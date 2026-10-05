@@ -1422,10 +1422,13 @@ window.__POEMS__ = [["Tragedi Seseorang Mencintaimu", ["kau tahu cara mencintai 
       var waHref = 'https://wa.me/?text='+shareText;
       var tgHref = 'https://t.me/share/url?url='+shareUrl+'&text='+encodeURIComponent(p[0]+' — Gaya Bebas');
       var xHref = 'https://twitter.com/intent/tweet?text='+encodeURIComponent(p[0]+'\n— Gaya Bebas · Shaiful Ridhwan')+'&url='+shareUrl;
+      var fbHref = 'https://www.facebook.com/sharer/sharer.php?u='+shareUrl;
       w.innerHTML = '<div class="work-head" role="button" tabindex="0" title="Klik untuk baca / tutup puisi"><div class="left"><span class="num">'+pad(p[2])+'</span><h3>'+p[0]+'</h3></div><div style="display:flex;align-items:center;gap:.8rem"><span class="work-cat">'+cat+'</span><button type="button" class="fav-btn" data-poem="'+p[0]+'" aria-label="Simpan ke kegemaran" title="Simpan ke kegemaran"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button><div class="plus"></div></div></div>'+
         '<div class="work-body"><div class="inner"><div class="poem-text">'+escapeHtml(lines)+'</div>'+
         '<div class="share-bar"><span class="share-label">Kongsi puisi ini</span>'+
+        '<a class="share-btn s-fb" href="'+fbHref+'" target="_blank" rel="noopener" title="Kongsi di Facebook">Facebook</a>'+
         '<a class="share-btn s-wa" href="'+waHref+'" target="_blank" rel="noopener" title="Kongsi di WhatsApp">WhatsApp</a>'+
+        '<button type="button" class="share-btn s-th" title="Kongsi di Threads">Threads</button>'+
         '<a class="share-btn s-tg" href="'+tgHref+'" target="_blank" rel="noopener" title="Kongsi di Telegram">Telegram</a>'+
         '<a class="share-btn s-x" href="'+xHref+'" target="_blank" rel="noopener" title="Kongsi di X / Twitter">X</a>'+
         '<button type="button" class="share-btn s-copy" title="Salin petikan puisi">Salin</button>'+
@@ -1482,6 +1485,17 @@ window.__POEMS__ = [["Tragedi Seseorang Mencintaimu", ["kau tahu cara mencintai 
       work.classList.remove('open');
       var bd = work.querySelector('.work-body'); if(bd) bd.style.maxHeight='0';
       work.querySelector('.work-head').scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+    if(btn.classList.contains('s-th')){
+      ev.preventDefault();
+      var thTitle = work.querySelector('h3').textContent;
+      var thPayload = thTitle+'\n— Gaya Bebas · Shaiful Ridhwan\n'+pageUrl;
+      if(navigator.share){
+        navigator.share({title: thTitle, text: thPayload, url: pageUrl}).catch(function(){});
+      } else {
+        window.open('https://www.threads.net/intent/post?text='+encodeURIComponent(thPayload), '_blank', 'noopener');
+      }
       return;
     }
     if(btn.classList.contains('s-copy')){
