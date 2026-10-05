@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://shaifulridhwan-penulispuisigayabebas.netlify.app/sitemap.xml
