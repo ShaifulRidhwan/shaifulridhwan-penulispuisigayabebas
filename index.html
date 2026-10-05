@@ -1428,7 +1428,6 @@ window.__POEMS__ = [["Tragedi Seseorang Mencintaimu", ["kau tahu cara mencintai 
         '<div class="share-bar"><span class="share-label">Kongsi puisi ini</span>'+
         '<a class="share-btn s-fb" href="'+fbHref+'" target="_blank" rel="noopener" title="Kongsi di Facebook">Facebook</a>'+
         '<a class="share-btn s-wa" href="'+waHref+'" target="_blank" rel="noopener" title="Kongsi di WhatsApp">WhatsApp</a>'+
-        '<button type="button" class="share-btn s-th" title="Kongsi di Threads">Threads</button>'+
         '<a class="share-btn s-tg" href="'+tgHref+'" target="_blank" rel="noopener" title="Kongsi di Telegram">Telegram</a>'+
         '<a class="share-btn s-x" href="'+xHref+'" target="_blank" rel="noopener" title="Kongsi di X / Twitter">X</a>'+
         '<button type="button" class="share-btn s-copy" title="Salin petikan puisi">Salin</button>'+
@@ -1485,17 +1484,6 @@ window.__POEMS__ = [["Tragedi Seseorang Mencintaimu", ["kau tahu cara mencintai 
       work.classList.remove('open');
       var bd = work.querySelector('.work-body'); if(bd) bd.style.maxHeight='0';
       work.querySelector('.work-head').scrollIntoView({behavior:'smooth', block:'center'});
-      return;
-    }
-    if(btn.classList.contains('s-th')){
-      ev.preventDefault();
-      var thTitle = work.querySelector('h3').textContent;
-      var thPayload = thTitle+'\n— Gaya Bebas · Shaiful Ridhwan\n'+pageUrl;
-      if(navigator.share){
-        navigator.share({title: thTitle, text: thPayload, url: pageUrl}).catch(function(){});
-      } else {
-        window.open('https://www.threads.net/intent/post?text='+encodeURIComponent(thPayload), '_blank', 'noopener');
-      }
       return;
     }
     if(btn.classList.contains('s-copy')){
