@@ -2331,8 +2331,10 @@ window.__POEMS__ = [["Tragedi Seseorang Mencintaimu", ["kau tahu cara mencintai 
     reader.classList.add('byac-open');
     document.body.style.overflow='hidden';
     render(0);
+    if(!/\/karya-khas\/?$/.test(location.pathname)){ history.pushState({view:'karya-khas'}, '', '/karya-khas'); }
   }
   function closeBook(){
+    if(/\/karya-khas\/?$/.test(location.pathname)){ history.pushState({}, '', '/'); }
     reader.classList.remove('byac-open');
     document.body.style.overflow='';
     setTimeout(function(){ reader.classList.add('byac-hidden'); }, 380);
@@ -2375,6 +2377,11 @@ window.__POEMS__ = [["Tragedi Seseorang Mencintaimu", ["kau tahu cara mencintai 
       openBook();
     });
   }
+  window.addEventListener('popstate', function(){
+    if(/\/karya-khas\/?$/.test(location.pathname)){ openBook(); }
+    else { closeBook(); }
+  });
+  if(/\/karya-khas\/?$/.test(location.pathname)){ openBook(); }
 })();
 </script>
 
