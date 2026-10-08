@@ -887,6 +887,34 @@ section#batas{padding:5rem 0 3rem}
 .about p{font-family:'Archivo',system-ui,sans-serif;font-weight:300}
 .about .bio-main{font-family:'Archivo',system-ui,sans-serif;font-size:clamp(1rem,2.2vw,1.12rem);line-height:2;color:var(--text);font-weight:300}
 </style>
+<style id="arkib-two-line">
+/* Arkib 42 Karya — hierarki dua baris: tajuk atas, kategori bawah */
+.work-head{flex-wrap:wrap;align-items:center;row-gap:.1rem}
+.work-head .left{flex:1 1 auto;min-width:0}
+.work-head > div:not(.left){flex:1 1 100%;margin-top:.55rem;display:flex;align-items:center;gap:.8rem}
+.work-head > div:not(.left) .fav-btn{margin-left:auto}
+.work-head h3{white-space:normal;overflow:visible;text-overflow:clip;font-size:1.08rem;line-height:1.35}
+.work-cat{font-size:.55rem;letter-spacing:.18em;opacity:.95}
+@media(max-width:600px){
+  .work-head{padding:.95rem 1.05rem;row-gap:0}
+  .work-head h3{font-size:1rem}
+  .work-head > div:not(.left){margin-top:.45rem}
+}
+</style>
+<style id="gadis-enhance">
+#gadis-reader .gadis-quote{margin:3rem auto 2.6rem;max-width:30rem;text-align:center;font-family:'Syne',sans-serif;font-weight:500;font-size:clamp(1.02rem,2.7vw,1.25rem);line-height:1.75;letter-spacing:.01em;color:#8a6a40;padding:0 .5rem}
+#gadis-reader .gadis-quote::before{content:"";display:block;width:28px;height:1px;background:#8a6a40;opacity:.35;margin:0 auto 1.4rem}
+#gadis-reader .gadis-illus{margin:2.6rem auto 2.2rem;display:flex;justify-content:center;color:#8a6a40;opacity:.45}
+#gadis-reader .gadis-illus svg{max-width:170px;height:auto;width:100%}
+#gadis-reader .gadis-illus-cover{margin:1.2rem auto 2rem;opacity:.5}
+#gadis-reader .gadis-illus-cover svg{max-width:210px}
+@media(max-width:600px){
+  #gadis-reader .gadis-quote{margin:2.4rem auto 2rem;font-size:1rem}
+  #gadis-reader .gadis-illus{margin:2.2rem auto 1.8rem}
+  #gadis-reader .gadis-illus svg{max-width:140px}
+  #gadis-reader .gadis-illus-cover svg{max-width:180px}
+}
+</style>
 </head>
 <body>
 <div class="progress" id="progress"></div>
@@ -915,7 +943,7 @@ section#batas{padding:5rem 0 3rem}
 
 <header class="hero">
   <div class="hero-side" aria-hidden="true">Puisi Bebas · Sastera Moden</div>
-  <div class="hero-meta"><span><b>Edisi Pertama</b> · 2026</span><span>42 Puisi · 2 Puisi Baharu</span></div>
+  <div class="hero-meta"><span><b>Himpunan Karya</b> · 2026</span></div>
   <h1 class="hero-title"><span class="line1">GAYA</span><span class="line2">BEBAS</span></h1>
   <div class="hero-author"><span class="rule"></span><span class="karya">Karya Oleh</span><span class="name">SHAIFUL RIDHWAN</span></div>
   <p class="hero-tagline">Aksara moden untuk hari ini,<br>Aksara kuno bila perlu.</p>
@@ -2978,7 +3006,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Aku tidak tahu sebabnya.'],
       ['p','Aku cuma suka.'],
       ['p','Pada umur sebelas tahun, aku belum tahu beza antara suka dan cinta.'],
-      ['p','Aku cuma tahu siapa yang aku cari waktu rehat.']
+      ['p','Aku cuma tahu siapa yang aku cari waktu rehat.'],['q','Barangkali ada keputusan dalam hidup yang dibuat sebelum akal sempat menyediakan alasan.']
     ]},
     {num:'02', chapter:'SEBELAH', first:true, blocks:[
       ['p','Duduk sebelah seseorang membuatkan kita mengenal benda-benda kecil tentang dia tanpa sengaja.'],
@@ -3142,7 +3170,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Benda-benda yang lain.'],
       ['p','Aku tidak duduk menunggu dia.'],
       ['p','Tetapi ada satu ruang kecil dalam rutin aku yang sudah berubah.'],
-      ['p','Aku hanya tidak tahu hendak memanggil ruang itu apa.']
+      ['p','Aku hanya tidak tahu hendak memanggil ruang itu apa.'],['illus','road']
     ]},
     {num:'08', chapter:'TAHUN-TAHUN YANG TIDAK BERTEMU', first:true, blocks:[
       ['p','Tahun-tahun selepas itu tidak mempunyai kisah cinta yang dramatik.'],
@@ -3168,7 +3196,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Aku semakin jauh daripada budak yang pernah duduk di sebelahnya.'],
       ['p','Namun peliknya, gadis itu masih mempunyai tempat kecil dalam ingatan aku.'],
       ['p','Bukan tempat yang aku sediakan.'],
-      ['p','Tempat yang terbentuk sendiri.']
+      ['p','Tempat yang terbentuk sendiri.'],['q','Mungkin kenangan memang begitu. Kita tidak perlu memanggilnya. Ia datang sendiri apabila terasa mahu datang.']
     ]},
     {num:'09', chapter:'HARI PERTAMA', first:true, blocks:[
       ['p','PLKN datang.'],
@@ -3217,7 +3245,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Cara dia melakukan sesuatu tanpa perlu mencari perhatian.'],
       ['p','Aku tidak perlu menjelaskan bahawa dia matang.'],
       ['p','Aku boleh nampak sendiri.'],
-      ['p','Masa telah melakukan kerjanya.']
+      ['p','Masa telah melakukan kerjanya.'],['q','Beberapa perkara memang tidak berubah walaupun manusia sudah berubah.']
     ]},
     {num:'11', chapter:'BUKIT', first:true, blocks:[
       ['p','Salah satu aktiviti yang aku masih ingat ialah mendaki bukit.'],
@@ -3238,7 +3266,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Aku masih suka dia.'],
       ['p','Tetapi perasaan itu tidak lagi sama seperti umur sebelas tahun.'],
       ['p','Atau mungkin sebenarnya sama.'],
-      ['p','Cuma aku yang sudah terlalu banyak berubah untuk merasakannya dengan cara yang sama.']
+      ['p','Cuma aku yang sudah terlalu banyak berubah untuk merasakannya dengan cara yang sama.'],['q','Kita boleh bertahun-tahun tidak berjumpa, tetapi satu reaksi kecil seseorang masih boleh terasa sangat dikenali.']
     ]},
     {num:'12', chapter:'TIGA BULAN', first:true, blocks:[
       ['p','PLKN bukan tentang dia.'],
@@ -3265,7 +3293,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Tiga bulan akhirnya menjadi semakin pendek.'],
       ['p','Hari yang dahulu terasa jauh mula datang.'],
       ['p','Aku tahu kem itu akan berakhir.'],
-      ['p','Aku cuma tidak tahu bahawa ada benda lain yang akan ikut berakhir bersamanya.']
+      ['p','Aku cuma tidak tahu bahawa ada benda lain yang akan ikut berakhir bersamanya.'],['q','Ada manusia yang kita lihat bukan kerana kita mahu memiliki mereka. Kita cuma mahu memastikan bahawa kenangan itu masih mempunyai wajah.']
     ]},
     {num:'13', chapter:'HARI-HARI YANG MENYUSUT', first:true, blocks:[
       ['p','Minggu terakhir datang.'],
@@ -3281,7 +3309,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Aku boleh fikir terlalu banyak perkara, tetapi bila tiba masa untuk melakukan sesuatu, aku kadang-kadang menjadi orang paling bodoh dalam bilik.'],
       ['p','Aku masih ada perasaan.'],
       ['p','Cuma perasaan itu tidak semestinya menghasilkan tindakan.'],
-      ['p','Aku rasa banyak. Aku buat sedikit.']
+      ['p','Aku rasa banyak. Aku buat sedikit.'],['illus','window']
     ]},
     {num:'14', chapter:'HARI TERAKHIR', first:true, blocks:[
       ['p','Hari terakhir.'],
@@ -3331,7 +3359,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Tiada ayat panjang.'],
       ['p','Tiada puisi.'],
       ['p','Tiada metafora.'],
-      ['p','Hanya satu pengakuan yang terlambat.']
+      ['p','Hanya satu pengakuan yang terlambat.'],['q','Mungkin ia tidak pernah hilang. Mungkin aku cuma sudah cukup dewasa untuk mengaku bahawa ia memang ada.']
     ]},
     {num:'16', chapter:'AYAT YANG TERLAMBAT', first:true, blocks:[
       ['p','Dia memberikan jawapan yang sampai sekarang masih aku ingat maksudnya.'],
@@ -3400,7 +3428,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Aku tidak mempunyai jawapan yang sempurna.'],
       ['p','Dan semakin lama aku fikir, semakin aku tidak yakin bahawa aku memerlukannya.'],
       ['p','Ada soalan yang tidak kehilangan nilainya hanya kerana ia tidak mempunyai jawapan.'],
-      ['p','Mungkin perasaan juga begitu.']
+      ['p','Mungkin perasaan juga begitu.'],['q','Ada soalan yang tidak kehilangan nilainya hanya kerana ia tidak mempunyai jawapan.']
     ]},
     {num:'19', chapter:'YANG TERTINGGAL', first:true, blocks:[
       ['p','Kalau aku fikir semula, mungkin perkara paling besar yang tertinggal daripada gadis itu bukan soal cinta.'],
@@ -3436,7 +3464,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','“Jadilah penulis.”'],
       ['p','Dia cuma membaca.'],
       ['p','Aku pula mahu mengalahkannya.'],
-      ['p','Kadang-kadang hidup tidak memerlukan seseorang untuk mengajar kita. Cukup seseorang itu wujud pada waktu yang tepat.']
+      ['p','Kadang-kadang hidup tidak memerlukan seseorang untuk mengajar kita. Cukup seseorang itu wujud pada waktu yang tepat.'],['illus','dots']
     ]},
     {num:'20', chapter:'TEMPAT DUDUK', first:true, blocks:[
       ['p','Aku selalu kembali kepada satu perkara.'],
@@ -3501,6 +3529,12 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
     {n:'19', t:'YANG TERTINGGAL', p:20},
     {n:'20', t:'TEMPAT DUDUK', p:21}
   ];
+  var GADIS_ILLUS = {
+    seat: '<svg viewBox="0 0 240 110" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="40" y1="55" x2="95" y2="55"/><line x1="48" y1="55" x2="48" y2="88"/><line x1="87" y1="55" x2="87" y2="88"/><circle cx="67" cy="38" r="7"/><line x1="145" y1="55" x2="200" y2="55"/><line x1="153" y1="55" x2="153" y2="88"/><line x1="192" y1="55" x2="192" y2="88"/></svg>',
+    road: '<svg viewBox="0 0 200 70" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><path d="M70 62 C72 45 78 32 92 20"/><path d="M130 62 C128 45 122 32 108 20"/><circle cx="100" cy="62" r="2.2" fill="currentColor" stroke="none"/></svg>',
+    window: '<svg viewBox="0 0 200 60" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><rect x="60" y="10" width="80" height="44" rx="2"/><line x1="60" y1="38" x2="140" y2="38"/><circle cx="118" cy="25" r="4"/></svg>',
+    dots: '<svg viewBox="0 0 200 60" fill="currentColor" stroke="none"><circle cx="50" cy="38" r="2"/><circle cx="80" cy="22" r="2.6"/><circle cx="110" cy="40" r="1.8"/><circle cx="140" cy="18" r="2.2"/><circle cx="160" cy="36" r="1.6"/></svg>'
+  };
   var total = 2 + GADIS_CONTENT.length;
   var current = 0;
   var reader = document.getElementById('gadis-reader');
@@ -3518,6 +3552,8 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       var b=blocks[i];
       if(b[0]==='p'){ h+='<p>'+b[1]+'</p>'; }
       else if(b[0]==='s'){ h+='<p class="gadis-strong">'+b[1]+'</p>'; }
+      else if(b[0]==='q'){ h+='<blockquote class="gadis-quote">'+b[1]+'</blockquote>'; }
+      else if(b[0]==='illus'){ h+='<div class="gadis-illus">'+GADIS_ILLUS[b[1]]+'</div>'; }
     }
     return h;
   }
@@ -3535,7 +3571,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       +'<h1>GADIS YANG<br>PERNAH DUDUK DI SEBELAH</h1>'
       +'<div class="gadis-rule"></div>'
       +'<div class="gadis-sub">sebuah novel tentang ingatan, kemungkinan, dan seseorang yang tidak pernah menjadi milik</div>'
-      +'<div class="gadis-cover-role">Penulis</div>'
+      +'<div class="gadis-illus gadis-illus-cover">'+GADIS_ILLUS.seat+'</div>'+'<div class="gadis-cover-role">Penulis</div>'
       +'<div class="gadis-cover-author">Shaiful Ridhwan</div>'
       +'<button type="button" class="gadis-start" id="gadis-start">Mula Membaca</button>'
       +resume
