@@ -1188,6 +1188,13 @@ LUAS pada pemikiran.</span></p>
       <p class="kunci" style="font-size:.8rem;color:var(--muted);font-style:italic;font-weight:300;line-height:1.7;margin:-.2rem 0 1.2rem">Catatan tentang hidup di antara perkara yang tidak pernah benar-benar hitam atau putih.</p>
       <a class="khas-btn" href="#antara" id="antara-cta">Baca ANTARA</a>
     </div>
+    <div class="khas-card reveal" id="gadis-card">
+      <div class="khas-tag">03</div>
+      <div class="kicker">Karya Khas &middot; Novel</div>
+      <h3>GADIS YANG<br><span class="grad">PERNAH DUDUK DI SEBELAH</span></h3>
+      <p class="kquote">sebuah novel tentang ingatan, kemungkinan, dan seseorang yang tidak pernah menjadi milik</p>
+      <a class="khas-btn" href="#gadis" id="gadis-cta">Baca Novel</a>
+    </div>
   </div>
 </section>
 
@@ -1392,12 +1399,8 @@ yang sedang mengkaji</div><div class="pick-meta">— Shaiful Ridhwan · Gaya Beb
   </div>
   <div class="cat-bar reveal" id="catBar">
       <button class="cat-btn active" data-cat="all" type="button">Semua</button>
-      <button class="cat-btn" data-cat="CINTA" type="button">Cinta</button>
-      <button class="cat-btn" data-cat="FALSAFAH" type="button">Falsafah</button>
-      <button class="cat-btn" data-cat="MANUSIA" type="button">Manusia</button>
-      <button class="cat-btn" data-cat="SAINS" type="button">Sains</button>
-      <button class="cat-btn" data-cat="WARISAN" type="button">Warisan</button>
-      <button class="cat-btn" data-cat="REFLEKSI" type="button">Refleksi</button>
+      <button class="cat-btn" data-cat="FALSAFAH &amp; MANUSIA" type="button">01 &middot; Falsafah &amp; Manusia</button>
+      <button class="cat-btn" data-cat="KARYA RINGAN &amp; CINTA" type="button">02 &middot; Karya Ringan &amp; Cinta</button>
       <button class="cat-reset" id="resetBtn" type="button">Set Semula</button>
     </div>
     <div class="filter-bar reveal">
@@ -1509,7 +1512,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
   var noResult = document.getElementById('noResult');
   var catBar = document.getElementById('catBar');
   var resetBtn = document.getElementById('resetBtn');
-  var CATS = ["CINTA", "REFLEKSI", "CINTA", "SAINS", "CINTA", "REFLEKSI", "CINTA", "FALSAFAH", "CINTA", "MANUSIA", "MANUSIA", "MANUSIA", "CINTA", "FALSAFAH", "SAINS", "FALSAFAH", "SAINS", "REFLEKSI", "SAINS", "REFLEKSI", "CINTA", "FALSAFAH", "FALSAFAH", "CINTA", "CINTA", "CINTA", "FALSAFAH", "CINTA", "MANUSIA", "SAINS", "WARISAN", "REFLEKSI", "CINTA", "SAINS", "SAINS", "SAINS", "REFLEKSI", "CINTA", "REFLEKSI", "CINTA", "MANUSIA", "REFLEKSI"];
+  var CATS = ["KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "KARYA RINGAN & CINTA", "KARYA RINGAN & CINTA", "KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "FALSAFAH & MANUSIA", "FALSAFAH & MANUSIA", "KARYA RINGAN & CINTA", "KARYA RINGAN & CINTA", "KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "FALSAFAH & MANUSIA", "FALSAFAH & MANUSIA", "KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "FALSAFAH & MANUSIA", "KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "FALSAFAH & MANUSIA", "KARYA RINGAN & CINTA", "KARYA RINGAN & CINTA", "KARYA RINGAN & CINTA", "KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "FALSAFAH & MANUSIA", "FALSAFAH & MANUSIA", "KARYA RINGAN & CINTA", "FALSAFAH & MANUSIA", "FALSAFAH & MANUSIA"];
   var activeCat = 'all';
   var pageUrl = (document.querySelector('link[rel="canonical"]')&&document.querySelector('link[rel="canonical"]').href)||location.href;
   function pad(n){ return n < 10 ? '0'+n : ''+n; }
@@ -2565,6 +2568,119 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
     </button>
   </div>
+</div><style id="gadis-style">
+@keyframes gadisFade{from{opacity:0}to{opacity:1}}
+#gadis-reader{position:fixed;inset:0;z-index:99999;display:flex;flex-direction:column;
+  background:radial-gradient(ellipse 70% 42% at 50% -5%,rgba(138,106,64,.07),transparent 62%),#f5efe2;
+  color:#38332c;font-family:'Archivo',system-ui,sans-serif;opacity:0;pointer-events:none;
+  transition:opacity .5s ease;overscroll-behavior:contain;-webkit-font-smoothing:antialiased}
+#gadis-reader.gadis-open{opacity:1;pointer-events:auto}
+#gadis-reader.gadis-hidden{display:none}
+#gadis-reader *{box-sizing:border-box}
+#gadis-reader button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#gadis-reader ::selection{background:#8a6a40;color:#f5efe2}
+#gadis-reader .gadis-top{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:.75rem;
+  padding:.85rem 1.1rem;border-bottom:1px solid rgba(138,106,64,.16);background:rgba(245,239,226,.86);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#gadis-reader .gadis-close{display:inline-flex;align-items:center;gap:.5rem;background:transparent;
+  border:1px solid rgba(138,106,64,.4);color:#8a6a40;font-family:'Syne',sans-serif;font-size:.62rem;
+  letter-spacing:.22em;text-transform:uppercase;padding:.55rem .95rem;transition:all .3s;border-radius:2px}
+#gadis-reader .gadis-close:hover{background:rgba(138,106,64,.10);border-color:#8a6a40}
+#gadis-reader .gadis-close svg{width:13px;height:13px;flex-shrink:0}
+#gadis-reader .gadis-top-title{flex:1;text-align:center;font-family:'Syne',sans-serif;font-size:.58rem;
+  letter-spacing:.32em;text-transform:uppercase;color:rgba(56,51,44,.42);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#gadis-reader .gadis-top-hold{width:72px;flex-shrink:0}
+#gadis-reader .gadis-progress{flex-shrink:0;height:2px;background:rgba(138,106,64,.10)}
+#gadis-reader .gadis-progress-bar{height:100%;width:0%;background:#8a6a40;transition:width .45s ease}
+#gadis-reader .gadis-stage{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
+  position:relative;scrollbar-width:thin;scrollbar-color:rgba(138,106,64,.3) transparent}
+#gadis-reader .gadis-stage::-webkit-scrollbar{width:4px}
+#gadis-reader .gadis-stage::-webkit-scrollbar-thumb{background:rgba(138,106,64,.3);border-radius:2px}
+#gadis-reader .gadis-page{max-width:680px;margin:0 auto;padding:2.6rem 1.5rem 3.4rem;min-height:100%;animation:gadisFade .55s ease both}
+#gadis-reader .gadis-kicker{font-family:'Syne',sans-serif;font-size:.58rem;letter-spacing:.38em;text-transform:uppercase;
+  color:#8a6a40;margin-bottom:.9rem;opacity:.85}
+#gadis-reader .gadis-chapter{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.5rem,5.5vw,2.25rem);
+  line-height:1.12;letter-spacing:.01em;margin-bottom:.5rem;color:#38332c}
+#gadis-reader .gadis-rule{width:48px;height:1px;background:#8a6a40;opacity:.45;margin:1rem 0 2.4rem}
+#gadis-reader .gadis-page p{font-size:clamp(1.05rem,2.6vw,1.16rem);line-height:2.02;color:#38332c;
+  margin-bottom:1.18rem;font-weight:400;letter-spacing:.004em}
+#gadis-reader .gadis-page p.gadis-strong{font-family:'Syne',sans-serif;font-weight:600;font-size:clamp(1.18rem,3.2vw,1.45rem);
+  line-height:1.75;letter-spacing:.01em;color:#8a6a40;text-align:center;margin:3.6rem 0;max-width:32rem;margin-left:auto;margin-right:auto}
+#gadis-reader .gadis-page .gadis-final{margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(138,106,64,.22)}
+#gadis-reader .gadis-bottom{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:.75rem;
+  padding:.8rem 1.1rem;border-top:1px solid rgba(138,106,64,.16);background:rgba(245,239,226,.86);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+#gadis-reader .gadis-nav{display:inline-flex;align-items:center;gap:.5rem;background:transparent;
+  border:1px solid rgba(138,106,64,.4);color:#8a6a40;font-family:'Syne',sans-serif;font-size:.6rem;
+  letter-spacing:.16em;text-transform:uppercase;padding:.7rem 1rem;transition:all .3s;border-radius:2px;white-space:nowrap}
+#gadis-reader .gadis-nav:hover{background:rgba(138,106,64,.10);border-color:#8a6a40}
+#gadis-reader .gadis-nav:disabled{opacity:.28;pointer-events:none}
+#gadis-reader .gadis-nav svg{width:14px;height:14px;flex-shrink:0}
+#gadis-reader .gadis-pagenum{flex:1;text-align:center;font-family:'Syne',sans-serif;font-size:.68rem;
+  letter-spacing:.25em;color:rgba(56,51,44,.5)}
+#gadis-reader .gadis-cover{min-height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;padding:1.5rem .5rem}
+#gadis-reader .gadis-cover-kicker{font-family:'Syne',sans-serif;font-size:.58rem;letter-spacing:.45em;text-transform:uppercase;
+  color:#8a6a40;margin-bottom:2rem;opacity:.85}
+#gadis-reader .gadis-cover h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,8.5vw,3.6rem);
+  line-height:1.08;letter-spacing:.01em;margin-bottom:1.6rem;color:#38332c;max-width:18ch}
+#gadis-reader .gadis-cover .gadis-sub{max-width:32rem;margin:0 auto 2.2rem;font-size:1rem;line-height:1.85;
+  color:#837a6c;font-weight:400;font-style:italic}
+#gadis-reader .gadis-cover .gadis-rule{margin:0 auto 1.8rem}
+#gadis-reader .gadis-cover-role{font-family:'Syne',sans-serif;font-size:.58rem;letter-spacing:.4em;text-transform:uppercase;
+  color:rgba(56,51,44,.45);margin-bottom:.5rem}
+#gadis-reader .gadis-cover-author{font-family:'Syne',sans-serif;font-size:1rem;letter-spacing:.2em;text-transform:uppercase;
+  color:#8a6a40;font-weight:700}
+#gadis-reader .gadis-start{margin-top:2.8rem;display:inline-flex;align-items:center;gap:.6rem;
+  background:rgba(138,106,64,.10);border:1px solid #8a6a40;color:#8a6a40;font-family:'Syne',sans-serif;
+  font-size:.66rem;letter-spacing:.25em;text-transform:uppercase;padding:1rem 2.2rem;transition:all .35s;border-radius:2px}
+#gadis-reader .gadis-start:hover{background:#8a6a40;color:#f5efe2}
+#gadis-reader .gadis-resume{margin-top:1.1rem;font-family:'Syne',sans-serif;font-size:.6rem;letter-spacing:.2em;
+  text-transform:uppercase;color:rgba(138,106,64,.7);background:transparent;border:none;padding:.4rem .6rem;
+  border-bottom:1px solid rgba(138,106,64,.3);transition:color .3s}
+#gadis-reader .gadis-resume:hover{color:#8a6a40}
+#gadis-reader .gadis-toc h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.7rem;margin-bottom:.3rem;color:#38332c}
+#gadis-reader .gadis-toc .gadis-rule{margin-bottom:1.8rem}
+#gadis-reader .gadis-toc-item{display:flex;align-items:baseline;gap:1rem;width:100%;text-align:left;
+  background:transparent;border:none;border-bottom:1px solid rgba(138,106,64,.14);padding:.9rem .2rem;
+  color:#38332c;transition:all .25s;font-family:'Archivo',sans-serif}
+#gadis-reader .gadis-toc-item:hover{background:rgba(138,106,64,.06);padding-left:.7rem;color:#8a6a40}
+#gadis-reader .gadis-toc-num{font-family:'Syne',sans-serif;font-size:.68rem;color:#8a6a40;letter-spacing:.15em;
+  flex-shrink:0;min-width:2.2rem;opacity:.8}
+#gadis-reader .gadis-toc-title{font-family:'Syne',sans-serif;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;
+  font-weight:600;flex:1;color:#38332c}
+@media(max-width:600px){
+  #gadis-reader .gadis-close span{display:none}
+  #gadis-reader .gadis-nav{padding:.65rem .75rem;font-size:.56rem}
+  #gadis-reader .gadis-nav span{display:none}
+  #gadis-reader .gadis-top-hold{width:40px}
+  #gadis-reader .gadis-page{padding:2rem 1.2rem 2.8rem}
+  #gadis-reader .gadis-page p{font-size:1.03rem;line-height:1.95}
+}
+</style><div id="gadis-reader" class="gadis-hidden" role="dialog" aria-modal="true" aria-label="Gadis Yang Pernah Duduk Di Sebelah — novel" style="display:none">
+  <div class="gadis-top">
+    <button type="button" class="gadis-close" id="gadis-close" aria-label="Kembali ke Karya Khas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span>Kembali</span>
+    </button>
+    <div class="gadis-top-title">Gadis Yang Pernah Duduk Di Sebelah</div>
+    <div class="gadis-top-hold"></div>
+  </div>
+  <div class="gadis-progress"><div class="gadis-progress-bar" id="gadis-progress-bar"></div></div>
+  <div class="gadis-stage" id="gadis-stage">
+    <div class="gadis-page" id="gadis-page"></div>
+  </div>
+  <div class="gadis-bottom">
+    <button type="button" class="gadis-nav" id="gadis-prev" aria-label="Bab sebelumnya">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+      <span>Bab Sebelumnya</span>
+    </button>
+    <div class="gadis-pagenum" id="gadis-pagenum">1 / 22</div>
+    <button type="button" class="gadis-nav" id="gadis-next" aria-label="Bab seterusnya">
+      <span>Bab Seterusnya</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
 </div><script>
 (function(){
   var ANTARA_CONTENT = [
@@ -2836,6 +2952,700 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
 })();
 </script>
 
+<script>
+(function(){
+  var GADIS_CONTENT = [
+    {num:'01', chapter:'PINDAH', first:true, blocks:[
+      ['p','Umur sebelas tahun, aku belum pandai memikirkan sebab orang dewasa membuat keputusan.'],
+      ['p','Aku cuma tahu ibu dapat kerja di Shah Alam, Selangor, lalu kami berpindah dari Teluk Intan.'],
+      ['p','Rumah berubah. Jalan berubah. Sekolah berubah.'],
+      ['p','Aku ikut sahaja.'],
+      ['p','Pada umur itu, berpindah bagi aku bukan persoalan tentang meninggalkan tempat lama. Ia lebih kepada memikirkan sekolah baharu, kawan baharu dan bagaimana hendak menyesuaikan diri tanpa nampak terlalu kekok.'],
+      ['p','Hari pertama di sekolah baharu, aku masuk ke kelas dan melihat tempat duduk yang kosong.'],
+      ['p','Ada satu tempat di sebelah seorang gadis.'],
+      ['p','Aku pilih tempat itu.'],
+      ['p','Aku sendiri tidak tahu kenapa.'],
+      ['p','Tiada siapa menyuruh aku duduk di situ. Cikgu tidak memasangkan kami. Aku cuma memilih.'],
+      ['p','Barangkali ada keputusan dalam hidup yang dibuat sebelum akal sempat menyediakan alasan.'],
+      ['p','Aku duduk.'],
+      ['p','Di sebelah aku ada seorang gadis dengan sebuah botol air teh yang besar.'],
+      ['p','Itu antara perkara pertama yang aku ingat tentangnya.'],
+      ['p','Bukan sesuatu yang istimewa. Bukan perkara yang sepatutnya menjadi kenangan bertahun-tahun.'],
+      ['p','Cuma sebuah botol air teh yang besar.'],
+      ['p','Dan seorang gadis yang duduk di sebelah aku.'],
+      ['p','Aku belum tahu bahawa kedua-duanya akan menjadi sebahagian daripada ingatan yang masih aku bawa sampai dewasa.'],
+      ['p','Pada waktu itu, aku cuma fikir dia menarik perhatian aku.'],
+      ['p','Aku tidak tahu sebabnya.'],
+      ['p','Aku cuma suka.'],
+      ['p','Pada umur sebelas tahun, aku belum tahu beza antara suka dan cinta.'],
+      ['p','Aku cuma tahu siapa yang aku cari waktu rehat.']
+    ]},
+    {num:'02', chapter:'SEBELAH', first:true, blocks:[
+      ['p','Duduk sebelah seseorang membuatkan kita mengenal benda-benda kecil tentang dia tanpa sengaja.'],
+      ['p','Aku tahu bila dia sedang betul-betul fokus.'],
+      ['p','Aku tahu bila dia tidak suka diganggu.'],
+      ['p','Aku tahu satu lagi perkara yang lebih menarik.'],
+      ['p','Kalau aku kacau dia terlalu banyak, dahinya akan berkerut.'],
+      ['p','Aku suka tengok.'],
+      ['p','Bukan sebab aku mahu menyakitkan hati dia.'],
+      ['p','Aku cuma suka melihat reaksi.'],
+      ['p','Mungkin itulah bentuk awal perangai aku ketika itu.'],
+      ['p','Aku tidak pandai menunjukkan aku suka seseorang dengan cara yang jelas. Aku lebih pandai mengganggu orang yang aku suka.'],
+      ['p','Satu hari, dia sedang membuat projek seni.'],
+      ['p','Kertas diletakkan atas meja. Pensel, pemadam dan pensel warna berselerak di sekelilingnya. Dia sedang melukis dengan bersungguh-sungguh.'],
+      ['p','Aku tengok lukisan itu.'],
+      ['p','Kemudian aku tengok dia.'],
+      ['p','“Lukis aku la.”'],
+      ['p','Dia berhenti sekejap.'],
+      ['p','Aku sambung dengan penuh yakin.'],
+      ['p','“Seni terhebat ni.”'],
+      ['p','Dia gelak.'],
+      ['p','Aku rasa lawak aku berjaya.'],
+      ['p','Siut betul.'],
+      ['p','Dia sambung melukis.'],
+      ['p','Aku pula duduk di sebelahnya dengan perasaan puas hati kerana berjaya membuat dia ketawa.'],
+      ['p','Begitulah.'],
+      ['p','Tidak ada bunga.'],
+      ['p','Tidak ada surat.'],
+      ['p','Tidak ada apa-apa yang boleh dijadikan bukti bahawa sebuah kisah cinta sedang bermula.'],
+      ['p','Cuma seorang budak lelaki yang suka mengacau seorang gadis ketika dia sedang melukis.'],
+      ['p','Dan seorang gadis yang tidak pernah benar-benar menjauh.'],
+      ['p','Kadang-kadang aku fikir, mungkin cinta pertama memang tidak datang dengan bunyi yang kuat.'],
+      ['p','Ia cuma masuk ke dalam rutin.'],
+      ['p','Lalu kita tidak sedar bila ia bermula.']
+    ]},
+    {num:'03', chapter:'WAKTU REHAT', first:true, blocks:[
+      ['p','Waktu rehat sekolah rendah mempunyai dunia sendiri.'],
+      ['p','Murid keluar kelas dengan duit belanja di tangan. Ada yang terus menuju ke kantin. Ada yang tunggu kawan. Ada yang berlari walaupun jaraknya cuma beberapa meter, seolah-olah makanan akan habis dalam masa dua minit.'],
+      ['p','Aku ada rutin sendiri.'],
+      ['p','Aku cari dia.'],
+      ['p','Kadang-kadang kami bercakap.'],
+      ['p','Kadang-kadang aku kacau.'],
+      ['p','Kadang-kadang aku cuma datang, berdiri sekejap, kemudian pergi semula.'],
+      ['p','Aku tidak pernah merancang apa yang hendak dibualkan.'],
+      ['p','Kalau ada benda untuk dikacau, aku kacau.'],
+      ['p','Kalau tiada, aku cari benda lain.'],
+      ['p','Aku tidak sedar bahawa aku sedang membina satu kebiasaan.'],
+      ['p','Aku cuma tahu kaki aku selalu tahu ke mana hendak pergi.'],
+      ['p','Pada umur sebelas tahun, aku belum tahu beza antara suka dan cinta. Aku cuma tahu siapa yang aku cari waktu rehat.'],
+      ['p','Aku tidak ingat semua perbualan kami.'],
+      ['p','Aku tidak ingat semua makanan yang pernah kami makan.'],
+      ['p','Aku tidak ingat berapa kali dia kerut dahi kerana aku.'],
+      ['p','Tetapi aku ingat perasaan bahawa waktu rehat akan menjadi sedikit lebih menarik kalau aku dapat bercakap dengannya.'],
+      ['p','Benda yang paling lama tinggal dalam ingatan kadang-kadang bukan perkara besar.'],
+      ['p','Ia cuma perkara yang berulang.']
+    ]},
+    {num:'04', chapter:'JALAN PULANG', first:true, blocks:[
+      ['p','Selepas sekolah, laluan kami sama.'],
+      ['p','Kadang-kadang kami berjalan bersama.'],
+      ['p','Tidak ada tujuan lain.'],
+      ['p','Kami cuma pulang.'],
+      ['p','Ada hari kami bercakap tentang sekolah.'],
+      ['p','Ada hari aku kacau dia.'],
+      ['p','Ada hari kami berjalan tanpa banyak bercakap.'],
+      ['p','Jalan itu bukan milik kami.'],
+      ['p','Ramai murid melalui laluan yang sama.'],
+      ['p','Cuma pada waktu itu aku tidak tahu bahawa seseorang boleh menjadi sebahagian daripada sesuatu yang begitu biasa, lalu bertahun-tahun kemudian perkara biasa itu terasa sangat khusus.'],
+      ['p','Kami berjalan kerana jalan kami sama.'],
+      ['p','Aku tidak pernah fikir lebih jauh daripada itu.'],
+      ['p','Kalau esok jalan yang sama masih ada, kami akan melaluinya lagi.'],
+      ['p','Kalau dia ada, aku akan bercakap dengannya.'],
+      ['p','Kalau aku ada peluang untuk mengacau, aku akan kacau.'],
+      ['p','Begitulah mudahnya dunia ketika umur sebelas tahun.'],
+      ['p','Kami belum tahu bahawa manusia boleh berjalan di jalan yang sama untuk beberapa tahun, lalu suatu hari masing-masing mengambil arah yang berbeza tanpa sesiapa membuat keputusan untuk berpisah.']
+    ]},
+    {num:'05', chapter:'SEKOLAH MENENGAH', first:true, blocks:[
+      ['p','Masuk sekolah menengah, banyak benda berubah.'],
+      ['p','Kami tidak lagi duduk sebelah.'],
+      ['p','Kelas berbeza.'],
+      ['p','Jadual berbeza.'],
+      ['p','Kawan pun semakin ramai.'],
+      ['p','Tetapi kami sudah jadi kawan.'],
+      ['p','Itu tidak hilang hanya kerana nombor kelas berubah.'],
+      ['p','Kalau terserempak, aku tegur.'],
+      ['p','Kalau ada peluang, aku cari dia.'],
+      ['p','Dan kalau aku rasa dia terlalu serius, aku kacau.'],
+      ['p','Dia masih boleh kerut dahi.'],
+      ['p','Kadang-kadang dia senyum.'],
+      ['p','Aku tidak tahu mana satu yang dia lebih banyak buat.'],
+      ['p','Aku cuma tahu aku suka kedua-duanya.'],
+      ['p','Kami sudah jadi kawan. Mungkin itu sebab aku tidak pernah tahu bila sebenarnya perasaan itu menjadi lebih daripada kawan.'],
+      ['p','Aku tidak pernah menganggap kami mempunyai hubungan yang istimewa.'],
+      ['p','Pada pandangan orang lain, mungkin kami cuma dua orang kawan sekolah yang kebetulan sudah lama kenal.'],
+      ['p','Memang begitu pun.'],
+      ['p','Aku suka dia, tetapi aku tidak mempunyai rancangan untuk mengubah persahabatan itu menjadi sesuatu yang lebih besar.'],
+      ['p','Mungkin sebab itu aku selesa.'],
+      ['p','Kami sudah biasa.'],
+      ['p','Dan sesuatu yang sudah biasa selalunya tidak terasa berbahaya.']
+    ]},
+    {num:'06', chapter:'NOMBOR SATU', first:true, blocks:[
+      ['p','Dia pandai.'],
+      ['p','Dalam kelas, dia selalu berada di hadapan.'],
+      ['p','Aku pula biasanya di belakang sedikit.'],
+      ['p','Kalau keputusan keluar dan dia nombor satu, aku nombor dua.'],
+      ['p','Aku tidak marah.'],
+      ['p','Cuma ada satu perkara dalam kepala aku.'],
+      ['p','Aku mahu menang daripada dia.'],
+      ['p','Bukan persaingan besar.'],
+      ['p','Bukan sampai bermusuh.'],
+      ['p','Cuma ego kecil budak sekolah.'],
+      ['p','Kalau dia boleh, aku pun mahu boleh.'],
+      ['p','Salah satu perkara yang aku perasan ialah dia suka membaca.'],
+      ['p','Dia baca banyak buku.'],
+      ['p','Aku fikir, kalau aku mahu mengalahkannya, aku kena baca lebih banyak.'],
+      ['p','Maka aku mula membaca.'],
+      ['p','Buku demi buku.'],
+      ['p','Setiap kali selesai membaca, aku masukkan rekod dalam buku NILAM.'],
+      ['p','Lama-lama buku rekod itu penuh.'],
+      ['p','Aku tampal buku baharu.'],
+      ['p','Satu buku jadi dua.'],
+      ['p','Dua jadi tiga.'],
+      ['p','Benda yang pada awalnya cuma satu cara untuk mengejar seseorang mula berkembang menjadi tabiat yang aku sendiri tidak sangka akan kekal.'],
+      ['p','Aku masih mahu menang.'],
+      ['p','Tetapi selepas beberapa lama, aku sudah tidak membaca semata-mata untuk menang.'],
+      ['p','Aku membaca sebab aku mahu tahu.'],
+      ['p','Aku mahu tahu apa yang ada dalam buku lain.'],
+      ['p','Apa yang ada di luar benda yang aku tahu.'],
+      ['p','Apa yang manusia fikir.'],
+      ['p','Apa yang manusia cipta.'],
+      ['p','Apa yang boleh ditulis.'],
+      ['p','Kalau orang nampak rekod NILAM itu sekarang, mungkin mereka akan fikir aku memang sejak kecil sudah mempunyai disiplin membaca yang luar biasa.'],
+      ['p','Sebenarnya aku cuma mahu kalahkan seorang gadis.'],
+      ['p','Tetapi ada benda yang bermula sebagai persaingan kecil lalu berubah menjadi sesuatu yang lebih besar daripada sebab asalnya.'],
+      ['p','Pada mulanya aku membaca kerana mahu mengalahkannya. Lama-lama aku membaca kerana aku sudah tidak memerlukan alasan untuk membaca.'],
+      ['p','Aku mula membaca.'],
+      ['p','Lama-lama aku mula menulis.'],
+      ['p','Aku menjadi juara BUKU NILAM.'],
+      ['p','Dia tidak pernah mengajar aku membaca.'],
+      ['p','Dia tidak pernah menyuruh aku menjadi penulis.'],
+      ['p','Dia mungkin tidak pernah tahu pun bahawa dia antara sebab aku mula melakukan semua itu.'],
+      ['p','Aku mahu mengalahkan dia. Aku tidak sangka persaingan kecil itu akhirnya mengubah aku.']
+    ]},
+    {num:'07', chapter:'TINGKATAN TIGA', first:true, blocks:[
+      ['p','Masa bergerak tanpa meminta izin.'],
+      ['p','Sekolah menengah terus berjalan.'],
+      ['p','Aku semakin membesar.'],
+      ['p','Dia juga.'],
+      ['p','Pada Tingkatan Tiga, dia berpindah sekolah.'],
+      ['p','Aku tidak ingat ada perpisahan besar.'],
+      ['p','Tiada adegan seperti dalam filem.'],
+      ['p','Tiada kami berdiri lama-lama untuk mengatakan bahawa kami akan saling mengingati.'],
+      ['p','Dia cuma pergi.'],
+      ['p','Begitulah hidup kadang-kadang.'],
+      ['p','Seseorang boleh keluar daripada rutin kita tanpa pintu ditutup dengan kuat.'],
+      ['p','Cuma satu hari, tempat yang biasanya ada seseorang itu sudah kosong.'],
+      ['p','Aku teruskan hidup.'],
+      ['p','Sekolah.'],
+      ['p','Kawan.'],
+      ['p','Membaca.'],
+      ['p','Menulis.'],
+      ['p','Benda-benda yang lain.'],
+      ['p','Aku tidak duduk menunggu dia.'],
+      ['p','Tetapi ada satu ruang kecil dalam rutin aku yang sudah berubah.'],
+      ['p','Aku hanya tidak tahu hendak memanggil ruang itu apa.']
+    ]},
+    {num:'08', chapter:'TAHUN-TAHUN YANG TIDAK BERTEMU', first:true, blocks:[
+      ['p','Tahun-tahun selepas itu tidak mempunyai kisah cinta yang dramatik.'],
+      ['p','Aku hidup seperti orang lain.'],
+      ['p','Ada sekolah.'],
+      ['p','Ada kawan.'],
+      ['p','Ada buku.'],
+      ['p','Ada perkara yang aku fikir penting pada waktu itu, kemudian lupa.'],
+      ['p','Ada benda yang aku mahu capai.'],
+      ['p','Ada benda yang aku gagal.'],
+      ['p','Ada hari aku teringat dia.'],
+      ['p','Bukan setiap hari.'],
+      ['p','Bukan sampai aku mencari-cari berita tentangnya.'],
+      ['p','Kadang-kadang sesuatu yang kecil sahaja cukup untuk membawa ingatan itu kembali.'],
+      ['p','Satu tempat.'],
+      ['p','Satu perangai seseorang.'],
+      ['p','Satu benda yang mengingatkan aku kepada zaman sekolah.'],
+      ['p','Lalu ingatan itu datang.'],
+      ['p','Selepas itu hilang semula.'],
+      ['p','Aku tidak mengejarnya.'],
+      ['p','Mungkin kenangan memang begitu. Kita tidak perlu memanggilnya. Ia datang sendiri apabila terasa mahu datang.'],
+      ['p','Tahun berganti.'],
+      ['p','Aku semakin jauh daripada budak yang pernah duduk di sebelahnya.'],
+      ['p','Namun peliknya, gadis itu masih mempunyai tempat kecil dalam ingatan aku.'],
+      ['p','Bukan tempat yang aku sediakan.'],
+      ['p','Tempat yang terbentuk sendiri.']
+    ]},
+    {num:'09', chapter:'HARI PERTAMA', first:true, blocks:[
+      ['p','PLKN datang.'],
+      ['p','Tiga bulan.'],
+      ['p','Kem di Negeri Sembilan.'],
+      ['p','Pada hari pertama, sebelum pembahagian kumpulan, aku nampak dia.'],
+      ['p','Aku kenal.'],
+      ['p','Sudah bertahun-tahun tidak berjumpa.'],
+      ['p','Tetapi aku kenal.'],
+      ['p','Dia juga mengenali aku.'],
+      ['p','Pertemuan itu tidak terasa seperti sesuatu yang patut masuk dalam novel.'],
+      ['p','Kami bercakap.'],
+      ['p','Biasa sahaja.'],
+      ['p','Cuma dalam kepala aku ada satu perkara yang sukar dijelaskan.'],
+      ['p','Aku gembira dia ada di situ.'],
+      ['p','Selepas bertahun-tahun, orang yang pernah duduk di sebelah aku ketika umur sebelas tahun tiba-tiba berdiri di hadapan aku dalam sebuah kem latihan.'],
+      ['p','Dia masih dia.'],
+      ['p','Cuma tidak sepenuhnya sama.'],
+      ['p','Masa sudah mengubah wajah, cara bercakap, cara berdiri, cara melihat orang.'],
+      ['p','Aku pula bukan budak sekolah rendah lagi.'],
+      ['p','Kami sudah membawa bertahun-tahun kehidupan masing-masing.'],
+      ['p','Tetapi ada sesuatu yang terasa tidak asing.'],
+      ['p','Masa boleh mengubah seseorang tanpa memadamkan cara kita mengenalinya.']
+    ]},
+    {num:'10', chapter:'ALPHA DAN DELTA', first:true, blocks:[
+      ['p','Selepas pembahagian kumpulan, aku masuk Kumpulan Alpha.'],
+      ['p','Dia Kumpulan Delta.'],
+      ['p','Lucu juga.'],
+      ['p','Bertahun-tahun dahulu kami duduk sebelah.'],
+      ['p','Sekarang satu huruf pun sudah memisahkan kami.'],
+      ['p','Kami ada rutin sendiri.'],
+      ['p','Aktiviti sendiri.'],
+      ['p','Kawan sendiri.'],
+      ['p','Tetapi PLKN bukan sekolah.'],
+      ['p','Ada aktiviti yang membuatkan kami berada dalam ruang yang sama.'],
+      ['p','Ada masa kami bercakap.'],
+      ['p','Ada masa aku nampak dia dari jauh.'],
+      ['p','Ada masa aku sengaja berada dekat.'],
+      ['p','Aku masih suka mengacau.'],
+      ['p','Beberapa perkara memang tidak berubah walaupun manusia sudah berubah.'],
+      ['p','Cuma sekarang dia bukan lagi gadis yang duduk di sebelah aku dalam kelas.'],
+      ['p','Aku mula nampak sisi lain dirinya.'],
+      ['p','Cara dia bercakap dengan orang.'],
+      ['p','Cara dia menjaga adab.'],
+      ['p','Cara dia membawa diri.'],
+      ['p','Cara dia melakukan sesuatu tanpa perlu mencari perhatian.'],
+      ['p','Aku tidak perlu menjelaskan bahawa dia matang.'],
+      ['p','Aku boleh nampak sendiri.'],
+      ['p','Masa telah melakukan kerjanya.']
+    ]},
+    {num:'11', chapter:'BUKIT', first:true, blocks:[
+      ['p','Salah satu aktiviti yang aku masih ingat ialah mendaki bukit.'],
+      ['p','Badan penat.'],
+      ['p','Nafas berubah.'],
+      ['p','Kumpulan bergerak mengikut kemampuan masing-masing.'],
+      ['p','Ada masa aku berada dekat dengannya.'],
+      ['p','Kami bercakap sedikit.'],
+      ['p','Aku kacau sedikit.'],
+      ['p','Dia memberi reaksi yang aku sudah kenal sejak sekolah.'],
+      ['p','Kerut dahi.'],
+      ['p','Kadang-kadang senyum.'],
+      ['p','Aku fikir, ada benda yang lucu tentang manusia.'],
+      ['p','Kita boleh bertahun-tahun tidak berjumpa, tetapi satu reaksi kecil seseorang masih boleh terasa sangat dikenali.'],
+      ['p','Aku juga melihat dia dari sudut yang berbeza.'],
+      ['p','Bukan lagi sebagai budak perempuan yang duduk di sebelah aku.'],
+      ['p','Dia sudah mempunyai cara sendiri untuk membawa diri.'],
+      ['p','Aku masih suka dia.'],
+      ['p','Tetapi perasaan itu tidak lagi sama seperti umur sebelas tahun.'],
+      ['p','Atau mungkin sebenarnya sama.'],
+      ['p','Cuma aku yang sudah terlalu banyak berubah untuk merasakannya dengan cara yang sama.']
+    ]},
+    {num:'12', chapter:'TIGA BULAN', first:true, blocks:[
+      ['p','PLKN bukan tentang dia.'],
+      ['p','Itu penting.'],
+      ['p','Ada banyak perkara lain.'],
+      ['p','Latihan.'],
+      ['p','Aktiviti.'],
+      ['p','Kawan-kawan.'],
+      ['p','Penat.'],
+      ['p','Makan.'],
+      ['p','Tidur.'],
+      ['p','Rutin yang berulang.'],
+      ['p','Ada hari aku tidak nampak dia langsung.'],
+      ['p','Ada hari kami terserempak.'],
+      ['p','Ada hari kami bercakap lama sedikit.'],
+      ['p','Ada hari cuma lalu.'],
+      ['p','Aku tidak mahu setiap saat yang ada dia menjadi sesuatu yang besar.'],
+      ['p','Sebab ketika itu pun hidup sedang berjalan.'],
+      ['p','Aku cuma suka bila dia ada.'],
+      ['p','Kadang-kadang aku tengok dia dari jauh.'],
+      ['p','Bukan kerana aku sedang menunggu satu babak romantik berlaku.'],
+      ['p','Aku cuma mahu menyimpan pandangan itu.'],
+      ['p','Ada manusia yang kita lihat bukan kerana kita mahu memiliki mereka. Kita cuma mahu memastikan bahawa kenangan itu masih mempunyai wajah.'],
+      ['p','Tiga bulan akhirnya menjadi semakin pendek.'],
+      ['p','Hari yang dahulu terasa jauh mula datang.'],
+      ['p','Aku tahu kem itu akan berakhir.'],
+      ['p','Aku cuma tidak tahu bahawa ada benda lain yang akan ikut berakhir bersamanya.']
+    ]},
+    {num:'13', chapter:'HARI-HARI YANG MENYUSUT', first:true, blocks:[
+      ['p','Minggu terakhir datang.'],
+      ['p','Aktiviti semakin berkurang.'],
+      ['p','Barang mula dikemas.'],
+      ['p','Orang mula bercakap tentang perjalanan pulang.'],
+      ['p','Aku pun sama.'],
+      ['p','Aku tidak membuat apa-apa rancangan besar dengan dia.'],
+      ['p','Aku tidak fikir untuk menjadikan hari terakhir sebagai hari pengakuan.'],
+      ['p','Tidak ada skrip.'],
+      ['p','Tidak ada ayat yang aku simpan dalam kepala.'],
+      ['p','Mungkin aku memang begitu.'],
+      ['p','Aku boleh fikir terlalu banyak perkara, tetapi bila tiba masa untuk melakukan sesuatu, aku kadang-kadang menjadi orang paling bodoh dalam bilik.'],
+      ['p','Aku masih ada perasaan.'],
+      ['p','Cuma perasaan itu tidak semestinya menghasilkan tindakan.'],
+      ['p','Aku rasa banyak. Aku buat sedikit.']
+    ]},
+    {num:'14', chapter:'HARI TERAKHIR', first:true, blocks:[
+      ['p','Hari terakhir.'],
+      ['p','Aku naik bas untuk bergerak ke stesen kereta api.'],
+      ['p','Dalam bas, aku berbual dengan kawan-kawan.'],
+      ['p','Ketawa.'],
+      ['p','Cerita benda lain.'],
+      ['p','Aku tidak duduk merenung keluar tingkap sepanjang perjalanan seperti watak utama filem.'],
+      ['p','Hidup sebenar tidak begitu.'],
+      ['p','Kita boleh sedang bercakap dan ketawa dengan kawan, sambil dalam masa yang sama menyedari seseorang yang pernah penting sedang berada tidak jauh dari kita.'],
+      ['p','Apabila sampai, keluarganya datang mengambil dia.'],
+      ['p','Aku nampak.'],
+      ['p','Aku tidak pergi kepadanya.'],
+      ['p','Aku cuma melihat sekali-sekala.'],
+      ['p','Dia masuk ke dalam kereta.'],
+      ['p','Aku masih melihat.'],
+      ['p','Kereta mula bergerak.'],
+      ['p','Perlahan-lahan dia hilang daripada pandangan.'],
+      ['p','Aku tidak mengejar.'],
+      ['p','Tidak melambai.'],
+      ['p','Tidak membuat apa-apa.'],
+      ['p','Aku cuma melihat sehingga kereta itu tidak lagi kelihatan.'],
+      ['p','Aku kembali kepada kawan-kawan.'],
+      ['p','Kami teruskan perjalanan.'],
+      ['p','Kami tidak pernah berpisah sebagai pasangan. Sebab kami tidak pernah menjadi pasangan.'],
+      ['p','Yang pergi pada hari itu bukan sebuah hubungan.'],
+      ['s','Yang pergi ialah satu kemungkinan.']
+    ]},
+    {num:'15', chapter:'FACEBOOK', first:true, blocks:[
+      ['p','Selepas PLKN, aku mencari dia semula melalui kumpulan PLKN di Facebook.'],
+      ['p','Aku tambah.'],
+      ['p','Kami mula berbual.'],
+      ['p','Daripada Facebook, kami bergerak ke WeChat.'],
+      ['p','Teknologi pada waktu itu menjadi jambatan yang pelik.'],
+      ['p','Dulu kami perlu duduk sebelah untuk bercakap.'],
+      ['p','Sekarang kami cuma perlu buka telefon.'],
+      ['p','Kami berbual tentang kehidupan.'],
+      ['p','Perkara biasa.'],
+      ['p','Perkara yang sudah berlaku.'],
+      ['p','Perkara yang sedang berlaku.'],
+      ['p','Aku tidak tahu bila perasaan lama itu kembali menjadi jelas.'],
+      ['p','Mungkin ia tidak pernah hilang.'],
+      ['p','Mungkin aku cuma sudah cukup dewasa untuk mengaku bahawa ia memang ada.'],
+      ['p','Aku akhirnya mengatakan sesuatu yang sepatutnya sudah aku katakan bertahun-tahun dahulu.'],
+      ['p','“Aku suka kau.”'],
+      ['p','Ringkas.'],
+      ['p','Tiada ayat panjang.'],
+      ['p','Tiada puisi.'],
+      ['p','Tiada metafora.'],
+      ['p','Hanya satu pengakuan yang terlambat.']
+    ]},
+    {num:'16', chapter:'AYAT YANG TERLAMBAT', first:true, blocks:[
+      ['p','Dia memberikan jawapan yang sampai sekarang masih aku ingat maksudnya.'],
+      ['p','Kalau aku suka, aku patut cakap.'],
+      ['p','Kalau aku terlalu lama diam, mungkin orang lain akan datang dahulu.'],
+      ['p','Bila difikirkan semula, ayat itu sepatutnya cukup jelas.'],
+      ['p','Masalahnya bukan dia.'],
+      ['p','Masalahnya aku.'],
+      ['p','Aku sudah mengaku.'],
+      ['p','Selepas itu aku tidak buat apa-apa.'],
+      ['p','Aku tidak mengambil langkah seterusnya.'],
+      ['p','Aku biarkan pengakuan itu tergantung seperti mesej yang sudah dibaca tetapi tidak tahu hendak dibalas dengan apa.'],
+      ['p','Lucu juga.'],
+      ['p','Bertahun-tahun aku fikir tentang seseorang.'],
+      ['p','Bertahun-tahun aku simpan perasaan.'],
+      ['p','Akhirnya apabila aku mengatakannya, aku sendiri tidak tahu apa yang hendak aku lakukan dengan pengakuan itu.'],
+      ['p','Mungkin aku memang bukan takut ditolak.'],
+      ['p','Aku cuma tidak pernah belajar apa yang patut dibuat apabila kemungkinan yang aku tunggu benar-benar muncul.'],
+      ['p','Aku pernah fikir diam itu selamat. Rupanya diam juga boleh membuat sesuatu terlepas.']
+    ]},
+    {num:'17', chapter:'WANITA', first:true, blocks:[
+      ['p','Tahun-tahun berlalu lagi.'],
+      ['p','Aku melihat kehidupannya dari jauh.'],
+      ['p','Dia sudah berkahwin.'],
+      ['p','Aku gembira untuk dia.'],
+      ['p','Tidak ada rasa bahawa sesuatu telah dirampas daripada aku.'],
+      ['p','Bagaimana sesuatu boleh dirampas kalau ia memang tidak pernah menjadi milik aku?'],
+      ['p','Aku mula melihatnya dengan cara yang berbeza.'],
+      ['p','Bukan lagi sebagai gadis yang duduk di sebelah aku.'],
+      ['p','Bukan lagi sebagai kawan sekolah yang aku suka kacau.'],
+      ['p','Bukan lagi sebagai seseorang yang pernah berjalan pulang melalui jalan yang sama.'],
+      ['p','Dia sudah menjadi wanita.'],
+      ['p','Dia mempunyai hidupnya sendiri.'],
+      ['p','Pilihan sendiri.'],
+      ['p','Dunia sendiri.'],
+      ['p','Dan aku sedar sesuatu yang agak pelik.'],
+      ['p','Dia tidak pernah menunggu dalam ingatan aku. Ingatan aku yang menunggunya.'],
+      ['p','Aku yang menyimpan versi dirinya pada umur sebelas tahun, kemudian membawa versi itu bertahun-tahun lamanya.'],
+      ['p','Sedangkan dia terus hidup.'],
+      ['p','Membesar.'],
+      ['p','Berubah.'],
+      ['p','Menjadi seseorang yang mungkin tidak lagi sama dengan gadis yang aku kenal dahulu.'],
+      ['p','Aku pula terpaksa belajar bahawa mencintai seseorang tidak semestinya bermaksud kita mempunyai hak terhadap kehidupannya.'],
+      ['p','Kadang-kadang cukup dengan mengetahui bahawa dia baik-baik sahaja.']
+    ]},
+    {num:'18', chapter:'APA YANG SEBENARNYA AKU CINTAI?', first:true, blocks:[
+      ['p','Soalan itu datang jauh lebih lambat daripada perasaan.'],
+      ['p','Apa sebenarnya yang aku cintai?'],
+      ['p','Gadis itu?'],
+      ['p','Kalau begitu, gadis yang mana?'],
+      ['p','Yang duduk di sebelah aku?'],
+      ['p','Yang aku cari waktu rehat?'],
+      ['p','Yang aku kacau di sekolah menengah?'],
+      ['p','Yang aku jumpa semula di PLKN?'],
+      ['p','Atau wanita yang hidup sekarang?'],
+      ['p','Kalau aku mencintai wanita yang sekarang, sejauh mana aku benar-benar mengenal kehidupannya?'],
+      ['p','Kalau aku mencintai gadis yang dahulu, adakah aku sedang mencintai seseorang yang sudah tidak wujud dalam bentuk yang sama?'],
+      ['p','Mungkin aku mencintai kenangan.'],
+      ['p','Mungkin aku mencintai perasaan yang muncul ketika aku berumur sebelas tahun.'],
+      ['p','Mungkin aku mencintai versi diri aku yang masih belum tahu apa-apa tentang cinta.'],
+      ['p','Mungkin aku mencintai kemungkinan.'],
+      ['p','Kemungkinan bahawa kalau aku bercakap lebih awal, sesuatu mungkin berlaku.'],
+      ['p','Kemungkinan bahawa kalau aku lebih berani, jalan kami mungkin berbeza.'],
+      ['p','Tetapi kemungkinan tidak pernah menjadi sejarah.'],
+      ['p','Ia cuma salah satu bentuk cerita yang manusia cipta selepas sesuatu sudah berlalu.'],
+      ['p','Aku tidak mempunyai jawapan yang sempurna.'],
+      ['p','Dan semakin lama aku fikir, semakin aku tidak yakin bahawa aku memerlukannya.'],
+      ['p','Ada soalan yang tidak kehilangan nilainya hanya kerana ia tidak mempunyai jawapan.'],
+      ['p','Mungkin perasaan juga begitu.']
+    ]},
+    {num:'19', chapter:'YANG TERTINGGAL', first:true, blocks:[
+      ['p','Kalau aku fikir semula, mungkin perkara paling besar yang tertinggal daripada gadis itu bukan soal cinta.'],
+      ['p','Ia tentang apa yang berlaku selepas aku cuba mengejarnya.'],
+      ['p','Dia suka membaca.'],
+      ['p','Aku mahu mengalahkannya.'],
+      ['p','Aku membaca.'],
+      ['p','Aku terus membaca.'],
+      ['p','Rekod NILAM bertambah.'],
+      ['p','Satu buku menjadi dua.'],
+      ['p','Dua menjadi tiga.'],
+      ['p','Aku mula menulis.'],
+      ['p','Kemudian hidup membawa aku ke tempat-tempat lain.'],
+      ['p','Aku belajar perkara lain.'],
+      ['p','Bertemu orang lain.'],
+      ['p','Membaca buku lain.'],
+      ['p','Mengalami perkara yang dia tidak pernah ada kaitan dengannya.'],
+      ['p','Aku tidak mahu mengatakan bahawa seluruh diri aku hari ini terbentuk kerana dia.'],
+      ['p','Itu tidak benar.'],
+      ['p','Manusia dibentuk oleh terlalu banyak perkara.'],
+      ['p','Keluarga.'],
+      ['p','Kawan.'],
+      ['p','Kegagalan.'],
+      ['p','Buku.'],
+      ['p','Guru.'],
+      ['p','Masa.'],
+      ['p','Kesilapan sendiri.'],
+      ['p','Tetapi dia adalah salah satu titik awal.'],
+      ['p','Salah satu titik kecil yang hanya kelihatan besar apabila aku menoleh ke belakang.'],
+      ['p','Dia tidak pernah berkata,'],
+      ['p','“Bacalah.”'],
+      ['p','Dia tidak pernah berkata,'],
+      ['p','“Jadilah penulis.”'],
+      ['p','Dia cuma membaca.'],
+      ['p','Aku pula mahu mengalahkannya.'],
+      ['p','Kadang-kadang hidup tidak memerlukan seseorang untuk mengajar kita. Cukup seseorang itu wujud pada waktu yang tepat.']
+    ]},
+    {num:'20', chapter:'TEMPAT DUDUK', first:true, blocks:[
+      ['p','Aku selalu kembali kepada satu perkara.'],
+      ['p','Tempat duduk itu.'],
+      ['p','Seorang budak lelaki berumur sebelas tahun masuk ke kelas baharu.'],
+      ['p','Dia melihat sebuah tempat kosong.'],
+      ['p','Di sebelah seorang gadis.'],
+      ['p','Dia memilih untuk duduk di situ.'],
+      ['p','Dia tidak tahu kenapa.'],
+      ['p','Kalau dia tahu bahawa keputusan kecil itu akan tinggal dalam ingatannya selama bertahun-tahun, mungkin dia akan ketawa.'],
+      ['p','Atau mungkin dia tetap duduk di situ.'],
+      ['p','Budak sebelas tahun tidak tahu bahawa sesetengah keputusan kecil akan menjadi besar hanya selepas masa berlalu.'],
+      ['p','Aku tidak tahu apa yang berlaku kepada tempat duduk itu selepas aku meninggalkannya.'],
+      ['p','Mungkin ada orang lain yang duduk di situ.'],
+      ['p','Mungkin meja itu sudah lama dibuang.'],
+      ['p','Mungkin kelas itu sudah berubah.'],
+      ['p','Tidak penting.'],
+      ['p','Yang penting bukan tempatnya.'],
+      ['p','Yang penting ialah siapa yang pernah berada di situ.'],
+      ['p','Dan apa yang tumbuh tanpa kami sedari.'],
+      ['s','Aku tidak pernah memiliki dia. Jadi aku tidak pernah benar-benar kehilangan dia.'],
+      ['p','Yang hilang ialah satu kemungkinan.'],
+      ['p','Satu kehidupan yang tidak pernah berlaku.'],
+      ['p','Satu jalan yang mungkin wujud, tetapi tidak pernah kami lalui.'],
+      ['p','Namun aku tidak menganggap semua itu sebagai kegagalan.'],
+      ['p','Aku pernah menyukai seorang gadis tanpa tahu sebabnya.'],
+      ['p','Aku pernah menjadi kawannya.'],
+      ['p','Aku pernah mengganggunya.'],
+      ['p','Aku pernah berjalan bersamanya.'],
+      ['p','Aku pernah bertahun-tahun tidak bertemu dengannya.'],
+      ['p','Aku pernah melihatnya semula sebagai seorang wanita.'],
+      ['p','Aku pernah mengaku.'],
+      ['p','Aku pernah terlambat.'],
+      ['p','Dan selepas semua itu, aku masih tidak mempunyai jawapan tentang apa sebenarnya yang aku cintai.'],
+      ['p','Mungkin itu sahaja yang tinggal.'],
+      ['p','Bukan jawapan.'],
+      ['p','Bukan hubungan.'],
+      ['p','Bukan penyesalan.'],
+      ['p','Cuma sebuah pertanyaan yang bermula di sebelah sebuah meja ketika aku berumur sebelas tahun.'],
+      ['p','Kalau seseorang pernah kita cintai, tetapi kita tidak pernah benar-benar tahu mengapa kita mencintainya, apakah yang sebenarnya kita cintai?']
+    ]}
+  ];
+  var GADIS_TOC = [
+    {n:'01', t:'PINDAH', p:2},
+    {n:'02', t:'SEBELAH', p:3},
+    {n:'03', t:'WAKTU REHAT', p:4},
+    {n:'04', t:'JALAN PULANG', p:5},
+    {n:'05', t:'SEKOLAH MENENGAH', p:6},
+    {n:'06', t:'NOMBOR SATU', p:7},
+    {n:'07', t:'TINGKATAN TIGA', p:8},
+    {n:'08', t:'TAHUN-TAHUN YANG TIDAK BERTEMU', p:9},
+    {n:'09', t:'HARI PERTAMA', p:10},
+    {n:'10', t:'ALPHA DAN DELTA', p:11},
+    {n:'11', t:'BUKIT', p:12},
+    {n:'12', t:'TIGA BULAN', p:13},
+    {n:'13', t:'HARI-HARI YANG MENYUSUT', p:14},
+    {n:'14', t:'HARI TERAKHIR', p:15},
+    {n:'15', t:'FACEBOOK', p:16},
+    {n:'16', t:'AYAT YANG TERLAMBAT', p:17},
+    {n:'17', t:'WANITA', p:18},
+    {n:'18', t:'APA YANG SEBENARNYA AKU CINTAI?', p:19},
+    {n:'19', t:'YANG TERTINGGAL', p:20},
+    {n:'20', t:'TEMPAT DUDUK', p:21}
+  ];
+  var total = 2 + GADIS_CONTENT.length;
+  var current = 0;
+  var reader = document.getElementById('gadis-reader');
+  var pageEl = document.getElementById('gadis-page');
+  var stage = document.getElementById('gadis-stage');
+  var pagenum = document.getElementById('gadis-pagenum');
+  var progress = document.getElementById('gadis-progress-bar');
+  var prevBtn = document.getElementById('gadis-prev');
+  var nextBtn = document.getElementById('gadis-next');
+  var LS_KEY = 'gadis-novel-last-page';
+
+  function renderBlocks(blocks){
+    var h='';
+    for(var i=0;i<blocks.length;i++){
+      var b=blocks[i];
+      if(b[0]==='p'){ h+='<p>'+b[1]+'</p>'; }
+      else if(b[0]==='s'){ h+='<p class="gadis-strong">'+b[1]+'</p>'; }
+    }
+    return h;
+  }
+  function coverHTML(){
+    var resume='';
+    try{
+      var saved=parseInt(localStorage.getItem(LS_KEY),10);
+      if(saved && saved>=2 && saved<total){
+        var ch=GADIS_CONTENT[saved-2];
+        resume='<button type="button" class="gadis-resume" id="gadis-resume">Teruskan &middot; Bab '+ch.num+' '+ch.chapter+'</button>';
+      }
+    }catch(e){}
+    return '<div class="gadis-cover">'
+      +'<div class="gadis-cover-kicker">Sebuah Karya Khas &middot; 03 &middot; Novel</div>'
+      +'<h1>GADIS YANG<br>PERNAH DUDUK DI SEBELAH</h1>'
+      +'<div class="gadis-rule"></div>'
+      +'<div class="gadis-sub">sebuah novel tentang ingatan, kemungkinan, dan seseorang yang tidak pernah menjadi milik</div>'
+      +'<div class="gadis-cover-role">Penulis</div>'
+      +'<div class="gadis-cover-author">Shaiful Ridhwan</div>'
+      +'<button type="button" class="gadis-start" id="gadis-start">Mula Membaca</button>'
+      +resume
+      +'</div>';
+  }
+  function tocHTML(){
+    var h='<div class="gadis-toc"><div class="gadis-kicker">Kandungan</div><h2>Daftar Bab</h2><div class="gadis-rule"></div>';
+    for(var i=0;i<GADIS_TOC.length;i++){
+      var t=GADIS_TOC[i];
+      h+='<button type="button" class="gadis-toc-item" data-page="'+t.p+'">'
+        +'<span class="gadis-toc-num">'+t.n+'</span>'
+        +'<span class="gadis-toc-title">'+t.t+'</span></button>';
+    }
+    h+='</div>';
+    return h;
+  }
+  function contentHTML(idx){
+    var p=GADIS_CONTENT[idx];
+    var isLast=(idx===GADIS_CONTENT.length-1);
+    var h='<div class="gadis-kicker">Bab '+p.num+'</div>'
+      +'<h2 class="gadis-chapter">'+p.chapter+'</h2>'
+      +'<div class="gadis-rule"></div>';
+    h+=renderBlocks(p.blocks);
+    if(isLast){ h+='<div class="gadis-final"></div>'; }
+    return h;
+  }
+  function setNavLabels(pageIdx){
+    var isChapter = (pageIdx>=2);
+    var ps=prevBtn.querySelector('span'), ns=nextBtn.querySelector('span');
+    if(ps){ ps.textContent = isChapter?'Bab Sebelumnya':'Sebelumnya'; }
+    if(ns){ ns.textContent = isChapter?'Bab Seterusnya':'Seterusnya'; }
+  }
+  function render(i, dir){
+    current = i;
+    var html;
+    if(i===0){ html=coverHTML(); }
+    else if(i===1){ html=tocHTML(); }
+    else { html=contentHTML(i-2); }
+    pageEl.innerHTML=html;
+    stage.scrollTop=0;
+    pagenum.textContent=(i+1)+' / '+total;
+    progress.style.width=((i+1)/total*100)+'%';
+    prevBtn.disabled=(i===0);
+    nextBtn.disabled=(i===total-1);
+    setNavLabels(i);
+    try{ if(i>=2){ localStorage.setItem(LS_KEY, String(i)); } }catch(e){}
+    var s=document.getElementById('gadis-start');
+    if(s){ s.addEventListener('click', function(){ render(2,'next'); }); }
+    var r=document.getElementById('gadis-resume');
+    if(r){ r.addEventListener('click', function(){
+      try{ var saved=parseInt(localStorage.getItem(LS_KEY),10); if(saved){ render(saved,'next'); } else { render(2,'next'); } }catch(e){ render(2,'next'); }
+    }); }
+    var items=pageEl.querySelectorAll('.gadis-toc-item');
+    items.forEach(function(it){
+      it.addEventListener('click', function(){ render(parseInt(it.getAttribute('data-page'),10),'next'); });
+    });
+  }
+  function openBook(){
+    reader.style.display='flex';
+    reader.classList.remove('gadis-hidden');
+    void reader.offsetWidth;
+    reader.classList.add('gadis-open');
+    document.body.style.overflow='hidden';
+    render(0);
+    if(!/\/karya-khas\/?$/.test(location.pathname)){ try{ history.pushState({view:'karya-khas'}, '', '/karya-khas'); }catch(e){} }
+  }
+  function closeBook(){
+    reader.classList.remove('gadis-open');
+    document.body.style.overflow='';
+    setTimeout(function(){ reader.classList.add('gadis-hidden'); reader.style.display='none'; }, 480);
+  }
+  function next(){ if(current<total-1){ render(current+1,'next'); } }
+  function prev(){ if(current>0){ render(current-1,'prev'); } }
+  document.getElementById('gadis-close').addEventListener('click', closeBook);
+  prevBtn.addEventListener('click', prev);
+  nextBtn.addEventListener('click', next);
+  document.addEventListener('keydown', function(e){
+    if(reader.classList.contains('gadis-hidden')){ return; }
+    if(e.key==='Escape'){ closeBook(); }
+    else if(e.key==='ArrowRight'||e.key==='ArrowDown'){ e.preventDefault(); next(); }
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){ e.preventDefault(); prev(); }
+  });
+  var tx=0, ty=0, tracking=false;
+  reader.addEventListener('touchstart', function(e){
+    if(e.touches.length!==1){ return; }
+    tx=e.touches[0].clientX; ty=e.touches[0].clientY; tracking=true;
+  }, {passive:true});
+  reader.addEventListener('touchend', function(e){
+    if(!tracking){ return; }
+    tracking=false;
+    var dx=e.changedTouches[0].clientX - tx;
+    var dy=e.changedTouches[0].clientY - ty;
+    if(Math.abs(dx)>60 && Math.abs(dx)>Math.abs(dy)*1.4){
+      if(dx<0){ next(); } else { prev(); }
+    }
+  }, {passive:true});
+  var card=document.getElementById('gadis-card');
+  if(card){
+    card.style.cursor='pointer';
+    card.addEventListener('click', function(e){
+      var a=e.target.closest('a');
+      if(a){ e.preventDefault(); }
+      openBook();
+    });
+  }
+  var cta=document.getElementById('gadis-cta');
+  if(cta){ cta.addEventListener('click', function(e){ e.preventDefault(); openBook(); }); }
+  window.addEventListener('popstate', function(){ if(!/\/karya-khas\/?$/.test(location.pathname)){ closeBook(); } });
+})();
+</script>
 <button id="backToTop" class="back-to-top" aria-label="Kembali ke atas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
 <script>
 (function(){
