@@ -786,22 +786,45 @@ section#pilihan{padding:5.5rem 0}
 .meta-row b{color:var(--text);font-weight:600;margin-right:.3rem}
 .disclaimer{margin-top:1.1rem;font-size:.72rem;font-style:italic;color:var(--muted);opacity:.75;line-height:1.6}
 
-/* ===== KARYA KHAS — special work feature ===== */
-section.khas{padding:5rem 0}
-.khas-card{position:relative;border:1px solid var(--border);background:var(--card);padding:3.5rem 2.5rem;text-align:center;transition:all .4s;overflow:hidden}
-.khas-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
-.khas-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 16px 50px var(--accent-soft)}
-.khas-card .kicker{font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.4em;text-transform:uppercase;color:var(--accent2);margin-bottom:1.5rem}
-.khas-card h3{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,5vw,3rem);letter-spacing:.02em;line-height:1.1;margin-bottom:1rem}
-.khas-card h3 .grad{background:linear-gradient(120deg,#f5d98a,var(--accent) 55%,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.khas-card .byline{font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem}
-.khas-card .desc{max-width:36rem;margin:0 auto 2rem;font-size:1rem;line-height:1.85;color:var(--muted);font-weight:300}
-.khas-card .kquote{font-style:italic;font-size:1.15rem;color:var(--accent);margin-bottom:2.2rem;line-height:1.7}
-.khas-card .kquote::before,.khas-card .kquote::after{content:'"';opacity:.5}
-.khas-card .khas-btn{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;padding:1rem 2.4rem;text-decoration:none;transition:all .3s;font-weight:600}
-.khas-card .khas-btn:hover{background:var(--accent);color:var(--bg);box-shadow:0 8px 30px var(--accent-soft)}
+/* ===== KARYA KHAS — special work feature (ENHANCED DESIGN) ===== */
+section.khas{padding:6rem 0 4rem;position:relative}
+section.khas::before{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);width:1px;height:60px;background:linear-gradient(var(--accent),transparent);opacity:.5}
+.khas-intro{position:relative;z-index:2}
+.khas-intro .kicker{display:inline-flex;align-items:center;gap:.8rem;font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.42em;text-transform:uppercase;color:var(--accent);margin-bottom:1.2rem}
+.khas-intro .kicker::before,.khas-intro .kicker::after{content:"";width:28px;height:1px;background:var(--accent);opacity:.6}
+.khas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.8rem;align-items:stretch;position:relative;z-index:2}
+.khas-card{position:relative;border:1px solid var(--border);background:var(--card);padding:3.2rem 2.2rem 2.8rem;text-align:center;transition:all .45s cubic-bezier(.4,0,.2,1);overflow:hidden;cursor:pointer;backdrop-filter:blur(10px)}
+.khas-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--card-accent,var(--accent)),transparent);opacity:.8}
+.khas-card::after{content:"";position:absolute;bottom:-40%;right:-40%;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,var(--card-accent-soft,var(--accent-soft)),transparent 70%);opacity:0;transition:opacity .5s}
+.khas-card:hover{border-color:var(--card-accent,var(--accent));transform:translateY(-6px);box-shadow:0 20px 60px var(--card-accent-soft,var(--accent-soft))}
+.khas-card:hover::after{opacity:1}
+.khas-card:hover .khas-icon{transform:scale(1.1) rotate(-5deg)}
+.khas-card:hover .khas-tag{background:var(--card-accent,var(--accent));color:var(--bg)}
+.khas-icon{width:64px;height:64px;margin:0 auto 1.4rem;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--card-accent,var(--accent));background:var(--card-accent-soft,var(--accent-soft));color:var(--card-accent,var(--accent));transition:transform .4s cubic-bezier(.34,1.56,.64,1)}
+.khas-icon svg{width:28px;height:28px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.khas-tag{display:inline-block;font-family:'Syne',sans-serif;font-weight:800;font-size:.62rem;letter-spacing:.35em;color:var(--card-accent,var(--accent2));margin-bottom:1.2rem;padding:.35rem .9rem;border:1px solid var(--card-accent,var(--border));background:transparent;line-height:1;transition:all .35s;border-radius:2px}
+.khas-card .kicker{font-family:'Syne',sans-serif;font-size:.58rem;letter-spacing:.38em;text-transform:uppercase;color:var(--muted);margin-bottom:1.2rem;opacity:.8}
+.khas-card h3{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.5rem,3.5vw,2.1rem);letter-spacing:.01em;line-height:1.15;margin-bottom:1.1rem;color:var(--text)}
+.khas-card h3 .grad{background:linear-gradient(120deg,#f5d98a,var(--card-accent,var(--accent)) 50%,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.khas-card .kquote{font-style:italic;font-size:1.02rem;color:var(--card-accent,var(--accent));margin-bottom:1.1rem;line-height:1.7;padding:0 1rem}
+.khas-card .kquote::before,.khas-card .kquote::after{content:'"';opacity:.4;font-size:1.2em}
+.khas-card .kunci{font-size:.82rem;color:var(--muted);font-style:italic;font-weight:300;line-height:1.7;margin:0 0 1.6rem;padding:0 .5rem}
+.khas-divider{width:40px;height:1px;background:linear-gradient(90deg,transparent,var(--card-accent,var(--accent)),transparent);margin:0 auto 1.4rem;opacity:.6}
+.khas-card .khas-btn{display:inline-block;background:transparent;border:1px solid var(--card-accent,var(--accent));color:var(--card-accent,var(--accent));font-family:'Syne',sans-serif;font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;padding:.9rem 2.2rem;text-decoration:none;transition:all .35s;font-weight:600;position:relative;overflow:hidden;z-index:1}
+.khas-card .khas-btn::before{content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;background:var(--card-accent,var(--accent));transition:left .35s;z-index:-1}
+.khas-card .khas-btn:hover{color:var(--bg)}
+.khas-card .khas-btn:hover::before{left:0}
 .khas-card .khas-btn::after{content:" →";opacity:.8}
-@media(max-width:600px){.khas-card{padding:2.5rem 1.3rem}}
+.khas-meta{display:flex;justify-content:center;gap:1.2rem;margin-top:1.6rem;padding-top:1.2rem;border-top:1px dashed var(--border);font-family:'Syne',sans-serif;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.khas-meta span b{color:var(--card-accent,var(--accent));font-weight:700}
+/* Tema warna untuk setiap karya */
+#byac-card{--card-accent:#e8b86a;--card-accent-soft:rgba(232,184,106,.15)}
+#antara-card{--card-accent:#8fa3e0;--card-accent-soft:rgba(143,163,224,.15)}
+#gadis-card{--card-accent:#c9a0dc;--card-accent-soft:rgba(201,160,220,.15)}
+/* Corak latar belakang halus */
+.khas-card .pattern{position:absolute;top:1rem;right:1rem;width:60px;height:60px;opacity:.08;pointer-events:none}
+.khas-card .pattern svg{width:100%;height:100%;stroke:var(--card-accent,var(--accent));fill:none;stroke-width:1}
+@media(max-width:600px){.khas-card{padding:2.5rem 1.5rem 2.2rem}.khas-icon{width:54px;height:54px}.khas-icon svg{width:22px;height:22px}}
 
 /* ===== KARYA KHAS — BATAS YANG AKU CARI (integrated) ===== */
 section#batas{padding:5rem 0 3rem}
@@ -915,6 +938,283 @@ section#batas{padding:5rem 0 3rem}
   #gadis-reader .gadis-illus-cover svg{max-width:180px}
 }
 </style>
+<style id="reader-enhance">
+/* ===== PENINGKATAN READER VIEW — elemen hiasan setiap halaman ===== */
+/* Watermark nombor bab besar di latar belakang */
+#byac-reader .byac-page, #antara-reader .byac-page{position:relative}
+#byac-reader .byac-page::before, #antara-reader .byac-page::before{
+  content:attr(data-chapter);
+  position:absolute;top:1rem;right:1rem;font-family:'Syne',sans-serif;font-weight:800;
+  font-size:5rem;color:rgba(232,184,106,.06);line-height:1;pointer-events:none;z-index:0;
+  letter-spacing:-.02em
+}
+#byac-reader .byac-page > *, #antara-reader .byac-page > *{position:relative;z-index:1}
+/* Corak latar belakang halus — titik-titik */
+#byac-reader .byac-stage::before, #antara-reader .byac-stage::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.4;
+  background-image:radial-gradient(rgba(232,184,106,.08) 1px,transparent 1px);
+  background-size:24px 24px
+}
+#gadis-reader .gadis-stage::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+  background-image:radial-gradient(rgba(138,106,64,.07) 1px,transparent 1px);
+  background-size:24px 24px
+}
+/* Drop cap pada permulaan setiap bab */
+#byac-reader .byac-page p:first-of-type::first-letter,
+#antara-reader .byac-page p:first-of-type::first-letter{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:3.2rem;float:left;line-height:.85;
+  margin:.1rem .6rem 0 0;color:#e8b86a;background:linear-gradient(120deg,#f5d98a,#e8b86a);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent
+}
+#gadis-reader .gadis-page p:first-of-type::first-letter{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:3.2rem;float:left;line-height:.85;
+  margin:.1rem .6rem 0 0;color:#8a6a40
+}
+/* Garisan hiasan sisi kiri */
+#byac-reader .byac-page::after, #antara-reader .byac-page::after{
+  content:"";position:absolute;left:0;top:3rem;bottom:3rem;width:2px;
+  background:linear-gradient(to bottom,transparent,rgba(232,184,106,.3),transparent);pointer-events:none
+}
+/* Footer hiasan pada setiap halaman */
+#byac-reader .byac-page .page-footer, #antara-reader .byac-page .page-footer{
+  margin-top:3rem;padding-top:1.2rem;border-top:1px solid rgba(232,184,106,.12);
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Syne',sans-serif;font-size:.55rem;letter-spacing:.3em;text-transform:uppercase;
+  color:rgba(234,230,219,.35)
+}
+#byac-reader .byac-page .page-footer .dot, #antara-reader .byac-page .page-footer .dot{
+  width:4px;height:4px;border-radius:50%;background:#e8b86a;opacity:.5
+}
+/* Bab divider yang lebih menarik */
+#byac-reader .byac-chapter, #antara-reader .byac-chapter{position:relative;padding-left:0}
+#byac-reader .byac-chapter::before, #antara-reader .byac-chapter::before{
+  content:"";display:block;width:60px;height:3px;background:linear-gradient(90deg,#e8b86a,transparent);
+  margin-bottom:1rem;border-radius:2px
+}
+/* Quote yang lebih menarik */
+#byac-reader .byac-quote, #antara-reader .byac-quote{
+  position:relative;padding-left:1.5rem;margin:2rem 0
+}
+#byac-reader .byac-quote::before, #antara-reader .byac-quote::before{
+  content:"\201C";position:absolute;left:-.2rem;top:-1.2rem;font-family:'Syne',sans-serif;
+  font-size:4rem;color:rgba(232,184,106,.2);line-height:1;font-weight:800
+}
+/* Progress bar sisi untuk reader */
+#byac-reader .byac-stage::after, #antara-reader .byac-stage::after{
+  content:"";position:fixed;right:0;top:0;bottom:0;width:3px;
+  background:linear-gradient(to bottom,#e8b86a var(--progress,0%),transparent var(--progress,0%));
+  pointer-events:none;z-index:10;opacity:.6
+}
+/* Animasi kemasukan halaman yang lebih halus */
+@keyframes pageFadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+#byac-reader .byac-page.byac-anim-next, #antara-reader .byac-page.byac-anim-next{
+  animation:pageFadeIn .45s ease both
+}
+#byac-reader .byac-page.byac-anim-prev, #antara-reader .byac-page.byac-anim-prev{
+  animation:pageFadeIn .45s ease both
+}
+/* Untuk gadis reader — tema terang */
+#gadis-reader .gadis-page{position:relative}
+#gadis-reader .gadis-page::before{
+  content:attr(data-chapter);position:absolute;top:1rem;right:1rem;font-family:'Syne',sans-serif;
+  font-weight:800;font-size:5rem;color:rgba(138,106,64,.07);line-height:1;pointer-events:none;z-index:0
+}
+#gadis-reader .gadis-page > *{position:relative;z-index:1}
+#gadis-reader .gadis-page::after{
+  content:"";position:absolute;left:0;top:3rem;bottom:3rem;width:2px;
+  background:linear-gradient(to bottom,transparent,rgba(138,106,64,.25),transparent);pointer-events:none
+}
+#gadis-reader .gadis-page .page-footer{
+  margin-top:3rem;padding-top:1.2rem;border-top:1px solid rgba(138,106,64,.15);
+  display:flex;justify-content:space-between;align-items:center;
+  font-family:'Syne',sans-serif;font-size:.55rem;letter-spacing:.3em;text-transform:uppercase;
+  color:rgba(56,51,44,.4)
+}
+#gadis-reader .gadis-page .page-footer .dot{
+  width:4px;height:4px;border-radius:50%;background:#8a6a40;opacity:.4
+}
+@media(max-width:600px){
+  #byac-reader .byac-page::before, #antara-reader .byac-page::before, #gadis-reader .gadis-page::before{font-size:3.5rem}
+  #byac-reader .byac-page p:first-of-type::first-letter, #antara-reader .byac-page p:first-of-type::first-letter, #gadis-reader .gadis-page p:first-of-type::first-letter{font-size:2.6rem}
+}
+</style>
+<style id="book-cover-enhance">
+/* ===== KULIT BUKU & HALAMAN PEMBUKA BAB ===== */
+/* Kulit buku - halaman penuh sebelum mula baca */
+.book-cover{
+  min-height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;padding:0;position:relative;overflow:hidden;
+  animation:coverFadeIn .8s ease both;
+}
+@keyframes coverFadeIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.book-cover::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 50% at 50% 20%,var(--cover-glow,rgba(232,184,106,.15)),transparent 70%);
+}
+.book-cover .cover-frame{
+  position:relative;z-index:2;border:none;
+  padding:2.5rem 1.8rem;max-width:none;width:100%;min-height:100%;background:var(--cover-bg,rgba(11,11,18,.6));
+  backdrop-filter:blur(8px);
+}
+.book-cover .cover-illus{
+  width:160px;height:160px;margin:0 auto 1.5rem;display:flex;align-items:center;justify-content:center;
+  color:var(--cover-accent,#e8b86a);opacity:.9;
+}
+.book-cover .cover-illus svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+.book-cover .cover-kicker{
+  font-family:'Syne',sans-serif;font-size:.5rem;letter-spacing:.4em;text-transform:uppercase;
+  color:var(--cover-accent2,#8fa3e0);margin-bottom:1.2rem;
+}
+.book-cover{min-height:100%;height:100%;padding:0;box-sizing:border-box}
+.book-cover h1{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.3rem,5vw,1.9rem);line-height:1.15;
+  letter-spacing:.02em;margin-bottom:1rem;color:var(--cover-title,#eae6db);
+}
+.book-cover h1 .grad{
+  background:linear-gradient(120deg,#f5d98a,var(--cover-accent,#e8b86a) 50%,var(--cover-accent2,#8fa3e0));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.book-cover .cover-divider{
+  width:50px;height:2px;background:linear-gradient(90deg,transparent,var(--cover-accent,#e8b86a),transparent);
+  margin:1.2rem auto;
+}
+.book-cover .cover-desc{
+  font-style:italic;font-size:.82rem;line-height:1.65;color:var(--cover-desc,rgba(234,230,219,.6));
+  margin-bottom:1.5rem;font-weight:300;
+}
+.book-cover .cover-author{
+  font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--cover-accent,#e8b86a);margin-bottom:1.8rem;font-weight:600;
+}
+.book-cover .cover-start{
+  display:inline-flex;align-items:center;gap:.6rem;background:var(--cover-accent-soft,rgba(232,184,106,.12));
+  border:1px solid var(--cover-accent,#e8b86a);color:var(--cover-accent,#e8b86a);
+  font-family:'Syne',sans-serif;font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;
+  padding:.85rem 1.8rem;transition:all .3s;cursor:pointer;border-radius:2px;
+}
+.book-cover .cover-start:hover{
+  background:var(--cover-accent,#e8b86a);color:var(--cover-bg-dark,#0b0b12);
+  box-shadow:0 0 30px var(--cover-glow,rgba(232,184,106,.35));
+}
+.book-cover .cover-start::after{content:"→";opacity:.8}
+/* Corak hiasan kulit buku */
+.book-cover .cover-pattern{
+  position:absolute;top:1.5rem;left:1.5rem;right:1.5rem;bottom:1.5rem;pointer-events:none;opacity:.1;
+  border:1px solid var(--cover-accent,#e8b86a);
+}
+.book-cover .cover-corner{position:absolute;width:24px;height:24px;pointer-events:none;opacity:.5}
+.book-cover .cover-corner.tl{top:1rem;left:1rem;border-top:2px solid var(--cover-accent,#e8b86a);border-left:2px solid var(--cover-accent,#e8b86a)}
+.book-cover .cover-corner.tr{top:1rem;right:1rem;border-top:2px solid var(--cover-accent,#e8b86a);border-right:2px solid var(--cover-accent,#e8b86a)}
+.book-cover .cover-corner.bl{bottom:1rem;left:1rem;border-bottom:2px solid var(--cover-accent,#e8b86a);border-left:2px solid var(--cover-accent,#e8b86a)}
+.book-cover .cover-corner.br{bottom:1rem;right:1rem;border-bottom:2px solid var(--cover-accent,#e8b86a);border-right:2px solid var(--cover-accent,#e8b86a)}
+
+/* Halaman pembuka bab - full page illustration */
+.chapter-open{
+  min-height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;
+  text-align:center;padding:2rem 1.5rem;position:relative;overflow:hidden;
+  animation:chapterFadeIn .7s ease both;
+}
+@keyframes chapterFadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.chapter-open::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 40% at 50% 50%,var(--cover-glow,rgba(232,184,106,.1)),transparent 70%);
+}
+.chapter-open .chapter-num{
+  font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(4rem,15vw,7rem);line-height:1;
+  color:transparent;-webkit-text-stroke:1.5px var(--cover-accent,#e8b86a);opacity:.35;
+  margin-bottom:1rem;letter-spacing:-.02em;
+}
+.chapter-open .chapter-illus{
+  width:140px;height:140px;margin:0 auto 1.5rem;color:var(--cover-accent,#e8b86a);opacity:.7;
+  animation:illusFloat 4s ease-in-out infinite;
+}
+@keyframes illusFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.chapter-open .chapter-illus svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+.chapter-open .chapter-kicker{
+  font-family:'Syne',sans-serif;font-size:.55rem;letter-spacing:.4em;text-transform:uppercase;
+  color:var(--cover-accent2,#8fa3e0);margin-bottom:1rem;
+}
+.chapter-open h2{
+  font-family:'Syne',sans-serif;font-weight:700;font-size:clamp(1.4rem,5vw,2rem);line-height:1.2;
+  letter-spacing:.02em;color:var(--cover-title,#eae6db);margin-bottom:1.2rem;
+}
+.chapter-open .chapter-divider{
+  display:flex;align-items:center;gap:1rem;margin:1.5rem 0;
+}
+.chapter-open .chapter-divider .line{flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--cover-accent,#e8b86a))}
+.chapter-open .chapter-divider .line:last-child{background:linear-gradient(90deg,var(--cover-accent,#e8b86a),transparent)}
+.chapter-open .chapter-divider .dot{width:6px;height:6px;border-radius:50%;background:var(--cover-accent,#e8b86a)}
+.chapter-open .chapter-hint{
+  font-family:'Syne',sans-serif;font-size:.55rem;letter-spacing:.3em;text-transform:uppercase;
+  color:var(--cover-desc,rgba(234,230,219,.4));margin-top:2rem;
+  animation:hintPulse 2s ease-in-out infinite;
+}
+@keyframes hintPulse{0%,100%{opacity:.4}50%{opacity:.8}}
+/* Tema khusus untuk setiap karya */
+#byac-reader .book-cover, #byac-reader .chapter-open{
+  --cover-accent:#e8b86a;--cover-accent2:#8fa3e0;--cover-glow:rgba(232,184,106,.15);
+  --cover-border:rgba(232,184,106,.3);--cover-bg:rgba(11,11,18,.6);--cover-bg-dark:#0b0b12;
+  --cover-title:#eae6db;--cover-desc:rgba(234,230,219,.6);--cover-accent-soft:rgba(232,184,106,.12);
+}
+#antara-reader .book-cover, #antara-reader .chapter-open{
+  --cover-accent:#8fa3e0;--cover-accent2:#e8b86a;--cover-glow:rgba(143,163,224,.15);
+  --cover-border:rgba(143,163,224,.3);--cover-bg:rgba(11,11,18,.6);--cover-bg-dark:#0b0b12;
+  --cover-title:#eae6db;--cover-desc:rgba(234,230,219,.6);--cover-accent-soft:rgba(143,163,224,.12);
+}
+#gadis-reader .book-cover, #gadis-reader .chapter-open{
+  --cover-accent:#8a6a40;--cover-accent2:#b8956a;--cover-glow:rgba(138,106,64,.12);
+  --cover-border:rgba(138,106,64,.3);--cover-bg:rgba(245,239,226,.9);--cover-bg-dark:#f5efe2;
+  --cover-title:#38332c;--cover-desc:rgba(56,51,44,.6);--cover-accent-soft:rgba(138,106,64,.1);
+}
+@media(max-width:600px){
+  .book-cover .cover-frame{padding:2rem 1.5rem}
+  .book-cover .cover-illus{width:90px;height:90px}
+  .chapter-open .chapter-illus{width:100px;height:100px}
+  .chapter-open .chapter-num{font-size:clamp(3rem,12vw,5rem)}
+}
+</style>
+<style id="hero-ident">
+.hero-ident{display:flex;flex-direction:column;gap:.4rem;font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:.34em;font-size:.6rem;color:var(--accent);opacity:.92;line-height:1.6}
+.hero-ident span{display:block}
+@media(max-width:600px){.hero-ident{font-size:.52rem;letter-spacing:.28em;gap:.3rem}}
+/* Identiti visual halaman pembuka Karya Khas (CSS-only, tidak sentuh teks) */
+#byac-reader .byac-cover, #antara-reader .byac-cover{position:relative}
+#byac-reader .byac-cover::before{content:"";position:absolute;top:18%;left:50%;transform:translateX(-50%);width:180px;height:28px;opacity:.28;background:
+  radial-gradient(circle at 15% 80%, #e8b86a 1.5px, transparent 2px),
+  radial-gradient(circle at 40% 55%, #e8b86a 2px, transparent 2.5px),
+  radial-gradient(circle at 65% 35%, #e8b86a 1.5px, transparent 2px),
+  radial-gradient(circle at 88% 18%, #e8b86a 2px, transparent 2.5px),
+  linear-gradient(to right, transparent, #e8b86a, transparent);
+  background-size:100% 100%;background-repeat:no-repeat;pointer-events:none}
+#antara-reader .byac-cover::before{content:"";position:absolute;top:18%;left:50%;transform:translateX(-50%);width:44px;height:44px;border-radius:50%;opacity:.22;background:linear-gradient(90deg,#e8b86a 50%,transparent 50%);border:1px solid rgba(232,184,106,.5);pointer-events:none}
+</style>
+<style id="byac-opening-style">
+.byac-open-page{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;height:100%;padding:2rem;box-sizing:border-box}
+.byac-open-num{font-family:'Syne',sans-serif;font-size:clamp(5rem,18vw,11rem);font-weight:800;line-height:1;-webkit-text-stroke:2px var(--oc,#e8b86a);color:transparent;opacity:.9;margin-bottom:1.5rem}
+.byac-open-bab{font-family:'Syne',sans-serif;font-size:.68rem;letter-spacing:.4em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.byac-open-svg{width:72px;height:72px;color:var(--oc,#e8b86a);margin-bottom:1.8rem;animation:byacFloat 4s ease-in-out infinite}
+@keyframes byacFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.byac-open-title{font-family:'Syne',sans-serif;font-size:clamp(1.3rem,4vw,2rem);font-weight:700;color:var(--text);letter-spacing:.05em;margin:0 0 1.5rem;max-width:22ch;line-height:1.3}
+.byac-open-divider{display:flex;align-items:center;gap:.8rem;margin-bottom:1.5rem;opacity:.6}
+.byac-open-divider span{width:60px;height:1px;background:var(--border)}
+.byac-open-divider i{width:6px;height:6px;border-radius:50%;background:var(--oc,#e8b86a);font-style:normal}
+.byac-open-img{width:300px;height:390px;margin-bottom:1.8rem;animation:byacFloat 4s ease-in-out infinite;border-radius:8px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.55)}
+.byac-open-img img{width:100%;height:100%;object-fit:cover;display:block}
+.byac-open-hint{font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);animation:byacPulse 2.4s ease-in-out infinite}
+@keyframes byacPulse{0%,100%{opacity:.45}50%{opacity:1}}
+</style>
+<style id="gadis-cover-polish">
+/* GADIS theme: purple-pink, not same as BATAS gold / ANTARA blue */
+#gadis-reader{ --cover-accent:#c89ae0; --cover-glow:rgba(200,154,224,.13); }
+/* All three book covers: cleaner — bigger title, smaller text below */
+.book-cover h1{ font-size:clamp(2rem,7vw,3rem) !important; line-height:1.08 !important; letter-spacing:-.01em; }
+.cover-desc{ font-size:.7rem !important; line-height:1.6 !important; max-width:32ch; margin-left:auto; margin-right:auto; }
+.cover-kicker{ font-size:.45rem !important; }
+.cover-author{ font-size:.55rem !important; }
+#gadis-reader .chapter-illus{width:260px !important;height:330px !important;}
+#gadis-reader .chapter-illus img{border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+</style>
 </head>
 <body>
 <div class="progress" id="progress"></div>
@@ -943,14 +1243,15 @@ section#batas{padding:5rem 0 3rem}
 
 <header class="hero">
   <div class="hero-side" aria-hidden="true">Puisi Bebas · Sastera Moden</div>
-  <div class="hero-meta"><span><b>Himpunan Karya</b> · 2026</span></div>
+  <div class="hero-meta hero-ident"><span>AKSARA MODEN UNTUK HARI INI</span><span>AKSARA KUNO BILA PERLU</span></div>
   <h1 class="hero-title"><span class="line1">GAYA</span><span class="line2">BEBAS</span></h1>
   <div class="hero-author"><span class="rule"></span><span class="karya">Karya Oleh</span><span class="name">SHAIFUL RIDHWAN</span></div>
-  <p class="hero-tagline">Aksara moden untuk hari ini,<br>Aksara kuno bila perlu.</p>
+  
   <div class="cta">
     <a class="btn" href="#karya">Baca 42 Karya</a>
     <a class="btn ghost" href="#manifesto">Manifesto</a>
     <a class="btn ghost" href="#trilogi">Trilogi</a>
+    <a class="btn ghost" href="#tetralogi">Tetralogi</a>
     <a class="btn ghost" href="#khas">Karya Khas</a>
   </div>
   <div class="scroll-hint"><span>Scroll</span><div class="line"></div></div>
@@ -1116,28 +1417,28 @@ LUAS pada pemikiran.</span></p>
         <h3 class="tri-title">WANITA YANG DIWARISI</h3>
         <div class="tri-poem"><div class="tri-stanza"><p>Namaku datang sebelum aku,</p><p>terbit dari lidah keluarga;</p><p>sebelum mengenal wajah sendiri,</p><p>aku telah diberi nama.</p></div><div class="tri-stanza"><p>Adat dijahit pada tubuh,</p><p>gerak diajar sebelum mengenal jalan;</p><p>benang turun dari tangan</p><p>yang pernah menerima jarum.</p></div><div class="tri-stanza"><p>Lama kusangka corak itu kulit,</p><p>hingga jarum terhenti pada simpul;</p><p>seutas benang masih terjuntai,</p><p>menghafal bentuk yang belum selesai.</p></div><div class="tri-stanza"><p>Kucari simpul paling awal,</p><p>namun tertanam jauh dalam waktu;</p><p>kain ini bukan pilihanku,</p><p>jarum ini sudah di tanganku.</p></div></div>
         <button class="tri-toggle" type="button" aria-expanded="false">Info Karya <span class="tri-arrow">+</span></button>
-        <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 01/04</span></div></div></div></div>
+        <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 01/04</span></div><div class="tri-mrow"><span class="tri-mk">Tahun</span><span class="tri-mv">2026</span></div></div></div></div>
       </article>
       <article class="tri-work reveal">
         <div class="tri-num">02 <span>/ 04</span></div>
         <h3 class="tri-title">WANITA YANG DILIHAT</h3>
         <div class="tri-poem"><div class="tri-stanza"><p>Wajahku dikenal sebelum aku,</p><p>garis dibaca sebelum suara;</p><p>rupa ditimbang daripada diam,</p><p>gerak ditafsir sebelum makna.</p></div><div class="tri-stanza"><p>Mereka memahat pada kaca,</p><p>membingkai sudut, menetapkan jarak;</p><p>bayang dipanggil diriku,</p><p>permukaan kian tidak mengenalku.</p></div><div class="tri-stanza"><p>Lama kubiarkan ia mendahului,</p><p>diri sekadar mengikuti;</p><p>retak menjalar memecah bacaan,</p><p>wajah berderai menjadi serpih.</p></div><div class="tri-stanza"><p>Serpihannya tinggal tanpa nama,</p><p>bayang kehilangan tempat berpaut;</p><p>yang dilihat cuma pecahan,</p><p>aku tidak lagi selesai di sana.</p></div></div>
         <button class="tri-toggle" type="button" aria-expanded="false">Info Karya <span class="tri-arrow">+</span></button>
-        <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 02/04</span></div></div></div></div>
+        <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 02/04</span></div><div class="tri-mrow"><span class="tri-mk">Tahun</span><span class="tri-mv">2026</span></div></div></div></div>
       </article>
       <article class="tri-work reveal">
         <div class="tri-num">03 <span>/ 04</span></div>
         <h3 class="tri-title">WANITA YANG DIAM</h3>
         <div class="tri-poem"><div class="tri-stanza"><p>Pintu menahan segala langkah,</p><p>dinding menakung sisa suara;</p><p>celah sunyi kian merapat,</p><p>jejak larut pada lantai.</p></div><div class="tri-stanza"><p>Daunnya merapat ke dinding,</p><p>bunyi halaman perlahan luruh;</p><p>langkah asing melintas,</p><p>gema surut sepanjang ruang.</p></div><div class="tri-stanza"><p>Lama ruang terasa sempit,</p><p>dinding mencatat gerak;</p><p>engsel berganjak tanpa bunyi,</p><p>ambang mendekati telapak.</p></div><div class="tri-stanza"><p>Pintu kubiarkan tanpa kunci,</p><p>dinding sepi di tempatnya;</p><p>belum perlu melangkah keluar,</p><p>ruang ini mengenal namaku.</p></div></div>
         <button class="tri-toggle" type="button" aria-expanded="false">Info Karya <span class="tri-arrow">+</span></button>
-        <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 03/04</span></div></div></div></div>
+        <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 03/04</span></div><div class="tri-mrow"><span class="tri-mk">Tahun</span><span class="tri-mv">2026</span></div></div></div></div>
       </article>
       <article class="tri-work reveal">
         <div class="tri-num">04 <span>/ 04</span></div>
         <h3 class="tri-title">WANITA YANG MEMILIH</h3>
         <div class="tri-poem"><div class="tri-stanza"><p>Di hadapan, jalan bercabang,</p><p>arah berbeza menawar janji;</p><p>satu telah mengenal jejaknya,</p><p>satu lagi belum bernama.</p></div><div class="tri-stanza"><p>Telapak tertahan di ambang,</p><p>bayang lama memanjang di tanah;</p><p>angin menggeser hujung kain,</p><p>kaki masih enggan berganjak.</p></div><div class="tri-stanza"><p>Langkahnya meninggalkan ambang,</p><p>jejak baharu tercetak di debu;</p><p>tiada tanda untuk diwariskan,</p><p>tiada suara perlu dijawab.</p></div><div class="tri-stanza"><p>Masa lalu tertinggal jauh,</p><p>jalan baharu terbuka lengang;</p><p>bumi belum mengenal bekas,</p><p>tiada arah sebelum langkah.</p></div></div>
         <button class="tri-toggle" type="button" aria-expanded="false">Info Karya <span class="tri-arrow">+</span></button>
-        <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 04/04</span></div></div></div></div>
+        <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 04/04</span></div><div class="tri-mrow"><span class="tri-mk">Tahun</span><span class="tri-mv">2026</span></div></div></div></div>
       </article>
     </div>
   </section>
@@ -1160,28 +1461,43 @@ LUAS pada pemikiran.</span></p>
     <p style="color:var(--muted);font-size:1rem;line-height:1.9;font-weight:300;font-style:italic;margin:0">Sebahagian tulisan tidak lahir untuk sekadar dibaca. Ada yang menyimpan perjalanan sebelum sebuah aksara menemukan bentuknya.</p>
   </div>
   <div class="khas-grid">
-    <div class="khas-card reveal" id="byac-card" style="border-color:var(--accent);box-shadow:0 12px 40px var(--accent-soft)">
+    <!-- Karya 01: Batas Yang Aku Cari -->
+    <div class="khas-card reveal" id="byac-card">
+      <div class="pattern"><svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="25"/><circle cx="30" cy="30" r="15"/><line x1="5" y1="30" x2="55" y2="30"/><line x1="30" y1="5" x2="30" y2="55"/></svg></div>
+      <div class="khas-icon"><svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
       <div class="khas-tag">01</div>
       <div class="kicker">Karya Khas · Cerita Panjang</div>
       <h3>BATAS<br><span class="grad">YANG AKU CARI</span></h3>
+      <div class="khas-divider"></div>
       <p class="kquote">Aku seorang yang perlu memahami.</p>
-      <p class="kunci" style="font-size:.8rem;color:var(--muted);font-style:italic;font-weight:300;line-height:1.7;margin:-.2rem 0 1.2rem">Sebuah perjalanan tentang perkara yang pernah aku cuba ukur, sebelum sedar bahawa diriku sendiri ialah sebahagian daripada persoalan.</p>
+      <p class="kunci">Sebuah perjalanan tentang perkara yang pernah aku cuba ukur, sebelum sedar bahawa diriku sendiri ialah sebahagian daripada persoalan.</p>
       <a class="khas-btn" href="#batas">Baca Cerita Penuh</a>
+      <div class="khas-meta"><span><b>36</b> Halaman</span><span><b>12</b> Bab</span><span><b>Prosa</b></span></div>
     </div>
+    <!-- Karya 02: Antara Cahaya dan Gelap -->
     <div class="khas-card reveal" id="antara-card">
+      <div class="pattern"><svg viewBox="0 0 60 60"><rect x="5" y="5" width="22" height="50"/><rect x="33" y="5" width="22" height="50"/><circle cx="16" cy="16" r="6"/><circle cx="44" cy="44" r="6"/></svg></div>
+      <div class="khas-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 0 20z" fill="currentColor" stroke="none"/></svg></div>
       <div class="khas-tag">02</div>
       <div class="kicker">Karya Khas · Catatan</div>
       <h3>ANTARA<br><span class="grad">CAHAYA DAN GELAP</span></h3>
+      <div class="khas-divider"></div>
       <p class="kquote">Kita tidak hidup di hujung. Kita hidup di antara.</p>
-      <p class="kunci" style="font-size:.8rem;color:var(--muted);font-style:italic;font-weight:300;line-height:1.7;margin:-.2rem 0 1.2rem">Catatan tentang hidup di antara perkara yang tidak pernah benar-benar hitam atau putih.</p>
+      <p class="kunci">Catatan tentang hidup di antara perkara yang tidak pernah benar-benar hitam atau putih.</p>
       <a class="khas-btn" href="#antara" id="antara-cta">Baca ANTARA</a>
+      <div class="khas-meta"><span><b>16</b> Halaman</span><span><b>8</b> Bab</span><span><b>Catatan</b></span></div>
     </div>
+    <!-- Karya 03: Gadis Yang Pernah Duduk Di Sebelah -->
     <div class="khas-card reveal" id="gadis-card">
+      <div class="pattern"><svg viewBox="0 0 60 60"><path d="M5 55 Q30 5 55 55"/><circle cx="30" cy="30" r="8"/><line x1="30" y1="38" x2="30" y2="55"/></svg></div>
+      <div class="khas-icon"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></div>
       <div class="khas-tag">03</div>
-      <div class="kicker">Karya Khas &middot; Novel</div>
+      <div class="kicker">Karya Khas · Novel</div>
       <h3>GADIS YANG<br><span class="grad">PERNAH DUDUK DI SEBELAH</span></h3>
+      <div class="khas-divider"></div>
       <p class="kquote">sebuah novel tentang ingatan, kemungkinan, dan seseorang yang tidak pernah menjadi milik</p>
       <a class="khas-btn" href="#gadis" id="gadis-cta">Baca Novel</a>
+      <div class="khas-meta"><span><b>22</b> Halaman</span><span><b>15</b> Bab</span><span><b>Novel</b></span></div>
     </div>
   </div>
 </section>
@@ -1262,7 +1578,7 @@ LUAS pada pemikiran.</span></p>
       <p class="pen-label">BIO</p>
       <p class="author-desc">Penulis puisi gaya bebas yang meneroka manusia, falsafah, cinta, akal dan persoalan kewujudan melalui bahasa sastera moden.</p>
       <p class="pen-label">CATATAN PENULIS</p>
-      <p class="author-desc">Aku tak nak pembaca memahami puisiku seperti memahami nota kaki.</p>
+      <p class="author-desc">Aku tak nak pembaca memahami tulisanku seperti memahami nota kaki.</p>
       <p class="author-desc">Aku nak mereka berhadapan dengannya.</p>
       <p class="pen-label">PENDIRIAN TENTANG IMEJ PUISI</p>
       <p class="author-desc">Aku tak suka puisi yang bergantung pada imej untuk kelihatan menarik. Bagi aku, puisi sudah mempunyai wajahnya sendiri melalui kata, ruang dan susunan.</p>
@@ -1540,7 +1856,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
 #byac-reader .byac-nav:disabled{opacity:.3;pointer-events:none}
 #byac-reader .byac-nav svg{width:14px;height:14px}
 #byac-reader .byac-pagenum{flex:1;text-align:center;font-family:'Syne',sans-serif;font-size:.7rem;letter-spacing:.25em;color:rgba(234,230,219,.55)}
-#byac-reader .byac-cover{min-height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:1rem .5rem}
+#byac-reader .byac-cover{min-height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0;}
 #byac-reader .byac-cover-kicker{font-family:'Syne',sans-serif;font-size:.6rem;letter-spacing:.45em;text-transform:uppercase;color:#8fa3e0;margin-bottom:2.2rem}
 #byac-reader .byac-cover h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.4rem,10vw,4.2rem);line-height:1.04;letter-spacing:.01em;margin-bottom:1.6rem;background:linear-gradient(120deg,#f5d98a,#e8b86a 50%,#8fa3e0 110%);-webkit-background-clip:text;background-clip:text;color:transparent}
 #byac-reader .byac-cover .byac-rule{margin:0 auto 1.8rem}
@@ -1595,6 +1911,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Ada juga yang hanya kita faham bertahun-tahun kemudian.'],
       ['p','Aku rasa, hidup aku lebih banyak berada dalam kategori kedua.']
     ]},
+    {opening:true,num:'01',chapter:'11 TAHUN',svg:0},
     {num:'01', chapter:'11 TAHUN', first:true, blocks:[
       ['p','Aku pernah menjadi seorang budak yang membuat roket pada umur sebelas tahun.'],
       ['p','Aku tidak tahu pun waktu itu bahawa rasa ingin tahu itu akan menjadi sebahagian daripada cara aku melihat dunia.'],
@@ -1604,6 +1921,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Tetapi apabila aku melihatnya semula hari ini, aku mula nampak satu corak.'],
       ['q','Sejak kecil, aku memang suka mencari sesuatu. Cuma waktu itu aku belum tahu apa yang sebenarnya sedang aku cari.']
     ]},
+    {opening:true,num:'02',chapter:'CYBERCAFE',svg:1},
     {num:'02', chapter:'CYBERCAFE', first:true, blocks:[
       ['p','Kemudian aku membesar.'],
       ['p','Ada satu fasa dalam hidup aku ketika aku bekerja part-time di sebuah cybercafe.'],
@@ -1664,6 +1982,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Bau rokok. Bunyi keyboard.'],
       ['p','Dan suara kawan yang menjerit dalam headset.'],
     ]},
+    {opening:true,num:'03',chapter:'AKU DAN CODING',svg:2},
     {num:'03', chapter:'AKU DAN CODING', first:true, blocks:[
       ['p','Sekitar umur enam belas hingga sembilan belas tahun, aku terlalu minat dengan coding.'],
       ['p','Aku aktif di XDA Forum, sebuah komuniti besar untuk peminat dan developer Android.'],
@@ -1698,6 +2017,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Namanya:'],
       ['em','Twister Kernel.']
     ]},
+    {opening:true,num:'04',chapter:'KENAPA TWISTER KERNEL LAHIR',svg:3},
     {num:'04', chapter:'KENAPA TWISTER KERNEL LAHIR', first:true, blocks:[
       ['p','Waktu itu PUBG Mobile sedang popular gila.'],
       ['p','Ramai orang bermain.'],
@@ -1730,6 +2050,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Mungkin aku tidak mampu mengubah telefon mereka menjadi telefon baharu.'],
       ['p','Tetapi aku boleh cuba melihat sejauh mana telefon itu sebenarnya masih boleh pergi.']
     ]},
+    {opening:true,num:'05',chapter:'TWISTER KERNEL',svg:4},
     {num:'05', chapter:'TWISTER KERNEL', first:true, blocks:[
       ['p','Untuk Twister Kernel, aku memilih satu keutamaan.'],
       ['em','Performance.'],
@@ -1801,6 +2122,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Keesokan harinya, aku upload kernel itu ke channel Telegram.'],
       ['p','Komen pertama masuk tidak sampai sejam kemudian.'],
     ]},
+    {opening:true,num:'06',chapter:'TWISTER KERNEL DAN DUNIA LUAR',svg:5},
     {num:'06', chapter:'TWISTER KERNEL DAN DUNIA LUAR', first:true, blocks:[
       ['p','Aku mempunyai channel Telegram sendiri.'],
       ['em','Twister Kernel.'],
@@ -1827,6 +2149,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['q','Sesuatu yang aku bina sendiri, kemudian digunakan oleh manusia yang aku sendiri tidak pernah kenal.'],
       ['p','Itu mungkin antara kali pertama aku benar-benar rasa bahawa sesuatu yang aku bina mempunyai kehidupan di luar diri aku.']
     ]},
+    {opening:true,num:'07',chapter:'GITHUB',svg:6},
     {num:'07', chapter:'GITHUB', first:true, blocks:[
       ['p','Aku juga aktif di GitHub ketika itu.'],
       ['p','Custom kernel aku open source.'],
@@ -1867,6 +2190,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Dan sekarang, ketika aku sedang bercerita semula tentang semua ini, baru aku teringat betapa banyaknya aku pernah buat.'],
       ['p','Aku sendiri hampir terlupa.']
     ]},
+    {opening:true,num:'08',chapter:'MANJARO',svg:7},
     {num:'08', chapter:'MANJARO', first:true, blocks:[
       ['p','Komputer di rumah aku pula menggunakan dual boot.'],
       ['p','Windows dan Linux.'],
@@ -1898,6 +2222,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Tanpa aku perasan, semua itu sedang membentuk satu cara berfikir.'],
       ['q','Aku sentiasa mahu tahu apa yang berada di sebalik sesuatu.']
     ]},
+    {opening:true,num:'09',chapter:'KEMUDIAN AKU BERHENTI',svg:8},
     {num:'09', chapter:'KEMUDIAN AKU BERHENTI', first:true, blocks:[
       ['p','Tapi hidup tidak selalu bergerak mengikut minat kita.'],
       ['p','Ada masa semua itu perlahan-lahan tertinggal.'],
@@ -1933,6 +2258,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Tiada kemarahan. Tiada kekecewaan besar.'],
       ['p','Cuma hidup yang bergerak, dan aku yang mengikutinya.'],
     ]},
+    {opening:true,num:'10',chapter:'SEORANG GADIS',svg:9},
     {num:'10', chapter:'SEORANG GADIS', first:true, blocks:[
       ['p','Kemudian datang seorang gadis.'],
       ['p','Bukan sebagai penyelamat.'],
@@ -1981,6 +2307,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['q','Aku dengan dia mungkin melihat bulan yang sama dari langit yang berbeza. Tapi itu tidak mengubah apa-apa pun. Sebab setiap malam, apabila aku menutup mata, aku tahu — di mana sahaja dia berada, hatinya masih di sini.'],
       ['p','Aku dengan kesedaran penuh, akan sentiasa memilih Dia.']
     ]},
+    {opening:true,num:'11',chapter:'KEBANGKITAN AKSARA KUNO',svg:10},
     {num:'11', chapter:'KEBANGKITAN AKSARA KUNO', first:true, blocks:[
       ['p','Aku mula menulis tentang dia.'],
       ['p','Kemudian aku mula menulis tentang diri sendiri.'],
@@ -2027,6 +2354,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Tapi malam itu, aku buka Notes semula.'],
       ['p','Dan aku mula menulis perenggan pertama untuk orang yang akan datang.'],
     ]},
+    {opening:true,num:'12',chapter:'BATAS',svg:11},
     {num:'12', chapter:'BATAS', first:true, blocks:[
       ['p','Bila aku melihat semuanya semula, aku mula nampak satu pola.'],
       ['p','Budak yang membuat roket pada umur sebelas tahun.'],
@@ -2162,7 +2490,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
   var prevBtn = document.getElementById('byac-prev');
   var nextBtn = document.getElementById('byac-next');
   var current = 0;
-  var total = 2 + BYAC_CONTENT.length;
+  var total = 1 + BYAC_CONTENT.length;
 
   function renderBlocks(blocks){
     var h='';
@@ -2177,6 +2505,16 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
   }
 
   function coverHTML(){
+    if(window.createBookCover){
+      return window.createBookCover({
+        illus: 'compass',
+        kicker: 'Sebuah Karya Khas · 01 · Cerita Panjang',
+        title: 'BATAS<br><span class="grad">YANG AKU CARI</span>',
+        desc: 'Sebuah perjalanan tentang perkara yang pernah aku cuba ukur, sebelum sedar bahawa diriku sendiri ialah sebahagian daripada persoalan.',
+        author: 'Shaiful Ridhwan',
+        startId: 'byac-start'
+      });
+    }
     return '<div class="byac-cover">'
       +'<div class="byac-cover-kicker">Sebuah Karya Khas</div>'
       +'<h1>BATAS<br>YANG AKU CARI</h1>'
@@ -2201,6 +2539,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
 
   function contentHTML(idx){
     var p=BYAC_CONTENT[idx];
+    if(p.opening){ return byacOpeningHTML(p,'#e8b86a','byac'); }
     var h='';
     if(p.first){
       if(p.num===''){ h+='<div class="byac-kicker">Pembukaan</div><div class="byac-rule"></div>'; }
@@ -2216,8 +2555,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
     current = i;
     var html;
     if(i===0){ html=coverHTML(); }
-    else if(i===1){ html=tocHTML(); }
-    else { html=contentHTML(i-2); }
+    else { html=contentHTML(i-1); }
     pageEl.innerHTML=html;
     pageEl.classList.remove('byac-anim-next','byac-anim-prev');
     void pageEl.offsetWidth;
@@ -2340,7 +2678,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
 #antara-reader .byac-nav:disabled{opacity:.3;pointer-events:none}
 #antara-reader .byac-nav svg{width:14px;height:14px}
 #antara-reader .byac-pagenum{flex:1;text-align:center;font-family:'Syne',sans-serif;font-size:.7rem;letter-spacing:.25em;color:rgba(234,230,219,.55)}
-#antara-reader .byac-cover{min-height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:1rem .5rem}
+#antara-reader .byac-cover{min-height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0;}
 #antara-reader .byac-cover-kicker{font-family:'Syne',sans-serif;font-size:.6rem;letter-spacing:.45em;text-transform:uppercase;color:#8fa3e0;margin-bottom:2.2rem}
 #antara-reader .byac-cover h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2.4rem,10vw,4.2rem);line-height:1.04;letter-spacing:.01em;margin-bottom:1.6rem;background:linear-gradient(120deg,#f5d98a,#e8b86a 50%,#8fa3e0 110%);-webkit-background-clip:text;background-clip:text;color:transparent}
 #antara-reader .byac-cover .byac-rule{margin:0 auto 1.8rem}
@@ -2517,6 +2855,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['q','Kita tidak hidup di hujung. Kita hidup di antara.'],
       ['p','Catatan ini tentang ruang itu. Tentang segala yang wujud di antara jawapan dan persoalan.']
     ]},
+    {opening:true,num:'01',chapter:'AKAL — DI ANTARA TAHU DAN TIDAK TAHU',svg:0},
     {num:'01', chapter:'AKAL — DI ANTARA TAHU DAN TIDAK TAHU', first:true, blocks:[
       ['p','Aku dulu fikir, ilmu adalah tentang mengumpul jawapan.'],
       ['p','Semakin banyak jawapan, semakin pandai seseorang.'],
@@ -2538,6 +2877,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Dan dalam proses itu, aku belajar satu perkara — ilmu bukan tentang sampai ke destinasi. Ilmu adalah tentang bersedia untuk tersesat, kemudian mencari jalan semula.'],
       ['p','Akal ada batasnya. Dan mengakui batas itu — itulah awal kebijaksanaan yang sebenar.']
     ]},
+    {opening:true,num:'02',chapter:'IMAN — DI ANTARA PASTI DAN RAGU',svg:1},
     {num:'02', chapter:'IMAN — DI ANTARA PASTI DAN RAGU', first:true, blocks:[
       ['p','Ada orang yang berbicara tentang iman seolah-olah ia adalah tembok. Kokoh. Tanpa retak. Tanpa ruang untuk soalan.'],
       ['p','Aku tidak rasa begitu.'],
@@ -2557,6 +2897,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Aku solat. Aku berdoa. Ada malam doaku terasa sampai. Ada malam doaku terasa hanya tinggal di bibir.'],
       ['p','Tapi aku tetap datang. Sebab yang penting bukan perasaan. Yang penting, aku tetap memilih untuk datang.']
     ]},
+    {opening:true,num:'03',chapter:'CINTA — DI ANTARA PUNYA DAN MEMINJAM',svg:2},
     {num:'03', chapter:'CINTA — DI ANTARA PUNYA DAN MEMINJAM', first:true, blocks:[
       ['p','Kita suka kata "punya". Aku punya dia. Dia punya aku. Seolah-olah cinta adalah barang yang boleh dimiliki.'],
       ['p','Tapi cinta bukan milik.'],
@@ -2576,6 +2917,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Kami mungkin di bawah langit yang berbeza. Tapi pilihanku tetap sama. Dan itu cukup.'],
       ['p','Sebab yang aku punya bukanlah dia sepenuhnya. Yang aku punya ialah hari ini. Dan hari ini, aku memilih untuk bersyukur.']
     ]},
+    {opening:true,num:'04',chapter:'KEBEBASAN — DI ANTARA PINTU DAN PAGAR',svg:3},
     {num:'04', chapter:'KEBEBASAN — DI ANTARA PINTU DAN PAGAR', first:true, blocks:[
       ['p','Orang sangka kebebasan ialah ketiadaan pagar.'],
       ['p','Semua terbuka. Semua boleh. Tiada yang menghalang.'],
@@ -2595,6 +2937,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Aku dulu benci batas. Aku anggap batas adalah musuh kebebasan.'],
       ['p','Sekarang aku faham. Batas adalah tempat kita belajar berjalan. Dan selepas kita tahu berjalan, barulah kita tahu ke mana mahu pergi.']
     ]},
+    {opening:true,num:'05',chapter:'MASA — DI ANTARA SUDAH DAN BELUM',svg:4},
     {num:'05', chapter:'MASA — DI ANTARA SUDAH DAN BELUM', first:true, blocks:[
       ['p','Masa tidak pernah berhenti. Tapi kita selalu terasa terperangkap di antara.'],
       ['p','Di antara yang sudah berlaku dan yang belum tiba. Di antara yang hilang dan yang dijanjikan.'],
@@ -2639,7 +2982,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
     {n:'05', t:'MASA — DI ANTARA SUDAH DAN BELUM', p:12},
     {n:'', t:'YANG ADA DI ANTARA', p:14}
   ];
-  var total = 2 + ANTARA_CONTENT.length;
+  var total = 1 + ANTARA_CONTENT.length;
   var current = 0;
   var reader = document.getElementById('antara-reader');
   var pageEl = document.getElementById('antara-page');
@@ -2659,6 +3002,16 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
     return h;
   }
   function coverHTML(){
+    if(window.createBookCover){
+      return window.createBookCover({
+        illus: 'sunmoon',
+        kicker: 'Sebuah Karya Khas · 02 · Catatan',
+        title: 'ANTARA<br><span class="grad">CAHAYA DAN GELAP</span>',
+        desc: 'Catatan tentang hidup di antara perkara yang tidak pernah benar-benar hitam atau putih.',
+        author: 'Shaiful Ridhwan',
+        startId: 'antara-start'
+      });
+    }
     return '<div class="byac-cover">'
       +'<div class="byac-cover-kicker">Sebuah Karya Khas · 02</div>'
       +'<h1>ANTARA<br>CAHAYA DAN GELAP</h1>'
@@ -2682,6 +3035,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
   }
   function contentHTML(idx){
     var p=ANTARA_CONTENT[idx];
+    if(p.opening){ return byacOpeningHTML(p,'#8fa3e0','antara'); }
     var h='';
     if(p.first){
       if(p.num===''){ h+='<div class="byac-kicker">'+p.chapter+'</div><div class="byac-rule"></div>'; }
@@ -2696,8 +3050,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
     current = i;
     var html;
     if(i===0){ html=coverHTML(); }
-    else if(i===1){ html=tocHTML(); }
-    else { html=contentHTML(i-2); }
+    else { html=contentHTML(i-1); }
     pageEl.innerHTML=html;
     pageEl.classList.remove('byac-anim-next','byac-anim-prev');
     void pageEl.offsetWidth;
@@ -3106,10 +3459,9 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Dalam bas, aku berbual dengan kawan-kawan.'],
       ['p','Ketawa.'],
       ['p','Cerita benda lain.'],
-      ['p','Aku tidak duduk merenung keluar tingkap sepanjang perjalanan seperti watak utama filem.'],
-      ['p','Hidup sebenar tidak begitu.'],
+      ['p','Aku, seorang remaja lelaki berumur 19 tahun dalam bas itu, melihat ke luar tingkap.'],
       ['p','Kita boleh sedang bercakap dan ketawa dengan kawan, sambil dalam masa yang sama menyedari seseorang yang pernah penting sedang berada tidak jauh dari kita.'],
-      ['p','Apabila sampai, keluarganya datang mengambil dia.'],
+      ['p','Apabila sampai, aku nampak dia — seorang remaja wanita berumur 19 tahun — bersama keluarganya, sedang bersiap sedia untuk naik ke dalam kereta.'],
       ['p','Aku nampak.'],
       ['p','Aku tidak pergi kepadanya.'],
       ['p','Aku cuma melihat sekali-sekala.'],
@@ -3293,7 +3645,9 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Bukan hubungan.'],
       ['p','Bukan penyesalan.'],
       ['p','Cuma sebuah pertanyaan yang bermula di sebelah sebuah meja ketika aku berumur sebelas tahun.'],
-      ['p','Kalau seseorang pernah kita cintai, tetapi kita tidak pernah benar-benar tahu mengapa kita mencintainya, apakah yang sebenarnya kita cintai?']
+      ['p','Kalau seseorang pernah kita cintai, tetapi kita tidak pernah benar-benar tahu mengapa kita mencintainya, apakah yang sebenarnya kita cintai?'],
+      ['p','Wanita sekarang mungkin akan cakap aku ni lelaki bingung.'],
+      ['p','Lucunya, aku mungkin setuju.']
     ]}
   ];
   var GADIS_TOC = [
@@ -3329,7 +3683,17 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
     phone: '<svg viewBox="0 0 100 120" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"><rect x="28" y="10" width="44" height="100" rx="8"/><circle cx="50" cy="98" r="2.5"/><circle cx="42" cy="40" r="3" fill="currentColor" stroke="none"/><circle cx="50" cy="52" r="3" fill="currentColor" stroke="none"/><circle cx="58" cy="64" r="3" fill="currentColor" stroke="none"/></svg>',
     moon: '<svg viewBox="0 0 100 100" fill="currentColor" stroke="none"><path d="M64 18 A34 34 0 1 0 64 82 A28 28 0 1 1 64 18 z"/></svg>'
 };
-  var total = 2 + GADIS_CONTENT.length;
+  // Tambah halaman pembuka bab sebelum setiap bab
+  var GADIS_PAGES = [];
+  var ILLUS_KEYS = ['moon','star','path','heart','window','book','sunmoon','compass','mountain','ocean','tree','bird','key','clock','letter','door'];
+  for(var gi=0; gi<GADIS_CONTENT.length; gi++){
+    var gch = GADIS_CONTENT[gi];
+    if(gch.first){
+      GADIS_PAGES.push({chapterOpen:true, num:gch.num, chapter:gch.chapter, illus: ILLUS_KEYS[gi % ILLUS_KEYS.length]});
+    }
+    GADIS_PAGES.push(gch);
+  }
+  var total = 1 + GADIS_PAGES.length;
   var current = 0;
   var reader = document.getElementById('gadis-reader');
   var pageEl = document.getElementById('gadis-page');
@@ -3357,9 +3721,24 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       var saved=parseInt(localStorage.getItem(LS_KEY),10);
       if(saved && saved>=2 && saved<total){
         var ch=GADIS_CONTENT[saved-2];
-        resume='<button type="button" class="gadis-resume" id="gadis-resume">Teruskan &middot; Bab '+ch.num+' '+ch.chapter+'</button>';
+        resume='<button type="button" class="gadis-resume" id="gadis-resume" style="margin-top:1rem;font-family:\'Syne\',sans-serif;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(138,106,64,.7);background:transparent;border:none;padding:.4rem .6rem;border-bottom:1px solid rgba(138,106,64,.3);cursor:pointer;transition:color .3s">Teruskan &middot; Bab '+ch.num+' '+ch.chapter+'</button>';
       }
     }catch(e){}
+    if(window.createBookCover){
+      var cover = window.createBookCover({
+        illus: 'window',
+        kicker: 'Sebuah Karya Khas · 03 · Novel',
+        title: 'GADIS YANG<br><span class="grad">PERNAH DUDUK DI SEBELAH</span>',
+        desc: 'sebuah novel tentang ingatan, kemungkinan, dan seseorang yang tidak pernah menjadi milik',
+        author: 'Shaiful Ridhwan',
+        startId: 'gadis-start'
+      });
+      // Tambah butang resume sebelum penutup div terakhir
+      if(resume){
+        cover = cover.replace('</button></div></div>', '</button>'+resume+'</div></div>');
+      }
+      return cover;
+    }
     return '<div class="gadis-cover">'
       +'<div class="gadis-cover-kicker">Sebuah Karya Khas &middot; 03 &middot; Novel</div>'
       +'<h1>GADIS YANG<br>PERNAH DUDUK DI SEBELAH</h1>'
@@ -3383,8 +3762,21 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
     return h;
   }
   function contentHTML(idx){
-    var p=GADIS_CONTENT[idx];
-    var isLast=(idx===GADIS_CONTENT.length-1);
+    var p=GADIS_PAGES[idx];
+    if(p.chapterOpen){
+      // Halaman pembuka bab dengan ilustrasi
+      var illusSvg = (window.ILLUS && window.ILLUS[p.illus]) ? window.ILLUS[p.illus] : '';
+      var __gimg = (CHAPTER_IMAGES['gadis'] && CHAPTER_IMAGES['gadis'][p.num]) ? CHAPTER_IMAGES['gadis'][p.num] : null;
+      return '<div class="chapter-open">'
+        +'<div class="chapter-num">'+p.num+'</div>'
+        +(__gimg ? '<div class="chapter-illus"><img src="'+__gimg+'" alt="Bab '+p.num+'" style="width:100%;height:100%;object-fit:cover;border-radius:6px"></div>' : '<div class="chapter-illus">'+illusSvg+'</div>')
+        +'<div class="chapter-kicker">Bab '+p.num+'</div>'
+        +'<h2>'+p.chapter+'</h2>'
+        +'<div class="chapter-divider"><div class="line"></div><div class="dot"></div><div class="line"></div></div>'
+        +'<div class="chapter-hint">Klik Seterusnya untuk membaca</div>'
+        +'</div>';
+    }
+    var isLast=(idx===GADIS_PAGES.length-1);
     var h='<div class="gadis-kicker">Bab '+p.num+'</div>'
       +'<h2 class="gadis-chapter">'+p.chapter+'</h2>'
       +'<div class="gadis-rule"></div>';
@@ -3402,8 +3794,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
     current = i;
     var html;
     if(i===0){ html=coverHTML(); }
-    else if(i===1){ html=tocHTML(); }
-    else { html=contentHTML(i-2); }
+    else { html=contentHTML(i-1); }
     pageEl.innerHTML=html;
     stage.scrollTop=0;
     pagenum.textContent=(i+1)+' / '+total;
@@ -3413,7 +3804,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
     setNavLabels(i);
     try{ if(i>=2){ localStorage.setItem(LS_KEY, String(i)); } }catch(e){}
     var s=document.getElementById('gadis-start');
-    if(s){ s.addEventListener('click', function(){ render(2,'next'); }); }
+    if(s){ s.addEventListener('click', function(){ render(1,'next'); }); }
     var r=document.getElementById('gadis-resume');
     if(r){ r.addEventListener('click', function(){
       try{ var saved=parseInt(localStorage.getItem(LS_KEY),10); if(saved){ render(saved,'next'); } else { render(2,'next'); } }catch(e){ render(2,'next'); }
@@ -3478,6 +3869,61 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
 </script>
 <button id="backToTop" class="back-to-top" aria-label="Kembali ke atas"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
 <script>
+/* ===== KULIT BUKU & HALAMAN PEMBUKA BAB ===== */
+(function(){
+  // SVG ilustrasi untuk setiap tema
+  var ILLUS = {
+    compass: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40"/><circle cx="50" cy="50" r="28"/><polygon points="50,20 56,50 50,80 44,50" fill="currentColor" opacity=".3"/><line x1="50" y1="10" x2="50" y2="20"/><line x1="50" y1="80" x2="50" y2="90"/><line x1="10" y1="50" x2="20" y2="50"/><line x1="80" y1="50" x2="90" y2="50"/><circle cx="50" cy="50" r="4" fill="currentColor"/></svg>',
+    sunmoon: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="35"/><path d="M50 15 A35 35 0 0 1 50 85 A25 35 0 0 0 50 15" fill="currentColor" opacity=".4"/><circle cx="50" cy="50" r="35" fill="none"/><line x1="50" y1="5" x2="50" y2="15"/><line x1="50" y1="85" x2="50" y2="95"/><line x1="5" y1="50" x2="15" y2="50"/><line x1="85" y1="50" x2="95" y2="50"/></svg>',
+    window: '<svg viewBox="0 0 100 100"><rect x="20" y="15" width="60" height="70" rx="2"/><line x1="50" y1="15" x2="50" y2="85"/><line x1="20" y1="50" x2="80" y2="50"/><circle cx="65" cy="30" r="8" opacity=".5"/><path d="M30 70 Q35 60 40 70 Q45 60 50 70" opacity=".4"/></svg>',
+    star: '<svg viewBox="0 0 100 100"><polygon points="50,10 61,35 88,35 66,52 74,80 50,63 26,80 34,52 12,35 39,35" fill="currentColor" opacity=".3"/><circle cx="20" cy="20" r="2" fill="currentColor"/><circle cx="80" cy="25" r="1.5" fill="currentColor"/><circle cx="15" cy="70" r="1.5" fill="currentColor"/><circle cx="85" cy="75" r="2" fill="currentColor"/></svg>',
+    path: '<svg viewBox="0 0 100 100"><path d="M20 80 Q40 60 35 40 Q30 20 50 15" fill="none" stroke-dasharray="4,4"/><circle cx="20" cy="80" r="4" fill="currentColor"/><circle cx="50" cy="15" r="4" fill="currentColor" opacity=".5"/><path d="M50 15 L45 22 M50 15 L55 22" stroke-width="2"/></svg>',
+    heart: '<svg viewBox="0 0 100 100"><path d="M50 85 L20 55 Q10 40 25 28 Q40 18 50 32 Q60 18 75 28 Q90 40 80 55 Z" fill="currentColor" opacity=".25"/><path d="M50 85 L20 55 Q10 40 25 28 Q40 18 50 32 Q60 18 75 28 Q90 40 80 55 Z" fill="none"/></svg>',
+    book: '<svg viewBox="0 0 100 100"><path d="M15 20 Q30 15 50 20 Q70 15 85 20 L85 80 Q70 75 50 80 Q30 75 15 80 Z" fill="none"/><line x1="50" y1="20" x2="50" y2="80"/><line x1="25" y1="35" x2="42" y2="32"/><line x1="25" y1="45" x2="42" y2="42"/><line x1="58" y1="32" x2="75" y2="35"/><line x1="58" y1="42" x2="75" y2="45"/></svg>',
+    moon: '<svg viewBox="0 0 100 100"><path d="M65 20 Q35 25 30 55 Q35 85 65 80 Q45 70 45 50 Q45 30 65 20 Z" fill="currentColor" opacity=".3"/><circle cx="70" cy="25" r="1.5" fill="currentColor"/><circle cx="78" cy="40" r="1" fill="currentColor"/><circle cx="75" cy="60" r="1.5" fill="currentColor"/><circle cx="70" cy="75" r="1" fill="currentColor"/></svg>',
+    mountain: '<svg viewBox="0 0 100 100"><path d="M10 80 L35 35 L50 55 L65 25 L90 80 Z" fill="currentColor" opacity=".2"/><path d="M10 80 L35 35 L50 55 L65 25 L90 80" fill="none"/><circle cx="75" cy="20" r="6" opacity=".5"/></svg>',
+    ocean: '<svg viewBox="0 0 100 100"><path d="M10 50 Q25 40 40 50 Q55 60 70 50 Q85 40 95 50" fill="none"/><path d="M10 65 Q25 55 40 65 Q55 75 70 65 Q85 55 95 65" fill="none" opacity=".6"/><path d="M10 80 Q25 70 40 80 Q55 90 70 80 Q85 70 95 80" fill="none" opacity=".4"/><circle cx="75" cy="25" r="8" opacity=".4"/></svg>',
+    tree: '<svg viewBox="0 0 100 100"><circle cx="50" cy="35" r="20" fill="currentColor" opacity=".25"/><circle cx="35" cy="45" r="15" fill="currentColor" opacity=".2"/><circle cx="65" cy="45" r="15" fill="currentColor" opacity=".2"/><rect x="46" y="55" width="8" height="30" fill="currentColor" opacity=".3"/><line x1="50" y1="85" x2="50" y2="95"/></svg>',
+    bird: '<svg viewBox="0 0 100 100"><path d="M20 50 Q35 35 50 50 Q65 35 80 50" fill="none" stroke-width="2"/><path d="M30 60 Q40 50 50 60 Q60 50 70 60" fill="none" opacity=".5"/><circle cx="50" cy="25" r="1.5" fill="currentColor"/><circle cx="30" cy="30" r="1" fill="currentColor"/><circle cx="70" cy="28" r="1" fill="currentColor"/></svg>',
+    key: '<svg viewBox="0 0 100 100"><circle cx="30" cy="50" r="15" fill="none"/><circle cx="30" cy="50" r="5" fill="currentColor" opacity=".3"/><line x1="45" y1="50" x2="85" y2="50"/><line x1="70" y1="50" x2="70" y2="62"/><line x1="80" y1="50" x2="80" y2="65"/></svg>',
+    clock: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="none"/><circle cx="50" cy="50" r="3" fill="currentColor"/><line x1="50" y1="50" x2="50" y2="25" stroke-width="2"/><line x1="50" y1="50" x2="68" y2="58" stroke-width="1.5"/><line x1="50" y1="10" x2="50" y2="18"/><line x1="50" y1="82" x2="50" y2="90"/><line x1="10" y1="50" x2="18" y2="50"/><line x1="82" y1="50" x2="90" y2="50"/></svg>',
+    letter: '<svg viewBox="0 0 100 100"><rect x="20" y="30" width="60" height="45" rx="2" fill="none"/><path d="M20 30 L50 55 L80 30" fill="none"/><line x1="20" y1="75" x2="40" y2="55" opacity=".5"/><line x1="80" y1="75" x2="60" y2="55" opacity=".5"/></svg>',
+    door: '<svg viewBox="0 0 100 100"><rect x="30" y="15" width="40" height="75" rx="2" fill="none"/><circle cx="62" cy="55" r="3" fill="currentColor" opacity=".5"/><line x1="50" y1="15" x2="50" y2="90" opacity=".4"/><path d="M20 90 L80 90" stroke-width="2"/></svg>'
+  };
+  
+  // Fungsi untuk mencipta kulit buku HTML
+  window.createBookCover = function(opts){
+    var illus = ILLUS[opts.illus] || ILLUS.book;
+    return '<div class="book-cover">'
+      +'<div class="cover-frame">'
+      +'<div class="cover-illus">'+illus+'</div>'
+      +'<div class="cover-kicker">'+opts.kicker+'</div>'
+      +'<h1>'+opts.title+'</h1>'
+      +'<div class="cover-divider"></div>'
+      +'<p class="cover-desc">'+opts.desc+'</p>'
+      +'<div class="cover-author">'+opts.author+'</div>'
+      +'<button type="button" class="cover-start" id="'+opts.startId+'">Mula Membaca</button>'
+      +'</div></div>';
+  };
+  
+  // Fungsi untuk mencipta halaman pembuka bab
+  window.createChapterOpen = function(opts){
+    var illus = ILLUS[opts.illus] || ILLUS.star;
+    return '<div class="chapter-open">'
+      +'<div class="chapter-num">'+opts.num+'</div>'
+      +'<div class="chapter-illus">'+illus+'</div>'
+      +'<div class="chapter-kicker">Bab '+opts.num+'</div>'
+      +'<h2>'+opts.title+'</h2>'
+      +'<div class="chapter-divider"><div class="line"></div><div class="dot"></div><div class="line"></div></div>'
+      +'<div class="chapter-hint">Geser / klik seterusnya untuk membaca</div>'
+      +'</div>';
+  };
+  
+  // Senarai ilustrasi untuk setiap bab (mengikut indeks)
+  window.CHAPTER_ILLUS = ['moon','star','path','heart','window','book','sunmoon','compass','moon','star','path','heart','window','book','sunmoon','compass'];
+})();
+</script>
+<script>
 (function(){
   var ham=document.getElementById('hamburger');
   var navLinks=document.querySelector('.nav-links');
@@ -3506,6 +3952,22 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
   if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',hideBadge);}else{hideBadge();}
   setTimeout(hideBadge,1500);
 })();
+</script>
+<script>
+var CHAPTER_IMAGES = {"byac": {"01": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/8e6d28ea81344eb788edea0222913ba8.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010156C7C822743035D256AE33&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794070979&x-signature=7FSJkfQkFpJejoTapuLr1j91mJ0%3D", "05": "https://p19-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/4c4b739564724b10bfc5a60ddbace7cc.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010156C7C822743035D256AE33&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794070982&x-signature=tjZfpe%2B3NG9pOSa3f3zqq%2FRWQR0%3D", "07": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/5fb9ee977a084b22895bdd3bb7b42d98.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010156C7C822743035D256AE33&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794070997&x-signature=NRNwzeMW2G%2FDtZ%2BdnwySFH85VM0%3D", "02": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/baa4ff8999b24e78b318720071c37b4d.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071339&x-signature=U50lEUCIzbOGfmTGU%2BaIHAL8T44%3D", "03": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/e7cd088493ef45f99945095f41019c51.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071339&x-signature=ANi7OxSYkl2oIDEB6xo%2FKh1mIvQ%3D", "04": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/5d5d3ac7d542466d845de5fdb1f6fe0b.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071339&x-signature=FOlr8UE7ShIGDsnjjylPI72QHQA%3D", "06": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/ff73b2d77e90483c943eb073b1dec836.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071339&x-signature=LPrLstonC7uFzHIEjc%2FZfrPMbYk%3D", "08": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/52485d7f722542bba2c59f9360bdcc64.jpeg~tplv-0es2k971ck-image.image?rcl=20261009012904C71B66AE3A224F699082&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794072616&x-signature=Pjg5tlqtNV3sh8drj6hS5Ns5UHU%3D", "09": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/224fd3dbeab949f79e5868bc379a97cc.jpeg~tplv-0es2k971ck-image.image?rcl=20261009012904C71B66AE3A224F699082&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794072616&x-signature=OkQ4gb2udVJY2kX9U65B%2FvIYdw0%3D", "10": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/1fc146f92b024c60af8637618f492f85.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071356&x-signature=3Mp8mVEkl06QzkvugjK7IJmj9p0%3D", "11": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/8767baf571ff4bd8b153c006c5ff5c1e.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071358&x-signature=lAxMqaDF6W5SH5RiyoWHllmg91c%3D", "12": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/83761e14c5c9473bbbab8c458c1e31b9.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071356&x-signature=sz5UElzXriqbOBKW1MwdEeRTKCs%3D"}, "antara": {"01": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/2013dbb096f647b9a2e7b23595912500.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010156C7C822743035D256AE33&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794070978&x-signature=%2BGbA2YfI3Kt8sHdUAD%2FyC%2FK6hMo%3D", "03": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/b01a4d518b4c46d2beda503871b0b7e3.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010156C7C822743035D256AE33&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794070997&x-signature=3eQGkFn%2FsUvIG7If96d01EtJRro%3D", "02": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/626fda7501f64479810f9e3097029413.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071355&x-signature=0Mj31JreW5wBm9tNBAD2hXczpl4%3D", "04": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/34491f1f561249339f0dbd3454d33033.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071374&x-signature=HI1xOQY4eEgbJlGmEbLv3M%2FQ9Ts%3D", "05": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/167f94b00b924659b2190fc44b379815.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071375&x-signature=70bxS%2FEXIItlMROGBMAxfqjNsyg%3D"}, "gadis": {"01": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/0c098d625547422b8757364735e856f7.jpeg~tplv-0es2k971ck-image.image?rcl=20261009012904C71B66AE3A224F699082&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794072617&x-signature=INTtfkD37sUlF4liVrwnHzvA0Q0%3D", "02": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/a4499e391bcb4687bdae43d24eaf9268.jpeg~tplv-0es2k971ck-image.image?rcl=20261009012904C71B66AE3A224F699082&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794072618&x-signature=G4AbJQVe68lsLLU4RtRJ18YNd3o%3D", "03": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/af18b85db74a48b6a5418e40f16df0e9.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071376&x-signature=2t5Uwb27tQ%2BRTXXIKC1ldCNzscI%3D", "04": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/d7fa312814b9457d87b033bee2ee34a9.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071375&x-signature=KvRdcaJsSku%2FBFAuJSpUHuRC8cY%3D", "05": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/579f92d55e8f41028f7d365ed9750c07.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071376&x-signature=eU%2BxDg0b0cADtGEJ9tdkvFlcIj8%3D", "06": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/b6f416bd64a84c1facfd2e776708f047.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071392&x-signature=lMz3wbwYHIJ2CPQrsqaDihH%2F5SI%3D", "07": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/7e9289eca4d94518b3a0247fc061020c.jpeg~tplv-0es2k971ck-image.image?rcl=20261009012904C71B66AE3A224F699082&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794072616&x-signature=jHcZh9BT67bjmS25X%2B3d36Uthgo%3D", "08": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/2f3a619c3c2b49d3b5d91d16e5546f82.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071392&x-signature=wJqNHGmUjm60SietmZsz6jVWPUc%3D", "09": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/564dfb27dcff4949968f56f974029c06.jpeg~tplv-0es2k971ck-image.image?rcl=20261009012904C71B66AE3A224F699082&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794072632&x-signature=JgJ2Z43aghowiHcPGM1LkdfJ%2BDk%3D", "10": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/ec6a1e7105a84a9299b9e330eecb9f5e.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071392&x-signature=x%2BK7k9605SbUEMkzFITZ4iyfyPs%3D", "11": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/b33b4de542f94d298448075f941aa20b.jpeg~tplv-0es2k971ck-image.image?rcl=20261009012904C71B66AE3A224F699082&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794072633&x-signature=jnf2oGzL6sUDmUJWOGl3UD0Ghpo%3D", "12": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/eb7286c269324430bd0e4e1c05ab4190.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071408&x-signature=pwLT%2F7oosrd4rPp7jL8%2F3VD%2BSXA%3D", "13": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/b844f9360ee943a0b500e9ce20fe22ca.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071409&x-signature=WRzIntU3A1jZk79qhmq5LK8%2BgWw%3D", "14": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/224d947232814c30b519b52dc51c4123.jpeg~tplv-0es2k971ck-image.image?rcl=20261009012904C71B66AE3A224F699082&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794072632&x-signature=1I8OkYXbQfumvq15zx3ijIZR7xI%3D", "15": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/9e64c2e2a5414496b9845434ca9f4858.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071410&x-signature=k19oJ866u77wzMQ16BGJTuUyqMY%3D", "16": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/41a01415556c473ab90169e229863db0.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071432&x-signature=8ScwGI%2B%2FVn3VLlo4hy8RDJOlVwo%3D", "17": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/35348bf484494c6394e8d544a074ea1b.jpeg~tplv-0es2k971ck-image.image?rcl=20261009012904C71B66AE3A224F699082&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794072633&x-signature=sJyUjJ49vz2YY%2FLAkmPheroLgVM%3D", "18": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/26152b2d014d4b77b2c3a79af8a87a0b.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071432&x-signature=%2Ba3At3KKNCw7J5%2Bxh%2BbMWjxzSeQ%3D", "19": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/592f2e86922a427c8a2166ddaf3b5a44.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071433&x-signature=AU1EudQSf6wq3f6hMw7VCwN%2FO0k%3D", "20": "https://p16-flow-image-sign.ibyteimg.com/tos-mya-i-3rsxbfecgb/rc_gen_image/3d65e72d12474538b71f80423d55484e.jpeg~tplv-0es2k971ck-image.image?rcl=20261009010804FC8C74CFE29D048EA32F&rk3s=8e244e95&rrcfp=02a80fc2&x-expires=1794071431&x-signature=g0QZDzri1I1lTA8rRevEiyP8YMA%3D"}};
+function byacOpeningHTML(p, color, book){
+    var __img = (book && CHAPTER_IMAGES[book] && CHAPTER_IMAGES[book][p.num]) ? CHAPTER_IMAGES[book][p.num] : null;
+  var svgs = ['<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><polygon points="12,7 14,12 12,17 10,12" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6L17 7M7 17l-1.4 1.4"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="4" y="3" width="16" height="18" rx="1"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="4" y1="12" x2="20" y2="12"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><polygon points="12,3 14.5,9 21,9.5 16,14 17.5,20.5 12,17 6.5,20.5 8,14 3,9.5 9.5,9"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M6 21c0-6 4-8 4-12s-2-4-2-6"/><path d="M18 21c0-6-4-8-4-12s2-4 2-6"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 20s-7-4.5-9-9c-1.5-3.5 1-7 4.5-7 2 0 3.5 1 4.5 2.5C13 5 14.5 4 16.5 4 20 4 22.5 7.5 21 11c-2 4.5-9 9-9 9z"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 4h7a2 2 0 012 2v14a2 2 0 00-2-2H4z"/><path d="M20 4h-7a2 2 0 00-2 2v14a2 2 0 012-2h7z"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M20 14.5A8 8 0 119.5 4 6.5 6.5 0 0020 14.5z"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M3 20l6-11 4 6 3-4 5 9z"/><circle cx="17" cy="6" r="1.5"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M2 9c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/><path d="M2 14c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/><path d="M2 19c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2 2-2 4-2"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="8" r="5"/><line x1="12" y1="13" x2="12" y2="21"/><path d="M9 17l3-2 3 2"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"><path d="M3 12c3-3 6-3 9 0 3-3 6-3 9 0"/><path d="M12 12v4"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="8" cy="12" r="4"/><line x1="12" y1="12" x2="21" y2="12"/><line x1="17" y1="12" x2="17" y2="15"/><line x1="20" y1="12" x2="20" y2="15"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 7l9 6 9-6"/></svg>', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M5 21V4a1 1 0 011-1h12a1 1 0 011 1v17"/><line x1="3" y1="21" x2="21" y2="21"/><circle cx="15.5" cy="12" r="1" fill="currentColor" stroke="none"/></svg>'];
+  var svg = svgs[(p.svg||0) % svgs.length];
+  return '<div class="byac-open-page" style="--oc:'+color+'">'
+    + '<div class="byac-open-num">'+p.num+'</div>'
+    + '<div class="byac-open-bab">Bab '+p.num+'</div>'
+    + (__img ? '<div class="byac-open-img"><img src="'+__img+'" alt="Bab '+p.num+'"></div>' : '<div class="byac-open-svg">'+svg+'</div>')
+    + '<div class="byac-open-title">'+p.chapter+'</div>'
+    + '<div class="byac-open-divider"><span></span><i></i><span></span></div>'
+    + '<div class="byac-open-hint">Klik Seterusnya untuk membaca</div>'
+    + '</div>';
+}
 </script>
 </body>
 </html>
