@@ -792,7 +792,7 @@ section.khas{padding:5rem 0}
 .khas-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
 .khas-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 16px 50px var(--accent-soft)}
 .khas-card .kicker{font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.4em;text-transform:uppercase;color:var(--accent2);margin-bottom:1.5rem}
-.khas-card h3{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,5vw,3rem);letter-spacing:.02em;line-height:1.1;margin-bottom:1rem}
+.khas-card h3{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,5vw,3rem);letter-spacing:.02em;line-height:1.1;margin-bottom:1.75rem}
 .khas-card h3 .grad{background:linear-gradient(120deg,#f5d98a,var(--accent) 55%,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .khas-card .byline{font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem}
 .khas-card .desc{max-width:36rem;margin:0 auto 2rem;font-size:1rem;line-height:1.85;color:var(--muted);font-weight:300}
@@ -946,6 +946,7 @@ section#batas{padding:5rem 0 3rem}
     <div class="nav-links">
       <a class="link" href="#manifesto">Manifesto</a>
       <a class="link" href="#trilogi">Trilogi</a>
+      <a class="link" href="#tetralogi">Tetralogi</a>
       <a class="link" href="#karya">42 Karya</a>
       <a class="link" href="#tentang">Penulis</a>
       <button class="theme-btn" id="themeBtn" aria-label="Tukar tema cahaya/gelap">
@@ -968,6 +969,7 @@ section#batas{padding:5rem 0 3rem}
     <a class="btn" href="#karya">Baca 42 Karya</a>
     <a class="btn ghost" href="#manifesto">Manifesto</a>
     <a class="btn ghost" href="#trilogi">Trilogi</a>
+    <a class="btn ghost" href="#tetralogi">Tetralogi</a>
     <a class="btn ghost" href="#khas">Karya Khas</a>
   </div>
   <div class="scroll-hint"><span>Scroll</span><div class="line"></div></div>
@@ -1132,29 +1134,64 @@ LUAS pada pemikiran.</span></p>
         <div class="tri-num">01 <span>/ 04</span></div>
         <h3 class="tri-title">WANITA YANG DIWARISI</h3>
         <div class="tri-poem"><div class="tri-stanza"><p>Namaku datang sebelum aku,</p><p>terbit dari lidah keluarga;</p><p>sebelum mengenal wajah sendiri,</p><p>aku telah diberi nama.</p></div><div class="tri-stanza"><p>Adat dijahit pada tubuh,</p><p>gerak diajar sebelum mengenal jalan;</p><p>benang turun dari tangan</p><p>yang pernah menerima jarum.</p></div><div class="tri-stanza"><p>Lama kusangka corak itu kulit,</p><p>hingga jarum terhenti pada simpul;</p><p>seutas benang masih terjuntai,</p><p>menghafal bentuk yang belum selesai.</p></div><div class="tri-stanza"><p>Kucari simpul paling awal,</p><p>namun tertanam jauh dalam waktu;</p><p>kain ini bukan pilihanku,</p><p>jarum ini sudah di tanganku.</p></div></div>
-        <button class="tri-toggle" type="button" aria-expanded="false">Info Karya <span class="tri-arrow">+</span></button>
-        <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 01/04</span></div><div class="tri-mrow"><span class="tri-mk">Tahun</span><span class="tri-mv">2026</span></div></div></div></div>
+        <div class="tri-acc">
+          <div class="tri-item">
+            <button class="tri-toggle" type="button" aria-expanded="false">Catatan Penulis <span class="tri-arrow">+</span></button>
+            <div class="tri-panel"><div class="tri-panel-in"><p>Ada perkara yang sampai kepada kita<br>sebelum sempat kita memilih.</p><p>Lama-kelamaan,<br>kita lupa bahawa ia pernah menjadi pilihan orang lain.</p></div></div>
+          </div>
+          <div class="tri-item">
+            <button class="tri-toggle" type="button" aria-expanded="false">Info Karya <span class="tri-arrow">+</span></button>
+            <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 01/04</span></div><div class="tri-mrow"><span class="tri-mk">Tahun</span><span class="tri-mv">2026</span></div></div></div>
+          </div>
+        </div></div>
       </article>
+      <div class="tri-divider"></div>
       <article class="tri-work reveal">
         <div class="tri-num">02 <span>/ 04</span></div>
         <h3 class="tri-title">WANITA YANG DILIHAT</h3>
         <div class="tri-poem"><div class="tri-stanza"><p>Wajahku dikenal sebelum aku,</p><p>garis dibaca sebelum suara;</p><p>rupa ditimbang daripada diam,</p><p>gerak ditafsir sebelum makna.</p></div><div class="tri-stanza"><p>Mereka memahat pada kaca,</p><p>membingkai sudut, menetapkan jarak;</p><p>bayang dipanggil diriku,</p><p>permukaan kian tidak mengenalku.</p></div><div class="tri-stanza"><p>Lama kubiarkan ia mendahului,</p><p>diri sekadar mengikuti;</p><p>retak menjalar memecah bacaan,</p><p>wajah berderai menjadi serpih.</p></div><div class="tri-stanza"><p>Serpihannya tinggal tanpa nama,</p><p>bayang kehilangan tempat berpaut;</p><p>yang dilihat cuma pecahan,</p><p>aku tidak lagi selesai di sana.</p></div></div>
-        <button class="tri-toggle" type="button" aria-expanded="false">Info Karya <span class="tri-arrow">+</span></button>
-        <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 02/04</span></div><div class="tri-mrow"><span class="tri-mk">Tahun</span><span class="tri-mv">2026</span></div></div></div></div>
+        <div class="tri-acc">
+          <div class="tri-item">
+            <button class="tri-toggle" type="button" aria-expanded="false">Catatan Penulis <span class="tri-arrow">+</span></button>
+            <div class="tri-panel"><div class="tri-panel-in"><p>Orang melihat kita<br>melalui apa yang mereka tahu.</p><p>Kadang-kadang,<br>yang mereka kenal cuma pantulan mereka sendiri.</p></div></div>
+          </div>
+          <div class="tri-item">
+            <button class="tri-toggle" type="button" aria-expanded="false">Info Karya <span class="tri-arrow">+</span></button>
+            <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 02/04</span></div><div class="tri-mrow"><span class="tri-mk">Tahun</span><span class="tri-mv">2026</span></div></div></div>
+          </div>
+        </div></div>
       </article>
+      <div class="tri-divider"></div>
       <article class="tri-work reveal">
         <div class="tri-num">03 <span>/ 04</span></div>
         <h3 class="tri-title">WANITA YANG DIAM</h3>
         <div class="tri-poem"><div class="tri-stanza"><p>Pintu menahan segala langkah,</p><p>dinding menakung sisa suara;</p><p>celah sunyi kian merapat,</p><p>jejak larut pada lantai.</p></div><div class="tri-stanza"><p>Daunnya merapat ke dinding,</p><p>bunyi halaman perlahan luruh;</p><p>langkah asing melintas,</p><p>gema surut sepanjang ruang.</p></div><div class="tri-stanza"><p>Lama ruang terasa sempit,</p><p>dinding mencatat gerak;</p><p>engsel berganjak tanpa bunyi,</p><p>ambang mendekati telapak.</p></div><div class="tri-stanza"><p>Pintu kubiarkan tanpa kunci,</p><p>dinding sepi di tempatnya;</p><p>belum perlu melangkah keluar,</p><p>ruang ini mengenal namaku.</p></div></div>
-        <button class="tri-toggle" type="button" aria-expanded="false">Info Karya <span class="tri-arrow">+</span></button>
-        <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 03/04</span></div><div class="tri-mrow"><span class="tri-mk">Tahun</span><span class="tri-mv">2026</span></div></div></div></div>
+        <div class="tri-acc">
+          <div class="tri-item">
+            <button class="tri-toggle" type="button" aria-expanded="false">Catatan Penulis <span class="tri-arrow">+</span></button>
+            <div class="tri-panel"><div class="tri-panel-in"><p>Aku tidak menganggap diam itu kosong.</p><p>Ada diam yang kelihatan seperti menunggu,<br>sedangkan sebenarnya<br>ia sedang memilih apa yang patut kekal.</p></div></div>
+          </div>
+          <div class="tri-item">
+            <button class="tri-toggle" type="button" aria-expanded="false">Info Karya <span class="tri-arrow">+</span></button>
+            <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 03/04</span></div><div class="tri-mrow"><span class="tri-mk">Tahun</span><span class="tri-mv">2026</span></div></div></div>
+          </div>
+        </div></div>
       </article>
+      <div class="tri-divider"></div>
       <article class="tri-work reveal">
         <div class="tri-num">04 <span>/ 04</span></div>
         <h3 class="tri-title">WANITA YANG MEMILIH</h3>
         <div class="tri-poem"><div class="tri-stanza"><p>Di hadapan, jalan bercabang,</p><p>arah berbeza menawar janji;</p><p>satu telah mengenal jejaknya,</p><p>satu lagi belum bernama.</p></div><div class="tri-stanza"><p>Telapak tertahan di ambang,</p><p>bayang lama memanjang di tanah;</p><p>angin menggeser hujung kain,</p><p>kaki masih enggan berganjak.</p></div><div class="tri-stanza"><p>Langkahnya meninggalkan ambang,</p><p>jejak baharu tercetak di debu;</p><p>tiada tanda untuk diwariskan,</p><p>tiada suara perlu dijawab.</p></div><div class="tri-stanza"><p>Masa lalu tertinggal jauh,</p><p>jalan baharu terbuka lengang;</p><p>bumi belum mengenal bekas,</p><p>tiada arah sebelum langkah.</p></div></div>
-        <button class="tri-toggle" type="button" aria-expanded="false">Info Karya <span class="tri-arrow">+</span></button>
-        <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 04/04</span></div><div class="tri-mrow"><span class="tri-mk">Tahun</span><span class="tri-mv">2026</span></div></div></div></div>
+        <div class="tri-acc">
+          <div class="tri-item">
+            <button class="tri-toggle" type="button" aria-expanded="false">Catatan Penulis <span class="tri-arrow">+</span></button>
+            <div class="tri-panel"><div class="tri-panel-in"><p>Kita selalu menganggap pilihan<br>bermula apabila kita menentukan arah.</p><p>Mungkin sebenarnya,<br>ia bermula ketika kita berhenti mengikut jalan yang sudah tersedia.</p></div></div>
+          </div>
+          <div class="tri-item">
+            <button class="tri-toggle" type="button" aria-expanded="false">Info Karya <span class="tri-arrow">+</span></button>
+            <div class="tri-panel"><div class="tri-panel-in"><div class="tri-meta"><div class="tri-mrow"><span class="tri-mk">Siri</span><span class="tri-mv">Tetralogi Wanita &middot; 04/04</span></div><div class="tri-mrow"><span class="tri-mk">Tahun</span><span class="tri-mv">2026</span></div></div></div>
+          </div>
+        </div></div>
       </article>
     </div>
   </section>
@@ -1177,12 +1214,11 @@ LUAS pada pemikiran.</span></p>
     <p style="color:var(--muted);font-size:1rem;line-height:1.9;font-weight:300;font-style:italic;margin:0">Sebahagian tulisan tidak lahir untuk sekadar dibaca. Ada yang menyimpan perjalanan sebelum sebuah aksara menemukan bentuknya.</p>
   </div>
   <div class="khas-grid">
-    <div class="khas-card reveal" id="byac-card" style="border-color:var(--accent);box-shadow:0 12px 40px var(--accent-soft)">
+    <div class="khas-card reveal" id="byac-card">
       <div class="khas-tag">01</div>
       <div class="kicker">Karya Khas · Cerita Panjang</div>
       <h3>BATAS<br><span class="grad">YANG AKU CARI</span></h3>
       <p class="kquote">Aku seorang yang perlu memahami.</p>
-      <p class="kunci" style="font-size:.8rem;color:var(--muted);font-style:italic;font-weight:300;line-height:1.7;margin:-.2rem 0 1.2rem">Sebuah perjalanan tentang perkara yang pernah aku cuba ukur, sebelum sedar bahawa diriku sendiri ialah sebahagian daripada persoalan.</p>
       <a class="khas-btn" href="#batas">Baca Cerita Penuh</a>
     </div>
     <div class="khas-card reveal" id="antara-card">
@@ -1190,14 +1226,13 @@ LUAS pada pemikiran.</span></p>
       <div class="kicker">Karya Khas · Catatan</div>
       <h3>ANTARA<br><span class="grad">CAHAYA DAN GELAP</span></h3>
       <p class="kquote">Kita tidak hidup di hujung. Kita hidup di antara.</p>
-      <p class="kunci" style="font-size:.8rem;color:var(--muted);font-style:italic;font-weight:300;line-height:1.7;margin:-.2rem 0 1.2rem">Catatan tentang hidup di antara perkara yang tidak pernah benar-benar hitam atau putih.</p>
       <a class="khas-btn" href="#antara" id="antara-cta">Baca ANTARA</a>
     </div>
     <div class="khas-card reveal" id="gadis-card">
       <div class="khas-tag">03</div>
       <div class="kicker">Karya Khas &middot; Novel</div>
       <h3>GADIS YANG<br><span class="grad">PERNAH DUDUK DI SEBELAH</span></h3>
-      <p class="kquote">sebuah novel tentang ingatan, kemungkinan, dan seseorang yang tidak pernah menjadi milik</p>
+      <p class="kquote">Novel tentang ingatan, kemungkinan, dan seseorang yang tidak pernah menjadi milik.</p>
       <a class="khas-btn" href="#gadis" id="gadis-cta">Baca Novel</a>
     </div>
   </div>
@@ -1225,6 +1260,7 @@ LUAS pada pemikiran.</span></p>
       <p style="margin-bottom:1.2rem;color:var(--text)">Aku cuma meninggalkan ruang untuk pembaca menemui jawapannya sendiri.</p>
       <p style="margin-bottom:1.2rem;color:var(--text)">Bagi aku, tidak semuanya benar<br>dan tidak semua sepenuhnya salah.</p>
       <p style="margin-top:1.6rem;color:var(--muted);font-style:italic;font-weight:300">Selebihnya, boleh tafsir sendiri.</p>
+      <p style="margin-top:1.8rem;color:var(--muted);font-size:.82rem;letter-spacing:.14em;font-weight:300;line-height:1.9">Shaiful Ridhwan<br><span style="font-size:.72rem;opacity:.7;letter-spacing:.2em">Oktober 2026</span></p>
     </div>
   </div>
 </section>
@@ -1285,7 +1321,7 @@ LUAS pada pemikiran.</span></p>
       <p class="author-desc">Aku tidak mahu pembaca memahami tulisanku seperti memahami nota kaki.</p>
       <p class="author-desc">Aku mahu mereka berhadapan dengannya.</p>
       <p class="pen-label">PENDIRIAN TENTANG IMEJ PUISI</p>
-      <p class="author-desc">Aku tak suka puisi yang bergantung pada imej untuk kelihatan menarik. Bagi aku, puisi sudah mempunyai wajahnya sendiri melalui kata, ruang dan susunan.</p>
+      <p class="author-desc">Aku tidak suka puisi yang bergantung pada imej untuk kelihatan menarik. Bagi aku, puisi sudah mempunyai wajahnya sendiri melalui kata, ruang dan susunan.</p>
       <p class="author-desc">Imej hanya diperlukan apabila ia menjadi sebahagian daripada makna, simbol atau bentuk karya.</p>
       <p class="author-desc">Bukan untuk menghias. Bukan untuk menerangkan apa yang pembaca patut rasa.</p>
       <p class="author-desc">Setuju atau tidak, tafsiran tetap milik anda.</p>
@@ -1987,12 +2023,12 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Aku diam seketika.'],
       ['p','Entah kenapa, baris itu melekat.'],
       ['p','Malam itu juga, selepas dia tidur, aku buka Notes.'],
-      ['p','Aku tak tulis puisi.'],
+      ['p','Aku tidak tulis puisi.'],
       ['p','Aku cuma tulis apa yang aku rasa.'],
       ['p','Perkataan pertama yang aku taip mungkin bukan ayat yang bagus.'],
       ['p','Tapi ia jujur.'],
       ['p','Aku masih ingat baris pertama yang aku taip.'],
-      ['p','Aku taip: "Aku tak tahu apa yang aku rasa. Tapi aku rasa banyak."'],
+      ['p','Aku taip: "Aku tidak tahu apa yang aku rasa. Tapi aku rasa banyak."'],
       ['p','Itu sahaja. Tapi malam itu, ia cukup.'],
       ['p','Dan sejak malam itu, Notes aku makin lama makin panjang.'],
       ['q','Kadang-kadang satu orang tidak perlu buat banyak. Cukup dengan hadir pada waktu yang betul.'],
@@ -2552,7 +2588,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU", ["kau tahu cara mencintai 
       ['p','Ada malam aku debug kernel sehingga tiga pagi.'],
       ['p','Telefon aku bootloop berkali-kali. Aku flash semula. Cuba lagi. Kemudian rosak lagi.'],
       ['p','Pada satu ketika, aku berhenti. Aku tengok skrin yang gelap.'],
-      ['p','Dan aku tahu — akal aku boleh baca kod. Tapi akal aku tak boleh jelaskan kenapa aku sanggup tidak tidur untuk sebuah telefon.'],
+      ['p','Dan aku tahu — akal aku boleh baca kod. Tapi akal aku tidak boleh jelaskan kenapa aku sanggup tidak tidur untuk sebuah telefon.'],
       ['p','Di situlah batas akal bermula. Bila ia boleh jawab bagaimana, tapi tak boleh jawab mengapa.'],
       ['p','Aku belajar semua benda sendiri. Google. YouTube. Forum. Cuba. Rosak. Cuba lagi.'],
       ['p','Dan dalam proses itu, aku belajar satu perkara — ilmu bukan tentang sampai ke destinasi. Ilmu adalah tentang bersedia untuk tersesat, kemudian mencari jalan semula.'],
