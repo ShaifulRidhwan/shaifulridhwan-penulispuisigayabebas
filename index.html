@@ -1415,10 +1415,14 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU",["kau tahu cara mencintai s
   function applyFilter(){
     var q = searchInput.value.trim().toLowerCase();
     var filtered = POEMS.filter(function(p){
+      if(q){
+        // Apabila ada kata carian, cari merentasi SEMUA kategori — tidak dihadkan oleh tab kategori aktif.
+        // Ini memastikan carian seperti "aporia" (dalam Trilogi) atau "memilih" (merentasi kategori)
+        // sentiasa menemukan karya yang sepadan tanpa mengira tab yang sedang dipilih.
+        return p[0].toLowerCase().indexOf(q) !== -1 || p[1].join(' ').toLowerCase().indexOf(q) !== -1;
+      }
       var catOk = (activeCat === 'all') || (CATS[p[2]-1] === activeCat);
-      if(!catOk) return false;
-      if(!q) return true;
-      return p[0].toLowerCase().indexOf(q) !== -1 || p[1].join(' ').toLowerCase().indexOf(q) !== -1;
+      return catOk;
     });
     render(filtered);
   }
