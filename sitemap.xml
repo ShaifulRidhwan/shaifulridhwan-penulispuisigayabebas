@@ -1,8 +1,11 @@
-<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">  <url>
+    <loc>https://shaifulridhwan-penulispuisigayabebas.netlify.app/</loc>
+  </url>
   <url>
+    <loc>https://shaifulridhwan-penulispuisigayabebas.netlify.app/karya-khas</loc>
+  </url>  <url>
     <loc>https://shaifulridhwan-penulispuisigayabebas.mshaifulridhwan.workers.dev/</loc>
   </url>
   <url>
     <loc>https://shaifulridhwan-penulispuisigayabebas.mshaifulridhwan.workers.dev/karya-khas</loc>
-  </url>
-</urlset>
+  </url></urlset>
