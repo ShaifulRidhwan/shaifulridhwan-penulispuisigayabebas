@@ -1085,8 +1085,6 @@ function paginate(){
   measurer.style.lineHeight='1.72';
   var sections=parseManuscript();
   pages=[];sectionStart=[];
-  /* Halaman tajug */
-  pages.push({html:'<div style="text-align:center;padding-top:16%;font-family:var(--font-display)"><div style="font-family:var(--font-ui);font-size:.6rem;letter-spacing:.4em;text-transform:uppercase;color:var(--accent);margin-bottom:1.6rem">Prosa Falsafah</div><div style="font-weight:300;font-size:2em;line-height:1.12;margin-bottom:.9rem;letter-spacing:.01em">Antara<br><em style="font-weight:600;color:var(--accent)">Cahaya dan Gelap</em></div><div style="height:1px;width:3.2rem;background:var(--accent-line);margin:1.6rem auto;opacity:.7"></div><div style="font-size:.95rem;letter-spacing:.22em;text-transform:uppercase;color:var(--text-muted)">Shaiful Ridhwan</div><div style="font-family:var(--font-ui);font-size:.55rem;letter-spacing:.3em;text-transform:uppercase;color:var(--text-faint);margin-top:2.4rem">Kita tidak hidup di hujung.<br>Kita hidup di antara.</div></div>',section:-1});
   var curHtml='';
   function flush(){if(curHtml!==''){pages.push({html:curHtml,section:sectionStart.length-1});curHtml='';}}
   function fits(html){
