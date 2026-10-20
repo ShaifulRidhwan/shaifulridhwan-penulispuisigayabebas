@@ -50,20 +50,22 @@
   --fs:16px;
 }
 :root[data-theme="dark"]{
-  --bg:#171717; --bg-soft:#1c1b18; --surface:#211f1b; --page-bg:#1a1916;
-  --text:#E8E2D4; --text-muted:#A8A294; --text-faint:#77766F;
-  --accent:#A69A7B; --accent-soft:rgba(166,154,123,.10); --accent-line:rgba(166,154,123,.32);
-  --border:rgba(166,154,123,.16); --hairline:rgba(232,226,212,.07);
-  --shadow:0 30px 80px rgba(0,0,0,.6); --page-edge:rgba(0,0,0,.45);
-  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  --bg:#0B0C0F; --bg-soft:#121418; --surface:#17191D; --page-bg:#14161A;
+  --text:#E8E0D2; --text-muted:#9A9DA3; --text-faint:#777A80;
+  --accent:#BFC1C5; --accent-soft:rgba(191,193,197,.08); --accent-line:rgba(191,193,197,.30);
+  --border:rgba(191,193,197,.14); --hairline:rgba(232,224,210,.06);
+  --shadow:0 30px 90px rgba(0,0,0,.7); --page-edge:rgba(0,0,0,.5);
+  --light:#F1EBDD;
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
 }
 :root[data-theme="light"]{
-  --bg:#EDE7D9; --bg-soft:#E6DFCE; --surface:#F1EBDD; --page-bg:#F1EBDD;
-  --text:#2A2820; --text-muted:#6B675C; --text-faint:#9A9588;
-  --accent:#8A7A55; --accent-soft:rgba(138,122,85,.09); --accent-line:rgba(138,122,85,.38);
-  --border:rgba(138,122,85,.20); --hairline:rgba(42,40,32,.09);
-  --shadow:0 24px 70px rgba(60,50,30,.18); --page-edge:rgba(60,50,30,.15);
-  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  --bg:#E8E0D2; --bg-soft:#E0D8C8; --surface:#F1EBDD; --page-bg:#F1EBDD;
+  --text:#17191D; --text-muted:#5A5D63; --text-faint:#8A8D93;
+  --accent:#6E7177; --accent-soft:rgba(110,113,119,.08); --accent-line:rgba(110,113,119,.35);
+  --border:rgba(110,113,119,.20); --hairline:rgba(23,25,29,.08);
+  --shadow:0 24px 70px rgba(20,22,26,.18); --page-edge:rgba(20,22,26,.15);
+  --light:#F1EBDD;
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
@@ -76,8 +78,8 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-off
 
 /* ===== COVER ===== */
 .cover{position:relative;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 1.5rem;overflow:hidden}
-.cover-emblem{width:210px;height:122px;margin-bottom:2.5rem;flex-shrink:0;position:relative;z-index:2}
-.cover-emblem svg{width:100%;height:100%;display:block}
+.cover-emblem{width:min(540px,90vw);height:auto;margin-bottom:2.5rem;flex-shrink:0;position:relative;z-index:2}
+.cover-emblem svg{width:100%;height:auto;display:block}
 .cover-halo{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 60% 40% at 50% 38%,var(--accent-soft),transparent 70%)}
 .cover-inner{position:relative;z-index:2;max-width:40rem}
 .cover-eyebrow{font-family:var(--font-ui);font-size:.6rem;letter-spacing:.4em;text-transform:uppercase;color:var(--accent);margin-bottom:1.6rem}
@@ -131,7 +133,7 @@ body.in-book .continuous{display:none}
 .page-inner .ps-rule::before,.page-inner .ps-rule::after{content:"";height:1px;flex:1;max-width:2.5rem;background:var(--hairline)}
 .page-inner p{margin-bottom:.65em;font-size:1em;line-height:1.62;color:var(--text);font-weight:400;text-align:justify;hyphens:auto}
 .page-inner p.drop::first-letter{font-family:var(--font-display);font-weight:600;font-size:2.6em;line-height:.8;float:left;padding:.04em .08em 0 0;color:var(--accent)}
-.page-inner .novel-quote{margin:1.6em 0;padding:.2em 0 .2em 1.2em;border-left:1.5px solid var(--accent-line);background:none;font-family:var(--font-display);font-style:italic;color:var(--text-muted);font-size:1.05em;line-height:1.65;font-weight:400;position:relative}
+.page-inner .novel-quote{margin:1.8em 0;padding:1.1em 1.3em 1.1em 1.5em;border-left:2.5px solid var(--accent);background:var(--accent-soft);border-radius:0 3px 3px 0;font-family:var(--font-display);font-style:italic;color:var(--text);font-size:1.08em;line-height:1.65;font-weight:400;position:relative}
 .page-inner .novel-quote p{margin-bottom:0;text-align:left}
 .page-inner .scene-break{display:flex;align-items:center;justify-content:center;gap:.8rem;margin:1em 0;color:var(--text-faint)}
 .page-inner .scene-break span{height:1px;flex:1;max-width:2rem;background:var(--hairline)}
@@ -186,7 +188,7 @@ body.in-book .continuous{display:none}
 /* Measurer (hidden) */
 #measurer{position:fixed;left:-9999px;top:0;visibility:hidden;overflow:hidden;font-family:var(--font-body);line-height:1.62;font-weight:400}
 #measurer p{margin-bottom:.65em;text-align:justify}
-#measurer .novel-quote{margin:1.6em 0;padding:.2em 0 .2em 1.2em;border-left:1.5px solid var(--accent-line);background:none;font-family:var(--font-display);font-style:italic;color:var(--text-muted);font-size:1.05em;line-height:1.65;font-weight:400}
+#measurer .novel-quote{margin:1.8em 0;padding:1.1em 1.3em 1.1em 1.5em;border-left:2.5px solid var(--accent);background:var(--accent-soft);border-radius:0 3px 3px 0;font-family:var(--font-display);font-style:italic;color:var(--text);font-size:1.08em;line-height:1.65;font-weight:400}
 #measurer .novel-quote p{margin-bottom:0;text-align:left}
 #measurer .scene-break{display:flex;align-items:center;justify-content:center;gap:.8rem;margin:1em 0}
 #measurer .scene-break span{height:1px;flex:1;max-width:2rem;background:var(--hairline)}
@@ -219,7 +221,7 @@ body.continuous-mode .reader{display:block}
 @media(max-width:640px){
   :root{--fs:17px}
   .cover{padding:3rem 1.2rem}
-  .cover-emblem{width:160px;height:93px;margin-bottom:1.6rem}
+  .cover-emblem{width:90vw;height:auto;margin-bottom:1.6rem}
   .tb-title{display:none}
   .icon-btn{width:2.15rem;height:2.15rem}
   .fs-btn{padding:0 .5rem;font-size:.75rem}
@@ -233,7 +235,7 @@ body.continuous-mode .reader{display:block}
 .ps-symbol{width:40px;height:40px;margin:0 auto 1.4rem;color:var(--accent);opacity:.85}
 .ps-symbol svg{width:100%;height:100%;display:block}
 .book-section-title{text-align:center;font-size:1.35em;letter-spacing:.02em;margin-bottom:.3em}
-.cover-emblem{width:210px;height:122px;margin-bottom:2.5rem}
+.cover-emblem{width:min(540px,90vw);height:auto;margin-bottom:2.5rem}
 .book-stage{background:radial-gradient(ellipse 70% 50% at 50% 40%,var(--accent-soft),transparent 72%)}
 @media(prefers-reduced-motion:reduce){.book-stage{background:none}.cover-emblem{filter:none}}
 
@@ -258,32 +260,51 @@ body.continuous-mode .reader{display:block}
   <div class="cover-halo" aria-hidden="true"></div>
   <div class="cover-inner">
     <div class="cover-emblem" aria-hidden="true">
-      <svg viewBox="0 0 240 140" xmlns="http://www.w3.org/2000/svg">
+      <svg viewBox="0 0 520 320" xmlns="http://www.w3.org/2000/svg">
         <defs>
-          <linearGradient id="horizonFade" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#77766F" stop-opacity="0"/>
-            <stop offset="20%" stop-color="#77766F" stop-opacity="0.5"/>
-            <stop offset="80%" stop-color="#77766F" stop-opacity="0.5"/>
-            <stop offset="100%" stop-color="#77766F" stop-opacity="0"/>
+          <linearGradient id="stoneV" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#1c1f25"/>
+            <stop offset="55%" stop-color="#121418"/>
+            <stop offset="100%" stop-color="#0B0C0F"/>
           </linearGradient>
-          <linearGradient id="horizonFade2" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#77766F" stop-opacity="0"/>
-            <stop offset="35%" stop-color="#77766F" stop-opacity="0.22"/>
-            <stop offset="65%" stop-color="#77766F" stop-opacity="0.22"/>
-            <stop offset="100%" stop-color="#77766F" stop-opacity="0"/>
+          <linearGradient id="stoneHL" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#BFC1C5" stop-opacity="0.35"/>
+            <stop offset="100%" stop-color="#BFC1C5" stop-opacity="0"/>
           </linearGradient>
-          <radialGradient id="pointGlow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="#A69A7B" stop-opacity="0.5"/>
-            <stop offset="45%" stop-color="#A69A7B" stop-opacity="0.12"/>
-            <stop offset="100%" stop-color="#A69A7B" stop-opacity="0"/>
+          <linearGradient id="beam" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#F1EBDD" stop-opacity="0.18"/>
+            <stop offset="55%" stop-color="#F1EBDD" stop-opacity="0.07"/>
+            <stop offset="100%" stop-color="#F1EBDD" stop-opacity="0"/>
+          </linearGradient>
+          <radialGradient id="farGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#F1EBDD" stop-opacity="0.5"/>
+            <stop offset="45%" stop-color="#F1EBDD" stop-opacity="0.12"/>
+            <stop offset="100%" stop-color="#F1EBDD" stop-opacity="0"/>
           </radialGradient>
         </defs>
-        <line x1="18" y1="88" x2="222" y2="88" stroke="url(#horizonFade)" stroke-width="0.6"/>
-        <line x1="60" y1="108" x2="180" y2="108" stroke="url(#horizonFade2)" stroke-width="0.4"/>
-        <circle cx="92" cy="70" r="26" fill="url(#pointGlow)"/>
-        <line x1="92" y1="72" x2="92" y2="86" stroke="#A69A7B" stroke-width="0.4" opacity="0.35"/>
-        <circle cx="92" cy="70" r="2.2" fill="#A69A7B"/>
-        <circle cx="92" cy="70" r="0.8" fill="#E8E2D4"/>
+        <!-- floor perspective lines -->
+        <line x1="60" y1="320" x2="245" y2="200" stroke="#777A80" stroke-width="0.5" opacity="0.22"/>
+        <line x1="120" y1="320" x2="252" y2="200" stroke="#777A80" stroke-width="0.4" opacity="0.16"/>
+        <line x1="460" y1="320" x2="275" y2="200" stroke="#777A80" stroke-width="0.5" opacity="0.22"/>
+        <line x1="400" y1="320" x2="268" y2="200" stroke="#777A80" stroke-width="0.4" opacity="0.16"/>
+        <!-- distant light through arch -->
+        <circle cx="260" cy="195" r="34" fill="url(#farGlow)"/>
+        <circle cx="260" cy="195" r="2.2" fill="#F1EBDD"/>
+        <!-- light beam -->
+        <polygon points="70,0 175,0 380,320 275,320" fill="url(#beam)"/>
+        <!-- pillars -->
+        <rect x="148" y="72" width="46" height="192" fill="url(#stoneV)"/>
+        <rect x="188" y="72" width="6" height="192" fill="url(#stoneHL)"/>
+        <rect x="326" y="72" width="46" height="192" fill="url(#stoneV)"/>
+        <rect x="326" y="72" width="4" height="192" fill="#BFC1C5" opacity="0.12"/>
+        <!-- lintel -->
+        <rect x="148" y="72" width="224" height="34" fill="url(#stoneV)"/>
+        <rect x="148" y="72" width="224" height="3" fill="#BFC1C5" opacity="0.14"/>
+        <!-- floor shadows -->
+        <polygon points="194,264 260,320 150,320" fill="#000" opacity="0.45"/>
+        <polygon points="326,264 370,320 260,320" fill="#000" opacity="0.35"/>
+        <!-- horizon line behind arch -->
+        <line x1="200" y1="200" x2="320" y2="200" stroke="#777A80" stroke-width="0.5" opacity="0.3"/>
       </svg>
     </div>
     <div class="cover-eyebrow">Prosa Falsafah · Renungan Intelektual</div>
@@ -905,14 +926,14 @@ function blockHtml(b,firstInSection){
   if(b.type==='symbol'){return '<div class="ps-symbol">'+b.html+'</div>';}
   return '';
 }
-var SECTION_VISUALS=['<svg viewBox="0 0 140 140"><line x1="15" y1="82" x2="125" y2="82" stroke="currentColor" stroke-width="0.5" opacity="0.4"/><line x1="15" y1="98" x2="125" y2="98" stroke="currentColor" stroke-width="0.3" opacity="0.2"/><circle cx="70" cy="90" r="2" fill="currentColor"/><circle cx="70" cy="90" r="10" fill="currentColor" opacity="0.07"/></svg>',
-'<svg viewBox="0 0 140 140"><polygon points="70,30 110,100 30,100" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.7"/><line x1="30" y1="100" x2="110" y2="30" stroke="currentColor" stroke-width="0.4" opacity="0.4"/><line x1="110" y1="100" x2="50" y2="30" stroke="currentColor" stroke-width="0.4" opacity="0.4"/><circle cx="70" cy="78" r="1.6" fill="currentColor"/></svg>',
-'<svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="48" fill="none" stroke="currentColor" stroke-width="0.35" opacity="0.18"/><circle cx="70" cy="70" r="30" fill="none" stroke="currentColor" stroke-width="0.4" opacity="0.28"/><circle cx="70" cy="70" r="14" fill="currentColor" opacity="0.07"/><circle cx="70" cy="70" r="2.2" fill="currentColor"/></svg>',
-'<svg viewBox="0 0 140 140"><circle cx="54" cy="70" r="24" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.75"/><circle cx="86" cy="70" r="24" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.45"/><line x1="68" y1="70" x2="72" y2="70" stroke="currentColor" stroke-width="1.1"/></svg>',
-'<svg viewBox="0 0 140 140"><rect x="38" y="34" width="64" height="72" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.6"/><line x1="38" y1="34" x2="38" y2="106" stroke="currentColor" stroke-width="2"/><line x1="70" y1="106" x2="70" y2="124" stroke="currentColor" stroke-width="0.35" opacity="0.3"/><circle cx="92" cy="66" r="1.5" fill="currentColor"/></svg>',
-'<svg viewBox="0 0 140 140"><path d="M22 96 Q50 42 70 68 T118 48" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.65"/><path d="M22 96 Q50 42 70 68 T118 48" fill="none" stroke="currentColor" stroke-width="0.45" opacity="0.28" transform="translate(0,7)"/><path d="M22 96 Q50 42 70 68 T118 48" fill="none" stroke="currentColor" stroke-width="0.3" opacity="0.14" transform="translate(0,14)"/></svg>',
-'<svg viewBox="0 0 140 140"><circle cx="56" cy="60" r="20" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.7"/><circle cx="84" cy="80" r="20" fill="none" stroke="currentColor" stroke-width="0.45" opacity="0.32" stroke-dasharray="3 4"/><line x1="22" y1="104" x2="118" y2="104" stroke="currentColor" stroke-width="0.35" opacity="0.25"/></svg>',
-'<svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="36" fill="none" stroke="currentColor" stroke-width="0.55" opacity="0.55"/><path d="M70 34 A36 36 0 0 1 70 106 Z" fill="currentColor" opacity="0.1"/><circle cx="70" cy="70" r="2.4" fill="currentColor"/><line x1="32" y1="70" x2="108" y2="70" stroke="currentColor" stroke-width="0.35" opacity="0.25"/></svg>'];
+var SECTION_VISUALS=['<svg viewBox="0 0 140 140"><rect x="42" y="30" width="14" height="80" fill="currentColor" opacity="0.5"/><rect x="84" y="30" width="14" height="80" fill="currentColor" opacity="0.3"/><rect x="42" y="30" width="56" height="10" fill="currentColor" opacity="0.45"/><polygon points="56,40 84,40 92,110 48,110" fill="currentColor" opacity="0.08"/><line x1="70" y1="110" x2="70" y2="124" stroke="currentColor" stroke-width="0.4" opacity="0.3"/></svg>',
+'<svg viewBox="0 0 140 140"><polygon points="70,28 108,96 32,96" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.6"/><polygon points="70,28 70,96 32,96" fill="currentColor" opacity="0.12"/><line x1="32" y1="96" x2="108" y2="28" stroke="currentColor" stroke-width="0.4" opacity="0.35"/><circle cx="70" cy="74" r="1.6" fill="currentColor"/></svg>',
+'<svg viewBox="0 0 140 140"><polygon points="64,20 76,20 88,110 52,110" fill="currentColor" opacity="0.08"/><line x1="70" y1="20" x2="70" y2="110" stroke="currentColor" stroke-width="0.5" opacity="0.4"/><circle cx="70" cy="60" r="2" fill="currentColor"/><circle cx="70" cy="60" r="10" fill="currentColor" opacity="0.08"/></svg>',
+'<svg viewBox="0 0 140 140"><rect x="48" y="34" width="16" height="76" fill="currentColor" opacity="0.55"/><rect x="76" y="34" width="16" height="76" fill="currentColor" opacity="0.3"/><line x1="68" y1="34" x2="68" y2="110" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><line x1="72" y1="34" x2="72" y2="110" stroke="currentColor" stroke-width="0.3" opacity="0.25"/></svg>',
+'<svg viewBox="0 0 140 140"><rect x="36" y="30" width="68" height="8" fill="currentColor" opacity="0.5"/><rect x="36" y="30" width="8" height="80" fill="currentColor" opacity="0.5"/><rect x="96" y="58" width="8" height="52" fill="currentColor" opacity="0.35"/><line x1="44" y1="110" x2="96" y2="110" stroke="currentColor" stroke-width="0.5" opacity="0.3"/><polygon points="44,38 96,38 108,110 44,110" fill="currentColor" opacity="0.06"/></svg>',
+'<svg viewBox="0 0 140 140"><rect x="30" y="50" width="80" height="60" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.5"/><rect x="44" y="60" width="52" height="50" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.32"/><rect x="56" y="70" width="28" height="40" fill="none" stroke="currentColor" stroke-width="0.4" opacity="0.18"/><line x1="30" y1="110" x2="110" y2="110" stroke="currentColor" stroke-width="0.4" opacity="0.25"/></svg>',
+'<svg viewBox="0 0 140 140"><rect x="40" y="32" width="26" height="44" fill="currentColor" opacity="0.5"/><rect x="74" y="64" width="26" height="44" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.3" stroke-dasharray="3 4"/><line x1="30" y1="110" x2="110" y2="110" stroke="currentColor" stroke-width="0.5" opacity="0.35"/><circle cx="87" cy="86" r="1.4" fill="currentColor" opacity="0.5"/></svg>',
+'<svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="36" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><path d="M70 34 A36 36 0 0 1 70 106 Z" fill="currentColor" opacity="0.12"/><line x1="34" y1="70" x2="106" y2="70" stroke="currentColor" stroke-width="0.4" opacity="0.3"/><circle cx="70" cy="70" r="2.2" fill="currentColor"/></svg>'];
 function headingHtml(title,num){
   var n=num<9?'0'+(num+1):''+(num+1);
   var vis=SECTION_VISUALS[num]||SECTION_VISUALS[0];
