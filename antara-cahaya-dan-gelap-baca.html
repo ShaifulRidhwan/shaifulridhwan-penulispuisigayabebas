@@ -43,81 +43,95 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet">
 <style>
+/* ============================================================
+   ANTARA CAHAYA DAN GELAP — Halaman Bacaan
+   Editorial Chiaroscuro · Sistem Dalaman Buku
+   Palet: arang gelap · gading · aksen cahaya (emas hangat)
+   ============================================================ */
 :root{
-  --font-display:'Fraunces',Georgia,serif;
-  --font-body:'Source Serif 4',Georgia,serif;
+  --font-display:'Fraunces',Georgia,'Times New Roman',serif;
+  --font-body:'Source Serif 4',Georgia,'Times New Roman',serif;
   --font-ui:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-  --fs:16px;
+  --fs:17px;
+  --gold:#C8A45C;
+  --gold-soft:rgba(200,164,92,.13);
+  --gold-line:rgba(200,164,92,.42);
+  --gold-faint:rgba(200,164,92,.16);
 }
 :root[data-theme="dark"]{
-  --bg:#0B0C0F; --bg-soft:#121418; --surface:#17191D; --page-bg:#14161A;
-  --text:#E8E0D2; --text-muted:#9A9DA3; --text-faint:#777A80;
-  --accent:#BFC1C5; --accent-soft:rgba(191,193,197,.08); --accent-line:rgba(191,193,197,.30);
-  --border:rgba(191,193,197,.14); --hairline:rgba(232,224,210,.06);
-  --shadow:0 30px 90px rgba(0,0,0,.7); --page-edge:rgba(0,0,0,.5);
-  --light:#F1EBDD;
+  --bg:#0B0C0F; --bg-soft:#121418; --surface:#17191E; --page-bg:#14161B;
+  --text:#EDE6D6; --text-muted:#A8A294; --text-faint:#6F6C62;
+  --accent:var(--gold); --accent-soft:var(--gold-soft); --accent-line:var(--gold-line);
+  --border:rgba(200,164,92,.20); --hairline:rgba(237,230,214,.07);
+  --shadow:0 30px 90px rgba(0,0,0,.72); --page-edge:rgba(0,0,0,.55);
+  --light:#F4EFE3;
+  --beam:radial-gradient(ellipse 55% 42% at 50% 32%,rgba(200,164,92,.10),transparent 70%);
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
 }
 :root[data-theme="light"]{
-  --bg:#E8E0D2; --bg-soft:#E0D8C8; --surface:#F1EBDD; --page-bg:#F1EBDD;
-  --text:#17191D; --text-muted:#5A5D63; --text-faint:#8A8D93;
-  --accent:#6E7177; --accent-soft:rgba(110,113,119,.08); --accent-line:rgba(110,113,119,.35);
-  --border:rgba(110,113,119,.20); --hairline:rgba(23,25,29,.08);
-  --shadow:0 24px 70px rgba(20,22,26,.18); --page-edge:rgba(20,22,26,.15);
-  --light:#F1EBDD;
+  --bg:#E9E1CF; --bg-soft:#E0D7C2; --surface:#F6F1E4; --page-bg:#F6F1E4;
+  --text:#1B1C1F; --text-muted:#5D5A50; --text-faint:#8B877A;
+  --accent:#96753A; --accent-soft:rgba(150,117,58,.11); --accent-line:rgba(150,117,58,.42);
+  --border:rgba(150,117,58,.24); --hairline:rgba(27,28,31,.09);
+  --shadow:0 24px 70px rgba(50,40,18,.18); --page-edge:rgba(50,40,18,.16);
+  --light:#F6F1E4;
+  --beam:radial-gradient(ellipse 55% 42% at 50% 32%,rgba(150,117,58,.10),transparent 70%);
   --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{font-family:var(--font-body);font-size:var(--fs);background:var(--bg);background-image:var(--grain);color:var(--text);line-height:1.8;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;transition:background .4s,color .4s;overflow-x:hidden}
+body{font-family:var(--font-body);font-size:var(--fs);background:var(--bg);background-image:var(--grain);color:var(--text);line-height:1.78;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;transition:background .45s ease,color .45s ease;overflow-x:hidden}
 ::selection{background:var(--accent);color:var(--bg)}
 a{color:var(--accent);text-decoration:none}
-button{font-family:var(--font-ui);cursor:pointer;-webkit-tap-highlight-color:transparent}
+button{font-family:var(--font-ui);cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:none;color:inherit}
 button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
-/* ===== COVER ===== */
+/* ===== COVER (dikekalkan struktur; tidak dipaparkan dalam mod bacaan) ===== */
 .cover{position:relative;min-height:100vh;min-height:100svh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:4rem 1.5rem;overflow:hidden}
 .cover-emblem{width:min(540px,90vw);height:auto;margin-bottom:2.5rem;flex-shrink:0;position:relative;z-index:2}
 .cover-emblem svg{width:100%;height:auto;display:block}
-.cover-halo{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 60% 40% at 50% 38%,var(--accent-soft),transparent 70%)}
+.cover-halo{position:absolute;inset:0;z-index:0;pointer-events:none;background:var(--beam)}
 .cover-inner{position:relative;z-index:2;max-width:40rem}
-.cover-eyebrow{font-family:var(--font-ui);font-size:.6rem;letter-spacing:.4em;text-transform:uppercase;color:var(--accent);margin-bottom:1.6rem}
+.cover-eyebrow{font-family:var(--font-ui);font-size:.62rem;letter-spacing:.42em;text-transform:uppercase;color:var(--accent);margin-bottom:1.6rem}
 .cover-title{font-family:var(--font-display);font-weight:300;font-size:clamp(2.4rem,8.5vw,4.6rem);line-height:1.08;margin-bottom:1.6rem}
 .cover-title .l1{display:block;font-weight:300}
 .cover-title .l2{display:block;font-weight:500;font-style:italic;color:var(--accent);letter-spacing:.01em}
 .cover-divider{display:flex;align-items:center;justify-content:center;gap:1rem;margin:1.8rem 0}
 .cover-divider span{height:1px;width:3rem;background:var(--accent-line)}
-.cover-divider em{font-style:normal;color:var(--accent);font-size:.65rem;opacity:.8}
-.cover-author{font-family:var(--font-display);font-size:1.05rem;letter-spacing:.18em;text-transform:uppercase;font-weight:500;margin-bottom:.4rem}
-.cover-role{font-family:var(--font-ui);font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--text-faint);margin-bottom:2.2rem}
+.cover-divider em{font-style:normal;color:var(--accent);font-size:.65rem;opacity:.85}
+.cover-author{font-family:var(--font-display);font-size:1.05rem;letter-spacing:.2em;text-transform:uppercase;font-weight:500;margin-bottom:.4rem}
+.cover-role{font-family:var(--font-ui);font-size:.6rem;letter-spacing:.32em;text-transform:uppercase;color:var(--text-faint);margin-bottom:2.2rem}
 .cover-tagline{font-family:var(--font-display);font-style:italic;font-size:clamp(.98rem,2.2vw,1.15rem);color:var(--text-muted);max-width:28rem;margin:0 auto 2.6rem;line-height:1.7}
-.cover-cta{display:inline-flex;align-items:center;gap:.7rem;font-family:var(--font-ui);font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-line);padding:1rem 2.2rem;border-radius:2px;transition:all .3s}
-.cover-cta:hover{background:var(--accent);color:var(--bg);transform:translateY(-2px)}
-.cover-cta svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.cover-resume{display:block;margin-top:1.1rem;font-family:var(--font-ui);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint);background:none;border:none}
+.cover-cta{display:inline-flex;align-items:center;gap:.7rem;font-family:var(--font-ui);font-size:.68rem;letter-spacing:.28em;text-transform:uppercase;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-line);padding:1rem 2.2rem;border-radius:2px;transition:all .3s ease}
+.cover-cta:hover{background:var(--accent);color:var(--bg);transform:translateY(-2px);box-shadow:0 10px 30px var(--accent-soft)}
+.cover-cta svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.75;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.cover-resume{display:block;margin-top:1.1rem;font-family:var(--font-ui);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-faint);transition:color .25s}
 .cover-resume:hover{color:var(--accent)}
 
-/* ===== READER VIEW (book) ===== */
+/* ===== READER VIEW ===== */
 .reader{display:none;min-height:100vh;min-height:100svh;flex-direction:column}
 body.in-book .reader{display:flex}
 body.in-book .cover{display:none}
 body.in-book .continuous{display:none}
 
-.progress-bar{position:fixed;top:0;left:0;height:2px;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-line));z-index:200;transition:width .15s linear}
+.progress-bar{position:fixed;top:0;left:0;height:2px;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent-line));z-index:200;transition:width .18s ease;box-shadow:0 0 12px var(--accent-soft)}
 
-.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.6rem 1rem;border-bottom:1px solid var(--hairline);background:color-mix(in srgb,var(--bg) 85%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.tb-group{display:flex;align-items:center;gap:.3rem}
-.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:2.3rem;height:2.3rem;background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;transition:all .25s;font-size:.85rem;flex-shrink:0}
-.icon-btn:hover{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
-.icon-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.fs-btn{font-family:var(--font-display);font-weight:600;width:auto;padding:0 .6rem;font-size:.8rem}
-.fs-btn .sep{opacity:.3;margin:0 .1rem}
-.tb-title{font-family:var(--font-ui);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-faint);text-align:center;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tb-title b{color:var(--accent);font-weight:600}
+/* --- Topbar / kawalan --- */
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.55rem 1rem;border-bottom:1px solid var(--hairline);background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.tb-group{display:flex;align-items:center;gap:.35rem}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:2.35rem;height:2.35rem;background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;transition:all .25s ease;font-size:.85rem;flex-shrink:0;position:relative}
+.icon-btn:hover{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);transform:translateY(-1px)}
+.icon-btn:active{transform:translateY(0) scale(.97)}
+.icon-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.fs-btn{font-family:var(--font-display);font-weight:600;width:auto;padding:0 .65rem;font-size:.82rem;letter-spacing:.02em}
+.fs-btn .sep{opacity:.35;margin:0 .12rem;font-weight:400}
+.tb-title{font-family:var(--font-ui);font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--text-faint);text-align:center;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-title b{color:var(--accent);font-weight:600;letter-spacing:.14em}
 
-.book-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:.4rem .2rem;position:relative;overflow:hidden;touch-action:pan-y;-webkit-tap-highlight-color:transparent}
-.book{position:relative;perspective:2200px}
+/* --- Book stage --- */
+.book-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:.5rem .2rem;position:relative;overflow:hidden;touch-action:pan-y;-webkit-tap-highlight-color:transparent;background:var(--beam)}
+.book{position:relative;perspective:2400px}
 .spread{display:flex;gap:0;position:relative}
 .page{position:relative;background:var(--page-bg);background-image:var(--grain);border:1px solid var(--hairline);box-shadow:var(--shadow);overflow:hidden;flex-shrink:0;display:flex;flex-direction:column}
 .page.left{border-radius:3px 0 0 3px}
@@ -126,23 +140,66 @@ body.in-book .continuous{display:none}
 .page.spine::after{content:"";position:absolute;top:0;bottom:0;right:0;width:1px;background:linear-gradient(180deg,transparent,var(--page-edge),transparent);pointer-events:none}
 .page.right::before{content:"";position:absolute;top:0;bottom:0;left:0;width:1px;background:linear-gradient(180deg,transparent,var(--page-edge),transparent);pointer-events:none}
 .page-inner{flex:1;padding:var(--pad);overflow:hidden;position:relative}
-.page-folio{flex-shrink:0;text-align:center;font-family:var(--font-ui);font-size:.56rem;letter-spacing:.22em;color:var(--text-faint);padding:.5rem 0 .7rem;text-transform:uppercase}
-.page-inner h3{font-family:var(--font-display);font-weight:500;font-size:1.25em;line-height:1.2;margin-bottom:.5em;color:var(--text)}
-.page-inner .ps-eyebrow{font-family:var(--font-ui);font-size:.55rem;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem}
-.page-inner .ps-rule{display:flex;align-items:center;gap:.8rem;margin-bottom:.9rem;color:var(--accent);font-size:.6rem;opacity:.7}
-.page-inner .ps-rule::before,.page-inner .ps-rule::after{content:"";height:1px;flex:1;max-width:2.5rem;background:var(--hairline)}
-.page-inner p{margin-bottom:.65em;font-size:1em;line-height:1.62;color:var(--text);font-weight:400;text-align:justify;hyphens:auto}
-.page-inner p.drop::first-letter{font-family:var(--font-display);font-weight:600;font-size:2.6em;line-height:.8;float:left;padding:.04em .08em 0 0;color:var(--accent)}
-.page-inner .novel-quote{margin:1.8em 0;padding:1.1em 1.3em 1.1em 1.5em;border-left:2.5px solid var(--accent);background:var(--accent-soft);border-radius:0 3px 3px 0;font-family:var(--font-display);font-style:italic;color:var(--text);font-size:1.08em;line-height:1.65;font-weight:400;position:relative}
-.page-inner .novel-quote p{margin-bottom:0;text-align:left}
-.page-inner .scene-break{display:flex;align-items:center;justify-content:center;gap:.8rem;margin:1em 0;color:var(--text-faint)}
-.page-inner .scene-break span{height:1px;flex:1;max-width:2rem;background:var(--hairline)}
-.page-inner .scene-break .dot{flex:0 0 auto;background:none;max-width:none;color:var(--accent);opacity:.6;font-size:.8rem}
+.page-folio{flex-shrink:0;text-align:center;font-family:var(--font-ui);font-size:.56rem;letter-spacing:.24em;color:var(--text-faint);padding:.5rem 0 .7rem;text-transform:uppercase}
 .page-blank{background:transparent;border:none;box-shadow:none}
 .page-blank .page-inner{display:none}
 .page-blank .page-folio{display:none}
 
-/* Flipper */
+/* --- Tipografi halaman prosa --- */
+.page-inner h3{font-family:var(--font-display);font-weight:500;font-size:1.3em;line-height:1.25;margin-bottom:.55em;color:var(--text);letter-spacing:.01em}
+.page-inner .ps-eyebrow{font-family:var(--font-ui);font-size:.55rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:.55rem}
+.page-inner .ps-rule{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem;color:var(--accent);font-size:.6rem;opacity:.75}
+.page-inner .ps-rule::before,.page-inner .ps-rule::after{content:"";height:1px;flex:1;max-width:2.5rem;background:var(--hairline)}
+.page-inner p{margin-bottom:.85em;font-size:1em;line-height:1.72;color:var(--text);font-weight:400;text-align:justify;hyphens:auto;-webkit-hyphens:auto;hyphenate-limit-chars:6 3 3}
+.page-inner p.drop::first-letter{font-family:var(--font-display);font-weight:600;font-size:2.9em;line-height:.78;float:left;padding:.05em .09em 0 0;color:var(--accent)}
+.page-inner .novel-quote{margin:1.9em 0;padding:1.15em 1.35em 1.15em 1.6em;border-left:2.5px solid var(--accent);background:var(--accent-soft);border-radius:0 3px 3px 0;font-family:var(--font-display);font-style:italic;color:var(--text);font-size:1.06em;line-height:1.68;font-weight:400;position:relative;box-shadow:inset 0 0 40px rgba(0,0,0,.04)}
+.page-inner .novel-quote::before{content:"“";position:absolute;left:.4rem;top:.1rem;font-family:var(--font-display);font-size:2.6em;line-height:1;color:var(--accent);opacity:.35;font-style:normal}
+.page-inner .novel-quote p{margin-bottom:0;text-align:left;line-height:1.68}
+.page-inner .scene-break{display:flex;align-items:center;justify-content:center;gap:.8rem;margin:1.2em 0;color:var(--text-faint)}
+.page-inner .scene-break span{height:1px;flex:1;max-width:2rem;background:var(--hairline)}
+.page-inner .scene-break .dot{flex:0 0 auto;background:none;max-width:none;color:var(--accent);opacity:.65;font-size:.85rem;letter-spacing:.3em}
+
+/* --- Simbol bahagian --- */
+.ps-symbol{width:42px;height:42px;margin:0 auto 1.4rem;color:var(--accent);opacity:.9}
+.ps-symbol svg{width:100%;height:100%;display:block}
+
+/* ============================================================
+   PEMBUKAAN BAB — Editorial Chiaroscuro (3 variasi terkawal)
+   ============================================================ */
+.section-open{position:relative;padding:10% 1.2rem 8%;color:var(--accent);overflow:hidden;min-height:100%;display:flex;flex-direction:column;justify-content:center}
+.so-visual{width:120px;height:120px;margin:0 0 1.6rem;opacity:.92;position:relative;z-index:2}
+.so-visual svg{width:100%;height:100%;display:block}
+.so-number{font-family:var(--font-ui);font-size:.6rem;letter-spacing:.45em;text-transform:uppercase;color:var(--text-faint);margin-bottom:1.1rem;position:relative;z-index:2}
+.so-bignum{font-family:var(--font-display);font-weight:200;font-size:clamp(4.5rem,16vw,7.5rem);line-height:.85;color:var(--accent);opacity:.16;position:absolute;top:6%;right:4%;z-index:1;letter-spacing:-.03em;user-select:none;pointer-events:none}
+.so-divider{width:2.8rem;height:1px;background:var(--accent-line);margin:0 0 1.4rem;position:relative;z-index:2}
+.so-title{font-family:var(--font-display);font-weight:400;font-size:1.5em;line-height:1.3;color:var(--text);letter-spacing:.01em;margin:0;max-width:16em;position:relative;z-index:2}
+.so-title em{font-style:italic;font-weight:500;color:var(--accent)}
+.so-spacer{height:3.5rem}
+.so-beam{position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 60% 50% at 30% 25%,var(--accent-soft),transparent 65%)}
+/* Variasi A: kiri asimetri (nombor besar di kanan) — default */
+.section-open.variant-a{text-align:left;align-items:flex-start}
+.section-open.variant-a .so-bignum{right:2%;top:4%}
+/* Variasi B: tengah seimbang (nombor besar di belakang tengah) */
+.section-open.variant-b{text-align:center;align-items:center}
+.section-open.variant-b .so-bignum{position:static;opacity:.12;font-size:clamp(5rem,18vw,9rem);margin-bottom:.4rem;order:-1}
+.section-open.variant-b .so-divider{margin:0 auto 1.4rem}
+.section-open.variant-b .so-visual{margin:0 auto 1.6rem}
+/* Variasi C: kanan asimetri dengan garis menegak cahaya */
+.section-open.variant-c{text-align:right;align-items:flex-end}
+.section-open.variant-c .so-bignum{left:2%;right:auto;top:4%}
+.section-open.variant-c::before{content:"";position:absolute;left:8%;top:12%;bottom:12%;width:1px;background:linear-gradient(180deg,transparent,var(--accent-line),transparent);z-index:1}
+.section-open.variant-c .so-divider{margin-left:auto;margin-right:0}
+/* Animasi kemunculan pembukaan bab */
+@keyframes soRise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes soBeam{from{opacity:0}to{opacity:1}}
+.section-open.enter .so-visual{animation:soRise .7s cubic-bezier(.2,.7,.2,1) both}
+.section-open.enter .so-number{animation:soRise .7s .08s cubic-bezier(.2,.7,.2,1) both}
+.section-open.enter .so-divider{animation:soRise .7s .16s cubic-bezier(.2,.7,.2,1) both}
+.section-open.enter .so-title{animation:soRise .7s .24s cubic-bezier(.2,.7,.2,1) both}
+.section-open.enter .so-bignum{animation:soBeam 1s .1s ease both}
+.section-open.enter .so-beam{animation:soBeam 1.2s ease both}
+
+/* --- Flipper (animasi lipat halaman) --- */
 .flipper{position:absolute;top:0;z-index:50;transform-style:preserve-3d;pointer-events:none;display:none}
 .flipper.active{display:block}
 .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;background:var(--page-bg);background-image:var(--grain);border:1px solid var(--hairline);overflow:hidden;display:flex;flex-direction:column}
@@ -151,104 +208,113 @@ body.in-book .continuous{display:none}
 .flipper.turn-prev{transition:transform .55s cubic-bezier(.4,.1,.3,1)}
 .flipper.turn-next.do{transform:rotateY(-180deg)}
 .flipper.turn-prev.do{transform:rotateY(180deg)}
-@media(prefers-reduced-motion:reduce){.flipper.turn-next,.flipper.turn-prev{transition:none}}
 
-/* Click zones */
+/* --- Click zones --- */
 .click-zone{position:absolute;top:0;bottom:0;width:22%;z-index:40;cursor:pointer}
 .click-zone.prev{left:0}
 .click-zone.next{right:0}
 
-/* Bottom controls */
-.book-controls{display:flex;align-items:center;justify-content:space-between;gap:.8rem;padding:.7rem 1rem 1.1rem;border-top:1px solid var(--hairline);max-width:900px;margin:0 auto;width:100%}
-.nav-btn{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--font-ui);font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-line);padding:.7rem 1.3rem;border-radius:2px;transition:all .25s}
-.nav-btn:hover:not(:disabled){background:var(--accent);color:var(--bg)}
+/* --- Kawalan bawah --- */
+.book-controls{display:flex;align-items:center;justify-content:space-between;gap:.8rem;padding:.7rem 1rem 1.1rem;border-top:1px solid var(--hairline);max-width:920px;margin:0 auto;width:100%}
+.nav-btn{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--font-ui);font-size:.64rem;letter-spacing:.22em;text-transform:uppercase;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-line);padding:.72rem 1.35rem;border-radius:2px;transition:all .25s ease}
+.nav-btn:hover:not(:disabled){background:var(--accent);color:var(--bg);transform:translateY(-1px);box-shadow:0 8px 22px var(--accent-soft)}
+.nav-btn:active:not(:disabled){transform:translateY(0) scale(.98)}
 .nav-btn:disabled{opacity:.3;cursor:not-allowed}
-.nav-btn svg{width:14px;height:14px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.page-indicator{font-family:var(--font-ui);font-size:.66rem;letter-spacing:.12em;color:var(--text-muted);text-align:center;flex:1}
-.page-indicator b{color:var(--accent);font-weight:600}
+.nav-btn svg{width:14px;height:14px;stroke:currentColor;stroke-width:1.75;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.page-indicator{font-family:var(--font-ui);font-size:.66rem;letter-spacing:.14em;color:var(--text-muted);text-align:center;flex:1;white-space:nowrap}
+.page-indicator b{color:var(--accent);font-weight:600;letter-spacing:.08em}
+.page-indicator .total{color:var(--text-faint)}
+.page-indicator.calc .total{opacity:.55}
 
-/* TOC panel */
-.toc-overlay{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(2px)}
+/* --- TOC panel (kad editorial) --- */
+.toc-overlay{position:fixed;inset:0;z-index:150;background:rgba(5,6,8,.6);opacity:0;pointer-events:none;transition:opacity .3s ease;backdrop-filter:blur(3px)}
 .toc-overlay.open{opacity:1;pointer-events:auto}
-.toc-panel{position:fixed;top:0;left:0;bottom:0;z-index:160;width:min(22rem,88vw);background:var(--bg-soft);border-right:1px solid var(--border);transform:translateX(-105%);transition:transform .38s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:var(--shadow)}
+.toc-panel{position:fixed;top:0;left:0;bottom:0;z-index:160;width:min(22rem,88vw);background:var(--bg-soft);background-image:var(--grain);border-right:1px solid var(--border);transform:translateX(-105%);transition:transform .4s cubic-bezier(.2,.7,.2,1);display:flex;flex-direction:column;box-shadow:var(--shadow)}
 .toc-panel.open{transform:translateX(0)}
-.toc-head{display:flex;align-items:center;justify-content:space-between;padding:1.3rem 1.4rem;border-bottom:1px solid var(--hairline)}
-.toc-head h3{font-family:var(--font-display);font-size:1.1rem;font-weight:600}
-.toc-head span{display:block;font-family:var(--font-ui);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-faint);margin-top:.2rem}
-.toc-list{flex:1;overflow-y:auto;padding:.8rem 0}
-.toc-link{display:flex;align-items:baseline;gap:.9rem;width:100%;text-align:left;background:none;border:none;border-bottom:1px solid var(--hairline);padding:.85rem 1.4rem;color:var(--text);font-family:var(--font-display);transition:all .2s}
-.toc-link:hover{background:var(--accent-soft);color:var(--accent);padding-left:1.6rem}
-.toc-num{font-family:var(--font-ui);font-size:.66rem;color:var(--text-faint);flex-shrink:0;min-width:1.6rem}
-.toc-title{font-size:.92rem;line-height:1.4;font-weight:500;flex:1;text-align:left}
-.toc-page{font-family:var(--font-ui);font-size:.62rem;color:var(--text-faint);flex-shrink:0}
-.toc-foot{padding:1.1rem 1.4rem;border-top:1px solid var(--hairline);display:flex;flex-direction:column;gap:.8rem}
-.toc-foot a,.toc-foot button{font-family:var(--font-ui);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);background:none;border:none;display:inline-flex;align-items:center;gap:.5rem;padding:0;text-align:left}
-.toc-foot a:hover,.toc-foot button:hover{opacity:.7}
+.toc-head{display:flex;align-items:center;justify-content:space-between;padding:1.4rem 1.4rem 1.2rem;border-bottom:1px solid var(--hairline);position:relative}
+.toc-head::after{content:"";position:absolute;left:1.4rem;right:1.4rem;bottom:-1px;height:1px;background:linear-gradient(90deg,var(--accent-line),transparent);opacity:.6}
+.toc-head h3{font-family:var(--font-display);font-size:1.15rem;font-weight:500;letter-spacing:.02em}
+.toc-head span{display:block;font-family:var(--font-ui);font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;color:var(--text-faint);margin-top:.3rem}
+.toc-list{flex:1;overflow-y:auto;padding:.6rem 0}
+.toc-link{display:flex;align-items:baseline;gap:.9rem;width:100%;text-align:left;border-bottom:1px solid var(--hairline);padding:.9rem 1.4rem;color:var(--text);transition:all .25s ease;position:relative}
+.toc-link:hover{background:var(--accent-soft);color:var(--accent);padding-left:1.7rem}
+.toc-link:hover::before{content:"";position:absolute;left:0;top:20%;bottom:20%;width:2px;background:var(--accent)}
+.toc-num{font-family:var(--font-ui);font-size:.64rem;color:var(--accent);flex-shrink:0;min-width:1.6rem;letter-spacing:.1em;opacity:.85}
+.toc-title{font-family:var(--font-display);font-size:.92rem;line-height:1.45;font-weight:400;flex:1;text-align:left;letter-spacing:.01em}
+.toc-page{font-family:var(--font-ui);font-size:.58rem;color:var(--text-faint);flex-shrink:0;letter-spacing:.08em}
+.toc-foot{padding:1.1rem 1.4rem;border-top:1px solid var(--hairline);display:flex;flex-direction:column;gap:.85rem}
+.toc-foot a,.toc-foot button{font-family:var(--font-ui);font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent);display:inline-flex;align-items:center;gap:.5rem;padding:0;text-align:left;transition:opacity .2s}
+.toc-foot a:hover,.toc-foot button:hover{opacity:.65}
 
-/* Measurer (hidden) */
-#measurer{position:fixed;left:-9999px;top:0;visibility:hidden;overflow:hidden;font-family:var(--font-body);line-height:1.62;font-weight:400}
-#measurer p{margin-bottom:.65em;text-align:justify}
-#measurer .novel-quote{margin:1.8em 0;padding:1.1em 1.3em 1.1em 1.5em;border-left:2.5px solid var(--accent);background:var(--accent-soft);border-radius:0 3px 3px 0;font-family:var(--font-display);font-style:italic;color:var(--text);font-size:1.08em;line-height:1.65;font-weight:400}
+/* --- Measurer (tersembunyi, untuk pengiraan halaman) --- */
+#measurer{position:fixed;left:-9999px;top:0;visibility:hidden;overflow:hidden;font-family:var(--font-body);line-height:1.72;font-weight:400}
+#measurer p{margin-bottom:.85em;text-align:justify;hyphens:auto;-webkit-hyphens:auto}
+#measurer .novel-quote{margin:1.9em 0;padding:1.15em 1.35em 1.15em 1.6em;border-left:2.5px solid var(--accent);background:var(--accent-soft);border-radius:0 3px 3px 0;font-family:var(--font-display);font-style:italic;color:var(--text);font-size:1.06em;line-height:1.68;font-weight:400}
 #measurer .novel-quote p{margin-bottom:0;text-align:left}
-#measurer .scene-break{display:flex;align-items:center;justify-content:center;gap:.8rem;margin:1em 0}
+#measurer .scene-break{display:flex;align-items:center;justify-content:center;gap:.8rem;margin:1.2em 0}
 #measurer .scene-break span{height:1px;flex:1;max-width:2rem;background:var(--hairline)}
-#measurer .scene-break .dot{flex:0 0 auto;background:none;max-width:none;color:var(--accent);opacity:.6;font-size:.8rem}
-#measurer h3{font-family:var(--font-display);font-weight:500;font-size:1.25em;line-height:1.2;margin-bottom:.5em}
-#measurer .ps-eyebrow{font-family:var(--font-ui);font-size:.55rem;letter-spacing:.28em;text-transform:uppercase;color:var(--accent);margin-bottom:.5rem}
-#measurer .ps-rule{display:flex;align-items:center;gap:.8rem;margin-bottom:.9rem;color:var(--accent);font-size:.6rem;opacity:.7}
+#measurer .scene-break .dot{flex:0 0 auto;background:none;max-width:none;color:var(--accent);opacity:.65;font-size:.85rem}
+#measurer h3{font-family:var(--font-display);font-weight:500;font-size:1.3em;line-height:1.25;margin-bottom:.55em}
+#measurer .ps-eyebrow{font-family:var(--font-ui);font-size:.55rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:.55rem}
+#measurer .ps-rule{display:flex;align-items:center;gap:.8rem;margin-bottom:1rem;color:var(--accent);font-size:.6rem;opacity:.75}
 #measurer .ps-rule::before,#measurer .ps-rule::after{content:"";height:1px;flex:1;max-width:2.5rem;background:var(--hairline)}
+#measurer .section-open{padding:10% 1.2rem 8%;min-height:0}
+#measurer .so-visual{width:120px;height:120px;margin:0 0 1.6rem}
+#measurer .so-number{font-family:var(--font-ui);font-size:.6rem;letter-spacing:.45em;text-transform:uppercase;color:var(--text-faint);margin-bottom:1.1rem}
+#measurer .so-bignum{font-family:var(--font-display);font-weight:200;font-size:6rem;line-height:.85;color:var(--accent);opacity:.16;margin-bottom:.4rem}
+#measurer .so-divider{width:2.8rem;height:1px;background:var(--accent-line);margin:0 0 1.4rem}
+#measurer .so-title{font-family:var(--font-display);font-weight:400;font-size:1.5em;line-height:1.3;color:var(--text);margin:0;max-width:16em}
+#measurer .so-spacer{height:3.5rem}
 
-/* Continuous fallback mode */
+/* --- Mod bacaan berterusan (fallback) --- */
 .continuous{max-width:66ch;margin:0 auto;padding:3rem 1.5rem 4rem}
 body.in-book .continuous{display:none}
 body.continuous-mode .book-stage,body.continuous-mode .book-controls,body.continuous-mode .topbar{display:none}
 body.continuous-mode .continuous{display:block}
 body.continuous-mode .reader{display:block}
-.book-section{margin-bottom:3.5rem}
-.book-section-title{font-family:var(--font-display);font-weight:500;font-size:clamp(1.5rem,4vw,2.2rem);text-align:center;margin-bottom:2rem}
-.continuous p{margin-bottom:1.1em;text-align:justify;hyphens:auto;font-weight:300}
-.continuous .novel-quote{margin:2rem 0;padding:1.2rem 1.4rem 1.2rem 1.6rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 4px 4px 0;font-family:var(--font-display);font-style:italic;color:var(--text);font-size:1.15em;line-height:1.75;font-weight:400}
-.continuous .scene-break{display:flex;align-items:center;justify-content:center;gap:1rem;margin:2.5rem 0;color:var(--text-faint)}
+.book-section{margin-bottom:4rem;position:relative}
+.book-section-title{font-family:var(--font-display);font-weight:500;font-size:clamp(1.5rem,4vw,2.2rem);text-align:center;margin-bottom:2.2rem;line-height:1.3;letter-spacing:.02em}
+.continuous p{margin-bottom:1.15em;text-align:justify;hyphens:auto;-webkit-hyphens:auto;font-weight:400;line-height:1.8}
+.continuous .novel-quote{margin:2.2rem 0;padding:1.3rem 1.5rem 1.3rem 1.8rem;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 4px 4px 0;font-family:var(--font-display);font-style:italic;color:var(--text);font-size:1.12em;line-height:1.75;font-weight:400;position:relative}
+.continuous .novel-quote::before{content:"“";position:absolute;left:.5rem;top:.2rem;font-family:var(--font-display);font-size:3em;line-height:1;color:var(--accent);opacity:.3;font-style:normal}
+.continuous .scene-break{display:flex;align-items:center;justify-content:center;gap:1rem;margin:2.8rem 0;color:var(--text-faint)}
 .continuous .scene-break span{height:1px;flex:1;max-width:4rem;background:var(--hairline)}
-.continuous .scene-break .dot{flex:0 0 auto;background:none;max-width:none;color:var(--accent);opacity:.6}
+.continuous .scene-break .dot{flex:0 0 auto;background:none;max-width:none;color:var(--accent);opacity:.65;letter-spacing:.3em}
 .continuous-end{text-align:center;padding:3rem 1.5rem;font-family:var(--font-display);font-style:italic;color:var(--text-muted)}
-.continuous-end .home-btn{display:inline-flex;align-items:center;gap:.6rem;margin-top:1.5rem;font-family:var(--font-ui);font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-line);padding:.85rem 1.8rem;border-radius:2px;font-style:normal}
-
-.back-top{position:fixed;bottom:1.2rem;right:1.2rem;z-index:90;width:2.5rem;height:2.5rem;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--accent);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .3s;box-shadow:var(--shadow)}
+.continuous-end .home-btn{display:inline-flex;align-items:center;gap:.6rem;margin-top:1.5rem;font-family:var(--font-ui);font-size:.66rem;letter-spacing:.24em;text-transform:uppercase;font-weight:600;color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-line);padding:.9rem 1.9rem;border-radius:2px;font-style:normal;transition:all .25s}
+.continuous-end .home-btn:hover{background:var(--accent);color:var(--bg)}
+.back-top{position:fixed;bottom:1.2rem;right:1.2rem;z-index:90;width:2.6rem;height:2.6rem;border-radius:50%;background:var(--surface);border:1px solid var(--border);color:var(--accent);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:all .3s ease;box-shadow:var(--shadow)}
 .back-top.visible{opacity:1;pointer-events:auto}
-.back-top svg{width:15px;height:15px;stroke:currentColor;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.back-top:hover{background:var(--accent-soft);transform:translateY(-2px)}
+.back-top svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.75;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.expansion-note b{color:var(--accent)}
 
+/* --- Responsif --- */
 @media(max-width:640px){
   :root{--fs:17px}
   .cover{padding:3rem 1.2rem}
   .cover-emblem{width:90vw;height:auto;margin-bottom:1.6rem}
   .tb-title{display:none}
-  .icon-btn{width:2.15rem;height:2.15rem}
-  .fs-btn{padding:0 .5rem;font-size:.75rem}
-  .nav-btn{padding:.6rem .9rem;font-size:.58rem;letter-spacing:.14em}
+  .icon-btn{width:2.2rem;height:2.2rem}
+  .fs-btn{padding:0 .5rem;font-size:.76rem}
+  .nav-btn{padding:.62rem .95rem;font-size:.58rem;letter-spacing:.16em}
   .nav-btn span.lbl{display:none}
-  .book-stage{padding:.8rem .4rem}
+  .book-stage{padding:.7rem .3rem}
+  .page-indicator{font-size:.6rem;letter-spacing:.1em}
+  .so-bignum{font-size:4.5rem!important}
+}
+@media(min-width:900px){
+  .page-inner p{line-height:1.74}
 }
 
-.expansion-note b{color:var(--accent)}
-/* === Reka Bentuk Akhir: Simbol Bahagian & Sinematik === */
-.ps-symbol{width:40px;height:40px;margin:0 auto 1.4rem;color:var(--accent);opacity:.85}
-.ps-symbol svg{width:100%;height:100%;display:block}
-.book-section-title{text-align:center;font-size:1.35em;letter-spacing:.02em;margin-bottom:.3em}
-.cover-emblem{width:min(540px,90vw);height:auto;margin-bottom:2.5rem}
-.book-stage{background:radial-gradient(ellipse 70% 50% at 50% 40%,var(--accent-soft),transparent 72%)}
-@media(prefers-reduced-motion:reduce){.book-stage{background:none}.cover-emblem{filter:none}}
-
-/* === Fasa 3: Halaman Pembuka Bahagian === */
-.section-open{text-align:center;padding:12% 1rem 8%;color:var(--accent)}
-.so-visual{width:130px;height:130px;margin:0 auto 1.8rem;opacity:.9}
-.so-visual svg{width:100%;height:100%;display:block}
-.so-number{font-family:var(--font-ui);font-size:.62rem;letter-spacing:.4em;text-transform:uppercase;color:var(--text-faint);margin-bottom:1rem}
-.so-divider{width:2.5rem;height:1px;background:var(--accent-line);margin:0 auto 1.4rem}
-.so-title{font-family:var(--font-display);font-weight:400;font-size:1.45em;line-height:1.35;color:var(--text);letter-spacing:.01em;margin:0;max-width:18em;margin-left:auto;margin-right:auto}
-.so-spacer{height:4rem}
-@media(prefers-reduced-motion:reduce){.so-visual{animation:none}}
-@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation:none!important;transition:none!important}}
+/* --- Pengurangan gerakan --- */
+@media(prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .book-stage{background:none}
+  .section-open.enter *{animation:none!important;opacity:1!important;transform:none!important}
+  .flipper.turn-next,.flipper.turn-prev{transition:none}
+}
 </style>
 </head>
 <body class="in-book">
@@ -273,7 +339,7 @@ body.continuous-mode .reader{display:block}
       <button class="icon-btn fs-btn" id="fontDown" aria-label="Perkecil saiz fon" title="Perkecil"><span style="font-size:.8em">A</span><span class="sep">–</span></button>
       <button class="icon-btn fs-btn" id="fontUp" aria-label="Perbesarkan saiz fon" title="Perbesarkan"><span style="font-size:1.15em">A</span><span class="sep">+</span></button>
       <button class="icon-btn" id="modeToggle" aria-label="Tukar mod bacaan berterusan / buku" title="Mod bacaan berterusan">
-        <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+        <svg viewBox="0 0 24 24"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="11" x2="20" y2="11"/><line x1="4" y1="16" x2="13" y2="16"/><line x1="4" y1="20" x2="16" y2="20"/></svg>
       </button>
       <button class="icon-btn" id="themeBtn" aria-label="Tukar mod gelap / cerah" title="Tukar tema">
         <svg id="iconMoon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -302,7 +368,7 @@ body.continuous-mode .reader{display:block}
       <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
       <span class="lbl">Sebelumnya</span>
     </button>
-    <div class="page-indicator" id="pageIndicator">Halaman <b>1</b> / <span id="totalPages">—</span></div>
+    <div class="page-indicator calc" id="pageIndicator" aria-live="polite">Halaman <b id="curPage">1</b> / <span class="total" id="totalPages">…</span></div>
     <button class="nav-btn" id="nextBtn" type="button" aria-label="Halaman seterusnya">
       <span class="lbl">Seterusnya</span>
       <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
@@ -775,31 +841,48 @@ body.continuous-mode .reader{display:block}
 <button class="back-top" id="backTop" aria-label="Kembali ke atas"><svg viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
 
 <script>
-(function(){
-'use strict';
+/* ============================================================
+   ANTARA CAHAYA DAN GELAP — Pembaca Buku Digital
+   Editorial Chiaroscuro · logik penomboran & navigasi
+   ============================================================ */
 var root=document.documentElement;
 var reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var FONT_SIZES=[15,16,17,18,19];
-var fontIdx=1;
+var fontIdx=2; // default 17px untuk keselesaan prosa panjang
 
-/* ---------- Theme ---------- */
+/* ---------- Tema ---------- */
 var themeBtn=document.getElementById('themeBtn');
 var iconMoon=document.getElementById('iconMoon');
 var iconSun=document.getElementById('iconSun');
-function applyTheme(t){root.setAttribute('data-theme',t);iconMoon.style.display=t==='dark'?'block':'none';iconSun.style.display=t==='dark'?'none':'block';try{localStorage.setItem('acg-theme',t);}catch(e){}}
-var savedTheme='dark';try{savedTheme=localStorage.getItem('acg-theme')||'dark';}catch(e){}
+function applyTheme(t){
+  root.setAttribute('data-theme',t);
+  if(iconMoon)iconMoon.style.display=t==='dark'?'block':'none';
+  if(iconSun)iconSun.style.display=t==='dark'?'none':'block';
+  try{localStorage.setItem('acg-theme',t);}catch(e){}
+}
+var savedTheme='dark';
+try{savedTheme=localStorage.getItem('acg-theme')||'dark';}catch(e){}
 applyTheme(savedTheme);
-themeBtn.addEventListener('click',function(){applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+if(themeBtn)themeBtn.addEventListener('click',function(){
+  applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');
+});
 
-/* ---------- Font size ---------- */
+/* ---------- Saiz fon ---------- */
 var fontUp=document.getElementById('fontUp'),fontDown=document.getElementById('fontDown');
-function applyFont(idx){fontIdx=Math.max(0,Math.min(FONT_SIZES.length-1,idx));root.style.setProperty('--fs',FONT_SIZES[fontIdx]+'px');fontUp.style.opacity=fontIdx===FONT_SIZES.length-1?'.35':'1';fontDown.style.opacity=fontIdx===0?'.35':'1';try{localStorage.setItem('acg-font',fontIdx);}catch(e){}}
-var savedFont=1;try{savedFont=parseInt(localStorage.getItem('acg-font')||'1',10);}catch(e){}
+function applyFont(idx){
+  fontIdx=Math.max(0,Math.min(FONT_SIZES.length-1,idx));
+  root.style.setProperty('--fs',FONT_SIZES[fontIdx]+'px');
+  if(fontUp)fontUp.style.opacity=fontIdx===FONT_SIZES.length-1?'.35':'1';
+  if(fontDown)fontDown.style.opacity=fontIdx===0?'.35':'1';
+  try{localStorage.setItem('acg-font',fontIdx);}catch(e){}
+}
+var savedFont=2;
+try{savedFont=parseInt(localStorage.getItem('acg-font')||'2',10);if(isNaN(savedFont))savedFont=2;}catch(e){}
 applyFont(savedFont);
-fontUp.addEventListener('click',function(){applyFont(fontIdx+1);needsPaginate=true;schedulePaginate();});
-fontDown.addEventListener('click',function(){applyFont(fontIdx-1);needsPaginate=true;schedulePaginate();});
+if(fontUp)fontUp.addEventListener('click',function(){applyFont(fontIdx+1);needsPaginate=true;schedulePaginate();});
+if(fontDown)fontDown.addEventListener('click',function(){applyFont(fontIdx-1);needsPaginate=true;schedulePaginate();});
 
-/* ---------- Elements ---------- */
+/* ---------- Elemen ---------- */
 var book=document.getElementById('book'),spread=document.getElementById('spread');
 var pageLeft=document.getElementById('pageLeft'),pageRight=document.getElementById('pageRight');
 var innerLeft=document.getElementById('innerLeft'),innerRight=document.getElementById('innerRight');
@@ -809,7 +892,9 @@ var faceFront=document.getElementById('faceFront'),faceBack=document.getElementB
 var innerFront=document.getElementById('innerFront'),innerBack=document.getElementById('innerBack');
 var folioFront=document.getElementById('folioFront'),folioBack=document.getElementById('folioBack');
 var prevBtn=document.getElementById('prevBtn'),nextBtn=document.getElementById('nextBtn');
-var pageIndicator=document.getElementById('pageIndicator'),totalPagesEl=document.getElementById('totalPages');
+var pageIndicator=document.getElementById('pageIndicator');
+var curPageEl=document.getElementById('curPage');
+var totalPagesEl=document.getElementById('totalPages');
 var progressBar=document.getElementById('progressBar');
 var zonePrev=document.getElementById('zonePrev'),zoneNext=document.getElementById('zoneNext');
 var measurer=document.getElementById('measurer');
@@ -817,99 +902,131 @@ var tocBtn=document.getElementById('tocBtn'),tocClose=document.getElementById('t
 var backToCover=document.getElementById('backToCover');
 var modeToggle=document.getElementById('modeToggle');
 var backTop=document.getElementById('backTop');
+var bookStage=document.getElementById('bookStage');
 
-/* ---------- State ---------- */
+/* ---------- Keadaan ---------- */
 var pages=[];          // {html, section}
-var sectionStart=[];   // page index per section
+var sectionStart=[];   // indeks halaman setiap bahagian
 var current=0;
-var spreadMode=1;      // 1 = single, 2 = double
+var spreadMode=1;      // 1 = tunggal, 2 = dua halaman
 var pageW=0,pageH=0,pad=0;
 var animating=false;
 var needsPaginate=true;
 var paginateTimer=null;
 var continuousMode=false;
+var paginateCount=0;
 
-/* ---------- Parse manuscript from continuous DOM ---------- */
+/* ---------- Penunjuk halaman: kemas kini melalui span kekal ---------- */
+function setIndicator(cur,total){
+  if(curPageEl)curPageEl.textContent=cur;
+  if(totalPagesEl)totalPagesEl.textContent=total;
+  if(pageIndicator)pageIndicator.classList.remove('calc');
+}
+function setIndicatorCalculating(){
+  if(totalPagesEl)totalPagesEl.textContent='…';
+  if(pageIndicator)pageIndicator.classList.add('calc');
+}
+
+/* ---------- Parse manuskrip dari DOM berterusan ---------- */
 function parseManuscript(){
   var secEls=document.querySelectorAll('#continuous .book-section');
   var sections=[];
   for(var i=0;i<secEls.length;i++){
     var sec=secEls[i];
-    var title=sec.querySelector('.book-section-title').textContent.trim();
+    var titleEl=sec.querySelector('.book-section-title');
+    var title=titleEl?titleEl.textContent.trim():'';
     var blocks=[];
     var kids=sec.children;
     for(var j=0;j<kids.length;j++){
       var el=kids[j];
       if(el.classList.contains('book-section-title'))continue;
+      if(el.classList.contains('ps-symbol')){blocks.push({type:'symbol',html:el.innerHTML});continue;}
       if(el.tagName==='P'){blocks.push({type:'p',html:el.innerHTML});}
       else if(el.tagName==='BLOCKQUOTE'){var p=el.querySelector('p');blocks.push({type:'q',html:p?p.innerHTML:''});}
       else if(el.classList.contains('scene-break')){blocks.push({type:'break'});}
-      else if(el.classList.contains('ps-symbol')){blocks.push({type:'symbol',html:el.innerHTML});}
     }
     sections.push({title:title,blocks:blocks});
   }
   return sections;
 }
 
-/* ---------- Block renderers ---------- */
+/* ---------- Penyedia blok ---------- */
 function blockHtml(b,firstInSection){
   if(b.type==='p'){return '<p'+(firstInSection?' class="drop"':'')+'>'+b.html+'</p>';}
   if(b.type==='q'){return '<blockquote class="novel-quote"><p>'+b.html+'</p></blockquote>';}
   if(b.type==='break'){return '<div class="scene-break"><span></span><span class="dot">·</span><span></span></div>';}
-  if(b.type==='symbol'){return '<div class="ps-symbol">'+b.html+'</div>';}
+  if(b.type==='symbol'){return '<div class="ps-symbol" aria-hidden="true">'+b.html+'</div>';}
   return '';
 }
-var SECTION_VISUALS=['<svg viewBox="0 0 140 140"><rect x="42" y="30" width="14" height="80" fill="currentColor" opacity="0.5"/><rect x="84" y="30" width="14" height="80" fill="currentColor" opacity="0.3"/><rect x="42" y="30" width="56" height="10" fill="currentColor" opacity="0.45"/><polygon points="56,40 84,40 92,110 48,110" fill="currentColor" opacity="0.08"/><line x1="70" y1="110" x2="70" y2="124" stroke="currentColor" stroke-width="0.4" opacity="0.3"/></svg>',
+
+/* Motif grafik setiap bahagian — bentuk geometri cahaya/bayang */
+var SECTION_VISUALS=[
+'<svg viewBox="0 0 140 140"><rect x="42" y="30" width="14" height="80" fill="currentColor" opacity="0.5"/><rect x="84" y="30" width="14" height="80" fill="currentColor" opacity="0.3"/><rect x="42" y="30" width="56" height="10" fill="currentColor" opacity="0.45"/><polygon points="56,40 84,40 92,110 48,110" fill="currentColor" opacity="0.08"/><line x1="70" y1="110" x2="70" y2="124" stroke="currentColor" stroke-width="0.4" opacity="0.3"/></svg>',
 '<svg viewBox="0 0 140 140"><polygon points="70,28 108,96 32,96" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.6"/><polygon points="70,28 70,96 32,96" fill="currentColor" opacity="0.12"/><line x1="32" y1="96" x2="108" y2="28" stroke="currentColor" stroke-width="0.4" opacity="0.35"/><circle cx="70" cy="74" r="1.6" fill="currentColor"/></svg>',
 '<svg viewBox="0 0 140 140"><polygon points="64,20 76,20 88,110 52,110" fill="currentColor" opacity="0.08"/><line x1="70" y1="20" x2="70" y2="110" stroke="currentColor" stroke-width="0.5" opacity="0.4"/><circle cx="70" cy="60" r="2" fill="currentColor"/><circle cx="70" cy="60" r="10" fill="currentColor" opacity="0.08"/></svg>',
-'<svg viewBox="0 0 140 140"><rect x="48" y="34" width="16" height="76" fill="currentColor" opacity="0.55"/><rect x="76" y="34" width="16" height="76" fill="currentColor" opacity="0.3"/><line x1="68" y1="34" x2="68" y2="110" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><line x1="72" y1="34" x2="72" y2="110" stroke="currentColor" stroke-width="0.3" opacity="0.25"/></svg>',
+'<svg viewBox="0 0 140 140"><circle cx="56" cy="70" r="22" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.55"/><circle cx="84" cy="70" r="22" fill="none" stroke="currentColor" stroke-width="0.7" opacity="0.35"/><circle cx="70" cy="70" r="2" fill="currentColor"/></svg>',
 '<svg viewBox="0 0 140 140"><rect x="36" y="30" width="68" height="8" fill="currentColor" opacity="0.5"/><rect x="36" y="30" width="8" height="80" fill="currentColor" opacity="0.5"/><rect x="96" y="58" width="8" height="52" fill="currentColor" opacity="0.35"/><line x1="44" y1="110" x2="96" y2="110" stroke="currentColor" stroke-width="0.5" opacity="0.3"/><polygon points="44,38 96,38 108,110 44,110" fill="currentColor" opacity="0.06"/></svg>',
-'<svg viewBox="0 0 140 140"><rect x="30" y="50" width="80" height="60" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.5"/><rect x="44" y="60" width="52" height="50" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.32"/><rect x="56" y="70" width="28" height="40" fill="none" stroke="currentColor" stroke-width="0.4" opacity="0.18"/><line x1="30" y1="110" x2="110" y2="110" stroke="currentColor" stroke-width="0.4" opacity="0.25"/></svg>',
-'<svg viewBox="0 0 140 140"><rect x="40" y="32" width="26" height="44" fill="currentColor" opacity="0.5"/><rect x="74" y="64" width="26" height="44" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.3" stroke-dasharray="3 4"/><line x1="30" y1="110" x2="110" y2="110" stroke="currentColor" stroke-width="0.5" opacity="0.35"/><circle cx="87" cy="86" r="1.4" fill="currentColor" opacity="0.5"/></svg>',
-'<svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="36" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><path d="M70 34 A36 36 0 0 1 70 106 Z" fill="currentColor" opacity="0.12"/><line x1="34" y1="70" x2="106" y2="70" stroke="currentColor" stroke-width="0.4" opacity="0.3"/><circle cx="70" cy="70" r="2.2" fill="currentColor"/></svg>'];
+'<svg viewBox="0 0 140 140"><path d="M70 30 m0 -12 a12 12 0 1 1 -8.5 3.2 a8.5 8.5 0 1 1 6.5 -1.4 a4.5 4.5 0 1 1 -2.5 0.4" fill="none" stroke="currentColor" stroke-width="0.8" opacity="0.55"/><circle cx="70" cy="70" r="1.6" fill="currentColor"/><line x1="70" y1="82" x2="70" y2="112" stroke="currentColor" stroke-width="0.5" opacity="0.35"/></svg>',
+'<svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="34" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><circle cx="70" cy="70" r="20" fill="none" stroke="currentColor" stroke-width="0.5" opacity="0.32"/><circle cx="70" cy="70" r="2.4" fill="currentColor"/></svg>',
+'<svg viewBox="0 0 140 140"><circle cx="70" cy="70" r="36" fill="none" stroke="currentColor" stroke-width="0.6" opacity="0.5"/><path d="M70 34 A36 36 0 0 1 70 106 Z" fill="currentColor" opacity="0.14"/><line x1="34" y1="70" x2="106" y2="70" stroke="currentColor" stroke-width="0.4" opacity="0.3"/><circle cx="70" cy="70" r="2.2" fill="currentColor"/></svg>'];
+
+/* Pembukaan bab — 3 variasi komposisi terkawal mengikut indeks */
 function headingHtml(title,num){
   var n=num<9?'0'+(num+1):''+(num+1);
   var vis=SECTION_VISUALS[num]||SECTION_VISUALS[0];
-  return '<div class="section-open">'
-    +'<div class="so-visual">'+vis+'</div>'
-    +'<div class="so-number">'+n+'</div>'
+  var variant=['variant-a','variant-b','variant-c'][num%3];
+  var titleHtml=title;
+  var dashIdx=title.indexOf(' — ');
+  if(dashIdx>0){
+    var main=title.substring(0,dashIdx);
+    var sub=title.substring(dashIdx+3);
+    titleHtml=main+'<br><em style="font-size:.68em;letter-spacing:.08em;font-weight:400;opacity:.9">'+sub+'</em>';
+  }
+  return '<div class="section-open '+variant+'">'
+    +'<div class="so-beam" aria-hidden="true"></div>'
+    +'<div class="so-bignum" aria-hidden="true">'+n+'</div>'
+    +'<div class="so-visual" aria-hidden="true">'+vis+'</div>'
+    +'<div class="so-number">Bahagian · '+n+'</div>'
     +'<div class="so-divider"></div>'
-    +'<h3 class="so-title">'+title+'</h3>'
+    +'<h3 class="so-title">'+titleHtml+'</h3>'
     +'<div class="so-spacer"></div>'
     +'</div>';
 }
 
-/* ---------- Pagination ---------- */
+/* ---------- Pengiraan halaman ---------- */
 function computeLayout(){
   var w=window.innerWidth,h=window.innerHeight;
   if(w>=900){
     spreadMode=2;
     pageW=Math.min(480,(w-60)/2);
     pageH=Math.min(h*0.88,940);
-    pad=Math.max(20,pageW*0.055);
+    pad=Math.max(22,Math.round(pageW*0.06));
   }else{
     spreadMode=1;
     pageW=Math.min(w-16,520);
     pageH=Math.min(h*0.84,820);
-    pad=Math.max(20,pageW*0.055);
+    pad=Math.max(20,Math.round(pageW*0.055));
   }
   root.style.setProperty('--pad',pad+'px');
 }
+
 function paginate(){
   needsPaginate=false;
+  paginateCount++;
   computeLayout();
   measurer.style.width=(pageW-pad*2)+'px';
-  measurer.style.height=(pageH-pad*2-24)+'px';
+  measurer.style.height=(pageH-pad*2-26)+'px';
   measurer.style.fontSize=FONT_SIZES[fontIdx]+'px';
+  measurer.style.lineHeight='1.72';
   var sections=parseManuscript();
   pages=[];sectionStart=[];
-  // Title page (page 0)
-  pages.push({html:'<div style="text-align:center;padding-top:18%;font-family:var(--font-display)"><div style="font-family:var(--font-ui);font-size:.6rem;letter-spacing:.35em;text-transform:uppercase;color:var(--accent);margin-bottom:1.4rem">Prosa Falsafah</div><div style="font-weight:300;font-size:1.9em;line-height:1.15;margin-bottom:.8rem">Antara<br><em style="font-weight:600;background:linear-gradient(120deg,var(--accent),var(--text) 70%);-webkit-background-clip:text;background-clip:text;color:transparent">Cahaya dan Gelap</em></div><div style="height:1px;width:3rem;background:var(--accent-line);margin:1.4rem auto"></div><div style="font-size:.95rem;letter-spacing:.15em;text-transform:uppercase">Shaiful Ridhwan</div></div>',section:-1});
+  /* Halaman tajug */
+  pages.push({html:'<div style="text-align:center;padding-top:16%;font-family:var(--font-display)"><div style="font-family:var(--font-ui);font-size:.6rem;letter-spacing:.4em;text-transform:uppercase;color:var(--accent);margin-bottom:1.6rem">Prosa Falsafah</div><div style="font-weight:300;font-size:2em;line-height:1.12;margin-bottom:.9rem;letter-spacing:.01em">Antara<br><em style="font-weight:600;color:var(--accent)">Cahaya dan Gelap</em></div><div style="height:1px;width:3.2rem;background:var(--accent-line);margin:1.6rem auto;opacity:.7"></div><div style="font-size:.95rem;letter-spacing:.22em;text-transform:uppercase;color:var(--text-muted)">Shaiful Ridhwan</div><div style="font-family:var(--font-ui);font-size:.55rem;letter-spacing:.3em;text-transform:uppercase;color:var(--text-faint);margin-top:2.4rem">Kita tidak hidup di hujung.<br>Kita hidup di antara.</div></div>',section:-1});
   var curHtml='';
   function flush(){if(curHtml!==''){pages.push({html:curHtml,section:sectionStart.length-1});curHtml='';}}
   function fits(html){
     measurer.innerHTML=html;
-    return measurer.scrollHeight<=measurer.clientHeight+1;
+    return measurer.scrollHeight<=measurer.clientHeight+2;
   }
   for(var s=0;s<sections.length;s++){
     var sec=sections[s];
@@ -925,25 +1042,41 @@ function paginate(){
         flush();
         curHtml=blockHtml(block,block.type==='p');
         if(block.type==='p')firstP=false;
+        /* Jika satu blok sahaja masih terlampau tinggi, biar — ia menjadi satu halaman */
       }else{
         curHtml+=add;
       }
     }
   }
   flush();
-  totalPagesEl.textContent=pages.length;
-  // Update TOC page numbers
+  if(!(pages.length>0))throw new Error('Pengiraan halaman menghasilkan sifar halaman');
+  /* Kemas kini penunjuk jumlah halaman melalui span kekal */
+  setIndicator((current+1),pages.length);
+  /* Kemas kini nombor halaman dalam TOC */
   var tocPages=document.querySelectorAll('.toc-page');
   for(var i=0;i<tocPages.length&&i<sectionStart.length;i++){
     tocPages[i].textContent='hlm. '+(sectionStart[i]+1);
   }
   if(current>=pages.length)current=pages.length-1;
+  if(current<0)current=0;
   renderSpread();
 }
+
 function schedulePaginate(){
   if(paginateTimer)clearTimeout(paginateTimer);
-  paginateTimer=setTimeout(function(){var sec=currentSection();paginate();goToSection(sec);},250);
+  paginateTimer=setTimeout(function(){
+    var sec=currentSection();
+    try{paginate();}catch(e){fallbackContinuous(e);return;}
+    goToSection(sec);
+  },250);
 }
+
+function fallbackContinuous(err){
+  continuousMode=true;
+  document.body.classList.add('continuous-mode');
+  if(window.console&&console.warn)console.warn('Pagination fallback to continuous mode:',err&&err.message);
+}
+
 function currentSection(){
   for(var i=sectionStart.length-1;i>=0;i--){if(current>=sectionStart[i])return i;}
   return 0;
@@ -955,46 +1088,70 @@ function goToSection(idx){
   renderSpread();
 }
 
-/* ---------- Render spread ---------- */
+/* ---------- Animasi kemunculan pembukaan bab ---------- */
+function triggerChapterEntrance(container){
+  if(!container)return;
+  var opens=container.querySelectorAll('.section-open');
+  if(!opens.length)return;
+  for(var i=0;i<opens.length;i++){
+    opens[i].classList.remove('enter');
+  }
+  if(reduced)return;
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      for(var j=0;j<opens.length;j++)opens[j].classList.add('enter');
+    });
+  });
+}
+
+/* ---------- Papar spread ---------- */
 function pageFolio(i){return i<0?'':(i+1)+' / '+pages.length;}
 function renderSpread(){
   if(pages.length===0)return;
   var l=current,r=(spreadMode===2)?current+1:-1;
-  pageLeft.classList.remove('page-blank');pageRight.classList.remove('page-blank');
+  if(pageLeft)pageLeft.classList.remove('page-blank');
+  if(pageRight)pageRight.classList.remove('page-blank');
   if(spreadMode===1){
     pageLeft.style.display='none';
     pageRight.classList.remove('right');pageRight.classList.add('single');
     pageRight.style.width=pageW+'px';pageRight.style.height=pageH+'px';
     innerRight.innerHTML=pages[current].html;
     folioRight.textContent=pageFolio(current);
+    triggerChapterEntrance(innerRight);
   }else{
     pageLeft.style.display='flex';
     pageRight.classList.remove('single');pageRight.classList.add('right');
     pageLeft.style.width=pageW+'px';pageLeft.style.height=pageH+'px';
     pageRight.style.width=pageW+'px';pageRight.style.height=pageH+'px';
     innerLeft.innerHTML=pages[l].html;folioLeft.textContent=pageFolio(l);
-    if(r>=0&&r<pages.length){innerRight.innerHTML=pages[r].html;folioRight.textContent=pageFolio(r);}
-    else{pageRight.classList.add('page-blank');innerRight.innerHTML='';folioRight.textContent='';}
+    if(r>=0&&r<pages.length){
+      innerRight.innerHTML=pages[r].html;folioRight.textContent=pageFolio(r);
+    }else{
+      pageRight.classList.add('page-blank');innerRight.innerHTML='';folioRight.textContent='';
+    }
+    triggerChapterEntrance(innerLeft);
+    triggerChapterEntrance(innerRight);
   }
-  // Book width
   book.style.width=(spreadMode===2?pageW*2:pageW)+'px';
   book.style.height=pageH+'px';
-  flipper.style.width=pageW+'px';flipper.style.height=pageH+'px';
-  // Buttons + progress
-  prevBtn.disabled=current<=0;
-  nextBtn.disabled=(spreadMode===2)?(current>=pages.length-1):(current>=pages.length-1);
+  if(flipper){flipper.style.width=pageW+'px';flipper.style.height=pageH+'px';}
+  /* Butang + penunjuk + kemajuan */
+  if(prevBtn)prevBtn.disabled=current<=0;
+  if(nextBtn)nextBtn.disabled=current>=pages.length-1;
   var shown=(spreadMode===2&&current+1<pages.length)?current+2:current+1;
-  pageIndicator.innerHTML='Halaman <b>'+(current+1)+'</b> / '+pages.length;
-  var pct=Math.min(100,Math.round(shown/pages.length*100));
-  progressBar.style.width=pct+'%';
-  progressBar.setAttribute('aria-valuenow',pct);
+  setIndicator((current+1),pages.length);
+  var pct=Math.min(100,Math.max(0,Math.round(shown/pages.length*100)));
+  if(progressBar){
+    progressBar.style.width=pct+'%';
+    progressBar.setAttribute('aria-valuenow',pct);
+  }
   try{localStorage.setItem('acg-page',current);}catch(e){}
 }
 
-/* ---------- Page turn ---------- */
+/* ---------- Lipat halaman ---------- */
 function endTurn(){
   animating=false;
-  flipper.classList.remove('active','turn-next','turn-prev','do');
+  if(flipper)flipper.classList.remove('active','turn-next','turn-prev','do');
   renderSpread();
 }
 function turn(dir){
@@ -1002,16 +1159,14 @@ function turn(dir){
   var target=current+dir;
   if(target<0||target>=pages.length)return;
   animating=true;
-  // Set static spread to target first (underneath)
   var saved=current;current=target;renderSpread();current=saved;
-  // Determine turned page content & flipper position
   var turnedIdx,origin,leftPos,cls;
-  if(dir>0){ // next
+  if(dir>0){
     cls='turn-next';
     origin=(spreadMode===2)?'left center':'right center';
     leftPos=(spreadMode===2)?pageW:0;
     turnedIdx=(spreadMode===2)?current+1:current;
-  }else{ // prev
+  }else{
     cls='turn-prev';
     origin=(spreadMode===2)?'right center':'left center';
     leftPos=0;
@@ -1023,26 +1178,25 @@ function turn(dir){
   flipper.style.transformOrigin=origin;
   innerFront.innerHTML=pages[turnedIdx].html;folioFront.textContent=pageFolio(turnedIdx);
   innerBack.innerHTML=pages[turnedIdx].html;folioBack.textContent=pageFolio(turnedIdx);
+  triggerChapterEntrance(innerFront);
   flipper.classList.remove('turn-next','turn-prev','do');
-  // force reflow
   void flipper.offsetWidth;
   flipper.classList.add('active',cls);
   if(reduced){endTurn();current=target;renderSpread();return;}
   requestAnimationFrame(function(){requestAnimationFrame(function(){flipper.classList.add('do');});});
-  setTimeout(function(){current=target;endTurn();},reduced?0:560);
+  setTimeout(function(){current=target;endTurn();},560);
 }
-prevBtn.addEventListener('click',function(){turn(-1);});
-nextBtn.addEventListener('click',function(){turn(1);});
-zonePrev.addEventListener('click',function(){turn(-1);});
-zoneNext.addEventListener('click',function(){turn(1);});
-zonePrev.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();turn(-1);}});
-zoneNext.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();turn(1);}});
+if(prevBtn)prevBtn.addEventListener('click',function(){turn(-1);});
+if(nextBtn)nextBtn.addEventListener('click',function(){turn(1);});
+if(zonePrev)zonePrev.addEventListener('click',function(){turn(-1);});
+if(zoneNext)zoneNext.addEventListener('click',function(){turn(1);});
+if(zonePrev)zonePrev.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();turn(-1);}});
+if(zoneNext)zoneNext.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();turn(1);}});
 
-/* ---------- Touch swipe ---------- */
+/* ---------- Sentuh luncur ---------- */
 var touchX=null,touchY=null;
-var bookStage=document.getElementById('bookStage');
-bookStage.addEventListener('touchstart',function(e){if(e.touches.length===1){touchX=e.touches[0].clientX;touchY=e.touches[0].clientY;}},{passive:true});
-bookStage.addEventListener('touchend',function(e){
+if(bookStage)bookStage.addEventListener('touchstart',function(e){if(e.touches.length===1){touchX=e.touches[0].clientX;touchY=e.touches[0].clientY;}},{passive:true});
+if(bookStage)bookStage.addEventListener('touchend',function(e){
   if(touchX===null)return;
   var dx=e.changedTouches[0].clientX-touchX;
   var dy=e.changedTouches[0].clientY-touchY;
@@ -1052,20 +1206,34 @@ bookStage.addEventListener('touchend',function(e){
   }
 },{passive:true});
 
-/* ---------- Keyboard ---------- */
+/* ---------- Papan kekunci ---------- */
 document.addEventListener('keydown',function(e){
-  if(tocPanel.classList.contains('open')){if(e.key==='Escape')closeToc();return;}
+  if(tocPanel&&tocPanel.classList.contains('open')){if(e.key==='Escape')closeToc();return;}
   if(!document.body.classList.contains('in-book'))return;
   if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();turn(1);}
   else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();turn(-1);}
 });
 
 /* ---------- TOC ---------- */
-function openToc(){tocPanel.classList.add('open');tocOverlay.classList.add('open');tocPanel.setAttribute('aria-hidden','false');tocOverlay.setAttribute('aria-hidden','false');tocBtn.setAttribute('aria-expanded','true');document.body.style.overflow='hidden';tocClose.focus();}
-function closeToc(){tocPanel.classList.remove('open');tocOverlay.classList.remove('open');tocPanel.setAttribute('aria-hidden','true');tocOverlay.setAttribute('aria-hidden','true');tocBtn.setAttribute('aria-expanded','false');document.body.style.overflow='';tocBtn.focus();}
-tocBtn.addEventListener('click',openToc);
-tocClose.addEventListener('click',closeToc);
-tocOverlay.addEventListener('click',closeToc);
+function openToc(){
+  if(!tocPanel)return;
+  tocPanel.classList.add('open');tocOverlay.classList.add('open');
+  tocPanel.setAttribute('aria-hidden','false');tocOverlay.setAttribute('aria-hidden','false');
+  if(tocBtn)tocBtn.setAttribute('aria-expanded','true');
+  document.body.style.overflow='hidden';
+  if(tocClose)tocClose.focus();
+}
+function closeToc(){
+  if(!tocPanel)return;
+  tocPanel.classList.remove('open');tocOverlay.classList.remove('open');
+  tocPanel.setAttribute('aria-hidden','true');tocOverlay.setAttribute('aria-hidden','true');
+  if(tocBtn)tocBtn.setAttribute('aria-expanded','false');
+  document.body.style.overflow='';
+  if(tocBtn)tocBtn.focus();
+}
+if(tocBtn)tocBtn.addEventListener('click',openToc);
+if(tocClose)tocClose.addEventListener('click',closeToc);
+if(tocOverlay)tocOverlay.addEventListener('click',closeToc);
 document.querySelectorAll('.toc-link').forEach(function(btn){
   btn.addEventListener('click',function(){
     var sec=parseInt(btn.getAttribute('data-section'),10);
@@ -1073,48 +1241,75 @@ document.querySelectorAll('.toc-link').forEach(function(btn){
     goToSection(sec);
   });
 });
-backToCover.addEventListener('click',function(){location.href='antara-cahaya-dan-gelap.html';});
+if(backToCover)backToCover.addEventListener('click',function(){location.href='antara-cahaya-dan-gelap.html';});
 
-/* ---------- Enter book ---------- */
+/* ---------- Masuk mod buku ---------- */
 function enterBook(page){
   document.body.classList.add('in-book');
   if(typeof page==='number'&&page>=0&&page<pages.length)current=page;
   renderSpread();
   window.scrollTo(0,0);
-  document.getElementById('reader').scrollIntoView({block:'start'});
+  var reader=document.getElementById('reader');
+  if(reader)reader.scrollIntoView({block:'start'});
 }
-var sr=document.getElementById('startReading');if(sr){sr.addEventListener('click',function(e){e.preventDefault();enterBook();});}
+var sr=document.getElementById('startReading');
+if(sr)sr.addEventListener('click',function(e){e.preventDefault();enterBook();});
 var resumeBtn=document.getElementById('resumeBtn');
-var savedPage=null;try{savedPage=parseInt(localStorage.getItem('acg-page')||'-1',10);}catch(e){}
+var savedPage=null;
+try{savedPage=parseInt(localStorage.getItem('acg-page')||'-1',10);if(isNaN(savedPage))savedPage=-1;}catch(e){}
 if(resumeBtn&&savedPage&&savedPage>0){
   resumeBtn.style.display='inline-block';
   resumeBtn.textContent='Sambung bacaan — halaman '+(savedPage+1);
   resumeBtn.addEventListener('click',function(e){e.preventDefault();enterBook(savedPage);});
 }
 
-/* ---------- Continuous mode toggle ---------- */
-if(modeToggle){modeToggle.addEventListener('click',function(){
+/* ---------- Togol mod bacaan berterusan ---------- */
+if(modeToggle)modeToggle.addEventListener('click',function(){
   continuousMode=!continuousMode;
   document.body.classList.toggle('continuous-mode',continuousMode);
-  if(continuousMode){window.scrollTo({top:document.getElementById('continuous').offsetTop-20,behavior:'smooth'});}
-});}
+  if(continuousMode){
+    var cont=document.getElementById('continuous');
+    if(cont)window.scrollTo({top:cont.offsetTop-20,behavior:'smooth'});
+  }
+});
 
-/* ---------- Back to top (continuous mode) ---------- */
+/* ---------- Kembali ke atas ---------- */
 window.addEventListener('scroll',function(){
-  if(backTop){backTop.classList.toggle('visible',window.scrollY>600);}
+  if(backTop)backTop.classList.toggle('visible',window.scrollY>600);
 },{passive:true});
-if(backTop){backTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});}
+if(backTop)backTop.addEventListener('click',function(){window.scrollTo({top:0,behavior:'smooth'});});
 
-/* ---------- Resize ---------- */
+/* ---------- Ubah saiz tetingkap ---------- */
 var resizeTimer=null;
 window.addEventListener('resize',function(){
   if(resizeTimer)clearTimeout(resizeTimer);
-  resizeTimer=setTimeout(function(){var sec=currentSection();needsPaginate=true;paginate();goToSection(sec);},200);
+  resizeTimer=setTimeout(function(){
+    var sec=currentSection();
+    needsPaginate=true;
+    try{paginate();}catch(e){fallbackContinuous(e);return;}
+    goToSection(sec);
+  },200);
 });
 
-/* ---------- Init ---------- */
-paginate();
-})();
+/* ---------- Pengiraan semula selepas fon dimuatkan ---------- */
+function repaginateAfterFonts(){
+  var sec=currentSection();
+  needsPaginate=true;
+  try{paginate();}catch(e){fallbackContinuous(e);return;}
+  goToSection(sec);
+}
+if(document.fonts&&document.fonts.ready&&document.fonts.ready.then){
+  document.fonts.ready.then(function(){repaginateAfterFonts();}).catch(function(){});
+}
+window.addEventListener('load',function(){setTimeout(repaginateAfterFonts,60);});
+
+/* ---------- Permulaan ---------- */
+setIndicatorCalculating();
+try{
+  paginate();
+}catch(e){
+  fallbackContinuous(e);
+}
 </script>
 </body>
 </html>
