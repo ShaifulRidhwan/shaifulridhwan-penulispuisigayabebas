@@ -374,6 +374,15 @@ body.continuous-mode .reader{display:block}
 .page-folio{display:none!important}
 @media(max-width:640px){.so-ill-wrap{bottom:-200px!important}}
 </style>
+<style>
+/* Fasa kemasan — minimum, berimpak tinggi */
+.page-indicator.calc .total{opacity:.5;letter-spacing:.05em}
+.page-indicator .total{transition:opacity .3s ease}
+@media (max-width:640px){
+  .nav-btn{min-height:44px;min-width:48px}
+  .continuous{padding:2rem 1.1rem 3.5rem;box-sizing:border-box}
+}
+</style>
 </head>
 <body class="in-book">
 
@@ -1155,6 +1164,10 @@ function fallbackContinuous(err){
   continuousMode=true;
   document.body.classList.add('continuous-mode');
   if(window.console&&console.warn)console.warn('Pagination fallback to continuous mode:',err&&err.message);
+  /* Penunjuk jujur untuk mod berterusan — jangan biarkan '…' menggantung */
+  if(totalPagesEl){totalPagesEl.textContent='—';}
+  if(pageIndicator){pageIndicator.classList.remove('calc');}
+  if(typeof updateContinuousProgress==='function'){updateContinuousProgress();}
 }
 
 function currentSection(){
@@ -1390,6 +1403,24 @@ try{
 }catch(e){
   fallbackContinuous(e);
 }
+/* --- Jaring keselamatan penomboran halaman --- */
+/* Jika '…' masih terpapar selepas 1.5s (ralat sementara, perlumbaan masa, atau JS terhenti awal), cubaan paginate sekali lagi. */
+setTimeout(function(){
+  if(totalPagesEl && totalPagesEl.textContent==='…' && !continuousMode){
+    try{ needsPaginate=true; paginate(); }catch(e){ fallbackContinuous(e); }
+  }
+},1500);
+/* Penunjuk kemajuan bacaan yang benar-benar berfungsi dalam mod berterusan (progress bar sedia ada, fixed di atas) */
+function updateContinuousProgress(){
+  if(!continuousMode || !progressBar) return;
+  var h=document.documentElement, b=document.body;
+  var max=(h.scrollHeight||b.scrollHeight)-h.clientHeight;
+  var pct=max>0? Math.min(100,Math.max(0,h.scrollTop/max*100)) : 0;
+  progressBar.style.width=pct+'%';
+  progressBar.setAttribute('aria-valuenow',Math.round(pct));
+}
+window.addEventListener('scroll',updateContinuousProgress,{passive:true});
+window.addEventListener('resize',updateContinuousProgress);
 </script>
 </body>
 </html>
