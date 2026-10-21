@@ -725,7 +725,7 @@ section.khas{padding:5rem 0}
 .about .bio-main{font-family:'Archivo',system-ui,sans-serif;font-size:clamp(1rem,2.2vw,1.12rem);line-height:2;color:var(--text);font-weight:300}
 </style>
 <style id="arkib-two-line">
-/* Arkib 29 Karya — hierarki dua baris: tajuk atas, kategori bawah */
+/* Arkib 34 Karya — hierarki dua baris: tajuk atas, kategori bawah */
 .work-head{flex-wrap:wrap;align-items:center;row-gap:.1rem}
 .work-head .left{flex:1 1 auto;min-width:0}
 .work-head > div:not(.left){flex:1 1 100%;margin-top:.55rem;display:flex;align-items:center;gap:.8rem}
@@ -744,6 +744,65 @@ section.khas{padding:5rem 0}
 @media(max-width:600px){.hero-ident{font-size:.52rem;letter-spacing:.28em;gap:.3rem}}
 </style>
 
+
+<style>
+/* ===== MULA DI SINI animasi + gold berkelip ===== */
+@keyframes mulaGlow{0%,100%{opacity:.85;letter-spacing:.45em}50%{opacity:1;letter-spacing:.5em;text-shadow:0 0 18px var(--glow)}}
+.mula .kicker{animation:mulaGlow 3.4s ease-in-out infinite}
+.mula .kicker::before,.mula .kicker::after{animation:mulaGlow 3.4s ease-in-out infinite}
+@keyframes mulaRise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.mula-inner{animation:mulaRise 1.1s cubic-bezier(.2,.7,.2,1) both}
+@keyframes goldTwinkle{0%,100%{opacity:1}45%{opacity:.68}55%{opacity:.92}}
+.hero-title .line2,.hero-tagline,.eyebrow,.sec-head .kicker,.manifesto-sig,.pick-num,.khas-card .kquote,.brand b,.hero-meta b{animation:goldTwinkle 3.6s ease-in-out infinite}
+.hero-tagline::before{animation:goldTwinkle 2.8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.mula .kicker,.mula-inner,.hero-title .line2,.hero-tagline,.eyebrow,.sec-head .kicker,.manifesto-sig,.pick-num,.khas-card .kquote,.brand b,.hero-meta b,.hero-tagline::before{animation:none}}
+</style>
+
+<style>
+/* ===== MOBILE FIX + ANIMASI TAMBAHAN ===== */
+/* 1. Paparkan kedua-dua baris hero-meta di mobile */
+@media(max-width:720px){
+  .hero-meta span:last-child{display:block!important}
+  .hero-meta{gap:.35rem}
+  header.hero{min-height:auto!important;padding:6rem 0 2.5rem!important}
+  section.mula{padding-top:2.5rem!important;padding-bottom:3rem!important}
+  .hero .cta{gap:.7rem}
+  .hero .cta .btn{flex:1 1 40%;justify-content:center;padding:.9rem 1rem}
+}
+/* 2. Animasi masuk hero bertingkat (staggered) */
+@keyframes heroUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.hero-meta{animation:heroUp .8s cubic-bezier(.2,.7,.2,1) .1s both}
+.hero-title .line1{animation:heroUp .9s cubic-bezier(.2,.7,.2,1) .25s both}
+.hero-title .line2{animation:heroUp .9s cubic-bezier(.2,.7,.2,1) .4s both}
+.hero-author{animation:heroUp .8s cubic-bezier(.2,.7,.2,1) .55s both}
+.hero-tagline{animation:heroUp .8s cubic-bezier(.2,.7,.2,1) .7s both}
+.hero .cta .btn:nth-child(1){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) .85s both}
+.hero .cta .btn:nth-child(2){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) .95s both}
+.hero .cta .btn:nth-child(3){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.05s both}
+.hero .cta .btn:nth-child(4){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.15s both}
+.hero .cta .btn:nth-child(5){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.25s both}
+.hero .cta .btn:nth-child(6){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.35s both}
+/* 3. Nav link hover: garis bawah emas meluncur (Duologi/Trilogi/Tetralogi/dll) */
+.nav-links a.link{position:relative}
+.nav-links a.link::after{content:"";position:absolute;left:0;bottom:-4px;width:0;height:1.5px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .35s cubic-bezier(.2,.7,.2,1)}
+.nav-links a.link:hover::after{width:100%}
+/* 4. Tajuk seksi (Duologi/Trilogi/Tetralogi): animasi garis emas + naik apabila kelihatan */
+@keyframes lineGrow{from{width:0}to{width:64px}}
+.reveal.visible .rule{animation:lineGrow .9s cubic-bezier(.2,.7,.2,1) .2s both}
+.reveal.visible .sec-head h2{animation:heroUp .8s cubic-bezier(.2,.7,.2,1) .1s both}
+.reveal.visible .sec-head .kicker{animation:heroUp .7s cubic-bezier(.2,.7,.2,1) both}
+/* 5. Hover pada butang kategori Duologi/Trilogi/Tetralogi/Novel di hero */
+.hero .cta .btn.ghost{position:relative;overflow:hidden}
+.hero .cta .btn.ghost::before{content:"";position:absolute;inset:0;background:var(--accent-soft);transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.2,.7,.2,1);z-index:-1}
+.hero .cta .btn.ghost:hover::before{transform:scaleX(1)}
+/* 6. Hero glow berdenyut lembut */
+@keyframes glowPulse{0%,100%{opacity:.7;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.06)}}
+.hero-glow{animation:glowPulse 6s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){
+  .hero-meta,.hero-title .line1,.hero-title .line2,.hero-author,.hero-tagline,.hero .cta .btn,.hero-glow,.reveal.visible .rule,.reveal.visible .sec-head h2,.reveal.visible .sec-head .kicker{animation:none!important}
+  .nav-links a.link::after{transition:none}
+}
+</style>
 </head>
 <body>
 <div class="progress" id="progress"></div>
@@ -760,7 +819,7 @@ section.khas{padding:5rem 0}
       <a class="link" href="#duologi">Duologi</a>
       <a class="link" href="#trilogi">Trilogi</a>
       <a class="link" href="#tetralogi">Tetralogi</a>
-      <a class="link" href="#karya">29 Karya</a>
+      <a class="link" href="#karya">34 Karya</a>
       <a class="link" href="#tentang">Penulis</a>
       <button class="theme-btn" id="themeBtn" aria-label="Tukar tema cahaya/gelap">
         <svg id="iconMoon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -786,7 +845,7 @@ section.khas{padding:5rem 0}
     <a class="btn ghost" href="#tetralogi">Tetralogi</a>
     <a class="btn ghost" href="#khas">Novel</a>
   </div>
-  <div class="scroll-hint"><span>Scroll</span><div class="line"></div></div>
+  </div>
 </header>
 
 <section class="mula">
@@ -1377,7 +1436,7 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU",["kau tahu cara mencintai s
   window.addEventListener('resize', resize);
   var COUNT = Math.min(70, Math.floor(window.innerWidth / 18));
   for(var i=0;i<COUNT;i++){
-    particles.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.8+.4, vx:(Math.random()-.5)*.25, vy:(Math.random()-.5)*.25, a:Math.random()*.5+.2});
+    particles.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.8+.4, vx:(Math.random()-.5)*.42, vy:(Math.random()-.5)*.42, a:Math.random()*.5+.2});
   }
   function tick(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
