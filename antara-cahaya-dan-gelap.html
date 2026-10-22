@@ -1375,8 +1375,7 @@ function enterBook(page){
   var reader=document.getElementById('reader');
   if(reader)reader.scrollIntoView({block:'start'});
 }
-var sr=document.getElementById('startReading');
-if(sr)sr.addEventListener('click',function(e){e.preventDefault();enterBook();});
+var sr=document.getElementById('startReading'); if(sr)sr.addEventListener('click',function(e){e.preventDefault();window.location.href='antara-cahaya-dan-gelap-baca.html';});
 var resumeBtn=document.getElementById('resumeBtn');
 var savedPage=null;
 try{savedPage=parseInt(localStorage.getItem('acg-page')||'-1',10);if(isNaN(savedPage))savedPage=-1;}catch(e){}
