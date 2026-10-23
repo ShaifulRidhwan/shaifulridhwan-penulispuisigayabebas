@@ -392,6 +392,198 @@ blockquote.novel-quote.chapter-close-final{margin:2rem auto 0;max-width:26em;tex
   .continuous{padding:2rem 1.1rem 3.5rem;box-sizing:border-box}
 }
 </style>
+
+<style id="redesign-css">
+/* ============================================================
+   REDESIGN LAYER — Cinematic Digital Book · Maximum Editorial
+   Additive overrides. Core pagination structure preserved.
+   ============================================================ */
+
+/* --- Ambient cinematic background: layered light + grain + vignette --- */
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 45% at calc(50% + var(--ambient-x,0%)) calc(28% + var(--ambient-y,0%)), rgba(200,164,92,.07), transparent 65%),
+    radial-gradient(ellipse 80% 60% at 50% 110%, rgba(0,0,0,.55), transparent 60%);
+  transition:background-position .8s ease;
+}
+:root[data-theme="light"] body::before{
+  background:
+    radial-gradient(ellipse 60% 45% at calc(50% + var(--ambient-x,0%)) calc(28% + var(--ambient-y,0%)), rgba(150,117,58,.08), transparent 65%),
+    radial-gradient(ellipse 80% 60% at 50% 110%, rgba(80,60,20,.18), transparent 60%);
+}
+/* Subtle ambient shift per section (driven by body[data-section] via JS) */
+body[data-section="0"]{--ambient-x:-18%;--ambient-y:-6%}
+body[data-section="1"]{--ambient-x:14%;--ambient-y:4%}
+body[data-section="2"]{--ambient-x:-10%;--ambient-y:10%}
+body[data-section="3"]{--ambient-x:18%;--ambient-y:-10%}
+body[data-section="4"]{--ambient-x:-16%;--ambient-y:6%}
+body[data-section="5"]{--ambient-x:10%;--ambient-y:12%}
+body[data-section="6"]{--ambient-x:-6%;--ambient-y:-12%}
+body[data-section="7"]{--ambient-x:0%;--ambient-y:0%}
+
+/* --- Book stage: cinematic depth well --- */
+.book-stage{background:transparent;z-index:1}
+.book-stage::before{
+  content:"";position:absolute;inset:4% 2%;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 70% 60% at 50% 45%, rgba(0,0,0,.35), transparent 72%);
+  filter:blur(30px);
+}
+:root[data-theme="light"] .book-stage::before{background:radial-gradient(ellipse 70% 60% at 50% 45%, rgba(80,60,20,.18), transparent 72%)}
+
+/* --- Page surfaces: richer paper, inner vignette, deckle edge glow --- */
+.page{
+  box-shadow:
+    0 40px 100px rgba(0,0,0,.55),
+    0 8px 24px rgba(0,0,0,.4),
+    inset 0 0 60px rgba(0,0,0,.06);
+  transition:box-shadow .4s ease;
+}
+:root[data-theme="light"] .page{
+  box-shadow:0 30px 80px rgba(60,45,15,.22),0 6px 18px rgba(60,45,15,.12),inset 0 0 50px rgba(150,117,58,.05);
+}
+.page::before{
+  content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+  background:
+    linear-gradient(180deg, rgba(200,164,92,.05) 0%, transparent 18%, transparent 82%, rgba(0,0,0,.10) 100%),
+    radial-gradient(ellipse 120% 90% at 50% 0%, transparent 55%, rgba(0,0,0,.14) 100%);
+}
+.page.left::after{
+  content:"";position:absolute;top:0;bottom:0;right:-1px;width:22px;z-index:4;pointer-events:none;
+  background:linear-gradient(90deg, rgba(0,0,0,.28), transparent);
+}
+.page.right::after{
+  content:"";position:absolute;top:0;bottom:0;left:-1px;width:22px;z-index:4;pointer-events:none;
+  background:linear-gradient(270deg, rgba(0,0,0,.28), transparent);
+}
+.page.single::after{display:none}
+/* Gold corner tick on pages (editorial mark) */
+.page-inner::after{
+  content:"";position:absolute;bottom:calc(var(--pad) + 1.6rem);right:var(--pad);width:14px;height:1px;
+  background:var(--accent-line);opacity:.5;z-index:5;pointer-events:none;
+}
+
+
+/* --- Typography: more dramatic drop cap --- */
+.page-inner p.drop::first-letter{
+  font-size:3.4em;line-height:.74;padding:.06em .1em 0 0;color:var(--accent);
+  font-weight:600;text-shadow:0 2px 18px var(--accent-soft);
+}
+.page-inner p{line-height:1.82;letter-spacing:.004em}
+
+/* --- Novel quote: editorial pull-quote with ornamental frame --- */
+.page-inner .novel-quote{
+  margin:2.1em 0;padding:1.5em 1.6em 1.5em 1.9em;
+  border-left:3px solid var(--accent);
+  background:linear-gradient(135deg, var(--accent-soft), transparent 70%);
+  position:relative;font-size:1.1em;line-height:1.72;
+  box-shadow:inset 0 0 50px rgba(0,0,0,.05), 0 10px 30px rgba(0,0,0,.12);
+}
+.page-inner .novel-quote::before{
+  content:"\201C";left:.35rem;top:-.15rem;font-size:3.4em;opacity:.3;
+}
+.page-inner .novel-quote::after{
+  content:"";position:absolute;left:1.9em;right:1.6em;bottom:.7em;height:1px;
+  background:linear-gradient(90deg, var(--accent-line), transparent);opacity:.6;
+}
+
+/* --- Scene break: ornamental editorial divider --- */
+.page-inner .scene-break{margin:1.6em 0;gap:1.1rem}
+.page-inner .scene-break .dot{letter-spacing:.5em;font-size:.7rem;opacity:.8;color:var(--accent)}
+.page-inner .scene-break span{max-width:2.6rem;background:var(--accent-line);opacity:.5}
+
+/* --- Chapter close: ornamental coda --- */
+.chapter-close{position:relative;margin-top:1em}
+.chapter-close::before{
+  content:"";display:block;height:1px;width:4rem;margin:0 auto 1.6rem;
+  background:linear-gradient(90deg, transparent, var(--accent-line), transparent);
+}
+.chapter-close-final{font-size:1.12em!important;border-left:none!important;background:transparent!important;text-align:center;padding:1em 0!important}
+.chapter-close-final p{text-align:center!important}
+
+/* --- Folio: refined editorial page number --- */
+.page-folio{
+  font-size:.52rem;letter-spacing:.3em;color:var(--text-faint);padding:.4rem 0 .65rem;
+  position:relative;
+}
+.page-folio::before{
+  content:"";display:block;width:2.2rem;height:1px;margin:0 auto .45rem;
+  background:linear-gradient(90deg, transparent, var(--accent-line), transparent);
+}
+
+/* --- Entrance animation for prose content (triggered via [data-enter]) --- */
+@keyframes pageRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.page-inner[data-enter]{animation:pageRise .55s cubic-bezier(.2,.7,.2,1) both}
+.flipper .page-inner[data-enter]{animation:none}
+
+/* --- Topbar: premium glass --- */
+.topbar{
+  border-bottom:1px solid var(--border);
+  background:color-mix(in srgb, var(--bg) 82%, transparent);
+  box-shadow:0 4px 24px rgba(0,0,0,.25);
+}
+.icon-btn{border-radius:3px;transition:all .28s cubic-bezier(.2,.7,.2,1)}
+.icon-btn:hover{box-shadow:0 0 18px var(--accent-soft)}
+.fs-btn{font-weight:700}
+
+/* --- Progress bar: glow + section ticks --- */
+.progress-bar{box-shadow:0 0 14px var(--accent-soft), 0 0 4px var(--accent)}
+.progress-bar .tick{position:absolute;top:-1px;width:1px;height:4px;background:var(--accent);opacity:.55}
+
+/* --- TOC panel: richer editorial --- */
+.toc-panel{box-shadow:-30px 0 80px rgba(0,0,0,.5);border-left:1px solid var(--border)}
+.toc-link{transition:all .25s ease;position:relative}
+.toc-link:hover{background:var(--accent-soft);transform:translateX(4px)}
+.toc-link.active{background:var(--accent-soft)}
+.toc-link.active .toc-num{color:var(--accent)}
+.toc-link.active::before{content:"";position:absolute;left:0;top:20%;bottom:20%;width:2px;background:var(--accent)}
+.toc-num{font-family:var(--font-display);font-weight:300;opacity:.85}
+
+/* --- Nav controls: premium --- */
+.nav-btn{transition:all .25s ease;border-radius:3px}
+.nav-btn:hover{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent);box-shadow:0 4px 18px var(--accent-soft)}
+.page-indicator b{color:var(--accent);font-weight:600}
+
+/* --- Back to top --- */
+.back-top{transition:all .3s ease;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.back-top:hover{background:var(--accent);color:var(--bg);transform:translateY(-3px)}
+
+/* --- Section opener: enhance transition glow (content preserved) --- */
+.section-open{transition:filter .5s ease}
+.section-open.enter{animation:none}
+.section-open.enter .so-number,
+.section-open.enter .so-divider,
+.section-open.enter .so-title,
+.section-open.enter .so-caption{animation:soRise .7s cubic-bezier(.2,.7,.2,1) both}
+.section-open.enter .so-divider{animation-delay:.15s}
+.section-open.enter .so-title{animation-delay:.28s}
+.section-open.enter .so-caption{animation-delay:.42s}
+
+/* --- Cover: subtle depth (preserved) --- */
+.cover-emblem{filter:drop-shadow(0 20px 50px rgba(200,164,92,.18))}
+
+/* --- Responsive: mobile single page refinement --- */
+@media(max-width:900px){
+  .page{box-shadow:0 20px 50px rgba(0,0,0,.5), inset 0 0 40px rgba(0,0,0,.06)}
+  .page-inner p{font-size:.98em;line-height:1.8}
+  .page-inner .novel-quote{font-size:1.02em;margin:1.6em 0;padding:1.2em 1.2em 1.2em 1.4em}
+  .book-controls .lbl{display:none}
+  .nav-btn{padding:.7rem 1rem}
+}
+@media(max-width:640px){
+  .page-inner p.drop::first-letter{font-size:2.9em}
+  .page-inner .novel-quote{font-size:.98em}
+}
+
+/* --- Reduced motion --- */
+@media(prefers-reduced-motion:reduce){
+  .page-inner[data-enter],.section-open.enter .so-number,
+  .section-open.enter .so-divider,.section-open.enter .so-title,
+  .section-open.enter .so-caption{animation:none!important}
+  body::before{transition:none}
+}
+</style>
+
 </head>
 <body class="in-book">
 <div aria-label="Kemajuan bacaan" aria-valuemax="100" aria-valuemin="0" aria-valuenow="0" class="progress-bar" id="progressBar" role="progressbar"></div>
@@ -475,7 +667,6 @@ blockquote.novel-quote.chapter-close-final{margin:2rem auto 0;max-width:26em;tex
 <!-- ===== CONTINUOUS FALLBACK (no-JS + continuous mode) ===== -->
 <main class="continuous" id="continuous">
 <section class="book-section" data-section="0">
-<div aria-hidden="true" class="ps-symbol"><svg viewbox="0 0 40 40"><circle cx="20" cy="20" fill="none" r="15" stroke="currentColor" stroke-width="1"></circle><path d="M20 5 A15 15 0 0 1 20 35 Z" fill="currentColor" opacity="0.3"></path></svg></div>
 <h2 class="book-section-title">DI ANTARA</h2>
 <p>Ada banyak perkara dalam hidup yang dianggap berada di satu hujung.</p>
 <p>Aku masih ingat bau kapur di dinding kelas itu. Serbuk putih yang melekat pada tapak tangan, dan apabila aku menggosoknya ke atas baju, kesannya tidak hilang begitu sahaja. Begitulah juga sebuah tuduhan. Ia tidak perlu benar untuk meninggalkan kesan. Ia hanya perlu diucapkan dengan cukup kuat, di hadapan orang yang cukup ramai, dan selepas itu segala-galanya berubah — bukan kerana fakta, tetapi kerana orang tidak lagi melihat kita dengan mata yang sama.</p>
@@ -519,7 +710,6 @@ blockquote.novel-quote.chapter-close-final{margin:2rem auto 0;max-width:26em;tex
 </div>
 </section>
 <section class="book-section" data-section="1">
-<div aria-hidden="true" class="ps-symbol"><svg viewbox="0 0 40 40"><path d="M20 7 L33 31 L7 31 Z" fill="none" stroke="currentColor" stroke-width="1"></path><circle cx="20" cy="23" fill="currentColor" r="1.8"></circle></svg></div>
 <h2 class="book-section-title">AKAL — DI ANTARA TAHU DAN TIDAK TAHU</h2>
 <p>Pada mulanya, ilmu dianggap sebagai pengumpulan jawapan. Semakin banyak jawapan, semakin pandai seseorang. Itulah ukuran yang diajarkan di sekolah: hafal, jawab, dapat markah. Tiada ruang untuk soalan. Tiada ruang untuk ragu.</p>
 <p>Forum adalah sebuah bandar. Ada lorong-lorong gelap, ada dataran terbuka, ada penjual ubat, ada guru, ada penipu, dan ada orang yang hanya mahu pulang ke rumah tetapi tersesat. Di bandar itu, reputasi adalah mata wang. Dan seperti semua mata wang, nilainya boleh jatuh dalam sehari apabila orang ramai panik.</p>
@@ -584,7 +774,6 @@ blockquote.novel-quote.chapter-close-final{margin:2rem auto 0;max-width:26em;tex
 </div>
 </section>
 <section class="book-section" data-section="2">
-<div aria-hidden="true" class="ps-symbol"><svg viewbox="0 0 40 40"><path d="M20 5 L33 20 L20 35 L7 20 Z" fill="none" stroke="currentColor" stroke-width="1"></path><path d="M20 13 L27 20 L20 27 L13 20 Z" fill="currentColor" opacity="0.25"></path></svg></div>
 <h2 class="book-section-title">IMAN — DI ANTARA PASTI DAN RAGU</h2>
 <p>Ada yang berbicara tentang iman seolah-olah ia adalah tembok. Kokoh. Tanpa retak. Tanpa ruang untuk soalan. Setiap keraguan dianggap kelemahan. Setiap soalan dianggap penghinaan. Dan mereka yang paling lantang, selalunya yang paling takut dengan soalan mereka sendiri.</p>
 <p>PLKN adalah sebuah dunia kecil. Di dalam kem itu, semua orang dari pelbagai latar belakang dipaksa hidup bersama, makan bersama, berbaris bersama. Dan dalam kedekatan yang dipaksa itu, aku melihat sesuatu: kepercayaan yang paling kuat selalunya dimiliki oleh orang yang paling takut untuk mempersoalkannya.</p>
@@ -652,7 +841,6 @@ blockquote.novel-quote.chapter-close-final{margin:2rem auto 0;max-width:26em;tex
 </div>
 </section>
 <section class="book-section" data-section="3">
-<div aria-hidden="true" class="ps-symbol"><svg viewbox="0 0 40 40"><circle cx="15" cy="20" fill="none" r="10" stroke="currentColor" stroke-width="1"></circle><circle cx="25" cy="20" fill="none" opacity="0.6" r="10" stroke="currentColor" stroke-width="1"></circle></svg></div>
 <h2 class="book-section-title">CINTA — DI ANTARA PUNYA DAN MEMINJAM</h2>
 <p>Kata "punya" sering dilemparkan. Aku punya dia. Dia punya aku. Seolah-olah cinta adalah barang yang boleh dimiliki, disimpan dalam almari, dikunci, dan dibanggakan kepada jiran.</p>
 <p>Kita sering bercakap tentang cinta seolah-olah ia adalah perasaan. Tetapi perasaan adalah permulaan, bukan keseluruhan. Perasaan adalah bunga yang mekar pada musim bunga. Cinta adalah pokok yang bertahan melalui musim sejuk. Dan kebanyakan kita berhenti pada bunga. Kita terpesona dengan keindahannya, dan apabila bunga itu layu, kita berfikir bahawa cinta telah mati. Kita tidak sedar bahawa bunga itu hanya permulaan. Yang sebenar berlaku di bawah tanah, di akar, di tempat yang tidak kelihatan, di tempat yang memerlukan masa dan kesabaran untuk tumbuh.</p>
@@ -740,7 +928,6 @@ blockquote.novel-quote.chapter-close-final{margin:2rem auto 0;max-width:26em;tex
 </div>
 </section>
 <section class="book-section" data-section="4">
-<div aria-hidden="true" class="ps-symbol"><svg viewbox="0 0 40 40"><rect fill="none" height="22" stroke="currentColor" stroke-width="1" width="22" x="9" y="9"></rect><line stroke="currentColor" stroke-width="2.2" x1="9" x2="9" y1="9" y2="31"></line><circle cx="24" cy="20" fill="currentColor" r="1.4"></circle></svg></div>
 <h2 class="book-section-title">KEBEBASAN — DI ANTARA PINTU DAN PAGAR</h2>
 <p>Kebebasan disangka sebagai ketiadaan pagar. Semua terbuka. Semua boleh. Tiada yang menghalang. Itulah gambaran yang dijual — kebebasan tanpa sempadan, kebebasan tanpa batas. Tetapi gambaran itu, adalah ilusi. Kerana tanpa batas, tiada apa yang dapat dipegang. Dan tanpa apa yang dipegang, kebebasan hanyalah kekosongan.</p>
 <p>Kuasa tidak mengubah seseorang. Kuasa mendedahkan seseorang. Apa yang kita lakukan apabila kita tidak perlu takut akan akibat — itulah siapa kita sebenarnya. Dan kebanyakan kita tidak mahu tahu jawapannya, kerana jawapannya selalunya tidak seindah yang kita bayangkan.</p>
@@ -805,7 +992,6 @@ blockquote.novel-quote.chapter-close-final{margin:2rem auto 0;max-width:26em;tex
 </div>
 </section>
 <section class="book-section" data-section="5">
-<div aria-hidden="true" class="ps-symbol"><svg viewbox="0 0 40 40"><path d="M20 20 m0 -13 a13 13 0 1 1 -9 3.5 a9 9 0 1 1 7 -1.5 a5 5 0 1 1 -3 0.5" fill="none" stroke="currentColor" stroke-width="1"></path><circle cx="20" cy="20" fill="currentColor" r="1.4"></circle></svg></div>
 <h2 class="book-section-title">MASA — DI ANTARA SUDAH DAN BELUM</h2>
 <p>Masa tidak pernah berhenti. Tetapi kita selalu terasa terperangkap di antara. Di antara yang sudah berlaku dan yang belum tiba. Di antara yang hilang dan yang dijanjikan. Masa berjalan lurus. Tetapi hati, berjalan dalam bulatan — kembali ke masa lalu, melompat ke masa depan, jarang sekali berhenti di hari ini.</p>
 <p>Nota lama adalah seperti bertemu dengan diri sendiri di stesen bas. Kita melihat orang muda itu — penuh semangat, penuh keyakinan, penuh dengan jawapan — dan kita tidak tahu sama ada untuk memeluknya atau menasihatinya. Dan kemudian kita sedar: dia tidak akan mendengar kita. Dia perlu melalui semuanya sendiri, seperti kita telah lalui.</p>
@@ -856,7 +1042,6 @@ blockquote.novel-quote.chapter-close-final{margin:2rem auto 0;max-width:26em;tex
 </div>
 </section>
 <section class="book-section" data-section="6">
-<div aria-hidden="true" class="ps-symbol"><svg viewbox="0 0 40 40"><circle cx="20" cy="20" fill="none" r="15" stroke="currentColor" stroke-width="0.8"></circle><circle cx="20" cy="20" fill="none" opacity="0.55" r="9" stroke="currentColor" stroke-width="0.8"></circle><circle cx="20" cy="20" fill="currentColor" r="2"></circle></svg></div>
 <h2 class="book-section-title">YANG ADA DI ANTARA</h2>
 <p>Pada akhirnya, tiada jawapan untuk segala-galanya. Tetapi ada ruang. Ruang di antara. Dan di ruang itulah kehidupan berlangsung. Di situlah pemikiran. Di situlah iman. Di situlah cinta. Di situlah manusia menjadi manusia — bukan di hujung yang terang, bukan di hujung yang gelap, tetapi di tengah-tengah, di mana cahaya dan gelap bergulat, di mana kebenaran dan pembohongan bercampur, di mana kita terpaksa memilih, dan memilih, dan memilih lagi.</p>
 <p>Semua bahagian sebelum ini bukanlah bab-bab yang berasingan. Ia adalah sungai yang sama, dilihat dari jambatan yang berbeza. Akal, iman, cinta, kebebasan, masa — semuanya bermuara ke satu tempat: ke ruang di antara, di mana aku berdiri, di mana kita semua berdiri, jika kita berani untuk berhenti dan melihat.</p>
@@ -882,7 +1067,6 @@ blockquote.novel-quote.chapter-close-final{margin:2rem auto 0;max-width:26em;tex
 </div>
 </section>
 <section class="book-section" data-section="7">
-<div aria-hidden="true" class="ps-symbol"><svg viewbox="0 0 40 40"><circle cx="20" cy="20" fill="none" opacity="0.35" r="13" stroke="currentColor" stroke-width="0.5"></circle><circle cx="20" cy="20" fill="currentColor" opacity="0.12" r="7"></circle><circle cx="20" cy="20" fill="currentColor" r="2.8"></circle></svg></div>
 <h2 class="book-section-title">DI SITULAH AKU HIDUP</h2>
 <p>Gelap tidak perlu menewaskan cahaya. Ia hanya perlu meyakinkan cahaya bahawa segala-galanya sudah terang. Pada ketika itu, tiada siapa yang lagi mencari lampu. Dan sistem yang paling berjaya, ialah sistem yang membuatkan kita rasa semuanya sudah terang — supaya kita berhenti mempersoal, berhenti mencari, berhenti melihat ke sudut yang gelap. Apabila semuanya dianggap terang, maka gelap dapat berkuasa dengan selesa, di bawah lindungan cahaya yang palsu. Dan kita, hidup dalam cahaya palsu itu, memanggilnya kebebasan. Padahal kita hanyalah tawanan yang tidak sedar.</p>
 <p>Dan jadi aku kembali ke tempat bermula. Ke cahaya. Ke gelap. Ke ruang di antara keduanya di mana bayang-bayang terbentuk dan di mana aku belajar melihat. Aku tidak datang ke sini dengan jawapan. Aku datang ke sini dengan pemahaman yang lebih jelas tentang soalan.</p>
@@ -1050,7 +1234,6 @@ var SECTION_VISUALS=[
 /* Pembukaan bab — 3 variasi komposisi terkawal mengikut indeks */
 function headingHtml(title,num){
   var n=num<9?'0'+(num+1):''+(num+1);
-  var vis=SECTION_VISUALS[num]||SECTION_VISUALS[0];
   var variant=['variant-a','variant-b','variant-c'][num%3];
   var img=SECTION_IMAGES[num]||'';
   var cap=SECTION_CAPTIONS[num]||'';
@@ -1066,7 +1249,6 @@ function headingHtml(title,num){
     +'<div class="so-beam" aria-hidden="true"></div>'
     +illHtml
     +'<div class="so-bignum" aria-hidden="true">'+n+'</div>'
-    +'<div class="so-visual" aria-hidden="true">'+vis+'</div>'
     +'<div class="so-number">Bahagian &middot; '+n+'</div>'
     +'<div class="so-divider"></div>'
     +'<h3 class="so-title">'+titleHtml+'</h3>'
@@ -1112,7 +1294,7 @@ function paginate(){
     flush();
     sectionStart.push(pages.length);
     curHtml=headingHtml(sec.title,s);
-    if(s%2===0&&sec.firstQuote){sec.blocks.unshift({type:'reflection',html:sec.firstQuote,num:s});}
+    if(sec.firstQuote){sec.blocks.unshift({type:'reflection',html:sec.firstQuote,num:s});}
     var firstP=true;
     for(var b=0;b<sec.blocks.length;b++){
       var block=sec.blocks[b];
@@ -1414,5 +1596,96 @@ function updateContinuousProgress(){
 window.addEventListener('scroll',updateContinuousProgress,{passive:true});
 window.addEventListener('resize',updateContinuousProgress);
 </script>
+
+<script id="redesign-js">
+(function(){
+  "use strict";
+  try{
+    var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /* ---- 1. Content entrance animation + running-head toggle ---- */
+    var innerIds = ['innerLeft','innerRight','innerFront','innerBack'];
+    var observers = [];
+    function onInnerMutate(el){
+      return function(){
+        if(!reduced){
+          el.removeAttribute('data-enter');
+          void el.offsetWidth;
+          el.setAttribute('data-enter','');
+          setTimeout(function(){ el.removeAttribute('data-enter'); }, 700);
+        }
+      };
+    }
+    innerIds.forEach(function(id){
+      var el = document.getElementById(id);
+      if(!el) return;
+      var cb = onInnerMutate(el);
+      var mo = new MutationObserver(cb);
+      mo.observe(el, {childList:true, subtree:false});
+      observers.push(mo);
+      cb();
+    });
+
+    /* ---- 2. Ambient section tint + active TOC marker ---- */
+    var lastSec = -1;
+    function tick(){
+      try{
+        var cur = window.current|0;
+        var pages = window.pages;
+        if(pages && pages[cur]){
+          var sec = pages[cur].section|0;
+          if(sec !== lastSec){
+            lastSec = sec;
+            document.body.setAttribute('data-section', sec);
+            var links = document.querySelectorAll('.toc-link');
+            for(var i=0;i<links.length;i++){
+              links[i].classList.toggle('active', (i===sec));
+            }
+          }
+        }
+      }catch(e){}
+      requestAnimationFrame(throttle);
+    }
+    var lastT = 0;
+    function throttle(t){
+      if(t - lastT > 400){ lastT = t; tick(); }
+      else { requestAnimationFrame(throttle); }
+    }
+    requestAnimationFrame(throttle);
+
+    /* ---- 3. Progress bar section tick marks ---- */
+    function addTicks(){
+      try{
+        var bar = document.querySelector('.progress-bar');
+        var ss = window.sectionStart;
+        var pages = window.pages;
+        if(!bar || !ss || !pages || pages.length===0) return;
+        var existing = bar.querySelectorAll('.tick');
+        for(var e=0;e<existing.length;e++) existing[e].remove();
+        for(var i=0;i<ss.length;i++){
+          var pct = (ss[i]/pages.length)*100;
+          var tick = document.createElement('span');
+          tick.className = 'tick';
+          tick.style.left = pct + '%';
+          bar.appendChild(tick);
+        }
+      }catch(e){}
+    }
+    setTimeout(addTicks, 1500);
+    setInterval(addTicks, 4000);
+
+    /* ---- 4. Keyboard refinement: Home/End jump, ensure arrows work ---- */
+    document.addEventListener('keydown', function(e){
+      try{
+        if(!document.body.classList.contains('in-book')) return;
+        if(e.key==='Home'){ if(typeof window.turn==='function'){ window.current = 0; if(typeof window.renderSpread==='function') window.renderSpread(); } }
+        if(e.key==='End'){ if(typeof window.turn==='function' && window.pages){ window.current = window.pages.length-1; if(typeof window.renderSpread==='function') window.renderSpread(); } }
+      }catch(err){}
+    }, true);
+
+  }catch(e){ /* enhancement layer fails silently */ }
+})();
+</script>
+
 </body>
 </html>
