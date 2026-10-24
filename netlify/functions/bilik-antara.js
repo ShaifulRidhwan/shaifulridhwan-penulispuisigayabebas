@@ -13,7 +13,7 @@
  *   - Soalan tentang identiti Shaiful Ridhwan dijawab secara
  *     deterministik dari fakta awam yang disahkan — TIADA panggilan
  *     Gemini, TIADA rekaan biodata peribadi.
- *   - Model lalai dinaik taraf kepada gemini-3.8-flash (Flash paling pintar,
+ *   - Model lalai dinaik taraf kepada gemini-2.5-flash (Flash paling pintar,
  *     stabil, pengganti rasmi 3.6/3.7 — bentuk API sama). GEMINI_MODEL (env)
  *     masih boleh mengatasi (cth: gemini-4-argon untuk penaakulan tertinggi).
  *
@@ -108,9 +108,7 @@ async function callGemini({ apiKey, model, system, contents, maxTokens, timeoutM
         generationConfig: {
           maxOutputTokens: Math.max(maxTokens, 64),
           responseMimeType: "application/json",
-          thinkingConfig: {
-            thinkingLevel: "low"
-          }
+          thinkingConfig: { thinkingBudget: 0 }
         }
       }),
       signal: ctrl.signal
@@ -130,7 +128,7 @@ function geminiErrorMsg(code) {
   if (code === 401) return "Kekunci API ditolak (401). Semak nilai GEMINI_API_KEY (tiada ruah/quote), status kekunci di AI Studio, dan pastikan Generative Language API diaktifkan.";
   if (code === 403) return "Akses ditolak (403). Kekunci mungkin mempunyai sekatan API, billing belum diaktifkan, atau wilayah tidak disokong.";
   if (code === 429) return "Kuota Gemini API dicapai (429). Had percuma harian mungkin habis (reset tengah malam Waktu Pasifik). Cuba lagi nanti atau tukar GEMINI_MODEL.";
-  if (code === 404) return "Model atau endpoint Gemini tidak ditemui (404). Semak nama model yang tersenarai dalam models.list dan endpoint API. Model lalai sekarang: gemini-3.8-flash (boleh diatasi GEMINI_MODEL).";
+  if (code === 404) return "Model atau endpoint Gemini tidak ditemui (404). Semak nama model yang tersenarai dalam models.list dan endpoint API. Model lalai sekarang: gemini-2.5-flash (boleh diatasi GEMINI_MODEL).";
   if (code === 400) return "Permintaan salah format (400).";
   return "Tidak dapat menghubungi Gemini API (status " + code + ").";
 }
@@ -144,7 +142,7 @@ exports.handler = async (event) => {
   try { payload = JSON.parse(event.body || "{}"); }
   catch { return { statusCode: 400, headers: H, body: JSON.stringify({ error: "Bad JSON" }) }; }
   const apiKey = process.env.GEMINI_API_KEY;
-  const preferredModel = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const preferredModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   const question = String(payload.question || "").trim().slice(0, 1000);
   log("start", { probe: !!payload.probe, qlen: question.length, hasKey: !!apiKey });
 
@@ -171,7 +169,7 @@ exports.handler = async (event) => {
           generationConfig: {
             maxOutputTokens: 64,
             responseMimeType: "text/plain",
-            thinkingConfig: { thinkingLevel: "low" }
+            thinkingConfig: { thinkingBudget: 0 }
           }
         }),
         signal: ctrl.signal
