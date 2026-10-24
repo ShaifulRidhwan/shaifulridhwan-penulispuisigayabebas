@@ -2,37 +2,37 @@
  * netlify/functions/bilik-antara.js
  * ------------------------------------------------------------------
  * Backend serverless Netlify untuk Bilik Antara — GEMINI API sahaja.
- * Nama fail inilah yang menentukan endpoint: /.netlify/functions/bilik-antara
- * (sepadu dengan panggilan dalam bilik-antara.html).
+ * Endpoint: /.netlify/functions/bilik-antara
+ * LETAK FAIL INI BERSAMA novel-kb.json di dalam: netlify/functions/
  *
- * LETAK FAIL INI BERSAMA novel-kb.json di dalam folder: netlify/functions/
- *   (require("./novel-kb.json") — kedua-duanya mesti dalam folder yang sama)
+ * ENV (Netlify dashboard): GEMINI_API_KEY (wajib), GEMINI_MODEL (pilihan),
+ * ALLOWED_ORIGIN (pilihan).
  *
- * PEMBOLEH UBAH PERSEKITARAN (Netlify dashboard → Environment variables):
- *   GEMINI_API_KEY   (WAJIB — dari Google AI Studio. JANGAN dalam kod klien.)
- *   GEMINI_MODEL     (pilihan, default: gemini-2.5-flash — sahkan had kuota
- *                     percuma di AI Studio; kuota percuma TIDAK tanpa had.)
- *   ALLOWED_ORIGIN   (pilihan, hadkan CORS; default "*")
+ * PENTING — HAD MASA (tiga jenis, jangan dikelirukan):
+ *   A. Timeout PELAYAR (bilik-antara.html): 20s — probe/soalan diberhentikan
+ *      di sisi pelayar jika tiada respons.
+ *   B. Had masa FUNGSI Netlify: lalai pelan (Free ~10s, Pro 26–60s). Jika
+ *      fungsi dibunuh di sini, pelayar terima sambungan terputus (tiada JSON).
+ *   C. Timeout panggilan GEMINI (dalam fail ini): setiap cubaan 7s, jumlah
+ *      keseluruhan (termasuk fallback) dihadkan DEADLINE_GLOBAL_MS = 14s
+ *      supaya fungsi memulangkan JSON SEBELUM (B) membunuhnya.
  *
- * DUA MOD:
- *   Mod Novel   — soalan tentang novel → pra-penapis petikan, 3 lapisan label,
- *                 setiap petikan disahkan terhadap novel-kb.json SEBELUM paparan.
- *   Mod Umum    — soalan luar novel → dijawab Gemini biasa, TIADA suntikan
- *                 petikan novel, dengan penafian ringkas. Tidak dipaksa novel.
- *
- * PRIVASI: hanya 5–7 petikan berkaitan dihantar ke Gemini (bukan keseluruhan
- * manuskrip). Pada tier percuma Gemini, data yang dihantar mungkin digunakan
- * Google untuk memperbaiki produk — notis ini dipaparkan di UI.
+ * LOG DIAGNOSTIK (selamat): console.log hanya medan tidak sensitif — fasa,
+ * model, status HTTP, tempoh ms, panjang soalan, bilangan petikan.
+ * API key, teks soalan penuh, dan petikan TIDAK pernah dilog.
  * ------------------------------------------------------------------
  */
 
 const KB = require("./novel-kb.json");
 
+const DEADLINE_GLOBAL_MS = 14000; // pulang sebelum fungsi Netlify dibunuh
+const PER_CALL_MS = 7000;          // had masa setiap panggilan Gemini
+const FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash"];
+
 const STOPWORDS = new Set(
   ("yang di dan ke dari kepada dengan untuk adalah ini itu akan telah sudah bagi juga atau tetapi maka kerana sehingga ketika apabila apa bagaimana mengapa boleh bolehkah saya aku kau kamu kita mereka ia dia nya lah pun lah lagi sangat terlalu hanya sudah belum pernah akan mahu hendak dapat kepada dalam pada atas bawah antara melalui selepas sebelum ketika serta serta dan atau tidak ya bukan apakah bagaimana mengapa siapa mana berapa the a an of to in on at for and or is are was were be been it this that with by from as not we you they he she i my your their his her its what which who how why when where can could would should do does did have has had but if so such no yes akan patut harus perlu mungkin jangan boleh ada lagi macam cara sangat terlalu sekali").split(/\s+/)
 );
 
-// Kata kunci pengesan Mod Novel (termasuk tajuk 8 bahagian + tema)
 const NOVEL_KEYWORDS = [
   "antara","cahaya","gelap","novel","buku","petikan","shaiful","ridhwan","gaya bebas","penulis",
   "akal","ilmu","kebenaran","bohong","pembohongan","reputasi","cerita","bijak","tahu","tahukah",
@@ -52,32 +52,27 @@ PERATURAN WAJIB:
 
 const SYS_GENERAL = `Anda pembantu yang membantu, menjawab dalam Bahasa Melayu (atau bahasa soalan). Jawab dengan ringkas dan jelas. Ini adalah Mod Umum — soalan di luar novel "Antara Cahaya dan Gelap". Jangan mengarang petikan novel. Akhiri dengan satu ayat penafian ringkas bahawa ini jawapan umum, bukan tafsiran novel. Output JSON sah: { "mode":"general", "reply":"...", "quotes":[], "disclaimer":"..." }.`;
 
-function corsHeaders(origin) {
-  const allow = process.env.ALLOWED_ORIGIN || "*";
+function corsHeaders() {
   return {
-    "Access-Control-Allow-Origin": allow,
+    "Access-Control-Allow-Origin": process.env.ALLOWED_ORIGIN || "*",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Content-Type": "application/json; charset=utf-8"
   };
 }
+function log(msg, extra) { console.log("[bilik-antara] " + msg + (extra ? " " + JSON.stringify(extra) : "")); }
 
 function termsOf(text) {
   return text.toLowerCase().replace(/[^a-zà-ÿ\s]/g, " ").split(/\s+/)
     .filter(w => w.length > 2 && !STOPWORDS.has(w));
 }
-
-/* ------- Pengelas mod: kos sifar, tanpa panggilan API tambahan ------- */
 function classifyMode(question, history) {
   const q = question.toLowerCase();
   for (const kw of NOVEL_KEYWORDS) if (q.indexOf(kw) !== -1) return "novel";
-  // soalan susulan pendek selepas mod novel → kekal novel
   const last = history && history[history.length - 1];
   if (last && last.role === "assistant" && question.length < 60) return "novel";
   return "general";
 }
-
-/* ------- Pra-penapis kos-sifar ------- */
 function selectExcerpts(question, maxChars = 3500, maxCount = 7) {
   const qterms = termsOf(question);
   if (!qterms.length) return KB.excerpts.filter(e => e.type === "quote").slice(0, maxCount);
@@ -104,7 +99,6 @@ function selectExcerpts(question, maxChars = 3500, maxCount = 7) {
   }
   return picked;
 }
-
 function norm(s) { return (s || "").toLowerCase().replace(/\s+/g, " ").trim().replace(/[“”"']/g, ""); }
 function validateQuote(text) {
   if (!text || text.length < 15) return null;
@@ -113,22 +107,24 @@ function validateQuote(text) {
     const ne = norm(ex.text);
     if (ne.indexOf(n) !== -1 || n.indexOf(ne) !== -1) return { text: ex.text, section: ex.section };
   }
-  return null; // tidak disahkan → JANGAN papar sebagai petikan sebenar
+  return null;
 }
-
 const rl = new Map();
 function rateLimited(ip) {
   const now = Date.now(), WIN = 60000, MAX = 12;
   const e = rl.get(ip);
   if (!e || now - e.start > WIN) { rl.set(ip, { count: 1, start: now }); return false; }
   e.count++;
-  return e.count > MAX; // usaha-terbaik — tidak kukuh merentas instance serverless
+  return e.count > MAX;
 }
 
-async function callGemini({ apiKey, model, system, contents, maxTokens }) {
+/* Panggilan Gemini dengan had masa per-cubaan (tidak pernah melebihi baki deadline global) */
+async function callGemini({ apiKey, model, system, contents, maxTokens, timeoutMs, remainingMs }) {
+  const budget = Math.min(timeoutMs || PER_CALL_MS, Math.max(500, (remainingMs || PER_CALL_MS) - 800));
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`;
   const ctrl = new AbortController();
-  const to = setTimeout(() => ctrl.abort(), 20000);
+  const to = setTimeout(() => ctrl.abort(), budget);
+  const t0 = Date.now();
   try {
     const res = await fetch(url, {
       method: "POST",
@@ -140,21 +136,20 @@ async function callGemini({ apiKey, model, system, contents, maxTokens }) {
       }),
       signal: ctrl.signal
     });
+    const dur = Date.now() - t0;
     if (!res.ok) {
-      const err = new Error(`HTTP ${res.status}`);
-      err.status = res.status;
-      throw err;
+      log("gemini-result", { model, status: res.status, durMs: dur });
+      const err = new Error(`HTTP ${res.status}`); err.status = res.status; throw err;
     }
-    return await res.json();
+    const data = await res.json();
+    log("gemini-result", { model, status: 200, durMs: dur, finishReason: data && data.candidates && data.candidates[0] && data.candidates[0].finishReason });
+    return data;
   } finally { clearTimeout(to); }
 }
 
-// Model stabil semasa (Okt 2026, dokumentasi rasmi Google): gemini-3.8-flash,
-// gemini-3.6-flash, gemini-3.5-flash-lite. gemini-2.5-flash ditutup 20 Okt 2026.
-// Jika model pilihan (GEMINI_MODEL) pulang 404, cuba senarai fallback ini.
-const FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash"];
-
-async function callGeminiFallback({ apiKey, preferred, system, contents, maxTokens }) {
+/* Fallback: cuba model pilihan, kemudian senarai fallback pada 404 sahaja.
+   Jumlah masa dihadkan DEADLINE_GLOBAL_MS — tidak boleh melebihi had fungsi. */
+async function callGeminiFallback({ apiKey, preferred, system, contents, maxTokens, started }) {
   const tried = new Set();
   const candidates = [];
   if (preferred) candidates.push(preferred);
@@ -163,21 +158,35 @@ async function callGeminiFallback({ apiKey, preferred, system, contents, maxToke
   for (const m of candidates) {
     if (tried.has(m)) continue;
     tried.add(m);
+    const remainingMs = DEADLINE_GLOBAL_MS - (Date.now() - started);
+    if (remainingMs < 1500) { lastErr = new Error("deadline"); lastErr.deadline = true; log("gemini-skip-deadline", { model: m, remainingMs }); break; }
+    log("gemini-call", { model: m, remainingMs });
     try {
-      const data = await callGemini({ apiKey, model: m, system, contents, maxTokens });
+      const data = await callGemini({ apiKey, model: m, system, contents, maxTokens, remainingMs });
+      log("gemini-success", { modelUsed: m, totalMs: Date.now() - started });
       return { data, modelUsed: m };
     } catch (e) {
       lastErr = e;
-      if (e && e.status === 404) continue; // model tidak ditemui → cuba yang seterusnya
-      throw e; // 401/403/429/rangkaian → henti, laporkan
+      if (e && e.name === "AbortError") { log("gemini-timeout", { model: m, totalMs: Date.now() - started }); break; } // tamat masa → jangan cuba model lain (habis masa)
+      if (e && e.status === 404) { log("gemini-404-fallback", { model: m }); continue; }
+      throw e; // 401/403/429/rangkaian → henti
     }
   }
-  throw lastErr; // semua model pulang 404
+  throw lastErr || new Error("no model succeeded");
+}
+
+function geminiErrorMsg(code) {
+  if (code === 401) return "Kekunci API ditolak (401). Semak nilai GEMINI_API_KEY (tiada ruah/quote), status kekunci di AI Studio, dan pastikan Generative Language API diaktifkan.";
+  if (code === 403) return "Akses ditolak (403). Kekunci mungkin mempunyai sekatan API, billing belum diaktifkan, atau wilayah tidak disokong.";
+  if (code === 429) return "Kuota Gemini API dicapai (429). Had percuma harian mungkin habis (reset tengah malam Waktu Pasifik). Cuba lagi nanti atau tukar GEMINI_MODEL.";
+  if (code === 404) return "Semua model dalam senarai fallback pulang 404. Semak GEMINI_MODEL di AI Studio.";
+  if (code === 400) return "Permintaan salah format (400).";
+  return "Tidak dapat menghubungi Gemini API (status " + code + ").";
 }
 
 exports.handler = async (event) => {
-  const origin = event.headers && (event.headers.origin || event.headers.Origin);
-  const H = corsHeaders(origin);
+  const started = Date.now();
+  const H = corsHeaders();
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: H, body: "" };
   if (event.httpMethod !== "POST") return { statusCode: 405, headers: H, body: JSON.stringify({ error: "Method not allowed" }) };
 
@@ -186,36 +195,33 @@ exports.handler = async (event) => {
   catch { return { statusCode: 400, headers: H, body: JSON.stringify({ error: "Bad JSON" }) }; }
 
   const apiKey = process.env.GEMINI_API_KEY;
-  const preferredModel = process.env.GEMINI_MODEL || "gemini-3.8-flash"; // gemini-2.5-flash ditutup 20 Okt 2026; 3.8-flash stabil semasa
+  const preferredModel = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const question = String(payload.question || "").trim().slice(0, 1000);
+  log("start", { probe: !!payload.probe, qlen: question.length, hasKey: !!apiKey });
 
-  const question = String(payload.question || "").trim().slice(0, 1000); // HAD INPUT — disemak dahulu
   if (!payload.probe && !question) return { statusCode: 400, headers: H, body: JSON.stringify({ error: "Soalan kosong" }) };
 
-  // PROBE — lakukan panggilan Gemini MINI sebenar supaya status "bersambung" bermakna
+  // PROBE — panggilan Gemini MINI sebenar (bukan semak key sahaja)
   if (payload.probe) {
-    if (!apiKey) return { statusCode: 503, headers: H,
-      body: JSON.stringify({ ok: false, error: "GEMINI_API_KEY belum ditetapkan di Netlify environment variables." }) };
+    if (!apiKey) { log("probe-no-key"); return { statusCode: 503, headers: H, body: JSON.stringify({ ok: false, error: "GEMINI_API_KEY belum ditetapkan di Netlify environment variables." }) }; }
     try {
-      const { modelUsed } = await callGeminiFallback({ apiKey, preferred: preferredModel, system: "Sah sahaja.", contents: [{ role: "user", parts: [{ text: "ok" }] }], maxTokens: 8 });
-      return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true, mode: "live", model: modelUsed }) };
+      const { modelUsed } = await callGeminiFallback({ apiKey, preferred: preferredModel, system: "Sah sahaja.", contents: [{ role: "user", parts: [{ text: "ok" }] }], maxTokens: 8, started });
+      log("probe-ok", { modelUsed, totalMs: Date.now() - started });
+      return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true, mode: "live", model: modelUsed, probeMs: Date.now() - started }) };
     } catch (e) {
       const code = e && e.status;
-      const msg = code === 401 ? "Kekunci API ditolak (401 Unauthorized). Nilai GEMINI_API_KEY mungkin salah, mengandungi ruah/quote, telah dibatalkan, atau Generative Language API belum diaktifkan." :
-                  code === 403 ? "Akses ditolak (403). Kekunci mungkin mempunyai sekatan API, billing belum diaktifkan, atau wilayah tidak disokong." :
-                  code === 429 ? "Kuota percuma Gemini dicapai (429)." :
-                  code === 400 ? "Kekunci API tidak sah atau permintaan salah format (400)." :
-                  code === 404 ? "Semua model dalam senarai fallback pulang 404. Semak GEMINI_MODEL dan senarai model di AI Studio." :
-                  "Tidak dapat menghubungi Gemini API dari fungsi (rangkaian / masa tamat). Cuba lagi.";
+      const msg = (e && (e.name === "AbortError" || e.deadline))
+        ? "Probe tamat masa — Gemini tidak membalas sebelum had 14s. Semak rangkaian fungsi→Google, atau tukar GEMINI_MODEL kepada model lebih pantas."
+        : geminiErrorMsg(code);
+      log("probe-fail", { status: code || (e && e.name) || "err", totalMs: Date.now() - started });
       return { statusCode: 502, headers: H, body: JSON.stringify({ ok: false, error: msg, status: code || null }) };
     }
   }
 
-  if (!apiKey) return { statusCode: 503, headers: H,
-    body: JSON.stringify({ error: "Backend belum dikonfigurasi: GEMINI_API_KEY tiada dalam environment variables Netlify." }) };
+  if (!apiKey) return { statusCode: 503, headers: H, body: JSON.stringify({ error: "Backend belum dikonfigurasi: GEMINI_API_KEY tiada." }) };
 
   const ip = (event.headers && (event.headers["x-nf-client-connection-ip"] || event.headers["x-forwarded-for"] || "").split(",")[0].trim()) || "unknown";
-  if (rateLimited(ip)) return { statusCode: 429, headers: H,
-    body: JSON.stringify({ error: "Had penggunaan sementara dicapai (cuba lagi dalam seminit). Kawalan sisi pelayan usaha-terbaik." }) };
+  if (rateLimited(ip)) return { statusCode: 429, headers: H, body: JSON.stringify({ error: "Had penggunaan sementara dicapai (cuba lagi dalam seminit)." }) };
 
   const history = Array.isArray(payload.history) ? payload.history.slice(-6) : [];
   const mode = classifyMode(question, history);
@@ -224,15 +230,18 @@ exports.handler = async (event) => {
     .map(m => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: String(m.content).slice(0, 1000) }] }))
     .concat([{ role: "user", parts: [{ text: question }] }]);
 
+  log("ask-start", { mode, qlen: question.length, historyLen: geminiContents.length });
+
   try {
     let picked = [], excerptCount = 0, modelUsed = preferredModel, data;
     if (mode === "novel") {
       picked = selectExcerpts(question);
       excerptCount = picked.length;
       const excerptBlock = picked.map((e, i) => `[${i + 1}] (${e.section}) ${e.text}`).join("\n");
-      ({ data, modelUsed } = await callGeminiFallback({ apiKey, preferred: preferredModel, system: SYS_NOVEL + "\n\nEXCERPTS (satu-satunya petikan yang boleh anda kutip):\n" + excerptBlock, contents: geminiContents, maxTokens: 900 }));
+      log("ask-excerpts", { excerptCount, chars: excerptBlock.length });
+      ({ data, modelUsed } = await callGeminiFallback({ apiKey, preferred: preferredModel, system: SYS_NOVEL + "\n\nEXCERPTS (satu-satunya petikan yang boleh anda kutip):\n" + excerptBlock, contents: geminiContents, maxTokens: 900, started }));
     } else {
-      ({ data, modelUsed } = await callGeminiFallback({ apiKey, preferred: preferredModel, system: SYS_GENERAL, contents: geminiContents, maxTokens: 600 }));
+      ({ data, modelUsed } = await callGeminiFallback({ apiKey, preferred: preferredModel, system: SYS_GENERAL, contents: geminiContents, maxTokens: 600, started }));
     }
 
     const cand = data && data.candidates && data.candidates[0];
@@ -249,11 +258,10 @@ exports.handler = async (event) => {
         if (v) safeQuotes.push(v); else dropped++;
       }
     }
-
     const privacy = replyMode === "novel"
       ? `Hanya ${excerptCount} petikan/perenggan berkaitan dihantar ke Gemini. Pada tier percuma, data mungkin digunakan Google untuk memperbaiki produk.`
       : "Mod Umum — tiada petikan novel dihantar. Pada tier percuma Gemini, soalan mungkin digunakan Google untuk memperbaiki produk.";
-
+    log("ask-ok", { aiMode: replyMode, modelUsed, quotes: safeQuotes.length, dropped, totalMs: Date.now() - started });
     return {
       statusCode: 200, headers: H,
       body: JSON.stringify({
@@ -263,21 +271,23 @@ exports.handler = async (event) => {
         disclaimer: (parsed.disclaimer ? parsed.disclaimer + " " : "") + privacy +
           (finishReason && finishReason !== "STOP" ? ` [Catatan: Gemini tamat dengan status ${finishReason}.]` : "") +
           (dropped ? ` [${dropped} petikan tidak disahkan terhadap sumber dan tidak dipaparkan.]` : ""),
-        usage: data.usageMetadata || null
+        usage: data.usageMetadata || null,
+        durMs: Date.now() - started
       })
     };
   } catch (err) {
-    if (err && err.name === "AbortError") return { statusCode: 504, headers: H,
-      body: JSON.stringify({ error: "Sambungan ke Gemini tamat masa (20 saat). Cuba lagi atau tukar GEMINI_MODEL kepada model yang lebih pantas." }) };
-    if (err && err.status === 429) return { statusCode: 429, headers: H,
-      body: JSON.stringify({ error: "Kuota Gemini API dicapai (429). Had percuma harian mungkin habis (reset tengah malam Waktu Pasifik) atau kadar terlalu tinggi. Cuba lagi nanti, atau tukar GEMINI_MODEL." }) };
-    if (err && err.status === 401) return { statusCode: 502, headers: H,
-      body: JSON.stringify({ error: "Kekunci API ditolak (401). Semak nilai GEMINI_API_KEY (tiada ruah/quote), status kekunci di AI Studio, dan pastikan Generative Language API diaktifkan." }) };
-    if (err && err.status === 403) return { statusCode: 502, headers: H,
-      body: JSON.stringify({ error: "Akses ditolak (403). Kekunci mungkin mempunyai sekatan API, billing belum diaktifkan, atau wilayah tidak disokong." }) };
-    if (err && err.status === 404) return { statusCode: 502, headers: H,
-      body: JSON.stringify({ error: "Model tidak ditemui (404) untuk semua fallback. Semak GEMINI_MODEL di AI Studio." }) };
-    return { statusCode: 502, headers: H,
-      body: JSON.stringify({ error: `Gagal menghubungi Gemini API (status ${err && err.status || "sambungan"}).` }) };
+    const totalMs = Date.now() - started;
+    if (err && (err.name === "AbortError" || err.deadline)) {
+      log("ask-timeout", { totalMs });
+      return { statusCode: 504, headers: H,
+        body: JSON.stringify({ error: `Gemini tidak membalas dalam had masa fungsi (${totalMs}ms). Ini adalah timeout GEMINI/fungsi — bukan timeout pelayar. Cuba lagi, atau tukar GEMINI_MODEL kepada model lebih pantas.` }) };
+    }
+    if (err && err.status === 429) { log("ask-429", { totalMs }); return { statusCode: 429, headers: H, body: JSON.stringify({ error: geminiErrorMsg(429) }) }; }
+    if (err && err.status === 401 || err && err.status === 403 || err && err.status === 404) {
+      log("ask-http-error", { status: err.status, totalMs });
+      return { statusCode: 502, headers: H, body: JSON.stringify({ error: geminiErrorMsg(err.status) }) };
+    }
+    log("ask-error", { err: String(err && err.message || err).slice(0, 80), totalMs });
+    return { statusCode: 502, headers: H, body: JSON.stringify({ error: `Gagal menghubungi Gemini API (status ${err && err.status || "sambungan"}).` }) };
   }
 };
