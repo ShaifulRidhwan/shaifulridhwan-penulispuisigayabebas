@@ -1439,6 +1439,23 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       if(!skinMesh){ gltf.scene.traverse(function(o){ if(o.morphTargetInfluences && !skinMesh) skinMesh=o; }); }
       if(skinMesh && skinMesh.morphTargetDictionary) MORPH = skinMesh.morphTargetDictionary;
       if(!skinMesh){ console.log('Ara3D: tiada morph mesh — fallback SVG.'); return; }
+      // Subtle cybernetic neck and shoulders, relative to the head mesh size.
+      model.updateMatrixWorld(true);
+      var hb=new THREE.Box3().setFromObject(skinMesh), hs=new THREE.Vector3();hb.getSize(hs);
+      if(hs.x>.04 && hs.x<3 && hs.y>.05 && hs.y<hs.x*2.2){
+        var cx=(hb.min.x+hb.max.x)/2, cz=(hb.min.z+hb.max.z)/2, w=hs.x, y=hb.min.y;
+        var bust=new THREE.Group();bust.name='AraCyberShoulders';
+        var fabric=new THREE.MeshPhysicalMaterial({color:0x1a2d39,metalness:.48,roughness:.4,clearcoat:.55});
+        var glow=new THREE.MeshBasicMaterial({color:0x63ddeb,transparent:true,opacity:.75});
+        function shape(name,x,yy,z,sx,sy,sz,mat){var o=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),mat);o.name=name;o.position.set(x,yy,z);o.scale.set(sx,sy,sz);bust.add(o);return o;}
+        shape('neck',cx,y-w*.12,cz,w*.17,w*.27,w*.16,fabric);
+        shape('torso',cx,y-w*.57,cz,w*.6,w*.29,w*.25,fabric);
+        for(var side of [-1,1]){
+          shape('shoulder',cx+side*w*.43,y-w*.46,cz,w*.46,w*.18,w*.23,fabric);
+          var trim=shape('cyanTrim',cx+side*w*.53,y-w*.32,cz+w*.16,w*.2,w*.015,w*.015,glow);trim.rotation.z=side*.25;
+        }
+        model.add(bust);
+      }
       model.position.set(0, -1.55, 0);
       if(headBone) baseRotation=headBone.rotation.clone();
       scene.add(model);
@@ -1446,7 +1463,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       faceEl.classList.add('face3d-on');
       apply();
       startRender();
-      console.log('Ara3D: model dimuatkan, Object.keys(MORPH).length, 'morph targets');
+      console.log('Ara3D: model dimuatkan, '+Object.keys(MORPH).length+' morph targets');
     }, undefined, function(){ console.log('Ara3D: ara-face.glb tidak dijumpai — fallback SVG asal.'); });
     return true;
   }
