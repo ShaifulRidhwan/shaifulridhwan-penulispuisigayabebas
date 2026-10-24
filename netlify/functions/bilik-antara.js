@@ -125,20 +125,26 @@ async function callGemini({ apiKey, model, system, contents, maxTokens, timeoutM
   const t0 = Date.now();
   try {
     const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: system }] },
-        contents: contents,
-        generationConfig: {
-  maxOutputTokens: Math.max(maxTokens, 64),
-  responseMimeType: "application/json",
-  thinkingConfig: {
-    thinkingLevel: "low"
-  }
-}
-      signal: ctrl.signal
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "x-goog-api-key": apiKey
+  },
+  body: JSON.stringify({
+    system_instruction: {
+      parts: [{ text: system }]
+    },
+    contents: contents,
+    generationConfig: {
+      maxOutputTokens: Math.max(maxTokens, 64),
+      responseMimeType: "application/json",
+      thinkingConfig: {
+        thinkingLevel: "low"
+      }
+    }
+  }),
+  signal: ctrl.signal
+});
     const dur = Date.now() - t0;
     if (!res.ok) {
       log("gemini-result", { model, status: res.status, durMs: dur });
