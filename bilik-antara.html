@@ -1439,24 +1439,43 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       if(!skinMesh){ gltf.scene.traverse(function(o){ if(o.morphTargetInfluences && !skinMesh) skinMesh=o; }); }
       if(skinMesh && skinMesh.morphTargetDictionary) MORPH = skinMesh.morphTargetDictionary;
       if(!skinMesh){ console.log('Ara3D: tiada morph mesh — fallback SVG.'); return; }
-      // Subtle cybernetic neck and shoulders, relative to the head mesh size.
+      // Upper-body portrait: adult human proportions, fully clothed futuristic suit.
+      // Construct below the head and fit the complete bust within the existing canvas.
       model.updateMatrixWorld(true);
       var hb=new THREE.Box3().setFromObject(skinMesh), hs=new THREE.Vector3();hb.getSize(hs);
       if(hs.x>.04 && hs.x<3 && hs.y>.05 && hs.y<hs.x*2.2){
         var cx=(hb.min.x+hb.max.x)/2, cz=(hb.min.z+hb.max.z)/2, w=hs.x, y=hb.min.y;
-        var bust=new THREE.Group();bust.name='AraCyberShoulders';
-        var fabric=new THREE.MeshPhysicalMaterial({color:0x1a2d39,metalness:.48,roughness:.4,clearcoat:.55});
-        var glow=new THREE.MeshBasicMaterial({color:0x63ddeb,transparent:true,opacity:.75});
-        function shape(name,x,yy,z,sx,sy,sz,mat){var o=new THREE.Mesh(new THREE.SphereGeometry(1,24,16),mat);o.name=name;o.position.set(x,yy,z);o.scale.set(sx,sy,sz);bust.add(o);return o;}
-        shape('neck',cx,y-w*.12,cz,w*.17,w*.27,w*.16,fabric);
-        shape('torso',cx,y-w*.57,cz,w*.6,w*.29,w*.25,fabric);
+        var bust=new THREE.Group();bust.name='AraUpperBodyPortrait';
+        var suit=new THREE.MeshPhysicalMaterial({color:0x1b303d,metalness:.24,roughness:.64,clearcoat:.26});
+        var trimMat=new THREE.MeshBasicMaterial({color:0x62cbd8,transparent:true,opacity:.7});
+        var neckMat=new THREE.MeshStandardMaterial({color:0x9a7770,roughness:.83,metalness:.02});
+        function oval(name,x,yy,z,sx,sy,sz,mat){var o=new THREE.Mesh(new THREE.SphereGeometry(1,40,28),mat);o.name=name;o.position.set(x,yy,z);o.scale.set(sx,sy,sz);bust.add(o);return o;}
+        oval('neck',cx,y-w*.20,cz,w*.19,w*.32,w*.18,neckMat);
+        // Continuous upper chest, not separate spherical body parts.
+        var profile=[new THREE.Vector2(0,y-w*1.46),new THREE.Vector2(w*.48,y-w*1.46),new THREE.Vector2(w*.62,y-w*1.25),new THREE.Vector2(w*.68,y-w*.93),new THREE.Vector2(w*.72,y-w*.66),new THREE.Vector2(w*.56,y-w*.51),new THREE.Vector2(w*.28,y-w*.35),new THREE.Vector2(w*.18,y-w*.23),new THREE.Vector2(0,y-w*.23)];
+        var torso=new THREE.Mesh(new THREE.LatheGeometry(profile,48),suit);
+        torso.name='FittedCyberSuit';torso.position.set(cx,0,cz);torso.scale.z=.58;bust.add(torso);
         for(var side of [-1,1]){
-          shape('shoulder',cx+side*w*.43,y-w*.46,cz,w*.46,w*.18,w*.23,fabric);
-          var trim=shape('cyanTrim',cx+side*w*.53,y-w*.32,cz+w*.16,w*.2,w*.015,w*.015,glow);trim.rotation.z=side*.25;
+          var shoulder=oval('roundedShoulder',cx+side*w*.52,y-w*.68,cz,w*.26,w*.23,w*.24,suit);
+          shoulder.rotation.z=side*.22;
+          var seam=oval('softCyanShoulderSeam',cx+side*w*.54,y-w*.49,cz+w*.10,w*.21,w*.014,w*.014,trimMat);
+          seam.rotation.z=side*.3;
         }
+        bust.position.z-=w*.025;
         model.add(bust);
       }
       model.position.set(0, -1.55, 0);
+      // Frame face, shoulders and upper chest together, on mobile and desktop.
+      model.updateMatrixWorld(true);
+      var portraitBounds=new THREE.Box3().setFromObject(model);
+      var portraitCenter=new THREE.Vector3(),portraitSize=new THREE.Vector3();
+      portraitBounds.getCenter(portraitCenter);portraitBounds.getSize(portraitSize);
+      if(portraitSize.y>0 && portraitSize.y<10){
+        var fov=THREE.MathUtils.degToRad(camera.fov);
+        var distance=(portraitSize.y*.60)/Math.tan(fov/2);
+        camera.position.set(portraitCenter.x,portraitCenter.y,portraitCenter.z+Math.max(.6,distance));
+        camera.lookAt(portraitCenter);
+      }
       if(headBone) baseRotation=headBone.rotation.clone();
       scene.add(model);
       active = true;
