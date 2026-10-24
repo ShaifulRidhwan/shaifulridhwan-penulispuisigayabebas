@@ -25,7 +25,7 @@
 
 const KB = require("./novel-kb.json");
 
-const PER_CALL_MS = 7000; // had masa panggilan Gemini, lebih pendek daripada had fungsi biasa
+const PER_CALL_MS = 9000; // had masa panggilan Gemini, lebih pendek daripada had fungsi biasa
 
 const STOPWORDS = new Set(
   ("yang di dan ke dari kepada dengan untuk adalah ini itu akan telah sudah bagi juga atau tetapi maka kerana sehingga ketika apabila apa bagaimana mengapa boleh bolehkah saya aku kau kamu kita mereka ia dia nya lah pun lah lagi sangat terlalu hanya sudah belum pernah akan mahu hendak dapat kepada dalam pada atas bawah antara melalui selepas sebelum ketika serta serta dan atau tidak ya bukan apakah bagaimana mengapa siapa mana berapa the a an of to in on at for and or is are was were be been it this that with by from as not we you they he she i my your their his her its what which who how why when where can could would should do does did have has had but if so such no yes akan patut harus perlu mungkin jangan boleh ada lagi macam cara sangat terlalu sekali").split(/\s+/)
