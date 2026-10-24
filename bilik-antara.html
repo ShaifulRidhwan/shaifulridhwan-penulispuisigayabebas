@@ -494,7 +494,7 @@ function setMode(m, msg){
 function probeBackend(){
   try{
     var ctrl = new AbortController();
-    var to = setTimeout(function(){ ctrl.abort(); }, 4000);
+    var to = setTimeout(function(){ ctrl.abort(); }, 20000);
     fetch(ENDPOINT, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -504,9 +504,10 @@ function probeBackend(){
       clearTimeout(to);
       var body={}; try{ body=await r.json(); }catch(e){}
       if(r.ok){ setMode('live'); }
-      else if(r.status===503){ setMode('demo'); }
-      else { setMode('error', body && body.error ? body.error : 'Sambungan ke Gemini gagal (status '+r.status+'). Kekunci API mungkin tidak sah atau kuota percuma habis.'); }
-    }).catch(function(){ clearTimeout(to); setMode('demo'); });
+      else if(r.status===503){ setMode('error','GEMINI_API_KEY tidak terbaca oleh fungsi (503). Semak nama pemboleh ubah (sepatutnya GEMINI_API_KEY), skop Functions, dan buat deploy semula.'); }
+      else if(r.status===404){ setMode('error','Endpoint tidak ditemui (404). Semak fail bilik-antara.js berada di dalam netlify/functions/ dan telah di-deploy bersama novel-kb.json.'); }
+      else { setMode('error', (body && body.error ? body.error : 'Sambungan ke Gemini gagal (status '+r.status+').') + ' Kemungkinan: kekunci tidak sah, model tidak tersedia, atau kuota percuma habis.'); }
+    }).catch(function(){ clearTimeout(to); setMode('error','Probe tamat masa / sambungan terputus (20 saat). Lazimnya cold start fungsi atau Gemini lambat — tekan Cuba Lagi (panggilan kedua lebih pantas). Anda masih boleh guna Mod Demo.'); });
   }catch(e){ setMode('demo'); }
 }
 
