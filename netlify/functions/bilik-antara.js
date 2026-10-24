@@ -170,13 +170,14 @@ exports.handler = async (event) => {
     if (!apiKey) return { statusCode: 503, headers: H,
       body: JSON.stringify({ ok: false, error: "GEMINI_API_KEY belum ditetapkan di Netlify environment variables." }) };
     try {
-      await callGemini({ apiKey, model, system: "Sah sahaja.", contents: [{ role: "user", parts: [{ text: "ok" }] }], maxTokens: 1 });
+      await callGemini({ apiKey, model, system: "Sah sahaja.", contents: [{ role: "user", parts: [{ text: "ok" }] }], maxTokens: 8 });
       return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true, mode: "live", model }) };
     } catch (e) {
       const code = e && e.status;
       const msg = code === 429 ? "Kuota percuma Gemini dicapai / API key tidak sah (429)." :
                   code === 400 ? "Kekunci API tidak sah atau model tidak tersedia (400)." :
-                  "Tidak dapat menghubungi Gemini API. Semak kekunci & rangkaian.";
+                  code === 404 ? "Model tidak tersedia atau nama GEMINI_MODEL salah (404). Semak senarai model di AI Studio." :
+                  "Tidak dapat menghubungi Gemini API dari fungsi (rangkaian / masa tamat). Cuba lagi.";
       return { statusCode: 502, headers: H, body: JSON.stringify({ ok: false, error: msg, status: code || null }) };
     }
   }
