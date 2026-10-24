@@ -3,228 +3,259 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-<title>Bilik Antara — Antara Cahaya dan Gelap | Shaiful Ridhwan</title>
-<meta name="description" content="Bilik Antara: ruang perbualan interaktif tentang novel falsafah Antara Cahaya dan Gelap. Tanya soalan, bincang petikan dan terokai tafsiran."/>
+<title>Bilik Antara — An Intelligence Space</title>
+<meta name="description" content="Bilik Antara — ruang kecerdasan buatan untuk berbual, berfikir dan mempersoalkan idea tentang falsafah, sastera, teknologi, manusia dan kehidupan."/>
 <meta name="author" content="Shaiful Ridhwan"/>
 <meta name="robots" content="index, follow"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,400&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-/* ============ TOKEN IDENTIK DENGAN NOVEL ============ */
+/* ============ TOKEN — Futuristic Light & Darkness ============ */
 :root{
-  --font-display:'Fraunces',Georgia,'Times New Roman',serif;
-  --font-body:'Source Serif 4',Georgia,'Times New Roman',serif;
-  --font-ui:system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
-  --fs:17px;
-  --gold:#C8A45C;
-  --gold-soft:rgba(200,164,92,.13);
-  --gold-line:rgba(200,164,92,.42);
-  --gold-faint:rgba(200,164,92,.16);
-  --bg:#0B0C0F; --bg-soft:#121418; --surface:#17191E; --page-bg:#14161B;
-  --text:#EDE6D6; --text-muted:#A8A294; --text-faint:#6F6C62;
-  --accent:var(--gold); --accent-soft:var(--gold-soft); --accent-line:var(--gold-line);
-  --border:rgba(200,164,92,.20); --hairline:rgba(237,230,214,.07);
-  --shadow:0 30px 90px rgba(0,0,0,.72); --page-edge:rgba(0,0,0,.55);
-  --light:#F4EFE3;
-  --error:#C96B5C; --error-soft:rgba(201,107,92,.12); --error-line:rgba(201,107,92,.4);
-  --ok:#8FB28A; --ok-soft:rgba(143,178,138,.12);
-  --beam:radial-gradient(ellipse 55% 42% at 50% 18%,rgba(200,164,92,.10),transparent 70%);
-  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
-}
-html[data-theme="light"]{
-  --bg:#E9E1CF; --bg-soft:#E0D7C2; --surface:#F6F1E4; --page-bg:#F6F1E4;
-  --text:#1B1C1F; --text-muted:#5D5A50; --text-faint:#8B877A;
-  --accent:#96753A; --accent-soft:rgba(150,117,58,.11); --accent-line:rgba(150,117,58,.42);
-  --border:rgba(150,117,58,.24); --hairline:rgba(27,28,31,.09);
-  --shadow:0 24px 70px rgba(50,40,18,.18); --page-edge:rgba(50,40,18,.16);
-  --light:#F6F1E4;
-  --beam:radial-gradient(ellipse 55% 42% at 50% 18%,rgba(150,117,58,.10),transparent 70%);
+  --font-display:'Space Grotesk',system-ui,sans-serif;
+  --font-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+  --fs:16px;
+  --obsidian:#05070D;
+  --midnight:#0A0F1C;
+  --abyss:#0D1424;
+  --surface:rgba(255,255,255,.04);
+  --surface-2:rgba(255,255,255,.07);
+  --cyan:#5EEAD4;
+  --cyan-bright:#22D3EE;
+  --cyan-soft:rgba(94,234,212,.10);
+  --cyan-line:rgba(94,234,212,.22);
+  --cyan-faint:rgba(94,234,212,.06);
+  --silver:#E8EDF5;
+  --silver-dim:#9AA5B8;
+  --silver-faint:#5A6478;
+  --hairline:rgba(232,237,245,.08);
+  --error:#F87171;
+  --error-soft:rgba(248,113,113,.10);
+  --error-line:rgba(248,113,113,.35);
+  --ok:#34D399;
+  --ok-soft:rgba(52,211,153,.10);
+  --ok-line:rgba(52,211,153,.4);
+  --warn:#FBBF24;
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{
-  font-family:var(--font-body);font-size:var(--fs);background:var(--bg);
-  background-image:var(--grain);color:var(--text);line-height:1.72;
+  font-family:var(--font-body);font-size:var(--fs);background:var(--obsidian);
+  background-image:var(--grain);color:var(--silver);line-height:1.7;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
-  transition:background .45s ease,color .45s ease;overflow:hidden;
-  display:flex;flex-direction:column;
+  overflow:hidden;display:flex;flex-direction:column;position:relative;
 }
 button{font-family:var(--font-ui);cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:none;color:inherit}
-a{color:var(--accent);text-decoration:none}
-/* lapisan cahaya terkawal (chiaroscuro) */
-.beam-layer{position:fixed;inset:0;background:var(--beam);pointer-events:none;z-index:0}
-.ambient{position:fixed;inset:-20%;pointer-events:none;z-index:0;
-  background:radial-gradient(ellipse 40% 35% at var(--ax,50%) var(--ay,30%),rgba(200,164,92,.07),transparent 65%);
-  transition:background 1.2s ease;animation:breathe 9s ease-in-out infinite alternate}
-@keyframes breathe{from{opacity:.7}to{opacity:1}}
+a{color:var(--cyan);text-decoration:none}
+
+/* ============ LATAR TETAP: ambience cahaya ============ */
+.bg-ambient{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 60% 45% at 50% -5%,rgba(34,211,238,.10),transparent 60%),
+    radial-gradient(ellipse 50% 40% at 85% 110%,rgba(94,234,212,.06),transparent 60%),
+    radial-gradient(ellipse 40% 35% at 10% 100%,rgba(59,130,246,.07),transparent 60%),
+    linear-gradient(180deg,#05070D 0%,#0A0F1C 50%,#05070D 100%);
+}
+.bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
+  background-image:linear-gradient(rgba(94,234,212,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(94,234,212,.035) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(ellipse 70% 60% at 50% 30%,black 20%,transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 30%,black 20%,transparent 75%);
+}
+
 /* ============ TOPBAR ============ */
-.topbar{
-  position:relative;z-index:5;display:flex;align-items:center;gap:.6rem;
-  padding:.7rem 1rem;border-bottom:1px solid var(--hairline);
-  background:rgba(11,12,15,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  flex-wrap:wrap;
+.topbar{position:relative;z-index:5;display:flex;align-items:center;gap:.7rem;
+  padding:.65rem 1.1rem;border-bottom:1px solid var(--hairline);
+  background:rgba(5,7,13,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
 }
-.topbar .brand{display:flex;align-items:baseline;gap:.55rem;min-width:0}
-.topbar .brand .mark{font-family:var(--font-display);font-weight:500;font-size:1.02rem;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.topbar .brand .sub{font-family:var(--font-ui);font-size:.56rem;letter-spacing:.28em;text-transform:uppercase;color:var(--text-faint);white-space:nowrap}
+.topbar .brand{display:flex;align-items:center;gap:.6rem;min-width:0}
+.topbar .brand .dot-orb{width:10px;height:10px;border-radius:50%;flex-shrink:0;
+  background:radial-gradient(circle,#fff 0%,var(--cyan) 50%,transparent 100%);
+  box-shadow:0 0 12px 2px rgba(94,234,212,.6);animation:pulse-dot 3s ease-in-out infinite;}
+.topbar .brand .mark{font-family:var(--font-display);font-weight:600;font-size:.95rem;letter-spacing:.14em;color:var(--silver);white-space:nowrap}
+.topbar .brand .sub{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:var(--silver-faint);white-space:nowrap}
 .topbar .spacer{flex:1}
-.icon-btn{
-  display:inline-flex;align-items:center;gap:.4rem;font-family:var(--font-ui);
-  font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;font-weight:600;
-  color:var(--text-muted);border:1px solid var(--hairline);padding:.5rem .8rem;border-radius:2px;
-  transition:all .25s ease;min-height:38px;
+.icon-btn{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--font-mono);
+  font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500;
+  color:var(--silver-dim);border:1px solid var(--hairline);padding:.5rem .75rem;border-radius:4px;
+  transition:all .25s ease;min-height:36px;
 }
-.icon-btn:hover{color:var(--accent);border-color:var(--accent-line);background:var(--accent-soft)}
-.icon-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-/* badge status — JUJUR tentang mod */
-.badge{
-  display:inline-flex;align-items:center;gap:.45rem;font-family:var(--font-ui);
-  font-size:.56rem;letter-spacing:.2em;text-transform:uppercase;font-weight:700;
-  padding:.45rem .8rem;border-radius:2px;border:1px solid;min-height:38px;white-space:nowrap;
+.icon-btn:hover{color:var(--cyan);border-color:var(--cyan-line);background:var(--cyan-soft)}
+.icon-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+
+/* badge status */
+.badge{display:inline-flex;align-items:center;gap:.45rem;font-family:var(--font-mono);
+  font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;font-weight:500;
+  padding:.45rem .8rem;border-radius:999px;border:1px solid;min-height:36px;white-space:nowrap;
 }
 .badge .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.badge.demo{color:var(--gold);border-color:var(--gold-line);background:var(--gold-soft)}
-.badge.demo .dot{background:var(--gold);animation:pulse-dot 2.2s ease-in-out infinite}
-.badge.live{color:var(--ok);border-color:rgba(143,178,138,.45);background:var(--ok-soft)}
+.badge.connecting{color:var(--warn);border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.06)}
+.badge.connecting .dot{background:var(--warn);animation:pulse-dot 1.6s ease-in-out infinite}
+.badge.live{color:var(--ok);border-color:var(--ok-line);background:var(--ok-soft)}
 .badge.live .dot{background:var(--ok)}
-@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.35}}
-/* ============ INTRO / HERO ============ */
-.intro{position:relative;z-index:2;text-align:center;padding:2.2rem 1.2rem 1.4rem;max-width:46rem;margin:0 auto}
-.eyebrow{font-family:var(--font-ui);font-size:.6rem;letter-spacing:.42em;text-transform:uppercase;color:var(--accent);margin-bottom:1.1rem}
-.intro h1{font-family:var(--font-display);font-weight:300;font-size:clamp(2.1rem,7.5vw,3.6rem);line-height:1.08;margin-bottom:1rem;letter-spacing:.01em}
-.intro h1 em{font-style:italic;color:var(--accent);font-weight:400}
-.intro .tagline{font-family:var(--font-display);font-style:italic;font-size:clamp(.95rem,2.2vw,1.1rem);color:var(--text-muted);max-width:32rem;margin:0 auto 1rem;line-height:1.7}
-.intro .rule{width:64px;height:1px;background:var(--accent-line);margin:1.1rem auto .6rem}
-.intro .note{font-family:var(--font-ui);font-size:.66rem;letter-spacing:.06em;color:var(--text-faint);max-width:34rem;margin:0 auto;line-height:1.7}
-/* ============ BANNER STATUS ============ */
-.banner{
-  position:relative;z-index:2;max-width:46rem;margin:0 auto 1rem;padding:.9rem 1.1rem;
-  border:1px solid;border-radius:3px;font-family:var(--font-ui);font-size:.72rem;line-height:1.65;
-  display:flex;gap:.8rem;align-items:flex-start;
-}
-.banner svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;margin-top:.1rem}
-.banner.info{color:var(--gold);border-color:var(--gold-line);background:var(--gold-soft)}
-.banner.error{color:var(--error);border-color:var(--error-line);background:var(--error-soft)}
-.banner.ok{color:var(--ok);border-color:rgba(143,178,138,.45);background:var(--ok-soft)}
-.banner strong{font-weight:700;letter-spacing:.04em}
-.banner .banner-actions{margin-top:.5rem;display:flex;gap:.6rem;flex-wrap:wrap}
-.banner .banner-actions button{
-  font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;
-  border:1px solid currentColor;padding:.35rem .7rem;border-radius:2px;opacity:.9;transition:opacity .2s;
-}
-.banner .banner-actions button:hover{opacity:1;background:rgba(0,0,0,.12)}
-/* ============ CHAT ============ */
+.badge.error{color:var(--error);border-color:var(--error-line);background:var(--error-soft)}
+.badge.error .dot{background:var(--error)}
+
+/* ============ HERO / HALAMAN PEMBUKA ============ */
 .chat-wrap{position:relative;z-index:2;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-.chat{max-width:46rem;margin:0 auto;padding:.5rem 1rem 2rem;display:flex;flex-direction:column;gap:1.1rem}
-.msg{display:flex;flex-direction:column;max-width:88%;animation:msgIn .45s cubic-bezier(.2,.7,.2,1) both}
+.hero{max-width:44rem;margin:0 auto;text-align:center;padding:3rem 1.2rem 1.5rem;transition:padding .6s cubic-bezier(.2,.7,.2,1),opacity .5s ease;}
+body.has-chat .hero{padding:.8rem 1.2rem .4rem}
+body.has-chat .hero .singularity,
+body.has-chat .hero .manifesto,
+body.has-chat .hero .hero-intro,
+body.has-chat .hero .hero-caption{opacity:0;max-height:0;margin:0;overflow:hidden;transition:opacity .4s ease,max-height .6s ease,margin .4s ease}
+.hero-caption{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.42em;text-transform:uppercase;color:var(--cyan);margin-bottom:1.4rem}
+.hero h1{font-family:var(--font-display);font-weight:300;font-size:clamp(2.4rem,9vw,4.4rem);line-height:1.05;letter-spacing:.06em;margin-bottom:.4rem;
+  background:linear-gradient(180deg,#fff 0%,var(--silver) 45%,var(--silver-dim) 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero .hero-sub{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.5em;text-transform:uppercase;color:var(--silver-faint);margin-bottom:1.6rem}
+.hero .rule{width:48px;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);margin:1.2rem auto}
+.manifesto{font-family:var(--font-display);font-style:italic;font-weight:300;font-size:clamp(1rem,2.4vw,1.2rem);color:var(--silver-dim);max-width:30rem;margin:0 auto;line-height:1.7}
+.hero-intro{font-size:.88rem;color:var(--silver-faint);max-width:32rem;margin:1.1rem auto 0;line-height:1.7}
+
+/* ============ SINGULARITY — entiti cahaya abstrak ============ */
+.singularity{position:relative;width:130px;height:130px;margin:0 auto 1.6rem;transition:transform .6s ease,opacity .5s ease}
+body.has-chat .singularity{transform:scale(.35);margin-bottom:0}
+.sing-core{position:absolute;inset:38%;border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,var(--cyan-bright) 35%,rgba(94,234,212,.4) 60%,transparent 75%);
+  box-shadow:0 0 30px 6px rgba(94,234,212,.5),0 0 90px 20px rgba(34,211,238,.22);
+  animation:sing-pulse 4.5s ease-in-out infinite;
+}
+@keyframes sing-pulse{0%,100%{transform:scale(1);opacity:.95}50%{transform:scale(1.12);opacity:.75}}
+.sing-ring{position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg,transparent 0%,rgba(94,234,212,.7) 12%,transparent 24%);
+  -webkit-mask:radial-gradient(circle,transparent 61%,black 63%,black 65%,transparent 67%);
+  mask:radial-gradient(circle,transparent 61%,black 63%,black 65%,transparent 67%);
+  animation:spin 9s linear infinite;
+}
+.sing-ring.r2{inset:-14%;animation-duration:14s;animation-direction:reverse;opacity:.6;
+  background:conic-gradient(from 180deg,transparent 0%,rgba(34,211,238,.55) 10%,transparent 22%);
+}
+.sing-ring.r3{inset:-30%;animation-duration:22s;opacity:.35;
+  background:conic-gradient(from 90deg,transparent 0%,rgba(148,163,184,.5) 8%,transparent 18%);
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sing-orbit{position:absolute;inset:0;animation:spin 9s linear infinite}
+.sing-orbit span{position:absolute;top:-2px;left:50%;width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px 2px rgba(94,234,212,.8)}
+.sing-orbit.o2{animation-duration:14s;animation-direction:reverse}
+.sing-orbit.o2 span{top:auto;bottom:-2px;background:var(--cyan-bright);width:4px;height:4px}
+
+/* ============ BANNER STATUS ============ */
+.banner{position:relative;z-index:2;max-width:44rem;margin:0 auto 1rem;padding:.8rem 1rem;
+  border:1px solid;border-radius:6px;font-family:var(--font-body);font-size:.74rem;line-height:1.6;
+  display:flex;gap:.7rem;align-items:flex-start;background:var(--surface);backdrop-filter:blur(8px);
+}
+.banner svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;margin-top:.15rem}
+.banner.connecting{color:var(--warn);border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.05)}
+.banner.ok{color:var(--ok);border-color:var(--ok-line);background:var(--ok-soft)}
+.banner.error{color:var(--error);border-color:var(--error-line);background:var(--error-soft)}
+.banner strong{font-weight:600;letter-spacing:.02em}
+.banner .banner-actions{margin-top:.5rem;display:flex;gap:.6rem;flex-wrap:wrap}
+.banner .banner-actions button{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;font-weight:500;
+  border:1px solid currentColor;padding:.35rem .7rem;border-radius:4px;opacity:.9;transition:opacity .2s;}
+.banner .banner-actions button:hover{opacity:1;background:rgba(255,255,255,.06)}
+
+/* ============ CHAT ============ */
+.chat{max-width:44rem;margin:0 auto;padding:.5rem 1rem 1.5rem;display:flex;flex-direction:column;gap:1rem}
+.msg{display:flex;flex-direction:column;max-width:88%;animation:msgIn .4s cubic-bezier(.2,.7,.2,1) both}
 @keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .msg.user{align-self:flex-end;align-items:flex-end}
 .msg.ai{align-self:flex-start;align-items:flex-start}
-.msg .who{font-family:var(--font-ui);font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;color:var(--text-faint);margin-bottom:.35rem;display:flex;align-items:center;gap:.45rem}
-.msg .who .avatar{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--accent-line);flex-shrink:0}
-.msg .who .avatar svg{width:11px;height:11px;stroke:var(--accent);fill:none;stroke-width:2}
-.msg.user .who{color:var(--text-faint)}
-.bubble{padding:.85rem 1.05rem;border-radius:6px;line-height:1.72;font-size:.96em;word-wrap:break-word;overflow-wrap:anywhere}
-.msg.user .bubble{background:var(--accent-soft);border:1px solid var(--accent-line);border-bottom-right-radius:1px;color:var(--text)}
-.msg.ai .bubble{background:var(--surface);border:1px solid var(--hairline);border-left:2.5px solid var(--accent);border-bottom-left-radius:1px;box-shadow:0 8px 28px rgba(0,0,0,.35)}
-/* label lapisan dalam jawapan AI */
-.layer-label{
-  display:inline-block;font-family:var(--font-ui);font-size:.54rem;letter-spacing:.26em;
-  text-transform:uppercase;font-weight:700;padding:.2rem .55rem;border-radius:2px;margin:1rem 0 .45rem;
+.msg .who{font-family:var(--font-mono);font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:var(--silver-faint);margin-bottom:.3rem;display:flex;align-items:center;gap:.45rem}
+.msg .who .avatar{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--cyan-line);flex-shrink:0}
+.msg .who .avatar svg{width:10px;height:10px;stroke:var(--cyan);fill:none;stroke-width:2}
+.bubble{padding:.85rem 1.05rem;border-radius:10px;line-height:1.7;font-size:.95em;word-wrap:break-word;overflow-wrap:anywhere;
+  background:var(--surface);border:1px solid var(--hairline);backdrop-filter:blur(8px);
 }
-.layer-label:first-child{margin-top:.1rem}
-.lbl-petikan{color:var(--accent);background:var(--accent-soft);border:1px solid var(--accent-line)}
-.lbl-tafsiran{color:var(--text-muted);border:1px solid var(--hairline);background:rgba(237,230,214,.04)}
-.lbl-catatan{color:var(--text-faint);border:1px dashed var(--hairline);background:transparent}
-.quote-real{
-  margin:.5rem 0 .9rem;padding:.85rem 1rem .85rem 1.2rem;border-left:2.5px solid var(--accent);
-  background:var(--accent-soft);border-radius:0 3px 3px 0;font-family:var(--font-display);
-  font-style:italic;color:var(--text);font-size:1.02em;line-height:1.68;position:relative;
-}
-.quote-real::before{content:"\201C";position:absolute;left:.3rem;top:.05rem;font-family:var(--font-display);font-size:2.2em;line-height:1;color:var(--accent);opacity:.35;font-style:normal}
-.quote-src{display:block;font-family:var(--font-ui);font-style:normal;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--text-faint);margin-top:.55rem}
-.ai-body p{margin-bottom:.75em}
+.msg.user .bubble{background:var(--cyan-soft);border:1px solid var(--cyan-line);border-bottom-right-radius:2px;color:var(--silver)}
+.msg.ai .bubble{border-left:2px solid var(--cyan);border-bottom-left-radius:2px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.ai-body p{margin-bottom:.7em}
 .ai-body p:last-child{margin-bottom:0}
-.ai-body .demo-foot{
-  margin-top:1rem;padding-top:.7rem;border-top:1px solid var(--hairline);
-  font-family:var(--font-ui);font-size:.6rem;letter-spacing:.08em;color:var(--text-faint);line-height:1.6;font-style:normal;
+.ai-body ul,.ai-body ol{margin:.4em 0 .8em 1.3em}
+.ai-body li{margin-bottom:.3em}
+.ai-body strong{color:var(--silver);font-weight:600}
+.ai-foot{margin-top:.9rem;padding-top:.6rem;border-top:1px solid var(--hairline);
+  font-family:var(--font-mono);font-size:.56rem;letter-spacing:.04em;color:var(--silver-faint);line-height:1.6;
 }
-/* typing indicator */
-.typing{display:inline-flex;align-items:center;gap:.45rem;padding:.9rem 1.1rem}
-.typing .dots{display:inline-flex;gap:.3rem}
-.typing .dots i{width:6px;height:6px;border-radius:50%;background:var(--accent);opacity:.4;animation:blink 1.2s infinite}
+/* typing indicator — cahaya berdenyut */
+.typing{display:inline-flex;align-items:center;gap:.55rem;padding:.9rem 1.1rem}
+.typing .dots{display:inline-flex;gap:.35rem;align-items:center}
+.typing .dots i{width:6px;height:6px;border-radius:50%;background:var(--cyan);opacity:.4;animation:blink 1.2s infinite;box-shadow:0 0 8px rgba(94,234,212,.6)}
 .typing .dots i:nth-child(2){animation-delay:.2s}
 .typing .dots i:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:.9;transform:translateY(-3px)}}
-.typing .typing-text{font-family:var(--font-ui);font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted)}
-/* error message bubble */
+@keyframes blink{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.typing .typing-text{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--silver-dim)}
 .msg.error-msg .bubble{border-color:var(--error-line);background:var(--error-soft);border-left-color:var(--error)}
-.msg.error-msg .bubble p{font-size:.9em;color:var(--error)}
-/* ============ PEMULA SOALAN ============ */
-.starters{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;padding:0 1rem .8rem;max-width:46rem;margin:0 auto;position:relative;z-index:2}
-.chip{
-  font-family:var(--font-ui);font-size:.66rem;letter-spacing:.06em;color:var(--text-muted);
-  border:1px solid var(--border);background:var(--surface);padding:.55rem .9rem;border-radius:999px;
-  transition:all .25s ease;line-height:1.4;text-align:left;
+.msg.error-msg .bubble p{font-size:.88em;color:var(--error)}
+
+/* ============ SOALAN CADANGAN ============ */
+.starters{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;padding:0 1rem 1rem;max-width:44rem;margin:0 auto;position:relative;z-index:2}
+.starters-label{width:100%;text-align:center;font-family:var(--font-mono);font-size:.54rem;letter-spacing:.32em;text-transform:uppercase;color:var(--silver-faint);margin-bottom:.3rem}
+.chip{font-family:var(--font-body);font-size:.72rem;letter-spacing:.01em;color:var(--silver-dim);
+  border:1px solid var(--hairline);background:var(--surface);padding:.55rem .95rem;border-radius:999px;
+  transition:all .25s ease;line-height:1.4;text-align:left;backdrop-filter:blur(6px);
 }
-.chip:hover{color:var(--accent);border-color:var(--accent-line);background:var(--accent-soft);transform:translateY(-1px)}
+.chip:hover{color:var(--cyan);border-color:var(--cyan-line);background:var(--cyan-soft);transform:translateY(-1px);box-shadow:0 4px 18px rgba(94,234,212,.12)}
 .chip:active{transform:translateY(0)}
-.starters-label{width:100%;text-align:center;font-family:var(--font-ui);font-size:.56rem;letter-spacing:.3em;text-transform:uppercase;color:var(--text-faint);margin-bottom:.2rem}
+.chip.primary{border-color:var(--cyan-line);color:var(--cyan);background:var(--cyan-faint)}
+
 /* ============ COMPOSER ============ */
-.composer-wrap{position:relative;z-index:5;border-top:1px solid var(--hairline);background:rgba(11,12,15,.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:.7rem 1rem calc(.7rem + env(safe-area-inset-bottom))}
-.composer{max-width:46rem;margin:0 auto;display:flex;align-items:flex-end;gap:.6rem}
-.composer textarea{
-  flex:1;resize:none;max-height:120px;min-height:44px;font-family:var(--font-body);font-size:.96em;
-  background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:6px;
-  padding:.7rem .9rem;line-height:1.5;outline:none;transition:border-color .25s;
+.composer-wrap{position:relative;z-index:5;border-top:1px solid var(--hairline);
+  background:rgba(5,7,13,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  padding:.75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
 }
-.composer textarea:focus{border-color:var(--accent-line)}
-.composer textarea::placeholder{color:var(--text-faint);font-style:italic}
-.send-btn{
-  width:46px;height:46px;flex-shrink:0;border-radius:6px;border:1px solid var(--accent-line);
-  background:var(--accent-soft);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;
+.composer{max-width:44rem;margin:0 auto;display:flex;align-items:flex-end;gap:.6rem}
+.composer textarea{flex:1;resize:none;max-height:130px;min-height:46px;font-family:var(--font-body);font-size:.95em;
+  background:var(--surface);color:var(--silver);border:1px solid var(--hairline);border-radius:10px;
+  padding:.75rem 1rem;line-height:1.5;outline:none;transition:border-color .25s,box-shadow .25s;
+}
+.composer textarea:focus{border-color:var(--cyan-line);box-shadow:0 0 0 3px rgba(94,234,212,.08),0 0 24px rgba(94,234,212,.10)}
+.composer textarea::placeholder{color:var(--silver-faint);font-style:italic}
+.send-btn{width:46px;height:46px;flex-shrink:0;border-radius:10px;border:1px solid var(--cyan-line);
+  background:var(--cyan-soft);color:var(--cyan);display:inline-flex;align-items:center;justify-content:center;
   transition:all .25s ease;
 }
-.send-btn:hover:not(:disabled){background:var(--accent);color:var(--bg)}
-.send-btn:disabled{opacity:.35;cursor:not-allowed}
-.send-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.composer-hint{max-width:46rem;margin:.35rem auto 0;font-family:var(--font-ui);font-size:.56rem;letter-spacing:.12em;color:var(--text-faint);text-align:center}
-/* ============ NOTES TEKNIKAL (collapsible) ============ */
-.tech-notes{position:relative;z-index:2;max-width:46rem;margin:0 auto;padding:0 1rem 1.5rem}
-.tech-notes summary{
-  cursor:pointer;font-family:var(--font-ui);font-size:.6rem;letter-spacing:.26em;text-transform:uppercase;
-  color:var(--text-faint);padding:.6rem 0;list-style:none;display:flex;align-items:center;gap:.5rem;
-}
+.send-btn:hover:not(:disabled){background:var(--cyan);color:var(--obsidian);box-shadow:0 0 20px rgba(94,234,212,.4)}
+.send-btn:disabled{opacity:.3;cursor:not-allowed}
+.send-btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.composer-hint{max-width:44rem;margin:.35rem auto 0;font-family:var(--font-mono);font-size:.52rem;letter-spacing:.1em;color:var(--silver-faint);text-align:center}
+
+/* ============ NOTES TEKNIKAL ============ */
+.tech-notes{position:relative;z-index:2;max-width:44rem;margin:0 auto;padding:0 1rem 1.5rem}
+.tech-notes summary{cursor:pointer;font-family:var(--font-mono);font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--silver-faint);padding:.6rem 0;list-style:none;display:flex;align-items:center;gap:.5rem;}
 .tech-notes summary::-webkit-details-marker{display:none}
-.tech-notes summary::before{content:"+";color:var(--accent);font-weight:700;font-size:.9rem}
+.tech-notes summary::before{content:"+";color:var(--cyan);font-weight:700;font-size:.85rem}
 .tech-notes[open] summary::before{content:"\2212"}
-.tech-notes .notes-body{
-  border:1px solid var(--hairline);border-radius:4px;padding:1.1rem 1.2rem;background:var(--surface);
-  font-family:var(--font-ui);font-size:.72rem;line-height:1.7;color:var(--text-muted);
+.tech-notes .notes-body{border:1px solid var(--hairline);border-radius:6px;padding:1.1rem 1.2rem;background:var(--surface);
+  font-family:var(--font-body);font-size:.74rem;line-height:1.7;color:var(--silver-dim);backdrop-filter:blur(8px);
 }
-.tech-notes .notes-body h4{font-family:var(--font-display);font-size:.95rem;color:var(--text);margin:1rem 0 .4rem;font-weight:500}
+.tech-notes .notes-body h4{font-family:var(--font-display);font-size:.95rem;color:var(--silver);margin:1rem 0 .4rem;font-weight:500;letter-spacing:.04em}
 .tech-notes .notes-body h4:first-child{margin-top:0}
-.tech-notes .notes-body pre{
-  background:#0a0b0e;border:1px solid var(--hairline);border-radius:4px;padding:.9rem 1rem;
-  overflow-x:auto;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:.66rem;
-  line-height:1.6;color:#c9c2b2;margin:.6rem 0;white-space:pre;
-}
-.tech-notes .notes-body code{font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:.86em;color:var(--accent)}
+.tech-notes .notes-body pre{background:#070A12;border:1px solid var(--hairline);border-radius:4px;padding:.8rem 1rem;
+  overflow-x:auto;font-family:var(--font-mono);font-size:.64rem;line-height:1.6;color:var(--silver-dim);margin:.6rem 0;white-space:pre}
+.tech-notes .notes-body code{font-family:var(--font-mono);font-size:.86em;color:var(--cyan)}
 .tech-notes .notes-body ul{margin:.4rem 0 .8rem 1.2rem}
 .tech-notes .notes-body li{margin-bottom:.3rem}
-/* ============ RESPONSIF ============ */
+
+/* ============ RESPONSIF (mobile-first) ============ */
 @media (max-width:640px){
-  body{--fs:16px}
-  .topbar{padding:.55rem .7rem;gap:.4rem}
+  body{--fs:15px}
+  .topbar{padding:.55rem .75rem;gap:.45rem}
   .topbar .brand .sub{display:none}
-  .icon-btn{padding:.45rem .6rem;font-size:.54rem;letter-spacing:.12em}
   .icon-btn .lbl{display:none}
-  .badge{font-size:.5rem;letter-spacing:.14em;padding:.4rem .6rem}
-  .intro{padding:1.5rem 1rem 1rem}
+  .icon-btn{padding:.45rem .6rem}
+  .badge{font-size:.5rem;letter-spacing:.12em;padding:.38rem .6rem}
+  .hero{padding:2rem 1rem 1rem}
+  .singularity{width:100px;height:100px}
   .msg{max-width:94%}
-  .starters{padding:0 .8rem .7rem}
-  .chip{font-size:.62rem;padding:.5rem .75rem}
+  .starters{padding:0 .7rem .8rem}
+  .chip{font-size:.68rem;padding:.5rem .8rem}
   .composer-wrap{padding:.6rem .7rem calc(.6rem + env(safe-area-inset-bottom))}
 }
 @media (prefers-reduced-motion:reduce){
@@ -233,8 +264,8 @@ a{color:var(--accent);text-decoration:none}
 </style>
 </head>
 <body>
-<div class="beam-layer"></div>
-<div class="ambient" id="ambient"></div>
+<div class="bg-ambient"></div>
+<div class="bg-grid"></div>
 
 <header class="topbar">
   <a class="icon-btn" href="index.html" title="Laman Utama" aria-label="Kembali ke Laman Utama">
@@ -245,29 +276,37 @@ a{color:var(--accent);text-decoration:none}
   </a>
   <div class="spacer"></div>
   <div class="brand">
-    <span class="mark">Bilik Antara</span>
-    <span class="sub">Antara Cahaya dan Gelap</span>
+    <span class="dot-orb"></span>
+    <span class="mark">BILIK ANTARA</span>
+    <span class="sub">An Intelligence Space</span>
   </div>
-  <span class="badge demo" id="modeBadge" role="status" aria-live="polite"><span class="dot"></span><span id="modeText">Mod Demo</span></span>
+  <span class="badge connecting" id="modeBadge" role="status" aria-live="polite"><span class="dot"></span><span id="modeText">Menyambung…</span></span>
 </header>
 
 <main class="chat-wrap" id="chatWrap">
-  <section class="intro">
-    <div class="eyebrow">Halaman Penutup · Ruang Perbualan</div>
-    <h1>Bilik <em>Antara</em></h1>
-    <p class="tagline">“Jangan cari aku di hujung. Cari aku di antara. Sebab di situlah aku paling hidup.”</p>
+  <section class="hero" id="hero">
+    <div class="singularity" aria-hidden="true">
+      <div class="sing-ring r3"></div>
+      <div class="sing-ring r2"></div>
+      <div class="sing-ring"></div>
+      <div class="sing-orbit"><span></span></div>
+      <div class="sing-orbit o2"><span></span></div>
+      <div class="sing-core"></div>
+    </div>
+    <div class="hero-caption">An Intelligence Space</div>
+    <h1>BILIK ANTARA</h1>
     <div class="rule"></div>
-    <p class="note">Tanya soalan tentang idea, hujah, petikan dan tafsiran novel. Setiap jawapan membezakan <strong>petikan sebenar</strong>, <strong>tafsiran munasabah</strong> dan <strong>catatan had</strong> — tiada petikan direka, tiada dakwaan tentang niat penulis tanpa bukti.</p>
+    <p class="manifesto">“Menulis untuk memahami. Berfikir untuk mempersoalkan. Mencuba mengusik fikiran, bukan menyentuh perasaan.”</p>
+    <p class="hero-intro">Ruang untuk berbual tentang falsafah, sastera, teknologi, manusia dan kehidupan. Tanya apa sahaja — saya jawab terus, jujur, dan kadang-kadang dengan sindiran halus.</p>
   </section>
 
-  <div class="banner info" id="statusBanner" role="status">
+  <div class="banner connecting" id="statusBanner" role="status">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
     <div>
-      <strong id="bannerTitle">Mod demo aktif — AI sebenar belum disambungkan.</strong>
-      <span id="bannerBody"> Jawapan disusun oleh <em>Pemandu Petikan Tempatan</em> menggunakan petikan sebenar novel yang dibenamkan dalam halaman ini. Ia bukan model bahasa: ia tidak mencipta jawapan baharu, hanya memadankan soalan anda dengan petikan dan tema yang wujud. Untuk menyambung AI sebenar (<strong>Gemini API</strong>) melalui backend tanpa mendedahkan API key, buka bahagian “Cara menyambung AI sebenar” di bawah.</span>
+      <strong id="bannerTitle">Menyambung ke ruang kecerdasan…</strong>
+      <span id="bannerBody"> Menyemak sambungan ke backend Gemini. Sebentar lagi.</span>
       <div class="banner-actions" id="bannerActions" style="display:none">
         <button type="button" id="retryBtn">Cuba sambung semula</button>
-        <button type="button" id="useDemoBtn">Kekal mod demo</button>
       </div>
     </div>
   </div>
@@ -275,52 +314,36 @@ a{color:var(--accent);text-decoration:none}
   <div class="chat" id="chat" aria-live="polite"></div>
 
   <div class="starters" id="starters">
-    <span class="starters-label">Cuba soalan permulaan</span>
+    <span class="starters-label">Mula dengan</span>
   </div>
 
   <details class="tech-notes" id="techNotes">
-    <summary>Cara menyambung AI sebenar &amp; seni bina</summary>
+    <summary>Seni bina &amp; cara AI disambung</summary>
     <div class="notes-body">
       <h4>Prinsip keselamatan</h4>
       <ul>
-        <li><strong>API key TIDAK boleh diletakkan dalam HTML/JS klien.</strong> Mana-mana key di sisi pelayan boleh dicuri sesiapa sahaja dengan melihat sumber halaman.</li>
-        <li>Halaman ini hanya menghubungi satu endpoint: <code id="epShow">/.netlify/functions/bilik-antara</code>. Endpoint inilah yang menyimpan key sebagai <em>environment variable</em> terenkripsi dan memanggil model AI bagi pihak anda.</li>
-        <li>Laman ini dihos di Netlify, yang menyediakan <strong>Netlify Functions</strong> (serverless Node.js) dan <strong>environment variables terenkripsi</strong> — jadi platform boleh menyediakan backend dan menyimpan rahsia tanpa pelayan berasingan.</li>
+        <li><strong>API key tidak pernah berada di sisi pelayar.</strong> Halaman ini hanya menghubungi satu endpoint: <code id="epShow">/.netlify/functions/bilik-antara</code> — fungsi Netlify yang menyimpan key sebagai environment variable terenkripsi dan memanggil Gemini bagi pihak anda.</li>
+        <li>Model lalai: <code>gemini-3.6-flash</code> (boleh diatasi dengan <code>GEMINI_MODEL</code>). Soalan tentang <strong>Shaiful Ridhwan</strong> dijawab secara tempatan dari fakta awam yang disahkan — tanpa melalui Gemini — bagi mengelakkan rekaan biodata peribadi.</li>
+        <li>Pada tier percuma Gemini, soalan mungkin digunakan Google untuk memperbaiki produk. Jika tidak diterima, aktifkan billing di Google Cloud.</li>
       </ul>
-      <h4>Apa yang boleh dibina terus (tanpa kos)</h4>
-      <ul>
-        <li>Seluruh UI sembang, keadaan memuatkan, ralat, soalan permulaan — fail ini sahaja.</li>
-        <li>Pemandu Petikan Tempatan (mod demo) dengan 40+ petikan sebenar novel dibenamkan.</li>
-      </ul>
-      <h4>Apa yang memerlukan perkhidmatan luaran + kos</h4>
-      <ul>
-        <li>Model AI sebenar: <strong>Gemini API</strong> (Google) — caj mengikut token jika melebihi kuota percuma. Kuota percuma wujud tetapi TIDAK tanpa had (had harian/RPM, reset tengah malam Waktu Pasifik; semak di AI Studio). Netlify Functions sendiri mempunyai tier percuma yang besar; kos utama ialah API model.</li>
-        <li>Untuk kualiti grounding yang tinggi, tambahkan teks penuh novel ke dalam fungsi (RAG) supaya AI memetik dengan tepat.</li>
-      </ul>
-      <h4>Langkah sambungan</h4>
-      <ul>
-        <li>1. Letakkan <code>bilik-antara.js</code> <strong>bersama</strong> <code>novel-kb.json</code> ke dalam folder <code>netlify/functions/</code> dalam repo laman (kedua-duanya mesti dalam folder yang sama). Tambah <code>netlify.toml</code> yang disertakan di root repo.</li>
-        <li>2. Di dashboard Netlify → Site settings → Environment variables, tambah <code>GEMINI_API_KEY</code> (diperoleh dari Google AI Studio). Pilihan: <code>GEMINI_MODEL</code> (default <code>gemini-3.8-flash</code>; fungsi mempunyai fallback automatik jika model pulang 404 — jangan anggar kuota percuma tanpa had, sahkan di AI Studio).</li>
-        <li><strong>Privasi tier percuma:</strong> pada tier percuma Gemini, soalan &amp; petikan yang dihantar mungkin digunakan Google untuk memperbaiki produk mereka. Fungsi hanya menghantar 5–7 petikan berkaitan (bukan keseluruhan manuskrip). Jika ini tidak diterima, aktifkan billing (Tier 1 berbayar) di Google Cloud.</li>
-        <li>3. Deploy semula. Halaman ini akan mengesan endpoint secara automatik dan menukar badge kepada “AI Bersambung”.</li>
-        <li>4. Sistem prompt dalam fungsi ini sudah menguatkuasakan: bezakan petikan/tafsiran/pendapat, larangan mereka petikan, dan larangan mendakwa niat penulis.</li>
-      </ul>
-      <h4>Format respons backend (dijangka)</h4>
+      <h4>Format respons backend</h4>
       <pre>{
   "mode": "live",
-  "reply": "jawapan penuh dengan label lapisan",
-  "quotes": [ {"text":"...","section":"AKAL — ..."} ],
-  "disclaimer": "..."
+  "aiMode": "general",
+  "reply": "jawapan",
+  "quotes": [],
+  "disclaimer": "...",
+  "model": "gemini-3.6-flash"
 }</pre>
-      <p>Jika endpoint tiada (404) atau gagal, halaman ini secara automatik kembali ke mod demo dan memaparkan mesej ralat yang jelas — ia <strong>tidak</strong> pernah berpura-pura AI berfungsi.</p>
+      <p>Jika endpoint gagal, mesej ralat yang jelas dipaparkan bersama butang “Cuba sambung semula” — halaman tidak pernah berpura-pura AI berfungsi.</p>
     </div>
   </details>
 </main>
 
 <div class="composer-wrap">
   <form class="composer" id="composer" autocomplete="off">
-    <textarea id="input" rows="1" placeholder="Tulis soalan anda tentang novel…" aria-label="Soalan anda" maxlength="800"></textarea>
-    <button type="submit" class="send-btn" id="sendBtn" disabled aria-label="Hantar soalan">
+    <textarea id="input" rows="1" placeholder="Tulis apa-apa yang ingin dibincangkan…" aria-label="Mesej anda" maxlength="800"></textarea>
+    <button type="submit" class="send-btn" id="sendBtn" disabled aria-label="Hantar mesej">
       <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2" fill="currentColor" stroke="none"/></svg>
     </button>
   </form>
@@ -329,115 +352,20 @@ a{color:var(--accent);text-decoration:none}
 
 <script>
 /* ============================================================
-   Bilik Antara — seni bina penyesuai (adapter)
-   Dua mod:
-     A. LocalQuoteEngine  (default, tiada backend) — memadankan
-        soalan dengan petikan BENAR novel yang dibenamkan.
-        Jelas berlabel "mod demo"; tidak mencipta teks.
-     B. BackendAdapter    (jika endpoint tersedia) — menghantar
-        ke /.netlify/functions/bilik-antara; API key disimpan
-        di sisi pelayan sahaja.
+   Bilik Antara — An Intelligence Space (v2 futuristik)
+   Satu-satunya mod: sembang bebas melalui Netlify Function.
+   Endpoint & format respons TIDAK diubah.
    ============================================================ */
 (function(){
 'use strict';
 
-/* ---------- ASAS PENGETAHUAN: petikan BENAR novel ----------
-   Semua petikan di bawah adalah verbatim daripada manuskrip
-   Antara Cahaya dan Gelap. Jangan tambah, tolak atau ubah. */
-var KB = {
-  themes: [
-    { id:'antara', label:'DI ANTARA (tema teras)', section:'01 · DI ANTARA',
-      kw:['antara','cahaya','gelap','ruang','tengah','hujung','maksud judul','tema utama','between','light','dark','apa itu antara','inti','maksud'],
-      quotes:[3,4,38,39,41,42,43,44],
-      tafsir:'Satu pembacaan yang munasabah: novel ini membina ruang “antara” bukan sebagai kompromi lemah, tetapi sebagai tempat hidup yang sebenar — manusia tidak pernah berdiri sepenuhnya di satu hujung. Kegelapan tidak sentiasa jahat dan cahaya tidak sentiasa suci; bahaya ialah mereka yang menganggap dirinya cahaya lalu tidak memeriksa bayangnya sendiri. Ini tafsiran satu pembaca; novel tidak mendefinisikan “antara” secara eksplisit dalam satu ayat.',
-      catatan:'Novel tidak menyatakan secara terus apa maksud muktamad “antara”. Mana-mana jawapan yang pasti adalah tafsiran, bukan kenyataan penulis.' },
-    { id:'akal', label:'AKAL — di antara tahu dan tidak tahu', section:'02 · AKAL',
-      kw:['akal','ilmu','tahu','tidak tahu','kebenaran','bohong','pembohongan','reputasi','cerita','bijak','kebijaksanaan','reason','truth','knowledge','lie','deception','fitnah','tuduhan'],
-      quotes:[1,5,6,7,9,22,23],
-      tafsir:'Satu pembacaan yang munasabah: bahagian AKAL mempersoalkan kepercayaan kita bahawa “tahu” sama dengan kebenaran. Orang ramai lebih mudah mempercayai wajah yang menenangkan daripada kebenaran yang mengganggu; dan orang yang menguasai cerita menguasai apa yang dipercayai, walaupun bukan apa yang berlaku. Kebenaran tidak memerlukan musuh — ia memerlukan seseorang yang sanggup tidak mendapat keuntungan daripadanya.',
-      catatan:'Ini satu tafsiran tentang hubungan kuasa-cerita-kebenaran. Novel tidak membuktikan satu teori epistemologi; ia membentangkan contoh dan renungan.' },
-    { id:'iman', label:'IMAN — di antara pasti dan ragu', section:'03 · IMAN',
-      kw:['iman','percaya','ragu','pasti','kepercayaan','amanah','faith','doubt','believe','agama','tuhan','jodoh','syariat','janji','pinjam'],
-      quotes:[15,16,24,25,26,27],
-      tafsir:'Satu pembacaan yang munasabah: bahagian IMAN tidak mempertahankan kepastian mahupun keraguan secara mutlak. “Ragu yang jujur kadang-kala lebih dekat kepada kebenaran daripada pasti yang buta.” Kepercayaan digambarkan sebagai pinjaman, bukan pemberian — apabila diingkari, ia tidak dipulihkan dengan kata-kata, hanya dengan tindakan konsisten. Konflik antara sistem kepercayaan yang berbeza (contohnya hari ibadat yang berbeza) dibentangkan sebagai ketegangan, bukan diselesaikan dengan satu jawapan.',
-      catatan:'Novel tidak menghalalkan atau mengharamkan apa-apa kedudukan agama khusus. Mana-mana dakwaan tentang pendirian muktamad penulis adalah tafsiran.' },
-    { id:'cinta', label:'CINTA — di antara punya dan meminjam', section:'04 · CINTA',
-      kw:['cinta','kasih','sayang','punya','meminjam','pinjam','topeng','kenali','wajah','dikenali','love','mask','identity','pasangan','perhubungan'],
-      quotes:[11,17,18,29,30,31],
-      tafsir:'Satu pembacaan yang munasabah: bahagian CINTA membezakan cinta sejati dengan persembahan. Topeng yang kita pakai untuk dicintai adalah penjara yang kita bina sendiri; cinta yang hilang apabila kita dikenali sepenuhnya bukanlah cinta. Cinta yang sejati memilih kebenaran seseorang lebih daripada keindahan persembahannya — dan ironinya, apa yang dinamakan cinta kadang-kala berlaku apabila seseorang kehilangan kebebasan untuk menolak.',
-      catatan:'Novel tidak menawarkan definisi cinta yang muktamad. Ayat-ayatnya adalah renungan, bukan doktrin.' },
-    { id:'kebebasan', label:'KEBEBASAN — di antara pintu dan pagar', section:'05 · KEBEBASAN',
-      kw:['bebas','kebebasan','pintu','pagar','kuasa','pilih','pilihan','takut','hormat','tunduk','kemerdekaan','authority','freedom','power','choice','diktator','politik','pemimpin'],
-      quotes:[7,12,13,14,19,20,21,32,33,34,35,36],
-      tafsir:'Satu pembacaan yang munasabah: bahagian KEBEBASAN berhujah bahawa kuasa paling licik bukan yang memaksa tunduk, tetapi yang membuat manusia percaya tunduk itu pilihan sendiri. Pagar bukan untuk memenjarakan — ia mengajar kita mencari pintu; tetapi pintu yang terbuka tiada ertinya bagi mereka yang takut melangkah. Ujian moraliti bukan apa yang sanggup kita lakukan demi kebaikan, tetapi apa yang enggan kita lakukan walaupun kejahatan menguntungkan. Kemunafikan mencapai kesempurnaan apabila seseorang sudah mempercayai lakonannya sendiri.',
-      catatan:'Ini tafsiran politik-moral satu pembaca. Novel menggunakan contoh (seperti senior kolej yang menjadi pemimpin) tanpa menyatakan satu teori negara khusus.' },
-    { id:'masa', label:'MASA — di antara sudah dan belum', section:'06 · MASA',
-      kw:['masa','waktu','hari ini','esok','lalu','sudah','belum','menunggu','wait','time','today','tomorrow','past','future','destinasi','tunggangan'],
-      quotes:[28,37,40],
-      tafsir:'Satu pembacaan yang munasabah: bahagian MASA menolak pandangan bahawa hari ini hanyalah tunggangan ke hari esok. “Hari ini bukan tunggangan. Hari ini ialah destinasi.” Menikmati apa yang belum dirampas oleh waktu — bukan menuntut jaminan daripada esok — adalah satu bentuk kebebasan. Hidup bukan menunggu ribut berlalu, tetapi belajar menari di dalam hujan yang singkat.',
-      catatan:'Ini satu etika hidup yang dicadangkan melalui gaya renungan; novel tidak membuktikannya secara falsafah formal.' },
-    { id:'akhir', label:'YANG ADA DI ANTARA / DI SITULAH AKU HIDUP', section:'07–08 · Penutup',
-      kw:['hidup','rumah','tinggal','tempat','akhir','penutup','makna','tujuan','kesimpulan','jawapan','life','home','meaning','ending','perhentian','pilihan'],
-      quotes:[2,8,10,45,44,43],
-      tafsir:'Satu pembacaan yang munasabah: penutup novel menolak kesimpulan yang kemas. “Jadi ini dia. Bukan kesimpulan. Bukan jawapan. Hanya perhentian.” Rumah bukanlah sebuah tempat — ia perasaan bahawa akhirnya kau berada di tempat yang sepatutnya. Manusia hidup bukan di puncak kejayaan atau dasar kegagalan, tetapi di antara keduanya, di tanah yang biasa. Soalan terakhir yang ditinggalkan adalah undangan kepada pembaca, bukan jawapan.',
-      catatan:'Penulis secara eksplisit menulis “bukan kesimpulan, bukan jawapan” — jadi mana-mana ringkasan yang mendakwa mengetahui mesej muktamad novel melebihi apa yang dibenarkan teks.' }
-  ],
-  quotes: {
-    1:'Kita lebih mudah mempercayai wajah yang menenangkan daripada kebenaran yang mengganggu.',
-    2:'Cahaya tidak menjadikan segala-galanya suci. Ia hanya menjadikan sesetengah perkara lebih jelas, dan sesetengah yang lain lebih pandai bersembunyi.',
-    3:'Kita tidak hidup di hujung. Kita hidup di antara.',
-    4:'Kebenaran tidak selalu berada di satu hujung. Kadang-kala, ia hidup di ruang antara.',
-    5:'Orang yang menguasai cerita tentang sesuatu peristiwa mungkin tidak mampu mengubah apa yang berlaku, tetapi dia mampu mempengaruhi apa yang dipercayai tentangnya.',
-    6:'Pembohongan paling berguna tidak semestinya meyakinkan semua orang. Cukuplah ia membuat orang yang berkuasa terus mempercayainya.',
-    7:'Reputasi ialah bayangan yang dibentuk oleh pandangan orang lain; manusia sanggup mengorbankan dirinya sendiri demi memastikan bayangan itu kekal utuh.',
-    8:'Kadangkala, kebenaran tidak memerlukan musuh untuk dikalahkan. Ia hanya memerlukan seseorang yang mempunyai keberanian untuk tidak mendapat keuntungan daripadanya.',
-    9:'Orang bijak bukanlah yang tahu segala-galanya, tetapi yang tahu batas pengetahuannya.',
-    10:'Kebaikan yang hanya bertahan ketika menguntungkan pemiliknya belum pernah benar-benar diuji.',
-    11:'Tidak semua pengorbanan lahir daripada kasih sayang. Ada yang merupakan pelaburan yang belum tiba masa untuk dituntut.',
-    12:'Manusia sering mengukur moraliti tindakannya berdasarkan niat sendiri, tetapi moraliti tindakan orang lain berdasarkan akibat yang diterimanya.',
-    13:'Prinsip paling mudah dipertahankan ialah prinsip yang tidak pernah meminta kita kehilangan apa-apa.',
-    14:'Ujian moraliti bukan sekadar apa yang sanggup kita lakukan demi kebaikan, tetapi apa yang enggan kita lakukan walaupun kejahatan itu menguntungkan kita.',
-    15:'Ragu yang jujur kadang-kala lebih dekat kepada kebenaran daripada pasti yang buta.',
-    16:'Kepercayaan bukanlah pemberian. Ia adalah pinjaman. Dan apabila pinjaman itu diingkari, ia tidak dapat dipulihkan dengan kata-kata. Ia hanya dapat dibina semula, sedikit demi sedikit, melalui tindakan yang konsisten.',
-    17:'Kita takut dikenali kerana kita percaya bahawa jika dikenali sepenuhnya, cinta akan hilang. Tetapi cinta yang hilang apabila dikenali bukanlah cinta. Ia adalah persembahan yang penontonnya telah pergi.',
-    18:'Topeng yang kita pakai untuk dicintai adalah penjara yang kita bina sendiri. Kita mengunci diri kita dalamnya, dan kemudian kita tertanya-tanya mengapa orang tidak dapat melihat kita.',
-    19:'Ada manusia yang menjaga maruahnya bukan dengan menghindari kejahatan, tetapi dengan menghindari pengetahuan orang lain tentangnya.',
-    20:'Kemunafikan mencapai kesempurnaannya apabila seseorang tidak lagi perlu berpura-pura di hadapan orang lain, kerana dia sudah mempercayai lakonannya sendiri.',
-    21:'Sesetengah orang tidak takut rahsia mereka terbongkar; mereka hanya takut kehilangan hak untuk menentukan bagaimana rahsia itu ditafsirkan.',
-    22:'Barangkali manusia tidak mencintai kebenaran. Mereka mencintai versi kebenaran yang masih membenarkan mereka menyukai diri sendiri.',
-    23:'Aku menyangka sedang memahami dirimu, rupanya aku sedang menyunting kesalahanmu agar sesuai dengan kepercayaanku.',
-    24:'Wajib Aku hari Jumaat, Dia pulak hari Ahad.',
-    25:'Jodoh di tangan Tuhan, TuhanKu atau TuhanMu?',
-    26:'bila mahu melangkah, syariat pula menyekat.',
-    27:'orang lain tak berhak untuk menilai.',
-    28:'Aku berhenti meminta jaminan daripada hari esok, dan aku mula menikmati apa yang belum dirampas oleh waktu.',
-    29:'Aku mahu menjadi pilihanmu, bukan sebab yang membuatmu takut untuk memilih selain aku.',
-    30:'Sungguh ironi, bukan? Kau menyebutnya cinta ketika seseorang kehilangan kebebasan untuk menolak.',
-    31:'Aku mengagumi keindahanmu, tetapi aku lebih memilih untuk mengenali kebenaranmu.',
-    32:'Pagar bukan untuk memenjarakan. Pagar adalah untuk mengajar kita mencari pintu.',
-    33:'Apabila seseorang tidak mampu mendapatkan kesetiaan, dia mungkin belajar menghasilkan ketakutan lalu menamakannya kesetiaan.',
-    34:'Ada yang mahu dihormati, ada yang mahu ditakuti. Yang berbahaya ialah mereka yang berjaya membuat orang lain menganggap kedua-duanya serupa.',
-    35:'Kuasa paling licik bukan kuasa yang memaksa manusia tunduk, tetapi kuasa yang membuat mereka percaya bahawa tunduk itu pilihan sendiri.',
-    36:'Pintu yang terbuka tidak ada ertinya bagi mereka yang takut melangkah keluar.',
-    37:'Hari ini bukan tunggangan. Hari ini ialah destinasi.',
-    38:'Gelap tidak selalu menyembunyikan kejahatan; kadangkala, ia melindungi kebenaran daripada mereka yang mahu menggunakannya.',
-    39:'Tidak semua yang keluar daripada gelap menuju cahaya. Ada yang hanya berpindah ke tempat yang lebih mudah dilihat.',
-    40:'Hidup bukanlah menunggu ribut berlalu, tetapi belajar menari di dalam hujan yang singkat.',
-    41:'Cahaya yang terlalu diarahkan mungkin menerangi wajah seseorang sambil membiarkan tangannya kekal dalam bayang-bayang.',
-    42:'Barangkali bahaya terbesar bukan manusia yang memilih gelap, tetapi manusia yang menganggap dirinya cahaya lalu tidak pernah memeriksa bayang-bayangnya.',
-    43:'Jawapan terbesar sering kali bukan di hujung, tetapi di ruang antara soalan-soalan.',
-    44:'Jangan cari aku di hujung. Cari aku di antara. Sebab di situlah aku paling hidup.',
-    45:'Rumah bukanlah sebuah tempat. Ia adalah perasaan bahawa akhirnya, kau berada di tempat yang sepatutnya.'
-  }
-};
-
 var STARTERS = [
-  'Apakah maksud “hidup di antara” dalam novel ini?',
-  'Bagaimana novel membincangkan hubungan kuasa dan kebenaran?',
-  'Mengapa cinta digambarkan sebagai “pinjaman”, bukan pemberian?',
-  'Apakah hujah novel tentang kebebasan dan pilihan?',
-  'Boleh beri petikan tentang masa dan “hari ini adalah destinasi”?',
-  'Apakah mesej penutup novel — adakah ia memberi jawapan?'
+  { text:'Shaiful Ridhwan siapa?', primary:true },
+  { text:'Kenapa manusia suka fikir berlebihan?' },
+  { text:'Mengapa sastera masih penting dalam dunia teknologi?' },
+  { text:'Bagaimana mengimbangi kerjaya teknologi dengan jiwa yang kreatif?' },
+  { text:'Apa ertinya menjadi bebas — dan adakah kebebasan itu nyata?' },
+  { text:'Bagaimana menghadapi keraguan tentang pilihan hidup kita?' }
 ];
 
 /* ---------- DOM ---------- */
@@ -454,40 +382,65 @@ var bannerTitle = document.getElementById('bannerTitle');
 var bannerBody = document.getElementById('bannerBody');
 var bannerActions = document.getElementById('bannerActions');
 var retryBtn = document.getElementById('retryBtn');
-var useDemoBtn = document.getElementById('useDemoBtn');
-var ambient = document.getElementById('ambient');
 
-/* ---------- Keadaan: state machine C1 ---------- */
+/* ---------- Keadaan ---------- */
 var state = 'idle';           // idle | loading
-var mode = 'demo';             // demo | live | error
+var mode = 'connecting';      // connecting | live | error
 var ENDPOINT = (window.BILIK_ENDPOINT || '/.netlify/functions/bilik-antara');
 document.getElementById('epShow').textContent = ENDPOINT;
-var history = [];              // untuk dihantar ke backend bila live
+var history = [];
+var hasChat = false;
 
 /* ---------- Util ---------- */
 function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function scrollBottom(){ requestAnimationFrame(function(){ chatWrap.scrollTop = chatWrap.scrollHeight; }); }
+/* Pemformatan ringkas & selamat: escape dahulu, kemudian **bold**, senarai, perenggan */
+function formatReply(text){
+  var html = esc(text || '');
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  var lines = html.split(/\n+/);
+  var out = '', inList = null;
+  function closeList(){ if(inList){ out += inList==='ul' ? '</ul>' : '</ol>'; inList = null; } }
+  for(var i=0;i<lines.length;i++){
+    var line = lines[i].trim();
+    if(!line) continue;
+    var ulMatch = line.match(/^[-•*]\s+(.+)/);
+    var olMatch = line.match(/^\d+[.)]\s+(.+)/);
+    if(ulMatch){
+      if(inList!=='ul'){ closeList(); out += '<ul>'; inList='ul'; }
+      out += '<li>'+ulMatch[1]+'</li>';
+    } else if(olMatch){
+      if(inList!=='ol'){ closeList(); out += '<ol>'; inList='ol'; }
+      out += '<li>'+olMatch[1]+'</li>';
+    } else {
+      closeList();
+      out += '<p>'+line+'</p>';
+    }
+  }
+  closeList();
+  return out;
+}
 
-/* ---------- Pengesanan backend (tidak menyekat UI) ---------- */
+/* ---------- Status ---------- */
 function setMode(m, msg){
   mode = m;
   if(m==='live'){
-    modeBadge.className='badge live'; modeText.textContent='AI Bersambung';
+    modeBadge.className='badge live'; modeText.textContent='Bersambung';
     banner.className='banner ok';
-    bannerTitle.textContent='AI sebenar bersambung melalui backend.';
-    bannerBody.innerHTML=' Jawapan dijana oleh <strong>Gemini API</strong> dengan akses kepada petikan sebenar novel. <code>GEMINI_API_KEY</code> disimpan di sisi pelayan (environment variable Netlify), tidak pernah dihantar ke pelayar anda. Hanya 5–7 petikan berkaitan dihantar (bukan keseluruhan manuskrip). Pada tier percuma Gemini, data yang dihantar mungkin digunakan Google untuk memperbaiki produk mereka. Label <strong>petikan sebenar</strong>, <strong>tafsiran</strong> dan <strong>catatan</strong> masih dikuatkuasakan oleh sistem prompt, dan setiap petikan disahkan terhadap sumber sebelum dipaparkan.';
+    bannerTitle.textContent='Ruang kecerdasan bersambung.';
+    bannerBody.innerHTML=' Jawapan dijana oleh <strong>Gemini API</strong> (model lalai <code>gemini-3.6-flash</code>). <code>GEMINI_API_KEY</code> disimpan di sisi pelayan sahaja. Soalan tentang Shaiful Ridhwan dijawab dari fakta awam yang disahkan, tanpa melalui model.';
     bannerActions.style.display='none';
   } else if(m==='error'){
-    modeBadge.className='badge demo'; modeText.textContent='Sambungan Gagal';
+    modeBadge.className='badge error'; modeText.textContent='Sambungan Gagal';
     banner.className='banner error';
     bannerTitle.textContent='Sambungan ke backend gagal.';
-    bannerBody.textContent= (msg||'Tiada respons daripada endpoint. Semak bahawa fungsi Netlify telah di-deploy dan environment variable API key disediakan. Sementara itu, mod demo (Pemandu Petikan Tempatan) masih boleh digunakan.');
+    bannerBody.textContent= (msg||'Tiada respons daripada endpoint. Semak fungsi Netlify telah di-deploy dan GEMINI_API_KEY disediakan.') + ' Anda masih boleh menaip soalan; ia akan dihantar semula apabila sambungan pulih.';
     bannerActions.style.display='flex';
   } else {
-    modeBadge.className='badge demo'; modeText.textContent='Mod Demo';
-    banner.className='banner info';
-    bannerTitle.textContent='Mod demo aktif — AI sebenar belum disambungkan.';
-    bannerBody.innerHTML=' Jawapan disusun oleh <em>Pemandu Petikan Tempatan</em> menggunakan petikan sebenar novel yang dibenamkan dalam halaman ini. Ia bukan model bahasa: ia tidak mencipta jawapan baharu, hanya memadankan soalan anda dengan petikan dan tema yang wujud. Untuk menyambung AI sebenar, buka bahagian “Cara menyambung AI sebenar” di bawah.';
+    modeBadge.className='badge connecting'; modeText.textContent='Menyambung…';
+    banner.className='banner connecting';
+    bannerTitle.textContent='Menyambung ke ruang kecerdasan…';
+    bannerBody.textContent=' Menyemak sambungan ke backend Gemini. Sebentar lagi.';
     bannerActions.style.display='none';
   }
 }
@@ -496,49 +449,32 @@ function probeBackend(){
     var ctrl = new AbortController();
     var to = setTimeout(function(){ ctrl.abort(); }, 20000);
     fetch(ENDPOINT, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({probe:true}),
-      signal: ctrl.signal
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({probe:true}), signal: ctrl.signal
     }).then(async function(r){
       clearTimeout(to);
       var body={}; try{ body=await r.json(); }catch(e){}
-      if(r.ok){ setMode('live'); }
-      else if(r.status===503){ setMode('error','GEMINI_API_KEY tidak terbaca oleh fungsi (503). Semak nama pemboleh ubah (sepatutnya GEMINI_API_KEY), skop Functions, dan buat deploy semula.'); }
-      else if(r.status===404){ setMode('error','Endpoint tidak ditemui (404). Semak fail bilik-antara.js berada di dalam netlify/functions/ dan telah di-deploy bersama novel-kb.json.'); }
-      else { setMode('error', (body && body.error ? body.error : 'Sambungan ke Gemini gagal (status '+r.status+').') + ' Kemungkinan: kekunci tidak sah, model tidak tersedia, atau kuota percuma habis.'); }
-    }).catch(function(){ clearTimeout(to); setMode('error','Probe tamat masa / sambungan terputus (20 saat). Lazimnya cold start fungsi atau Gemini lambat — tekan Cuba Lagi (panggilan kedua lebih pantas). Anda masih boleh guna Mod Demo.'); });
-  }catch(e){ setMode('demo'); }
+      if(r.ok && body && body.ok){ setMode('live'); }
+      else if(r.status===503){ setMode('error','GEMINI_API_KEY tidak terbaca oleh fungsi (503). Semak nama pemboleh ubah dan buat deploy semula.'); }
+      else if(r.status===404){ setMode('error','Endpoint tidak ditemui (404). Semak bilik-antara.js berada di netlify/functions/ dan telah di-deploy.'); }
+      else { setMode('error', (body && body.error ? body.error : 'Sambungan ke Gemini gagal (status '+r.status+').') + ' Kemungkinan: kekunci tidak sah, model tidak tersedia, atau kuota habis.'); }
+    }).catch(function(){ clearTimeout(to); setMode('error','Probe tamat masa / sambungan terputus (20 saat). Lazimnya cold start — tekan Cuba sambung semula.'); });
+  }catch(e){ setMode('error','Tidak dapat menghubungi endpoint.'); }
 }
 
-/* ---------- LocalQuoteEngine (mod demo) ---------- */
-function localEngine(question){
-  var q = question.toLowerCase();
-  var best = null, bestScore = 0;
-  for(var i=0;i<KB.themes.length;i++){
-    var t = KB.themes[i], score = 0;
-    for(var k=0;k<t.kw.length;k++){ if(q.indexOf(t.kw[k].toLowerCase()) !== -1) score++; }
-    if(score > bestScore){ bestScore = score; best = t; }
-  }
-  if(!best || bestScore === 0){
-    return { nomatch:true,
-      text:'Pemandu Petikan Tempatan tidak menemui tema yang berkaitan langsung dengan soalan anda dalam pangkalan petikan yang dibenamkan. Cuba tanya tentang salah satu tema utama novel: <strong>akal & kebenaran, iman & keraguan, cinta & topeng, kebebasan & kuasa, masa & hari ini, atau makna “hidup di antara”</strong>. Apabila AI sebenar disambungkan, ia boleh menangani soalan terbuka dengan lebih luas — tetapi prinsip yang sama tetap terpakai: tiada petikan direka, dan tafsiran jelas dilabel.' };
-  }
-  // pilih 2 petikan pertama tema (atau 1 jika hanya 1)
-  var qids = best.quotes.slice(0,2);
-  var quotesOut = qids.map(function(id){ return { text: KB.quotes[id], section: best.section }; });
-  return { nomatch:false, themeLabel: best.label, quotes: quotesOut, tafsir: best.tafsir, catatan: best.catatan };
-}
-
-/* ---------- BackendAdapter (mod live) ---------- */
+/* ---------- BackendAdapter ---------- */
 function backendAsk(question){
   history.push({role:'user', content:question});
   return fetch(ENDPOINT, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
+    method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ question: question, history: history.slice(-12) })
   }).then(function(r){
-    if(!r.ok){ throw new Error('HTTP '+r.status); }
+    if(!r.ok){
+      return r.json().catch(function(){ return {}; }).then(function(body){
+        var err = new Error(body && body.error ? body.error : 'HTTP '+r.status);
+        err.status = r.status; throw err;
+      });
+    }
     return r.json();
   }).then(function(data){
     history.push({role:'assistant', content: data.reply || ''});
@@ -557,8 +493,8 @@ function addUserMsg(text){
 function addTyping(){
   var el = document.createElement('div');
   el.className = 'msg ai'; el.id = 'typingMsg';
-  el.innerHTML = '<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3A7 7 0 0 0 12 2z"/><line x1="9" y1="22" x2="15" y2="22"/></svg></span>Pemandu Bilik</div>'
-    + '<div class="bubble typing"><span class="dots"><i></i><i></i><i></i></span><span class="typing-text">sedang merenung…</span></div>';
+  el.innerHTML = '<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>'
+    + '<div class="bubble typing"><span class="dots"><i></i><i></i><i></i></span><span class="typing-text">sedang berfikir…</span></div>';
   chat.appendChild(el); scrollBottom();
   return el;
 }
@@ -570,48 +506,18 @@ function addErrorMsg(text){
   el.querySelector('p').textContent = text;
   chat.appendChild(el); scrollBottom();
 }
-function renderAiDemo(res){
-  var el = document.createElement('div');
-  el.className = 'msg ai';
-  var who = '<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3A7 7 0 0 0 12 2z"/><line x1="9" y1="22" x2="15" y2="22"/></svg></span>Pemandu Bilik · Mod Demo</div>';
-  var body = '<div class="bubble"><div class="ai-body">';
-  if(res.nomatch){
-    body += '<p>'+res.text+'</p>';
-  } else {
-    body += '<p>Soalan anda menyentuh tema <strong>'+esc(res.themeLabel)+'</strong>. Berikut adalah petikan sebenar novel berkaitan, diikuti satu tafsiran munasabah dan catatan hadnya.</p>';
-    body += '<span class="layer-label lbl-petikan">Petikan Sebenar</span>';
-    for(var i=0;i<res.quotes.length;i++){
-      body += '<blockquote class="quote-real">'+esc(res.quotes[i].text)+'<span class="quote-src">'+esc(res.quotes[i].section)+'</span></blockquote>';
-    }
-    body += '<span class="layer-label lbl-tafsiran">Tafsiran Munasabah</span>';
-    body += '<p>'+esc(res.tafsir)+'</p>';
-    body += '<span class="layer-label lbl-catatan">Catatan Had</span>';
-    body += '<p>'+esc(res.catatan)+'</p>';
-  }
-  body += '<div class="demo-foot">Mod demo — jawapan ini disusun daripada petikan sebenar novel secara tempatan, bukan dijana oleh model bahasa. Tiada petikan direka. Sambung AI sebenar untuk perbualan yang lebih luas.</div>';
-  body += '</div></div>';
-  el.innerHTML = who + body;
-  chat.appendChild(el); scrollBottom();
-}
 function renderAiLive(data){
   var el = document.createElement('div');
   el.className = 'msg ai';
-  var modeBadge = data.aiMode==='general' ? ' <span style="margin-left:8px;background:rgba(200,164,92,.15);color:var(--gold);border:1px solid rgba(200,164,92,.4);padding:1px 8px;border-radius:999px;font-size:11px;letter-spacing:.08em">MOD UMUM</span>' : ' <span style="margin-left:8px;background:rgba(143,178,138,.15);color:var(--ok);border:1px solid rgba(143,178,138,.4);padding:1px 8px;border-radius:999px;font-size:11px;letter-spacing:.08em">MOD NOVEL</span>';
-  var who = '<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3A7 7 0 0 0 12 2z"/><line x1="9" y1="22" x2="15" y2="22"/></svg></span>Bilik Antara AI'+modeBadge+'</div>';
+  var who = '<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>';
   var body = '<div class="bubble"><div class="ai-body">';
-  // backend diminta memulangkan reply dengan label lapisan yang sama; jika ada quotes, paparkan
-  if(data && data.reply){
-    body += '<p>'+esc(data.reply).replace(/\n/g,'</p><p>')+'</p>';
-  }
+  if(data && data.reply){ body += formatReply(data.reply); }
   if(data && data.quotes && data.quotes.length){
-    body += '<span class="layer-label lbl-petikan">Petikan Sebenar</span>';
     for(var i=0;i<data.quotes.length;i++){
-      body += '<blockquote class="quote-real">'+esc(data.quotes[i].text)+(data.quotes[i].section?'<span class="quote-src">'+esc(data.quotes[i].section)+'</span>':'')+'</blockquote>';
+      body += '<p style="font-style:italic;color:var(--silver-dim);border-left:2px solid var(--cyan);padding-left:.8rem;margin:.6rem 0">'+esc(data.quotes[i].text)+'</p>';
     }
   }
-  if(data && data.disclaimer){
-    body += '<div class="demo-foot">'+esc(data.disclaimer)+'</div>';
-  }
+  if(data && data.disclaimer){ body += '<div class="ai-foot">'+esc(data.disclaimer)+'</div>'; }
   body += '</div></div>';
   el.innerHTML = who + body;
   chat.appendChild(el); scrollBottom();
@@ -621,23 +527,21 @@ function renderAiLive(data){
 function welcome(){
   var el = document.createElement('div');
   el.className = 'msg ai';
-  el.innerHTML = '<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 0-4 12.7V17a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-2.3A7 7 0 0 0 12 2z"/><line x1="9" y1="22" x2="15" y2="22"/></svg></span>Pemandu Bilik</div>'
+  el.innerHTML = '<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>'
     + '<div class="bubble"><div class="ai-body">'
-    + '<p>Selamat datang ke Bilik Antara. Anda boleh bertanya tentang <strong>idea, hujah, petikan dan tafsiran</strong> novel <em>Antara Cahaya dan Gelap</em>.</p>'
-    + '<p>Setiap jawapan saya terbahagi kepada tiga lapisan berlabel:</p>'
-    + '<p><span class="layer-label lbl-petikan">Petikan Sebenar</span> — ayat verbatim daripada novel, dengan bahagiannya.<br/>'
-    + '<span class="layer-label lbl-tafsiran">Tafsiran Munasabah</span> — satu pembacaan yang mungkin, bukan satu-satunya.<br/>'
-    + '<span class="layer-label lbl-catatan">Catatan Had</span> — apa yang novel tidak katakan, dan batas tafsiran.</p>'
-    + '<p>Saya tidak akan mereka petikan, dan saya tidak mendakwa mengetahui niat penulis tanpa bukti teks.</p>'
+    + '<p>Selamat datang. Kita boleh berbual tentang <strong>falsafah, sastera, teknologi, manusia, kehidupan</strong> — atau apa sahaja yang ada di minda anda.</p>'
+    + '<p>Saya jawab terus, tidak terlalu formal. Jika saya tidak tahu, saya akan katakan begitu. Dan saya tidak akan mengiyakan sesuatu semata-mata untuk menyenangkan anda.</p>'
+    + '<p>Cuba salah satu soalan di bawah, atau teruskan menulis.</p>'
     + '</div></div>';
-  chat.appendChild(el); scrollBottom();
+  chat.appendChild(el);
+  /* Jangan scroll ke bawah pada muat awal — biar hero/halaman pembuka kekal kelihatan. */
 }
 
-/* ---------- Soalan permulaan ---------- */
+/* ---------- Soalan cadangan ---------- */
 STARTERS.forEach(function(s){
   var b = document.createElement('button');
-  b.type='button'; b.className='chip'; b.textContent=s;
-  b.addEventListener('click', function(){ if(state!=='idle')return; input.value=s; updateSend(); send(); });
+  b.type='button'; b.className='chip'+(s.primary?' primary':''); b.textContent=s.text;
+  b.addEventListener('click', function(){ if(state!=='idle')return; input.value=s.text; updateSend(); send(); });
   startersEl.appendChild(b);
 });
 
@@ -645,61 +549,47 @@ STARTERS.forEach(function(s){
 function updateSend(){ sendBtn.disabled = (state==='loading' || input.value.trim()===''); }
 input.addEventListener('input', function(){
   input.style.height='auto';
-  input.style.height = Math.min(input.scrollHeight, 120)+'px';
+  input.style.height = Math.min(input.scrollHeight, 130)+'px';
   updateSend();
 });
 input.addEventListener('keydown', function(e){
   if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); form.dispatchEvent(new Event('submit')); }
 });
-retryBtn && retryBtn.addEventListener('click', function(){ setMode('demo'); probeBackend(); });
-useDemoBtn && useDemoBtn.addEventListener('click', function(){ setMode('demo'); });
+retryBtn && retryBtn.addEventListener('click', function(){ setMode('connecting'); probeBackend(); });
 
 function send(){
   if(state!=='idle') return;
   var q = input.value.trim();
   if(!q) return;
   state='loading'; updateSend();
+  if(!hasChat){ hasChat = true; document.body.classList.add('has-chat'); }
   addUserMsg(q);
   input.value=''; input.style.height='auto'; updateSend();
-  var typing = addTyping();
+  addTyping();
 
   function fail(err){
     removeTyping(); state='idle'; updateSend();
-    addErrorMsg('Tidak dapat memperoleh jawapan: ' + (err && err.message ? err.message : 'sambungan terputus.') + ' Sila cuba sebentar lagi.');
-    if(mode==='live'){ setMode('error', 'Endpoint ada tetapi memulakan ralat. Semak log fungsi Netlify.'); }
+    var msg = err && err.message ? err.message : 'sambungan terputus.';
+    if(err && err.status === 429) msg = 'Had penggunaan sementara dicapai (429). Cuba lagi dalam seminit.';
+    else if(err && err.status === 503) msg = 'Backend belum dikonfigurasi: GEMINI_API_KEY tiada.';
+    else if(err && err.status === 504) msg = 'Gemini tidak membalas dalam had masa. Cuba lagi sebentar lagi.';
+    addErrorMsg('Tidak dapat memperoleh jawapan: ' + msg + ' Sila cuba sebentar lagi.');
+    if(mode==='live'){ setMode('error', 'Endpoint ada tetapi memulangkan ralat. Semak log fungsi Netlify.'); }
   }
 
-  if(mode==='live'){
-    // had masa 30s
-    var done=false;
-    var to=setTimeout(function(){ if(!done){ done=true; fail(new Error('masa sambungan tamat (30 saat)')); } },30000);
-    backendAsk(q).then(function(data){
-      if(done) return; done=true; clearTimeout(to);
-      removeTyping(); state='idle'; updateSend();
-      renderAiLive(data);
-    }).catch(function(e){ if(done)return; done=true; clearTimeout(to); fail(e); });
-  } else {
-    // mod demo: delay kecil untuk rasa semula jadi, tapi tetap pantas
-    setTimeout(function(){
-      removeTyping(); state='idle'; updateSend();
-      try{ renderAiDemo(localEngine(q)); }catch(e){ addErrorMsg('Ralat tempatan: '+e.message); }
-    }, 550);
-  }
+  var done=false;
+  var to=setTimeout(function(){ if(!done){ done=true; fail(new Error('masa sambungan tamat (30 saat)')); } },30000);
+  backendAsk(q).then(function(data){
+    if(done) return; done=true; clearTimeout(to);
+    removeTyping(); state='idle'; updateSend();
+    if(mode!=='live'){ setMode('live'); }
+    renderAiLive(data);
+  }).catch(function(e){ if(done)return; done=true; clearTimeout(to); fail(e); });
 }
 form.addEventListener('submit', function(e){ e.preventDefault(); send(); });
 
-/* ---------- Cahaya ambient bergerak perlahan ---------- */
-var ax=50, ay=28, tx=50, ty=28;
-setInterval(function(){
-  tx = 35 + Math.random()*30; ty = 20 + Math.random()*20;
-}, 8000);
-setInterval(function(){
-  ax += (tx-ax)*0.04; ay += (ty-ay)*0.04;
-  ambient.style.setProperty('--ax', ax+'%');
-  ambient.style.setProperty('--ay', ay+'%');
-}, 120);
-
 /* ---------- Mula ---------- */
+setMode('connecting');
 welcome();
 updateSend();
 setTimeout(probeBackend, 600);
