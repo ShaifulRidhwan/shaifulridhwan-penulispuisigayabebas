@@ -180,7 +180,8 @@ exports.handler = async (event) => {
   const question = String(payload.question || "").trim().slice(0, 1000);
   log("start", { probe: !!payload.probe, qlen: question.length, hasKey: !!apiKey });
 
-  if (payload.probe) {
+  
+if (payload.probe) {
   if (!apiKey) {
     return {
       statusCode: 503,
@@ -192,32 +193,46 @@ exports.handler = async (event) => {
     };
   }
 
+  const started = Date.now();
   const ctrl = new AbortController();
-  const startedProbe = Date.now();
-  const timer = setTimeout(() => ctrl.abort(), 8000);
+  const timer = setTimeout(() => ctrl.abort(), 15000);
 
   try {
     const url =
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(preferredModel)}`;
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(preferredModel)}:generateContent`;
 
-    log("model-check-start", {
+    log("generation-probe-start", {
       model: preferredModel
     });
 
     const res = await fetch(url, {
-      method: "GET",
+      method: "POST",
       headers: {
+        "Content-Type": "application/json",
         "x-goog-api-key": apiKey
       },
+      body: JSON.stringify({
+        contents: [{
+          role: "user",
+          parts: [{ text: "Reply with exactly: OK" }]
+        }],
+        generationConfig: {
+          maxOutputTokens: 64,
+          responseMimeType: "text/plain",
+          thinkingConfig: {
+            thinkingLevel: "low"
+          }
+        }
+      }),
       signal: ctrl.signal
     });
 
     const body = await res.text();
 
-    log("model-check-result", {
+    log("generation-probe-result", {
       status: res.status,
-      durMs: Date.now() - startedProbe,
-      body: body.slice(0, 500)
+      durMs: Date.now() - started,
+      body: body.slice(0, 700)
     });
 
     return {
@@ -226,31 +241,32 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         ok: res.ok,
         httpStatus: res.status,
-        model: preferredModel,
-        result: body.slice(0, 500)
+        durMs: Date.now() - started,
+        result: body.slice(0, 700)
       })
     };
   } catch (err) {
-    log("model-check-fail", {
+    log("generation-probe-fail", {
       error: err.name,
       message: String(err.message || err).slice(0, 150),
-      durMs: Date.now() - startedProbe
+      durMs: Date.now() - started
     });
 
     return {
-      statusCode: 502,
+      statusCode: 200,
       headers: H,
       body: JSON.stringify({
         ok: false,
         error: err.name === "AbortError"
-          ? "Sambungan Google tamat masa selepas 8 saat."
-          : "Permintaan gagal: " + err.message
+          ? "Penjanaan teks tamat masa selepas 15 saat."
+          : String(err.message || err)
       })
     };
   } finally {
     clearTimeout(timer);
   }
 }
+
   if (!apiKey) return { statusCode: 503, headers: H, body: JSON.stringify({ error: "Backend belum dikonfigurasi: GEMINI_API_KEY tiada." }) };
 
   const ip = (event.headers && (event.headers["x-nf-client-connection-ip"] || event.headers["x-forwarded-for"] || "").split(",")[0].trim()) || "unknown";
