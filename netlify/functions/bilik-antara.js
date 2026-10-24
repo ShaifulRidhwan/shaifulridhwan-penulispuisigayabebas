@@ -180,25 +180,77 @@ exports.handler = async (event) => {
   const question = String(payload.question || "").trim().slice(0, 1000);
   log("start", { probe: !!payload.probe, qlen: question.length, hasKey: !!apiKey });
 
-  if (!payload.probe && !question) return { statusCode: 400, headers: H, body: JSON.stringify({ error: "Soalan kosong" }) };
-
-  // PROBE — panggilan Gemini MINI sebenar (bukan semak key sahaja)
   if (payload.probe) {
-    if (!apiKey) { log("probe-no-key"); return { statusCode: 503, headers: H, body: JSON.stringify({ ok: false, error: "GEMINI_API_KEY belum ditetapkan di Netlify environment variables." }) }; }
-    try {
-      await callGemini({ apiKey, model: preferredModel, system: "Balas dengan perkataan OK sahaja.", contents: [{ role: "user", parts: [{ text: "ok" }] }], maxTokens: 8, timeoutMs: PER_CALL_MS, remainingMs: PER_CALL_MS + 800 });
-      log("probe-ok", { modelUsed: preferredModel, totalMs: Date.now() - started });
-      return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true, mode: "live", model: preferredModel, probeMs: Date.now() - started }) };
-    } catch (e) {
-      const code = e && e.status;
-      const msg = (e && (e.name === "AbortError" || e.deadline))
-        ? "Probe tamat masa — Gemini tidak membalas dalam had panggilan 7 saat. Semak log dan konfigurasi sambungan."
-        : geminiErrorMsg(code);
-      log("probe-fail", { status: code || (e && e.name) || "err", totalMs: Date.now() - started });
-      return { statusCode: 502, headers: H, body: JSON.stringify({ ok: false, error: msg, status: code || null }) };
-    }
+  if (!apiKey) {
+    return {
+      statusCode: 503,
+      headers: H,
+      body: JSON.stringify({
+        ok: false,
+        error: "GEMINI_API_KEY tiada"
+      })
+    };
   }
 
+  const ctrl = new AbortController();
+  const startedProbe = Date.now();
+  const timer = setTimeout(() => ctrl.abort(), 8000);
+
+  try {
+    const url =
+      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(preferredModel)}`;
+
+    log("model-check-start", {
+      model: preferredModel
+    });
+
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        "x-goog-api-key": apiKey
+      },
+      signal: ctrl.signal
+    });
+
+    const body = await res.text();
+
+    log("model-check-result", {
+      status: res.status,
+      durMs: Date.now() - startedProbe,
+      body: body.slice(0, 500)
+    });
+
+    return {
+      statusCode: 200,
+      headers: H,
+      body: JSON.stringify({
+        ok: res.ok,
+        httpStatus: res.status,
+        model: preferredModel,
+        result: body.slice(0, 500)
+      })
+    };
+  } catch (err) {
+    log("model-check-fail", {
+      error: err.name,
+      message: String(err.message || err).slice(0, 150),
+      durMs: Date.now() - startedProbe
+    });
+
+    return {
+      statusCode: 502,
+      headers: H,
+      body: JSON.stringify({
+        ok: false,
+        error: err.name === "AbortError"
+          ? "Sambungan Google tamat masa selepas 8 saat."
+          : "Permintaan gagal: " + err.message
+      })
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
   if (!apiKey) return { statusCode: 503, headers: H, body: JSON.stringify({ error: "Backend belum dikonfigurasi: GEMINI_API_KEY tiada." }) };
 
   const ip = (event.headers && (event.headers["x-nf-client-connection-ip"] || event.headers["x-forwarded-for"] || "").split(",")[0].trim()) || "unknown";
