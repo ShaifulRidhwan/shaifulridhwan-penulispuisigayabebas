@@ -9,254 +9,197 @@
 <meta name="robots" content="index, follow"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <style>
-/* ============ TOKEN — Futuristic Light & Darkness ============ */
+/* ============ TOKEN — Futuristic Light & Darkness (v3) ============ */
 :root{
   --font-display:'Space Grotesk',system-ui,sans-serif;
   --font-body:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
   --font-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
-  --fs:16px;
-  --obsidian:#05070D;
-  --midnight:#0A0F1C;
-  --abyss:#0D1424;
-  --surface:rgba(255,255,255,.04);
-  --surface-2:rgba(255,255,255,.07);
-  --cyan:#5EEAD4;
-  --cyan-bright:#22D3EE;
-  --cyan-soft:rgba(94,234,212,.10);
-  --cyan-line:rgba(94,234,212,.22);
-  --cyan-faint:rgba(94,234,212,.06);
-  --silver:#E8EDF5;
-  --silver-dim:#9AA5B8;
-  --silver-faint:#5A6478;
-  --hairline:rgba(232,237,245,.08);
-  --error:#F87171;
-  --error-soft:rgba(248,113,113,.10);
-  --error-line:rgba(248,113,113,.35);
-  --ok:#34D399;
-  --ok-soft:rgba(52,211,153,.10);
-  --ok-line:rgba(52,211,153,.4);
+  --fs:15px;
+  --obsidian:#05070D; --midnight:#0A0F1C; --abyss:#0D1424;
+  --surface:rgba(255,255,255,.035); --surface-2:rgba(255,255,255,.06);
+  --cyan:#5EEAD4; --cyan-bright:#22D3EE; --cyan-soft:rgba(94,234,212,.09);
+  --cyan-line:rgba(94,234,212,.20); --cyan-faint:rgba(94,234,212,.05);
+  --silver:#E8EDF5; --silver-dim:#9AA5B8; --silver-faint:#5A6478;
+  --hairline:rgba(232,237,245,.07);
+  --error:#F87171; --error-soft:rgba(248,113,113,.09); --error-line:rgba(248,113,113,.32);
+  --ok:#34D399; --ok-soft:rgba(52,211,153,.09); --ok-line:rgba(52,211,153,.35);
   --warn:#FBBF24;
-  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{
-  font-family:var(--font-body);font-size:var(--fs);background:var(--obsidian);
-  background-image:var(--grain);color:var(--silver);line-height:1.7;
-  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  font-family:var(--font-body);font-size:var(--fs);background:var(--obsidian);color:var(--silver);
+  line-height:1.65;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
   overflow:hidden;display:flex;flex-direction:column;position:relative;
 }
-button{font-family:var(--font-ui);cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:none;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent;background:none;border:none;color:inherit;font-family:inherit}
 a{color:var(--cyan);text-decoration:none}
 
-/* ============ LATAR TETAP: ambience cahaya ============ */
-.bg-ambient{position:fixed;inset:0;pointer-events:none;z-index:0;
-  background:
-    radial-gradient(ellipse 60% 45% at 50% -5%,rgba(34,211,238,.10),transparent 60%),
-    radial-gradient(ellipse 50% 40% at 85% 110%,rgba(94,234,212,.06),transparent 60%),
-    radial-gradient(ellipse 40% 35% at 10% 100%,rgba(59,130,246,.07),transparent 60%),
-    linear-gradient(180deg,#05070D 0%,#0A0F1C 50%,#05070D 100%);
-}
-.bg-grid{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;
-  background-image:linear-gradient(rgba(94,234,212,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(94,234,212,.035) 1px,transparent 1px);
-  background-size:56px 56px;
-  mask-image:radial-gradient(ellipse 70% 60% at 50% 30%,black 20%,transparent 75%);
-  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 30%,black 20%,transparent 75%);
-}
+/* ============ LATAR KANVAS KOSMIK ============ */
+#cosmos{position:fixed;inset:0;z-index:0;display:block}
+body.app-error #cosmos{filter:hue-rotate(-40deg) saturate(1.2)}
 
-/* ============ TOPBAR ============ */
-.topbar{position:relative;z-index:5;display:flex;align-items:center;gap:.7rem;
-  padding:.65rem 1.1rem;border-bottom:1px solid var(--hairline);
-  background:rgba(5,7,13,.6);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+/* ============ TOPBAR (kompak) ============ */
+.topbar{position:relative;z-index:5;display:flex;align-items:center;gap:.55rem;
+  padding:.5rem .9rem;border-bottom:1px solid var(--hairline);
+  background:rgba(5,7,13,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
 }
-.topbar .brand{display:flex;align-items:center;gap:.6rem;min-width:0}
-.topbar .brand .dot-orb{width:10px;height:10px;border-radius:50%;flex-shrink:0;
+.topbar .brand{display:flex;align-items:center;gap:.55rem;min-width:0}
+.topbar .brand .dot-orb{width:8px;height:8px;border-radius:50%;flex-shrink:0;
   background:radial-gradient(circle,#fff 0%,var(--cyan) 50%,transparent 100%);
-  box-shadow:0 0 12px 2px rgba(94,234,212,.6);animation:pulse-dot 3s ease-in-out infinite;}
-.topbar .brand .mark{font-family:var(--font-display);font-weight:600;font-size:.95rem;letter-spacing:.14em;color:var(--silver);white-space:nowrap}
-.topbar .brand .sub{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.22em;text-transform:uppercase;color:var(--silver-faint);white-space:nowrap}
+  box-shadow:0 0 10px 2px rgba(94,234,212,.6);animation:pulse-dot 3s ease-in-out infinite;}
+.topbar .brand .mark{font-family:var(--font-display);font-weight:600;font-size:.82rem;letter-spacing:.16em;color:var(--silver);white-space:nowrap}
+.topbar .brand .sub{font-family:var(--font-mono);font-size:.5rem;letter-spacing:.24em;text-transform:uppercase;color:var(--silver-faint);white-space:nowrap}
 .topbar .spacer{flex:1}
 .icon-btn{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--font-mono);
-  font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500;
-  color:var(--silver-dim);border:1px solid var(--hairline);padding:.5rem .75rem;border-radius:4px;
-  transition:all .25s ease;min-height:36px;
+  font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500;
+  color:var(--silver-dim);border:1px solid var(--hairline);padding:.4rem .6rem;border-radius:4px;
+  transition:all .25s ease;min-height:30px;
 }
 .icon-btn:hover{color:var(--cyan);border-color:var(--cyan-line);background:var(--cyan-soft)}
-.icon-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.icon-btn svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
-
-/* badge status */
-.badge{display:inline-flex;align-items:center;gap:.45rem;font-family:var(--font-mono);
-  font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;font-weight:500;
-  padding:.45rem .8rem;border-radius:999px;border:1px solid;min-height:36px;white-space:nowrap;
+.badge{display:inline-flex;align-items:center;gap:.4rem;font-family:var(--font-mono);
+  font-size:.5rem;letter-spacing:.16em;text-transform:uppercase;font-weight:500;
+  padding:.35rem .65rem;border-radius:999px;border:1px solid;min-height:30px;white-space:nowrap;
 }
-.badge .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.badge.connecting{color:var(--warn);border-color:rgba(251,191,36,.35);background:rgba(251,191,36,.06)}
+.badge .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.badge.connecting{color:var(--warn);border-color:rgba(251,191,36,.32);background:rgba(251,191,36,.05)}
 .badge.connecting .dot{background:var(--warn);animation:pulse-dot 1.6s ease-in-out infinite}
 .badge.live{color:var(--ok);border-color:var(--ok-line);background:var(--ok-soft)}
 .badge.live .dot{background:var(--ok)}
 .badge.error{color:var(--error);border-color:var(--error-line);background:var(--error-soft)}
 .badge.error .dot{background:var(--error)}
 
-/* ============ HERO / HALAMAN PEMBUKA ============ */
+/* ============ HERO (kompak, tipografi kecil) ============ */
 .chat-wrap{position:relative;z-index:2;flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-.hero{max-width:44rem;margin:0 auto;text-align:center;padding:3rem 1.2rem 1.5rem;transition:padding .6s cubic-bezier(.2,.7,.2,1),opacity .5s ease;}
-body.has-chat .hero{padding:.8rem 1.2rem .4rem}
-body.has-chat .hero .singularity,
+.hero{max-width:38rem;margin:0 auto;text-align:center;padding:1.6rem 1rem .8rem;transition:padding .6s cubic-bezier(.2,.7,.2,1),opacity .5s ease;}
+body.has-chat .hero{padding:.5rem 1rem .2rem}
 body.has-chat .hero .manifesto,
 body.has-chat .hero .hero-intro,
-body.has-chat .hero .hero-caption{opacity:0;max-height:0;margin:0;overflow:hidden;transition:opacity .4s ease,max-height .6s ease,margin .4s ease}
-.hero-caption{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.42em;text-transform:uppercase;color:var(--cyan);margin-bottom:1.4rem}
-.hero h1{font-family:var(--font-display);font-weight:300;font-size:clamp(2.4rem,9vw,4.4rem);line-height:1.05;letter-spacing:.06em;margin-bottom:.4rem;
-  background:linear-gradient(180deg,#fff 0%,var(--silver) 45%,var(--silver-dim) 100%);
+body.has-chat .hero .hero-caption,
+body.has-chat .hero .rule{opacity:0;max-height:0;margin:0;overflow:hidden;transition:opacity .4s ease,max-height .6s ease,margin .4s ease}
+.hero-caption{font-family:var(--font-mono);font-size:.52rem;letter-spacing:.42em;text-transform:uppercase;color:var(--cyan);margin-bottom:.8rem}
+.hero h1{font-family:var(--font-display);font-weight:300;font-size:clamp(1.5rem,4.5vw,2.3rem);line-height:1.1;letter-spacing:.08em;margin-bottom:.25rem;
+  background:linear-gradient(180deg,#fff 0%,var(--silver) 50%,var(--silver-dim) 100%);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
 }
-.hero .hero-sub{font-family:var(--font-mono);font-size:.62rem;letter-spacing:.5em;text-transform:uppercase;color:var(--silver-faint);margin-bottom:1.6rem}
-.hero .rule{width:48px;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);margin:1.2rem auto}
-.manifesto{font-family:var(--font-display);font-style:italic;font-weight:300;font-size:clamp(1rem,2.4vw,1.2rem);color:var(--silver-dim);max-width:30rem;margin:0 auto;line-height:1.7}
-.hero-intro{font-size:.88rem;color:var(--silver-faint);max-width:32rem;margin:1.1rem auto 0;line-height:1.7}
-
-/* ============ SINGULARITY — entiti cahaya abstrak ============ */
-.singularity{position:relative;width:130px;height:130px;margin:0 auto 1.6rem;transition:transform .6s ease,opacity .5s ease}
-body.has-chat .singularity{transform:scale(.35);margin-bottom:0}
-.sing-core{position:absolute;inset:38%;border-radius:50%;
-  background:radial-gradient(circle,#fff 0%,var(--cyan-bright) 35%,rgba(94,234,212,.4) 60%,transparent 75%);
-  box-shadow:0 0 30px 6px rgba(94,234,212,.5),0 0 90px 20px rgba(34,211,238,.22);
-  animation:sing-pulse 4.5s ease-in-out infinite;
-}
-@keyframes sing-pulse{0%,100%{transform:scale(1);opacity:.95}50%{transform:scale(1.12);opacity:.75}}
-.sing-ring{position:absolute;inset:0;border-radius:50%;
-  background:conic-gradient(from 0deg,transparent 0%,rgba(94,234,212,.7) 12%,transparent 24%);
-  -webkit-mask:radial-gradient(circle,transparent 61%,black 63%,black 65%,transparent 67%);
-  mask:radial-gradient(circle,transparent 61%,black 63%,black 65%,transparent 67%);
-  animation:spin 9s linear infinite;
-}
-.sing-ring.r2{inset:-14%;animation-duration:14s;animation-direction:reverse;opacity:.6;
-  background:conic-gradient(from 180deg,transparent 0%,rgba(34,211,238,.55) 10%,transparent 22%);
-}
-.sing-ring.r3{inset:-30%;animation-duration:22s;opacity:.35;
-  background:conic-gradient(from 90deg,transparent 0%,rgba(148,163,184,.5) 8%,transparent 18%);
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-.sing-orbit{position:absolute;inset:0;animation:spin 9s linear infinite}
-.sing-orbit span{position:absolute;top:-2px;left:50%;width:5px;height:5px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px 2px rgba(94,234,212,.8)}
-.sing-orbit.o2{animation-duration:14s;animation-direction:reverse}
-.sing-orbit.o2 span{top:auto;bottom:-2px;background:var(--cyan-bright);width:4px;height:4px}
+.hero .hero-sub{font-family:var(--font-mono);font-size:.52rem;letter-spacing:.5em;text-transform:uppercase;color:var(--silver-faint);margin-bottom:.8rem}
+.hero .rule{width:36px;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);margin:.7rem auto}
+.manifesto{font-family:var(--font-display);font-style:italic;font-weight:300;font-size:clamp(.82rem,1.8vw,.95rem);color:var(--silver-dim);max-width:26rem;margin:0 auto;line-height:1.65}
+.hero-intro{font-size:.78rem;color:var(--silver-faint);max-width:28rem;margin:.7rem auto 0;line-height:1.65}
 
 /* ============ BANNER STATUS ============ */
-.banner{position:relative;z-index:2;max-width:44rem;margin:0 auto 1rem;padding:.8rem 1rem;
-  border:1px solid;border-radius:6px;font-family:var(--font-body);font-size:.74rem;line-height:1.6;
-  display:flex;gap:.7rem;align-items:flex-start;background:var(--surface);backdrop-filter:blur(8px);
+.banner{position:relative;z-index:2;max-width:38rem;margin:0 auto .7rem;padding:.55rem .8rem;
+  border:1px solid;border-radius:6px;font-size:.7rem;line-height:1.55;
+  display:flex;gap:.55rem;align-items:flex-start;background:var(--surface);backdrop-filter:blur(8px);
 }
-.banner svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;margin-top:.15rem}
-.banner.connecting{color:var(--warn);border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.05)}
+.banner svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0;margin-top:.1rem}
+.banner.connecting{color:var(--warn);border-color:rgba(251,191,36,.28);background:rgba(251,191,36,.045)}
 .banner.ok{color:var(--ok);border-color:var(--ok-line);background:var(--ok-soft)}
 .banner.error{color:var(--error);border-color:var(--error-line);background:var(--error-soft)}
-.banner strong{font-weight:600;letter-spacing:.02em}
-.banner .banner-actions{margin-top:.5rem;display:flex;gap:.6rem;flex-wrap:wrap}
-.banner .banner-actions button{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;font-weight:500;
-  border:1px solid currentColor;padding:.35rem .7rem;border-radius:4px;opacity:.9;transition:opacity .2s;}
+.banner strong{font-weight:600}
+.banner .banner-actions{margin-top:.4rem;display:flex;gap:.5rem;flex-wrap:wrap}
+.banner .banner-actions button{font-family:var(--font-mono);font-size:.52rem;letter-spacing:.14em;text-transform:uppercase;font-weight:500;
+  border:1px solid currentColor;padding:.3rem .6rem;border-radius:4px;opacity:.9;transition:opacity .2s;}
 .banner .banner-actions button:hover{opacity:1;background:rgba(255,255,255,.06)}
 
-/* ============ CHAT ============ */
-.chat{max-width:44rem;margin:0 auto;padding:.5rem 1rem 1.5rem;display:flex;flex-direction:column;gap:1rem}
-.msg{display:flex;flex-direction:column;max-width:88%;animation:msgIn .4s cubic-bezier(.2,.7,.2,1) both}
-@keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* ============ CHAT (kompak) ============ */
+.chat{max-width:38rem;margin:0 auto;padding:.3rem .9rem 1rem;display:flex;flex-direction:column;gap:.7rem}
+.msg{display:flex;flex-direction:column;max-width:88%;animation:msgIn .35s cubic-bezier(.2,.7,.2,1) both}
+@keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .msg.user{align-self:flex-end;align-items:flex-end}
 .msg.ai{align-self:flex-start;align-items:flex-start}
-.msg .who{font-family:var(--font-mono);font-size:.54rem;letter-spacing:.2em;text-transform:uppercase;color:var(--silver-faint);margin-bottom:.3rem;display:flex;align-items:center;gap:.45rem}
-.msg .who .avatar{width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--cyan-line);flex-shrink:0}
-.msg .who .avatar svg{width:10px;height:10px;stroke:var(--cyan);fill:none;stroke-width:2}
-.bubble{padding:.85rem 1.05rem;border-radius:10px;line-height:1.7;font-size:.95em;word-wrap:break-word;overflow-wrap:anywhere;
+.msg .who{font-family:var(--font-mono);font-size:.48rem;letter-spacing:.2em;text-transform:uppercase;color:var(--silver-faint);margin-bottom:.25rem;display:flex;align-items:center;gap:.4rem}
+.msg .who .avatar{width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--cyan-line);flex-shrink:0}
+.msg .who .avatar svg{width:9px;height:9px;stroke:var(--cyan);fill:none;stroke-width:2}
+.bubble{padding:.6rem .8rem;border-radius:8px;line-height:1.65;font-size:.86rem;word-wrap:break-word;overflow-wrap:anywhere;
   background:var(--surface);border:1px solid var(--hairline);backdrop-filter:blur(8px);
 }
 .msg.user .bubble{background:var(--cyan-soft);border:1px solid var(--cyan-line);border-bottom-right-radius:2px;color:var(--silver)}
-.msg.ai .bubble{border-left:2px solid var(--cyan);border-bottom-left-radius:2px;box-shadow:0 10px 30px rgba(0,0,0,.4)}
-.ai-body p{margin-bottom:.7em}
+.msg.ai .bubble{border-left:2px solid var(--cyan);border-bottom-left-radius:2px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.ai-body p{margin-bottom:.55em}
 .ai-body p:last-child{margin-bottom:0}
-.ai-body ul,.ai-body ol{margin:.4em 0 .8em 1.3em}
-.ai-body li{margin-bottom:.3em}
+.ai-body ul,.ai-body ol{margin:.3em 0 .6em 1.2em}
+.ai-body li{margin-bottom:.2em}
 .ai-body strong{color:var(--silver);font-weight:600}
-.ai-foot{margin-top:.9rem;padding-top:.6rem;border-top:1px solid var(--hairline);
-  font-family:var(--font-mono);font-size:.56rem;letter-spacing:.04em;color:var(--silver-faint);line-height:1.6;
+.ai-foot{margin-top:.6rem;padding-top:.45rem;border-top:1px solid var(--hairline);
+  font-family:var(--font-mono);font-size:.5rem;letter-spacing:.03em;color:var(--silver-faint);line-height:1.55;
 }
-/* typing indicator — cahaya berdenyut */
-.typing{display:inline-flex;align-items:center;gap:.55rem;padding:.9rem 1.1rem}
-.typing .dots{display:inline-flex;gap:.35rem;align-items:center}
-.typing .dots i{width:6px;height:6px;border-radius:50%;background:var(--cyan);opacity:.4;animation:blink 1.2s infinite;box-shadow:0 0 8px rgba(94,234,212,.6)}
+.typing{display:inline-flex;align-items:center;gap:.5rem;padding:.65rem .8rem}
+.typing .dots{display:inline-flex;gap:.3rem;align-items:center}
+.typing .dots i{width:5px;height:5px;border-radius:50%;background:var(--cyan);opacity:.4;animation:blink 1.2s infinite;box-shadow:0 0 7px rgba(94,234,212,.6)}
 .typing .dots i:nth-child(2){animation-delay:.2s}
 .typing .dots i:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
-.typing .typing-text{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--silver-dim)}
+@keyframes blink{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-2px)}}
+.typing .typing-text{font-family:var(--font-mono);font-size:.52rem;letter-spacing:.18em;text-transform:uppercase;color:var(--silver-dim)}
 .msg.error-msg .bubble{border-color:var(--error-line);background:var(--error-soft);border-left-color:var(--error)}
-.msg.error-msg .bubble p{font-size:.88em;color:var(--error)}
+.msg.error-msg .bubble p{font-size:.8rem;color:var(--error)}
 
-/* ============ SOALAN CADANGAN ============ */
-.starters{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;padding:0 1rem 1rem;max-width:44rem;margin:0 auto;position:relative;z-index:2}
-.starters-label{width:100%;text-align:center;font-family:var(--font-mono);font-size:.54rem;letter-spacing:.32em;text-transform:uppercase;color:var(--silver-faint);margin-bottom:.3rem}
-.chip{font-family:var(--font-body);font-size:.72rem;letter-spacing:.01em;color:var(--silver-dim);
-  border:1px solid var(--hairline);background:var(--surface);padding:.55rem .95rem;border-radius:999px;
+/* ============ SOALAN CADANGAN (kompak) ============ */
+.starters{display:flex;flex-wrap:wrap;gap:.4rem;justify-content:center;padding:0 .9rem .7rem;max-width:38rem;margin:0 auto;position:relative;z-index:2}
+.starters-label{width:100%;text-align:center;font-family:var(--font-mono);font-size:.48rem;letter-spacing:.3em;text-transform:uppercase;color:var(--silver-faint);margin-bottom:.2rem}
+.chip{font-family:var(--font-body);font-size:.68rem;letter-spacing:.01em;color:var(--silver-dim);
+  border:1px solid var(--hairline);background:var(--surface);padding:.4rem .75rem;border-radius:999px;
   transition:all .25s ease;line-height:1.4;text-align:left;backdrop-filter:blur(6px);
 }
-.chip:hover{color:var(--cyan);border-color:var(--cyan-line);background:var(--cyan-soft);transform:translateY(-1px);box-shadow:0 4px 18px rgba(94,234,212,.12)}
+.chip:hover{color:var(--cyan);border-color:var(--cyan-line);background:var(--cyan-soft);transform:translateY(-1px);box-shadow:0 4px 14px rgba(94,234,212,.1)}
 .chip:active{transform:translateY(0)}
 .chip.primary{border-color:var(--cyan-line);color:var(--cyan);background:var(--cyan-faint)}
 
-/* ============ COMPOSER ============ */
+/* ============ COMPOSER KOMPAK ============ */
 .composer-wrap{position:relative;z-index:5;border-top:1px solid var(--hairline);
-  background:rgba(5,7,13,.72);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-  padding:.75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
+  background:rgba(5,7,13,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  padding:.5rem .8rem calc(.5rem + env(safe-area-inset-bottom));
 }
-.composer{max-width:44rem;margin:0 auto;display:flex;align-items:flex-end;gap:.6rem}
-.composer textarea{flex:1;resize:none;max-height:130px;min-height:46px;font-family:var(--font-body);font-size:.95em;
-  background:var(--surface);color:var(--silver);border:1px solid var(--hairline);border-radius:10px;
-  padding:.75rem 1rem;line-height:1.5;outline:none;transition:border-color .25s,box-shadow .25s;
+.composer{max-width:38rem;margin:0 auto;display:flex;align-items:flex-end;gap:.5rem}
+.composer textarea{flex:1;resize:none;max-height:100px;min-height:36px;font-family:var(--font-body);font-size:.84rem;
+  background:var(--surface);color:var(--silver);border:1px solid var(--hairline);border-radius:8px;
+  padding:.5rem .75rem;line-height:1.5;outline:none;transition:border-color .25s,box-shadow .25s;
 }
-.composer textarea:focus{border-color:var(--cyan-line);box-shadow:0 0 0 3px rgba(94,234,212,.08),0 0 24px rgba(94,234,212,.10)}
-.composer textarea::placeholder{color:var(--silver-faint);font-style:italic}
-.send-btn{width:46px;height:46px;flex-shrink:0;border-radius:10px;border:1px solid var(--cyan-line);
+.composer textarea:focus{border-color:var(--cyan-line);box-shadow:0 0 0 2px rgba(94,234,212,.07),0 0 16px rgba(94,234,212,.08)}
+.composer textarea::placeholder{color:var(--silver-faint);font-style:italic;font-size:.8rem}
+.send-btn{width:36px;height:36px;flex-shrink:0;border-radius:8px;border:1px solid var(--cyan-line);
   background:var(--cyan-soft);color:var(--cyan);display:inline-flex;align-items:center;justify-content:center;
   transition:all .25s ease;
 }
-.send-btn:hover:not(:disabled){background:var(--cyan);color:var(--obsidian);box-shadow:0 0 20px rgba(94,234,212,.4)}
+.send-btn:hover:not(:disabled){background:var(--cyan);color:var(--obsidian);box-shadow:0 0 16px rgba(94,234,212,.35)}
 .send-btn:disabled{opacity:.3;cursor:not-allowed}
-.send-btn svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.composer-hint{max-width:44rem;margin:.35rem auto 0;font-family:var(--font-mono);font-size:.52rem;letter-spacing:.1em;color:var(--silver-faint);text-align:center}
+.send-btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.composer-hint{max-width:38rem;margin:.25rem auto 0;font-family:var(--font-mono);font-size:.46rem;letter-spacing:.08em;color:var(--silver-faint);text-align:center}
 
 /* ============ NOTES TEKNIKAL ============ */
-.tech-notes{position:relative;z-index:2;max-width:44rem;margin:0 auto;padding:0 1rem 1.5rem}
-.tech-notes summary{cursor:pointer;font-family:var(--font-mono);font-size:.56rem;letter-spacing:.24em;text-transform:uppercase;
-  color:var(--silver-faint);padding:.6rem 0;list-style:none;display:flex;align-items:center;gap:.5rem;}
+.tech-notes{position:relative;z-index:2;max-width:38rem;margin:0 auto;padding:0 .9rem 1rem}
+.tech-notes summary{cursor:pointer;font-family:var(--font-mono);font-size:.5rem;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--silver-faint);padding:.5rem 0;list-style:none;display:flex;align-items:center;gap:.45rem;}
 .tech-notes summary::-webkit-details-marker{display:none}
-.tech-notes summary::before{content:"+";color:var(--cyan);font-weight:700;font-size:.85rem}
+.tech-notes summary::before{content:"+";color:var(--cyan);font-weight:700;font-size:.8rem}
 .tech-notes[open] summary::before{content:"\2212"}
-.tech-notes .notes-body{border:1px solid var(--hairline);border-radius:6px;padding:1.1rem 1.2rem;background:var(--surface);
-  font-family:var(--font-body);font-size:.74rem;line-height:1.7;color:var(--silver-dim);backdrop-filter:blur(8px);
+.tech-notes .notes-body{border:1px solid var(--hairline);border-radius:6px;padding:.9rem 1rem;background:var(--surface);
+  font-size:.7rem;line-height:1.65;color:var(--silver-dim);backdrop-filter:blur(8px);
 }
-.tech-notes .notes-body h4{font-family:var(--font-display);font-size:.95rem;color:var(--silver);margin:1rem 0 .4rem;font-weight:500;letter-spacing:.04em}
+.tech-notes .notes-body h4{font-family:var(--font-display);font-size:.85rem;color:var(--silver);margin:.8rem 0 .35rem;font-weight:500;letter-spacing:.04em}
 .tech-notes .notes-body h4:first-child{margin-top:0}
-.tech-notes .notes-body pre{background:#070A12;border:1px solid var(--hairline);border-radius:4px;padding:.8rem 1rem;
-  overflow-x:auto;font-family:var(--font-mono);font-size:.64rem;line-height:1.6;color:var(--silver-dim);margin:.6rem 0;white-space:pre}
+.tech-notes .notes-body pre{background:#070A12;border:1px solid var(--hairline);border-radius:4px;padding:.6rem .8rem;
+  overflow-x:auto;font-family:var(--font-mono);font-size:.6rem;line-height:1.6;color:var(--silver-dim);margin:.5rem 0;white-space:pre}
 .tech-notes .notes-body code{font-family:var(--font-mono);font-size:.86em;color:var(--cyan)}
-.tech-notes .notes-body ul{margin:.4rem 0 .8rem 1.2rem}
-.tech-notes .notes-body li{margin-bottom:.3rem}
+.tech-notes .notes-body ul{margin:.3rem 0 .6rem 1.1rem}
+.tech-notes .notes-body li{margin-bottom:.25rem}
 
-/* ============ RESPONSIF (mobile-first) ============ */
+/* ============ RESPONSIF ============ */
 @media (max-width:640px){
-  body{--fs:15px}
-  .topbar{padding:.55rem .75rem;gap:.45rem}
+  body{--fs:14px}
+  .topbar{padding:.45rem .6rem;gap:.4rem}
   .topbar .brand .sub{display:none}
   .icon-btn .lbl{display:none}
-  .icon-btn{padding:.45rem .6rem}
-  .badge{font-size:.5rem;letter-spacing:.12em;padding:.38rem .6rem}
-  .hero{padding:2rem 1rem 1rem}
-  .singularity{width:100px;height:100px}
+  .badge{font-size:.46rem;letter-spacing:.1em;padding:.3rem .5rem}
+  .hero{padding:1.2rem .8rem .6rem}
   .msg{max-width:94%}
-  .starters{padding:0 .7rem .8rem}
-  .chip{font-size:.68rem;padding:.5rem .8rem}
-  .composer-wrap{padding:.6rem .7rem calc(.6rem + env(safe-area-inset-bottom))}
+  .starters{padding:0 .6rem .6rem}
+  .chip{font-size:.64rem;padding:.35rem .7rem}
+  .composer-wrap{padding:.45rem .6rem calc(.45rem + env(safe-area-inset-bottom))}
 }
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
@@ -264,8 +207,7 @@ body.has-chat .singularity{transform:scale(.35);margin-bottom:0}
 </style>
 </head>
 <body>
-<div class="bg-ambient"></div>
-<div class="bg-grid"></div>
+<canvas id="cosmos" aria-hidden="true"></canvas>
 
 <header class="topbar">
   <a class="icon-btn" href="index.html" title="Laman Utama" aria-label="Kembali ke Laman Utama">
@@ -285,19 +227,12 @@ body.has-chat .singularity{transform:scale(.35);margin-bottom:0}
 
 <main class="chat-wrap" id="chatWrap">
   <section class="hero" id="hero">
-    <div class="singularity" aria-hidden="true">
-      <div class="sing-ring r3"></div>
-      <div class="sing-ring r2"></div>
-      <div class="sing-ring"></div>
-      <div class="sing-orbit"><span></span></div>
-      <div class="sing-orbit o2"><span></span></div>
-      <div class="sing-core"></div>
-    </div>
     <div class="hero-caption">An Intelligence Space</div>
     <h1>BILIK ANTARA</h1>
+    <div class="hero-sub">Falsafah · Sastera · Teknologi · Kehidupan</div>
     <div class="rule"></div>
     <p class="manifesto">“Menulis untuk memahami. Berfikir untuk mempersoalkan. Mencuba mengusik fikiran, bukan menyentuh perasaan.”</p>
-    <p class="hero-intro">Ruang untuk berbual tentang falsafah, sastera, teknologi, manusia dan kehidupan. Tanya apa sahaja — saya jawab terus, jujur, dan kadang-kadang dengan sindiran halus.</p>
+    <p class="hero-intro">Ruang kecerdasan buatan untuk berbual dan berfikir. Saya jawab terus, jujur, dan kadang-kadang dengan sindiran halus.</p>
   </section>
 
   <div class="banner connecting" id="statusBanner" role="status">
@@ -322,9 +257,9 @@ body.has-chat .singularity{transform:scale(.35);margin-bottom:0}
     <div class="notes-body">
       <h4>Prinsip keselamatan</h4>
       <ul>
-        <li><strong>API key tidak pernah berada di sisi pelayar.</strong> Halaman ini hanya menghubungi satu endpoint: <code id="epShow">/.netlify/functions/bilik-antara</code> — fungsi Netlify yang menyimpan key sebagai environment variable terenkripsi dan memanggil Gemini bagi pihak anda.</li>
-        <li>Model lalai: <code>gemini-3.6-flash</code> (boleh diatasi dengan <code>GEMINI_MODEL</code>). Soalan tentang <strong>Shaiful Ridhwan</strong> dijawab secara tempatan dari fakta awam yang disahkan — tanpa melalui Gemini — bagi mengelakkan rekaan biodata peribadi.</li>
-        <li>Pada tier percuma Gemini, soalan mungkin digunakan Google untuk memperbaiki produk. Jika tidak diterima, aktifkan billing di Google Cloud.</li>
+        <li><strong>API key tidak pernah berada di sisi pelayar.</strong> Halaman ini hanya menghubungi <code id="epShow">/.netlify/functions/bilik-antara</code> — fungsi Netlify yang menyimpan key sebagai environment variable dan memanggil Gemini bagi pihak anda.</li>
+        <li>Model lalai: <code>gemini-3.8-flash</code> (Flash paling pintar, stabil). Boleh diatasi dengan <code>GEMINI_MODEL</code> (cth: <code>gemini-4-argon</code> untuk penaakulan tertinggi, dengan kos &amp; latensi lebih tinggi). Soalan tentang <strong>Shaiful Ridhwan</strong> dijawab secara tempatan dari fakta awam yang disahkan — tanpa melalui Gemini.</li>
+        <li>Pada tier percuma Gemini, soalan mungkin digunakan Google untuk memperbaiki produk.</li>
       </ul>
       <h4>Format respons backend</h4>
       <pre>{
@@ -333,9 +268,9 @@ body.has-chat .singularity{transform:scale(.35);margin-bottom:0}
   "reply": "jawapan",
   "quotes": [],
   "disclaimer": "...",
-  "model": "gemini-3.6-flash"
+  "model": "gemini-3.8-flash"
 }</pre>
-      <p>Jika endpoint gagal, mesej ralat yang jelas dipaparkan bersama butang “Cuba sambung semula” — halaman tidak pernah berpura-pura AI berfungsi.</p>
+      <p>Jika endpoint gagal, mesej ralat yang jelas dipaparkan bersama butang “Cuba sambung semula”.</p>
     </div>
   </details>
 </main>
@@ -352,13 +287,216 @@ body.has-chat .singularity{transform:scale(.35);margin-bottom:0}
 
 <script>
 /* ============================================================
-   Bilik Antara — An Intelligence Space (v2 futuristik)
-   Satu-satunya mod: sembang bebas melalui Netlify Function.
+   Bilik Antara — An Intelligence Space (v3)
+   Latar kosmik kanvas + sembang bebas melalui Netlify Function.
    Endpoint & format respons TIDAK diubah.
    ============================================================ */
 (function(){
 'use strict';
 
+/* ============ LATAR KANVAS KOSMIK (berkeadaan) ============ */
+(function(){
+  var canvas = document.getElementById('cosmos');
+  var ctx = canvas.getContext('2d');
+  var W=0, H=0, CX=0, CY=0, DPR=1;
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Keadaan aplikasi: idle | input | thinking | error — dibaca oleh gelung render
+  window.APP_STATE = 'idle';
+  var mouseX = 0.5, mouseY = 0.5;
+
+  // Bintang/partikel pada 3 lapisan kedalaman
+  var stars = [];
+  function initStars(){
+    stars = [];
+    var n = Math.min(110, Math.floor(W*H/14000));
+    for(var i=0;i<n;i++){
+      stars.push({
+        x: Math.random()*W, y: Math.random()*H,
+        z: 0.25 + Math.random()*0.75, // kedalaman
+        r: 0.4 + Math.random()*1.3,
+        ph: Math.random()*Math.PI*2,
+        sp: 0.005 + Math.random()*0.015
+      });
+    }
+  }
+  // Nebula blobs
+  var nebulas = [
+    {x:.25,y:.3,r:.45,c:'34,211,238',a:.10,ph:0,sp:.0003},
+    {x:.75,y:.7,r:.5,c:'94,234,212',a:.07,ph:2,sp:.0002},
+    {x:.5,y:.15,r:.4,c:'59,130,246',a:.08,ph:4,sp:.00025},
+    {x:.1,y:.85,r:.35,c:'139,92,246',a:.05,ph:1,sp:.0004}
+  ];
+  // Partikel orbit mengelilingi pusat (singulariti)
+  var orbiters = [];
+  function initOrbiters(){
+    orbiters = [];
+    for(var i=0;i<14;i++){
+      orbiters.push({
+        rad: 50 + Math.random()*130,
+        spd: (0.002 + Math.random()*0.006) * (Math.random()<0.5?-1:1),
+        ang: Math.random()*Math.PI*2,
+        tilt: 0.35 + Math.random()*0.4, // kecondongan elips (perspektif)
+        size: 1 + Math.random()*1.6
+      });
+    }
+  }
+  // Gelombang tenaga (mengembang dari pusat) — dijana ketika thinking
+  var waves = [];
+  function spawnWave(){ waves.push({r:10, a:0.5, sp:1.6}); }
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio||1, 1.5);
+    W = window.innerWidth; H = window.innerHeight;
+    canvas.width = W*DPR; canvas.height = H*DPR;
+    canvas.style.width = W+'px'; canvas.style.height = H+'px';
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    CX = W/2; CY = H*0.42;
+    initStars(); initOrbiters();
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', function(e){ mouseX = e.clientX/W; mouseY = e.clientY/H; }, {passive:true});
+  resize();
+
+  var t = 0;
+  function frame(){
+    var st = window.APP_STATE || 'idle';
+    // Kelajuan & kecerahan mengikut keadaan
+    var speed = st==='thinking' ? 2.4 : (st==='input' ? 1.4 : 1);
+    var bright = st==='thinking' ? 1.5 : (st==='input' ? 1.15 : 1);
+    var err = st==='error';
+    t += 0.016 * speed;
+
+    // Latar asas
+    ctx.clearRect(0,0,W,H);
+    var bg = ctx.createLinearGradient(0,0,0,H);
+    bg.addColorStop(0,'#05070D'); bg.addColorStop(0.5,'#0A0F1C'); bg.addColorStop(1,'#05070D');
+    ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+    // Nebula (komposit 'lighter' untuk kesan cahaya)
+    ctx.globalCompositeOperation = 'lighter';
+    for(var i=0;i<nebulas.length;i++){
+      var nb = nebulas[i];
+      var nx = (nb.x + Math.sin(t*nb.sp*60 + nb.ph)*0.05 + (mouseX-0.5)*0.02*nb.r*2) * W;
+      var ny = (nb.y + Math.cos(t*nb.sp*50 + nb.ph)*0.05 + (mouseY-0.5)*0.02*nb.r*2) * H;
+      var nr = nb.r * Math.min(W,H);
+      var g = ctx.createRadialGradient(nx,ny,0,nx,ny,nr);
+      var col = err ? '248,113,113' : nb.c;
+      g.addColorStop(0,'rgba('+col+','+(nb.a*bright)+')');
+      g.addColorStop(1,'rgba('+col+',0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(nx,ny,nr,0,Math.PI*2); ctx.fill();
+    }
+
+    // Grid perspektif halus (konvergen ke pusat, bergerak ke hadapan)
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = err ? 'rgba(248,113,113,0.05)' : 'rgba(94,234,212,0.045)';
+    ctx.lineWidth = 1;
+    var vpX = CX + (mouseX-0.5)*20, vpY = CY + (mouseY-0.5)*10;
+    var gridOffset = (t*30) % 60;
+    for(var g2=-6; g2<=6; g2++){
+      ctx.beginPath();
+      ctx.moveTo(vpX + g2*120, vpY);
+      ctx.lineTo(vpX + g2*W*0.6, H);
+      ctx.stroke();
+    }
+    for(var gy=0; gy<8; gy++){
+      var yp = vpY + Math.pow((gy*60 + gridOffset)/480, 1.8) * (H-vpY);
+      if(yp > H) continue;
+      ctx.beginPath(); ctx.moveTo(0, yp); ctx.lineTo(W, yp); ctx.stroke();
+    }
+
+    // Bintang (parallax + kedipan)
+    ctx.globalCompositeOperation = 'lighter';
+    for(var s=0;s<stars.length;s++){
+      var st2 = stars[s];
+      st2.x -= st2.sp * st2.z * speed * 8;
+      if(st2.x < -5){ st2.x = W+5; st2.y = Math.random()*H; }
+      var tw = 0.5 + 0.5*Math.sin(t*2 + st2.ph);
+      var alpha = (0.25 + 0.55*tw) * st2.z * (err?0.6:1) * bright;
+      ctx.fillStyle = err ? 'rgba(248,113,113,'+alpha+')' : 'rgba(232,237,245,'+alpha+')';
+      ctx.beginPath(); ctx.arc(st2.x + (mouseX-0.5)*st2.z*8, st2.y + (mouseY-0.5)*st2.z*8, st2.r, 0, Math.PI*2); ctx.fill();
+    }
+
+    // Gelang orbit (elips condong dengan arka berputar)
+    var rings = [
+      {r:70, tilt:0.32, spd:0.008, arc:0.9, col:'94,234,212'},
+      {r:115, tilt:0.5, spd:-0.005, arc:0.7, col:'34,211,238'},
+      {r:170, tilt:0.22, spd:0.003, arc:0.5, col:'148,163,184'}
+    ];
+    for(var ri=0; ri<rings.length; ri++){
+      var rg = rings[ri];
+      ctx.save();
+      ctx.translate(CX + (mouseX-0.5)*12, CY + (mouseY-0.5)*6);
+      ctx.scale(1, rg.tilt);
+      ctx.strokeStyle = 'rgba('+rg.col+','+(0.10*bright)+')';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(0,0,rg.r,0,Math.PI*2); ctx.stroke();
+      // Arka bercahaya berputar
+      var a0 = t * rg.spd * 60 * speed;
+      ctx.strokeStyle = err ? 'rgba(248,113,113,'+(0.6*bright)+')' : 'rgba('+rg.col+','+(0.55*bright)+')';
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = err ? 'rgba(248,113,113,0.8)' : 'rgba(94,234,212,0.8)';
+      ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.arc(0,0,rg.r,a0,a0+rg.arc); ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+
+    // Partikel orbit
+    for(var o=0; o<orbiters.length; o++){
+      var ob = orbiters[o];
+      ob.ang += ob.spd * speed;
+      var ox = CX + Math.cos(ob.ang)*ob.rad + (mouseX-0.5)*8;
+      var oy = CY + Math.sin(ob.ang)*ob.rad*ob.tilt + (mouseY-0.5)*4;
+      ctx.fillStyle = err ? 'rgba(248,113,113,0.7)' : 'rgba(94,234,212,'+(0.5+0.3*Math.sin(t*3+ob.ang))+')';
+      ctx.shadowColor = err ? 'rgba(248,113,113,0.9)' : 'rgba(94,234,212,0.9)';
+      ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.arc(ox, oy, ob.size, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+
+    // Teras singulariti (denyut berlapis)
+    var pulse = 1 + 0.12*Math.sin(t*(st==='thinking'?5:2.2));
+    var coreR = 14 * pulse;
+    var cg = ctx.createRadialGradient(CX,CY,0,CX,CY,coreR*4);
+    var coreCol = err ? '248,113,113' : '94,234,212';
+    cg.addColorStop(0,'rgba(255,255,255,'+(0.95*bright)+')');
+    cg.addColorStop(0.25,'rgba('+coreCol+','+(0.7*bright)+')');
+    cg.addColorStop(0.6,'rgba('+coreCol+','+(0.18*bright)+')');
+    cg.addColorStop(1,'rgba('+coreCol+',0)');
+    ctx.fillStyle = cg;
+    ctx.beginPath(); ctx.arc(CX + (mouseX-0.5)*10, CY + (mouseY-0.5)*5, coreR*4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(CX + (mouseX-0.5)*10, CY + (mouseY-0.5)*5, coreR*0.4, 0, Math.PI*2); ctx.fill();
+
+    // Gelombang tenaga ketika thinking
+    if(st==='thinking' && Math.random() < 0.04) spawnWave();
+    if(st==='error' && waves.length===0) spawnWave();
+    for(var w=waves.length-1; w>=0; w--){
+      var wv = waves[w];
+      wv.r += wv.sp * speed; wv.a -= 0.008 * speed;
+      if(wv.a <= 0){ waves.splice(w,1); continue; }
+      ctx.strokeStyle = err ? 'rgba(248,113,113,'+wv.a+')' : 'rgba(94,234,212,'+wv.a+')';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(CX, CY, wv.r, 0, Math.PI*2); ctx.stroke();
+    }
+
+    ctx.globalCompositeOperation = 'source-over';
+    if(!reduced) requestAnimationFrame(frame);
+  }
+
+  if(reduced){
+    // Render satu bingkai statik sahaja
+    window.APP_STATE = 'idle'; frame();
+  } else {
+    requestAnimationFrame(frame);
+    // Hentikan loop apabila tab tersembunyi (jimat prestasi)
+    document.addEventListener('visibilitychange', function(){
+      if(!document.hidden) requestAnimationFrame(frame);
+    });
+  }
+})();
+
+/* ============ SEMBANG (logik sama, ditambah kelas keadaan) ============ */
 var STARTERS = [
   { text:'Shaiful Ridhwan siapa?', primary:true },
   { text:'Kenapa manusia suka fikir berlebihan?' },
@@ -367,8 +505,8 @@ var STARTERS = [
   { text:'Apa ertinya menjadi bebas — dan adakah kebebasan itu nyata?' },
   { text:'Bagaimana menghadapi keraguan tentang pilihan hidup kita?' }
 ];
+function setState(s){ window.APP_STATE = s; document.body.className = document.body.className.replace(/\bapp-\w+/g,'').trim() + ' app-'+s; }
 
-/* ---------- DOM ---------- */
 var chat = document.getElementById('chat');
 var chatWrap = document.getElementById('chatWrap');
 var form = document.getElementById('composer');
@@ -383,65 +521,54 @@ var bannerBody = document.getElementById('bannerBody');
 var bannerActions = document.getElementById('bannerActions');
 var retryBtn = document.getElementById('retryBtn');
 
-/* ---------- Keadaan ---------- */
-var state = 'idle';           // idle | loading
-var mode = 'connecting';      // connecting | live | error
+var state = 'idle';
+var mode = 'connecting';
 var ENDPOINT = (window.BILIK_ENDPOINT || '/.netlify/functions/bilik-antara');
 document.getElementById('epShow').textContent = ENDPOINT;
 var history = [];
 var hasChat = false;
 
-/* ---------- Util ---------- */
 function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function scrollBottom(){ requestAnimationFrame(function(){ chatWrap.scrollTop = chatWrap.scrollHeight; }); }
-/* Pemformatan ringkas & selamat: escape dahulu, kemudian **bold**, senarai, perenggan */
 function formatReply(text){
   var html = esc(text || '');
   html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   var lines = html.split(/\n+/);
-  var out = '', inList = null;
-  function closeList(){ if(inList){ out += inList==='ul' ? '</ul>' : '</ol>'; inList = null; } }
+  var out='', inList=null;
+  function close(){ if(inList){ out += inList==='ul'?'</ul>':'</ol>'; inList=null; } }
   for(var i=0;i<lines.length;i++){
-    var line = lines[i].trim();
-    if(!line) continue;
-    var ulMatch = line.match(/^[-•*]\s+(.+)/);
-    var olMatch = line.match(/^\d+[.)]\s+(.+)/);
-    if(ulMatch){
-      if(inList!=='ul'){ closeList(); out += '<ul>'; inList='ul'; }
-      out += '<li>'+ulMatch[1]+'</li>';
-    } else if(olMatch){
-      if(inList!=='ol'){ closeList(); out += '<ol>'; inList='ol'; }
-      out += '<li>'+olMatch[1]+'</li>';
-    } else {
-      closeList();
-      out += '<p>'+line+'</p>';
-    }
+    var line=lines[i].trim(); if(!line) continue;
+    var ul=line.match(/^[-•*]\s+(.+)/), ol=line.match(/^\d+[.)]\s+(.+)/);
+    if(ul){ if(inList!=='ul'){close(); out+='<ul>'; inList='ul';} out+='<li>'+ul[1]+'</li>'; }
+    else if(ol){ if(inList!=='ol'){close(); out+='<ol>'; inList='ol';} out+='<li>'+ol[1]+'</li>'; }
+    else { close(); out+='<p>'+line+'</p>'; }
   }
-  closeList();
-  return out;
+  close(); return out;
 }
 
-/* ---------- Status ---------- */
 function setMode(m, msg){
   mode = m;
   if(m==='live'){
     modeBadge.className='badge live'; modeText.textContent='Bersambung';
     banner.className='banner ok';
     bannerTitle.textContent='Ruang kecerdasan bersambung.';
-    bannerBody.innerHTML=' Jawapan dijana oleh <strong>Gemini API</strong> (model lalai <code>gemini-3.6-flash</code>). <code>GEMINI_API_KEY</code> disimpan di sisi pelayan sahaja. Soalan tentang Shaiful Ridhwan dijawab dari fakta awam yang disahkan, tanpa melalui model.';
+    bannerBody.innerHTML=' Jawapan dijana oleh <strong>Gemini API</strong> (model lalai <code>gemini-3.8-flash</code>). <code>GEMINI_API_KEY</code> di sisi pelayan sahaja. Soalan tentang Shaiful Ridhwan dijawab dari fakta awam yang disahkan.';
     bannerActions.style.display='none';
+    if(window.APP_STATE!=='thinking') setState('idle');
   } else if(m==='error'){
     modeBadge.className='badge error'; modeText.textContent='Sambungan Gagal';
     banner.className='banner error';
     bannerTitle.textContent='Sambungan ke backend gagal.';
     bannerBody.textContent= (msg||'Tiada respons daripada endpoint. Semak fungsi Netlify telah di-deploy dan GEMINI_API_KEY disediakan.') + ' Anda masih boleh menaip soalan; ia akan dihantar semula apabila sambungan pulih.';
     bannerActions.style.display='flex';
+    setState('error');
   } else {
     modeBadge.className='badge connecting'; modeText.textContent='Menyambung…';
     banner.className='banner connecting';
     bannerTitle.textContent='Menyambung ke ruang kecerdasan…';
     bannerBody.textContent=' Menyemak sambungan ke backend Gemini. Sebentar lagi.';
     bannerActions.style.display='none';
+    setState('idle');
   }
 }
 function probeBackend(){
@@ -455,14 +582,13 @@ function probeBackend(){
       clearTimeout(to);
       var body={}; try{ body=await r.json(); }catch(e){}
       if(r.ok && body && body.ok){ setMode('live'); }
-      else if(r.status===503){ setMode('error','GEMINI_API_KEY tidak terbaca oleh fungsi (503). Semak nama pemboleh ubah dan buat deploy semula.'); }
+      else if(r.status===503){ setMode('error','GEMINI_API_KEY tidak terbaca oleh fungsi (503). Semak nama pemboleh ubah dan deploy semula.'); }
       else if(r.status===404){ setMode('error','Endpoint tidak ditemui (404). Semak bilik-antara.js berada di netlify/functions/ dan telah di-deploy.'); }
       else { setMode('error', (body && body.error ? body.error : 'Sambungan ke Gemini gagal (status '+r.status+').') + ' Kemungkinan: kekunci tidak sah, model tidak tersedia, atau kuota habis.'); }
     }).catch(function(){ clearTimeout(to); setMode('error','Probe tamat masa / sambungan terputus (20 saat). Lazimnya cold start — tekan Cuba sambung semula.'); });
   }catch(e){ setMode('error','Tidak dapat menghubungi endpoint.'); }
 }
 
-/* ---------- BackendAdapter ---------- */
 function backendAsk(question){
   history.push({role:'user', content:question});
   return fetch(ENDPOINT, {
@@ -482,87 +608,72 @@ function backendAsk(question){
   });
 }
 
-/* ---------- Render mesej ---------- */
 function addUserMsg(text){
-  var el = document.createElement('div');
-  el.className = 'msg user';
-  el.innerHTML = '<div class="who">Anda</div><div class="bubble"></div>';
-  el.querySelector('.bubble').textContent = text;
-  chat.appendChild(el); scrollBottom();
+  var el=document.createElement('div'); el.className='msg user';
+  el.innerHTML='<div class="who">Anda</div><div class="bubble"></div>';
+  el.querySelector('.bubble').textContent=text; chat.appendChild(el); scrollBottom();
 }
 function addTyping(){
-  var el = document.createElement('div');
-  el.className = 'msg ai'; el.id = 'typingMsg';
-  el.innerHTML = '<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>'
-    + '<div class="bubble typing"><span class="dots"><i></i><i></i><i></i></span><span class="typing-text">sedang berfikir…</span></div>';
-  chat.appendChild(el); scrollBottom();
-  return el;
+  var el=document.createElement('div'); el.className='msg ai'; el.id='typingMsg';
+  el.innerHTML='<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>'
+    +'<div class="bubble typing"><span class="dots"><i></i><i></i><i></i></span><span class="typing-text">sedang berfikir…</span></div>';
+  chat.appendChild(el); scrollBottom(); return el;
 }
 function removeTyping(){ var t=document.getElementById('typingMsg'); if(t) t.remove(); }
 function addErrorMsg(text){
-  var el = document.createElement('div');
-  el.className = 'msg error-msg ai';
-  el.innerHTML = '<div class="who">Ralat</div><div class="bubble"><p></p></div>';
-  el.querySelector('p').textContent = text;
-  chat.appendChild(el); scrollBottom();
+  var el=document.createElement('div'); el.className='msg error-msg ai';
+  el.innerHTML='<div class="who">Ralat</div><div class="bubble"><p></p></div>';
+  el.querySelector('p').textContent=text; chat.appendChild(el); scrollBottom();
 }
 function renderAiLive(data){
-  var el = document.createElement('div');
-  el.className = 'msg ai';
-  var who = '<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>';
-  var body = '<div class="bubble"><div class="ai-body">';
+  var el=document.createElement('div'); el.className='msg ai';
+  var who='<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>';
+  var body='<div class="bubble"><div class="ai-body">';
   if(data && data.reply){ body += formatReply(data.reply); }
   if(data && data.quotes && data.quotes.length){
     for(var i=0;i<data.quotes.length;i++){
-      body += '<p style="font-style:italic;color:var(--silver-dim);border-left:2px solid var(--cyan);padding-left:.8rem;margin:.6rem 0">'+esc(data.quotes[i].text)+'</p>';
+      body += '<p style="font-style:italic;color:var(--silver-dim);border-left:2px solid var(--cyan);padding-left:.7rem;margin:.5rem 0">'+esc(data.quotes[i].text)+'</p>';
     }
   }
   if(data && data.disclaimer){ body += '<div class="ai-foot">'+esc(data.disclaimer)+'</div>'; }
   body += '</div></div>';
-  el.innerHTML = who + body;
-  chat.appendChild(el); scrollBottom();
+  el.innerHTML = who + body; chat.appendChild(el); scrollBottom();
 }
-
-/* ---------- Mesej aluan ---------- */
 function welcome(){
-  var el = document.createElement('div');
-  el.className = 'msg ai';
-  el.innerHTML = '<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>'
-    + '<div class="bubble"><div class="ai-body">'
-    + '<p>Selamat datang. Kita boleh berbual tentang <strong>falsafah, sastera, teknologi, manusia, kehidupan</strong> — atau apa sahaja yang ada di minda anda.</p>'
-    + '<p>Saya jawab terus, tidak terlalu formal. Jika saya tidak tahu, saya akan katakan begitu. Dan saya tidak akan mengiyakan sesuatu semata-mata untuk menyenangkan anda.</p>'
-    + '<p>Cuba salah satu soalan di bawah, atau teruskan menulis.</p>'
-    + '</div></div>';
+  var el=document.createElement('div'); el.className='msg ai';
+  el.innerHTML='<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>'
+    +'<div class="bubble"><div class="ai-body">'
+    +'<p>Selamat datang. Kita boleh berbual tentang <strong>falsafah, sastera, teknologi, manusia, kehidupan</strong> — atau apa sahaja yang ada di minda anda.</p>'
+    +'<p>Saya jawab terus, tidak terlalu formal. Jika tidak tahu, saya akan katakan begitu. Dan saya tidak akan mengiyakan sesuatu semata-mata untuk menyenangkan anda.</p>'
+    +'<p>Cuba salah satu soalan di bawah, atau teruskan menulis.</p>'
+    +'</div></div>';
   chat.appendChild(el);
-  /* Jangan scroll ke bawah pada muat awal — biar hero/halaman pembuka kekal kelihatan. */
 }
 
-/* ---------- Soalan cadangan ---------- */
 STARTERS.forEach(function(s){
-  var b = document.createElement('button');
-  b.type='button'; b.className='chip'+(s.primary?' primary':''); b.textContent=s.text;
+  var b=document.createElement('button'); b.type='button'; b.className='chip'+(s.primary?' primary':''); b.textContent=s.text;
   b.addEventListener('click', function(){ if(state!=='idle')return; input.value=s.text; updateSend(); send(); });
   startersEl.appendChild(b);
 });
 
-/* ---------- Hantar ---------- */
 function updateSend(){ sendBtn.disabled = (state==='loading' || input.value.trim()===''); }
+var inputTimer=null;
 input.addEventListener('input', function(){
-  input.style.height='auto';
-  input.style.height = Math.min(input.scrollHeight, 130)+'px';
-  updateSend();
+  input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,100)+'px'; updateSend();
+  setState('input');
+  clearTimeout(inputTimer); inputTimer=setTimeout(function(){ if(state!=='loading') setState('idle'); }, 800);
 });
-input.addEventListener('keydown', function(e){
-  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); form.dispatchEvent(new Event('submit')); }
-});
+input.addEventListener('focus', function(){ setState('input'); });
+input.addEventListener('blur', function(){ if(state!=='loading') setState('idle'); });
+input.addEventListener('keydown', function(e){ if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); form.dispatchEvent(new Event('submit')); } });
 retryBtn && retryBtn.addEventListener('click', function(){ setMode('connecting'); probeBackend(); });
 
 function send(){
   if(state!=='idle') return;
-  var q = input.value.trim();
-  if(!q) return;
+  var q=input.value.trim(); if(!q) return;
   state='loading'; updateSend();
-  if(!hasChat){ hasChat = true; document.body.classList.add('has-chat'); }
+  if(!hasChat){ hasChat=true; document.body.classList.add('has-chat'); }
+  setState('thinking');
   addUserMsg(q);
   input.value=''; input.style.height='auto'; updateSend();
   addTyping();
@@ -570,25 +681,24 @@ function send(){
   function fail(err){
     removeTyping(); state='idle'; updateSend();
     var msg = err && err.message ? err.message : 'sambungan terputus.';
-    if(err && err.status === 429) msg = 'Had penggunaan sementara dicapai (429). Cuba lagi dalam seminit.';
-    else if(err && err.status === 503) msg = 'Backend belum dikonfigurasi: GEMINI_API_KEY tiada.';
-    else if(err && err.status === 504) msg = 'Gemini tidak membalas dalam had masa. Cuba lagi sebentar lagi.';
+    if(err && err.status===429) msg='Had penggunaan sementara dicapai (429). Cuba lagi dalam seminit.';
+    else if(err && err.status===503) msg='Backend belum dikonfigurasi: GEMINI_API_KEY tiada.';
+    else if(err && err.status===504) msg='Gemini tidak membalas dalam had masa. Cuba lagi sebentar lagi.';
     addErrorMsg('Tidak dapat memperoleh jawapan: ' + msg + ' Sila cuba sebentar lagi.');
-    if(mode==='live'){ setMode('error', 'Endpoint ada tetapi memulangkan ralat. Semak log fungsi Netlify.'); }
+    setState('error');
+    if(mode==='live'){ setMode('error','Endpoint ada tetapi memulangkan ralat. Semak log fungsi Netlify.'); }
   }
-
   var done=false;
   var to=setTimeout(function(){ if(!done){ done=true; fail(new Error('masa sambungan tamat (30 saat)')); } },30000);
   backendAsk(q).then(function(data){
     if(done) return; done=true; clearTimeout(to);
     removeTyping(); state='idle'; updateSend();
-    if(mode!=='live'){ setMode('live'); }
+    if(mode!=='live'){ setMode('live'); } else { setState('idle'); }
     renderAiLive(data);
   }).catch(function(e){ if(done)return; done=true; clearTimeout(to); fail(e); });
 }
 form.addEventListener('submit', function(e){ e.preventDefault(); send(); });
 
-/* ---------- Mula ---------- */
 setMode('connecting');
 welcome();
 updateSend();
