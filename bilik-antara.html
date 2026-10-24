@@ -1424,20 +1424,23 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     surprised:{browInnerUp:0.5,browOuterUpLeft:0.85,browOuterUpRight:0.85,eyeWideLeft:0.85,eyeWideRight:0.85,jawOpen:0.35},
     concerned:{browInnerUp:0.7,mouthFrown:0.45,browDownLeft:0.2,browDownRight:0.2}
   };
-  var curState = 'idle', curViseme = null;
+  var curState = 'idle', curViseme = null, targets = {}, blink = 0, elapsed = 0, nextBlink = 3, blinkAt = -1, raf = null, lastTime = 0, baseRotation = null;
   var VISEME = {SIL:{},A:{jawOpen:0.9},E:{jawOpen:0.4,mouthStretch:0.7},I:{jawOpen:0.25,mouthStretch:0.55},O:{jawOpen:0.5,mouthPucker:0.65},U:{jawOpen:0.2,mouthPucker:0.95},M:{jawOpen:0,mouthPress:0.55},F:{jawOpen:0.12,mouthUpperUp:0.85},L:{jawOpen:0.35,mouthStretch:0.2},S:{jawOpen:0.15,mouthStretch:0.6},K:{jawOpen:0.45},R:{jawOpen:0.35,mouthPucker:0.35}};
 
-  function apply(){
-    if(!skinMesh || !skinMesh.morphTargetInfluences) return;
-    var inf = skinMesh.morphTargetInfluences, merged = {}, base = STATE[curState]||{};
-    for(var b in base) merged[b]=base[b];
-    if(curViseme && VISEME[curViseme]){ for(var v in VISEME[curViseme]) merged[v]=VISEME[curViseme][v]; }
-    for(var n in MORPH) inf[MORPH[n]] = 0;
-    for(var k in merged){ if(MORPH[k]!==undefined) inf[MORPH[k]] = merged[k]; }
+  // Unified morph targets: expressions, speech and blinking blend smoothly.
+  function apply(){ targets=Object.assign({},STATE[curState]||{},curViseme?(VISEME[curViseme]||{}):{}); }
+  function setState(v){curState=STATE[v]?v:'idle';apply();}
+  function setViseme(v){curViseme=VISEME[v]?v:null;apply();}
+  window.__araSetViseme=setViseme;
+  function updateMorph(dt){
+    if(!skinMesh||!skinMesh.morphTargetInfluences)return;
+    var inf=skinMesh.morphTargetInfluences, blend=1-Math.exp(-dt*12);
+    for(var name in MORPH){
+      var i=MORPH[name], goal=targets[name]||0;
+      if(name==='eyeBlinkLeft'||name==='eyeBlinkRight')goal=Math.max(goal,blink);
+      inf[i]+=(Math.max(0,Math.min(1,goal))-inf[i])*blend;
+    }
   }
-  function setState(s){ curState = s; apply(); }
-  function setViseme(v){ curViseme = v; apply(); }
-
   function init3D(){
     try{
       renderer = new THREE.WebGLRenderer({canvas:canvas, alpha:true, antialias:true});
@@ -1451,7 +1454,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     var fill = new THREE.DirectionalLight(0x88bbff, 0.5); fill.position.set(-2.5,1,2); scene.add(fill);
     var rim = new THREE.DirectionalLight(0x7de8d8, 1.2); rim.position.set(-1,2,-2.5); scene.add(rim);
     function resize(){ var w=faceEl.clientWidth||200, h=faceEl.clientHeight||200; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
-    resize(); window.addEventListener('resize', resize);
+    resize(); if(window.ResizeObserver) new ResizeObserver(resize).observe(faceEl); else window.addEventListener('resize', resize);
     // Muat GLB Ara 3D Gen
     new GLTFLoader().load('./ara-face.glb', function(gltf){
       var model = gltf.scene;
@@ -1463,36 +1466,47 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       if(skinMesh && skinMesh.morphTargetDictionary) MORPH = skinMesh.morphTargetDictionary;
       if(!skinMesh){ console.log('Ara3D: tiada morph mesh — fallback SVG.'); return; }
       model.position.set(0, -1.55, 0);
+      if(headBone) baseRotation=headBone.rotation.clone();
       scene.add(model);
       active = true;
       faceEl.classList.add('face3d-on');
       apply();
-      console.log('Ara3D: model dimuatkan,', Object.keys(MORPH).length, 'morph targets');
+      startRender();
+      console.log('Ara3D: model dimuatkan, Object.keys(MORPH).length, 'morph targets');
     }, undefined, function(){ console.log('Ara3D: ara-face.glb tidak dijumpai — fallback SVG asal.'); });
-    animate();
     return true;
   }
-  function animate(){
-    requestAnimationFrame(animate);
-    var dt = Math.min(clock.getDelta(), 0.05);
-    // Hayunan kepala lembut + kedipan berkala
-    if(headBone){ var t=clock.elapsedTime; headBone.rotation.y = Math.sin(t*0.7)*0.08; headBone.rotation.x = Math.sin(t*0.5)*0.04; }
-    renderer.render(scene, camera);
+  function startRender(){
+    if(raf!==null||!active||document.hidden)return;
+    lastTime=performance.now();raf=requestAnimationFrame(animate);
   }
-  // Kedipan mata berkala
-  setInterval(function(){
-    if(!active) return;
-    var inf = skinMesh.morphTargetInfluences;
-    var l=MORPH.eyeBlinkLeft, r=MORPH.eyeBlinkRight;
-    if(l===undefined) return;
-    inf[l]=1; if(r!==undefined) inf[r]=1;
-    setTimeout(function(){ inf[l]=0; if(r!==undefined) inf[r]=0; }, 140);
-  }, 3200);
-
+  function animate(now){
+    raf=null;
+    if(!active||document.hidden)return;
+    var dt=Math.max(0,Math.min((now-lastTime)/1000,.05));
+    lastTime=now;elapsed+=dt;
+    if(elapsed>nextBlink&&blinkAt<0){blinkAt=elapsed;nextBlink=elapsed+2.8+Math.random()*2.5;}
+    if(blinkAt>=0){
+      var phase=(elapsed-blinkAt)/.22;
+      blink=phase>=1?0:Math.sin(phase*Math.PI);
+      if(phase>=1)blinkAt=-1;
+    }
+    updateMorph(dt);
+    if(headBone&&baseRotation){
+      headBone.rotation.y=baseRotation.y+Math.sin(elapsed*.7)*.045;
+      headBone.rotation.x=baseRotation.x+Math.sin(elapsed*.5)*.025;
+    }
+    renderer.render(scene,camera);
+    raf=requestAnimationFrame(animate);
+  }
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden&&raf!==null){cancelAnimationFrame(raf);raf=null;}
+    else startRender();
+  });
   // Sambung ke sistem emosi asal — OVERRIDE window.__setFaceEmotion
   var origSet = window.__setFaceEmotion;
   window.__setFaceEmotion = function(emotion, duration){
-    if(origSet) origSet(emotion, duration); // kekalkan SVG (tersembunyi jika 3D aktif)
+    if(!active && origSet) origSet(emotion, duration); // fallback only
     if(active) setState(EMO[emotion] || 'idle');
   };
   // Pemerhati kelas 'thinking' pada #aiFace (asal tambah kelas ini semasa berfikir)
