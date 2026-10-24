@@ -1495,7 +1495,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       console.log('Ara3D: model dimuatkan, '+Object.keys(MORPH).length+' morph targets');
     }
     var loader=new GLTFLoader();
-    loader.load('./ara-alina-optimized.glb',installModel,undefined,function(e){
+    loader.load('https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/releases/download/ara-3d-v1/alina_ip_realistic_asian_woman_animated.glb',installModel,undefined,function(e){
       console.warn('Ara3D: Alina asset not hosted yet, loading existing Ara model.',e);
       loader.load('./ara-face.glb',installModel,undefined,function(){console.log('Ara3D: kedua-dua model tiada — fallback SVG asal.');});
     });
