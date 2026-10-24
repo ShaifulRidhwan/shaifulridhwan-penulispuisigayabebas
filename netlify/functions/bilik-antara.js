@@ -146,56 +146,13 @@ exports.handler = async (event) => {
   const question = String(payload.question || "").trim().slice(0, 1000);
   log("start", { probe: !!payload.probe, qlen: question.length, hasKey: !!apiKey });
 
-  /* ---------- PROBE (tidak diubah) ---------- */
+  /* Pemeriksaan kesihatan backend sahaja. Tidak menjana teks dan tidak menggunakan kuota generateContent. */
   if (payload.probe) {
     if (!apiKey) {
-      return {
-        statusCode: 503,
-        headers: H,
-        body: JSON.stringify({ ok: false, error: "GEMINI_API_KEY tiada" })
-      };
+      return { statusCode: 503, headers: H, body: JSON.stringify({ ok: false, error: "GEMINI_API_KEY tiada" }) };
     }
-    const probeStarted = Date.now();
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 15000);
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(preferredModel)}:generateContent`;
-      log("generation-probe-start", { model: preferredModel });
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: "Reply with exactly: OK" }] }],
-          generationConfig: {
-            maxOutputTokens: 64,
-            responseMimeType: "text/plain",
-            thinkingConfig: { thinkingLevel: "low" }
-          }
-        }),
-        signal: ctrl.signal
-      });
-      const body = await res.text();
-      log("generation-probe-result", { status: res.status, durMs: Date.now() - probeStarted, body: body.slice(0, 700) });
-      return {
-        statusCode: 200,
-        headers: H,
-        body: JSON.stringify({ ok: res.ok, httpStatus: res.status, durMs: Date.now() - probeStarted, result: body.slice(0, 700) })
-      };
-    } catch (err) {
-      log("generation-probe-fail", { error: err.name, message: String(err.message || err).slice(0, 150), durMs: Date.now() - probeStarted });
-      return {
-        statusCode: 200,
-        headers: H,
-        body: JSON.stringify({
-          ok: false,
-          error: err.name === "AbortError"
-            ? "Penjanaan teks tamat masa selepas 15 saat."
-            : String(err.message || err)
-        })
-      };
-    } finally {
-      clearTimeout(timer);
-    }
+    log("backend-health-ok", { model: preferredModel });
+    return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true, backend: "ready", model: preferredModel, geminiVerified: false }) };
   }
 
   if (!apiKey) return { statusCode: 503, headers: H, body: JSON.stringify({ error: "Backend belum dikonfigurasi: GEMINI_API_KEY tiada." }) };
