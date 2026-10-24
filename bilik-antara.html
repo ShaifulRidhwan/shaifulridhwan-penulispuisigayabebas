@@ -964,7 +964,7 @@ function probeBackend(){
       if(r.ok && body && body.ok){ setMode('live'); }
       else if(r.status===503){ setMode('error','GEMINI_API_KEY tidak terbaca oleh fungsi (503). Semak nama pemboleh ubah dan deploy semula.'); }
       else if(r.status===404){ setMode('error','Endpoint tidak ditemui (404). Semak bilik-antara.js berada di netlify/functions/ dan telah di-deploy.'); }
-      else { setMode('error', (body && body.error ? body.error : 'Sambungan ke Gemini gagal (status '+r.status+').') + ' Kemungkinan: kekunci tidak sah, model tidak tersedia, atau kuota habis.'); }
+      else { var upstreamStatus = body && body.httpStatus; var detail = body && body.error ? body.error : (body && body.result ? String(body.result).slice(0,450) : 'Tiada butiran ralat daripada Gemini.'); setMode('error', 'Backend Netlify HTTP '+r.status+(upstreamStatus ? ', Gemini HTTP '+upstreamStatus : '')+'. '+detail); }
     }).catch(function(){ clearTimeout(to); setMode('error','Probe tamat masa / sambungan terputus (20 saat). Lazimnya cold start — tekan Cuba sambung semula.'); });
   }catch(e){ setMode('error','Tidak dapat menghubungi endpoint.'); }
 }
