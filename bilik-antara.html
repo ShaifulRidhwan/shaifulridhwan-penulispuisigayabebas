@@ -1495,10 +1495,29 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       console.log('Ara3D: model dimuatkan, '+Object.keys(MORPH).length+' morph targets');
     }
     var loader=new GLTFLoader();
-    loader.load('https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/releases/download/ara-3d-v1/alina_ip_realistic_asian_woman_animated.glb',installModel,undefined,function(e){
-      console.warn('Ara3D: Alina asset not hosted yet, loading existing Ara model.',e);
-      loader.load('./ara-face.glb',installModel,undefined,function(){console.log('Ara3D: kedua-dua model tiada — fallback SVG asal.');});
-    });
+    function fallbackAlina(err){
+      console.warn('Ara3D: Alina tidak tersedia, guna Ara lama.',err);
+      loader.load('./ara-face.glb',installModel,undefined,function(){console.log('Ara3D: fallback SVG asal.');});
+    }
+    // Same-origin Netlify chunks: avoids GitHub Release CORS and per-file upload limits.
+    fetch('./ara-assets/manifest.json',{cache:'no-store'}).then(function(r){
+      if(!r.ok)throw Error('Manifest '+r.status);
+      return r.json();
+    }).then(async function(manifest){
+      if(!Number.isInteger(manifest.parts)||manifest.parts<1||manifest.parts>40)throw Error('Manifest invalid');
+      var chunks=[],total=0;
+      for(var i=0;i<manifest.parts;i++){
+        var filename='part-'+String(i).padStart(3,'0')+'.bin';
+        var response=await fetch('./ara-assets/'+filename);
+        if(!response.ok)throw Error(filename+' HTTP '+response.status);
+        var data=await response.arrayBuffer();chunks.push(new Uint8Array(data));total+=data.byteLength;
+      }
+      if(total!==manifest.bytes)throw Error('GLB chunk size mismatch');
+      var full=new Uint8Array(total),offset=0;
+      for(var chunk of chunks){full.set(chunk,offset);offset+=chunk.byteLength;}
+      if(new DataView(full.buffer).getUint32(0,true)!==0x46546c67)throw Error('GLB magic invalid');
+      loader.parse(full.buffer,'./',installModel,fallbackAlina);
+    }).catch(fallbackAlina);
     return true;
   }
   function startRender(){
