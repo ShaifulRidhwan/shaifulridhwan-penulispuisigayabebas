@@ -1,15 +1,3 @@
-# Konfigurasi Netlify untuk Bilik Antara
-# Fungsi terletak di: netlify/functions/ (lalai, tidak perlu nyatakan)
-# Fail yang diperlukan di dalamnya: bilik-antara.js + novel-kb.json
-# JANGAN tetapkan [build] publish di sini kecuali ia memang publish dir anda —
-# ia boleh menimpa tetapan sedia ada laman anda.
-
 [functions]
-  # Had masa laksana sinkronus (saat). Nilai sebenar dibataskan oleh pelan:
-  # tier Free mungkin 10s, Pro hingga 26s/60s — sahkan di dashboard anda.
-  # Panggilan Gemini di fungsi di-abort pada 20s, jadi 26 sudah memadai.
-  timeout = 26
+  directory = "netlify/functions"
   node_bundler = "esbuild"
-
-# Jika mahu hadkan CORS kepada domain laman sendiri, set di dashboard:
-# ALLOWED_ORIGIN = https://namalamananda.netlify.app
