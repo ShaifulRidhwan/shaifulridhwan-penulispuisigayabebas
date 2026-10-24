@@ -149,6 +149,32 @@ async function callGemini({ apiKey, model, system, contents, maxTokens }) {
   } finally { clearTimeout(to); }
 }
 
+// Model stabil semasa (Okt 2026, dokumentasi rasmi Google): gemini-3.8-flash,
+// gemini-3.6-flash, gemini-3.5-flash-lite. gemini-2.5-flash ditutup 20 Okt 2026.
+// Jika model pilihan (GEMINI_MODEL) pulang 404, cuba senarai fallback ini.
+const FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash-lite", "gemini-2.5-flash"];
+
+async function callGeminiFallback({ apiKey, preferred, system, contents, maxTokens }) {
+  const tried = new Set();
+  const candidates = [];
+  if (preferred) candidates.push(preferred);
+  for (const m of FALLBACK_MODELS) if (!candidates.includes(m)) candidates.push(m);
+  let lastErr;
+  for (const m of candidates) {
+    if (tried.has(m)) continue;
+    tried.add(m);
+    try {
+      const data = await callGemini({ apiKey, model: m, system, contents, maxTokens });
+      return { data, modelUsed: m };
+    } catch (e) {
+      lastErr = e;
+      if (e && e.status === 404) continue; // model tidak ditemui → cuba yang seterusnya
+      throw e; // 401/403/429/rangkaian → henti, laporkan
+    }
+  }
+  throw lastErr; // semua model pulang 404
+}
+
 exports.handler = async (event) => {
   const origin = event.headers && (event.headers.origin || event.headers.Origin);
   const H = corsHeaders(origin);
@@ -160,7 +186,7 @@ exports.handler = async (event) => {
   catch { return { statusCode: 400, headers: H, body: JSON.stringify({ error: "Bad JSON" }) }; }
 
   const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  const preferredModel = process.env.GEMINI_MODEL || "gemini-3.8-flash"; // gemini-2.5-flash ditutup 20 Okt 2026; 3.8-flash stabil semasa
 
   const question = String(payload.question || "").trim().slice(0, 1000); // HAD INPUT — disemak dahulu
   if (!payload.probe && !question) return { statusCode: 400, headers: H, body: JSON.stringify({ error: "Soalan kosong" }) };
@@ -170,13 +196,15 @@ exports.handler = async (event) => {
     if (!apiKey) return { statusCode: 503, headers: H,
       body: JSON.stringify({ ok: false, error: "GEMINI_API_KEY belum ditetapkan di Netlify environment variables." }) };
     try {
-      await callGemini({ apiKey, model, system: "Sah sahaja.", contents: [{ role: "user", parts: [{ text: "ok" }] }], maxTokens: 8 });
-      return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true, mode: "live", model }) };
+      const { modelUsed } = await callGeminiFallback({ apiKey, preferred: preferredModel, system: "Sah sahaja.", contents: [{ role: "user", parts: [{ text: "ok" }] }], maxTokens: 8 });
+      return { statusCode: 200, headers: H, body: JSON.stringify({ ok: true, mode: "live", model: modelUsed }) };
     } catch (e) {
       const code = e && e.status;
-      const msg = code === 429 ? "Kuota percuma Gemini dicapai / API key tidak sah (429)." :
-                  code === 400 ? "Kekunci API tidak sah atau model tidak tersedia (400)." :
-                  code === 404 ? "Model tidak tersedia atau nama GEMINI_MODEL salah (404). Semak senarai model di AI Studio." :
+      const msg = code === 401 ? "Kekunci API ditolak (401 Unauthorized). Nilai GEMINI_API_KEY mungkin salah, mengandungi ruah/quote, telah dibatalkan, atau Generative Language API belum diaktifkan." :
+                  code === 403 ? "Akses ditolak (403). Kekunci mungkin mempunyai sekatan API, billing belum diaktifkan, atau wilayah tidak disokong." :
+                  code === 429 ? "Kuota percuma Gemini dicapai (429)." :
+                  code === 400 ? "Kekunci API tidak sah atau permintaan salah format (400)." :
+                  code === 404 ? "Semua model dalam senarai fallback pulang 404. Semak GEMINI_MODEL dan senarai model di AI Studio." :
                   "Tidak dapat menghubungi Gemini API dari fungsi (rangkaian / masa tamat). Cuba lagi.";
       return { statusCode: 502, headers: H, body: JSON.stringify({ ok: false, error: msg, status: code || null }) };
     }
@@ -197,14 +225,14 @@ exports.handler = async (event) => {
     .concat([{ role: "user", parts: [{ text: question }] }]);
 
   try {
-    let data, picked = [], excerptCount = 0;
+    let picked = [], excerptCount = 0, modelUsed = preferredModel, data;
     if (mode === "novel") {
       picked = selectExcerpts(question);
       excerptCount = picked.length;
       const excerptBlock = picked.map((e, i) => `[${i + 1}] (${e.section}) ${e.text}`).join("\n");
-      data = await callGemini({ apiKey, model, system: SYS_NOVEL + "\n\nEXCERPTS (satu-satunya petikan yang boleh anda kutip):\n" + excerptBlock, contents: geminiContents, maxTokens: 900 });
+      ({ data, modelUsed } = await callGeminiFallback({ apiKey, preferred: preferredModel, system: SYS_NOVEL + "\n\nEXCERPTS (satu-satunya petikan yang boleh anda kutip):\n" + excerptBlock, contents: geminiContents, maxTokens: 900 }));
     } else {
-      data = await callGemini({ apiKey, model, system: SYS_GENERAL, contents: geminiContents, maxTokens: 600 });
+      ({ data, modelUsed } = await callGeminiFallback({ apiKey, preferred: preferredModel, system: SYS_GENERAL, contents: geminiContents, maxTokens: 600 }));
     }
 
     const cand = data && data.candidates && data.candidates[0];
@@ -229,7 +257,7 @@ exports.handler = async (event) => {
     return {
       statusCode: 200, headers: H,
       body: JSON.stringify({
-        mode: "live", aiMode: replyMode, model,
+        mode: "live", aiMode: replyMode, model: modelUsed,
         reply: parsed.reply || "",
         quotes: safeQuotes,
         disclaimer: (parsed.disclaimer ? parsed.disclaimer + " " : "") + privacy +
@@ -243,6 +271,12 @@ exports.handler = async (event) => {
       body: JSON.stringify({ error: "Sambungan ke Gemini tamat masa (20 saat). Cuba lagi atau tukar GEMINI_MODEL kepada model yang lebih pantas." }) };
     if (err && err.status === 429) return { statusCode: 429, headers: H,
       body: JSON.stringify({ error: "Kuota Gemini API dicapai (429). Had percuma harian mungkin habis (reset tengah malam Waktu Pasifik) atau kadar terlalu tinggi. Cuba lagi nanti, atau tukar GEMINI_MODEL." }) };
+    if (err && err.status === 401) return { statusCode: 502, headers: H,
+      body: JSON.stringify({ error: "Kekunci API ditolak (401). Semak nilai GEMINI_API_KEY (tiada ruah/quote), status kekunci di AI Studio, dan pastikan Generative Language API diaktifkan." }) };
+    if (err && err.status === 403) return { statusCode: 502, headers: H,
+      body: JSON.stringify({ error: "Akses ditolak (403). Kekunci mungkin mempunyai sekatan API, billing belum diaktifkan, atau wilayah tidak disokong." }) };
+    if (err && err.status === 404) return { statusCode: 502, headers: H,
+      body: JSON.stringify({ error: "Model tidak ditemui (404) untuk semua fallback. Semak GEMINI_MODEL di AI Studio." }) };
     return { statusCode: 502, headers: H,
       body: JSON.stringify({ error: `Gagal menghubungi Gemini API (status ${err && err.status || "sambungan"}).` }) };
   }
