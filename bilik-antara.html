@@ -1399,6 +1399,36 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     concerned:{browInnerUp:0.7,mouthFrown:0.45,browDownLeft:0.2,browDownRight:0.2}
   };
   var curState = 'idle', curViseme = null, targets = {}, blink = 0, elapsed = 0, nextBlink = 3, blinkAt = -1, raf = null, lastTime = 0, baseRotation = null;
+  // Idle director: one gentle, non-repeating gesture about every five seconds.
+  var idleGestures=[
+    {name:'look-left',yaw:-.14,pitch:0,roll:-.025,emotion:'idle'},
+    {name:'look-right',yaw:.14,pitch:0,roll:.025,emotion:'idle'},
+    {name:'look-down',yaw:0,pitch:.085,roll:0,emotion:'thoughtful'},
+    {name:'look-up',yaw:0,pitch:-.065,roll:0,emotion:'curious'},
+    {name:'small-smile',yaw:0,pitch:0,roll:.018,emotion:'confident'},
+    {name:'soft-listen',yaw:.045,pitch:.025,roll:-.04,emotion:'listening'},
+    {name:'empathetic',yaw:-.035,pitch:.02,roll:.025,emotion:'empathetic'}
+  ];
+  var idleNext=5,idleUntil=0,idleGesture=null,idlePrevious=-1,idleYaw=0,idlePitch=0,idleRoll=0;
+  function idleAllowed(){return curState==='idle' && !curViseme && window.APP_STATE!=='thinking' && window.APP_STATE!=='responding' && !faceEl.classList.contains('thinking');}
+  function updateIdle(dt){
+    if(!idleAllowed()){
+      idleGesture=null;idleNext=elapsed+5;
+    }else if(elapsed>=idleNext){
+      var index=Math.floor(Math.random()*(idleGestures.length-1));
+      if(index>=idlePrevious)index++;
+      idlePrevious=index;idleGesture=idleGestures[index];
+      idleUntil=elapsed+2+Math.random()*1.5;
+      idleNext=elapsed+4.5+Math.random()*1.5;
+    }
+    if(idleGesture && elapsed>=idleUntil)idleGesture=null;
+    var gesture=idleAllowed()?idleGesture:null;
+    var blend=1-Math.exp(-dt*2.6);
+    idleYaw+=((gesture?gesture.yaw:0)-idleYaw)*blend;
+    idlePitch+=((gesture?gesture.pitch:0)-idlePitch)*blend;
+    idleRoll+=((gesture?gesture.roll:0)-idleRoll)*blend;
+    return gesture;
+  }
   var VISEME = {SIL:{},A:{jawOpen:0.9},E:{jawOpen:0.4,mouthStretch:0.7},I:{jawOpen:0.25,mouthStretch:0.55},O:{jawOpen:0.5,mouthPucker:0.65},U:{jawOpen:0.2,mouthPucker:0.95},M:{jawOpen:0,mouthPress:0.55},F:{jawOpen:0.12,mouthUpperUp:0.85},L:{jawOpen:0.35,mouthStretch:0.2},S:{jawOpen:0.15,mouthStretch:0.6},K:{jawOpen:0.45},R:{jawOpen:0.35,mouthPucker:0.35}};
 
   // Unified morph targets: expressions, speech and blinking blend smoothly.
@@ -1478,10 +1508,17 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       blink=phase>=1?0:Math.sin(phase*Math.PI);
       if(phase>=1)blinkAt=-1;
     }
+    var idleNow=updateIdle(dt);
+    if(idleAllowed() && idleNow && idleNow.emotion!=='idle'){
+      targets=Object.assign({},STATE[idleNow.emotion]||{});
+    }else if(idleAllowed() && !idleNow){
+      targets=Object.assign({},STATE.idle);
+    }else{apply();}
     updateMorph(dt);
     if(headBone&&baseRotation){
-      headBone.rotation.y=baseRotation.y+Math.sin(elapsed*.7)*.045;
-      headBone.rotation.x=baseRotation.x+Math.sin(elapsed*.5)*.025;
+      headBone.rotation.y=baseRotation.y+Math.sin(elapsed*.7)*.018+idleYaw;
+      headBone.rotation.x=baseRotation.x+Math.sin(elapsed*.5)*.012+idlePitch;
+      headBone.rotation.z=baseRotation.z+idleRoll;
     }
     renderer.render(scene,camera);
     raf=requestAnimationFrame(animate);
