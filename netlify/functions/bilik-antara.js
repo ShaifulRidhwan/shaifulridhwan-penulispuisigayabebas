@@ -130,8 +130,13 @@ async function callGemini({ apiKey, model, system, contents, maxTokens, timeoutM
       body: JSON.stringify({
         system_instruction: { parts: [{ text: system }] },
         contents: contents,
-        generationConfig: { temperature: 0.3, maxOutputTokens: maxTokens, responseMimeType: "application/json" }
-      }),
+        generationConfig: {
+  maxOutputTokens: Math.max(maxTokens, 64),
+  responseMimeType: "application/json",
+  thinkingConfig: {
+    thinkingLevel: "low"
+  }
+}
       signal: ctrl.signal
     });
     const dur = Date.now() - t0;
