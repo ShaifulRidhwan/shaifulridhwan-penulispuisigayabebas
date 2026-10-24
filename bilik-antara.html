@@ -1370,7 +1370,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   var faceEl = document.getElementById('aiFace');
   var canvas = document.getElementById('face3d');
   if(!faceEl || !canvas){ return; }
-  var renderer, scene, camera, skinMesh=null, headBone=null, MORPH={}, active=false, clock=new THREE.Clock();
+  var renderer, scene, camera, skinMesh=null, headBone=null, MORPH={}, active=false, clock=new THREE.Clock(), animationMixer=null, animationAction=null, modelRoot=null;
 
   // Pemetaan emosi asal (50+ nama) → 10 keadaan 3D
   var EMO = {
@@ -1437,7 +1437,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   function setViseme(v){curViseme=VISEME[v]?v:null;apply();}
   window.__araSetViseme=setViseme;
   function updateMorph(dt){
-    if(!skinMesh||!skinMesh.morphTargetInfluences)return;
+    if(!skinMesh||!skinMesh.morphTargetInfluences||!Object.keys(MORPH).length)return;
     var inf=skinMesh.morphTargetInfluences, blend=1-Math.exp(-dt*12);
     for(var name in MORPH){
       var i=MORPH[name], goal=targets[name]||0;
@@ -1460,15 +1460,18 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     function resize(){ var w=faceEl.clientWidth||200, h=faceEl.clientHeight||200; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
     resize(); if(window.ResizeObserver) new ResizeObserver(resize).observe(faceEl); else window.addEventListener('resize', resize);
     // Muat GLB Ara 3D Gen
-    new GLTFLoader().load('./ara-face.glb', function(gltf){
+    function installModel(gltf){
       var model = gltf.scene;
       model.traverse(function(o){
         if(o.isSkinnedMesh && o.morphTargetInfluences && !skinMesh){ skinMesh=o; }
-        if(o.isBone && /^head$/i.test(o.name)) headBone=o;
+        if(o.isBone && (/^head$/i.test(o.name)||/^CC_Base_Head(?:_\d+)?$/i.test(o.name))) headBone=o;
       });
       if(!skinMesh){ gltf.scene.traverse(function(o){ if(o.morphTargetInfluences && !skinMesh) skinMesh=o; }); }
       if(skinMesh && skinMesh.morphTargetDictionary) MORPH = skinMesh.morphTargetDictionary;
       if(!skinMesh){ console.log('Ara3D: tiada morph mesh — fallback SVG.'); return; }
+      modelRoot=model;
+      if(gltf.animations && gltf.animations.length){animationMixer=new THREE.AnimationMixer(model);animationAction=animationMixer.clipAction(gltf.animations[0]);animationAction.play();}
+      // Alina morph names are not ARKit-labelled. Keep its supplied facial animation until a verified mapping is available.
       // Original Ara GLB already contains a full body. Do not add duplicate geometry.
       model.position.set(0,0,0);
       model.updateMatrixWorld(true);
@@ -1490,7 +1493,12 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       apply();
       startRender();
       console.log('Ara3D: model dimuatkan, '+Object.keys(MORPH).length+' morph targets');
-    }, undefined, function(){ console.log('Ara3D: ara-face.glb tidak dijumpai — fallback SVG asal.'); });
+    }
+    var loader=new GLTFLoader();
+    loader.load('./ara-alina-optimized.glb',installModel,undefined,function(e){
+      console.warn('Ara3D: Alina asset not hosted yet, loading existing Ara model.',e);
+      loader.load('./ara-face.glb',installModel,undefined,function(){console.log('Ara3D: kedua-dua model tiada — fallback SVG asal.');});
+    });
     return true;
   }
   function startRender(){
@@ -1514,7 +1522,8 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     }else if(idleAllowed() && !idleNow){
       targets=Object.assign({},STATE.idle);
     }else{apply();}
-    updateMorph(dt);
+    if(animationMixer)animationMixer.update(dt);
+    if(!animationMixer || Object.keys(MORPH).length)updateMorph(dt);
     if(headBone&&baseRotation){
       headBone.rotation.y=baseRotation.y+Math.sin(elapsed*.7)*.018+idleYaw;
       headBone.rotation.x=baseRotation.x+Math.sin(elapsed*.5)*.012+idlePitch;
