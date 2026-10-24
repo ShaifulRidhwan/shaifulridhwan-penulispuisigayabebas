@@ -1,3 +1,7 @@
+[build]
+  command = "node scripts/prepare-ara-assets.mjs"
+  publish = "."
+
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
