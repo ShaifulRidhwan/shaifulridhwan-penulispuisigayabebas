@@ -25,7 +25,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=2/);
+ assert.match(html,/bilik-antara-voice\.js\?v=3/);
  assert.match(html,/bilik-antara\.css\?v=3/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
@@ -37,6 +37,35 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
  assert.doesNotMatch(js,/panel\.hidden=false/);
  assert.match(css,/\.voice-panel\[hidden\]\{display:none!important\}/);
  assert.match(css,/\.voice-wave/);
+});
+test("Casual Malay UI uses Cakap instead of technical Dikte",()=>{
+ assert.match(html,/>🎙 Cakap<\/button>/);
+ assert.match(html,/status\("ready","AI sedia"/);
+ assert.match(js,/dictate\.textContent="🎙 Cakap"/);
+ assert.match(js,/dictate\.textContent="■ Berhenti"/);
+ assert.doesNotMatch(html,/>🎙 Dikte<\/button>/);
+ assert.doesNotMatch(js,/textContent="🎙 Dikte"/);
+});
+test("Fallback from retired Gemini models uses current Gemini Live",async()=>{
+ const previous=process.env.GEMINI_LIVE_MODEL;
+ process.env.GEMINI_LIVE_MODEL="gemini-2.5-flash-native-audio-preview-09-2025";
+ process.env.GEMINI_API_KEY="test-only";
+ const originalFetch=global.fetch;
+ try{
+  global.fetch=async(_url,opts)=>{
+   const data=JSON.parse(opts.body);
+   assert.equal(data.liveConnectConstraints.model,"models/gemini-3.8-live");
+   return {ok:true,status:200,json:async()=>({name:"auth_tokens/model-validated"})};
+  };
+  const response=await handler(event("voice-old-model"));
+  assert.equal(response.statusCode,200);
+  assert.equal(JSON.parse(response.body).model,"gemini-3.8-live");
+ }finally{
+  global.fetch=originalFetch;
+  delete process.env.GEMINI_API_KEY;
+  if(previous===undefined)delete process.env.GEMINI_LIVE_MODEL;
+  else process.env.GEMINI_LIVE_MODEL=previous;
+ }
 });
 test("Live streaming uses ephemeral token with PCM input/output and transcription",()=>{
  assert.match(js,/bilik-antara-live-token/);
@@ -78,12 +107,12 @@ test("One-use ten-minute token broker never returns permanent API key",async()=>
   const res=await handler(event("voice-test-healthy"));
   assert.equal(res.statusCode,200);
   const data=JSON.parse(res.body);
-  assert.equal(data.model,"gemini-2.5-flash-native-audio-preview-09-2025");
+  assert.equal(data.model,"gemini-3.8-live");
   assert.equal(data.token,"auth_tokens/unit-test-voice-token");
   assert.equal(data.durationSeconds,600);
   assert.ok(!res.body.includes("fake-permanent-api-key-test"));
   assert.equal(request.body.uses,1);
-  assert.equal(request.body.liveConnectConstraints.model,"models/gemini-2.5-flash-native-audio-preview-09-2025");
+  assert.equal(request.body.liveConnectConstraints.model,"models/gemini-3.8-live");
   const ttl=new Date(request.body.expireTime)-new Date(request.body.newSessionExpireTime);
   assert.ok(ttl<=10*60*1000&&ttl>=8*60*1000);
   assert.equal(request.opts.headers["x-goog-api-key"],"fake-permanent-api-key-test");
@@ -106,7 +135,7 @@ test("Token broker retries unscoped one-use token after Google rejects optional 
   assert.equal(res.statusCode,200);
   assert.equal(JSON.parse(res.body).token,"auth_tokens/test-retry");
   assert.equal(sent.length,2);
-  assert.equal(sent[0].liveConnectConstraints.model,"models/gemini-2.5-flash-native-audio-preview-09-2025");
+  assert.equal(sent[0].liveConnectConstraints.model,"models/gemini-3.8-live");
   assert.equal(sent[1].uses,1);
   assert.ok(!Object.hasOwn(sent[1],"liveConnectConstraints"));
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
