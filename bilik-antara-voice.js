@@ -11,7 +11,7 @@ if(!dictate||!liveButton||!auto||!panel||!status||!transcript||!stopButton||!mic
 const ENDPOINT="/.netlify/functions/bilik-antara-live-token";
 const SOCKET_BASE="wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=";
 const MAX_SESSION=10*60*1000;
-let recognizer=null,dictating=false,readUtterance=null,readEnabled=true,liveGeneration=0;
+let recognizer=null,dictating=false,readUtterance=null,liveGeneration=0;
 let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null;
 let liveActive=false,liveReady=false,micEnabled=true,speakerEnabled=true;
 let startAbort=null,sessionTimer=null,nextAudioTime=0,playSources=new Set(),lastTurn=null;
@@ -151,8 +151,10 @@ async function closeLive(reason){
   if(micSource){try{micSource.disconnect();}catch(e){}micSource=null;}
   if(micSink){try{micSink.disconnect();}catch(e){}micSink=null;}
   if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;}
-  if(micContext){const ctx=micContext;micContext=null;try{await ctx.close();}catch(e){}}
-  if(playContext){const ctx=playContext;playContext=null;try{await ctx.close();}catch(e){}}
+  const closingMic=micContext,closingPlayback=playContext;
+  micContext=null;playContext=null;
+  if(closingMic)try{await closingMic.close();}catch(e){}
+  if(closingPlayback)try{await closingPlayback.close();}catch(e){}
   lastTurn=null;
   setWave(0);setButtonState();
   if(reason)liveButton.title=reason;
@@ -243,7 +245,7 @@ function onServerMessage(payload){
 async function startLive(){
   if(liveActive)return;
   if(!window.isSecureContext||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||
-     !window.AudioContext||!window.AudioWorkletNode||!window.WebSocket){
+     !(window.AudioContext||window.webkitAudioContext)||!window.AudioWorkletNode||!window.WebSocket){
     liveButton.title="Voice Live memerlukan HTTPS dan pelayar yang menyokong Web Audio.";
     sayStatus("Pelayar ini tidak menyokong Voice Live.");
     panel.hidden=false;return;
@@ -255,11 +257,12 @@ async function startLive(){
   const generation=++liveGeneration;
   try{
     // Request microphone while we still have a direct user gesture.
-    mediaStream=await navigator.mediaDevices.getUserMedia({
+    const stream=await navigator.mediaDevices.getUserMedia({
       audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},
       video:false
     });
-    if(generation!==liveGeneration){mediaStream.getTracks().forEach(t=>t.stop());return;}
+    if(generation!==liveGeneration){stream.getTracks().forEach(t=>t.stop());return;}
+    mediaStream=stream;
     const Audio=window.AudioContext||window.webkitAudioContext;
     micContext=new Audio({latencyHint:"interactive"});
     playContext=new Audio({latencyHint:"interactive"});
