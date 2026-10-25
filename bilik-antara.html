@@ -343,6 +343,33 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
 }
 
 @media(prefers-reduced-motion:reduce){#cosmos{display:none!important}.ai-face *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* Bilik Antara Intelligence v2: modes, local privacy controls, grounded source links */
+.intelligence-panel{position:relative;z-index:2;max-width:38rem;margin:.3rem auto .8rem;padding:0 .9rem}
+.insight-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45rem}
+.insight-option{min-width:0;border:1px solid var(--hairline);background:var(--surface);color:var(--silver-dim);
+ padding:.58rem .25rem;border-radius:9px;display:flex;flex-direction:column;align-items:center;gap:.2rem;
+ transition:background .2s,border-color .2s,color .2s;cursor:pointer}
+.insight-option strong{font-family:var(--font-display);font-weight:600;font-size:.87rem;letter-spacing:.025em}
+.insight-option small{font-family:var(--font-body);font-size:.62rem;color:var(--silver-faint)}
+.insight-option.active,.insight-option[aria-pressed="true"]{border-color:var(--cyan);background:var(--cyan-soft);color:var(--cyan)}
+.insight-option.active small{color:var(--silver)}
+.insight-option:hover,.insight-option:focus-visible{border-color:var(--cyan)}
+.session-controls{display:flex;flex-wrap:wrap;gap:.4rem .95rem;align-items:center;justify-content:center;margin-top:.75rem}
+.session-controls label,.session-controls button{font-size:.67rem;line-height:1.5;color:var(--silver-dim);cursor:pointer}
+.session-controls input[type=checkbox]{accent-color:var(--cyan);vertical-align:middle}
+.session-controls .attach-label,.session-controls button{border:1px solid var(--hairline);padding:.24rem .5rem;border-radius:5px;background:var(--surface)}
+.session-controls .attach-label:hover,.session-controls button:hover{border-color:var(--cyan-line);color:var(--cyan)}
+.session-controls button:disabled{opacity:.5;cursor:wait}
+.document-status{font-size:.66rem;color:var(--cyan);text-align:center;margin-top:.35rem}
+.document-status:empty{display:none}
+.privacy-note{font-size:.61rem;color:var(--silver-faint);line-height:1.6;text-align:center;margin:.55rem auto 0;max-width:58ch}
+.ai-sources{border-top:1px solid var(--hairline);margin-top:.65rem;padding-top:.55rem;display:flex;flex-wrap:wrap;gap:.35rem}
+.ai-sources .sources-label{flex-basis:100%;font-family:var(--font-mono);font-size:.57rem;color:var(--silver-faint)}
+.ai-sources a{font-size:.69rem;line-height:1.5;color:var(--cyan);text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
+.ai-sources a:hover{color:var(--silver)}
+@media(max-width:640px){.intelligence-panel{padding:0 .55rem}.insight-option{padding:.55rem .15rem}.insight-option strong{font-size:.81rem}.insight-option small{font-size:.57rem}.session-controls{gap:.4rem .7rem}}
+
 </style>
 </head>
 <body>
@@ -371,6 +398,23 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
     <div class="hero-sub">Falsafah · Sastera · Teknologi · Kehidupan</div>
     <div class="rule"></div>
     <p class="hero-intro">Ruang kecerdasan buatan Shaiful Ridhwan untuk berbual dan berfikir. Aku jawab santai, jujur, dan sedikit sindiran halus.</p>
+  </section>
+
+  <section class="intelligence-panel" aria-label="Tetapan kecerdasan Bilik Antara">
+    <div class="insight-modes" role="group" aria-label="Pilih cara jawapan AI">
+      <button type="button" class="insight-option active" data-insight="bual" aria-pressed="true"><strong>Bual</strong><small>Santai &amp; pantas</small></button>
+      <button type="button" class="insight-option" data-insight="bedah" aria-pressed="false"><strong>Bedah</strong><small>Uji hujah</small></button>
+      <button type="button" class="insight-option" data-insight="selidik" aria-pressed="false"><strong>Selidik</strong><small>Bukti &amp; sumber</small></button>
+    </div>
+    <div class="session-controls">
+      <label><input type="checkbox" id="useWorks"> Rujuk karya</label>
+      <label><input type="checkbox" id="rememberChat"> Simpan sesi pada peranti</label>
+      <label class="attach-label" for="documentUpload">Lampir teks</label>
+      <input type="file" id="documentUpload" accept=".txt,.md,.csv,text/plain,text/markdown,text/csv" hidden>
+      <button type="button" id="clearChat">Padam sesi</button>
+    </div>
+    <p id="docStatus" class="document-status" role="status" aria-live="polite"></p>
+    <p class="privacy-note">Sembang tidak disimpan pada peranti melainkan diaktifkan. Mesej dihantar kepada penyedia AI untuk dijawab. Mod Selidik mungkin menggunakan kuota carian tambahan.</p>
   </section>
 
   <div class="banner connecting" id="statusBanner" role="status">
@@ -415,7 +459,7 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
 
 <div class="composer-wrap">
   <form class="composer" id="composer" autocomplete="off">
-    <textarea id="input" rows="1" placeholder="Tulis apa-apa yang ingin dibincangkan…" aria-label="Mesej anda" maxlength="800"></textarea>
+    <textarea id="input" rows="1" placeholder="Tulis apa-apa yang ingin dibincangkan…" aria-label="Mesej anda" maxlength="1600"></textarea>
     <button type="submit" class="send-btn" id="sendBtn" disabled aria-label="Hantar mesej">
       <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2" fill="currentColor" stroke="none"/></svg>
     </button>
