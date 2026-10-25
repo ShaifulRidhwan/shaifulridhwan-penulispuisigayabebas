@@ -68,7 +68,7 @@ Output JSON sah sahaja: { "mode":"general", "reply":"...", "quotes":[], "disclai
 const SITE_ORIGIN = "https://shaifulridhwan-penulispuisigayabebas.netlify.app";
 function allowedOrigin(origin) {
   if (!origin) return true; // Server-side requests may not send Origin.
-  const configured = (process.env.ALLOWED_ORIGIN || SITE_ORIGIN).replace(/\\/$/, "");
+  const configured = (process.env.ALLOWED_ORIGIN || SITE_ORIGIN).trim();
   return origin === configured;
 }
 function corsHeaders() {
