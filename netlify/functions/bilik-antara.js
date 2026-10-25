@@ -65,11 +65,19 @@ KEPASTIAN & BATAS:
 
 Output JSON sah sahaja: { "mode":"general", "reply":"...", "quotes":[], "disclaimer":"" }.`;
 
+const SITE_ORIGIN = "https://shaifulridhwan-penulispuisigayabebas.netlify.app";
+function allowedOrigin(origin) {
+  if (!origin) return true; // Server-side requests may not send Origin.
+  const configured = (process.env.ALLOWED_ORIGIN || SITE_ORIGIN).trim();
+  return origin === configured;
+}
 function corsHeaders() {
   return {
-    "Access-Control-Allow-Origin": process.env.ALLOWED_ORIGIN || "*",
+    "Access-Control-Allow-Origin": process.env.ALLOWED_ORIGIN || SITE_ORIGIN,
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Vary": "Origin",
+    "Cache-Control": "no-store",
     "Content-Type": "application/json; charset=utf-8"
   };
 }
@@ -78,6 +86,10 @@ function log(msg, extra) { console.log("[bilik-antara] " + msg + (extra ? " " + 
 const rl = new Map();
 function rateLimited(ip) {
   const now = Date.now(), WIN = 60000, MAX = 12;
+  if (rl.size > 1000) {
+    for (const [key, value] of rl) if (now - value.start > WIN) rl.delete(key);
+    if (rl.size > 1000) rl.clear();
+  }
   const e = rl.get(ip);
   if (!e || now - e.start > WIN) { rl.set(ip, { count: 1, start: now }); return false; }
   e.count++;
@@ -135,6 +147,8 @@ function geminiErrorMsg(code) {
 exports.handler = async (event) => {
   const started = Date.now();
   const H = corsHeaders();
+  const requestOrigin = event.headers && (event.headers.origin || event.headers.Origin);
+  if (!allowedOrigin(requestOrigin)) return { statusCode: 403, headers: H, body: JSON.stringify({ error: "Origin not allowed" }) };
   if (event.httpMethod === "OPTIONS") return { statusCode: 204, headers: H, body: "" };
   if (event.httpMethod !== "POST") return { statusCode: 405, headers: H, body: JSON.stringify({ error: "Method not allowed" }) };
   let payload;
