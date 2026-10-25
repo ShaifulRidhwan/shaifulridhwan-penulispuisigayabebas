@@ -15,6 +15,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&display=swap" rel="stylesheet">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
 <link rel="stylesheet" href="bilik-antara-cinematic.css?v=1">
+<link rel="stylesheet" href="bilik-antara-editorial-glass.css?v=1">
 
 </head>
 <body>
@@ -37,13 +38,15 @@
  <main class="app-shell">
   <section class="identity" aria-label="Identiti Bilik Antara">
    <div class="eyebrow">Ruang di antara cahaya &amp; gelap</div>
-   <h1><span>Bilik</span> <em>Antara.</em></h1>
-   <p class="intro">Di antara cahaya dan gelap, setiap jawapan wajar dipersoalkan.</p>
-   <div class="signature">Aku, Kecerdasan Buatan</div>
+   <h1><span>Bilik</span> <em>Antara</em></h1>
+   <div class="chapter-ornament" aria-hidden="true"><span>✦</span></div>
+   <div class="signature">Aku, Kecerdasan Buatan.</div>
+   <p class="intro">Di antara cahaya dan gelap, kebenaran bukan sekadar sesuatu yang dijawab. Ia sesuatu yang mesti diuji.</p>
   </section>
   <section class="conversation" aria-label="Ruang perbualan">
    <header class="conversation-head">
-    <div class="conversation-heading"><strong>Ruang Perbualan</strong><small>ANTARA CAHAYA DAN GELAP</small></div>
+    <div class="channel-seal" aria-hidden="true"></div>
+    <div class="conversation-heading"><strong>Saluran Antara</strong><small>RUANG KECERDASAN BUATAN</small></div>
     <div class="chat-controls">
      <div class="connection" id="connection" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="connectionText">Memeriksa…</span></div>
      <details class="settings" id="settingsPanel">
@@ -276,7 +279,7 @@ function renderExtras(bubble,data){
  if(data.disclaimer)bubble.appendChild(elem("div","aside-note",String(data.disclaimer).slice(0,450)));
 }
 function welcome(){
- addMessage("assistant","Aku Bilik Antara. Bawa persoalan kau ke sini. Kita uji logiknya, bezakan fakta daripada andaian, dan bongkar apa yang tidak tahan dipersoalkan.");
+ addMessage("assistant","Aku Bilik Antara. Bawa hujah atau persoalan kau. Aku akan semak logik, cari bukti apabila perlu, dan jawab terus terang. Kalau premisnya bocor, aku takkan pura-pura tak nampak.");
 }
 function renderHistory(){
  ui.chat.textContent="";
