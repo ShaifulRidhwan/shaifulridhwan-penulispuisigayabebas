@@ -59,4 +59,4 @@ ear_ring('ARA_ANDROID_EAR_CORE',1.55,.95,dark,x=-13.8)
 j['buffers'][0]['byteLength']=len(b);raw=json.dumps(j,separators=(',',':')).encode();raw+=b' '*((-len(raw))%4)
 out=struct.pack('<4sII',b'glTF',2,12+8+len(raw)+8+len(b))+struct.pack('<I4s',len(raw),b'JSON')+raw+struct.pack('<I4s',len(b),b'BIN\x00')+b
 Path(dst).write_bytes(out)
-print('ARA android model v29: left-side temple and external ear:,len(data),'->',len(out),'head bone',head)
+print('ARA android model v30: left-side temple and external ear:',len(data),'->',len(out),'head bone',head)
