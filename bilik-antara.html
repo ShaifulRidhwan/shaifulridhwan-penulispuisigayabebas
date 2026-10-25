@@ -1599,7 +1599,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         while(nextIndex<manifest.parts){
           var i=nextIndex++;
           var filename='part-'+String(i).padStart(3,'0')+'.bin';
-          var response=await fetch('./ara-assets/'+(manifest.version==='v3'?'v3/':manifest.version==='v2'?'v2/':'')+filename,{cache:'force-cache'});
+          var response=await fetch('./ara-assets/'+(manifest.version==='v4'?'v4/':manifest.version==='v3'?'v3/':manifest.version==='v2'?'v2/':'')+filename,{cache:'force-cache'});
           if(!response.ok)throw Error(filename+' HTTP '+response.status);
           var data=new Uint8Array(await response.arrayBuffer());
           var offset=i*chunkSize;
