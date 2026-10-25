@@ -31,8 +31,8 @@ async function checkLiveAudio(token, model) {
     encodeURIComponent(token);
   await new Promise((resolve, reject) => {
     const ws = new WebSocket(url);
-    let configured = false, hasAudio = false, settled = false;
-    const timer = setTimeout(() => finish(Error("Gemini Live audio response timed out")), 45000);
+    let configured = false, hasAudio = false, settled = false, opened = false, seen = 0;
+    const timer = setTimeout(() => finish(Error("Gemini Live timed out (socket-open=" + opened + ", setup-complete=" + configured + ", messages=" + seen + ", audio=" + hasAudio + ")")), 45000);
     function finish(error) {
       if (settled) return;
       settled = true;
@@ -42,6 +42,8 @@ async function checkLiveAudio(token, model) {
       else resolve();
     }
     ws.addEventListener("open", () => {
+      opened = true;
+      log("Gemini Live WebSocket open event");
       ws.send(JSON.stringify({
         setup: {
           model: "models/" + model,
@@ -55,8 +57,11 @@ async function checkLiveAudio(token, model) {
       }));
     });
     ws.addEventListener("message", event => {
+      seen++;
+      if (seen <= 2) log("Gemini Live message received: data-type=" + typeof event.data);
       let packet;
-      try { packet = JSON.parse(String(event.data)); } catch (_) { return; }
+      try { packet = JSON.parse(String(event.data)); } catch (_) { if (seen <= 2) log("Gemini Live message was not JSON text"); return; }
+      if (seen <= 2) log("Gemini Live packet fields=" + Object.keys(packet).join(","));
       if (packet.setupComplete && !configured) {
         configured = true;
         log("Gemini Live WebSocket setupComplete diterima");
@@ -87,7 +92,7 @@ async function main() {
   assert.equal(probe.ok, true);
   log("Probe Netlify: backend tersedia (ini belum mengesahkan Gemini)");
   const failures = [];
-  try {
+  if (process.env.SKIP_GEMINI_TEXT !== "1") try {
     const answer = await post("/.netlify/functions/bilik-antara", {
       question:"Berikan satu ayat ringkas tentang hubungan antara akal dan bukti."
     }, 50000);
