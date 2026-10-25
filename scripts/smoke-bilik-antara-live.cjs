@@ -86,18 +86,31 @@ async function main() {
   const probe = await post("/.netlify/functions/bilik-antara", {probe:true}, 25000);
   assert.equal(probe.ok, true);
   log("Probe Netlify: backend tersedia (ini belum mengesahkan Gemini)");
-  const answer = await post("/.netlify/functions/bilik-antara", {
-    question:"Berikan satu ayat ringkas tentang hubungan antara akal dan bukti."
-  }, 50000);
-  assert.equal(answer.mode, "live");
-  assert.ok(typeof answer.reply === "string" && answer.reply.trim().length > 2);
-  log("Gemini generateContent: jawapan sebenar diterima; " + answer.reply.trim().length + " aksara");
-  const ticket = await post("/.netlify/functions/bilik-antara-live-token", {}, 30000);
-  assert.ok(typeof ticket.token === "string" && ticket.token.length > 10);
-  assert.match(ticket.model, /^gemini-3\.8-live/);
-  log("Token sementara Gemini Live dikeluarkan tanpa mendedahkan token");
-  await checkLiveAudio(ticket.token, ticket.model);
-  log("Gemini Live: sambungan, setup, dan balasan audio sebenar berjaya");
+  const failures = [];
+  try {
+    const answer = await post("/.netlify/functions/bilik-antara", {
+      question:"Berikan satu ayat ringkas tentang hubungan antara akal dan bukti."
+    }, 50000);
+    assert.equal(answer.mode, "live");
+    assert.ok(typeof answer.reply === "string" && answer.reply.trim().length > 2);
+    log("Gemini generateContent: jawapan sebenar diterima; " + answer.reply.trim().length + " aksara");
+  } catch (error) {
+    log("Gemini generateContent belum lulus: " + String(error.message || error).slice(0, 180));
+    failures.push("Gemini text");
+  }
+  try {
+    const ticket = await post("/.netlify/functions/bilik-antara-live-token", {}, 30000);
+    assert.ok(typeof ticket.token === "string" && ticket.token.length > 10);
+    assert.match(ticket.model, /^gemini-3\.8-live/);
+    log("Token sementara Gemini Live dikeluarkan tanpa mendedahkan token");
+    await checkLiveAudio(ticket.token, ticket.model);
+    log("Gemini Live: sambungan, setup, dan balasan audio sebenar berjaya");
+  } catch (error) {
+    log("Gemini Live belum lulus: " + String(error.message || error).slice(0, 180));
+    failures.push("Gemini Live");
+  }
+  if (failures.length) throw Error("Semakan belum lulus: " + failures.join(", "));
+
 }
 main().catch(error => {
   console.error("[Bilik Antara] Ujian gagal: " + String(error && error.message || error).slice(0, 260));
