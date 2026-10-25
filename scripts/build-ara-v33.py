@@ -23,17 +23,18 @@ def add_accessor(arr,component,typ,target):
  if typ=='VEC3' and component==5126:
   a['min']=arr.min(axis=0).tolist();a['max']=arr.max(axis=0).tolist()
  ai=len(j['accessors']);j['accessors'].append(a);return ai
-def mat(name,color,metal,rough,em=None):
+def mat(name,color,metal,rough,em=None,fade=False):
  d={'name':name,'pbrMetallicRoughness':{'baseColorFactor':color,'metallicFactor':metal,'roughnessFactor':rough},'doubleSided':True}
  if em:d['emissiveFactor']=em
+ if fade:d['alphaMode']='BLEND';d['alphaCutoff']=0.0
  j['materials'].append(d);return len(j['materials'])-1
-graphite=mat('ARA_V33_GRAPHITE',[.038,.078,.108,1],.72,.3)
-titanium=mat('ARA_V33_TITANIUM',[.17,.27,.33,1],.8,.24)
-cyan=mat('ARA_V33_CYAN',[.02,.7,.78,1],.22,.32,[.02,.52,.67])
+graphite=mat('ARA_V33_GRAPHITE',[.038,.078,.108,1],.72,.3,fade=True)
+titanium=mat('ARA_V33_TITANIUM',[.17,.27,.33,1],.8,.24,fade=True)
+cyan=mat('ARA_V33_CYAN',[.02,.7,.78,1],.22,.32,[.02,.52,.67],fade=True)
 # The overlay is copied from the ACTUAL skinned source mesh. Original
 # JOINTS_0, WEIGHTS_0, UVs and normals are retained; the new shell follows
 # skinning and contours instead of floating as flat geometric rectangles.
-def overlay(mesh_id,name,select,material,offset=.45):
+def overlay(mesh_id,name,select,material,offset=.45,opacity=None):
  node_id=next(i for i,node in enumerate(j['nodes']) if node.get('mesh')==mesh_id)
  prim=j['meshes'][mesh_id]['primitives'][0]
  attrs=prim['attributes'];pos=accessor_data(attrs['POSITION'])
@@ -49,6 +50,11 @@ def overlay(mesh_id,name,select,material,offset=.45):
  newpos=add_accessor(moved,5126,'VEC3',34962)
  newidx=add_accessor(selected.astype('<u4').reshape(-1,1),5125,'SCALAR',34963)
  newattrs=dict(attrs);newattrs['POSITION']=newpos
+ if opacity is not None:
+  a=np.clip(opacity(pos),0,1).astype('<f4')
+  # Feather mesh edges rather than showing jagged triangles.
+  colors=np.ones((len(pos),4),dtype='<f4');colors[:,3]=a
+  newattrs['COLOR_0']=add_accessor(colors,5126,'VEC4',34962)
  mesh=len(j['meshes']);j['meshes'].append({'name':name,'primitives':[{'attributes':newattrs,'indices':newidx,'material':material}]})
  old=j['nodes'][node_id]
  newnode={'name':name,'mesh':mesh}
@@ -63,12 +69,23 @@ def overlay(mesh_id,name,select,material,offset=.45):
    if node_id in scene.get('nodes',[]):scene['nodes'].append(ni);break
  else:j['nodes'][parent]['children'].append(ni)
  print(name,'faces',len(selected))
-overlay(1,'ARA_ANDROID_FACE_SIDE',lambda c:(c[:,0]<-7)&(c[:,1]>157)&(c[:,1]<174)&(c[:,2]>0),titanium,.42)
-overlay(1,'ARA_ANDROID_FACE_TRACE',lambda c:(c[:,0]<-7.4)&(c[:,1]>160)&(c[:,1]<172)&(c[:,2]>0),cyan,.62)
-overlay(3,'ARA_ANDROID_SHOULDERS',lambda c:(abs(c[:,0])>13)&(abs(c[:,0])<28)&(c[:,1]>135)&(c[:,1]<149)&(c[:,2]>-1),titanium,.38)
-
-overlay(2,'ARA_ANDROID_NECK',lambda c:(abs(c[:,0])<10)&(c[:,1]>136)&(c[:,1]<149)&(c[:,2]>3),graphite,.5)
-overlay(7,'ARA_ANDROID_CHEST_ARMOR',lambda c:(abs(c[:,0])<14)&(c[:,1]>115)&(c[:,1]<137)&(c[:,2]>8),graphite,.38)
+# Soft falloff makes armor follow the actual face/shoulder curvature
+# without polygon-cut edges. Keep face, eyes, lips and central forehead clear.
+def smoothstep(a,b,x):
+ t=np.clip((x-a)/(b-a),0,1)
+ return t*t*(3-2*t)
+def face_alpha(p):
+ x,y,z=p.T
+ return smoothstep(-5.2,-8.8,x)*smoothstep(154,161,y)*(1-smoothstep(172,177,y))*smoothstep(-1,6,z)
+def shoulder_alpha(p):
+ x,y,z=p.T;ax=np.abs(x)
+ return smoothstep(10,17,ax)*(1-smoothstep(25,31,ax))*smoothstep(132,140,y)*(1-smoothstep(147,152,y))*smoothstep(-5,2,z)
+def chest_alpha(p):
+ x,y,z=p.T;ax=np.abs(x)
+ return (1-smoothstep(10,17,ax))*smoothstep(111,118,y)*(1-smoothstep(134,141,y))*smoothstep(3,11,z)
+overlay(1,'ARA_ANDROID_FACE_SIDE',lambda c:(c[:,0]<-5)&(c[:,1]>153)&(c[:,1]<177)&(c[:,2]>-1),titanium,.25,face_alpha)
+overlay(3,'ARA_ANDROID_SHOULDERS',lambda c:(abs(c[:,0])>10)&(abs(c[:,0])<31)&(c[:,1]>132)&(c[:,1]<152)&(c[:,2]>-5),titanium,.26,shoulder_alpha)
+overlay(7,'ARA_ANDROID_CHEST_ARMOR',lambda c:(abs(c[:,0])<17)&(c[:,1]>111)&(c[:,1]<141)&(c[:,2]>3),graphite,.23,chest_alpha)
 
 # Reveal the cybernetic temple without hiding the rest of the hair.
 for mi,m in enumerate(j['meshes']):
