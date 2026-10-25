@@ -37,12 +37,12 @@ button,a,summary,input,textarea{outline-offset:4px}
 :focus-visible{outline:2px solid var(--blue);outline-offset:3px}
 ::selection{background:var(--gold);color:var(--bg)}
 body::before{
- content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+ content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
  background:radial-gradient(ellipse 47% 58% at 16% 40%,rgba(196,170,117,.105),transparent 75%),
  radial-gradient(ellipse 49% 63% at 90% 68%,rgba(94,141,169,.095),transparent 76%);
 }
 html[data-theme=light] body::before{background:radial-gradient(ellipse 45% 55% at 16% 42%,rgba(239,188,113,.13),transparent 75%),radial-gradient(ellipse 50% 70% at 88% 72%,rgba(115,164,186,.09),transparent 80%)}
-.shell{position:relative;min-height:100dvh;display:flex;flex-direction:column}
+.shell{position:relative;z-index:1;min-height:100dvh;display:flex;flex-direction:column}
 .topbar{height:76px;flex:none;width:100%;padding:0 clamp(18px,3.5vw,62px);display:flex;align-items:center;justify-content:space-between;gap:18px;border-bottom:1px solid var(--line);position:relative;z-index:10}
 .brand{display:flex;align-items:center;gap:12px;white-space:nowrap}
 .brand-mark{width:37px;height:37px;display:grid;place-items:center;border:1px solid var(--line);border-radius:50%;font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:-.09em;font-weight:700}
@@ -125,6 +125,11 @@ h1,h2,p{margin:0}
 .bubble{border:1px solid var(--line);border-radius:14px;border-bottom-left-radius:4px;background:var(--bubble);padding:13px 16px;font-size:13px;line-height:1.85;overflow-wrap:anywhere;max-width:100%}
 .message.user .bubble{background:var(--user);border-bottom-left-radius:14px;border-bottom-right-radius:4px}
 .bubble p+p{margin-top:12px}
+.message-paragraph{white-space:pre-wrap}
+.formatted-list{margin:10px 0;padding-left:22px}
+.formatted-list li{margin:4px 0}
+.code-block{white-space:pre;overflow-x:auto;max-width:100%;padding:13px 14px;margin:12px 0;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);font:12px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:2}
+.inline-code{font:12px ui-monospace,SFMono-Regular,Consolas,monospace;background:var(--pane2);padding:2px 5px;border-radius:3px}
 .bubble strong{font-weight:700;color:var(--ink)}
 .bubble a{color:var(--blue);text-decoration:underline;text-underline-offset:3px}
 .bubble .aside-note{font-size:10px;color:var(--faint);border-top:1px solid var(--line);margin-top:12px;padding-top:9px}
@@ -154,6 +159,8 @@ h1,h2,p{margin:0}
 .composer-area{flex:none;background:var(--pane);border-top:1px solid var(--line);padding:13px 16px 14px}
 #docStatus{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--blue);padding:0 4px 7px;min-height:0}
 #docStatus:empty{display:none}
+#removeAttachment:not([hidden]){display:inline-flex;align-items:center;gap:5px;margin:0 0 9px 4px;padding:3px 8px;border:1px solid var(--line);border-radius:9px;background:transparent;color:var(--muted);cursor:pointer}
+#removeAttachment:hover{border-color:var(--gold);color:var(--gold)}
 #removeAttachment{font-size:12px;border:0;background:none;color:var(--muted);padding:0 4px}
 #removeAttachment[hidden]{display:none}
 .composer{display:flex;gap:9px;align-items:flex-end;border:1px solid var(--line);border-radius:13px;padding:6px;background:var(--pane2);transition:border-color .2s,box-shadow .2s}
