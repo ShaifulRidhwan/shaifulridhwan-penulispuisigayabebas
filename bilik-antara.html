@@ -1545,7 +1545,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       // Original Ara GLB already contains a full body. Do not add duplicate geometry.
       model.position.set(0,0,0);
       model.updateMatrixWorld(true);
+      // Keep portrait framing based on the human avatar, not new android ornaments.
+      var androidParts=[];
+      model.traverse(function(obj){if(obj.isMesh && /^ARA_ANDROID_/.test(obj.name)){androidParts.push(obj);obj.visible=false;}});
       const bounds=new THREE.Box3().setFromObject(model);
+      androidParts.forEach(function(obj){obj.visible=true;});
       const size=new THREE.Vector3();
       const center=new THREE.Vector3();
       bounds.getSize(size);bounds.getCenter(center);
@@ -1599,7 +1603,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         while(nextIndex<manifest.parts){
           var i=nextIndex++;
           var filename='part-'+String(i).padStart(3,'0')+'.bin';
-          var response=await fetch('./ara-assets/'+(manifest.version==='v4'?'v4/':manifest.version==='v3'?'v3/':manifest.version==='v2'?'v2/':'')+filename,{cache:'force-cache'});
+          var response=await fetch('./ara-assets/'+(manifest.version==='v5'?'v5/':manifest.version==='v4'?'v4/':manifest.version==='v3'?'v3/':manifest.version==='v2'?'v2/':'')+filename,{cache:'force-cache'});
           if(!response.ok)throw Error(filename+' HTTP '+response.status);
           var data=new Uint8Array(await response.arrayBuffer());
           var offset=i*chunkSize;
