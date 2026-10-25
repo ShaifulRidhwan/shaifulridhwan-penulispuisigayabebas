@@ -12,7 +12,7 @@ const cache=new Map();
 let tokenCache=null;
 function canonicalHandle(value){
   if(typeof value!=="string")return null;
-  const v=value.trim().replace(/^@/,"");
+  const v=value.trim().replace(/^@/,"").replace(/[.,;!?]+$/,"");
   return /^[A-Za-z0-9._]{2,24}$/.test(v)&&!v.endsWith(".")?v:null;
 }
 function extractTikTokHandle(message){
