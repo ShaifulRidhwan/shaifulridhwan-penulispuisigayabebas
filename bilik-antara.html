@@ -1381,6 +1381,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   if(!faceEl || !canvas){ return; }
   var renderer, scene, camera, skinMesh=null, headBone=null, MORPH={}, active=false, clock=new THREE.Clock(), animationMixer=null, animationAction=null, modelRoot=null;
   var cyberTrim=[],cyberPulse=0,cyberAura=null;
+  var cyberRig=null,cyberHalo=null,cyberGlowMaterials=[];
 
   // Pemetaan emosi asal (50+ nama) → 10 keadaan 3D
   var EMO = {
@@ -1518,6 +1519,39 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         camera.position.set(center.x,lookY,center.z+Math.max(0.4,distance));
         camera.lookAt(center.x,lookY,center.z);
       }
+      // Cybernetic armor accents anchored to the animated chest region.
+      // Lightweight primitives, no external textures and no change to the original skeleton.
+      var upperHeight=size.y*0.38;
+      var shoulderY=bounds.max.y-upperHeight*0.48;
+      var unit=Math.max(0.03,Math.min(0.22,size.x*0.17));
+      cyberRig=new THREE.Group();
+      var cyan=new THREE.MeshBasicMaterial({color:0x56fff0,transparent:true,opacity:0.82,depthWrite:false});
+      var armor=new THREE.MeshStandardMaterial({color:0x172b3a,metalness:0.68,roughness:0.3,side:THREE.DoubleSide});
+      cyberGlowMaterials.push(cyan);
+      function cyberLine(points,radius,mat){
+        var curve=new THREE.CatmullRomCurve3(points.map(function(p){return new THREE.Vector3(p[0],p[1],p[2]);}));
+        var mesh=new THREE.Mesh(new THREE.TubeGeometry(curve,Math.max(8,points.length*5),radius,5,false),mat);
+        cyberRig.add(mesh);return mesh;
+      }
+      // Minimal collar armor, side shoulder nodes and glowing circuit pathways.
+      var y=shoulderY,front=center.z+size.z*0.28;
+      [-1,1].forEach(function(side){
+        var x=center.x+side*unit*1.25;
+        var plate=new THREE.Mesh(new THREE.BoxGeometry(unit*0.95,unit*0.16,unit*0.3),armor);
+        plate.position.set(x,y+unit*0.9,front-unit*0.32);
+        plate.rotation.z=side*0.22;cyberRig.add(plate);
+        cyberLine([[center.x+side*unit*0.35,y+unit*1.22,front],[x,y+unit*0.96,front],[x+side*unit*0.2,y+unit*0.35,front]],unit*0.035,cyan);
+        cyberLine([[x,y+unit*0.35,front],[x-side*unit*0.22,y-unit*0.45,front+unit*0.12]],unit*0.022,cyan);
+      });
+      cyberLine([[center.x-unit*0.22,y+unit*0.28,front+unit*0.04],[center.x,y+unit*0.06,front+unit*0.08],[center.x+unit*0.22,y+unit*0.28,front+unit*0.04]],unit*0.03,cyan);
+      scene.add(cyberRig);
+      // Soft holographic data halo behind the avatar, not around the face.
+      var haloMat=new THREE.MeshBasicMaterial({color:0x39dfd7,transparent:true,opacity:0.3,side:THREE.DoubleSide,depthWrite:false});
+      cyberGlowMaterials.push(haloMat);
+      cyberHalo=new THREE.Mesh(new THREE.TorusGeometry(unit*3.1,unit*0.018,5,80),haloMat);
+      cyberHalo.position.set(center.x,y+unit*0.25,center.z-size.z*0.45);
+      cyberHalo.rotation.x=0.28;
+      scene.add(cyberHalo);
       if(headBone) baseRotation=headBone.rotation.clone();
       scene.add(model);
       active = true;
@@ -1614,6 +1648,11 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     cyberPulse+=(glowTarget-cyberPulse)*Math.min(1,dt*2.8);
     if(cyberAura)cyberAura.intensity=0.28+cyberPulse*0.5+Math.sin(elapsed*1.5)*0.035;
     for(var mat of cyberTrim)mat.emissiveIntensity=0.12+cyberPulse*0.45;
+    for(var glow of cyberGlowMaterials)glow.opacity=(glow===cyberGlowMaterials[0]?0.55:0.16)+cyberPulse*0.32;
+    if(cyberHalo)cyberHalo.rotation.z+=dt*0.12;
+    // Follow the model's animated root without interfering with bones.
+    if(cyberRig&&modelRoot){cyberRig.position.x+=(modelRoot.position.x-cyberRig.position.x)*Math.min(1,dt*5);}
+
     renderer.render(scene,camera);
     raf=requestAnimationFrame(animate);
   }
