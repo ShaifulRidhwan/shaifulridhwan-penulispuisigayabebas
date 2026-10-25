@@ -4,6 +4,7 @@ on:
     paths:
       - "netlify/functions/**"
       - "bilik-antara.html"
+      - "bilik-antara-horizon.css"
       - "karya-index.json"
       - "scripts/test-bilik-antara.cjs"
       - "scripts/test-tiktok-public-research.cjs"
@@ -13,6 +14,7 @@ on:
     paths:
       - "netlify/functions/**"
       - "bilik-antara.html"
+      - "bilik-antara-horizon.css"
       - "karya-index.json"
       - "scripts/test-bilik-antara.cjs"
       - "scripts/test-tiktok-public-research.cjs"
