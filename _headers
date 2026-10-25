@@ -1,7 +1,11 @@
-# Immutable release chunks are safe to cache for repeat visits.
+# Alina v2 optimized GLB chunks. Immutable only while version path remains unchanged.
+/ara-assets/v2/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Original chunks, retained for compatibility.
 /ara-assets/part-*.bin
   Cache-Control: public, max-age=31536000, immutable
 
-# Always revalidate the manifest on deploy.
+# Manifest must always reflect current release.
 /ara-assets/manifest.json
   Cache-Control: public, max-age=0, must-revalidate
