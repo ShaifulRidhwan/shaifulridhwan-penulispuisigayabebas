@@ -1035,10 +1035,14 @@ function probeBackend(){
 }
 
 function backendAsk(question){
-  history.push({role:'user', content:question});
+  var attachment=pendingDocument;
   return fetch(ENDPOINT, {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ question: question, history: history.slice(-12) })
+    body: JSON.stringify({
+      question:question,history:history.slice(-16),summary:sessionSummary,
+      insightMode:insightMode,useWorks:useWorks.checked,
+      documentText:attachment?attachment.text:"",documentName:attachment?attachment.name:""
+    })
   }).then(function(r){
     if(!r.ok){
       return r.json().catch(function(){ return {}; }).then(function(body){
@@ -1048,7 +1052,10 @@ function backendAsk(question){
     }
     return r.json();
   }).then(function(data){
-    history.push({role:'assistant', content: data.reply || ''});
+    history.push({role:'user',content:question});
+    history.push({role:'assistant',content:String(data.reply||""),sources:data.sources||[]});
+    if(attachment&&pendingDocument===attachment){pendingDocument=null;documentUpload.value="";docStatus.textContent="";}
+    persistSession();compactContext();
     return data;
   });
 }
@@ -1082,14 +1089,29 @@ function renderAiLive(data){
   }
   if(data && data.disclaimer){ body += '<div class="ai-foot">'+esc(data.disclaimer)+'</div>'; }
   body += '</div></div>';
-  el.innerHTML = who + body; chat.appendChild(el); scrollBottom();
+  el.innerHTML = who + body;
+  if(data && Array.isArray(data.sources) && data.sources.length){
+    var list=document.createElement('div');list.className='ai-sources';
+    var caption=document.createElement('div');caption.className='sources-label';caption.textContent='SUMBER SEMAKAN';list.appendChild(caption);
+    data.sources.slice(0,6).forEach(function(source){
+      try {
+        var url=new URL(String(source.url),location.href);
+        if(url.protocol!=='https:'&&url.protocol!=='http:')return;
+        var link=document.createElement('a');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';
+        link.textContent=String(source.title||url.hostname).slice(0,90);
+        list.appendChild(link);
+      } catch(e){}
+    });
+    el.querySelector('.ai-body').appendChild(list);
+  }
+  chat.appendChild(el); scrollBottom();
 }
 function welcome(){
   var el=document.createElement('div'); el.className='msg ai';
   el.innerHTML='<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>'
     +'<div class="bubble"><div class="ai-body">'
     +'<p>Selamat datang. Kita boleh berbual tentang <strong>falsafah, sastera, teknologi, manusia, kehidupan</strong> — atau apa sahaja yang ada di minda anda.</p>'
-    +'<p>Aku jawab terus, tidak terlalu formal. Jika tidak tahu, aku akan katakan begitu. Dan aku tidak akan mengiyakan sesuatu semata-mata untuk menyenangkan anda.</p>'
+    +'<p>Aku jawab terus, berani membantah dan suka menyindir bila kena tempat. Tapi kalau hujah kau kukuh, takkan aku nak cari gaduh semata-mata untuk nampak bijak.</p>'
     +'<p>Cuba salah satu soalan di bawah, atau teruskan menulis.</p>'
     +'</div></div>';
   chat.appendChild(el);
@@ -1154,7 +1176,7 @@ function send(){
 form.addEventListener('submit', function(e){ e.preventDefault(); send(); });
 
 setMode('connecting');
-welcome();
+if(!restoreSession())welcome();
 updateSend();
 setTimeout(probeBackend, 600);
 })();
