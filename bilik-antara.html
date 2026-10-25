@@ -399,6 +399,11 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
       <button type="button" id="clearChat">Padam sesi</button>
     </div>
     <p id="docStatus" class="document-status" role="status" aria-live="polite"></p>
+    <details class="memory-notes" id="ideaLedger">
+      <summary>Nota idea dalam perbualan</summary>
+      <ul id="thoughtItems"></ul>
+      <button type="button" id="forgetIdeas">Kosongkan nota idea</button>
+    </details>
     <p class="privacy-note">Semua soalan diurus secara automatik. Carian, pengiraan dan semakan hujah digunakan apabila perlu. Sejarah sesi hanya disimpan pada peranti dengan izin; mesej dan lampiran dihantar ke penyedia AI.</p>
   </section>
 
@@ -882,32 +887,26 @@ var ENDPOINT = (window.BILIK_ENDPOINT || '/.netlify/functions/bilik-antara');
 document.getElementById('epShow').textContent = ENDPOINT;
 var history = [];
 var hasChat = false;
-var insightMode = "bual";
 var sessionSummary = "";
+var thoughtLedger = [];
 var summarizedThrough = 0;
 var summaryBusy = false;
 var pendingDocument = null;
 var rememberChat = document.getElementById("rememberChat");
-var useWorks = document.getElementById("useWorks");
 var documentUpload = document.getElementById("documentUpload");
 var docStatus = document.getElementById("docStatus");
+var thoughtItems = document.getElementById("thoughtItems");
 var SESSION_KEY = "bilik-antara-session-v2";
-
-function setInsight(name) {
-  if(["bual","bedah","selidik"].indexOf(name) < 0) name="bual";
-  insightMode=name;
-  document.querySelectorAll("[data-insight]").forEach(function(button){
-    var yes=button.getAttribute("data-insight")===name;
-    button.classList.toggle("active",yes);
-    button.setAttribute("aria-pressed",yes?"true":"false");
-  });
-  persistSession();
-}
+var VALID_MEDIA = {
+  "application/pdf":true,"image/jpeg":true,"image/png":true,"image/webp":true,"image/gif":true,
+  "audio/mpeg":true,"audio/wav":true,"audio/mp4":true,"audio/ogg":true,
+  "video/mp4":true,"video/webm":true
+};
 function persistSession(){
-  if(!rememberChat.checked) return;
+  if(!rememberChat.checked)return;
   try {
-    localStorage.setItem(SESSION_KEY,JSON.stringify({at:Date.now(),history:history.slice(-42),summary:sessionSummary,insightMode:insightMode,works:useWorks.checked}));
-  }catch(e){ docStatus.textContent="Storan pelayar tidak tersedia; sesi hanya disimpan sehingga halaman ditutup."; }
+    localStorage.setItem(SESSION_KEY,JSON.stringify({at:Date.now(),history:history.slice(-42),summary:sessionSummary,thoughtLedger:thoughtLedger.slice(-12)}));
+  }catch(e){docStatus.textContent="Storan peranti penuh atau tidak tersedia. Sesi ini kekal sehingga halaman ditutup.";}
 }
 function restoreSession(){
   try {
@@ -915,46 +914,108 @@ function restoreSession(){
     if(!data||!Array.isArray(data.history)||Date.now()-data.at>14*24*60*60*1000){localStorage.removeItem(SESSION_KEY);return false;}
     rememberChat.checked=true;
     history=data.history.filter(function(m){return m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string";}).slice(-42);
-    sessionSummary=typeof data.summary==="string"?data.summary.slice(0,1600):"";
+    sessionSummary=typeof data.summary==="string"?data.summary.slice(0,1800):"";
+    thoughtLedger=Array.isArray(data.thoughtLedger)?data.thoughtLedger.slice(-12).filter(function(x){return x&&typeof x.idea==="string";}):[];
     summarizedThrough=history.length>16?history.length-12:0;
-    useWorks.checked=!!data.works;
-    setInsight(data.insightMode);
-    history.forEach(function(m){ if(m.role==="user")addUserMsg(m.content);else renderAiLive({reply:m.content,sources:m.sources||[]}); });
+    renderLedger();
+    history.forEach(function(m){if(m.role==="user")addUserMsg(m.content);else renderAiLive(m);});
     if(history.length){hasChat=true;document.body.classList.add("has-chat");}
     return history.length>0;
   }catch(e){return false;}
 }
-function compactContext(){
-  if(summaryBusy||history.length<20||history.length-summarizedThrough<12) return;
-  var until=history.length-12;
-  if(until<=summarizedThrough) return;
-  var chunk=history.slice(summarizedThrough,until).slice(-18);
-  if(chunk.length<4) return;
-  summaryBusy=true;
-  fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({summarize:true,summary:sessionSummary,history:chunk})})
-   .then(function(r){if(!r.ok)throw Error("summary");return r.json();})
-   .then(function(d){if(typeof d.summary==="string"&&d.summary.trim()){sessionSummary=d.summary.slice(0,1600);summarizedThrough=until;persistSession();}})
-   .catch(function(){})
-   .finally(function(){summaryBusy=false;});
+function renderLedger(){
+  thoughtItems.textContent="";
+  thoughtLedger.forEach(function(note,i){
+    var li=document.createElement("li"),txt=document.createElement("span");
+    txt.textContent=note.idea;li.appendChild(txt);
+    var edit=document.createElement("button");edit.type="button";edit.textContent="Sunting";
+    edit.addEventListener("click",function(){
+      var value=prompt("Betulkan nota idea ini:",note.idea);
+      if(value===null)return;
+      value=value.trim().slice(0,170);
+      if(value)thoughtLedger[i].idea=value;else thoughtLedger.splice(i,1);
+      renderLedger();persistSession();
+    });
+    li.appendChild(edit);
+    var del=document.createElement("button");del.type="button";del.textContent="Padam";
+    del.addEventListener("click",function(){thoughtLedger.splice(i,1);renderLedger();persistSession();});
+    li.appendChild(del);thoughtItems.appendChild(li);
+  });
+  if(!thoughtLedger.length){
+    var li=document.createElement("li");li.textContent="Tiada premis atau kesimpulan disimpan lagi.";thoughtItems.appendChild(li);
+  }
 }
-document.querySelectorAll("[data-insight]").forEach(function(btn){btn.addEventListener("click",function(){setInsight(btn.getAttribute("data-insight"));});});
+function absorbIdeas(items){
+  if(!Array.isArray(items))return;
+  items.slice(0,6).forEach(function(x){
+    if(!x||typeof x.idea!=="string")return;
+    var idea=x.idea.trim().slice(0,170);
+    if(idea&&!thoughtLedger.some(function(n){return n.idea.toLowerCase()===idea.toLowerCase();})){
+      thoughtLedger.push({idea:idea,status:x.status||"premis"});
+    }
+  });
+  thoughtLedger=thoughtLedger.slice(-12);
+  renderLedger();persistSession();
+}
+function compactContext(){
+  if(summaryBusy||history.length<20||history.length-summarizedThrough<12)return;
+  var until=history.length-12;
+  if(until<=summarizedThrough)return;
+  var chunk=history.slice(summarizedThrough,until).slice(-18);
+  if(chunk.length<4)return;
+  summaryBusy=true;
+  fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+    summarize:true,summary:sessionSummary,history:chunk
+  })}).then(function(r){if(!r.ok)throw Error("summary");return r.json();})
+    .then(function(d){if(typeof d.summary==="string"&&d.summary.trim()){
+      sessionSummary=d.summary.slice(0,1800);summarizedThrough=until;persistSession();
+    }}).catch(function(){}).finally(function(){summaryBusy=false;});
+}
 rememberChat.addEventListener("change",function(){
   if(rememberChat.checked)persistSession();
   else {try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
 });
-useWorks.addEventListener("change",persistSession);
+document.getElementById("forgetIdeas").addEventListener("click",function(){
+  thoughtLedger=[];renderLedger();persistSession();
+});
 documentUpload.addEventListener("change",async function(){
   var file=this.files&&this.files[0];pendingDocument=null;
   if(!file){docStatus.textContent="";return;}
-  if(!/\.(txt|md|csv)$/i.test(file.name)||file.size>25000){docStatus.textContent="Fail teks .txt, .md atau .csv sahaja (maksimum 25 KB).";this.value="";return;}
-  try {pendingDocument={name:file.name.slice(0,100),text:(await file.text()).slice(0,15000)};docStatus.textContent="Dilampir: "+pendingDocument.name+" (sekali hantar).";}
-  catch(e){docStatus.textContent="Gagal membaca fail teks.";this.value="";}
+  var name=file.name.slice(0,100);
+  var extension=name.split(".").pop().toLowerCase();
+  if(["txt","md","csv"].indexOf(extension)!==-1){
+    if(file.size>25000){docStatus.textContent="Fail teks maksimum 25 KB.";this.value="";return;}
+    try{pendingDocument={name:name,text:(await file.text()).slice(0,15000)};
+      docStatus.textContent="Teks dilampir: "+name+" (dihantar sekali sahaja).";}
+    catch(e){docStatus.textContent="Gagal membaca fail.";this.value="";}
+    return;
+  }
+  var mime=file.type.toLowerCase();
+  if(extension==="pdf")mime="application/pdf";
+  if(extension==="m4a")mime="audio/mp4";
+  if(mime==="audio/x-wav"||mime==="audio/wave")mime="audio/wav";
+  if(!VALID_MEDIA[mime]||file.size>2200000||file.size===0){
+    docStatus.textContent="Hanya PDF, imej, audio atau video pendek maksimum 2.2 MB disokong.";this.value="";return;
+  }
+  docStatus.textContent="Membaca lampiran "+name+"…";
+  try {
+    var base64=await new Promise(function(resolve,reject){
+      var reader=new FileReader();
+      reader.onerror=function(){reject(new Error("Fail tidak boleh dibaca"));};
+      reader.onload=function(){resolve(String(reader.result||"").split(",")[1]||"");};
+      reader.readAsDataURL(file);
+    });
+    if(base64.length>3000000)throw Error("Fail terlalu besar");
+    pendingDocument={name:name,media:{mimeType:mime,data:base64,name:name}};
+    docStatus.textContent="Dilampir: "+name+" (maksimum 2.2 MB, dihantar sekali sahaja).";
+  }catch(e){pendingDocument=null;docStatus.textContent="Gagal membaca lampiran.";this.value="";}
 });
 document.getElementById("clearChat").addEventListener("click",function(){
-  history=[];sessionSummary="";summarizedThrough=0;pendingDocument=null;documentUpload.value="";docStatus.textContent="";
-  rememberChat.checked=false;useWorks.checked=false;setInsight("bual");
+  history=[];sessionSummary="";thoughtLedger=[];summarizedThrough=0;
+  pendingDocument=null;documentUpload.value="";docStatus.textContent="";
+  rememberChat.checked=false;
   try{localStorage.removeItem(SESSION_KEY);}catch(e){}
-  chat.textContent="";hasChat=false;document.body.classList.remove("has-chat");welcome();
+  renderLedger();chat.textContent="";hasChat=false;document.body.classList.remove("has-chat");welcome();
 });
 
 function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
