@@ -320,7 +320,7 @@ async function startLive(){
     ws.onerror=()=>{if(generation===liveGeneration)sayStatus("Sambungan Voice terganggu.");};
     ws.onclose=(event)=>{
       if(generation!==liveGeneration)return;
-      const message=event.code===1000?"Sesi tamat.":"Sambungan Gemini Live terputus.";
+      const message=event.code===1000?"Sesi tamat.":event.code===1008?"Gemini menolak konfigurasi Voice Live. Semak model dan akses API.":"Sambungan Gemini Live terputus (kod "+event.code+").";
       sayStatus(message);closeLive(message);
       if(event.code!==1000)showNotice(message+" Cuba lagi selepas semak sambungan.");
     };
