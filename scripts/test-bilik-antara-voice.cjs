@@ -20,16 +20,21 @@ test("Microphone is allowed only for this site's origin",()=>{
  assert.doesNotMatch(netlify,/microphone=\(\)/);
 });
 test("Opt-in voice UI, screen-reader status and independent original text input",()=>{
- for(const id of ["voiceDictate","voiceLive","voiceAutoplay","voicePanel","voiceStop",
+ for(const id of ["voiceDictate","voiceLive","voiceNotice","voicePanel","voiceStop",
   "voiceMuteMic","voiceMuteSpeaker","voiceTranscript","voiceStatus","voiceWave"]){
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=1/);
- assert.match(html,/bilik-antara\.css\?v=2/);
+ assert.match(html,/bilik-antara-voice\.js\?v=2/);
+ assert.match(html,/bilik-antara\.css\?v=3/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
  assert.match(html,/audio dihantar terus/i);
+ assert.doesNotMatch(html,/id="voiceAutoplay"|Baca jawapan/);
+ assert.match(html,/<header class="conversation-head">\s*<div class="voice-toolbar"/);
+ assert.match(html,/Shaiful Ridhwan A\.I/);
+ assert.match(js,/showNotice\(message\)/);
+ assert.doesNotMatch(js,/panel\.hidden=false/);
  assert.match(css,/\.voice-panel\[hidden\]\{display:none!important\}/);
  assert.match(css,/\.voice-wave/);
 });
@@ -38,7 +43,7 @@ test("Live streaming uses ephemeral token with PCM input/output and transcriptio
  assert.match(js,/BidiGenerateContentConstrained\?access_token=/);
  assert.match(js,/inputAudioTranscription:\{\}/);
  assert.match(js,/outputAudioTranscription:\{\}/);
- assert.match(js,/voiceName:"Aoede"/);
+ assert.match(js,/voiceName:"Charon"/);
  assert.match(js,/audio\/pcm;rate=16000/);
  assert.match(js,/decodePcm/);
  assert.match(js,/c\.interrupted/);
@@ -84,6 +89,40 @@ test("One-use ten-minute token broker never returns permanent API key",async()=>
   assert.equal(request.opts.headers["x-goog-api-key"],"fake-permanent-api-key-test");
   assert.ok(request.url.endsWith("/v1beta/auth_tokens"));
   assert.match(res.headers["Cache-Control"],/no-store/);
+ }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
+});
+
+test("Token broker retries unscoped one-use token after Google rejects optional model constraint",async()=>{
+ process.env.GEMINI_API_KEY="fake-permanent-api-key-test";
+ const old=global.fetch;
+ const sent=[];
+ try{
+  global.fetch=async(url,opts)=>{
+   sent.push(JSON.parse(opts.body));
+   if(sent.length===1)return {ok:false,status:400,json:async()=>({error:{message:"invalid liveConnectConstraints",status:"INVALID_ARGUMENT"}})};
+   return {ok:true,status:200,json:async()=>({name:"auth_tokens/test-retry"})};
+  };
+  const res=await handler(event("voice-fallback-"+Date.now()));
+  assert.equal(res.statusCode,200);
+  assert.equal(JSON.parse(res.body).token,"auth_tokens/test-retry");
+  assert.equal(sent.length,2);
+  assert.equal(sent[0].liveConnectConstraints.model,"models/gemini-3.8-live");
+  assert.equal(sent[1].uses,1);
+  assert.ok(!Object.hasOwn(sent[1],"liveConnectConstraints"));
+ }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
+});
+test("Unsupported Live token response presents actionable status rather than a full-screen overlay",async()=>{
+ process.env.GEMINI_API_KEY="fake-permanent-api-key-test";
+ const old=global.fetch;
+ try{
+  global.fetch=async()=>({ok:false,status:400,json:async()=>({error:{message:"not supported for this project",status:"INVALID_ARGUMENT"}})});
+  const res=await handler(event("voice-failure-"+Date.now()));
+  assert.equal(res.statusCode,502);
+  const body=JSON.parse(res.body);
+  assert.equal(body.reason,"TOKEN_HTTP_400");
+  assert.match(body.error,/tidak disokong/);
+  assert.match(js,/showNotice\(message\)/);
+  assert.doesNotMatch(js,/panel\.hidden=false/);
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
 test("Session creation has backend rate limiting",async()=>{
