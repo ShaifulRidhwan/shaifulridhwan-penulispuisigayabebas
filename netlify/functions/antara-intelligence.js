@@ -94,6 +94,22 @@ function sourceList(candidate){
     seen.add(w.uri);return true;
   }).slice(0,8).map(w=>({title:safeText(w.title,140)||"Sumber",url:w.uri}));
 }
+function groundingEvidence(candidate,sources){
+  const metadata=candidate&&candidate.groundingMetadata||{};
+  const chunks=metadata.groundingChunks||[];
+  const supports=metadata.groundingSupports||[];
+  if(!Array.isArray(chunks)||!Array.isArray(supports))return [];
+  return supports.slice(0,16).map(s=>{
+    const segment=s&&s.segment&&s.segment.text;
+    const indices=s&&s.groundingChunkIndices;
+    if(typeof segment!=="string"||!Array.isArray(indices))return null;
+    const sourceIndices=indices.map(index=>{
+      const url=chunks[index]&&chunks[index].web&&chunks[index].web.uri;
+      return sources.findIndex(p=>p.url===url);
+    }).filter(i=>i>=0);
+    return {claim:safeText(segment,320),sourceIndices:[...new Set(sourceIndices)]};
+  }).filter(x=>x&&x.claim&&x.sourceIndices.length).slice(0,12);
+}
 function modelText(candidate){
   const parts=candidate&&candidate.content&&candidate.content.parts||[];
   return parts.filter(p=>p&&typeof p.text==="string"&&!p.thought).map(p=>p.text).join("\n").trim();
@@ -134,4 +150,4 @@ function parseReview(text){
   return {critique:safeText(obj.critique,550),revision:safeText(obj.revision,8500),argumentMap:map,truthAudit:truth,thoughtLedger:ledger,
     hypothesis:safeText(obj.hypothesis,900)};
 }
-module.exports={POEMS,safeText,safeHistory,tokenize,poemMatches,poemContext,analyzeIntent,getTools,chooseModel,sourceList,modelText,parseReply,sanitizeMedia,parseReview};
+module.exports={POEMS,safeText,safeHistory,tokenize,poemMatches,poemContext,analyzeIntent,getTools,chooseModel,sourceList,groundingEvidence,modelText,parseReply,sanitizeMedia,parseReview};
