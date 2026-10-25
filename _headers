@@ -27,3 +27,8 @@
 # Manifest must always reflect current release.
 /ara-assets/manifest.json
   Cache-Control: public, max-age=0, must-revalidate
+
+# Manuskrip dalaman dimuatkan melalui halaman novel; jangan indeks secara berasingan.
+/assets/novel/pembaca.html
+  X-Robots-Tag: noindex, follow
+  Cache-Control: public, max-age=300
