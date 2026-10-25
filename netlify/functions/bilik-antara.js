@@ -219,24 +219,15 @@ exports.handler = async (event) => {
 
     const cand = data && data.candidates && data.candidates[0];
     const finishReason = cand && cand.finishReason;
-    const rawText = cand && cand.content && cand.content.parts && cand.content.parts.map(p => p.text || "").join("");
-    let parsed = {};
-    try { parsed = JSON.parse(rawText); } catch { parsed = { reply: String(rawText || ""), quotes: [], mode: "general" }; }
-
-    const privacy = "Sembang bebas — tiada petikan novel dihantar. Pada tier percuma Gemini, soalan mungkin digunakan Google untuk memperbaiki produk.";
-    log("ask-ok", { aiMode: "general", modelUsed, totalMs: Date.now() - started });
-    return {
-      statusCode: 200, headers: H,
-      body: JSON.stringify({
-        mode: "live", aiMode: "general", model: modelUsed,
-        reply: parsed.reply || "",
-        quotes: [],
-        disclaimer: (parsed.disclaimer ? parsed.disclaimer + " " : "") + privacy +
-          (finishReason && finishReason !== "STOP" ? ` [Catatan: Gemini tamat dengan status ${finishReason}.]` : ""),
-        usage: data.usageMetadata || null,
-        durMs: Date.now() - started
-      })
-    };
+    const reply = parseReply(modelText(cand)) || "Maaf, aku tak dapat menghasilkan jawapan lengkap kali ini. Cuba lagi dengan soalan yang lebih pendek.";
+    const sources = sourceList(cand);
+    log("ask-ok",{mode:insightMode,modelUsed,sourceCount:sources.length,totalMs:Date.now()-started});
+    return {statusCode:200,headers:H,body:JSON.stringify({
+      mode:"live",aiMode:"general",insightMode,model:modelUsed,thinkingLevel,
+      reply,quotes:[],sources,toolsUsed:tools.map(t=>Object.keys(t)[0]),
+      disclaimer:finishReason&&finishReason!=="STOP"?"Jawapan mungkin tidak lengkap ("+finishReason+").":"",
+      usage:data.usageMetadata||null,durMs:Date.now()-started
+    })};
   } catch (err) {
     const totalMs = Date.now() - started;
     if (err && (err.name === "AbortError" || err.deadline)) {
