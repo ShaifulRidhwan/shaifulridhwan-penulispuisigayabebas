@@ -1380,6 +1380,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
   var canvas = document.getElementById('face3d');
   if(!faceEl || !canvas){ return; }
   var renderer, scene, camera, skinMesh=null, headBone=null, MORPH={}, active=false, clock=new THREE.Clock(), animationMixer=null, animationAction=null, modelRoot=null;
+  var cyberTrim=[],cyberPulse=0,cyberAura=null;
 
   // Pemetaan emosi asal (50+ nama) → 10 keadaan 3D
   var EMO = {
@@ -1466,6 +1467,9 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
     var key = new THREE.DirectionalLight(0xffe8d0, 2.4); key.position.set(2,2.5,3); scene.add(key);
     var fill = new THREE.DirectionalLight(0x88bbff, 0.5); fill.position.set(-2.5,1,2); scene.add(fill);
     var rim = new THREE.DirectionalLight(0x7de8d8, 1.2); rim.position.set(-1,2,-2.5); scene.add(rim);
+    // Futuristic studio illumination: subtle cyan highlights, natural skin tones.
+    var cyberLight=new THREE.PointLight(0x32e6e0,0.45,4);cyberLight.position.set(-1.3,0.8,1.3);scene.add(cyberLight);
+    cyberAura=cyberLight;
     function resize(){ var w=faceEl.clientWidth||200, h=faceEl.clientHeight||200; renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
     resize(); if(window.ResizeObserver) new ResizeObserver(resize).observe(faceEl); else window.addEventListener('resize', resize);
     // Muat GLB Ara 3D Gen
@@ -1478,6 +1482,25 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       if(!skinMesh){ gltf.scene.traverse(function(o){ if(o.morphTargetInfluences && !skinMesh) skinMesh=o; }); }
       if(skinMesh && skinMesh.morphTargetDictionary) MORPH = skinMesh.morphTargetDictionary;
       if(!skinMesh){ console.warn('Ara3D: model tanpa morph mesh; paparkan 3D dengan animasi asal.'); MORPH={}; }
+      // Non-destructive futuristic suit material: only fabric meshes, never skin, face, eyes or hair.
+      var fabricPattern=/shirt|top|cloth|outfit|dress|camisole|bra|garment|fabric|suit|upperbodywear/i;
+      var humanPattern=/skin|body|face|head|eye|lash|brow|hair|lip|teeth|tongue|nail/i;
+      model.traverse(function(part){
+        if(!part.isMesh||!part.material)return;
+        var mats=Array.isArray(part.material)?part.material:[part.material];
+        var meshName=part.name||'';
+        mats.forEach(function(material,index){
+          var name=(meshName+' '+(material.name||''));
+          if(!fabricPattern.test(name)||humanPattern.test(name))return;
+          var clone=material.clone();
+          if(clone.color)clone.color.multiply(new THREE.Color(0x526575));
+          if('metalness' in clone)clone.metalness=0.32;
+          if('roughness' in clone)clone.roughness=0.44;
+          if('emissive' in clone){clone.emissive=new THREE.Color(0x073b45);clone.emissiveIntensity=0.15;cyberTrim.push(clone);}
+          if(Array.isArray(part.material)){var copy=part.material.slice();copy[index]=clone;part.material=copy;}
+          else part.material=clone;
+        });
+      });
       modelRoot=model;
       if(gltf.animations && gltf.animations.length){animationMixer=new THREE.AnimationMixer(model);animationAction=animationMixer.clipAction(gltf.animations[0]);animationAction.play();}
       // Alina morph names are not ARKit-labelled. Keep its supplied facial animation until a verified mapping is available.
@@ -1585,6 +1608,12 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       headBone.rotation.x=baseRotation.x+Math.sin(elapsed*.5)*.012+idlePitch;
       headBone.rotation.z=baseRotation.z+idleRoll;
     }
+    // AI-state reactive cyan illumination; tiny per-frame cost, no extra meshes.
+    var aiBusy=window.APP_STATE==='thinking'||window.APP_STATE==='responding'||curState==='speaking';
+    var glowTarget=aiBusy?0.95:0.25;
+    cyberPulse+=(glowTarget-cyberPulse)*Math.min(1,dt*2.8);
+    if(cyberAura)cyberAura.intensity=0.28+cyberPulse*0.5+Math.sin(elapsed*1.5)*0.035;
+    for(var mat of cyberTrim)mat.emissiveIntensity=0.12+cyberPulse*0.45;
     renderer.render(scene,camera);
     raf=requestAnimationFrame(animate);
   }
