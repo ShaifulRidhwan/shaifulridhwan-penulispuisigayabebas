@@ -83,7 +83,14 @@ def shoulder_alpha(p):
 def chest_alpha(p):
  x,y,z=p.T;ax=np.abs(x)
  return (1-smoothstep(10,17,ax))*smoothstep(111,118,y)*(1-smoothstep(134,141,y))*smoothstep(3,11,z)
-overlay(1,'ARA_ANDROID_FACE_SIDE',lambda c:(c[:,0]<-5)&(c[:,1]>153)&(c[:,1]<177)&(c[:,2]>-1),titanium,.25,face_alpha)
+def half_face_alpha(p):
+ x,y,z=p.T
+ return smoothstep(0,-4,x)*smoothstep(153,157,y)*(1-smoothstep(174,177,y))*smoothstep(-4,0,z)
+def circuit_alpha(p):
+ x,y,z=p.T
+ return smoothstep(-3,-7,x)*smoothstep(158,161,y)*(1-smoothstep(171,174,y))*smoothstep(-3,2,z)*(np.abs(np.sin(y*1.5+x*.7))>.90)
+overlay(1,'ARA_ANDROID_HALF_FACE',lambda c:(c[:,0]<-1.2)&(c[:,1]>154)&(c[:,1]<177)&(c[:,2]>-2),titanium,.37,half_face_alpha)
+overlay(1,'ARA_ANDROID_FACE_CIRCUIT',lambda c:(c[:,0]<-4)&(c[:,1]>158)&(c[:,1]<174)&(c[:,2]>-2),cyan,.6,circuit_alpha)
 overlay(3,'ARA_ANDROID_SHOULDERS',lambda c:(abs(c[:,0])>10)&(abs(c[:,0])<31)&(c[:,1]>132)&(c[:,1]<152)&(c[:,2]>-5),titanium,.26,shoulder_alpha)
 overlay(7,'ARA_ANDROID_CHEST_ARMOR',lambda c:(abs(c[:,0])<17)&(c[:,1]>111)&(c[:,1]<141)&(c[:,2]>3),graphite,.23,chest_alpha)
 
@@ -105,15 +112,15 @@ garment_material=j['meshes'][7]['primitives'][0]['material']
 j['materials'][garment_material]={
  'name':'ARA_CARBON_SUIT',
  'pbrMetallicRoughness':{'baseColorFactor':[.018,.045,.065,1],
- 'metallicFactor':.55,'roughnessFactor':.49},
+ 'metallicFactor':.38,'roughnessFactor':.68},
  'doubleSided':True
 }
 # Reduce specular blowout seen in the actual rendered QA frame.
 for material in j['materials']:
  if material.get('name','').startswith('ARA_V33_'):
   pbr=material['pbrMetallicRoughness']
-  pbr['metallicFactor']=.5;pbr['roughnessFactor']=.64
-  if 'TITANIUM' in material['name']:pbr['baseColorFactor']=[.055,.11,.16,.92]
+  pbr['metallicFactor']=.35;pbr['roughnessFactor']=.72
+  if 'TITANIUM' in material['name']:pbr['baseColorFactor']=[.08,.16,.23,1]
   if 'GRAPHITE' in material['name']:pbr['baseColorFactor']=[.025,.05,.07,.96]
   material['alphaMode']='BLEND'
 align();j['buffers'][0]['byteLength']=len(b)
