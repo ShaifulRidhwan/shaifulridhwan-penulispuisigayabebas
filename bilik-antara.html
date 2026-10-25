@@ -1548,7 +1548,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
           status('Menyediakan Alina '+Math.round(completed/manifest.parts*100)+'%');
         }
       }
-      await Promise.all(Array.from({length:Math.min(4,manifest.parts)},function(){return worker();}));
+      await Promise.all(Array.from({length:Math.min(6,manifest.parts)},function(){return worker();}));
       if(completed!==manifest.parts)throw Error('Bahagian model tidak lengkap');
       if(new DataView(full.buffer).getUint32(0,true)!==0x46546c67)throw Error('GLB tidak sah');
       status('Memproses model 3D...');
