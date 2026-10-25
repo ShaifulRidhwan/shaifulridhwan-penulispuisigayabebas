@@ -1,3 +1,6 @@
+/ara-assets/v3/*
+  Cache-Control: public, max-age=31536000, immutable
+
 # Alina v2 optimized GLB chunks. Immutable only while version path remains unchanged.
 /ara-assets/v2/*
   Cache-Control: public, max-age=31536000, immutable
