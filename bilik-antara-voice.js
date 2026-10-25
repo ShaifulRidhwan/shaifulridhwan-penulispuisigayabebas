@@ -22,7 +22,7 @@ const setWave=(value)=>{waveform.style.setProperty("--voice-intensity",String(Ma
 const setButtonState=()=>{
   liveButton.setAttribute("aria-pressed",liveActive?"true":"false");
   liveButton.disabled=liveActive;
-  liveButton.textContent=liveActive?"● Voice sedang aktif":"✦ Voice Live";
+  liveButton.textContent=liveActive?"● Sedang berbual":"✦ Voice Live";
   panel.hidden=!liveActive;
   dictate.disabled=liveActive||!speechAPI;
   micButton.textContent=micEnabled?"Tutup mikrofon":"Buka mikrofon";
@@ -88,12 +88,12 @@ const observer=new MutationObserver(mutations=>{
 });
 observer.observe(chat,{childList:true,subtree:true});
 if(!speechAPI){
-  dictate.disabled=true;dictate.title="Dikte tidak disokong oleh pelayar ini. Gunakan Voice Live jika tersedia.";
+  dictate.disabled=true;dictate.title="Pelayar ini tak boleh tukar suara jadi teks. Cuba Voice Live.";
 }
 function closeDictation(){
   if(recognizer){try{recognizer.stop();}catch(e){}}
   recognizer=null;dictating=false;
-  dictate.textContent="🎙 Dikte";
+  dictate.textContent="🎙 Cakap";
   dictate.setAttribute("aria-pressed","false");
 }
 function startDictation(){
@@ -106,7 +106,7 @@ function startDictation(){
   const initial=input.value.trim();
   recognition.lang="ms-MY";recognition.continuous=true;recognition.interimResults=true;
   recognition.onstart=()=>{
-    dictating=true;dictate.textContent="■ Henti dikte";
+    dictating=true;dictate.textContent="■ Berhenti";
     dictate.setAttribute("aria-pressed","true");
   };
   recognition.onresult=(event)=>{
@@ -213,7 +213,7 @@ function queueAudio(data,mime){
 }
 function onServerMessage(payload){
   if(payload.setupComplete){liveReady=true;sayStatus("Bersambung. Cakap sahaja, aku sedang mendengar.");return;}
-  if(payload.goAway){sayStatus("Sesi Voice hampir tamat.");}
+  if(payload.goAway){sayStatus("Sesi suara hampir tamat.");}
   const c=payload.serverContent;
   if(!c)return;
   if(c.interrupted){stopAudioQueue();panel.classList.remove("voice-speaking");if(lastTurn)lastTurn.finished=true;}
@@ -240,8 +240,8 @@ async function startLive(){
   if(liveActive)return;
   if(!window.isSecureContext||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||
      !(window.AudioContext||window.webkitAudioContext)||!window.AudioWorkletNode||!window.WebSocket){
-    liveButton.title="Voice Live memerlukan HTTPS dan pelayar yang menyokong Web Audio.";
-    const message="Pelayar ini tidak menyokong Voice Live.";
+    liveButton.title="Voice Live perlukan sambungan selamat dan pelayar yang sesuai.";
+    const message="Pelayar ini tak menyokong Voice Live.";
     sayStatus(message);showNotice(message);return;
   }
   closeDictation();stopReading();showNotice("");
@@ -263,7 +263,7 @@ async function startLive(){
     await Promise.all([micContext.resume(),playContext.resume()]);
     await micContext.audioWorklet.addModule("./bilik-antara-pcm-worklet.js");
     if(generation!==liveGeneration)return;
-    sayStatus("Menyambung ke Gemini Live…");
+    sayStatus("Sedang sambungkan suara…");
     const controller=new AbortController();startAbort=controller;
     const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
       body:"{}",signal:controller.signal,credentials:"same-origin",cache:"no-store"});
@@ -309,7 +309,7 @@ async function startLive(){
           data:bytesBase64(pcm),mimeType:"audio/pcm;rate=16000"
         }}}));
       };
-      sayStatus("Sambungan dibuat. Menunggu Gemini…");
+      sayStatus("Dah bersambung. Tunggu sekejap…");
       sessionTimer=setTimeout(()=>{sayStatus("Had sesi 10 minit dicapai.");closeLive("Had 10 minit.");},MAX_SESSION);
     };
     ws.onmessage=(event)=>{
@@ -317,7 +317,7 @@ async function startLive(){
       if(typeof event.data!=="string")return;
       try{onServerMessage(JSON.parse(event.data));}catch(e){/* skip malformed chunk */}
     };
-    ws.onerror=()=>{if(generation===liveGeneration)sayStatus("Sambungan Voice terganggu.");};
+    ws.onerror=()=>{if(generation===liveGeneration)sayStatus("Sambungan suara terputus.");};
     ws.onclose=(event)=>{
       if(generation!==liveGeneration)return;
       const message=event.code===1000?"Sesi tamat.":event.code===1008?"Gemini menolak konfigurasi Voice Live. Semak model dan akses API.":"Sambungan Gemini Live terputus (kod "+event.code+").";
@@ -328,14 +328,14 @@ async function startLive(){
     const message=e&&e.name==="NotAllowedError"?
       "Mikrofon tidak dibenarkan. Aktifkan kebenaran mikrofon untuk laman ini.":
       e&&e.name==="NotFoundError"?"Tiada mikrofon dikesan.":
-      String(e&&e.message||"Voice Live gagal disambung.").slice(0,180);
+      String(e&&e.message||"Tak dapat sambungkan suara.").slice(0,180);
     sayStatus(message);
     await closeLive(message);
     showNotice(message);
   }
 }
 liveButton.addEventListener("click",startLive);
-stopButton.addEventListener("click",()=>closeLive("Sesi Voice dihentikan."));
+stopButton.addEventListener("click",()=>closeLive("Sembang suara dihentikan."));
 micButton.addEventListener("click",()=>{
   micEnabled=!micEnabled;
   if(mediaStream)mediaStream.getAudioTracks().forEach(t=>{t.enabled=micEnabled;});
