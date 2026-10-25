@@ -14,6 +14,7 @@ on:
       - "scripts/test-bilik-antara.cjs"
       - "scripts/test-tiktok-public-research.cjs"
       - "scripts/test-bilik-antara-design.cjs"
+      - "scripts/test-bilik-antara-voice.cjs"
   push:
     branches: [main]
     paths:
@@ -29,6 +30,7 @@ on:
       - "scripts/test-bilik-antara.cjs"
       - "scripts/test-tiktok-public-research.cjs"
       - "scripts/test-bilik-antara-design.cjs"
+      - "scripts/test-bilik-antara-voice.cjs"
 jobs:
   verify:
     runs-on: ubuntu-latest
