@@ -1083,23 +1083,27 @@ function probeBackend(){
 function backendAsk(question,signal){
   var attachment=pendingDocument;
   return fetch(ENDPOINT, {
-    method:'POST', headers:{'Content-Type':'application/json'},signal:signal,
-    body: JSON.stringify({
+    method:'POST',headers:{'Content-Type':'application/json'},signal:signal,
+    body:JSON.stringify({
       question:question,history:history.slice(-16),summary:sessionSummary,
-      insightMode:insightMode,useWorks:useWorks.checked,
-      documentText:attachment?attachment.text:"",documentName:attachment?attachment.name:""
+      thoughtLedger:thoughtLedger.slice(-8),
+      documentText:attachment&&attachment.text||"",
+      documentName:attachment&&attachment.name||"",
+      media:attachment&&attachment.media||null
     })
   }).then(function(r){
     if(!r.ok){
-      return r.json().catch(function(){ return {}; }).then(function(body){
-        var err = new Error(body && body.error ? body.error : 'HTTP '+r.status);
-        err.status = r.status; throw err;
+      return r.json().catch(function(){return {};}).then(function(body){
+        var err=new Error(body&&body.error?body.error:"HTTP "+r.status);
+        err.status=r.status;throw err;
       });
     }
     return r.json();
   }).then(function(data){
-    history.push({role:'user',content:question});
-    history.push({role:'assistant',content:String(data.reply||""),sources:data.sources||[]});
+    history.push({role:"user",content:question});
+    history.push({role:"assistant",content:String(data.reply||""),sources:data.sources||[],
+      argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||""});
+    absorbIdeas(data.thoughtLedger);
     if(attachment&&pendingDocument===attachment){pendingDocument=null;documentUpload.value="";docStatus.textContent="";}
     persistSession();compactContext();
     return data;
@@ -1127,7 +1131,7 @@ function renderAiLive(data){
   var el=document.createElement('div'); el.className='msg ai';
   var who='<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>';
   var body='<div class="bubble"><div class="ai-body">';
-  if(data && data.reply){ body += formatReply(data.reply); }
+  if(data && (data.reply||data.content)){ body += formatReply(data.reply||data.content); }
   if(data && data.quotes && data.quotes.length){
     for(var i=0;i<data.quotes.length;i++){
       body += '<p style="font-style:italic;color:var(--silver-dim);border-left:2px solid var(--cyan);padding-left:.7rem;margin:.5rem 0">'+esc(data.quotes[i].text)+'</p>';
@@ -1172,7 +1176,7 @@ STARTERS.forEach(function(s){
 function updateSend(){
   sendBtn.disabled = (state==='loading' || input.value.trim()==='');
   document.getElementById('clearChat').disabled=state==='loading';
-  document.querySelectorAll('[data-insight]').forEach(function(b){b.disabled=state==='loading';});
+  documentUpload.disabled=state==='loading';
 }
 var inputTimer=null;
 input.addEventListener('input', function(){
