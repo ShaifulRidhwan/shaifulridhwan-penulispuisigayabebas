@@ -1556,6 +1556,27 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         camera.position.set(center.x,lookY,center.z+Math.max(0.4,distance));
         camera.lookAt(center.x,lookY,center.z);
       }
+      // Android reference: bone-attached temple hardware. Keep facial features visible.
+      // Position pieces relative to the head bone, not the scene or camera.
+      if(headBone){
+        var headScale=Math.max(.07,Math.min(.19,size.x*.12));
+        var shellMaterial=new THREE.MeshStandardMaterial({color:0x172d3e,metalness:.88,roughness:.22,side:THREE.DoubleSide});
+        var seamMaterial=new THREE.MeshBasicMaterial({color:0x32d9f2,transparent:true,opacity:.67,depthWrite:false});
+        var ringMaterial=new THREE.MeshStandardMaterial({color:0x40566a,metalness:.9,roughness:.19});
+        // Small temple module behind the ear line; intentionally no front-face wires.
+        [-1,1].forEach(function(side){
+          var module=new THREE.Group();
+          module.position.set(side*headScale*.91,headScale*.05,-headScale*.22);
+          var shell=new THREE.Mesh(new THREE.SphereGeometry(headScale*.49,18,12,0,Math.PI*2,0,Math.PI*.75),shellMaterial);
+          shell.scale.set(.28,1.1,.75);
+          module.add(shell);
+          var disc=new THREE.Mesh(new THREE.CylinderGeometry(headScale*.28,headScale*.28,headScale*.07,28),ringMaterial);
+          disc.rotation.z=Math.PI/2;disc.position.x=side*headScale*.14;module.add(disc);
+          var emitter=new THREE.Mesh(new THREE.TorusGeometry(headScale*.18,headScale*.025,6,28),seamMaterial.clone());
+          emitter.rotation.y=Math.PI/2;emitter.position.x=side*headScale*.18;module.add(emitter);
+          headBone.add(module);
+        });
+      }
       if(headBone) baseRotation=headBone.rotation.clone();
       scene.add(model);
       active = true;
