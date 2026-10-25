@@ -792,9 +792,31 @@ section.khas{padding:5rem 0}
   min-width:0;
   box-sizing:border-box;
   justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  gap:.4rem;
+  min-height:92px;
   text-align:center;
   border-color:var(--accent2);
   background:var(--accent-soft);
+}
+.hero .cta .bilik-entry-title{
+  font-size:clamp(1rem,2.8vw,1.25rem);
+  font-weight:800;
+  letter-spacing:.18em;
+  line-height:1.2;
+  color:var(--text);
+}
+.hero .cta .bilik-entry-desc{
+  font-size:clamp(.58rem,1.6vw,.68rem);
+  font-weight:400;
+  letter-spacing:.18em;
+  line-height:1.35;
+  color:var(--muted);
+}
+.hero .cta .btn.bilik-entry:hover .bilik-entry-title,
+.hero .cta .btn.bilik-entry:hover .bilik-entry-desc{
+  color:var(--bg);
 }
 .hero .cta .btn.bilik-entry:focus-visible{
   outline:2px solid var(--accent);
@@ -863,7 +885,7 @@ section.khas{padding:5rem 0}
     <a class="btn ghost" href="#trilogi">Trilogi</a>
     <a class="btn ghost" href="#tetralogi">Tetralogi</a>
     <a class="btn ghost" href="#khas">Novel</a>
-    <a class="btn ghost bilik-entry" href="bilik-antara.html">Bilik Antara</a>
+    <a class="btn ghost bilik-entry" href="bilik-antara.html"><span class="bilik-entry-title">Bilik Antara</span><span class="bilik-entry-desc">Ruang Kecerdasan Buatan</span></a>
   </div>
   </div>
 </header>
