@@ -1,0 +1,33 @@
+name: Novel Unified Reader Tests
+on:
+  pull_request:
+    paths:
+      - "antara-cahaya-dan-gelap.html"
+      - "antara-cahaya-dan-gelap-baca.html"
+      - "assets/novel/**"
+      - "_redirects"
+      - "_headers"
+      - "sitemap.xml"
+      - "scripts/test-novel-unification.cjs"
+      - ".github/workflows/novel-unification.yml"
+  push:
+    branches: [main]
+    paths:
+      - "antara-cahaya-dan-gelap.html"
+      - "antara-cahaya-dan-gelap-baca.html"
+      - "assets/novel/**"
+      - "_redirects"
+      - "_headers"
+      - "sitemap.xml"
+      - "scripts/test-novel-unification.cjs"
+      - ".github/workflows/novel-unification.yml"
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify unified novel and redirects
+        run: node --test scripts/test-novel-unification.cjs
