@@ -5,6 +5,9 @@ on:
       - "netlify/functions/**"
       - "bilik-antara.html"
       - "bilik-antara-horizon.css"
+      - "bilik-antara-cinematic.css"
+      - "bilik-antara-cover-art.jpg"
+      - "scripts/test-bilik-antara-cinematic.cjs"
       - "karya-index.json"
       - "scripts/test-bilik-antara.cjs"
       - "scripts/test-tiktok-public-research.cjs"
@@ -15,6 +18,9 @@ on:
       - "netlify/functions/**"
       - "bilik-antara.html"
       - "bilik-antara-horizon.css"
+      - "bilik-antara-cinematic.css"
+      - "bilik-antara-cover-art.jpg"
+      - "scripts/test-bilik-antara-cinematic.cjs"
       - "karya-index.json"
       - "scripts/test-bilik-antara.cjs"
       - "scripts/test-tiktok-public-research.cjs"
@@ -32,4 +38,4 @@ jobs:
           node --check netlify/functions/bilik-antara.js
           node --check netlify/functions/antara-intelligence.js
           node --check netlify/functions/tiktok-public-research.js
-          node --test scripts/test-bilik-antara.cjs scripts/test-tiktok-public-research.cjs scripts/test-bilik-antara-design.cjs
+          node --test scripts/test-bilik-antara.cjs scripts/test-tiktok-public-research.cjs scripts/test-bilik-antara-design.cjs scripts/test-bilik-antara-cinematic.cjs
