@@ -1468,7 +1468,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       });
       if(!skinMesh){ gltf.scene.traverse(function(o){ if(o.morphTargetInfluences && !skinMesh) skinMesh=o; }); }
       if(skinMesh && skinMesh.morphTargetDictionary) MORPH = skinMesh.morphTargetDictionary;
-      if(!skinMesh){ console.log('Ara3D: tiada morph mesh — fallback SVG.'); return; }
+      if(!skinMesh){ console.warn('Ara3D: model tanpa morph mesh; paparkan 3D dengan animasi asal.'); MORPH={}; }
       modelRoot=model;
       if(gltf.animations && gltf.animations.length){animationMixer=new THREE.AnimationMixer(model);animationAction=animationMixer.clipAction(gltf.animations[0]);animationAction.play();}
       // Alina morph names are not ARKit-labelled. Keep its supplied facial animation until a verified mapping is available.
@@ -1499,24 +1499,43 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       console.warn('Ara3D: Alina tidak tersedia, guna Ara lama.',err);
       loader.load('./ara-face.glb',installModel,undefined,function(){console.log('Ara3D: fallback SVG asal.');});
     }
-    // Same-origin Netlify chunks: avoids GitHub Release CORS and per-file upload limits.
+    // Load each chunk without retaining both all chunks and a second full copy in RAM.
+    // Diagnostic status is visible in browser, especially useful on Android.
+    var araStatus=document.createElement('div');
+    araStatus.id='ara3d-status';
+    araStatus.setAttribute('role','status');
+    araStatus.style.cssText='position:absolute;bottom:5px;left:8px;right:8px;z-index:12;text-align:center;font:11px/1.4 system-ui,sans-serif;color:#b4eaff;background:#081c2dcc;padding:5px;border-radius:6px;pointer-events:none';
+    faceEl.appendChild(araStatus);
+    function status(message){araStatus.textContent=message;console.log('Ara3D:',message);}
+    var loaded=false;
+    var originalInstall=installModel;
+    installModel=function(gltf){
+      try{originalInstall(gltf);loaded=true;status('Ara 3D berjaya dimuatkan');setTimeout(function(){araStatus.remove();},3500);}
+      catch(e){status('Ralat paparan 3D: '+(e.message||e));fallbackAlina(e);}
+    };
+    var originalFallback=fallbackAlina;
+    fallbackAlina=function(err){status('Model Alina gagal: '+(err&&err.message||'ralat tidak diketahui')+' | mencuba Ara lama');originalFallback(err);};
+    status('Menyemak model Alina...');
     fetch('./ara-assets/manifest.json',{cache:'no-store'}).then(function(r){
-      if(!r.ok)throw Error('Manifest '+r.status);
+      if(!r.ok)throw Error('Manifest HTTP '+r.status);
       return r.json();
     }).then(async function(manifest){
-      if(!Number.isInteger(manifest.parts)||manifest.parts<1||manifest.parts>40)throw Error('Manifest invalid');
-      var chunks=[],total=0;
+      if(!Number.isInteger(manifest.parts)||manifest.parts<1||manifest.parts>40||!Number.isInteger(manifest.bytes)||manifest.bytes<1024)throw Error('Manifest invalid');
+      var full=new Uint8Array(manifest.bytes),offset=0;
       for(var i=0;i<manifest.parts;i++){
+        status('Memuatkan Alina '+(i+1)+'/'+manifest.parts);
         var filename='part-'+String(i).padStart(3,'0')+'.bin';
         var response=await fetch('./ara-assets/'+filename);
         if(!response.ok)throw Error(filename+' HTTP '+response.status);
-        var data=await response.arrayBuffer();chunks.push(new Uint8Array(data));total+=data.byteLength;
+        var data=new Uint8Array(await response.arrayBuffer());
+        if(offset+data.byteLength>full.byteLength)throw Error('Saiz model tidak sah');
+        full.set(data,offset);offset+=data.byteLength;
       }
-      if(total!==manifest.bytes)throw Error('GLB chunk size mismatch');
-      var full=new Uint8Array(total),offset=0;
-      for(var chunk of chunks){full.set(chunk,offset);offset+=chunk.byteLength;}
-      if(new DataView(full.buffer).getUint32(0,true)!==0x46546c67)throw Error('GLB magic invalid');
+      if(offset!==manifest.bytes)throw Error('Saiz model tidak sepadan');
+      if(new DataView(full.buffer).getUint32(0,true)!==0x46546c67)throw Error('GLB tidak sah');
+      status('Memproses model 3D...');
       loader.parse(full.buffer,'./',installModel,fallbackAlina);
+      full=null;
     }).catch(fallbackAlina);
     return true;
   }
