@@ -29,7 +29,7 @@ def shell(name,p0,p1,y0,y1,m,r=1):
  for i in range(nv+1):
   y=y0+(y1-y0)*i/nv;t=math.sqrt(max(.08,1-((y-10.5)/14)**2))
   for k in range(nu+1):
-   a=p0+(p1-p0)*k/nu;vs.append((-1.4+9*r*t*math.cos(a),y,10.4*r*t*math.sin(a)))
+   a=p0+(p1-p0)*k/nu;vs.append((-1.4+9*r*t*math.cos(a),y,-12.4*r*t*math.sin(a)))
  for i in range(nv):
   for k in range(nu):
    a=i*(nu+1)+k;z=a+nu+1;fs.extend([(a,z,a+1),(a+1,z,z+1)])
@@ -38,7 +38,7 @@ def ring(name,rad,inner,m):
  vs=[];fs=[];n=48
  for i in range(n):
   t=2*math.pi*i/n
-  for r in (rad,inner):vs.append((-.8+math.cos(t)*r,10.5+math.sin(t)*r,-10.8))
+  for r in (rad,inner):vs.append((-14.8,10.5+math.cos(t)*r,0.8+math.sin(t)*r))
  for i in range(n):
   a=i*2;z=((i+1)%n)*2;fs.extend([(a,a+1,z),(z,a+1,z+1)])
  mesh(name,vs,fs,m)
@@ -53,4 +53,4 @@ shell('ARA_ANDROID_FOREHEAD_TRACE',-1.38,-1.36,14,20,cyan,1.06)
 j['buffers'][0]['byteLength']=len(b);raw=json.dumps(j,separators=(',',':')).encode();raw+=b' '*((-len(raw))%4)
 out=struct.pack('<4sII',b'glTF',2,12+8+len(raw)+8+len(b))+struct.pack('<I4s',len(raw),b'JSON')+raw+struct.pack('<I4s',len(b),b'BIN\x00')+b
 Path(dst).write_bytes(out)
-print('ARA android model:',len(data),'->',len(out),'head bone',head)
+print('ARA android model v28: front-facing shell and side-facing ear:',len(data),'->',len(out),'head bone',head)
