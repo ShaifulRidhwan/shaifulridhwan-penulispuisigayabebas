@@ -897,6 +897,80 @@ var ENDPOINT = (window.BILIK_ENDPOINT || '/.netlify/functions/bilik-antara');
 document.getElementById('epShow').textContent = ENDPOINT;
 var history = [];
 var hasChat = false;
+var insightMode = "bual";
+var sessionSummary = "";
+var summarizedThrough = 0;
+var summaryBusy = false;
+var pendingDocument = null;
+var rememberChat = document.getElementById("rememberChat");
+var useWorks = document.getElementById("useWorks");
+var documentUpload = document.getElementById("documentUpload");
+var docStatus = document.getElementById("docStatus");
+var SESSION_KEY = "bilik-antara-session-v2";
+
+function setInsight(name) {
+  if(["bual","bedah","selidik"].indexOf(name) < 0) name="bual";
+  insightMode=name;
+  document.querySelectorAll("[data-insight]").forEach(function(button){
+    var yes=button.getAttribute("data-insight")===name;
+    button.classList.toggle("active",yes);
+    button.setAttribute("aria-pressed",yes?"true":"false");
+  });
+  persistSession();
+}
+function persistSession(){
+  if(!rememberChat.checked) return;
+  try {
+    localStorage.setItem(SESSION_KEY,JSON.stringify({at:Date.now(),history:history.slice(-42),summary:sessionSummary,insightMode:insightMode,works:useWorks.checked}));
+  }catch(e){ docStatus.textContent="Storan pelayar tidak tersedia; sesi hanya disimpan sehingga halaman ditutup."; }
+}
+function restoreSession(){
+  try {
+    var data=JSON.parse(localStorage.getItem(SESSION_KEY)||"null");
+    if(!data||!Array.isArray(data.history)||Date.now()-data.at>14*24*60*60*1000){localStorage.removeItem(SESSION_KEY);return false;}
+    rememberChat.checked=true;
+    history=data.history.filter(function(m){return m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string";}).slice(-42);
+    sessionSummary=typeof data.summary==="string"?data.summary.slice(0,1600):"";
+    summarizedThrough=history.length>16?history.length-12:0;
+    useWorks.checked=!!data.works;
+    setInsight(data.insightMode);
+    history.forEach(function(m){ if(m.role==="user")addUserMsg(m.content);else renderAiLive({reply:m.content,sources:m.sources||[]}); });
+    if(history.length){hasChat=true;document.body.classList.add("has-chat");}
+    return history.length>0;
+  }catch(e){return false;}
+}
+function compactContext(){
+  if(summaryBusy||history.length<20||history.length-summarizedThrough<12) return;
+  var until=history.length-12;
+  if(until<=summarizedThrough) return;
+  var chunk=history.slice(summarizedThrough,until).slice(-18);
+  if(chunk.length<4) return;
+  summaryBusy=true;
+  fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({summarize:true,summary:sessionSummary,history:chunk})})
+   .then(function(r){if(!r.ok)throw Error("summary");return r.json();})
+   .then(function(d){if(typeof d.summary==="string"&&d.summary.trim()){sessionSummary=d.summary.slice(0,1600);summarizedThrough=until;persistSession();}})
+   .catch(function(){})
+   .finally(function(){summaryBusy=false;});
+}
+document.querySelectorAll("[data-insight]").forEach(function(btn){btn.addEventListener("click",function(){setInsight(btn.getAttribute("data-insight"));});});
+rememberChat.addEventListener("change",function(){
+  if(rememberChat.checked)persistSession();
+  else {try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
+});
+useWorks.addEventListener("change",persistSession);
+documentUpload.addEventListener("change",async function(){
+  var file=this.files&&this.files[0];pendingDocument=null;
+  if(!file){docStatus.textContent="";return;}
+  if(!/\.(txt|md|csv)$/i.test(file.name)||file.size>25000){docStatus.textContent="Fail teks .txt, .md atau .csv sahaja (maksimum 25 KB).";this.value="";return;}
+  try {pendingDocument={name:file.name.slice(0,100),text:(await file.text()).slice(0,15000)};docStatus.textContent="Dilampir: "+pendingDocument.name+" (sekali hantar).";}
+  catch(e){docStatus.textContent="Gagal membaca fail teks.";this.value="";}
+});
+document.getElementById("clearChat").addEventListener("click",function(){
+  history=[];sessionSummary="";summarizedThrough=0;pendingDocument=null;documentUpload.value="";docStatus.textContent="";
+  rememberChat.checked=false;useWorks.checked=false;setInsight("bual");
+  try{localStorage.removeItem(SESSION_KEY);}catch(e){}
+  chat.textContent="";hasChat=false;document.body.classList.remove("has-chat");welcome();
+});
 
 function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function scrollBottom(){ requestAnimationFrame(function(){ chatWrap.scrollTop = chatWrap.scrollHeight; }); }
