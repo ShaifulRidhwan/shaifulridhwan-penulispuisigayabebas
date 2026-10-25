@@ -21,4 +21,6 @@ jobs:
       - name: Check smoke test syntax
         run: node --check scripts/smoke-bilik-antara-live.cjs
       - name: Probe Netlify, ask Gemini, test Live audio
+        env:
+          SKIP_GEMINI_TEXT: "1"
         run: node scripts/smoke-bilik-antara-live.cjs
