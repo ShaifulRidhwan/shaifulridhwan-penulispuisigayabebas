@@ -342,6 +342,7 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
   .composer-wrap{padding:.45rem .6rem calc(.45rem + env(safe-area-inset-bottom))}
 }
 
+@media(prefers-reduced-motion:reduce){#cosmos{display:none!important}.ai-face *{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
@@ -427,7 +428,7 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
     </div>
   </div>
 
-  <div class="chat" id="chat" aria-live="polite"></div>
+  <div class="chat" id="chat" role="log" aria-live="polite" aria-relevant="additions" aria-label="Perbualan Bilik Antara"></div>
 
   <div class="starters" id="starters">
     <span class="starters-label">Mula dengan</span>
@@ -439,7 +440,7 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
       <h4>Prinsip keselamatan</h4>
       <ul>
         <li><strong>API key tidak pernah berada di sisi pelayar.</strong> Halaman ini hanya menghubungi <code id="epShow">/.netlify/functions/bilik-antara</code> — fungsi Netlify yang menyimpan key sebagai environment variable dan memanggil Gemini bagi pihak anda.</li>
-        <li>Model lalai: <code>gemini-3.8-flash</code> (Flash paling pintar, stabil). Boleh diatasi dengan <code>GEMINI_MODEL</code> (cth: <code>gemini-4-argon</code> untuk penaakulan tertinggi, dengan kos &amp; latensi lebih tinggi). Soalan tentang <strong>Shaiful Ridhwan</strong> dijawab secara tempatan dari fakta awam yang disahkan — tanpa melalui Gemini.</li>
+        <li>Model lalai: <code>gemini-3.6-flash</code> (model lalai yang dikonfigurasi). Boleh diatasi dengan <code>GEMINI_MODEL</code>. Soalan tentang <strong>Shaiful Ridhwan</strong> dijawab secara tempatan dari fakta awam yang disahkan — tanpa melalui Gemini.</li>
         <li>Pada tier percuma Gemini, soalan mungkin digunakan Google untuk memperbaiki produk.</li>
       </ul>
       <h4>Format respons backend</h4>
@@ -449,7 +450,7 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
   "reply": "jawapan",
   "quotes": [],
   "disclaimer": "...",
-  "model": "gemini-3.8-flash"
+  "model": "gemini-3.6-flash"
 }</pre>
       <p>Jika endpoint gagal, mesej ralat yang jelas dipaparkan bersama butang “Cuba sambung semula”.</p>
     </div>
@@ -915,13 +916,14 @@ function formatReply(text){
   close(); return out;
 }
 
+var reportedModel = 'model belum disahkan';
 function setMode(m, msg){
   mode = m;
   if(m==='live'){
     modeBadge.className='badge live'; modeText.textContent='Bersambung';
     banner.className='banner ok';
     bannerTitle.textContent='Ruang kecerdasan bersambung.';
-    bannerBody.innerHTML=' Jawapan dijana oleh <strong>Gemini API</strong> (model lalai <code>gemini-3.8-flash</code>). <code>GEMINI_API_KEY</code> di sisi pelayan sahaja. Soalan tentang Shaiful Ridhwan dijawab dari fakta awam yang disahkan.';
+    bannerBody.textContent='Backend tersedia. Model dikonfigurasi: '+reportedModel+'. Sambungan sebenar ke Gemini hanya diuji apabila soalan dihantar. API key disimpan di pelayan.';
     bannerActions.style.display='none';
     if(window.APP_STATE!=='thinking') setState('idle');
   } else if(m==='error'){
@@ -950,7 +952,7 @@ function probeBackend(){
     }).then(async function(r){
       clearTimeout(to);
       var body={}; try{ body=await r.json(); }catch(e){}
-      if(r.ok && body && body.ok){ setMode('live'); }
+      if(r.ok && body && body.ok){ reportedModel=String(body.model||'tidak diketahui'); setMode('live'); }
       else if(r.status===503){ setMode('error','GEMINI_API_KEY tidak terbaca oleh fungsi (503). Semak nama pemboleh ubah dan deploy semula.'); }
       else if(r.status===404){ setMode('error','Endpoint tidak ditemui (404). Semak bilik-antara.js berada di netlify/functions/ dan telah di-deploy.'); }
       else { var upstreamStatus = body && body.httpStatus; var detail = body && body.error ? body.error : (body && body.result ? String(body.result).slice(0,450) : 'Tiada butiran ralat daripada Gemini.'); setMode('error', 'Backend Netlify HTTP '+r.status+(upstreamStatus ? ', Gemini HTTP '+upstreamStatus : '')+'. '+detail); }
