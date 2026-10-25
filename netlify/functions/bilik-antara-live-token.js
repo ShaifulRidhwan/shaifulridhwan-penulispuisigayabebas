@@ -5,7 +5,7 @@
  * ephemeral tokens with a short TTL. No audio or transcript passes this handler.
  */
 const DEFAULT_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
-const DEFAULT_MODEL="gemini-3.1-flash-live-preview";
+const DEFAULT_MODEL="gemini-3.8-live";
 const RATE_WINDOW_MS=10*60*1000;
 const recent=new Map();
 const headers=()=>({
