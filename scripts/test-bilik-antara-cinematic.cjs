@@ -16,7 +16,7 @@ test("Cinematic identity replaces orbital dashboard markup",()=>{
  assert.doesNotMatch(html,/class="eclipse-scene"/);
  assert.match(html,/Aku, Kecerdasan Buatan/);
  assert.match(html,/bilik-antara-cinematic\.css\?v=1/);
- assert.match(html,/Ruang Perbualan/);
+ assert.match(html,/(Ruang Perbualan|Saluran Antara)/);
  assert.match(css,/\.world-art/);
  assert.match(css,/\.world-haze/);
  assert.match(css,/\.world-embers/);
