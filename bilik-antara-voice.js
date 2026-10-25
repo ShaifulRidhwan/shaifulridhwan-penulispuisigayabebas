@@ -3,11 +3,11 @@
 /* Bilik Antara voice: opt-in dictation, browser read-aloud, and Gemini Live.
    Never persists raw audio, never reveals the normal Gemini API key. */
 const $=id=>document.getElementById(id);
-const dictate=$("voiceDictate"),liveButton=$("voiceLive"),auto=$("voiceAutoplay");
+const dictate=$("voiceDictate"),liveButton=$("voiceLive"),notice=$("voiceNotice");
 const panel=$("voicePanel"),status=$("voiceStatus"),transcript=$("voiceTranscript");
 const stopButton=$("voiceStop"),micButton=$("voiceMuteMic"),speakerButton=$("voiceMuteSpeaker");
 const waveform=$("voiceWave"),input=$("input"),chat=$("chat");
-if(!dictate||!liveButton||!auto||!panel||!status||!transcript||!stopButton||!micButton||!speakerButton||!input||!chat)return;
+if(!dictate||!liveButton||!notice||!panel||!status||!transcript||!stopButton||!micButton||!speakerButton||!input||!chat)return;
 const ENDPOINT="/.netlify/functions/bilik-antara-live-token";
 const SOCKET_BASE="wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=";
 const MAX_SESSION=10*60*1000;
@@ -15,9 +15,9 @@ let recognizer=null,dictating=false,readUtterance=null,liveGeneration=0;
 let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null;
 let liveActive=false,liveReady=false,micEnabled=true,speakerEnabled=true;
 let startAbort=null,sessionTimer=null,nextAudioTime=0,playSources=new Set(),lastTurn=null;
-let autoRead=false;
 const speechAPI=window.SpeechRecognition||window.webkitSpeechRecognition;
 const sayStatus=(value)=>{status.textContent=value;};
+const showNotice=(message)=>{notice.textContent=String(message||"").slice(0,230);notice.hidden=!message;};
 const setWave=(value)=>{waveform.style.setProperty("--voice-intensity",String(Math.max(.08,Math.min(1,value||0))));};
 const setButtonState=()=>{
   liveButton.setAttribute("aria-pressed",liveActive?"true":"false");
@@ -33,7 +33,10 @@ const setButtonState=()=>{
 function canTalk(){return !!window.speechSynthesis&&typeof window.SpeechSynthesisUtterance==="function";}
 function pickBrowserVoice(){
   const voices=window.speechSynthesis.getVoices();
-  return voices.find(v=>/^ms[-_](MY|BN)/i.test(v.lang)&&/female|woman|perempuan/i.test(v.name))||
+  const male=v=>/(?:\\bmale\\b|lelaki|\\bman\\b)/i.test(v.name)&&!/female|woman|perempuan/i.test(v.name);
+  return voices.find(v=>/^ms[-_](MY|BN)/i.test(v.lang)&&male(v))||
+    voices.find(v=>/^ms([_-]|$)/i.test(v.lang)&&male(v))||
+    voices.find(v=>/^id([_-]|$)/i.test(v.lang)&&male(v))||
     voices.find(v=>/^ms([_-]|$)/i.test(v.lang))||
     voices.find(v=>/^id([_-]|$)/i.test(v.lang))||null;
 }
@@ -44,7 +47,7 @@ function speak(text){
   if(!clean)return;
   stopReading();
   const utter=new SpeechSynthesisUtterance(clean);
-  utter.lang="ms-MY";utter.rate=.99;utter.pitch=1.02;utter.volume=1;
+  utter.lang="ms-MY";utter.rate=.98;utter.pitch=.85;utter.volume=1;
   const voice=pickBrowserVoice();
   if(voice)utter.voice=voice;
   readUtterance=utter;
@@ -59,7 +62,7 @@ function extractMessage(node){
   clone.querySelectorAll("details,.msg-sources,.voice-read,button,pre").forEach(el=>el.remove());
   return String(clone.textContent||"").replace(/\s+/g," ").trim();
 }
-function equipRead(node,automatic=false){
+function equipRead(node){
   if(!node.matches(".message.ai")||node.querySelector(".voice-read")||node.querySelector(".typing"))return;
   const bubble=node.querySelector(".bubble");
   if(!bubble)return;
@@ -74,25 +77,16 @@ function equipRead(node,automatic=false){
     speak(text);
   });
   bubble.appendChild(button);
-  if(automatic&&autoRead&&!liveActive)speak(text);
 }
 chat.querySelectorAll(".message.ai").forEach(n=>equipRead(n));
 const observer=new MutationObserver(mutations=>{
   for(const m of mutations)for(const n of m.addedNodes){
     if(n.nodeType!==1)continue;
-    if(n.matches&&n.matches(".message.ai"))equipRead(n,true);
-    if(n.querySelectorAll)n.querySelectorAll(".message.ai").forEach(x=>equipRead(x,false));
+    if(n.matches&&n.matches(".message.ai"))equipRead(n);
+    if(n.querySelectorAll)n.querySelectorAll(".message.ai").forEach(x=>equipRead(x));
   }
 });
 observer.observe(chat,{childList:true,subtree:true});
-auto.addEventListener("change",()=>{
-  autoRead=!!auto.checked;
-  if(!autoRead)stopReading();
-});
-if(!canTalk()){
-  auto.disabled=true;
-  auto.title="Peranti ini tidak menyokong bacaan suara pelayar.";
-}
 if(!speechAPI){
   dictate.disabled=true;dictate.title="Dikte tidak disokong oleh pelayar ini. Gunakan Voice Live jika tersedia.";
 }
@@ -247,10 +241,10 @@ async function startLive(){
   if(!window.isSecureContext||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||
      !(window.AudioContext||window.webkitAudioContext)||!window.AudioWorkletNode||!window.WebSocket){
     liveButton.title="Voice Live memerlukan HTTPS dan pelayar yang menyokong Web Audio.";
-    sayStatus("Pelayar ini tidak menyokong Voice Live.");
-    panel.hidden=false;return;
+    const message="Pelayar ini tidak menyokong Voice Live.";
+    sayStatus(message);showNotice(message);return;
   }
-  closeDictation();stopReading();
+  closeDictation();stopReading();showNotice("");
   liveActive=true;liveReady=false;micEnabled=true;speakerEnabled=true;
   lastTurn=null;transcript.replaceChildren();panel.classList.remove("voice-speaking");
   setButtonState();sayStatus("Meminta kebenaran mikrofon…");
@@ -284,7 +278,7 @@ async function startLive(){
         model:"models/"+body.model,
         generationConfig:{
           responseModalities:["AUDIO"],
-          speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:"Aoede"}}}
+          speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:"Charon"}}}
         },
         inputAudioTranscription:{},
         outputAudioTranscription:{},
@@ -328,6 +322,7 @@ async function startLive(){
       if(generation!==liveGeneration)return;
       const message=event.code===1000?"Sesi tamat.":"Sambungan Gemini Live terputus.";
       sayStatus(message);closeLive(message);
+      if(event.code!==1000)showNotice(message+" Cuba lagi selepas semak sambungan.");
     };
   }catch(e){
     const message=e&&e.name==="NotAllowedError"?
@@ -336,7 +331,7 @@ async function startLive(){
       String(e&&e.message||"Voice Live gagal disambung.").slice(0,180);
     sayStatus(message);
     await closeLive(message);
-    panel.hidden=false;
+    showNotice(message);
   }
 }
 liveButton.addEventListener("click",startLive);
