@@ -14,7 +14,7 @@ test("Original novel art is used, not a generic external image",()=>{
 });
 test("Cinematic identity replaces orbital dashboard markup",()=>{
  assert.doesNotMatch(html,/class="eclipse-scene"/);
- assert.match(html,/Aku, Kecerdasan Buatan/);
+ assert.match(html,/Aku kecerdasan buatan yang dibina oleh Shaiful Ridhwan/);
  assert.match(html,/bilik-antara-cinematic\.css\?v=1/);
  assert.match(html,/(Ruang Perbualan|Saluran Antara)/);
  assert.match(css,/\.world-art/);
