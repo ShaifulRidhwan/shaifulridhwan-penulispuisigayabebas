@@ -65,11 +65,23 @@ def overlay(mesh_id,name,select,material,offset=.45):
  print(name,'faces',len(selected))
 overlay(1,'ARA_ANDROID_FACE_SIDE',lambda c:(c[:,0]<-7)&(c[:,1]>157)&(c[:,1]<174)&(c[:,2]>0),titanium,.42)
 overlay(1,'ARA_ANDROID_FACE_TRACE',lambda c:(c[:,0]<-7.4)&(c[:,1]>160)&(c[:,1]<172)&(c[:,2]>0),cyan,.62)
-overlay(3,'ARA_ANDROID_SHOULDERS',lambda c:(abs(c[:,0])>13)&(abs(c[:,0])<28)&(c[:,1]>135)&(c[:,1]<149)&(c[:,2]>-1),titanium,.72)
-overlay(3,'ARA_ANDROID_SHOULDER_TRIM',lambda c:(abs(c[:,0])>15)&(abs(c[:,0])<26)&(c[:,1]>144)&(c[:,1]<149)&(c[:,2]>0),cyan,.94)
+overlay(3,'ARA_ANDROID_SHOULDERS',lambda c:(abs(c[:,0])>13)&(abs(c[:,0])<28)&(c[:,1]>135)&(c[:,1]<149)&(c[:,2]>-1),titanium,.38)
+
 overlay(2,'ARA_ANDROID_NECK',lambda c:(abs(c[:,0])<10)&(c[:,1]>136)&(c[:,1]<149)&(c[:,2]>3),graphite,.5)
-overlay(7,'ARA_ANDROID_CHEST_ARMOR',lambda c:(abs(c[:,0])<14)&(c[:,1]>115)&(c[:,1]<137)&(c[:,2]>8),graphite,.65)
-overlay(7,'ARA_ANDROID_CHEST_LIGHT',lambda c:(abs(c[:,0])<1.8)&(c[:,1]>118)&(c[:,1]<134)&(c[:,2]>12),cyan,.88)
+overlay(7,'ARA_ANDROID_CHEST_ARMOR',lambda c:(abs(c[:,0])<14)&(c[:,1]>115)&(c[:,1]<137)&(c[:,2]>8),graphite,.38)
+
+# Reveal the cybernetic temple without hiding the rest of the hair.
+for mi,m in enumerate(j['meshes']):
+ if not any(word in m.get('name','') for word in ('Hair','Bang_')):continue
+ for prim in m.get('primitives',[]):
+  if 'POSITION' not in prim['attributes'] or 'indices' not in prim:continue
+  pts=accessor_data(prim['attributes']['POSITION'])
+  faces=accessor_data(prim['indices']).flatten().reshape(-1,3)
+  centers=pts[faces].mean(axis=1)
+  keep=~((centers[:,0]<-6)&(centers[:,1]>150)&(centers[:,2]>0))
+  if not keep.all():
+   prim['indices']=add_accessor(faces[keep].astype('<u4').reshape(-1,1),5125,'SCALAR',34963)
+   print('Ara hair temple clearance:',m.get('name'),int((~keep).sum()),'triangles')
 align();j['buffers'][0]['byteLength']=len(b)
 raw=json.dumps(j,separators=(',',':'),allow_nan=False).encode();raw+=b' '*((-len(raw))%4)
 out=struct.pack('<4sII',b'glTF',2,12+8+len(raw)+8+len(b))+struct.pack('<I4s',len(raw),b'JSON')+raw+struct.pack('<I4s',len(b),b'BIN\x00')+b
