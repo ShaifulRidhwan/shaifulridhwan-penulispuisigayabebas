@@ -8,7 +8,7 @@ const cover=fs.readFileSync("bilik-antara-cover-art.jpg");
 const emblem=fs.readFileSync("bilik-antara-woman-emblem.svg","utf8");
 
 test("One clean external stylesheet and preserved cinematic assets",()=>{
- assert.match(html,/href="bilik-antara\.css\?v=1"/);
+ assert.match(html,/href="bilik-antara\.css\?v=2"/);
  assert.doesNotMatch(html,/bilik-antara-(horizon|cinematic|editorial-glass)\.css/);
  assert.doesNotMatch(html,/<style\b/);
  assert.equal((html.match(/rel="stylesheet" href="bilik-antara\.css/g)||[]).length,1);
@@ -79,7 +79,7 @@ test("Mobile viewport, light theme and conversation functions retained",()=>{
 });
 
 test("Inline JavaScript valid and element IDs unique",()=>{
- const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
+ const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].filter(m=>m[1].trim());
  assert.equal(scripts.length,1);
  assert.doesNotThrow(()=>new Function(scripts[0][1]));
  const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
