@@ -32,3 +32,7 @@
 /assets/novel/pembaca.html
   X-Robots-Tag: noindex, follow
   Cache-Control: public, max-age=300
+
+# Ilustrasi novel disimpan sebagai aset JPEG berasingan.
+/assets/novel/*.jpg
+  Cache-Control: public, max-age=86400
