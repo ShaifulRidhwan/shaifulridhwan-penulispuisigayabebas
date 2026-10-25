@@ -8,7 +8,7 @@ const cover=fs.readFileSync("bilik-antara-cover-art.jpg");
 const emblem=fs.readFileSync("bilik-antara-woman-emblem.svg","utf8");
 
 test("One clean external stylesheet and preserved cinematic assets",()=>{
- assert.match(html,/href="bilik-antara\.css\?v=3"/);
+ assert.match(html,/href="bilik-antara\.css\?v=4"/);
  assert.doesNotMatch(html,/bilik-antara-(horizon|cinematic|editorial-glass)\.css/);
  assert.doesNotMatch(html,/<style\b/);
  assert.equal((html.match(/rel="stylesheet" href="bilik-antara\.css/g)||[]).length,1);
