@@ -5,7 +5,7 @@
  * ephemeral tokens with a short TTL. No audio or transcript passes this handler.
  */
 const DEFAULT_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
-const DEFAULT_MODEL="gemini-2.5-flash-native-audio-preview-09-2025";
+const DEFAULT_MODEL="gemini-3.8-live";
 const RATE_WINDOW_MS=10*60*1000;
 const recent=new Map();
 const headers=()=>({
@@ -38,11 +38,11 @@ exports.handler=async(event)=>{
   if(!allowedOrigin(event))return reply(403,{error:"Origin tidak dibenarkan."});
   if(event.body && event.body.length>100)return reply(413,{error:"Permintaan terlalu besar."});
   const key=process.env.GEMINI_API_KEY;
-  if(!key)return reply(503,{error:"Voice belum tersedia: GEMINI_API_KEY tiada di Netlify."});
+  if(!key)return reply(503,{error:"Voice belum boleh digunakan. Kunci API belum diset di Netlify."});
   const ip=String((event.headers||{})["x-nf-client-connection-ip"]||"unknown").slice(0,100);
-  if(rate(ip))return reply(429,{error:"Had Voice sementara dicapai. Cuba lagi selepas beberapa minit."});
+  if(rate(ip))return reply(429,{error:"Had sembang suara dah dicapai. Cuba lagi dalam beberapa minit."});
   const configured=process.env.GEMINI_LIVE_MODEL||DEFAULT_MODEL;
-  const model=/^gemini-[a-z0-9.-]{5,80}$/.test(configured)?configured:DEFAULT_MODEL;
+  const model=/^gemini-(?:3\.8-live(?:-extended-thinking)?|3\.1-flash-live-preview)$/.test(configured)?configured:DEFAULT_MODEL;
   const now=Date.now();
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),12000);
@@ -73,7 +73,7 @@ exports.handler=async(event)=>{
     }
     if(!response.ok){
       const detail=String(json&&json.error&&json.error.message||"").toLowerCase();
-      const message=response.status===429?"Kuota Gemini Live penuh.":
+      const message=response.status===429?"Kuota Voice Live dah penuh buat sementara.":
         response.status===401||response.status===403?"Projek ini belum dibenarkan menggunakan Gemini Live.":
         /billing|payment/.test(detail)?"Gemini Live memerlukan bil atau akses projek yang sesuai.":
         /not found|model/.test(detail)?"Model Gemini Live tidak tersedia untuk projek ini.":
