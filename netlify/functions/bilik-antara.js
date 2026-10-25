@@ -2,7 +2,7 @@
 /* Bilik Antara Autonomi: one personality, automatic research, reasoning and critique. */
 const {
   safeText,safeHistory,poemContext,analyzeIntent,getTools,chooseModel,
-  sourceList,modelText,parseReply,sanitizeMedia,parseReview
+  sourceList,groundingEvidence,modelText,parseReply,sanitizeMedia,parseReview
 }=require("./antara-intelligence");
 const DEFAULT_MODEL="gemini-3.6-flash";
 const SITE_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
@@ -73,17 +73,17 @@ const REVIEW_SYSTEM=[
   "Jika eksperimen pemikiran, hypothesis jelaskan akibat andaian, bukan fakta. Jangan cadangkan serangan peribadi.",
   "Sekiranya tiada bukti, gunakan belum_disahkan, jangan berpura-pura pasti."
 ].join("\n");
-async function reviewAnswer({apiKey,model,question,reply,sources,intent,timeBudgetMs}){
+async function reviewAnswer({apiKey,model,question,reply,sources,evidence,intent,timeBudgetMs}){
   if(timeBudgetMs<3500)return null;
   const prompt=JSON.stringify({question,reply:reply.slice(0,8000),
-    sources:sources.map((x,i)=>({i,title:x.title,url:x.url})),isThoughtExperiment:intent.thought,
-    analyzeArgument:intent.debate});
+    sources:sources.map((x,i)=>({i,title:x.title,url:x.url})),evidence,
+    isThoughtExperiment:intent.thought,analyzeArgument:intent.debate});
   const data=await callGemini({apiKey,model,system:REVIEW_SYSTEM,contents:[{role:"user",parts:[{text:prompt}]}],
     thinkingLevel:"low",maxTokens:1600,tools:[],json:true,timeoutMs:Math.min(7200,timeBudgetMs)});
   const review=parseReview(modelText(data&&data.candidates&&data.candidates[0]));
   if(!review)return null;
   review.truthAudit=review.truthAudit.map(c=>{
-    if(c.status==="bersumber"&&!(Number.isInteger(c.sourceIndex)&&sources[c.sourceIndex])){
+    if(c.status==="bersumber"&&!(Number.isInteger(c.sourceIndex)&&sources[c.sourceIndex]&&evidence.some(e=>e.sourceIndices.includes(c.sourceIndex)))){
       return {...c,status:"belum_disahkan",sourceIndex:null};
     }
     return c;
@@ -156,11 +156,12 @@ exports.handler=async event=>{
     const reply=parseReply(modelText(candidate));
     if(!reply)throw Object.assign(new Error("Empty candidate"),{status:502});
     const sources=sourceList(candidate);
+    const evidence=groundingEvidence(candidate,sources);
     let review=null;
     if(intent.review&&process.env.ENABLE_DUAL_REVIEW!=="false"){
       const remaining=27800-(Date.now()-started);
       if(remaining>=3600){
-        try{review=await reviewAnswer({apiKey,model:baseModel,question,reply,sources,intent,timeBudgetMs:remaining});}
+        try{review=await reviewAnswer({apiKey,model:baseModel,question,reply,sources,evidence,intent,timeBudgetMs:remaining});}
         catch(error){log("review_skipped",{reason:error.status||error.name||"failed"});}
       }
     }
