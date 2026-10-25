@@ -17,11 +17,11 @@ try{
  const bytes=await readFile(optimized);
  if(bytes.toString('ascii',0,4)!=='glTF')throw Error('Invalid optimized GLB');
  await rm(dir,{recursive:true,force:true});await mkdir(dir,{recursive:true});
- const max=8*1024*1024;let count=0;
+ const max=8*1024*1024;let count=0;const version='v2';await mkdir(join(dir,version),{recursive:true});
  for(let offset=0;offset<bytes.length;offset+=max){
-  await writeFile(join(dir,'part-'+String(count++).padStart(3,'0')+'.bin'),bytes.subarray(offset,offset+max));
+  await writeFile(join(dir,version,'part-'+String(count++).padStart(3,'0')+'.bin'),bytes.subarray(offset,offset+max));
  }
- await writeFile(join(dir,'manifest.json'),JSON.stringify({parts:count,bytes:bytes.length,version:'ara-3d-v2-pbr-optimized'}));
+ await writeFile(join(dir,'manifest.json'),JSON.stringify({parts:count,bytes:bytes.length,version:'v2'}));
  console.log('Ara GLB optimized and prepared:',count,'parts,',bytes.length,'bytes; original',length);
 }catch(e){
  console.error('Ara optimization failed:',e.message);
