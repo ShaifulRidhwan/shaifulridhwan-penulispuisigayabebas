@@ -18,13 +18,24 @@ test("editorial glass CSS is loaded AFTER the cinematic base CSS",()=>{
 });
 test("book cover typography and image-inspired chat framing",()=>{
  for(const mark of ['<h1><span>Bilik</span> <em>Antara</em></h1>',
-    'class="chapter-ornament"', 'Aku, Kecerdasan Buatan.',
+    'class="chapter-ornament"', 'Ruang Kecerdasan', 'Buatan A.I',
     'class="channel-seal"', 'Saluran Antara', 'class="world-scene"',
     'class="messages" id="chat"'])assert.ok(html.includes(mark),mark);
  assert.match(css,/\.identity h1 span\s*\{/);
  assert.match(css,/\.identity h1 em\s*\{/);
  assert.match(css,/\.messages\.is-welcome .message\.ai .bubble\s*\{/);
  assert.match(css,/\.message\.user .bubble\s*\{/);
+});
+test("requested concise hero, greeting and blank composer",()=>{
+ assert.doesNotMatch(html,/class="signature"|class="intro"/);
+ assert.doesNotMatch(html,/Di antara cahaya dan gelap, kebenaran bukan sekadar sesuatu yang dijawab/);
+ assert.doesNotMatch(html,/<span class="brand-name">Bilik Antara/);
+ assert.match(html,/<span class="brand-name"><span>Ruang Kecerdasan<\/span><span>Buatan A\.I<\/span><\/span>/);
+ assert.match(html,/Aku kecerdasan buatan yang dibina oleh Shaiful Ridhwan untuk menguji pemikiran/);
+ assert.match(html,/<textarea[^>]+id="input" placeholder=""/);
+ assert.doesNotMatch(html,/Tanya apa sahaja\. Hujah lemah pun boleh/);
+ assert.match(css,/flex:0 0 clamp\(145px,20dvh,210px\)/);
+ assert.match(css,/flex:0 0 clamp\(105px,16dvh,142px\)/);
 });
 test("mobile layout and keyboard remain intact",()=>{
  assert.match(css,/@media\(max-width:760px\)/);
