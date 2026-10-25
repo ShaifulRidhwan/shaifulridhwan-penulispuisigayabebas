@@ -2122,3 +2122,81 @@ html[data-theme="light"] .voice-read{color:#2a2421}
 @media(prefers-reduced-motion:reduce){
   .voice-panel::before,.voice-wave i,.voice-live-dot{animation:none}
 }
+
+
+/* Voice placement: one compact line alongside the existing backend badge. */
+.conversation-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:7px;
+  min-width:0;
+}
+.conversation-head .voice-toolbar{
+  display:flex;
+  flex:0 1 auto;
+  flex-wrap:nowrap;
+  align-items:center;
+  justify-content:flex-start;
+  min-width:0;
+  gap:5px;
+  padding:0;
+}
+.conversation-head .voice-action{
+  flex:0 0 auto;
+  min-height:28px;
+  padding:4px 9px;
+  font-size:10px;
+  white-space:nowrap;
+  line-height:1.1;
+}
+.conversation-head .chat-controls{
+  flex:0 0 auto;
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+.voice-notice{
+  flex:none;
+  margin:4px 12px 0;
+  padding:8px 11px;
+  border-radius:10px;
+  border:1px solid rgba(240,192,133,.37);
+  background:rgba(29,21,22,.75);
+  color:#f2d7b2;
+  font:500 11px/1.35 'DM Sans',sans-serif;
+  text-align:center;
+}
+.voice-notice[hidden]{display:none!important}
+/* Do not cover the full conversation with a blank overlay while connecting. */
+.voice-panel{
+  top:55px;
+  bottom:auto;
+  height:min(355px,calc(100% - 145px));
+  max-height:355px;
+  min-height:0;
+}
+.voice-transcript{min-height:24px}
+@media(max-width:760px){
+  .conversation-head{gap:4px;padding:5px 8px;min-height:39px}
+  .conversation-head .voice-toolbar{gap:4px}
+  .conversation-head .voice-action{min-height:27px;padding:4px 7px;font-size:9px}
+  .conversation-head .chat-controls{gap:3px}
+  .conversation-head .connection{padding:4px 6px;font-size:9px}
+  .conversation-head .settings>summary{width:28px;height:28px}
+  .voice-panel{
+    top:42px;bottom:auto;
+    height:min(310px,calc(100% - 130px));
+    max-height:310px;
+  }
+  .voice-notice{margin:4px 7px 0;font-size:10px}
+}
+@media(max-width:390px){
+  .conversation-head{padding:4px 6px;gap:3px}
+  .conversation-head .voice-toolbar{gap:3px}
+  .conversation-head .voice-action{font-size:9px;padding:4px 5px}
+  .conversation-head .connection{padding:4px 4px;font-size:8px}
+  .conversation-head .settings>summary{width:26px;height:26px}
+  .voice-panel{top:38px;height:min(300px,calc(100% - 120px))}
+}

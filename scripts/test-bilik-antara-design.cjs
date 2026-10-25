@@ -8,7 +8,7 @@ const cover=fs.readFileSync("bilik-antara-cover-art.jpg");
 const emblem=fs.readFileSync("bilik-antara-woman-emblem.svg","utf8");
 
 test("One clean external stylesheet and preserved cinematic assets",()=>{
- assert.match(html,/href="bilik-antara\.css\?v=2"/);
+ assert.match(html,/href="bilik-antara\.css\?v=3"/);
  assert.doesNotMatch(html,/bilik-antara-(horizon|cinematic|editorial-glass)\.css/);
  assert.doesNotMatch(html,/<style\b/);
  assert.equal((html.match(/rel="stylesheet" href="bilik-antara\.css/g)||[]).length,1);
@@ -26,7 +26,8 @@ test("Final text, controls and simplified channel header",()=>{
  assert.match(html,/<div class="eyebrow">DI ANTARA CAHAYA DAN GELAP<\/div>/);
  assert.doesNotMatch(html,/Saluran Antara/);
  assert.doesNotMatch(html,/class="conversation-heading"/);
- assert.match(html,/class="conversation-head">\s*<div class="chat-controls"/);
+ assert.match(html,/class="conversation-head">\s*<div class="voice-toolbar"/);
+ assert.match(html,/id="voiceLive"[\s\S]*?<div class="chat-controls"/);
  assert.match(html,/addMessage\("assistant","Assalamualaikum dan selamat sejahtera\."\)/);
  assert.doesNotMatch(html,/Aku kecerdasan buatan yang dibina oleh Shaiful Ridhwan/);
  assert.match(html,/KECERDASAN BUATAN AI/);
