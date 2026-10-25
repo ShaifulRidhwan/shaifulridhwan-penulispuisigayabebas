@@ -1,7 +1,16 @@
 [build]
-  command = "node scripts/prepare-ara-assets.mjs"
   publish = "."
+  # Ara 3D dibekukan: jangan muat turun GLB atau jalankan Python semasa deploy.
+  command = "echo 'Static site build: Ara 3D disabled'"
 
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
