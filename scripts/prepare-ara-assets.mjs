@@ -27,6 +27,7 @@ try{
  console.log('Ara GLB optimized and prepared:',count,'parts,',bytes.length,'bytes; original',length);
 }catch(e){
  console.error('Ara optimization failed:',e.message);
- // Never publish partial optimized chunks. Old Ara remains the in-page fallback.
+ // Fail the deployment instead of silently publishing a broken site without the manifest.
  await rm(dir,{recursive:true,force:true});
+ process.exitCode=1;
 }
