@@ -9,7 +9,7 @@ const existing=fs.readFileSync("bilik-antara-cinematic.css","utf8");
 
 test("editorial glass CSS is loaded AFTER the cinematic base CSS",()=>{
  const base=html.indexOf('bilik-antara-cinematic.css?v=1');
- const second=html.indexOf('bilik-antara-editorial-glass.css?v=1');
+ const second=html.indexOf('bilik-antara-editorial-glass.css?v=2');
  assert.ok(base>0&&second>base);
  assert.match(css,/\.conversation\s*\{/);
  assert.match(css,/background:[\s\S]*?rgba\(15,17,25,\.43\)/);
