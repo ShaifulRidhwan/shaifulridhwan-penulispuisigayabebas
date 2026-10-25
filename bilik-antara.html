@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#090c11">
+<meta name="theme-color" content="#070911">
 <meta name="description" content="Bilik Antara: ruang kecerdasan buatan untuk menguji idea, menyemak fakta dan berfikir di antara cahaya dengan gelap.">
 <meta name="author" content="Shaiful Ridhwan">
 <meta name="color-scheme" content="dark light">
@@ -12,10 +12,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="bilik-antara-horizon.css?v=4">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&display=swap" rel="stylesheet">
+<link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
+<link rel="stylesheet" href="bilik-antara-cinematic.css?v=1">
 
 </head>
 <body>
 <div class="shell">
+ <div class="world-scene" aria-hidden="true"><div class="world-art"></div><div class="world-haze"></div><div class="world-embers"></div></div>
  <header class="topbar">
   <a class="brand" href="index.html" aria-label="Kembali ke laman utama Gaya Bebas">
    <span class="brand-mark" aria-hidden="true">B<b>A</b></span>
@@ -32,24 +36,14 @@
  </header>
  <main class="app-shell">
   <section class="identity" aria-label="Identiti Bilik Antara">
-   <div class="eyebrow">Di antara cahaya &amp; gelap</div>
-   <div class="eclipse-scene" aria-hidden="true">
-    <span class="eclipse-ring"></span>
-    <span class="eclipse-light"></span>
-    <span class="eclipse-grain"></span>
-    <span class="orbit-scan"></span>
-    <span class="orbit-index">LIGHT / DARK</span>
-    <span class="orbit-coordinate">00.01 / HORIZON</span>
-    <span class="eclipse-label">RUANG / ∞</span>
-   </div>
-   <h1><span>Bilik</span><em>Antara.</em></h1>
-   <p class="intro">Di antara cahaya dan gelap, kebenaran bukan sekadar sesuatu yang dijawab. Ia sesuatu yang mesti diuji.</p>
-   <p class="thesis">“Aku tak menjual persetujuan. Kalau hujah kau retak, kita periksa sampai jumpa sebabnya.”</p>
-   <div class="signature">Kecerdasan yang mempersoalkan</div>
+   <div class="eyebrow">Ruang di antara cahaya &amp; gelap</div>
+   <h1><span>Bilik</span> <em>Antara.</em></h1>
+   <p class="intro">Di antara cahaya dan gelap, setiap jawapan wajar dipersoalkan.</p>
+   <div class="signature">Aku, Kecerdasan Buatan</div>
   </section>
   <section class="conversation" aria-label="Ruang perbualan">
    <header class="conversation-head">
-    <div class="conversation-heading"><strong>Saluran Antara</strong><small>KECERDASAN AUTONOMI / 04</small></div>
+    <div class="conversation-heading"><strong>Ruang Perbualan</strong><small>ANTARA CAHAYA DAN GELAP</small></div>
     <div class="chat-controls">
      <div class="connection" id="connection" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="connectionText">Memeriksa…</span></div>
      <details class="settings" id="settingsPanel">
@@ -101,6 +95,15 @@ const ui={
  docStatus:el("docStatus"),remove:el("removeAttachment"),settings:el("settingsPanel"),
  remember:el("rememberChat"),clear:el("clearChat"),notes:el("thoughtItems"),forget:el("forgetIdeas")
 };
+// Follow the visible viewport when Android/iOS keyboards open, without changing chat logic.
+function syncViewport(){
+ const view=window.visualViewport;
+ if(window.innerWidth<=760&&view)document.documentElement.style.setProperty("--app-height",Math.round(view.height)+"px");
+ else document.documentElement.style.removeProperty("--app-height");
+}
+syncViewport();
+window.addEventListener("resize",syncViewport,{passive:true});
+if(window.visualViewport)window.visualViewport.addEventListener("resize",syncViewport,{passive:true});
 const ENDPOINT="/.netlify/functions/bilik-antara";
 const STORAGE="bilik-antara-session-v2",THEME="bilik-antara-theme";
 const MEDIA=new Set(["application/pdf","image/jpeg","image/png","image/webp","image/gif",
@@ -125,7 +128,7 @@ function setTheme(value,save){
  ui.theme.setAttribute("aria-pressed",value==="light"?"true":"false");
  ui.theme.setAttribute("title",value==="light"?"Aktifkan tema gelap":"Aktifkan tema cahaya");
  const meta=document.querySelector('meta[name="theme-color"]');
- if(meta)meta.content=value==="light"?"#f1f2ee":"#090c11";
+ if(meta)meta.content=value==="light"?"#e8ddc7":"#070911";
  if(save)try{localStorage.setItem(THEME,value);}catch(e){}
 }
 try{setTheme(localStorage.getItem(THEME),false);}catch(e){setTheme("dark",false);}
@@ -273,10 +276,11 @@ function renderExtras(bubble,data){
  if(data.disclaimer)bubble.appendChild(elem("div","aside-note",String(data.disclaimer).slice(0,450)));
 }
 function welcome(){
- addMessage("assistant","Aku Bilik Antara. Bawa hujah atau persoalan kau. Aku akan semak logik, cari bukti apabila perlu, dan jawab terus terang. Kalau premisnya bocor, aku takkan pura-pura tak nampak.");
+ addMessage("assistant","Aku Bilik Antara. Bawa persoalan kau ke sini. Kita uji logiknya, bezakan fakta daripada andaian, dan bongkar apa yang tidak tahan dipersoalkan.");
 }
 function renderHistory(){
  ui.chat.textContent="";
+ ui.chat.classList.toggle("is-welcome",history.length===0);
  for(const m of history)addMessage(m.role,m.content,m.role==="assistant"?m:null);
  ui.starters.hidden=history.length>0;
  if(!history.length)welcome();
@@ -428,7 +432,7 @@ async function submit(event){
  if(!typed&&!fileState)return;
  const question=typed||"Analisis lampiran ini dan bezakan fakta daripada perkara yang belum disahkan.";
  const selectedFile=fileState;
- busy=true;update();ui.starters.hidden=true;
+ busy=true;update();ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
  addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""));
  const typing=showTyping();
  ui.input.value="";resize();update();
