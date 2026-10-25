@@ -1,0 +1,7 @@
+# Immutable release chunks are safe to cache for repeat visits.
+/ara-assets/part-*.bin
+  Cache-Control: public, max-age=31536000, immutable
+
+# Always revalidate the manifest on deploy.
+/ara-assets/manifest.json
+  Cache-Control: public, max-age=0, must-revalidate
