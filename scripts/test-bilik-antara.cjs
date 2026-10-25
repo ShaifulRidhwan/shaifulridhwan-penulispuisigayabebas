@@ -21,6 +21,7 @@ global.fetch=async(url,opts)=>{
   return {ok:true,status:200,json:async()=>({candidates:[{content:{parts:[{text:answer}]},finishReason:"STOP",
     groundingMetadata:{groundingChunks:[{web:{uri:"https://example.org/source",title:"Rujukan Ujian"}}]}}],usageMetadata:{totalTokenCount:42}})};
 };
+function latestPrimary(){return [...calls].reverse().find(c=>c.body.generationConfig.responseMimeType!=="application/json").body;}
 function event(body,id){
   return {httpMethod:"POST",headers:{origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app","x-nf-client-connection-ip":"test-"+id},body:JSON.stringify(body)};
 }
@@ -28,10 +29,10 @@ test("one automatic intelligence: no user mode required or honored",async()=>{
   const a=await handler(event({question:"Hai, salam?"},"hi"));
   assert.equal(a.statusCode,200);
   assert.equal(JSON.parse(a.body).aiMode,"automatic");
-  assert.equal(calls.at(-1).body.generationConfig.thinkingConfig.thinkingLevel,"low");
+  assert.equal(latestPrimary().generationConfig.thinkingConfig.thinkingLevel,"low");
   const b=await handler(event({question:"Hai lagi",insightMode:"bedah"},"nomode"));
   assert.equal(b.statusCode,200);
-  assert.equal(calls.at(-1).body.generationConfig.thinkingConfig.thinkingLevel,"low");
+  assert.equal(latestPrimary().generationConfig.thinkingConfig.thinkingLevel,"low");
 });
 test("deep argument generates second-pass review, map, and uncertain truth audit",async()=>{
   const r=await handler(event({question:"Mengapa paradoks kebebasan memilih perlu diuji?"},"deep"));
@@ -46,11 +47,11 @@ test("deep argument generates second-pass review, map, and uncertain truth audit
 });
 test("auto research, code and URL context without any selector",async()=>{
   await handler(event({question:"Berita terkini kajian sains?"},"search"));
-  assert.ok(calls.at(-1).body.tools.some(t=>t.google_search));
+  assert.ok(latestPrimary().tools.some(t=>t.google_search));
   await handler(event({question:"Kira 18 + 24"},"math"));
-  assert.ok(calls.at(-1).body.tools.some(t=>t.code_execution));
+  assert.ok(latestPrimary().tools.some(t=>t.code_execution));
   await handler(event({question:"Baca https://example.com dan ulas kandungan"},"url"));
-  assert.ok(calls.at(-1).body.tools.some(t=>t.url_context));
+  assert.ok(latestPrimary().tools.some(t=>t.url_context));
 });
 test("concept-aware literary retrieval uses only published works",()=>{
   const ranked=H.poemMatches("wanita yang diwarisi");
@@ -62,7 +63,7 @@ test("media: PDF/image/audio/video allowed with limits and carried inline",async
   for(const mime of ["application/pdf","image/png","audio/mpeg","video/mp4"]){
     const r=await handler(event({question:"Analisis lampiran ini",media:{name:"sampel",mimeType:mime,data:"QUJDRA=="}},"media"+mime));
     assert.equal(r.statusCode,200);
-    const content=calls.at(-1).body.contents.at(-1).parts;
+    const content=latestPrimary().contents.at(-1).parts;
     assert.equal(content[1].inlineData.mimeType,mime);
     assert.equal(content[1].inlineData.data,"QUJDRA==");
     assert.ok(!r.body.includes("QUJDRA=="));
@@ -73,8 +74,8 @@ test("session summaries and thoughts included as untrusted user data",async()=>{
     summary:"Terdahulu kami pertikai kemerdekaan.",
     thoughtLedger:[{idea:"Premis yang belum dibuktikan",status:"premis"}]},"session"));
   assert.equal(r.statusCode,200);
-  assert.match(calls.at(-1).body.contents.at(-1).parts[0].text,/Terdahulu kami pertikai/);
-  assert.ok(!calls.at(-1).body.systemInstruction.parts[0].text.includes("Terdahulu kami pertikai"));
+  assert.match(latestPrimary().contents.at(-1).parts[0].text,/Terdahulu kami pertikai/);
+  assert.ok(!latestPrimary().systemInstruction.parts[0].text.includes("Terdahulu kami pertikai"));
 });
 test("probe and opt-in conversational compaction",async()=>{
   const before=calls.length;
