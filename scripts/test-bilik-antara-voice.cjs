@@ -25,12 +25,14 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=3/);
- assert.match(html,/bilik-antara\.css\?v=3/);
+ assert.match(html,/bilik-antara-voice\.js\?v=4/);
+ assert.match(html,/bilik-antara\.css\?v=4/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
  assert.match(html,/audio dihantar terus/i);
  assert.doesNotMatch(html,/id="voiceAutoplay"|Baca jawapan/);
+ assert.doesNotMatch(js,/voice-read|readUtterance|speechSynthesis|equipRead/);
+ assert.doesNotMatch(css,/\.voice-read\b|\.voice-autoread\b/);
  assert.match(html,/<header class="conversation-head">\s*<div class="voice-toolbar"/);
  assert.match(html,/Shaiful Ridhwan A\.I/);
  assert.match(js,/showNotice\(message\)/);

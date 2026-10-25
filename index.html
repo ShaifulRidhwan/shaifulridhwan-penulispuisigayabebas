@@ -1206,7 +1206,8 @@ section.khas{padding:5rem 0}
     <div class="rule"></div>
   </div>
   <div class="cat-bar reveal" id="catBar">
-      <button class="cat-btn active" data-cat="media" type="button">Arkib Media Sosial</button>
+      <button class="cat-btn" data-cat="all" type="button" aria-pressed="false">Semua Karya</button>
+      <button class="cat-btn active" data-cat="media" type="button" aria-pressed="true">Arkib Media Sosial</button>
       <button class="cat-btn" data-series="duologi" type="button">Duologi</button>
       <button class="cat-btn" data-series="trilogi" type="button">Trilogi</button>
       <button class="cat-btn" data-series="tetralogi" type="button">Tetralogi</button>
@@ -1399,15 +1400,17 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU",["kau tahu cara mencintai s
   var ctEl=document.getElementById('countTotal'); if(ctEl){ ctEl.textContent = POEMS.length; }
   function applyFilter(){
     var q = searchInput.value.trim().toLowerCase();
-    var filtered = POEMS.filter(function(p){
-      if(q){
-        // Apabila ada kata carian, cari merentasi SEMUA kategori — tidak dihadkan oleh tab kategori aktif.
-        // Ini memastikan carian seperti "aporia" (dalam Trilogi) atau "memilih" (merentasi kategori)
-        // sentiasa menemukan karya yang sepadan tanpa mengira tab yang sedang dipilih.
-        return p[0].toLowerCase().indexOf(q) !== -1 || p[1].join(' ').toLowerCase().indexOf(q) !== -1;
-      }
-      var catOk = (activeCat === 'all') || (CATS[p[2]-1] === activeCat);
-      return catOk;
+    if(q)activeCat='all';
+    catBar.querySelectorAll('.cat-btn').forEach(function(btn){
+      var series=btn.getAttribute('data-series'),cat=btn.getAttribute('data-cat');
+      var selected=series ? (series.charAt(0).toUpperCase()+series.slice(1)===activeCat) : (cat==='all'?activeCat==='all':activeCat==='Media Sosial');
+      btn.classList.toggle('active',selected);
+      btn.setAttribute('aria-pressed',selected?'true':'false');
+    });
+    var filtered=POEMS.filter(function(p){
+      var textOk=!q||p[0].toLowerCase().indexOf(q)!==-1||p[1].join(' ').toLowerCase().indexOf(q)!==-1;
+      var catOk=activeCat==='all'||CATS[p[2]-1]===activeCat;
+      return textOk&&catOk;
     });
     render(filtered);
   }
@@ -1434,22 +1437,20 @@ window.__POEMS__ = [["TRAGEDI SESEORANG MENCINTAIMU",["kau tahu cara mencintai s
       else { fallbackCopy(payload); done(); }
     }
   });
-  searchInput.addEventListener('input', applyFilter);
-  catBar.addEventListener('click', function(e){
-    var btn = e.target.closest('.cat-btn');
-    if(!btn) return;
-    catBar.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.toggle('active', b===btn); });
-    var series = btn.getAttribute('data-series');
-    var cat = btn.getAttribute('data-cat');
-    if(series){ activeCat = series.charAt(0).toUpperCase()+series.slice(1); }
-    else if(cat==='media'){ activeCat = 'Media Sosial'; }
-    else { activeCat = 'all'; }
+  searchInput.addEventListener('input',applyFilter);
+  catBar.addEventListener('click',function(e){
+    var btn=e.target.closest('.cat-btn');
+    if(!btn)return;
+    var series=btn.getAttribute('data-series'),cat=btn.getAttribute('data-cat');
+    if(series)activeCat=series.charAt(0).toUpperCase()+series.slice(1);
+    else if(cat==='media')activeCat='Media Sosial';
+    else activeCat='all';
+    searchInput.value='';
     applyFilter();
   });
-  resetBtn.addEventListener('click', function(){
-    activeCat = 'all';
-    searchInput.value = '';
-    catBar.querySelectorAll('.cat-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-cat')==='media'); });
+  resetBtn.addEventListener('click',function(){
+    activeCat='all';
+    searchInput.value='';
     applyFilter();
   });
 
