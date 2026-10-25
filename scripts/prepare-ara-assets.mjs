@@ -1,24 +1,30 @@
-// Netlify build: fetch GitHub Release server-side and publish small same-origin GLB chunks.
-import {mkdir,writeFile,rm} from 'node:fs/promises';
+// Download Ara GLB, optimize textures/materials, publish same-origin 8 MB chunks.
+import {mkdir,writeFile,readFile,rm} from 'node:fs/promises';
+import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
 const url='https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/releases/download/ara-3d-v1/alina_ip_realistic_asian_woman_animated.glb';
-const dir='ara-assets';
-try {
-  const res=await fetch(url,{signal:AbortSignal.timeout(240000),headers:{'User-Agent':'Ara-Netlify-Build/1.0'}});
-  if(!res.ok||!res.body)throw Error('Release HTTP '+res.status);
-  await rm(dir,{recursive:true,force:true});await mkdir(dir,{recursive:true});
-  const max=8*1024*1024;let pending=Buffer.alloc(0),count=0,total=0;
-  async function save(data){await writeFile(join(dir,'part-'+String(count++).padStart(3,'0')+'.bin'),data);}
-  for await(const chunk of res.body){
-    pending=Buffer.concat([pending,chunk]);total+=chunk.length;
-    if(total>250*1024*1024)throw Error('GLB larger than 250 MB');
-    while(pending.length>=max){await save(pending.subarray(0,max));pending=pending.subarray(max);}
-  }
-  if(pending.length)await save(pending);
-  if(total<1024*1024)throw Error('Asset unexpectedly small');
-  await writeFile(join(dir,'manifest.json'),JSON.stringify({parts:count,bytes:total,version:'ara-3d-v1'}));
-  console.log('Ara GLB prepared:',count,'parts,',total,'bytes');
+const dir='ara-assets',source='/tmp/ara-original.glb',optimized='/tmp/ara-optimized.glb';
+try{
+ const res=await fetch(url,{signal:AbortSignal.timeout(240000),headers:{'User-Agent':'Ara-Netlify-Build/1.0'}});
+ if(!res.ok||!res.body)throw Error('Release HTTP '+res.status);
+ const chunks=[];let length=0;
+ for await(const chunk of res.body){chunks.push(chunk);length+=chunk.length;if(length>250*1024*1024)throw Error('Asset too large');}
+ if(length<1024*1024)throw Error('GLB unexpectedly small');
+ await writeFile(source,Buffer.concat(chunks));
+ // Pillow is a build-only dependency; not shipped to the browser.
+ execFileSync('python',['-m','pip','install','--quiet','--target','/tmp/ara-python-deps','Pillow'],{stdio:'inherit',timeout:120000});
+ execFileSync('python',['scripts/optimize-ara.py',source,optimized],{stdio:'inherit',timeout:180000,env:{...process.env,PYTHONPATH:'/tmp/ara-python-deps'}});
+ const bytes=await readFile(optimized);
+ if(bytes.toString('ascii',0,4)!=='glTF')throw Error('Invalid optimized GLB');
+ await rm(dir,{recursive:true,force:true});await mkdir(dir,{recursive:true});
+ const max=8*1024*1024;let count=0;
+ for(let offset=0;offset<bytes.length;offset+=max){
+  await writeFile(join(dir,'part-'+String(count++).padStart(3,'0')+'.bin'),bytes.subarray(offset,offset+max));
+ }
+ await writeFile(join(dir,'manifest.json'),JSON.stringify({parts:count,bytes:bytes.length,version:'ara-3d-v2-pbr-optimized'}));
+ console.log('Ara GLB optimized and prepared:',count,'parts,',bytes.length,'bytes; original',length);
 }catch(e){
-  console.warn('Ara model build unavailable, existing model remains:',e.message);
-  await rm(dir,{recursive:true,force:true});
+ console.error('Ara optimization failed:',e.message);
+ // Never publish partial optimized chunks. Old Ara remains the in-page fallback.
+ await rm(dir,{recursive:true,force:true});
 }
