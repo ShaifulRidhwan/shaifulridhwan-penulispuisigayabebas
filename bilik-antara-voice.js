@@ -33,7 +33,7 @@ const setButtonState=()=>{
 function canTalk(){return !!window.speechSynthesis&&typeof window.SpeechSynthesisUtterance==="function";}
 function pickBrowserVoice(){
   const voices=window.speechSynthesis.getVoices();
-  const male=v=>/(?:\\bmale\\b|lelaki|\\bman\\b)/i.test(v.name)&&!/female|woman|perempuan/i.test(v.name);
+  const male=v=>/(?:\bmale\b|\blelaki\b|\bman\b)/i.test(v.name)&&!/female|woman|perempuan/i.test(v.name);
   return voices.find(v=>/^ms[-_](MY|BN)/i.test(v.lang)&&male(v))||
     voices.find(v=>/^ms([_-]|$)/i.test(v.lang)&&male(v))||
     voices.find(v=>/^id([_-]|$)/i.test(v.lang)&&male(v))||
