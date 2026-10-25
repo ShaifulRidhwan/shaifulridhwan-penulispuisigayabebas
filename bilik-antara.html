@@ -1117,7 +1117,8 @@ function backendAsk(question,signal){
   }).then(function(data){
     history.push({role:"user",content:question});
     history.push({role:"assistant",content:String(data.reply||""),sources:data.sources||[],
-      argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||""});
+      argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
+      publicAccount:data.publicAccount||null});
     absorbIdeas(data.thoughtLedger);
     if(attachment&&pendingDocument===attachment){pendingDocument=null;documentUpload.value="";docStatus.textContent="";}
     persistSession();compactContext();
@@ -1169,6 +1170,50 @@ function renderAiLive(data){
     });
     el.querySelector('.ai-body').appendChild(list);
   }
+
+  if(data && data.publicAccount && data.publicAccount.handle){
+    var account=data.publicAccount;
+    var section=document.createElement('details');section.className='ai-analysis';section.open=true;
+    var header=document.createElement('summary');
+    header.textContent='OSINT TIKTOK · '+String(account.handle).slice(0,26);
+    section.appendChild(header);
+    var status=document.createElement('p');
+    status.textContent=account.status==='verified'?
+      'Maklumat profil awam yang disahkan oleh TikTok Research API.' :
+      'Profil belum disahkan melalui TikTok API rasmi. Maklumat di bawah bukan bukti akaun itu wujud.';
+    section.appendChild(status);
+    function row(label,value){
+      if(value===null||value===undefined||value==='')return;
+      var p=document.createElement('p'),head=document.createElement('strong');
+      head.textContent=label+': ';p.appendChild(head);p.appendChild(document.createTextNode(String(value)));section.appendChild(p);
+    }
+    var p=account.profile;
+    if(account.status==='verified'&&p){
+      row('Nama paparan',p.displayName);
+      row('Bio awam',p.bio);
+      row('Tanda pengesahan',p.verified===true?'Ya':p.verified===false?'Tidak':'Tidak diketahui');
+      row('Pengikut',p.followers===null?null:new Intl.NumberFormat('ms-MY').format(p.followers));
+      row('Mengikuti',p.following===null?null:new Intl.NumberFormat('ms-MY').format(p.following));
+      row('Jumlah suka',p.likes===null?null:new Intl.NumberFormat('ms-MY').format(p.likes));
+      row('Video awam',p.videos===null?null:new Intl.NumberFormat('ms-MY').format(p.videos));
+      if(p.retrievedAt)row('Diperiksa pada',new Date(p.retrievedAt).toLocaleString('ms-MY'));
+      if(p.bioLink){
+        var b=document.createElement('a');b.href=p.bioLink;b.target='_blank';b.rel='noopener noreferrer';b.textContent='Pautan dalam bio';section.appendChild(b);
+      }
+    }
+    try {
+      var url=new URL(String(account.profileUrl||''));
+      if(url.protocol==='https:'&&url.hostname==='www.tiktok.com'&&/^\/@[A-Za-z0-9._]{2,24}$/.test(url.pathname)){
+        var link=document.createElement('a');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';
+        link.textContent='Buka pautan profil TikTok';section.appendChild(link);
+      }
+    }catch(e){}
+    var note=document.createElement('p');note.className='ai-foot';
+    note.textContent='Tiada carian lokasi GPS, alamat fizikal, identiti tersembunyi atau maklumat akaun peribadi.';
+    section.appendChild(note);
+    el.querySelector('.ai-body').appendChild(section);
+  }
+
   var contentBox=el.querySelector('.ai-body');
   function makeDetails(label,items,kind){
     if(!Array.isArray(items)||!items.length)return;
