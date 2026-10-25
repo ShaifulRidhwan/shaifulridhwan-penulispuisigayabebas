@@ -13,7 +13,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&display=swap" rel="stylesheet">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=1">
+<link rel="stylesheet" href="bilik-antara.css?v=2">
 
 </head>
 <body>
@@ -63,6 +63,20 @@
     <button class="starter" type="button">Adakah manusia benar-benar bebas?</button>
     <button class="starter" type="button">Semak satu dakwaan</button>
    </div>
+   <div class="voice-panel" id="voicePanel" hidden aria-label="Perbualan Voice Live">
+    <div class="voice-panel-head">
+     <span class="voice-live-label"><span class="voice-live-dot"></span> BILIK ANTARA · VOICE LIVE</span>
+     <button type="button" id="voiceStop" class="voice-stop" aria-label="Tamatkan sesi Voice Live">Tamatkan sesi</button>
+    </div>
+    <div class="voice-wave" id="voiceWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div id="voiceStatus" class="voice-status" role="status" aria-live="polite">Belum bersambung.</div>
+    <div id="voiceTranscript" class="voice-transcript" role="log" aria-label="Transkrip sesi Voice" aria-live="polite"></div>
+    <div class="voice-session-controls">
+     <button type="button" id="voiceMuteMic" aria-pressed="true">Tutup mikrofon</button>
+     <button type="button" id="voiceMuteSpeaker" aria-pressed="true">Senyapkan suara</button>
+    </div>
+    <p class="voice-privacy">Mikrofon digunakan hanya ketika sesi aktif. Audio dihantar terus kepada Google Gemini; transkrip sesi tidak disimpan secara automatik. Sesi maksimum 10 minit.</p>
+   </div>
    <div class="composer-area">
     <div id="docStatus" role="status" aria-live="polite"></div><button type="button" id="removeAttachment" hidden aria-label="Buang lampiran">× Buang lampiran</button>
     <form class="composer" id="composer">
@@ -73,6 +87,11 @@
      <textarea rows="1" maxlength="1600" id="input" placeholder="" aria-label="Tulis mesej untuk Bilik Antara"></textarea>
      <button type="submit" id="sendBtn" class="send-btn" aria-label="Hantar soalan" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-9-3.6 18L11 13l-6-1Z"/><path d="m11 13 8-10"/></svg></button>
     </form>
+    <div class="voice-toolbar" role="group" aria-label="Kawalan suara">
+     <button type="button" id="voiceDictate" class="voice-action" aria-pressed="false" title="Dikte mungkin menggunakan perkhidmatan pengecaman suara pelayar.">🎙 Dikte</button>
+     <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini sepanjang sesi aktif.">✦ Voice Live</button>
+     <label class="voice-autoread"><input type="checkbox" id="voiceAutoplay"><span>Baca jawapan</span></label>
+    </div>
     <div class="composer-hint"><span>Enter untuk hantar · Shift + Enter untuk baris baharu</span><span>≤ 1,600 aksara</span></div>
    </div>
   </section>
@@ -471,5 +490,6 @@ ui.form.addEventListener("submit",submit);
 restore();renderIdeas();renderHistory();update();probe();
 })();
 </script>
+<script src="bilik-antara-voice.js?v=1" defer></script>
 </body>
 </html>
