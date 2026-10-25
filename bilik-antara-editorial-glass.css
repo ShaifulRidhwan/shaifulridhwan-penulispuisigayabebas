@@ -492,3 +492,97 @@ html[data-theme="light"] .composer-hint{color:#695438}
 @media(prefers-reduced-motion:reduce){
   .message{animation:none}
 }
+
+
+/* Identity refinement: original female-silhouette symbol, editorial centered chapter label. */
+.brand-mark--muse{
+  clip-path:none;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border-radius:50%;
+  background:rgba(10,14,23,.66);
+  border:1px solid rgba(241,202,141,.65);
+  box-shadow:0 0 19px rgba(230,183,107,.13);
+}
+.brand-mark--muse::after{display:none}
+.brand-mark--muse img,
+.channel-seal--muse img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.brand-name{min-width:0;gap:0}
+.brand-name span:first-child{
+  font:600 12px/1.22 'DM Sans',sans-serif;
+  letter-spacing:.105em;
+  text-transform:uppercase;
+  color:#fff3df;
+  white-space:nowrap;
+}
+.brand-name span:last-child{
+  margin-top:4px;
+  font:500 10px/1.2 'DM Sans',sans-serif;
+  letter-spacing:.23em;
+  color:#e9c68d;
+  white-space:nowrap;
+}
+.identity{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  text-align:center;
+  padding-top:clamp(9px,1.65dvh,18px);
+}
+.identity .eyebrow{
+  align-self:center;
+  width:100%;
+  margin:0;
+  padding:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  color:#f5d9a3;
+  letter-spacing:.24em;
+  line-height:1.5;
+}
+.identity h1{
+  margin:5px auto 0;
+  text-align:center;
+}
+.channel-seal--muse{
+  overflow:hidden;
+  border-radius:50%;
+  background:rgba(9,13,21,.64);
+  border-color:rgba(247,214,161,.62);
+  box-shadow:0 0 22px rgba(243,192,115,.12);
+}
+.channel-seal--muse::after{display:none}
+.message.ai::before{
+  content:"";
+  background:rgba(9,13,22,.78) url("./bilik-antara-woman-emblem.svg") center / cover no-repeat;
+}
+html[data-theme="light"] .brand-name span:first-child{color:#302217}
+html[data-theme="light"] .brand-name span:last-child{color:#92682d}
+@media(max-width:760px){
+  .brand-mark--muse{width:33px;height:33px}
+  .brand-name span:first-child{font-size:10px;letter-spacing:.06em}
+  .brand-name span:last-child{font-size:8px;letter-spacing:.13em;margin-top:3px}
+  .identity{padding-top:clamp(5px,1dvh,10px)}
+  .identity .eyebrow{font-size:8px;letter-spacing:.13em;gap:8px}
+  .identity h1{margin:3px auto 0}
+  .channel-seal--muse{width:39px;height:39px}
+}
+@media(max-width:390px){
+  .brand{gap:6px}
+  .brand-mark--muse{width:29px;height:29px}
+  .brand-name span:first-child{font-size:9px;letter-spacing:.02em}
+  .brand-name span:last-child{font-size:7px;letter-spacing:.1em}
+  .nav-actions{gap:2px}
+  .nav-link[href="index.html"]{display:none}
+  .identity .eyebrow{font-size:7.5px;letter-spacing:.085em;gap:6px}
+  .identity .eyebrow::before,.identity .eyebrow::after{width:12px}
+}
