@@ -56,11 +56,20 @@ async function checkLiveAudio(token, model) {
         }
       }));
     });
-    ws.addEventListener("message", event => {
+    ws.addEventListener("message", async event => {
       seen++;
-      if (seen <= 2) log("Gemini Live message received: data-type=" + typeof event.data);
       let packet;
-      try { packet = JSON.parse(String(event.data)); } catch (_) { if (seen <= 2) log("Gemini Live message was not JSON text"); return; }
+      try {
+        const raw = event.data;
+        const content = typeof raw === "string" ? raw :
+          raw && typeof raw.text === "function" ? await raw.text() :
+          Buffer.isBuffer(raw) ? raw.toString("utf8") :
+          new TextDecoder().decode(raw);
+        packet = JSON.parse(content);
+      } catch (_) {
+        if (seen <= 2) log("Gemini Live non-JSON packet skipped");
+        return;
+      }
       if (seen <= 2) log("Gemini Live packet fields=" + Object.keys(packet).join(","));
       if (packet.setupComplete && !configured) {
         configured = true;
