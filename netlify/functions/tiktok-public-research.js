@@ -57,7 +57,7 @@ function normalizeProfile(handle,data){
     location:"Tidak disahkan",coordinates:null,accountCreated:"Tidak disediakan"
   };
 }
-async function request(url,options,fetcher,timeout=6500){
+async function request(url,options,fetcher,timeout=3600){
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),timeout);
   try{
