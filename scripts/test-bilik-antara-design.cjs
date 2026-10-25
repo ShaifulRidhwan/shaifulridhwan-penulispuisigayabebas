@@ -64,7 +64,7 @@ test("Mobile viewport, light theme and conversation functions retained",()=>{
  assert.match(css,/@media\(max-width:760px\)/);
  assert.match(css,/html\[data-theme="light"\] body/);
  assert.match(css,/\.shell\.is-busy/);
- assert.match(css,/\.composer textarea\{font-size:16px/);
+ assert.match(css,/\.composer textarea\{\s*font-size:16px/);
  assert.match(html,/visualViewport/);
  assert.match(html,/ENDPOINT="\/\.netlify\/functions\/bilik-antara"/);
  for(const id of ["chat","connection","connectionText","connectionInfo","connectionInfoText",
