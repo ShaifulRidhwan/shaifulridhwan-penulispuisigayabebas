@@ -19,11 +19,11 @@ try{
  const bytes=await readFile(android);
  if(bytes.toString('ascii',0,4)!=='glTF')throw Error('Invalid optimized GLB');
  await rm(dir,{recursive:true,force:true});await mkdir(dir,{recursive:true});
- const max=8*1024*1024;let count=0;const version='v5';await mkdir(join(dir,version),{recursive:true});
+ const max=8*1024*1024;let count=0;const version='v6';await mkdir(join(dir,version),{recursive:true});
  for(let offset=0;offset<bytes.length;offset+=max){
   await writeFile(join(dir,version,'part-'+String(count++).padStart(3,'0')+'.bin'),bytes.subarray(offset,offset+max));
  }
- await writeFile(join(dir,'manifest.json'),JSON.stringify({parts:count,bytes:bytes.length,version:'v5'}));
+ await writeFile(join(dir,'manifest.json'),JSON.stringify({parts:count,bytes:bytes.length,version:'v6'}));
  console.log('Ara GLB optimized and prepared:',count,'parts,',bytes.length,'bytes; original',length);
 }catch(e){
  console.error('Ara optimization failed:',e.message);

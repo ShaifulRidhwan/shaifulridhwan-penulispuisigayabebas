@@ -56,6 +56,30 @@ temple_shell('ARA_ANDROID_REAR_PANEL',3.55,3.85,6,21,dark,1.09)
 ear_ring('ARA_ANDROID_EAR_FRAME',4.1,3.25,silver)
 ear_ring('ARA_ANDROID_EAR_CYAN',2.85,2.48,cyan,x=-13.5)
 ear_ring('ARA_ANDROID_EAR_CORE',1.55,.95,dark,x=-13.8)
+# Front-visible facial temple insert calibrated against the actual head mesh:
+# Head surface spans x=-9.91..9.91, y=143.81..178.02,
+# z=-11.82..11.64 in model bind coordinates. The head bone origin is
+# ~y=159.7. This plate sits on the outside cheek/temple, not across the eyes.
+def plate(name,coords,m):
+ mesh(name,coords,[(0,1,2),(0,2,3)],m)
+# Side-facing micro-panels are deliberately narrow (outside eye region).
+plate('ARA_ANDROID_VISIBLE_TEMPLE',[
+ (-11.6,16.4,8.8),(-9.6,18.4,9.8),(-9.2,9.7,11.7),(-11.5,7.6,10.3)],metal)
+plate('ARA_ANDROID_TEMPLE_GLOW',[
+ (-11.8,15.7,9.05),(-11.2,16.2,9.3),(-11.1,9.6,11.3),(-11.7,9.2,10.9)],cyan)
+# External emitter on the visible front/side plane, not behind the hair.
+def disc(name,x,y,z,outer,inner,m):
+ vs=[];fs=[];steps=40
+ for i in range(steps):
+  t=2*math.pi*i/steps
+  for rad in (outer,inner):
+   vs.append((x+rad*math.cos(t),y+rad*math.sin(t),z))
+ for i in range(steps):
+  a=i*2;bb=((i+1)%steps)*2
+  fs.extend([(a,a+1,bb),(bb,a+1,bb+1)])
+ mesh(name,vs,fs,m)
+disc('ARA_ANDROID_VISIBLE_EAR_FRAME',-11.2,9.0,10.5,2.4,1.9,silver)
+disc('ARA_ANDROID_VISIBLE_EAR_CYAN',-11.2,9.0,10.7,1.55,1.24,cyan)
 j['buffers'][0]['byteLength']=len(b);raw=json.dumps(j,separators=(',',':')).encode();raw+=b' '*((-len(raw))%4)
 out=struct.pack('<4sII',b'glTF',2,12+8+len(raw)+8+len(b))+struct.pack('<I4s',len(raw),b'JSON')+raw+struct.pack('<I4s',len(b),b'BIN\x00')+b
 Path(dst).write_bytes(out)

@@ -1483,62 +1483,24 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
       if(!skinMesh){ gltf.scene.traverse(function(o){ if(o.morphTargetInfluences && !skinMesh) skinMesh=o; }); }
       if(skinMesh && skinMesh.morphTargetDictionary) MORPH = skinMesh.morphTargetDictionary;
       if(!skinMesh){ console.warn('Ara3D: model tanpa morph mesh; paparkan 3D dengan animasi asal.'); MORPH={}; }
-      // ARA CYBERSUIT: custom UV fabric follows the original animated clothing mesh.
-      // No loose geometry; skin, eyes, face and hair remain untouched.
-      var suitCanvas=document.createElement('canvas');
-      suitCanvas.width=1024;suitCanvas.height=1024;
-      var ctx=suitCanvas.getContext('2d');
-      if(ctx){
-        var w=1024,h=1024;
-        var bg=ctx.createLinearGradient(0,0,w,h);
-        bg.addColorStop(0,'#101a26');bg.addColorStop(.48,'#273847');bg.addColorStop(1,'#0a1420');
-        ctx.fillStyle=bg;ctx.fillRect(0,0,w,h);
-        // Subtle woven carbon fiber.
-        ctx.globalAlpha=.12;
-        for(var yy=0;yy<h;yy+=8){ctx.fillStyle=yy%16?'#79919e':'#03090e';ctx.fillRect(0,yy,w,2);}
-        for(var xx=0;xx<w;xx+=10){ctx.fillStyle='#8da8b0';ctx.fillRect(xx,0,1,h);}
-        ctx.globalAlpha=1;
-        // Graphite armor panels: angular, deliberately kept within garment UVs.
-        ctx.fillStyle='#182b3b';
-        ctx.beginPath();ctx.moveTo(90,110);ctx.lineTo(460,160);ctx.lineTo(470,490);ctx.lineTo(145,590);ctx.closePath();ctx.fill();
-        ctx.fillStyle='#243b49';
-        ctx.beginPath();ctx.moveTo(565,155);ctx.lineTo(935,115);ctx.lineTo(880,590);ctx.lineTo(550,485);ctx.closePath();ctx.fill();
-        ctx.fillStyle='#0c1724';ctx.fillRect(160,700,710,150);
-        // Thin cyan seam lines, not face overlays.
-        ctx.strokeStyle='#38d8db';ctx.lineWidth=5;ctx.shadowColor='#1bf0e7';ctx.shadowBlur=12;
-        [[130,135,460,182,480,505],[894,135,560,182,542,505],[165,620,480,560,850,620],[210,750,810,750,850,800]].forEach(function(p){
-          ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(p[2],p[3]);ctx.lineTo(p[4],p[5]);ctx.stroke();
-        });
-        ctx.shadowBlur=0;
-        // Technical micro-markings.
-        ctx.fillStyle='#8debe8';ctx.font='bold 18px monospace';ctx.fillText('ARA // SYNTHETIC INTELLIGENCE',220,825);
-        for(var j=0;j<12;j++){ctx.fillRect(220+j*34,850,20,3);}
-      }
-      var suitMap=new THREE.CanvasTexture(suitCanvas);
-      suitMap.colorSpace=THREE.SRGBColorSpace;
-      suitMap.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
-      var fabricPattern=/shirt|top|cloth|outfit|dress|camisole|bra|garment|fabric|suit|upperbodywear/i;
-      var humanPattern=/skin|body|face|head|eye|lash|brow|hair|lip|teeth|tongue|nail/i;
-      var suited=0;
+      // Opaque PBR material on the ACTUAL rigged garment mesh. Previous
+      // procedural UV texture caused broken/transparent-looking clothing.
       model.traverse(function(part){
-        if(!part.isMesh||!part.material||!part.geometry?.attributes?.uv)return;
-        var original=Array.isArray(part.material)?part.material:[part.material];
-        var changed=false;
-        var updated=original.map(function(material){
-          var name=(part.name||'')+' '+(material.name||'');
-          if(!fabricPattern.test(name)||humanPattern.test(name))return material;
-          var clone=material.clone();
-          clone.map=suitMap;
-          clone.color.set(0xffffff);
-          if('metalness' in clone)clone.metalness=0.42;
-          if('roughness' in clone)clone.roughness=0.52;
-          if('emissive' in clone){clone.emissive.set(0x06333b);clone.emissiveIntensity=0.18;cyberTrim.push(clone);}
-          clone.needsUpdate=true;changed=true;suited++;
-          return clone;
+        if(!part.isMesh||!part.material)return;
+        var mats=Array.isArray(part.material)?part.material:[part.material];
+        var modified=mats.map(function(mat){
+          if(!/camisole|spaghetti_strap_top/i.test((part.name||'')+' '+(mat.name||'')))return mat;
+          var m=new THREE.MeshStandardMaterial({
+            name:'ARA_ANDROID_GRAPHITE_ARMOR',
+            color:0x172b3b,metalness:0.66,roughness:0.31,
+            side:THREE.DoubleSide,transparent:false,depthWrite:true,
+            emissive:0x06222c,emissiveIntensity:0.22
+          });
+          cyberTrim.push(m);
+          return m;
         });
-        if(changed)part.material=Array.isArray(part.material)?updated:updated[0];
+        part.material=Array.isArray(part.material)?modified:modified[0];
       });
-      console.log('ARA CYBERSUIT: applied to',suited,'garment materials');
       modelRoot=model;
       if(gltf.animations && gltf.animations.length){animationMixer=new THREE.AnimationMixer(model);animationAction=animationMixer.clipAction(gltf.animations[0]);animationAction.play();}
       // Alina morph names are not ARKit-labelled. Keep its supplied facial animation until a verified mapping is available.
@@ -1603,7 +1565,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
         while(nextIndex<manifest.parts){
           var i=nextIndex++;
           var filename='part-'+String(i).padStart(3,'0')+'.bin';
-          var response=await fetch('./ara-assets/'+(manifest.version==='v5'?'v5/':manifest.version==='v4'?'v4/':manifest.version==='v3'?'v3/':manifest.version==='v2'?'v2/':'')+filename,{cache:'force-cache'});
+          var response=await fetch('./ara-assets/'+(manifest.version==='v6'?'v6/':manifest.version==='v4'?'v4/':manifest.version==='v3'?'v3/':manifest.version==='v2'?'v2/':'')+filename,{cache:'force-cache'});
           if(!response.ok)throw Error(filename+' HTTP '+response.status);
           var data=new Uint8Array(await response.arrayBuffer());
           var offset=i*chunkSize;
