@@ -5,6 +5,9 @@ on:
       - "netlify/functions/**"
       - "bilik-antara.html"
       - "bilik-antara.css"
+      - "bilik-antara-voice.js"
+      - "bilik-antara-pcm-worklet.js"
+      - "netlify.toml"
       - "bilik-antara-cover-art.jpg"
       - "bilik-antara-woman-emblem.svg"
       - "karya-index.json"
@@ -17,6 +20,9 @@ on:
       - "netlify/functions/**"
       - "bilik-antara.html"
       - "bilik-antara.css"
+      - "bilik-antara-voice.js"
+      - "bilik-antara-pcm-worklet.js"
+      - "netlify.toml"
       - "bilik-antara-cover-art.jpg"
       - "bilik-antara-woman-emblem.svg"
       - "karya-index.json"
@@ -34,6 +40,9 @@ jobs:
       - name: Syntax and mocked tests
         run: |
           node --check netlify/functions/bilik-antara.js
+          node --check netlify/functions/bilik-antara-live-token.js
+          node --check bilik-antara-voice.js
+          node --check bilik-antara-pcm-worklet.js
           node --check netlify/functions/antara-intelligence.js
           node --check netlify/functions/tiktok-public-research.js
-          node --test scripts/test-bilik-antara.cjs scripts/test-tiktok-public-research.cjs scripts/test-bilik-antara-design.cjs
+          node --test scripts/test-bilik-antara.cjs scripts/test-tiktok-public-research.cjs scripts/test-bilik-antara-design.cjs scripts/test-bilik-antara-voice.cjs
