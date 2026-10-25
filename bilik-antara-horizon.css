@@ -110,7 +110,7 @@ body::after{
   display:flex;align-items:center;justify-content:space-between;gap:18px;
   border-bottom:1px solid var(--line);
   background:var(--glass);
-  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
 }
 .topbar::after{
   content:"";position:absolute;bottom:-1px;left:clamp(18px,4.25vw,76px);
@@ -171,6 +171,7 @@ html[data-theme="light"] .icon-btn .sun{display:block}
 
 /* The orbital sculpture is essentially five cheap CSS layers */
 .eclipse-scene{
+  --scan-travel:70px;
   position:relative;flex:none;
   width:clamp(235px,27vw,390px);aspect-ratio:1;
   margin:12px 0 14px clamp(8px,1.7vw,26px);
@@ -254,7 +255,7 @@ html[data-theme="light"] .eclipse-light{
 }
 @keyframes orbitSpin{to{transform:rotate(360deg)}}
 @keyframes eclipseFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-@keyframes scanSweep{0%{transform:translateY(-70px) scaleX(.55);opacity:0}36%{opacity:.65}100%{transform:translateY(70px) scaleX(1);opacity:0}}
+@keyframes scanSweep{0%{transform:translateY(calc(0px - var(--scan-travel))) scaleX(.55);opacity:0}36%{opacity:.65}100%{transform:translateY(var(--scan-travel)) scaleX(1);opacity:0}}
 .identity h1{
   position:relative;z-index:2;
   font:600 clamp(60px,6.9vw,108px)/.84 'Space Grotesk',sans-serif;
@@ -294,7 +295,7 @@ html[data-theme="light"] .eclipse-light{
   border-radius:5px 27px 5px 27px;
   box-shadow:var(--shadow);
   overflow:hidden;
-  -webkit-backdrop-filter:blur(17px);backdrop-filter:blur(17px);
+  -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
 }
 .conversation::before{
   content:"";position:absolute;z-index:4;pointer-events:none;
@@ -435,7 +436,8 @@ html[data-theme="light"] .eclipse-light{
 .typing i{width:5px;height:5px;border-radius:50%;background:var(--gold);animation:typingPulse 1.3s ease-in-out infinite}
 .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
 @keyframes typingPulse{0%,65%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}
-.shell.is-busy .eclipse-ring{animation:orbitSpin 11s linear infinite}
+@keyframes ringActive{from{transform:rotate(-32deg) scaleX(1.16)}to{transform:rotate(328deg) scaleX(1.16)}}
+.shell.is-busy .eclipse-ring{animation:ringActive 11s linear infinite}
 .shell.is-busy .eclipse-scene::after{animation-duration:21s}
 .shell.is-busy .connection .dot::after{animation-duration:1.25s}
 
@@ -571,7 +573,7 @@ html[data-theme="light"] .eclipse-light{
   .identity::before{display:none}
   .eyebrow{grid-column:2;grid-row:1;align-self:end;font-size:8px;letter-spacing:.14em;gap:6px}
   .eyebrow::before{width:14px}
-  .eclipse-scene{grid-column:1;grid-row:1/4;width:97px;margin:0}
+  .eclipse-scene{--scan-travel:23px;grid-column:1;grid-row:1/4;width:97px;margin:0}
   .eclipse-scene::after{inset:0}
   .eclipse-label,.orbit-index,.orbit-coordinate{display:none}
   .identity h1{
@@ -613,7 +615,7 @@ html[data-theme="light"] .eclipse-light{
   .nav-link{font-size:9px}
   .app-shell{padding:9px 7px 8px}
   .identity{grid-template-columns:73px minmax(0,1fr);min-height:83px;column-gap:9px}
-  .eclipse-scene{width:72px}
+  .eclipse-scene{--scan-travel:17px;width:72px}
   .identity h1{font-size:clamp(32px,8vw,39px);margin:5px 0 0}
   .identity .intro{font-size:9px;margin:4px 0 0}
   .eyebrow{font-size:7px}
