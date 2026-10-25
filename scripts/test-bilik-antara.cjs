@@ -1,39 +1,99 @@
 "use strict";
 const test=require("node:test");
 const assert=require("node:assert/strict");
-const h=require("../netlify/functions/antara-intelligence");
+const H=require("../netlify/functions/antara-intelligence");
 const {handler}=require("../netlify/functions/bilik-antara");
-process.env.GEMINI_API_KEY="demo-test-key";
-const requests=[];
-global.fetch=async(_url,config)=>{
- requests.push(JSON.parse(config.body));
- return {ok:true,status:200,json:async()=>({candidates:[{content:{parts:[{text:"Jawapan ujian."}]},finishReason:"STOP",groundingMetadata:{groundingChunks:[{web:{uri:"https://example.com/fakta",title:"Rujukan"}}]}}]})};
+process.env.GEMINI_API_KEY="fake-test-key";
+process.env.GEMINI_MODEL="gemini-3.6-flash";
+const calls=[];
+global.fetch=async(url,opts)=>{
+  const body=JSON.parse(opts.body);
+  calls.push({url,body});
+  const review=body.generationConfig&&body.generationConfig.responseMimeType==="application/json";
+  const answer=review?JSON.stringify({
+    critique:"Premis perlu dibezakan daripada kesimpulan.",
+    revision:"",
+    argumentMap:[{label:"Kebebasan memerlukan pilihan",type:"premis",refersTo:null},{label:"Tak semua pilihan sama bebas",type:"bantahan",refersTo:1}],
+    truthAudit:[{claim:"Kebebasan mutlak terbukti",status:"bersumber",note:"Sebenarnya tidak disahkan",sourceIndex:99}],
+    thoughtLedger:[{idea:"Kebebasan dan tanggungjawab",status:"soalan_terbuka"}],
+    hypothesis:"Dalam dunia tanpa dusta, privasi mungkin berubah."
+  }):"Hujah ini boleh dibedah tanpa menghina orang.";
+  return {ok:true,status:200,json:async()=>({candidates:[{content:{parts:[{text:answer}]},finishReason:"STOP",
+    groundingMetadata:{groundingChunks:[{web:{uri:"https://example.org/source",title:"Rujukan Ujian"}}]}}],usageMetadata:{totalTokenCount:42}})};
 };
-function e(body,id){return {httpMethod:"POST",headers:{origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app","x-nf-client-connection-ip":id},body:JSON.stringify(body)};}
-test("adaptive reasoning",()=>{
- assert.equal(h.thinkingFor("bedah","hai"),"high");
- assert.equal(h.thinkingFor("bual","hai"),"low");
- assert.ok(h.poemMatches("wanita yang diwarisi").length);
+function latestPrimary(){return [...calls].reverse().find(c=>c.body.generationConfig.responseMimeType!=="application/json").body;}
+function event(body,id){
+  return {httpMethod:"POST",headers:{origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app","x-nf-client-connection-ip":"test-"+id},body:JSON.stringify(body)};
+}
+test("one automatic intelligence: no user mode required or honored",async()=>{
+  const a=await handler(event({question:"Hai, salam?"},"hi"));
+  assert.equal(a.statusCode,200);
+  assert.equal(JSON.parse(a.body).aiMode,"automatic");
+  assert.equal(latestPrimary().generationConfig.thinkingConfig.thinkingLevel,"low");
+  const b=await handler(event({question:"Hai lagi",insightMode:"bedah"},"nomode"));
+  assert.equal(b.statusCode,200);
+  assert.equal(latestPrimary().generationConfig.thinkingConfig.thinkingLevel,"low");
 });
-test("probe",async()=>{
- const r=await handler(e({probe:true},"probe"));
- assert.equal(r.statusCode,200);
- assert.equal(JSON.parse(r.body).geminiVerified,false);
+test("deep argument generates second-pass review, map, and uncertain truth audit",async()=>{
+  const r=await handler(event({question:"Mengapa paradoks kebebasan memilih perlu diuji?"},"deep"));
+  const obj=JSON.parse(r.body);
+  assert.equal(r.statusCode,200);
+  assert.equal(obj.aiMode,"automatic");
+  assert.equal(obj.reviewApplied,true);
+  assert.ok(obj.argumentMap.length>0);
+  assert.equal(obj.truthAudit[0].status,"belum_disahkan");
+  assert.ok(obj.thoughtLedger.length);
+  assert.equal(calls.at(-2).body.generationConfig.thinkingConfig.thinkingLevel,"high");
 });
-test("bedah, selidik, karya and memory",async()=>{
- const a=await handler(e({question:"Bedah paradoks",insightMode:"bedah"},"bedah"));
- assert.equal(a.statusCode,200);
- assert.equal(requests.at(-1).generationConfig.thinkingConfig.thinkingLevel,"high");
- const b=await handler(e({question:"Cari berita",insightMode:"selidik"},"selidik"));
- assert.equal(b.statusCode,200);
- assert.ok(requests.at(-1).tools.some(t=>t.google_search));
- assert.equal(JSON.parse(b.body).sources[0].title,"Rujukan");
- await handler(e({question:"wanita yang diwarisi",useWorks:true},"karya"));
- assert.match(JSON.stringify(requests.at(-1)),/WANITA YANG DIWARISI/);
- const c=await handler(e({summarize:true,history:[{role:"user",content:"a"},{role:"assistant",content:"b"},{role:"user",content:"c"},{role:"assistant",content:"d"}]},"memory"));
- assert.ok(JSON.parse(c.body).summary);
+test("auto research, code and URL context without any selector",async()=>{
+  await handler(event({question:"Berita terkini kajian sains?"},"search"));
+  assert.ok(latestPrimary().tools.some(t=>t.google_search));
+  await handler(event({question:"Kira 18 + 24"},"math"));
+  assert.ok(latestPrimary().tools.some(t=>t.code_execution));
+  await handler(event({question:"Baca https://example.com dan ulas kandungan"},"url"));
+  assert.ok(latestPrimary().tools.some(t=>t.url_context));
 });
-test("reject invalid payload",async()=>{
- assert.equal((await handler(e({},"empty"))).statusCode,400);
- assert.equal((await handler(e({documentText:"x".repeat(56000)},"large"))).statusCode,413);
+test("concept-aware literary retrieval uses only published works",()=>{
+  const ranked=H.poemMatches("wanita yang diwarisi");
+  assert.ok(ranked.length>0);
+  assert.match(H.poemContext("puisi wanita yang diwarisi"),/WANITA YANG DIWARISI/);
+  assert.equal(H.poemContext("qwerty01234 nonsense"),"");
+});
+test("media: PDF/image/audio/video allowed with limits and carried inline",async()=>{
+  for(const mime of ["application/pdf","image/png","audio/mpeg","video/mp4"]){
+    const r=await handler(event({question:"Analisis lampiran ini",media:{name:"sampel",mimeType:mime,data:"QUJDRA=="}},"media"+mime));
+    assert.equal(r.statusCode,200);
+    const content=latestPrimary().contents.at(-1).parts;
+    assert.equal(content[1].inlineData.mimeType,mime);
+    assert.equal(content[1].inlineData.data,"QUJDRA==");
+    assert.ok(!r.body.includes("QUJDRA=="));
+  }
+});
+test("session summaries and thoughts included as untrusted user data",async()=>{
+  const r=await handler(event({question:"Sambung analisis",
+    summary:"Terdahulu kami pertikai kemerdekaan.",
+    thoughtLedger:[{idea:"Premis yang belum dibuktikan",status:"premis"}]},"session"));
+  assert.equal(r.statusCode,200);
+  assert.match(latestPrimary().contents.at(-1).parts[0].text,/Terdahulu kami pertikai/);
+  assert.ok(!latestPrimary().systemInstruction.parts[0].text.includes("Terdahulu kami pertikai"));
+});
+test("probe and opt-in conversational compaction",async()=>{
+  const before=calls.length;
+  const ping=await handler(event({probe:true},"probe"));
+  assert.equal(ping.statusCode,200);
+  assert.equal(JSON.parse(ping.body).geminiVerified,false);
+  assert.equal(calls.length,before);
+  const r=await handler(event({summarize:true,history:[
+    {role:"user",content:"A"},{role:"assistant",content:"B"},
+    {role:"user",content:"C"},{role:"assistant",content:"D"}]},"summary"));
+  assert.equal(r.statusCode,200);
+  assert.ok(JSON.parse(r.body).summary);
+});
+test("invalid origin, unsupported media, request size, and empty prompt rejected",async()=>{
+  const origin=await handler({httpMethod:"POST",headers:{origin:"https://other.example"},body:"{}"});
+  assert.equal(origin.statusCode,403);
+  assert.equal((await handler(event({},"empty"))).statusCode,400);
+  assert.equal((await handler(event({question:"Test",media:{mimeType:"application/x-msdownload",data:"QUJDRA=="}},"badfile"))).statusCode,400);
+  assert.equal((await handler(event({question:"Test",media:{mimeType:"image/png",data:"A".repeat(3100000)}},"bigfile"))).statusCode,400);
+  assert.equal((await handler(event({huge:"x".repeat(3350000)},"size"))).statusCode,413);
 });

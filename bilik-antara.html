@@ -346,15 +346,6 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
 
 /* Bilik Antara Intelligence v2: modes, local privacy controls, grounded source links */
 .intelligence-panel{position:relative;z-index:2;max-width:38rem;margin:.3rem auto .8rem;padding:0 .9rem}
-.insight-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.45rem}
-.insight-option{min-width:0;border:1px solid var(--hairline);background:var(--surface);color:var(--silver-dim);
- padding:.58rem .25rem;border-radius:9px;display:flex;flex-direction:column;align-items:center;gap:.2rem;
- transition:background .2s,border-color .2s,color .2s;cursor:pointer}
-.insight-option strong{font-family:var(--font-display);font-weight:600;font-size:.87rem;letter-spacing:.025em}
-.insight-option small{font-family:var(--font-body);font-size:.62rem;color:var(--silver-faint)}
-.insight-option.active,.insight-option[aria-pressed="true"]{border-color:var(--cyan);background:var(--cyan-soft);color:var(--cyan)}
-.insight-option.active small{color:var(--silver)}
-.insight-option:hover,.insight-option:focus-visible{border-color:var(--cyan)}
 .session-controls{display:flex;flex-wrap:wrap;gap:.4rem .95rem;align-items:center;justify-content:center;margin-top:.75rem}
 .session-controls label,.session-controls button{font-size:.67rem;line-height:1.5;color:var(--silver-dim);cursor:pointer}
 .session-controls input[type=checkbox]{accent-color:var(--cyan);vertical-align:middle}
@@ -368,8 +359,23 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
 .ai-sources .sources-label{flex-basis:100%;font-family:var(--font-mono);font-size:.57rem;color:var(--silver-faint)}
 .ai-sources a{font-size:.69rem;line-height:1.5;color:var(--cyan);text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere}
 .ai-sources a:hover{color:var(--silver)}
-@media(max-width:640px){.intelligence-panel{padding:0 .55rem}.insight-option{padding:.55rem .15rem}.insight-option strong{font-size:.81rem}.insight-option small{font-size:.57rem}.session-controls{gap:.4rem .7rem}}
+@media(max-width:640px){.intelligence-panel{padding:0 .55rem}.session-controls{gap:.4rem .7rem}}
 
+
+.memory-notes{margin:.45rem auto 0;color:var(--silver-dim);font-size:.68rem;max-width:38rem;}
+.memory-notes summary{cursor:pointer;color:var(--cyan);padding:.3rem 0}
+.memory-notes li{padding:.35rem 0;border-bottom:1px solid var(--hairline);display:flex;flex-wrap:wrap;align-items:center;gap:.35rem}
+.memory-notes li span{flex:1;min-width:8rem}
+.memory-notes button{font-size:.63rem;color:var(--cyan);border:1px solid var(--hairline);border-radius:4px;padding:.25rem .45rem;cursor:pointer}
+#forgetIdeas{margin-top:.35rem}
+.ai-analysis{border-top:1px solid var(--hairline);margin-top:.65rem;padding-top:.45rem}
+.ai-analysis summary{font-family:var(--font-mono);font-size:.63rem;color:var(--cyan);cursor:pointer;padding:.15rem 0}
+.ai-analysis-list{margin:.5rem 0 .1rem 1.15rem!important;padding:0}
+.ai-analysis-list li{margin:.5rem 0;line-height:1.6;font-size:.76rem}
+.ai-analysis-list li p{color:var(--silver-dim)}
+.ai-analysis-list li a{color:var(--cyan);font-size:.7rem;text-decoration:underline}
+.map-node{padding:.2rem .1rem;text-align:left;color:var(--silver);cursor:pointer}
+.map-node:hover,.map-node:focus-visible{color:var(--cyan);text-decoration:underline}
 </style>
 </head>
 <body>
@@ -401,20 +407,19 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
   </section>
 
   <section class="intelligence-panel" aria-label="Tetapan kecerdasan Bilik Antara">
-    <div class="insight-modes" role="group" aria-label="Pilih cara jawapan AI">
-      <button type="button" class="insight-option active" data-insight="bual" aria-pressed="true"><strong>Bual</strong><small>Santai &amp; pantas</small></button>
-      <button type="button" class="insight-option" data-insight="bedah" aria-pressed="false"><strong>Bedah</strong><small>Uji hujah</small></button>
-      <button type="button" class="insight-option" data-insight="selidik" aria-pressed="false"><strong>Selidik</strong><small>Bukti &amp; sumber</small></button>
-    </div>
     <div class="session-controls">
-      <label><input type="checkbox" id="useWorks"> Rujuk karya</label>
       <label><input type="checkbox" id="rememberChat"> Simpan sesi pada peranti</label>
-      <label class="attach-label" for="documentUpload">Lampir teks</label>
-      <input type="file" id="documentUpload" accept=".txt,.md,.csv,text/plain,text/markdown,text/csv" hidden>
+      <label class="attach-label" for="documentUpload">Lampir fail</label>
+      <input type="file" id="documentUpload" aria-label="Lampir PDF, imej, audio, video pendek atau teks" accept=".txt,.md,.csv,.pdf,image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/wav,audio/mp4,audio/ogg,video/mp4,video/webm" hidden>
       <button type="button" id="clearChat">Padam sesi</button>
     </div>
     <p id="docStatus" class="document-status" role="status" aria-live="polite"></p>
-    <p class="privacy-note">Sejarah sembang tidak disimpan oleh halaman ini melainkan diaktifkan. Mesej dihantar kepada penyedia AI untuk dijawab. Mod Selidik mungkin menggunakan kuota carian tambahan.</p>
+    <details class="memory-notes" id="ideaLedger">
+      <summary>Nota idea dalam perbualan</summary>
+      <ul id="thoughtItems"></ul>
+      <button type="button" id="forgetIdeas">Kosongkan nota idea</button>
+    </details>
+    <p class="privacy-note">Semua soalan diurus secara automatik. Carian, pengiraan dan semakan hujah digunakan apabila perlu. Sejarah sesi hanya disimpan pada peranti dengan izin; mesej dan lampiran dihantar ke penyedia AI.</p>
   </section>
 
   <div class="banner connecting" id="statusBanner" role="status">
@@ -440,7 +445,7 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
       <h4>Prinsip keselamatan</h4>
       <ul>
         <li><strong>API key tidak pernah berada di sisi pelayar.</strong> Halaman ini hanya menghubungi <code id="epShow">/.netlify/functions/bilik-antara</code> — fungsi Netlify yang menyimpan key sebagai environment variable dan memanggil Gemini bagi pihak anda.</li>
-        <li>Model lalai: <code>gemini-3.6-flash</code>, boleh ditukar melalui <code>GEMINI_MODEL</code>. Mod Bedah menggunakan penaakulan lebih tinggi; Selidik menggunakan Google Search apabila tersedia (boleh menambah kos). Soalan identiti penulis dijawab daripada fakta awam yang disahkan.</li>
+        <li>Model lalai: <code>gemini-3.6-flash</code>, boleh ditukar melalui <code>GEMINI_MODEL</code>. Penaakulan, carian Google dan alat pengiraan dipilih secara automatik apabila diperlukan (boleh menambah kos). Soalan identiti penulis dijawab daripada fakta awam yang disahkan.</li>
         <li>Pada tier percuma Gemini, soalan mungkin digunakan Google untuk memperbaiki produk.</li>
       </ul>
       <h4>Format respons backend</h4>
@@ -897,32 +902,26 @@ var ENDPOINT = (window.BILIK_ENDPOINT || '/.netlify/functions/bilik-antara');
 document.getElementById('epShow').textContent = ENDPOINT;
 var history = [];
 var hasChat = false;
-var insightMode = "bual";
 var sessionSummary = "";
+var thoughtLedger = [];
 var summarizedThrough = 0;
 var summaryBusy = false;
 var pendingDocument = null;
 var rememberChat = document.getElementById("rememberChat");
-var useWorks = document.getElementById("useWorks");
 var documentUpload = document.getElementById("documentUpload");
 var docStatus = document.getElementById("docStatus");
+var thoughtItems = document.getElementById("thoughtItems");
 var SESSION_KEY = "bilik-antara-session-v2";
-
-function setInsight(name) {
-  if(["bual","bedah","selidik"].indexOf(name) < 0) name="bual";
-  insightMode=name;
-  document.querySelectorAll("[data-insight]").forEach(function(button){
-    var yes=button.getAttribute("data-insight")===name;
-    button.classList.toggle("active",yes);
-    button.setAttribute("aria-pressed",yes?"true":"false");
-  });
-  persistSession();
-}
+var VALID_MEDIA = {
+  "application/pdf":true,"image/jpeg":true,"image/png":true,"image/webp":true,"image/gif":true,
+  "audio/mpeg":true,"audio/wav":true,"audio/mp4":true,"audio/ogg":true,
+  "video/mp4":true,"video/webm":true
+};
 function persistSession(){
-  if(!rememberChat.checked) return;
+  if(!rememberChat.checked)return;
   try {
-    localStorage.setItem(SESSION_KEY,JSON.stringify({at:Date.now(),history:history.slice(-42),summary:sessionSummary,insightMode:insightMode,works:useWorks.checked}));
-  }catch(e){ docStatus.textContent="Storan pelayar tidak tersedia; sesi hanya disimpan sehingga halaman ditutup."; }
+    localStorage.setItem(SESSION_KEY,JSON.stringify({at:Date.now(),history:history.slice(-42),summary:sessionSummary,thoughtLedger:thoughtLedger.slice(-12)}));
+  }catch(e){docStatus.textContent="Storan peranti penuh atau tidak tersedia. Sesi ini kekal sehingga halaman ditutup.";}
 }
 function restoreSession(){
   try {
@@ -930,46 +929,108 @@ function restoreSession(){
     if(!data||!Array.isArray(data.history)||Date.now()-data.at>14*24*60*60*1000){localStorage.removeItem(SESSION_KEY);return false;}
     rememberChat.checked=true;
     history=data.history.filter(function(m){return m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string";}).slice(-42);
-    sessionSummary=typeof data.summary==="string"?data.summary.slice(0,1600):"";
+    sessionSummary=typeof data.summary==="string"?data.summary.slice(0,1800):"";
+    thoughtLedger=Array.isArray(data.thoughtLedger)?data.thoughtLedger.slice(-12).filter(function(x){return x&&typeof x.idea==="string";}):[];
     summarizedThrough=history.length>16?history.length-12:0;
-    useWorks.checked=!!data.works;
-    setInsight(data.insightMode);
-    history.forEach(function(m){ if(m.role==="user")addUserMsg(m.content);else renderAiLive({reply:m.content,sources:m.sources||[]}); });
+    renderLedger();
+    history.forEach(function(m){if(m.role==="user")addUserMsg(m.content);else renderAiLive(m);});
     if(history.length){hasChat=true;document.body.classList.add("has-chat");}
     return history.length>0;
   }catch(e){return false;}
 }
-function compactContext(){
-  if(summaryBusy||history.length<20||history.length-summarizedThrough<12) return;
-  var until=history.length-12;
-  if(until<=summarizedThrough) return;
-  var chunk=history.slice(summarizedThrough,until).slice(-18);
-  if(chunk.length<4) return;
-  summaryBusy=true;
-  fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({summarize:true,summary:sessionSummary,history:chunk})})
-   .then(function(r){if(!r.ok)throw Error("summary");return r.json();})
-   .then(function(d){if(typeof d.summary==="string"&&d.summary.trim()){sessionSummary=d.summary.slice(0,1600);summarizedThrough=until;persistSession();}})
-   .catch(function(){})
-   .finally(function(){summaryBusy=false;});
+function renderLedger(){
+  thoughtItems.textContent="";
+  thoughtLedger.forEach(function(note,i){
+    var li=document.createElement("li"),txt=document.createElement("span");
+    txt.textContent=note.idea;li.appendChild(txt);
+    var edit=document.createElement("button");edit.type="button";edit.textContent="Sunting";
+    edit.addEventListener("click",function(){
+      var value=prompt("Betulkan nota idea ini:",note.idea);
+      if(value===null)return;
+      value=value.trim().slice(0,170);
+      if(value)thoughtLedger[i].idea=value;else thoughtLedger.splice(i,1);
+      renderLedger();persistSession();
+    });
+    li.appendChild(edit);
+    var del=document.createElement("button");del.type="button";del.textContent="Padam";
+    del.addEventListener("click",function(){thoughtLedger.splice(i,1);renderLedger();persistSession();});
+    li.appendChild(del);thoughtItems.appendChild(li);
+  });
+  if(!thoughtLedger.length){
+    var li=document.createElement("li");li.textContent="Tiada premis atau kesimpulan disimpan lagi.";thoughtItems.appendChild(li);
+  }
 }
-document.querySelectorAll("[data-insight]").forEach(function(btn){btn.addEventListener("click",function(){setInsight(btn.getAttribute("data-insight"));});});
+function absorbIdeas(items){
+  if(!Array.isArray(items))return;
+  items.slice(0,6).forEach(function(x){
+    if(!x||typeof x.idea!=="string")return;
+    var idea=x.idea.trim().slice(0,170);
+    if(idea&&!thoughtLedger.some(function(n){return n.idea.toLowerCase()===idea.toLowerCase();})){
+      thoughtLedger.push({idea:idea,status:x.status||"premis"});
+    }
+  });
+  thoughtLedger=thoughtLedger.slice(-12);
+  renderLedger();persistSession();
+}
+function compactContext(){
+  if(summaryBusy||history.length<20||history.length-summarizedThrough<12)return;
+  var until=history.length-12;
+  if(until<=summarizedThrough)return;
+  var chunk=history.slice(summarizedThrough,until).slice(-18);
+  if(chunk.length<4)return;
+  summaryBusy=true;
+  fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({
+    summarize:true,summary:sessionSummary,history:chunk
+  })}).then(function(r){if(!r.ok)throw Error("summary");return r.json();})
+    .then(function(d){if(typeof d.summary==="string"&&d.summary.trim()){
+      sessionSummary=d.summary.slice(0,1800);summarizedThrough=until;persistSession();
+    }}).catch(function(){}).finally(function(){summaryBusy=false;});
+}
 rememberChat.addEventListener("change",function(){
   if(rememberChat.checked)persistSession();
   else {try{localStorage.removeItem(SESSION_KEY);}catch(e){}}
 });
-useWorks.addEventListener("change",persistSession);
+document.getElementById("forgetIdeas").addEventListener("click",function(){
+  thoughtLedger=[];renderLedger();persistSession();
+});
 documentUpload.addEventListener("change",async function(){
   var file=this.files&&this.files[0];pendingDocument=null;
   if(!file){docStatus.textContent="";return;}
-  if(!/\.(txt|md|csv)$/i.test(file.name)||file.size>25000){docStatus.textContent="Fail teks .txt, .md atau .csv sahaja (maksimum 25 KB).";this.value="";return;}
-  try {pendingDocument={name:file.name.slice(0,100),text:(await file.text()).slice(0,15000)};docStatus.textContent="Dilampir: "+pendingDocument.name+" (sekali hantar).";}
-  catch(e){docStatus.textContent="Gagal membaca fail teks.";this.value="";}
+  var name=file.name.slice(0,100);
+  var extension=name.split(".").pop().toLowerCase();
+  if(["txt","md","csv"].indexOf(extension)!==-1){
+    if(file.size>25000){docStatus.textContent="Fail teks maksimum 25 KB.";this.value="";return;}
+    try{pendingDocument={name:name,text:(await file.text()).slice(0,15000)};
+      docStatus.textContent="Teks dilampir: "+name+" (dihantar sekali sahaja).";}
+    catch(e){docStatus.textContent="Gagal membaca fail.";this.value="";}
+    return;
+  }
+  var mime=file.type.toLowerCase();
+  if(extension==="pdf")mime="application/pdf";
+  if(extension==="m4a")mime="audio/mp4";
+  if(mime==="audio/x-wav"||mime==="audio/wave")mime="audio/wav";
+  if(!VALID_MEDIA[mime]||file.size>2200000||file.size===0){
+    docStatus.textContent="Hanya PDF, imej, audio atau video pendek maksimum 2.2 MB disokong.";this.value="";return;
+  }
+  docStatus.textContent="Membaca lampiran "+name+"…";
+  try {
+    var base64=await new Promise(function(resolve,reject){
+      var reader=new FileReader();
+      reader.onerror=function(){reject(new Error("Fail tidak boleh dibaca"));};
+      reader.onload=function(){resolve(String(reader.result||"").split(",")[1]||"");};
+      reader.readAsDataURL(file);
+    });
+    if(base64.length>3000000)throw Error("Fail terlalu besar");
+    pendingDocument={name:name,media:{mimeType:mime,data:base64,name:name}};
+    docStatus.textContent="Dilampir: "+name+" (maksimum 2.2 MB, dihantar sekali sahaja).";
+  }catch(e){pendingDocument=null;docStatus.textContent="Gagal membaca lampiran.";this.value="";}
 });
 document.getElementById("clearChat").addEventListener("click",function(){
-  history=[];sessionSummary="";summarizedThrough=0;pendingDocument=null;documentUpload.value="";docStatus.textContent="";
-  rememberChat.checked=false;useWorks.checked=false;setInsight("bual");
+  history=[];sessionSummary="";thoughtLedger=[];summarizedThrough=0;
+  pendingDocument=null;documentUpload.value="";docStatus.textContent="";
+  rememberChat.checked=false;
   try{localStorage.removeItem(SESSION_KEY);}catch(e){}
-  chat.textContent="";hasChat=false;document.body.classList.remove("has-chat");welcome();
+  renderLedger();chat.textContent="";hasChat=false;document.body.classList.remove("has-chat");welcome();
 });
 
 function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
@@ -1037,23 +1098,27 @@ function probeBackend(){
 function backendAsk(question,signal){
   var attachment=pendingDocument;
   return fetch(ENDPOINT, {
-    method:'POST', headers:{'Content-Type':'application/json'},signal:signal,
-    body: JSON.stringify({
+    method:'POST',headers:{'Content-Type':'application/json'},signal:signal,
+    body:JSON.stringify({
       question:question,history:history.slice(-16),summary:sessionSummary,
-      insightMode:insightMode,useWorks:useWorks.checked,
-      documentText:attachment?attachment.text:"",documentName:attachment?attachment.name:""
+      thoughtLedger:thoughtLedger.slice(-8),
+      documentText:attachment&&attachment.text||"",
+      documentName:attachment&&attachment.name||"",
+      media:attachment&&attachment.media||null
     })
   }).then(function(r){
     if(!r.ok){
-      return r.json().catch(function(){ return {}; }).then(function(body){
-        var err = new Error(body && body.error ? body.error : 'HTTP '+r.status);
-        err.status = r.status; throw err;
+      return r.json().catch(function(){return {};}).then(function(body){
+        var err=new Error(body&&body.error?body.error:"HTTP "+r.status);
+        err.status=r.status;throw err;
       });
     }
     return r.json();
   }).then(function(data){
-    history.push({role:'user',content:question});
-    history.push({role:'assistant',content:String(data.reply||""),sources:data.sources||[]});
+    history.push({role:"user",content:question});
+    history.push({role:"assistant",content:String(data.reply||""),sources:data.sources||[],
+      argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||""});
+    absorbIdeas(data.thoughtLedger);
     if(attachment&&pendingDocument===attachment){pendingDocument=null;documentUpload.value="";docStatus.textContent="";}
     persistSession();compactContext();
     return data;
@@ -1081,7 +1146,7 @@ function renderAiLive(data){
   var el=document.createElement('div'); el.className='msg ai';
   var who='<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>';
   var body='<div class="bubble"><div class="ai-body">';
-  if(data && data.reply){ body += formatReply(data.reply); }
+  if(data && (data.reply||data.content)){ body += formatReply(data.reply||data.content); }
   if(data && data.quotes && data.quotes.length){
     for(var i=0;i<data.quotes.length;i++){
       body += '<p style="font-style:italic;color:var(--silver-dim);border-left:2px solid var(--cyan);padding-left:.7rem;margin:.5rem 0">'+esc(data.quotes[i].text)+'</p>';
@@ -1104,6 +1169,50 @@ function renderAiLive(data){
     });
     el.querySelector('.ai-body').appendChild(list);
   }
+  var contentBox=el.querySelector('.ai-body');
+  function makeDetails(label,items,kind){
+    if(!Array.isArray(items)||!items.length)return;
+    var details=document.createElement('details');details.className='ai-analysis';
+    var summary=document.createElement('summary');summary.textContent=label;details.appendChild(summary);
+    var ol=document.createElement('ol');ol.className='ai-analysis-list';
+    items.slice(0,7).forEach(function(item){
+      if(!item||typeof item!=='object')return;
+      var li=document.createElement('li');
+      if(kind==='map'){
+        var btn=document.createElement('button');btn.type='button';btn.className='map-node';
+        btn.textContent='['+(item.type||'premis')+'] '+String(item.label||'').slice(0,130);
+        btn.addEventListener('click',function(){
+          input.value='Bedah hujah berikut dengan lebih teliti: '+String(item.label||'').slice(0,130);
+          input.focus();updateSend();
+        });
+        li.appendChild(btn);
+      }else{
+        var title=document.createElement('strong');
+        title.textContent='['+String(item.status||'belum_disahkan')+'] '+String(item.claim||'').slice(0,240);
+        li.appendChild(title);
+        if(item.note){var p=document.createElement('p');p.textContent=String(item.note).slice(0,270);li.appendChild(p);}
+        var i=item.sourceIndex;
+        if(Number.isInteger(i)&&data.sources&&data.sources[i]){
+          try{
+            var url=new URL(data.sources[i].url);
+            if(url.protocol==='http:'||url.protocol==='https:'){
+              var link=document.createElement('a');link.href=url.href;link.target='_blank';
+              link.rel='noopener noreferrer';link.textContent='Rujukan bagi dakwaan ini';li.appendChild(link);
+            }
+          }catch(e){}
+        }
+      }
+      ol.appendChild(li);
+    });
+    details.appendChild(ol);contentBox.appendChild(details);
+  }
+  makeDetails('Peta hujah (tekan cabang untuk dibedah)',data&&data.argumentMap,'map');
+  makeDetails('Audit dakwaan dan tahap bukti',data&&data.truthAudit,'truth');
+  if(data&&typeof data.hypothesis==='string'&&data.hypothesis.trim()){
+    var hypothesis=document.createElement('details');hypothesis.className='ai-analysis';
+    var head=document.createElement('summary');head.textContent='Eksperimen pemikiran';hypothesis.appendChild(head);
+    var p=document.createElement('p');p.textContent=data.hypothesis;hypothesis.appendChild(p);contentBox.appendChild(hypothesis);
+  }
   chat.appendChild(el); scrollBottom();
 }
 function welcome(){
@@ -1111,7 +1220,7 @@ function welcome(){
   el.innerHTML='<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>'
     +'<div class="bubble"><div class="ai-body">'
     +'<p>Selamat datang. Kita boleh berbual tentang <strong>falsafah, sastera, teknologi, manusia, kehidupan</strong> — atau apa sahaja yang ada di minda anda.</p>'
-    +'<p>Aku jawab terus, berani membantah dan suka menyindir bila kena tempat. Tapi kalau hujah kau kukuh, takkan aku nak cari gaduh semata-mata untuk nampak bijak.</p>'
+    +'<p>Aku jawab terus. Kalau hujah kau bocor, aku bedah tanpa kompromi. Yang kena kritik itu idea, bukan kau. Kalau hujah kukuh, aku akan mengaku.</p>'
     +'<p>Cuba salah satu soalan di bawah, atau teruskan menulis.</p>'
     +'</div></div>';
   chat.appendChild(el);
@@ -1126,7 +1235,7 @@ STARTERS.forEach(function(s){
 function updateSend(){
   sendBtn.disabled = (state==='loading' || input.value.trim()==='');
   document.getElementById('clearChat').disabled=state==='loading';
-  document.querySelectorAll('[data-insight]').forEach(function(b){b.disabled=state==='loading';});
+  documentUpload.disabled=state==='loading';
 }
 var inputTimer=null;
 input.addEventListener('input', function(){
@@ -1145,8 +1254,6 @@ function send(){
   state='loading'; updateSend();
   if(!hasChat){ hasChat=true; document.body.classList.add('has-chat'); }
   setState('thinking');
-  var __face=document.getElementById('aiFace'); if(__face){ __face.classList.add('thinking'); }
-  if(window.__detectEmotion && window.__setFaceEmotion){ window.__setFaceEmotion(window.__detectEmotion(q), 6000); }
   addUserMsg(q);
   input.value=''; input.style.height='auto'; updateSend();
   addTyping();
@@ -1160,8 +1267,6 @@ function send(){
     else if(err && err.status===504) msg='Gemini tidak membalas dalam had masa. Cuba lagi sebentar lagi.';
     addErrorMsg('Tidak dapat memperoleh jawapan: ' + msg + ' Sila cuba sebentar lagi.');
     setState('error');
-    if(__face){ __face.classList.remove('thinking'); }
-    if(window.__setFaceEmotion){ window.__setFaceEmotion('disappointed', 5000); }
     if(mode==='live'){ setMode('error','Endpoint ada tetapi memulangkan ralat. Semak log fungsi Netlify.'); }
   }
   var done=false;
@@ -1174,8 +1279,6 @@ function send(){
     renderAiLive(data);
     setState('responding');
     if(window.__galaxyBurst){ window.__galaxyBurst(3); }
-    if(__face){ __face.classList.remove('thinking'); }
-    if(window.__detectEmotion && window.__setFaceEmotion){ window.__setFaceEmotion(window.__detectEmotion(data.reply||''), 6000); }
     setTimeout(function(){ setState('idle'); }, 1500);
   }).catch(function(e){ if(done)return; done=true; clearTimeout(to); fail(e); });
 }
@@ -1187,267 +1290,7 @@ updateSend();
 setTimeout(probeBackend, 600);
 })();
 
-/* ============ WAJAH AI: 50 VARIAN EMOSI x 100 KATA KUNCI ============ */
-(function(){
-  var face = document.getElementById('aiFace');
-  if(!face) return;
-  var mouths = face.querySelectorAll('.ov-mouth');
-  var fxBox = document.getElementById('faceEffects');
-  var current = 'neutral';
-  var idleTimer = null;
-  var CHARS = { love:'\u2665', heartbig:'\u2665', spark:'\u2726', q:'?', z:'Z', sweat:'\u2022', excl:'!', note:'\u266A', steam:'\u2248', anger:'!', star:'\u2605', tear:'\u2022' };
-
-  function spawnFx(type, count){
-    if(!fxBox) return;
-    var ch = CHARS[type] || '\u2726';
-    for(var i=0;i<count;i++){ (function(){
-      var s=document.createElement('span'); s.className='fx '+type; s.textContent=ch;
-      s.style.setProperty('--fx-x',(Math.random()*90-45)+'px');
-      s.style.setProperty('--fx-r',(Math.random()*50-25)+'deg');
-      var d=Math.random()*0.5; s.style.animationDelay=d+'s'; s.style.top=(60+Math.random()*10)+'%';
-      fxBox.appendChild(s); setTimeout(function(){s.remove();},2800+d*1000);
-    })();}
-  }
-  function clearMods(){ face.classList.remove('tilt-left','tilt-right','tint-pink','tint-gold','tint-cold','eye-wide','eye-narrow','eye-closed','eye-heart','eye-roll','eye-half'); }
-
-  // 50 VARIAN EMOSI: {m:mulut, e:mata, t:condong, c:tona, f:zarah, n:bilangan}
-  var S = {
-    neutral:      {m:'neutral'},
-    smile:        {m:'smile', f:'spark', n:1},
-    bigsmile:     {m:'bigsmile', e:'eye-half', t:'left', f:'spark', n:2},
-    laugh:        {m:'laugh', e:'eye-closed', c:'gold', f:'spark', n:4},
-    laugh_tears:  {m:'laugh', e:'eye-closed', c:'gold', f:'tear', n:3},
-    angry:        {m:'angry', e:'eye-narrow', t:'right', f:'anger', n:2},
-    furious:      {m:'angry', e:'eye-narrow', t:'right', c:'cold', f:'anger', n:4},
-    frown:        {m:'frown', e:'eye-half'},
-    sad:          {m:'sad', e:'eye-half', c:'cold', t:'right'},
-    cry:          {m:'cry', e:'eye-half', c:'cold', f:'tear', n:3},
-    sob:          {m:'cry', e:'eye-closed', c:'cold', f:'tear', n:5},
-    disappointed: {m:'disappointed', e:'eye-half', t:'right'},
-    devastated:   {m:'sad', e:'eye-half', c:'cold', t:'right', f:'tear', n:2},
-    surprised:    {m:'surprised', e:'eye-wide', t:'right', f:'excl', n:1},
-    shocked:      {m:'surprised', e:'eye-wide', c:'gold', f:'excl', n:3},
-    scared:       {m:'scared', e:'eye-wide', c:'cold', f:'sweat', n:1},
-    terrified:    {m:'scared', e:'eye-wide', c:'cold', f:'sweat', n:3},
-    shy:          {m:'shy', e:'eye-roll', t:'left', c:'pink'},
-    embarrassed:  {m:'shy', e:'eye-roll', t:'left', c:'pink', f:'sweat', n:2},
-    love:         {m:'love', e:'eye-heart', t:'left', c:'pink', f:'heartbig', n:6},
-    love_blow:    {m:'love', e:'eye-heart', t:'left', c:'pink', f:'heartbig', n:9},
-    adore:        {m:'bigsmile', e:'eye-heart', c:'pink', f:'love', n:4},
-    confused:     {m:'confused', e:'eye-roll', t:'left', f:'q', n:2},
-    puzzled:      {m:'confused', e:'eye-roll', t:'right', f:'q', n:3},
-    tired:        {m:'tired', e:'eye-half', t:'right', f:'z', n:2},
-    exhausted:    {m:'tired', e:'eye-closed', t:'right', f:'z', n:4},
-    sleepy:       {m:'tired', e:'eye-half', f:'z', n:3},
-    bored:        {m:'bored', e:'eye-roll', t:'right', f:'steam', n:1},
-    excited:      {m:'excited', e:'eye-wide', c:'gold', f:'spark', n:5},
-    thrilled:     {m:'excited', e:'eye-wide', c:'gold', f:'star', n:7},
-    proud:        {m:'smug', e:'eye-half', t:'left', c:'gold', f:'star', n:3},
-    smug:         {m:'smug', e:'eye-half', t:'left'},
-    worried:      {m:'worried', e:'eye-half', c:'cold', f:'sweat', n:1},
-    anxious:      {m:'worried', e:'eye-wide', c:'cold', f:'sweat', n:2},
-    calm:         {m:'neutral', e:'eye-half', t:'left'},
-    hopeful:      {m:'smile', e:'eye-wide', c:'gold', f:'star', n:2},
-    regretful:    {m:'frown', e:'eye-half', c:'cold', t:'right'},
-    amazed:       {m:'surprised', e:'eye-wide', c:'gold', f:'star', n:4},
-    flirty:       {m:'flirty', e:'eye-half', t:'left', c:'pink', f:'love', n:2},
-    playful:      {m:'bigsmile', e:'eye-closed', t:'left', f:'spark', n:3},
-    hungry:       {m:'excited', e:'eye-wide', f:'spark', n:1},
-    curious:      {m:'confused', e:'eye-wide', t:'left', f:'q', n:1},
-    nostalgic:    {m:'smile', e:'eye-roll', c:'pink', f:'heart', n:1},
-    jealous:      {m:'angry', e:'eye-narrow', c:'cold', f:'anger', n:1},
-    guilty:       {m:'sad', e:'eye-roll', t:'right', f:'sweat', n:1},
-    relieved:     {m:'smile', e:'eye-half', f:'steam', n:2},
-    determined:   {m:'angry', e:'eye-narrow', t:'left', c:'gold'},
-    sarcastic:    {m:'smug', e:'eye-half', t:'right', f:'q', n:1},
-    dreamy:       {m:'shy', e:'eye-roll', c:'pink', f:'spark', n:2},
-    speechless:   {m:'surprised', e:'eye-wide', f:'excl', n:2}
-  };
-
-  window.__setFaceEmotion = function(state, holdMs){
-    if(!face) return;
-    clearMods();
-    current = state || 'neutral';
-    var st = S[current] || S.neutral;
-    for(var i=0;i<mouths.length;i++){ mouths[i].classList.toggle('active', mouths[i].getAttribute('data-emotion')===st.m); }
-    if(st.e){ face.classList.add('eye-'+st.e); }
-    if(st.t){ face.classList.add('tilt-'+st.t); }
-    if(st.c){ face.classList.add('tint-'+st.c); }
-    if(st.f){ spawnFx(st.f, st.n||3); }
-    clearTimeout(idleTimer);
-    if(holdMs && current!=='neutral'){ idleTimer=setTimeout(function(){ clearMods(); window.__setFaceEmotion&&window.__setFaceEmotion('neutral'); }, holdMs); }
-  };
-
-  // 100 KATA KUNCI -> 50 varian emosi
-  var R = [
-    [/\b(cinta|sayang|love|i love you|aku cinta|aku sayang|muah|cium|kiss|hati|heart|valentine|gebu|comel|adorable|sweet|manis|jodoh|bercinta|tercinta|kesayangan|menyintai|teman hati|jantung berdebar|butterfly)\b|\u2665|<3|:\*|muacks?/i,'love_blow'],
-    [/\b(marah|geram|benci|bodoh|bangang|sial|celaka|hampeh|menyampah|naik angin|panas baran|koyak|stupid|fool|idiot|shut up|diamlah|bodo|babi|kutuk|hina|maki|hamun|menghan|hang|dengki|hasad|menatang|meroyan|meluat|geramnya|menyakitkan hati)\b/i,'angry'],
-    [/\b(marah sangat|geram sangat|benci sangat|sangat marah|meluat teruk|hangin satu badan|naik darah|membara|mencanak|geram tak tertahan|furious|enraged|bersangat marah)\b/i,'furious'],
-    [/\b(sedih|nangis|menangis|tangis|pilu|duka|patah hati|hancur hati|hilang|mati|kematian|tinggalkan|sunyi|sepi|rindu|putus asa|give up|kesal|pergi|selamat tinggal|merana|sengsara|menderita|air mata|sebak|teresak|merintih|sesak nafas|terkulai)\b/i,'cry'],
-    [/\b(teresak|tangis teresak|menangis teruk|merintih|sesak|hancur hati sangat|patah hati teruk|sob|sobbing|menangis sebak)\b/i,'sob'],
-    [/\b(terkejut|wow|tak sangka|serius|benar|shock|omg|astaga|wah|ajaib|apa\?|benarkah|seriuskah|no way|really|what\?|subhanallah|masyaallah|ya Allah|astaghfirullah|tidak mungkin|mustahil|ahhaah|tergamam|ternganga|tercengang)\b/i,'surprised'],
-    [/\b(shock teruk|terkejut sangat|tak sangka langsung|no way!|are you serious|serius ke|tipu ke|joking ke|shocked|tergamam|terkedu|terkedu sekejap)\b/i,'shocked'],
-    [/\b(takut|seram|scary|afraid|fear|ngeri|gentar|gerun|horror|seram sejuk|bulu roma|meremang|ketakutan|takutnya|gemetar|gigil|ketar|nyawa hampir terbang)\b/i,'scared'],
-    [/\b(takut sangat|terlalu takut|terketar|gemetar teruk|nyawa terbang|terkejut seram|terrified|panik|panic|ketakutan teruk)\b/i,'terrified'],
-    [/\b(malu|segan|tersipu|blush|shy|muka merah|merah padam|segan nak|takut nak|terima pujian|dipuji|teruja malu)\b/i,'shy'],
-    [/\b(tersebilu|muka merah padam|termenung|malu sangat|terlalu malu|embarrassed|tercicak|terkedu|terperasan|tersilap)\b/i,'embarrassed'],
-    [/\b(penat|lelah|mengantuk|letih|ngantuk|bosan|boring|membosankan|tak best|sleepy|tired|zzz|tidur|menguap|penatnya|letihnya|malas|lesu|down|tak larat|dawn|loya|pening|pening kepala)\b/i,'tired'],
-    [/\b(penat teruk|exhausted|burnout|hilang tenaga|lemah teruk|tak larat langsung|pengsan|pengsan penat|terkulai|lesu teruk)\b/i,'exhausted'],
-    [/\b(mengantuk|ngantuk|menguap|menguap besar|tidur|nak tidur|sleepy|mengantuk sangat|mata terasa berat)\b/i,'sleepy'],
-    [/\b(bosan|bosan|membosankan|takda kerja|nothing to do|saja|lepak|duduk|bored to death|menunggu|wait|lama sangat|jemu|fed up|muak|bosan sangat|tak boleh tahan lagi|enough already|penat dengar|sick of)\b/i,'bored'],
-    [/\b(keliru|confuse|tak faham|apa maksud|bagaimana|kenapa|mengapa|why|how|hmm|pelik|strange|weird|apa ni|macam mana|kenapa pula|susah faham|musykil|samar|kabur|tidak jelas|meragukan)\b/i,'confused'],
-    [/\b(musykil|sangat keliru|tak faham langsung|meragukan|puzzled|perplexed|bingung|sangat pelik|macam mana boleh)\b/i,'puzzled'],
-    [/\b(teruja|excited|best gila|syok gila|awesome|great|fantastic|amazing|hebat|gembira sangat|menang besar|juara|tahniah|congrats|meriah|heboh|bestnya|syoknya|gembiranya|sukacita|meriahkan|pesta|sambut|grateful|syukur sangat)\b/i,'excited'],
-    [/\b(teruja sangat|thrilled|over the moon|gembira bukan main|melompat kegembiraan|menang besar|juara dunia|best gila punya|syok habis|ecstatic|elated)\b/i,'thrilled'],
-    [/\b(kecewa|hampa|sia-sia|mengecewakan|harapan|tidak jadi|batal|rugi|terlepas|gagal|percuma|hampeh|tak jadi|patah harapan|merosot|terumbang)\b/i,'disappointed'],
-    [/\b(kecewa teruk|hancur harapan|devastated|patah hati|hampa sangat|gagal total|merosot teruk|down teruk|depres|stress|tekanan|pressure|tak lulus|fail|gagal exam|repeat|tawar hati)\b/i,'devastated'],
-    [/(haha|hehe|hihi|lol|gelak|tergelak|ketawa|lucu|funny|lawak|gelak terguling|perut sakit ketawa)/i,'laugh'],
-    [/\b(ketawa sampai menangis|laughing tears|tergelak teruk|perut sakit|ketawa tak henti|rofl|lmao|haha sangat|gelak terguling)/i,'laugh_tears'],
-    [/\b(gembira|happy|joy|kegembiraan|sukacita|riang|ria|tersenyum|senyum lebar|berhari raya|raya|hari jadi|birthday|anniversary|selamat|tahniah|berjaya|lulus|pass|diterima|accepted|dapat kerja|dapat tawaran|offer|biasiswa|scholarship)\b/i,'bigsmile'],
-    [/\b(terima kasih|thanks|ok|baik|setuju|betul|ya|nice|okay|faham|tahu|bijak|cemerlang|pintar|bagus|well done|tepat|betul begitu)\b/i,'smile'],
-    [/\b(bangga|proud|achievement|berjaya besar|anak berjaya|menang anugerah|anugerah|diiktiraf|dihormati|kemenangan|proud of)\b/i,'proud'],
-    [/\b(smug|berlagak|sombong|angkat diri|show off|perasan|bijak sangat|hebat sangat|atas angin)\b/i,'smug'],
-    [/\b(risau|bimbang|worried|anxious|cemas|resah|gelisah|tidak tenang|takut salah|bimbangkan|kerisauan|nervous|saraf|tegang|tense|gugup|debar|jantung berdebar|first date|temuduga|interview|peperiksaan|exam|upsr|spm)\b/i,'worried'],
-    [/\b(cemas|anxious|gugup teruk|debar kencang|jantung berdebar kencang|panic|panik|takut salah|sangat risau)\b/i,'anxious'],
-    [/\b(tenang|damai|peace|calm|relaks|relax|meditasi|yoga|pantai tenang|senyap|sunyi senyap|fokus|sabar|kesabaran|tenang sahaja|redha|rela|ikhlas|sincere|tawakal|berserah|pasrah)\b/i,'calm'],
-    [/\b(harap|harapan|berdoa|doa|moga|semoga|wish|berharap|ingin|mahu|impian|dream|cita-cita|tak sabar|counting days|menanti dengan|jangkaan|anticipate|excited for)\b/i,'hopeful'],
-    [/\b(sesal|regret|sepatutnya|patutnya|andai|kalau saja|if only|penyesalan|meratapi|terkenang andai)\b/i,'regretful'],
-    [/\b(kagum|admire|terpesona|wow sangat|hebatnya|subhanallah|masyaallah tabarakallah|indah sekali|menakjubkan|astounding|amazed|impressed)\b/i,'amazed'],
-    [/\b(flirty|menggoda|goda|rayu|merayu|sweet talk|berani|berani goda|teasing|teasing you|wink|;)\b/i,'flirty'],
-    [/\b(bermain|playful|main-main|gurau|gurauan|joking|joking with you|santai main|berjenaka|prank|pranking)\b/i,'playful'],
-    [/\b(lapar|hungry|makan|sedap|laper|food|makanan|jamuan|kek|coklat|ice cream|aiskrim|perut kosong|makan tengah hari|dinner|lunch|breakfast|supper|teatime)\b/i,'hungry'],
-    [/\b(ingin tahu|curious|ingin tahu lebih|apa itu|bagaimana mungkin|meneroka|explore|menyelidik|bertanya|tanya soalan|komplain|complaint|aduan|minta penjelasan)\b/i,'curious'],
-    [/\b(nostalgia|terkenang|kenangan lama|zaman dahulu|masa kecil|childhood|memori|memory|rindu zaman dulu|terkenang dulu|dulu-dulu|masa sekolah|zaman sekolah)\b/i,'nostalgic'],
-    [/\b(cemburu|jealous|iri|dengki|hasad|terguris|terasa hati|small heart|kecil hati|cemburu buta)\b/i,'jealous'],
-    [/\b(bersalah|guilty|rasa bersalah|terasa bersalah|dosa|silap saya|kesilapan saya|maafkan saya|minta maaf|apologize|sorry|terlanjur|terkhilaf)\b/i,'guilty'],
-    [/\b(lega|relieved|syukur|alhamdulillah|akhirnya|selamat|berjaya selamat|tidak jadi apa|lega rasanya|thank god|thank goodness)\b/i,'relieved'],
-    [/\b(berazam|determined|tekat|azam|mesti|mesti boleh|tidak akan berputus asa|champion|fight|berjuang|usaha|gigih|cekal|tabah)\b/i,'determined'],
-    [/\b(sinik|sarcastic|sindiran|menyindir|perli|mengperli|mengejek|mocking|sarcasm|sinis halus|kata-kata sindiran)\b/i,'sarcastic'],
-    [/\b(melamun|dreamy|termimpi|khayal|berkhayal|melayang|floating|termain khayal|terbayang|bayangan indah)\b/i,'dreamy'],
-    [/\b(tergamam|speechless|tak tahu nak cakap apa|terkedu|bisu|senyap|diam seribu bahasa|terkejut sampai tak boleh cakap|wordless)\b/i,'speechless'],
-    [/\b(nyanyi|lagu|muzik|music|sing|song|melodi|irama|karaoke|senandung|bersenandung)\b/i,'playful'],
-    [/\b(travel|bercuti|cuti|jalan-jalan|pantai|gunung|liburan|holiday|trip|adventure|petualangan|explore)\b/i,'excited'],
-    [/\b(buku|baca|membaca|novel|puisi|sastera|falsafah|fikir|berfikir|renung|kontemplasi|idea|ilmu|pengetahuan)\b/i,'calm'],
-    [/\b(teknologi|ai|kecerdasan buatan|robot|machine learning|coding|program|kod|komputer|digital|future|masa depan|teknologi baharu)\b/i,'excited'],
-    [/\b(sahabat|kawan|kawan baik|sahabat karib|friend|bestfriend|bersama|lepak|hangout|jumpa kawan|keluarga|ibu|bapa|ayah|mak|adik|abang|kakak|family|anak|isteri|suami|pasangan|rumah)\b/i,'bigsmile'],
-    [/\b(gerun|hantu|pontianak|ghost|horror cerita|jalan gelap|sendirian malam|gelap gulita|seram|kisah seram|cerita hantu)\b/i,'scared'],
-    [/\b(terpaksa|terpaksa buat|tak mahu|malas buat|ogah|enggan|rela terpaksa|dipaksa|forced)\b/i,'frown'],
-    [/\b(kantoi|tertangkap|caught|terbongkar|busted|ketahuan|tersebar|exposed|kena tipu|scammed|deceived|tricked|terpedaya|termakan umpan)\b/i,'speechless'],
-    [/\b(hujan|rain|mendung|gelap|sejuk|cold|winter|musim sejuk|angin|ribut|storm|petir|thunder)\b/i,'calm'],
-    [/\b(panas|sunny|cerah|summer|musim panas|panas terik|berpeluh|sweating|terik matahari)\b/i,'tired'],
-    [/\b(kopi|coffee|tea|teh|minum|break|istirehat|rehat|minum petang|morning|pagi|good morning)\b/i,'smile'],
-    [/\b(mimpi|mimpi ngeri|nightmare|terjaga|bangun tidur|tidur lena|insomnia|tidak boleh tidur|mengantuk sangat)\b/i,'sleepy'],
-    [/\b(terharu|touched|menangis terharu|sebak terharu|terharu sekali|dihargai|penghargaan|ucapan terima kasih|surprise|hadiah|gift)\b/i,'adore'],
-    [/\b(terpaku|staring|termakan|termakan umpan|terpedaya|tricked|kena tipu|deceived|scammed|kena scam)\b/i,'speechless'],
-    [/\b(terpujuk|convinced|setuju akhirnya|agree|ok fine|baiklah|fine then|mengalah|give in|kalah)\b/i,'smile'],
-    [/\b(terkejut besar|shock teruk|tak sangka langsung|no way!|are you serious|serius ke|tipu ke|joking ke)\b/i,'shocked'],
-    [/\b(terharu dengan|terkenang|nostalgia|kenangan lama|zaman dahulu|masa kecil|childhood|memori|memory|rindu zaman dulu)\b/i,'nostalgic'],
-    [/\b(kecewa dengan|tidak puas hati|not satisfied|komplain|complaint|aduan|minta penjelasan|tanya soalan)\b/i,'confused'],
-    [/\b(terlalu penat|exhausted|burnout|need rest|perlukan rehat|cuti panjang|breakdown|hilang tenaga|lemah)\b/i,'exhausted'],
-    [/\b(teruja untuk|excited for|tak sabar|tak sabar sabar|counting days|menanti dengan|jangkaan|anticipate)\b/i,'thrilled'],
-    [/\b(merenung|termerenung|contemplate|berfikir panjang|fikir dalam|dalam hati|berkata dalam hati|renungan)\b/i,'dreamy'],
-    [/\b(menangis|terharu|sebak|air mata jatuh|menitis air mata|nangis terharu)\b/i,'cry'],
-    [/\b(senario|lawak|jenaka|joke|pun|pantun|sajak|puisi|pantun jenaka|gurau senda)\b/i,'laugh'],
-    [/\b(sedih hati|kecewa hati|patah hati|sakit hati|terguris hati|guris hati|luka hati)\b/i,'sad'],
-    [/\b(marah hati|geram hati|menyampah hati|benci hati|meluat hati)\b/i,'angry'],
-    [/\b(gembira hati|suka hati|riang hati|seronok hati|kegembiraan)\b/i,'bigsmile'],
-    [/\b(takut hati|gerun hati|cemas hati|risau hati|bimbang hati)\b/i,'worried'],
-    [/\b(malu hati|segan hati|tersebilu|tersipu-sipu)\b/i,'shy'],
-    [/\b(cinta hati|sayang hati|rindu hati|terindah|tercinta)\b/i,'love'],
-    [/\b(terkejut hati|kaget|terperanjat|terperanjat besar)\b/i,'surprised'],
-    [/\b(penat hati|lesu hati|lemah hati|down hati|murung)\b/i,'tired'],
-    [/\b(bosan hati|jemu hati|muak hati|jelak)\b/i,'bored'],
-    [/\b(keliru hati|musykil hati|ragu hati|ragu-ragu|tidak pasti)\b/i,'confused'],
-    [/\b(teruja hati|excited hati|tidak sabar hati|gembira bukan kepalang)\b/i,'excited'],
-    [/\b(kecewa hati|hampa hati|sedih hati|susah hati)\b/i,'disappointed'],
-    [/\b(bangga hati|proud hati|angkat hati|syok sendiri)\b/i,'proud'],
-    [/\b(tenang hati|damai hati|sejuk hati|lapang dada|lega hati)\b/i,'calm'],
-    [/\b(harap hati|berdoa hati|moga hati|ingin hati)\b/i,'hopeful'],
-    [/\b(sesal hati|menyesal|penyesalan|andai kata)\b/i,'regretful'],
-    [/\b(kagum hati|terpesona|terkedu kagum|hebat sangat)\b/i,'amazed'],
-    [/\b(goda hati|rayu hati|flirty hati|menggoda)\b/i,'flirty'],
-    [/\b(main hati|bermain-main|gurau hati|berjenaka)\b/i,'playful'],
-    [/\b(lapar hati|makan hati|sedap hati|laper sangat)\b/i,'hungry'],
-    [/\b(ingin tahu hati|curious hati|bertanya hati)\b/i,'curious'],
-    [/\b(nostalgia hati|terkenang hati|rindu dulu)\b/i,'nostalgic'],
-    [/\b(cemburu hati|iri hati|dengki hati|kecil hati)\b/i,'jealous'],
-    [/\b(bersalah hati|guilty hati|silap saya|maafkan)\b/i,'guilty'],
-    [/\b(lega hati|syukur hati|alhamdulillah|akhirnya)\b/i,'relieved'],
-    [/\b(berazam hati|tekat hati|azam hati|mesti boleh)\b/i,'determined'],
-    [/\b(sinik hati|sindir hati|perli hati|mengperli)\b/i,'sarcastic'],
-    [/\b(melamun hati|termimpi|berkhayal|khayalan)\b/i,'dreamy'],
-    [/\b(speechless|tergamam|tak tahu cakap apa|bisu seribu bahasa)\b/i,'speechless'],
-    [/\b(ketawa|laugh|haha|hehe|hihi|lol|gelak|tergelak|lucu|funny|lawak)\b/i,'laugh'],
-    [/\b(senyum|smile|tersenyum|senyum lebar|grin)\b/i,'smile'],
-    [/\b(nangis|cry|sedih|tangis|menangis|air mata)\b/i,'cry'],
-    [/\b(marah|angry|geram|benci|meluat|menyampah)\b/i,'angry'],
-    [/\b(terkejut|surprised|wow|shock|omg|astaga)\b/i,'surprised'],
-    [/\b(takut|scared|afraid|fear|ngeri|seram)\b/i,'scared'],
-    [/\b(malu|shy|segan|blush|tersipu)\b/i,'shy'],
-    [/\b(penat|tired|lelah|mengantuk|letih|ngantuk)\b/i,'tired'],
-    [/\b(keliru|confused|tak faham|kenapa|bagaimana|hmm|pelik)\b/i,'confused'],
-    [/\b(teruja|excited|awesome|great|hebat|gembira|best)\b/i,'excited'],
-    [/\b(kecewa|disappointed|hampa|gagal|sia-sia)\b/i,'disappointed']
-  ];
-
-  window.__detectEmotion = function(text){
-    var t = ' ' + (text||'').toLowerCase() + ' ';
-    for(var i=0;i<R.length;i++){ if(R[i][0].test(t)) return R[i][1]; }
-    return 'neutral';
-  };
-
-  // Kelipan mata + wink rawak
-  function blinkLoop(){
-    setTimeout(function(){
-      if(!face){ blinkLoop(); return; }
-      if(Math.random()<0.14){ face.classList.add('wink'); setTimeout(function(){face&&face.classList.remove('wink');},230); }
-      else { face.classList.add('blink'); setTimeout(function(){face&&face.classList.remove('blink');},130);
-        if(Math.random()<0.18){ setTimeout(function(){ if(!face)return; face.classList.add('blink'); setTimeout(function(){face&&face.classList.remove('blink');},130); },240); } }
-      blinkLoop();
-    }, 1500+Math.random()*1500);
-  }
-  blinkLoop();
-  setInterval(function(){ if(!face||current!=='neutral')return; if(Math.random()<0.3){ face.classList.add(Math.random()<0.5?'tilt-left':'tilt-right'); setTimeout(function(){face&&face.classList.remove('tilt-left','tilt-right');},900); } },12000);
-
-  // Eye-tracking: iris + kepala menoleh ke kursor
-  var wrap = face.querySelector('.face-img-wrap');
-  var irisG = face.querySelector('.ov-iris-group');
-  if(wrap && window.matchMedia('(pointer:fine)').matches){
-    document.addEventListener('mousemove', function(e){
-      var r = face.getBoundingClientRect();
-      var cx=r.left+r.width/2, cy=r.top+r.height/2;
-      var dx=(e.clientX-cx)/r.width, dy=(e.clientY-cy)/r.height;
-      wrap.style.transform='rotateY('+Math.max(-12,Math.min(12,dx*18))+'deg) rotateX('+Math.max(-10,Math.min(10,-dy*14))+'deg)';
-      if(irisG){ irisG.style.transform='translate('+Math.max(-2.2,Math.min(2.2,dx*4.5))+'px,'+Math.max(-1.8,Math.min(1.8,dy*3.5))+'px)'; }
-    });
-  }
-  // Bibir bergerak: micro-expression rawak ketika neutral
-  var mouthVariants = ['neutral','smile','frown','shy','smug','bigsmile'];
-  var talking = false;
-  setInterval(function(){
-    if(!face || current!=='neutral' || talking) return;
-    if(Math.random()<0.35){
-      var mv = mouthVariants[Math.floor(Math.random()*mouthVariants.length)];
-      for(var i=0;i<mouths.length;i++){ mouths[i].classList.toggle('active', mouths[i].getAttribute('data-emotion')===mv); }
-      setTimeout(function(){
-        if(current==='neutral'){ for(var j=0;j<mouths.length;j++){ mouths[j].classList.toggle('active', mouths[j].getAttribute('data-emotion')==='neutral'); } }
-      }, 700);
-    }
-  }, 3500);
-  // Bibir bercakap ketika AI menjawab (state responding)
-  setInterval(function(){
-    if(!face) return;
-    var st = window.APP_STATE || 'idle';
-    if(st==='responding' || st==='thinking'){
-      talking = true;
-      var shapes = ['neutral','smile','surprised','bigsmile','excited'];
-      var s = shapes[Math.floor(Math.random()*shapes.length)];
-      for(var i=0;i<mouths.length;i++){ mouths[i].classList.toggle('active', mouths[i].getAttribute('data-emotion')===s); }
-    } else { talking = false; }
-  }, 160);
-  window.__setFaceEmotion('neutral');
-})();
-
+/* Legacy avatar code removed. Intelligence-only room. */
 </script>
 
 
