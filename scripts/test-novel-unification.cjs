@@ -18,7 +18,7 @@ test("One canonical novel URL and no duplicate manuscript in cover",()=>{
  assert.doesNotMatch(shell,/<section\s+class="book-section"/);
  assert.doesNotMatch(shell,/SECTION_IMAGES\s*=/);
  assert.doesNotMatch(shell,/antara-cahaya-dan-gelap-baca\.html/);
- assert.ok(shell.length<420000);
+ assert.ok(shell.length<80000);
 });
 test("Latest manuscript retained without modifying its engine",()=>{
  assert.equal((reader.match(/<section\s+class="book-section" data-section="\d+"/g)||[]).length,8);
@@ -26,7 +26,7 @@ test("Latest manuscript retained without modifying its engine",()=>{
  assert.match(reader,/function enterBook\(page\)/);
  assert.match(reader,/id="backToCover"/);
  assert.match(reader,/acg-page/);
- assert.ok(reader.length>2000000);
+ assert.ok(reader.length<250000);
 });
 test("Old URL redirects and the internal source is excluded from indexing",()=>{
  assert.match(redirects,/^\/antara-cahaya-dan-gelap-baca\.html \/antara-cahaya-dan-gelap\.html 301!/);
@@ -41,5 +41,5 @@ test("Reader embedded lazily with navigation safeguards; script parses",()=>{
  const scripts=[...shell.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)];
  const executable=scripts.filter(m=>!m[0].includes("application/ld+json"));
  assert.equal(executable.length,1);
- assert.doesNotThrow(()=>new Function(executable[0][1]));
+ assert.doesNotThrow(()=>new (require("node:vm").Script)(executable[0][1]));
 });
