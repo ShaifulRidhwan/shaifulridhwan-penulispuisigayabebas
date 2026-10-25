@@ -1515,7 +1515,8 @@ function renderSpread(){
     progressBar.style.width=pct+'%';
     progressBar.setAttribute('aria-valuenow',pct);
   }
-  try{localStorage.setItem('acg-page',current);}catch(e){}
+  // Jangan gantikan penanda buku ketika kulit masih dipaparkan.
+  if(document.getElementById('cover')?.hidden){try{localStorage.setItem('acg-page',current);}catch(e){}}
 }
 
 /* ---------- Lipat halaman ---------- */
