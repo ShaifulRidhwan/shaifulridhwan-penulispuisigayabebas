@@ -282,6 +282,386 @@ h1,h2,p{margin:0}
  </main>
  <footer class="footer-note">BILIK ANTARA · CAHAYA &amp; GELAP · Bukan semua jawapan itu kebenaran.</footer>
 </div>
-<!--BILIK_SCRIPT-->
+<script>
+(function(){
+"use strict";
+const el=id=>document.getElementById(id);
+const ui={
+ html:document.documentElement,theme:el("themeToggle"),conn:el("connection"),
+ connText:el("connectionText"),connInfo:el("connectionInfo"),connInfoText:el("connectionInfoText"),
+ retry:el("retryBtn"),chat:el("chat"),starters:el("starters"),form:el("composer"),
+ input:el("input"),send:el("sendBtn"),upload:el("documentUpload"),
+ docStatus:el("docStatus"),remove:el("removeAttachment"),settings:el("settingsPanel"),
+ remember:el("rememberChat"),clear:el("clearChat"),notes:el("thoughtItems"),forget:el("forgetIdeas")
+};
+const ENDPOINT="/.netlify/functions/bilik-antara";
+const STORAGE="bilik-antara-session-v2",THEME="bilik-antara-theme";
+const MEDIA=new Set(["application/pdf","image/jpeg","image/png","image/webp","image/gif",
+ "audio/mpeg","audio/wav","audio/mp4","audio/ogg","video/mp4","video/webm"]);
+let history=[],summary="",ideas=[],summarizedThrough=0,compacting=false,fileState=null,busy=false;
+function elem(tag,cls,text){
+ const e=document.createElement(tag);if(cls)e.className=cls;
+ if(text!==undefined)e.textContent=String(text);return e;
+}
+function urlSafe(value){
+ try{const u=new URL(String(value));if(u.protocol==="https:"||u.protocol==="http:")return u.href;}
+ catch(e){}return null;
+}
+function link(parent,label,url){
+ const safe=urlSafe(url);if(!safe)return false;
+ const a=elem("a","",String(label||"Lihat sumber").slice(0,120));
+ a.href=safe;a.rel="noopener noreferrer";a.target="_blank";parent.appendChild(a);return true;
+}
+function setTheme(value,save){
+ value=value==="light"?"light":"dark";
+ ui.html.setAttribute("data-theme",value);
+ ui.theme.setAttribute("aria-pressed",value==="light"?"true":"false");
+ ui.theme.setAttribute("title",value==="light"?"Aktifkan tema gelap":"Aktifkan tema cahaya");
+ const meta=document.querySelector('meta[name="theme-color"]');
+ if(meta)meta.content=value==="light"?"#f4f2ec":"#0b1016";
+ if(save)try{localStorage.setItem(THEME,value);}catch(e){}
+}
+try{setTheme(localStorage.getItem(THEME),false);}catch(e){setTheme("dark",false);}
+ui.theme.addEventListener("click",()=>setTheme(ui.html.getAttribute("data-theme")==="dark"?"light":"dark",true));
+function status(kind,label,explain){
+ ui.conn.className="connection"+(["ready","online"].includes(kind)?" ready":kind==="error"?" error":"");
+ ui.connText.textContent=label;
+ ui.connInfo.className="connection-info"+(explain?" active"+(kind==="error"?" error":""):"");
+ ui.connInfoText.textContent=explain||"";
+ ui.retry.hidden=kind==="ready"||kind==="online";
+}
+async function probe(){
+ status("connecting","Menyemak…","");
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),14000);
+ try{
+  const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({probe:true}),signal:controller.signal});
+  const data=await res.json().catch(()=>({}));
+  if(res.ok&&data.ok)status("ready","Backend sedia","");
+  else status("error","Backend gagal",String(data.error||"Fungsi Netlify belum tersedia.").slice(0,250));
+ }catch(e){status("error","Tiada sambungan","Cuba hubungi pelayan semula.");}
+ finally{clearTimeout(timer);}
+}
+ui.retry.addEventListener("click",probe);
+function scrollDown(){ui.chat.scrollTop=ui.chat.scrollHeight;}
+function strongText(target,text){
+ const parts=String(text).split(/(\*\*[^*\n]+\*\*)/g);
+ for(const p of parts){
+  if(!p)continue;
+  if(p.startsWith("**")&&p.endsWith("**"))target.appendChild(elem("strong","",p.slice(2,-2)));
+  else target.appendChild(document.createTextNode(p));
+ }
+}
+function format(target,text){
+ const tick=String.fromCharCode(96).repeat(3);
+ const chunks=String(text||"").trim().split(tick);
+ for(let idx=0;idx<chunks.length;idx++){
+  const value=chunks[idx];if(!value.trim())continue;
+  if(idx%2===1){
+   const pre=elem("pre","code-block");
+   const code=elem("code","",value.replace(/^[\w+-]+\n/,"").trimEnd());
+   pre.appendChild(code);target.appendChild(pre);continue;
+  }
+  for(const paragraph of value.split(/\n\s*\n/)){
+   if(!paragraph.trim())continue;
+   const lines=paragraph.trim().split("\n");
+   const bullets=lines.every(x=>/^\s*[-*•]\s+/.test(x));
+   const numbered=lines.every(x=>/^\s*\d+[.)]\s+/.test(x));
+   if((bullets||numbered)&&lines.length){
+    const list=elem(numbered?"ol":"ul","formatted-list");
+    lines.forEach(line=>{
+     const li=elem("li");strongText(li,line.replace(/^\s*(?:[-*•]|\d+[.)])\s+/,""));
+     list.appendChild(li);
+    });
+    target.appendChild(list);
+   }else{
+    const p=elem("p","message-paragraph");
+    lines.forEach((line,i)=>{if(i)p.appendChild(document.createTextNode("\n"));strongText(p,line);});
+    target.appendChild(p);
+   }
+  }
+ }
+}
+function addMessage(role,text,data){
+ const msg=elem("article","message "+(role==="user"?"user":"ai"));
+ msg.appendChild(elem("div","byline",role==="user"?"Kau":"Bilik Antara"));
+ const bubble=elem("div","bubble");
+ format(bubble,text);
+ if(role!=="user"&&data)renderExtras(bubble,data);
+ msg.appendChild(bubble);ui.chat.appendChild(msg);scrollDown();return msg;
+}
+function renderExtras(bubble,data){
+ const sources=Array.isArray(data.sources)?data.sources.slice(0,8):[];
+ if(sources.length){
+  const area=elem("div","msg-sources");area.appendChild(elem("span","section-label","Sumber semakan"));
+  sources.forEach(s=>{if(s&&s.url)link(area,s.title,s.url);});
+  if(area.children.length>1)bubble.appendChild(area);
+ }
+ function detail(title,items,isArgument){
+  if(!Array.isArray(items)||!items.length)return;
+  const box=elem("details","msg-details");box.appendChild(elem("summary","",title));
+  const list=elem("ol");
+  for(const item of items.slice(0,7)){
+   if(!item||typeof item!=="object")continue;
+   const li=elem("li");
+   if(isArgument){
+    const label=String(item.label||"").slice(0,150);
+    if(!label)continue;
+    const b=elem("button","",String(item.type?"["+item.type+"] ":"")+label);
+    b.type="button";b.addEventListener("click",()=>{
+     ui.input.value="Bedah hujah berikut: "+label;resize();update();ui.input.focus();
+    });li.appendChild(b);
+   }else{
+    const claim=String(item.claim||"").slice(0,240);if(!claim)continue;
+    li.appendChild(elem("strong","",String(item.status?"["+item.status+"] ":"")+claim));
+    if(item.note)li.appendChild(elem("p","",String(item.note).slice(0,300)));
+    if(Number.isInteger(item.sourceIndex)&&sources[item.sourceIndex]){
+     link(li,"Bukti berkaitan",sources[item.sourceIndex].url);
+    }
+   }
+   list.appendChild(li);
+  }
+  if(list.childElementCount){box.appendChild(list);bubble.appendChild(box);}
+ }
+ detail("Peta hujah · tekan untuk bedah",data.argumentMap,true);
+ detail("Audit dakwaan & sumber",data.truthAudit,false);
+ if(typeof data.hypothesis==="string"&&data.hypothesis.trim()){
+  const d=elem("details","msg-details");
+  d.appendChild(elem("summary","","Eksperimen pemikiran"));
+  d.appendChild(elem("p","",data.hypothesis.slice(0,1100)));bubble.appendChild(d);
+ }
+ const account=data.publicAccount;
+ if(account&&account.handle){
+  const card=elem("details","osint-card");card.open=true;
+  card.appendChild(elem("summary","","OSINT TikTok · "+String(account.handle).slice(0,30)));
+  const verified=account.status==="verified";
+  card.appendChild(elem("p",verified?"":"warning",verified?
+    "Maklumat akaun awam disahkan melalui TikTok Research API.":
+    "Akaun belum disahkan oleh API rasmi. Pautan username bukan bukti akaun itu wujud."));
+  const p=account.profile;
+  if(verified&&p){
+   function row(key,value){
+    if(value===null||value===undefined||value==="")return;
+    const line=elem("p");line.appendChild(elem("strong","",key+": "));
+    line.appendChild(document.createTextNode(String(value)));card.appendChild(line);
+   }
+   const fmt=value=>Number.isSafeInteger(value)?new Intl.NumberFormat("ms-MY").format(value):null;
+   row("Nama paparan",p.displayName);row("Bio awam",p.bio);
+   row("Disahkan",p.verified===true?"Ya":p.verified===false?"Tidak":null);
+   row("Pengikut",fmt(p.followers));row("Mengikuti",fmt(p.following));
+   row("Suka",fmt(p.likes));row("Video",fmt(p.videos));
+   if(p.retrievedAt&&!Number.isNaN(Date.parse(p.retrievedAt)))
+    row("Diperiksa",new Date(p.retrievedAt).toLocaleString("ms-MY"));
+   if(p.bioLink)link(card,"Pautan dalam bio",p.bioLink);
+  }
+  try{
+   const u=new URL(account.profileUrl);
+   if(u.protocol==="https:"&&u.hostname==="www.tiktok.com"&&/^\/@[A-Za-z0-9._]{2,24}$/.test(u.pathname)){
+    link(card,"Buka profil TikTok",u.href);
+   }
+  }catch(e){}
+  card.appendChild(elem("p","aside-note","Tidak memaparkan lokasi GPS, alamat, IP atau identiti tersembunyi."));
+  bubble.appendChild(card);
+ }
+ if(data.disclaimer)bubble.appendChild(elem("div","aside-note",String(data.disclaimer).slice(0,450)));
+}
+function welcome(){
+ addMessage("assistant","Aku Bilik Antara. Bawa hujah atau persoalan kau. Aku akan semak logik, cari bukti apabila perlu, dan jawab terus terang. Kalau premisnya bocor, aku takkan pura-pura tak nampak.");
+}
+function renderHistory(){
+ ui.chat.textContent="";
+ for(const m of history)addMessage(m.role,m.content,m.role==="assistant"?m:null);
+ ui.starters.hidden=history.length>0;
+ if(!history.length)welcome();
+}
+function save(){
+ if(!ui.remember.checked)return;
+ try{localStorage.setItem(STORAGE,JSON.stringify({at:Date.now(),history:history.slice(-44),
+  summary:summary,thoughtLedger:ideas.slice(-12)}));}
+ catch(e){ui.docStatus.textContent="Penyimpanan peranti tidak tersedia.";}
+}
+function restore(){
+ try{
+  const stored=JSON.parse(localStorage.getItem(STORAGE)||"null");
+  if(!stored||!Array.isArray(stored.history)||Date.now()-stored.at>14*24*60*60*1000){
+   localStorage.removeItem(STORAGE);return;
+  }
+  history=stored.history.filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string")
+   .slice(-44).map(m=>({...m,content:m.content.slice(0,8000)}));
+  summary=typeof stored.summary==="string"?stored.summary.slice(0,1800):"";
+  ideas=Array.isArray(stored.thoughtLedger)?stored.thoughtLedger.slice(-12).filter(x=>x&&typeof x.idea==="string"):[];
+  summarizedThrough=Math.max(0,history.length-12);ui.remember.checked=true;
+ }catch(e){}
+}
+function renderIdeas(){
+ ui.notes.textContent="";
+ if(!ideas.length){ui.notes.appendChild(elem("li","","Belum ada nota idea."));return;}
+ ideas.forEach((item,index)=>{
+  const li=elem("li"),label=elem("span","",item.idea),edit=elem("button","","Sunting"),del=elem("button","","Padam");
+  edit.type="button";del.type="button";
+  edit.addEventListener("click",()=>{
+   const field=elem("input");field.value=item.idea;field.maxLength=170;
+   field.style.width="100%";
+   const commit=()=>{
+    const val=field.value.trim().slice(0,170);
+    if(val)ideas[index].idea=val;else ideas.splice(index,1);
+    renderIdeas();save();
+   };
+   li.replaceChild(field,label);field.focus();field.select();
+   field.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();commit();}if(e.key==="Escape")renderIdeas();});
+   field.addEventListener("blur",commit,{once:true});
+  });
+  del.addEventListener("click",()=>{ideas.splice(index,1);renderIdeas();save();});
+  li.append(label,edit,del);ui.notes.appendChild(li);
+ });
+}
+function addIdeas(items){
+ if(!Array.isArray(items))return;
+ items.slice(0,6).forEach(x=>{
+  if(!x||typeof x.idea!=="string")return;
+  const idea=x.idea.trim().slice(0,170);
+  if(idea&&!ideas.some(k=>k.idea.toLowerCase()===idea.toLowerCase()))
+   ideas.push({idea,status:String(x.status||"premis").slice(0,35)});
+ });
+ ideas=ideas.slice(-12);renderIdeas();save();
+}
+async function compact(){
+ if(compacting||history.length<20||history.length-summarizedThrough<12)return;
+ const until=history.length-12;
+ const segment=history.slice(summarizedThrough,until).slice(-18);
+ if(segment.length<4)return;
+ compacting=true;
+ try{
+  const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({summarize:true,summary,history:segment})});
+  if(!res.ok)throw Error("summary");
+  const out=await res.json();
+  if(out&&typeof out.summary==="string"&&out.summary.trim()){
+   summary=out.summary.slice(0,1800);summarizedThrough=until;save();
+  }
+ }catch(e){}finally{compacting=false;}
+}
+function resize(){
+ ui.input.style.height="auto";ui.input.style.height=Math.min(ui.input.scrollHeight,140)+"px";
+}
+function update(){
+ ui.send.disabled=busy||(!ui.input.value.trim()&&!fileState);
+ ui.clear.disabled=busy;ui.upload.disabled=busy;ui.remove.disabled=busy;
+}
+function discardFile(){
+ fileState=null;ui.upload.value="";ui.docStatus.textContent="";ui.remove.hidden=true;update();
+}
+async function readFile(file){
+ discardFile();if(!file)return;
+ const name=String(file.name||"fail").slice(0,100);
+ const ext=(name.split(".").pop()||"").toLowerCase();
+ if(["txt","md","csv"].includes(ext)){
+  if(file.size>25000){ui.docStatus.textContent="Fail teks maksimum 25 KB.";return;}
+  try{fileState={name,text:(await file.text()).slice(0,15000)};}
+  catch(e){ui.docStatus.textContent="Fail teks tidak dapat dibaca.";return;}
+ }else{
+  const aliases={"audio/x-wav":"audio/wav","audio/wave":"audio/wav","audio/x-m4a":"audio/mp4"};
+  let mime=aliases[file.type]||file.type;
+  if(ext==="pdf")mime="application/pdf";
+  if(ext==="m4a")mime="audio/mp4";
+  if(!MEDIA.has(mime)||!file.size||file.size>2200000){
+   ui.docStatus.textContent="PDF, imej, audio atau video pendek maksimum 2.2 MB sahaja.";return;
+  }
+  try{
+   const encoded=await new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||"").split(",")[1]||"");
+    reader.onerror=()=>reject(new Error("read"));reader.readAsDataURL(file);
+   });
+   if(!encoded||encoded.length>3000000)throw Error("oversize");
+   fileState={name,media:{name,mimeType:mime,data:encoded}};
+  }catch(e){ui.docStatus.textContent="Lampiran tidak dapat dibaca.";return;}
+ }
+ ui.docStatus.textContent="Dilampir: "+name+" · dihantar sekali sahaja";
+ ui.remove.hidden=false;update();
+}
+ui.upload.addEventListener("change",()=>readFile(ui.upload.files&&ui.upload.files[0]));
+ui.remove.addEventListener("click",discardFile);
+ui.remember.addEventListener("change",()=>{
+ if(ui.remember.checked)save();
+ else try{localStorage.removeItem(STORAGE);}catch(e){}
+});
+ui.forget.addEventListener("click",()=>{ideas=[];renderIdeas();save();});
+ui.clear.addEventListener("click",()=>{
+ if(busy)return;
+ if(history.length&&!window.confirm("Padam perbualan dan nota idea sesi ini?"))return;
+ history=[];summary="";ideas=[];summarizedThrough=0;ui.remember.checked=false;
+ try{localStorage.removeItem(STORAGE);}catch(e){}
+ discardFile();renderIdeas();renderHistory();ui.settings.open=false;
+});
+document.addEventListener("pointerdown",e=>{
+ if(ui.settings.open&&!ui.settings.contains(e.target))ui.settings.open=false;
+});
+ui.input.addEventListener("input",()=>{resize();update();});
+ui.input.addEventListener("keydown",e=>{
+ if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){
+  e.preventDefault();if(!ui.send.disabled)ui.form.requestSubmit();
+ }
+});
+ui.starters.querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
+ if(busy)return;
+ ui.input.value=btn.textContent.trim();resize();update();ui.input.focus();ui.form.requestSubmit();
+}));
+function showTyping(){
+ const msg=elem("article","message ai");
+ msg.appendChild(elem("div","byline","Bilik Antara"));
+ const b=elem("div","bubble"),dots=elem("span","typing");
+ for(let i=0;i<3;i++)dots.appendChild(elem("i"));
+ b.appendChild(dots);msg.appendChild(b);ui.chat.appendChild(msg);scrollDown();return msg;
+}
+async function submit(event){
+ event.preventDefault();if(busy)return;
+ const typed=ui.input.value.trim();
+ if(!typed&&!fileState)return;
+ const question=typed||"Analisis lampiran ini dan bezakan fakta daripada perkara yang belum disahkan.";
+ const selectedFile=fileState;
+ busy=true;update();ui.starters.hidden=true;
+ addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""));
+ const typing=showTyping();
+ ui.input.value="";resize();update();
+ const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),34000);
+ try{
+  const payload={question,history:history.slice(-16).map(m=>({role:m.role,content:m.content})),
+   summary,thoughtLedger:ideas.slice(-8),
+   documentText:selectedFile&&selectedFile.text||"",
+   documentName:selectedFile&&selectedFile.name||"",
+   media:selectedFile&&selectedFile.media||null};
+  const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+   body:JSON.stringify(payload),signal:ctrl.signal});
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok){
+   const error=new Error(String(data.error||"HTTP "+res.status));error.status=res.status;throw error;
+  }
+  if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
+  typing.remove();addMessage("assistant",data.reply,data);
+  history.push({role:"user",content:question});
+  history.push({role:"assistant",content:data.reply,sources:data.sources||[],
+   argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
+   publicAccount:data.publicAccount||null});
+  if(history.length>80){
+   const cut=history.length-80;history.splice(0,cut);summarizedThrough=Math.max(0,summarizedThrough-cut);
+  }
+  addIdeas(data.thoughtLedger);save();
+  if(selectedFile&&selectedFile===fileState)discardFile();
+  status("online","AI bersambung","");
+  compact();
+ }catch(error){
+  typing.remove();
+  const desc=error&&error.name==="AbortError"?"Sambungan mengambil masa terlalu lama. Cuba semula.":String(error&&error.message||"Ralat tidak diketahui.").slice(0,300);
+  addMessage("assistant","Permintaan belum berjaya: "+desc);
+  status("error","Sambungan terganggu","Mesej atau lampiran masih ada untuk dicuba semula.");
+  if(!ui.input.value.trim())ui.input.value=typed;
+  resize();
+ }finally{clearTimeout(timer);busy=false;update();}
+}
+ui.form.addEventListener("submit",submit);
+restore();renderIdeas();renderHistory();update();probe();
+})();
+</script>
 </body>
 </html>
