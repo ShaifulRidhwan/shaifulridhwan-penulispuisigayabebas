@@ -397,7 +397,7 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
     <h1>BILIK ANTARA</h1>
     <div class="hero-sub">Falsafah · Sastera · Teknologi · Kehidupan</div>
     <div class="rule"></div>
-    <p class="hero-intro">Ruang kecerdasan buatan Shaiful Ridhwan untuk berbual dan berfikir. Aku jawab santai, jujur, dan sedikit sindiran halus.</p>
+    <p class="hero-intro">Ruang kecerdasan buatan Shaiful Ridhwan untuk berbual dan berfikir. Aku jawab terus terang, santai, dan suka menyindir hujah yang tak masuk akal.</p>
   </section>
 
   <section class="intelligence-panel" aria-label="Tetapan kecerdasan Bilik Antara">
@@ -414,7 +414,7 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
       <button type="button" id="clearChat">Padam sesi</button>
     </div>
     <p id="docStatus" class="document-status" role="status" aria-live="polite"></p>
-    <p class="privacy-note">Sembang tidak disimpan pada peranti melainkan diaktifkan. Mesej dihantar kepada penyedia AI untuk dijawab. Mod Selidik mungkin menggunakan kuota carian tambahan.</p>
+    <p class="privacy-note">Sejarah sembang tidak disimpan oleh halaman ini melainkan diaktifkan. Mesej dihantar kepada penyedia AI untuk dijawab. Mod Selidik mungkin menggunakan kuota carian tambahan.</p>
   </section>
 
   <div class="banner connecting" id="statusBanner" role="status">
@@ -440,7 +440,7 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
       <h4>Prinsip keselamatan</h4>
       <ul>
         <li><strong>API key tidak pernah berada di sisi pelayar.</strong> Halaman ini hanya menghubungi <code id="epShow">/.netlify/functions/bilik-antara</code> — fungsi Netlify yang menyimpan key sebagai environment variable dan memanggil Gemini bagi pihak anda.</li>
-        <li>Model lalai: <code>gemini-3.6-flash</code> (model lalai yang dikonfigurasi). Boleh diatasi dengan <code>GEMINI_MODEL</code>. Soalan tentang <strong>Shaiful Ridhwan</strong> dijawab secara tempatan dari fakta awam yang disahkan — tanpa melalui Gemini.</li>
+        <li>Model lalai: <code>gemini-3.6-flash</code>, boleh ditukar melalui <code>GEMINI_MODEL</code>. Mod Bedah menggunakan penaakulan lebih tinggi; Selidik menggunakan Google Search apabila tersedia (boleh menambah kos). Soalan identiti penulis dijawab daripada fakta awam yang disahkan.</li>
         <li>Pada tier percuma Gemini, soalan mungkin digunakan Google untuk memperbaiki produk.</li>
       </ul>
       <h4>Format respons backend</h4>
@@ -1034,10 +1034,10 @@ function probeBackend(){
   }catch(e){ setMode('error','Tidak dapat menghubungi endpoint.'); }
 }
 
-function backendAsk(question){
+function backendAsk(question,signal){
   var attachment=pendingDocument;
   return fetch(ENDPOINT, {
-    method:'POST', headers:{'Content-Type':'application/json'},
+    method:'POST', headers:{'Content-Type':'application/json'},signal:signal,
     body: JSON.stringify({
       question:question,history:history.slice(-16),summary:sessionSummary,
       insightMode:insightMode,useWorks:useWorks.checked,
@@ -1123,7 +1123,11 @@ STARTERS.forEach(function(s){
   startersEl.appendChild(b);
 });
 
-function updateSend(){ sendBtn.disabled = (state==='loading' || input.value.trim()===''); }
+function updateSend(){
+  sendBtn.disabled = (state==='loading' || input.value.trim()==='');
+  document.getElementById('clearChat').disabled=state==='loading';
+  document.querySelectorAll('[data-insight]').forEach(function(b){b.disabled=state==='loading';});
+}
 var inputTimer=null;
 input.addEventListener('input', function(){
   input.style.height='auto'; input.style.height=Math.min(input.scrollHeight,100)+'px'; updateSend();
@@ -1150,6 +1154,7 @@ function send(){
   function fail(err){
     removeTyping(); state='idle'; updateSend();
     var msg = err && err.message ? err.message : 'sambungan terputus.';
+    if(!input.value.trim()){input.value=q;updateSend();}
     if(err && err.status===429) msg='Had penggunaan sementara dicapai (429). Cuba lagi dalam seminit.';
     else if(err && err.status===503) msg='Backend belum dikonfigurasi: GEMINI_API_KEY tiada.';
     else if(err && err.status===504) msg='Gemini tidak membalas dalam had masa. Cuba lagi sebentar lagi.';
@@ -1160,8 +1165,9 @@ function send(){
     if(mode==='live'){ setMode('error','Endpoint ada tetapi memulangkan ralat. Semak log fungsi Netlify.'); }
   }
   var done=false;
-  var to=setTimeout(function(){ if(!done){ done=true; fail(new Error('masa sambungan tamat (30 saat)')); } },30000);
-  backendAsk(q).then(function(data){
+  var controller=new AbortController();
+  var to=setTimeout(function(){ if(!done){ done=true; controller.abort(); fail(new Error('masa sambungan tamat (30 saat)')); } },30000);
+  backendAsk(q,controller.signal).then(function(data){
     if(done) return; done=true; clearTimeout(to);
     removeTyping(); state='idle'; updateSend();
     if(mode!=='live'){ setMode('live'); }
