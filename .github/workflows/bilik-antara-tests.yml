@@ -3,6 +3,12 @@ on:
   pull_request:
     paths:
       - "netlify/functions/**"
+      - "antara-cahaya-dan-gelap.html"
+      - "antara-cahaya-dan-gelap-baca.html"
+      - "assets/novel/**"
+      - "scripts/test-novel-merged.cjs"
+      - "_redirects"
+      - "sitemap.xml"
       - "bilik-antara.html"
       - "bilik-antara.css"
       - "bilik-antara-voice.js"
@@ -47,4 +53,4 @@ jobs:
           node --check bilik-antara-pcm-worklet.js
           node --check netlify/functions/antara-intelligence.js
           node --check netlify/functions/tiktok-public-research.js
-          node --test scripts/test-bilik-antara.cjs scripts/test-tiktok-public-research.cjs scripts/test-bilik-antara-design.cjs scripts/test-bilik-antara-voice.cjs
+          node --test scripts/test-novel-merged.cjs scripts/test-bilik-antara.cjs scripts/test-tiktok-public-research.cjs scripts/test-bilik-antara-design.cjs scripts/test-bilik-antara-voice.cjs
