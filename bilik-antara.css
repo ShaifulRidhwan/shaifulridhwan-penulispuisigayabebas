@@ -2074,8 +2074,8 @@ display:none
 .voice-wave i:nth-child(4n){animation-delay:-540ms}
 .voice-speaking .voice-wave i{background:linear-gradient(#e6f4ff,#97bacc,#f1c98c)}
 @keyframes antaraVoiceWave{
-  0%{transform:scaleY(calc(.25 + var(--voice-intensity)*.3))}
-  100%{transform:scaleY(calc(1.1 + var(--voice-intensity)*3))}
+  0%{transform:scaleY(calc(.25 + var(--voice-intensity)))}
+  100%{transform:scaleY(calc(1.1 + var(--voice-intensity)))}
 }
 .voice-status{
   position:relative;z-index:1;text-align:center;min-height:19px;
