@@ -26,7 +26,8 @@ test("Final text, controls and simplified channel header",()=>{
  assert.match(html,/<div class="eyebrow">DI ANTARA CAHAYA DAN GELAP<\/div>/);
  assert.doesNotMatch(html,/Saluran Antara/);
  assert.doesNotMatch(html,/class="conversation-heading"/);
- assert.match(html,/class="conversation-head">\s*<div class="chat-controls"/);
+ assert.match(html,/class="conversation-head">\s*<div class="voice-toolbar"/);
+ assert.match(html,/id="voiceLive"[\s\S]*?<div class="chat-controls"/);
  assert.match(html,/addMessage\("assistant","Assalamualaikum dan selamat sejahtera\."\)/);
  assert.doesNotMatch(html,/Aku kecerdasan buatan yang dibina oleh Shaiful Ridhwan/);
  assert.match(html,/KECERDASAN BUATAN AI/);
