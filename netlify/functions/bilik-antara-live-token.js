@@ -5,7 +5,7 @@
  * ephemeral tokens with a short TTL. No audio or transcript passes this handler.
  */
 const DEFAULT_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
-const DEFAULT_MODEL="gemini-3.8-live";
+const DEFAULT_MODEL="gemini-2.5-flash-native-audio-preview-09-2025";
 const RATE_WINDOW_MS=10*60*1000;
 const recent=new Map();
 const headers=()=>({
@@ -42,7 +42,7 @@ exports.handler=async(event)=>{
   const ip=String((event.headers||{})["x-nf-client-connection-ip"]||"unknown").slice(0,100);
   if(rate(ip))return reply(429,{error:"Had Voice sementara dicapai. Cuba lagi selepas beberapa minit."});
   const configured=process.env.GEMINI_LIVE_MODEL||DEFAULT_MODEL;
-  const model=/^gemini-[a-z0-9.-]{5,60}$/.test(configured)?configured:DEFAULT_MODEL;
+  const model=/^gemini-[a-z0-9.-]{5,80}$/.test(configured)?configured:DEFAULT_MODEL;
   const now=Date.now();
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),12000);
