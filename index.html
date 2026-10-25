@@ -784,6 +784,22 @@ section.khas{padding:5rem 0}
 .hero .cta .btn:nth-child(4){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.15s both}
 .hero .cta .btn:nth-child(5){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.25s both}
 .hero .cta .btn:nth-child(6){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.35s both}
+.hero .cta .btn:nth-child(7){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.45s both}
+/* Pintu Bilik Antara merentasi kedua-dua lajur di bawah Tetralogi dan Novel. */
+.hero .cta .btn.bilik-entry{
+  flex:1 1 100%;
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  justify-content:center;
+  text-align:center;
+  border-color:var(--accent2);
+  background:var(--accent-soft);
+}
+.hero .cta .btn.bilik-entry:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:3px;
+}
 /* 3. Nav link hover: garis bawah emas meluncur (Duologi/Trilogi/Tetralogi/dll) */
 .nav-links a.link{position:relative}
 .nav-links a.link::after{content:"";position:absolute;left:0;bottom:-4px;width:0;height:1.5px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .35s cubic-bezier(.2,.7,.2,1)}
@@ -847,6 +863,7 @@ section.khas{padding:5rem 0}
     <a class="btn ghost" href="#trilogi">Trilogi</a>
     <a class="btn ghost" href="#tetralogi">Tetralogi</a>
     <a class="btn ghost" href="#khas">Novel</a>
+    <a class="btn ghost bilik-entry" href="bilik-antara.html">Bilik Antara</a>
   </div>
   </div>
 </header>
