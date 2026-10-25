@@ -361,6 +361,21 @@ body.has-chat .ai-face-wrap{height:190px;margin:.05rem auto}body.has-chat .ai-fa
 .ai-sources a:hover{color:var(--silver)}
 @media(max-width:640px){.intelligence-panel{padding:0 .55rem}.session-controls{gap:.4rem .7rem}}
 
+
+.memory-notes{margin:.45rem auto 0;color:var(--silver-dim);font-size:.68rem;max-width:38rem;}
+.memory-notes summary{cursor:pointer;color:var(--cyan);padding:.3rem 0}
+.memory-notes li{padding:.35rem 0;border-bottom:1px solid var(--hairline);display:flex;flex-wrap:wrap;align-items:center;gap:.35rem}
+.memory-notes li span{flex:1;min-width:8rem}
+.memory-notes button{font-size:.63rem;color:var(--cyan);border:1px solid var(--hairline);border-radius:4px;padding:.25rem .45rem;cursor:pointer}
+#forgetIdeas{margin-top:.35rem}
+.ai-analysis{border-top:1px solid var(--hairline);margin-top:.65rem;padding-top:.45rem}
+.ai-analysis summary{font-family:var(--font-mono);font-size:.63rem;color:var(--cyan);cursor:pointer;padding:.15rem 0}
+.ai-analysis-list{margin:.5rem 0 .1rem 1.15rem!important;padding:0}
+.ai-analysis-list li{margin:.5rem 0;line-height:1.6;font-size:.76rem}
+.ai-analysis-list li p{color:var(--silver-dim)}
+.ai-analysis-list li a{color:var(--cyan);font-size:.7rem;text-decoration:underline}
+.map-node{padding:.2rem .1rem;text-align:left;color:var(--silver);cursor:pointer}
+.map-node:hover,.map-node:focus-visible{color:var(--cyan);text-decoration:underline}
 </style>
 </head>
 <body>
@@ -1154,6 +1169,50 @@ function renderAiLive(data){
     });
     el.querySelector('.ai-body').appendChild(list);
   }
+  var contentBox=el.querySelector('.ai-body');
+  function makeDetails(label,items,kind){
+    if(!Array.isArray(items)||!items.length)return;
+    var details=document.createElement('details');details.className='ai-analysis';
+    var summary=document.createElement('summary');summary.textContent=label;details.appendChild(summary);
+    var ol=document.createElement('ol');ol.className='ai-analysis-list';
+    items.slice(0,7).forEach(function(item){
+      if(!item||typeof item!=='object')return;
+      var li=document.createElement('li');
+      if(kind==='map'){
+        var btn=document.createElement('button');btn.type='button';btn.className='map-node';
+        btn.textContent='['+(item.type||'premis')+'] '+String(item.label||'').slice(0,130);
+        btn.addEventListener('click',function(){
+          input.value='Bedah hujah berikut dengan lebih teliti: '+String(item.label||'').slice(0,130);
+          input.focus();updateSend();
+        });
+        li.appendChild(btn);
+      }else{
+        var title=document.createElement('strong');
+        title.textContent='['+String(item.status||'belum_disahkan')+'] '+String(item.claim||'').slice(0,240);
+        li.appendChild(title);
+        if(item.note){var p=document.createElement('p');p.textContent=String(item.note).slice(0,270);li.appendChild(p);}
+        var i=item.sourceIndex;
+        if(Number.isInteger(i)&&data.sources&&data.sources[i]){
+          try{
+            var url=new URL(data.sources[i].url);
+            if(url.protocol==='http:'||url.protocol==='https:'){
+              var link=document.createElement('a');link.href=url.href;link.target='_blank';
+              link.rel='noopener noreferrer';link.textContent='Rujukan bagi dakwaan ini';li.appendChild(link);
+            }
+          }catch(e){}
+        }
+      }
+      ol.appendChild(li);
+    });
+    details.appendChild(ol);contentBox.appendChild(details);
+  }
+  makeDetails('Peta hujah (tekan cabang untuk dibedah)',data&&data.argumentMap,'map');
+  makeDetails('Audit dakwaan dan tahap bukti',data&&data.truthAudit,'truth');
+  if(data&&typeof data.hypothesis==='string'&&data.hypothesis.trim()){
+    var hypothesis=document.createElement('details');hypothesis.className='ai-analysis';
+    var head=document.createElement('summary');head.textContent='Eksperimen pemikiran';hypothesis.appendChild(head);
+    var p=document.createElement('p');p.textContent=data.hypothesis;hypothesis.appendChild(p);contentBox.appendChild(hypothesis);
+  }
   chat.appendChild(el); scrollBottom();
 }
 function welcome(){
@@ -1161,7 +1220,7 @@ function welcome(){
   el.innerHTML='<div class="who"><span class="avatar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></span>Bilik Antara</div>'
     +'<div class="bubble"><div class="ai-body">'
     +'<p>Selamat datang. Kita boleh berbual tentang <strong>falsafah, sastera, teknologi, manusia, kehidupan</strong> — atau apa sahaja yang ada di minda anda.</p>'
-    +'<p>Aku jawab terus, berani membantah dan suka menyindir bila kena tempat. Tapi kalau hujah kau kukuh, takkan aku nak cari gaduh semata-mata untuk nampak bijak.</p>'
+    +'<p>Aku jawab terus. Kalau hujah kau bocor, aku bedah tanpa kompromi. Yang kena kritik itu idea, bukan kau. Kalau hujah kukuh, aku akan mengaku.</p>'
     +'<p>Cuba salah satu soalan di bawah, atau teruskan menulis.</p>'
     +'</div></div>';
   chat.appendChild(el);
