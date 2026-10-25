@@ -797,15 +797,22 @@ section.khas{padding:5rem 0}
   gap:.4rem;
   min-height:92px;
   text-align:center;
-  border-color:var(--accent2);
-  background:var(--accent-soft);
+  border-color:var(--border);
+  background:transparent;
+  color:var(--muted);
+}
+.hero .cta .btn.bilik-entry:hover{
+  border-color:var(--accent);
+  background:transparent;
+  color:var(--accent);
+  box-shadow:none;
 }
 .hero .cta .bilik-entry-title{
   font-size:clamp(1rem,2.8vw,1.25rem);
   font-weight:800;
   letter-spacing:.18em;
   line-height:1.2;
-  color:var(--text);
+  color:var(--muted);
 }
 .hero .cta .bilik-entry-desc{
   font-size:clamp(.58rem,1.6vw,.68rem);
@@ -816,7 +823,7 @@ section.khas{padding:5rem 0}
 }
 .hero .cta .btn.bilik-entry:hover .bilik-entry-title,
 .hero .cta .btn.bilik-entry:hover .bilik-entry-desc{
-  color:var(--bg);
+  color:var(--accent);
 }
 .hero .cta .btn.bilik-entry:focus-visible{
   outline:2px solid var(--accent);
