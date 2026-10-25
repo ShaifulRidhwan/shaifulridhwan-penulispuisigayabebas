@@ -99,6 +99,23 @@ for mi,m in enumerate(j['meshes']):
   if not keep.all():
    prim['indices']=add_accessor(faces[keep].astype('<u4').reshape(-1,1),5125,'SCALAR',34963)
    print('Ara hair temple clearance:',m.get('name'),int((~keep).sum()),'triangles')
+# Real garment material correction: baked into GLB so VTK and browser agree.
+# Replaces the original camisole texture with opaque carbon armor.
+garment_material=j['meshes'][7]['primitives'][0]['material']
+j['materials'][garment_material]={
+ 'name':'ARA_CARBON_SUIT',
+ 'pbrMetallicRoughness':{'baseColorFactor':[.018,.045,.065,1],
+ 'metallicFactor':.55,'roughnessFactor':.49},
+ 'doubleSided':True
+}
+# Reduce specular blowout seen in the actual rendered QA frame.
+for material in j['materials']:
+ if material.get('name','').startswith('ARA_V33_'):
+  pbr=material['pbrMetallicRoughness']
+  pbr['metallicFactor']=.5;pbr['roughnessFactor']=.64
+  if 'TITANIUM' in material['name']:pbr['baseColorFactor']=[.055,.11,.16,.92]
+  if 'GRAPHITE' in material['name']:pbr['baseColorFactor']=[.025,.05,.07,.96]
+  material['alphaMode']='BLEND'
 align();j['buffers'][0]['byteLength']=len(b)
 raw=json.dumps(j,separators=(',',':'),allow_nan=False).encode();raw+=b' '*((-len(raw))%4)
 out=struct.pack('<4sII',b'glTF',2,12+8+len(raw)+8+len(b))+struct.pack('<I4s',len(raw),b'JSON')+raw+struct.pack('<I4s',len(b),b'BIN\x00')+b
