@@ -23,7 +23,7 @@ test("Animation is lightweight and respects accessibility settings",()=>{
  assert.ok(!html.includes("ai-face"));
  assert.ok(!html.includes("THREE."));
  assert.ok(!css.includes("@import"),"Avoid third-party style runtime imports");
- assert.ok(!css.includes("filter:blur("),"Avoid per-frame element blur");
+ assert.ok(!/(?:^|[;{])\s*filter\s*:\s*blur\(/m.test(css),"Avoid animated element blur filters");
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
  assert.match(css,/@media\(max-width:760px\)/);
  assert.match(css,/@media\(max-width:405px\)/);
