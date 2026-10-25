@@ -1982,3 +1982,143 @@ display:none
 @media(prefers-reduced-motion:reduce){
   .conversation::after{animation:none;opacity:.25;will-change:auto}
 }
+
+
+/* VOICE 2026 — opt-in controls; original light/dark composition untouched. */
+.voice-toolbar{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  padding:7px 2px 1px;color:var(--ink);
+}
+.voice-action,.voice-autoread{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:34px;padding:5px 12px;border-radius:999px;
+  border:1px solid rgba(235,205,151,.31);
+  background:rgba(10,17,27,.48);
+  color:var(--ink);font:600 11px/1.25 'DM Sans',sans-serif;
+  letter-spacing:.035em;backdrop-filter:blur(9px);
+}
+.voice-action{cursor:pointer;transition:border-color .2s,transform .2s,background .2s}
+.voice-action:hover:not(:disabled){border-color:rgba(242,206,150,.8);transform:translateY(-1px)}
+.voice-action:focus-visible,.voice-autoread:focus-within,.voice-panel button:focus-visible{
+  outline:2px solid #f8d9a2;outline-offset:3px;
+}
+.voice-action:disabled{opacity:.42;cursor:not-allowed}
+.voice-action--live{
+  border-color:rgba(242,200,124,.59);
+  background:linear-gradient(110deg,rgba(150,99,43,.3),rgba(20,28,43,.55));
+  box-shadow:0 0 18px rgba(239,181,95,.11);
+}
+.voice-autoread{gap:7px;cursor:pointer}
+.voice-autoread input{accent-color:#d9ad69;cursor:pointer}
+.voice-read{
+  display:inline-flex;align-items:center;justify-content:center;
+  margin:9px 0 0;padding:5px 10px;border-radius:99px;
+  border:1px solid rgba(231,198,142,.27);
+  background:rgba(30,35,43,.32);color:var(--ink);
+  font:500 10px/1.25 'DM Sans',sans-serif;cursor:pointer;
+}
+.voice-read:hover{border-color:rgba(235,200,147,.8)}
+.conversation{position:relative}
+.voice-panel{
+  position:absolute;inset:55px 12px 115px;z-index:8;
+  padding:clamp(15px,2vw,26px);
+  border-radius:20px;
+  border:1px solid rgba(247,219,175,.38);
+  background:
+    radial-gradient(ellipse at 50% 22%,rgba(195,142,76,.19),transparent 46%),
+    linear-gradient(135deg,rgba(13,19,30,.95),rgba(11,17,26,.91));
+  box-shadow:0 20px 65px rgba(0,0,0,.4),inset 0 0 35px rgba(233,186,121,.045);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  display:flex;flex-direction:column;align-items:center;
+  min-height:0;gap:12px;overflow:hidden;
+  --voice-intensity:.1;
+}
+.voice-panel[hidden]{display:none!important}
+.voice-panel::before{
+  content:"";position:absolute;inset:-40% -40%;
+  pointer-events:none;opacity:.48;
+  background:linear-gradient(107deg,transparent 41%,rgba(243,208,149,.065) 50%,transparent 60%);
+  animation:antaraVoiceGlass 3.5s ease-in-out infinite alternate;
+}
+@keyframes antaraVoiceGlass{
+  from{transform:translate3d(-28%,0,0)}
+  to{transform:translate3d(28%,0,0)}
+}
+.voice-panel-head,.voice-session-controls{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+  position:relative;z-index:1;
+}
+.voice-live-label{font:600 11px/1.4 'DM Sans',sans-serif;letter-spacing:.18em;color:#f4d8a6}
+.voice-live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;background:#edb668;box-shadow:0 0 14px #edb668;animation:antaraPulse 1.2s ease-in-out infinite}
+@keyframes antaraPulse{50%{opacity:.35;transform:scale(.73)}}
+.voice-panel button{
+  min-height:36px;cursor:pointer;border-radius:999px;
+  padding:7px 13px;border:1px solid rgba(240,199,139,.4);
+  color:var(--ink);background:rgba(29,35,48,.75);
+  font:600 11px/1.2 'DM Sans',sans-serif;
+}
+.voice-stop{border-color:rgba(252,170,158,.52)!important}
+.voice-wave{
+  display:flex;gap:5px;align-items:center;justify-content:center;
+  width:min(270px,85%);height:125px;position:relative;z-index:1;
+}
+.voice-wave i{
+  width:5px;height:26px;flex:none;border-radius:20px;
+  background:linear-gradient(to bottom,#fff1ce,#c7964a,#8faec3);
+  box-shadow:0 0 16px rgba(224,180,110,.26);
+  animation:antaraVoiceWave 900ms ease-in-out infinite alternate;
+}
+.voice-wave i:nth-child(2n){animation-delay:-380ms}
+.voice-wave i:nth-child(3n){animation-delay:-230ms}
+.voice-wave i:nth-child(4n){animation-delay:-540ms}
+.voice-speaking .voice-wave i{background:linear-gradient(#e6f4ff,#97bacc,#f1c98c)}
+@keyframes antaraVoiceWave{
+  0%{transform:scaleY(calc(.25 + var(--voice-intensity)*.3))}
+  100%{transform:scaleY(calc(1.1 + var(--voice-intensity)*3))}
+}
+.voice-status{
+  position:relative;z-index:1;text-align:center;min-height:19px;
+  font:500 12px/1.5 'DM Sans',sans-serif;color:#f3e0c4;
+}
+.voice-transcript{
+  position:relative;z-index:1;width:100%;flex:1;min-height:50px;
+  padding:12px 14px;overflow-y:auto;overscroll-behavior:contain;
+  background:rgba(2,8,16,.18);border-radius:12px;
+  border:1px solid rgba(243,207,160,.13);
+  scrollbar-width:thin;
+}
+.voice-line{margin:0 0 9px;font:400 13px/1.6 'DM Sans',sans-serif;color:#e9e7e4;overflow-wrap:anywhere}
+.voice-line strong{font-weight:700;color:#f2cb88}
+.voice-line:last-child{margin-bottom:0}
+.voice-session-controls{justify-content:center;flex-wrap:wrap}
+.voice-privacy{
+  position:relative;z-index:1;margin:0;text-align:center;
+  font:400 10px/1.4 'DM Sans',sans-serif;color:#c5c2bb;
+}
+html[data-theme="light"] .voice-action,html[data-theme="light"] .voice-autoread{
+  background:rgba(255,247,231,.65);color:#3b2b1f;border-color:rgba(114,85,49,.3);
+}
+html[data-theme="light"] .voice-read{color:#2a2421}
+@media(max-width:760px){
+  .voice-toolbar{gap:5px;padding:5px 0 0}
+  .voice-action,.voice-autoread{min-height:30px;padding:5px 9px;font-size:10px}
+  .voice-panel{inset:40px 7px 119px;padding:13px 12px;gap:8px;border-radius:16px}
+  .voice-panel-head{gap:5px}
+  .voice-live-label{font-size:9px;letter-spacing:.1em}
+  .voice-panel button{min-height:30px;padding:5px 9px;font-size:10px}
+  .voice-wave{height:66px}
+  .voice-wave i{width:4px}
+  .voice-status{font-size:11px}
+  .voice-line{font-size:12px}
+  .voice-privacy{font-size:9px}
+  .voice-transcript{padding:8px 9px}
+}
+@media(max-width:390px){
+  .voice-toolbar{gap:4px}
+  .voice-action,.voice-autoread{padding:4px 7px;font-size:9px}
+  .voice-panel{inset:37px 5px 110px}
+}
+@media(prefers-reduced-motion:reduce){
+  .voice-panel::before,.voice-wave i,.voice-live-dot{animation:none}
+}
