@@ -1,12 +1,12 @@
 name: Bilik Antara Production Smoke
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - qa/bilik-antara-live-smoke-2026-10-26
-    paths:
-      - scripts/smoke-bilik-antara-live.cjs
-      - .github/workflows/bilik-antara-live-smoke.yml
+    inputs:
+      test_text:
+        description: "Test Gemini text API too (consumes Google quota)"
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
 jobs:
@@ -20,7 +20,7 @@ jobs:
           node-version: "22"
       - name: Check smoke test syntax
         run: node --check scripts/smoke-bilik-antara-live.cjs
-      - name: Probe Netlify, ask Gemini, test Live audio
+      - name: Probe Netlify and test Gemini Live audio
         env:
-          SKIP_GEMINI_TEXT: "1"
+          SKIP_GEMINI_TEXT: ${{ inputs.test_text && '0' || '1' }}
         run: node scripts/smoke-bilik-antara-live.cjs
