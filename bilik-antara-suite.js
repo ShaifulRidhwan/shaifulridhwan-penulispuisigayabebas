@@ -47,7 +47,7 @@ head.after(toolbar);
 document.body.appendChild(drawer); // keep fixed overlay outside clipped glass conversation
 const labels=[["sessions","Sesi"],["memory","Memori"],["workspace","Ruang kerja"],["metrics","Prestasi"]];
 for(const [key,label] of labels)toolbar.appendChild(button(label,()=>open(key),"ba-tab"));
-toolbar.appendChild(button("Studio · PDF & Imej BETA TEST",()=>{window.location.href="studio-antara.html";},"ba-tab"));
+toolbar.appendChild(button("Studio · E-mel & PDF",()=>{window.location.href="studio-antara.html";},"ba-tab"));
 function notice(message){
  let status=$("baNotification");
  if(!status){status=make("div",undefined,"ba-notification");status.id="baNotification";status.setAttribute("role","status");toolbar.after(status);}
