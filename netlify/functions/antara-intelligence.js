@@ -62,17 +62,26 @@ function poemContext(question){
 }
 function analyzeIntent(question,attachment){
   const q=safeText(question,1600).toLowerCase();
-  const deep=/mengapa|kenapa|bukti|buktikan|hujah|analisis|bedah|banding|kritik|pertentangan|kontradiksi|paradoks|falsafah|logik|algoritma|persamaan|kebebasan|etika|moral|hukum|hipotesis|andaian|sebab|kesan|compare|reason|prove|debug|analyse|analyze/i.test(q)||q.length>190;
-  const latest=/terkini|terbaru|baru-baru|sekarang|hari ini|semalam|minggu ini|bulan ini|tahun ini|202[5-9]|berita|harga|pasaran|kajian|statistik|sumber|rujukan|fakta|siapa (presiden|perdana menteri|menteri|ceo)|is it true|latest|current|today|news|study|research|source|verify|semak fakta|sahkan/i.test(q);
-  const calculate=/(?:\d+\s*[+\-*/^×÷]\s*\d+|hitung|kira(?:kan)?|calculate|integral|derivative|terbitan|statistik|regresi|matriks|persamaan|equation|jalankan kod|graf data|formula|statistical)/i.test(q);
-  const thought=/bagaimana jika|kalau dunia|andaikan|bayangkan jika|hipotesis|eksperimen fikiran|what if|suppose|imagine if/i.test(q);
-  const debate=/(?:hujah|pendapat|dakwaan|logik|debat|kritik|bedah|pertikaikan|analisis|sebab|mengapa|patutkah|wajarkah|salahkah|adilkah|benarkah|should|argue|premis|paradoks|contradiction)/i.test(q)||deep;
-  const works=/(?:puisi|sajak|karya|sastera|rangkap|shaiful|ridhwan|puisigayabebas|tetralogi|trilogi|duologi|syair|novel)/i.test(q);
   const hasLink=/https?:\/\/[^\s]+/i.test(q);
-  const sensitive=/(?:bunuh diri|cederakan diri|kemurungan|depresi|depression|krisis|trauma|serangan panik|gangguan makan|kanser|barah|kematian|pemergian|duka|kesedihan melampau|abuse|panic attack|suicide|self-harm|seksual|sexual assault)/i.test(q);
-  const depth=sensitive?"medium":(deep||thought||attachment)?"high":(latest||calculate||q.length>100)?"medium":"low";
-  return {depth,search:latest||hasLink,calculate,thought,debate,works,hasLink,sensitive,
-    review:(deep||thought||latest)&&!sensitive,attachment:!!attachment};
+  const sensitive=/(?:bunuh diri|cederakan diri|kemurungan|depresi|depression|krisis|trauma|serangan panik|gangguan makan|kanser|barah|kematian|pemergian|duka|sedih|cemas|tertekan|kesedihan melampau|abuse|panic attack|suicide|self-harm|seksual|sexual assault)/i.test(q);
+  const thought=/(?:bagaimana jika|kalau dunia|andaikan|bayangkan jika|hipotesis|eksperimen fikiran|what if|suppose|imagine if)/i.test(q);
+  // Soalan yang panjang, "mengapa" dan "analisis" tidak semestinya permintaan berdebat.
+  const debate=/(?:\b(?:kritik|kritikkan|kritikan|debat|debatkan|bahaskan|sanggah|patahkan|refute|debate)\b|bedah (?:hujah|logik)|uji (?:logik|hujah)|cari (?:kelemahan|percanggahan) (?:hujah|idea|alasan)|semak (?:logik|hujah)|bantah (?:pendapat|hujah)|counterargument|logical fallacy|apa (?:silap|lemah) (?:pada|dalam) hujah)/i.test(q);
+  const latest=/(?:terkini|terbaru|baru-baru|sekarang|hari ini|semalam|minggu ini|bulan ini|tahun ini|202[5-9]|berita|harga|pasaran|kajian terkini|statistik terkini|sumber terbaru|siapa (?:presiden|perdana menteri|menteri|ceo)|is it true|latest|current|today|news|recent studies|verify|semak fakta|sahkan dakwaan)/i.test(q);
+  const calculate=/(?:\d+\s*[+\-*/^×÷]\s*\d+|\b(?:hitung|kira|kirakan|calculate|integral|derivative|terbitan|regresi|matriks|persamaan|equation|jalankan kod|graf data|formula|statistical)\b)/i.test(q);
+  const technical=/(?:\b(?:kod|coding|javascript|python|html|css|sql|api|debug|ralat|bug|error|fungsi|program|algoritma|skrip|terminal|database)\b|baiki (?:kod|laman|aplikasi)|selesaikan (?:masalah|persamaan))/i.test(q);
+  const creative=/(?:\b(?:tulis|tuliskan|hasilkan|karangkan|cipta|ciptakan|draf|karang|terjemah|terjemahkan|ringkaskan|olah|perkemas|rewrite|translate|summarize)\b|bantu (?:aku|saya) (?:menulis|hasilkan|cipta|cari idea)|idea (?:cerita|puisi|penulisan|caption|kapsyen))/i.test(q);
+  const explain=/(?:\b(?:terangkan|jelaskan|ajar|belajar|fahami|maksud|definisi|kenapa|mengapa|bagaimana|cara|contoh|bezakan|bandingkan|explain|teach|how|why)\b|apa (?:itu|makna|maksud)|what is)/i.test(q);
+  const casual=/(?:^(?:hai|hello|hi|helo|assalamualaikum|salam|selamat pagi|selamat malam|apa khabar)[!?.\s]*$|borak|sembang|cerita (?:apa|sikit|pasal)|aku bosan|aku penat|lawak)/i.test(q);
+  const deep=/(?:analisis (?:mendalam|terperinci)|huraikan (?:secara )?mendalam|perbandingan terperinci|langkah demi langkah|tunjuk (?:pengiraan|penyelesaian)|reka bentuk sistem|bina aplikasi|architecture|debug|kontradiksi|paradoks|falsafah|etika|hipotesis|kajian ilmiah|deep dive)/i.test(q)||q.length>340;
+  const works=/(?:shaiful|ridhwan|puisigayabebas|tetralogi|trilogi|duologi|antara cahaya dan gelap|karya (?:kau|aku|shaiful|laman|penulis)|puisi (?:kau|aku|shaiful|dalam laman))/i.test(q);
+  const task=sensitive?"support":debate?"critique":thought?"hypothetical":
+    creative?"creative":(calculate||technical)?"technical":latest?"research":
+    explain?"explain":casual?"conversation":"general";
+  const depth=sensitive?"medium":(deep||attachment||task==="critique"||task==="hypothetical")?"high":
+    (calculate||technical||latest||q.length>135)?"medium":"low";
+  return {task,depth,search:latest||hasLink,calculate,thought,debate,works,hasLink,sensitive,
+    review:debate&&!sensitive,attachment:!!attachment};
 }
 function getTools(intent){
   const tools=[];
