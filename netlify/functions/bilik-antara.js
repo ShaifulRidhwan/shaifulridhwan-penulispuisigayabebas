@@ -1,7 +1,7 @@
 "use strict";
 /* Bilik Antara Autonomi: one personality, automatic research, reasoning and critique. */
 const {
-  safeText,safeHistory,poemContext,analyzeIntent,getTools,chooseModel,
+  safeText,safeHistory,poemContext,resolveIntent,intelligencePlan,getTools,chooseModel,
   sourceList,groundingEvidence,modelText,parseReply,sanitizeMedia,parseReview
 }=require("./antara-intelligence");
 const {extractTikTokHandle,researchPublicAccount}=require("./tiktok-public-research");
@@ -28,7 +28,7 @@ const PERSONALITY=[
   "OSINT TIKTOK: Jika diminta menyemak akaun, hanya laporan metadata profil yang benar-benar awam atau disahkan melalui TikTok API rasmi. Utamakan handle, nama paparan, bio (tanpa maklumat hubungan peribadi), verified, followers/following/video/likes dan pautan bio awam. Bezakan data API rasmi daripada hasil carian yang belum disahkan.",
   "OSINT PRIVASI: Jangan cuba mengenal pasti pemilik sebenar akaun pseudonim, menghubungkan akaun tersembunyi, keluarga, nombor peribadi, e-mel, IP, peranti atau lokasi fizikal pengguna. Jangan terbitkan latitud, longitud, koordinat GPS, rumah, sekolah, tempat kerja, lokasi masa nyata atau infer lokasi daripada gambar, geotag, catatan, video atau masa siaran. Negara hanya boleh disebut sebagai pernyataan sukarela dalam bio yang disahkan, bukan lokasi sebenar.",
   "Jangan menganggap username membuktikan akaun itu wujud. Jika TikTok Research API tiada akses, terangkan maklumat profil belum disahkan dan rujuk pautan awam sahaja. Jangan reka tarikh pendaftaran akaun atau ID dalaman."
-].join("\n");;
+].join("\n");
 
 const TASK_GUIDANCE={
   conversation:"PERBUALAN: Balas secara semula jadi, dengar konteks dan sesuaikan humor. Jangan analisis logik pengguna tanpa diminta.",
@@ -82,19 +82,19 @@ async function callGemini({apiKey,model,contents,system,tools=[],thinkingLevel="
 }
 const REVIEW_SYSTEM=[
   "Kau editor logik bebas untuk Bilik Antara, bukan mesin pujian.",
-  "Tugas: semak jawapan dan sumber yang DISEDIAKAN. Jangan mengaku telah menyemak Internet sendiri. Senaraikan kelemahan hujah yang konkrit, jika ada.",
+  "Tugas: jadi pemeriksa ketepatan tanpa pilih kasih. Untuk soalan fakta, semak ketelitian fakta dan dakwaan. Untuk matematik atau kod, semak langkah, keputusan dan percanggahan. Untuk hujah, semak premis dan bantahan. Jangan mengaku telah menyemak Internet sendiri.",
   "Hanya pulangkan JSON sah: {critique:string,revision:string,argumentMap:[{label:string,type:'premis'|'bukti'|'bantahan'|'kesimpulan',refersTo:number|null}],truthAudit:[{claim:string,status:'bersumber'|'tafsiran'|'belum_disahkan'|'dipertikaikan',note:string,sourceIndex:number|null}],thoughtLedger:[{idea:string,status:'premis'|'soalan_terbuka'|'kesimpulan'}],hypothesis:string}.",
-  "revision hanya apabila jawapan asal ada kesilapan penting yang jelas; jika jawapan asal munasabah, jadikan revision rentetan kosong.",
+  "revision ialah JAWAPAN PENUH yang diperbetulkan, bukan ulasan tentang jawapan. Tulis hanya jika ada kesilapan penting yang boleh dikenal pasti. Jika jawapan asal tepat atau isu tidak dapat dipastikan, revision mesti rentetan kosong. Kekalkan bahasa, tujuan dan nada yang diminta.",
   "status bersumber hanya jika sumber bertajuk/URL yang diberi memang menyokong dakwaan secara langsung. sourceIndex ialah indeks 0-based kepada senarai sumber. Jangan reka URL.",
-  "Peta hujah ialah justifikasi luaran ringkas, bukan penalaran dalaman. Maksimum 6 nod. Rekod idea yang pengguna betul-betul utarakan; jangan mereka pendirian.",
+  "Hanya untuk permintaan kritik/debat: bina peta hujah luaran ringkas maksimum 6 nod, bukan penalaran dalaman. Untuk kerja teknikal, penjelasan biasa dan penyelidikan, gunakan argumentMap:[] dan thoughtLedger:[]. Jangan paksa debat.",
   "Jika eksperimen pemikiran, hypothesis jelaskan akibat andaian, bukan fakta. Jangan cadangkan serangan peribadi.",
-  "Sekiranya tiada bukti, gunakan belum_disahkan, jangan berpura-pura pasti."
+  "Status bersumber hanya dengan metadata sokongan sebenar, dan bukan bukti kebenaran mutlak. Sekiranya tiada bukti, gunakan belum_disahkan atau truthAudit:[]; jangan berpura-pura pasti. Jangan cipta rujukan atau dapatan."
 ].join("\n");
 async function reviewAnswer({apiKey,model,question,reply,sources,evidence,intent,timeBudgetMs}){
   if(timeBudgetMs<3500)return null;
   const prompt=JSON.stringify({question,reply:reply.slice(0,8000),
     sources:sources.map((x,i)=>({i,title:x.title,url:x.url})),evidence,
-    isThoughtExperiment:intent.thought,analyzeArgument:intent.debate});
+    task:intent.task,isThoughtExperiment:intent.thought,analyzeArgument:intent.debate});
   const data=await callGemini({apiKey,model,system:REVIEW_SYSTEM,contents:[{role:"user",parts:[{text:prompt}]}],
     thinkingLevel:"low",maxTokens:1600,tools:[],json:true,timeoutMs:Math.min(7200,timeBudgetMs)});
   const review=parseReview(modelText(data&&data.candidates&&data.candidates[0]));
@@ -139,7 +139,8 @@ exports.handler=async event=>{
   if(payload.media&&!media)return result(400,{error:"Jenis atau saiz media tidak disokong. Maksimum 2.2 MB."},H);
   const documentText=safeText(payload.documentText,15000);
   const documentName=safeText(payload.documentName,100);
-  const intent=analyzeIntent(question,!!(media||documentText));
+  const intent=resolveIntent(question,history,!!(media||documentText));
+  const plan=intelligencePlan(intent);
   if(isAuthorIdentity(question)&&!media&&!documentText)return result(200,{
     mode:"live",aiMode:"automatic",model:"grounded-facts",reply:AUTHOR_REPLY,
     sources:[],argumentMap:[],truthAudit:[],thoughtLedger:[],hypothesis:"",
@@ -166,15 +167,17 @@ exports.handler=async event=>{
   const tools=getTools({...intent,search:intent.search||!!tiktokHandle});
   const model=chooseModel(baseModel,intent);
   const system=PERSONALITY+"\n"+(TASK_GUIDANCE[intent.task]||TASK_GUIDANCE.general)+
+      "\nPENDEKATAN CERDAS: Kenal pasti tugas sebenar, pecahkan masalah rumit kepada submasalah yang perlu, semak pengiraan dan andaian, pilih alat hanya apabila alat menambah bukti. Utamakan jawapan yang boleh diuji berbanding bunyi yakin. Jangan dedahkan nota penalaran dalaman. Jangan mengaku melakukan semakan yang tidak dibuat."+
       (intent.thought?"\nEKSPERIMEN PEMIKIRAN: nyatakan andaian jelas dan kesan yang dijangka, jangan bentangkan andaian sebagai fakta.":"")+
       (intent.debate?"\nKRITIK HUJAH: cari premis lemah, bantahan paling kuat, dan nilai bukti dengan tegas.":"")+
-      (intent.search?"\nFAKTA TERKINI: semak hasil carian jika tersedia; jangan reka rujukan.":"")+
+      (intent.search?"\nFAKTA TERKINI: gunakan carian jika tersedia; bezakan sumber yang benar-benar dijumpai daripada pengetahuan sedia ada. Jika tiada sumber disahkan, nyatakan ketidakpastian.":"")+
+      (intent.hasLink?"\nPAUTAN: semak kandungan URL dengan alat URL Context jika tersedia. Jika kandungan tidak dapat diakses, akui dan jangan buat ringkasan rekaan.":"")+
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
-  const maxTokens=intent.depth==="high"?3200:intent.depth==="medium"?2300:1300;
+  const maxTokens=plan.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
     works:!!poem,multimodal:!!media,model,review:intent.review});
   try{
-    const data=await callGemini({apiKey,model,system,contents,tools,thinkingLevel:intent.depth,
+    const data=await callGemini({apiKey,model,system,contents,tools,thinkingLevel:plan.thinkingLevel,
       maxTokens,timeoutMs:18000});
     const candidate=data&&data.candidates&&data.candidates[0];
     const reply=parseReply(modelText(candidate));
@@ -182,21 +185,29 @@ exports.handler=async event=>{
     const sources=sourceList(candidate);
     const evidence=groundingEvidence(candidate,sources);
     let review=null;
-    if(intent.review&&!tiktokHandle&&process.env.ENABLE_DUAL_REVIEW!=="false"){
+    if(plan.doReview&&!tiktokHandle&&process.env.ENABLE_DUAL_REVIEW!=="false"){
       const remaining=27800-(Date.now()-started);
       if(remaining>=3600){
         try{review=await reviewAnswer({apiKey,model:baseModel,question,reply,sources,evidence,intent,timeBudgetMs:remaining});}
         catch(error){log("review_skipped",{reason:error.status||error.name||"failed"});}
       }
     }
-    const revised=review&&review.revision&&review.revision.length>30?review.revision:reply;
+    const revised=review&&review.revision&&review.revision.length>30&&review.critique.trim()?review.revision:reply;
+    const actualTools=[];
+    if(candidate&&candidate.groundingMetadata&&Array.isArray(candidate.groundingMetadata.webSearchQueries)&&candidate.groundingMetadata.webSearchQueries.length)actualTools.push("google_search");
+    if(candidate&&candidate.content&&Array.isArray(candidate.content.parts)&&candidate.content.parts.some(p=>p&&p.executableCode))actualTools.push("code_execution");
+    if(candidate&&candidate.urlContextMetadata&&Array.isArray(candidate.urlContextMetadata.urlMetadata)&&candidate.urlContextMetadata.urlMetadata.length)actualTools.push("url_context");
+    const warnings=[];
+    if(candidate&&candidate.finishReason&&candidate.finishReason!=="STOP")warnings.push("Jawapan mungkin tidak lengkap ("+candidate.finishReason+").");
+    if(intent.search&&tools.some(t=>t.google_search)&&!sources.length)warnings.push("Tiada rujukan carian yang dapat disahkan untuk jawapan ini.");
+    if(intent.hasLink&&!actualTools.includes("url_context")&&!sources.length)warnings.push("Kandungan pautan tidak dapat disahkan daripada metadata alat.");
     const output={mode:"live",aiMode:"automatic",model,reply:revised,sources,
       ...(publicAccount?{publicAccount}:{}),
       argumentMap:review?review.argumentMap:[],truthAudit:review?review.truthAudit:[],
       thoughtLedger:review?review.thoughtLedger:[],hypothesis:review?review.hypothesis:"",
       reviewApplied:!!review,
-      toolsUsed:tools.map(t=>Object.keys(t)[0]),
-      disclaimer:candidate&&candidate.finishReason&&candidate.finishReason!=="STOP"?"Jawapan mungkin tidak lengkap.":"",
+      toolsUsed:actualTools,toolsOffered:tools.map(t=>Object.keys(t)[0]),
+      disclaimer:warnings.join(" "),
       usage:data.usageMetadata||null,durMs:Date.now()-started};
     log("success",{depth:intent.depth,review:!!review,sources:sources.length,ms:output.durMs});
     return result(200,output,H);
