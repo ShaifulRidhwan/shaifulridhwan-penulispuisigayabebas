@@ -108,7 +108,7 @@ section{padding:5.5rem 0;position:relative}
 .about p strong{color:var(--text);font-weight:500}
 .about .pull{font-family:'Syne',sans-serif;font-size:1.15rem;color:var(--accent);font-style:italic;margin-top:1.8rem;line-height:1.6;border-left:2px solid var(--accent);padding-left:1.2rem}
 .info-card{background:var(--card);border:1px solid var(--border);padding:2rem;backdrop-filter:blur(8px);position:sticky;top:90px}
-.info-card h4{font-family:'Syne',sans-serif;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:1.4rem}
+.info-card h3{font-family:'Syne',sans-serif;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:1.4rem}
 .info-card ul{list-style:none}
 .info-card li{padding:.7rem 0;border-bottom:1px solid var(--border);color:var(--muted);font-size:.92rem;display:flex;justify-content:space-between;gap:1rem}
 .info-card li:last-child{border-bottom:none}
@@ -175,7 +175,7 @@ section.manifesto{padding:7rem 0;position:relative}
 .manifesto-sig{margin-top:2.5rem;font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;color:var(--accent)}
 .manifesto-pillars{margin-top:4.5rem;padding-top:3rem;border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);gap:2.5rem}
 .pillar .p-num{font-family:'Syne',sans-serif;font-size:.7rem;letter-spacing:.3em;color:var(--accent2);font-weight:700;display:block;margin-bottom:.8rem}
-.pillar h4{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.04em;margin-bottom:.6rem;color:var(--text)}
+.pillar h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.04em;margin-bottom:.6rem;color:var(--text)}
 .pillar p{font-size:.9rem;color:var(--muted);line-height:1.7;font-weight:300}
 @media(max-width:720px){.manifesto-pillars{grid-template-columns:1fr;gap:1.8rem}section.manifesto{padding:5rem 0}}
 
