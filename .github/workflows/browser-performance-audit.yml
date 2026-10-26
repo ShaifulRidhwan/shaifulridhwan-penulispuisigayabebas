@@ -53,6 +53,29 @@ jobs:
             }catch(e){console.log("[Lighthouse] "+mode+" unavailable: "+e.message);}
           }
           NODE
+      - name: Lighthouse live Netlify (desktop and mobile)
+        if: always()
+        continue-on-error: true
+        run: |
+          export CHROME_PATH="$(node -e "process.stdout.write(require('playwright').chromium.executablePath())")"
+          for target in home chat; do
+            if [ "$target" = "home" ]; then url="https://shaifulridhwan-penulispuisigayabebas.netlify.app/"; else url="https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html"; fi
+            for mode in desktop mobile; do
+              if [ "$mode" = "desktop" ]; then args="--preset=desktop"; else args="--form-factor=mobile --screenEmulation.mobile"; fi
+              npx lighthouse "$url" --chrome-flags="--headless --no-sandbox" $args --max-wait-for-load=35000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path="audit-production-$target-$mode.json" --quiet || true
+            done
+          done
+          node - <<'NODE'
+          const fs=require("node:fs");
+          for(const name of ["home-desktop","home-mobile","chat-desktop","chat-mobile"]){
+            try{
+              const data=JSON.parse(fs.readFileSync("audit-production-"+name+".json","utf8"));
+              const scores=Object.fromEntries(Object.entries(data.categories).map(([k,v])=>[k,Math.round(v.score*100)]));
+              console.log("[Production Lighthouse] "+name+" "+JSON.stringify(scores));
+              console.log("[Production LCP] "+name+" "+(data.audits["largest-contentful-paint"]?.displayValue||"unavailable"));
+            }catch(e){console.log("[Production Lighthouse] "+name+" unavailable: "+e.message);}
+          }
+          NODE
       - name: Upload screenshots and Lighthouse reports
         if: always()
         uses: actions/upload-artifact@v4
@@ -61,4 +84,5 @@ jobs:
           path: |
             audit-*.png
             audit-lighthouse-*.json
+            audit-production-*.json
           if-no-files-found: warn
