@@ -94,8 +94,8 @@ test("invalid origin, unsupported media, request size, and empty prompt rejected
   assert.equal(origin.statusCode,403);
   assert.equal((await handler(event({},"empty"))).statusCode,400);
   assert.equal((await handler(event({question:"Test",media:{mimeType:"application/x-msdownload",data:"QUJDRA=="}},"badfile"))).statusCode,400);
-  assert.equal((await handler(event({question:"Test",media:{mimeType:"image/png",data:"A".repeat(3100000)}},"bigfile"))).statusCode,400);
-  assert.equal((await handler(event({huge:"x".repeat(3350000)},"size"))).statusCode,413);
+  assert.equal((await handler(event({question:"Test",media:{mimeType:"image/png",data:"A".repeat(5000000)}},"bigfile"))).statusCode,400);
+  assert.equal((await handler(event({huge:"x".repeat(5450000)},"size"))).statusCode,413);
 });
 
 
@@ -141,22 +141,29 @@ test("standalone URL doesn't waste search grounding quota",async()=>{
   assert.ok(!used.some(t=>t.google_search));
 });
 
-test("multi-attachment request stays within combined budget",async()=>{
+test("multiple attachments are allowed when total payload fits",async()=>{
  const a={name:"a.pdf",mimeType:"application/pdf",data:"QUJDRA=="};
  const b={name:"b.png",mimeType:"image/png",data:"QUJDRA=="};
- const response=await handler(event({question:"Bandingkan dua lampiran",media:[a,b]},"multi-media"));
+ const response=await handler(event({question:"Bandingkan empat lampiran",media:[a,b,a,b]},"multi-media"));
  assert.equal(response.statusCode,200);
  const parts=latestPrimary().contents.at(-1).parts;
- assert.equal(parts.length,3);
+ assert.equal(parts.length,5);
  assert.equal(parts[1].inlineData.mimeType,"application/pdf");
  assert.equal(parts[2].inlineData.mimeType,"image/png");
- const overflow=await handler(event({question:"test",media:[a,b,a,b]},"too-many-media"));
- assert.equal(overflow.statusCode,400);
 });
-test("opt-in memory is forwarded as untrusted context, not system instruction",async()=>{
- const reply=await handler(event({question:"Terangkan sains",memoryNotes:"Aku suka jawapan santai."},"memory-context"));
- assert.equal(reply.statusCode,200);
- const req=latestPrimary();
- assert.match(req.contents.at(-1).parts[0].text,/Aku suka jawapan santai/);
- assert.ok(!req.systemInstruction.parts[0].text.includes("Aku suka jawapan santai."));
+test("longer messages are preserved, and oversized ones receive explicit errors",async()=>{
+ const question="Terangkan dengan contoh: "+("huraian ".repeat(300));
+ const good=await handler(event({question},"long-question"));
+ assert.equal(good.statusCode,200);
+ assert.equal(latestPrimary().contents.at(-1).parts[0].text.slice(0,question.length),question);
+ const tooLong=await handler(event({question:"a".repeat(32001)},"overlong-question"));
+ assert.equal(tooLong.statusCode,413);
+});
+test("memory context capacity is increased without moving it to system instructions",async()=>{
+ const notes="Aku lebih suka contoh. ".repeat(100);
+ const r=await handler(event({question:"Terangkan sains",memoryNotes:notes},"extended-memory"));
+ assert.equal(r.statusCode,200);
+ const content=latestPrimary().contents.at(-1).parts[0].text;
+ assert.ok(content.includes(notes));
+ assert.ok(!latestPrimary().systemInstruction.parts[0].text.includes(notes));
 });
