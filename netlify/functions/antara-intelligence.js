@@ -110,16 +110,20 @@ function intelligencePlan(intent){
 }
 function getTools(intent){
   const tools=[];
-  // Fail closed on the free Gemini 3.6 API tier: Google Search grounding can require billing.
-  // Deliberately not activated by any public/user request.
-  if(intent.search&&process.env.ENABLE_SEARCH_GROUNDING==="true"&&process.env.ALLOW_BILLABLE_SEARCH==="true")tools.push({google_search:{}});
+  // RM0 edition: Google Search grounding is not enabled because the API free tier does not cover it.
+  // Wikipedia references (separate bounded adapter) and free URL Context remain available.
   if(intent.calculate&&process.env.ENABLE_CODE_EXECUTION!=="false")tools.push({code_execution:{}});
   if(intent.hasLink&&process.env.ENABLE_URL_CONTEXT!=="false")tools.push({url_context:{}});
   return tools;
 }
+const FREE_TEXT_MODELS=new Set(["gemini-3.6-flash","gemini-3.8-flash","gemini-3.5-flash-lite","gemini-3.1-flash-lite"]);
+function freeModel(name,fallback="gemini-3.6-flash"){
+  return typeof name==="string"&&FREE_TEXT_MODELS.has(name)?name:fallback;
+}
 function chooseModel(defaultModel,intent){
-  const advanced=process.env.GEMINI_MODEL_COMPLEX;
-  return intent.depth==="high"&&advanced?advanced:defaultModel;
+  const base=freeModel(defaultModel);
+  const advanced=freeModel(process.env.GEMINI_MODEL_COMPLEX,base);
+  return intent.depth==="high"?advanced:base;
 }
 function sourceList(candidate){
   const chunks=candidate&&candidate.groundingMetadata&&candidate.groundingMetadata.groundingChunks;
@@ -186,4 +190,4 @@ function parseReview(text){
   return {critique:safeText(obj.critique,550),revision:safeText(obj.revision,8500),argumentMap:map,truthAudit:truth,thoughtLedger:ledger,
     hypothesis:safeText(obj.hypothesis,900)};
 }
-module.exports={POEMS,safeText,safeHistory,tokenize,poemMatches,poemContext,analyzeIntent,resolveIntent,intelligencePlan,getTools,chooseModel,sourceList,groundingEvidence,modelText,parseReply,sanitizeMedia,parseReview};
+module.exports={POEMS,safeText,safeHistory,tokenize,poemMatches,poemContext,analyzeIntent,resolveIntent,intelligencePlan,getTools,freeModel,chooseModel,sourceList,groundingEvidence,modelText,parseReply,sanitizeMedia,parseReview};
