@@ -7,7 +7,7 @@ if(!C||!$("checkDevice"))return;
 const ui={
  device:$("deviceStatus"),details:$("deviceDetails"),check:$("checkDevice"),copy:$("copyDiagnostic"),
  consent:$("modelConsent"),mobileRisk:$("mobileGpuConsent"),cache:$("cacheStatus"),checkCache:$("checkCache"),
- prefetch:$("prefetchModel"),background:$("backgroundModel"),cancel:$("cancelDownload"),
+ prefetch:$("prefetchModel"),background:$("backgroundModel"),downloadNote:$("downloadModeNote"),cancel:$("cancelDownload"),
  clear:$("clearModel"),progress:$("modelProgress"),progressNote:$("modelProgressNote"),
  activate:$("activateModel"),gpu:$("gpuStatus"),gen:$("generateImage"),stop:$("stopImage"),
  img:$("generatedImage"),output:$("studioImageOutput"),placeholder:$("previewPlaceholder"),
@@ -34,6 +34,7 @@ function flags(){
  const consent=ui.consent.checked;
  ui.prefetch.disabled=!cacheAvailable||!consent||downloading||loading||generating||ready||completed===C.files.length;
  ui.background.disabled=!cacheAvailable||!consent||downloading||loading||ready||!backgroundSupported;
+ ui.background.hidden=!backgroundSupported;
  ui.cancel.disabled=!downloading;
  ui.clear.disabled=downloading||loading||generating||ready||!completed;
  ui.activate.disabled=!gpuAllowed||!consent||(mobile&&!ui.mobileRisk.checked)||completed!==C.files.length||downloading||loading||ready;
@@ -42,6 +43,11 @@ function flags(){
  ui.download.disabled=!blob;
 }
 let backgroundSupported=false,swRegistration=null;
+function updateDownloadMode(){
+ if(backgroundSupported)ui.downloadNote.textContent="Background Fetch dikesan (eksperimen). Pelayar mungkin masih menolak muat turun besar; status disahkan selepas operasi bermula.";
+ else if(cacheAvailable)ui.downloadNote.textContent="Muat turun latar tidak tersedia di pelayar ini. Gunakan 'Muat turun / sambung' sambil tab kekal terbuka. Fail siap boleh digunakan semula.";
+ else ui.downloadNote.textContent="Cache Storage/HTTPS tidak tersedia pada pelayar ini.";
+}
 async function cacheCounts(){
  if(!cacheAvailable){completed=0;cacheMsg("Cache Storage atau HTTPS tidak tersedia. Pelayar tidak boleh menyimpan model secara setempat.");flags();return 0;}
  try{
@@ -122,6 +128,7 @@ async function deviceCheck(){
   }catch(_){backgroundSupported=false;}
  }
  row("Background Fetch",backgroundSupported?"API tersedia dalam pelayar (masih eksperimen)":"API tidak tersedia pada pelayar ini");
+ updateDownloadMode();
  checked=true;
  message("BETA TEST: Laporan berdasarkan maklumat pelayar yang boleh diperiksa. "+
    (report.gpu.accessible?"WebGPU adapter dikesan. ":"WebGPU belum dapat disahkan. ")+
@@ -151,6 +158,10 @@ ui.copy.addEventListener("click",async()=>{
 });
 ui.check.addEventListener("click",()=>deviceCheck().catch(e=>message("Semakan gagal: "+e.message)));
 ui.checkCache.addEventListener("click",()=>cacheCounts());
+document.addEventListener("visibilitychange",()=>{
+ if(downloading&&document.hidden&&!backgroundReg)
+  ui.progressNote.textContent="Sistem mungkin menggantung tab di latar. Kembali ke tab untuk menyemak muat turun.";
+});
 ui.mobileRisk.addEventListener("change",flags);
 ui.consent.addEventListener("change",()=>{
  if(!ui.consent.checked&&downloading){
@@ -192,9 +203,28 @@ async function foregroundDownload(){
    if(type.includes("text/html"))throw new Error("Model memulangkan HTML dan bukannya fail ONNX.");
    const len=Number(response.headers.get("content-length")||0);
    if(len>0&&len<10*1024*1024)throw new Error("Fail kelihatan terlalu kecil untuk model ONNX.");
-   // Cache.put streams the body into browser storage. No JS arrayBuffer() allocation.
-   await cache.put(url,response);
-   progress(((i+1)/missing.length)*100,"Fail "+(i+1)+"/"+missing.length+" selesai. Fail lengkap disimpan untuk percubaan berikutnya.");
+   // Stream to Cache Storage without materializing the large model in JavaScript.
+   let payload=response,downloadedBytes=0,lastUpdate=0;
+   if(response.body&&typeof TransformStream==="function"&&typeof Response==="function"){
+    const transform=new TransformStream({
+     transform(chunk,ctl){
+      downloadedBytes+=Number(chunk?.byteLength)||0;
+      const now=Date.now();
+      if(now-lastUpdate>350){
+       lastUpdate=now;
+       const total=len>0?" / "+(len/1048576).toFixed(1)+" MB":" MB";
+       progress(len>0?downloadedBytes/len*100:NaN,
+        "Fail "+(i+1)+"/"+missing.length+": "+name+" · "+(downloadedBytes/1048576).toFixed(1)+total);
+      }
+      ctl.enqueue(chunk);
+     }
+    });
+    payload=new Response(response.body.pipeThrough(transform),{
+     status:response.status,statusText:response.statusText,headers:response.headers
+    });
+   }
+   await cache.put(url,payload);
+   progress(100,"Fail "+(i+1)+"/"+missing.length+" selesai disimpan. "+(downloadedBytes>0?(downloadedBytes/1048576).toFixed(1)+" MB. ":"")+"Fail siap digunakan semula pada cubaan berikutnya.");
   }
   cacheMsg("Muat turun cache selesai. Semak fail model sebelum mengaktifkan GPU.");
  }catch(e){
@@ -243,12 +273,15 @@ async function beginBackground(){
   if(!missing.length){cacheMsg("Semua fail sudah berada dalam cache. Tidak perlu muat turun.");await cacheCounts();return;}
   // For downloads >2GiB the browser may reject; never activate GPU here.
   const reg=await swRegistration.backgroundFetch.fetch(C.backgroundId,missing,{
-   title:"Studio Antara · Model imej AI (BETA TEST)"
+   title:"Studio Antara · Model imej AI (BETA TEST)",
+   downloadTotal:C.modelBytes
   });
   cacheMsg("Background Fetch telah dimulakan oleh pelayar. Kemajuan bergantung pada sokongan pelayar.");
   await attachBackground(reg);
  }catch(e){cacheMsg("Background Fetch ditolak oleh pelayar: "+String(e.message||e).slice(0,170)+". "+
-   "Gunakan butang Muat turun / sambung sambil mengekalkan tab terbuka.");}
+   "Gunakan butang Muat turun / sambung sambil mengekalkan tab terbuka.");
+   ui.downloadNote.textContent="Pelayar menolak operasi muat turun latar. Muat turun biasa memerlukan tab kekal terbuka.";
+  }
 }
 ui.background.addEventListener("click",beginBackground);
 ui.cancel.addEventListener("click",async()=>{
@@ -360,6 +393,7 @@ window.addEventListener("pagehide",()=>{
  if(abortGenerate)abortGenerate();
  // Do not cancel browser-managed Background Fetch: it may continue if supported.
 });
+updateDownloadMode();
 flags(); // Proses diagnostik tidak boleh mengunci butang muat turun selepas persetujuan.
 cacheCounts().catch(()=>{});
 deviceCheck().catch(e=>message("Semakan permulaan gagal: "+String(e.message||e)+". Muat turun boleh dicuba selepas persetujuan."));
