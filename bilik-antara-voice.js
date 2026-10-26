@@ -14,7 +14,7 @@ const MAX_SESSION=10*60*1000;
 let recognizer=null,dictating=false,liveGeneration=0;
 let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null;
 let liveActive=false,liveReady=false,micEnabled=true,speakerEnabled=true;
-let startAbort=null,sessionTimer=null,nextAudioTime=0,playSources=new Set(),lastTurn=null;
+let startAbort=null,sessionTimer=null,connectTimer=null,nextAudioTime=0,playSources=new Set(),lastTurn=null;
 const speechAPI=window.SpeechRecognition||window.webkitSpeechRecognition;
 const sayStatus=(value)=>{status.textContent=value;};
 const showNotice=(message)=>{notice.textContent=String(message||"").slice(0,230);notice.hidden=!message;};
@@ -82,6 +82,7 @@ async function closeLive(reason){
   liveReady=false;liveActive=false;
   if(startAbort){startAbort.abort();startAbort=null;}
   if(sessionTimer){clearTimeout(sessionTimer);sessionTimer=null;}
+  if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
   if(socket){const ws=socket;socket=null;ws.onclose=null;ws.onerror=null;ws.onmessage=null;try{ws.close(1000,"Sesi tamat");}catch(e){}}
   stopAudioQueue();
   if(micNode){try{micNode.disconnect();micNode.port.onmessage=null;}catch(e){}micNode=null;}
@@ -155,7 +156,11 @@ function queueAudio(data,mime){
   }catch(e){sayStatus("Audio suara tidak dapat dimainkan pada pelayar ini.");}
 }
 function onServerMessage(payload){
-  if(payload.setupComplete){liveReady=true;sayStatus("Bersambung. Cakap sahaja, aku sedang mendengar.");return;}
+  if(payload.setupComplete){
+    liveReady=true;
+    if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
+    sayStatus("Bersambung. Cakap sahaja, aku sedang mendengar.");return;
+  }
   if(payload.goAway){sayStatus("Sesi suara hampir tamat.");}
   const c=payload.serverContent;
   if(!c)return;
@@ -208,13 +213,22 @@ async function startLive(){
     if(generation!==liveGeneration)return;
     sayStatus("Sedang sambungkan suara…");
     const controller=new AbortController();startAbort=controller;
-    const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:"{}",signal:controller.signal,credentials:"same-origin",cache:"no-store"});
-    const body=await res.json().catch(()=>({}));
+    const tokenTimer=setTimeout(()=>controller.abort(),16000);
+    let res,body;
+    try{
+      res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+        body:"{}",signal:controller.signal,credentials:"same-origin",cache:"no-store"});
+      body=await res.json().catch(()=>({}));
+    }finally{clearTimeout(tokenTimer);}
     if(!res.ok||!body.token||!body.model)throw Error(body.error||"Token Voice tidak tersedia.");
     if(generation!==liveGeneration)return;
     const ws=new WebSocket(SOCKET_BASE+encodeURIComponent(body.token));
     socket=ws;
+    connectTimer=setTimeout(()=>{
+      if(generation!==liveGeneration||liveReady)return;
+      const message="Gemini Live tak memberi pengesahan sambungan. Semak akses API atau rangkaian.";
+      sayStatus(message);showNotice(message);closeLive(message);
+    },20000);
     ws.onopen=()=>{
       if(generation!==liveGeneration)return;
       ws.send(JSON.stringify({setup:{
@@ -255,10 +269,18 @@ async function startLive(){
       sayStatus("Dah bersambung. Tunggu sekejap…");
       sessionTimer=setTimeout(()=>{sayStatus("Had sesi 10 minit dicapai.");closeLive("Had 10 minit.");},MAX_SESSION);
     };
-    ws.onmessage=(event)=>{
+    ws.onmessage=async(event)=>{
       if(generation!==liveGeneration)return;
-      if(typeof event.data!=="string")return;
-      try{onServerMessage(JSON.parse(event.data));}catch(e){/* skip malformed chunk */}
+      try{
+        let raw=event.data;
+        if(typeof raw!=="string"){
+          if(typeof Blob!=="undefined"&&raw instanceof Blob)raw=await raw.text();
+          else if(raw instanceof ArrayBuffer)raw=new TextDecoder().decode(raw);
+          else return;
+        }
+        if(generation!==liveGeneration)return;
+        onServerMessage(JSON.parse(raw));
+      }catch(e){/* ignore malformed or unsupported packets */}
     };
     ws.onerror=()=>{if(generation===liveGeneration)sayStatus("Sambungan suara terputus.");};
     ws.onclose=(event)=>{
@@ -268,7 +290,9 @@ async function startLive(){
       if(event.code!==1000)showNotice(message+" Cuba lagi selepas semak sambungan.");
     };
   }catch(e){
-    const message=e&&e.name==="NotAllowedError"?
+    const message=e&&e.name==="AbortError"?
+      "Permintaan token suara terlalu lama. Cuba semula apabila sambungan stabil.":
+      e&&e.name==="NotAllowedError"?
       "Mikrofon tidak dibenarkan. Aktifkan kebenaran mikrofon untuk laman ini.":
       e&&e.name==="NotFoundError"?"Tiada mikrofon dikesan.":
       String(e&&e.message||"Tak dapat sambungkan suara.").slice(0,180);
