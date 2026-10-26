@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ms" data-theme="dark">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080b13">
+<title>Studio Antara | E-mel, PDF, Word, Grafik & Imej AI BETA TEST</title>
+<meta name="description" content="Studio Antara: e-mel, dokumen PDF, Word, jadual, graf dan poster percuma. Makmal penjana imej AI berjalan di peranti pengguna dalam BETA TEST.">
+<link rel="canonical" href="https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html">
+<link rel="icon" href="bilik-antara-woman-emblem.svg" type="image/svg+xml">
+<link rel="stylesheet" href="studio-antara.css?v=1">
+<script src="studio-antara.js?v=1" defer></script>
+<script src="studio-imej-beta.js?v=1" defer></script>
+</head>
+<body>
+<div class="site">
+<header class="topbar"><a class="brand" href="bilik-antara.html">← BILIK ANTARA</a><span class="brand-sub">SHAIFUL RIDHWAN A.I. · STUDIO</span><a href="index.html">LAMAN UTAMA</a></header>
+<main>
+<div class="intro"><p class="overline">STUDIO ANTARA / MAKMAL KREATIF</p><h1>Daripada idea<br><em>kepada hasil.</em></h1><p>Tulis, reka, semak dan eksport karya. Tiada akaun tambahan, tiada API eksport berbayar. Hasil kekal pada peranti melainkan kau memilih bantuan Gemini.</p></div>
+<nav class="tabs" aria-label="Jenis projek">
+<button class="tab active" data-tab="email" aria-selected="true">E-mel</button>
+<button class="tab" data-tab="document">PDF & Word</button>
+<button class="tab" data-tab="table">Jadual</button>
+<button class="tab" data-tab="chart">Graf</button>
+<button class="tab" data-tab="poster">Poster</button>
+<button class="tab tab-beta" data-tab="image">Imej AI <span class="beta">BETA TEST</span></button>
+</nav>
+<div class="work-area">
+<section class="edit card" aria-label="Editor projek">
+<div class="panel-head"><h2 id="sectionTitle">Draf e-mel</h2><span class="meta">Diproses pada peranti</span></div>
+<section id="editor-email" class="panel">
+<label>Nama penerima (pilihan)<input id="emailName" placeholder="Contoh: Pengurus Sumber Manusia"></label>
+<label>Alamat e-mel penerima (pilihan)<input id="emailTo" inputmode="email" type="email" autocomplete="off" placeholder="nama@contoh.com"></label>
+<label>Subjek<input id="emailSubject" placeholder="Permohonan latihan industri"></label>
+<label>Mesej<textarea id="emailBody" rows="14" placeholder="Assalamualaikum dan salam sejahtera,&#10;&#10;..."></textarea></label>
+<div class="actions"><button id="emailAI" class="primary" type="button">Bantu draf dengan AI</button><button id="emailEml" type="button">Eksport .eml</button><button id="emailOpen" type="button">Buka aplikasi e-mel</button><button id="emailCopy" type="button">Salin</button></div>
+<p class="hint">Tiada e-mel dihantar secara automatik. Kau semak dan hantar sendiri.</p>
+</section>
+<section id="editor-document" class="panel" hidden>
+<label>Jenis dokumen<select id="docTemplate"><option value="report">Laporan</option><option value="letter">Surat rasmi</option><option value="resume">Resume</option><option value="proposal">Cadangan projek</option><option value="notes">Nota / artikel</option></select></label>
+<label>Tajuk<input id="docTitle" placeholder="Tajuk dokumen"></label>
+<label>Isi dokumen<textarea id="docBody" rows="18" placeholder="Masukkan kandungan. Satu perenggan bagi setiap blok teks."></textarea></label>
+<div class="actions"><button id="docAI" class="primary" type="button">Bantu tulis dengan AI</button><button id="docPdf" type="button">Simpan sebagai PDF</button><button id="docWord" type="button">Eksport .docx</button><button id="docHtml" type="button">Eksport HTML</button><button id="docCopy" type="button">Salin</button></div>
+<p class="hint">PDF menggunakan fungsi cetak pelayar: pilih “Save as PDF / Simpan sebagai PDF”. Word dijana melalui pustaka sumber terbuka ketika diminta.</p>
+</section>
+<section id="editor-table" class="panel" hidden>
+<label>Tajuk jadual<input id="tableTitle" value="Jadual saya"></label>
+<label>Data CSV<textarea id="tableData" rows="12" spellcheck="false">Bulan,Nilai&#10;Jan,12&#10;Feb,18&#10;Mac,26&#10;Apr,23</textarea></label>
+<div class="actions"><button id="tablePreview" class="primary" type="button">Pratonton jadual</button><button id="tableCsv" type="button">Eksport CSV</button><button id="tableJson" type="button">Eksport JSON</button><button id="tableCopy" type="button">Salin</button></div>
+<p class="hint">Baris pertama ialah tajuk lajur. CSV menyokong koma dan petikan berganda.</p>
+</section>
+<section id="editor-chart" class="panel" hidden>
+<label>Tajuk graf<input id="chartTitle" value="Perbandingan bulanan"></label>
+<label>Jenis graf<select id="chartType"><option value="bar">Graf bar</option><option value="line">Graf garisan</option></select></label>
+<label>Data CSV (lajur pertama label, kedua nombor)<textarea id="chartData" rows="10" spellcheck="false">Bulan,Nilai&#10;Jan,12&#10;Feb,18&#10;Mac,26&#10;Apr,23</textarea></label>
+<div class="actions"><button id="chartRender" class="primary" type="button">Jana graf</button><button id="chartSvg" type="button">Eksport SVG</button><button id="chartPng" type="button">Eksport PNG</button></div>
+</section>
+<section id="editor-poster" class="panel" hidden>
+<label>Format<select id="posterSize"><option value="story">Story 1080 × 1920</option><option value="square">Petak 1080 × 1080</option><option value="landscape">Landskap 1600 × 900</option></select></label>
+<label>Tajuk<input id="posterTitle" value="DI ANTARA CAHAYA DAN GELAP"></label>
+<label>Teks kecil / kapsyen<textarea id="posterBody" rows="7">Tidak semua jawapan itu kebenaran.</textarea></label>
+<label>Gaya<select id="posterStyle"><option value="noir">Cahaya & gelap</option><option value="paper">Kertas klasik</option><option value="aurora">Aurora biru</option></select></label>
+<div class="actions"><button id="posterRender" class="primary" type="button">Reka poster</button><button id="posterPng" type="button">Eksport PNG</button></div>
+<p class="hint">Poster menggunakan tipografi dan grafik generatif Canvas, bukan model AI imej. Boleh berfungsi tanpa GPU khusus.</p>
+</section>
+<section id="editor-image" class="panel" hidden>
+<div class="beta-info"><span class="beta">BETA TEST</span><strong>Penjanaan imej AI pada GPU pengguna</strong><p>Eksperimen sebenar berasaskan SD-Turbo dan WebGPU. Tiada API imej berbayar. Memerlukan pelayar/peranti yang serasi, ruang storan serta muat turun model bersaiz besar. Pada telefon, fungsi mungkin gagal atau terlalu berat.</p></div>
+<label>Prompt imej<textarea id="imagePrompt" rows="5" maxlength="700" placeholder="A quiet futuristic library made of glass and shadows, cinematic lighting..."></textarea></label>
+<label>Seed (pilihan)<input id="imageSeed" type="number" min="0" max="2147483647" value="42"></label>
+<label class="consent"><input type="checkbox" id="imageConsent"> Aku faham model akan dimuat turun daripada penyedia luaran ke peranti dan proses mungkin mengambil masa atau gagal.</label>
+<p id="gpuStatus" class="status" role="status" aria-live="polite">Status WebGPU belum diperiksa.</p>
+<div class="actions"><button id="checkGPU" type="button">Semak WebGPU</button><button id="loadImageModel" class="primary" type="button">Muat model (BETA)</button><button id="generateImage" type="button" disabled>Jana imej</button><button id="stopImage" type="button" disabled>Henti</button><button id="downloadImage" type="button" disabled>Simpan PNG</button></div>
+<progress id="imageProgress" max="100" value="0" hidden></progress>
+<p id="imageProgressNote" class="hint" aria-live="polite"></p>
+<p class="hint">Jika WebGPU tiada atau modul eksperimen gagal dipasang, imej tidak akan direka-reka. Model hanya dimuat selepas klik dan persetujuan. <a href="https://lacerbi.github.io/web-txt2img/" target="_blank" rel="noopener noreferrer">Demo asal sumber terbuka</a>.</p>
+</section>
+<p id="studioStatus" class="status" role="status" aria-live="polite"></p>
+</section>
+<section class="preview card" aria-label="Pratonton projek">
+<div class="panel-head"><h2>Pratonton</h2><span id="previewKind" class="meta">E-mel</span></div>
+<div id="studioPreview" class="preview-content"></div>
+<div id="studioImageOutput" hidden><img id="generatedImage" alt="Imej AI yang dijana pada peranti"><p class="hint">Imej dijana secara tempatan (BETA TEST). Hasil dan masa berbeza mengikut GPU.</p></div>
+</section>
+</div>
+</main>
+<footer>STUDIO ANTARA · DI ANTARA CAHAYA & GELAP · PROJEK SHAIFUL RIDHWAN</footer>
+</div>
+</body></html>
