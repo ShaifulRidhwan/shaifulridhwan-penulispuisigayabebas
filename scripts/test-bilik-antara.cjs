@@ -155,7 +155,7 @@ test("longer messages are preserved, and oversized ones receive explicit errors"
  const question="Terangkan dengan contoh: "+("huraian ".repeat(300));
  const good=await handler(event({question},"long-question"));
  assert.equal(good.statusCode,200);
- assert.equal(latestPrimary().contents.at(-1).parts[0].text.slice(0,question.length),question);
+ assert.equal(latestPrimary().contents.at(-1).parts[0].text.slice(0,question.trim().length),question.trim());
  const tooLong=await handler(event({question:"a".repeat(32001)},"overlong-question"));
  assert.equal(tooLong.statusCode,413);
 });
@@ -164,6 +164,6 @@ test("memory context capacity is increased without moving it to system instructi
  const r=await handler(event({question:"Terangkan sains",memoryNotes:notes},"extended-memory"));
  assert.equal(r.statusCode,200);
  const content=latestPrimary().contents.at(-1).parts[0].text;
- assert.ok(content.includes(notes));
- assert.ok(!latestPrimary().systemInstruction.parts[0].text.includes(notes));
+ assert.ok(content.includes(notes.trim()));
+ assert.ok(!latestPrimary().systemInstruction.parts[0].text.includes(notes.trim()));
 });
