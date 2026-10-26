@@ -8,7 +8,9 @@ const {extractTikTokHandle,researchPublicAccount}=require("./tiktok-public-resea
 const {publicReferences}=require("./antara-free-research");
 const DEFAULT_MODEL="gemini-3.6-flash";
 const SITE_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
-const MAX_BODY=3300000;
+const MAX_BODY=5400000;
+const MAX_QUESTION=32000;
+const MAX_MEDIA_ENCODED=4800000;
 const rateMap=new Map();
 
 const AUTHOR_REPLY="Shaiful Ridhwan ialah penulis di sebalik puisigayabebas. Dia menghasilkan puisi gaya bebas, menulis tentang sastera moden, cinta dan falsafah, serta menghasilkan prosa falsafah Antara Cahaya dan Gelap. Butiran peribadi yang tidak diterbitkan? Aku takkan reka. Kreativiti itu untuk karya, bukannya biodata orang.";
@@ -114,7 +116,7 @@ exports.handler=async event=>{
   if(origin&&origin!==(process.env.ALLOWED_ORIGIN||SITE_ORIGIN))return result(403,{error:"Origin tidak dibenarkan."},H);
   if(event.httpMethod==="OPTIONS")return {statusCode:204,headers:H,body:""};
   if(event.httpMethod!=="POST")return result(405,{error:"Kaedah tidak diterima."},H);
-  if(typeof event.body!=="string"||event.body.length>MAX_BODY)return result(413,{error:"Permintaan terlalu besar. Had media 2.2 MB."},H);
+  if(typeof event.body!=="string"||event.body.length>MAX_BODY)return result(413,{error:"Permintaan melebihi kapasiti 5.4 MB fungsi. Kurangkan lampiran atau pecahkan soalan."},H);
   let payload;
   try{payload=JSON.parse(event.body||"{}");}catch(e){return result(400,{error:"JSON tidak sah."},H);}
   if(!payload||typeof payload!=="object"||Array.isArray(payload))return result(400,{error:"Format permintaan tidak sah."},H);
@@ -134,14 +136,15 @@ exports.handler=async event=>{
     }catch(e){return result(502,{error:"Ringkasan tidak tersedia; sesi tidak dipadam."},H);}
   }
 
-  const question=safeText(payload.question,1600);
+  if(typeof payload.question==="string"&&payload.question.length>MAX_QUESTION)return result(413,{error:"Soalan melebihi kapasiti konteks permintaan ini. Bahagikan kepada beberapa mesej."},H);
+  const question=safeText(payload.question,MAX_QUESTION);
   if(!question)return result(400,{error:"Tulis soalan dahulu."},H);
   const rawMedia=payload.media===undefined||payload.media===null?[]:(Array.isArray(payload.media)?payload.media:[payload.media]);
-  if(rawMedia.length>3)return result(400,{error:"Maksimum tiga lampiran media untuk satu soalan."},H);
   const media=rawMedia.map(sanitizeMedia);
-  if(media.some(x=>!x)||media.reduce((n,x)=>n+x.data.length,0)>2900000)
-    return result(400,{error:"Lampiran tidak sah. Had gabungan media kira-kira 2.1 MB."},H);
-  const documentText=safeText(payload.documentText,15000);
+  if(media.some(x=>!x)||media.reduce((n,x)=>n+x.data.length,0)>MAX_MEDIA_ENCODED)
+    return result(400,{error:"Lampiran tidak sah atau jumlah media melebihi kapasiti kira-kira 3.6 MB."},H);
+  if(typeof payload.documentText==="string"&&payload.documentText.length>100000)return result(413,{error:"Kandungan fail teks terlalu besar untuk satu permintaan. Bahagikan dokumen."},H);
+  const documentText=safeText(payload.documentText,100000);
   const documentName=safeText(payload.documentName,100);
   const intent=resolveIntent(question,history,!!(media.length||documentText));
   const plan=intelligencePlan(intent);
