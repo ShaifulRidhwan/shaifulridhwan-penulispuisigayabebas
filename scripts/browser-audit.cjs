@@ -55,11 +55,14 @@ async function home(page,device){
  assert.equal(await page.locator(".work").count(),1,"Directory click must filter single poem");
  await page.locator("#resetBtn").click();
  assert.equal(await page.locator(".work").count(),6,"Reset must return to editorial curation");
+ if(device==="mobile"){
+  // Theme button belongs to the collapsed mobile navigation. Open it first.
+  await page.locator("#hamburger").click();
+  assert.equal(await page.locator("#hamburger").getAttribute("aria-expanded"),"true");
+ }
  await page.locator("#themeBtn").click();
  assert.equal(await page.locator("html").getAttribute("data-theme"),"light");
  if(device==="mobile"){
-  await page.locator("#hamburger").click();
-  assert.equal(await page.locator("#hamburger").getAttribute("aria-expanded"),"true");
   await page.locator('.nav-links a[href="#karya"]').click();
   assert.equal(await page.locator("#hamburger").getAttribute("aria-expanded"),"false");
  }
@@ -114,6 +117,16 @@ async function main(){
    const context=await browser.newContext(dev.options);
    const page=await context.newPage();
    page.on("pageerror",e=>{errors.push(dev.label+": "+e.message);log("JS ERROR "+e.message);});
+   page.on("response",response=>{
+     if(response.status()>=400&&response.url().startsWith(BASE)){
+       // Static Python server cannot serve Netlify function POSTs; record only missing assets.
+       const url=response.url();
+       if(!url.includes("/.netlify/functions/")){
+         errors.push(dev.label+": HTTP "+response.status()+" "+url);
+         log("RESOURCE ERROR "+response.status()+" "+url);
+       }
+     }
+   });
    await home(page,dev.label);
    await chat(page,dev.label);
    await context.close();
