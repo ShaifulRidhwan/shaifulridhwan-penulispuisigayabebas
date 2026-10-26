@@ -1,0 +1,36 @@
+name: Gaya Bebas Site Quality
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "gaya-bebas.css"
+      - "gaya-bebas.js"
+      - "karya-data.js"
+      - "karya-index.json"
+      - "bilik-antara.html"
+      - "scripts/test-site-quality.cjs"
+      - ".github/workflows/site-quality.yml"
+  push:
+    branches: [main]
+    paths:
+      - "index.html"
+      - "gaya-bebas.css"
+      - "gaya-bebas.js"
+      - "karya-data.js"
+      - "karya-index.json"
+      - "bilik-antara.html"
+      - "scripts/test-site-quality.cjs"
+      - ".github/workflows/site-quality.yml"
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Syntax and editorial, SEO and archive checks
+        run: |
+          node --check gaya-bebas.js
+          node --check karya-data.js
+          node --test scripts/test-site-quality.cjs
