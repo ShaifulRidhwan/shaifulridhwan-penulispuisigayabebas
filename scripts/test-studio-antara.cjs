@@ -59,7 +59,7 @@ test("BETA image has a separate page, explicit warning, consent and cache contro
  assert.match(imgJs,/if\(mobile&&engine!=="worker"\)/);
  assert.match(imgJs,/storageNeeded/);
  assert.match(imgJs,/backgroundFetch\.fetch/);
- assert.match(imgJs,/cache\.put\(url,response\)/);
+ assert.match(imgJs,/cache\.put\(url,payload\)/);
  assert.match(imgJs,/typeof sdk\?\.loadModel/);
  assert.match(imgJs,/sdk\.loadModel/);
 });
