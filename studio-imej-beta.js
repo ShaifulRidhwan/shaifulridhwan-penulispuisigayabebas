@@ -6,7 +6,7 @@ const $=id=>document.getElementById(id);
 if(!C||!$("checkDevice"))return;
 const ui={
  device:$("deviceStatus"),details:$("deviceDetails"),check:$("checkDevice"),copy:$("copyDiagnostic"),
- consent:$("modelConsent"),cache:$("cacheStatus"),checkCache:$("checkCache"),
+ consent:$("modelConsent"),mobileRisk:$("mobileGpuConsent"),cache:$("cacheStatus"),checkCache:$("checkCache"),
  prefetch:$("prefetchModel"),background:$("backgroundModel"),cancel:$("cancelDownload"),
  clear:$("clearModel"),progress:$("modelProgress"),progressNote:$("modelProgressNote"),
  activate:$("activateModel"),gpu:$("gpuStatus"),gen:$("generateImage"),stop:$("stopImage"),
@@ -36,7 +36,7 @@ function flags(){
  ui.background.disabled=!cacheAvailable||!consent||downloading||loading||ready||!backgroundSupported;
  ui.cancel.disabled=!downloading;
  ui.clear.disabled=downloading||loading||generating||ready||!completed;
- ui.activate.disabled=!gpuAllowed||!consent||completed!==C.files.length||downloading||loading||ready;
+ ui.activate.disabled=!gpuAllowed||!consent||(mobile&&!ui.mobileRisk.checked)||completed!==C.files.length||downloading||loading||ready;
  ui.gen.disabled=!ready||loading||generating;
  ui.stop.disabled=!generating;
  ui.download.disabled=!blob;
@@ -104,12 +104,12 @@ async function deviceCheck(){
  row("Shader f16",report.gpu.shaderF16===null?"Tidak dapat disahkan":report.gpu.shaderF16?"Disokong adapter":"Tidak ditawarkan adapter");
  row("Had buffer WebGPU",report.gpu.maxBufferSize!==null?bytes(report.gpu.maxBufferSize)+" (had API, bukan VRAM)":"Tidak didedahkan");
  row("Had binding WebGPU",report.gpu.maxStorageBufferBindingSize!==null?bytes(report.gpu.maxStorageBufferBindingSize)+" (had API)":"Tidak didedahkan");
- gpuAllowed=!mobile&&report.secure&&report.gpu.accessible;
+ gpuAllowed=report.secure&&report.gpu.accessible; // WebGPU on Android/iOS may be available; mobile requires separate risk acknowledgement.
  row("Penilaian WebGPU",report.gpu.accessible?"Adapter tersedia; belum bukti model 2.34 GiB mampu berjalan":"Adapter tidak boleh disahkan; model tidak akan diaktifkan");
  row("Dasar keselamatan BETA",mobile?
-  "Inferens berat masih dimatikan pada mudah alih kerana risiko tab crash, BUKAN kerana GPU disahkan lemah":
-  gpuAllowed?"Percubaan GPU dibenarkan selepas model lengkap, bukan jaminan berjaya":
-  "Pengaktifan dihentikan kerana adapter/HTTPS tidak tersedia");
+  gpuAllowed?"Percubaan GPU mudah alih boleh dipilih selepas muat turun dan amaran risiko khas. Tiada jaminan berjaya.":
+  "Pelayar tidak membenarkan WebGPU; penjanaan lokal belum boleh dibuat.":
+  gpuAllowed?"WebGPU tersedia untuk percubaan selepas model lengkap.":"WebGPU belum tersedia untuk penjanaan lokal.");
  report.notes.forEach((note,i)=>row("Had laporan "+(i+1),note));
  if(navigator.serviceWorker&&window.isSecureContext){
   try{
@@ -125,7 +125,7 @@ async function deviceCheck(){
  checked=true;
  message("BETA TEST: Laporan berdasarkan maklumat pelayar yang boleh diperiksa. "+
    (report.gpu.accessible?"WebGPU adapter dikesan. ":"WebGPU belum dapat disahkan. ")+
-   (mobile?"Muat turun boleh dicuba; inferens mudah alih masih dikawal. ":"")+
+   (mobile?"Muat turun boleh dicuba; percubaan GPU memerlukan persetujuan tambahan. ":"")+
    "Tiada model atau inferens dimuat semasa semakan.");
  ui.copy.disabled=false;
  await cacheCounts();
@@ -151,6 +151,7 @@ ui.copy.addEventListener("click",async()=>{
 });
 ui.check.addEventListener("click",()=>deviceCheck().catch(e=>message("Semakan gagal: "+e.message)));
 ui.checkCache.addEventListener("click",()=>cacheCounts());
+ui.mobileRisk.addEventListener("change",flags);
 ui.consent.addEventListener("change",()=>{
  if(!ui.consent.checked&&downloading){
   controller?.abort();
@@ -276,26 +277,35 @@ if(navigator.serviceWorker){
 }
 async function activate(){
  if(!checked)await deviceCheck();
- if(!gpuAllowed){gpuMsg("BETA TEST: Pengaktifan ditangguh oleh dasar keselamatan mudah alih atau adapter/HTTPS tidak tersedia. Ini bukan pengesahan GPU tidak mampu.");return;}
+ if(!gpuAllowed){gpuMsg("BETA TEST: WebGPU adapter atau HTTPS tidak tersedia. Percubaan lokal belum boleh dijalankan pada pelayar ini.");return;}
+ if(mobile&&!ui.mobileRisk.checked){gpuMsg("Tandakan persetujuan eksperimen GPU mudah alih. Model 2.34 GiB masih berisiko membuat tab crash.");return;}
  if(!ui.consent.checked||completed!==C.files.length){gpuMsg("Selesaikan muat turun cache model dan persetujuan dahulu.");return;}
  if(loading||ready)return;
  loading=true;ui.activate.disabled=true;ui.imgProgress.hidden=false;ui.imgProgress.removeAttribute("value");
- gpuMsg("BETA TEST: Menyediakan runtime dan GPU desktop. Penggunaan memori masih tinggi.");
+ gpuMsg("BETA TEST: Menyediakan runtime GPU "+(mobile?"telefon":"peranti")+". Model besar masih berisiko menyebabkan tab terhenti.");
  try{
   sdk=await import("https://esm.sh/web-txt2img@0.3.1?bundle");
   if(typeof sdk?.loadModel!=="function"||typeof sdk?.generateImage!=="function")
    throw new Error("Runtime tidak lengkap.");
   engine="direct";client=null;
   if(typeof Worker!=="undefined"&&sdk.Txt2ImgWorkerClient?.createDefault){
+   let candidate=null;
    try{
-    const candidate=sdk.Txt2ImgWorkerClient.createDefault();
+    candidate=sdk.Txt2ImgWorkerClient.createDefault();
     const caps=await Promise.race([
-     candidate.detect(),new Promise((_,rej)=>setTimeout(()=>rej(new Error("Worker timeout")),6500))
+     candidate.detect(),
+     new Promise((_,reject)=>setTimeout(()=>reject(new Error("Worker tidak responsif")),6500))
     ]);
     if(caps?.webgpu){client=candidate;engine="worker";}
-    else candidate.terminate();
-   }catch(_){try{client?.terminate();}catch(_){}client=null;}
+    else throw Error("Worker WebGPU tidak tersedia.");
+   }catch(e){
+    try{candidate?.terminate();}catch(_){}
+    client=null;
+    if(mobile)throw Error("Mod pekerja WebGPU tidak tersedia pada pelayar mudah alih ini: "+String(e.message||e));
+   }
   }
+  if(mobile&&engine!=="worker")
+   throw Error("Percubaan mudah alih memerlukan Web Worker yang berfungsi; pemprosesan terus pada tab dimatikan untuk mengurangkan risiko crash.");
   const onProgress=p=>{
    const pct=Number(p?.pct);
    if(Number.isFinite(pct)){ui.imgProgress.value=Math.max(0,Math.min(100,pct));}
@@ -307,7 +317,7 @@ async function activate(){
   if(!result?.ok)throw new Error(result?.message||result?.reason||"Model tidak boleh diaktifkan.");
   ready=true;gpuMsg("Model diaktifkan pada GPU. BETA TEST: jana satu imej untuk menguji.");
  }catch(e){
-  ready=false;gpuMsg("BETA TEST: Model gagal diaktifkan. "+String(e.message||e).slice(0,160));
+  ready=false;gpuMsg("BETA TEST: Model tidak dapat diaktifkan. "+String(e.message||e).slice(0,160));
   try{client?.terminate();}catch(_){}
   client=null;sdk=null;
  }finally{loading=false;ui.imgProgress.hidden=true;flags();}
