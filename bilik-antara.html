@@ -468,6 +468,7 @@ function showTyping(){
 async function tryStream(payload,typing,signal){
  if(payload.media&&payload.media.length||payload.documentText)return null;
  const q=String(payload.question||"");
+ if(window.BilikAntaraIdentity?.answerIdentity(q))return null;
  if(q.length>180||/https?:\/\/|terkini|berita|semak|buktikan|hujah|kritik|kira|debug|ralat|kod|trauma|sedih|cemas|sakit|novel|shaiful/i.test(q))return null;
  let res;
  try{res=await fetch("/.netlify/functions/bilik-antara-stream",{
