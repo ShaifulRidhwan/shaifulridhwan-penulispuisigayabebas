@@ -81,7 +81,8 @@ function snapshotCurrent(){
 window.addEventListener("ba:saved",snapshotCurrent);
 window.addEventListener("ba:cleared",()=>{
  archive=archive.filter(x=>x.id!==activeId);
- if(archive.length)persistArchive();
+ // Clear explicitly deleted this entry even though the native UI has unchecked persistence.
+ if(archive.length)write(KEYS.archive,archive);
  else try{localStorage.removeItem(KEYS.archive);}catch(_){}
  if(currentPanel==="sessions")render();
 });
