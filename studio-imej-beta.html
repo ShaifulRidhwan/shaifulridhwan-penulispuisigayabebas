@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="studio-imej-beta.css?v=2">
 <script src="studio-imej-config.js?v=1" defer></script>
 <script src="studio-device-diagnostics.js?v=1" defer></script>
-<script src="studio-imej-beta.js?v=6" defer></script>
+<script src="studio-imej-beta.js?v=7" defer></script>
 </head>
 <body class="mobile-studio">
 <div class="site">
@@ -54,16 +54,17 @@
 <label class="consent"><input id="modelConsent" type="checkbox"> Aku setuju menggunakan data internet dan storan peranti untuk memuat turun model besar ini.</label>
 <div class="actions model-actions">
 <button id="prefetchModel" class="primary" type="button" disabled>Muat turun / sambung</button>
-<button id="backgroundModel" type="button" disabled>Muat turun latar</button>
+<button id="backgroundModel" type="button" disabled hidden>Muat turun latar (eksperimen)</button>
 <button id="cancelDownload" type="button" disabled>Batal</button>
 </div>
 <p id="cacheStatus" class="status" role="status" aria-live="polite">Menyemak model yang tersimpan...</p>
+<p id="downloadModeNote" class="hint" aria-live="polite">Mengesan sokongan muat turun latar. Jika tidak disokong, muat turun biasa memerlukan tab ini kekal terbuka.</p>
 <progress id="modelProgress" max="100" value="0" hidden></progress>
 <p id="modelProgressNote" class="hint" aria-live="polite"></p>
 <label class="consent mobile-risk-consent"><input id="mobileGpuConsent" type="checkbox"> <span><strong>Cuba penjanaan GPU pada telefon (BETA).</strong> Aku faham model besar ini mungkin membuat tab beku atau crash walaupun WebGPU dikesan.</span></label>
 <details class="compact-options"><summary>Cache model & bantuan muat turun</summary>
 <div class="actions"><button id="checkCache" type="button">Semak cache</button><button id="clearModel" type="button" disabled>Padam cache model</button></div>
-<p class="hint">Muat turun biasa memerlukan tab kekal terbuka. Background Fetch hanya berfungsi pada pelayar yang menyokongnya. Butang sambung menggunakan fail yang sudah lengkap, bukan menyambung setiap bait.</p>
+<p class="hint">Muat turun dalam tab boleh menunjukkan kemajuan fail dan disimpan dalam cache apabila lengkap. Jika pelayar menggantung atau menutup tab, proses mungkin terhenti. Muat turun latar sebenar hanya disediakan apabila API Background Fetch berfungsi. Sambung semula menggunakan fail lengkap yang telah dicache, bukan bait separa.</p>
 </details>
 </section>
 <details id="devicePanel" class="mobile-diagnostic card">
