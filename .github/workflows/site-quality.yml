@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - "index.html"
+      - "_headers"
+      - "netlify.toml"
       - "gaya-bebas.css"
       - "gaya-bebas.js"
       - "karya-data.js"
@@ -14,6 +16,8 @@ on:
     branches: [main]
     paths:
       - "index.html"
+      - "_headers"
+      - "netlify.toml"
       - "gaya-bebas.css"
       - "gaya-bebas.js"
       - "karya-data.js"
