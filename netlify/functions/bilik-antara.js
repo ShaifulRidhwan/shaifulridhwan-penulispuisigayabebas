@@ -1,7 +1,7 @@
 "use strict";
 /* Bilik Antara Autonomi: one personality, automatic research, reasoning and critique. */
 const {
-  safeText,safeHistory,poemContext,resolveIntent,intelligencePlan,getTools,chooseModel,
+  safeText,safeHistory,poemContext,resolveIntent,intelligencePlan,getTools,freeModel,chooseModel,
   sourceList,groundingEvidence,modelText,parseReply,sanitizeMedia,parseReview
 }=require("./antara-intelligence");
 const {extractTikTokHandle,researchPublicAccount}=require("./tiktok-public-research");
@@ -118,7 +118,7 @@ exports.handler=async event=>{
   let payload;
   try{payload=JSON.parse(event.body||"{}");}catch(e){return result(400,{error:"JSON tidak sah."},H);}
   if(!payload||typeof payload!=="object"||Array.isArray(payload))return result(400,{error:"Format permintaan tidak sah."},H);
-  const apiKey=process.env.GEMINI_API_KEY,baseModel=process.env.GEMINI_MODEL||DEFAULT_MODEL;
+  const apiKey=process.env.GEMINI_API_KEY,baseModel=freeModel(process.env.GEMINI_MODEL,DEFAULT_MODEL);
   if(payload.probe===true)return result(apiKey?200:503,apiKey?{ok:true,backend:"ready",model:baseModel,geminiVerified:false}:{ok:false,error:"GEMINI_API_KEY tiada."},H);
   if(!apiKey)return result(503,{error:"GEMINI_API_KEY belum ditetapkan di pelayan."},H);
   const ip=(event.headers&&(event.headers["x-nf-client-connection-ip"]||"").split(",")[0])||"unknown";
