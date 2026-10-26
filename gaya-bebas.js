@@ -37,8 +37,9 @@
   var noResult = document.getElementById('noResult');
   var catBar = document.getElementById('catBar');
   var resetBtn = document.getElementById('resetBtn');
-  var CATS = ["Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Duologi","Duologi","Trilogi","Trilogi","Trilogi","Tetralogi","Tetralogi","Tetralogi","Tetralogi","Novel","Novel","Novel"];
-  var activeCat = 'Media Sosial';
+  var CATS = ["Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Media Sosial","Duologi","Duologi","Trilogi","Trilogi","Trilogi","Tetralogi","Tetralogi","Tetralogi","Tetralogi"];
+  var PILIHAN = ["LANGIT YANG TIDAK SAMA","SEBUAH SENI KEBOHONGAN","PARADOKS TERLALU MANUSIA","DI LUAR GARIS","ANTARA TAHU DAN APORIA","WANITA YANG DIAM"];
+  var activeCat = 'pilihan';
   var pageUrl = (document.querySelector('link[rel="canonical"]')&&document.querySelector('link[rel="canonical"]').href)||location.href;
   function pad(n){ return n < 10 ? '0'+n : ''+n; }
   function render(list){
@@ -98,20 +99,23 @@
   POEMS.forEach(function(p,i){ p.push(i+1); });
   var ctEl=document.getElementById('countTotal'); if(ctEl){ ctEl.textContent = POEMS.length; }
   function applyFilter(){
-    var q = searchInput.value.trim().toLowerCase();
-    if(q)activeCat='all';
+    var q=searchInput.value.trim().toLowerCase();
+    var mode=q?'all':activeCat;
     catBar.querySelectorAll('.cat-btn').forEach(function(btn){
       var series=btn.getAttribute('data-series'),cat=btn.getAttribute('data-cat');
-      var selected=series ? (series.charAt(0).toUpperCase()+series.slice(1)===activeCat) : (cat==='all'?activeCat==='all':activeCat==='Media Sosial');
+      var selected=series?(series.charAt(0).toUpperCase()+series.slice(1)===mode):
+        cat==='pilihan'?mode==='pilihan':cat==='media'?mode==='Media Sosial':mode==='all';
       btn.classList.toggle('active',selected);
       btn.setAttribute('aria-pressed',selected?'true':'false');
     });
     var filtered=POEMS.filter(function(p){
-      var textOk=!q||p[0].toLowerCase().indexOf(q)!==-1||p[1].join(' ').toLowerCase().indexOf(q)!==-1;
-      var catOk=activeCat==='all'||CATS[p[2]-1]===activeCat;
-      return textOk&&catOk;
+      if(q&&!(p[0].toLowerCase().includes(q)||p[1].join(' ').toLowerCase().includes(q)))return false;
+      return mode==='pilihan'?PILIHAN.includes(p[0]):mode==='all'||CATS[p[2]-1]===mode;
     });
+    if(mode==='pilihan')filtered.sort(function(a,b){return PILIHAN.indexOf(a[0])-PILIHAN.indexOf(b[0]);});
     render(filtered);
+    var note=document.getElementById('archiveNote');
+    if(note)note.textContent=q?'Carian merentasi semua 33 puisi.':mode==='pilihan'?'Enam puisi pilihan. Semua karya lain masih boleh dicari.':mode==='all'?'Semua 33 puisi dipaparkan.':'Kategori: '+mode+'.';
   }
   applyFilter();
   function fallbackCopy(t){ var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta); }
@@ -138,19 +142,16 @@
   });
   searchInput.addEventListener('input',applyFilter);
   catBar.addEventListener('click',function(e){
-    var btn=e.target.closest('.cat-btn');
-    if(!btn)return;
+    var btn=e.target.closest('.cat-btn');if(!btn)return;
     var series=btn.getAttribute('data-series'),cat=btn.getAttribute('data-cat');
     if(series)activeCat=series.charAt(0).toUpperCase()+series.slice(1);
+    else if(cat==='pilihan')activeCat='pilihan';
     else if(cat==='media')activeCat='Media Sosial';
     else activeCat='all';
-    searchInput.value='';
-    applyFilter();
+    searchInput.value='';applyFilter();
   });
   resetBtn.addEventListener('click',function(){
-    activeCat='all';
-    searchInput.value='';
-    applyFilter();
+    activeCat='pilihan';searchInput.value='';applyFilter();
   });
 
   var progress = document.getElementById('progress');
