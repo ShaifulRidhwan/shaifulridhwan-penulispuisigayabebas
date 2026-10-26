@@ -4,17 +4,26 @@ Tarikh: 26 Oktober 2026.
 
 ## Ciri telah dibina
 - Memori yang pengguna aktif dan sunting sendiri, disimpan setempat.
-- Arkib sehingga 15 sesi, carian, pin, padam serta eksport Markdown dan JSON. Memerlukan pilihan simpan sesi.
+- Arkib sesi tanpa had bilangan buatan aplikasi, carian, pin, padam serta eksport Markdown dan JSON. Memerlukan pilihan simpan sesi; tertakluk pada ruang storan pelayar.
 - Ruang kerja untuk menyunting draf, menyalin dan eksport Markdown.
 - Tindakan pada jawapan: salin, ringkaskan, semak dakwaan, belajar berperingkat dan salin ke draf.
 - Statistik token, bilangan respons dan masa respons, hanya pada peranti.
-- Sehingga tiga lampiran sekali gus dan had gabungan media 2.1 MB.
+- Tiada had bilangan lampiran buatan aplikasi; gabungan media sehingga kira-kira 3.6 MB dalam satu permintaan kerana had payload Netlify 6 MB.
 - Voice Live menerima konteks sembang teks; transkrip dipindahkan ke sejarah hanya dengan persetujuan.
 - Aliran teks sebenar melalui Netlify Functions dan Gemini SSE untuk sembang biasa, dengan sandaran backend asal bagi soalan rumit.
 - Semakan fakta/logik secara terpilih dan pemilihan tahap pemikiran, bukan pada semua jawapan.
 - Rujukan ensiklopedia Wikimedia tanpa kunci berbayar untuk topik umum dan permintaan sesuai.
 - Pembelajaran berperingkat melalui arahan pintar. Rekod keputusan latihan jangka panjang belum ada.
 - Penyelesaian masalah bertahap. Belum menjadi agen autonomi yang boleh menggunakan komputer atau mengubah akaun luar.
+
+## Had buatan yang dibuang dan batas sebenar
+
+- Ruang mesej tidak lagi mempunyai maxlength 1,600 aksara; pelayan menolak input melebihi kira-kira 32,000 aksara dengan mesej jelas, bukannya memotongnya senyap.
+- Sejarah perbualan yang dipilih untuk disimpan tidak lagi dipadam selepas 14 hari atau dipotong pada 44/80 mesej. Konteks yang dihantar kepada model masih dipilih daripada mesej terkini dan ringkasan supaya tidak memenuhi kuota token.
+- Tiada had 15 sesi atau 50,000 aksara pada draf setempat. Had fizikal storan pelayar masih berkuat kuasa.
+- Had bilangan lampiran dibuang. Had gabungan data dan saiz setiap permintaan ialah perlindungan teknikal untuk Netlify, bukan caj tambahan.
+- Memori pilihan boleh menyimpan sehingga 8,000 aksara konteks untuk setiap permintaan.
+- Kawalan anti-spam, tempoh token Voice Live, saiz fungsi, dan kuota Google/Netlify kekal. Kod tidak boleh menjadikan API luar benar-benar tanpa had.
 
 ## Had RM0 yang mesti dijelaskan
 
