@@ -59,7 +59,7 @@ function startDictation(){
       const item=event.results[i];const segment=String(item[0]&&item[0].transcript||"");
       if(item.isFinal)heard+=segment+" ";else interim+=segment;
     }
-    input.value=[initial,(heard+interim).trim()].filter(Boolean).join(" ").slice(0,1600);
+    input.value=[initial,(heard+interim).trim()].filter(Boolean).join(" ").slice(0,32000);
     input.dispatchEvent(new Event("input",{bubbles:true}));
   };
   recognition.onerror=(event)=>{
