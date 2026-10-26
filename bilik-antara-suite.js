@@ -81,8 +81,8 @@ function snapshotCurrent(){
 window.addEventListener("ba:saved",snapshotCurrent);
 window.addEventListener("ba:cleared",()=>{
  archive=archive.filter(x=>x.id!==activeId);
- try{localStorage.removeItem(KEYS.archive);}catch(_){}
- // A deliberate clear does not silently delete other archived sessions; provide an explicit delete-all action.
+ if(archive.length)persistArchive();
+ else try{localStorage.removeItem(KEYS.archive);}catch(_){}
  if(currentPanel==="sessions")render();
 });
 window.addEventListener("ba:storage",event=>{
@@ -94,10 +94,10 @@ window.addEventListener("ba:storage",event=>{
 function beginSession(entry){
  if(api.active()){notice("Tunggu jawapan semasa selesai dahulu.");return;}
  snapshotCurrent();
- const next=entry&&entry.id||freshId();
- const ok=entry?api.load(entry):api.fresh();
- if(!ok)return;
+ const previous=activeId,next=entry&&entry.id||freshId();
  activeId=next;
+ const ok=entry?api.load(entry):api.fresh();
+ if(!ok){activeId=previous;return;}
  try{sessionStorage.setItem(PREFIX+"-active",activeId);}catch(_){}
  if(entry&&api.remember())snapshotCurrent();
  close();notice(entry?"Sesi dipulihkan.":"Sesi baharu bermula.");
