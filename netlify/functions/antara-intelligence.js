@@ -71,7 +71,7 @@ function analyzeIntent(question,attachment){
   const temporal=/(?:sekarang|hari ini|semalam|minggu ini|bulan ini|tahun ini|202[5-9])/i.test(q);
   const asksCurrentFact=/(?:apa|siapa|berapa|bila|di mana|cuaca|suhu|status|jadual|cari|semak|laporan|statistik|keputusan|saham|nilai|terkini|current|how much|who is|when is|update)/i.test(q);
   const latest=explicitNews||(temporal&&asksCurrentFact);
-  const calculate=/(?:\d+\s*[+\-*/^×÷]\s*\d+|\b(?:hitung|kira|kirakan|calculate|integral|derivative|terbitan|regresi|matriks|persamaan|equation|jalankan kod|graf data|formula|statistical)\b)/i.test(q);
+  const calculate=/(?:\d+\s*(?:[+\-*/^×÷]|darab|kali|bahagi|campur|tolak|peratus|percent)\s*\d+|\b(?:hitung|kira|kirakan|calculate|integral|derivative|terbitan|regresi|matriks|persamaan|equation|jalankan kod|graf data|formula|statistical)\b)/i.test(q);
   const technical=/(?:\b(?:kod|coding|javascript|python|html|css|sql|api|debug|ralat|bug|error|fungsi|program|algoritma|skrip|terminal|database)\b|baiki (?:kod|laman|aplikasi)|selesaikan (?:masalah|persamaan))/i.test(q);
   const creative=/(?:\b(?:tulis|tuliskan|hasilkan|karangkan|cipta|ciptakan|draf|karang|terjemah|terjemahkan|ringkaskan|olah|perkemas|rewrite|translate|summarize)\b|bantu (?:aku|saya) (?:menulis|hasilkan|cipta|cari idea)|idea (?:cerita|puisi|penulisan|caption|kapsyen))/i.test(q);
   const explain=/(?:\b(?:terangkan|jelaskan|ajar|belajar|fahami|maksud|definisi|kenapa|mengapa|bagaimana|cara|contoh|bezakan|bandingkan|explain|teach|how|why)\b|apa (?:itu|makna|maksud)|what is)/i.test(q);
@@ -83,8 +83,30 @@ function analyzeIntent(question,attachment){
     explain?"explain":casual?"conversation":"general";
   const depth=(sensitive&&!creative)?"medium":(deep||attachment||task==="critique"||task==="hypothetical")?"high":
     (calculate||technical||latest||q.length>135)?"medium":"low";
-  return {task,depth,search:latest||hasLink,calculate,thought,debate,works,hasLink,sensitive,
-    review:debate&&!sensitive,attachment:!!attachment};
+  const verification=!sensitive&&(debate||
+    (deep&&["technical","research","explain","general"].includes(task))||
+    (calculate&&/(?:semak|buktikan|pastikan|verify|check|banding)/i.test(q)));
+  return {task,depth,search:latest,calculate,thought,debate,works,hasLink,sensitive,
+    review:verification,attachment:!!attachment};
+}
+function resolveIntent(question,history,attachment){
+  const current=analyzeIntent(question,attachment);
+  if(attachment||!Array.isArray(history))return current;
+  const q=safeText(question,1600).toLowerCase().replace(/[!?.]+$/,"").trim();
+  // Lanjutan ringkas mewarisi topik terakhir; arahan baharu kekal keutamaan.
+  if(!/^(?:lagi|teruskan|sambung|jelaskan lagi|terangkan lagi|hurai lagi|lebih mendalam|lebih terperinci|bagi contoh|contoh lain|macam mana|kenapa|mengapa|yang kedua|yang ketiga|itu|lanjutkan)$/.test(q))return current;
+  const previous=[...history].reverse().find(m=>m&&m.role==="user"&&typeof m.content==="string"&&m.content.trim());
+  if(!previous)return current;
+  const prior=analyzeIntent(previous.content,false);
+  return {...current,task:prior.task,depth:q.includes("mendalam")||q.includes("terperinci")?"high":prior.depth,
+    search:prior.search,calculate:prior.calculate,works:prior.works,thought:prior.thought,
+    debate:prior.debate,sensitive:prior.sensitive,review:prior.review,contextFollowUp:true};
+}
+function intelligencePlan(intent){
+  // OutputTokens includes Gemini's hidden thinking tokens: a tight cap can lead to blank replies.
+  return {thinkingLevel:intent.depth,
+    maxTokens:intent.depth==="high"?10000:intent.depth==="medium"?5600:2500,
+    doReview:!!intent.review};
 }
 function getTools(intent){
   const tools=[];
@@ -162,4 +184,4 @@ function parseReview(text){
   return {critique:safeText(obj.critique,550),revision:safeText(obj.revision,8500),argumentMap:map,truthAudit:truth,thoughtLedger:ledger,
     hypothesis:safeText(obj.hypothesis,900)};
 }
-module.exports={POEMS,safeText,safeHistory,tokenize,poemMatches,poemContext,analyzeIntent,getTools,chooseModel,sourceList,groundingEvidence,modelText,parseReply,sanitizeMedia,parseReview};
+module.exports={POEMS,safeText,safeHistory,tokenize,poemMatches,poemContext,analyzeIntent,resolveIntent,intelligencePlan,getTools,chooseModel,sourceList,groundingEvidence,modelText,parseReply,sanitizeMedia,parseReview};
