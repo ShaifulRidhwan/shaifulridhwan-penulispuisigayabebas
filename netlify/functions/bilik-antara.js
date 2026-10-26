@@ -184,7 +184,7 @@ exports.handler=async event=>{
   contents.push({role:"user",parts:userParts});
   const tools=getTools({...intent,search:intent.search||!!tiktokHandle});
   const model=chooseModel(baseModel,intent);
-  const system=PERSONALITY+"\n"+Identity.PROMPT+"\n"+(TASK_GUIDANCE[intent.task]||TASK_GUIDANCE.general)+
+  const system=PERSONALITY+"\n"+Identity.CORE_PROMPT+"\n"+(Identity.needsDetail(question)?Identity.PROMPT:"")+"\n"+(TASK_GUIDANCE[intent.task]||TASK_GUIDANCE.general)+
       "\nPENDEKATAN CERDAS: Kenal pasti tugas sebenar, pecahkan masalah rumit kepada submasalah yang perlu, semak pengiraan dan andaian, pilih alat hanya apabila alat menambah bukti. Utamakan jawapan yang boleh diuji berbanding bunyi yakin. Jangan dedahkan nota penalaran dalaman. Jangan mengaku melakukan semakan yang tidak dibuat."+
       (intent.thought?"\nEKSPERIMEN PEMIKIRAN: nyatakan andaian jelas dan kesan yang dijangka, jangan bentangkan andaian sebagai fakta.":"")+
       (intent.debate?"\nKRITIK HUJAH: cari premis lemah, bantahan paling kuat, dan nilai bukti dengan tegas.":"")+
