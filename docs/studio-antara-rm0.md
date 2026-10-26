@@ -20,7 +20,7 @@ Peringkat:
 4. **Sambung semula** bermaksud guna semula komponen model yang sudah lengkap disimpan. Komponen yang terputus mungkin dimuat turun sekali lagi; tiada sokongan sambung pada aras bait yang dijanjikan.
 5. Selepas tiga fail model selesai, pengguna desktop WebGPU yang layak boleh cuba mengaktifkan model dan menjana imej 512 × 512, lalu menyimpan PNG.
 
-**Perlindungan Android:** muat turun biasa dan pengaktifan GPU berat disekat pada Android/telefon. Background Fetch boleh ditawarkan jika API sebenar wujud dan kuota storan memadai, tetapi inferens berat tetap disekat. Pengguna diberitahu desktop lebih sesuai, bukan diminta memuat fail besar yang hampir pasti menumbangkan tab.
+**Android:** muat turun biasa model boleh dicuba pada telefon selepas persetujuan pengguna, walaupun anggaran kuota storan tidak diketahui atau rendah. Pelayar mungkin gagal menyimpan fail 2.34 GiB atau tab mungkin crash; ini dipaparkan sebagai risiko dan ralat sebenar. Cache menyimpan komponen lengkap untuk cubaan seterusnya. Background Fetch hanya muncul jika disokong pelayar. Pengaktifan GPU untuk inferens berat masih dikawal secara berasingan pada Android supaya muat turun tidak terus mencetuskan pemprosesan model.
 
 **Keselamatan dan privasi:** tiada API penjana imej berbayar; model/pustaka dimuat daripada sumber luar selepas persetujuan. Pengurusan cache hanya menyentuh tiga URL ONNX SD-Turbo dalam cache `web-txt2img-v1`, tanpa memadam data laman lain. Muat turun latar boleh dihentikan dan persetujuan boleh ditarik balik. Muat turun dan memori adalah perbelanjaan data/storan/perkakasan peranti pengguna, bukan kapasiti tanpa had.
 
