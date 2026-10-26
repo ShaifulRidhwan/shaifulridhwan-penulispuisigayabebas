@@ -41,9 +41,11 @@ jobs:
           export CHROME_PATH="$(node -e "process.stdout.write(require('playwright').chromium.executablePath())")"
           npx lighthouse http://127.0.0.1:4177/ --chrome-flags="--headless --no-sandbox" --preset=desktop --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=audit-lighthouse-desktop.json --quiet
           npx lighthouse http://127.0.0.1:4177/ --chrome-flags="--headless --no-sandbox" --form-factor=mobile --screenEmulation.mobile --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=audit-lighthouse-mobile.json --quiet
+          npx lighthouse http://127.0.0.1:4177/bilik-antara.html --chrome-flags="--headless --no-sandbox" --preset=desktop --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=audit-lighthouse-chat-desktop.json --quiet
+          npx lighthouse http://127.0.0.1:4177/bilik-antara.html --chrome-flags="--headless --no-sandbox" --form-factor=mobile --screenEmulation.mobile --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=audit-lighthouse-chat-mobile.json --quiet
           node - <<'NODE'
           const fs=require("node:fs");
-          for(const mode of ["desktop","mobile"]){
+          for(const mode of ["desktop","mobile","chat-desktop","chat-mobile"]){
             try{
               const j=JSON.parse(fs.readFileSync("audit-lighthouse-"+mode+".json"));
               console.log("[Lighthouse] "+mode+" "+JSON.stringify(Object.fromEntries(Object.entries(j.categories).map(([name,x])=>[name,Math.round(x.score*100)]))));
