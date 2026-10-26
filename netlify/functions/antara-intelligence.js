@@ -17,10 +17,10 @@ CONCEPTS.forEach((group,i)=>group.forEach(w=>{
   if(!WORDS.has(w))WORDS.set(w,new Set());
   WORDS.get(w).add(i);
 }));
-function safeText(value,max=1600){return typeof value==="string"?value.trim().slice(0,max):"";}
+function safeText(value,max=32000){return typeof value==="string"?value.trim().slice(0,max):"";}
 function safeHistory(value){
   if(!Array.isArray(value))return [];
-  return value.slice(-18).filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim()).map(m=>({role:m.role,content:safeText(m.content,1600)}));
+  return value.slice(-18).filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim()).map(m=>({role:m.role,content:safeText(m.content,4000)}));
 }
 function tokenize(value){
   return [...new Set((String(value||"").toLowerCase().match(/[\p{L}\p{N}]+/gu)||[]).filter(w=>w.length>=3&&!STOP.has(w)))].slice(0,35);
@@ -34,7 +34,7 @@ function similarity(a,b){
   return count/Math.max(x.size,y.size);
 }
 function poemMatches(question,limit=4){
-  const q=safeText(question,1600).toLowerCase();
+  const q=safeText(question,32000).toLowerCase();
   const tokens=tokenize(q);
   if(!tokens.length)return [];
   return POEMS.map(p=>{
@@ -61,7 +61,7 @@ function poemContext(question){
     m.map(x=>"TAJUK: "+x.title+"\nPETIKAN:\n"+x.lines.join("\n").slice(0,1800)).join("\n\n");
 }
 function analyzeIntent(question,attachment){
-  const q=safeText(question,1600).toLowerCase();
+  const q=safeText(question,32000).toLowerCase();
   const hasLink=/https?:\/\/[^\s]+/i.test(q);
   const sensitive=/(?:bunuh diri|cederakan diri|kemurungan|depresi|depression|krisis|trauma|serangan panik|gangguan makan|kanser|barah|kematian|pemergian|duka|sedih|cemas|tertekan|kesedihan melampau|abuse|panic attack|suicide|self-harm|seksual|sexual assault)/i.test(q);
   const thought=/(?:bagaimana jika|kalau dunia|andaikan|bayangkan jika|hipotesis|eksperimen fikiran|what if|suppose|imagine if)/i.test(q);
@@ -92,7 +92,7 @@ function analyzeIntent(question,attachment){
 function resolveIntent(question,history,attachment){
   const current=analyzeIntent(question,attachment);
   if(attachment||!Array.isArray(history))return current;
-  const q=safeText(question,1600).toLowerCase().replace(/[!?.]+$/,"").trim();
+  const q=safeText(question,32000).toLowerCase().replace(/[!?.]+$/,"").trim();
   // Lanjutan ringkas mewarisi topik terakhir; arahan baharu kekal keutamaan.
   if(!/^(?:lagi|teruskan|sambung|jelaskan lagi|terangkan lagi|hurai lagi|lebih mendalam|lebih terperinci|bagi contoh|contoh lain|macam mana|kenapa|mengapa|yang kedua|yang ketiga|itu|lanjutkan)$/.test(q))return current;
   const previous=[...history].reverse().find(m=>m&&m.role==="user"&&typeof m.content==="string"&&m.content.trim());
@@ -167,8 +167,8 @@ function sanitizeMedia(data){
   if(!data||typeof data!=="object"||Array.isArray(data))return null;
   const mime=safeText(data.mimeType,50).toLowerCase();
   const encoded=data.data;
-  if(!ALLOWED_MIMES.has(mime)||typeof encoded!=="string"||encoded.length>3000000||encoded.length<4||!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded))return null;
-  if(Math.ceil(encoded.length*3/4)>2200000)return null;
+  if(!ALLOWED_MIMES.has(mime)||typeof encoded!=="string"||encoded.length>4800000||encoded.length<4||!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded))return null;
+  if(Math.ceil(encoded.length*3/4)>3600000)return null;
   return {mimeType:mime,data:encoded,name:safeText(data.name,100)};
 }
 function parseReview(text){
