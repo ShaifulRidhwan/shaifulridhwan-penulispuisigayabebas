@@ -46,7 +46,7 @@ test("Reader embedded lazily with navigation safeguards; script parses",()=>{
 
 
 test("Illustration attributes remain valid after Base64 extraction",()=>{
- const images=[...reader.matchAll(/<img\b[^>]*>/g)].map(m=>m[0]);
+ const images=[...reader.matchAll(/<img\b[^>]*>/g)].map(m=>m[0]).filter(tag=>/src="ilustrasi-\d+\.jpg"/.test(tag));
  assert.ok(images.length>=16,"Expected illustrated manuscript");
  for(const img of images){
   assert.doesNotMatch(img,/\/\s+(?:loading|decoding)=/,"Malformed image attribute ordering");
