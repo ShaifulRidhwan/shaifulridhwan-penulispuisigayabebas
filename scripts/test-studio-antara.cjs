@@ -3,6 +3,7 @@ const test=require("node:test");
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const html=fs.readFileSync("studio-antara.html","utf8");
+const studioCss=fs.readFileSync("studio-antara.css","utf8");
 const docJs=fs.readFileSync("studio-antara.js","utf8");
 const imgHtml=fs.readFileSync("studio-imej-beta.html","utf8");
 const imgJs=fs.readFileSync("studio-imej-beta.js","utf8");
@@ -32,6 +33,11 @@ test("email/PDF/Word exports still operate without an extra paid image API",()=>
  assert.match(docJs,/docx@9\.11\.0/);
  assert.match(docJs,/fetch\("\/\.netlify\/functions\/bilik-antara"/);
  assert.doesNotMatch(docJs,/web-txt2img|sd-turbo/);
+});
+test("print stylesheet keeps the page wrapper visible so PDF is not blank",()=>{
+ assert.match(studioCss,/\.site\{display:block!important/);
+ assert.doesNotMatch(studioCss,/\.site,\.topbar,\.intro,\.tabs/);
+ assert.match(studioCss,/@page\{size:A4/);
 });
 test("BETA image has a separate page, explicit warning, consent and cache controls",()=>{
  for(const id of ["checkDevice","deviceStatus","deviceDetails","modelConsent","checkCache",
