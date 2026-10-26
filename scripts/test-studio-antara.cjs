@@ -8,6 +8,7 @@ const docJs=fs.readFileSync("studio-antara.js","utf8");
 const imgHtml=fs.readFileSync("studio-imej-beta.html","utf8");
 const imgJs=fs.readFileSync("studio-imej-beta.js","utf8");
 const manifest=fs.readFileSync("studio-imej-config.js","utf8");
+const diagSource=fs.readFileSync("studio-device-diagnostics.js","utf8");
 const worker=fs.readFileSync("studio-imej-sw.js","utf8");
 const chat=fs.readFileSync("bilik-antara.html","utf8");
 const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
@@ -49,6 +50,8 @@ test("BETA image has a separate page, explicit warning, consent and cache contro
  assert.match(imgHtml,/Brave Android/);
  assert.match(imgHtml,/2\.34 GiB/);
  assert.match(imgHtml,/studio-imej-config\.js\?v=1/);
+ assert.match(imgHtml,/studio-device-diagnostics\.js\?v=1/);
+ assert.match(imgHtml,/id="copyDiagnostic"/);
  assert.ok(imgHtml.indexOf("studio-imej-config.js")<imgHtml.indexOf("studio-imej-beta.js"));
  assert.match(imgJs,/mobile.*Android\|iPhone\|iPad\|iPod/);
  assert.match(imgJs,/if\(mobile\)\{/);
@@ -94,7 +97,9 @@ function browser(ua,{background=false,desktopGpu=false}={}){
  }
  const doc={getElementById:element,createElement:tag=>element("anon-"+tag+"-"+Math.random())};
  const C=Function("let self={};"+manifest+";return self.StudioImejConfig")();
- const window={StudioImejConfig:C,isSecureContext:true,addEventListener(){},caches:true};
+ const diagModule={exports:{}};
+ new Function("module","window","setTimeout","clearTimeout",diagSource)(diagModule,undefined,setTimeout,clearTimeout);
+ const window={StudioImejConfig:C,StudioDeviceDiagnostics:diagModule.exports,isSecureContext:true,addEventListener(){},caches:true};
  const data=new Map(),cache={
   match:async url=>data.get(String(url))||null,
   put:async(url,res)=>{data.set(String(url),res);},
@@ -120,6 +125,41 @@ function browser(ua,{background=false,desktopGpu=false}={}){
  invoke(window,doc,navigator,caches,fakeFetch,class{constructor(url){this.url=url;}},class{constructor(){this.signal={aborted:false}}abort(){this.signal.aborted=true}},()=>true,()=>0,URL,Blob);
  return {window,nodes,handlers,C,data,get network(){return network},get backgroundCalls(){return backgroundCalls}};
 }
+test("browser device metadata is labeled as approximate and never invented",async()=>{
+ const diag={exports:{}};
+ new Function("module","window","setTimeout","clearTimeout",diagSource)(diag,undefined,setTimeout,clearTimeout);
+ const nav={
+  userAgent:"Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/130",
+  userAgentData:{mobile:true,platform:"Android",
+   getHighEntropyValues:async()=>({platform:"Android",platformVersion:"16",model:"Example 12 Pro",fullVersionList:[{brand:"Chromium",version:"130"}]})},
+  brave:{isBrave:async()=>true},
+  deviceMemory:8,hardwareConcurrency:8,
+  storage:{estimate:async()=>({quota:8*1024**3,usage:1*1024**3}),persisted:async()=>false},
+  gpu:{requestAdapter:async()=>({info:{description:"GPU yang dilaporkan",architecture:"sample"},
+    features:new Set(["shader-f16"]),limits:{maxBufferSize:268435456,maxStorageBufferBindingSize:134217728}})}
+ };
+ const d=await diag.exports.inspect(nav,{secure:true,minimumStorageBytes:2*1024**3});
+ assert.equal(d.platform.os,"Android");
+ assert.equal(d.platform.model,"Example 12 Pro");
+ assert.equal(d.browser,"Brave");
+ assert.equal(d.mobile,true);
+ assert.equal(d.gpu.accessible,true,"Android WebGPU adapter must still be probed");
+ assert.equal(d.gpu.name,"GPU yang dilaporkan");
+ assert.equal(d.memory,8);
+ assert.equal(d.storage.remaining,7*1024**3);
+ assert.ok(d.notes.some(note=>note.includes("BUKAN ruang fizikal")));
+});
+test("unknown device metadata stays unknown, not labeled as weak hardware",async()=>{
+ const diag={exports:{}};
+ new Function("module","window","setTimeout","clearTimeout",diagSource)(diag,undefined,setTimeout,clearTimeout);
+ const report=await diag.exports.inspect({userAgent:"GenericBrowser",userAgentData:{mobile:false},
+  gpu:{requestAdapter:async()=>null}}, {secure:true,minimumStorageBytes:2*1024**3});
+ assert.equal(report.platform.model,diag.exports.UNKNOWN);
+ assert.equal(report.memory,null);
+ assert.equal(report.storage.remaining,null);
+ assert.equal(report.gpu.accessible,false);
+ assert.equal(report.platform.os,diag.exports.UNKNOWN);
+});
 test("Android crash-safe mode refuses heavy foreground model download and GPU",async()=>{
  const b=browser("Mozilla/5.0 (Linux; Android 16) AppleWebKit Brave");
  const status=await b.window.StudioImejBeta.deviceCheck();
