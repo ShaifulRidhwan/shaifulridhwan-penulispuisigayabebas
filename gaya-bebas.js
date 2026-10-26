@@ -57,7 +57,7 @@
       var tgHref = 'https://t.me/share/url?url='+shareUrl+'&text='+encodeURIComponent(p[0]+' — Gaya Bebas');
       var xHref = 'https://twitter.com/intent/tweet?text='+encodeURIComponent(p[0]+'\n— Gaya Bebas · Shaiful Ridhwan')+'&url='+shareUrl;
       var fbHref = 'https://www.facebook.com/sharer/sharer.php?u='+shareUrl;
-      w.innerHTML = '<div class="work-head" role="button" tabindex="0" title="Klik untuk baca / tutup puisi"><div class="left"><span class="num">'+pad(p[2])+'</span><h3>'+p[0]+'</h3></div><div style="display:flex;align-items:center;gap:.8rem"><span class="work-cat">'+catLabel+'</span><span class="work-cat" style="color:var(--muted)">2026</span><button type="button" class="fav-btn" data-poem="'+p[0]+'" aria-label="Simpan ke kegemaran" title="Simpan ke kegemaran"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button><div class="plus"></div></div></div>'+
+      w.innerHTML = '<div class="work-head" role="button" tabindex="0" aria-expanded="false" title="Klik untuk baca / tutup puisi"><div class="left"><span class="num">'+pad(p[2])+'</span><h3>'+p[0]+'</h3></div><div style="display:flex;align-items:center;gap:.8rem"><span class="work-cat">'+catLabel+'</span><span class="work-cat" style="color:var(--muted)">2026</span><button type="button" class="fav-btn" data-poem="'+p[0]+'" aria-label="Simpan ke kegemaran" title="Simpan ke kegemaran"><svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></button><div class="plus"></div></div></div>'+
         '<div class="work-body"><div class="inner"><div class="poem-text">'+escapeHtml(lines)+'</div>'+
         '<div class="share-bar"><span class="share-label">Kongsi puisi ini</span>'+
         '<a class="share-btn s-fb" href="'+fbHref+'" target="_blank" rel="noopener" title="Kongsi di Facebook">Facebook</a>'+
@@ -72,6 +72,7 @@
       var favBtn = w.querySelector('.fav-btn');
       head.addEventListener('click', function(){
         var open = w.classList.toggle('open');
+        head.setAttribute('aria-expanded',open?'true':'false');
         body.style.maxHeight = open ? body.scrollHeight + 'px' : '0';
       });
       head.addEventListener('keydown', function(ev){ if(ev.key==='Enter'||ev.key===' '){ ev.preventDefault(); head.click(); } });
@@ -152,6 +153,18 @@
   });
   resetBtn.addEventListener('click',function(){
     activeCat='pilihan';searchInput.value='';applyFilter();
+  });
+
+  var archiveDirectory=document.getElementById('archiveDirectory');
+  if(archiveDirectory)archiveDirectory.addEventListener('click',function(event){
+    var link=event.target.closest('a[data-archive-title]');
+    if(!link)return;
+    event.preventDefault();
+    searchInput.value=link.getAttribute('data-archive-title')||'';
+    applyFilter();
+    var work=worksEl.querySelector('.work-head');
+    if(work){work.scrollIntoView({behavior:'smooth',block:'center'});work.click();}
+    if(window.history&&history.replaceState)history.replaceState(null,'','#karya');
   });
 
   var progress = document.getElementById('progress');
