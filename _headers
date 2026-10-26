@@ -1,33 +1,3 @@
-/ara-assets/v8/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/ara-assets/v7/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/ara-assets/v6/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/ara-assets/v5/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/ara-assets/v4/*
-  Cache-Control: public, max-age=31536000, immutable
-
-/ara-assets/v3/*
-  Cache-Control: public, max-age=31536000, immutable
-
-# Alina v2 optimized GLB chunks. Immutable only while version path remains unchanged.
-/ara-assets/v2/*
-  Cache-Control: public, max-age=31536000, immutable
-
-# Original chunks, retained for compatibility.
-/ara-assets/part-*.bin
-  Cache-Control: public, max-age=31536000, immutable
-
-# Manifest must always reflect current release.
-/ara-assets/manifest.json
-  Cache-Control: public, max-age=0, must-revalidate
-
 # Manuskrip dalaman dimuatkan melalui halaman novel; jangan indeks secara berasingan.
 /assets/novel/pembaca.html
   X-Robots-Tag: noindex, follow
