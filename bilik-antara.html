@@ -442,6 +442,7 @@ ui.clear.addEventListener("click",()=>{
  history=[];summary="";ideas=[];summarizedThrough=0;ui.remember.checked=false;
  try{localStorage.removeItem(STORAGE);}catch(e){}
  discardFile();renderIdeas();renderHistory();ui.settings.open=false;
+ window.dispatchEvent(new Event("ba:cleared"));
 });
 document.addEventListener("pointerdown",e=>{
  if(ui.settings.open&&!ui.settings.contains(e.target))ui.settings.open=false;
@@ -527,7 +528,14 @@ window.BilikAntaraBridge={
  },
  fill:text=>{ui.input.value=String(text||"").slice(0,1600);resize();update();ui.input.focus();},
  active:()=>busy,
- latest:()=>history.length?history[history.length-1]:null
+ latest:()=>history.length?history[history.length-1]:null,
+ addVoice:items=>{
+  if(busy||!Array.isArray(items)||!items.length)return false;
+  const valid=items.slice(-24).filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim()).map(m=>({role:m.role,content:m.content.slice(0,1500)}));
+  if(!valid.length)return false;
+  history.push(...valid);history=history.slice(-80);
+  renderHistory();save();return true;
+ }
 };
 restore();renderIdeas();renderHistory();update();probe();
 })();
