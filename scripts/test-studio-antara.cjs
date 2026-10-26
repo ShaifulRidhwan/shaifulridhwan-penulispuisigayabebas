@@ -47,7 +47,7 @@ test("BETA image has a separate page, explicit warning, consent and cache contro
   assert.match(imgHtml,new RegExp('id="'+id+'"'),id);
  }
  assert.match(imgHtml,/BETA TEST/g);
- assert.match(imgHtml,/Brave Android/);
+ assert.match(imgHtml,/ANDROID \/ iOS/);
  assert.match(imgHtml,/2\.34 GiB/);
  assert.match(imgHtml,/studio-imej-config\.js\?v=1/);
  assert.match(imgHtml,/studio-device-diagnostics\.js\?v=1/);
@@ -55,7 +55,8 @@ test("BETA image has a separate page, explicit warning, consent and cache contro
  assert.ok(imgHtml.indexOf("studio-imej-config.js")<imgHtml.indexOf("studio-imej-beta.js"));
  assert.match(diagSource,/Android\|iPhone\|iPad\|iPod\|Mobile/);
  assert.match(imgJs,/const D=window\.StudioDeviceDiagnostics/);
- assert.match(imgJs,/if\(mobile\)\{/);
+ assert.match(imgJs,/mobile&&!ui\.mobileRisk\.checked/);
+ assert.match(imgJs,/if\(mobile&&engine!=="worker"\)/);
  assert.match(imgJs,/storageNeeded/);
  assert.match(imgJs,/backgroundFetch\.fetch/);
  assert.match(imgJs,/cache\.put\(url,response\)/);
@@ -83,7 +84,7 @@ test("Bilik Antara links Studio and sitemap includes both separate pages",()=>{
  assert.match(sitemap,/studio-antara\.html/);
  assert.match(sitemap,/studio-imej-beta\.html/);
 });
-function browser(ua,{background=false,desktopGpu=false,quota=10*1024**3,hideQuota=false}={}){
+function browser(ua,{background=false,desktopGpu=false,mobileGpu=false,quota=10*1024**3,hideQuota=false}={}){
  const handlers=new Map(),nodes=new Map();
  function element(id){
   if(nodes.has(id))return nodes.get(id);
@@ -113,9 +114,9 @@ function browser(ua,{background=false,desktopGpu=false,quota=10*1024**3,hideQuot
   async fetch(){backgroundCalls++;return {result:"",downloadTotal:C.modelBytes,downloaded:0,addEventListener(){},abort:async()=>true};}
  };
  const navigator={
-  userAgent:ua,userAgentData:{mobile:/Android/i.test(ua)},deviceMemory:desktopGpu?16:4,hardwareConcurrency:8,
+  userAgent:ua,userAgentData:{mobile:/Android|iPhone|iPad|iPod/i.test(ua)},deviceMemory:desktopGpu?16:4,hardwareConcurrency:8,
   storage:{estimate:async()=>(hideQuota?{}:{quota,usage:0}),persist:async()=>true},
-  gpu:desktopGpu?{requestAdapter:async()=>({features:new Set(["shader-f16"])})}:undefined,
+  gpu:(desktopGpu||mobileGpu)?{requestAdapter:async()=>({features:new Set(["shader-f16"])})}:undefined,
   serviceWorker:background?{register:async()=>({backgroundFetch:bg}),addEventListener(){}}:undefined
  };
  const fakeFetch=async(url)=>{
@@ -174,7 +175,7 @@ test("unknown device metadata stays unknown, not labeled as weak hardware",async
  assert.equal(report.gpu.accessible,false);
  assert.equal(report.platform.os,diag.exports.UNKNOWN);
 });
-test("Android download is enabled with consent while GPU inference remains disabled",async()=>{
+test("Android with no WebGPU can still download; inference remains disabled",async()=>{
  const b=browser("Mozilla/5.0 (Linux; Android 16) AppleWebKit Brave");
  const status=await b.window.StudioImejBeta.deviceCheck();
  assert.ok(status.mobile);
@@ -188,6 +189,31 @@ test("Android download is enabled with consent while GPU inference remains disab
  assert.equal(b.network,3,"mobile may fetch model files by explicit request");
  assert.equal(b.data.size,3);
  assert.equal(b.nodes.get("activateModel").disabled,true,"GPU inference stays guarded on mobile");
+});
+test("Android and iOS WebGPU phones can opt in to worker-based inference after download",async()=>{
+ for(const ua of ["Mozilla/5.0 (Linux; Android 16) Chrome/156 Mobile",
+                  "Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 Safari/605.1.15"]){
+  const b=browser(ua,{mobileGpu:true});
+  const report=await b.window.StudioImejBeta.deviceCheck();
+  assert.equal(report.mobile,true);
+  assert.equal(report.gpuAllowed,true,"Mobile WebGPU must not be hard-coded off");
+  b.nodes.get("modelConsent").checked=true;
+  b.handlers.get("modelConsent:change")();
+  await b.handlers.get("prefetchModel:click")();
+  assert.equal(b.data.size,3);
+  assert.equal(b.nodes.get("activateModel").disabled,true,"Risk consent must be separate");
+  b.nodes.get("mobileGpuConsent").checked=true;
+  b.handlers.get("mobileGpuConsent:change")();
+  assert.equal(b.nodes.get("activateModel").disabled,false,"User may explicitly try a real WebGPU device");
+ }
+});
+test("Mobile layout places prompt before model download and hides diagnostics by default",()=>{
+ assert.ok(imgHtml.indexOf('id="imagePrompt"')<imgHtml.indexOf('id="prefetchModel"'));
+ assert.ok(imgHtml.indexOf('id="generatedImage"')<imgHtml.indexOf('id="deviceDetails"'));
+ assert.match(imgHtml,/<details id="devicePanel"/);
+ assert.doesNotMatch(imgHtml,/<details id="devicePanel"[^>]*\bopen\b/);
+ assert.match(imgHtml,/id="mobileGpuConsent"/);
+ assert.match(imgHtml,/id="imagePrompt"/);
 });
 test("unknown or low estimated browser quota does not disable opt-in download",async()=>{
  for(const opts of [{hideQuota:true},{quota:300*1024**2}]){
