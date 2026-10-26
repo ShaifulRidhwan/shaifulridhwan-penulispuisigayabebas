@@ -1,143 +1,294 @@
 (function(){
 "use strict";
-/*
- * STUDIO ANTARA: penjana imej AI percubaan berasaskan WebGPU.
- * Prompt diproses oleh worker model setempat. HANYA memuat pustaka/model
- * daripada CDN selepas pengguna beri persetujuan dan klik "Muat model".
- * Tiada panggilan kepada Gemini, model imej berbayar atau Netlify Function.
- * Browser/CDN/GPU compatibility cannot be guaranteed: display BETA TEST.
- */
+/* Studio Antara image BETA: cache-first download, desktop-only WebGPU inference. */
+const C=window.StudioImejConfig;
 const $=id=>document.getElementById(id);
-if(!$("imagePrompt")||!$("loadImageModel"))return;
-const status=$("gpuStatus"),progress=$("imageProgress"),note=$("imageProgressNote");
-const check=$("checkGPU"),loadBtn=$("loadImageModel"),genBtn=$("generateImage");
-const stop=$("stopImage"),download=$("downloadImage"),output=$("studioImageOutput"),img=$("generatedImage");
-let client=null,sdkRuntime=null,engine="worker",ready=false,loading=false,generating=false,cancel=null,generatedBlob=null,objectUrl=null;
-const set=(message)=>{status.textContent=String(message||"").slice(0,380);};
-const failed=(detail)=>{
- const message=String(detail||"Tidak diketahui").slice(0,180);
- set("BETA TEST: Fungsi imej belum boleh digunakan pada peranti atau rangkaian ini. "+message);
+if(!C||!$("checkDevice"))return;
+const ui={
+ device:$("deviceStatus"),details:$("deviceDetails"),check:$("checkDevice"),
+ consent:$("modelConsent"),cache:$("cacheStatus"),checkCache:$("checkCache"),
+ prefetch:$("prefetchModel"),background:$("backgroundModel"),cancel:$("cancelDownload"),
+ clear:$("clearModel"),progress:$("modelProgress"),progressNote:$("modelProgressNote"),
+ activate:$("activateModel"),gpu:$("gpuStatus"),gen:$("generateImage"),stop:$("stopImage"),
+ img:$("generatedImage"),output:$("studioImageOutput"),placeholder:$("previewPlaceholder"),
+ imgProgress:$("imageProgress"),imgNote:$("imageProgressNote"),download:$("downloadImage"),
+ prompt:$("imagePrompt"),seed:$("imageSeed")
 };
-const stages=p=>{
- if(!p||typeof p!=="object")return;
- let pct=Number(p.pct);
- if(Number.isFinite(pct)){if(pct>0&&pct<=1)pct*=100;pct=Math.max(0,Math.min(100,pct));progress.value=pct;progress.hidden=false;}
- const bytes=Number(p.bytesDownloaded),max=Number(p.totalBytesExpected);
- let size="";
- if(Number.isFinite(bytes)&&bytes>0){size=" · "+(bytes/1048576).toFixed(0)+" MB";if(Number.isFinite(max)&&max>bytes)size+="/"+(max/1048576).toFixed(0)+" MB";}
- note.textContent="BETA TEST · "+String(p.message||p.phase||"Proses berjalan").slice(0,125)+(Number.isFinite(pct)&&pct>0?" · "+Math.round(pct)+"%":"")+size;
-};
-const consent=()=>$("imageConsent").checked;
-async function gpuSupport(){
- if(!window.isSecureContext){failed("Memerlukan HTTPS atau localhost.");return false;}
- if(!("gpu" in navigator)){failed("WebGPU tidak disokong dalam pelayar ini. Cuba Chrome/Edge moden dengan GPU bersesuaian.");return false;}
- try{
-  const adapter=await navigator.gpu.requestAdapter({powerPreference:"high-performance"});
-  if(!adapter){failed("Pelayar tidak dapat mendapatkan WebGPU adapter. GPU/driver mungkin tidak sesuai.");return false;}
-  const f16=adapter.features?.has("shader-f16");
-  set("WebGPU dikesan. Shader f16: "+(f16?"tersedia":"tidak disahkan")+". Ini bukan jaminan model boleh berjalan. BETA TEST.");
-  return true;
- }catch(e){failed("Gagal menyemak WebGPU: "+String(e.message||e).slice(0,100));return false;}
+const mobile=Boolean(navigator.userAgentData?.mobile)||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"");
+const storageNeeded=Math.ceil(C.modelBytes*1.4);
+let checked=false,storageAllowed=false,gpuAllowed=false,completed=0,downloading=false,backgroundReg=null;
+let controller=null,sdk=null,client=null,engine=null,ready=false,loading=false,generating=false,abortGenerate=null,blob=null,imageUrl=null;
+const bytes=n=>Number.isFinite(n)?(n/(1024**3)).toFixed(2)+" GiB":"tidak diketahui";
+function message(text){ui.device.textContent=String(text).slice(0,350);}
+function cacheMsg(text){ui.cache.textContent=String(text).slice(0,350);}
+function gpuMsg(text){ui.gpu.textContent=String(text).slice(0,350);}
+function row(label,value){
+ const node=document.createElement("div");node.className="device-row";
+ const a=document.createElement("span"),b=document.createElement("strong");
+ a.textContent=label;b.textContent=String(value);node.append(a,b);ui.details.appendChild(node);
 }
-check.addEventListener("click",gpuSupport);
-$("imageConsent").addEventListener("change",()=>{if(!consent()&&!ready)set("Persetujuan diperlukan sebelum muat turun model.");});
-loadBtn.addEventListener("click",async()=>{
- if(loading||generating)return;
- if(!consent()){set("Tandakan persetujuan untuk muat turun model bersaiz besar terlebih dahulu.");return;}
- if(ready){set("Model sudah dimuat. Masukkan prompt dan tekan Jana imej (BETA TEST).");return;}
- if(!await gpuSupport())return;
- loading=true;loadBtn.disabled=true;check.disabled=true;
- set("BETA TEST: Membaca pustaka WebGPU. Model boleh menggunakan beberapa gigabait storan dan RAM.");
- note.textContent="Tiada bayaran API; muat turun bergantung pada rangkaian/CDN pengguna.";
+function flags(){
+ const consent=ui.consent.checked;
+ ui.prefetch.disabled=!checked||!storageAllowed||!consent||downloading||loading||ready||mobile;
+ ui.background.disabled=!checked||!storageAllowed||!consent||downloading||loading||ready||!backgroundSupported;
+ ui.cancel.disabled=!downloading;
+ ui.clear.disabled=downloading||loading||generating||!completed;
+ ui.activate.disabled=!gpuAllowed||!consent||completed!==C.files.length||downloading||loading||ready;
+ ui.gen.disabled=!ready||loading||generating;
+ ui.stop.disabled=!generating;
+ ui.download.disabled=!blob;
+}
+let backgroundSupported=false,swRegistration=null;
+async function cacheCounts(){
+ if(!("caches" in window)){completed=0;cacheMsg("Cache Storage tidak tersedia. Tidak boleh menyimpan model.");flags();return 0;}
  try{
-  // External runtime fetched only after affirmative user action; pinned to known package version.
-  const sdk=await import("https://esm.sh/web-txt2img@0.3.1?bundle");
-  sdkRuntime=sdk;
-  if(typeof sdk.loadModel!=="function"||typeof sdk.generateImage!=="function")
-    throw Error("Pustaka SD-Turbo tidak lengkap.");
-  engine="direct";
-  if(typeof Worker!=="undefined"&&sdk?.Txt2ImgWorkerClient?.createDefault){
-   try{
-    client=sdk.Txt2ImgWorkerClient.createDefault();
-    const caps=await Promise.race([
-      client.detect(),
-      new Promise((_,reject)=>setTimeout(()=>reject(Error("Worker tidak membalas.")),6500))
-    ]);
-    if(caps?.webgpu)engine="worker";
-    else throw Error("WebGPU Worker tidak tersedia.");
-   }catch(_){
-    try{client?.terminate();}catch(_){}
-    client=null;engine="direct";
-    note.textContent="BETA TEST: Worker CDN tidak serasi. Mencuba enjin WebGPU terus.";
-   }
+  const cache=await caches.open(C.cacheName);
+  let n=0;
+  for(const url of C.files){
+   const response=await cache.match(url);
+   if(response&&response.ok&&response.type!=="opaque")n++;
   }
-  if(engine==="direct"){
-   const caps=await sdk.detectCapabilities();
-   if(!caps?.webgpu)throw Error("Enjin terus tidak dapat mengakses WebGPU.");
-  }
-  progress.hidden=false;progress.removeAttribute("value");
-  set("BETA TEST: Memuat model SD-Turbo. Jangan tutup tab ketika muat turun.");
-  const result=engine==="worker"
-   ?await client.load("sd-turbo",{backendPreference:["webgpu"]},stages)
-   :await sdk.loadModel("sd-turbo",{backendPreference:["webgpu"],onProgress:stages});
-  if(!result?.ok)throw Error(result?.message||result?.reason||"Model gagal dimuat.");
-  ready=true;genBtn.disabled=false;
-  progress.hidden=true;note.textContent="Model siap dimuat pada peranti. Hasil ialah percubaan dan berbeza mengikut GPU.";
-  set("Model SD-Turbo tersedia dalam pelayar ini. BETA TEST: Jana imej apabila bersedia.");
- }catch(err){
-  ready=false;genBtn.disabled=true;progress.hidden=true;
-  failed(String(err?.message||err)+". Jika mahu, cuba demo sumber terbuka yang dipautkan di bawah.");
-  try{if(engine==="worker")await client?.unload();else await sdkRuntime?.unloadModel("sd-turbo");}catch(_){}
-  try{client?.terminate();}catch(_){}
-  client=null;sdkRuntime=null;
- }finally{loading=false;loadBtn.disabled=false;check.disabled=false;}
-});
-genBtn.addEventListener("click",async()=>{
- if(!ready||!sdkRuntime||generating){if(!ready)set("Muat model BETA TEST terlebih dahulu.");return;}
- if(!consent()){set("Persetujuan telah ditarik balik. Penjanaan dihentikan.");return;}
- const prompt=$("imagePrompt").value.trim();
- if(!prompt){set("Tulis penerangan imej terlebih dahulu.");return;}
- const n=Number($("imageSeed").value),seed=Number.isFinite(n)?Math.max(0,Math.min(2147483647,Math.floor(n))):42;
- generating=true;genBtn.disabled=true;stop.disabled=false;download.disabled=true;
- generatedBlob=null;
- if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null;}
- img.removeAttribute("src");output.hidden=true;
- progress.hidden=false;progress.removeAttribute("value");
- set("BETA TEST: SD-Turbo sedang menjana imej pada peranti. Tiada API berbayar.");
- try{
-  let result;
-  if(engine==="worker"){
-   const task=client.generate({prompt,seed,width:512,height:512},stages,{busyPolicy:"queue",debounceMs:0});
-   if(!task||typeof task.promise?.then!=="function")throw Error("Worker tidak memberi tugasan penjanaan.");
-   cancel=typeof task.abort==="function"?task.abort:null;
-   result=await task.promise;
-  }else{
-   const controller=new AbortController();
-   cancel=()=>controller.abort();
-   note.textContent="BETA TEST: Pemprosesan GPU secara langsung mungkin memperlahankan tab.";
-   result=await sdkRuntime.generateImage({
-    model:"sd-turbo",prompt,seed,width:512,height:512,signal:controller.signal,onProgress:stages
-   });
-  }
-  if(!result?.ok||!(result.blob instanceof Blob)||!result.blob.size)
-   throw Error(result?.message||result?.reason||"Tiada fail imej berjaya dijana.");
-  generatedBlob=result.blob;
-  objectUrl=URL.createObjectURL(generatedBlob);
-  img.src=objectUrl;output.hidden=false;
-  note.textContent="Imej sebenar dijana oleh model pada peranti. "+(Number.isFinite(result.timeMs)?"Masa: "+(result.timeMs/1000).toFixed(1)+"s. ":"")+"BETA TEST.";
-  download.disabled=false;
-  set("BETA TEST: Imej siap. Simpan PNG untuk disimpan pada peranti.");
- }catch(e){generatedBlob=null;download.disabled=true;output.hidden=true;failed("Janaan gagal atau dibatalkan: "+String(e.message||e));}
- finally{
-  generating=false;cancel=null;genBtn.disabled=!ready;stop.disabled=true;progress.hidden=true;
+  completed=n;
+  cacheMsg(n+"/"+C.files.length+" fail besar model tersedia dalam cache peranti ini."+
+   (n===C.files.length?" Boleh cuba aktifkan model pada desktop yang sesuai.":" Tekan Muat turun / sambung untuk fail yang belum lengkap."));
+  flags();return n;
+ }catch(e){completed=0;cacheMsg("Tidak boleh membaca cache: "+String(e.message||e).slice(0,110));flags();return 0;}
+}
+async function missingUrls(){
+ const cache=await caches.open(C.cacheName),missing=[];
+ for(const url of C.files){
+  const r=await cache.match(url);
+  if(!r||!r.ok||r.type==="opaque")missing.push(url);
  }
+ return missing;
+}
+async function deviceCheck(){
+ checked=false;storageAllowed=false;gpuAllowed=false;
+ ui.details.replaceChildren();
+ row("Jenis peranti",mobile?"Telefon/tablet · inferens berat disekat":"Desktop/laptop");
+ row("Pelayar",navigator.userAgent?.includes("Brave")?"Brave atau Chromium":"Pelayar semasa");
+ row("RAM yang dilaporkan",navigator.deviceMemory?navigator.deviceMemory+" GiB":"Tidak didedahkan oleh pelayar");
+ row("Teras CPU yang dilaporkan",navigator.hardwareConcurrency||"Tidak diketahui");
+ let estimate;
+ try{estimate=await navigator.storage?.estimate?.();}catch(_){}
+ const remaining=estimate&&Number.isFinite(estimate.quota)?estimate.quota-(estimate.usage||0):NaN;
+ row("Anggaran ruang storan tersedia",bytes(remaining));
+ row("Sasaran muat turun",bytes(C.modelBytes)+"; perlu lebihan storan");
+ storageAllowed=Number.isFinite(remaining)?remaining>=storageNeeded:!mobile;
+ if(!storageAllowed)row("Muat turun","Disekat: kuota storan tidak cukup / tidak dapat disahkan pada telefon");
+ else row("Muat turun",mobile?"Latar sahaja apabila pelayar menyokong":"Biasa atau latar (jika disokong)");
+ const webgpu=Boolean(navigator.gpu);
+ row("WebGPU API",webgpu?"Dikesan":"Tiada");
+ if(!mobile&&webgpu&&(!navigator.deviceMemory||navigator.deviceMemory>=8)){
+  try{
+   const adapter=await navigator.gpu.requestAdapter({powerPreference:"high-performance"});
+   gpuAllowed=Boolean(adapter);
+  }catch(_){}
+ }
+ row("Penjanaan imej",mobile?"Disekat pada telefon untuk elak tab crash":
+  !gpuAllowed?"Tidak sesuai / memerlukan desktop WebGPU dan memori mencukupi":"Layak mencuba, belum dijamin");
+ if(navigator.serviceWorker&&window.isSecureContext){
+  try{
+   swRegistration=await navigator.serviceWorker.register("./studio-imej-sw.js",{scope:"./"});
+   backgroundSupported=Boolean(swRegistration.backgroundFetch);
+  }catch(_){backgroundSupported=false;}
+ }
+ row("Background Fetch",backgroundSupported?"Tersedia (eksperimen)":"Tidak disokong oleh pelayar ini");
+ checked=true;
+ const reason=!storageAllowed?"Storan terhad. ":mobile?"Android: muat turun biasa dan pengaktifan GPU disekat. ":"";
+ message("BETA TEST: Semakan selesai. "+reason+(backgroundSupported?"Pilihan muat turun latar tersedia.":"Muat turun latar sebenar tidak tersedia."));
+ await cacheCounts();
+ flags();
+ return {mobile,storageAllowed,gpuAllowed,backgroundSupported};
+}
+ui.check.addEventListener("click",()=>deviceCheck().catch(e=>message("Semakan gagal: "+e.message)));
+ui.checkCache.addEventListener("click",()=>cacheCounts());
+ui.consent.addEventListener("change",flags);
+function progress(value,note){
+ ui.progress.hidden=false;
+ if(Number.isFinite(value)){ui.progress.value=Math.min(100,Math.max(0,value));}
+ else ui.progress.removeAttribute("value");
+ ui.progressNote.textContent=String(note||"Muat turun sedang berjalan").slice(0,230);
+}
+async function persistCache(){
+ try{if(navigator.storage?.persist)await navigator.storage.persist();}catch(_){}
+}
+async function foregroundDownload(){
+ if(!checked)await deviceCheck();
+ if(!ui.consent.checked){cacheMsg("Berikan persetujuan terlebih dahulu.");return;}
+ if(mobile){cacheMsg("Pada Android, muat turun biasa model 2.34 GiB disekat. Cuba Background Fetch hanya jika ia disokong.");return;}
+ if(!storageAllowed||downloading||loading)return;
+ if(!("caches" in window)){cacheMsg("Cache Storage tidak tersedia.");return;}
+ downloading=true;controller=new AbortController();flags();
+ progress(NaN,"BETA TEST: cache-only, GPU tidak dimulakan. Kekalkan tab ini terbuka.");
+ await persistCache();
+ try{
+  const cache=await caches.open(C.cacheName);
+  const missing=await missingUrls();
+  for(let i=0;i<missing.length;i++){
+   if(controller.signal.aborted)throw new Error("Dibatalkan");
+   const url=missing[i],name=url.split("/").slice(-2).join("/");
+   progress(NaN,"Muat turun fail "+(i+1)+"/"+missing.length+": "+name+". Pelayar mungkin tidak memaparkan peratus semasa menyimpan fail.");
+   const request=new Request(url,{mode:"cors",credentials:"omit",signal:controller.signal});
+   const response=await fetch(request);
+   if(!response.ok||response.type==="opaque")throw new Error("Pelayan model menolak permintaan ("+response.status+").");
+   const type=(response.headers.get("content-type")||"").toLowerCase();
+   if(type.includes("text/html"))throw new Error("Model memulangkan HTML dan bukannya fail ONNX.");
+   const len=Number(response.headers.get("content-length")||0);
+   if(len>0&&len<10*1024*1024)throw new Error("Fail kelihatan terlalu kecil untuk model ONNX.");
+   // Cache.put streams the body into browser storage. No JS arrayBuffer() allocation.
+   await cache.put(url,response);
+   progress(((i+1)/missing.length)*100,"Fail "+(i+1)+"/"+missing.length+" selesai. Fail lengkap disimpan untuk percubaan berikutnya.");
+  }
+  cacheMsg("Muat turun cache selesai. Semak fail model sebelum mengaktifkan GPU.");
+ }catch(e){cacheMsg("Muat turun dihentikan: "+String(e.message||e).slice(0,150)+". Fail lengkap dalam cache boleh digunakan semula.");}
+ finally{downloading=false;controller=null;ui.progress.hidden=true;await cacheCounts();flags();}
+}
+ui.prefetch.addEventListener("click",foregroundDownload);
+async function attachBackground(reg){
+ backgroundReg=reg;downloading=Boolean(reg&&reg.result==="");
+ flags();
+ if(!reg)return;
+ const update=()=>{
+  if(reg.result===""){
+   downloading=true;
+   const pct=reg.downloadTotal>0?Math.min(99,reg.downloaded/reg.downloadTotal*100):NaN;
+   progress(pct,"BETA TEST: Pelayar memuat "+bytes(reg.downloaded)+". Jika sokongan Background Fetch berfungsi, tab boleh ditinggalkan.");
+  }else{
+   downloading=false;
+   ui.progress.hidden=true;
+   cacheMsg(reg.result==="success"?"Muat turun latar selesai; cache sedang disahkan.":"Muat turun latar gagal ("+(reg.failureReason||"ralat")+"). Cuba semak cache.");
+   setTimeout(()=>cacheCounts().catch(()=>{}),800);
+  }
+  flags();
+ };
+ reg.addEventListener("progress",update);
+ update();
+}
+async function beginBackground(){
+ if(!checked)await deviceCheck();
+ if(!ui.consent.checked){cacheMsg("Tandakan persetujuan model dahulu.");return;}
+ if(!storageAllowed||!backgroundSupported||!swRegistration?.backgroundFetch){
+  cacheMsg("Pelayar tidak menyokong Background Fetch atau ruang storan tidak mencukupi.");return;
+ }
+ if(downloading||loading)return;
+ await persistCache();
+ try{
+  const existing=await swRegistration.backgroundFetch.get(C.backgroundId);
+  if(existing){await attachBackground(existing);return;}
+  const missing=await missingUrls();
+  if(!missing.length){cacheMsg("Semua fail sudah berada dalam cache. Tidak perlu muat turun.");await cacheCounts();return;}
+  // For downloads >2GiB the browser may reject; never activate GPU here.
+  const reg=await swRegistration.backgroundFetch.fetch(C.backgroundId,missing,{
+   title:"Studio Antara · Model imej AI (BETA TEST)"
+  });
+  cacheMsg("Background Fetch telah dimulakan oleh pelayar. Kemajuan bergantung pada sokongan pelayar.");
+  await attachBackground(reg);
+ }catch(e){cacheMsg("Background Fetch ditolak oleh pelayar: "+String(e.message||e).slice(0,170)+". "+
+   (mobile?"Pada Android, muat turun biasa tidak dimulakan untuk mengelakkan crash.":"Gunakan butang muat turun biasa dalam tab."));}
+}
+ui.background.addEventListener("click",beginBackground);
+ui.cancel.addEventListener("click",async()=>{
+ if(controller)controller.abort();
+ if(backgroundReg&&backgroundReg.result===""){
+  try{await backgroundReg.abort();}catch(_){}
+ }
+ downloading=false;flags();cacheMsg("Pembatalan diminta. Fail yang sudah lengkap boleh dikekalkan.");
 });
-stop.addEventListener("click",()=>{if(typeof cancel==="function"){cancel();set("Permintaan henti dihantar. GPU mungkin mengambil masa untuk berhenti.");}});
-download.addEventListener("click",()=>{
- if(!generatedBlob){set("Tiada imej berjaya dijana untuk disimpan.");return;}
- const url=URL.createObjectURL(generatedBlob),a=document.createElement("a");
- a.href=url;a.download="studio-antara-imej-beta-"+Date.now()+".png";document.body.appendChild(a);a.click();a.remove();
+ui.clear.addEventListener("click",async()=>{
+ if(downloading||loading||generating)return;
+ if(!confirm("Padam hanya tiga fail model SD-Turbo daripada cache Studio Antara? Fail lain tidak disentuh."))return;
+ try{
+  const cache=await caches.open(C.cacheName);
+  for(const url of C.files)await cache.delete(url);
+  await cacheCounts();cacheMsg("Cache fail SD-Turbo dipadam. Tidak menyentuh cache laman atau fail lain.");
+ }catch(e){cacheMsg("Tidak boleh padam cache: "+String(e.message||e).slice(0,140));}
+});
+if(navigator.serviceWorker){
+ navigator.serviceWorker.addEventListener("message",event=>{
+  if(event.data?.source==="studio-imej-beta"){
+   cacheMsg(String(event.data.message||"Status muat turun berubah."));
+   cacheCounts().catch(()=>{});
+  }
+ });
+}
+async function activate(){
+ if(!checked)await deviceCheck();
+ if(!gpuAllowed||mobile){gpuMsg("BETA TEST: Model berat disekat pada Android atau GPU tidak sesuai. Jangan ulang muat untuk memaksa telefon.");return;}
+ if(!ui.consent.checked||completed!==C.files.length){gpuMsg("Selesaikan muat turun cache model dan persetujuan dahulu.");return;}
+ if(loading||ready)return;
+ loading=true;ui.activate.disabled=true;ui.imgProgress.hidden=false;ui.imgProgress.removeAttribute("value");
+ gpuMsg("BETA TEST: Menyediakan runtime dan GPU desktop. Penggunaan memori masih tinggi.");
+ try{
+  sdk=await import("https://esm.sh/web-txt2img@0.3.1?bundle");
+  if(typeof sdk?.loadModel!=="function"||typeof sdk?.generateImage!=="function")
+   throw new Error("Runtime tidak lengkap.");
+  engine="direct";client=null;
+  if(typeof Worker!=="undefined"&&sdk.Txt2ImgWorkerClient?.createDefault){
+   try{
+    const candidate=sdk.Txt2ImgWorkerClient.createDefault();
+    const caps=await Promise.race([
+     candidate.detect(),new Promise((_,rej)=>setTimeout(()=>rej(new Error("Worker timeout")),6500))
+    ]);
+    if(caps?.webgpu){client=candidate;engine="worker";}
+    else candidate.terminate();
+   }catch(_){try{client?.terminate();}catch(_){}client=null;}
+  }
+  const onProgress=p=>{
+   const pct=Number(p?.pct);
+   if(Number.isFinite(pct)){ui.imgProgress.value=Math.max(0,Math.min(100,pct));}
+   ui.imgNote.textContent="BETA TEST: "+String(p?.message||p?.phase||"Membina sesi GPU").slice(0,155);
+  };
+  const result=engine==="worker"?
+   await client.load(C.model,{backendPreference:["webgpu"]},onProgress):
+   await sdk.loadModel(C.model,{backendPreference:["webgpu"],onProgress});
+  if(!result?.ok)throw new Error(result?.message||result?.reason||"Model tidak boleh diaktifkan.");
+  ready=true;gpuMsg("Model diaktifkan pada GPU. BETA TEST: jana satu imej untuk menguji.");
+ }catch(e){
+  ready=false;gpuMsg("BETA TEST: Model gagal diaktifkan. "+String(e.message||e).slice(0,160));
+  try{client?.terminate();}catch(_){}
+  client=null;sdk=null;
+ }finally{loading=false;ui.imgProgress.hidden=true;flags();}
+}
+ui.activate.addEventListener("click",activate);
+ui.gen.addEventListener("click",async()=>{
+ if(!ready||!sdk||generating)return;
+ const prompt=ui.prompt.value.trim();
+ if(!prompt){gpuMsg("Masukkan penerangan imej dahulu.");return;}
+ generating=true;blob=null;
+ if(imageUrl){URL.revokeObjectURL(imageUrl);imageUrl=null;}
+ ui.img.removeAttribute("src");ui.output.hidden=true;ui.placeholder.hidden=false;
+ ui.imgProgress.hidden=false;ui.imgProgress.removeAttribute("value");flags();
+ const seed=Math.max(0,Math.min(2147483647,Math.trunc(Number(ui.seed.value)||42)));
+ try{
+  let result;const onProgress=p=>{ui.imgNote.textContent="BETA TEST: "+String(p?.message||p?.phase||"Jana imej").slice(0,155);};
+  if(engine==="worker"){
+   const task=client.generate({prompt,seed,width:512,height:512},onProgress,{busyPolicy:"queue",debounceMs:0});
+   abortGenerate=()=>task.abort();result=await task.promise;
+  }else{
+   controller=new AbortController();abortGenerate=()=>controller.abort();
+   result=await sdk.generateImage({model:C.model,prompt,seed,width:512,height:512,signal:controller.signal,onProgress});
+  }
+  if(!result?.ok||!(result.blob instanceof Blob)||!result.blob.size)throw new Error(result?.message||result?.reason||"Tiada imej sebenar.");
+  blob=result.blob;imageUrl=URL.createObjectURL(blob);
+  ui.img.src=imageUrl;ui.output.hidden=false;ui.placeholder.hidden=true;
+  gpuMsg("Imej siap! BETA TEST. Simpan PNG untuk kegunaan seterusnya.");
+ }catch(e){gpuMsg("BETA TEST: Penjanaan gagal/dibatalkan: "+String(e.message||e).slice(0,150));}
+ finally{generating=false;abortGenerate=null;controller=null;ui.imgProgress.hidden=true;flags();}
+});
+ui.stop.addEventListener("click",()=>{if(abortGenerate)abortGenerate();});
+ui.download.addEventListener("click",()=>{
+ if(!blob)return;
+ const a=document.createElement("a"),url=URL.createObjectURL(blob);
+ a.href=url;a.download="studio-antara-beta-"+Date.now()+".png";document.body.appendChild(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),8000);
 });
-window.addEventListener("pagehide",()=>{if(objectUrl)URL.revokeObjectURL(objectUrl);if(cancel)cancel();});
+window.addEventListener("pagehide",()=>{
+ if(imageUrl)URL.revokeObjectURL(imageUrl);
+ if(abortGenerate)abortGenerate();
+ // Do not cancel browser-managed Background Fetch: it may continue if supported.
+});
+cacheCounts().catch(()=>{});
+deviceCheck().catch(e=>message("Semakan permulaan gagal: "+String(e.message||e)));
+window.StudioImejBeta={deviceCheck,cacheCounts,missingUrls};
 })();
