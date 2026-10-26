@@ -10,7 +10,8 @@
 <link rel="stylesheet" href="studio-antara.css?v=2">
 <link rel="stylesheet" href="studio-imej-beta.css?v=1">
 <script src="studio-imej-config.js?v=1" defer></script>
-<script src="studio-imej-beta.js?v=2" defer></script>
+<script src="studio-device-diagnostics.js?v=1" defer></script>
+<script src="studio-imej-beta.js?v=3" defer></script>
 </head>
 <body>
 <div class="site">
@@ -23,7 +24,7 @@
 <section class="intro">
 <p class="overline">STUDIO ANTARA · EKSPERIMEN GPU SETEMPAT</p>
 <h1>Imej AI <em>BETA TEST.</em></h1>
-<p>Eksperimen percuma tanpa API penjana imej berbayar. Muat turun model, simpan komponen lengkap dalam cache dan jana imej 512 × 512 apabila peranti benar-benar sesuai. <strong>Penggunaan pada Android belum disokong untuk inferens berat.</strong></p>
+<p>Eksperimen percuma tanpa API penjana imej berbayar. Muat turun model, simpan komponen lengkap dalam cache dan jana imej 512 × 512 apabila peranti benar-benar sesuai. <strong>WebGPU boleh dikesan pada Android, tetapi inferens berat masih dikawal untuk mengurangkan risiko tab crash.</strong></p>
 </section>
 <div class="beta-alert" role="note"><strong>BETA TEST · BUKAN JAMINAN SERASI</strong>
 <p>Masalah “Aw, Snap!” pada Brave Android menunjukkan tab pelayar boleh crash ketika memproses model berat. Fail model SD-Turbo sekitar <strong>2.34 GiB</strong> dan proses GPU mungkin menggunakan lebih banyak RAM. Muat turun sahaja tidak bermaksud peranti mampu menjana imej.</p>
@@ -32,8 +33,9 @@
 <section class="edit card" aria-label="Pengurusan model dan penjana imej">
 <div class="panel-head"><h2>01 / Periksa peranti</h2><span class="meta">BETA TEST</span></div>
 <p id="deviceStatus" class="status" role="status" aria-live="polite">Pemeriksaan belum dijalankan.</p>
-<div class="actions"><button id="checkDevice" class="primary" type="button">Periksa keserasian</button></div>
+<div class="actions"><button id="checkDevice" class="primary" type="button">Periksa keupayaan sebenar</button><button id="copyDiagnostic" type="button" disabled>Salin laporan</button></div>
 <div id="deviceDetails" class="device-details" aria-live="polite"></div>
+<p class="hint">Bacaan RAM, storan dan had GPU boleh disekat atau dianggarkan oleh pelayar. Keputusan membezakan WebGPU yang dikesan daripada sekatan keselamatan BETA. Ini bukan ujian prestasi atau pengesahan model telefon sebenar.</p>
 
 <hr class="soft-rule">
 <h2>02 / Muat turun model</h2>
