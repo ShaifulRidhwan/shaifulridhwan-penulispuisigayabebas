@@ -97,7 +97,7 @@ function browser(ua,{background=false,desktopGpu=false,mobileGpu=false,quota=10*
    click(){const fn=handlers.get(id+":click");return fn&&fn();}};
   nodes.set(id,obj);return obj;
  }
- const doc={getElementById:element,createElement:tag=>element("anon-"+tag+"-"+Math.random())};
+ const doc={getElementById:element,createElement:tag=>element("anon-"+tag+"-"+Math.random()),addEventListener(){},hidden:false};
  const C=Function("let self={};"+manifest+";return self.StudioImejConfig")();
  const diagModule={exports:{}};
  new Function("module","window","setTimeout","clearTimeout",diagSource)(diagModule,undefined,setTimeout,clearTimeout);
@@ -237,6 +237,32 @@ test("Desktop prefetch caches whole model files and reuses them without repeatin
  assert.equal(await b.window.StudioImejBeta.cacheCounts(),3);
  await b.handlers.get("prefetchModel:click")();
  assert.equal(b.network,3,"cached assets should not be re-downloaded");
+});
+test("Unsupported Background Fetch stays hidden with an honest active-tab explanation",async()=>{
+ const b=browser("Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) Safari");
+ await b.window.StudioImejBeta.deviceCheck();
+ b.nodes.get("modelConsent").checked=true;
+ b.handlers.get("modelConsent:change")();
+ assert.equal(b.nodes.get("backgroundModel").hidden,true);
+ assert.equal(b.nodes.get("backgroundModel").disabled,true);
+ assert.match(b.nodes.get("downloadModeNote").textContent,/tidak tersedia/i);
+ assert.match(b.nodes.get("downloadModeNote").textContent,/tab kekal terbuka/i);
+ assert.equal(b.nodes.get("prefetchModel").disabled,false);
+});
+test("Supported Background Fetch is visible and describes its experimental limitations",async()=>{
+ const b=browser("Mozilla/5.0 (Linux; Android 16) Chrome/156 Mobile",{background:true});
+ await b.window.StudioImejBeta.deviceCheck();
+ b.nodes.get("modelConsent").checked=true;
+ b.handlers.get("modelConsent:change")();
+ assert.equal(b.nodes.get("backgroundModel").hidden,false);
+ assert.equal(b.nodes.get("backgroundModel").disabled,false);
+ assert.match(b.nodes.get("downloadModeNote").textContent,/Background Fetch/i);
+});
+test("Download progress reports streamed bytes without allocating a complete model file",()=>{
+ assert.match(imgJs,/new TransformStream/);
+ assert.match(imgJs,/response\.body\.pipeThrough\(transform\)/);
+ assert.match(imgJs,/downloadedBytes/);
+ assert.doesNotMatch(imgJs,/response\.arrayBuffer\(\)/);
 });
 test("Background fetch is opt-in and mobile remains GPU-blocked even if available",async()=>{
  const b=browser("Mozilla/5.0 (Linux; Android 16) Brave",{background:true});
