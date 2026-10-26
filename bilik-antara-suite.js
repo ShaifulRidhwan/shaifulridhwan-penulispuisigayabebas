@@ -47,6 +47,7 @@ head.after(toolbar);
 document.body.appendChild(drawer); // keep fixed overlay outside clipped glass conversation
 const labels=[["sessions","Sesi"],["memory","Memori"],["workspace","Ruang kerja"],["metrics","Prestasi"]];
 for(const [key,label] of labels)toolbar.appendChild(button(label,()=>open(key),"ba-tab"));
+toolbar.appendChild(button("Studio · PDF & Imej BETA TEST",()=>{window.location.href="studio-antara.html";},"ba-tab"));
 function notice(message){
  let status=$("baNotification");
  if(!status){status=make("div",undefined,"ba-notification");status.id="baNotification";status.setAttribute("role","status");toolbar.after(status);}
@@ -226,7 +227,13 @@ function quickActions(){
    button("Ringkas",()=>api.fill("Ringkaskan jawapan ini dalam Bahasa Melayu yang jelas:\n"+text.slice(0,1200)),"ba-mini"),
    button("Semak",()=>api.fill("Semak ketepatan jawapan ini. Jangan reka sumber; nyatakan perkara belum disahkan:\n"+text.slice(0,1200)),"ba-mini"),
    button("Belajar",()=>api.fill("Ajar aku topik dalam jawapan ini secara berperingkat dengan contoh:\n"+text.slice(0,1200)),"ba-mini"),
-   button("Draf",()=>{workspace={title:"Petikan AI",content:text,at:Date.now()};open("workspace");},"ba-mini")
+   button("Draf",()=>{workspace={title:"Petikan AI",content:text,at:Date.now()};open("workspace");},"ba-mini"),
+   button("Studio",()=>{
+    try{
+     sessionStorage.setItem("bilik-antara-studio-transfer-v1",JSON.stringify({title:"Draf daripada Bilik Antara",text:text.slice(0,100000)}));
+     window.location.href="studio-antara.html#document";
+    }catch(_){notice("Draf tidak dapat dipindah. Cuba salin dahulu.");}
+   },"ba-mini")
   );
   bubble.appendChild(row);
  }
