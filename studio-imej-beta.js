@@ -12,7 +12,7 @@ if(!$("imagePrompt")||!$("loadImageModel"))return;
 const status=$("gpuStatus"),progress=$("imageProgress"),note=$("imageProgressNote");
 const check=$("checkGPU"),loadBtn=$("loadImageModel"),genBtn=$("generateImage");
 const stop=$("stopImage"),download=$("downloadImage"),output=$("studioImageOutput"),img=$("generatedImage");
-let client=null,ready=false,loading=false,generating=false,cancel=null,generatedBlob=null,objectUrl=null;
+let client=null,sdkRuntime=null,engine="worker",ready=false,loading=false,generating=false,cancel=null,generatedBlob=null,objectUrl=null;
 const set=(message)=>{status.textContent=String(message||"").slice(0,380);};
 const failed=(detail)=>{
  const message=String(detail||"Tidak diketahui").slice(0,180);
@@ -31,7 +31,6 @@ const consent=()=>$("imageConsent").checked;
 async function gpuSupport(){
  if(!window.isSecureContext){failed("Memerlukan HTTPS atau localhost.");return false;}
  if(!("gpu" in navigator)){failed("WebGPU tidak disokong dalam pelayar ini. Cuba Chrome/Edge moden dengan GPU bersesuaian.");return false;}
- if(typeof Worker==="undefined"){failed("Web Worker diperlukan untuk mengekalkan responsiviti.");return false;}
  try{
   const adapter=await navigator.gpu.requestAdapter({powerPreference:"high-performance"});
   if(!adapter){failed("Pelayar tidak dapat mendapatkan WebGPU adapter. GPU/driver mungkin tidak sesuai.");return false;}
@@ -53,13 +52,34 @@ loadBtn.addEventListener("click",async()=>{
  try{
   // External runtime fetched only after affirmative user action; pinned to known package version.
   const sdk=await import("https://esm.sh/web-txt2img@0.3.1?bundle");
-  if(!sdk?.Txt2ImgWorkerClient?.createDefault)throw Error("Modul penjanaan tidak serasi dengan pelayar ini.");
-  client=sdk.Txt2ImgWorkerClient.createDefault();
-  const caps=await client.detect();
-  if(!caps||!caps.webgpu)throw Error("Runtime tidak mengesan WebGPU yang boleh digunakan.");
+  sdkRuntime=sdk;
+  if(typeof sdk.loadModel!=="function"||typeof sdk.generateImage!=="function")
+    throw Error("Pustaka SD-Turbo tidak lengkap.");
+  engine="direct";
+  if(typeof Worker!=="undefined"&&sdk?.Txt2ImgWorkerClient?.createDefault){
+   try{
+    client=sdk.Txt2ImgWorkerClient.createDefault();
+    const caps=await Promise.race([
+      client.detect(),
+      new Promise((_,reject)=>setTimeout(()=>reject(Error("Worker tidak membalas.")),6500))
+    ]);
+    if(caps?.webgpu)engine="worker";
+    else throw Error("WebGPU Worker tidak tersedia.");
+   }catch(_){
+    try{client?.terminate();}catch(_){}
+    client=null;engine="direct";
+    note.textContent="BETA TEST: Worker CDN tidak serasi. Mencuba enjin WebGPU terus.";
+   }
+  }
+  if(engine==="direct"){
+   const caps=await sdk.detectCapabilities();
+   if(!caps?.webgpu)throw Error("Enjin terus tidak dapat mengakses WebGPU.");
+  }
   progress.hidden=false;progress.removeAttribute("value");
   set("BETA TEST: Memuat model SD-Turbo. Jangan tutup tab ketika muat turun.");
-  const result=await client.load("sd-turbo",{backendPreference:["webgpu"]},stages);
+  const result=engine==="worker"
+   ?await client.load("sd-turbo",{backendPreference:["webgpu"]},stages)
+   :await sdk.loadModel("sd-turbo",{backendPreference:["webgpu"],onProgress:stages});
   if(!result?.ok)throw Error(result?.message||result?.reason||"Model gagal dimuat.");
   ready=true;genBtn.disabled=false;
   progress.hidden=true;note.textContent="Model siap dimuat pada peranti. Hasil ialah percubaan dan berbeza mengikut GPU.";
@@ -67,12 +87,13 @@ loadBtn.addEventListener("click",async()=>{
  }catch(err){
   ready=false;genBtn.disabled=true;progress.hidden=true;
   failed(String(err?.message||err)+". Jika mahu, cuba demo sumber terbuka yang dipautkan di bawah.");
-  try{await client?.unload();}catch(_){}
-  client=null;
+  try{if(engine==="worker")await client?.unload();else await sdkRuntime?.unloadModel("sd-turbo");}catch(_){}
+  try{client?.terminate();}catch(_){}
+  client=null;sdkRuntime=null;
  }finally{loading=false;loadBtn.disabled=false;check.disabled=false;}
 });
 genBtn.addEventListener("click",async()=>{
- if(!ready||!client||generating){if(!ready)set("Muat model BETA TEST terlebih dahulu.");return;}
+ if(!ready||!sdkRuntime||generating){if(!ready)set("Muat model BETA TEST terlebih dahulu.");return;}
  if(!consent()){set("Persetujuan telah ditarik balik. Penjanaan dihentikan.");return;}
  const prompt=$("imagePrompt").value.trim();
  if(!prompt){set("Tulis penerangan imej terlebih dahulu.");return;}
@@ -84,10 +105,20 @@ genBtn.addEventListener("click",async()=>{
  progress.hidden=false;progress.removeAttribute("value");
  set("BETA TEST: SD-Turbo sedang menjana imej pada peranti. Tiada API berbayar.");
  try{
-  const task=client.generate({prompt,seed,width:512,height:512},stages,{busyPolicy:"queue",debounceMs:0});
-  if(!task||typeof task.promise?.then!=="function")throw Error("Runtime tidak memberikan tugasan penjanaan.");
-  cancel=typeof task.abort==="function"?task.abort:null;
-  const result=await task.promise;
+  let result;
+  if(engine==="worker"){
+   const task=client.generate({prompt,seed,width:512,height:512},stages,{busyPolicy:"queue",debounceMs:0});
+   if(!task||typeof task.promise?.then!=="function")throw Error("Worker tidak memberi tugasan penjanaan.");
+   cancel=typeof task.abort==="function"?task.abort:null;
+   result=await task.promise;
+  }else{
+   const controller=new AbortController();
+   cancel=()=>controller.abort();
+   note.textContent="BETA TEST: Pemprosesan GPU secara langsung mungkin memperlahankan tab.";
+   result=await sdkRuntime.generateImage({
+    model:"sd-turbo",prompt,seed,width:512,height:512,signal:controller.signal,onProgress:stages
+   });
+  }
   if(!result?.ok||!(result.blob instanceof Blob)||!result.blob.size)
    throw Error(result?.message||result?.reason||"Tiada fail imej berjaya dijana.");
   generatedBlob=result.blob;
