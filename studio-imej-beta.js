@@ -274,7 +274,8 @@ async function beginBackground(){
   // For downloads >2GiB the browser may reject; never activate GPU here.
   const reg=await swRegistration.backgroundFetch.fetch(C.backgroundId,missing,{
    title:"Studio Antara · Model imej AI (BETA TEST)",
-   downloadTotal:C.modelBytes
+   // downloadTotal is a HARD CAP, not merely a hint. Leave headroom for model-file variation.
+   downloadTotal:Math.ceil(C.modelBytes*1.25)
   });
   cacheMsg("Background Fetch telah dimulakan oleh pelayar. Kemajuan bergantung pada sokongan pelayar.");
   await attachBackground(reg);
