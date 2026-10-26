@@ -1,7 +1,7 @@
 [build]
   publish = "."
-  # Ara 3D dibekukan: jangan muat turun GLB atau jalankan Python semasa deploy.
-  command = "echo 'Static site build: Ara 3D disabled'"
+  # Laman statik: tidak memerlukan proses kompilasi.
+  command = "echo 'Static website: no build required'"
 
 [functions]
   directory = "netlify/functions"
