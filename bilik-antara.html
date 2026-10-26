@@ -162,7 +162,7 @@ async function probe(){
   const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
    body:JSON.stringify({probe:true}),signal:controller.signal});
   const data=await res.json().catch(()=>({}));
-  if(res.ok&&data.ok)status("ready","AI sedia","");
+  if(res.ok&&data.ok)status("ready","Pelayan sedia","");
   else status("error","AI tak dapat bersambung",String(data.error||"Sambungan AI belum tersedia.").slice(0,250));
  }catch(e){status("error","Tiada sambungan","Cuba hubungi pelayan semula.");}
  finally{clearTimeout(timer);}

@@ -51,30 +51,21 @@ exports.handler=async(event)=>{
     expireTime:new Date(now+10*60*1000).toISOString(),
     newSessionExpireTime:new Date(now+60*1000).toISOString()
   };
-  async function requestToken(constrained){
-    const payload=constrained?{...base,liveConnectConstraints:{model:"models/"+model}}:base;
+  try{
+    // Tokens are restricted to this model. A rejected restriction must not
+    // silently downgrade to an unrestricted client-side Gemini credential.
     const response=await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens",{
       method:"POST",
       headers:{"Content-Type":"application/json","x-goog-api-key":key},
-      body:JSON.stringify(payload),
+      body:JSON.stringify({...base,liveConnectConstraints:{model:"models/"+model}}),
       signal:controller.signal
     });
     const json=await response.json().catch(()=>({}));
-    return {response,json};
-  }
-  try{
-    // Some API projects reject optional Live model constraints; retry a
-    // one-use/short-lived token without them when the first request gets 400.
-    let {response,json}=await requestToken(true);
-    if(response.status===400){
-      const retry=await requestToken(false);
-      response=retry.response;
-      json=retry.json;
-    }
     if(!response.ok){
       const detail=String(json&&json.error&&json.error.message||"").toLowerCase();
       const message=response.status===429?"Kuota Voice Live dah penuh buat sementara.":
         response.status===401||response.status===403?"Projek ini belum dibenarkan menggunakan Gemini Live.":
+        response.status===400?"Tetapan Voice Live tidak disokong atau ditolak Google. Token tanpa sekatan tidak akan dikeluarkan.":
         /billing|payment/.test(detail)?"Gemini Live memerlukan bil atau akses projek yang sesuai.":
         /not found|model/.test(detail)?"Model Gemini Live tidak tersedia untuk projek ini.":
         /not supported|not available|permission/.test(detail)?"Gemini Live tidak disokong oleh kunci API projek ini.":
