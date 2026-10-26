@@ -1,0 +1,499 @@
+/* Bahagian 1 daripada CSS asal */
+:root[data-theme="dark"]{
+  --bg:#101018; --bg2:#16161f; --card:rgba(255,255,255,.035); --card-solid:#1a1a26;
+  --text:#f0ede6; --muted:#b5b2c2; --accent:#e8b86a; --accent2:#8fa3e0;
+  --accent-soft:rgba(232,184,106,.12); --border:rgba(232,184,106,.16);
+  --glow:rgba(232,184,106,.35); --particle:rgba(232,184,106,.55);
+  --grid:rgba(143,163,224,.06); --hero-glow:rgba(232,184,106,.18);
+}
+:root[data-theme="light"]{
+  --bg:#f4f0e6; --bg2:#ece6d8; --card:rgba(255,255,255,.7); --card-solid:#ffffff;
+  --text:#1c1c26; --muted:#565362; --accent:#a8741f; --accent2:#4a5fa8;
+  --accent-soft:rgba(168,116,31,.10); --border:rgba(168,116,31,.22);
+  --glow:rgba(168,116,31,.30); --particle:rgba(168,116,31,.35);
+  --grid:rgba(74,95,168,.07); --hero-glow:rgba(168,116,31,.16);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Archivo',system-ui,sans-serif;line-height:1.75;overflow-x:hidden;transition:background .5s ease,color .5s ease}
+::selection{background:var(--accent);color:var(--bg)}
+#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+.grid-overlay{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:64px 64px;mask-image:radial-gradient(ellipse 90% 70% at 50% 30%,black 30%,transparent 80%)}
+.hero-glow{position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:900px;height:900px;border-radius:50%;
+  background:radial-gradient(circle,var(--hero-glow),transparent 65%);pointer-events:none;z-index:0;filter:blur(40px)}
+.progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:100;width:0;transition:width .1s linear}
+.wrap{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:0 1.5rem}
+nav{position:fixed;top:0;left:0;right:0;z-index:50;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  background:color-mix(in srgb,var(--bg) 72%,transparent);border-bottom:1px solid var(--border)}
+.nav-in{max-width:1080px;margin:0 auto;padding:.8rem 1.5rem;display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.brand{font-family:'Syne',sans-serif;font-weight:800;letter-spacing:.06em;font-size:1rem;text-decoration:none;color:var(--text)}
+.brand b{color:var(--accent)}
+.nav-links{display:flex;gap:1.5rem;align-items:center}
+.nav-links a{color:var(--muted);text-decoration:none;font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;transition:color .25s}
+.nav-links a:hover{color:var(--accent)}
+.theme-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .3s;flex-shrink:0}
+.theme-btn:hover{border-color:var(--accent);box-shadow:0 0 18px var(--glow);transform:rotate(20deg)}
+.theme-btn svg{width:18px;height:18px}
+@media(max-width:720px){
+  .hamburger{display:flex}
+  .nav-links{position:fixed;top:62px;left:0;right:0;flex-direction:column;align-items:stretch;gap:0;background:var(--bg2);border-bottom:1px solid var(--border);padding:0;transform:translateY(-14px);opacity:0;pointer-events:none;transition:all .3s ease;z-index:999;box-shadow:0 20px 40px rgba(0,0,0,.4)}
+  .nav-links.open{transform:translateY(0);opacity:1;pointer-events:auto}
+  .nav-links a.link{display:block;padding:1rem 1.8rem;font-size:.8rem;border-bottom:1px solid var(--border)}
+  .nav-links .theme-btn{margin:.8rem 1.8rem;align-self:flex-start}
+}
+header.hero{min-height:min(100vh,820px);display:flex;flex-direction:column;justify-content:center;padding:7rem 0 4rem;position:relative}
+.eyebrow{font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.45em;text-transform:uppercase;color:var(--accent);margin-bottom:1.8rem;display:flex;align-items:center;gap:.8rem}
+.eyebrow::before{content:"";width:36px;height:1px;background:var(--accent)}
+.hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(3rem,11vw,7rem);line-height:.95;letter-spacing:-.02em;margin-bottom:1.6rem}
+.hero h1 .grad{background:linear-gradient(120deg,#f5d98a,var(--accent) 45%,var(--accent2) 110%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero h1 .outline{color:transparent;-webkit-text-stroke:1.5px var(--muted)}
+.hero .sub{font-size:clamp(1rem,2.2vw,1.25rem);color:var(--muted);max-width:34rem;margin-bottom:2.2rem;font-weight:300}
+.hero .sub strong{color:var(--text);font-weight:500}
+.cta{display:flex;gap:1rem;flex-wrap:wrap}
+.btn{font-family:'Syne',sans-serif;font-size:.76rem;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;
+  padding:.95rem 2rem;border:1px solid var(--accent);color:var(--text);background:var(--accent-soft);transition:all .3s;display:inline-flex;align-items:center;gap:.6rem;cursor:pointer}
+.btn:hover{background:var(--accent);color:var(--bg);box-shadow:0 0 30px var(--glow);transform:translateY(-2px)}
+.btn.ghost{background:transparent;border-color:var(--border);color:var(--muted)}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent);background:transparent;box-shadow:none}
+.scroll-hint{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.5rem;color:var(--muted);font-family:'Syne',sans-serif;font-size:.65rem;letter-spacing:.3em;text-transform:uppercase}
+.scroll-hint .line{width:1px;height:40px;background:linear-gradient(var(--accent),transparent);animation:drop 2s infinite}
+@keyframes drop{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+section{padding:5.5rem 0;position:relative}
+.sec-head{margin-bottom:2.8rem}
+.sec-head .kicker{font-family:'Syne',sans-serif;font-size:.7rem;letter-spacing:.4em;text-transform:uppercase;color:var(--accent);margin-bottom:.9rem;display:flex;align-items:center;gap:.8rem}
+.sec-head .kicker .num{color:var(--accent2);font-weight:700}
+.sec-head h2{font-family:'Syne',sans-serif;font-weight:700;font-size:clamp(1.8rem,4.5vw,2.8rem);letter-spacing:-.01em;line-height:1.1}
+.sec-head p{color:var(--muted);margin-top:1rem;max-width:36rem;font-weight:300}
+.rule{width:64px;height:2px;background:linear-gradient(90deg,var(--accent),transparent);margin-top:1.2rem}
+.manifesto-box{background:var(--card);border:1px solid var(--border);padding:3rem 2.5rem;position:relative;overflow:hidden;backdrop-filter:blur(8px)}
+.manifesto-box::before{content:"GB";position:absolute;right:-1.5rem;top:-4rem;font-family:'Syne',sans-serif;font-weight:800;font-size:18rem;color:var(--accent-soft);line-height:1;pointer-events:none}
+.manifesto-box .poem-text{font-size:1.08rem;line-height:2;white-space:pre-line;color:var(--text);position:relative;z-index:1;font-weight:300}
+.manifesto-box .sig{margin-top:2rem;font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;color:var(--accent);position:relative;z-index:1}
+.baharu-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+.baharu-card{background:var(--card);border:1px solid var(--border);padding:2rem;position:relative;transition:all .35s;backdrop-filter:blur(8px)}
+.baharu-card:hover{border-color:var(--accent);transform:translateY(-4px);box-shadow:0 12px 40px var(--accent-soft)}
+.baharu-card .tag{display:inline-block;font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.25em;text-transform:uppercase;color:var(--bg);background:var(--accent);padding:.3rem .8rem;margin-bottom:1.2rem;font-weight:700}
+.baharu-card h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1.2rem;margin-bottom:1rem}
+.baharu-card .excerpt{color:var(--muted);font-style:italic;font-size:.95rem;line-height:1.8;white-space:pre-line}
+.filter-bar{display:flex;gap:1rem;align-items:center;margin-bottom:2rem;flex-wrap:wrap}
+.search-box{flex:1;min-width:220px;position:relative}
+.search-box input{width:100%;padding:.9rem 1rem .9rem 2.8rem;background:var(--card);border:1px solid var(--border);color:var(--text);font-family:'Archivo',sans-serif;font-size:.95rem;outline:none;transition:border-color .3s;backdrop-filter:blur(8px)}
+.search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.search-box svg{position:absolute;left:1rem;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--muted)}
+.count-pill{font-family:'Syne',sans-serif;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);padding:.5rem 1rem;white-space:nowrap}
+.count-pill b{color:var(--accent)}
+.work{border:1px solid var(--border);background:var(--card);margin-bottom:.7rem;transition:all .3s;backdrop-filter:blur(6px)}
+.work:hover{border-color:var(--accent)}
+.work.open{border-color:var(--accent);box-shadow:0 0 24px var(--accent-soft)}
+.work-head{padding:1.15rem 1.6rem;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:1rem;user-select:none}
+.work-head .left{display:flex;align-items:center;gap:1.2rem;min-width:0}
+.work-head .num{font-family:'Syne',sans-serif;font-size:.7rem;color:var(--accent2);letter-spacing:.15em;min-width:2.2rem;font-weight:700}
+.work-head h3{font-family:'Syne',sans-serif;font-weight:600;font-size:1rem;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plus{width:24px;height:24px;flex-shrink:0;position:relative;transition:transform .4s}
+.plus::before,.plus::after{content:"";position:absolute;background:var(--accent);transition:opacity .3s}
+.plus::before{top:50%;left:3px;right:3px;height:1.5px;transform:translateY(-50%)}
+.plus::after{left:50%;top:3px;bottom:3px;width:1.5px;transform:translateX(-50%)}
+.work.open .plus{transform:rotate(45deg)}
+.work-body{max-height:0;overflow:hidden;transition:max-height .55s cubic-bezier(.4,0,.2,1)}
+.work-body .inner{padding:0 1.6rem 1.8rem;border-top:1px solid var(--border)}
+.poem-text{font-size:.98rem;line-height:2;color:var(--text);white-space:pre-line;padding-top:1.4rem;font-weight:300}
+.work-meta{margin-top:1.4rem;padding-top:.9rem;border-top:1px dashed var(--border);font-family:'Syne',sans-serif;font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.work-meta span{color:var(--accent)}
+.no-result{text-align:center;padding:3rem;color:var(--muted);font-style:italic;display:none}
+.about-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:3rem;align-items:start}
+@media(max-width:820px){.about-grid{grid-template-columns:1fr}}
+.about p{color:var(--muted);margin-bottom:1.2rem;font-size:1.02rem;font-weight:300}
+.about p strong{color:var(--text);font-weight:500}
+.about .pull{font-family:'Syne',sans-serif;font-size:1.15rem;color:var(--accent);font-style:italic;margin-top:1.8rem;line-height:1.6;border-left:2px solid var(--accent);padding-left:1.2rem}
+.info-card{background:var(--card);border:1px solid var(--border);padding:2rem;backdrop-filter:blur(8px);position:sticky;top:90px}
+.info-card h4{font-family:'Syne',sans-serif;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent);margin-bottom:1.4rem}
+.info-card ul{list-style:none}
+.info-card li{padding:.7rem 0;border-bottom:1px solid var(--border);color:var(--muted);font-size:.92rem;display:flex;justify-content:space-between;gap:1rem}
+.info-card li:last-child{border-bottom:none}
+.info-card li b{color:var(--text);font-weight:500;text-align:right}
+.traits{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.8rem;margin-top:2.5rem}
+.trait{border:1px solid var(--border);padding:1.2rem 1rem;text-align:center;background:var(--card);transition:all .3s}
+.trait:hover{border-color:var(--accent);transform:translateY(-3px)}
+.trait .ico{width:32px;height:32px;margin:0 auto .6rem;color:var(--accent)}
+.trait .ico svg{width:100%;height:100%}
+.trait span{font-family:'Syne',sans-serif;font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+footer{border-top:1px solid var(--border);padding:4rem 0 2.5rem;position:relative;z-index:2;background:var(--bg2)}
+footer p{color:var(--muted);font-size:.92rem;text-align:center;margin-bottom:.4rem}
+footer .copy{font-size:.75rem;color:var(--muted);margin-top:1.8rem;text-align:center;font-family:'Syne',sans-serif;letter-spacing:.1em;opacity:.7}
+.reveal{opacity:0;transform:translateY(30px);transition:opacity .8s ease,transform .8s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+@media(max-width:600px){.manifesto-box{padding:2rem 1.4rem}.work-head{padding:1rem 1.2rem}.work-head h3{font-size:.92rem}}
+
+/* ===== HERO EDITORIAL REDESIGN ===== */
+header.hero{padding:8rem 0 5rem;gap:0}
+.hero-meta{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-bottom:2.6rem;padding-bottom:1rem;border-bottom:1px solid var(--border);font-family:'Syne',sans-serif;font-size:.66rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hero-meta b{color:var(--accent);font-weight:600}
+.hero-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(3.4rem,13vw,8.5rem);line-height:.92;letter-spacing:-.02em;margin:0}
+.hero-title .line1{display:block;color:var(--text)}
+.hero-title .line2{display:block;background:linear-gradient(120deg,#f5d98a,var(--accent) 50%,var(--accent2) 120%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero-author{display:flex;align-items:center;gap:1.1rem;margin:2.2rem 0 1.5rem;flex-wrap:wrap}
+.hero-author .rule{flex:0 0 56px;height:1px;background:var(--accent)}
+.hero-author .karya{font-size:.66rem;letter-spacing:.35em;text-transform:uppercase;color:var(--muted);font-family:'Syne',sans-serif}
+.hero-author .name{font-size:clamp(1rem,2.4vw,1.4rem);font-weight:700;letter-spacing:.1em;color:var(--text);font-family:'Syne',sans-serif}
+.hero-tagline{font-size:clamp(1.15rem,2.6vw,1.5rem);color:var(--accent);font-style:italic;font-weight:300;margin:0 0 2.8rem;line-height:1.5}
+.hero-tagline::before{content:"";display:inline-block;width:7px;height:7px;background:var(--accent);border-radius:50%;margin-right:.9rem;vertical-align:middle;box-shadow:0 0 12px var(--glow)}
+.hero .cta .btn{padding:1.05rem 2.2rem;font-size:.78rem}
+.hero .cta .btn:not(.ghost){box-shadow:0 0 0 1px var(--accent),0 10px 34px var(--accent-soft)}
+.hero .cta .btn:not(.ghost)::after{content:" →";opacity:.8}
+.hero-side{position:absolute;right:-3.2rem;top:50%;transform:translateY(-50%) rotate(90deg);transform-origin:center;font-family:'Syne',sans-serif;font-size:.6rem;letter-spacing:.5em;text-transform:uppercase;color:var(--muted);white-space:nowrap;opacity:.65}
+@media(max-width:720px){
+  .hero-meta{flex-direction:column;align-items:flex-start;gap:.5rem;border-bottom:none;padding-bottom:0;margin-bottom:2rem}
+  .hero-meta span:last-child{display:none}
+  .hero-side{display:none}
+  .hero-author .rule{flex:0 0 32px}
+  header.hero{padding:7rem 0 4rem}
+}
+
+/* ===== MULA DI SINI — editorial opening statement ===== */
+section.mula{padding:6rem 0 5rem;text-align:center;border-bottom:1px solid var(--border)}
+.mula-inner{max-width:44rem;margin:0 auto}
+.mula .kicker{font-family:'Syne',sans-serif;font-size:.66rem;letter-spacing:.45em;text-transform:uppercase;color:var(--accent);margin-bottom:2.2rem;display:flex;align-items:center;justify-content:center;gap:1rem}
+.mula .kicker::before,.mula .kicker::after{content:"";width:32px;height:1px;background:var(--accent);opacity:.5}
+.mula .statement{font-size:clamp(1.2rem,2.6vw,1.6rem);line-height:1.9;color:var(--text);font-weight:300;font-style:italic;letter-spacing:.01em}
+.mula .statement em{color:var(--accent);font-style:normal}
+@media(max-width:600px){section.mula{padding:4.5rem 0 3.5rem}.mula .statement{font-size:1.1rem;line-height:1.85}}
+
+/* ===== MANIFESTO — philosophical declaration ===== */
+section.manifesto{padding:7rem 0;position:relative}
+.manifesto-wrap{max-width:62rem;margin:0 auto}
+.manifesto-head{margin-bottom:3.5rem}
+.manifesto-head .kicker{font-family:'Syne',sans-serif;font-size:.66rem;letter-spacing:.45em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem;display:flex;align-items:center;gap:1rem}
+.manifesto-head .kicker .num{color:var(--accent2);font-weight:700}
+.manifesto-head h2{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,5vw,3.4rem);letter-spacing:-.01em}
+.manifesto-text{font-size:clamp(1.15rem,2.4vw,1.55rem);line-height:2.1;font-weight:300;color:var(--text)}
+.manifesto-text .stanza{margin:0 0 2.2rem;white-space:pre-line}
+.manifesto-text .bound{font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:.12em;font-size:.82em;color:var(--muted);font-weight:600;line-height:2}
+.manifesto-text .declaration{font-family:'Syne',sans-serif;font-weight:800;font-size:1.15em;line-height:1.7;letter-spacing:.02em;margin-top:3rem;padding-top:2rem;border-top:1px solid var(--border)}
+.manifesto-text .declaration span{background:linear-gradient(120deg,#f5d98a,var(--accent) 60%,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.manifesto-sig{margin-top:2.5rem;font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;color:var(--accent)}
+.manifesto-pillars{margin-top:4.5rem;padding-top:3rem;border-top:1px solid var(--border);display:grid;grid-template-columns:repeat(3,1fr);gap:2.5rem}
+.pillar .p-num{font-family:'Syne',sans-serif;font-size:.7rem;letter-spacing:.3em;color:var(--accent2);font-weight:700;display:block;margin-bottom:.8rem}
+.pillar h4{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.04em;margin-bottom:.6rem;color:var(--text)}
+.pillar p{font-size:.9rem;color:var(--muted);line-height:1.7;font-weight:300}
+@media(max-width:720px){.manifesto-pillars{grid-template-columns:1fr;gap:1.8rem}section.manifesto{padding:5rem 0}}
+
+/* ===== KARYA PILIHAN — editorial journal list ===== */
+section#pilihan{padding:5.5rem 0}
+.picks{border-top:1px solid var(--border)}
+.pick{border-bottom:1px solid var(--border);padding:2.6rem 0}
+.pick-head{display:flex;gap:2rem;align-items:flex-start}
+.pick-num{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:800;color:var(--accent);opacity:.35;line-height:1;min-width:3.5rem;padding-top:.2rem}
+.pick-main{flex:1;min-width:0}
+.pick-top{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:1.1rem}
+.pick-top h3{font-family:'Syne',sans-serif;font-weight:700;font-size:clamp(1.25rem,2.6vw,1.7rem);letter-spacing:.01em;color:var(--text)}
+.pick-cat{font-family:'Syne',sans-serif;font-size:.64rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.pick-excerpt{font-size:clamp(1.05rem,2vw,1.25rem);font-style:italic;color:var(--muted);line-height:1.7;font-weight:300;margin-bottom:1.2rem;max-width:40rem}
+.pick-toggle{background:none;border:none;color:var(--accent);font-family:'Syne',sans-serif;font-size:.7rem;letter-spacing:.25em;text-transform:uppercase;cursor:pointer;padding:0;display:inline-flex;align-items:center;gap:.5rem;transition:gap .25s}
+.pick-toggle:hover{gap:1rem}
+.pick-toggle .arr{transition:transform .25s;display:inline-block}
+.pick.open .pick-toggle .arr{transform:rotate(90deg)}
+.pick-body{max-height:0;overflow:hidden;transition:max-height .6s cubic-bezier(.4,0,.2,1)}
+.pick-body .pick-poem{padding-top:1.8rem;font-size:1rem;line-height:2;white-space:pre-line;color:var(--text);font-weight:300;max-width:44rem}
+.pick-body .pick-meta{margin-top:1.4rem;font-family:'Syne',sans-serif;font-size:.66rem;letter-spacing:.22em;text-transform:uppercase;color:var(--accent)}
+@media(max-width:640px){.pick-head{gap:1rem}.pick-num{min-width:2.6rem;font-size:1.6rem}}
+
+/* ===== KATEGORY FILTER — editorial minimal ===== */
+.cat-bar{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:1.4rem;align-items:center}
+.cat-btn{background:none;border:1px solid var(--border);color:var(--muted);font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;padding:.5rem .95rem;cursor:pointer;transition:all .25s}
+.cat-btn:hover{border-color:var(--accent);color:var(--accent)}
+.cat-btn.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:700}
+.cat-reset{background:none;border:none;color:var(--muted);font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;margin-left:auto;text-decoration:underline;text-underline-offset:4px;transition:color .25s;padding:.5rem 0}
+.cat-reset:hover{color:var(--accent)}
+.work-cat{font-family:'Syne',sans-serif;font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent2);white-space:nowrap}
+
+/* ===== KARYA BAHARU — third card + penerangan ===== */
+.baharu-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.card-wide{grid-column:1/-1}
+.poem-full{font-style:normal;color:var(--text);font-size:1rem;line-height:1.95;white-space:pre-line}
+.penerangan{margin-top:1.6rem;padding-top:1.3rem;border-top:1px solid var(--border)}
+.pen-label{font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.32em;text-transform:uppercase;color:var(--accent);margin-bottom:.9rem}
+.penerangan p{font-size:.9rem;color:var(--muted);line-height:1.85;margin-bottom:.75rem;font-weight:300}
+.penerangan .pen-salute{color:var(--accent);font-style:italic;margin-top:1rem}
+.meta-row{margin-top:1.3rem;display:flex;flex-wrap:wrap;gap:.5rem 1.4rem;font-family:'Syne',sans-serif;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.meta-row b{color:var(--text);font-weight:600;margin-right:.3rem}
+.disclaimer{margin-top:1.1rem;font-size:.72rem;font-style:italic;color:var(--muted);opacity:.75;line-height:1.6}
+
+/* ===== KARYA KHAS — special work feature ===== */
+section.khas{padding:5rem 0}
+.khas-card{position:relative;border:1px solid var(--border);background:var(--card);padding:3.5rem 2.5rem;text-align:center;transition:all .4s;overflow:hidden}
+.khas-card::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent)}
+.khas-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 16px 50px var(--accent-soft)}
+.khas-card .kicker{font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.4em;text-transform:uppercase;color:var(--accent2);margin-bottom:1.5rem}
+.khas-card h3{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,5vw,3rem);letter-spacing:.02em;line-height:1.1;margin-bottom:1.75rem}
+.khas-card h3 .grad{background:linear-gradient(120deg,#f5d98a,var(--accent) 55%,var(--accent2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.khas-card .byline{font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem}
+.khas-card .desc{max-width:36rem;margin:0 auto 2rem;font-size:1rem;line-height:1.85;color:var(--muted);font-weight:300}
+.khas-card .kquote{font-style:italic;font-size:1.15rem;color:var(--accent);margin-bottom:2.2rem;line-height:1.7}
+.khas-card .kquote::before,.khas-card .kquote::after{content:'"';opacity:.5}
+.khas-card .khas-btn{display:inline-block;background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;padding:1rem 2.4rem;text-decoration:none;transition:all .3s;font-weight:600}
+.khas-card .khas-btn:hover{background:var(--accent);color:var(--bg);box-shadow:0 8px 30px var(--accent-soft)}
+.khas-card .khas-btn::after{content:" →";opacity:.8}
+@media(max-width:600px){.khas-card{padding:2.5rem 1.3rem}}
+
+/* ===== PENAMBAHBAIKAN v2 ===== */
+.share-bar{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-top:1.4rem;padding-top:1rem;border-top:1px dashed var(--border)}
+.share-label{font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-right:.4rem}
+.share-btn{display:inline-block;background:var(--accent-soft);border:1px solid var(--border);color:var(--accent);font-family:'Syne',sans-serif;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:.5rem .85rem;text-decoration:none;cursor:pointer;border-radius:3px;transition:all .25s}
+.share-btn:hover{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.fav-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;transition:all .3s;margin-left:auto;flex-shrink:0}
+.fav-btn:hover{border-color:var(--accent);color:var(--accent);transform:scale(1.1)}
+.fav-btn.active{color:#e74c3c;border-color:#e74c3c;background:rgba(231,76,60,.1)}
+.fav-btn svg{width:16px;height:16px;fill:currentColor}
+.fav-btn.active svg{fill:#e74c3c}
+.share-bar{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;margin-top:1.2rem;padding-top:1rem;border-top:1px dashed var(--border)}
+.back-to-top{position:fixed;right:1.4rem;bottom:1.4rem;z-index:9000;width:46px;height:46px;border-radius:50%;border:1px solid var(--accent);background:var(--card-solid);color:var(--accent);cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transform:translateY(12px);pointer-events:none;transition:all .35s;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.back-to-top.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.back-to-top:hover{background:var(--accent);color:var(--bg)}
+.back-to-top svg{width:18px;height:18px}
+.work-head{transition:background .25s}
+.work-head:hover{background:var(--accent-soft)}
+.work-head .plus{transition:transform .4s}
+.work-head:hover .plus{transform:scale(1.2)}
+.work.open .work-head:hover .plus{transform:rotate(45deg) scale(1.1)}
+.tri-toggle{transition:all .25s}
+.tri-toggle:hover{color:var(--accent);border-color:var(--accent)}
+.tri-arrow{transition:transform .35s;display:inline-block}
+.tri-toggle[aria-expanded="true"] .tri-arrow{transform:rotate(45deg)}
+.hamburger{display:none;background:none;border:1px solid var(--border);width:42px;height:42px;border-radius:4px;cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:5px;flex-shrink:0;padding:0}
+.hamburger span{display:block;width:18px;height:2px;background:var(--accent);transition:all .3s;border-radius:2px}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.netlify-badge,iframe[src*="netlify"]{display:none!important}
+@media(max-width:600px){.poem-text{font-size:1.02rem;line-height:1.95}.share-label{width:100%;margin-bottom:.2rem}}
+
+/* Bahagian 2 daripada CSS asal */
+/* ===== Maklumat Penulis :: penambaikan ===== */
+.info-avatar{width:64px;height:64px;border-radius:50%;border:1px solid var(--border);background:var(--accent-soft);color:var(--accent);font-family:'Syne',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;margin:0 auto 1.2rem;box-shadow:0 0 24px var(--accent-soft)}
+.info-list{margin:0;padding:0}
+.info-row{padding:.7rem 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;gap:1rem;align-items:baseline}
+.info-row:last-child{border-bottom:none}
+.info-row dt{color:var(--muted);font-size:.92rem;font-weight:400}
+.info-row dd{margin:0;color:var(--text);font-weight:500;text-align:right;font-size:.92rem}
+.info-row dd a{color:var(--accent);text-decoration:none;word-break:break-all}
+.info-row dd a:hover{text-decoration:underline}
+.info-links{display:flex;flex-direction:column;gap:.55rem;margin-top:1.3rem;padding-top:1.2rem;border-top:1px solid var(--border)}
+.info-links a{font-family:'Syne',sans-serif;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:.65rem 1rem;text-align:center;transition:all .3s}
+.info-links a:hover{border-color:var(--accent);color:var(--accent);box-shadow:0 0 18px var(--accent-soft)}
+.info-cta{margin-top:1rem;width:100%;justify-content:center}
+/* ===== Samakan taipan puisi manifesto & bio penulis dgn puisi trilogi ===== */
+.manifesto-text{font-family:'Archivo',system-ui,sans-serif;font-size:clamp(1rem,2.2vw,1.12rem);line-height:2;font-weight:300}
+.about p{font-family:'Archivo',system-ui,sans-serif;font-weight:300}
+.about .bio-main{font-family:'Archivo',system-ui,sans-serif;font-size:clamp(1rem,2.2vw,1.12rem);line-height:2;color:var(--text);font-weight:300}
+
+/* Bahagian 3 daripada CSS asal */
+/* Arkib 34 Karya — hierarki dua baris: tajuk atas, kategori bawah */
+.work-head{flex-wrap:wrap;align-items:center;row-gap:.1rem}
+.work-head .left{flex:1 1 auto;min-width:0}
+.work-head > div:not(.left){flex:1 1 100%;margin-top:.55rem;display:flex;align-items:center;gap:.8rem}
+.work-head > div:not(.left) .fav-btn{margin-left:auto}
+.work-head h3{white-space:normal;overflow:visible;text-overflow:clip;font-size:1.08rem;line-height:1.35}
+.work-cat{font-size:.55rem;letter-spacing:.18em;opacity:.95}
+@media(max-width:600px){
+  .work-head{padding:.95rem 1.05rem;row-gap:0}
+  .work-head h3{font-size:1rem}
+  .work-head > div:not(.left){margin-top:.45rem}
+}
+
+/* Bahagian 4 daripada CSS asal */
+.hero-ident{display:flex;flex-direction:column;gap:.4rem;font-family:'Syne',sans-serif;text-transform:uppercase;letter-spacing:.34em;font-size:.6rem;color:var(--accent);opacity:.92;line-height:1.6}
+.hero-ident span{display:block}
+@media(max-width:600px){.hero-ident{font-size:.52rem;letter-spacing:.28em;gap:.3rem}}
+
+/* Bahagian 5 daripada CSS asal */
+/* ===== MULA DI SINI animasi + gold berkelip ===== */
+@keyframes mulaGlow{0%,100%{opacity:.85;letter-spacing:.45em}50%{opacity:1;letter-spacing:.5em;text-shadow:0 0 18px var(--glow)}}
+.mula .kicker{animation:mulaGlow 3.4s ease-in-out infinite}
+.mula .kicker::before,.mula .kicker::after{animation:mulaGlow 3.4s ease-in-out infinite}
+@keyframes mulaRise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.mula-inner{animation:mulaRise 1.1s cubic-bezier(.2,.7,.2,1) both}
+@keyframes goldTwinkle{0%,100%{opacity:1}45%{opacity:.68}55%{opacity:.92}}
+.hero-title .line2,.hero-tagline,.eyebrow,.sec-head .kicker,.manifesto-sig,.pick-num,.khas-card .kquote,.brand b,.hero-meta b{animation:goldTwinkle 3.6s ease-in-out infinite}
+.hero-tagline::before{animation:goldTwinkle 2.8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.mula .kicker,.mula-inner,.hero-title .line2,.hero-tagline,.eyebrow,.sec-head .kicker,.manifesto-sig,.pick-num,.khas-card .kquote,.brand b,.hero-meta b,.hero-tagline::before{animation:none}}
+
+/* Bahagian 6 daripada CSS asal */
+/* ===== MOBILE FIX + ANIMASI TAMBAHAN ===== */
+/* 1. Paparkan kedua-dua baris hero-meta di mobile */
+@media(max-width:720px){
+  .hero-meta span:last-child{display:block!important}
+  .hero-meta{gap:.35rem}
+  header.hero{min-height:auto!important;padding:6rem 0 2.5rem!important}
+  section.mula{padding-top:2.5rem!important;padding-bottom:3rem!important}
+  .hero .cta{gap:.7rem}
+  .hero .cta .btn{flex:1 1 40%;justify-content:center;padding:.9rem 1rem}
+}
+/* 2. Animasi masuk hero bertingkat (staggered) */
+@keyframes heroUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.hero-meta{animation:heroUp .8s cubic-bezier(.2,.7,.2,1) .1s both}
+.hero-title .line1{animation:heroUp .9s cubic-bezier(.2,.7,.2,1) .25s both}
+.hero-title .line2{animation:heroUp .9s cubic-bezier(.2,.7,.2,1) .4s both}
+.hero-author{animation:heroUp .8s cubic-bezier(.2,.7,.2,1) .55s both}
+.hero-tagline{animation:heroUp .8s cubic-bezier(.2,.7,.2,1) .7s both}
+.hero .cta .btn:nth-child(1){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) .85s both}
+.hero .cta .btn:nth-child(2){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) .95s both}
+.hero .cta .btn:nth-child(3){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.05s both}
+.hero .cta .btn:nth-child(4){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.15s both}
+.hero .cta .btn:nth-child(5){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.25s both}
+.hero .cta .btn:nth-child(6){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.35s both}
+.hero .cta .btn:nth-child(7){animation:heroUp .7s cubic-bezier(.2,.7,.2,1) 1.45s both}
+/* Pintu Bilik Antara merentasi kedua-dua lajur di bawah Tetralogi dan Novel. */
+.hero .cta .btn.bilik-entry{
+  flex:1 1 100%;
+  width:100%;
+  min-width:0;
+  box-sizing:border-box;
+  justify-content:center;
+  align-items:center;
+  flex-direction:column;
+  gap:.4rem;
+  min-height:92px;
+  text-align:center;
+  border-color:var(--border);
+  background:transparent;
+  color:var(--muted);
+}
+.hero .cta .btn.bilik-entry:hover{
+  border-color:var(--accent);
+  background:transparent;
+  color:var(--accent);
+  box-shadow:none;
+}
+.hero .cta .bilik-entry-title{
+  font-size:clamp(1rem,2.8vw,1.25rem);
+  font-weight:800;
+  letter-spacing:.18em;
+  line-height:1.2;
+  color:var(--muted);
+}
+.hero .cta .bilik-entry-desc{
+  font-size:clamp(.58rem,1.6vw,.68rem);
+  font-weight:400;
+  letter-spacing:.18em;
+  line-height:1.35;
+  color:var(--muted);
+}
+.hero .cta .btn.bilik-entry:hover .bilik-entry-title,
+.hero .cta .btn.bilik-entry:hover .bilik-entry-desc{
+  color:var(--accent);
+}
+.hero .cta .btn.bilik-entry:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:3px;
+}
+/* 3. Nav link hover: garis bawah emas meluncur (Duologi/Trilogi/Tetralogi/dll) */
+.nav-links a.link{position:relative}
+.nav-links a.link::after{content:"";position:absolute;left:0;bottom:-4px;width:0;height:1.5px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .35s cubic-bezier(.2,.7,.2,1)}
+.nav-links a.link:hover::after{width:100%}
+/* 4. Tajuk seksi (Duologi/Trilogi/Tetralogi): animasi garis emas + naik apabila kelihatan */
+@keyframes lineGrow{from{width:0}to{width:64px}}
+.reveal.visible .rule{animation:lineGrow .9s cubic-bezier(.2,.7,.2,1) .2s both}
+.reveal.visible .sec-head h2{animation:heroUp .8s cubic-bezier(.2,.7,.2,1) .1s both}
+.reveal.visible .sec-head .kicker{animation:heroUp .7s cubic-bezier(.2,.7,.2,1) both}
+/* 5. Hover pada butang kategori Duologi/Trilogi/Tetralogi/Novel di hero */
+.hero .cta .btn.ghost{position:relative;overflow:hidden}
+.hero .cta .btn.ghost::before{content:"";position:absolute;inset:0;background:var(--accent-soft);transform:scaleX(0);transform-origin:left;transition:transform .35s cubic-bezier(.2,.7,.2,1);z-index:-1}
+.hero .cta .btn.ghost:hover::before{transform:scaleX(1)}
+/* 6. Hero glow berdenyut lembut */
+@keyframes glowPulse{0%,100%{opacity:.7;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.06)}}
+.hero-glow{animation:glowPulse 6s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){
+  .hero-meta,.hero-title .line1,.hero-title .line2,.hero-author,.hero-tagline,.hero .cta .btn,.hero-glow,.reveal.visible .rule,.reveal.visible .sec-head h2,.reveal.visible .sec-head .kicker{animation:none!important}
+  .nav-links a.link::after{transition:none}
+}
+
+/* Bahagian 7 daripada CSS asal */
+.tri-section{padding:5rem 1.25rem 6rem;position:relative;z-index:2}
+.tri-head{max-width:760px;margin:0 auto 4.5rem;text-align:center}
+.tri-kicker{font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.42em;text-transform:uppercase;color:var(--accent2);margin-bottom:1.1rem}
+.tri-title-main{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(2rem,6vw,3.6rem);letter-spacing:.02em;color:var(--text);line-height:1.05;margin-bottom:1.1rem}
+.tri-title-main .tri-gold{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.tri-sub{color:var(--muted);font-size:clamp(.95rem,2vw,1.05rem);font-weight:300;line-height:1.8;max-width:560px;margin:0 auto}
+.tri-rule{width:64px;height:2px;margin:1.6rem auto 0;background:linear-gradient(90deg,var(--accent),transparent)}
+.tri-work{max-width:720px;margin:0 auto}
+.tri-num{font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.35em;color:var(--accent);margin-bottom:.9rem;font-weight:600}
+.tri-num span{color:var(--muted);font-weight:400}
+.tri-title{font-family:'Syne',sans-serif;font-weight:700;font-size:clamp(1.35rem,3.4vw,1.9rem);letter-spacing:.03em;color:var(--text);margin-bottom:2.2rem;line-height:1.25}
+.tri-poem{margin-bottom:2.4rem}
+.tri-stanza{margin-bottom:1.6rem}
+.tri-stanza p{font-size:clamp(1rem,2.2vw,1.12rem);line-height:2;color:var(--text);font-weight:300;margin:0}
+.tri-acc{border-top:1px solid var(--border)}
+.tri-item{border-bottom:1px solid var(--border)}
+.tri-toggle{width:100%;background:transparent;border:0;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:1.1rem .25rem;font-family:'Syne',sans-serif;font-size:.62rem;letter-spacing:.32em;text-transform:uppercase;color:var(--accent);transition:color .25s;-webkit-tap-highlight-color:transparent;text-align:left}
+.tri-toggle:hover{color:var(--text)}
+.tri-arrow{font-size:1rem;color:var(--muted);transition:transform .3s;font-weight:400}
+.tri-item.open .tri-arrow{transform:rotate(45deg);color:var(--accent)}
+.tri-panel{max-height:0;overflow:hidden;transition:max-height .45s ease}
+.tri-item.open .tri-panel{max-height:2400px}.tri-work.open .tri-panel{max-height:2400px}.tri-work.open .tri-arrow{transform:rotate(45deg);color:var(--accent)}
+.tri-panel-in{padding:.4rem .25rem 1.6rem;color:var(--muted);font-size:.95rem;line-height:1.9;font-weight:300}
+.tri-panel-in p{margin-bottom:.9rem}
+.tri-cat-quote{font-style:italic;color:var(--accent);border-left:2px solid var(--accent);padding-left:1rem;margin-top:1rem}
+.tri-meta{display:flex;flex-direction:column;gap:0}
+.tri-mrow{display:flex;gap:1rem;padding:.55rem 0;border-bottom:1px dashed var(--border)}
+.tri-mrow:last-child{border-bottom:0}
+.tri-mk{flex:0 0 130px;font-family:'Syne',sans-serif;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent2);padding-top:.2rem}
+.tri-mv{flex:1;color:var(--text);font-size:.92rem;line-height:1.6}
+.tri-divider{max-width:720px;margin:4rem auto;height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
+@media(max-width:640px){
+  .tri-section{padding:3.5rem 1.1rem 4.5rem}
+  .tri-head{margin-bottom:3rem}
+  .tri-mrow{flex-direction:column;gap:.2rem}
+  .tri-mk{flex:none}
+  .tri-stanza p{line-height:1.9}
+}
+
+/* Bahagian 8 daripada CSS asal */
+.author-portrait{width:168px;height:168px;border-radius:50%;position:relative;margin:0 0 1.8rem;flex-shrink:0}
+.author-portrait img{width:100%;height:100%;object-fit:cover;display:block;border-radius:50%;border:2px solid var(--accent);box-shadow:0 0 0 7px var(--accent-soft),0 14px 40px rgba(0,0,0,.45)}
+.author-portrait::after{content:"";position:absolute;inset:-11px;border-radius:50%;border:1px dashed var(--border);animation:portraitSpin 26s linear infinite;pointer-events:none}
+@keyframes portraitSpin{to{transform:rotate(360deg)}}
+@media(max-width:820px){.author-portrait{margin:0 auto 1.8rem}}
+
+/* Bahagian 9 daripada CSS asal */
+.author-name{font-family:'Syne',sans-serif;font-size:clamp(2.1rem,5.5vw,3.6rem);font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:1.4rem 0 .7rem;color:var(--text)}
+.author-sub{font-family:'Syne',sans-serif;font-size:.74rem;letter-spacing:.3em;text-transform:uppercase;color:var(--accent2);margin-bottom:2rem}
+.author-desc{color:var(--muted);font-size:.97rem;line-height:1.95;max-width:48ch;margin:0 0 1.1rem;font-weight:300}
+.author-signature{margin-top:3rem}
+.author-signature p{font-family:'Syne',sans-serif;font-size:clamp(1.15rem,2.8vw,1.5rem);font-weight:600;line-height:1.75;color:var(--text);margin:0}
+.author-portrait{max-width:130px;margin-bottom:.5rem}
+.author-portrait img{width:100%;aspect-ratio:1;object-fit:cover;display:block;border-radius:50%;border:1px solid var(--border)}
+@media(max-width:640px){.author-portrait{max-width:104px}.author-signature{margin-top:2.2rem}}
+
+/* Bahagian 10 daripada CSS asal */
+.author-penname{display:flex;align-items:center;gap:.55rem;font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.16em;margin:0 0 1.1rem;flex-wrap:wrap}
+.author-penname .ap-label{text-transform:uppercase;color:var(--muted)}
+.author-penname .ap-val{color:var(--accent);font-weight:600;letter-spacing:.04em}
+.footer-contact{display:flex;gap:1rem;justify-content:center;margin-top:1.8rem;flex-wrap:wrap}
+.fc-box{font-family:'Syne',sans-serif;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;text-decoration:none;padding:.85rem 2.1rem;border:1px solid var(--accent);color:var(--text);background:var(--accent-soft);transition:all .3s;display:inline-flex;align-items:center;gap:.55rem}
+.fc-box:hover{background:var(--accent);color:var(--bg);box-shadow:0 0 24px var(--glow);transform:translateY(-2px)}
+.fc-box.fc-em{background:transparent;border-color:var(--border);color:var(--muted)}
+.fc-box.fc-em:hover{border-color:var(--accent);color:var(--accent);background:transparent;box-shadow:none;transform:translateY(-2px)}
+@media(max-width:520px){.footer-contact{flex-direction:column;align-items:stretch}.fc-box{justify-content:center}}
+
+/* Bahagian 11 daripada CSS asal */
+.khas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:1.5rem;align-items:stretch}
+.khas-tag{display:inline-block;font-family:'Syne',sans-serif;font-weight:800;font-size:.72rem;letter-spacing:.35em;color:var(--accent2);margin-bottom:1.1rem;padding:.3rem .75rem;border:1px solid var(--border);background:var(--accent-soft);line-height:1}
+@media(max-width:600px){.khas-grid{grid-template-columns:1fr}}
+
+/* Penambahbaikan aksesibiliti dan arkib */
+.sr-only{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.skip-link{position:fixed;z-index:9999;top:8px;left:8px;padding:12px 16px;color:var(--text);background:var(--bg);border:2px solid var(--accent);transform:translateY(-180%)}
+.skip-link:focus{transform:translateY(0)}
+.archive-note{font-size:.9rem;color:var(--muted);line-height:1.7;margin:-.35rem 0 1.15rem}
+.cat-btn:focus-visible,.cat-reset:focus-visible,.work-head:focus-visible,.hamburger:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+
+.archive-directory{border-top:1px solid var(--border);margin:2rem 0;padding:1.2rem 0;color:var(--muted)}
+.archive-directory summary{cursor:pointer;font-family:'Syne',sans-serif;font-size:.81rem;letter-spacing:.09em;font-weight:700;color:var(--accent);padding:.5rem 0}
+.archive-directory p{font-size:.89rem;line-height:1.6}
+.archive-directory ol{columns:2;column-gap:2.4rem;padding-left:1.5rem}
+.archive-directory li{break-inside:avoid;font-size:.84rem;line-height:1.7;padding:.2rem 0}
+.archive-directory a{color:var(--text);text-decoration:none}
+.archive-directory a:hover,.archive-directory a:focus-visible{color:var(--accent);text-decoration:underline}
+@media(max-width:640px){.archive-directory ol{columns:1}}
