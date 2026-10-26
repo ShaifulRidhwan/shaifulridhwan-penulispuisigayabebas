@@ -464,6 +464,44 @@ function showTyping(){
  for(let i=0;i<3;i++)dots.appendChild(elem("i"));
  b.appendChild(dots);msg.appendChild(b);ui.chat.appendChild(msg);scrollDown();return msg;
 }
+async function tryStream(payload,typing,signal){
+ if(payload.media&&payload.media.length||payload.documentText)return null;
+ const q=String(payload.question||"");
+ if(q.length>180||/https?:\/\/|terkini|berita|semak|buktikan|hujah|kritik|kira|debug|ralat|kod|trauma|sedih|cemas|sakit|novel|shaiful/i.test(q))return null;
+ let res;
+ try{res=await fetch("/.netlify/functions/bilik-antara-stream",{
+  method:"POST",headers:{"Content-Type":"application/json"},
+  body:JSON.stringify(payload),signal
+ });}catch(_){return null;}
+ if(!res.ok||!res.body||!res.body.getReader)return null;
+ const reader=res.body.getReader(),decoder=new TextDecoder();
+ let buffer="",reply="",completed=false,usage=null,model="",finishReason="STOP";
+ const bubble=typing.querySelector(".bubble");
+ const para=elem("p","message-paragraph");
+ bubble.replaceChildren(para);
+ const started=performance.now();
+ try{
+  while(true){
+   const part=await reader.read();
+   if(part.done)break;
+   buffer+=decoder.decode(part.value,{stream:true});
+   const lines=buffer.split("\n");buffer=lines.pop()||"";
+   for(const line of lines){
+    if(!line.trim())continue;
+    let item;try{item=JSON.parse(line);}catch(_){continue;}
+    if(item.type==="delta"&&typeof item.text==="string"){
+     reply+=item.text;para.textContent=reply;scrollDown();
+    }else if(item.type==="done"){
+     completed=true;usage=item.usage||null;model=item.model||"gemini";
+     finishReason=item.finishReason||"STOP";
+    }else if(item.type==="error"){throw Error("stream ended");}
+   }
+  }
+  if(completed&&reply.trim())return {reply,model,usage,sources:[],argumentMap:[],truthAudit:[],
+   thoughtLedger:[],hypothesis:"",durMs:Math.round(performance.now()-started),
+   disclaimer:finishReason!=="STOP"?"Jawapan mungkin tidak lengkap.":""};
+ }catch(_){try{await reader.cancel();}catch(_){}}return null;
+}
 async function submit(event){
  event.preventDefault();if(busy)return;
  const typed=ui.input.value.trim();
@@ -481,11 +519,14 @@ async function submit(event){
    documentText:selectedFile&&selectedFile.text||"",
    documentName:selectedFile&&selectedFile.name||"",
    media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt()||""};
-  const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-   body:JSON.stringify(payload),signal:ctrl.signal});
-  const data=await res.json().catch(()=>({}));
-  if(!res.ok){
-   const error=new Error(String(data.error||"HTTP "+res.status));error.status=res.status;throw error;
+  let data=await tryStream(payload,typing,ctrl.signal);
+  if(!data){
+   const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(payload),signal:ctrl.signal});
+   data=await res.json().catch(()=>({}));
+   if(!res.ok){
+    const error=new Error(String(data.error||"HTTP "+res.status));error.status=res.status;throw error;
+   }
   }
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
   typing.remove();addMessage("assistant",data.reply,data);
