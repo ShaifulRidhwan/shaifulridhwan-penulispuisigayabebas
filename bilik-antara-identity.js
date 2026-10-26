@@ -49,13 +49,13 @@ function answerIdentity(question){
   const q=clean(question);
   if(!q||q.length>240||/\b(?:contoh ayat|petikan|watak|novel|cerita|skrip|lakonan|roleplay|terjemah|translate)\b/i.test(q))return null;
   const project=/(?:bilik antara|shaiful ridhwan a\.?i\.?|sistem (?:ini|kau)|projek (?:ini|ai|kau))/i.test(q);
-  const self=/(?:\b(?:kau|awak|kamu|anda|you|yourself)\b|(?:\bai\b|\bkecerdasan buatan\b)\s*(?:ini|tu|kau)?)/i.test(q);
+  const self=/(?:\b(?:kau|awak|kamu|anda|you|yourself)\b|(?:\bai\b|\bkecerdasan buatan\b)\s+(?:ini|tu|kau|awak)\b)/i.test(q);
   const owner=/(?:shaiful|ridhwan)/i.test(q);
   const directSelf=/^(?:(?:kau|awak|kamu|anda)\s+(?:ni\s+|ini\s+)?siapa|siapa\s+(?:kau|awak|kamu|anda)\s*(?:sebenarnya)?|who\s+are\s+you|siapa\s+diri\s+kau|kenalkan\s+diri\s+(?:kau|awak)|perkenalkan\s+diri(?:mu)?|apa\s+nama\s+(?:kau|awak|ai\s+ini)|nama\s+(?:kau|awak)\s+apa)$/i.test(q);
   const changes=/(?:apa|macam mana|bagaimana|senarai|cerita|terangkan|jelaskan|detail|butiran|what).{0,90}(?:ubah\s*suai|modifikasi|tambah\s*baik|upgrade|fungsi|ciri|feature|buat\s+(?:pada|kat|dekat)\s+(?:kau|ai)|bangunkan)|(?:ubah\s*suai|modifikasi|tambah\s*baik|upgrade|fungsi|ciri|feature).{0,90}(?:kau|ai|shaiful|bilik antara)/i.test(q);
   const created=/(?:siapa.{0,45}(?:cipta|buat|bina|bangun|bangunkan|hasilkan|reka|developer|pengasas|pencipta)|(?:cipta|dibina|dibuat|dicipta|dibangunkan|dibangunkan oleh|direka|created|built|made|developed).{0,45}(?:siapa|oleh siapa|you|kau|awak)|who\s+(?:made|built|created|developed)\s+you|(?:pencipta|pengasas|pembangun|developer)\s+(?:kau|awak|ai ini|bilik antara))/i.test(q);
   const trained=/(?:latih|latihan|train|trained|model asas|model bahasa|gemini|google|chatgpt)/i.test(q)&&
-    /(?:kau|awak|ai|shaiful|ridhwan|bilik antara|model)/i.test(q);
+    /(?:kau|awak|ai ini|shaiful|ridhwan|bilik antara|gemini|google)/i.test(q);
   const person=/^(?:(?:siapa|who is|kenal tak|cerita pasal|terangkan tentang)\s+)?shaiful\s+ridhwan(?:\s+(?:tu|itu|sebenarnya))?$/i.test(q);
   if((changes&&(project||self||owner))||(/^(?:modifikasi|perubahan|pengubahsuaian)\s+(?:kau|bilik antara|shaiful ridhwan a\.?i\.?)$/i.test(q))){
     return "Antara perkara yang Shaiful Ridhwan arahkan, bina dan ubah suai pada projek aku ialah:\n\n"+
