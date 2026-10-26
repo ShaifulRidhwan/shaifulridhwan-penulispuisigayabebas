@@ -53,7 +53,8 @@ test("BETA image has a separate page, explicit warning, consent and cache contro
  assert.match(imgHtml,/studio-device-diagnostics\.js\?v=1/);
  assert.match(imgHtml,/id="copyDiagnostic"/);
  assert.ok(imgHtml.indexOf("studio-imej-config.js")<imgHtml.indexOf("studio-imej-beta.js"));
- assert.match(imgJs,/mobile.*Android\|iPhone\|iPad\|iPod/);
+ assert.match(diagSource,/Android\|iPhone\|iPad\|iPod\|Mobile/);
+ assert.match(imgJs,/const D=window\.StudioDeviceDiagnostics/);
  assert.match(imgJs,/if\(mobile\)\{/);
  assert.match(imgJs,/storageNeeded/);
  assert.match(imgJs,/backgroundFetch\.fetch/);
@@ -148,6 +149,19 @@ test("browser device metadata is labeled as approximate and never invented",asyn
  assert.equal(d.memory,8);
  assert.equal(d.storage.remaining,7*1024**3);
  assert.ok(d.notes.some(note=>note.includes("BUKAN ruang fizikal")));
+});
+test("Android browser in desktop-site mode is still reported as Android",async()=>{
+ const diag={exports:{}};
+ new Function("module","window","setTimeout","clearTimeout",diagSource)(diag,undefined,setTimeout,clearTimeout);
+ const result=await diag.exports.inspect({
+  userAgent:"Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/130",
+  userAgentData:{mobile:false,platform:"Android"},
+  storage:{estimate:async()=>({quota:5*1024**3,usage:0})},
+  gpu:{requestAdapter:async()=>({info:{description:"GPU Android"},features:new Set(),limits:{maxBufferSize:268435456}})}
+ },{secure:true,minimumStorageBytes:3*1024**3});
+ assert.equal(result.platform.os,"Android");
+ assert.equal(result.mobile,true);
+ assert.equal(result.gpu.accessible,true);
 });
 test("unknown device metadata stays unknown, not labeled as weak hardware",async()=>{
  const diag={exports:{}};
