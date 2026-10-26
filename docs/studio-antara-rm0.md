@@ -1,34 +1,45 @@
-# Studio Antara: kelompok RM0 dan Imej AI BETA TEST
+# Studio Antara RM0 — Pembetulan keselamatan muat turun dan Imej AI BETA TEST
 
-Studio berada di studio-antara.html, dipaut dari Bilik Antara. Novel tidak diubah.
+**26 Oktober 2026.** Dua halaman ringan:
 
-## Kelompok pertama
-- E-mel: draf manual atau bantuan Gemini tier percuma; salin, .eml, atau buka aplikasi e-mel dengan mailto. Tiada penghantaran automatik.
-- Dokumen: laporan, resume, surat, proposal dan nota. Pratonton, eksport HTML dan DOCX sebenar melalui docx.js yang dimuat apabila pengguna menekan eksport.
-- PDF: fungsi cetak pelayar dengan gaya A4; pengguna memilih 'Save as PDF / Simpan sebagai PDF'. Tiada perkhidmatan PDF berbayar.
-- Jadual: CSV dengan quoted fields, pratonton dan eksport CSV/JSON. Pratonton maksimum 1,000 baris; fail eksport masih mengandungi semua data.
-- Graf: graf bar/garisan SVG dan PNG daripada data CSV, maksimum 100 rekod digraf untuk keterbacaan.
-- Poster: 3 format dan 3 tema tipografi Canvas, eksport PNG. Poster bukan imej yang dijana oleh model AI.
-- Butang Studio pada jawapan AI memindahkan teks ke draf melalui sessionStorage tanpa memasukkannya ke URL.
+- `studio-antara.html`: e-mel serta PDF/Word sahaja. Fungsi jadual, graf dan poster telah **dibuang** daripada antaramuka dan skrip utama.
+- `studio-imej-beta.html`: eksperimen imej AI **BETA TEST** dalam halaman berasingan. Tiada SDK atau muat turun model dipasang di halaman Studio biasa.
 
-## Kelompok kedua: Imej AI BETA TEST
-- Label BETA TEST jelas pada tab, notis, butang dan status output.
-- Model imej dimuat hanya selepas pengguna menanda persetujuan dan menekan Muat model.
-- Semak HTTPS, WebGPU dan Worker; jika gagal, beritahu keadaan sebenar tanpa imej palsu.
-- Runtime web-txt2img versi 0.3.1 (MIT) dimuat dari CDN selepas persetujuan; model SD-Turbo menggunakan GPU peranti.
-- Penjanaan sebenar menghasilkan Blob PNG untuk pengguna simpan. Tiada API imej berbayar.
-- Muat turun model mungkin beberapa gigabait, dan WebGPU/Android tidak semestinya serasi.
-- Hanya tiada kuota panggilan API imej apabila pemprosesan setempat berjaya. RAM, GPU, storan, data rangkaian dan elektrik tetap terhad.
-- Perpustakaan/model dari sumber luar mungkin memerlukan sambungan CDN. Jangan hantar data sulit atau andaikan pemprosesan setempat bermaksud tiada sebarang hubungan rangkaian semasa pemuatan.
-- Integrasi SD-Turbo belum lulus ujian produksi GPU/Android sebenar. BETA TEST bermaksud percubaan, bukannya fungsi dijamin.
+## Studio utama
 
-## Ujian produksi
-1. Buka Studio dari Bilik Antara, eksport jawapan AI ke Studio dan sahkan draf dipindahkan.
-2. Cipta .eml dan buka aplikasi e-mel; pastikan tiada e-mel dihantar automatik.
-3. Cetak surat sebagai PDF A4 melalui pelayar. Buka DOCX yang dieksport.
-4. Uji CSV termasuk petikan berganda, graf SVG/PNG dan poster PNG pelbagai format.
-5. Uji Android tanpa WebGPU dan desktop dengan WebGPU. Pastikan model tidak dimuat sebelum persetujuan.
-6. Dengan WebGPU sebenar, cuba muat SD-Turbo, jana imej dan eksport PNG.
-7. Jalankan test: node --test scripts/test-studio-antara.cjs
+E-mel mempunyai editor, draf Gemini (tertakluk kuota RM0), eksport .eml, salin dan buka aplikasi e-mel tanpa menghantar e-mel secara automatik. Dokumen mempunyai editor, draf Gemini, cetak sebagai PDF melalui pelayar, eksport HTML serta DOCX melalui pustaka sumber terbuka yang dimuat apabila pengguna meminta. Jawapan daripada Bilik Antara masih boleh dipindahkan ke Studio melalui butang Studio, menggunakan sessionStorage.
 
-Kos sifar hanya bermaksud tiada perkhidmatan API tambahan. Bantuan menulis melalui Gemini tetap terikat kuota percuma.
+## Imej AI BETA TEST
+
+**Mengapa diasingkan?** Brave Android memaparkan “Aw, Snap!” ketika model besar dimuat. Kejadian ini konsisten dengan risiko tab kehabisan memori tetapi screenshot sahaja bukan bukti mutlak punca crash. SD-Turbo memerlukan beberapa fail ONNX sekitar **2.34 GiB** untuk dimuat dan kemudian disediakan pada GPU. Pemindahan model ke Cache Storage kini dipisahkan daripada inisialisasi runtime GPU.
+
+Peringkat:
+1. Semak jenis peranti, WebGPU API, RAM yang didedahkan pelayar dan anggaran kuota storan. Tiada SDK besar dimuat ketika halaman dibuka.
+2. Dapatkan persetujuan sebelum muat turun 2.34 GiB. Butang muat turun biasa menggunakan `fetch` dan `Cache.put` untuk menyimpan setiap fail lengkap dalam Cache Storage tanpa `arrayBuffer()` yang memperuntuk keseluruhan fail pada JavaScript.
+3. Pilihan **Background Fetch** sebenar dengan service worker hanya diaktifkan jika API pelayar menyokongnya. Jika tidak, jangan berjanji boleh terus memuat turun selepas tab ditutup.
+4. **Sambung semula** bermaksud guna semula komponen model yang sudah lengkap disimpan. Komponen yang terputus mungkin dimuat turun sekali lagi; tiada sokongan sambung pada aras bait yang dijanjikan.
+5. Selepas tiga fail model selesai, pengguna desktop WebGPU yang layak boleh cuba mengaktifkan model dan menjana imej 512 × 512, lalu menyimpan PNG.
+
+**Perlindungan Android:** muat turun biasa dan pengaktifan GPU berat disekat pada Android/telefon. Background Fetch boleh ditawarkan jika API sebenar wujud dan kuota storan memadai, tetapi inferens berat tetap disekat. Pengguna diberitahu desktop lebih sesuai, bukan diminta memuat fail besar yang hampir pasti menumbangkan tab.
+
+**Keselamatan dan privasi:** tiada API penjana imej berbayar; model/pustaka dimuat daripada sumber luar selepas persetujuan. Pengurusan cache hanya menyentuh tiga URL ONNX SD-Turbo dalam cache `web-txt2img-v1`, tanpa memadam data laman lain. Muat turun latar boleh dihentikan dan persetujuan boleh ditarik balik. Muat turun dan memori adalah perbelanjaan data/storan/perkakasan peranti pengguna, bukan kapasiti tanpa had.
+
+## Fail terlibat
+
+- `studio-antara.html`, `studio-antara.js`, `studio-antara.css`
+- `studio-imej-beta.html`, `studio-imej-beta.css`, `studio-imej-beta.js`
+- `studio-imej-config.js` (manifes URL model tepat), `studio-imej-sw.js` (Background Fetch sahaja)
+- `scripts/test-studio-antara.cjs`
+- Pautan Bilik Antara, AI backend dan sitemap dikemaskini.
+
+## Ujian selepas Netlify deploy
+
+1. Brave Android: masuk Studio tanpa crash; hanya E-mel dan PDF/Word, pautan Imej AI BETA TEST.
+2. Brave Android: buka halaman imej, perhatikan status peranti dan bahawa muat turun biasa/GPU **disekat**. Jika Background Fetch tersedia, ia tetap perlu persetujuan dan storan cukup.
+3. Desktop: uji dialog persetujuan, pemeriksaan storan, Cache Storage, muat turun satu fail, muat turun semula dan padam tiga fail model.
+4. Pelayar yang menyokong Background Fetch: muat turun berjaya melalui service worker, buka semula halaman dan semak cache. Jika API tiada, butang muat turun latar tidak aktif.
+5. Desktop WebGPU dan memori mencukupi: uji pengaktifan dan jana imej sebenar. Runtime pihak ketiga mungkin masih gagal.
+6. Uji e-mel, cetak PDF serta eksport DOCX; pastikan fungsi lain kekal lancar.
+7. Jalankan `node --test scripts/test-studio-antara.cjs` dan regresi Bilik Antara.
+
+**Status pengesahan:** pengujian kod/mock membuktikan aliran kawalan setakat yang diuji. Ia **tidak** membuktikan peranti Brave atau GPU sebenar berjaya menjana imej atau Background Fetch disokong pada peranti pengguna. Label **BETA TEST** mesti kekal sehingga ujian lapangan lulus.
