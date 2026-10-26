@@ -65,3 +65,7 @@
  .mobile-primary-actions>button{flex:1 1 100%}
  .model-actions>button{flex:1 1 100%}
 }
+
+/* Keep even an opened technical report from consuming a whole phone screen. */
+.mobile-diagnostic .device-details{max-height:220px;overflow-y:auto;overscroll-behavior:contain;padding-right:5px}
+.mobile-diagnostic:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
