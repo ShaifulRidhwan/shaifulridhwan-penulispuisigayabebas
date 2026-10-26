@@ -64,7 +64,7 @@ function controlRow(...nodes){const row=make("div",undefined,"ba-row");row.appen
 function persistArchive(){
  if(!api.remember())return false;
  archive=archive.filter(x=>x&&typeof x.id==="string"&&Array.isArray(x.history))
-   .sort((a,b)=>(Number(b.pinned)-Number(a.pinned))||(b.at-a.at)).slice(0,15);
+   .sort((a,b)=>(Number(b.pinned)-Number(a.pinned))||(b.at-a.at));
  return write(KEYS.archive,archive);
 }
 function snapshotCurrent(){
@@ -114,7 +114,7 @@ function sessionText(history){
 }
 function renderSessions(){
  section("Sejarah perbualan");
- paragraph("Sesi disimpan pada peranti ini sahaja apabila 'Simpan sesi pada peranti ini' diaktifkan. Maksimum 15 sesi.");
+ paragraph("Sesi disimpan pada peranti ini sahaja apabila 'Simpan sesi pada peranti ini' diaktifkan. Tiada had bilangan sesi yang ditetapkan aplikasi; tertakluk pada ruang storan pelayar.");
  controlRow(button("+ Sesi baharu",()=>beginSession(null)),button("Eksport sesi ini",()=>{
   download("bilik-antara-sesi.md",sessionText(api.snapshot().history),"text/markdown;charset=utf-8");
  }));
@@ -149,12 +149,12 @@ function renderMemory(){
  paragraph("Memori ini berbeza daripada sejarah sesi. Hanya perkara yang kau tulis dan izinkan akan dihantar sebagai konteks kepada Gemini. Tidak menyimpan identiti atau butiran peribadi secara automatik.");
  const toggle=make("input");toggle.type="checkbox";toggle.checked=!!memory.enabled;
  const label=make("label"," Aktifkan memori");label.prepend(toggle);content.appendChild(label);
- const field=make("textarea");field.className="ba-editor";field.rows=8;field.maxLength=1200;
+ const field=make("textarea");field.className="ba-editor";field.rows=8;field.maxLength=8000;
  field.value=typeof memory.text==="string"?memory.text:"";
  field.placeholder="Contoh: Aku suka Bahasa Melayu santai, jawapan ringkas, dan sedang membina laman web…";
  content.appendChild(field);
  controlRow(button("Simpan memori",()=>{
-  memory={enabled:toggle.checked,text:field.value.trim().slice(0,1200)};
+  memory={enabled:toggle.checked,text:field.value.trim().slice(0,8000)};
   write(KEYS.memory,memory);notice("Pilihan memori disimpan pada peranti.");render();
  }),button("Padam memori",()=>{
   if(!confirm("Padam semua memori pilihan di peranti ini?"))return;
@@ -171,7 +171,7 @@ function renderWorkspace(){
  content.append(name,field);
  controlRow(
   button("Simpan draf",()=>{
-   workspace={title:name.value.slice(0,100),content:field.value.slice(0,50000),at:Date.now()};
+   workspace={title:name.value.slice(0,100),content:field.value,at:Date.now()};
    if(api.remember())write(KEYS.workspace,workspace);
    notice(api.remember()?"Draf disimpan pada peranti.":"Draf dalam ingatan tab sahaja. Hidupkan simpan sesi untuk kekalkan.");
   }),
@@ -263,7 +263,7 @@ if(voicePanel&&voiceTranscript&&api.addVoice){
  }
 }
 window.BilikAntaraSuite={
- memoryForPrompt:()=>memory.enabled&&typeof memory.text==="string"?memory.text.slice(0,1200):"",
+ memoryForPrompt:()=>memory.enabled&&typeof memory.text==="string"?memory.text.slice(0,8000):"",
  open,
  getLocalStats:()=>({...metrics})
 };
