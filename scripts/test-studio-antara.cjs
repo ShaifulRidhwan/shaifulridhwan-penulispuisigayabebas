@@ -83,7 +83,7 @@ test("Bilik Antara links Studio and sitemap includes both separate pages",()=>{
  assert.match(sitemap,/studio-antara\.html/);
  assert.match(sitemap,/studio-imej-beta\.html/);
 });
-function browser(ua,{background=false,desktopGpu=false}={}){
+function browser(ua,{background=false,desktopGpu=false,quota=10*1024**3,hideQuota=false}={}){
  const handlers=new Map(),nodes=new Map();
  function element(id){
   if(nodes.has(id))return nodes.get(id);
@@ -114,7 +114,7 @@ function browser(ua,{background=false,desktopGpu=false}={}){
  };
  const navigator={
   userAgent:ua,userAgentData:{mobile:/Android/i.test(ua)},deviceMemory:desktopGpu?16:4,hardwareConcurrency:8,
-  storage:{estimate:async()=>({quota:10*1024**3,usage:0}),persist:async()=>true},
+  storage:{estimate:async()=>(hideQuota?{}:{quota,usage:0}),persist:async()=>true},
   gpu:desktopGpu?{requestAdapter:async()=>({features:new Set(["shader-f16"])})}:undefined,
   serviceWorker:background?{register:async()=>({backgroundFetch:bg}),addEventListener(){}}:undefined
  };
@@ -174,17 +174,30 @@ test("unknown device metadata stays unknown, not labeled as weak hardware",async
  assert.equal(report.gpu.accessible,false);
  assert.equal(report.platform.os,diag.exports.UNKNOWN);
 });
-test("Android crash-safe mode refuses heavy foreground model download and GPU",async()=>{
+test("Android download is enabled with consent while GPU inference remains disabled",async()=>{
  const b=browser("Mozilla/5.0 (Linux; Android 16) AppleWebKit Brave");
  const status=await b.window.StudioImejBeta.deviceCheck();
  assert.ok(status.mobile);
  assert.ok(!status.gpuAllowed);
+ assert.equal(b.nodes.get("prefetchModel").disabled,true,"explicit consent remains mandatory");
  b.nodes.get("modelConsent").checked=true;
  b.handlers.get("modelConsent:change")();
- assert.equal(b.nodes.get("prefetchModel").disabled,true);
- assert.equal(b.nodes.get("activateModel").disabled,true);
+ assert.equal(b.nodes.get("prefetchModel").disabled,false,"Android must be allowed to download");
+ assert.equal(b.nodes.get("activateModel").disabled,true,"downloading must not activate GPU");
  await b.handlers.get("prefetchModel:click")();
- assert.equal(b.network,0,"mobile must not request huge model URLs");
+ assert.equal(b.network,3,"mobile may fetch model files by explicit request");
+ assert.equal(b.data.size,3);
+ assert.equal(b.nodes.get("activateModel").disabled,true,"GPU inference stays guarded on mobile");
+});
+test("unknown or low estimated browser quota does not disable opt-in download",async()=>{
+ for(const opts of [{hideQuota:true},{quota:300*1024**2}]){
+  const b=browser("Mozilla/5.0 (Linux; Android 16) AppleWebKit Brave",opts);
+  await b.window.StudioImejBeta.deviceCheck();
+  b.nodes.get("modelConsent").checked=true;
+  b.handlers.get("modelConsent:change")();
+  assert.equal(b.nodes.get("prefetchModel").disabled,false,"estimate is a warning, not a block");
+  assert.equal(b.nodes.get("activateModel").disabled,true);
+ }
 });
 test("Desktop prefetch caches whole model files and reuses them without repeating requests",async()=>{
  const b=browser("Mozilla/5.0 (X11; Linux x86_64) Chrome", {desktopGpu:true});
