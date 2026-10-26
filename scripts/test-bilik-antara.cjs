@@ -35,7 +35,7 @@ test("one automatic intelligence: no user mode required or honored",async()=>{
   assert.equal(latestPrimary().generationConfig.thinkingConfig.thinkingLevel,"low");
 });
 test("deep argument generates second-pass review, map, and uncertain truth audit",async()=>{
-  const r=await handler(event({question:"Mengapa paradoks kebebasan memilih perlu diuji?"},"deep"));
+  const r=await handler(event({question:"Kritik hujah aku: mengapa paradoks kebebasan memilih perlu diuji?"},"deep"));
   const obj=JSON.parse(r.body);
   assert.equal(r.statusCode,200);
   assert.equal(obj.aiMode,"automatic");
@@ -96,4 +96,47 @@ test("invalid origin, unsupported media, request size, and empty prompt rejected
   assert.equal((await handler(event({question:"Test",media:{mimeType:"application/x-msdownload",data:"QUJDRA=="}},"badfile"))).statusCode,400);
   assert.equal((await handler(event({question:"Test",media:{mimeType:"image/png",data:"A".repeat(3100000)}},"bigfile"))).statusCode,400);
   assert.equal((await handler(event({huge:"x".repeat(3350000)},"size"))).statusCode,413);
+});
+
+
+test("ordinary explanation stays conversational rather than forcing debate",async()=>{
+  const start=calls.length;
+  const response=await handler(event({question:"Kenapa langit berwarna biru?"},"explain-normal"));
+  assert.equal(response.statusCode,200);
+  const first=calls[start].body;
+  assert.match(first.systemInstruction.parts[0].text,/PENERANGAN:/);
+  assert.equal(first.generationConfig.thinkingConfig.thinkingLevel,"low");
+  assert.equal(first.generationConfig.maxOutputTokens,2500);
+  assert.equal(calls.length,start+1,"Ordinary factual explanation should not trigger a second API call");
+});
+test("hard technical tasks get adaptive output headroom and correctness review",async()=>{
+  const start=calls.length;
+  const reply=await handler(event({question:"Analisis mendalam tentang algoritma dan ralat kod Python ini: for i in range(4): print(i)"},"technical-deep"));
+  assert.equal(reply.statusCode,200);
+  const first=calls[start].body;
+  assert.equal(first.generationConfig.thinkingConfig.thinkingLevel,"high");
+  assert.equal(first.generationConfig.maxOutputTokens,10000);
+  assert.match(first.systemInstruction.parts[0].text,/PENYELESAIAN:/);
+  assert.equal(JSON.parse(reply.body).reviewApplied,true);
+});
+test("follow-up inherits previous research, but explicit new task resets tools",async()=>{
+  const prev=[{role:"user",content:"Apa berita teknologi terkini?"},{role:"assistant",content:"Ringkasan semasa."}];
+  await handler(event({question:"Teruskan",history:prev},"follow-up-research"));
+  assert.match(latestPrimary().systemInstruction.parts[0].text,/MAKLUMAT:/);
+  assert.ok(latestPrimary().tools.some(t=>t.google_search));
+  await handler(event({question:"Tulis sajak asli",history:prev},"new-task"));
+  assert.match(latestPrimary().systemInstruction.parts[0].text,/KREATIF:/);
+  assert.ok(!latestPrimary().tools||!latestPrimary().tools.some(t=>t.google_search));
+});
+test("tool offers are not falsely reported as tool executions",async()=>{
+  const response=await handler(event({question:"Kira 28 + 6"},"tool-fidelity"));
+  const parsed=JSON.parse(response.body);
+  assert.ok(parsed.toolsOffered.includes("code_execution"));
+  assert.deepEqual(parsed.toolsUsed,[],"Fake Gemini response did not actually execute any tool");
+});
+test("standalone URL doesn't waste search grounding quota",async()=>{
+  await handler(event({question:"Ringkaskan https://example.org/report"},"url-only"));
+  const used=latestPrimary().tools;
+  assert.ok(used.some(t=>t.url_context));
+  assert.ok(!used.some(t=>t.google_search));
 });
