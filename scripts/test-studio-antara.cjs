@@ -262,6 +262,8 @@ test("Download progress reports streamed bytes without allocating a complete mod
  assert.match(imgJs,/new TransformStream/);
  assert.match(imgJs,/response\.body\.pipeThrough\(transform\)/);
  assert.match(imgJs,/downloadedBytes/);
+ assert.match(imgJs,/downloadTotal:Math\.ceil\(C\.modelBytes\*1\.25\)/);
+ assert.match(imgHtml,/studio-imej-beta\.js\?v=8/);
  assert.doesNotMatch(imgJs,/response\.arrayBuffer\(\)/);
 });
 test("Background fetch is opt-in and mobile remains GPU-blocked even if available",async()=>{
