@@ -110,7 +110,9 @@ function intelligencePlan(intent){
 }
 function getTools(intent){
   const tools=[];
-  if(intent.search&&process.env.ENABLE_SEARCH_GROUNDING!=="false")tools.push({google_search:{}});
+  // Fail closed on the free Gemini 3.6 API tier: Google Search grounding can require billing.
+  // Deliberately not activated by any public/user request.
+  if(intent.search&&process.env.ENABLE_SEARCH_GROUNDING==="true"&&process.env.ALLOW_BILLABLE_SEARCH==="true")tools.push({google_search:{}});
   if(intent.calculate&&process.env.ENABLE_CODE_EXECUTION!=="false")tools.push({code_execution:{}});
   if(intent.hasLink&&process.env.ENABLE_URL_CONTEXT!=="false")tools.push({url_context:{}});
   return tools;
