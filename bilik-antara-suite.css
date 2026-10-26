@@ -1,0 +1,38 @@
+/* Bilik Antara suite: light-weight glass UI, visually subordinate to the main chat. */
+.ba-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:9px 13px 5px;z-index:2;position:relative}
+.ba-button,.ba-tab,.ba-mini,.ba-close,.ba-tiny,.ba-session-title{font:inherit;cursor:pointer;color:inherit;background:transparent;border:1px solid rgba(185,175,155,.32);border-radius:9px;padding:8px 12px;transition:background .2s ease,border-color .2s ease}
+.ba-tab{font-size:12px;letter-spacing:.015em;padding:7px 12px;border-radius:20px;backdrop-filter:blur(8px);background:rgba(80,77,82,.12)}
+.ba-tab:hover,.ba-button:hover,.ba-tiny:hover,.ba-mini:hover{background:rgba(173,159,143,.18);border-color:rgba(210,194,165,.55)}
+.ba-drawer[hidden]{display:none!important}
+.ba-drawer{position:fixed;inset:0;z-index:1500;display:flex;justify-content:flex-end;isolation:isolate}
+.ba-backdrop{position:absolute;inset:0;background:rgba(3,4,9,.72);border:0;cursor:pointer}
+.ba-sheet{position:relative;z-index:1;width:min(460px,100vw);height:100%;height:100dvh;overflow:hidden;background:linear-gradient(153deg,#171921,#0b0c11 70%);border-left:1px solid rgba(218,196,168,.24);box-shadow:-12px 0 48px rgba(0,0,0,.45);display:flex;flex-direction:column;color:#eae2d5}
+.ba-drawer-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 20px;border-bottom:1px solid rgba(224,206,175,.22);font-size:16px}
+.ba-close{font-size:16px;padding:4px 9px}
+.ba-content{padding:20px;overflow-y:auto;flex:1;overscroll-behavior:contain}
+.ba-h3{font-size:17px;margin:0 0 10px;font-weight:600;letter-spacing:.015em}
+.ba-hint{font-size:12px;line-height:1.65;opacity:.72;margin:9px 0 16px}
+.ba-content label{display:flex;align-items:center;gap:8px;margin:12px 0;font-size:14px}
+.ba-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+.ba-row .ba-button{padding:9px 12px;font-size:12px}
+.ba-input,.ba-editor{width:100%;box-sizing:border-box;color:#e9e4dc;font:inherit;border:1px solid rgba(217,197,169,.29);border-radius:11px;background:rgba(255,255,255,.045);outline:none;padding:11px 12px;margin:8px 0}
+.ba-input:focus,.ba-editor:focus{border-color:rgba(234,204,155,.7)}
+.ba-editor{min-height:130px;resize:vertical;font-size:13px;line-height:1.6}
+.ba-editor--large{min-height:330px}
+.ba-list{display:grid;gap:9px;margin:13px 0}
+.ba-session{display:grid;gap:4px;padding:10px;border:1px solid rgba(218,196,168,.18);border-radius:12px;background:rgba(255,255,255,.025)}
+.ba-session-title{text-align:left;border:0;padding:3px 0;font-weight:600;line-height:1.4}
+.ba-tiny{font-size:11px;padding:5px 8px}
+.ba-metric{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(217,199,171,.17);padding:13px 1px;gap:12px;font-size:13px}
+.ba-metric strong{font-variant-numeric:tabular-nums}
+.ba-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:13px;padding-top:11px;border-top:1px solid rgba(193,180,161,.18)}
+.ba-mini{padding:5px 8px;font-size:11px;border-radius:16px;opacity:.8}
+.ba-mini:hover{opacity:1}
+.ba-notification{font-size:12px;padding:0 15px;color:#e6c99e;min-height:0}
+.ba-notification:empty{display:none}
+html[data-theme="light"] .ba-sheet{background:linear-gradient(160deg,#f6f0e5,#e2d9c9);color:#332a21}
+html[data-theme="light"] .ba-input,html[data-theme="light"] .ba-editor{color:#2b2621;background:rgba(255,255,255,.3);border-color:rgba(69,55,43,.25)}
+html[data-theme="light"] .ba-session{background:rgba(255,255,255,.22)}
+html[data-theme="light"] .ba-backdrop{background:rgba(23,19,16,.48)}
+@media(max-width:760px){.ba-toolbar{gap:5px;padding:8px 10px 3px}.ba-tab{padding:6px 9px;font-size:11px}.ba-sheet{width:min(430px,100vw)}.ba-content{padding:16px}.ba-actions{gap:5px}.ba-mini{font-size:10px;padding:5px 7px}}
+@media(prefers-reduced-motion:reduce){.ba-button,.ba-tab,.ba-mini,.ba-close,.ba-tiny{transition:none}}
