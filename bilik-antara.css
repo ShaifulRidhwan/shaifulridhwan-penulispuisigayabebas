@@ -2190,3 +2190,13 @@ html[data-theme="light"] .voice-action,html[data-theme="light"]
   .conversation-head .settings>summary{width:26px;height:26px}
   .voice-panel{top:38px;height:min(300px,calc(100% - 120px))}
 }
+
+/* Audit Chromium: accessible labels and touch-sized controls on mobile */
+@media(max-width:760px){
+ .composer-hint,.starter,.outline-btn,.connection-info,
+ .connection-info button,.identity .eyebrow,
+ .conversation-head .connection,.conversation-head .voice-action,
+ .brand-name span:first-child,.brand-name span:last-child,
+ .message.ai .byline,#thoughtItems li{font-size:12px}
+ .conversation-head .voice-action,.starter{min-height:40px}
+}
