@@ -65,7 +65,7 @@ exports.handler=async(event)=>{
       const detail=String(json&&json.error&&json.error.message||"").toLowerCase();
       const message=response.status===429?"Kuota Voice Live dah penuh buat sementara.":
         response.status===401||response.status===403?"Projek ini belum dibenarkan menggunakan Gemini Live.":
-        response.status===400?"Google menolak tetapan Voice Live. Tiada token tanpa sekatan akan dikeluarkan.":
+        response.status===400?"Tetapan Voice Live tidak disokong atau ditolak Google. Token tanpa sekatan tidak akan dikeluarkan.":
         /billing|payment/.test(detail)?"Gemini Live memerlukan bil atau akses projek yang sesuai.":
         /not found|model/.test(detail)?"Model Gemini Live tidak tersedia untuk projek ini.":
         /not supported|not available|permission/.test(detail)?"Gemini Live tidak disokong oleh kunci API projek ini.":
