@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="studio-imej-beta.css?v=1">
 <script src="studio-imej-config.js?v=1" defer></script>
 <script src="studio-device-diagnostics.js?v=1" defer></script>
-<script src="studio-imej-beta.js?v=3" defer></script>
+<script src="studio-imej-beta.js?v=4" defer></script>
 </head>
 <body>
 <div class="site">
@@ -35,11 +35,11 @@
 <p id="deviceStatus" class="status" role="status" aria-live="polite">Pemeriksaan belum dijalankan.</p>
 <div class="actions"><button id="checkDevice" class="primary" type="button">Periksa keupayaan sebenar</button><button id="copyDiagnostic" type="button" disabled>Salin laporan</button></div>
 <div id="deviceDetails" class="device-details" aria-live="polite"></div>
-<p class="hint">Bacaan RAM, storan dan had GPU boleh disekat atau dianggarkan oleh pelayar. Keputusan membezakan WebGPU yang dikesan daripada sekatan keselamatan BETA. Ini bukan ujian prestasi atau pengesahan model telefon sebenar.</p>
+<p class="hint">Bacaan RAM, storan dan had GPU boleh disekat atau dianggarkan oleh pelayar. <strong>Keputusan diagnostik atau RAM yang tidak diketahui tidak mengunci butang muat turun.</strong> Penjanaan imej pula mempunyai pemeriksaan GPU tersendiri.</p>
 
 <hr class="soft-rule">
 <h2>02 / Muat turun model</h2>
-<p class="hint">Muat turun fail model secara berasingan daripada proses memulakan GPU. Muat turun hanya berlaku selepas kau bersetuju. Fail yang selesai boleh digunakan semula daripada cache, selagi pelayar tidak memadamnya.</p>
+<p class="hint">Muat turun kini boleh dicuba di Android atau desktop selepas persetujuan, tanpa perlu menunggu keputusan GPU. Fail model disimpan ke cache tanpa mengaktifkan GPU. <strong>Ini muat turun besar sekitar 2.34 GiB yang masih boleh gagal atau menyebabkan tab kehabisan memori.</strong> Kekalkan tab terbuka untuk muat turun biasa.</p>
 <label class="consent"><input id="modelConsent" type="checkbox"> Aku faham muat turun kira-kira 2.34 GiB menggunakan data internet dan ruang storan peranti. Ia boleh gagal, mengambil masa panjang atau dipadam oleh pelayar.</label>
 <div class="actions">
 <button id="checkCache" type="button">Semak cache</button>
