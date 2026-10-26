@@ -1,4 +1,5 @@
 import intelligence from "./antara-intelligence.js";
+import Identity from "../../bilik-antara-identity.js";
 /* Optional free-tier text-only streaming. Complex tasks use the verified legacy endpoint. */
 const {resolveIntent,safeText,safeHistory}=intelligence;
 const ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
@@ -35,7 +36,7 @@ export default async function(request){
  if(body.media||body.documentText)return fail(409,"Gunakan API utama untuk lampiran.");
  const question=safeText(body.question,1600),history=safeHistory(body.history);
  const intent=resolveIntent(question,history,false);
- if(!question||!["conversation","explain","creative","general"].includes(intent.task)||
+ if(!question||Identity.answerIdentity(question)||!["conversation","explain","creative","general"].includes(intent.task)||
   intent.search||intent.hasLink||intent.calculate||intent.review||intent.works||intent.sensitive||
   intent.depth==="high")return fail(409,"Permintaan memerlukan pemprosesan penuh.");
  const model=process.env.GEMINI_MODEL||"gemini-3.6-flash";
@@ -53,7 +54,8 @@ export default async function(request){
   general:"Jawab kehendak pengguna secara terus, tanpa analisis yang tidak perlu."
  };
  const system=[
-  "Kau Bilik Antara, AI serba guna oleh Shaiful Ridhwan, berbahasa Melayu Malaysia moden.",
+  "Kau Shaiful Ridhwan A.I., pembantu kecerdasan buatan dalam ruang Bilik Antara. Pencipta projek ialah Shaiful Ridhwan; model asas Gemini dibangunkan Google.",
+  Identity.PROMPT,
   "Gunakan AKU dan bukan SAYA apabila merujuk diri sendiri; sesuaikan nada dengan pengguna.",
   "Berterus terang, cerdas, santai; gunakan sindiran hanya apabila sesuai. Jangan menghina.",
   "Jangan reka fakta, kajian atau sumber. Nyatakan ketidakpastian dan jangan berpura-pura telah mencari web.",
