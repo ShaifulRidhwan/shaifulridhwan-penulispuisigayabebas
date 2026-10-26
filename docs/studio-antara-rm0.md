@@ -9,6 +9,15 @@
 
 E-mel mempunyai editor, draf Gemini (tertakluk kuota RM0), eksport .eml, salin dan buka aplikasi e-mel tanpa menghantar e-mel secara automatik. Dokumen mempunyai editor, draf Gemini, cetak sebagai PDF melalui pelayar, eksport HTML serta DOCX melalui pustaka sumber terbuka yang dimuat apabila pengguna meminta. Jawapan daripada Bilik Antara masih boleh dipindahkan ke Studio melalui butang Studio, menggunakan sessionStorage.
 
+## Muat turun latar: sokongan sebenar, bukan janji umum
+
+- Background Fetch API ialah ciri pelayar eksperimen dan tidak tersedia pada Safari/iOS; Brave Android boleh berbeza mengikut versi/polisi. Jangan anggap sokongan hanya daripada nama pelayar.
+- Antaramuka kini **menyembunyikan** butang muat turun latar apabila `ServiceWorkerRegistration.backgroundFetch` tidak tersedia. Status memberitahu pengguna supaya menggunakan **Muat turun / sambung** dengan tab kekal terbuka.
+- Jika API ditawarkan tetapi operasi ditolak, halaman memaparkan ralat sebenar dan menerangkan pilihan muat turun dalam tab. Aplikasi tidak berpura-pura muat turun berjaya.
+- Muat turun dalam tab menggunakan `fetch` dan `Cache.put` dengan pemantauan strim menggunakan `TransformStream`, menunjukkan kemajuan MB bagi **fail semasa** apabila data strim tersedia. Tidak menggunakan `arrayBuffer()` untuk membaca keseluruhan model ke memori.
+- Jika tab ditutup atau sistem menggantung aplikasi, muat turun biasa boleh berhenti. Sambung semula hanya bermaksud melangkau **fail lengkap** yang disimpan dalam cache; muat turun bait separa belum disokong.
+- Background Fetch yang tersedia masih boleh gagal pada model 2.34 GiB, had storan, URL luaran atau kuasa pengurusan latar pelayar. Tiada kaedah web percuma yang boleh menjamin muat turun OS-level dengan aplikasi ditutup pada setiap Android dan iOS.
+
 ## Imej AI BETA TEST
 
 **Mengapa diasingkan?** Brave Android memaparkan “Aw, Snap!” ketika model besar dimuat. Kejadian ini konsisten dengan risiko tab kehabisan memori tetapi screenshot sahaja bukan bukti mutlak punca crash. SD-Turbo memerlukan beberapa fail ONNX sekitar **2.34 GiB** untuk dimuat dan kemudian disediakan pada GPU. Pemindahan model ke Cache Storage kini dipisahkan daripada inisialisasi runtime GPU.
