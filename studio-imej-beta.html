@@ -1,80 +1,83 @@
 <!doctype html>
 <html lang="ms" data-theme="dark">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#080b13">
-<meta name="description" content="Imej AI BETA TEST. Cuba jana imej melalui GPU peranti sendiri dengan pemeriksaan keserasian, cache model dan pilihan Background Fetch apabila disokong.">
-<title>Imej AI | BETA TEST · Studio Antara</title>
+<meta name="description" content="Studio Antara Imej AI BETA TEST, diutamakan untuk Android dan iOS dengan WebGPU, prompt mudah, cache model dan diagnostik ringkas.">
+<title>Imej AI · BETA TEST | Studio Antara</title>
 <link rel="canonical" href="https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-imej-beta.html">
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="stylesheet" href="studio-antara.css?v=2">
-<link rel="stylesheet" href="studio-imej-beta.css?v=1">
+<link rel="stylesheet" href="studio-imej-beta.css?v=2">
 <script src="studio-imej-config.js?v=1" defer></script>
 <script src="studio-device-diagnostics.js?v=1" defer></script>
-<script src="studio-imej-beta.js?v=5" defer></script>
+<script src="studio-imej-beta.js?v=6" defer></script>
 </head>
-<body>
+<body class="mobile-studio">
 <div class="site">
 <header class="topbar">
-<a class="brand" href="studio-antara.html">← STUDIO ANTARA</a>
-<span class="brand-sub">SHAIFUL RIDHWAN A.I. / MAKMAL IMEJ</span>
+<a class="brand" href="studio-antara.html">← STUDIO</a>
+<span class="brand-sub">SHAIFUL RIDHWAN A.I.</span>
 <a href="bilik-antara.html">BILIK ANTARA</a>
 </header>
 <main>
-<section class="intro">
-<p class="overline">STUDIO ANTARA · EKSPERIMEN GPU SETEMPAT</p>
-<h1>Imej AI <em>BETA TEST.</em></h1>
-<p>Eksperimen percuma tanpa API penjana imej berbayar. Muat turun model, simpan komponen lengkap dalam cache dan jana imej 512 × 512 apabila peranti benar-benar sesuai. <strong>WebGPU boleh dikesan pada Android, tetapi inferens berat masih dikawal untuk mengurangkan risiko tab crash.</strong></p>
+<section class="mobile-intro">
+<div class="intro-eyebrow">MAKMAL IMEJ · ANDROID / iOS</div>
+<div class="mobile-heading"><h1>Jana imej AI</h1><span class="beta">BETA TEST</span></div>
+<p>Eksperimen model AI pada peranti sendiri. WebGPU dan storan yang besar diperlukan. Tiada caj API imej, tetapi bukan semua telefon mampu menjalankan model.</p>
 </section>
-<div class="beta-alert" role="note"><strong>BETA TEST · BUKAN JAMINAN SERASI</strong>
-<p>Masalah “Aw, Snap!” pada Brave Android menunjukkan tab pelayar boleh crash ketika memproses model berat. Fail model SD-Turbo sekitar <strong>2.34 GiB</strong> dan proses GPU mungkin menggunakan lebih banyak RAM. Muat turun sahaja tidak bermaksud peranti mampu menjana imej.</p>
-</div>
-<div class="work-area">
-<section class="edit card" aria-label="Pengurusan model dan penjana imej">
-<div class="panel-head"><h2>01 / Periksa peranti</h2><span class="meta">BETA TEST</span></div>
-<p id="deviceStatus" class="status" role="status" aria-live="polite">Pemeriksaan belum dijalankan.</p>
-<div class="actions"><button id="checkDevice" class="primary" type="button">Periksa keupayaan sebenar</button><button id="copyDiagnostic" type="button" disabled>Salin laporan</button></div>
-<div id="deviceDetails" class="device-details" aria-live="polite"></div>
-<p class="hint">Bacaan RAM, storan dan had GPU boleh disekat atau dianggarkan oleh pelayar. <strong>Keputusan diagnostik atau RAM yang tidak diketahui tidak mengunci butang muat turun.</strong> Penjanaan imej pula mempunyai pemeriksaan GPU tersendiri.</p>
-
-<hr class="soft-rule">
-<h2>02 / Muat turun model</h2>
-<p class="hint">Muat turun kini boleh dicuba di Android atau desktop selepas persetujuan, tanpa perlu menunggu keputusan GPU. Fail model disimpan ke cache tanpa mengaktifkan GPU. <strong>Ini muat turun besar sekitar 2.34 GiB yang masih boleh gagal atau menyebabkan tab kehabisan memori.</strong> Kekalkan tab terbuka untuk muat turun biasa.</p>
-<label class="consent"><input id="modelConsent" type="checkbox"> Aku faham muat turun kira-kira 2.34 GiB menggunakan data internet dan ruang storan peranti. Ia boleh gagal, mengambil masa panjang atau dipadam oleh pelayar.</label>
-<div class="actions">
-<button id="checkCache" type="button">Semak cache</button>
-<button id="prefetchModel" class="primary" type="button" disabled>Muat turun / sambung</button>
-<button id="backgroundModel" type="button" disabled>Muat turun latar (jika disokong)</button>
-<button id="cancelDownload" type="button" disabled>Batal muat turun</button>
-<button id="clearModel" type="button" disabled>Padam cache model</button>
-</div>
-<p id="cacheStatus" class="status" role="status" aria-live="polite">Belum menyemak cache model.</p>
-<progress id="modelProgress" max="100" value="0" hidden></progress>
-<p id="modelProgressNote" class="hint" aria-live="polite"></p>
-<p class="hint"><strong>Latar sebenar:</strong> hanya apabila Background Fetch API disokong. Jika tidak, muat turun biasa memerlukan tab kekal terbuka. <strong>Sambung semula</strong> menggunakan fail yang sudah siap disimpan; bahagian fail yang terputus mungkin dimuat semula dari awal.</p>
-
-<hr class="soft-rule">
-<h2>03 / Jana imej</h2>
-<label>Prompt imej<textarea id="imagePrompt" rows="5" maxlength="700" placeholder="Futuristic city library, atmospheric cinematography, soft chiaroscuro lighting..."></textarea></label>
-<label>Seed (pilihan)<input id="imageSeed" type="number" min="0" max="2147483647" value="42"></label>
-<div class="actions">
-<button id="activateModel" type="button" disabled>Aktifkan model pada GPU</button>
+<div class="mobile-studio-layout">
+<section class="mobile-generator card" aria-labelledby="generatorTitle">
+<div class="panel-head"><h2 id="generatorTitle">Cipta imej</h2><span class="meta">512 × 512</span></div>
+<label for="imagePrompt">Terangkan imej yang kau mahukan
+<textarea id="imagePrompt" rows="4" maxlength="700" placeholder="Contoh: Perpustakaan futuristik yang disinari cahaya senja, suasana sinematik..."></textarea></label>
+<details class="compact-options"><summary>Pengaturan tambahan</summary>
+<label for="imageSeed">Seed (pilihan)<input id="imageSeed" type="number" min="0" max="2147483647" value="42"></label>
+</details>
+<div class="mobile-primary-actions actions">
+<button id="activateModel" type="button" disabled>Aktifkan AI pada GPU</button>
 <button id="generateImage" class="primary" type="button" disabled>Jana imej · BETA TEST</button>
 <button id="stopImage" type="button" disabled>Henti</button>
-<button id="downloadImage" type="button" disabled>Simpan PNG</button>
 </div>
-<p id="gpuStatus" class="status" role="status" aria-live="polite">Model belum diaktifkan. Telefon Android disekat daripada inferens berat.</p>
-<p id="imageProgressNote" class="hint" aria-live="polite"></p>
+<p id="gpuStatus" class="status" role="status" aria-live="polite">Semak model dan GPU sebelum menjana imej.</p>
 <progress id="imageProgress" max="100" value="0" hidden></progress>
+<p id="imageProgressNote" class="hint" aria-live="polite"></p>
 </section>
-<aside class="preview card">
-<div class="panel-head"><h2>Hasil imej</h2><span class="beta">BETA TEST</span></div>
-<div id="previewPlaceholder" class="image-empty"><span>✦</span><p>Tiada imej dijana lagi. Model mesti selesai dimuat turun dan diaktifkan pada GPU desktop yang sesuai.</p></div>
-<div id="studioImageOutput" hidden><img id="generatedImage" alt="Imej AI hasil GPU peranti sendiri"><p class="hint">Imej SD-Turbo · 512 × 512 · BETA TEST. Simpan PNG untuk menyimpan hasil.</p></div>
-<p class="hint">Tiada hasil gambar contoh atau gambar palsu. Jika percubaan gagal, kesilapan akan dinyatakan dengan jelas.</p>
-</aside>
+<section class="mobile-result card" aria-labelledby="resultTitle">
+<div class="panel-head"><h2 id="resultTitle">Hasil</h2><button id="downloadImage" type="button" disabled>Simpan PNG</button></div>
+<div id="previewPlaceholder" class="image-empty"><span>✦</span><p>Imej sebenar akan muncul di sini selepas AI berjaya menjana hasil.</p></div>
+<div id="studioImageOutput" hidden><img id="generatedImage" alt="Imej yang benar-benar dijana oleh AI pada GPU peranti"><p class="hint">Hasil SD-Turbo · BETA TEST · 512 × 512</p></div>
+</section>
+<section class="mobile-model card" aria-label="Pengurusan model AI">
+<div class="panel-head"><h2>Sediakan model AI</h2><span class="beta">BETA TEST</span></div>
+<p class="compact-lead">Model SD-Turbo perlu dimuat turun sekali, sekitar <strong>2.34 GiB</strong>. Muat turun dan penjanaan ialah proses berasingan.</p>
+<label class="consent"><input id="modelConsent" type="checkbox"> Aku setuju menggunakan data internet dan storan peranti untuk memuat turun model besar ini.</label>
+<div class="actions model-actions">
+<button id="prefetchModel" class="primary" type="button" disabled>Muat turun / sambung</button>
+<button id="backgroundModel" type="button" disabled>Muat turun latar</button>
+<button id="cancelDownload" type="button" disabled>Batal</button>
+</div>
+<p id="cacheStatus" class="status" role="status" aria-live="polite">Menyemak model yang tersimpan...</p>
+<progress id="modelProgress" max="100" value="0" hidden></progress>
+<p id="modelProgressNote" class="hint" aria-live="polite"></p>
+<label class="consent mobile-risk-consent"><input id="mobileGpuConsent" type="checkbox"> <span><strong>Cuba penjanaan GPU pada telefon (BETA).</strong> Aku faham model besar ini mungkin membuat tab beku atau crash walaupun WebGPU dikesan.</span></label>
+<details class="compact-options"><summary>Cache model & bantuan muat turun</summary>
+<div class="actions"><button id="checkCache" type="button">Semak cache</button><button id="clearModel" type="button" disabled>Padam cache model</button></div>
+<p class="hint">Muat turun biasa memerlukan tab kekal terbuka. Background Fetch hanya berfungsi pada pelayar yang menyokongnya. Butang sambung menggunakan fail yang sudah lengkap, bukan menyambung setiap bait.</p>
+</details>
+</section>
+<details id="devicePanel" class="mobile-diagnostic card">
+<summary><span><strong>Maklumat peranti</strong><small>WebGPU, pelayar dan storan · pilihan</small></span><span class="device-chevron">⌄</span></summary>
+<div class="diagnostic-content">
+<p id="deviceStatus" class="status" role="status" aria-live="polite">Pemeriksaan ringkas sedang dijalankan.</p>
+<div class="actions"><button id="checkDevice" type="button">Periksa semula</button><button id="copyDiagnostic" type="button" disabled>Salin laporan</button></div>
+<div id="deviceDetails" class="device-details"></div>
+<p class="hint">RAM dan kuota laman ialah anggaran yang pelayar dedahkan. WebGPU adapter bukan jaminan penjanaan model berat akan berjaya.</p>
+</div>
+</details>
+<p class="mobile-footer-note">BETA TEST · Tiada imej contoh palsu. Jika peranti tidak mampu menjalankan model, sistem akan menerangkan kegagalan tanpa menjanjikan hasil.</p>
 </div>
 </main>
-<footer>STUDIO ANTARA · IMEJ AI BETA TEST · PROJEK SHAIFUL RIDHWAN</footer>
+<footer>STUDIO ANTARA · ANDROID / iOS FIRST · PROJEK SHAIFUL RIDHWAN</footer>
 </div>
 </body></html>
