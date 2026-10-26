@@ -18,9 +18,9 @@ Peringkat:
 2. Dapatkan persetujuan sebelum muat turun 2.34 GiB. Butang muat turun biasa menggunakan `fetch` dan `Cache.put` untuk menyimpan setiap fail lengkap dalam Cache Storage tanpa `arrayBuffer()` yang memperuntuk keseluruhan fail pada JavaScript.
 3. Pilihan **Background Fetch** sebenar dengan service worker hanya diaktifkan jika API pelayar menyokongnya. Jika tidak, jangan berjanji boleh terus memuat turun selepas tab ditutup.
 4. **Sambung semula** bermaksud guna semula komponen model yang sudah lengkap disimpan. Komponen yang terputus mungkin dimuat turun sekali lagi; tiada sokongan sambung pada aras bait yang dijanjikan.
-5. Selepas tiga fail model selesai, pengguna desktop WebGPU yang layak boleh cuba mengaktifkan model dan menjana imej 512 × 512, lalu menyimpan PNG.
+5. Selepas tiga fail model selesai, pengguna **Android, iOS atau desktop** yang mempunyai WebGPU boleh cuba mengaktifkan model dan menjana imej 512 × 512. Pada telefon, diperlukan **persetujuan tambahan khusus untuk risiko inferens berat**, serta Web Worker yang berfungsi. Tiada pemprosesan berat terus pada thread halaman mudah alih.
 
-**Android:** muat turun biasa model boleh dicuba pada telefon selepas persetujuan pengguna, walaupun anggaran kuota storan tidak diketahui atau rendah. Pelayar mungkin gagal menyimpan fail 2.34 GiB atau tab mungkin crash; ini dipaparkan sebagai risiko dan ralat sebenar. Cache menyimpan komponen lengkap untuk cubaan seterusnya. Background Fetch hanya muncul jika disokong pelayar. Pengaktifan GPU untuk inferens berat masih dikawal secara berasingan pada Android supaya muat turun tidak terus mencetuskan pemprosesan model.
+**Mobile-first (Android/iOS):** editor prompt dan pratonton kini di hadapan. Pengurus model berada selepas pratonton. Pemeriksaan teknikal dipindahkan ke panel <details> tertutup dengan ketinggian terkawal apabila dibuka; laporan penuh boleh disalin. Muat turun model boleh dicuba selepas persetujuan walaupun kuota storan tidak diketahui. Pengaktifan GPU **tidak lagi menghalang telefon semata-mata kerana ia mudah alih**. Jika WebGPU adapter tersedia dan model selesai dimuat, pengguna boleh memberi persetujuan risiko khusus untuk mencuba **Web Worker sahaja**. Pelayar boleh tetap kehabisan memori atau crash akibat SD-Turbo 2.34 GiB. Ini bukan model kecil yang dioptimumkan khas untuk telefon, dan belum diuji pada perkakasan sebenar. Background Fetch hanya muncul jika disokong.
 
 **Keselamatan dan privasi:** tiada API penjana imej berbayar; model/pustaka dimuat daripada sumber luar selepas persetujuan. Pengurusan cache hanya menyentuh tiga URL ONNX SD-Turbo dalam cache `web-txt2img-v1`, tanpa memadam data laman lain. Muat turun latar boleh dihentikan dan persetujuan boleh ditarik balik. Muat turun dan memori adalah perbelanjaan data/storan/perkakasan peranti pengguna, bukan kapasiti tanpa had.
 
@@ -35,11 +35,11 @@ Peringkat:
 ## Ujian selepas Netlify deploy
 
 1. Brave Android: masuk Studio tanpa crash; hanya E-mel dan PDF/Word, pautan Imej AI BETA TEST.
-2. Brave Android: buka halaman imej, perhatikan status peranti dan bahawa muat turun biasa/GPU **disekat**. Jika Background Fetch tersedia, ia tetap perlu persetujuan dan storan cukup.
+2. Android dan iOS: buka halaman imej. Prompt, butang jana dan hasil mesti kelihatan dahulu; diagnostik mesti tertutup. Muat turun biasa dibenarkan dengan persetujuan. Pengaktifan GPU memerlukan cache penuh, WebGPU adapter dan persetujuan khusus risiko. Jika Web Worker gagal, paparkan mesej bukannya memaksa inferens pada thread halaman.
 3. Desktop: uji dialog persetujuan, pemeriksaan storan, Cache Storage, muat turun satu fail, muat turun semula dan padam tiga fail model.
 4. Pelayar yang menyokong Background Fetch: muat turun berjaya melalui service worker, buka semula halaman dan semak cache. Jika API tiada, butang muat turun latar tidak aktif.
-5. Desktop WebGPU dan memori mencukupi: uji pengaktifan dan jana imej sebenar. Runtime pihak ketiga mungkin masih gagal.
+5. Android/iOS WebGPU yang sesuai dan desktop: uji pengaktifan serta satu imej sebenar apabila model sudah dicache. Runtime pihak ketiga dan penggunaan memori mungkin gagal; jangan anggap ujian simulasi membuktikan kompatibiliti.
 6. Uji e-mel, cetak PDF serta eksport DOCX; pastikan fungsi lain kekal lancar.
 7. Jalankan `node --test scripts/test-studio-antara.cjs` dan regresi Bilik Antara.
 
-**Status pengesahan:** pengujian kod/mock membuktikan aliran kawalan setakat yang diuji. Ia **tidak** membuktikan peranti Brave atau GPU sebenar berjaya menjana imej atau Background Fetch disokong pada peranti pengguna. Label **BETA TEST** mesti kekal sehingga ujian lapangan lulus.
+**Status pengesahan:** ujian kod/mock mengesahkan aliran kawalan, UI dan keizinan setakat yang diuji. Ia **tidak** membuktikan peranti Brave atau GPU sebenar berjaya menjana imej atau Background Fetch disokong pada peranti pengguna. Label **BETA TEST** mesti kekal sehingga ujian lapangan lulus.
