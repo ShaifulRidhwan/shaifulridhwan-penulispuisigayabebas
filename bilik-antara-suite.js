@@ -244,6 +244,23 @@ window.addEventListener("ba:answered",event=>{
 const observer=new MutationObserver(()=>{if(!api.active())quickActions();});
 observer.observe($("chat"),{childList:true});
 quickActions();
+const voicePanel=$("voicePanel"),voiceTranscript=$("voiceTranscript");
+if(voicePanel&&voiceTranscript&&api.addVoice){
+ const actions=voicePanel.querySelector(".voice-session-controls");
+ if(actions){
+  const add=button("Masukkan transkrip ke sembang",()=>{
+   const lines=[...voiceTranscript.querySelectorAll(".voice-line")].map(row=>{
+    const label=row.querySelector("strong")?.textContent||"";
+    const text=row.querySelector("span")?.textContent?.trim()||"";
+    return {role:label.includes("Kau")?"user":"assistant",content:text};
+   }).filter(m=>m.content);
+   if(!lines.length){notice("Transkrip suara masih kosong.");return;}
+   if(!confirm("Masukkan transkrip suara ke sejarah sembang? Jika simpan sesi diaktifkan, transkrip juga disimpan pada peranti."))return;
+   if(api.addVoice(lines))notice("Transkrip dimasukkan ke sembang. Sambungan teks dan suara kini ada konteks yang sama.");
+  },"ba-button");
+  actions.appendChild(add);
+ }
+}
 window.BilikAntaraSuite={
  memoryForPrompt:()=>memory.enabled&&typeof memory.text==="string"?memory.text.slice(0,1200):"",
  open,
