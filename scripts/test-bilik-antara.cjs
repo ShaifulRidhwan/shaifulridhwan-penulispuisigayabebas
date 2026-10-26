@@ -45,9 +45,9 @@ test("deep argument generates second-pass review, map, and uncertain truth audit
   assert.ok(obj.thoughtLedger.length);
   assert.equal(calls.at(-2).body.generationConfig.thinkingConfig.thinkingLevel,"high");
 });
-test("auto research, code and URL context without any selector",async()=>{
+test("free-mode research, code and URL context without any selector",async()=>{
   await handler(event({question:"Berita terkini kajian sains?"},"search"));
-  assert.ok(latestPrimary().tools.some(t=>t.google_search));
+  assert.ok(!latestPrimary().tools||!latestPrimary().tools.some(t=>t.google_search),"Paid search must be disabled in RM0 mode");
   await handler(event({question:"Kira 18 + 24"},"math"));
   assert.ok(latestPrimary().tools.some(t=>t.code_execution));
   await handler(event({question:"Baca https://example.com dan ulas kandungan"},"url"));
@@ -123,7 +123,7 @@ test("follow-up inherits previous research, but explicit new task resets tools",
   const prev=[{role:"user",content:"Apa berita teknologi terkini?"},{role:"assistant",content:"Ringkasan semasa."}];
   await handler(event({question:"Teruskan",history:prev},"follow-up-research"));
   assert.match(latestPrimary().systemInstruction.parts[0].text,/MAKLUMAT:/);
-  assert.ok(latestPrimary().tools.some(t=>t.google_search));
+  assert.ok(!latestPrimary().tools||!latestPrimary().tools.some(t=>t.google_search),"No paid search on follow-up");
   await handler(event({question:"Tulis sajak asli",history:prev},"new-task"));
   assert.match(latestPrimary().systemInstruction.parts[0].text,/KREATIF:/);
   assert.ok(!latestPrimary().tools||!latestPrimary().tools.some(t=>t.google_search));
@@ -139,4 +139,24 @@ test("standalone URL doesn't waste search grounding quota",async()=>{
   const used=latestPrimary().tools;
   assert.ok(used.some(t=>t.url_context));
   assert.ok(!used.some(t=>t.google_search));
+});
+
+test("multi-attachment request stays within combined budget",async()=>{
+ const a={name:"a.pdf",mimeType:"application/pdf",data:"QUJDRA=="};
+ const b={name:"b.png",mimeType:"image/png",data:"QUJDRA=="};
+ const response=await handler(event({question:"Bandingkan dua lampiran",media:[a,b]},"multi-media"));
+ assert.equal(response.statusCode,200);
+ const parts=latestPrimary().contents.at(-1).parts;
+ assert.equal(parts.length,3);
+ assert.equal(parts[1].inlineData.mimeType,"application/pdf");
+ assert.equal(parts[2].inlineData.mimeType,"image/png");
+ const overflow=await handler(event({question:"test",media:[a,b,a,b]},"too-many-media"));
+ assert.equal(overflow.statusCode,400);
+});
+test("opt-in memory is forwarded as untrusted context, not system instruction",async()=>{
+ const reply=await handler(event({question:"Terangkan sains",memoryNotes:"Aku suka jawapan santai."},"memory-context"));
+ assert.equal(reply.statusCode,200);
+ const req=latestPrimary();
+ assert.match(req.contents.at(-1).parts[0].text,/Aku suka jawapan santai/);
+ assert.ok(!req.systemInstruction.parts[0].text.includes("Aku suka jawapan santai."));
 });
