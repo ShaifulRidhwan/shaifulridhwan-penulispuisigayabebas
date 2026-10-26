@@ -174,6 +174,7 @@ async function foregroundDownload(){
  if(downloading||loading||generating||ready)return;
  if(!checked)deviceCheck().catch(()=>{});
  downloading=true;controller=new AbortController();flags();
+ let downloadError="";
  progress(NaN,"BETA TEST: cache sahaja tanpa GPU. "+(mobile?"Pada telefon, muat turun besar masih berisiko. ":"")+"Kekalkan tab terbuka.");
  await persistCache();
  try{
@@ -195,8 +196,14 @@ async function foregroundDownload(){
    progress(((i+1)/missing.length)*100,"Fail "+(i+1)+"/"+missing.length+" selesai. Fail lengkap disimpan untuk percubaan berikutnya.");
   }
   cacheMsg("Muat turun cache selesai. Semak fail model sebelum mengaktifkan GPU.");
- }catch(e){cacheMsg("Muat turun dihentikan: "+String(e.message||e).slice(0,150)+". Fail lengkap dalam cache boleh digunakan semula.");}
- finally{downloading=false;controller=null;ui.progress.hidden=true;await cacheCounts();flags();}
+ }catch(e){
+  downloadError="Muat turun gagal atau dibatalkan: "+String(e.message||e).slice(0,150);
+ }finally{
+  downloading=false;controller=null;ui.progress.hidden=true;
+  await cacheCounts();
+  if(downloadError)cacheMsg(downloadError+". "+completed+"/"+C.files.length+" fail lengkap telah disimpan. Cuba Muat turun / sambung semula.");
+  flags();
+ }
 }
 ui.prefetch.addEventListener("click",foregroundDownload);
 async function attachBackground(reg){
