@@ -43,3 +43,13 @@ test("Reader embedded lazily with navigation safeguards; script parses",()=>{
  assert.equal(executable.length,1);
  assert.doesNotThrow(()=>new (require("node:vm").Script)(executable[0][1]));
 });
+
+test("Illustration attributes remain valid after Base64 extraction",()=>{
+ const images=[...reader.matchAll(/<img\\b[^>]*>/g)].map(m=>m[0]);
+ assert.ok(images.length>=16,"Expected illustrated manuscript");
+ for(const img of images){
+  assert.doesNotMatch(img,/\\/\\s+(?:loading|decoding)=/,"Malformed image attribute ordering");
+  assert.match(img,/\\bloading="lazy"/,"Illustrations should load lazily");
+  assert.match(img,/\\bdecoding="async"/,"Illustrations should decode asynchronously");
+ }
+});
