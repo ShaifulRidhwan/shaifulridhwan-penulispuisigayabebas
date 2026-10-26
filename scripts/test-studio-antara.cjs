@@ -1,93 +1,153 @@
 "use strict";
-const {test}=require("node:test");
+const test=require("node:test");
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const html=fs.readFileSync("studio-antara.html","utf8");
-const css=fs.readFileSync("studio-antara.css","utf8");
-const js=fs.readFileSync("studio-antara.js","utf8");
-const image=fs.readFileSync("studio-imej-beta.js","utf8");
+const docJs=fs.readFileSync("studio-antara.js","utf8");
+const imgHtml=fs.readFileSync("studio-imej-beta.html","utf8");
+const imgJs=fs.readFileSync("studio-imej-beta.js","utf8");
+const manifest=fs.readFileSync("studio-imej-config.js","utf8");
+const worker=fs.readFileSync("studio-imej-sw.js","utf8");
 const chat=fs.readFileSync("bilik-antara.html","utf8");
 const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
+const sitemap=fs.readFileSync("sitemap.xml","utf8");
 
-test("Studio is linked from Bilik Antara and transferred drafts remain on same device",()=>{
+test("Studio has email and PDF/Word only; no heavy image runtime on ordinary page",()=>{
+ for(const word of ['data-tab="email"','data-tab="document"','id="emailBody"','id="docPdf"','id="docWord"'])
+  assert.ok(html.includes(word),word);
+ for(const old of ['data-tab="table"','data-tab="chart"','data-tab="poster"','data-tab="image"',
+ 'id="tableData"','id="chartData"','id="posterTitle"','studio-imej-beta.js'])
+  assert.ok(!html.includes(old),"Removed UI still in Studio: "+old);
+ assert.ok(!/createPoster|drawChart|parseCSV|navigator\.gpu/.test(docJs),"Heavy/retired script remains.");
+ assert.match(html,/href="studio-imej-beta\.html"/);
+ const opens=(html.match(/<section\b/g)||[]).length;
+ assert.equal(opens,(html.match(/<\/section>/g)||[]).length);
+});
+test("email/PDF/Word exports still operate without an extra paid image API",()=>{
+ for(const x of ['id="emailEml"','id="emailOpen"','id="docHtml"','id="docPdf"','id="docWord"'])
+  assert.match(html,new RegExp(x));
+ assert.match(docJs,/message\/rfc822/);
+ assert.match(docJs,/mailto:/);
+ assert.match(docJs,/window\.print\(\)/);
+ assert.match(docJs,/docx@9\.11\.0/);
+ assert.match(docJs,/fetch\("\/\.netlify\/functions\/bilik-antara"/);
+ assert.doesNotMatch(docJs,/web-txt2img|sd-turbo/);
+});
+test("BETA image has a separate page, explicit warning, consent and cache controls",()=>{
+ for(const id of ["checkDevice","deviceStatus","deviceDetails","modelConsent","checkCache",
+  "prefetchModel","backgroundModel","cancelDownload","clearModel","checkCache","activateModel",
+  "generateImage","downloadImage","modelProgress","gpuStatus"]){
+  assert.match(imgHtml,new RegExp('id="'+id+'"'),id);
+ }
+ assert.match(imgHtml,/BETA TEST/g);
+ assert.match(imgHtml,/Brave Android/);
+ assert.match(imgHtml,/2\.34 GiB/);
+ assert.match(imgHtml,/studio-imej-config\.js\?v=1/);
+ assert.ok(imgHtml.indexOf("studio-imej-config.js")<imgHtml.indexOf("studio-imej-beta.js"));
+ assert.match(imgJs,/mobile.*Android\|iPhone\|iPad\|iPod/);
+ assert.match(imgJs,/if\(mobile\)\{/);
+ assert.match(imgJs,/storageNeeded/);
+ assert.match(imgJs,/backgroundFetch\.fetch/);
+ assert.match(imgJs,/cache\.put\(url,response\)/);
+ assert.match(imgJs,/typeof sdk\?\.loadModel/);
+ assert.match(imgJs,/sdk\.loadModel/);
+});
+test("Background Fetch service worker is restricted to model files and doesn't intercept the site",()=>{
+ assert.match(worker,/backgroundfetchsuccess/);
+ assert.match(worker,/backgroundfetchfail/);
+ assert.match(worker,/backgroundfetchabort/);
+ assert.match(worker,/record\.responseReady/);
+ assert.match(worker,/cache\.put\(record\.request,response\)/);
+ assert.match(worker,/C\.isModelFile\(record\.request\.url\)/);
+ assert.doesNotMatch(worker,/addEventListener\("fetch"/);
+ const C=Function("let self={};let globalThis=self;"+manifest+";return self.StudioImejConfig")();
+ assert.equal(C.files.length,3);
+ assert.equal(C.cacheName,"web-txt2img-v1");
+ assert.ok(C.files.every(x=>x.startsWith("https://huggingface.co/schmuell/sd-turbo-ort-web/resolve/main/")));
+ assert.ok(C.modelBytes>2*1024*1024*1024);
+ assert.equal(C.isModelFile("https://example.com/secret"),false);
+});
+test("Bilik Antara links Studio and sitemap includes both separate pages",()=>{
  assert.match(chat,/href="studio-antara\.html"/);
  assert.match(suite,/bilik-antara-studio-transfer-v1/);
- assert.match(js,/sessionStorage\.getItem\("bilik-antara-studio-transfer-v1"\)/);
- assert.match(js,/sessionStorage\.removeItem\("bilik-antara-studio-transfer-v1"\)/);
+ assert.match(sitemap,/studio-antara\.html/);
+ assert.match(sitemap,/studio-imej-beta\.html/);
 });
-test("all first-group tools and exports exist as editable UI, no payment",()=>{
- for(const id of ["emailBody","emailSubject","emailTo","emailAI","emailEml","emailOpen",
-  "docTitle","docBody","docPdf","docWord","docHtml",
-  "tableData","tableCsv","tableJson","chartData","chartSvg","chartPng",
-  "posterTitle","posterBody","posterPng","posterSize"]){
-  assert.match(html,new RegExp('id="'+id+'"'),id);
+function browser(ua,{background=false,desktopGpu=false}={}){
+ const handlers=new Map(),nodes=new Map();
+ function element(id){
+  if(nodes.has(id))return nodes.get(id);
+  const obj={id,textContent:"",value:"",checked:false,hidden:false,disabled:true,children:[],style:{},
+   addEventListener(event,fn){handlers.set(id+":"+event,fn);},
+   replaceChildren(){this.children=[];},
+   append(...args){this.children.push(...args);},
+   appendChild(x){this.children.push(x);},
+   removeAttribute(){},setAttribute(){},classList:{add(){},remove(){},toggle(){}},
+   click(){const fn=handlers.get(id+":click");return fn&&fn();}};
+  nodes.set(id,obj);return obj;
  }
- assert.match(js,/window\.print\(\)/);
- assert.match(js,/docx@9\.11\.0\/\+esm/);
- assert.match(js,/message\/rfc822/);
- assert.match(js,/text\/csv/);
- assert.match(js,/image\/svg\+xml/);
- assert.match(js,/toBlob/);
- assert.match(css,/@media print/);
- assert.doesNotMatch(js,/apiKey\s*=|STRIPE|paymentIntent|paypal/i);
+ const doc={getElementById:element,createElement:tag=>element("anon-"+tag+"-"+Math.random())};
+ const C=Function("let self={};"+manifest+";return self.StudioImejConfig")();
+ const window={StudioImejConfig:C,isSecureContext:true,addEventListener(){},caches:true};
+ const data=new Map(),cache={
+  match:async url=>data.get(String(url))||null,
+  put:async(url,res)=>{data.set(String(url),res);},
+  delete:async url=>data.delete(String(url))
+ };
+ const caches={open:async()=>cache};
+ let network=0,backgroundCalls=0;
+ const bg={
+  async get(){return null;},
+  async fetch(){backgroundCalls++;return {result:"",downloadTotal:C.modelBytes,downloaded:0,addEventListener(){},abort:async()=>true};}
+ };
+ const navigator={
+  userAgent:ua,userAgentData:{mobile:/Android/i.test(ua)},deviceMemory:desktopGpu?16:4,hardwareConcurrency:8,
+  storage:{estimate:async()=>({quota:10*1024**3,usage:0}),persist:async()=>true},
+  gpu:desktopGpu?{requestAdapter:async()=>({features:new Set(["shader-f16"])})}:undefined,
+  serviceWorker:background?{register:async()=>({backgroundFetch:bg}),addEventListener(){}}:undefined
+ };
+ const fakeFetch=async(url)=>{
+  network++;
+  return {ok:true,status:200,type:"cors",headers:{get:()=>String(800*1024*1024)}};
+ };
+ const invoke=new Function("window","document","navigator","caches","fetch","Request","AbortController","confirm","setTimeout","URL","Blob",imgJs);
+ invoke(window,doc,navigator,caches,fakeFetch,class{constructor(url){this.url=url;}},class{constructor(){this.signal={aborted:false}}abort(){this.signal.aborted=true}},()=>true,()=>0,URL,Blob);
+ return {window,nodes,handlers,C,data,get network(){return network},get backgroundCalls(){return backgroundCalls}};
+}
+test("Android crash-safe mode refuses heavy foreground model download and GPU",async()=>{
+ const b=browser("Mozilla/5.0 (Linux; Android 16) AppleWebKit Brave");
+ const status=await b.window.StudioImejBeta.deviceCheck();
+ assert.ok(status.mobile);
+ assert.ok(!status.gpuAllowed);
+ b.nodes.get("modelConsent").checked=true;
+ b.handlers.get("modelConsent:change")();
+ assert.equal(b.nodes.get("prefetchModel").disabled,true);
+ assert.equal(b.nodes.get("activateModel").disabled,true);
+ await b.handlers.get("prefetchModel:click")();
+ assert.equal(b.network,0,"mobile must not request huge model URLs");
 });
-test("image generation BETA TEST is conspicuous and consent gated",()=>{
- assert.match(html,/Imej AI <span class="beta">BETA TEST<\/span>/);
- assert.match(html,/BETA TEST/g);
- assert.match(html,/id="imageConsent"/);
- assert.match(html,/id="loadImageModel"/);
- assert.match(html,/id="generateImage"/);
- assert.match(image,/if\(!consent\(\)\)/);
- assert.match(image,/navigator\.gpu\.requestAdapter/);
- assert.match(image,/window\.isSecureContext/);
- assert.match(image,/web-txt2img@0\.3\.1/);
- assert.match(image,/client\.load\("sd-turbo"/);
- assert.match(image,/client\.generate\(/);
- assert.match(image,/result\.blob instanceof Blob/);
- assert.match(image,/download\.disabled=true/);
- assert.doesNotMatch(image,/placehold|Math\.random\(\).*canvas|generativelanguage\.googleapis\.com/i);
+test("Desktop prefetch caches whole model files and reuses them without repeating requests",async()=>{
+ const b=browser("Mozilla/5.0 (X11; Linux x86_64) Chrome", {desktopGpu:true});
+ const status=await b.window.StudioImejBeta.deviceCheck();
+ assert.equal(status.gpuAllowed,true);
+ b.nodes.get("modelConsent").checked=true;
+ b.handlers.get("modelConsent:change")();
+ await b.handlers.get("prefetchModel:click")();
+ assert.equal(b.network,3);
+ assert.equal(b.data.size,3);
+ assert.equal(await b.window.StudioImejBeta.cacheCounts(),3);
+ await b.handlers.get("prefetchModel:click")();
+ assert.equal(b.network,3,"cached assets should not be re-downloaded");
 });
-test("tools operate in browser and never silently send email or image prompts to backend",()=>{
- assert.match(js,/window\.location\.href=href/);
- assert.doesNotMatch(js,/gmail\.send|smtp|sendEmail\(/i);
- assert.match(js,/fetch\("\/\.netlify\/functions\/bilik-antara"/);
- assert.doesNotMatch(image,/fetch\("\/\.netlify|GEMINI_API_KEY/);
- assert.match(html,/Tiada e-mel dihantar secara automatik/);
- assert.match(html,/Model hanya dimuat selepas klik dan persetujuan/);
-});
-test("CSV parser handles escaped comma, quotes and newlines",()=>{
- const ids=["sectionTitle","previewKind","studioPreview","studioStatus","studioImageOutput",
- "emailName","emailTo","emailSubject","emailBody","docTemplate","docTitle","docBody","tableTitle",
- "tableData","chartTitle","chartType","chartData","posterTitle","posterBody","posterSize","posterStyle"];
- const handlers={},nodes=new Map();
- function element(tag="div"){
-  return {tagName:tag,children:[],dataset:{},hidden:false,style:{},value:"",textContent:"",
-   appendChild(ch){this.children.push(ch);return ch;},append(...args){this.children.push(...args);},
-   replaceChildren(...args){this.children=[...args];},setAttribute(){},addEventListener(name,fn){handlers[this.tagName+":"+name]=fn;},
-   classList:{toggle(){}},getContext(){return {createLinearGradient(){return {addColorStop(){}};},
-     createRadialGradient(){return {addColorStop(){}};},
-     fillRect(){},strokeRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){},
-     measureText(t){return {width:String(t).length*10}}};}};
- }
- for(const id of ids)nodes.set(id,element(id));
- nodes.get("tableData").value='Name,Quote\n"Ali, Ahmad","Dia kata ""hai"""\nBaru,5';
- nodes.get("chartData").value="Bulan,Nilai\nJan,10\nFeb,12";
- nodes.get("chartType").value="bar";
- const tabs=["email","document","table","chart","poster","image"].map(name=>{
-  const n=element("tab");n.dataset.tab=name;return n;
- });
- const panels=tabs.map(t=>{const n=element("panel");n.id="editor-"+t.dataset.tab;return n});
- const doc={getElementById(id){return nodes.get(id)||element(id)},
- createElement:element,createElementNS(_ns,tag){return element(tag);},
- querySelectorAll(s){return s===".tab"?tabs:s===".panel"?panels:[]}};
- const fakeWindow={},fakeLocation={hash:""},fakeHistory={replaceState(){}};
- new Function("document","window","history","location","sessionStorage","navigator","URL","Blob","Image","XMLSerializer",js)(
-  doc,fakeWindow,fakeHistory,fakeLocation,{getItem(){return null}},
-  {},{createObjectURL(){return "blob:test"},revokeObjectURL(){}},
-  Blob,class{},{});
- const rows=fakeWindow.StudioAntara.parseCSV(nodes.get("tableData").value);
- assert.equal(rows[1][0],"Ali, Ahmad");
- assert.equal(rows[1][1],'Dia kata "hai"');
- assert.equal(rows[2][0],"Baru");
- assert.equal(fakeWindow.StudioAntara.drawChart().tagName,"svg");
+test("Background fetch is opt-in and mobile remains GPU-blocked even if available",async()=>{
+ const b=browser("Mozilla/5.0 (Linux; Android 16) Brave",{background:true});
+ await b.window.StudioImejBeta.deviceCheck();
+ assert.equal(b.nodes.get("backgroundModel").disabled,true);
+ b.nodes.get("modelConsent").checked=true;
+ b.handlers.get("modelConsent:change")();
+ assert.equal(b.nodes.get("backgroundModel").disabled,false);
+ await b.handlers.get("backgroundModel:click")();
+ assert.equal(b.backgroundCalls,1);
+ assert.equal(b.nodes.get("activateModel").disabled,true);
+ assert.equal(b.network,0,"no normal fetch during background download");
 });
