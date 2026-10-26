@@ -1,0 +1,29 @@
+# Dependencies and local build state
+node_modules/
+.netlify/
+dist/
+.cache/
+.tmp/
+tmp/
+
+# Local environment and API secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Editor, OS and Python cache
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+__pycache__/
+*.py[cod]
+
+# Local debug logs and generated audit screenshots
+*.log
+npm-debug.log*
+audit-*.png
+audit-lighthouse-*.json
+audit-production-*.json
