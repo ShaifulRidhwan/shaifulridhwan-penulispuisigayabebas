@@ -5,7 +5,7 @@ const C=window.StudioImejConfig;
 const $=id=>document.getElementById(id);
 if(!C||!$("checkDevice"))return;
 const ui={
- device:$("deviceStatus"),details:$("deviceDetails"),check:$("checkDevice"),
+ device:$("deviceStatus"),details:$("deviceDetails"),check:$("checkDevice"),copy:$("copyDiagnostic"),
  consent:$("modelConsent"),cache:$("cacheStatus"),checkCache:$("checkCache"),
  prefetch:$("prefetchModel"),background:$("backgroundModel"),cancel:$("cancelDownload"),
  clear:$("clearModel"),progress:$("modelProgress"),progressNote:$("modelProgressNote"),
@@ -14,7 +14,9 @@ const ui={
  imgProgress:$("imageProgress"),imgNote:$("imageProgressNote"),download:$("downloadImage"),
  prompt:$("imagePrompt"),seed:$("imageSeed")
 };
-const mobile=Boolean(navigator.userAgentData?.mobile)||/Android|iPhone|iPad|iPod/i.test(navigator.userAgent||"");
+let mobile=false;
+let diagnostic=null;
+const D=window.StudioDeviceDiagnostics;
 const storageNeeded=Math.ceil(C.modelBytes*1.4);
 let checked=false,storageAllowed=false,gpuAllowed=false,completed=0,downloading=false,backgroundReg=null;
 let controller=null,sdk=null,client=null,engine=null,ready=false,loading=false,generating=false,abortGenerate=null,blob=null,imageUrl=null;
@@ -64,29 +66,50 @@ async function missingUrls(){
 }
 async function deviceCheck(){
  checked=false;storageAllowed=false;gpuAllowed=false;
+ backgroundSupported=false;
+ diagnostic=null;
+ ui.copy.disabled=true;
  ui.details.replaceChildren();
- row("Jenis peranti",mobile?"Telefon/tablet · inferens berat disekat":"Desktop/laptop");
- row("Pelayar",navigator.userAgent?.includes("Brave")?"Brave atau Chromium":"Pelayar semasa");
- row("RAM yang dilaporkan",navigator.deviceMemory?navigator.deviceMemory+" GiB":"Tidak didedahkan oleh pelayar");
- row("Teras CPU yang dilaporkan",navigator.hardwareConcurrency||"Tidak diketahui");
- let estimate;
- try{estimate=await navigator.storage?.estimate?.();}catch(_){}
- const remaining=estimate&&Number.isFinite(estimate.quota)?estimate.quota-(estimate.usage||0):NaN;
- row("Anggaran ruang storan tersedia",bytes(remaining));
- row("Sasaran muat turun",bytes(C.modelBytes)+"; perlu lebihan storan");
- storageAllowed=Number.isFinite(remaining)?remaining>=storageNeeded:!mobile;
- if(!storageAllowed)row("Muat turun","Disekat: kuota storan tidak cukup / tidak dapat disahkan pada telefon");
- else row("Muat turun",mobile?"Latar sahaja apabila pelayar menyokong":"Biasa atau latar (jika disokong)");
- const webgpu=Boolean(navigator.gpu);
- row("WebGPU API",webgpu?"Dikesan":"Tiada");
- if(!mobile&&webgpu&&(!navigator.deviceMemory||navigator.deviceMemory>=8)){
-  try{
-   const adapter=await navigator.gpu.requestAdapter({powerPreference:"high-performance"});
-   gpuAllowed=Boolean(adapter);
-  }catch(_){}
+ if(!D?.inspect){
+  message("Modul diagnostik tidak tersedia. Muat semula halaman.");return null;
  }
- row("Penjanaan imej",mobile?"Disekat pada telefon untuk elak tab crash":
-  !gpuAllowed?"Tidak sesuai / memerlukan desktop WebGPU dan memori mencukupi":"Layak mencuba, belum dijamin");
+ message("Sedang membaca kemampuan sebenar yang didedahkan pelayar...");
+ const report=await D.inspect(navigator,{
+  secure:window.isSecureContext,
+  minimumStorageBytes:storageNeeded
+ });
+ diagnostic=report;
+ mobile=report.mobile;
+ const v=x=>x===D.UNKNOWN?"Tidak didedahkan oleh pelayar":x;
+ row("Sistem operasi",v(report.platform.os)+(report.platform.platformVersion?" · versi dilaporkan "+report.platform.platformVersion:""));
+ row("Kategori peranti",mobile?"Mudah alih (menurut "+report.platform.classification+")":"Bukan mudah alih (menurut "+report.platform.classification+")");
+ row("Model peranti (jika didedahkan)",v(report.platform.model));
+ row("Pelayar",report.browser);
+ row("RAM (anggaran pelayar)",report.memory!==null?report.memory+" GiB · bukan jumlah RAM sebenar":"Tidak didedahkan oleh pelayar");
+ row("CPU (pemproses logik)",report.cpu!==null?report.cpu+" · bilangan yang pelayar laporkan":"Tidak didedahkan oleh pelayar");
+ row("Kuota storan untuk laman",report.storage.quota!==null?bytes(report.storage.quota)+" · anggaran":"Tidak didedahkan oleh pelayar");
+ row("Penggunaan storan laman",report.storage.usage!==null?bytes(report.storage.usage)+" · anggaran":"Tidak didedahkan oleh pelayar");
+ row("Baki kuota laman (bukan storan telefon)",report.storage.remaining!==null?bytes(report.storage.remaining)+" · anggaran":"Tidak dapat diukur");
+ row("Cache kekal",report.storage.persistent===true?"Diberikan pelayar":report.storage.persistent===false?"Tidak diberikan (boleh dipadam)":"Tidak dapat disahkan");
+ row("Anggaran saiz model",bytes(C.modelBytes));
+ storageAllowed=report.storage.remaining===null?!mobile&&report.secure:report.storage.remaining>=storageNeeded;
+ if(report.storage.remaining===null)row("Kapasiti muat turun",
+  mobile?"Kuota tidak diketahui; muat turun besar ditangguhkan":"Kuota tidak diketahui; tertakluk pada kegagalan storan");
+ else row("Kapasiti muat turun",storageAllowed?"Kuota laman dianggarkan mencukupi, tidak dijamin":"Kuota laman dianggarkan tidak mencukupi");
+ row("WebGPU API",report.gpu.api?"Ada":"Tiada/terhalang");
+ row("WebGPU adapter",report.gpu.accessible?"Berjaya diperoleh":"Belum berjaya: "+report.gpu.reason);
+ row("Nama GPU didedahkan",v(report.gpu.name));
+ row("Seni bina GPU didedahkan",v(report.gpu.architecture));
+ row("Shader f16",report.gpu.shaderF16===null?"Tidak dapat disahkan":report.gpu.shaderF16?"Disokong adapter":"Tidak ditawarkan adapter");
+ row("Had buffer WebGPU",report.gpu.maxBufferSize!==null?bytes(report.gpu.maxBufferSize)+" (had API, bukan VRAM)":"Tidak didedahkan");
+ row("Had binding WebGPU",report.gpu.maxStorageBufferBindingSize!==null?bytes(report.gpu.maxStorageBufferBindingSize)+" (had API)":"Tidak didedahkan");
+ gpuAllowed=!mobile&&report.secure&&report.gpu.accessible;
+ row("Penilaian WebGPU",report.gpu.accessible?"Adapter tersedia; belum bukti model 2.34 GiB mampu berjalan":"Adapter tidak boleh disahkan; model tidak akan diaktifkan");
+ row("Dasar keselamatan BETA",mobile?
+  "Inferens berat masih dimatikan pada mudah alih kerana risiko tab crash, BUKAN kerana GPU disahkan lemah":
+  gpuAllowed?"Percubaan GPU dibenarkan selepas model lengkap, bukan jaminan berjaya":
+  "Pengaktifan dihentikan kerana adapter/HTTPS tidak tersedia");
+ report.notes.forEach((note,i)=>row("Had laporan "+(i+1),note));
  if(navigator.serviceWorker&&window.isSecureContext){
   try{
    swRegistration=await navigator.serviceWorker.register("./studio-imej-sw.js",{scope:"./"});
@@ -97,14 +120,34 @@ async function deviceCheck(){
    }
   }catch(_){backgroundSupported=false;}
  }
- row("Background Fetch",backgroundSupported?"Tersedia (eksperimen)":"Tidak disokong oleh pelayar ini");
+ row("Background Fetch",backgroundSupported?"API tersedia dalam pelayar (masih eksperimen)":"API tidak tersedia pada pelayar ini");
  checked=true;
- const reason=!storageAllowed?"Storan terhad. ":mobile?"Android: muat turun biasa dan pengaktifan GPU disekat. ":"";
- message("BETA TEST: Semakan selesai. "+reason+(backgroundSupported?"Pilihan muat turun latar tersedia.":"Muat turun latar sebenar tidak tersedia."));
+ message("BETA TEST: Laporan berdasarkan maklumat pelayar yang boleh diperiksa. "+
+   (report.gpu.accessible?"WebGPU adapter dikesan. ":"WebGPU belum dapat disahkan. ")+
+   (mobile?"Had keselamatan inferens mudah alih masih aktif. ":"")+
+   "Tiada model atau inferens dimuat semasa semakan.");
+ ui.copy.disabled=false;
  await cacheCounts();
  flags();
- return {mobile,storageAllowed,gpuAllowed,backgroundSupported};
+ return {mobile,storageAllowed,gpuAllowed,backgroundSupported,report};
 }
+ui.copy.addEventListener("click",async()=>{
+ if(!diagnostic)return;
+ const safe={
+  os:diagnostic.platform.os,model:diagnostic.platform.model,browser:diagnostic.browser,
+  mobile:diagnostic.mobile,mobileSource:diagnostic.platform.classification,
+  ramBrowserApproxGiB:diagnostic.memory,logicalCpuReported:diagnostic.cpu,
+  siteQuotaEstimatedGiB:diagnostic.storage.quota!==null?Number((diagnostic.storage.quota/(1024**3)).toFixed(2)):null,
+  siteQuotaRemainingEstimatedGiB:diagnostic.storage.remaining!==null?Number((diagnostic.storage.remaining/(1024**3)).toFixed(2)):null,
+  webgpuAdapter:diagnostic.gpu.accessible,gpuNameReported:diagnostic.gpu.name,
+  gpuArchitectureReported:diagnostic.gpu.architecture,shaderF16:diagnostic.gpu.shaderF16,
+  webgpuMaxBufferBytes:diagnostic.gpu.maxBufferSize,
+  backgroundFetchAvailable:backgroundSupported,
+  note:"Anggaran dan maklumat yang pelayar dedahkan sahaja; bukan pengukuran fizikal. Tidak termasuk User-Agent penuh atau ID peranti."
+ };
+ try{await navigator.clipboard.writeText(JSON.stringify(safe,null,2));message("Laporan diagnostik disalin. Tiada data dihantar ke pelayan.");}
+ catch(_){message("Salinan disekat oleh pelayar. Rujuk baris laporan di atas.");}
+});
 ui.check.addEventListener("click",()=>deviceCheck().catch(e=>message("Semakan gagal: "+e.message)));
 ui.checkCache.addEventListener("click",()=>cacheCounts());
 ui.consent.addEventListener("change",()=>{
@@ -127,7 +170,7 @@ async function persistCache(){
 async function foregroundDownload(){
  if(!checked)await deviceCheck();
  if(!ui.consent.checked){cacheMsg("Berikan persetujuan terlebih dahulu.");return;}
- if(mobile){cacheMsg("Pada Android, muat turun biasa model 2.34 GiB disekat. Cuba Background Fetch hanya jika ia disokong.");return;}
+ if(mobile){cacheMsg("Untuk keselamatan BETA, muat turun biasa model besar tidak dimulakan pada peranti mudah alih. WebGPU yang dikesan tidak bermakna RAM mencukupi.");return;}
  if(!storageAllowed||downloading||loading)return;
  if(!("caches" in window)){cacheMsg("Cache Storage tidak tersedia.");return;}
  downloading=true;controller=new AbortController();flags();
@@ -226,7 +269,7 @@ if(navigator.serviceWorker){
 }
 async function activate(){
  if(!checked)await deviceCheck();
- if(!gpuAllowed||mobile){gpuMsg("BETA TEST: Model berat disekat pada Android atau GPU tidak sesuai. Jangan ulang muat untuk memaksa telefon.");return;}
+ if(!gpuAllowed){gpuMsg("BETA TEST: Pengaktifan ditangguh oleh dasar keselamatan mudah alih atau adapter/HTTPS tidak tersedia. Ini bukan pengesahan GPU tidak mampu.");return;}
  if(!ui.consent.checked||completed!==C.files.length){gpuMsg("Selesaikan muat turun cache model dan persetujuan dahulu.");return;}
  if(loading||ready)return;
  loading=true;ui.activate.disabled=true;ui.imgProgress.hidden=false;ui.imgProgress.removeAttribute("value");
