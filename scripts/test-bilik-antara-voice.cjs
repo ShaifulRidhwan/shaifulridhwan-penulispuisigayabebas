@@ -42,7 +42,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
 });
 test("Casual Malay UI uses Cakap instead of technical Dikte",()=>{
  assert.match(html,/>🎙 Cakap<\/button>/);
- assert.match(html,/status\("ready","AI sedia"/);
+ assert.match(html,/status\("ready","Pelayan sedia"/);
  assert.match(js,/dictate\.textContent="🎙 Cakap"/);
  assert.match(js,/dictate\.textContent="■ Berhenti"/);
  assert.doesNotMatch(html,/>🎙 Dikte<\/button>/);
@@ -123,24 +123,28 @@ test("One-use ten-minute token broker never returns permanent API key",async()=>
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
 
-test("Token broker retries unscoped one-use token after Google rejects optional model constraint",async()=>{
+test("Google rejection never downgrades a model-restricted Live token",async()=>{
  process.env.GEMINI_API_KEY="fake-permanent-api-key-test";
  const old=global.fetch;
  const sent=[];
  try{
   global.fetch=async(url,opts)=>{
    sent.push(JSON.parse(opts.body));
-   if(sent.length===1)return {ok:false,status:400,json:async()=>({error:{message:"invalid liveConnectConstraints",status:"INVALID_ARGUMENT"}})};
-   return {ok:true,status:200,json:async()=>({name:"auth_tokens/test-retry"})};
+   return {ok:false,status:400,json:async()=>({error:{message:"invalid liveConnectConstraints",status:"INVALID_ARGUMENT"}})};
   };
-  const res=await handler(event("voice-fallback-"+Date.now()));
-  assert.equal(res.statusCode,200);
-  assert.equal(JSON.parse(res.body).token,"auth_tokens/test-retry");
-  assert.equal(sent.length,2);
+  const res=await handler(event("voice-constrained-"+Date.now()));
+  assert.equal(res.statusCode,502);
+  assert.equal(JSON.parse(res.body).reason,"TOKEN_HTTP_400");
+  assert.equal(sent.length,1);
   assert.equal(sent[0].liveConnectConstraints.model,"models/gemini-3.8-live");
-  assert.equal(sent[1].uses,1);
-  assert.ok(!Object.hasOwn(sent[1],"liveConnectConstraints"));
+  assert.equal(sent[0].uses,1);
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
+});
+test("Voice connection has explicit token and websocket watchdogs",()=>{
+ assert.match(js,/const tokenTimer=setTimeout\(\(\)=>controller\.abort\(\),16000\)/);
+ assert.match(js,/connectTimer=setTimeout\(\(\)=>/);
+ assert.match(js,/if\(connectTimer\)\{clearTimeout\(connectTimer\);connectTimer=null;\}/);
+ assert.match(js,/if\(typeof Blob!=="undefined"&&raw instanceof Blob\)/);
 });
 test("Unsupported Live token response presents actionable status rather than a full-screen overlay",async()=>{
  process.env.GEMINI_API_KEY="fake-permanent-api-key-test";
