@@ -31,8 +31,8 @@ function inferPlatform(nav, high){
  const platformVersion=limit(high.platformVersion||"",35);
  const model=limit(high.model||"",70)||UNKNOWN;
  const platformMobile=nav.userAgentData&&typeof nav.userAgentData.mobile==="boolean"?nav.userAgentData.mobile:null;
- const mobile=platformMobile!==null?platformMobile:/Android|iPhone|iPad|iPod|Mobile/i.test(ua);
- const classification=platformMobile!==null?"Client Hints pelayar":"Petunjuk User-Agent (boleh diubah)";
+ const mobile=os==="Android"||os==="iOS/iPadOS"||(platformMobile!==null?platformMobile:/Android|iPhone|iPad|iPod|Mobile/i.test(ua));
+ const classification=(os==="Android"||os==="iOS/iPadOS")?"Sistem operasi yang dilaporkan pelayar":platformMobile!==null?"Client Hints pelayar":"Petunjuk User-Agent (boleh diubah)";
  return {os,platformVersion,model,mobile,classification,modelSource:model===UNKNOWN?"tidak tersedia":"Client Hints pelayar (mungkin dilindungi)"};
 }
 async function withTimeout(promise,ms,fallback){
