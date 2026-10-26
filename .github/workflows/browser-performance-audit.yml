@@ -1,0 +1,62 @@
+name: Gaya Bebas Browser Performance Audit
+on:
+  pull_request:
+    paths:
+      - "index.html"
+      - "gaya-bebas.js"
+      - "gaya-bebas.css"
+      - "karya-data.js"
+      - "bilik-antara.html"
+      - "bilik-antara.css"
+      - "bilik-antara-voice.js"
+      - "scripts/browser-audit.cjs"
+      - ".github/workflows/browser-performance-audit.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install Chromium testing and Lighthouse
+        run: |
+          npm install --no-save playwright@1.58.2 lighthouse@12.6.0
+          npx playwright install chromium
+      - name: Start local static server
+        run: |
+          python3 -m http.server 4177 --bind 127.0.0.1 > /tmp/gaya-server.log 2>&1 &
+          echo $! > /tmp/gaya-server.pid
+          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:4177/ -o /dev/null && break; sleep 1; done
+      - name: Browser desktop/mobile navigation and production probe
+        run: node scripts/browser-audit.cjs
+      - name: Lighthouse desktop and mobile
+        if: always()
+        continue-on-error: true
+        run: |
+          export CHROME_PATH="$(node -e "process.stdout.write(require('playwright').chromium.executablePath())")"
+          npx lighthouse http://127.0.0.1:4177/ --chrome-flags="--headless --no-sandbox" --preset=desktop --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=audit-lighthouse-desktop.json --quiet
+          npx lighthouse http://127.0.0.1:4177/ --chrome-flags="--headless --no-sandbox" --form-factor=mobile --screenEmulation.mobile --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=audit-lighthouse-mobile.json --quiet
+          node - <<'NODE'
+          const fs=require("node:fs");
+          for(const mode of ["desktop","mobile"]){
+            try{
+              const j=JSON.parse(fs.readFileSync("audit-lighthouse-"+mode+".json"));
+              console.log("[Lighthouse] "+mode+" "+JSON.stringify(Object.fromEntries(Object.entries(j.categories).map(([name,x])=>[name,Math.round(x.score*100)]))));
+              console.log("[Web Vitals] "+mode+" "+JSON.stringify(Object.fromEntries(["first-contentful-paint","largest-contentful-paint","speed-index","total-blocking-time","cumulative-layout-shift"].map(x=>[x,j.audits[x]?.displayValue]))));
+            }catch(e){console.log("[Lighthouse] "+mode+" unavailable: "+e.message);}
+          }
+          NODE
+      - name: Upload screenshots and Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaya-bebas-browser-audit
+          path: |
+            audit-*.png
+            audit-lighthouse-*.json
+          if-no-files-found: warn
