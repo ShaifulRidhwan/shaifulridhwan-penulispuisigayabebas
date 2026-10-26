@@ -32,7 +32,7 @@ function flags(){
  ui.prefetch.disabled=!checked||!storageAllowed||!consent||downloading||loading||ready||mobile;
  ui.background.disabled=!checked||!storageAllowed||!consent||downloading||loading||ready||!backgroundSupported;
  ui.cancel.disabled=!downloading;
- ui.clear.disabled=downloading||loading||generating||!completed;
+ ui.clear.disabled=downloading||loading||generating||ready||!completed;
  ui.activate.disabled=!gpuAllowed||!consent||completed!==C.files.length||downloading||loading||ready;
  ui.gen.disabled=!ready||loading||generating;
  ui.stop.disabled=!generating;
@@ -91,6 +91,10 @@ async function deviceCheck(){
   try{
    swRegistration=await navigator.serviceWorker.register("./studio-imej-sw.js",{scope:"./"});
    backgroundSupported=Boolean(swRegistration.backgroundFetch);
+   if(backgroundSupported){
+    const prior=await swRegistration.backgroundFetch.get(C.backgroundId).catch(()=>null);
+    if(prior)await attachBackground(prior);
+   }
   }catch(_){backgroundSupported=false;}
  }
  row("Background Fetch",backgroundSupported?"Tersedia (eksperimen)":"Tidak disokong oleh pelayar ini");
@@ -103,7 +107,14 @@ async function deviceCheck(){
 }
 ui.check.addEventListener("click",()=>deviceCheck().catch(e=>message("Semakan gagal: "+e.message)));
 ui.checkCache.addEventListener("click",()=>cacheCounts());
-ui.consent.addEventListener("change",flags);
+ui.consent.addEventListener("change",()=>{
+ if(!ui.consent.checked&&downloading){
+  controller?.abort();
+  if(backgroundReg&&backgroundReg.result==="")backgroundReg.abort().catch(()=>{});
+  cacheMsg("Persetujuan ditarik balik. Muat turun diminta berhenti.");
+ }
+ flags();
+});
 function progress(value,note){
  ui.progress.hidden=false;
  if(Number.isFinite(value)){ui.progress.value=Math.min(100,Math.max(0,value));}
@@ -146,6 +157,7 @@ async function foregroundDownload(){
 }
 ui.prefetch.addEventListener("click",foregroundDownload);
 async function attachBackground(reg){
+ if(backgroundReg===reg)return;
  backgroundReg=reg;downloading=Boolean(reg&&reg.result==="");
  flags();
  if(!reg)return;
