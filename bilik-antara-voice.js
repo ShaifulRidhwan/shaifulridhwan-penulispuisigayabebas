@@ -30,6 +30,8 @@ let pendingAudio=[],pendingAudioBytes=0,audioQueueGeneration=0,modelTurnFinished
 const MAX_PENDING_AUDIO_BYTES=12*1024*1024; // ~4 minutes of mono PCM, bounded for phones
 const MAX_SCHEDULE_AHEAD=5; // seconds scheduled on AudioContext; rest remains in bounded queue
 let dayTimer=null,sessionStarted=0,resumeHandle="",liveModel="",reconnecting=false,connectionAttempts=0,renewListener=null,lastSpeechAt=0,connectedAt=0;
+let preferStandardFallback=false;
+const FALLBACK_CACHE_KEY="ba:live-standard-fallback:tab";
 const speechAPI=window.SpeechRecognition||window.webkitSpeechRecognition;
 const sayStatus=(value)=>{status.textContent=value;};
 const showNotice=(message)=>{notice.textContent=String(message||"").slice(0,230);notice.hidden=!message;};
@@ -286,6 +288,7 @@ async function startLive(){
   const speakingRule=languageLock;
   liveActive=true;liveReady=false;micEnabled=true;speakerEnabled=true;
   sessionStarted=Date.now();resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;lastSpeechAt=0;connectedAt=0;
+  try{preferStandardFallback=window.sessionStorage?.getItem(FALLBACK_CACHE_KEY)==="1";}catch(_){preferStandardFallback=false;}
   lastTurn=null;transcript.replaceChildren();panel.classList.remove("voice-speaking");
   setButtonState();sayStatus("Meminta kebenaran mikrofon…");
   const generation=++liveGeneration;
@@ -294,7 +297,8 @@ async function startLive(){
   const controller=new AbortController();startAbort=controller;
   const tokenTimer=setTimeout(()=>controller.abort(),26000);
   const tokenPromise=fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-     body:"{}",signal:controller.signal,credentials:"same-origin",cache:"no-store"})
+     body:JSON.stringify(preferStandardFallback?{mode:"standard"}:{}),
+     signal:controller.signal,credentials:"same-origin",cache:"no-store"})
     .then(async res=>({res,body:await res.json().catch(()=>({}))}));
   tokenPromise.catch(()=>{}); // permission can fail while the request is pending
   try{
@@ -351,7 +355,8 @@ async function startLive(){
         let data,response;
         try{
           response=await fetch(ENDPOINT,{
-            method:"POST",headers:{"Content-Type":"application/json"},body:"{}",
+            method:"POST",headers:{"Content-Type":"application/json"},
+            body:JSON.stringify(preferStandardFallback?{mode:"standard"}:{}),
             signal:tokenCtl.signal,credentials:"same-origin",cache:"no-store"
           });
           data=await response.json().catch(()=>({}));
@@ -391,14 +396,18 @@ async function startLive(){
       liveReady=false;stopAudioQueue();panel.classList.remove("voice-speaking");
       const handle=resumeHandle;
       const ws=new WebSocket(SOCKET_BASE+encodeURIComponent(data.token));
+      let established=false;
       socket=ws;liveModel=data.model;
       connectTimer=setTimeout(()=>{
         if(generation!==liveGeneration||socket!==ws||liveReady)return;
         sayStatus("Google tidak mengesahkan sambungan Voice.");
-        // Invalid handles must not trap the user in a loop.
+        if(!established&&data.model==="gemini-3.8-live-extended-thinking"&&!preferStandardFallback){
+          preferStandardFallback=true;
+          try{window.sessionStorage?.setItem(FALLBACK_CACHE_KEY,"1");}catch(_){}
+        }
         if(handle)resumeHandle="";
         reconnecting=false;
-        renewConnection("Menyambung semula selepas masa menunggu…");
+        renewConnection("Menyambung melalui Voice Live yang serasi…");
       },20000);
       ws.onopen=()=>{
         if(generation!==liveGeneration||socket!==ws)return;
@@ -410,7 +419,7 @@ async function startLive(){
             // Only extended-thinking/legacy models support thinkingLevel.
             // Google 3.8 Live standard rejects this field; don't break its low-latency fallback.
             ...(["gemini-3.8-live-extended-thinking","gemini-3.1-flash-live-preview"].includes(data.model)?
-              {thinkingConfig:{thinkingLevel:data.model==="gemini-3.8-live-extended-thinking"?"LOW":"LOW"}}:{})
+              {thinkingConfig:{thinkingLevel:data.model==="gemini-3.8-live-extended-thinking"?"MEDIUM":"LOW"}}:{})
           },
           // Native audio grows rapidly; compresses oldest conversational turns.
           contextWindowCompression:{slidingWindow:{}},
@@ -477,6 +486,7 @@ async function startLive(){
           const parsed=JSON.parse(raw);
           onServerMessage(parsed);
           if(parsed.setupComplete){
+            established=true;
             reconnecting=false;connectionAttempts=0;connectedAt=Date.now();
             // The temporary token expires; use a fresh credential for each
             // new connection. The Live session may resume via in-memory handle.
@@ -493,6 +503,14 @@ async function startLive(){
         if(sessionTimer){clearTimeout(sessionTimer);sessionTimer=null;}
         if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
         const code=Number(event.code)||1006;
+        if(!established&&data.model==="gemini-3.8-live-extended-thinking"&&
+           !preferStandardFallback&&[1003,1006,1008,1011].includes(code)){
+          preferStandardFallback=true;
+          try{window.sessionStorage?.setItem(FALLBACK_CACHE_KEY,"1");}catch(_){}
+          reconnecting=false;
+          renewConnection("Model Deep Thinking ditolak. Menyambung Voice biasa…");
+          return;
+        }
         if(code===1008&&handle)resumeHandle=""; // session handle may be stale
         if([1008,4001,4401,4429].includes(code)&&!handle){
           const message="Google menolak sambungan Voice (WS "+code+"). Semak akses, kuota atau konfigurasi.";
