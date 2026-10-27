@@ -7,6 +7,7 @@ const $=id=>document.getElementById(id);
 const panel=$("voiceFallback"),min=$("voiceFallbackMinimize"),start=$("voiceFallbackStart"),
  stop=$("voiceFallbackStop"),retry=$("voiceFallbackRetry"),speak=$("voiceFallbackSpeak"),
  status=$("voiceFallbackStatus"),live=$("voiceLive");
+const selectedVoiceStyle=$("voiceDialect"),voiceLocale=window.BilikAntaraVoiceLocale;
 if(!panel||!min||!start||!stop||!retry||!speak||!status)return;
 let stream=null,recorder=null,timer=null,chunks=[],reply="",sendOnStop=false,busy=false,lastBlob=null;
 const statusText=x=>{status.textContent=String(x||"").slice(0,2600);};
@@ -69,7 +70,11 @@ async function submitAudio(blob){
    headers:{"Content-Type":"application/json"},signal:ctl.signal,
    body:JSON.stringify({
     voiceFallback:true,
-    question:"Jawab soalan dalam audio dengan ringkas, jelas dan dalam Bahasa Melayu Malaysia santai. Jika audio tidak jelas, minta pengguna ulang.",
+    question:[
+     "Dengar soalan dalam audio, jawab dengan ringkas dan jelas. Jika audio tidak jelas, minta pengguna ulang.",
+     voiceLocale?.instruction(selectedVoiceStyle?.value||"santai")||
+     "RESPOND ONLY IN COLLOQUIAL MALAYSIAN MALAY (ms-MY). NEVER SWITCH TO SPANISH OR OTHER LANGUAGES."
+    ].join(" "),
     media:{mimeType:mime,name:"rakaman-suara",data}
    })
   });
