@@ -282,7 +282,8 @@ async function startLive(){
         }}}));
       };
       sayStatus("Dah bersambung. Tunggu sekejap…");
-      sessionTimer=setTimeout(()=>{sayStatus("Had sesi 10 minit dicapai.");closeLive("Had 10 minit.");},MAX_SESSION);
+      const allowedMs=Math.min(MAX_SESSION,Math.max(60000,Number(body.durationSeconds||600)*1000));
+      sessionTimer=setTimeout(()=>{sayStatus("Tempoh sesi Voice telah tamat.");closeLive("Sesi suara tamat.");},allowedMs);
     };
     ws.onmessage=async(event)=>{
       if(generation!==liveGeneration)return;
