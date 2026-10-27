@@ -22,7 +22,7 @@ test("Recorded-audio fallback stays opt-in and does not expose any permanent API
  for(const id of ["voiceFallback","voiceFallbackStart","voiceFallbackStop","voiceFallbackStatus","voiceFallbackSpeak"]){
   assert.match(html,new RegExp('id="'+id+'"'));
  }
- assert.match(html,/bilik-antara-voice-fallback\.js\?v=2/);
+ assert.match(html,/bilik-antara-voice-fallback\.js\?v=3/);
  assert.match(voiceFallback,/ba:voice-live-failed/);
  assert.match(js,/dispatchEvent\(new Event\("ba:voice-live-failed"\)\)/);
  assert.match(voiceFallback,/getUserMedia/);
@@ -43,7 +43,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=8/);
+ assert.match(html,/bilik-antara-voice\.js\?v=9/);
  assert.match(html,/bilik-antara\.css\?v=7/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
@@ -219,7 +219,7 @@ test("Fallback voice only records after an explicit user click and uses the orig
   assert.match(fallback,/voiceFallback:true/);
   assert.match(js,/minimizeButton\.addEventListener/);
 
- assert.match(html,/bilik-antara-voice-fallback\.js\?v=2/);
+ assert.match(html,/bilik-antara-voice-fallback\.js\?v=3/);
  assert.match(js,/ba:voice-live-failed/);
  assert.match(fallback,/addEventListener\("ba:voice-live-failed"/);
  assert.match(fallback,/start\.addEventListener\("click",async/);
@@ -230,6 +230,10 @@ test("Fallback voice only records after an explicit user click and uses the orig
  assert.match(fallback,/audio\/webm/);
  assert.match(fallback,/2400000/);
  assert.match(fallback,/20000/);
+ assert.match(fallback,/timer=setTimeout\(\(\)=>finish\(false\),20000\)/);
+ assert.match(css,/\.voice-panel\.is-minimized/);
+ assert.match(css,/\.composer-voice/);
+ assert.match(css,/\.voice-fallback\.is-collapsed/);
  assert.doesNotMatch(fallback,/GEMINI_API_KEY|localStorage|indexedDB/);
 });
 test("Voice token request runs in parallel with microphone initialization",()=>{
