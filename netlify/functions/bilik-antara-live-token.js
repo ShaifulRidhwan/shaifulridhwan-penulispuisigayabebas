@@ -5,7 +5,9 @@
  * ephemeral tokens with a short TTL. No audio or transcript passes this handler.
  */
 const DEFAULT_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
-const DEFAULT_MODEL="gemini-3.8-live";
+// Prefer reasoning-capable Live; fall back automatically to standard Live when
+// the project's API access does not support the extended-thinking model.
+const DEFAULT_MODEL="gemini-3.8-live-extended-thinking";
 const RATE_WINDOW_MS=10*60*1000;
 const recent=new Map();
 const headers=()=>({
@@ -58,7 +60,9 @@ exports.handler=async(event)=>{
   try{
     // Try model-bound, one-use Live tokens first; if Google explicitly
     // rejects that optional field, use a shorter one-use Live-only token.
-    const candidates=[model,...(model==="gemini-3.8-live"?["gemini-3.1-flash-live-preview"]:["gemini-3.8-live"])];
+    const candidates=model==="gemini-3.8-live-extended-thinking"?
+      [model,"gemini-3.8-live","gemini-3.1-flash-live-preview"]:
+      [model,...(model==="gemini-3.8-live"?["gemini-3.1-flash-live-preview"]:["gemini-3.8-live"])];
     let lastStatus=502,lastReason="UPSTREAM",lastMessage="",tried=[];
     outer: for(const candidate of [...new Set(candidates)]){
       // Attempt the smallest valid model-locked token first. Avoid binding
@@ -113,7 +117,12 @@ exports.handler=async(event)=>{
               return reply(502,{error:"Token sementara Google tidak sah.",reason:"TOKEN_FORMAT"});
             rate(ip,true);
             return reply(200,{
-              token:bare.name,model:candidate,durationSeconds:300,
+              token:bare.name,
+              // If the project rejects model-bound credentials, preserve the
+              // previously verified standard Live path instead of guessing
+              // whether an unconstrained credential permits extended thinking.
+              model:candidate==="gemini-3.8-live-extended-thinking"?"gemini-3.8-live":candidate,
+              durationSeconds:300,
               tokenMode:"temporary-live-only",
               notice:"Token Live sementara sah lima minit untuk membuka sambungan. Ini bukan tempoh keseluruhan penggunaan harian; penyambungan semula memerlukan token baharu."
             });
