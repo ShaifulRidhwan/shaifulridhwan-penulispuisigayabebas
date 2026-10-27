@@ -2284,3 +2284,41 @@ html[data-theme="light"] .voice-action,html[data-theme="light"]
   max-width:38px;max-height:38px;flex-basis:38px
  }
 }
+
+
+/* Voice language lock: compact Malay/dialect selector below Live toolbar. */
+.voice-dialect-bar{
+ display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+ margin:0 10px 5px;padding:6px 10px;
+ border:1px solid rgba(223,177,107,.23);border-radius:11px;
+ background:rgba(10,15,27,.60);color:#e8d4b3;
+ font:500 12px/1.35 'DM Sans',sans-serif;
+}
+.voice-dialect-bar label{flex:none;letter-spacing:.01em}
+.voice-dialect-bar select{
+ box-sizing:border-box;flex:0 1 190px;min-width:0;min-height:38px;
+ padding:7px 29px 7px 10px;border:1px solid rgba(222,182,123,.53);
+ border-radius:9px;background:#101724;color:#f8eddb;
+ font:500 13px/1.3 'DM Sans',sans-serif;
+ cursor:pointer;
+}
+.voice-dialect-bar select:disabled{opacity:.65;cursor:not-allowed}
+.voice-dialect-bar select:focus-visible{
+ outline:2px solid #e8c58d;outline-offset:2px;
+}
+.voice-dialect-bar span{font:400 10px/1.45 'DM Sans',sans-serif;color:#dfcbaa;opacity:.82}
+html[data-theme="light"] .voice-dialect-bar{
+ background:rgba(251,246,233,.81);color:#49321c;border-color:rgba(127,90,48,.25)
+}
+html[data-theme="light"] .voice-dialect-bar select{
+ background:#fdf7eb;color:#3a2819;border-color:rgba(127,90,48,.44)
+}
+html[data-theme="light"] .voice-dialect-bar span{color:#61462a}
+@media(max-width:760px){
+ .voice-dialect-bar{margin:0 7px 5px;padding:5px 8px;gap:8px;font-size:11px}
+ .voice-dialect-bar select{flex:1 1 140px;max-width:230px;min-height:40px;font-size:12px}
+ .voice-dialect-bar span{display:none}
+}
+@media(max-width:350px){
+ .voice-dialect-bar select{max-width:none}
+}
