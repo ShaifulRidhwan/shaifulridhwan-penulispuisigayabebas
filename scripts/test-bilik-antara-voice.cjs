@@ -96,7 +96,7 @@ test("Live streaming uses ephemeral token with PCM input/output and transcriptio
  assert.match(js,/audio\/pcm;rate=16000/);
  assert.match(js,/decodePcm/);
  assert.match(js,/c\.interrupted/);
- assert.match(js,/setTimeout\(\(\)=>\{sayStatus\("Had sesi 10 minit dicapai\./);
+ assert.match(js,/allowedMs=Math\.min\(MAX_SESSION/);
  assert.match(js,/visibilitychange/);
  assert.match(js,/mediaStream\.getTracks\(\)\.forEach\(t=>t\.stop\(\)\)/);
  assert.match(pcm,/registerProcessor\("antara-pcm"/);
@@ -141,26 +141,61 @@ test("One-use ten-minute token broker never returns permanent API key",async()=>
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
 
-test("Google rejection never downgrades a model-restricted Live token",async()=>{
+test("Google TOKEN_CONSTRAINTS 400 falls back to documented 1-use 5-minute Live-only token",async()=>{
  process.env.GEMINI_API_KEY="fake-permanent-api-key-test";
- const old=global.fetch;
- const sent=[];
+ const originalFetch=global.fetch, requests=[];
  try{
   global.fetch=async(url,opts)=>{
-   sent.push(JSON.parse(opts.body));
-   return {ok:false,status:400,json:async()=>({error:{message:"invalid liveConnectConstraints",status:"INVALID_ARGUMENT"}})};
+   const body=JSON.parse(opts.body);requests.push({url,body});
+   if(requests.length===1)return {
+    ok:false,status:400,
+    json:async()=>({error:{message:"Invalid liveConnectConstraints field",status:"INVALID_ARGUMENT"}})
+   };
+   return {ok:true,status:200,json:async()=>({name:"auth_tokens/short-lived-test-token"})};
   };
-  const res=await handler(event("voice-constrained-"+Date.now()));
+  const response=await handler(event("voice-token-constraints-"+Date.now()));
+  assert.equal(response.statusCode,200);
+  const result=JSON.parse(response.body);
+  assert.equal(result.token,"auth_tokens/short-lived-test-token");
+  assert.equal(result.model,"gemini-3.8-live");
+  assert.equal(result.durationSeconds,300);
+  assert.equal(result.tokenMode,"temporary-live-only");
+  assert.equal(requests.length,2,"Do not retry unnecessary model configs");
+  assert.equal(requests[0].body.liveConnectConstraints.model,"models/gemini-3.8-live");
+  assert.equal(requests[1].body.liveConnectConstraints,undefined);
+  assert.equal(requests[1].body.uses,1);
+  assert.ok(new Date(requests[1].body.expireTime)-Date.now()<=5*60*1000);
+  assert.ok(new Date(requests[1].body.newSessionExpireTime)-Date.now()<=90*1000);
+  assert.ok(!response.body.includes("fake-permanent-api-key-test"));
+ }finally{global.fetch=originalFetch;delete process.env.GEMINI_API_KEY;}
+});
+test("Repeated Google 400 on both token formats returns a useful error",async()=>{
+ process.env.GEMINI_API_KEY="fake-permanent-api-key-test";
+ const old=global.fetch,calls=[];
+ try{
+  global.fetch=async(_,opts)=>{
+   calls.push(JSON.parse(opts.body));
+   return {ok:false,status:400,json:async()=>({error:{message:calls.length===1?"Unknown field liveConnectConstraints":"Invalid auth token input",status:"INVALID_ARGUMENT"}})};
+  };
+  const res=await handler(event("voice-rejected-again-"+Date.now()));
   assert.equal(res.statusCode,502);
   assert.equal(JSON.parse(res.body).reason,"TOKEN_HTTP_400");
-  assert.equal(sent.length,4,"Two model-bound configurations for each allowlisted Live model.");
-  assert.equal(sent[0].liveConnectConstraints.model,"models/gemini-3.8-live");
-  assert.equal(sent[0].liveConnectConstraints.config,undefined,"Minimal first attempt avoids optional audio constraint.");
-  assert.equal(sent[1].liveConnectConstraints.model,"models/gemini-3.8-live");
-  assert.deepEqual(sent[1].liveConnectConstraints.config.responseModalities,["AUDIO"]);
-  assert.equal(sent[2].liveConnectConstraints.model,"models/gemini-3.1-flash-live-preview");
-  assert.equal(sent[3].liveConnectConstraints.model,"models/gemini-3.1-flash-live-preview");
-  assert.equal(sent[0].uses,1);
+  assert.equal(calls.length,2);
+  assert.equal(calls[1].liveConnectConstraints,undefined);
+ }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
+});
+test("403 project access rejection never retries an unbound Live token",async()=>{
+ process.env.GEMINI_API_KEY="fake-permanent-api-key-test";
+ const old=global.fetch,calls=[];
+ try{
+  global.fetch=async(_,opts)=>{
+   calls.push(JSON.parse(opts.body));
+   return {ok:false,status:403,json:async()=>({error:{message:"permission denied",status:"PERMISSION_DENIED"}})};
+  };
+  const res=await handler(event("voice-denied-"+Date.now()));
+  assert.equal(res.statusCode,502);
+  assert.equal(calls.length,1);
+  assert.equal(JSON.parse(res.body).reason,"TOKEN_HTTP_403");
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
 test("A 400 audio-configuration rejection can recover using an allowlisted model-locked Live token",async()=>{
