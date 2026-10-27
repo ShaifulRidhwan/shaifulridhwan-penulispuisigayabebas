@@ -83,7 +83,7 @@ exports.handler=async(event)=>{
           rate(ip,true);
           return reply(200,{
             token:json.name,model:candidate,durationSeconds:600,
-            notice:"Audio dihantar terus ke Google Gemini semasa Voice Live aktif. Sesi maksimum 10 minit."
+            notice:"Setiap sambungan Google sekitar 10 minit. Bilik Antara boleh cuba memperbaharui sambungan sehingga 24 jam jika tab kekal aktif, tertakluk pada kuota dan sokongan Google."
           });
         }
         lastStatus=response.status;
@@ -115,7 +115,7 @@ exports.handler=async(event)=>{
             return reply(200,{
               token:bare.name,model:candidate,durationSeconds:300,
               tokenMode:"temporary-live-only",
-              notice:"Google menerima token sementara satu guna untuk Live API. Tempoh terhad lima minit."
+              notice:"Token Live sementara sah lima minit untuk membuka sambungan. Ini bukan tempoh keseluruhan penggunaan harian; penyambungan semula memerlukan token baharu."
             });
           }
           lastStatus=fallback.status;
