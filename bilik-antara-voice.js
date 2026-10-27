@@ -214,7 +214,7 @@ async function startLive(){
       audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},
       video:false
     });
-    if(generation!==liveGeneration){stream.getTracks().forEach(t=>t.stop());return;}
+    if(generation!==liveGeneration){clearTimeout(tokenTimer);stream.getTracks().forEach(t=>t.stop());return;}
     mediaStream=stream;
     const Audio=window.AudioContext||window.webkitAudioContext;
     micContext=new Audio({latencyHint:"interactive"});
@@ -223,7 +223,7 @@ async function startLive(){
       micContext.resume(),playContext.resume(),
       micContext.audioWorklet.addModule("./bilik-antara-pcm-worklet.js")
     ]);
-    if(generation!==liveGeneration)return;
+    if(generation!==liveGeneration){clearTimeout(tokenTimer);return;}
     sayStatus("Menyambung kepada Gemini Live…");
     const {res,body}=await tokenPromise;
     clearTimeout(tokenTimer);
