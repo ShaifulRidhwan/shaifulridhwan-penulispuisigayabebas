@@ -184,7 +184,7 @@ function onServerMessage(payload){
   if(payload.setupComplete){
     liveReady=true;
     if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
-    sayStatus("Bersambung. Cakap sahaja, aku sedang mendengar.");return;
+    sayStatus("Bersambung · "+(voiceLocale?.displayName(dialectChoice)||"Bahasa Melayu santai")+". Cakap sahaja, aku sedang mendengar.");return;
   }
   if(payload.sessionResumptionUpdate){
     const update=payload.sessionResumptionUpdate;
