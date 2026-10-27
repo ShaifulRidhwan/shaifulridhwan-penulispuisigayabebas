@@ -24,7 +24,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=8">
+<link rel="stylesheet" href="bilik-antara.css?v=9">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=1">
 
 </head>
@@ -74,6 +74,19 @@
      </details>
     </div>
    </header>
+   <div class="voice-dialect-bar" role="group" aria-label="Pilihan gaya percakapan Voice Live">
+    <label for="voiceDialect">Gaya Voice</label>
+    <select id="voiceDialect" name="voiceDialect" lang="ms" aria-describedby="voiceDialectHint">
+     <option value="santai">Melayu santai</option>
+     <option value="perak">Loghat Perak</option>
+     <option value="kelantan">Loghat Kelantan</option>
+     <option value="penang">Loghat Pulau Pinang</option>
+     <option value="kedah">Loghat Kedah</option>
+     <option value="sabah">Loghat Sabah</option>
+     <option value="sarawak">Loghat Sarawak</option>
+    </select>
+    <span id="voiceDialectHint">Pilih sebelum Voice Live bermula. Pelat suara bergantung pada model Google.</span>
+   </div>
    <div id="voiceNotice" class="voice-notice" role="status" aria-live="polite" hidden></div>
    <div id="voiceFallback" class="voice-fallback is-collapsed" hidden aria-label="Suara sandaran">
      <div class="voice-fallback-head">
@@ -600,7 +613,8 @@ restore();renderIdeas();renderHistory();update();probe();
 </script>
 <script src="bilik-antara-identity.js?v=2" defer></script>
 <script src="bilik-antara-suite.js?v=2" defer></script>
-<script src="bilik-antara-voice.js?v=13" defer></script>
-<script src="bilik-antara-voice-fallback.js?v=3" defer></script>
+<script src="bilik-antara-voice-locale.js?v=1" defer></script>
+<script src="bilik-antara-voice.js?v=14" defer></script>
+<script src="bilik-antara-voice-fallback.js?v=4" defer></script>
 </body>
 </html>
