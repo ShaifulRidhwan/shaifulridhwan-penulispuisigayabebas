@@ -39,7 +39,8 @@ test("Siapa Aku answers project origin, enhancements and base-model provenance",
  assert.match(reply,/dibina dan terus diubah suai oleh Shaiful Ridhwan/);
  assert.match(reply,/keupayaan setinggi mungkin/);
  assert.match(reply,/Google Gemini/);
- assert.doesNotMatch(reply,/sudah mencapai kecerdasan tertinggi di dunia/);
+ assert.match(reply,/bukan mendakwa sudah mencapai kecerdasan tertinggi di dunia/);
+ assert.doesNotMatch(reply,/^Aku (?:sudah|telah) mencapai kecerdasan tertinggi/m);
  assert.equal(ID.answerIdentity("siapa aku?"),reply);
 });
 test("Verified Shaiful Ridhwan biography is rich, natural and attribution-safe",()=>{
