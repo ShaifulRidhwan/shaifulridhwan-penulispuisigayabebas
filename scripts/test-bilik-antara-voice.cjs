@@ -30,7 +30,7 @@ test("Recorded-audio fallback stays opt-in and does not expose any permanent API
  for(const id of ["voiceFallback","voiceFallbackStart","voiceFallbackStop","voiceFallbackStatus","voiceFallbackSpeak"]){
   assert.match(html,new RegExp('id="'+id+'"'));
  }
- assert.match(html,/bilik-antara-voice-fallback\.js\?v=6/);
+ assert.match(html,/bilik-antara-voice-fallback\.js\?v=7/);
  assert.match(voiceFallback,/ba:voice-live-failed/);
  assert.match(js,/dispatchEvent\(new Event\("ba:voice-live-failed"\)\)/);
  assert.match(voiceFallback,/getUserMedia/);
@@ -163,6 +163,9 @@ test("Shaiful creator history, deeper reasoning and empathic voice share grounde
  assert.match(js,/sharedIdentity\?\.VOICE_CREATOR_PROMPT\|\|""/);
  assert.match(js,/thinkingConfig:\{thinkingLevel:data\.model==="gemini-3\.8-live-extended-thinking"\?"MEDIUM":"LOW"\}/);
  assert.match(js,/interactionStatus/);
+ assert.match(js,/modelTurnFinished=true/);
+ assert.match(js,/reasoningActive=false/);
+ assert.match(fallback,/projectIdentity\?\.VOICE_CREATOR_PROMPT\|\|""/);
  assert.match(html,/bilik-antara-brain\.js\?v=2/);
  assert.match(html,/bilik-antara-identity\.js\?v=3/);
  assert.match(html,/bilik-antara-voice\.js\?v=18/);
@@ -465,7 +468,7 @@ test("Fallback voice only records after an explicit user click and uses the orig
   assert.match(fallback,/voiceFallback:true/);
   assert.match(js,/minimizeButton\.addEventListener/);
 
- assert.match(html,/bilik-antara-voice-fallback\.js\?v=6/);
+ assert.match(html,/bilik-antara-voice-fallback\.js\?v=7/);
  assert.match(js,/ba:voice-live-failed/);
  assert.match(fallback,/addEventListener\("ba:voice-live-failed"/);
  assert.match(fallback,/start\.addEventListener\("click",async/);
