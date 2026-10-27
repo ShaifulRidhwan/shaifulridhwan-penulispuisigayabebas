@@ -47,7 +47,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
  assert.match(html,/bilik-antara\.css\?v=8/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
- assert.match(html,/audio dihantar terus/i);
+ assert.match(html,/Audio dihantar kepada Google/i);
  assert.doesNotMatch(html,/id="voiceAutoplay"|Baca jawapan/);
  assert.doesNotMatch(js,/voice-read|readUtterance|speechSynthesis|equipRead/);
  assert.doesNotMatch(css,/\.voice-read\b|\.voice-autoread\b/);
@@ -301,7 +301,7 @@ test("Siapa Aku is the only welcome starter and workspace nav is hidden",()=>{
 test("Voice errors distinguish Google token rejection from permission and WebSocket failures",()=>{
  assert.match(js,/TOKEN_UNAVAILABLE/);
  assert.match(js,/HTTP "\+res\.status/);
- assert.match(js,/WS 1008/);
+ assert.match(js,/code===1008|\[1008,4001,4401,4429\]/);
  assert.match(js,/WS 1006/);
  assert.match(js,/WS 1011/);
  assert.match(js,/visibilityTimer=setTimeout/);
