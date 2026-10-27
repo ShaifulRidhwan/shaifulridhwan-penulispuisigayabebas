@@ -354,6 +354,66 @@ test("Voice token request runs in parallel with microphone initialization",()=>{
  assert.ok(token>=0&&mic>=0&&token<mic,"start token while requesting microphone");
  assert.match(js,/tokenPromise\.catch\(\(\)=>\{\}\)/);
 });
+test("Voice resumption reuses microphone and keeps Google handle in memory only",async()=>{
+ const items=new Map(),events=new Map();
+ const item=id=>{
+  if(items.has(id))return items.get(id);
+  const handlers={},attrs={};
+  const x={hidden:false,disabled:false,style:{setProperty(){}},classList:{add(){},remove(){},toggle(){return true}},textContent:"",children:[],value:"",scrollHeight:0,
+   addEventListener:(n,fn)=>handlers[n]=fn,listener:n=>handlers[n],
+   setAttribute:(n,v)=>attrs[n]=v,getAttribute:n=>attrs[n],
+   replaceChildren(){this.children=[];},appendChild(v){this.children.push(v);},disconnect(){}};
+  items.set(id,x);return x;
+ };
+ const doc={getElementById:item,createElement:t=>item(t+"-"+items.size),addEventListener(){},hidden:false};
+ const track={enabled:true,stop(){this.stopped=true}};
+ const stream={getTracks:()=>[track],getAudioTracks:()=>[track]};
+ class Audio{constructor(){this.audioWorklet={addModule:async()=>{}};this.destination={};this.currentTime=0;}
+  resume(){return Promise.resolve()}close(){return Promise.resolve()}
+  createMediaStreamSource(){return{connect(){},disconnect(){}}}
+  createGain(){return{gain:{value:1},connect(){},disconnect(){}}}
+ }
+ class Worklet{constructor(){this.port={onmessage:null}}connect(){}disconnect(){}}
+ class Socket{
+  static instances=[];static OPEN=1;
+  constructor(url){this.url=url;this.readyState=1;this.sent=[];Socket.instances.push(this);Promise.resolve().then(()=>this.onopen?.());}
+  send(payload){this.sent.push(JSON.parse(payload));}
+  close(){this.readyState=3;}
+ }
+ let called=0;
+ const page={
+  isSecureContext:true,AudioContext:Audio,AudioWorkletNode:Worklet,WebSocket:Socket,
+  addEventListener:(n,fn)=>events.set(n,[...(events.get(n)||[]),fn]),
+  removeEventListener:(n,fn)=>events.set(n,(events.get(n)||[]).filter(f=>f!==fn)),
+  dispatchEvent:e=>(events.get(e.type)||[]).forEach(fn=>fn(e))
+ };
+ const nav={mediaDevices:{getUserMedia:async()=>stream}};
+ let id=0;
+ const fakeSet=()=>++id,fakeClear=()=>{};
+ const FakeEvent=class{constructor(type){this.type=type}};
+ const issue=async()=>({ok:true,status:200,json:async()=>({token:"auth_tokens/test-"+(++called),model:"gemini-3.8-live",durationSeconds:600})});
+ new Function("document","window","navigator","WebSocket","AudioWorkletNode","setTimeout","clearTimeout","fetch","Event","AbortController","btoa","atob",js)(
+  doc,page,nav,Socket,Worklet,fakeSet,fakeClear,issue,FakeEvent,
+  class{constructor(){this.signal={aborted:false}}abort(){this.signal.aborted=true}},()=>"",()=>""
+ );
+ await item("voiceLive").listener("click")();
+ for(let n=0;n<4;n++)await Promise.resolve();
+ const first=Socket.instances[0];
+ assert.ok(first?.sent[0]?.setup);
+ assert.deepEqual(first.sent[0].setup.sessionResumption,{});
+ await first.onmessage({data:JSON.stringify({setupComplete:{}})});
+ await first.onmessage({data:JSON.stringify({sessionResumptionUpdate:{resumable:true,newHandle:"HANDLE_ONLY_IN_MEMORY"}})});
+ await first.onmessage({data:JSON.stringify({goAway:{timeLeft:"15s"}})});
+ for(let n=0;n<24;n++)await Promise.resolve();
+ const second=Socket.instances[1];
+ assert.ok(second?.sent[0]?.setup);
+ assert.equal(second.sent[0].setup.sessionResumption.handle,"HANDLE_ONLY_IN_MEMORY");
+ assert.equal(called,2);
+ assert.equal(track.stopped,undefined,"no new microphone permission when connection renews");
+ await item("voiceStop").listener("click")();
+ assert.equal(track.stopped,true,"stopping voice releases microphone");
+ assert.equal((events.get("ba:voice-renew")||[]).length,0);
+});
 test("Session creation has backend rate limiting",async()=>{
  process.env.GEMINI_API_KEY="fake-permanent-api-key-test";
  const old=global.fetch;
