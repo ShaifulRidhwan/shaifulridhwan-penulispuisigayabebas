@@ -395,8 +395,11 @@ async function startLive(){
             automaticActivityDetection:{
               startOfSpeechSensitivity:"START_SENSITIVITY_HIGH",
               endOfSpeechSensitivity:"END_SENSITIVITY_LOW",
-              prefixPaddingMs:500,silenceDurationMs:1200
+              prefixPaddingMs:40,silenceDurationMs:950
             },
+            // Avoid false interruptions when the phone speaker leaks into its mic.
+            // Users can finish a thought after the model has completed its turn.
+            activityHandling:"NO_INTERRUPTION",
             turnCoverage:"TURN_INCLUDES_ONLY_ACTIVITY"
           },
           inputAudioTranscription:{},
