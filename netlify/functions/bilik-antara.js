@@ -166,13 +166,13 @@ exports.handler=async event=>{
   }
 
   // Short follow-ups inherit the preceding conversational subject, not a fresh topic.
-  const followUp=/^(?:(?:tapi|jadi|habis|kalau|dan|so|then|pula|pulak|ok|okay)\\s+)*(?:kenapa|mengapa|sebab apa|bagaimana|macam mana|apa sebab|apa akibat|akibatnya|kesannya|adakah|apakah|betul ke|maksudnya|contohnya|contoh|jelaskan|terangkan|why|how|lepas tu|pastu|seterusnya|yang tadi|yang tu|dia|itu|macam tu|kalau begitu|apa bezanya|apa kaitan|apa bukti|boleh ke|patut ke|rasanya|serius|jadi apa)(?:\\b|[?!.,]|$)/i.test(question.trim());
+  const followUp=/^(?:(?:tapi|jadi|habis|kalau|dan|so|then|pula|pulak|ok|okay)\s+)*(?:kenapa|mengapa|sebab apa|bagaimana|macam mana|apa sebab|apa akibat|akibatnya|kesannya|adakah|apakah|betul ke|maksudnya|contohnya|contoh|jelaskan|terangkan|why|how|lepas tu|pastu|seterusnya|yang tadi|yang tu|dia|itu|macam tu|kalau begitu|apa bezanya|apa kaitan|apa bukti|boleh ke|patut ke|rasanya|serius|jadi apa)(?:\b|[?!.,]|$)/i.test(question.trim());
   const followUpGuidance=history.length&&followUp?
     "\nSOALAN SUSULAN BERKONTEKS: Soalan ringkas ini merujuk kepada perbualan sebelumnya. Cari perkara yang paling baru dibincangkan dan jawapan terakhir AI; sambungkan hujah secara semula jadi. 'Kenapa' minta alasan/sebab, 'bagaimana' minta proses, 'akibat' minta kesan, 'adakah' minta penilaian berasas. Jangan minta pengguna ulang topik yang jelas. Jika rujukan benar-benar mempunyai beberapa maksud setara, nyatakan tafsiran paling munasabah dan beri peluang pembetulan. Jangan mereka sebab atau niat seseorang.": "";
   const intent=resolveIntent(question,history,!!(media.length||documentText));
   // A short elliptical reply needs the previous topic even when keyword routing misses it.
   const contextual=history.length>0&&(followUp||
-    (question.length<=85&&/^(?:dia|itu|ni|tu|mereka|yang|kalau|tapi|jadi|habis|pastu|so|betul|boleh|patut|maksud|sebab|akibat|kesan|contoh|lebih|kurang)\\b/i.test(question)));
+    (question.length<=85&&/^(?:dia|itu|ni|tu|mereka|yang|kalau|tapi|jadi|habis|pastu|so|betul|boleh|patut|maksud|sebab|akibat|kesan|contoh|lebih|kurang)\b/i.test(question)));
   if(contextual){intent.depth=Math.max(intent.depth||0,2);intent.review=false;}
   const plan=intelligencePlan(intent);
   const identityReply=(!media.length&&!documentText&&!contextual)?Identity.answerIdentity(question):null;
