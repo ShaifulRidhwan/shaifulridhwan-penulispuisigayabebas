@@ -60,7 +60,7 @@ exports.handler=async(event)=>{
     requestMode=body.mode==="standard"?"standard":"auto";
   }catch(_){return reply(400,{error:"Permintaan Voice tidak sah."});}
   const configured=process.env.GEMINI_LIVE_MODEL||DEFAULT_MODEL;
-  const preferred=/^gemini-(?:3\\.8-live(?:-extended-thinking)?|3\\.1-flash-live-preview)$/.test(configured)?configured:DEFAULT_MODEL;
+  const preferred=/^gemini-(?:3\.8-live(?:-extended-thinking)?|3\.1-flash-live-preview)$/.test(configured)?configured:DEFAULT_MODEL;
   const model=requestMode==="standard"?"gemini-3.8-live":preferred;
   const now=Date.now();
   const controller=new AbortController();
