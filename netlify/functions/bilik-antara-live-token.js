@@ -60,35 +60,43 @@ exports.handler=async(event)=>{
     // or billable Google Search grounding.
     const candidates=[model,...(model==="gemini-3.8-live"?["gemini-3.1-flash-live-preview"]:["gemini-3.8-live"])];
     let lastStatus=502,lastReason="UPSTREAM",lastMessage="",tried=[];
-    for(const candidate of [...new Set(candidates)]){
-      const restriction={
-        model:"models/"+candidate,
-        config:{sessionResumption:{},responseModalities:["AUDIO"]}
-      };
-      const response=await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens",{
-        method:"POST",
-        headers:{"Content-Type":"application/json","x-goog-api-key":key},
-        body:JSON.stringify({...base,liveConnectConstraints:restriction}),
-        signal:controller.signal
-      });
-      const json=await response.json().catch(()=>({}));
-      tried.push(candidate);
-      if(response.ok){
-        if(!json||typeof json.name!=="string"||!json.name.startsWith("auth_tokens/"))
-          return reply(502,{error:"Token sementara Google tidak sah.",reason:"TOKEN_FORMAT"});
-        rate(ip,true);
-        return reply(200,{
-          token:json.name,model:candidate,durationSeconds:600,
-          notice:"Audio dihantar terus ke Google Gemini semasa Voice Live aktif. Sesi maksimum 10 minit."
+    outer: for(const candidate of [...new Set(candidates)]){
+      // Attempt the smallest valid model-locked token first. Avoid binding
+      // extra Live config that may differ from the actual WebSocket setup.
+      // Google only ever receives a ONE-USE, short-lived, model-bound request.
+      for(const variant of ["model-only","audio-config"]){
+        const restriction={model:"models/"+candidate};
+        if(variant==="audio-config")restriction.config={
+          sessionResumption:{},responseModalities:["AUDIO"]
+        };
+        const response=await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens",{
+          method:"POST",
+          headers:{"Content-Type":"application/json","x-goog-api-key":key},
+          body:JSON.stringify({...base,liveConnectConstraints:restriction}),
+          signal:controller.signal
         });
+        const json=await response.json().catch(()=>({}));
+        tried.push(candidate+(variant==="model-only"?" · model sahaja":" · audio"));
+        if(response.ok){
+          if(!json||typeof json.name!=="string"||!json.name.startsWith("auth_tokens/"))
+            return reply(502,{error:"Token sementara Google tidak sah.",reason:"TOKEN_FORMAT"});
+          rate(ip,true);
+          return reply(200,{
+            token:json.name,model:candidate,durationSeconds:600,
+            notice:"Audio dihantar terus ke Google Gemini semasa Voice Live aktif. Sesi maksimum 10 minit."
+          });
+        }
+        lastStatus=response.status;
+        lastReason=String(json?.error?.status||"UPSTREAM").slice(0,40);
+        lastMessage=String(json?.error?.message||"").slice(0,400);
+        console.warn("[bilik-antara-voice] token refused",{
+          httpStatus:lastStatus,reason:lastReason,model:candidate,variant
+        });
+        // Authentication, account, billing and quota failures must never be
+        // bypassed by repeated requests. Only 400/404 try another shape/model.
+        if(lastStatus!==400&&lastStatus!==404)break outer;
+        if(lastStatus===404)break; // A nonexistent model cannot be fixed by config.
       }
-      lastStatus=response.status;
-      lastReason=String(json?.error?.status||"UPSTREAM").slice(0,40);
-      lastMessage=String(json?.error?.message||"").slice(0,400);
-      console.warn("[bilik-antara-voice] token refused",{httpStatus:lastStatus,reason:lastReason,model:candidate});
-      // Only HTTP 400 or model not found permits one alternate free-tier
-      // Live model. Do not retry auth, quota or billing rejections.
-      if(lastStatus!==400&&lastStatus!==404)break;
     }
     const lower=lastMessage.toLowerCase();
     const error=/billing|payment|restricted.*tier/.test(lower)?"Google menyatakan projek memerlukan akses/bil yang sesuai. Tiada caj atau pelan ditukar oleh Bilik Antara.":
@@ -98,8 +106,14 @@ exports.handler=async(event)=>{
       [400,404].includes(lastStatus)?"Google menolak tetapan token Voice untuk model yang dicuba. Semak akses Live API dan konfigurasi (HTTP "+lastStatus+").":
       "Google tidak mengeluarkan token Voice (HTTP "+lastStatus+").";
     const diagnostic=["INVALID_ARGUMENT","PERMISSION_DENIED","RESOURCE_EXHAUSTED","NOT_FOUND"].includes(lastReason)?lastReason:"UPSTREAM";
+    const fieldIssue=/liveConnectConstraints|live_connect_constraints/i.test(lastMessage)?"TOKEN_CONSTRAINTS":
+      /newSessionExpireTime|new_session_expire_time/i.test(lastMessage)?"TOKEN_SESSION_EXPIRY":
+      /expireTime|expire_time/i.test(lastMessage)?"TOKEN_EXPIRY":
+      /model/i.test(lastMessage)?"MODEL_ACCESS":
+      /API key|api_key/i.test(lastMessage)?"API_KEY":
+      /audio|modality|config/i.test(lastMessage)?"LIVE_CONFIG":"UNKNOWN";
     return reply(lastStatus===429?429:502,{
-      error,reason:"TOKEN_HTTP_"+lastStatus,diagnostic,
+      error,reason:"TOKEN_HTTP_"+lastStatus,diagnostic,fieldIssue,
       triedModels:tried,
       hint:"Jika masalah berulang, semak akses Gemini Live dan model tersedia dalam Google AI Studio."
     });
