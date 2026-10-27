@@ -2,6 +2,7 @@
 const test=require("node:test");
 const assert=require("node:assert/strict");
 const H=require("../netlify/functions/antara-intelligence");
+const Brain=require("../bilik-antara-brain");
 const {handler}=require("../netlify/functions/bilik-antara");
 process.env.GEMINI_API_KEY="fake-test-key";
 process.env.GEMINI_MODEL="gemini-3.6-flash";
@@ -25,6 +26,16 @@ function latestPrimary(){return [...calls].reverse().find(c=>c.body.generationCo
 function event(body,id){
   return {httpMethod:"POST",headers:{origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app","x-nf-client-connection-ip":"test-"+id},body:JSON.stringify(body)};
 }
+test("Text Gemini shares intelligent personality core with Voice Live without voice-only constraints",async()=>{
+ const response=await handler(event({question:"Terangkan graviti secara mudah."},"shared-brain-core"));
+ assert.equal(response.statusCode,200);
+ const instruction=latestPrimary().systemInstruction.parts[0].text;
+ assert.ok(instruction.includes(Brain.CORE));
+ assert.ok(instruction.includes(Brain.TEXT_DELIVERY));
+ assert.ok(!Brain.CORE.includes("teks/Markdown"));
+ assert.match(Brain.VOICE_GUIDANCE,/KECERDASAN ADAPTIF/);
+ assert.match(instruction,/PENERANGAN:/);
+});
 test("one automatic intelligence: no user mode required or honored",async()=>{
   const a=await handler(event({question:"Hai, salam?"},"hi"));
   assert.equal(a.statusCode,200);
