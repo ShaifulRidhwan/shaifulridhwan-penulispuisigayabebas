@@ -8,6 +8,8 @@ const html=fs.readFileSync("bilik-antara.html","utf8");
 const css=fs.readFileSync("bilik-antara.css","utf8");
 const js=fs.readFileSync("bilik-antara-voice.js","utf8");
 const pcm=fs.readFileSync("bilik-antara-pcm-worklet.js","utf8");
+const voiceFallback=fs.readFileSync("bilik-antara-voice-fallback.js","utf8");
+const intelligence=fs.readFileSync("netlify/functions/antara-intelligence.js","utf8");
 const netlify=fs.readFileSync("netlify.toml","utf8");
 const backend=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
 const origin="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
@@ -15,6 +17,21 @@ function event(ip,host=origin){
  return {httpMethod:"POST",headers:{origin:host,"x-nf-client-connection-ip":ip},body:"{}"};
 }
 
+test("Recorded-audio fallback stays opt-in and does not expose any permanent API key",()=>{
+ for(const id of ["voiceFallback","voiceFallbackStart","voiceFallbackStop","voiceFallbackStatus","voiceFallbackSpeak"]){
+  assert.match(html,new RegExp('id="'+id+'"'));
+ }
+ assert.match(html,/bilik-antara-voice-fallback\.js\?v=1/);
+ assert.match(voiceFallback,/ba:voice-live-failed/);
+ assert.match(js,/dispatchEvent\(new Event\("ba:voice-live-failed"\)\)/);
+ assert.match(voiceFallback,/getUserMedia/);
+ assert.match(voiceFallback,/MediaRecorder/);
+ assert.match(voiceFallback,/sendOnStop/);
+ assert.match(voiceFallback,/audio\/webm/);
+ assert.match(voiceFallback,/\.netlify\/functions\/bilik-antara/);
+ assert.match(intelligence,/"audio\/webm"/);
+ assert.doesNotMatch(voiceFallback,/GEMINI_API_KEY|localStorage\.setItem|sessionStorage\.setItem/);
+});
 test("Microphone is allowed only for this site's origin",()=>{
  assert.match(netlify,/Permissions-Policy = "camera=\(\), microphone=\(self\), geolocation=\(\)"/);
  assert.doesNotMatch(netlify,/microphone=\(\)/);
