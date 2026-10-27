@@ -26,7 +26,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
  }
  assert.match(html,/id="voicePanel" hidden/);
  assert.match(html,/bilik-antara-voice\.js\?v=7/);
- assert.match(html,/bilik-antara\.css\?v=5/);
+ assert.match(html,/bilik-antara\.css\?v=6/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
  assert.match(html,/audio dihantar terus/i);
@@ -86,7 +86,7 @@ test("Live streaming uses ephemeral token with PCM input/output and transcriptio
 });
 test("First-person AI persona uses aku not saya in both regular and live models",()=>{
  assert.match(js,/WAJIB gunakan kata ganti diri pertama AKU, bukan SAYA/);
- assert.match(backend,/WAJIB bercakap dengan kata ganti diri AKU, bukan SAYA/);
+ assert.match(backend,/WAJIB kata ganti diri AKU, bukan SAYA/);
  assert.match(html,/Assalamualaikum dan selamat sejahtera/);
 });
 test("Empty secret and disallowed cross-origin requests never issue Gemini tokens",async()=>{
