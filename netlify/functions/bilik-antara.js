@@ -15,8 +15,7 @@ const MAX_QUESTION=32000;
 const MAX_MEDIA_ENCODED=4800000;
 const rateMap=new Map();
 
-const AUTHOR_REPLY="Shaiful Ridhwan ialah penulis di sebalik puisigayabebas. Dia menghasilkan puisi gaya bebas, menulis tentang sastera moden, cinta dan falsafah, serta menghasilkan prosa falsafah Antara Cahaya dan Gelap. Butiran peribadi yang tidak diterbitkan? Aku takkan reka. Kreativiti itu untuk karya, bukannya biodata orang.";
-const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+[
+const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+Identity.PROMPT+"\n"+[
 "STUDIO ANTARA: Jika pengguna meminta e-mel, PDF atau Word siap dieksport, bantu hasilkan kandungan dan maklumkan bahawa pengguna boleh buka studio-antara.html serta pindahkan jawapan melalui butang Studio pada mesej. Studio mengendalikan eksport fail dalam pelayar. Penjanaan imej AI ada di studio-imej-beta.html sebagai BETA TEST berasingan; memerlukan peranti desktop yang sesuai, WebGPU, persetujuan dan muat turun model; jangan dakwa serasi dengan semua peranti atau boleh menjana imej terus melalui API sembang.",
 "OSINT TIKTOK: Jika diminta menyemak akaun, hanya laporan metadata profil yang benar-benar awam atau disahkan melalui TikTok API rasmi. Utamakan handle, nama paparan, bio (tanpa maklumat hubungan peribadi), verified, followers/following/video/likes dan pautan bio awam. Bezakan data API rasmi daripada hasil carian yang belum disahkan.",
 "OSINT PRIVASI: Jangan cuba mengenal pasti pemilik sebenar akaun pseudonim, menghubungkan akaun tersembunyi, keluarga, nombor peribadi, e-mel, IP, peranti atau lokasi fizikal pengguna. Jangan terbitkan latitud, longitud, koordinat GPS, rumah, sekolah, tempat kerja, lokasi masa nyata atau infer lokasi daripada gambar, geotag, catatan, video atau masa siaran. Negara hanya boleh disebut sebagai pernyataan sukarela dalam bio yang disahkan, bukan lokasi sebenar.",
@@ -47,9 +46,6 @@ function throttle(ip){
   const e=rateMap.get(ip);
   if(!e||now-e.start>60000){rateMap.set(ip,{count:1,start:now});return false;}
   return ++e.count>12;
-}
-function isAuthorIdentity(q){
-  return /shaiful|ridhwan/i.test(q)&&/\b(siapa|who|kenal|biodata|umur|biografi|asal)\b/i.test(q);
 }
 function errorMessage(status){
   if(status===429)return "Kuota API Google sedang penuh. Cuba sebentar lagi.";
@@ -176,11 +172,6 @@ exports.handler=async event=>{
     mode:"live",aiMode:"automatic",model:"project-identity",reply:identityReply,
     sources:[],argumentMap:[],truthAudit:[],thoughtLedger:[],hypothesis:"",
     reviewApplied:false,disclaimer:"Asal-usul dan ciri berdasarkan rekod projek; bukan latihan semula Gemini."
-  },H);
-  if(isAuthorIdentity(question)&&!media.length&&!documentText)return result(200,{
-    mode:"live",aiMode:"automatic",model:"grounded-facts",reply:AUTHOR_REPLY,
-    sources:[],argumentMap:[],truthAudit:[],thoughtLedger:[],hypothesis:"",
-    reviewApplied:false,disclaimer:"Maklumat identiti daripada fakta awam penulis sahaja."
   },H);
   const tiktokHandle=extractTikTokHandle(question);
   const publicAccount=tiktokHandle?await researchPublicAccount(tiktokHandle):null;
