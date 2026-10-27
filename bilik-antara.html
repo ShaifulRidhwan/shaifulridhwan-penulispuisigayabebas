@@ -107,7 +107,7 @@
      <button type="button" id="voiceMuteMic" aria-pressed="true">Tutup mikrofon</button>
      <button type="button" id="voiceMuteSpeaker" aria-pressed="true">Senyapkan suara</button>
     </div>
-    <p class="voice-privacy">Mikrofon aktif hanya selepas kau mulakan Voice Live. Setiap sambungan Google kira-kira 10 minit; sistem akan cuba sambung semula tanpa meminta mikrofon berulang kali, sehingga 24 jam jika tab kekal aktif. Sambungan, kuota dan kelancaran tidak dijamin. Voice menggunakan Bahasa Melayu Malaysia santai. Semak transkrip “Kau” untuk melihat apa yang AI dengar, termasuk perkataan pendek. Audio dihantar kepada Google dan transkrip tidak disimpan secara automatik.</p>
+    <p class="voice-privacy">Mikrofon aktif hanya selepas kau mulakan Voice Live. Setiap sambungan Google kira-kira 10 minit; sistem akan cuba sambung semula tanpa meminta mikrofon berulang kali, sehingga 24 jam jika tab kekal aktif. Sambungan, kuota dan kelancaran tidak dijamin. Voice menggunakan Bahasa Melayu Malaysia santai. Semak transkrip “Kau” untuk melihat apa yang AI dengar, termasuk perkataan pendek. Audio dihantar kepada Google. Selepas sesi tamat, transkrip yang tersedia disambungkan ke sejarah chat; ia hanya disimpan pada peranti jika pilihan ingat sesi diaktifkan.</p>
    </div>
    <div class="composer-area">
     <div id="docStatus" role="status" aria-live="polite"></div><button type="button" id="removeAttachment" hidden aria-label="Buang lampiran">× Buang lampiran</button>
@@ -533,7 +533,7 @@ async function submit(event){
  ui.input.value="";resize();update();
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),34000);
  try{
-  const payload={question,history:history.slice(-16).map(m=>({role:m.role,content:m.content})),
+  const payload={question,history:history.slice(-24).map(m=>({role:m.role,content:String(m.content||"").slice(0,1800)})),
    summary,thoughtLedger:ideas.slice(-8),
    documentText:selectedFile&&selectedFile.text||"",
    documentName:selectedFile&&selectedFile.name||"",
