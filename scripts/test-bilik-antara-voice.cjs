@@ -52,6 +52,9 @@ test("Short Malay words trigger a natural answer, not five requests to repeat",(
  assert.match(js,/NO_INTERRUPTION/);
  assert.match(js,/Perkataan pendek seperti 'lapar'/);
  assert.match(js,/PERKATAAN PENDEK SAH/);
+ assert.match(js,/c\.interimInputTranscription\?\.text/);
+ assert.match(js,/Sedang dengar:/);
+ assert.match(js,/removeItem\("bilik-antara:voice-dialect:v1"\)/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/lapar/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/Jangan meminta ulang/);
  assert.match(fallback,/Perkataan pendek seperti lapar/);
