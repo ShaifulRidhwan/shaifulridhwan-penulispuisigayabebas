@@ -4,6 +4,7 @@
    Nothing is captured until microphone button is pressed. Audio stays in
    memory and is sent only when user presses Stop & Send (or 20s limit). */
 const $=id=>document.getElementById(id);
+const projectIdentity=window.BilikAntaraIdentity;
 const panel=$("voiceFallback"),min=$("voiceFallbackMinimize"),start=$("voiceFallbackStart"),
  stop=$("voiceFallbackStop"),retry=$("voiceFallbackRetry"),speak=$("voiceFallbackSpeak"),
  status=$("voiceFallbackStatus"),live=$("voiceLive");
@@ -73,7 +74,9 @@ async function submitAudio(blob){
      "Dengar audio pengguna dan jawab dalam Bahasa Melayu Malaysia santai sahaja, bukan bahasa lain.",
      "Perkataan pendek seperti lapar, haus, penat, bosan ialah ujaran sah yang perlu dijawab terus, walaupun pengguna tidak membentuk soalan penuh.",
      "Jangan meminta ulang berulang kali apabila perkataan jelas. Jika tiada perkataan dapat dikenal pasti, minta ulang sekali sahaja.",
-     "Jawab dengan lengkap dalam 2 hingga 4 ayat atau lebih jika masalah perlukan penerangan. Jangan hentikan ayat di tengah."
+     "Jawab dengan lengkap dalam 2 hingga 4 ayat atau lebih jika masalah perlukan penerangan. Jangan hentikan ayat di tengah.",
+     "Gaya pertuturan semula jadi dan ada empati; persoalan sukar memerlukan analisis teliti, tetapi soalan ringan jangan diubah menjadi esei.",
+     projectIdentity?.VOICE_CREATOR_PROMPT||""
     ].join(" "),
     media:{mimeType:mime,name:"rakaman-suara",data}
    })
