@@ -16,7 +16,7 @@ let recognizer=null,dictating=false,liveGeneration=0;
 let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null;
 let liveActive=false,liveReady=false,micEnabled=true,speakerEnabled=true;
 let startAbort=null,sessionTimer=null,connectTimer=null,visibilityTimer=null,nextAudioTime=0,playSources=new Set(),lastTurn=null;
-let dayTimer=null,sessionStarted=0,resumeHandle="",liveModel="",reconnecting=false,connectionAttempts=0;
+let dayTimer=null,sessionStarted=0,resumeHandle="",liveModel="",reconnecting=false,connectionAttempts=0,renewListener=null;
 const speechAPI=window.SpeechRecognition||window.webkitSpeechRecognition;
 const sayStatus=(value)=>{status.textContent=value;};
 const showNotice=(message)=>{notice.textContent=String(message||"").slice(0,230);notice.hidden=!message;};
@@ -86,6 +86,7 @@ async function closeLive(reason){
   if(sessionTimer){clearTimeout(sessionTimer);sessionTimer=null;}
   if(dayTimer){clearTimeout(dayTimer);dayTimer=null;}
   resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;sessionStarted=0;
+  if(renewListener){window.removeEventListener("ba:voice-renew",renewListener);renewListener=null;}
   if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
    if(visibilityTimer){clearTimeout(visibilityTimer);visibilityTimer=null;}
   if(socket){const ws=socket;socket=null;ws.onclose=null;ws.onerror=null;ws.onmessage=null;try{ws.close(1000,"Sesi tamat");}catch(e){}}
@@ -288,9 +289,9 @@ async function startLive(){
           connectionAttempts++;
           sessionTimer=setTimeout(()=>renewConnection("Mencuba sambungan Voice sekali lagi…"),2400);
         }else await closeLive(msg);
-      }finally{reconnecting=false;}
+      }finally{if(!liveActive)reconnecting=false;}
     }
-    const renewListener=()=>{if(generation===liveGeneration&&liveActive)renewConnection("Menyambung kerana sambungan Google hampir tamat…");};
+    renewListener=()=>{if(generation===liveGeneration&&liveActive)renewConnection("Menyambung kerana sambungan Google hampir tamat…");};
     window.addEventListener("ba:voice-renew",renewListener);
     function openConnection(data){
       if(generation!==liveGeneration||!liveActive)return;
@@ -307,6 +308,7 @@ async function startLive(){
         sayStatus("Google tidak mengesahkan sambungan Voice.");
         // Invalid handles must not trap the user in a loop.
         if(handle)resumeHandle="";
+        reconnecting=false;
         renewConnection("Menyambung semula selepas masa menunggu…");
       },20000);
       ws.onopen=()=>{
@@ -396,6 +398,7 @@ async function startLive(){
           return;
         }
         if(!document.hidden&&Date.now()-sessionStarted<MAX_DAY){
+          reconnecting=false;
           renewConnection("Sambungan suara terputus. Menyambung semula…");
         }else{
           closeLive("Sesi dihentikan apabila laman tidak aktif atau tempoh hari berakhir.");
