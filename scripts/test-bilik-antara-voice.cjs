@@ -43,8 +43,8 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=9/);
- assert.match(html,/bilik-antara\.css\?v=7/);
+ assert.match(html,/bilik-antara-voice\.js\?v=10/);
+ assert.match(html,/bilik-antara\.css\?v=8/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
  assert.match(html,/audio dihantar terus/i);
@@ -153,11 +153,42 @@ test("Google rejection never downgrades a model-restricted Live token",async()=>
   const res=await handler(event("voice-constrained-"+Date.now()));
   assert.equal(res.statusCode,502);
   assert.equal(JSON.parse(res.body).reason,"TOKEN_HTTP_400");
-  assert.equal(sent.length,2,"Only the two allowlisted free-tier Live models are tried after 400.");
+  assert.equal(sent.length,4,"Two model-bound configurations for each allowlisted Live model.");
   assert.equal(sent[0].liveConnectConstraints.model,"models/gemini-3.8-live");
-  assert.equal(sent[1].liveConnectConstraints.model,"models/gemini-3.1-flash-live-preview");
+  assert.equal(sent[0].liveConnectConstraints.config,undefined,"Minimal first attempt avoids optional audio constraint.");
+  assert.equal(sent[1].liveConnectConstraints.model,"models/gemini-3.8-live");
+  assert.deepEqual(sent[1].liveConnectConstraints.config.responseModalities,["AUDIO"]);
+  assert.equal(sent[2].liveConnectConstraints.model,"models/gemini-3.1-flash-live-preview");
+  assert.equal(sent[3].liveConnectConstraints.model,"models/gemini-3.1-flash-live-preview");
   assert.equal(sent[0].uses,1);
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
+});
+test("A 400 audio-configuration rejection can recover using an allowlisted model-locked Live token",async()=>{
+ process.env.GEMINI_API_KEY="fake-permanent-api-key-test";
+ const old=global.fetch,sent=[];
+ try{
+  global.fetch=async(_,opts)=>{
+   const body=JSON.parse(opts.body);sent.push(body);
+   if(sent.length===1)return {ok:false,status:400,json:async()=>({error:{message:"Invalid model",status:"INVALID_ARGUMENT"}})};
+   return {ok:true,status:200,json:async()=>({name:"auth_tokens/fallback-works"})};
+  };
+  const res=await handler(event("voice-recover-"+Date.now()));
+  assert.equal(res.statusCode,200);
+  assert.equal(sent.length,2);
+  assert.equal(sent[0].liveConnectConstraints.config,undefined);
+  assert.equal(sent[1].liveConnectConstraints.model,"models/gemini-3.8-live");
+  assert.equal(JSON.parse(res.body).token,"auth_tokens/fallback-works");
+  assert.ok(!res.body.includes("fake-permanent-api-key-test"));
+ }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
+});
+test("Voice composer microphone and send share identical 44px and responsive dimensions",()=>{
+ assert.match(css,/2026-10-27: Match microphone and send touch targets/);
+ assert.match(css,/\.composer #voiceFallbackStart,/);
+ assert.match(css,/\.composer #voiceFallbackStop,/);
+ assert.match(css,/\.composer #sendBtn/);
+ assert.match(css,/width:44px;height:44px/);
+ assert.match(css,/width:40px;height:40px/);
+ assert.match(css,/width:38px;height:38px/);
 });
 test("Voice connection has explicit token and websocket watchdogs",()=>{
  assert.match(js,/const tokenTimer=setTimeout\(\(\)=>controller\.abort\(\),26000\)/);
