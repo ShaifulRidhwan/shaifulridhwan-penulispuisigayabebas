@@ -204,7 +204,7 @@ async function startLive(){
   // Begin token request in parallel with microphone permission and audio setup,
   // so network latency doesn't accumulate after the user's permission dialog.
   const controller=new AbortController();startAbort=controller;
-  const tokenTimer=setTimeout(()=>controller.abort(),18000);
+  const tokenTimer=setTimeout(()=>controller.abort(),26000);
   const tokenPromise=fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
      body:"{}",signal:controller.signal,credentials:"same-origin",cache:"no-store"})
     .then(async res=>({res,body:await res.json().catch(()=>({}))}));
