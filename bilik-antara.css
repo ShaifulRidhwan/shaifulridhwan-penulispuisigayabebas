@@ -2200,3 +2200,13 @@ html[data-theme="light"] .voice-action,html[data-theme="light"]
  .message.ai .byline,#thoughtItems li{font-size:12px}
  .conversation-head .voice-action,.starter{min-height:40px}
 }
+
+/* Voice Live fallback: visible only after opt-in and a Live token failure. */
+.voice-fallback[hidden]{display:none!important}
+.voice-fallback{margin:8px 12px 12px;padding:13px 14px;border:1px solid rgba(226,185,115,.4);border-radius:14px;background:rgba(10,14,25,.91);color:var(--text,#f4e7d5);font:13px/1.65 'DM Sans',sans-serif}
+.voice-fallback-title{font-weight:700;color:#ebd0a2;letter-spacing:.025em}
+.voice-fallback p{margin:5px 0 11px;opacity:.85}
+.voice-fallback-buttons{display:flex;flex-wrap:wrap;gap:8px}
+.voice-fallback button{border:1px solid rgba(225,182,122,.48);background:rgba(49,43,37,.73);color:#f8e7cf;border-radius:9px;padding:9px 11px;min-height:40px;cursor:pointer}
+.voice-fallback button:disabled{opacity:.5;cursor:not-allowed}
+#voiceFallbackStatus{font-size:12px;margin-top:9px;color:#e8ca97}
