@@ -10,6 +10,10 @@ const js=fs.readFileSync("bilik-antara-voice.js","utf8");
 const pcm=fs.readFileSync("bilik-antara-pcm-worklet.js","utf8");
 const fallback=fs.readFileSync("bilik-antara-voice-fallback.js","utf8");
 const voiceFallback=fs.readFileSync("bilik-antara-voice-fallback.js","utf8");
+const voiceLocaleJs=fs.readFileSync("bilik-antara-voice-locale.js","utf8");
+const localeModule={exports:{}};
+new Function("module",voiceLocaleJs)(localeModule);
+const voiceLocale=localeModule.exports;
 const intelligence=fs.readFileSync("netlify/functions/antara-intelligence.js","utf8");
 const netlify=fs.readFileSync("netlify.toml","utf8");
 const backend=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
@@ -22,7 +26,7 @@ test("Recorded-audio fallback stays opt-in and does not expose any permanent API
  for(const id of ["voiceFallback","voiceFallbackStart","voiceFallbackStop","voiceFallbackStatus","voiceFallbackSpeak"]){
   assert.match(html,new RegExp('id="'+id+'"'));
  }
- assert.match(html,/bilik-antara-voice-fallback\.js\?v=3/);
+ assert.match(html,/bilik-antara-voice-fallback\.js\?v=5/);
  assert.match(voiceFallback,/ba:voice-live-failed/);
  assert.match(js,/dispatchEvent\(new Event\("ba:voice-live-failed"\)\)/);
  assert.match(voiceFallback,/getUserMedia/);
@@ -32,6 +36,42 @@ test("Recorded-audio fallback stays opt-in and does not expose any permanent API
  assert.match(voiceFallback,/\.netlify\/functions\/bilik-antara/);
  assert.match(intelligence,/"audio\/webm"/);
  assert.doesNotMatch(voiceFallback,/GEMINI_API_KEY|localStorage\.setItem|sessionStorage\.setItem/);
+});
+test("Seven Malay speaking styles appear in compact selector with accessible labels",()=>{
+ const styles=[...html.matchAll(/<option value="(santai|perak|kelantan|penang|kedah|sabah|sarawak)">/g)].map(x=>x[1]);
+ assert.deepEqual(styles,["santai","perak","kelantan","penang","kedah","sabah","sarawak"]);
+ assert.match(html,/id="voiceDialect"/);
+ assert.match(html,/for="voiceDialect"/);
+ assert.match(html,/id="voiceDialectHint"/);
+ assert.ok(html.indexOf("bilik-antara-voice-locale.js?v=1")<html.indexOf("bilik-antara-voice.js?v=15"));
+ assert.match(css,/\.voice-dialect-bar/);
+ assert.match(js,/dialectSelect\.disabled=liveActive/);
+ assert.match(js,/const speakingRule=languageLock\(selectedDialect\)/);
+ assert.match(fallback,/voiceLocale\?\.instruction\(selectedVoiceStyle\?\.value/);
+});
+test("Malay-only voice instructions override Spanish for every regional style",()=>{
+ const styles=["santai","perak","kelantan","penang","kedah","sabah","sarawak"];
+ assert.deepEqual(Object.keys(voiceLocale.STYLES),styles);
+ for(const code of styles){
+  const instruction=voiceLocale.instruction(code);
+  assert.match(instruction,/RESPOND ONLY IN MALAY/);
+  assert.match(instruction,/NEVER SWITCH TO SPANISH/);
+  assert.match(instruction,/Bahasa Melayu Malaysia/);
+  assert.ok(instruction.includes(voiceLocale.displayName(code)));
+ }
+ assert.equal(voiceLocale.normalize("spanish"),"santai");
+ assert.equal(voiceLocale.instruction("__proto__"),voiceLocale.instruction("santai"));
+});
+test("Voice preference stores allowlisted codes and falls back if storage is blocked",()=>{
+ const values=new Map(),storage={
+  setItem:(k,v)=>values.set(k,v),getItem:k=>values.get(k)
+ };
+ assert.equal(voiceLocale.read(storage),"santai");
+ assert.equal(voiceLocale.save("kelantan",storage),"kelantan");
+ assert.equal(voiceLocale.read(storage),"kelantan");
+ assert.equal(voiceLocale.save("spanish",storage),"santai");
+ assert.equal(voiceLocale.read(storage),"santai");
+ assert.equal(voiceLocale.read({getItem(){throw Error("disabled")}}),"santai");
 });
 test("Microphone is allowed only for this site's origin",()=>{
  assert.match(netlify,/Permissions-Policy = "camera=\(\), microphone=\(self\), geolocation=\(\)"/);
@@ -43,8 +83,8 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=13/);
- assert.match(html,/bilik-antara\.css\?v=8/);
+ assert.match(html,/bilik-antara-voice\.js\?v=15/);
+ assert.match(html,/bilik-antara\.css\?v=9/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
  assert.match(html,/Audio dihantar kepada Google/i);
@@ -331,7 +371,7 @@ test("Fallback voice only records after an explicit user click and uses the orig
   assert.match(fallback,/voiceFallback:true/);
   assert.match(js,/minimizeButton\.addEventListener/);
 
- assert.match(html,/bilik-antara-voice-fallback\.js\?v=3/);
+ assert.match(html,/bilik-antara-voice-fallback\.js\?v=5/);
  assert.match(js,/ba:voice-live-failed/);
  assert.match(fallback,/addEventListener\("ba:voice-live-failed"/);
  assert.match(fallback,/start\.addEventListener\("click",async/);
@@ -381,8 +421,11 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
   close(){this.readyState=3;}
  }
  let called=0;
+ const preferences=new Map([[voiceLocale.STORAGE_KEY,"kelantan"]]);
  const page={
   isSecureContext:true,AudioContext:Audio,AudioWorkletNode:Worklet,WebSocket:Socket,
+  BilikAntaraVoiceLocale:voiceLocale,
+  localStorage:{getItem:k=>preferences.get(k),setItem:(k,v)=>preferences.set(k,v)},
   addEventListener:(n,fn)=>events.set(n,[...(events.get(n)||[]),fn]),
   removeEventListener:(n,fn)=>events.set(n,(events.get(n)||[]).filter(f=>f!==fn)),
   dispatchEvent:e=>(events.get(e.type)||[]).forEach(fn=>fn(e))
@@ -401,6 +444,11 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  const first=Socket.instances[0];
  assert.ok(first?.sent[0]?.setup);
  assert.deepEqual(first.sent[0].setup.sessionResumption,{});
+ const spoken=first.sent[0].setup.systemInstruction.parts[0].text;
+ assert.match(spoken,/RESPOND ONLY IN MALAY/);
+ assert.match(spoken,/NEVER SWITCH TO SPANISH/);
+ assert.match(spoken,/Kelantan/);
+ assert.equal(item("voiceDialect").disabled,true);
  await first.onmessage({data:JSON.stringify({setupComplete:{}})});
  await first.onmessage({data:JSON.stringify({sessionResumptionUpdate:{resumable:true,newHandle:"HANDLE_ONLY_IN_MEMORY"}})});
  await first.onmessage({data:JSON.stringify({goAway:{timeLeft:"15s"}})});
@@ -408,10 +456,12 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  const second=Socket.instances[1];
  assert.ok(second?.sent[0]?.setup);
  assert.equal(second.sent[0].setup.sessionResumption.handle,"HANDLE_ONLY_IN_MEMORY");
+ assert.match(second.sent[0].setup.systemInstruction.parts[0].text,/Kelantan/);
  assert.equal(called,2);
  assert.equal(track.stopped,undefined,"no new microphone permission when connection renews");
  await item("voiceStop").listener("click")();
  assert.equal(track.stopped,true,"stopping voice releases microphone");
+ assert.equal(item("voiceDialect").disabled,false);
  assert.equal((events.get("ba:voice-renew")||[]).length,0);
 });
 test("Session creation has backend rate limiting",async()=>{
