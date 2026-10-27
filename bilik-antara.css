@@ -2289,3 +2289,9 @@ html[data-theme="light"] .voice-action,html[data-theme="light"]
 .conversation .conversation-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .conversation-head .voice-toolbar{min-width:0;display:flex;align-items:center}
 @media(max-width:760px){.conversation .conversation-head{padding:8px 10px;min-height:50px}}
+
+/* Voice Live avatar stage: waveform/transcript stay internal and invisible. */
+.voice-panel .voice-wave,.voice-panel .voice-transcript{display:none!important}
+.voice-avatar-stage{position:relative;isolation:isolate;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;min-height:clamp(240px,44vh,490px);border-radius:24px;background:radial-gradient(ellipse at 50% 45%,rgba(180,146,87,.12),transparent 46%),linear-gradient(125deg,#080b10,#11151b 47%,#050609);border:1px solid rgba(220,193,139,.18)}
+.voice-avatar-glow{position:absolute;inset:12% 18%;border-radius:50%;background:radial-gradient(ellipse,rgba(210,172,99,.13),transparent 68%);filter:blur(22px);pointer-events:none}
+.voice-avatar-caption{position:relative;z-index:1;padding:0 12px 18px;color:#c9b89a;letter-spacing:.22em;font-size:clamp(10px,1.6vw,12px);text-align:center}
