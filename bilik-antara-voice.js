@@ -26,7 +26,7 @@ let recognizer=null,dictating=false,liveGeneration=0;
 let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null;
 let liveActive=false,liveReady=false,micEnabled=true,speakerEnabled=true;
 let startAbort=null,sessionTimer=null,connectTimer=null,visibilityTimer=null,nextAudioTime=0,playSources=new Set(),lastTurn=null;
-let pendingAudio=[],pendingAudioBytes=0,audioQueueGeneration=0,modelTurnFinished=false;
+let pendingAudio=[],pendingAudioBytes=0,audioQueueGeneration=0,modelTurnFinished=false,reasoningActive=false;
 const MAX_PENDING_AUDIO_BYTES=12*1024*1024; // ~4 minutes of mono PCM, bounded for phones
 const MAX_SCHEDULE_AHEAD=5; // seconds scheduled on AudioContext; rest remains in bounded queue
 let dayTimer=null,sessionStarted=0,resumeHandle="",liveModel="",reconnecting=false,connectionAttempts=0,renewListener=null,lastSpeechAt=0,connectedAt=0;
@@ -90,7 +90,7 @@ function startDictation(){
 dictate.addEventListener("click",startDictation);
 function stopAudioQueue(){
   audioQueueGeneration++;
-  pendingAudio=[];pendingAudioBytes=0;modelTurnFinished=false;
+  pendingAudio=[];pendingAudioBytes=0;modelTurnFinished=false;reasoningActive=false;
   for(const src of playSources){try{src.stop();}catch(e){}}
   playSources.clear();nextAudioTime=0;
 }
@@ -226,6 +226,15 @@ function onServerMessage(payload){
     window.dispatchEvent(new Event("ba:voice-renew"));
   }
   const c=payload.serverContent;
+  // Extended Thinking may emit a spoken bridging response with turnComplete
+  // while reasoning is IN_PROGRESS. Don't mislabel that as the end of the answer.
+  const thinkingState=String(c?.interactionStatus||payload.interactionStatus||"").toUpperCase();
+  if(thinkingState==="IN_PROGRESS"){
+    reasoningActive=true;
+    if(!playbackBusy())sayStatus("Aku sedang fikir dan susun jawapan…");
+  }else if(thinkingState==="IDLE"){
+    reasoningActive=false;
+  }
   if(!c)return;
   if(c.interrupted){stopAudioQueue();panel.classList.remove("voice-speaking");if(lastTurn)lastTurn.finished=true;}
   // Google can send interim words before the final transcript is available.
@@ -248,13 +257,17 @@ function onServerMessage(payload){
   }
   if(c.turnComplete){
     if(lastTurn)lastTurn.finished=true;
-    modelTurnFinished=true;
-    // Gemini can generate much faster than a person can listen.
-    // turnComplete does NOT mean AudioContext finished playing the reply.
-    if(playbackBusy())sayStatus("Aku sedang habiskan jawapan…");
-    else {
-      panel.classList.remove("voice-speaking");
-      sayStatus("Aku sedang dengar. Kau boleh bercakap.");
+    if(thinkingState==="IN_PROGRESS"||reasoningActive){
+      modelTurnFinished=false; // intermediary audio, not the final deep-thinking answer
+      if(!playbackBusy())sayStatus("Aku tengah fikir bahagian seterusnya…");
+    }else{
+      modelTurnFinished=true;
+      // Generation ending and audio playback ending are different events.
+      if(playbackBusy())sayStatus("Aku sedang habiskan jawapan…");
+      else {
+        panel.classList.remove("voice-speaking");
+        sayStatus("Aku sedang dengar. Kau boleh bercakap.");
+      }
     }
   }
 }
@@ -318,7 +331,7 @@ async function startLive(){
       // Avoid severing a spoken sentence for scheduled renewals. A hard
       // provider GoAway or a broken connection bypasses this short delay.
       if(why==="Sambung berjadual"&&connectedAt&&Date.now()-connectedAt<9*60*1000&&
-         (Date.now()-lastSpeechAt<1600||playbackBusy())){
+         (Date.now()-lastSpeechAt<1600||playbackBusy()||reasoningActive)){
         if(sessionTimer)clearTimeout(sessionTimer);
         sessionTimer=setTimeout(()=>renewConnection(why),1600);
         return;
@@ -393,7 +406,11 @@ async function startLive(){
           model:"models/"+data.model,
           generationConfig:{
             responseModalities:["AUDIO"],
-            speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:"Charon"}}}
+            speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:"Charon"}}},
+            // Only extended-thinking/legacy models support thinkingLevel.
+            // Google 3.8 Live standard rejects this field; don't break its low-latency fallback.
+            ...(["gemini-3.8-live-extended-thinking","gemini-3.1-flash-live-preview"].includes(data.model)?
+              {thinkingConfig:{thinkingLevel:data.model==="gemini-3.8-live-extended-thinking"?"LOW":"LOW"}}:{})
           },
           // Native audio grows rapidly; compresses oldest conversational turns.
           contextWindowCompression:{slidingWindow:{}},
@@ -414,9 +431,10 @@ async function startLive(){
           systemInstruction:{parts:[{text:[
             sharedBrain?.CORE||"",
             sharedIdentity?.CORE_PROMPT||"",
+            sharedIdentity?.VOICE_CREATOR_PROMPT||"",
             speakingRule,
             sharedBrain?.VOICE_GUIDANCE||"",
-            "Kau Shaiful Ridhwan A.I. di Bilik Antara, dibina dan diubah suai oleh Shaiful Ridhwan. Model asas Google Gemini dibangunkan oleh Google.",
+            "Kau Shaiful Ridhwan A.I. di Bilik Antara. Shaiful Ridhwan ialah penulis puisi gaya bebas Malaysia dan PEMBANGUN sistem Bilik Antara yang membina identiti serta fungsi kau. Google membina model asas Gemini, bukan Shaiful.",
             "WAJIB gunakan kata ganti diri pertama AKU, bukan SAYA. Panggil pengguna KAU. Fahami loghat Malaysia dan istilah Inggeris dalam ayat Melayu, tetapi balas hanya dalam Bahasa Melayu Malaysia santai.",
             "DENGAR BETUL-BETUL: Utamakan perkataan yang dapat dikenal pasti daripada transkripsi dan konteks. PERKATAAN PENDEK SAH: Jika pengguna sebut lapar, jawab tentang makanan tanpa meminta ulang. Jika sebut haus, jawab tentang minuman. Jika sebut penat, respon tentang keletihan. Jangan ulang ayat boleh ulang? berkali-kali. Hanya minta penjelasan jika maklumat benar-benar tidak cukup atau audio tiada perkataan yang dikenali.",
             "Utamakan soalan terkini. Beri jawapan yang cukup lengkap dan jelas, sekitar 2–4 ayat untuk soalan biasa, lebih terperinci apabila perlu. Jangan berhenti pada separuh ayat atau menyekat penerangan yang pengguna minta.",
