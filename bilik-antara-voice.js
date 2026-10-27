@@ -11,7 +11,7 @@ if(!dictate||!liveButton||!notice||!panel||!status||!transcript||!stopButton||!m
 const sharedBrain=window.BilikAntaraBrain;
 const sharedIdentity=window.BilikAntaraIdentity;
 const languageLock=[
- "RESPOND ONLY IN COLLOQUIAL MALAYSIAN MALAY (ms-MY) FROM BEGINNING TO END. NEVER SWITCH TO SPANISH, ENGLISH OR ANOTHER LANGUAGE.",
+ "RESPOND ONLY IN MALAY, SPECIFICALLY COLLOQUIAL MALAYSIAN MALAY (ms-MY), FROM BEGINNING TO END. NEVER SWITCH TO SPANISH, ENGLISH OR ANOTHER LANGUAGE.",
  "Kekalkan Bahasa Melayu Malaysia santai yang mesra. Fahami loghat tempatan pengguna tetapi jangan bertukar gaya daerah secara sengaja.",
  "Perkataan pendek seperti 'lapar', 'haus', 'penat' dan 'bosan' ialah input yang jelas; jawab maksudnya terus. Jangan meminta ulang kecuali audio benar-benar tidak boleh difahami.",
  "Berikan jawapan lengkap mengikut kesukaran soalan. Jangan memendekkan jawapan kepada serpihan ayat."
