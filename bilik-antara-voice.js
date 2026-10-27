@@ -16,7 +16,7 @@ let recognizer=null,dictating=false,liveGeneration=0;
 let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null;
 let liveActive=false,liveReady=false,micEnabled=true,speakerEnabled=true;
 let startAbort=null,sessionTimer=null,connectTimer=null,visibilityTimer=null,nextAudioTime=0,playSources=new Set(),lastTurn=null;
-let dayTimer=null,sessionStarted=0,resumeHandle="",liveModel="",reconnecting=false,connectionAttempts=0,renewListener=null;
+let dayTimer=null,sessionStarted=0,resumeHandle="",liveModel="",reconnecting=false,connectionAttempts=0,renewListener=null,lastSpeechAt=0,connectedAt=0;
 const speechAPI=window.SpeechRecognition||window.webkitSpeechRecognition;
 const sayStatus=(value)=>{status.textContent=value;};
 const showNotice=(message)=>{notice.textContent=String(message||"").slice(0,230);notice.hidden=!message;};
@@ -85,7 +85,7 @@ async function closeLive(reason){
   if(startAbort){startAbort.abort();startAbort=null;}
   if(sessionTimer){clearTimeout(sessionTimer);sessionTimer=null;}
   if(dayTimer){clearTimeout(dayTimer);dayTimer=null;}
-  resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;sessionStarted=0;
+  resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;sessionStarted=0;lastSpeechAt=0;connectedAt=0;
   if(renewListener){window.removeEventListener("ba:voice-renew",renewListener);renewListener=null;}
   if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
    if(visibilityTimer){clearTimeout(visibilityTimer);visibilityTimer=null;}
@@ -211,7 +211,7 @@ async function startLive(){
   panel.classList.remove("is-minimized");
   if(minimizeButton){minimizeButton.textContent="Minimumkan";minimizeButton.setAttribute("aria-expanded","true");}
   liveActive=true;liveReady=false;micEnabled=true;speakerEnabled=true;
-  sessionStarted=Date.now();resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;
+  sessionStarted=Date.now();resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;lastSpeechAt=0;connectedAt=0;
   lastTurn=null;transcript.replaceChildren();panel.classList.remove("voice-speaking");
   setButtonState();sayStatus("Meminta kebenaran mikrofon…");
   const generation=++liveGeneration;
@@ -235,7 +235,7 @@ async function startLive(){
     playContext=new Audio({latencyHint:"interactive"});
     await Promise.all([
       micContext.resume(),playContext.resume(),
-      micContext.audioWorklet.addModule("./bilik-antara-pcm-worklet.js")
+      micContext.audioWorklet.addModule("./bilik-antara-pcm-worklet.js?v=2")
     ]);
     if(generation!==liveGeneration){clearTimeout(tokenTimer);return;}
     sayStatus("Menyambung kepada Gemini Live…");
@@ -253,6 +253,13 @@ async function startLive(){
       if(generation!==liveGeneration||!liveActive||reconnecting||document.hidden)return;
       if(Date.now()-sessionStarted>=MAX_DAY){
         await closeLive("Tempoh maksimum penggunaan Voice hari ini (24 jam) tamat.");return;
+      }
+      // Avoid severing a spoken sentence for scheduled renewals. A hard
+      // provider GoAway or a broken connection bypasses this short delay.
+      if(why==="Sambung berjadual"&&connectedAt&&Date.now()-connectedAt<9*60*1000&&Date.now()-lastSpeechAt<1600){
+        if(sessionTimer)clearTimeout(sessionTimer);
+        sessionTimer=setTimeout(()=>renewConnection(why),1600);
+        return;
       }
       if(connectionAttempts>=2){
         showNotice("Sambungan semula gagal dua kali. Tekan Voice Live untuk mencuba sesi baharu.");
@@ -354,6 +361,7 @@ async function startLive(){
           if(ws.bufferedAmount>250000)return; // avoid backpressure or stale audio
           const {pcm,level}=event.data||{};
           if(!(pcm instanceof ArrayBuffer))return;
+          if(Number(level)>0.028)lastSpeechAt=Date.now();
           setWave((level||0)*4.6);
           ws.send(JSON.stringify({realtimeInput:{audio:{
             data:bytesBase64(pcm),mimeType:"audio/pcm;rate=16000"
@@ -374,12 +382,12 @@ async function startLive(){
           const parsed=JSON.parse(raw);
           onServerMessage(parsed);
           if(parsed.setupComplete){
-            reconnecting=false;connectionAttempts=0;
+            reconnecting=false;connectionAttempts=0;connectedAt=Date.now();
             // The temporary token expires; use a fresh credential for each
             // new connection. The Live session may resume via in-memory handle.
             const renewMs=CONNECTION_SPAN;
             if(sessionTimer)clearTimeout(sessionTimer);
-            sessionTimer=setTimeout(()=>renewConnection("Menyambung perbualan tanpa hentikan mikrofon…"),renewMs);
+            sessionTimer=setTimeout(()=>renewConnection("Sambung berjadual"),renewMs);
           }
         }catch(e){/* malformed payload is not audio or an instruction */}
       };
