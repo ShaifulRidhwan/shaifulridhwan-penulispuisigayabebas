@@ -69,6 +69,47 @@ test("media: PDF/image/audio/video allowed with limits and carried inline",async
     assert.ok(!r.body.includes("QUJDRA=="));
   }
 });
+test("short recorded voice takes fast path without tools or second-pass review",async()=>{
+ const before=calls.length;
+ const r=await handler(event({question:"Jawab rakaman ini",voiceFallback:true,
+  media:{name:"suara.webm",mimeType:"audio/webm",data:"QUJDRA=="}},"voice-fast"));
+ assert.equal(r.statusCode,200);
+ const answer=JSON.parse(r.body);
+ assert.equal(answer.mode,"recorded-voice");
+ assert.equal(answer.reviewApplied,false);
+ assert.ok(answer.reply.length>0);
+ assert.equal(calls.length,before+1,"fast audio must only make one Gemini request");
+ const request=calls.at(-1).body;
+ assert.equal(request.contents[0].parts[1].inlineData.mimeType,"audio/webm");
+ assert.ok(!request.tools?.length,"fast audio must skip optional tools");
+ assert.equal(request.generationConfig.maxOutputTokens,650);
+});
+test("recorded voice retries a temporary Google 503 once, then replies",async()=>{
+ const old=global.fetch;let times=0;
+ try{
+  global.fetch=async()=>{
+   times++;
+   if(times===1)return {ok:false,status:503,json:async()=>({error:{status:"UNAVAILABLE"}})};
+   return {ok:true,status:200,json:async()=>({candidates:[{content:{parts:[{text:"Aku dengar soalan kau."}]}}]})};
+  };
+  const r=await handler(event({question:"Jawab rakaman ini",voiceFallback:true,
+    media:{mimeType:"audio/webm",data:"QUJDRA=="}},"voice-retry503"));
+  assert.equal(r.statusCode,200);
+  assert.equal(times,2);
+  assert.match(JSON.parse(r.body).reply,/Aku dengar/);
+ }finally{global.fetch=old;}
+});
+test("persistent Gemini 503 remains retryable without falsely claiming success",async()=>{
+ const old=global.fetch;let attempts=0;
+ try{
+  global.fetch=async()=>{attempts++;return {ok:false,status:503,json:async()=>({})};};
+  const r=await handler(event({question:"Rakaman",voiceFallback:true,
+    media:{mimeType:"audio/webm",data:"QUJDRA=="}},"voice-still503"));
+  assert.equal(r.statusCode,503);
+  assert.equal(attempts,2);
+  assert.match(JSON.parse(r.body).error,/Cuba lagi tanpa merakam semula/);
+ }finally{global.fetch=old;}
+});
 test("session summaries and thoughts included as untrusted user data",async()=>{
   const r=await handler(event({question:"Sambung analisis",
     summary:"Terdahulu kami pertikai kemerdekaan.",
