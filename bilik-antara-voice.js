@@ -14,7 +14,7 @@ const MAX_SESSION=10*60*1000;
 let recognizer=null,dictating=false,liveGeneration=0;
 let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null;
 let liveActive=false,liveReady=false,micEnabled=true,speakerEnabled=true;
-let startAbort=null,sessionTimer=null,connectTimer=null,nextAudioTime=0,playSources=new Set(),lastTurn=null;
+let startAbort=null,sessionTimer=null,connectTimer=null,visibilityTimer=null,nextAudioTime=0,playSources=new Set(),lastTurn=null;
 const speechAPI=window.SpeechRecognition||window.webkitSpeechRecognition;
 const sayStatus=(value)=>{status.textContent=value;};
 const showNotice=(message)=>{notice.textContent=String(message||"").slice(0,230);notice.hidden=!message;};
@@ -83,6 +83,7 @@ async function closeLive(reason){
   if(startAbort){startAbort.abort();startAbort=null;}
   if(sessionTimer){clearTimeout(sessionTimer);sessionTimer=null;}
   if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
+   if(visibilityTimer){clearTimeout(visibilityTimer);visibilityTimer=null;}
   if(socket){const ws=socket;socket=null;ws.onclose=null;ws.onerror=null;ws.onmessage=null;try{ws.close(1000,"Sesi tamat");}catch(e){}}
   stopAudioQueue();
   if(micNode){try{micNode.disconnect();micNode.port.onmessage=null;}catch(e){}micNode=null;}
@@ -220,13 +221,16 @@ async function startLive(){
         body:"{}",signal:controller.signal,credentials:"same-origin",cache:"no-store"});
       body=await res.json().catch(()=>({}));
     }finally{clearTimeout(tokenTimer);}
-    if(!res.ok||!body.token||!body.model)throw Error(body.error||"Token Voice tidak tersedia.");
+    if(!res.ok||!body.token||!body.model){
+       const reason=String(body?.reason||"TOKEN_UNAVAILABLE").replace(/[^A-Z0-9_]/g,"").slice(0,35);
+       throw Error((body?.error||"Token Voice tidak tersedia.")+" [HTTP "+res.status+" · "+reason+"]");
+     }
     if(generation!==liveGeneration)return;
     const ws=new WebSocket(SOCKET_BASE+encodeURIComponent(body.token));
     socket=ws;
     connectTimer=setTimeout(()=>{
       if(generation!==liveGeneration||liveReady)return;
-      const message="Gemini Live tak memberi pengesahan sambungan. Semak akses API atau rangkaian.";
+      const message="Tiada pengesahan Voice selepas 20 saat (TIMEOUT_SETUP). Semak akses Google Live, rangkaian atau Brave Shields."
       sayStatus(message);showNotice(message);closeLive(message);
     },20000);
     ws.onopen=()=>{
@@ -285,18 +289,25 @@ async function startLive(){
         onServerMessage(JSON.parse(raw));
       }catch(e){/* ignore malformed or unsupported packets */}
     };
-    ws.onerror=()=>{if(generation===liveGeneration)sayStatus("Sambungan suara terputus.");};
+    ws.onerror=()=>{if(generation===liveGeneration)sayStatus("WebSocket Voice gagal. Semak sambungan dan Brave Shields.");};
     ws.onclose=(event)=>{
       if(generation!==liveGeneration)return;
-      const message=event.code===1000?"Sesi tamat.":event.code===1008?"Gemini menolak konfigurasi Voice Live. Semak model dan akses API.":"Sambungan Gemini Live terputus (kod "+event.code+").";
-      sayStatus(message);closeLive(message);
-      if(event.code!==1000)showNotice(message+" Cuba lagi selepas semak sambungan.");
+      const code=Number(event.code)||1006;
+       const rawReason=String(event.reason||"").slice(0,135);
+       const safeReason=/(?:key=|access_token=|auth_tokens\/|AIza)/i.test(rawReason)?"Butiran pelayan disembunyikan":rawReason;
+       const message=code===1000?"Sesi Voice tamat.":
+         code===1008?"Google menolak sambungan Voice (WS 1008): model, token atau konfigurasi tidak sepadan.":
+         code===1006?"Sambungan WebSocket terputus (WS 1006): mungkin rangkaian atau sekatan pelayar.":
+         code===1011?"Pelayan Gemini Live gagal (WS 1011).":
+         "Sambungan Voice ditutup (WS "+code+").";
+       sayStatus(message);closeLive(message);
+       if(code!==1000)showNotice(message+(safeReason?" Butiran: "+safeReason:""));
     };
   }catch(e){
     const message=e&&e.name==="AbortError"?
       "Permintaan token suara terlalu lama. Cuba semula apabila sambungan stabil.":
       e&&e.name==="NotAllowedError"?
-      "Mikrofon tidak dibenarkan. Aktifkan kebenaran mikrofon untuk laman ini.":
+      "Kebenaran mikrofon ditolak pelayar. Benarkan akses mikrofon kepada Bilik Antara dan cuba semula.":
       e&&e.name==="NotFoundError"?"Tiada mikrofon dikesan.":
       String(e&&e.message||"Tak dapat sambungkan suara.").slice(0,180);
     sayStatus(message);
@@ -321,7 +332,14 @@ speakerButton.addEventListener("click",()=>{
 });
 window.addEventListener("pagehide",()=>{closeDictation();closeLive();});
 document.addEventListener("visibilitychange",()=>{
-  if(document.hidden&&liveActive)closeLive("Sesi dihentikan apabila laman ditinggalkan.");
-});
+   if(visibilityTimer){clearTimeout(visibilityTimer);visibilityTimer=null;}
+   if(document.hidden&&liveActive){
+     // Permission prompts may briefly hide the page on mobile.
+     visibilityTimer=setTimeout(()=>{
+       visibilityTimer=null;
+       if(document.hidden&&liveActive)closeLive("Sesi Voice dihentikan selepas laman berada di latar.");
+     },8000);
+   }
+ });
 setWave(0);setButtonState();
 })();
