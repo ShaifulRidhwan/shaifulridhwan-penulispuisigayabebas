@@ -2322,3 +2322,44 @@ html[data-theme="light"] .voice-dialect-bar span{color:#61462a}
 @media(max-width:350px){
  .voice-dialect-bar select{max-width:none}
 }
+
+
+/* Jom Voice Live: the dialect control is a real second row IN the voice header.
+   Prevent clipped or overlooked preferences on narrow Android/iOS screens. */
+.conversation .conversation-head{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;
+ align-items:center;column-gap:9px;row-gap:7px;
+ padding:10px clamp(10px,2vw,18px) 9px;
+}
+.conversation-head .voice-toolbar{grid-column:1;grid-row:1;min-width:0;margin:0}
+.conversation-head .chat-controls{grid-column:2;grid-row:1;min-width:0;justify-self:end}
+.conversation-head .voice-dialect-bar{
+ grid-column:1/-1;grid-row:2;display:flex!important;box-sizing:border-box;
+ position:relative;z-index:6;visibility:visible!important;opacity:1!important;
+ width:100%;min-width:0;margin:0;padding:6px 9px;
+ border:1px solid rgba(224,182,109,.52);border-radius:11px;
+ background:rgba(14,20,33,.88);gap:8px;
+}
+.conversation-head .voice-dialect-bar label{font-size:12px;font-weight:700;color:#eac17c;white-space:nowrap}
+.conversation-head .voice-dialect-bar select{
+ min-width:130px;min-height:40px;max-width:240px;
+ width:auto;flex:1 1 150px;display:block!important;
+ color:#fff5e6;background:#141b2a;border:1px solid rgba(234,193,124,.75);
+ -webkit-appearance:auto;appearance:auto;
+}
+.conversation-head .voice-dialect-bar span{flex:1 1 150px}
+html[data-theme="light"] .conversation-head .voice-dialect-bar{background:rgba(250,242,226,.96);border-color:rgba(123,88,45,.48)}
+html[data-theme="light"] .conversation-head .voice-dialect-bar label{color:#795327}
+html[data-theme="light"] .conversation-head .voice-dialect-bar select{background:#fffaf1;color:#362516}
+@media(max-width:760px){
+ .conversation .conversation-head{padding:8px 9px 7px;gap:5px}
+ .conversation-head .voice-dialect-bar{min-height:48px;margin:0;padding:4px 8px}
+ .conversation-head .voice-dialect-bar label{font-size:12px}
+ .conversation-head .voice-dialect-bar select{min-width:0;max-width:none;min-height:39px;font-size:13px}
+ .conversation-head .voice-dialect-bar span{display:none}
+ .conversation-head .voice-action--live{white-space:nowrap;min-height:40px}
+}
+@media(max-width:360px){
+ .conversation-head .voice-dialect-bar label{font-size:11px}
+ .conversation-head .voice-dialect-bar select{font-size:12px}
+}
