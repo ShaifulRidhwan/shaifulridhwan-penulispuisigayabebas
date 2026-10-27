@@ -148,6 +148,39 @@ exports.handler=async event=>{
   if(typeof payload.documentText==="string"&&payload.documentText.length>100000)return result(413,{error:"Kandungan fail teks terlalu besar untuk satu permintaan. Bahagikan dokumen."},H);
   const documentText=safeText(payload.documentText,100000);
   const documentName=safeText(payload.documentName,100);
+
+  // Opt-in short audio recordings: avoid search, historical context, tools and
+  // secondary review. One short retry for Google's transient service failures.
+  if(payload.voiceFallback===true){
+    const audioOnly=media.length===1&&/^audio\/(?:webm|ogg|mp4|mpeg|wav)$/.test(media[0].mimeType);
+    if(!audioOnly)return result(400,{error:"Mod suara memerlukan satu rakaman audio yang sah."},H);
+    const voiceSystem="Kau Shaiful Ridhwan A.I. dalam Bilik Antara. Gunakan Bahasa Melayu Malaysia moden, kata ganti aku. Fahami soalan audio pengguna dan jawab ringkas serta berguna. Jika audio tidak jelas, jangan mereka kandungan; minta ulang.";
+    const voiceContents=[{role:"user",parts:[
+      {text:"Dengar soalan dalam audio dan jawab. Jangan terangkan proses transkripsi."},
+      {inlineData:{mimeType:media[0].mimeType,data:media[0].data}}
+    ]}];
+    let voiceErr;
+    for(let attempt=0;attempt<2;attempt++){
+      try{
+        const voiceData=await callGemini({apiKey,model:baseModel,system:voiceSystem,
+          contents:voiceContents,tools:[],thinkingLevel:"low",maxTokens:650,timeoutMs:8000});
+        const replyText=parseReply(modelText(voiceData?.candidates?.[0]));
+        if(!replyText)return result(502,{error:"AI tidak dapat memahami audio. Cuba rakam dengan lebih jelas."},H);
+        return result(200,{reply:replyText,model:baseModel,mode:"recorded-voice",
+          sources:[],reviewApplied:false,durMs:Date.now()-started},H);
+      }catch(e){
+        voiceErr=e;
+        if(![503,502,504].includes(e.status)||attempt===1)break;
+        await new Promise(resolve=>setTimeout(resolve,350+Math.floor(Math.random()*200)));
+      }
+    }
+    log("voice_fallback_error",{http:voiceErr?.status||null,name:voiceErr?.name||"unknown"});
+    if(voiceErr?.status===503)return result(503,{error:"Servis Gemini sedang sibuk (503). Cuba lagi tanpa merakam semula."},H);
+    if(voiceErr?.status===429)return result(429,{error:"Kuota Gemini sementara penuh. Cuba kemudian tanpa rakam semula."},H);
+    if(voiceErr?.name==="AbortError")return result(504,{error:"Gemini mengambil masa terlalu lama untuk audio. Cuba lagi."},H);
+    return result(502,{error:errorMessage(voiceErr?.status||502)},H);
+  }
+
   const intent=resolveIntent(question,history,!!(media.length||documentText));
   const plan=intelligencePlan(intent);
   const identityReply=(!media.length&&!documentText)?Identity.answerIdentity(question):null;
