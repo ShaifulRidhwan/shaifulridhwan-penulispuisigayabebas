@@ -211,6 +211,7 @@ exports.handler=async event=>{
       (intent.debate?"\nKRITIK HUJAH: cari premis lemah, bantahan paling kuat, dan nilai bukti dengan tegas.":"")+
       (intent.search?"\nFAKTA TERKINI: gunakan carian jika tersedia; bezakan sumber yang benar-benar dijumpai daripada pengetahuan sedia ada. Jika tiada sumber disahkan, nyatakan ketidakpastian.":"")+
       (intent.hasLink?"\nPAUTAN: semak kandungan URL dengan alat URL Context jika tersedia. Jika kandungan tidak dapat diakses, akui dan jangan buat ringkasan rekaan.":"")+
+      "\nPERSEMBAHAN KREATIF: Jika diminta menyanyi, cipta lirik lagu ORIGINAL pendek dalam Bahasa Melayu santai, dengan rangkap dan korus ringkas. Jangan menolak permintaan nyanyian original secara automatik. Jangan hasilkan semula lirik penuh lagu komersial atau menyamar sebagai penyanyi asal. Dalam mod teks, nyatakan bahawa jawapan ialah lirik, bukan rakaman suara."+
       followUpGuidance+
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
   const maxTokens=plan.maxTokens;
