@@ -89,7 +89,7 @@ async function submitAudio(blob){
    "Rakaman belum dapat diproses: "+String(e.message||e).slice(0,160)+
    (transient?" Tekan Cuba lagi tanpa merakam semula.":""),
    true);
-  retry.hidden=!transient;retry.disabled=!transient;
+  retry.textContent="Cuba lagi tanpa rakam semula";retry.hidden=!transient;retry.disabled=!transient;
  }finally{clearTimeout(timeout);busy=false;toggleRecording(false);}
 }
 function finish(send){
@@ -106,7 +106,7 @@ start.addEventListener("click",async()=>{
   hint("Pelayar tidak menyokong rakaman. Cuba fungsi Cakap jadi teks dalam panel suara.",true);return;
  }
  hint("Meminta kebenaran mikrofon…",true);
- reply="";lastBlob=null;retry.hidden=true;retry.disabled=true;speak.hidden=true;speak.disabled=true;
+ reply="";lastBlob=null;retry.hidden=true;retry.disabled=true;retry.textContent="Cuba lagi tanpa rakam semula";speak.hidden=true;speak.disabled=true;
  try{
   stream=await navigator.mediaDevices.getUserMedia({
    audio:{echoCancellation:true,noiseSuppression:true,channelCount:1},video:false
@@ -120,12 +120,12 @@ start.addEventListener("click",async()=>{
    const blob=new Blob(chunks,{type:recorder?.mimeType||type||"audio/webm"});
    const shouldSend=sendOnStop;chunks=[];cleanup();toggleRecording(false);
    if(shouldSend){lastBlob=blob;submitAudio(blob);}
-   else hint("Rakaman tidak dihantar.",false);
+   else {lastBlob=blob;retry.hidden=false;retry.disabled=false;retry.textContent="Hantar rakaman";hint("Had rakaman 20 saat dicapai. Tekan Hantar rakaman untuk menghantar. Audio belum dihantar.",true);}
   };
   recorder.onerror=()=>{sendOnStop=false;cleanup();toggleRecording(false);hint("Pelayar gagal merakam audio.",true);};
   recorder.start(700);toggleRecording(true);
   statusText("Sedang merakam… tekan butang berhenti di sebelah Hantar untuk menghantar. Maksimum 20 saat.");
-  timer=setTimeout(()=>finish(true),20000);
+  timer=setTimeout(()=>finish(false),20000); // Never upload a recording automatically when the time limit ends.
  }catch(e){
   cleanup();toggleRecording(false);
   hint(e?.name==="NotAllowedError"?"Kebenaran mikrofon ditolak. Benarkan akses mikrofon untuk laman ini.":
