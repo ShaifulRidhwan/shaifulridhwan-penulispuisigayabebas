@@ -49,7 +49,7 @@ exports.handler=async(event)=>{
   const model=/^gemini-(?:3\.8-live(?:-extended-thinking)?|3\.1-flash-live-preview)$/.test(configured)?configured:DEFAULT_MODEL;
   const now=Date.now();
   const controller=new AbortController();
-  const timeout=setTimeout(()=>controller.abort(),12000);
+  const timeout=setTimeout(()=>controller.abort(),22000);
   const base={
     uses:1,
     expireTime:new Date(now+10*60*1000).toISOString(),
@@ -63,7 +63,7 @@ exports.handler=async(event)=>{
     for(const candidate of [...new Set(candidates)]){
       const restriction={
         model:"models/"+candidate,
-        config:{responseModalities:["AUDIO"]}
+        config:{sessionResumption:{},responseModalities:["AUDIO"]}
       };
       const response=await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens",{
         method:"POST",
