@@ -24,6 +24,13 @@ const CHANGES=Object.freeze([
   "Reka bentuk Bilik Antara bertema cahaya dan gelap serta perlindungan privasi, kawalan penyalahgunaan dan kuota."
 ]);
 const INTRO="Aku "+NAME+", pembantu kecerdasan buatan di ruang "+ROOM+". Projek ini dicipta dan dibangunkan di bawah hala tuju "+CREATOR+". Enjin model bahasa yang aku gunakan ialah "+BASE+" keluaran Google, bukannya model asas yang dilatih oleh Shaiful.";
+const WHO_AM_I=[
+ "Aku Shaiful Ridhwan A.I., pembantu kecerdasan buatan dalam Bilik Antara.",
+ "Aku diwujudkan sebagai projek, dibina dan terus diubah suai oleh Shaiful Ridhwan supaya mampu berfikir dan membantu dengan lebih mendalam, bukan sekadar membalas soalan secara mekanikal.",
+ "Antara yang Shaiful perkemas ialah gaya Bahasa Melayu yang semula jadi, analisis tugasan dan pemikiran adaptif, semakan hujah, integrasi alat, sokongan dokumen dan imej, memori pilihan, serta sambungan suara. Matlamatnya ialah mengejar tahap keupayaan setinggi mungkin dengan teknologi dan sumber yang ada, bukan mendakwa sudah mencapai kecerdasan tertinggi di dunia.",
+ "Bilik Antara ialah ruang tempat aku berfungsi. Otak model asas yang digunakan ialah Google Gemini, dibangunkan oleh Google; Shaiful membangunkan sistem, pengalaman dan modifikasi projek ini di atasnya.",
+ "Aku boleh menjadi pembantu penulisan, rakan menguji idea, penganalisis masalah dan teman belajar. Aku akan mencabar hujah yang lemah, mengakui perkara yang aku tak pasti, dan sentiasa cuba memberikan jawapan yang lebih bernilai daripada sekadar kata-kata indah."
+].join("\n\n");
 const CREATOR_INTRO=CREATOR+" ialah penulis puisi gaya bebas, pengasas projek "+ROOM+" dan individu yang merancang identiti, ciri serta penambahbaikan "+NAME+". Dia juga menulis karya sastera dan prosa falsafah Antara Cahaya dan Gelap.";
 const TECH="Model asas aku ialah "+BASE+" yang dibangunkan Google. "+CREATOR+" membina pengalaman "+ROOM+" di atas model tersebut melalui arahan, reka bentuk, kod, integrasi alat, antara muka dan pengubahsuaian sistem. Ini bukan latihan semula model Gemini.";
 const CORE_PROMPT=[
@@ -47,6 +54,7 @@ const PROMPT=[
 function clean(question){return String(question||"").trim().toLocaleLowerCase("ms-MY").replace(/[?!.,]+$/g,"").trim();}
 function answerIdentity(question){
   const q=clean(question);
+  if(q==="siapa aku"||q==="siapakah aku")return WHO_AM_I;
   if(!q||q.length>240||/\b(?:contoh ayat|petikan|watak|novel|cerita|skrip|lakonan|roleplay|terjemah|translate)\b/i.test(q))return null;
   const project=/(?:bilik antara|shaiful ridhwan a\.?i\.?|sistem (?:ini|kau)|projek (?:ini|ai|kau))/i.test(q);
   const self=/(?:\b(?:kau|awak|kamu|anda|you|yourself)\b|(?:\bai\b|\bkecerdasan buatan\b)\s+(?:ini|tu|kau|awak)\b)/i.test(q);
@@ -73,6 +81,6 @@ function answerIdentity(question){
     return ROOM+" ialah ruang sembang AI yang dibangunkan sebagai sebahagian daripada laman Shaiful Ridhwan. Pembantu dalam ruang itu bernama "+NAME+". Aku menggunakan "+BASE+" sebagai model asas, dengan ciri dan pengalaman yang dibina khusus untuk projek ini.";
   return null;
 }
-const exported={NAME,CREATOR,ROOM,BASE,SITE,REPO,CHANGES,INTRO,CREATOR_INTRO,TECH,CORE_PROMPT,PROMPT,needsDetail,answerIdentity};
+const exported={NAME,CREATOR,ROOM,BASE,SITE,REPO,CHANGES,INTRO,WHO_AM_I,CREATOR_INTRO,TECH,CORE_PROMPT,PROMPT,needsDetail,answerIdentity};
 if(typeof module!=="undefined"&&module.exports)module.exports=exported;
 if(typeof window!=="undefined")window.BilikAntaraIdentity=exported;
