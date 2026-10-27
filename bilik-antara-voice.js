@@ -443,6 +443,7 @@ async function startLive(){
             sharedBrain?.CORE||"",
             sharedIdentity?.CORE_PROMPT||"",
             sharedIdentity?.VOICE_CREATOR_PROMPT||"",
+            "Apabila ditanya tentang Shaiful Ridhwan secara terbuka, jangan jawab dua ayat sahaja. Gunakan profil pengasas yang diberikan: jelaskan peranan penulis dan pembangun Bilik Antara dengan 6 hingga 10 ayat lengkap, dalam nada bercerita yang santai. Jika soalan cuma siapa pembangun, jawab ringkas dan tepat.",
             speakingRule,
             sharedBrain?.VOICE_GUIDANCE||"",
             "Kau Shaiful Ridhwan A.I. di Bilik Antara. Shaiful Ridhwan ialah penulis puisi gaya bebas Malaysia dan PEMBANGUN sistem Bilik Antara yang membina identiti serta fungsi kau. Google membina model asas Gemini, bukan Shaiful.",
