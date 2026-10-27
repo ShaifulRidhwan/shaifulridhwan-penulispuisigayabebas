@@ -11,6 +11,10 @@ const pcm=fs.readFileSync("bilik-antara-pcm-worklet.js","utf8");
 const fallback=fs.readFileSync("bilik-antara-voice-fallback.js","utf8");
 const voiceFallback=fs.readFileSync("bilik-antara-voice-fallback.js","utf8");
 const brainJs=fs.readFileSync("bilik-antara-brain.js","utf8");
+const identityJs=fs.readFileSync("bilik-antara-identity.js","utf8");
+const identityModule={exports:{}};
+new Function("module",identityJs)(identityModule);
+const creatorIdentity=identityModule.exports;
 const brainModule={exports:{}};
 new Function("module",brainJs)(brainModule);
 const sharedBrain=brainModule.exports;
@@ -107,6 +111,61 @@ test("A 12.5-second generated reply plays every chunk in order without truncatio
  assert.equal(simulate.pending(),0);
  assert.equal(simulate.active(),0);
  assert.deepEqual(simulate.warnings(),[]);
+});
+test("Extended Live token denial falls back to normal Live without bypassing limits",async()=>{
+ const originalModel=process.env.GEMINI_LIVE_MODEL;
+ process.env.GEMINI_API_KEY="fake-key";delete process.env.GEMINI_LIVE_MODEL;
+ const old=global.fetch,calls=[];
+ try{
+  global.fetch=async(_,opts)=>{
+   const body=JSON.parse(opts.body);calls.push(body);
+   if(body.liveConnectConstraints?.model==="models/gemini-3.8-live-extended-thinking")
+    return {ok:false,status:404,json:async()=>({error:{status:"NOT_FOUND",message:"Model unavailable"}})};
+   return {ok:true,status:200,json:async()=>({name:"auth_tokens/standard-recovery"})};
+  };
+  const res=await handler(event("deep-model-fallback-"+Date.now()));
+  assert.equal(res.statusCode,200);
+  assert.equal(JSON.parse(res.body).model,"gemini-3.8-live");
+  assert.equal(calls.length,2);
+  assert.equal(calls[0].liveConnectConstraints.model,"models/gemini-3.8-live-extended-thinking");
+  assert.equal(calls[1].liveConnectConstraints.model,"models/gemini-3.8-live");
+ }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;
+   if(originalModel!==undefined)process.env.GEMINI_LIVE_MODEL=originalModel;}
+});
+test("Unsupported Extended Thinking websocket can explicitly request standard Live",async()=>{
+ const originalModel=process.env.GEMINI_LIVE_MODEL;
+ process.env.GEMINI_API_KEY="fake-key";delete process.env.GEMINI_LIVE_MODEL;
+ const old=global.fetch,calls=[];
+ try{
+  global.fetch=async(_,opts)=>{
+   calls.push(JSON.parse(opts.body));
+   return {ok:true,status:200,json:async()=>({name:"auth_tokens/forced-standard"})};
+  };
+  const req=event("standard-mode-"+Date.now());req.body=JSON.stringify({mode:"standard"});
+  const res=await handler(req);
+  assert.equal(res.statusCode,200);
+  assert.equal(JSON.parse(res.body).model,"gemini-3.8-live");
+  assert.equal(calls.length,1);
+  assert.equal(calls[0].liveConnectConstraints.model,"models/gemini-3.8-live");
+  const invalid=event("invalid-mode-"+Date.now());invalid.body='{"mode":"unrestricted"}';
+  assert.equal((await handler(invalid)).statusCode,400);
+ }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;
+   if(originalModel!==undefined)process.env.GEMINI_LIVE_MODEL=originalModel;}
+});
+test("Shaiful creator history, deeper reasoning and empathic voice share grounded rules",()=>{
+ assert.match(creatorIdentity.VOICE_CREATOR_PROMPT,/penulis puisi gaya bebas/);
+ assert.match(creatorIdentity.VOICE_CREATOR_PROMPT,/Antara Cahaya dan Gelap/);
+ assert.match(creatorIdentity.VOICE_CREATOR_PROMPT,/bukan.*melatih/i);
+ assert.match(sharedBrain.CORE,/PEMIKIRAN MENDALAM SECARA ADAPTIF/);
+ assert.match(sharedBrain.CORE,/EMOSI DALAM KOMUNIKASI/);
+ assert.match(sharedBrain.VOICE_GUIDANCE,/DEEP THINKING/);
+ assert.match(sharedBrain.VOICE_GUIDANCE,/EMOSI DAN NADANYA/);
+ assert.match(js,/sharedIdentity\?\.VOICE_CREATOR_PROMPT\|\|""/);
+ assert.match(js,/thinkingConfig:\{thinkingLevel:data\.model==="gemini-3\.8-live-extended-thinking"\?"MEDIUM":"LOW"\}/);
+ assert.match(js,/interactionStatus/);
+ assert.match(html,/bilik-antara-brain\.js\?v=2/);
+ assert.match(html,/bilik-antara-identity\.js\?v=3/);
+ assert.match(html,/bilik-antara-voice\.js\?v=18/);
 });
 test("Microphone is allowed only for this site's origin",()=>{
  assert.match(netlify,/Permissions-Policy = "camera=\(\), microphone=\(self\), geolocation=\(\)"/);
@@ -459,6 +518,7 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  const page={
   isSecureContext:true,AudioContext:Audio,AudioWorkletNode:Worklet,WebSocket:Socket,
   BilikAntaraBrain:sharedBrain,
+  BilikAntaraIdentity:creatorIdentity,
   addEventListener:(n,fn)=>events.set(n,[...(events.get(n)||[]),fn]),
   removeEventListener:(n,fn)=>events.set(n,(events.get(n)||[]).filter(f=>f!==fn)),
   dispatchEvent:e=>(events.get(e.type)||[]).forEach(fn=>fn(e))
@@ -467,7 +527,15 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  let id=0;
  const fakeSet=()=>++id,fakeClear=()=>{};
  const FakeEvent=class{constructor(type){this.type=type}};
- const issue=async()=>({ok:true,status:200,json:async()=>({token:"auth_tokens/test-"+(++called),model:"gemini-3.8-live",durationSeconds:600})});
+ const modeRequests=[];
+ const issue=async(_url,opts)=>{
+  const body=JSON.parse(opts.body);modeRequests.push(body.mode||"auto");
+  return {ok:true,status:200,json:async()=>({
+   token:"auth_tokens/test-"+(++called),
+   model:body.mode==="standard"?"gemini-3.8-live":"gemini-3.8-live-extended-thinking",
+   durationSeconds:600
+  })};
+ };
  new Function("document","window","navigator","WebSocket","AudioWorkletNode","setTimeout","clearTimeout","fetch","Event","AbortController","btoa","atob",js)(
   doc,page,nav,Socket,Worklet,fakeSet,fakeClear,issue,FakeEvent,
   class{constructor(){this.signal={aborted:false}}abort(){this.signal.aborted=true}},()=>"",()=>""
@@ -482,7 +550,13 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  assert.match(spoken,/NEVER SWITCH TO SPANISH/);
  assert.ok(spoken.includes(sharedBrain.CORE),"Voice prompt shares common persona");
  assert.ok(spoken.includes(sharedBrain.VOICE_GUIDANCE),"Voice prompt adds voice-specific intelligence guidance");
+ assert.ok(spoken.includes(creatorIdentity.VOICE_CREATOR_PROMPT),"Creator profile is available to Voice");
+ assert.equal(first.sent[0].setup.generationConfig.thinkingConfig.thinkingLevel,"MEDIUM");
  await first.onmessage({data:JSON.stringify({setupComplete:{}})});
+ await first.onmessage({data:JSON.stringify({serverContent:{interactionStatus:"IN_PROGRESS",turnComplete:true}})});
+ assert.match(item("voiceStatus").textContent,/fikir/);
+ await first.onmessage({data:JSON.stringify({serverContent:{interactionStatus:"IDLE",turnComplete:true}})});
+ assert.match(item("voiceStatus").textContent,/sedang dengar/);
  await first.onmessage({data:JSON.stringify({sessionResumptionUpdate:{resumable:true,newHandle:"HANDLE_ONLY_IN_MEMORY"}})});
  await first.onmessage({data:JSON.stringify({goAway:{timeLeft:"15s"}})});
  for(let n=0;n<24;n++)await Promise.resolve();
@@ -491,6 +565,15 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  assert.equal(second.sent[0].setup.sessionResumption.handle,"HANDLE_ONLY_IN_MEMORY");
  assert.match(second.sent[0].setup.systemInstruction.parts[0].text,/Bahasa Melayu Malaysia/);
  assert.equal(called,2);
+ assert.equal(second.sent[0].setup.generationConfig.thinkingConfig.thinkingLevel,"MEDIUM");
+ await second.onclose({code:1008,reason:"unsupported extended setup"});
+ for(let i=0;i<24;i++)await Promise.resolve();
+ const third=Socket.instances[2];
+ assert.ok(third?.sent[0]?.setup,"Failed extended setup should use standard Live");
+ assert.equal(third.sent[0].setup.model,"models/gemini-3.8-live");
+ assert.equal(third.sent[0].setup.generationConfig.thinkingConfig,undefined);
+ assert.equal(modeRequests[2],"standard");
+ assert.equal(called,3);
  assert.equal(track.stopped,undefined,"no new microphone permission when connection renews");
  await item("voiceStop").listener("click")();
  assert.equal(track.stopped,true,"stopping voice releases microphone");
