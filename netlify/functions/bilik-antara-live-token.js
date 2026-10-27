@@ -47,8 +47,21 @@ exports.handler=async(event)=>{
   if(!key)return reply(503,{error:"Voice belum boleh digunakan. Kunci API belum diset di Netlify."});
   const ip=String((event.headers||{})["x-nf-client-connection-ip"]||"unknown").slice(0,100);
   if(rate(ip))return reply(429,{error:"Had cubaan atau sesi Voice Live dicapai buat sementara. Cuba kemudian.",reason:"LOCAL_RATE_LIMIT"});
+  // A previously opened Extended Thinking session may be rejected at the
+  // WebSocket setup stage. The browser can explicitly request the proven
+  // standard model. This does not bypass authorization, quotas or safeguards.
+  let requestMode="auto";
+  try{
+    const body=event.body?JSON.parse(event.body):{};
+    if(!body||typeof body!=="object"||Array.isArray(body)||
+       Object.keys(body).some(k=>k!=="mode")||
+       (body.mode!==undefined&&body.mode!=="standard"))
+      return reply(400,{error:"Mod Voice tidak sah."});
+    requestMode=body.mode==="standard"?"standard":"auto";
+  }catch(_){return reply(400,{error:"Permintaan Voice tidak sah."});}
   const configured=process.env.GEMINI_LIVE_MODEL||DEFAULT_MODEL;
-  const model=/^gemini-(?:3\.8-live(?:-extended-thinking)?|3\.1-flash-live-preview)$/.test(configured)?configured:DEFAULT_MODEL;
+  const preferred=/^gemini-(?:3\\.8-live(?:-extended-thinking)?|3\\.1-flash-live-preview)$/.test(configured)?configured:DEFAULT_MODEL;
+  const model=requestMode==="standard"?"gemini-3.8-live":preferred;
   const now=Date.now();
   const controller=new AbortController();
   const timeout=setTimeout(()=>controller.abort(),22000);
