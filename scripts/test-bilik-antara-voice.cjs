@@ -11,6 +11,10 @@ const pcm=fs.readFileSync("bilik-antara-pcm-worklet.js","utf8");
 const fallback=fs.readFileSync("bilik-antara-voice-fallback.js","utf8");
 const voiceFallback=fs.readFileSync("bilik-antara-voice-fallback.js","utf8");
 const voiceLocaleJs=fs.readFileSync("bilik-antara-voice-locale.js","utf8");
+const brainJs=fs.readFileSync("bilik-antara-brain.js","utf8");
+const brainModule={exports:{}};
+new Function("module",brainJs)(brainModule);
+const sharedBrain=brainModule.exports;
 const localeModule={exports:{}};
 new Function("module",voiceLocaleJs)(localeModule);
 const voiceLocale=localeModule.exports;
@@ -43,11 +47,33 @@ test("Seven Malay speaking styles appear in compact selector with accessible lab
  assert.match(html,/id="voiceDialect"/);
  assert.match(html,/for="voiceDialect"/);
  assert.match(html,/id="voiceDialectHint"/);
- assert.ok(html.indexOf("bilik-antara-voice-locale.js?v=1")<html.indexOf("bilik-antara-voice.js?v=15"));
+ assert.ok(html.indexOf("bilik-antara-voice-locale.js?v=1")<html.indexOf("bilik-antara-voice.js?v=16"));
+ assert.ok(html.indexOf("bilik-antara-brain.js?v=1")<html.indexOf("bilik-antara-voice.js?v=16"));
  assert.match(css,/\.voice-dialect-bar/);
  assert.match(js,/dialectSelect\.disabled=liveActive/);
  assert.match(js,/const speakingRule=languageLock\(selectedDialect\)/);
  assert.match(fallback,/voiceLocale\?\.instruction\(selectedVoiceStyle\?\.value/);
+});
+test("Jom Voice Live and a visible dialect selector share the mobile header",()=>{
+ const head=html.split('<header class="conversation-head">')[1]?.split('</header>')[0]||"";
+ assert.match(head,/>✦ Jom Voice Live<\/button>/);
+ assert.match(head,/id="voiceDialect"/);
+ assert.match(head,/for="voiceDialect"/);
+ assert.match(html,/SHAIFUL RIDHWAN A\.I · JOM VOICE LIVE/);
+ assert.match(js,/liveButton\.textContent=liveActive\?"● Sedang berbual":"✦ Jom Voice Live"/);
+ assert.match(css,/\.conversation \.conversation-head\{\s*display:grid/);
+ assert.match(css,/\.conversation-head \.voice-dialect-bar\{[\s\S]*?display:flex!important/);
+});
+test("Regular chat and Live share one core AI personality and task reasoning guidance",()=>{
+ assert.match(backend,/const Brain=require\("\.\.\/\.\.\/bilik-antara-brain"\)/);
+ assert.match(backend,/const PERSONALITY=Brain\.CORE/);
+ assert.match(js,/sharedBrain\?\.CORE\|\|""/);
+ assert.match(js,/sharedBrain\?\.VOICE_GUIDANCE\|\|""/);
+ assert.match(sharedBrain.CORE,/UTAMAKAN NIAT PENGGUNA/);
+ assert.match(sharedBrain.CORE,/Perwatakan: cerdas/);
+ assert.match(sharedBrain.CORE,/WAJIB kata ganti diri AKU/);
+ assert.match(sharedBrain.VOICE_GUIDANCE,/Jangan mengaku melayari web/);
+ assert.match(sharedBrain.VOICE_GUIDANCE,/KECERDASAN ADAPTIF/);
 });
 test("Malay-only voice instructions override Spanish for every regional style",()=>{
  const styles=["santai","perak","kelantan","penang","kedah","sabah","sarawak"];
@@ -83,8 +109,8 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=15/);
- assert.match(html,/bilik-antara\.css\?v=9/);
+ assert.match(html,/bilik-antara-voice\.js\?v=16/);
+ assert.match(html,/bilik-antara\.css\?v=10/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
  assert.match(html,/Audio dihantar kepada Google/i);
@@ -424,6 +450,7 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  const preferences=new Map([[voiceLocale.STORAGE_KEY,"kelantan"]]);
  const page={
   isSecureContext:true,AudioContext:Audio,AudioWorkletNode:Worklet,WebSocket:Socket,
+  BilikAntaraBrain:sharedBrain,
   BilikAntaraVoiceLocale:voiceLocale,
   localStorage:{getItem:k=>preferences.get(k),setItem:(k,v)=>preferences.set(k,v)},
   addEventListener:(n,fn)=>events.set(n,[...(events.get(n)||[]),fn]),
@@ -448,6 +475,8 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  assert.match(spoken,/RESPOND ONLY IN MALAY/);
  assert.match(spoken,/NEVER SWITCH TO SPANISH/);
  assert.match(spoken,/Kelantan/);
+ assert.ok(spoken.includes(sharedBrain.CORE),"Voice prompt shares common persona");
+ assert.ok(spoken.includes(sharedBrain.VOICE_GUIDANCE),"Voice prompt adds voice-specific intelligence guidance");
  assert.equal(item("voiceDialect").disabled,true);
  await first.onmessage({data:JSON.stringify({setupComplete:{}})});
  await first.onmessage({data:JSON.stringify({sessionResumptionUpdate:{resumable:true,newHandle:"HANDLE_ONLY_IN_MEMORY"}})});
