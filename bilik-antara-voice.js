@@ -10,6 +10,8 @@ const waveform=$("voiceWave"),input=$("input"),chat=$("chat");
 if(!dictate||!liveButton||!notice||!panel||!status||!transcript||!stopButton||!micButton||!speakerButton||!input||!chat)return;
 const sharedBrain=window.BilikAntaraBrain;
 const sharedIdentity=window.BilikAntaraIdentity;
+// The regional voice preference was retired; clean its obsolete browser key.
+try{window.localStorage?.removeItem("bilik-antara:voice-dialect:v1");}catch(_){}
 const languageLock=[
  "RESPOND ONLY IN MALAY, SPECIFICALLY COLLOQUIAL MALAYSIAN MALAY (ms-MY), FROM BEGINNING TO END. NEVER SWITCH TO SPANISH, ENGLISH OR ANOTHER LANGUAGE.",
  "Kekalkan Bahasa Melayu Malaysia santai yang mesra. Fahami loghat tempatan pengguna tetapi jangan bertukar gaya daerah secara sengaja.",
@@ -226,6 +228,11 @@ function onServerMessage(payload){
   const c=payload.serverContent;
   if(!c)return;
   if(c.interrupted){stopAudioQueue();panel.classList.remove("voice-speaking");if(lastTurn)lastTurn.finished=true;}
+  // Google can send interim words before the final transcript is available.
+  // Showing them helps distinguish recognition issues from answer issues.
+  if(c.interimInputTranscription?.text&&!c.inputTranscription?.text){
+    sayStatus("Sedang dengar: "+String(c.interimInputTranscription.text).slice(0,125));
+  }
   if(c.inputTranscription&&c.inputTranscription.text){
     appendTranscript("user",c.inputTranscription.text);
     sayStatus("Aku dengar: "+String(c.inputTranscription.text).slice(0,125));
