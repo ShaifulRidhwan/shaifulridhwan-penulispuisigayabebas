@@ -43,7 +43,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=7/);
+ assert.match(html,/bilik-antara-voice\.js\?v=8/);
  assert.match(html,/bilik-antara\.css\?v=6/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
@@ -59,7 +59,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
  assert.match(css,/\.voice-wave/);
 });
 test("Casual Malay UI uses Cakap instead of technical Dikte",()=>{
- assert.match(html,/>🎙 Cakap<\/button>/);
+ assert.match(html,/id="voiceDictate"[^>]*>Cakap jadi teks<\/button>/);
  assert.match(html,/status\("ready","Pelayan sedia"/);
  assert.match(js,/dictate\.textContent="🎙 Cakap"/);
  assert.match(js,/dictate\.textContent="■ Berhenti"/);
@@ -233,8 +233,8 @@ test("Fallback voice only records after an explicit user click and uses the orig
  assert.doesNotMatch(fallback,/GEMINI_API_KEY|localStorage|indexedDB/);
 });
 test("Voice token request runs in parallel with microphone initialization",()=>{
- const token=s.indexOf('const tokenPromise=fetch(ENDPOINT');
- const mic=s.indexOf('const stream=await navigator.mediaDevices.getUserMedia');
+ const token=js.indexOf('const tokenPromise=fetch(ENDPOINT');
+ const mic=js.indexOf('const stream=await navigator.mediaDevices.getUserMedia');
  assert.ok(token>=0&&mic>=0&&token<mic,"start token while requesting microphone");
  assert.match(js,/tokenPromise\.catch\(\(\)=>\{\}\)/);
 });
