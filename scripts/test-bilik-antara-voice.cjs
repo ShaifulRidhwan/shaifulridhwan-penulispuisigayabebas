@@ -302,8 +302,8 @@ test("Voice errors distinguish Google token rejection from permission and WebSoc
  assert.match(js,/TOKEN_UNAVAILABLE/);
  assert.match(js,/HTTP "\+res\.status/);
  assert.match(js,/code===1008|\[1008,4001,4401,4429\]/);
- assert.match(js,/WS 1006/);
- assert.match(js,/WS 1011/);
+ assert.match(js,/ws\.onclose=event=>/);
+ assert.match(js,/Number\(event\.code\)\|\|1006/);
  assert.match(js,/visibilityTimer=setTimeout/);
  assert.match(js,/8000/);
 });
