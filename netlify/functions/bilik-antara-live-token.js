@@ -56,8 +56,8 @@ exports.handler=async(event)=>{
     newSessionExpireTime:new Date(now+60*1000).toISOString()
   };
   try{
-    // Each attempt stays model-locked and one-use. No unrestricted tokens
-    // or billable Google Search grounding.
+    // Try model-bound, one-use Live tokens first; if Google explicitly
+    // rejects that optional field, use a shorter one-use Live-only token.
     const candidates=[model,...(model==="gemini-3.8-live"?["gemini-3.1-flash-live-preview"]:["gemini-3.8-live"])];
     let lastStatus=502,lastReason="UPSTREAM",lastMessage="",tried=[];
     outer: for(const candidate of [...new Set(candidates)]){
@@ -92,8 +92,41 @@ exports.handler=async(event)=>{
         console.warn("[bilik-antara-voice] token refused",{
           httpStatus:lastStatus,reason:lastReason,model:candidate,variant
         });
-        // Authentication, account, billing and quota failures must never be
-        // bypassed by repeated requests. Only 400/404 try another shape/model.
+        // Some Google projects reject the optional liveConnectConstraints field
+        // itself. Google's REST docs explicitly support a one-use ephemeral
+        // token without that field. This is a fallback ONLY for that specific
+        // 400, never an attempt to bypass denied access, quotas or billing.
+        if(lastStatus===400&&/liveConnectConstraints|live_connect_constraints/i.test(lastMessage)){
+          const shortToken={
+            uses:1,expireTime:new Date(now+5*60*1000).toISOString(),
+            newSessionExpireTime:new Date(now+35*1000).toISOString()
+          };
+          const fallback=await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens",{
+            method:"POST",
+            headers:{"Content-Type":"application/json","x-goog-api-key":key},
+            body:JSON.stringify(shortToken),signal:controller.signal
+          });
+          const bare=await fallback.json().catch(()=>({}));
+          tried.push("short-lived-token · Live API only");
+          if(fallback.ok){
+            if(typeof bare.name!=="string"||!bare.name.startsWith("auth_tokens/"))
+              return reply(502,{error:"Token sementara Google tidak sah.",reason:"TOKEN_FORMAT"});
+            rate(ip,true);
+            return reply(200,{
+              token:bare.name,model:candidate,durationSeconds:300,
+              tokenMode:"temporary-live-only",
+              notice:"Google menerima token sementara satu guna untuk Live API. Tempoh terhad lima minit."
+            });
+          }
+          lastStatus=fallback.status;
+          lastReason=String(bare?.error?.status||"UPSTREAM").slice(0,40);
+          lastMessage=String(bare?.error?.message||"").slice(0,400);
+          console.warn("[bilik-antara-voice] short-lived fallback refused",{
+            httpStatus:lastStatus,reason:lastReason
+          });
+          break outer;
+        }
+        // Never keep retrying on bad credentials, quota or paid-plan errors.
         if(lastStatus!==400&&lastStatus!==404)break outer;
         if(lastStatus===404)break; // A nonexistent model cannot be fixed by config.
       }
