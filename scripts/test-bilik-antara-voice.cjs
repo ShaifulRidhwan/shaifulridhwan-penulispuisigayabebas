@@ -43,7 +43,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=12/);
+ assert.match(html,/bilik-antara-voice\.js\?v=13/);
  assert.match(html,/bilik-antara\.css\?v=8/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
