@@ -194,6 +194,7 @@ async function startLive(){
     sayStatus(message);showNotice(message);return;
   }
   closeDictation();showNotice("");
+  const fb=document.getElementById("voiceFallback");if(fb)fb.hidden=true;
   liveActive=true;liveReady=false;micEnabled=true;speakerEnabled=true;
   lastTurn=null;transcript.replaceChildren();panel.classList.remove("voice-speaking");
   setButtonState();sayStatus("Meminta kebenaran mikrofon…");
@@ -232,6 +233,7 @@ async function startLive(){
       if(generation!==liveGeneration||liveReady)return;
       const message="Tiada pengesahan Voice selepas 20 saat (TIMEOUT_SETUP). Semak akses Google Live, rangkaian atau Brave Shields."
       sayStatus(message);showNotice(message);closeLive(message);
+      window.dispatchEvent(new Event("ba:voice-live-failed"));
     },20000);
     ws.onopen=()=>{
       if(generation!==liveGeneration)return;
@@ -301,7 +303,7 @@ async function startLive(){
          code===1011?"Pelayan Gemini Live gagal (WS 1011).":
          "Sambungan Voice ditutup (WS "+code+").";
        sayStatus(message);closeLive(message);
-       if(code!==1000)showNotice(message+(safeReason?" Butiran: "+safeReason:""));
+       if(code!==1000){showNotice(message+(safeReason?" Butiran: "+safeReason:""));window.dispatchEvent(new Event("ba:voice-live-failed"));}
     };
   }catch(e){
     const message=e&&e.name==="AbortError"?
@@ -313,6 +315,7 @@ async function startLive(){
     sayStatus(message);
     await closeLive(message);
     showNotice(message);
+    window.dispatchEvent(new Event("ba:voice-live-failed"));
   }
 }
 liveButton.addEventListener("click",startLive);
