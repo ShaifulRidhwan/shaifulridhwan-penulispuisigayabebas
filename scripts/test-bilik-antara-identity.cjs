@@ -42,6 +42,30 @@ test("Siapa Aku answers project origin, enhancements and base-model provenance",
  assert.doesNotMatch(reply,/sudah mencapai kecerdasan tertinggi di dunia/);
  assert.equal(ID.answerIdentity("siapa aku?"),reply);
 });
+test("Verified Shaiful Ridhwan biography is rich, natural and attribution-safe",()=>{
+ const detailed=ID.answerIdentity("Siapa Shaiful Ridhwan?");
+ assert.ok(detailed&&detailed.length>650,"Creator reply should not be two dry sentences");
+ assert.match(detailed,/penulis puisi gaya bebas/i);
+ assert.match(detailed,/puisigayabebas/);
+ assert.match(detailed,/Gaya Bebas/);
+ assert.match(detailed,/Antara Cahaya dan Gelap/);
+ assert.match(detailed,/Bilik Antara/);
+ assert.match(detailed,/Google Gemini/);
+ assert.match(detailed,/pembangun aplikasi/i);
+ assert.equal(ID.answerIdentity("Shaiful Ridhwan tu siapa?"),detailed);
+ assert.equal(ID.answerIdentity("Kau kenal Shaiful Ridhwan?"),detailed);
+});
+test("Creator is credited as builder of the application, not trainer of Gemini",()=>{
+ const who=ID.answerIdentity("Siapa cipta kau?");
+ assert.ok(who&&who.length>650);
+ assert.match(who,/Shaiful yang membina dan mengubah suai sistem aku/);
+ assert.match(who,/Google.*Gemini/i);
+ assert.match(ID.VOICE_CREATOR_PROMPT,/BILA DITANYA TENTANG SHAIFUL/);
+ assert.match(ID.VOICE_CREATOR_PROMPT,/5 hingga 8 ayat/);
+ assert.match(ID.VOICE_CREATOR_PROMPT,/JANGAN REKA/);
+ assert.equal(ID.CREATOR_PROFILE.creativeName,"puisigayabebas");
+ assert.match(ID.CREATOR_PROFILE.provenance,/bukan melatih semula model asas/);
+});
 test("unrelated questions cannot be misattributed to project creator",()=>{
  for(const q of [
   "Siapa cipta AI?","Siapa cipta JavaScript?","Siapa pencipta alam semesta?",
@@ -66,8 +90,9 @@ test("text, stream and voice use shared project provenance",()=>{
  assert.match(rest,/Identity\.CORE_PROMPT/);
  assert.match(stream,/import Identity from "\.\.\/\.\.\/bilik-antara-identity\.js"/);
  assert.match(stream,/Identity\.answerIdentity\(question\)/);
- assert.match(voice,/window\.BilikAntaraIdentity\?\.PROMPT/);
- assert.match(html,/src="bilik-antara-identity\.js\?v=2"/);
+ assert.match(voice,/sharedIdentity\?\.CORE_PROMPT\|\|""/);
+ assert.match(voice,/sharedIdentity\?\.VOICE_CREATOR_PROMPT\|\|""/);
+ assert.match(html,/src="bilik-antara-identity\.js\?v=3"/);
  assert.ok(html.indexOf('src="bilik-antara-identity.js')<html.indexOf('src="bilik-antara-voice.js'));
 });
 test("identity gateway answers without issuing Gemini calls",async()=>{
