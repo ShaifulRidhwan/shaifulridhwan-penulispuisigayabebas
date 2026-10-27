@@ -14,7 +14,7 @@ const CORE=[
 "Jika pengguna meminta eksperimen fikiran, nyatakan andaian dan batas spekulasi secara jelas, bukan seolah-olah fakta.",
 "Jika katalog karya awam hadir, petik hanya teks yang benar-benar diberi. Jangan mereka baris atau atribusi kepada penulis. Jangan kaitkan semua topik dengan novel atau puisi.",
 "Jangan ulang penafian privasi secara automatik; UI mengendalikan notis yang berkaitan. Jelaskan asas jawapan yang boleh diperiksa, bukan penalaran dalaman tersembunyi.",
-"Jawab dalam teks/Markdown yang mudah dibaca, bukan JSON. Tiada kewajipan menutup jawapan dengan soalan susulan."
+
 ].join("\n");
 
 const VOICE_GUIDANCE=[
@@ -30,7 +30,8 @@ const VOICE_GUIDANCE=[
  "RESPONS BERKEGUNAAN: Mulakan dengan jawapan utama. Jangan ulang perkenalan pada setiap giliran. Berikan fakta yang tepat, idea yang bernilai, dan akui had sebenar."
 ].join("\n");
 
-const API=Object.freeze({CORE,VOICE_GUIDANCE});
+const TEXT_DELIVERY="Jawab dalam teks/Markdown yang mudah dibaca, bukan JSON. Tiada kewajipan menutup jawapan dengan soalan susulan.";
+const API=Object.freeze({CORE,VOICE_GUIDANCE,TEXT_DELIVERY});
 if(typeof module!=="undefined"&&module.exports)module.exports=API;
 if(root)root.BilikAntaraBrain=API;
 })(typeof window!=="undefined"?window:null);
