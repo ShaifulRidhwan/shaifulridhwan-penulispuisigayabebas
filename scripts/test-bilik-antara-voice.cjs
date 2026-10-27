@@ -8,6 +8,7 @@ const html=fs.readFileSync("bilik-antara.html","utf8");
 const css=fs.readFileSync("bilik-antara.css","utf8");
 const js=fs.readFileSync("bilik-antara-voice.js","utf8");
 const pcm=fs.readFileSync("bilik-antara-pcm-worklet.js","utf8");
+const fallback=fs.readFileSync("bilik-antara-voice-fallback.js","utf8");
 const voiceFallback=fs.readFileSync("bilik-antara-voice-fallback.js","utf8");
 const intelligence=fs.readFileSync("netlify/functions/antara-intelligence.js","utf8");
 const netlify=fs.readFileSync("netlify.toml","utf8");
@@ -205,6 +206,23 @@ test("Rejected Google token attempts are not counted as completed Live sessions"
   for(let i=0;i<5;i++)assert.equal((await handler(event(label))).statusCode,200);
   assert.equal((await handler(event(label))).statusCode,429);
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
+});
+test("Fallback voice only records after an explicit user click and uses the original server-side key",()=>{
+ assert.match(html,/id="voiceFallback"[^>]*hidden/);
+ assert.match(html,/id="voiceFallbackStart"/);
+ assert.match(html,/id="voiceFallbackStop"/);
+ assert.match(html,/bilik-antara-voice-fallback\.js\?v=1/);
+ assert.match(js,/ba:voice-live-failed/);
+ assert.match(fallback,/addEventListener\("ba:voice-live-failed"/);
+ assert.match(fallback,/start\.addEventListener\("click",async/);
+ assert.match(fallback,/stop\.addEventListener\("click"/);
+ assert.match(fallback,/getUserMedia/);
+ assert.match(fallback,/new MediaRecorder/);
+ assert.match(fallback,/\.netlify\/functions\/bilik-antara/);
+ assert.match(fallback,/audio\/webm/);
+ assert.match(fallback,/2500000/);
+ assert.match(fallback,/20000/);
+ assert.doesNotMatch(fallback,/GEMINI_API_KEY|localStorage|indexedDB/);
 });
 test("Session creation has backend rate limiting",async()=>{
  process.env.GEMINI_API_KEY="fake-permanent-api-key-test";
