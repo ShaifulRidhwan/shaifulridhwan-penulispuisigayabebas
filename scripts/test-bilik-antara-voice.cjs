@@ -155,7 +155,7 @@ test("Unsupported Extended Thinking websocket can explicitly request standard Li
 test("Shaiful creator history, deeper reasoning and empathic voice share grounded rules",()=>{
  assert.match(creatorIdentity.VOICE_CREATOR_PROMPT,/penulis puisi gaya bebas/);
  assert.match(creatorIdentity.VOICE_CREATOR_PROMPT,/Antara Cahaya dan Gelap/);
- assert.match(creatorIdentity.VOICE_CREATOR_PROMPT,/bukan.*melatih/i);
+ assert.match(creatorIdentity.VOICE_CREATOR_PROMPT,/JANGAN sekali-kali.*melatih/i);
  assert.match(sharedBrain.CORE,/PEMIKIRAN MENDALAM SECARA ADAPTIF/);
  assert.match(sharedBrain.CORE,/EMOSI DALAM KOMUNIKASI/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/DEEP THINKING/);
