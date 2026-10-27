@@ -7,7 +7,6 @@ const $=id=>document.getElementById(id);
 const panel=$("voiceFallback"),min=$("voiceFallbackMinimize"),start=$("voiceFallbackStart"),
  stop=$("voiceFallbackStop"),retry=$("voiceFallbackRetry"),speak=$("voiceFallbackSpeak"),
  status=$("voiceFallbackStatus"),live=$("voiceLive");
-const selectedVoiceStyle=$("voiceDialect"),voiceLocale=window.BilikAntaraVoiceLocale;
 if(!panel||!min||!start||!stop||!retry||!speak||!status)return;
 let stream=null,recorder=null,timer=null,chunks=[],reply="",sendOnStop=false,busy=false,lastBlob=null;
 const statusText=x=>{status.textContent=String(x||"").slice(0,2600);};
@@ -71,9 +70,10 @@ async function submitAudio(blob){
    body:JSON.stringify({
     voiceFallback:true,
     question:[
-     "Dengar soalan dalam audio, jawab dengan ringkas dan jelas. Jika audio tidak jelas, minta pengguna ulang.",
-     voiceLocale?.instruction(selectedVoiceStyle?.value||"santai")||
-     "RESPOND ONLY IN COLLOQUIAL MALAYSIAN MALAY (ms-MY). NEVER SWITCH TO SPANISH OR OTHER LANGUAGES."
+     "Dengar audio pengguna dan jawab dalam Bahasa Melayu Malaysia santai sahaja, bukan bahasa lain.",
+     "Perkataan pendek seperti lapar, haus, penat, bosan ialah ujaran sah yang perlu dijawab terus, walaupun pengguna tidak membentuk soalan penuh.",
+     "Jangan meminta ulang berulang kali apabila perkataan jelas. Jika tiada perkataan dapat dikenal pasti, minta ulang sekali sahaja.",
+     "Jawab dengan lengkap dalam 2 hingga 4 ayat atau lebih jika masalah perlukan penerangan. Jangan hentikan ayat di tengah."
     ].join(" "),
     media:{mimeType:mime,name:"rakaman-suara",data}
    })
