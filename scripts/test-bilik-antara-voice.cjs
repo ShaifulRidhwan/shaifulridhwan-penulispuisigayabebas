@@ -22,7 +22,7 @@ test("Recorded-audio fallback stays opt-in and does not expose any permanent API
  for(const id of ["voiceFallback","voiceFallbackStart","voiceFallbackStop","voiceFallbackStatus","voiceFallbackSpeak"]){
   assert.match(html,new RegExp('id="'+id+'"'));
  }
- assert.match(html,/bilik-antara-voice-fallback\.js\?v=1/);
+ assert.match(html,/bilik-antara-voice-fallback\.js\?v=2/);
  assert.match(voiceFallback,/ba:voice-live-failed/);
  assert.match(js,/dispatchEvent\(new Event\("ba:voice-live-failed"\)\)/);
  assert.match(voiceFallback,/getUserMedia/);
@@ -160,7 +160,7 @@ test("Google rejection never downgrades a model-restricted Live token",async()=>
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
 test("Voice connection has explicit token and websocket watchdogs",()=>{
- assert.match(js,/const tokenTimer=setTimeout\(\(\)=>controller\.abort\(\),16000\)/);
+ assert.match(js,/const tokenTimer=setTimeout\(\(\)=>controller\.abort\(\),18000\)/);
  assert.match(js,/connectTimer=setTimeout\(\(\)=>/);
  assert.match(js,/if\(connectTimer\)\{clearTimeout\(connectTimer\);connectTimer=null;\}/);
  assert.match(js,/if\(typeof Blob!=="undefined"&&raw instanceof Blob\)/);
@@ -211,18 +211,32 @@ test("Fallback voice only records after an explicit user click and uses the orig
  assert.match(html,/id="voiceFallback"[^>]*hidden/);
  assert.match(html,/id="voiceFallbackStart"/);
  assert.match(html,/id="voiceFallbackStop"/);
- assert.match(html,/bilik-antara-voice-fallback\.js\?v=1/);
+  assert.ok(html.indexOf('id="voiceFallbackStart"')<html.indexOf('id="sendBtn"'));
+  assert.ok(html.indexOf('id="voiceFallbackStop"')<html.indexOf('id="sendBtn"'));
+  assert.match(html,/id="voiceMinimize"/);
+  assert.match(html,/id="voiceFallbackMinimize"/);
+  assert.match(fallback,/voiceFallbackRetry/);
+  assert.match(fallback,/voiceFallback:true/);
+  assert.match(js,/minimizeButton\.addEventListener/);
+
+ assert.match(html,/bilik-antara-voice-fallback\.js\?v=2/);
  assert.match(js,/ba:voice-live-failed/);
  assert.match(fallback,/addEventListener\("ba:voice-live-failed"/);
  assert.match(fallback,/start\.addEventListener\("click",async/);
  assert.match(fallback,/stop\.addEventListener\("click"/);
  assert.match(fallback,/getUserMedia/);
- assert.match(fallback,/new MediaRecorder/);
+ assert.match(fallback,/new window\.MediaRecorder/);
  assert.match(fallback,/\.netlify\/functions\/bilik-antara/);
  assert.match(fallback,/audio\/webm/);
- assert.match(fallback,/2500000/);
+ assert.match(fallback,/2400000/);
  assert.match(fallback,/20000/);
  assert.doesNotMatch(fallback,/GEMINI_API_KEY|localStorage|indexedDB/);
+});
+test("Voice token request runs in parallel with microphone initialization",()=>{
+ const token=s.indexOf('const tokenPromise=fetch(ENDPOINT');
+ const mic=s.indexOf('const stream=await navigator.mediaDevices.getUserMedia');
+ assert.ok(token>=0&&mic>=0&&token<mic,"start token while requesting microphone");
+ assert.match(js,/tokenPromise\.catch\(\(\)=>\{\}\)/);
 });
 test("Session creation has backend rate limiting",async()=>{
  process.env.GEMINI_API_KEY="fake-permanent-api-key-test";
