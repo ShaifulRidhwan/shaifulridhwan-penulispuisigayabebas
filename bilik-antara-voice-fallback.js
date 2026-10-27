@@ -86,7 +86,7 @@ start.addEventListener("click",async()=>{
    audio:{echoCancellation:true,noiseSuppression:true,channelCount:1},video:false
   });
   const types=["audio/webm;codecs=opus","audio/mp4","audio/ogg;codecs=opus","audio/webm"];
-  const type=types.find(x=>MediaRecorder.isTypeSupported(x))||"";
+  const type=types.find(x=>typeof window.MediaRecorder.isTypeSupported==="function"&&window.MediaRecorder.isTypeSupported(x))||"";
   recorder=new MediaRecorder(stream,type?{mimeType:type,audioBitsPerSecond:32000}:{audioBitsPerSecond:32000});
   chunks=[];sendOnStop=false;
   recorder.ondataavailable=e=>{if(e.data?.size)chunks.push(e.data);};
