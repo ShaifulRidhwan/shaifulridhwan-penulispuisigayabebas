@@ -68,6 +68,7 @@
        <p>Perbualan dihantar kepada penyedia AI untuk dijawab. Sejarah hanya disimpan di pelayar jika kau benarkan.</p>
        <label class="settings-row"><input type="checkbox" id="rememberChat"><span>Simpan sesi pada peranti ini</span></label>
        <div class="settings-actions"><button class="outline-btn" id="clearChat" type="button">Padam perbualan</button></div>
+       <div class="settings-actions voice-text-access"><button type="button" id="voiceDictate" class="voice-action" aria-pressed="false" title="Tukar suara kepada teks">Cakap jadi teks</button></div>
        <details id="ideaLedger"><summary>Nota idea</summary><ul id="thoughtItems"></ul><button class="outline-btn" id="forgetIdeas" type="button">Kosongkan nota idea</button></details>
       </div>
      </details>
@@ -84,7 +85,7 @@
       <div class="voice-fallback-buttons">
        <button type="button" id="voiceFallbackRetry" hidden disabled>Cuba lagi tanpa rakam semula</button>
        <button type="button" id="voiceFallbackSpeak" hidden disabled>🔊 Dengar jawapan</button>
-       <button type="button" id="voiceDictate" class="voice-action" aria-pressed="false" title="Tukar suara kepada teks">Cakap jadi teks</button>
+       
       </div>
       <div id="voiceFallbackStatus" role="status" aria-live="polite"></div>
      </div>
