@@ -2210,3 +2210,47 @@ html[data-theme="light"] .voice-action,html[data-theme="light"]
 .voice-fallback button{border:1px solid rgba(225,182,122,.48);background:rgba(49,43,37,.73);color:#f8e7cf;border-radius:9px;padding:9px 11px;min-height:40px;cursor:pointer}
 .voice-fallback button:disabled{opacity:.5;cursor:not-allowed}
 #voiceFallbackStatus{font-size:12px;margin-top:9px;color:#e8ca97}
+
+
+/* Voice mobile-first: record is inside the composer beside Send. */
+.composer-voice{
+ width:42px;height:42px;min-width:42px;flex:none;display:grid;place-items:center;
+ border:1px solid rgba(222,182,123,.53);border-radius:10px;
+ background:rgba(222,182,123,.12);color:var(--gold);cursor:pointer;
+ touch-action:manipulation
+}
+.composer-voice svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.composer-voice.is-recording{background:#6c2626;color:#ffe3d1;border-color:#e7a291;font-weight:700}
+.composer-voice[hidden]{display:none!important}
+.composer-voice:disabled{opacity:.48;cursor:not-allowed}
+.composer-voice:focus-visible,.voice-fallback button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.voice-fallback{padding:8px 12px;margin:5px 9px 7px;border-radius:11px;max-height:min(200px,30vh);overflow:auto;overscroll-behavior:contain}
+.voice-fallback-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.voice-fallback-head button{font-size:11px;min-height:34px;flex:none}
+.voice-fallback.is-collapsed{max-height:50px;overflow:hidden}
+.voice-fallback.is-collapsed .voice-fallback-body{display:none!important}
+.voice-fallback-body p{font-size:12px;margin:4px 0}
+.voice-fallback-buttons{gap:6px}
+.voice-fallback-buttons button{font-size:11px;padding:6px 10px;min-height:36px}
+.voice-panel-head-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.voice-panel.is-minimized{
+ height:auto!important;max-height:none!important;min-height:0!important;
+ bottom:auto!important;inset:auto 8px auto 8px!important;top:44px!important;
+ padding:10px 12px!important;border-radius:12px;gap:4px
+}
+.voice-panel.is-minimized .voice-wave,.voice-panel.is-minimized .voice-transcript,
+.voice-panel.is-minimized .voice-session-controls,.voice-panel.is-minimized .voice-privacy{display:none!important}
+.voice-panel.is-minimized .voice-status{font-size:12px;margin:0}
+.voice-notice{max-width:100%;overflow-wrap:anywhere}
+@media(max-width:760px){
+ .composer{gap:5px!important;padding:6px!important}
+ .composer-voice{width:39px;height:42px;min-width:39px}
+ .composer textarea{font-size:16px!important;min-width:0}
+ .composer-hint{font-size:9px;gap:4px;flex-wrap:wrap}
+ .voice-fallback{margin:4px 7px 6px;max-height:190px}
+ .voice-panel-head-actions .voice-stop{font-size:10px;min-height:36px}
+ .conversation-head .voice-toolbar{padding:0;gap:3px}
+ .conversation-head .voice-action--live{min-height:38px;padding:7px 10px;font-size:11px}
+ .voice-panel.is-minimized{top:42px!important}
+}
+@media(max-width:380px){.composer-voice{min-width:35px;width:35px}.send-btn{width:39px}}
