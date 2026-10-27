@@ -18,12 +18,16 @@ const headers=()=>({
   "Vary":"Origin"
 });
 function reply(code,payload){return {statusCode:code,headers:headers(),body:JSON.stringify(payload)};}
-function rate(ip){
+function rate(ip,success=false){
   const now=Date.now();
-  if(recent.size>1000)for(const [k,v] of recent)if(now-v[0]>RATE_WINDOW_MS)recent.delete(k);
-  const calls=(recent.get(ip)||[]).filter(t=>now-t<RATE_WINDOW_MS);
-  if(calls.length>=3){recent.set(ip,calls);return true;}
-  calls.push(now);recent.set(ip,calls);return false;
+  if(recent.size>1000)for(const [k,state] of recent)if(now-state.last>RATE_WINDOW_MS)recent.delete(k);
+  const state=recent.get(ip)||{attempts:[],sessions:[],last:now};
+  state.attempts=state.attempts.filter(t=>now-t<RATE_WINDOW_MS);
+  state.sessions=state.sessions.filter(t=>now-t<RATE_WINDOW_MS);
+  state.last=now;
+  if(success){state.sessions.push(now);recent.set(ip,state);return false;}
+  if(state.attempts.length>=12||state.sessions.length>=5){recent.set(ip,state);return true;}
+  state.attempts.push(now);recent.set(ip,state);return false;
 }
 function allowedOrigin(event){
   const h=event.headers||{};
@@ -40,7 +44,7 @@ exports.handler=async(event)=>{
   const key=process.env.GEMINI_API_KEY;
   if(!key)return reply(503,{error:"Voice belum boleh digunakan. Kunci API belum diset di Netlify."});
   const ip=String((event.headers||{})["x-nf-client-connection-ip"]||"unknown").slice(0,100);
-  if(rate(ip))return reply(429,{error:"Had sembang suara dah dicapai. Cuba lagi dalam beberapa minit."});
+  if(rate(ip))return reply(429,{error:"Had cubaan atau sesi Voice Live dicapai buat sementara. Cuba kemudian.",reason:"LOCAL_RATE_LIMIT"});
   const configured=process.env.GEMINI_LIVE_MODEL||DEFAULT_MODEL;
   const model=/^gemini-(?:3\.8-live(?:-extended-thinking)?|3\.1-flash-live-preview)$/.test(configured)?configured:DEFAULT_MODEL;
   const now=Date.now();
@@ -72,6 +76,7 @@ exports.handler=async(event)=>{
       if(response.ok){
         if(!json||typeof json.name!=="string"||!json.name.startsWith("auth_tokens/"))
           return reply(502,{error:"Token sementara Google tidak sah.",reason:"TOKEN_FORMAT"});
+        rate(ip,true);
         return reply(200,{
           token:json.name,model:candidate,durationSeconds:600,
           notice:"Audio dihantar terus ke Google Gemini semasa Voice Live aktif. Sesi maksimum 10 minit."
@@ -86,11 +91,12 @@ exports.handler=async(event)=>{
       if(lastStatus!==400&&lastStatus!==404)break;
     }
     const lower=lastMessage.toLowerCase();
-    const error=lastStatus===429?"Kuota Voice Live percuma sedang habis. Cuba lagi apabila kuota pulih.":
-      [401,403].includes(lastStatus)?"Kunci API projek tidak mempunyai akses Voice Live. Semak projek Google AI Studio.":
-      /billing|payment/.test(lower)?"Google meminta akses bil atau pelan yang berbeza. Voice Live berbayar tidak diaktifkan.":
-      [400,404].includes(lastStatus)?"Google menolak tetapan token Voice Live untuk model yang diuji. Semak model dan akses Live API projek.":
-      "Google tidak dapat mengeluarkan token Voice (HTTP "+lastStatus+").";
+    const error=/billing|payment|restricted.*tier/.test(lower)?"Google menyatakan projek memerlukan akses/bil yang sesuai. Tiada caj atau pelan ditukar oleh Bilik Antara.":
+      /leaked|blocked.*key/.test(lower)?"Kunci API projek disekat oleh Google. Semak kunci di AI Studio.":
+      lastStatus===429?"Kuota Gemini Live percuma penuh buat sementara (429).":
+      [401,403].includes(lastStatus)?"Kunci atau projek API tidak dibenarkan menggunakan Gemini Live ("+lastStatus+").":
+      [400,404].includes(lastStatus)?"Google menolak tetapan token Voice untuk model yang dicuba. Semak akses Live API dan konfigurasi (HTTP "+lastStatus+").":
+      "Google tidak mengeluarkan token Voice (HTTP "+lastStatus+").";
     const diagnostic=["INVALID_ARGUMENT","PERMISSION_DENIED","RESOURCE_EXHAUSTED","NOT_FOUND"].includes(lastReason)?lastReason:"UPSTREAM";
     return reply(lastStatus===429?429:502,{
       error,reason:"TOKEN_HTTP_"+lastStatus,diagnostic,
