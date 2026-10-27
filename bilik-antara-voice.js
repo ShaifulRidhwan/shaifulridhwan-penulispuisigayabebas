@@ -116,6 +116,15 @@ async function closeLive(reason){
   micContext=null;playContext=null;
   if(closingMic)try{await closingMic.close();}catch(e){}
   if(closingPlayback)try{await closingPlayback.close();}catch(e){}
+  // Preserve completed voice dialogue in the shared in-page conversation.
+  // The existing Remember toggle controls whether the bridge persists it locally.
+  const voiceTurns=[...transcript.querySelectorAll(".voice-line")].map(line=>{
+    const role=line.querySelector("strong")?.textContent?.startsWith("Kau")?"user":"assistant";
+    const content=String(line.querySelector("span")?.textContent||"").trim();
+    return {role,content};
+  }).filter(m=>m.content);
+  if(voiceTurns.length)window.BilikAntaraBridge?.addVoice?.(voiceTurns);
+  transcript.replaceChildren();
   lastTurn=null;
   setWave(0);setButtonState();
   if(reason)liveButton.title=reason;
