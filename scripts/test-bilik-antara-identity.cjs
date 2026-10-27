@@ -33,6 +33,15 @@ test("identity responses cover creator, modifications and model provenance",()=>
   assert.match(response,new RegExp(expected,"i"),q);
  }
 });
+test("Siapa Aku answers project origin, enhancements and base-model provenance",()=>{
+ const reply=ID.answerIdentity("Siapa Aku");
+ assert.match(reply,/Shaiful Ridhwan A\.I\./);
+ assert.match(reply,/dibina dan terus diubah suai oleh Shaiful Ridhwan/);
+ assert.match(reply,/keupayaan setinggi mungkin/);
+ assert.match(reply,/Google Gemini/);
+ assert.doesNotMatch(reply,/sudah mencapai kecerdasan tertinggi di dunia/);
+ assert.equal(ID.answerIdentity("siapa aku?"),reply);
+});
 test("unrelated questions cannot be misattributed to project creator",()=>{
  for(const q of [
   "Siapa cipta AI?","Siapa cipta JavaScript?","Siapa pencipta alam semesta?",
@@ -58,7 +67,7 @@ test("text, stream and voice use shared project provenance",()=>{
  assert.match(stream,/import Identity from "\.\.\/\.\.\/bilik-antara-identity\.js"/);
  assert.match(stream,/Identity\.answerIdentity\(question\)/);
  assert.match(voice,/window\.BilikAntaraIdentity\?\.PROMPT/);
- assert.match(html,/src="bilik-antara-identity\.js\?v=1"/);
+ assert.match(html,/src="bilik-antara-identity\.js\?v=2"/);
  assert.ok(html.indexOf('src="bilik-antara-identity.js')<html.indexOf('src="bilik-antara-voice.js'));
 });
 test("identity gateway answers without issuing Gemini calls",async()=>{
