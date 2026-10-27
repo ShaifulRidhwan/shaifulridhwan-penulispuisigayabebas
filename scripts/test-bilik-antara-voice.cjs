@@ -43,7 +43,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=11/);
+ assert.match(html,/bilik-antara-voice\.js\?v=12/);
  assert.match(html,/bilik-antara\.css\?v=8/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
@@ -96,11 +96,57 @@ test("Live streaming uses ephemeral token with PCM input/output and transcriptio
  assert.match(js,/audio\/pcm;rate=16000/);
  assert.match(js,/decodePcm/);
  assert.match(js,/c\.interrupted/);
- assert.match(js,/allowedMs=Math\.min\(MAX_SESSION/);
+ assert.match(js,/MAX_DAY=24\*60\*60\*1000/);
+ assert.match(js,/CONNECTION_SPAN=8\*60\*1000/);
+ assert.match(js,/sessionResumption:handle\?\{handle\}:\{\}/);
+ assert.match(js,/contextWindowCompression:\{slidingWindow:\{\}\}/);
  assert.match(js,/visibilitychange/);
  assert.match(js,/mediaStream\.getTracks\(\)\.forEach\(t=>t\.stop\(\)\)/);
  assert.match(pcm,/registerProcessor\("antara-pcm"/);
  assert.match(js,/AudioWorkletNode/);
+});
+test("PCM worklet converts 44.1/48 kHz to 16 kHz using 40ms chunks with anti-alias averaging",()=>{
+ for(const rate of [44100,48000,16000]){
+  let Processor=null;
+  const posted=[];
+  const AudioWorkletProcessor=class{constructor(){this.port={postMessage(x){posted.push(x);}};}};
+  new Function("AudioWorkletProcessor","registerProcessor","sampleRate",pcm)(
+   AudioWorkletProcessor,(_name,klass)=>{Processor=klass;},rate
+  );
+  const capture=new Processor();
+  for(let n=0;n<rate;n+=128){
+   const samples=new Float32Array(Math.min(128,rate-n)).fill(.5);
+   capture.process([[samples]]);
+  }
+  const count=posted.reduce((n,item)=>n+item.pcm.byteLength/2,0);
+  assert.equal(count,16000);
+  assert.equal(posted.length,25);
+  assert.ok(posted.every(item=>item.pcm.byteLength===1280));
+  assert.ok(posted.every(item=>Math.abs(new Int16Array(item.pcm)[0]-16384)<2));
+ }
+ assert.match(js,/pcm-worklet\.js\?v=2/);
+ assert.doesNotMatch(pcm,/this\.phase\+=ratio/);
+});
+test("Long-running Voice is opted in and reconnects in foreground without storing resume handles",()=>{
+ assert.match(js,/MAX_DAY=24\*60\*60\*1000/);
+ assert.match(js,/sessionResumptionUpdate/);
+ assert.match(js,/sessionResumption:handle\?\{handle\}:\{\}/);
+ assert.match(js,/contextWindowCompression:\{slidingWindow:\{\}\}/);
+ assert.match(js,/window\.removeEventListener\("ba:voice-renew",renewListener\)/);
+ assert.match(js,/document\.hidden/);
+ assert.match(js,/connectionAttempts>=2/);
+ assert.match(js,/connectedAt<9\*60\*1000/);
+ assert.doesNotMatch(js,/localStorage\.setItem\([^;]*resumeHandle/);
+ assert.match(html,/24 jam/);
+ assert.match(html,/transkrip/);
+});
+test("Live speech detection tolerates Malay pauses and refuses to guess unclear speech",()=>{
+ assert.match(js,/silenceDurationMs:900/);
+ assert.match(js,/prefixPaddingMs:300/);
+ assert.match(js,/START_SENSITIVITY_LOW/);
+ assert.match(js,/TURN_INCLUDES_ONLY_ACTIVITY/);
+ assert.match(js,/DENGAR BETUL-BETUL/);
+ assert.match(js,/Aku dengar:/);
 });
 test("First-person AI persona uses aku not saya in both regular and live models",()=>{
  assert.match(js,/WAJIB gunakan kata ganti diri pertama AKU, bukan SAYA/);
