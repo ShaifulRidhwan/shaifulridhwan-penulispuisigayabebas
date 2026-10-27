@@ -67,6 +67,44 @@ test("Long generated speech is buffered and does not cut off after three seconds
  assert.match(js,/MAX_PENDING_AUDIO_BYTES=12\*1024\*1024/);
  assert.doesNotMatch(js,/nextAudioTime-now>3\.5\)return/);
 });
+test("A 12.5-second generated reply plays every chunk in order without truncation",()=>{
+ const start=js.indexOf("function playbackBusy(){");
+ const end=js.indexOf("function onServerMessage(payload){",start);
+ assert.ok(start>=0&&end>start);
+ const source=js.slice(start,end);
+ const scheduled=[],context={
+  currentTime:0,destination:{},
+  createBufferSource(){
+   return {connect(){},disconnect(){},onended:null,start(when){this.when=when;scheduled.push(this)}};
+  }
+ };
+ const simulate=new Function("context",[
+  "let pendingAudio=[],pendingAudioBytes=0,audioQueueGeneration=0,modelTurnFinished=false;",
+  "const MAX_PENDING_AUDIO_BYTES=12*1024*1024,MAX_SCHEDULE_AHEAD=5;",
+  "let playSources=new Set(),nextAudioTime=0,playContext=context,speakerEnabled=true;",
+  "const panel={classList:{add(){},remove(){}}};let warnings=[];",
+  "function decodePcm(){return {duration:.05}}",
+  "function sayStatus(){} function showNotice(x){warnings.push(x)}",
+  source,
+  "return {queueAudio,pending:()=>pendingAudio.length,active:()=>playSources.size,warnings:()=>warnings};"
+ ].join("\n"))(context);
+ for(let n=0;n<250;n++)simulate.queueAudio("AAAAAA","audio/pcm;rate=24000");
+ assert.ok(scheduled.length<250,"Do not schedule all generated audio ahead of playback");
+ assert.ok(simulate.pending()>0,"Extra audio is buffered, never dropped");
+ for(let time=1;time<=20;time++){
+  context.currentTime=time;
+  for(const source of [...scheduled]){
+   if(!source.finished&&source.when+.05<=time){
+    source.finished=true;source.onended?.();
+   }
+  }
+ }
+ assert.equal(scheduled.length,250);
+ assert.equal(scheduled.filter(x=>x.finished).length,250);
+ assert.equal(simulate.pending(),0);
+ assert.equal(simulate.active(),0);
+ assert.deepEqual(simulate.warnings(),[]);
+});
 test("Microphone is allowed only for this site's origin",()=>{
  assert.match(netlify,/Permissions-Policy = "camera=\(\), microphone=\(self\), geolocation=\(\)"/);
  assert.doesNotMatch(netlify,/microphone=\(\)/);
