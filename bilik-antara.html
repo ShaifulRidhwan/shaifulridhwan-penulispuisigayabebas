@@ -107,7 +107,7 @@
      <button type="button" id="voiceMuteMic" aria-pressed="true">Tutup mikrofon</button>
      <button type="button" id="voiceMuteSpeaker" aria-pressed="true">Senyapkan suara</button>
     </div>
-    <p class="voice-privacy">Mikrofon digunakan hanya ketika sesi aktif. Audio dihantar terus kepada Google Gemini; transkrip sesi tidak disimpan secara automatik. Sesi maksimum 10 minit.</p>
+    <p class="voice-privacy">Mikrofon aktif hanya selepas kau mulakan Voice Live. Setiap sambungan Google kira-kira 10 minit; sistem akan cuba sambung semula tanpa meminta mikrofon berulang kali, sehingga 24 jam jika tab kekal aktif. Sambungan, kuota dan kelancaran tidak dijamin. Semak transkrip “Kau” untuk melihat apa yang AI sebenarnya dengar. Audio dihantar kepada Google dan transkrip tidak disimpan secara automatik.</p>
    </div>
    <div class="composer-area">
     <div id="docStatus" role="status" aria-live="polite"></div><button type="button" id="removeAttachment" hidden aria-label="Buang lampiran">× Buang lampiran</button>
@@ -600,7 +600,7 @@ restore();renderIdeas();renderHistory();update();probe();
 </script>
 <script src="bilik-antara-identity.js?v=2" defer></script>
 <script src="bilik-antara-suite.js?v=2" defer></script>
-<script src="bilik-antara-voice.js?v=11" defer></script>
+<script src="bilik-antara-voice.js?v=12" defer></script>
 <script src="bilik-antara-voice-fallback.js?v=3" defer></script>
 </body>
 </html>
