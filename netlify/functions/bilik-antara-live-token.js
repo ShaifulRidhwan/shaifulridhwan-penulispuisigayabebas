@@ -52,35 +52,50 @@ exports.handler=async(event)=>{
     newSessionExpireTime:new Date(now+60*1000).toISOString()
   };
   try{
-    // Tokens are restricted to this model. A rejected restriction must not
-    // silently downgrade to an unrestricted client-side Gemini credential.
-    const response=await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens",{
-      method:"POST",
-      headers:{"Content-Type":"application/json","x-goog-api-key":key},
-      body:JSON.stringify({...base,liveConnectConstraints:{model:"models/"+model}}),
-      signal:controller.signal
-    });
-    const json=await response.json().catch(()=>({}));
-    if(!response.ok){
-      const detail=String(json&&json.error&&json.error.message||"").toLowerCase();
-      const message=response.status===429?"Kuota Voice Live dah penuh buat sementara.":
-        response.status===401||response.status===403?"Projek ini belum dibenarkan menggunakan Gemini Live.":
-        response.status===400?"Tetapan Voice Live tidak disokong atau ditolak Google. Token tanpa sekatan tidak akan dikeluarkan.":
-        /billing|payment/.test(detail)?"Gemini Live memerlukan bil atau akses projek yang sesuai.":
-        /not found|model/.test(detail)?"Model Gemini Live tidak tersedia untuk projek ini.":
-        /not supported|not available|permission/.test(detail)?"Gemini Live tidak disokong oleh kunci API projek ini.":
-        "Google menolak token Voice (HTTP "+response.status+"). Semak akses Live API dalam projek Google AI Studio.";
-      console.warn("[bilik-antara-voice] token refused",{httpStatus:response.status,reason:json&&json.error&&json.error.status||"upstream"});
-      return reply(response.status===429?429:502,{error:message,reason:"TOKEN_HTTP_"+response.status});
+    // Each attempt stays model-locked and one-use. No unrestricted tokens
+    // or billable Google Search grounding.
+    const candidates=[model,...(model==="gemini-3.8-live"?["gemini-3.1-flash-live-preview"]:["gemini-3.8-live"])];
+    let lastStatus=502,lastReason="UPSTREAM",lastMessage="",tried=[];
+    for(const candidate of [...new Set(candidates)]){
+      const restriction={
+        model:"models/"+candidate,
+        config:{responseModalities:["AUDIO"]}
+      };
+      const response=await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens",{
+        method:"POST",
+        headers:{"Content-Type":"application/json","x-goog-api-key":key},
+        body:JSON.stringify({...base,liveConnectConstraints:restriction}),
+        signal:controller.signal
+      });
+      const json=await response.json().catch(()=>({}));
+      tried.push(candidate);
+      if(response.ok){
+        if(!json||typeof json.name!=="string"||!json.name.startsWith("auth_tokens/"))
+          return reply(502,{error:"Token sementara Google tidak sah.",reason:"TOKEN_FORMAT"});
+        return reply(200,{
+          token:json.name,model:candidate,durationSeconds:600,
+          notice:"Audio dihantar terus ke Google Gemini semasa Voice Live aktif. Sesi maksimum 10 minit."
+        });
+      }
+      lastStatus=response.status;
+      lastReason=String(json?.error?.status||"UPSTREAM").slice(0,40);
+      lastMessage=String(json?.error?.message||"").slice(0,400);
+      console.warn("[bilik-antara-voice] token refused",{httpStatus:lastStatus,reason:lastReason,model:candidate});
+      // Only HTTP 400 or model not found permits one alternate free-tier
+      // Live model. Do not retry auth, quota or billing rejections.
+      if(lastStatus!==400&&lastStatus!==404)break;
     }
-    if(!json||typeof json.name!=="string"||!json.name.startsWith("auth_tokens/")){
-      return reply(502,{error:"Token sementara Gemini tidak sah.",reason:"TOKEN_FORMAT"});
-    }
-    return reply(200,{
-      token:json.name,
-      model,
-      durationSeconds:600,
-      notice:"Audio dihantar terus ke Google Gemini semasa sesi Voice aktif. Sesi tamat automatik dalam 10 minit."
+    const lower=lastMessage.toLowerCase();
+    const error=lastStatus===429?"Kuota Voice Live percuma sedang habis. Cuba lagi apabila kuota pulih.":
+      [401,403].includes(lastStatus)?"Kunci API projek tidak mempunyai akses Voice Live. Semak projek Google AI Studio.":
+      /billing|payment/.test(lower)?"Google meminta akses bil atau pelan yang berbeza. Voice Live berbayar tidak diaktifkan.":
+      [400,404].includes(lastStatus)?"Google menolak tetapan token Voice Live untuk model yang diuji. Semak model dan akses Live API projek.":
+      "Google tidak dapat mengeluarkan token Voice (HTTP "+lastStatus+").";
+    const diagnostic=["INVALID_ARGUMENT","PERMISSION_DENIED","RESOURCE_EXHAUSTED","NOT_FOUND"].includes(lastReason)?lastReason:"UPSTREAM";
+    return reply(lastStatus===429?429:502,{
+      error,reason:"TOKEN_HTTP_"+lastStatus,diagnostic,
+      triedModels:tried,
+      hint:"Jika masalah berulang, semak akses Gemini Live dan model tersedia dalam Google AI Studio."
     });
   }catch(e){
     return reply(502,{error:"Sambungan token Voice gagal. Cuba semula.",reason:"TOKEN_NETWORK"});
