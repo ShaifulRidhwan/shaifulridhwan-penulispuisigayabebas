@@ -45,7 +45,7 @@ const backdrop=button("",()=>close(),"ba-backdrop");backdrop.setAttribute("aria-
 const head=convo.querySelector(".conversation-head");
 head.after(toolbar);
 document.body.appendChild(drawer); // keep fixed overlay outside clipped glass conversation
-const labels=[["sessions","Sesi"],["memory","Memori"],["workspace","Ruang kerja"],["metrics","Prestasi"]];
+const labels=[["sessions","Sesi"],["memory","Memori"],["metrics","Prestasi"]];
 for(const [key,label] of labels)toolbar.appendChild(button(label,()=>open(key),"ba-tab"));
 toolbar.appendChild(button("Studio · E-mel & PDF",()=>{window.location.href="studio-antara.html";},"ba-tab"));
 function notice(message){
