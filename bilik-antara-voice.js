@@ -8,6 +8,21 @@ const panel=$("voicePanel"),status=$("voiceStatus"),transcript=$("voiceTranscrip
 const stopButton=$("voiceStop"),minimizeButton=$("voiceMinimize"),micButton=$("voiceMuteMic"),speakerButton=$("voiceMuteSpeaker");
 const waveform=$("voiceWave"),input=$("input"),chat=$("chat");
 if(!dictate||!liveButton||!notice||!panel||!status||!transcript||!stopButton||!micButton||!speakerButton||!input||!chat)return;
+const dialectSelect=$("voiceDialect"),dialectHint=$("voiceDialectHint");
+const voiceLocale=window.BilikAntaraVoiceLocale;
+let dialectChoice="santai";
+try{dialectChoice=voiceLocale?.read(window.localStorage)||"santai";}catch(_){}
+if(dialectSelect){
+ dialectSelect.value=dialectChoice;
+ dialectSelect.addEventListener("change",()=>{
+  dialectChoice=voiceLocale?.normalize(dialectSelect.value)||"santai";
+  try{voiceLocale?.save(dialectChoice,window.localStorage);}catch(_){}
+  if(dialectHint)dialectHint.textContent="Gaya "+(voiceLocale?.displayName(dialectChoice)||"Bahasa Melayu santai")+
+   " akan digunakan semasa Voice Live bermula. Pelat suara sebenar bergantung pada model.";
+ });
+}
+const languageLock=choice=>voiceLocale?.instruction(choice)||
+ "RESPOND ONLY IN MALAYSIAN MALAY (ms-MY). YOU MUST RESPOND UNMISTAKABLY IN MALAY ON EVERY TURN. NEVER SWITCH TO SPANISH OR ENGLISH. Guna Bahasa Melayu Malaysia santai sahaja. Jika tak faham, minta pengguna ulang dalam Melayu.";
 const ENDPOINT="/.netlify/functions/bilik-antara-live-token";
 const SOCKET_BASE="wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=";
 const MAX_DAY=24*60*60*1000; // Access window, NOT one 24-hour Google WebSocket.
@@ -26,6 +41,10 @@ const setButtonState=()=>{
   liveButton.disabled=liveActive;
   liveButton.textContent=liveActive?"● Sedang berbual":"✦ Voice Live";
   panel.hidden=!liveActive;
+  if(dialectSelect){
+    dialectSelect.disabled=liveActive;
+    dialectSelect.title=liveActive?"Tamatkan Voice Live sebelum tukar loghat.":"Pilih gaya bahasa sebelum mulakan Voice Live.";
+  }
   dictate.disabled=liveActive||!speechAPI;
   micButton.textContent=micEnabled?"Tutup mikrofon":"Buka mikrofon";
   micButton.setAttribute("aria-pressed",micEnabled?"true":"false");
@@ -210,6 +229,8 @@ async function startLive(){
   const fb=document.getElementById("voiceFallback");if(fb)fb.hidden=true;
   panel.classList.remove("is-minimized");
   if(minimizeButton){minimizeButton.textContent="Minimumkan";minimizeButton.setAttribute("aria-expanded","true");}
+  const selectedDialect=voiceLocale?.normalize(dialectChoice)||"santai";
+  const speakingRule=languageLock(selectedDialect);
   liveActive=true;liveReady=false;micEnabled=true;speakerEnabled=true;
   sessionStarted=Date.now();resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;lastSpeechAt=0;connectedAt=0;
   lastTurn=null;transcript.replaceChildren();panel.classList.remove("voice-speaking");
@@ -347,8 +368,9 @@ async function startLive(){
           inputAudioTranscription:{},
           outputAudioTranscription:{},
           systemInstruction:{parts:[{text:[
+            speakingRule,
             "Kau Shaiful Ridhwan A.I. di Bilik Antara, dibina dan diubah suai oleh Shaiful Ridhwan. Model asas Google Gemini dibangunkan oleh Google.",
-            "WAJIB gunakan kata ganti diri pertama AKU, bukan SAYA. Gunakan Bahasa Melayu Malaysia moden santai, termasuk memahami loghat Malaysia dan perkataan Inggeris dalam ayat Melayu. Panggil pengguna KAU.",
+            "WAJIB gunakan kata ganti diri pertama AKU, bukan SAYA. Panggil pengguna KAU. Fahami loghat Malaysia dan perkataan Inggeris dalam ayat Melayu, tetapi balas dalam Bahasa Melayu Malaysia sahaja dengan gaya yang pengguna pilih.",
             "DENGAR BETUL-BETUL: Jawab hanya soalan yang benar-benar pengguna sebut. Jika suara kurang jelas, pertuturan terputus, atau kau tidak pasti perkataan yang didengar, minta pengguna ulang dengan ringkas. Jangan reka soalan atau tersalah anggap bunyi latar dan suara orang lain sebagai arahan.",
             "Utamakan soalan terkini berbanding topik lama. Jawab padat dan semula jadi; jangan bagi jawapan panjang jika pengguna tanya ringkas.",
             "Jika pengguna berhenti sekejap di tengah ayat, tunggu sehingga dia selesai. Jangan terus meneka maksud daripada ayat yang belum lengkap.",
