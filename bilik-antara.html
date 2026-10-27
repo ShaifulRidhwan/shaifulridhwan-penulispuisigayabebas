@@ -74,6 +74,15 @@
     </div>
    </header>
    <div id="voiceNotice" class="voice-notice" role="status" aria-live="polite" hidden></div>
+   <div id="voiceFallback" class="voice-fallback" hidden aria-label="Suara sandaran">
+    <div class="voice-fallback-title">Suara sandaran · bukan Live</div>
+    <p>Jika Google menolak Voice Live, kau masih boleh rakam soalan ringkas. Rakaman dihantar kepada Gemini selepas kau hentikan rakaman; jawapan akan dibacakan jika pelayar menyokongnya.</p>
+    <div class="voice-fallback-buttons">
+     <button type="button" id="voiceFallbackStart">🎙 Rakam soalan</button>
+     <button type="button" id="voiceFallbackStop" disabled>■ Henti & hantar</button>
+    </div>
+    <div id="voiceFallbackStatus" role="status" aria-live="polite"></div>
+   </div>
    <div id="connectionInfo" class="connection-info" role="status" aria-live="polite"><span id="connectionInfoText"></span><button type="button" id="retryBtn">Cuba semula</button></div>
    <div class="messages" id="chat" role="log" aria-live="polite" aria-relevant="additions" aria-label="Mesej perbualan"></div>
    <div class="starters" id="starters" aria-label="Soalan permulaan">
@@ -582,6 +591,6 @@ restore();renderIdeas();renderHistory();update();probe();
 </script>
 <script src="bilik-antara-identity.js?v=2" defer></script>
 <script src="bilik-antara-suite.js?v=1" defer></script>
-<script src="bilik-antara-voice.js?v=4" defer></script>
+<script src="bilik-antara-voice.js?v=5" defer></script>
 </body>
 </html>
