@@ -282,8 +282,10 @@ async function startLive(){
           data=await response.json().catch(()=>({}));
         }finally{clearTimeout(deadline);if(startAbort===tokenCtl)startAbort=null;}
         if(generation!==liveGeneration)return;
-        if(!response.ok||!data?.token||!data?.model)
-          throw Error(data?.error||"Google menolak token sambungan semula (HTTP "+response.status+").");
+        if(!response.ok||!data?.token||!data?.model){
+          const issue=new Error(data?.error||"Google menolak token sambungan semula (HTTP "+response.status+").");
+          issue.http=response.status;throw issue;
+        }
         if(liveModel&&data.model!==liveModel)resumeHandle="";
         connectionAttempts++;
         openConnection(data);
@@ -292,6 +294,11 @@ async function startLive(){
         const msg="Voice terputus: "+String(e.message||e).slice(0,130);
         showNotice(msg+" Tekan Voice Live jika sambungan automatik gagal.");
         reconnecting=false;
+        // Auth/permission/quota errors are definitive for this attempt. Never
+        // burn further Google tokens trying to dodge a provider limit.
+        if([400,401,403,404,429].includes(e.http)){
+          await closeLive(msg);return;
+        }
         if(connectionAttempts<2&&!document.hidden){
           connectionAttempts++;
           sessionTimer=setTimeout(()=>renewConnection("Mencuba sambungan Voice sekali lagi…"),2400);
