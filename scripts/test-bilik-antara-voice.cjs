@@ -25,7 +25,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=4/);
+ assert.match(html,/bilik-antara-voice\.js\?v=7/);
  assert.match(html,/bilik-antara\.css\?v=5/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
@@ -135,8 +135,9 @@ test("Google rejection never downgrades a model-restricted Live token",async()=>
   const res=await handler(event("voice-constrained-"+Date.now()));
   assert.equal(res.statusCode,502);
   assert.equal(JSON.parse(res.body).reason,"TOKEN_HTTP_400");
-  assert.equal(sent.length,1);
+  assert.equal(sent.length,2,"Only the two allowlisted free-tier Live models are tried after 400.");
   assert.equal(sent[0].liveConnectConstraints.model,"models/gemini-3.8-live");
+  assert.equal(sent[1].liveConnectConstraints.model,"models/gemini-3.1-flash-live-preview");
   assert.equal(sent[0].uses,1);
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
@@ -155,9 +156,37 @@ test("Unsupported Live token response presents actionable status rather than a f
   assert.equal(res.statusCode,502);
   const body=JSON.parse(res.body);
   assert.equal(body.reason,"TOKEN_HTTP_400");
-  assert.match(body.error,/tidak disokong/);
+  assert.match(body.error,/tetapan token|menolak|Google/i);
   assert.match(js,/showNotice\(message\)/);
   assert.doesNotMatch(js,/panel\.hidden=false/);
+ }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
+});
+test("Siapa Aku is the only welcome starter and workspace nav is hidden",()=>{
+ const match=[...html.matchAll(/<button class="starter"[^>]*>([^<]+)<\/button>/g)];
+ assert.equal(match.length,1);
+ assert.equal(match[0][1],"Siapa Aku");
+ const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
+ assert.doesNotMatch(suite,/\["workspace","Ruang kerja"\]/);
+});
+test("Voice errors distinguish Google token rejection from permission and WebSocket failures",()=>{
+ assert.match(js,/TOKEN_UNAVAILABLE/);
+ assert.match(js,/HTTP "\+res\.status/);
+ assert.match(js,/WS 1008/);
+ assert.match(js,/WS 1006/);
+ assert.match(js,/WS 1011/);
+ assert.match(js,/visibilityTimer=setTimeout/);
+ assert.match(js,/8000/);
+});
+test("Rejected Google token attempts are not counted as completed Live sessions",async()=>{
+ process.env.GEMINI_API_KEY="fake-key-for-test";
+ const old=global.fetch;
+ const label="voice-rejections-then-success";
+ try{
+  global.fetch=async()=>({ok:false,status:403,json:async()=>({error:{message:"permission denied",status:"PERMISSION_DENIED"}})});
+  for(let i=0;i<4;i++)assert.equal((await handler(event(label))).statusCode,502);
+  global.fetch=async()=>({ok:true,status:200,json:async()=>({name:"auth_tokens/approved-for-test"})});
+  for(let i=0;i<5;i++)assert.equal((await handler(event(label))).statusCode,200);
+  assert.equal((await handler(event(label))).statusCode,429);
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
 test("Session creation has backend rate limiting",async()=>{
@@ -165,7 +194,7 @@ test("Session creation has backend rate limiting",async()=>{
  const old=global.fetch;
  try{
   global.fetch=async()=>({ok:true,status:200,json:async()=>({name:"auth_tokens/unit-test-token"})});
-  for(let i=0;i<3;i++)assert.equal((await handler(event("voice-test-limiter"))).statusCode,200);
+  for(let i=0;i<5;i++)assert.equal((await handler(event("voice-test-limiter"))).statusCode,200);
   assert.equal((await handler(event("voice-test-limiter"))).statusCode,429);
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
