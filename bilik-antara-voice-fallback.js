@@ -77,6 +77,7 @@ async function submitAudio(blob){
      "Jangan meminta ulang berulang kali apabila perkataan jelas. Jika tiada perkataan dapat dikenal pasti, minta ulang sekali sahaja.",
      "Jawab dengan lengkap dalam 2 hingga 4 ayat atau lebih jika masalah perlukan penerangan. Jangan hentikan ayat di tengah.",
      "Gaya pertuturan semula jadi dan ada empati; persoalan sukar memerlukan analisis teliti, tetapi soalan ringan jangan diubah menjadi esei.",
+     "Jika diminta menyanyi, boleh cipta lagu spontan original Bahasa Melayu dan cuba menyampaikannya berirama; jangan meniru lirik lagu berhak cipta. Jika suara sintesis tidak boleh menyanyi, jelaskan secara ringkas.",
      projectIdentity?.VOICE_CREATOR_PROMPT||""
     ].join(" "),
     media:{mimeType:mime,name:"rakaman-suara",data}
