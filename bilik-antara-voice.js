@@ -10,6 +10,8 @@ const waveform=$("voiceWave"),input=$("input"),chat=$("chat");
 if(!dictate||!liveButton||!notice||!panel||!status||!transcript||!stopButton||!micButton||!speakerButton||!input||!chat)return;
 const dialectSelect=$("voiceDialect"),dialectHint=$("voiceDialectHint");
 const voiceLocale=window.BilikAntaraVoiceLocale;
+const sharedBrain=window.BilikAntaraBrain;
+const sharedIdentity=window.BilikAntaraIdentity;
 let dialectChoice="santai";
 try{dialectChoice=voiceLocale?.read(window.localStorage)||"santai";}catch(_){}
 if(dialectSelect){
@@ -39,7 +41,7 @@ const setWave=(value)=>{waveform.style.setProperty("--voice-intensity",String(Ma
 const setButtonState=()=>{
   liveButton.setAttribute("aria-pressed",liveActive?"true":"false");
   liveButton.disabled=liveActive;
-  liveButton.textContent=liveActive?"● Sedang berbual":"✦ Voice Live";
+  liveButton.textContent=liveActive?"● Sedang berbual":"✦ Jom Voice Live";
   panel.hidden=!liveActive;
   if(dialectSelect){
     dialectSelect.disabled=liveActive;
@@ -52,7 +54,7 @@ const setButtonState=()=>{
   speakerButton.setAttribute("aria-pressed",speakerEnabled?"true":"false");
 };
 if(!speechAPI){
-  dictate.disabled=true;dictate.title="Pelayar ini tak boleh tukar suara jadi teks. Cuba Voice Live.";
+  dictate.disabled=true;dictate.title="Pelayar ini tak boleh tukar suara jadi teks. Cuba Jom Voice Live.";
 }
 function closeDictation(){
   if(recognizer){try{recognizer.stop();}catch(e){}}
@@ -368,7 +370,10 @@ async function startLive(){
           inputAudioTranscription:{},
           outputAudioTranscription:{},
           systemInstruction:{parts:[{text:[
+            sharedBrain?.CORE||"",
+            sharedIdentity?.CORE_PROMPT||"",
             speakingRule,
+            sharedBrain?.VOICE_GUIDANCE||"",
             "Kau Shaiful Ridhwan A.I. di Bilik Antara, dibina dan diubah suai oleh Shaiful Ridhwan. Model asas Google Gemini dibangunkan oleh Google.",
             "WAJIB gunakan kata ganti diri pertama AKU, bukan SAYA. Panggil pengguna KAU. Fahami loghat Malaysia dan perkataan Inggeris dalam ayat Melayu, tetapi balas dalam Bahasa Melayu Malaysia sahaja dengan gaya yang pengguna pilih.",
             "DENGAR BETUL-BETUL: Jawab hanya soalan yang benar-benar pengguna sebut. Jika suara kurang jelas, pertuturan terputus, atau kau tidak pasti perkataan yang didengar, minta pengguna ulang dengan ringkas. Jangan reka soalan atau tersalah anggap bunyi latar dan suara orang lain sebagai arahan.",
