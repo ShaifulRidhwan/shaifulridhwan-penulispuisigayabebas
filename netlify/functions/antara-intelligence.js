@@ -161,7 +161,7 @@ function parseReply(text){
 }
 const ALLOWED_MIMES=new Set([
  "application/pdf","image/jpeg","image/png","image/webp","image/gif",
- "audio/mpeg","audio/wav","audio/mp4","audio/ogg","video/mp4","video/webm"
+ "audio/mpeg","audio/wav","audio/mp4","audio/ogg","audio/webm","video/mp4","video/webm"
 ]);
 function sanitizeMedia(data){
   if(!data||typeof data!=="object"||Array.isArray(data))return null;
