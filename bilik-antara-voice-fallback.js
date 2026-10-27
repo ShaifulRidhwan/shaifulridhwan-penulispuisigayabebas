@@ -70,6 +70,7 @@ async function submitAudio(blob){
    headers:{"Content-Type":"application/json"},signal:ctl.signal,
    body:JSON.stringify({
     voiceFallback:true,
+    history:(window.BilikAntaraBridge?.snapshot()?.history||[]).slice(-10).map(m=>({role:m.role,content:String(m.content||"").slice(0,1200)})),
     question:[
      "Dengar audio pengguna dan jawab dalam Bahasa Melayu Malaysia santai sahaja, bukan bahasa lain.",
      "Perkataan pendek seperti lapar, haus, penat, bosan ialah ujaran sah yang perlu dijawab terus, walaupun pengguna tidak membentuk soalan penuh.",
