@@ -160,7 +160,7 @@ test("Google rejection never downgrades a model-restricted Live token",async()=>
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
 test("Voice connection has explicit token and websocket watchdogs",()=>{
- assert.match(js,/const tokenTimer=setTimeout\(\(\)=>controller\.abort\(\),18000\)/);
+ assert.match(js,/const tokenTimer=setTimeout\(\(\)=>controller\.abort\(\),26000\)/);
  assert.match(js,/connectTimer=setTimeout\(\(\)=>/);
  assert.match(js,/if\(connectTimer\)\{clearTimeout\(connectTimer\);connectTimer=null;\}/);
  assert.match(js,/if\(typeof Blob!=="undefined"&&raw instanceof Blob\)/);
