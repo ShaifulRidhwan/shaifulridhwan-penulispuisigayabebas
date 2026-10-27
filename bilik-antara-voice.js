@@ -236,6 +236,8 @@ function onServerMessage(payload){
     if(!playbackBusy())sayStatus("Aku sedang fikir dan susun jawapan…");
   }else if(thinkingState==="IDLE"){
     reasoningActive=false;
+    modelTurnFinished=true;
+    if(!playbackBusy())sayStatus("Aku dah habis fikir. Kau boleh sambung.");
   }
   if(!c)return;
   if(c.interrupted){stopAudioQueue();panel.classList.remove("voice-speaking");if(lastTurn)lastTurn.finished=true;}
