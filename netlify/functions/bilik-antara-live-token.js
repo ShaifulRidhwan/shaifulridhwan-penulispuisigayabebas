@@ -99,7 +99,7 @@ exports.handler=async(event)=>{
         if(lastStatus===400&&/liveConnectConstraints|live_connect_constraints/i.test(lastMessage)){
           const shortToken={
             uses:1,expireTime:new Date(now+5*60*1000).toISOString(),
-            newSessionExpireTime:new Date(now+35*1000).toISOString()
+            newSessionExpireTime:new Date(now+90*1000).toISOString()
           };
           const fallback=await fetch("https://generativelanguage.googleapis.com/v1beta/auth_tokens",{
             method:"POST",
