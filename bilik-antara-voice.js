@@ -5,7 +5,7 @@
 const $=id=>document.getElementById(id);
 const dictate=$("voiceDictate"),liveButton=$("voiceLive"),notice=$("voiceNotice");
 const panel=$("voicePanel"),status=$("voiceStatus"),transcript=$("voiceTranscript");
-const stopButton=$("voiceStop"),micButton=$("voiceMuteMic"),speakerButton=$("voiceMuteSpeaker");
+const stopButton=$("voiceStop"),minimizeButton=$("voiceMinimize"),micButton=$("voiceMuteMic"),speakerButton=$("voiceMuteSpeaker");
 const waveform=$("voiceWave"),input=$("input"),chat=$("chat");
 if(!dictate||!liveButton||!notice||!panel||!status||!transcript||!stopButton||!micButton||!speakerButton||!input||!chat)return;
 const ENDPOINT="/.netlify/functions/bilik-antara-live-token";
@@ -195,12 +195,21 @@ async function startLive(){
   }
   closeDictation();showNotice("");
   const fb=document.getElementById("voiceFallback");if(fb)fb.hidden=true;
+  panel.classList.remove("is-minimized");
+  if(minimizeButton){minimizeButton.textContent="Minimumkan";minimizeButton.setAttribute("aria-expanded","true");}
   liveActive=true;liveReady=false;micEnabled=true;speakerEnabled=true;
   lastTurn=null;transcript.replaceChildren();panel.classList.remove("voice-speaking");
   setButtonState();sayStatus("Meminta kebenaran mikrofon…");
   const generation=++liveGeneration;
+  // Begin token request in parallel with microphone permission and audio setup,
+  // so network latency doesn't accumulate after the user's permission dialog.
+  const controller=new AbortController();startAbort=controller;
+  const tokenTimer=setTimeout(()=>controller.abort(),18000);
+  const tokenPromise=fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+     body:"{}",signal:controller.signal,credentials:"same-origin",cache:"no-store"})
+    .then(async res=>({res,body:await res.json().catch(()=>({}))}));
+  tokenPromise.catch(()=>{}); // permission can fail while the request is pending
   try{
-    // Request microphone while we still have a direct user gesture.
     const stream=await navigator.mediaDevices.getUserMedia({
       audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true,channelCount:1},
       video:false
@@ -210,18 +219,14 @@ async function startLive(){
     const Audio=window.AudioContext||window.webkitAudioContext;
     micContext=new Audio({latencyHint:"interactive"});
     playContext=new Audio({latencyHint:"interactive"});
-    await Promise.all([micContext.resume(),playContext.resume()]);
-    await micContext.audioWorklet.addModule("./bilik-antara-pcm-worklet.js");
+    await Promise.all([
+      micContext.resume(),playContext.resume(),
+      micContext.audioWorklet.addModule("./bilik-antara-pcm-worklet.js")
+    ]);
     if(generation!==liveGeneration)return;
-    sayStatus("Sedang sambungkan suara…");
-    const controller=new AbortController();startAbort=controller;
-    const tokenTimer=setTimeout(()=>controller.abort(),16000);
-    let res,body;
-    try{
-      res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-        body:"{}",signal:controller.signal,credentials:"same-origin",cache:"no-store"});
-      body=await res.json().catch(()=>({}));
-    }finally{clearTimeout(tokenTimer);}
+    sayStatus("Menyambung kepada Gemini Live…");
+    const {res,body}=await tokenPromise;
+    clearTimeout(tokenTimer);
     if(!res.ok||!body.token||!body.model){
        const reason=String(body?.reason||"TOKEN_UNAVAILABLE").replace(/[^A-Z0-9_]/g,"").slice(0,35);
        throw Error((body?.error||"Token Voice tidak tersedia.")+" [HTTP "+res.status+" · "+reason+"]");
@@ -306,6 +311,7 @@ async function startLive(){
        if(code!==1000){showNotice(message+(safeReason?" Butiran: "+safeReason:""));window.dispatchEvent(new Event("ba:voice-live-failed"));}
     };
   }catch(e){
+    clearTimeout(tokenTimer);
     const message=e&&e.name==="AbortError"?
       "Permintaan token suara terlalu lama. Cuba semula apabila sambungan stabil.":
       e&&e.name==="NotAllowedError"?
@@ -319,6 +325,12 @@ async function startLive(){
   }
 }
 liveButton.addEventListener("click",startLive);
+if(minimizeButton)minimizeButton.addEventListener("click",()=>{
+ const minimized=panel.classList.toggle("is-minimized");
+ minimizeButton.textContent=minimized?"Buka":"Minimumkan";
+ minimizeButton.setAttribute("aria-expanded",String(!minimized));
+ minimizeButton.setAttribute("aria-label",minimized?"Buka panel Voice Live":"Minimumkan panel Voice Live");
+});
 stopButton.addEventListener("click",()=>closeLive("Sembang suara dihentikan."));
 micButton.addEventListener("click",()=>{
   micEnabled=!micEnabled;
