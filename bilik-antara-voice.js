@@ -229,7 +229,8 @@ async function startLive(){
     clearTimeout(tokenTimer);
     if(!res.ok||!body.token||!body.model){
        const reason=String(body?.reason||"TOKEN_UNAVAILABLE").replace(/[^A-Z0-9_]/g,"").slice(0,35);
-       throw Error((body?.error||"Token Voice tidak tersedia.")+" [HTTP "+res.status+" · "+reason+"]");
+       const field=String(body?.fieldIssue||"").replace(/[^A-Z0-9_]/g,"").slice(0,32);
+       throw Error((body?.error||"Token Voice tidak tersedia.")+" [HTTP "+res.status+" · "+reason+(field?" · "+field:"")+"]");
      }
     if(generation!==liveGeneration)return;
     const ws=new WebSocket(SOCKET_BASE+encodeURIComponent(body.token));
