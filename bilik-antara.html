@@ -24,7 +24,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=11">
+<link rel="stylesheet" href="bilik-antara.css?v=12">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=1">
 
 </head>
@@ -100,14 +100,15 @@
      <span class="voice-live-label"><span class="voice-live-dot"></span> SHAIFUL RIDHWAN A.I · JOM VOICE LIVE</span>
      <div class="voice-panel-head-actions"><button type="button" id="voiceMinimize" class="voice-stop" aria-expanded="true" aria-label="Minimumkan panel Voice Live">Minimumkan</button><button type="button" id="voiceStop" class="voice-stop" aria-label="Tamatkan sesi Voice Live">Tamatkan sesi</button></div>
     </div>
+    <div class="voice-avatar-stage" id="voiceAvatarStage" aria-label="Ruang avatar AI cahaya dan gelap"><div class="voice-avatar-glow" aria-hidden="true"></div><div class="voice-avatar-caption">SHAIFUL RIDHWAN A.I.</div></div>
     <div class="voice-wave" id="voiceWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <div id="voiceStatus" class="voice-status" role="status" aria-live="polite">Belum bersambung.</div>
-    <div id="voiceTranscript" class="voice-transcript" role="log" aria-label="Transkrip sesi Voice" aria-live="polite"></div>
+    <div id="voiceTranscript" class="voice-transcript" hidden aria-hidden="true"></div>
     <div class="voice-session-controls">
      <button type="button" id="voiceMuteMic" aria-pressed="true">Tutup mikrofon</button>
      <button type="button" id="voiceMuteSpeaker" aria-pressed="true">Senyapkan suara</button>
     </div>
-    <p class="voice-privacy">Mikrofon aktif hanya selepas kau mulakan Voice Live. Setiap sambungan Google kira-kira 10 minit; sistem akan cuba sambung semula tanpa meminta mikrofon berulang kali, sehingga 24 jam jika tab kekal aktif. Sambungan, kuota dan kelancaran tidak dijamin. Voice menggunakan Bahasa Melayu Malaysia santai. Semak transkrip “Kau” untuk melihat apa yang AI dengar, termasuk perkataan pendek. Audio dihantar kepada Google. Selepas sesi tamat, transkrip yang tersedia disambungkan ke sejarah chat; ia hanya disimpan pada peranti jika pilihan ingat sesi diaktifkan.</p>
+    <p class="voice-privacy">Mikrofon aktif hanya selepas kau mulakan Voice Live. Setiap sambungan Google kira-kira 10 minit; sistem akan cuba sambung semula tanpa meminta mikrofon berulang kali, sehingga 24 jam jika tab kekal aktif. Sambungan, kuota dan kelancaran tidak dijamin. Voice menggunakan Bahasa Melayu Malaysia santai. Audio dihantar kepada Google. Selepas sesi tamat, teks perbualan yang tersedia disambungkan ke sejarah chat tanpa dipaparkan semasa Voice Live; ia hanya disimpan pada peranti jika pilihan ingat sesi diaktifkan.</p>
    </div>
    <div class="composer-area">
     <div id="docStatus" role="status" aria-live="polite"></div><button type="button" id="removeAttachment" hidden aria-label="Buang lampiran">× Buang lampiran</button>
