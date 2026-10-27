@@ -118,7 +118,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=17/);
+ assert.match(html,/bilik-antara-voice\.js\?v=18/);
  assert.match(html,/bilik-antara\.css\?v=11/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
@@ -149,12 +149,12 @@ test("Fallback from retired Gemini models uses current Gemini Live",async()=>{
  try{
   global.fetch=async(_url,opts)=>{
    const data=JSON.parse(opts.body);
-   assert.equal(data.liveConnectConstraints.model,"models/gemini-3.8-live");
+   assert.equal(data.liveConnectConstraints.model,"models/gemini-3.8-live-extended-thinking");
    return {ok:true,status:200,json:async()=>({name:"auth_tokens/model-validated"})};
   };
   const response=await handler(event("voice-old-model"));
   assert.equal(response.statusCode,200);
-  assert.equal(JSON.parse(response.body).model,"gemini-3.8-live");
+  assert.equal(JSON.parse(response.body).model,"gemini-3.8-live-extended-thinking");
  }finally{
   global.fetch=originalFetch;
   delete process.env.GEMINI_API_KEY;
@@ -248,12 +248,12 @@ test("One-use ten-minute token broker never returns permanent API key",async()=>
   const res=await handler(event("voice-test-healthy"));
   assert.equal(res.statusCode,200);
   const data=JSON.parse(res.body);
-  assert.equal(data.model,"gemini-3.8-live");
+  assert.equal(data.model,"gemini-3.8-live-extended-thinking");
   assert.equal(data.token,"auth_tokens/unit-test-voice-token");
   assert.equal(data.durationSeconds,600);
   assert.ok(!res.body.includes("fake-permanent-api-key-test"));
   assert.equal(request.body.uses,1);
-  assert.equal(request.body.liveConnectConstraints.model,"models/gemini-3.8-live");
+  assert.equal(request.body.liveConnectConstraints.model,"models/gemini-3.8-live-extended-thinking");
   const ttl=new Date(request.body.expireTime)-new Date(request.body.newSessionExpireTime);
   assert.ok(ttl<=10*60*1000&&ttl>=8*60*1000);
   assert.equal(request.opts.headers["x-goog-api-key"],"fake-permanent-api-key-test");
@@ -282,7 +282,7 @@ test("Google TOKEN_CONSTRAINTS 400 falls back to documented 1-use 5-minute Live-
   assert.equal(result.durationSeconds,300);
   assert.equal(result.tokenMode,"temporary-live-only");
   assert.equal(requests.length,2,"Do not retry unnecessary model configs");
-  assert.equal(requests[0].body.liveConnectConstraints.model,"models/gemini-3.8-live");
+  assert.equal(requests[0].body.liveConnectConstraints.model,"models/gemini-3.8-live-extended-thinking");
   assert.equal(requests[1].body.liveConnectConstraints,undefined);
   assert.equal(requests[1].body.uses,1);
   assert.ok(new Date(requests[1].body.expireTime)-Date.now()<=5*60*1000);
@@ -332,7 +332,7 @@ test("A 400 audio-configuration rejection can recover using an allowlisted model
   assert.equal(res.statusCode,200);
   assert.equal(sent.length,2);
   assert.equal(sent[0].liveConnectConstraints.config,undefined);
-  assert.equal(sent[1].liveConnectConstraints.model,"models/gemini-3.8-live");
+  assert.equal(sent[1].liveConnectConstraints.model,"models/gemini-3.8-live-extended-thinking");
   assert.equal(JSON.parse(res.body).token,"auth_tokens/fallback-works");
   assert.ok(!res.body.includes("fake-permanent-api-key-test"));
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
