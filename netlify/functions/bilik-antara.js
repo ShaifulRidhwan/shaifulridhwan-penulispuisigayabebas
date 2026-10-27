@@ -166,10 +166,9 @@ exports.handler=async event=>{
   }
 
   // Short follow-ups inherit the preceding conversational subject, not a fresh topic.
-  const followUp=/^(?:(?:tapi|jadi|habis|kalau|dan|so|then|pula|pulak)\\s+)*(?:kenapa|mengapa|sebab apa|bagaimana|macam mana|apa sebab|apa akibat|akibatnya|kesannya|adakah|apakah|betul ke|maksudnya|contohnya|contoh|jelaskan|terangkan|why|how)(?:\\b|[?!.,]|$)/i.test(question.trim());
-  const recentContext=history.slice(-8).map(m=>m.role+": "+m.content.slice(0,900)).join("\\n");
+  const followUp=/^(?:(?:tapi|jadi|habis|kalau|dan|so|then|pula|pulak)\s+)*(?:kenapa|mengapa|sebab apa|bagaimana|macam mana|apa sebab|apa akibat|akibatnya|kesannya|adakah|apakah|betul ke|maksudnya|contohnya|contoh|jelaskan|terangkan|why|how)(?:\b|[?!.,]|$)/i.test(question.trim());
   const followUpGuidance=followUp&&history.length?
-    "\\nSOALAN SUSULAN BERKONTEKS: Soalan ringkas ini merujuk kepada perbualan sebelumnya. Cari perkara yang paling baru dibincangkan dan jawapan terakhir AI; sambungkan hujah secara semula jadi. 'Kenapa' minta alasan/sebab, 'bagaimana' minta proses, 'akibat' minta kesan, 'adakah' minta penilaian berasas. Jangan minta pengguna ulang topik yang jelas. Jika rujukan benar-benar mempunyai beberapa maksud setara, nyatakan tafsiran paling munasabah dan beri peluang pembetulan. Jangan mereka sebab atau niat seseorang.": "";
+    "\nSOALAN SUSULAN BERKONTEKS: Soalan ringkas ini merujuk kepada perbualan sebelumnya. Cari perkara yang paling baru dibincangkan dan jawapan terakhir AI; sambungkan hujah secara semula jadi. 'Kenapa' minta alasan/sebab, 'bagaimana' minta proses, 'akibat' minta kesan, 'adakah' minta penilaian berasas. Jangan minta pengguna ulang topik yang jelas. Jika rujukan benar-benar mempunyai beberapa maksud setara, nyatakan tafsiran paling munasabah dan beri peluang pembetulan. Jangan mereka sebab atau niat seseorang.": "";
   const intent=resolveIntent(question,history,!!(media.length||documentText));
   const plan=intelligencePlan(intent);
   const identityReply=(!media.length&&!documentText&&!followUp)?Identity.answerIdentity(question):null;
@@ -208,6 +207,7 @@ exports.handler=async event=>{
       (intent.debate?"\nKRITIK HUJAH: cari premis lemah, bantahan paling kuat, dan nilai bukti dengan tegas.":"")+
       (intent.search?"\nFAKTA TERKINI: gunakan carian jika tersedia; bezakan sumber yang benar-benar dijumpai daripada pengetahuan sedia ada. Jika tiada sumber disahkan, nyatakan ketidakpastian.":"")+
       (intent.hasLink?"\nPAUTAN: semak kandungan URL dengan alat URL Context jika tersedia. Jika kandungan tidak dapat diakses, akui dan jangan buat ringkasan rekaan.":"")+
+      followUpGuidance+
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
   const maxTokens=plan.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
