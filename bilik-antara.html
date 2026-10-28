@@ -170,7 +170,7 @@ function setTheme(value,save){
 try{setTheme(localStorage.getItem(THEME),false);}catch(e){setTheme("dark",false);}
 ui.theme.addEventListener("click",()=>setTheme(ui.html.getAttribute("data-theme")==="dark"?"light":"dark",true));
 function status(kind,label,explain){
- ui.conn.className="connection"+(["ready","online"].includes(kind)?" ready":["error","limited"].includes(kind)?" error":"");
+ ui.conn.className="connection multi-ai-trigger"+(["ready","online"].includes(kind)?" ready":["error","limited"].includes(kind)?" error":"");
  ui.connText.textContent=label==="Connected"?"Multi A.I. Connected":label;
  ui.connInfo.className="connection-info"+(explain?" active"+(["error","limited"].includes(kind)?" error":""):"");
  ui.connInfoText.textContent=explain||"";
