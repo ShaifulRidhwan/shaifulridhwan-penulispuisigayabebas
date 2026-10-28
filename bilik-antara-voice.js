@@ -426,7 +426,7 @@ async function startLive(){
           model:"models/"+data.model,
           generationConfig:{
             responseModalities:["AUDIO"],
-            speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:"Charon"}}},
+            speechConfig:{voiceConfig:{prebuiltVoiceConfig:{voiceName:"Aoede"}}},
             // Only extended-thinking/legacy models support thinkingLevel.
             // Google 3.8 Live standard rejects this field; don't break its low-latency fallback.
             ...(["gemini-3.8-live-extended-thinking","gemini-3.1-flash-live-preview"].includes(data.model)?
