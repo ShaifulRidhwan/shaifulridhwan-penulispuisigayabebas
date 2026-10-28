@@ -108,3 +108,25 @@ test("CSS braces and quoted strings remain balanced",()=>{
  }
  assert.equal(depth,0);assert.equal(quote,"");assert.equal(comment,false);
 });
+
+
+test("Feature icon consolidates sessions, performance, studio and keeps privacy actions",()=>{
+ const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
+ const suiteCSS=fs.readFileSync("bilik-antara-suite.css","utf8");
+ assert.match(html,/<summary aria-label="Buka Ciri dan Fungsi Aksara"/);
+ assert.match(html,/<div class="settings-title">Ciri &amp; Fungsi<\/div>/);
+ for(const id of ["featureSessions","featureMetrics","featureStudio","privacySettings","rememberChat","contextFallback","clearChat","voiceDictate","ideaLedger","forgetIdeas"]){
+  assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,"Feature or privacy control missing/duplicated: "+id);
+ }
+ assert.match(html,/<a class="feature-hub-item" id="featureStudio" href="studio-antara\.html">/);
+ assert.match(html,/<details class="feature-privacy" id="privacySettings">/);
+ assert.match(suite,/featureSessions\?\.addEventListener\("click",\(\)=>open\("sessions"\)\)/);
+ assert.match(suite,/featureMetrics\?\.addEventListener\("click",\(\)=>open\("metrics"\)\)/);
+ assert.match(suite,/if\(settings\)settings\.open=false;/);
+ assert.match(suite,/head\.after\(status\)/);
+ assert.doesNotMatch(suite,/head\.after\(toolbar\)|ba-toolbar|ba-tab/);
+ assert.doesNotMatch(suiteCSS,/ba-toolbar|ba-tab/);
+ assert.match(css,/\.conversation-head:has\(#settingsPanel\[open\]\)/);
+ assert.match(css,/\.conversation #settingsPanel \.feature-hub-item/);
+ assert.match(css,/\.conversation>\.messages\.is-welcome/);
+});
