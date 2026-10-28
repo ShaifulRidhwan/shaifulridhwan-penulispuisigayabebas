@@ -24,7 +24,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=45">
+<link rel="stylesheet" href="bilik-antara.css?v=46">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=5">
 
 </head>
@@ -534,8 +534,31 @@ ui.clear.addEventListener("click",()=>{
  discardFile();renderIdeas();renderHistory();ui.settings.open=false;
  window.dispatchEvent(new Event("ba:cleared"));
 });
+// Keep the native details/summary accessibility, with a short glass-panel exit.
+let featureCloseTimer=null;
+const featureSummary=ui.settings.querySelector(":scope > summary");
+function closeFeatureMenu(){
+ if(!ui.settings.open)return;
+ if(featureCloseTimer!==null)clearTimeout(featureCloseTimer);
+ const reduce=window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+ if(reduce){ui.settings.open=false;ui.settings.classList.remove("is-closing");featureCloseTimer=null;return;}
+ ui.settings.classList.add("is-closing");
+ featureCloseTimer=setTimeout(()=>{
+  ui.settings.open=false;ui.settings.classList.remove("is-closing");featureCloseTimer=null;
+ },200);
+}
+featureSummary.addEventListener("click",event=>{
+ event.preventDefault();
+ if(ui.settings.open&&!ui.settings.classList.contains("is-closing")){closeFeatureMenu();return;}
+ if(featureCloseTimer!==null){clearTimeout(featureCloseTimer);featureCloseTimer=null;}
+ ui.settings.classList.remove("is-closing");
+ ui.settings.open=true;
+});
 document.addEventListener("pointerdown",e=>{
- if(ui.settings.open&&!ui.settings.contains(e.target))ui.settings.open=false;
+ if(ui.settings.open&&!ui.settings.contains(e.target))closeFeatureMenu();
+});
+document.addEventListener("keydown",event=>{
+ if(event.key==="Escape"&&ui.settings.open){closeFeatureMenu();featureSummary.focus();}
 });
 ui.input.addEventListener("input",()=>{resize();update();});
 ui.input.addEventListener("keydown",e=>{
