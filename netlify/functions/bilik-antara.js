@@ -8,6 +8,7 @@ const {extractTikTokHandle,researchPublicAccount}=require("./tiktok-public-resea
 const {publicReferences}=require("./antara-free-research");
 const Identity=require("../../bilik-antara-identity");
 const Brain=require("../../bilik-antara-brain");
+const ChatStyle=require("../../bilik-antara-chat-style");
 const Router=require("./aksara-provider-router");
 const {requestControl,readSSE}=require("./lib/aksara-transport");
 const DEFAULT_MODEL="gemini-3.6-flash";
@@ -21,7 +22,7 @@ let geminiTextCooldownUntil=0,lastTextProvider="",lastTextSuccessAt=0;
 const GEMINI_COOLDOWN_MS=120000;
 
 const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+Identity.PROMPT+"\n"+[
-"STUDIO ANTARA: Jika pengguna meminta e-mel, PDF atau Word siap dieksport, bantu hasilkan kandungan dan maklumkan bahawa pengguna boleh buka studio-antara.html serta pindahkan jawapan melalui butang Studio pada mesej. Studio mengendalikan eksport fail dalam pelayar. Penjanaan imej AI ada di studio-imej-beta.html sebagai BETA TEST berasingan; memerlukan peranti desktop yang sesuai, WebGPU, persetujuan dan muat turun model; jangan dakwa serasi dengan semua peranti atau boleh menjana imej terus melalui API sembang.",
+"STUDIO ANTARA: Jika pengguna meminta e-mel, PDF atau Word siap dieksport, bantu hasilkan kandungan dan maklumkan bahawa pengguna boleh buka studio-antara.html serta salin kandungan ke Studio melalui navigasi di atas chat. Studio mengendalikan eksport fail dalam pelayar. Penjanaan imej AI ada di studio-imej-beta.html sebagai BETA TEST berasingan; memerlukan peranti desktop yang sesuai, WebGPU, persetujuan dan muat turun model; jangan dakwa serasi dengan semua peranti atau boleh menjana imej terus melalui API sembang.",
 "OSINT TIKTOK: Jika diminta menyemak akaun, hanya laporan metadata profil yang benar-benar awam atau disahkan melalui TikTok API rasmi. Utamakan handle, nama paparan, bio (tanpa maklumat hubungan peribadi), verified, followers/following/video/likes dan pautan bio awam. Bezakan data API rasmi daripada hasil carian yang belum disahkan.",
 "OSINT PRIVASI: Jangan cuba mengenal pasti pemilik sebenar akaun pseudonim, menghubungkan akaun tersembunyi, keluarga, nombor peribadi, e-mel, IP, peranti atau lokasi fizikal pengguna. Jangan terbitkan latitud, longitud, koordinat GPS, rumah, sekolah, tempat kerja, lokasi masa nyata atau infer lokasi daripada gambar, geotag, catatan, video atau masa siaran. Negara hanya boleh disebut sebagai pernyataan sukarela dalam bio yang disahkan, bukan lokasi sebenar.",
 "Jangan menganggap username membuktikan akaun itu wujud. Jika TikTok Research API tiada akses, terangkan maklumat profil belum disahkan dan rujuk pautan awam sahaja. Jangan reka tarikh pendaftaran akaun atau ID dalaman."
@@ -51,7 +52,10 @@ function headers(){
     "Access-Control-Allow-Headers":"Content-Type","Access-Control-Allow-Methods":"POST, OPTIONS",
     "Vary":"Origin","Cache-Control":"no-store","Content-Type":"application/json; charset=utf-8"};
 }
-function result(code,data,H){return {statusCode:code,headers:H,body:JSON.stringify(data)};}
+function result(code,data,H){
+  if(code===200&&typeof data.reply==="string"&&data.mode!=="recorded-voice")data={...data,reply:ChatStyle.reply(data.reply)};
+  return {statusCode:code,headers:H,body:JSON.stringify(data)};
+}
 function throttle(ip){
   const now=Date.now();
   if(rateMap.size>750)for(const [k,v] of rateMap)if(now-v.start>60000)rateMap.delete(k);

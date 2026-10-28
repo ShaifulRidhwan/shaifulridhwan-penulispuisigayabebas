@@ -71,7 +71,7 @@ test("SSE decodes split UTF-8, CRLF and multiple frames, and rejects upstream er
 test("primary streaming hides reasoning and requires a terminal frame",async t=>{
  const handler=setup(t);let chunks=[];
  global.fetch=async()=>sse([{candidates:[{content:{parts:[{text:"hidden",thought:true},{text:"Aku "}]}}]},{candidates:[{content:{parts:[{text:"jawab."}]},finishReason:"STOP"}]}]);
- const r=await handler(event({question:"Hai"},{onDelta:x=>chunks.push(x)}));assert.equal(r.statusCode,200);assert.equal(chunks.join(""),"Aku jawab.");assert.equal(JSON.parse(r.body).reply,"Aku jawab.");
+ const r=await handler(event({question:"Hai"},{onDelta:x=>chunks.push(x)}));assert.equal(r.statusCode,200);assert.equal(chunks.join(""),"Aku jawab.");assert.equal(JSON.parse(r.body).reply,"Aku jawab. 🙂 ✨");
  global.fetch=async()=>sse([{candidates:[{content:{parts:[{text:"separuh"}]}}]}]);
  const failed=await handler(event({question:"Hai"},{onDelta:()=>{}}));assert.equal(JSON.parse(failed.body).code,"STREAM_INTERRUPTED");
 });
@@ -85,7 +85,7 @@ test("stream endpoint reuses the validated handler and emits a final committed a
  setup(t);global.fetch=async()=>sse([{candidates:[{content:{parts:[{text:"Hai kau."}]},finishReason:"STOP"}]}]);
  const stream=(await import("../netlify/functions/bilik-antara-stream.mjs")).default;
  const r=await stream(new Request(ORIGIN+"/.netlify/functions/bilik-antara-stream",{method:"POST",headers:{origin:ORIGIN,"content-type":"application/json"},body:JSON.stringify({question:"helo"})}));
- const lines=(await r.text()).trim().split("\n").map(JSON.parse);assert.equal(lines[0].type,"start");assert.ok(lines.some(x=>x.type==="delta"));assert.equal(lines.at(-1).type,"done");assert.equal(lines.at(-1).reply,"Hai kau.");
+ const lines=(await r.text()).trim().split("\n").map(JSON.parse);assert.equal(lines[0].type,"start");assert.ok(lines.some(x=>x.type==="delta"));assert.equal(lines.at(-1).type,"done");assert.equal(lines.at(-1).reply,"Hai kau. 🙂 ✨");
  const blocked=await stream(new Request(ORIGIN,{method:"POST",headers:{origin:"https://other.example"},body:"{}"}));assert.equal(blocked.status,403);
 });
 test("client NDJSON failures never trigger a duplicate JSON request; unavailable endpoint does",async()=>{
@@ -270,7 +270,45 @@ test("the exact grounded identity exchange keeps a short ooo connected without a
  const handler=setup(t),ID=require("../bilik-antara-identity");let calls=0;global.fetch=()=>{calls++;throw Error("No model needed for this grounded acknowledgement");};
  const question="siapa buat bilik antara no",history=[{role:"user",content:question},{role:"assistant",content:ID.answerIdentity(question)}];
  assert.equal(ID.answerReaction("ooo",history),"Ha, dia yang bangunkan ruang ni.");
- const r=await handler(event({question:"ooo",history}));assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).reply,"Ha, dia yang bangunkan ruang ni.");assert.equal(calls,0);
+ const r=await handler(event({question:"ooo",history}));assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).reply,"Ha, dia yang bangunkan ruang ni. 🙂 ✨");assert.equal(calls,0);
  assert.equal(ID.answerReaction("ooo",[{role:"user",content:"Kenapa langit biru?"},{role:"assistant",content:"Cahaya biru dihamburkan lebih kuat."}]),null);
  assert.equal(ID.answerReaction("ooo tak faham",history),null);
+});
+
+test("chat enforces two complete emoji graphemes and preserves literal code",()=>{
+ const style=require("../bilik-antara-chat-style");
+ for(const value of ["Hai.","Hai 🙂", "Hai 👨‍👩‍👧‍👦 🇲🇾 👍🏽 😀", "Nombor 1 dan 2 bukan emoji.","Tekan 1️⃣ 2️⃣ 3️⃣"]){
+  const reply=style.reply(value);assert.equal(style.count(reply),2);assert.equal(style.reply(reply),reply);
+ }
+ assert.equal(style.reply(""),"");
+ assert.equal(style.reply("Hai",{complete:false}),"Hai");
+ const code='```js\nconst icons = "😀 😄 😁";\n```';
+ assert.ok(style.reply(code).includes(code),"Source literals remain exact");
+ assert.equal(style.count(style.reply("Aku faham kau sedang sedih.")),2);
+ assert.ok(!style.reply("Aku faham kau sedang sedih.").includes("🙂"));
+});
+test("emoji formatting preserves grounded identity follow-up continuity",()=>{
+ const ID=require("../bilik-antara-identity"),style=require("../bilik-antara-chat-style");
+ const question="siapa buat bilik antara no";
+ const history=[{role:"user",content:question},{role:"assistant",content:style.reply(ID.answerIdentity(question))}];
+ assert.equal(ID.answerReaction("ooo",history),"Ha, dia yang bangunkan ruang ni.");
+});
+test("opening the page tests providers before showing Connected and never installs message actions",async()=>{
+ const html=fs.readFileSync(path.join(__dirname,"../bilik-antara.html"),"utf8");
+ assert.match(html,/restore\(\);renderIdeas\(\);renderHistory\(\);update\(\);probe\(\);/);
+ assert.match(html,/async function probe\(\)\{[\s\S]*?return checkProviders\(true\)/);
+ const source=html.slice(html.indexOf("async function checkProviders("),html.indexOf('ui.conn.addEventListener("click"'));
+ let resolve,requests=[],states=[];
+ const pending=new Promise(done=>resolve=done);
+ const run=new Function("fetch","status","renderProviderRows","el","multiChecked","ENDPOINT",'let busy=false,multiChecking=false,multiLastCheck=0,connectionRevision=0;'+source+';return checkProviders;')(
+  async(_url,opts)=>{requests.push(JSON.parse(opts.body));return pending;},(...args)=>states.push(args),()=>{},()=>({}),{},"/mock"
+ );
+ const waiting=run(true);
+ assert.equal(requests[0].providerStatus,true);
+ assert.ok(!states.some(x=>x[1]==="Multi AI Connected"));
+ resolve({ok:true,json:async()=>({providers:[{id:"groq",status:"online"}],someOnline:true})});await waiting;
+ assert.ok(states.some(x=>x[0]==="ready"&&x[1]==="Multi AI Connected"));
+ const suite=fs.readFileSync(path.join(__dirname,"../bilik-antara-suite.js"),"utf8");
+ assert.doesNotMatch(suite,/function quickActions|bubble\.appendChild\(row\)/);
+ assert.match(html,/if\(data\.disclaimer\)/,"Fallback provenance is retained");
 });

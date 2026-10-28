@@ -285,32 +285,6 @@ function render(){
  else if(currentPanel==="workspace")renderWorkspace();
  else if(currentPanel==="metrics")renderMetrics();
 }
-function quickActions(){
- const messages=[...document.querySelectorAll("#chat article.message.ai")];
- for(let i=0;i<messages.length;i++){
-  const bubble=messages[i].querySelector(".bubble");
-  if(!bubble||bubble.querySelector(".ba-actions"))continue;
-  const p=bubble.querySelector(".message-paragraph,.code-block,.formatted-list");
-  if(!p)continue;
-  const text=[...bubble.children].filter(x=>!x.classList.contains("msg-details")&&!x.classList.contains("msg-sources")&&!x.classList.contains("osint-card")).map(x=>x.textContent).join("\n").trim();
-  if(!text||text==="Assalamualaikum dan selamat sejahtera.")continue;
-  const row=make("div",undefined,"ba-actions");
-  row.append(
-   button("Salin",()=>copyText(text),"ba-mini"),
-   button("Ringkas",()=>api.fill("Ringkaskan jawapan ini dalam Bahasa Melayu yang jelas:\n"+text.slice(0,1200)),"ba-mini"),
-   button("Semak",()=>api.fill("Semak ketepatan jawapan ini. Jangan reka sumber; nyatakan perkara belum disahkan:\n"+text.slice(0,1200)),"ba-mini"),
-   button("Belajar",()=>api.fill("Ajar aku topik dalam jawapan ini secara berperingkat dengan contoh:\n"+text.slice(0,1200)),"ba-mini"),
-   button("Draf",()=>{workspace={title:"Petikan AI",content:text,at:Date.now()};open("workspace");},"ba-mini"),
-   button("Studio",()=>{
-    try{
-     sessionStorage.setItem("bilik-antara-studio-transfer-v1",JSON.stringify({title:"Draf daripada Bilik Antara",text:text.slice(0,100000)}));
-     window.location.href="studio-antara.html#document";
-    }catch(_){notice("Draf tidak dapat dipindah. Cuba salin dahulu.");}
-   },"ba-mini")
-  );
-  bubble.appendChild(row);
- }
-}
 window.addEventListener("ba:answered",event=>{
  const item=event.detail||{};
  const provider=["gemini","groq","mistral","openrouter","local"].includes(item.provider)?item.provider:"unknown";
@@ -326,7 +300,7 @@ window.addEventListener("ba:answered",event=>{
  const record=metrics.byProvider[provider]||{calls:0};
  metrics.byProvider[provider]={calls:record.calls+1};
  metrics.events=[...metrics.events,{at:Date.now(),ok:true,provider,firstTokenMs:Number.isFinite(item.firstTokenMs)?item.firstTokenMs:null,ms:Number.isFinite(item.elapsedMs)?item.elapsedMs:null}].slice(-120);
- persistMetrics();quickActions();if(currentPanel==="metrics")render();
+ persistMetrics();if(currentPanel==="metrics")render();
 });
 window.addEventListener("ba:request-failed",event=>{
  const item=event.detail||{};
@@ -336,9 +310,6 @@ window.addEventListener("ba:request-failed",event=>{
  metrics.events=[...metrics.events,{at:Date.now(),ok:false,code:String(item.code||item.status||"UNKNOWN").slice(0,32),ms:Number.isFinite(elapsed)?elapsed:null}].slice(-120);
  persistMetrics();if(currentPanel==="metrics")render();
 });
-const observer=new MutationObserver(()=>{if(!api.active())quickActions();});
-observer.observe($("chat"),{childList:true});
-quickActions();
 window.BilikAntaraSuite={
  memoryForPrompt:()=>memory.enabled&&typeof memory.text==="string"?memory.text.slice(0,8000):"",
  open,

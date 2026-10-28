@@ -24,7 +24,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=42">
+<link rel="stylesheet" href="bilik-antara.css?v=43">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=4">
 
 </head>
@@ -48,6 +48,7 @@
    <div class="chapter-ornament" aria-hidden="true"><span>✦</span></div>
   </section>
   <section class="conversation" aria-label="Ruang perbualan">
+   <div class="glass-meteor" aria-hidden="true"><i class="meteor-flight"></i></div>
    <div class="glass-shadow-mist" aria-hidden="true"></div>
    <header class="conversation-head">
     <div class="voice-toolbar" role="group" aria-label="Kawalan suara">
@@ -120,6 +121,7 @@
  </main>
  <footer class="footer-note">BILIK ANTARA · CAHAYA &amp; GELAP · Bukan semua jawapan itu kebenaran.</footer>
 </div>
+<script src="bilik-antara-chat-style.js?v=1"></script>
 <script>
 (function(){
 "use strict";
@@ -164,7 +166,9 @@ function link(parent,label,url){
 // Bilik Antara uses one permanent dark palette, including returning browsers.
 ui.html.setAttribute("data-theme","dark");
 try{localStorage.removeItem("bilik-antara-theme");}catch(_){}
+let connectionRevision=0;
 function status(kind,label,explain){
+ connectionRevision++;
  ui.conn.className="connection multi-ai-trigger"+(["ready","online"].includes(kind)?" ready":["error","limited"].includes(kind)?" error":"");
  ui.connText.textContent=label==="Connected"?"Multi AI Connected":label;
  ui.conn.title=kind==="configured"&&label==="Multi AI Connected"?"Pelayan Multi AI bersambung. Tekan untuk menyemak setiap model.":"Semak sambungan model AI";
@@ -174,17 +178,8 @@ function status(kind,label,explain){
 }
 window.addEventListener("ba:voice-connected",()=>status("online","Multi AI Connected",""));
 async function probe(){
- if(Date.now()<quotaCooldownUntil){status("limited","Had API","Kuota Gemini sementara penuh. Mesej kau masih ada; cuba lagi selepas beberapa ketika.");return;}
- status("connecting","Menyemak…","");
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),14000);
- try{
-  const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({probe:true}),signal:controller.signal});
-  const data=await res.json().catch(()=>({}));
-  if(res.ok&&data.ok)status("configured","Multi AI Connected","");
-  else status("error","AI tak dapat bersambung",String(data.error||"Sambungan AI belum tersedia.").slice(0,250));
- }catch(e){status("error","Tiada sambungan","Cuba hubungi pelayan semula.");}
- finally{clearTimeout(timer);}
+ if(Date.now()<quotaCooldownUntil){status("limited","Had API","Kuota AI sementara penuh. Cuba lagi sebentar.");return;}
+ return checkProviders(true);
 }
 ui.retry.addEventListener("click",()=>{
  if(busy)return;
@@ -209,6 +204,8 @@ async function checkProviders(force=false){
  if(multiChecking)return;
  if(!force&&Date.now()-multiLastCheck<20000)return;
  multiChecking=true;el("multiAiRefresh").disabled=true;renderProviderRows();
+ if(!busy)status("connecting","Menguji sambungan AI…","");
+ const revision=connectionRevision;
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12500);
  try{
   const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
@@ -217,9 +214,13 @@ async function checkProviders(force=false){
   const data=await res.json();if(!Array.isArray(data.providers))throw Error("Status tidak lengkap");
   renderProviderRows(data.providers);multiLastCheck=Date.now();
   multiChecked.textContent=data.someOnline?"Sekurang-kurangnya satu model boleh dihubungi.":"Tiada model berjaya disahkan sekarang.";
-  if(data.someOnline)status("ready","Multi AI Connected","");
-  else status("error","Multi A.I. Offline","");
- }catch(_){renderProviderRows([]);multiChecked.textContent="Semakan gagal. Status penyedia belum dapat disahkan.";}
+  if(!busy&&connectionRevision===revision){
+   if(data.someOnline)status("ready","Multi AI Connected","");
+   else status("error","Multi AI Offline","");
+  }
+ }catch(_){renderProviderRows([]);multiChecked.textContent="Semakan gagal. Status penyedia belum dapat disahkan.";
+  if(!busy&&connectionRevision===revision)status("error","Sambungan belum disahkan","");
+ }
  finally{clearTimeout(timer);multiChecking=false;el("multiAiRefresh").disabled=false;}
 }
 ui.conn.addEventListener("click",()=>{if(!multiDialog.open)multiDialog.showModal();checkProviders();});
@@ -279,7 +280,7 @@ function addMessage(role,text,data){
  const msg=elem("article","message "+(role==="user"?"user":"ai"));
  msg.appendChild(elem("div","byline",role==="user"?"Kau":"Aksara A.I."));
  const bubble=elem("div","bubble");
- format(bubble,text);
+ format(bubble,role==="user"?text:window.BilikAntaraChatStyle.reply(text));
  if(role!=="user"&&data)renderExtras(bubble,data);
  msg.appendChild(bubble);ui.chat.appendChild(msg);scrollDown();return msg;
 }
@@ -650,7 +651,7 @@ async function submit(event){
    partialBubble=elem("div","bubble");partialNode.appendChild(partialBubble);ui.chat.appendChild(partialNode);
   }
   const nearBottom=ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight<100;
-  partialBubble.textContent=partial;if(nearBottom)scrollDown();
+  partialBubble.textContent=window.BilikAntaraChatStyle.reply(partial,{complete:false});if(nearBottom)scrollDown();
  }
  try{
   const payload={question,preferredProvider:Date.now()-lastProviderAt<90000?lastProvider:"",history:contextHistory(),contextFallback:ui.contextFallback.checked,
@@ -667,6 +668,7 @@ async function submit(event){
     typing=showTyping();status("connecting","Menyambung semula · "+attempt+"/2","");
    });
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
+  data.reply=window.BilikAntaraChatStyle.reply(data.reply);
   typing.remove();partialNode?.remove();addMessage("assistant",data.reply,data);
   history.push({role:"user",content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
   history.push({role:"assistant",content:data.reply,sources:data.sources||[],
@@ -746,9 +748,9 @@ window.BilikAntaraBridge={
 restore();renderIdeas();renderHistory();update();probe();
 })();
 </script>
-<script src="bilik-antara-identity.js?v=15" defer></script>
-<script src="bilik-antara-suite.js?v=8" defer></script>
-<script src="bilik-antara-brain.js?v=8" defer></script>
+<script src="bilik-antara-identity.js?v=16" defer></script>
+<script src="bilik-antara-suite.js?v=9" defer></script>
+<script src="bilik-antara-brain.js?v=9" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-voice.js?v=32" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>

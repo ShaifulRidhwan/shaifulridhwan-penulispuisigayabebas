@@ -2790,3 +2790,26 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 @media(max-width:760px){.voice-panel:not(.is-minimized){padding-bottom:14px}.voice-panel .voice-dialogue-dock{gap:9px}.voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-status{padding:10px 12px;font-size:11px}.glass-shadow-mist::before{filter:blur(16px)}.glass-shadow-mist::after{filter:blur(20px)}}
 @media(prefers-reduced-motion:reduce){.glass-shadow-mist::before{animation:antaraShadowMist 6.8s ease-in-out infinite!important}.glass-shadow-mist::after{animation:antaraShadowMistCurl 6.8s ease-in-out infinite!important}}
 
+
+/* A meteor crosses the glass; the right-hand shadow pushes its head back. */
+.conversation{--scene-cycle:7.6s}
+.conversation::after{content:none;animation:none!important}
+.glass-meteor{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;border-radius:inherit;contain:paint}
+.meteor-flight{position:absolute;left:-65%;top:20%;width:58%;height:3px;transform:rotate(16deg);transform-origin:right center;background:linear-gradient(90deg,transparent,rgba(242,197,112,.12) 25%,rgba(255,225,166,.7) 85%,#fff9dc);border-radius:100%;box-shadow:0 0 11px rgba(255,219,155,.6);animation:antaraMeteorFlight var(--scene-cycle) ease-in-out infinite;will-change:left,top,opacity}
+.meteor-flight::after{content:"";position:absolute;right:-2px;top:50%;width:9px;height:9px;border-radius:50%;transform:translateY(-50%);background:#fff9df;box-shadow:0 0 9px #fff2c4,0 0 26px rgba(255,203,111,.95),0 0 48px rgba(228,192,133,.5)}
+@keyframes antaraMeteorFlight{0%,12%{left:-65%;top:18%;opacity:0}20%{opacity:.75}48%{left:23%;top:36%;opacity:1}56%{left:30%;top:38%;opacity:1}64%{left:20%;top:34%;opacity:.9}76%{left:0%;top:28%;opacity:.4}86%,100%{left:-35%;top:22%;opacity:0}}
+/* Every navigation link gets the same dark glass treatment as the chat controls. */
+.topbar{background:linear-gradient(115deg,rgba(8,14,24,.4),rgba(17,26,40,.2));-webkit-backdrop-filter:blur(12px) saturate(1.15);backdrop-filter:blur(12px) saturate(1.15);box-shadow:inset 0 -1px 0 rgba(241,211,163,.18),0 6px 24px rgba(0,0,0,.14)}
+.topbar .brand,.topbar .nav-link{border:1px solid rgba(220,196,154,.26);border-radius:999px;background:linear-gradient(115deg,rgba(255,234,198,.065),rgba(110,153,196,.055));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,241,214,.1);padding:7px 11px}
+.topbar .brand{border-radius:13px;padding:7px 10px}
+.topbar .nav-link:hover,.topbar .brand:hover{background:rgba(217,185,136,.13);border-color:rgba(236,208,164,.48)}
+@media(max-width:760px){.topbar{gap:6px;padding-inline:9px}.topbar .brand{padding:5px 7px}.topbar .nav-actions{gap:4px}.topbar .nav-link{font-size:10px;padding:6px 8px}.glass-shadow-mist::before{filter:blur(11px)}.glass-shadow-mist::after{filter:blur(15px)}}
+@media(max-width:390px){.topbar .nav-actions{gap:3px}.topbar .nav-link{font-size:9px;padding:6px}.topbar .brand{padding:5px 6px}}
+
+.conversation>.glass-shadow-mist{inset:0;z-index:1;overflow:visible;background:none;contain:none}
+.conversation>.glass-shadow-mist::before{background:radial-gradient(ellipse 20% 23% at 87% 34%,rgba(0,0,3,.94),rgba(0,0,3,.32) 50%,transparent 100%),radial-gradient(ellipse 24% 30% at 84% 57%,rgba(1,3,9,.85),rgba(0,0,3,.2) 54%,transparent 100%);filter:blur(17px);animation:antaraShadowRepel var(--scene-cycle) ease-in-out infinite}
+.conversation>.glass-shadow-mist::after{background:radial-gradient(ellipse 22% 29% at 90% 45%,rgba(0,0,2,.95),rgba(0,0,2,.25) 50%,transparent 100%),radial-gradient(ellipse 17% 20% at 76% 38%,rgba(3,6,14,.7),transparent 100%);filter:blur(22px);animation:antaraShadowRoll var(--scene-cycle) ease-in-out infinite}
+@keyframes antaraShadowRepel{0%,38%{opacity:0;transform:translate3d(8%,5%,0) scale(.86)}49%{opacity:.7}58%{opacity:.97;transform:translate3d(-5%,-2%,0) scale(1.1)}72%{opacity:.88;transform:translate3d(-12%,-8%,0) scale(1.2)}89%,100%{opacity:0;transform:translate3d(-18%,-16%,0) scale(1.28)}}
+@keyframes antaraShadowRoll{0%,45%{opacity:0;transform:translate3d(9%,8%,0) rotate(-5deg) scale(.84)}60%{opacity:.94;transform:translate3d(-4%,-5%,0) rotate(5deg) scale(1.1)}78%{opacity:.7;transform:translate3d(-11%,-13%,0) rotate(12deg) scale(1.24)}96%,100%{opacity:0;transform:translate3d(-18%,-20%,0) rotate(16deg) scale(1.3)}}
+@media(max-width:760px){.conversation>.glass-shadow-mist::before{filter:blur(13px)}.conversation>.glass-shadow-mist::after{filter:blur(17px)}}
+@media(prefers-reduced-motion:reduce){.meteor-flight{animation:antaraMeteorFlight var(--scene-cycle) ease-in-out infinite!important}.conversation>.glass-shadow-mist::before{animation:antaraShadowRepel var(--scene-cycle) ease-in-out infinite!important}.conversation>.glass-shadow-mist::after{animation:antaraShadowRoll var(--scene-cycle) ease-in-out infinite!important}}

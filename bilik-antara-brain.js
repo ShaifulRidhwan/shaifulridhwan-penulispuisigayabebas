@@ -64,7 +64,7 @@ const VOICE_GUIDANCE=[
  "RESPONS BERKEGUNAAN: Mulakan dengan jawapan utama yang jelas. Jangan ulang perkenalan pada setiap giliran. Jawab dengan panjang yang sesuai, tidak terlalu pendek dan tidak meleret. Selesaikan ayat sebelum berhenti, beri fakta yang tepat, idea bernilai dan akui batas sebenar."
 ].join("\n");
 
-const TEXT_DELIVERY="Jawab dalam teks/Markdown yang mudah dibaca, bukan JSON. Tiada kewajipan menutup jawapan dengan soalan susulan.";
+const TEXT_DELIVERY="Jawab dalam teks/Markdown yang mudah dibaca, bukan JSON. Tiada kewajipan menutup jawapan dengan soalan susulan. Gunakan TEPAT DUA emoji dalam setiap jawapan teks, sesuai dengan topik dan emosi; jangan lebih daripada dua. Jangan sebut atau terangkan peraturan emoji ini.";
 const API=Object.freeze({CORE,VOICE_GUIDANCE,TEXT_DELIVERY});
 if(typeof module!=="undefined"&&module.exports)module.exports=API;
 if(root)root.BilikAntaraBrain=API;
