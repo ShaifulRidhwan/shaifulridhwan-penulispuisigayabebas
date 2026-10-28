@@ -62,6 +62,7 @@
  <button type="button" id="docImport">Import .txt / .html</button>
  <input type="file" id="docFile" accept=".txt,.html,.htm,text/plain,text/html" hidden>
  <button type="button" id="docSaveDraft">Simpan draf</button>
+ <button type="button" id="docVersions">Sejarah versi</button>
  <button type="button" id="docFind">Cari &amp; ganti</button>
  <button type="button" id="docTable">Jadual</button>
  <button type="button" id="docImage">Masukkan imej</button>
@@ -80,6 +81,11 @@
  </div>
  <p class="hint">*Word menyokong nombor halaman automatik. PDF menggunakan tetapan cetak pelayar; nombor halaman automatik tidak dijamin dalam setiap pelayar.</p>
 </details>
+<div class="doc-find-panel" id="docVersionsPanel" hidden>
+ <label>Versi tersimpan<select id="docVersionList" aria-label="Pilih versi draf"></select></label>
+ <button type="button" id="docRestoreVersion">Pulihkan versi</button>
+ <span id="docVersionsStatus" aria-live="polite"></span>
+</div>
 <div class="doc-find-panel" id="docFindPanel" hidden>
  <label>Cari<input id="docFindText" placeholder="Teks yang dicari"></label>
  <label>Ganti dengan<input id="docReplaceText" placeholder="Teks pengganti"></label>
