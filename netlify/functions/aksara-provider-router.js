@@ -76,9 +76,9 @@ async function checkStatus(){
   try{
    const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
    if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
-   const response=await fetch(provider.url,{method:"POST",headers,body:JSON.stringify({
-    model:provider.model,messages:[{role:"user",content:"Jawab OK sahaja."}],max_tokens:80
-   }),signal:ctrl.signal});
+   const probeBody={model:provider.model,messages:[{role:"user",content:"Jawab OK sahaja."}],max_tokens:120};
+   if(provider.id==="groq"){probeBody.reasoning_effort="low";probeBody.include_reasoning=false;}
+   const response=await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(probeBody),signal:ctrl.signal});
    if(!response.ok)return {id:provider.id,status:"offline"};
    const data=await response.json();
    const content=data?.choices?.[0]?.message?.content;
