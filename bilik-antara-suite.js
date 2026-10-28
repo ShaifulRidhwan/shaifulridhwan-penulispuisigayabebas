@@ -38,8 +38,6 @@ const persistMetrics=()=>{if(api.remember())write(KEYS.metrics,metrics);};
 let currentPanel="";
 const convo=document.querySelector(".conversation");
 if(!convo)return;
-const toolbar=make("div",undefined,"ba-toolbar");
-toolbar.setAttribute("role","group");toolbar.setAttribute("aria-label","Alat percuma Bilik Antara");
 const drawer=make("aside",undefined,"ba-drawer");
 drawer.hidden=true;drawer.setAttribute("aria-label","Alat dan penyimpanan setempat");
 const sheet=make("div",undefined,"ba-sheet"),top=make("div",undefined,"ba-drawer-top");
@@ -49,17 +47,19 @@ const content=make("div",undefined,"ba-content");
 sheet.append(top,content);drawer.appendChild(sheet);
 const backdrop=button("",()=>close(),"ba-backdrop");backdrop.setAttribute("aria-label","Tutup panel");drawer.prepend(backdrop);
 const head=convo.querySelector(".conversation-head");
-head.after(toolbar);
+const settings=$("settingsPanel");
+const featureSessions=$("featureSessions"),featureMetrics=$("featureMetrics");
 document.body.appendChild(drawer); // keep fixed overlay outside clipped glass conversation
-const labels=[["sessions","Sesi & Memori"],["metrics","Prestasi"]];
-for(const [key,label] of labels)toolbar.appendChild(button(label,()=>open(key),"ba-tab"));
-toolbar.appendChild(button("Studio · E-mel & PDF",()=>{window.location.href="studio-antara.html";},"ba-tab"));
+// Reuse the feature icon beside Multi AI Connected, not a second toolbar inside chat.
+featureSessions?.addEventListener("click",()=>open("sessions"));
+featureMetrics?.addEventListener("click",()=>open("metrics"));
 function notice(message){
  let status=$("baNotification");
- if(!status){status=make("div",undefined,"ba-notification");status.id="baNotification";status.setAttribute("role","status");toolbar.after(status);}
+ if(!status){status=make("div",undefined,"ba-notification");status.id="baNotification";status.setAttribute("role","status");head.after(status);}
  status.textContent=String(message||"").slice(0,240);
 }
 function open(panel){
+ if(settings)settings.open=false;
  currentPanel=panel;drawer.hidden=false;document.body.classList.add("ba-panel-open");
  render();
 }
