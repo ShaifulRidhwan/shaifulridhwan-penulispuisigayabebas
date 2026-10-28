@@ -38,6 +38,14 @@ const TASK_GUIDANCE={
   support:"SOKONGAN: Dengar dengan empati dan jawab secara berhati-hati, tanpa sindiran atau debat.",
   general:"UMUM: Fahami kehendak pengguna dan selesaikan permintaan dengan pendekatan paling berguna. Jangan ubah perbualan menjadi hujah."
 };
+function reactionReply(text,intent,history){
+  if(!intent.reaction||!String(text||"").trim())return text;
+  let value=String(text||"").trim();
+  value=value.replace(/\s*(?:Ada apa-apa lagi(?: yang)? (?:kau |awak |anda )?(?:nak|mahu|ingin) (?:tanya|tanyakan)|Ada (?:lagi )?apa-apa(?: lagi)?(?: yang)? (?:kau |awak |anda )?(?:nak|mahu|ingin) (?:tanya|tanyakan|bincang))(?:[?!.]|\s)*$/i,"").trim();
+  const humour=history.slice(-4).some(m=>/(?:haha|hehe|lawak|kelakar|😂|🤣)/i.test(m.content||""));
+  if(!humour)value=value.replace(/^(?:ha(?:ha)+|he(?:he)+)[,!.\s]*/i,"").trim();
+  return value||"Haa, macam tu.";
+}
 function headers(){
   return {"Access-Control-Allow-Origin":process.env.ALLOWED_ORIGIN||SITE_ORIGIN,
     "Access-Control-Allow-Headers":"Content-Type","Access-Control-Allow-Methods":"POST, OPTIONS",
@@ -270,7 +278,7 @@ exports.handler=async event=>{
   async function useAlternative(options={}){
       let alternative;
       try{
-        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:4000,bufferedTimeoutMs:20000,deadline,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,...options});
+        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:4000,bufferedTimeoutMs:20000,deadline,signal:event.signal,onDelta:intent.reaction?null:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,...options});
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
@@ -278,6 +286,7 @@ exports.handler=async event=>{
       }
       if(alternative.attempts)providerFailures.push(...alternative.attempts);
       if(alternative.reply){
+        alternative.reply=reactionReply(alternative.reply,intent,history);
         lastTextProvider=alternative.provider;lastTextSuccessAt=Date.now();
         log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
         // Off by default, only eligible ordinary text. Never treat another LLM as a verified fact-checker.
@@ -302,9 +311,9 @@ exports.handler=async event=>{
     if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
     if(Date.now()<geminiTextCooldownUntil)throw Object.assign(new Error("Gemini quota cooling down"),{status:429});
     const data=await callGemini({apiKey,model,system,contents,tools,thinkingLevel:plan.thinkingLevel,
-      maxTokens,timeoutMs:Math.min(textOnly&&Router.enabled()?6500:18000,remaining()),signal:event.signal,deadline,onDelta:emit&&!plan.doReview&&!tools.length?emit:null});
+      maxTokens,timeoutMs:Math.min(textOnly&&Router.enabled()?6500:18000,remaining()),signal:event.signal,deadline,onDelta:emit&&!intent.reaction&&!plan.doReview&&!tools.length?emit:null});
     const candidate=data&&data.candidates&&data.candidates[0];
-    const reply=parseReply(modelText(candidate));
+    const reply=reactionReply(parseReply(modelText(candidate)),intent,history);
     if(!reply)throw Object.assign(new Error("Empty candidate"),{status:502});
     const directSources=sourceList(candidate);
     const sources=[...publicSources.map(({title,url})=>({title,url})),...directSources.filter(x=>!publicSources.some(y=>y.url===x.url))].slice(0,8);

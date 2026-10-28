@@ -256,3 +256,13 @@ test("reaction guidance reaches the chosen provider together with the actual pre
  const history=[{role:"user",content:"siapa buat bilik antara no"},{role:"assistant",content:"Shaiful Ridhwan yang membangunkan Bilik Antara."}];
  const r=await handler(event({question:"ooo",history,preferredProvider:"groq"}));assert.equal(r.statusCode,200);assert.match(request.messages[0].content,/REAKSI PENDEK PADA GILIRAN TERAKHIR/);assert.equal(request.messages.at(-2).content,history[1].content);assert.equal(request.reasoning_effort,"low");
 });
+test("accepting an offered action is not downgraded to a mere acknowledgement",()=>{
+ const history=[{role:"user",content:"Tolong bantu tulis puisi"},{role:"assistant",content:"Nak aku buat versi empat rangkap?"}];
+ assert.notEqual(I.resolveIntent("ok",history,false).reaction,true);assert.notEqual(I.resolveIntent("ya",history,false).reaction,true);
+ assert.equal(I.resolveIntent("ooo",history,false).reaction,true);
+});
+test("plain acknowledgements do not inherit canned laughter or an automatic invitation to ask another question",async t=>{
+ const handler=setup(t);global.fetch=async()=>reply("Haha, faham. Ada apa-apa lagi nak tanya?");
+ const r=await handler(event({question:"ooo",history:[{role:"user",content:"siapa buat bilik antara no"},{role:"assistant",content:"Shaiful Ridhwan yang membangunkan Bilik Antara."}],preferredProvider:"groq"}));
+ assert.equal(r.statusCode,200);const text=JSON.parse(r.body).reply;assert.match(text,/faham/i);assert.doesNotMatch(text,/haha|apa-apa lagi|nak tanya/i);
+});
