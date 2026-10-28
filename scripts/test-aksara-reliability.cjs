@@ -305,9 +305,9 @@ test("opening the page tests providers before showing Connected and never instal
  );
  const waiting=run(true);
  assert.equal(requests[0].providerStatus,true);
- assert.ok(!states.some(x=>x[1]==="Multi AI Connected"));
+ assert.ok(!states.some(x=>x[1]==="Multi A.I Connected"));
  resolve({ok:true,json:async()=>({providers:[{id:"groq",status:"online"}],someOnline:true})});await waiting;
- assert.ok(states.some(x=>x[0]==="ready"&&x[1]==="Multi AI Connected"));
+ assert.ok(states.some(x=>x[0]==="ready"&&x[1]==="Multi A.I Connected"));
  const suite=fs.readFileSync(path.join(__dirname,"../bilik-antara-suite.js"),"utf8");
  assert.doesNotMatch(suite,/function quickActions|bubble\.appendChild\(row\)/);
  assert.match(html,/if\(data\.disclaimer\)/,"Fallback provenance is retained");
