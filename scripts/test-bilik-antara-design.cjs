@@ -151,7 +151,7 @@ test("Header chips stay optically aligned and feature interactions have gentle g
 test("Rounded Aksara controls share Liquid Glass, preserve contrast and cap mobile blur",()=>{
  const suite=fs.readFileSync("bilik-antara-suite.css","utf8");
  assert.match(html,/href="bilik-antara-suite\.css\?v=6"/);
- assert.match(css,/\/\* Liquid Glass · shared rounded surfaces/);
+ assert.match(css,/\/\* Liquid Glass · clearer optical glass/);
  for(const selector of [".topbar .brand",".topbar .nav-link",
   ".conversation-head #voiceLive",".conversation-head #connection",
   ".conversation-head #settingsPanel>summary",".conversation .starter",
@@ -172,7 +172,7 @@ test("Rounded Aksara controls share Liquid Glass, preserve contrast and cap mobi
 });
 
 test("Clear Liquid Glass preserves background visibility and treats Send like a glass control",()=>{
- const clear=css.slice(css.indexOf("/* Liquid Glass · shared rounded surfaces"));
+ const clear=css.slice(css.indexOf("/* Liquid Glass · clearer optical glass"));
  assert.match(html,/href="bilik-antara\.css\?v=49"/);
  assert.match(clear,/clearer optical glass: transparent tint/);
  assert.match(clear,/rgba\(255,247,224,\.035\)/);
@@ -189,7 +189,7 @@ test("Clear Liquid Glass preserves background visibility and treats Send like a 
 });
 
 test("Voice and Multi AI pills share starter-question sizing and genuinely clearer glass",()=>{
- const clear=css.slice(css.indexOf("/* Liquid Glass · shared rounded surfaces"));
+ const clear=css.slice(css.indexOf("/* Liquid Glass · clearer optical glass"));
  const pills=clear.slice(clear.indexOf("/* Two header pills"),clear.indexOf("/* Readable menus"));
  assert.match(pills,/\.conversation-head #voiceLive,\.conversation-head #connection\{/);
  assert.match(pills,/height:38px!important;min-height:38px!important;max-height:38px!important/);
