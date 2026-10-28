@@ -52,7 +52,7 @@ function headers(){
 }
 function result(code,data,H){
   if(code===200&&typeof data.reply==="string"&&data.mode!=="recorded-voice")data={...data,reply:ChatStyle.reply(data.reply)};
-  return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-5"})};
+  return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-6"})};
 }
 function throttle(ip,store=rateMap,limit=12){
   const now=Date.now();
@@ -392,8 +392,15 @@ exports.handler=async event=>{
     log("error",{http:error.status||null,name:error.name||"unknown",ms:Date.now()-started});
     if(!textOnly&&Router.enabled())return result(error.status===429?429:503,{code:"CAPABILITY_UNAVAILABLE",error:privateContext&&payload.contextFallback!==true?"Model utama belum tersedia. Kau boleh benarkan sandaran memproses memori dan fail teks dalam Privasi & sesi, atau cuba lagi kemudian.":"Model yang menyokong permintaan ini belum tersedia. Sandaran teks tidak boleh menggantikan alat carian, audio, imej atau fungsi khusus ini.",retryAfterSeconds:30},H);
     if(textOnly&&Router.enabled()&&alternativeTried){
-      const waits=Router.availability().map(p=>p.retryAfterSeconds).filter(x=>x>0);
-      const wait=waits.length?Math.min(...waits):providerRetrySeconds;
+      const recovered=Router.availability().filter(p=>p.retryAfterSeconds===0&&
+        providerFailures.some(f=>f.provider===p.provider&&f.status===429)).map(p=>p.provider);
+      if(recovered.length&&remaining()>2000){
+        // The actual Retry-After elapsed while other routes were being tested.
+        // One recovery attempt is permitted now; never retry before that reset.
+        const recovery=await useAlternative({only:recovered,firstResponseDeadline:deadline,timeoutMs:Math.min(4000,remaining())});
+        if(recovery&&(recovery.statusCode===200||recovery.statusCode===499||streamed))return recovery;
+      }
+      const wait=Router.retryAfterSeconds(providerRetrySeconds);
       return result(503,{code:"ALL_PROVIDERS_BUSY",error:"Model yang tersedia belum dapat menjawab. Teks kau dikekalkan.",retryAfterSeconds:wait,retryable:!([400,401,403,404].includes(error.status)&&providerFailures.length&&providerFailures.every(x=>[400,401,403,404,413,422].includes(x.status))),providerFailures:providerFailures.slice(-6),durMs:Date.now()-started,timings:timings()},H);
     }
     if(error.name==="AbortError")return result(504,{error:"Model mengambil masa terlalu lama. Teks kau dikekalkan.",durMs:Date.now()-started},H);

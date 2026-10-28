@@ -65,6 +65,12 @@ function retrySeconds(response,fallback=30){
 function availability(){
  return configured().map(p=>({provider:p.id,retryAfterSeconds:Math.max(0,Math.ceil(((cooldown.get(p.id)||0)-Date.now())/1000))}));
 }
+function retryAfterSeconds(fallback=3){
+ const providers=availability();
+ // Zero means ready now. Filtering it out would wait for a slower, failed
+ // provider even though another one has already recovered.
+ return providers.length?Math.max(1,Math.min(...providers.map(p=>p.retryAfterSeconds))):fallback;
+}
 function blockedClassifierPrefix(text){
  const value=String(text).replace(/\*\*/g,"").trimStart().toLowerCase();
  return ["user safety:","response safety:"].some(prefix=>prefix.startsWith(value)||value.startsWith(prefix));
@@ -184,8 +190,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    attempts.push({provider:provider.id,status:status||"unavailable",reason:err.reason||(err.name==="AbortError"?"timeout":status===429?"rate_limit":status>=500?"upstream":"request_failed"),...(err.quota?{quota:err.quota}:{}),...(err.quotaKind?{quotaKind:err.quotaKind}:{}),...(err.fieldIssue?{fieldIssue:err.fieldIssue}:{}),...(err.errorType?{errorType:err.errorType}:{}),...(err.reason==="empty_output"?{finishReason:err.finishReason,outputTokens:err.outputTokens}:{}),elapsedMs:Date.now()-attemptStarted,retryAfterSeconds:Math.ceil(wait/1000)});
   }finally{control.close();}
  }
- const waits=availability().map(p=>p.retryAfterSeconds).filter(x=>x>0);
- return {error:"all_providers_unavailable",attempts,retryAfterSeconds:waits.length?Math.min(...waits):3};
+ return {error:"all_providers_unavailable",attempts,retryAfterSeconds:retryAfterSeconds()};
 }
 // Optional second-model critique: never silently overwrite a user's answer.
  // Requires AKSARA_CROSS_REVIEW=true; default OFF to protect free quotas.
@@ -269,4 +274,4 @@ async function checkStatus(){
  })();
  try{return await healthCache.pending;}finally{healthCache.pending=null;}
 }
-module.exports={complete,configured,enabled,checkStatus,rankProviders,crossReview,availability};
+module.exports={complete,configured,enabled,checkStatus,rankProviders,crossReview,availability,retryAfterSeconds};

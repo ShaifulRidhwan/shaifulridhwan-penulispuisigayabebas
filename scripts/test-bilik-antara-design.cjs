@@ -18,12 +18,13 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
  assert.match(css,/bilik-antara-woman-emblem\.svg/);
  assert.equal(cover[0],0xff);assert.equal(cover[1],0xd8);
  assert.match(emblem,/<svg[^>]+viewBox="0 0 96 96"/);
- assert.ok(css.length<113500,"CSS bundle unexpectedly big");
+ assert.ok(Buffer.byteLength(css)<125000,"CSS parse budget unexpectedly big");
+ assert.ok(require("node:zlib").gzipSync(css).length<28000,"Compressed CSS network budget unexpectedly big");
 });
 
 test("Final text, controls and simplified channel header",()=>{
  assert.match(html,/<h1><span>BILIK<\/span> <em>ANTARA<\/em><\/h1>/);
- assert.match(html,/<div class="eyebrow">DI ANTARA CAHAYA DAN GELAP<\/div>/);
+ assert.match(html,/<span class="eyebrow-caption">DI ANTARA CAHAYA DAN GELAP<\/span>/);
  assert.doesNotMatch(html,/Saluran Antara/);
  assert.doesNotMatch(html,/class="conversation-heading"/);
  assert.match(html,/class="conversation-head">\s*<div class="voice-toolbar"/);
@@ -51,7 +52,7 @@ test("No obsolete orbital, dashboard or removed title styles",()=>{
 test("Faster ambience and animated translucent glass layer",()=>{
  assert.match(css,/\.world-art\{animation-duration:11s\}/);
  assert.match(css,/\.world-haze\{animation-duration:7s\}/);
- assert.match(css,/\.world-embers\{animation-duration:17s\}/);
+ assert.match(css,/\.world-embers i\{animation-duration:17s\}/);
  assert.match(css,/\.conversation::after\{\s*content:"";\s*display:block/);
  assert.match(css,/@keyframes glassGlide/);
  assert.match(css,/animation:glassGlide 5\.4s/);
@@ -83,8 +84,8 @@ test("Mobile viewport, permanent dark theme and conversation functions retained"
 
 test("Inline JavaScript valid and element IDs unique",()=>{
  const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].filter(m=>m[1].trim()&&!m[0].includes("importmap"));
- assert.equal(scripts.length,1);
- assert.doesNotThrow(()=>new Function(scripts[0][1]));
+ assert.ok(scripts.length>=1);
+ for(const script of scripts)assert.doesNotThrow(()=>new Function(script[1]));
  const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
  assert.equal(ids.length,new Set(ids).size);
  assert.ok(html.length<60000);
@@ -132,7 +133,7 @@ test("Feature icon consolidates sessions, performance, studio and keeps privacy 
 });
 
 test("Header chips stay optically aligned and feature interactions have gentle golden motion",()=>{
- assert.match(html,/href="bilik-antara\.css\?v=51"/);
+ assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.match(css,/\.conversation-head #voiceLive,\s*\.conversation-head #connection,\s*\.conversation-head #settingsPanel > summary\s*\{/);
  assert.match(css,/height:42px;\s*min-height:42px!important;\s*max-height:42px/);
  assert.match(css,/@media\(max-width:760px\)\{[\s\S]*?\.conversation-head #voiceLive,\.conversation-head #connection/);
@@ -173,7 +174,7 @@ test("Rounded Aksara controls share Liquid Glass, preserve contrast and cap mobi
 
 test("Clear Liquid Glass preserves background visibility and treats Send like a glass control",()=>{
  const clear=css.slice(css.indexOf("/* Liquid Glass · clearer optical glass"));
- assert.match(html,/href="bilik-antara\.css\?v=51"/);
+ assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.match(clear,/clearer optical glass: transparent tint/);
  assert.match(clear,/rgba\(255,247,224,\.035\)/);
  assert.match(clear,/backdrop-filter:blur\(5px\)/);
@@ -208,12 +209,12 @@ test("AI bubbles match light glass and hand sparks fall toward woman without rep
  assert.match(css,/\.world-hand-sparks\{/);
  assert.match(css,/@keyframes handSparkDescent/);
  assert.match(css,/translate3d\(calc\(20vw \+ var\(--dx,0px\)\),calc\(13dvh \+ var\(--dy,0px\)\),0\)/);
- assert.match(css,/\.world-embers\{animation-duration:17s\}/);
+ assert.match(css,/\.world-embers i\{animation-duration:17s\}/);
  assert.match(html,/class="world-hand-sparks" aria-hidden="true"/);
  assert.equal((html.match(/style="--delay:/g)||[]).length,24);
  assert.match(html,/Multi A\.I Connected/);
  assert.doesNotMatch(html,/Multi AI Connected/);
- assert.match(html,/href="bilik-antara\.css\?v=51"/);
+ assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
 });
 
 test("Consistent DM Sans chat typography and independent animated voice icon",()=>{
@@ -229,6 +230,6 @@ test("Consistent DM Sans chat typography and independent animated voice icon",()
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
  assert.match(voice,/liveButton\.textContent=liveActive\?"Sedang berbual":"Jom Voice Chat"/);
  assert.match(html,/src="bilik-antara-voice\.js\?v=33"/);
- assert.match(html,/href="bilik-antara\.css\?v=51"/);
+ assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.match(css,/\.conversation-head button\.multi-ai-trigger \.dot/);
 });

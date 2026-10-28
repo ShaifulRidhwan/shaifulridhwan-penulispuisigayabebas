@@ -518,3 +518,29 @@ test("health check treats a daily free-tier quota as unavailable without immedia
  assert.equal(again.find(x=>x.id==="groq").status,"offline");
  assert.equal(attempts,1);
 });
+
+test("a ready provider wins the retry countdown over other providers still in cooldown",async t=>{
+ const handler=setup(t);process.env.MISTRAL_API_KEY="mock";process.env.MISTRAL_FREE_CONFIRMED="true";
+ let now=100000,groq=0;t.mock.method(Date,"now",()=>now);
+ global.fetch=async url=>{
+  if(url.includes("groq.com")){groq++;return new Response("",{status:429,headers:{"retry-after":groq===1?"2":"1"}});}
+  if(url.includes("mistral.ai"))return new Response("",{status:429,headers:{"retry-after":"30"}});
+  now+=3000;throw new DOMException("primary timed out","AbortError");
+ };
+ const r=await handler(event({question:"Aku cuma nak borak"})),data=JSON.parse(r.body);
+ assert.equal(r.statusCode,503);assert.equal(data.retryAfterSeconds,1);
+ assert.equal(groq,2,"Only one lawful recovery attempt after the first wait expires");
+});
+test("a quota-limited chat provider can recover in the same request once its real wait expires",async t=>{
+ const handler=setup(t);let now=100000,calls=0;t.mock.method(Date,"now",()=>now);
+ global.fetch=async url=>{
+  if(url.includes("groq.com")){
+   calls++;
+   return calls===1?new Response("",{status:429,headers:{"retry-after":"2"}}):reply("Sambungan sudah pulih.");
+  }
+  now+=3000;throw new DOMException("primary timed out","AbortError");
+ };
+ const r=await handler(event({question:"Apa itu atom?"})),data=JSON.parse(r.body);
+ assert.equal(r.statusCode,200);assert.equal(data.provider,"groq");assert.equal(calls,2);
+ assert.match(data.reply,/pulih/);assert.equal(data.routing.failedAttempts[0].status,429);
+});
