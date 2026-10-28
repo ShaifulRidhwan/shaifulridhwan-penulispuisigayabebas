@@ -18,7 +18,7 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
  assert.match(css,/bilik-antara-woman-emblem\.svg/);
  assert.equal(cover[0],0xff);assert.equal(cover[1],0xd8);
  assert.match(emblem,/<svg[^>]+viewBox="0 0 96 96"/);
- assert.ok(css.length<112000,"CSS bundle unexpectedly big");
+ assert.ok(css.length<113500,"CSS bundle unexpectedly big");
 });
 
 test("Final text, controls and simplified channel header",()=>{
@@ -132,7 +132,7 @@ test("Feature icon consolidates sessions, performance, studio and keeps privacy 
 });
 
 test("Header chips stay optically aligned and feature interactions have gentle golden motion",()=>{
- assert.match(html,/href="bilik-antara\.css\?v=50"/);
+ assert.match(html,/href="bilik-antara\.css\?v=51"/);
  assert.match(css,/\.conversation-head #voiceLive,\s*\.conversation-head #connection,\s*\.conversation-head #settingsPanel > summary\s*\{/);
  assert.match(css,/height:42px;\s*min-height:42px!important;\s*max-height:42px/);
  assert.match(css,/@media\(max-width:760px\)\{[\s\S]*?\.conversation-head #voiceLive,\.conversation-head #connection/);
@@ -173,7 +173,7 @@ test("Rounded Aksara controls share Liquid Glass, preserve contrast and cap mobi
 
 test("Clear Liquid Glass preserves background visibility and treats Send like a glass control",()=>{
  const clear=css.slice(css.indexOf("/* Liquid Glass · clearer optical glass"));
- assert.match(html,/href="bilik-antara\.css\?v=50"/);
+ assert.match(html,/href="bilik-antara\.css\?v=51"/);
  assert.match(clear,/clearer optical glass: transparent tint/);
  assert.match(clear,/rgba\(255,247,224,\.035\)/);
  assert.match(clear,/backdrop-filter:blur\(5px\)/);
@@ -213,5 +213,22 @@ test("AI bubbles match light glass and hand sparks fall toward woman without rep
  assert.equal((html.match(/style="--delay:/g)||[]).length,24);
  assert.match(html,/Multi A\.I Connected/);
  assert.doesNotMatch(html,/Multi AI Connected/);
- assert.match(html,/href="bilik-antara\.css\?v=50"/);
+ assert.match(html,/href="bilik-antara\.css\?v=51"/);
+});
+
+test("Consistent DM Sans chat typography and independent animated voice icon",()=>{
+ const voice=fs.readFileSync("bilik-antara-voice.js","utf8");
+ assert.match(css,/font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif!important/);
+ assert.match(css,/letter-spacing:-\.008em/);
+ assert.match(css,/\.messages \.message\.ai \.bubble/);
+ assert.match(css,/\.messages \.message\.user \.bubble/);
+ assert.match(html,/>Jom Voice Chat<\/button>/);
+ assert.match(css,/\.conversation-head #voiceLive::before/);
+ assert.match(css,/@keyframes aksaraVoiceWave/);
+ assert.match(css,/#voiceLive\[aria-pressed="true"\]::before/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+ assert.match(voice,/liveButton\.textContent=liveActive\?"Sedang berbual":"Jom Voice Chat"/);
+ assert.match(html,/src="bilik-antara-voice\.js\?v=33"/);
+ assert.match(html,/href="bilik-antara\.css\?v=51"/);
+ assert.match(css,/\.conversation-head button\.multi-ai-trigger \.dot/);
 });
