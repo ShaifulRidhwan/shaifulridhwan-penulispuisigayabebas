@@ -173,7 +173,7 @@ exports.handler=async event=>{
   // A short elliptical reply needs the previous topic even when keyword routing misses it.
   const contextual=history.length>0&&(followUp||
     (question.length<=85&&/^(?:dia|itu|ni|tu|mereka|yang|kalau|tapi|jadi|habis|pastu|so|betul|boleh|patut|maksud|sebab|akibat|kesan|contoh|lebih|kurang)\b/i.test(question)));
-  if(contextual){intent.depth=Math.max(intent.depth||0,2);intent.review=false;}
+  if(contextual){intent.depth=intent.depth==="high"?"high":"medium";intent.review=false;}
   const plan=intelligencePlan(intent);
   const identityReply=(!media.length&&!documentText&&!contextual)?Identity.answerIdentity(question):null;
   if(identityReply)return result(200,{
