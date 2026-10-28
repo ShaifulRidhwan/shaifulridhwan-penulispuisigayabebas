@@ -17,7 +17,9 @@ function sanitize(markup){
    const safeHref=node.tagName==="A"&&/^https?:\/\//i.test(node.getAttribute("href")||"")?node.getAttribute("href"):null;
    walk(node);
    if(!SAFE_TAGS.has(node.tagName)){node.replaceWith(...[...node.childNodes]);continue;}
+   const align=/^text-align:\\s*(left|center|right|justify)\\s*;?$/i.exec((node.getAttribute("style")||"").trim());
    for(const attr of [...node.attributes])node.removeAttribute(attr.name);
+   if(align)node.style.textAlign=align[1].toLowerCase();
    if(node.tagName==="A"&&safeHref){node.setAttribute("href",safeHref);node.setAttribute("rel","noopener noreferrer");}
   }
  }
