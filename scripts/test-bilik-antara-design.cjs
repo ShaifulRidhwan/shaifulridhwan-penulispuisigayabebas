@@ -132,7 +132,7 @@ test("Feature icon consolidates sessions, performance, studio and keeps privacy 
 });
 
 test("Header chips stay optically aligned and feature interactions have gentle golden motion",()=>{
- assert.match(html,/href="bilik-antara\.css\?v=47"/);
+ assert.match(html,/href="bilik-antara\.css\?v=48"/);
  assert.match(css,/\.conversation-head #voiceLive,\s*\.conversation-head #connection,\s*\.conversation-head #settingsPanel > summary\s*\{/);
  assert.match(css,/height:42px;\s*min-height:42px!important;\s*max-height:42px/);
  assert.match(css,/@media\(max-width:760px\)\{[\s\S]*?\.conversation-head #voiceLive,\.conversation-head #connection/);
@@ -169,4 +169,21 @@ test("Rounded Aksara controls share Liquid Glass, preserve contrast and cap mobi
  assert.match(css,/prefers-reduced-motion:reduce/);
  assert.match(suite,/Match archive\/performance controls to Aksara's rounded Liquid Glass/);
  assert.match(suite,/\.ba-drawer :is\(\.ba-button,\.ba-mini,\.ba-tiny,\.ba-close,\.ba-session-title\)/);
+});
+
+test("Clear Liquid Glass preserves background visibility and treats Send like a glass control",()=>{
+ const clear=css.slice(css.indexOf("/* Liquid Glass · shared rounded surfaces"));
+ assert.match(html,/href="bilik-antara\.css\?v=48"/);
+ assert.match(clear,/Clear-glass revision: low-alpha reflections/);
+ assert.match(clear,/rgba\(255,251,238,\.11\)/);
+ assert.match(clear,/backdrop-filter:blur\(5px\)/);
+ assert.match(clear,/backdrop-filter:blur\(3px\)/);
+ assert.match(clear,/\.conversation \.composer:focus-within\{/);
+ assert.match(clear,/\.conversation \.composer #sendBtn\{/);
+ assert.match(clear,/\.conversation \.composer #sendBtn:disabled\{/);
+ assert.match(clear,/\.conversation \.composer #sendBtn:not\(:disabled\)\{/);
+ assert.match(clear,/\.conversation \.composer #sendBtn:hover:not\(:disabled\)\{/);
+ assert.match(clear,/rgba\(244,216,171,\.105\)/);
+ assert.match(clear,/rgba\(253,223,174,\.19\)/);
+ assert.doesNotMatch(clear,/rgba\(255,242,207,\.96\)/);
 });
