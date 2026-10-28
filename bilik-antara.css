@@ -2767,3 +2767,25 @@ html[data-theme="light"] .multi-ai-row{background:rgba(255,255,255,.32);border-c
  .topbar .theme-choice{width:19px;min-width:19px}
  .topbar .theme-choice svg{width:10px;height:10px}
 }
+
+/* Header two-theme controls: light left, dark right; both true circles. */
+.topbar .theme-choices{gap:2px;align-items:center}
+.topbar .theme-choices .theme-choice{
+ border-radius:50%!important;
+ background:transparent!important;
+ border:1px solid transparent!important;
+ box-shadow:none!important;
+ width:24px;height:24px;min-width:24px;min-height:24px;
+ opacity:.7;
+}
+.topbar .theme-choices .theme-choice[aria-pressed="true"]{
+ background:rgba(210,176,123,.12)!important;
+ border-color:rgba(221,183,124,.32)!important;
+ opacity:1;
+}
+.topbar .theme-choices .theme-choice svg{width:11px;height:11px}
+@media(max-width:760px){
+ .topbar .theme-choices{gap:1px}
+ .topbar .theme-choices .theme-choice{width:23px;height:23px;min-width:23px;min-height:23px}
+}
+@media(max-width:390px){.topbar .theme-choices .theme-choice{width:21px;height:21px;min-width:21px;min-height:21px}}
