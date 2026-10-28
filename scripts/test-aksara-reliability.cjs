@@ -565,13 +565,14 @@ test("light turns choose an allowlisted low-latency Gemini model while deep task
  assert.equal(I.chooseModel("gemini-3.6-flash",{depth:"low"}),"gemini-3.1-flash-lite");
 });
 test("model-specific quota blocks that model, and project-wide quota blocks every Gemini variant",async t=>{
- for(const modelScoped of [true,false]){
+ for(const scope of ["model","project","mixed"]){
+  const modelScoped=scope==="model";
   const handler=setup(t);let google=0;
   global.fetch=async url=>{
    if(!url.includes("googleapis"))return reply("Sandaran tersedia.");
    google++;
    if(url.includes("gemini-3.1-flash-lite"))return Response.json({error:{details:[
-    {"@type":"type.googleapis.com/google.rpc.QuotaFailure",violations:[{quotaId:modelScoped?"GenerateContentRequestsPerDayPerProjectPerModel-FreeTier":"GenerateContentRequestsPerDayPerProject"}]},
+    {"@type":"type.googleapis.com/google.rpc.QuotaFailure",violations:[{quotaId:scope!=="project"?"GenerateContentRequestsPerDayPerProjectPerModel-FreeTier":"GenerateContentRequestsPerDayPerProject"},...(scope==="mixed"?[{quotaId:"GenerateContentRequestsPerDayPerProject"}]:[])]},
     {"@type":"type.googleapis.com/google.rpc.RetryInfo",retryDelay:"30s"}
    ]}},{status:429});
    return Response.json({candidates:[{content:{parts:[{text:"Jawapan model besar."}]},finishReason:"STOP"}]});
@@ -581,4 +582,35 @@ test("model-specific quota blocks that model, and project-wide quota blocks ever
   assert.equal(google,modelScoped?2:1);
   assert.equal(result.model,modelScoped?"gemini-3.6-flash":"mock");
  }
+});
+
+test("a one-second token reset recovers before spending another model's first-token timeout",async t=>{
+ const handler=setup(t);let calls=0,google=0;const started=Date.now();
+ global.fetch=async url=>{
+  if(url.includes("googleapis")){google++;throw Error("This route should not be needed");}
+  calls++;
+  return calls===1?Response.json({error:{message:"Tokens per minute exceeded"}},{status:429,headers:{"retry-after":"1"}}):reply("Sambung topik tadi.");
+ };
+ const response=await handler(event({question:"Ringkaskan punca tadi kepada dua perkara."}));
+ assert.equal(response.statusCode,200);assert.equal(calls,2);assert.equal(google,0);
+ assert.ok(Date.now()-started>=1000,"The real quota reset is honoured before retrying");
+ assert.equal(JSON.parse(response.body).routing.failedAttempts[0].status,429);
+});
+test("stopping during a short quota reset cancels it without sending another completion",async t=>{
+ const handler=setup(t),controller=new AbortController();let calls=0;
+ global.fetch=async()=>{calls++;return Response.json({error:{message:"Tokens per minute exceeded"}},{status:429,headers:{"retry-after":"1"}});};
+ const pending=handler(event({question:"Sambung perbualan tadi."},{signal:controller.signal}));
+ setTimeout(()=>controller.abort(),20);
+ const response=await pending;
+ assert.equal(response.statusCode,499);assert.equal(calls,1);
+});
+test("a failed short quota recovery is not repeated again after another model times out",async t=>{
+ const handler=setup(t);let calls=0,offset=0;const realNow=Date.now.bind(Date);
+ t.mock.method(Date,"now",()=>realNow()+offset);
+ global.fetch=async url=>{
+  if(url.includes("googleapis")){offset+=3000;throw new DOMException("Primary timed out","AbortError");}
+  calls++;return Response.json({error:{message:"Tokens per minute exceeded"}},{status:429,headers:{"retry-after":"1"}});
+ };
+ const response=await handler(event({question:"Terangkan apa itu api."}));
+ assert.equal(response.statusCode,503);assert.equal(calls,2,"A request gets at most one recovery attempt");
 });

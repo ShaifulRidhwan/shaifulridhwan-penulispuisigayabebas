@@ -30,6 +30,13 @@ function requestControl(timeoutMs,parent){
   clearTimeout(timer);timer=setTimeout(()=>controller.abort(),Math.max(1,ms));
  },close(){clearTimeout(timer);parent?.removeEventListener("abort",abort);}};
 }
+function waitFor(ms,signal){
+ return new Promise((resolve,reject)=>{
+  const abort=()=>{clearTimeout(timer);signal?.removeEventListener("abort",abort);reject(new DOMException("Dihentikan","AbortError"));};
+  const timer=setTimeout(()=>{signal?.removeEventListener("abort",abort);resolve();},Math.max(0,ms));
+  if(signal?.aborted)abort();else signal?.addEventListener("abort",abort,{once:true});
+ });
+}
 async function readSSE(body,consume){
  const reader=body.getReader(),decoder=new TextDecoder();let buffer="";
  const block=text=>{
@@ -51,4 +58,4 @@ async function readSSE(body,consume){
   }
  }finally{try{await reader.cancel();}catch(_){}reader.releaseLock();}
 }
-module.exports={boundedText,boundedHistory,requestControl,readSSE};
+module.exports={boundedText,boundedHistory,requestControl,readSSE,waitFor};

@@ -10,7 +10,7 @@ const Identity=require("../../bilik-antara-identity");
 const Brain=require("../../bilik-antara-brain");
 const ChatStyle=require("../../bilik-antara-chat-style");
 const Router=require("./aksara-provider-router");
-const {requestControl,readSSE}=require("./lib/aksara-transport");
+const {requestControl,readSSE,waitFor}=require("./lib/aksara-transport");
 const DEFAULT_MODEL="gemini-3.6-flash";
 const SITE_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
 const MAX_BODY=5400000;
@@ -63,7 +63,7 @@ function headers(){
 }
 function result(code,data,H){
   if(code===200&&typeof data.reply==="string"&&data.mode!=="recorded-voice")data={...data,reply:ChatStyle.reply(data.reply)};
-  return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-8"})};
+  return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-9"})};
 }
 function throttle(ip,store=rateMap,limit=12){
   const now=Date.now();
@@ -97,9 +97,12 @@ async function callGemini({apiKey,model,contents,system,tools=[],thinkingLevel="
       const seconds=Number.parseFloat(res.headers?.get?.("retry-after")||retryInfo?.retryDelay||"");
       if(Number.isFinite(seconds))error.retryAfterSeconds=Math.max(1,Math.ceil(seconds));
       if(res.status===429){
-        const names=(details?.error?.details||[]).flatMap(x=>(x.violations||[]).map(v=>String(v.quotaId||""))).join(" ")+" "+String(details?.error?.message||"");
+        const quotaIds=(details?.error?.details||[]).flatMap(x=>(x.violations||[]).map(v=>String(v.quotaId||"")));
+        const names=quotaIds.join(" ")+" "+String(details?.error?.message||"");
         error.quotaKind=/perday|per[-_ ]day|daily/i.test(names)?"daily":/perminute|per[-_ ]min/i.test(names)?"minute":"unspecified";
-        error.quotaScope=/permodel|per[-_ ]model/i.test(names)?"model":"project";
+        // A project-wide violation wins even when the same response also lists
+        // a per-model limit. Switching models must never bypass that limit.
+        error.quotaScope=quotaIds.length&&quotaIds.every(id=>/permodel|per[-_ ]model/i.test(id))?"model":"project";
       }
       throw error;
     }
@@ -314,7 +317,7 @@ exports.handler=async event=>{
     works:!!poem,multimodal:media.length>0,model,review:intent.review});
   const privateContext=!!(documentText||userMemory);
   const textOnly=media.length===0&&!tiktokHandle&&(!privateContext||payload.contextFallback===true)&&!(intent.sensitive||intent.search||intent.hasLink);
-  let providerFailures=[],alternativeTried=false,providerRetrySeconds=3;
+  let providerFailures=[],alternativeTried=false,quotaRecoveryTried=false,providerRetrySeconds=3;
   const preparationMs=Date.now()-started;
   const timings=()=>({preparationMs,firstTextMs,systemChars:system.length,historyChars:history.reduce((n,m)=>n+m.content.length,0)});
   async function useAlternative(options={}){
@@ -352,6 +355,20 @@ exports.handler=async event=>{
   if(textOnly&&!tools.length&&hint!=="gemini"&&Router.enabled()){
     const fast=await useAlternative({prefer:hint});
     if(fast&&(fast.statusCode===200||fast.statusCode===499||streamed))return fast;
+    // A genuine one-second token reset is quicker than waiting for another
+    // model's full first-token timeout. Honour it once, inside this request.
+    const imminent=Router.availability().filter(p=>p.retryAfterSeconds<=1&&
+      providerFailures.some(f=>f.provider===p.provider&&f.status===429&&f.quotaKind!=="daily"));
+    if(imminent.length&&remaining()>5000){
+      const wait=Math.min(...imminent.map(p=>p.retryAfterSeconds))*1000;
+      try{if(wait)await waitFor(wait,event.signal);}catch(_){return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);}
+      const recovered=Router.availability().filter(p=>p.retryAfterSeconds===0&&imminent.some(x=>x.provider===p.provider)).map(p=>p.provider);
+      if(recovered.length){
+        quotaRecoveryTried=true;
+        const recovery=await useAlternative({only:recovered,firstResponseDeadline:deadline,timeoutMs:Math.min(4000,remaining())});
+        if(recovery&&(recovery.statusCode===200||recovery.statusCode===499||streamed))return recovery;
+      }
+    }
   }
   try{
     if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
@@ -382,14 +399,14 @@ exports.handler=async event=>{
     if(intent.search&&!tools.some(t=>t.google_search))warnings.push("Carian web langsung dimatikan dalam tetapan RM0. Maklumat terkini belum disahkan.");
     else if(intent.search&&!sources.length)warnings.push("Tiada rujukan carian yang dapat disahkan untuk jawapan ini.");
     if(intent.hasLink&&!actualTools.includes("url_context")&&!sources.length)warnings.push("Kandungan pautan tidak dapat disahkan daripada metadata alat.");
-    const output={mode:"live",aiMode:"automatic",model,reply:revised,sources,
+    const output={mode:"live",aiMode:"automatic",provider:"gemini",model,reply:revised,sources,
       ...(publicAccount?{publicAccount}:{}),
       argumentMap:review?review.argumentMap:[],truthAudit:review?review.truthAudit:[],
       thoughtLedger:review?review.thoughtLedger:[],hypothesis:review?review.hypothesis:"",
       reviewApplied:!!review,
       toolsUsed:actualTools,toolsOffered:tools.map(t=>Object.keys(t)[0]),
       disclaimer:warnings.join(" "),
-      usage:data.usageMetadata||null,durMs:Date.now()-started,timings:timings()};
+      usage:data.usageMetadata||null,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures}};
     lastTextProvider="gemini";lastTextSuccessAt=Date.now();
     const successfulHealth=googleHealthFor(model);successfulHealth.value={id:"gemini",model,status:"online",latencyMs:Date.now()-started};successfulHealth.time=Date.now();
     log("success",{depth:intent.depth,review:!!review,sources:sources.length,ms:output.durMs});
@@ -397,7 +414,7 @@ exports.handler=async event=>{
   }catch(error){
     if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
     if(streamed)return result(502,{code:"STREAM_INTERRUPTED",error:"Aliran jawapan terputus. Jawapan separa belum lengkap."},H);
-    providerFailures.push({provider:"gemini",status:error.status||"unavailable",reason:error.cooldownKnown?"quota_cooldown":error.name==="AbortError"?"timeout":"upstream",...(error.quotaKind?{quotaKind:error.quotaKind}:{})});
+    providerFailures.push({provider:"gemini",status:error.status||"unavailable",reason:error.cooldownKnown?"quota_cooldown":error.name==="AbortError"?"timeout":"upstream",...(error.quotaKind?{quotaKind:error.quotaKind,quotaScope:error.quotaScope}:{})});
     googleCooldown(model,error);
     const transient=[400,401,403,404,429,500,502,503,504].includes(error.status)||error.name==="AbortError"||error.name==="TypeError"||(!error.status&&error.name==="Error");
     if(transient&&textOnly&&Router.enabled()&&!alternativeTried){
@@ -408,7 +425,7 @@ exports.handler=async event=>{
     if(textOnly&&Router.enabled()&&alternativeTried){
       const recovered=Router.availability().filter(p=>p.retryAfterSeconds===0&&
         providerFailures.some(f=>f.provider===p.provider&&f.status===429)).map(p=>p.provider);
-      if(recovered.length&&remaining()>2000){
+      if(!quotaRecoveryTried&&recovered.length&&remaining()>2000){
         // The actual Retry-After elapsed while other routes were being tested.
         // One recovery attempt is permitted now; never retry before that reset.
         const recovery=await useAlternative({only:recovered,firstResponseDeadline:deadline,timeoutMs:Math.min(4000,remaining())});
