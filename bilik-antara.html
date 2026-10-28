@@ -523,12 +523,13 @@ async function submit(event){
   compact();
  }catch(error){
   typing.remove();pendingUser.remove(); // Failed attempts must not masquerade as conversation history.
-  const limited=error?.status===429||error?.code==="API_QUOTA"||error?.code==="RATE_LIMIT";
+  const limited=error?.status===429||["API_QUOTA","RATE_LIMIT","ALL_PROVIDERS_BUSY"].includes(error?.code);
   if(limited){
    quotaCooldownUntil=Date.now()+60000; // Local retry guard, not a claim about Google reset time.
-   const rateLimited=error?.code==="RATE_LIMIT";
-   status("limited",rateLimited?"Terlalu banyak permintaan":"Had API",rateLimited
+   const rateLimited=error?.code==="RATE_LIMIT",allBusy=error?.code==="ALL_PROVIDERS_BUSY";
+   status("limited",rateLimited?"Terlalu banyak permintaan":allBusy?"Model AI sibuk":"Had API",rateLimited
     ?"Had permintaan sementara dicapai. Teks masih ada; cuba lagi selepas seketika."
+    :allBusy?"Model utama dan sandaran belum tersedia. Teks kau masih ada; cuba lagi kemudian."
     :"Kuota Gemini sementara penuh. Mesej kau masih ada; cuba lagi sebentar nanti.");
   }else{
    const desc=error?.name==="AbortError"?"Respons mengambil masa terlalu lama.":String(error?.message||"Ralat tidak diketahui.").slice(0,180);
