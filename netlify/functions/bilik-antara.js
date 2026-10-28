@@ -257,6 +257,22 @@ exports.handler=async event=>{
     log("success",{depth:intent.depth,review:!!review,sources:sources.length,ms:output.durMs});
     return result(200,output,H);
   }catch(error){
+    const transient=[429,500,502,503,504].includes(error.status)||error.name==="AbortError";
+    const textOnly=media.length===0&&!documentText&&!tiktokHandle&&!userMemory&&
+      !(intent.sensitive||intent.search||intent.hasLink)&&question.length<=9000;
+    if(transient&&textOnly&&Router.enabled()){
+      const alternative=await Router.complete({system,history,question,maxTokens:Math.min(maxTokens,1600),timeoutMs:8500});
+      if(alternative.reply){
+        log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
+        return result(200,{
+          mode:"fallback",aiMode:"automatic",model:alternative.model,provider:alternative.provider,
+          reply:alternative.reply,sources:[],argumentMap:[],truthAudit:[],
+          thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[],toolsOffered:[],
+          disclaimer:"Jawapan daripada model sandaran, tanpa semakan web langsung.",
+          usage:alternative.usage,durMs:Date.now()-started
+        },H);
+      }
+    }
     log("error",{http:error.status||null,name:error.name||"unknown",ms:Date.now()-started});
     if(error.name==="AbortError")return result(504,{error:"Gemini mengambil masa terlalu lama. Cuba soalan lebih ringkas."},H);
     if(error.status===429)return result(429,{code:"API_QUOTA",error:errorMessage(429)},H);
