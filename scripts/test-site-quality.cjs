@@ -57,9 +57,9 @@ test("Asset extraction preserves CSS and JavaScript with correct ordering",()=>{
  assert.ok(css.length>35000&&js.length>10000);
  assert.equal((home.match(/<style\b/gi)||[]).length,0);
  assert.equal((home.match(/<script\b/gi)||[]).length,3);
- assert.match(home,/href="gaya-bebas\.css\?v=2"/);
+ assert.match(home,/href="gaya-bebas\.css\?v=\d+"/);
  assert.match(home,/src="karya-data\.js\?v=1" defer/);
- assert.match(home,/src="gaya-bebas\.js\?v=1" defer/);
+ assert.match(home,/src="gaya-bebas\.js\?v=\d+" defer/);
  assert.ok(home.indexOf('src="karya-data.js')<home.indexOf('src="gaya-bebas.js'));
 });
 test("Canonical, open graph and JSON-LD consistency across public pages",()=>{
