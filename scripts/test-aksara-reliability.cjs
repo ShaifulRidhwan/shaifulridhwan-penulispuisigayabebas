@@ -204,3 +204,13 @@ test("colloquial identity questions use the existing grounded Aksara introductio
   const r=await handler(event({question}));assert.equal(r.statusCode,200,question);const data=JSON.parse(r.body);assert.equal(data.model,"project-identity");assert.match(data.reply,/Aksara A\.I\./);assert.doesNotMatch(data.reply,/User Safety:/);
  }
 });
+test("buffered OpenRouter answers are not cut off at the streaming first-token deadline",async t=>{
+ setup(t);delete process.env.GROQ_API_KEY;process.env.OPENROUTER_API_KEY="mock";
+ const router=require("../netlify/functions/aksara-provider-router");let calls=0;
+ global.fetch=async(_url,{signal})=>{calls++;return new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>resolve(reply("Jawapan lengkap yang mengambil masa sedikit lebih lama.")),100);
+  signal.addEventListener("abort",()=>{clearTimeout(timer);reject(new DOMException("abort","AbortError"));},{once:true});
+ });};
+ const r=await router.complete({system:"persona",history:[],question:"Kenapa langit biru?",onDelta:()=>{},timeoutMs:30,bufferedTimeoutMs:600,deadline:Date.now()+1000});
+ assert.equal(r.provider,"openrouter");assert.match(r.reply,/Jawapan lengkap/);assert.equal(calls,1);
+});
