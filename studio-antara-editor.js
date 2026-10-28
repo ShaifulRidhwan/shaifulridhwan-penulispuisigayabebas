@@ -31,8 +31,8 @@ function sanitize(markup){
  walk(parsed.body);
  return parsed.body.innerHTML;
 }
-function getHTML(){return sanitize(editor.innerHTML);}
-function getText(){return editor.innerText||editor.textContent||"";}
+function getHTML(){return window.StudioTipTap?.ready?window.StudioTipTap.editor.getHTML():sanitize(editor.innerHTML);}
+function getText(){return window.StudioTipTap?.ready?window.StudioTipTap.editor.getText():editor.innerText||editor.textContent||"";}
 function setHTML(html){editor.innerHTML=sanitize(html);update(false);}
 function setText(text){editor.replaceChildren();for(const p of String(text||"").split(/\n{2,}/)){const block=document.createElement("p");block.textContent=p.trim();editor.appendChild(block);}update(false);}
 function update(edited=true){
@@ -42,6 +42,7 @@ function update(edited=true){
  changeCallback();
 }
 function saveDraft(){
+ if(window.StudioTipTap?.ready)return window.StudioRich.saveDraft();
  clearTimeout(saveTimer);
  const data={title:title.value,template:$("docTemplate").value,html:getHTML(),at:Date.now()};
  try{
