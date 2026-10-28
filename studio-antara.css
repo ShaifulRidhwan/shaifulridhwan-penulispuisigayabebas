@@ -45,3 +45,33 @@
  .preview-paper .formatted-body{font:11.5pt/1.55 Georgia,serif}
  .preview-paper .formatted-body li{break-inside:avoid}
 }
+
+/* Advanced Studio controls for professional document preparation. */
+.doc-layout-settings{margin:14px 0;border:1px solid var(--line);border-radius:11px;padding:12px;background:rgba(255,255,255,.025)}
+.doc-layout-settings summary{cursor:pointer;font-weight:600;color:var(--gold);padding:3px 0}
+.doc-layout-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px;margin-top:13px}
+.doc-layout-grid label{margin:0}
+.doc-layout-grid input,.doc-layout-grid select{max-width:100%}
+.doc-layout-grid .doc-check{display:flex;align-items:center;gap:8px;color:var(--ink);padding:12px 0}
+.doc-layout-grid .doc-check input{width:18px;height:18px;margin:0;accent-color:var(--gold)}
+.doc-find-panel{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px;border:1px solid var(--line);border-radius:10px;padding:12px;margin:12px 0}
+.doc-find-panel[hidden]{display:none!important}
+.doc-find-panel label{flex:1 1 150px;margin:0}
+.doc-find-panel button{border:1px solid var(--line);padding:9px;border-radius:7px;background:rgba(255,255,255,.05);color:var(--ink)}
+#docFindStatus{width:100%;font-size:12px;color:var(--gold)}
+.rich-document table,.preview-paper table{border-collapse:collapse;width:100%;table-layout:fixed;margin:15px 0}
+.rich-document td,.rich-document th,.preview-paper td,.preview-paper th{border:1px solid #aaa;padding:7px;vertical-align:top;overflow-wrap:anywhere}
+.rich-document img,.preview-paper img{display:block;max-width:100%;height:auto;object-fit:contain;margin:12px auto}
+.rich-document hr[data-page-break]{border:none;border-top:2px dashed #c4a675;margin:24px 0;position:relative}
+.rich-document hr[data-page-break]::after{content:"Halaman baharu";position:absolute;right:0;top:-16px;font:10px Arial,sans-serif;color:#80633a}
+.preview-paper hr[data-page-break]{border:0;border-top:1px dashed #ddd;margin:18px 0}
+.document-running-header{font:11px/1.5 Arial,sans-serif;color:#777;border-bottom:1px solid #ddd;margin-bottom:22px;padding-bottom:8px}
+.document-running-footer{font:11px/1.5 Arial,sans-serif;color:#777;border-top:1px solid #ddd;margin-top:22px;padding-top:8px}
+@media(max-width:550px){.doc-layout-grid{grid-template-columns:1fr}.doc-find-panel button{min-height:40px}}
+@media print{
+ .preview-paper table{break-inside:auto!important}
+ .preview-paper tr{break-inside:avoid}
+ .preview-paper img{break-inside:avoid;max-height:225mm}
+ .preview-paper hr[data-page-break]{break-after:page;page-break-after:always;border:0;margin:0;height:0}
+ .document-running-header,.document-running-footer{color:#555}
+}
