@@ -76,7 +76,7 @@ function analyzeIntent(question,attachment){
   const creative=/(?:\b(?:tulis|tuliskan|hasilkan|karangkan|cipta|ciptakan|draf|karang|terjemah|terjemahkan|ringkaskan|olah|perkemas|rewrite|translate|summarize)\b|bantu (?:aku|saya) (?:menulis|hasilkan|cipta|cari idea)|idea (?:cerita|puisi|penulisan|caption|kapsyen))/i.test(q);
   const explain=/(?:\b(?:terangkan|jelaskan|ajar|belajar|fahami|maksud|definisi|kenapa|mengapa|bagaimana|cara|contoh|bezakan|bandingkan|explain|teach|how|why)\b|apa (?:itu|makna|maksud)|what is)/i.test(q);
   const casual=/(?:^(?:hai|hello|hi|helo|assalamualaikum|salam|selamat pagi|selamat malam|apa khabar)[!?.\s]*$|borak|sembang|cerita (?:apa|sikit|pasal)|aku bosan|aku penat|lawak)/i.test(q);
-  const deep=/(?:analisis (?:mendalam|terperinci)|huraikan (?:secara )?mendalam|perbandingan terperinci|langkah demi langkah|tunjuk (?:pengiraan|penyelesaian)|reka bentuk sistem|bina aplikasi|architecture|debug|kontradiksi|paradoks|falsafah|etika|hipotesis|kajian ilmiah|deep dive)/i.test(q)||q.length>340;
+  const deep=/(?:secara mendalam|lebih mendalam|secara terperinci|analisis (?:mendalam|terperinci)|huraikan (?:secara )?mendalam|perbandingan terperinci|langkah demi langkah|tunjuk (?:pengiraan|penyelesaian)|reka bentuk sistem|bina aplikasi|architecture|debug|kontradiksi|paradoks|falsafah|etika|hipotesis|kajian ilmiah|deep dive)/i.test(q)||q.length>340;
   const works=/(?:shaiful|ridhwan|puisigayabebas|tetralogi|trilogi|duologi|antara cahaya dan gelap|karya (?:kau|aku|shaiful|laman|penulis)|puisi (?:kau|aku|shaiful|dalam laman))/i.test(q);
   const task=(sensitive&&!creative)?"support":debate?"critique":thought?"hypothetical":
     creative?"creative":(calculate||technical)?"technical":latest?"research":
@@ -91,14 +91,18 @@ function analyzeIntent(question,attachment){
 }
 function resolveIntent(question,history,attachment){
   const current=analyzeIntent(question,attachment);
-  if(attachment||!Array.isArray(history))return current;
+  if(attachment||!Array.isArray(history)||current.sensitive)return current;
   const q=safeText(question,32000).toLowerCase().replace(/[!?.]+$/,"").trim();
-  // Lanjutan ringkas mewarisi topik terakhir; arahan baharu kekal keutamaan.
-  if(!/^(?:lagi|teruskan|sambung|jelaskan lagi|terangkan lagi|hurai lagi|lebih mendalam|lebih terperinci|bagi contoh|contoh lain|macam mana|kenapa|mengapa|yang kedua|yang ketiga|itu|lanjutkan)$/.test(q))return current;
+  // Preserve the preceding user goal for truly elliptical follow-ups and corrections.
+  const reference=/^(?:lagi|teruskan|sambung|jelaskan lagi|terangkan lagi|hurai lagi|lebih mendalam|lebih terperinci|lebih detail|bagi contoh|contoh lain|macam mana|kenapa|mengapa|yang kedua|yang ketiga|yang tadi|yang tu|dia|itu|lanjutkan|bukan macam tu|bukan tu|maksud aku|yang lain|pastu)$/.test(q);
+  if(!reference)return current;
   const previous=[...history].reverse().find(m=>m&&m.role==="user"&&typeof m.content==="string"&&m.content.trim());
   if(!previous)return current;
   const prior=analyzeIntent(previous.content,false);
-  return {...current,task:prior.task,depth:q.includes("mendalam")||q.includes("terperinci")?"high":prior.depth,
+  const askDeep=/(?:mendalam|terperinci|detail)/.test(q);
+  const inheritDepth=askDeep?"high":prior.depth;
+  // A question like 'kenapa' inherits subject, not an unwanted debating mode.
+  return {...current,task:prior.task,depth:inheritDepth,
     search:prior.search,calculate:prior.calculate,works:prior.works,thought:prior.thought,
     debate:prior.debate,sensitive:prior.sensitive,review:prior.review,contextFollowUp:true};
 }
