@@ -2334,3 +2334,34 @@ html.chat-portrait-ready .message.ai::before{
 /* The voice starter is an action, not a text message. */
 .starter.starter-voice{border-color:rgba(215,180,123,.53)}
 .starter.starter-voice::before{content:"✦"}
+
+/* Header identity: one tidy baseline, with founder credit secondary to Aksara. */
+.topbar .brand{flex:0 0 auto;min-width:0;text-decoration:none}
+.topbar .brand-name{display:inline-flex;align-items:baseline;gap:clamp(5px,.7vw,10px);white-space:nowrap;min-width:0}
+.topbar .brand-name span{display:inline-block;white-space:nowrap;margin:0}
+.topbar .brand-name span:first-child{font:650 13px/1.2 'DM Sans',sans-serif;letter-spacing:.07em}
+.topbar .brand-name span:last-child{font:450 9px/1.2 'DM Sans',sans-serif;letter-spacing:.045em;text-transform:none;opacity:.83}
+.topbar .nav-actions{flex:0 0 auto;min-width:0}
+@media(max-width:760px){
+ .topbar{gap:6px;padding-inline:clamp(7px,2vw,12px)}
+ .topbar .brand-name{gap:5px}
+ .topbar .brand-name span:first-child{font-size:11px;letter-spacing:.025em}
+ .topbar .brand-name span:last-child{font-size:8px;letter-spacing:0}
+ .topbar .nav-actions{gap:1px}
+ .topbar .nav-link{font-size:10px;letter-spacing:0;padding:7px 3px;white-space:nowrap}
+ .topbar .icon-btn{width:31px;height:31px;flex:none}
+}
+@media(max-width:390px){
+ .topbar .nav-link[href="index.html"]{display:inline-flex}
+ .topbar .brand-name{gap:3px}
+ .topbar .brand-name span:first-child{font-size:10px;letter-spacing:0}
+ .topbar .brand-name span:last-child{font-size:7px}
+ .topbar .nav-link{font-size:9px;padding-inline:2px}
+ .topbar .nav-actions{gap:0}
+ .topbar .icon-btn{width:29px;height:29px}
+}
+@media(max-width:350px){
+ .topbar .brand-name span:last-child{font-size:6.5px}
+ .topbar .brand-name span:first-child{font-size:9.5px}
+ .topbar .nav-link{font-size:8.5px}
+}
