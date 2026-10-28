@@ -525,7 +525,7 @@ async function submit(event){
  const selectedFile=fileState;
  if(Date.now()<quotaCooldownUntil){
   const seconds=Math.max(1,Math.ceil((quotaCooldownUntil-Date.now())/1000));
-  status("limited","Had API","Kuota Gemini belum tersedia. Cuba lagi selepas kira-kira "+seconds+" saat. Teks kau kekal dalam kotak taip.");return;
+  status("limited","Cuba sebentar lagi","Had percubaan sementara aktif. Cuba semula selepas kira-kira "+seconds+" saat. Teks kau kekal dalam kotak taip.");return;
  }
  busy=true;update();ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
  const pendingUser=addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""));
@@ -561,10 +561,13 @@ async function submit(event){
   compact();
  }catch(error){
   typing.remove();pendingUser.remove(); // Failed attempts must not masquerade as conversation history.
-  const limited=error?.status===429||error?.code==="API_QUOTA";
+  const limited=error?.status===429||error?.code==="API_QUOTA"||error?.code==="RATE_LIMIT";
   if(limited){
    quotaCooldownUntil=Date.now()+60000; // Local retry guard, not a claim about Google reset time.
-   status("limited","Had API","Kuota Gemini sementara penuh. Mesej kau masih ada; cuba lagi sebentar nanti.");
+   const rateLimited=error?.code==="RATE_LIMIT";
+   status("limited",rateLimited?"Terlalu banyak permintaan":"Had API",rateLimited
+    ?"Had permintaan sementara dicapai. Teks masih ada; cuba lagi selepas seketika."
+    :"Kuota Gemini sementara penuh. Mesej kau masih ada; cuba lagi sebentar nanti.");
   }else{
    const desc=error?.name==="AbortError"?"Respons mengambil masa terlalu lama.":String(error?.message||"Ralat tidak diketahui.").slice(0,180);
    status("error","Permintaan gagal",desc+" Mesej kau dikekalkan untuk dicuba semula.");
