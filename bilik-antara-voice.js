@@ -38,7 +38,7 @@ const VOICE_TOOLS=[{functionDeclarations:[
 {name:"get_local_time",description:"Dapatkan waktu tempatan peranti apabila ditanya waktu sekarang.",parameters:{type:"OBJECT",properties:{}}},
 {name:"get_voice_session_status",description:"Dapatkan diagnostik sambungan voice tanpa teks atau rakaman suara.",parameters:{type:"OBJECT",properties:{}}}
 ]}];
-let advancedVoiceConfig=true,turnStartAt=0,lastCommand="",lastCommandAt=0,echoRiskSince=0;
+let advancedVoiceConfig=true,turnStartAt=0,lastCommand="",lastCommandAt=0,echoRiskSince=0,suppressPlaybackUntilUser=false;
 let voiceMetrics={startedAt:0,connections:0,reconnects:0,interruptions:0,commands:0,turns:0,audioChunks:0,echoRiskEvents:0,lastResponseLatencyMs:null};
 const voiceDiagnosticSnapshot=()=>({...voiceMetrics,connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,advancedFeatures:advancedVoiceConfig,model:liveModel||"unknown",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
 window.BilikAntaraVoiceDiagnostics={snapshot:voiceDiagnosticSnapshot};
@@ -49,7 +49,7 @@ function handleSpokenControl(text){
  if(!stop&&!resume)return false;
  if(lastCommand===q&&Date.now()-lastCommandAt<1700)return true;
  lastCommand=q;lastCommandAt=Date.now();voiceMetrics.commands++;
- if(stop){stopAudioQueue();panel.classList.remove("voice-speaking");sayStatus("Baik, aku diam. Kau cakap je.");}
+ if(stop){suppressPlaybackUntilUser=true;stopAudioQueue();panel.classList.remove("voice-speaking");sayStatus("Baik, aku diam. Kau cakap je.");}
  else sayStatus("Aku dengar. Kau boleh sambung.");
  return true;
 }
@@ -237,7 +237,7 @@ function drainAudioQueue(){
   }
 }
 function queueAudio(data,mime){
-  if(!speakerEnabled||!playContext||!data)return;
+  if(!speakerEnabled||!playContext||!data||suppressPlaybackUntilUser)return;
   const match=String(mime||"").match(/rate=(\d+)/);
   const rate=match?Number(match[1]):24000;
   if(rate<8000||rate>48000)return;
@@ -300,7 +300,7 @@ function onServerMessage(payload){
   }
   if(c.inputTranscription&&c.inputTranscription.text){
     turnStartAt=performance.now();voiceMetrics.turns++;
-    handleSpokenControl(c.inputTranscription.text);
+    if(!handleSpokenControl(c.inputTranscription.text))suppressPlaybackUntilUser=false;
     appendTranscript("user",c.inputTranscription.text);
     sayStatus("Aku dengar. Sekejap, aku jawab…");
   }
@@ -345,7 +345,7 @@ async function startLive(){
   if(minimizeButton){minimizeButton.textContent="Minimize";minimizeButton.setAttribute("aria-expanded","true");}
   const speakingRule=languageLock;
   liveActive=true;liveReady=false;micEnabled=true;speakerEnabled=true;
-  advancedVoiceConfig=true;turnStartAt=0;lastCommand="";lastCommandAt=0;echoRiskSince=0;
+  advancedVoiceConfig=true;turnStartAt=0;lastCommand="";lastCommandAt=0;echoRiskSince=0;suppressPlaybackUntilUser=false;
   voiceMetrics={startedAt:Date.now(),connections:0,reconnects:0,interruptions:0,commands:0,turns:0,audioChunks:0,echoRiskEvents:0,lastResponseLatencyMs:null};
   sessionStarted=Date.now();resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;lastSpeechAt=0;connectedAt=0;
   try{preferStandardFallback=window.sessionStorage?.getItem(FALLBACK_CACHE_KEY)==="1";}catch(_){preferStandardFallback=false;}
