@@ -170,3 +170,11 @@ test("reconnect waits for internet recovery instead of repeatedly sending reques
  const r=await h.askWithReconnect({},new AbortController().signal,()=>{},({offline})=>{if(offline)offlineStatuses++;},()=>{});
  assert.equal(r.reply,"pulih");assert.equal(calls,2);assert.ok(offlineStatuses>=5);assert.equal(h.waits.reduce((a,b)=>a+b,0),5000);
 });
+test("a truncated or malformed client stream is marked retryable even when the HTTP connection closes normally",async()=>{
+ const html=fs.readFileSync(path.join(__dirname,"../bilik-antara.html"),"utf8"),start=html.indexOf("let streamAvailable=true;"),end=html.indexOf("function reconnectable",start);
+ const make=new Function("fetch","ReadableStream","STREAM_ENDPOINT","ENDPOINT",html.slice(start,end)+";return ask;");
+ for(const body of ['{"type":"start"}\n{"type":"delta","text":"separuh"}\n','{"type":"start"}\n{broken}\n']){
+  const ask=make(async()=>new Response(body,{headers:{"content-type":"application/x-ndjson"}}),ReadableStream,"/stream","/json");
+  await assert.rejects(ask({},new AbortController().signal,()=>{}),{code:"STREAM_INTERRUPTED",status:502});
+ }
+});

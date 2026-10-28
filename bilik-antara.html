@@ -561,7 +561,8 @@ async function ask(payload,signal,onDelta){
    if(!res.ok){const data=await res.json().catch(()=>({}));throw Object.assign(new Error(data.error||"HTTP "+res.status),{status:res.status,retryAfterSeconds:retryAfter(res),...data});}
    const reader=res.body.getReader(),decoder=new TextDecoder();let buffer="",answer=null;
    function consume(line){
-    if(!line.trim())return;const item=JSON.parse(line);
+    if(!line.trim())return;let item;
+    try{item=JSON.parse(line);}catch(_){throw Object.assign(new Error("Aliran respons tidak lengkap."),{code:"STREAM_INTERRUPTED",status:502});}
     if(item.type==="delta"&&typeof item.text==="string")onDelta(item.text);
     if(item.type==="done")answer=item;
     if(item.type==="error")throw Object.assign(new Error(item.error||"Permintaan gagal"),item);
@@ -573,7 +574,7 @@ async function ask(payload,signal,onDelta){
      if(done){if(buffer.trim())consume(buffer);break;}
     }
    }finally{try{await reader.cancel();}catch(_){}reader.releaseLock();}
-   if(!answer)throw Error("Aliran respons belum lengkap.");return answer;
+   if(!answer||typeof answer.reply!=="string"||!answer.reply.trim())throw Object.assign(new Error("Aliran respons belum lengkap."),{code:"STREAM_INTERRUPTED",status:502});return answer;
   }
  }
  const res=await fetch(ENDPOINT,options),data=await res.json().catch(()=>({}));
