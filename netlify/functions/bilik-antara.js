@@ -325,7 +325,7 @@ exports.handler=async event=>{
           mode:"fallback",aiMode:"automatic",model:alternative.model,provider:alternative.provider,
           reply:alternative.reply,sources:publicSources.map(({title,url})=>({title,url})),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[],toolsOffered:[],
-          disclaimer:"Jawapan daripada model sandaran ("+alternative.provider+"). "+(publicSources.length?"Rujukan ensiklopedia awam dilampirkan; maklumat terkini masih memerlukan pengesahan.":"Tiada semakan web langsung; butiran sejarah dan dakwaan khusus mungkin memerlukan pengesahan.")+(alternative.partial?" Jawapan model mungkin terpotong kerana had output.":"")+(check?.flag?" Semakan model kedua mengesan kemungkinan isu: "+check.flag+" (belum disahkan secara bebas).":""),
+          disclaimer:"Model sandaran: "+({groq:"Groq",mistral:"Mistral",openrouter:"OpenRouter",gemini:"Gemini"}[alternative.provider]||alternative.provider),
           usage:alternative.usage,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures}
         },H);
       }
