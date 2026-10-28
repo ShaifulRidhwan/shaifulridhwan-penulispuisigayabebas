@@ -560,7 +560,7 @@ async function submit(event){
   addIdeas(data.thoughtLedger);save();
   if(selectedFile&&selectedFile===fileState)discardFile();
   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,sources:data.sources||[]}}));
-  status("online","Connected","");
+  status(data.model==="project-identity"?"ready":"online",data.model==="project-identity"?"Multi A.I. Ready":"Connected","");
   compact();
  }catch(error){
   typing.remove();pendingUser.remove(); // Failed attempts must not masquerade as conversation history.
