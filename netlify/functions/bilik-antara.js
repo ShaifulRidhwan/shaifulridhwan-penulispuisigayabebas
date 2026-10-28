@@ -138,7 +138,7 @@ exports.handler=async event=>{
   if(payload.voiceFallback===true){
     const audioOnly=media.length===1&&/^audio\/(?:webm|ogg|mp4|mpeg|wav)$/.test(media[0].mimeType);
     if(!audioOnly)return result(400,{error:"Mod suara memerlukan satu rakaman audio yang sah."},H);
-    const voiceSystem="Kau Shaiful Ridhwan A.I. dalam Bilik Antara. Gunakan Bahasa Melayu Malaysia santai, kata ganti aku. Soalan pendek seperti kenapa, bagaimana, sebab, akibat dan adakah merujuk kepada topik terakhir jika jelas. Beri alasan, proses dan akibat secara berasas, bukan jawapan satu ayat yang kosong. Jika audio tidak jelas, jangan mereka kandungan; minta ulang.";
+    const voiceSystem=Brain.CORE+"\n"+Brain.VOICE_GUIDANCE+"\n"+Identity.CORE_PROMPT+"\nJawab rakaman audio dalam Bahasa Melayu Malaysia santai dengan kata ganti aku. Kenal pasti niat, nada dan konteks sebelum menjawab; tegur hujah secara tegas apabila sesuai tanpa menghina orang. Jika audio tidak jelas, jangan reka kandungan dan minta ulang sekali sahaja.";
     const voiceContents=[...history.slice(-10).map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content.slice(0,1200)}]})),{role:"user",parts:[
       {text:"Dengar soalan dalam audio dan jawab. Jangan terangkan proses transkripsi."},
       {inlineData:{mimeType:media[0].mimeType,data:media[0].data}}
@@ -147,7 +147,7 @@ exports.handler=async event=>{
     for(let attempt=0;attempt<2;attempt++){
       try{
         const voiceData=await callGemini({apiKey,model:baseModel,system:voiceSystem,
-          contents:voiceContents,tools:[],thinkingLevel:"low",maxTokens:650,timeoutMs:8000});
+          contents:voiceContents,tools:[],thinkingLevel:"low",maxTokens:950,timeoutMs:10000});
         const replyText=parseReply(modelText(voiceData?.candidates?.[0]));
         if(!replyText)return result(502,{error:"AI tidak dapat memahami audio. Cuba rakam dengan lebih jelas."},H);
         return result(200,{reply:replyText,model:baseModel,mode:"recorded-voice",
@@ -166,7 +166,7 @@ exports.handler=async event=>{
   }
 
   // Short follow-ups inherit the preceding conversational subject, not a fresh topic.
-  const followUp=/^(?:(?:tapi|jadi|habis|kalau|dan|so|then|pula|pulak|ok|okay)\s+)*(?:kenapa|mengapa|sebab apa|bagaimana|macam mana|apa sebab|apa akibat|akibatnya|kesannya|adakah|apakah|betul ke|maksudnya|contohnya|contoh|jelaskan|terangkan|why|how|lepas tu|pastu|seterusnya|yang tadi|yang tu|dia|itu|macam tu|kalau begitu|apa bezanya|apa kaitan|apa bukti|boleh ke|patut ke|rasanya|serius|jadi apa)(?:\b|[?!.,]|$)/i.test(question.trim());
+  const followUp=/^(?:(?:tapi|jadi|habis|kalau|dan|so|then|pula|pulak|ok|okay)\s+)*(?:kenapa|mengapa|sebab apa|bagaimana|macam mana|apa sebab|apa akibat|akibatnya|kesannya|adakah|apakah|betul ke|maksudnya|contohnya|contoh|jelaskan|terangkan|why|how|lepas tu|pastu|seterusnya|yang tadi|yang tu|yang itu|dia|itu|macam tu|kalau begitu|apa bezanya|apa kaitan|apa bukti|boleh ke|patut ke|rasanya|serius|jadi apa|maksud aku|bukan macam tu|bukan tu|yang lain|teruskan|sambung|lagi|lebih detail|bagi contoh)(?:\b|[?!.,]|$)/i.test(question.trim());
   const followUpGuidance=history.length&&followUp?
     "\nSOALAN SUSULAN BERKONTEKS: Soalan ringkas ini merujuk kepada perbualan sebelumnya. Cari perkara yang paling baru dibincangkan dan jawapan terakhir AI; sambungkan hujah secara semula jadi. 'Kenapa' minta alasan/sebab, 'bagaimana' minta proses, 'akibat' minta kesan, 'adakah' minta penilaian berasas. Jangan minta pengguna ulang topik yang jelas. Jika rujukan benar-benar mempunyai beberapa maksud setara, nyatakan tafsiran paling munasabah dan beri peluang pembetulan. Jangan mereka sebab atau niat seseorang.": "";
   const intent=resolveIntent(question,history,!!(media.length||documentText));
