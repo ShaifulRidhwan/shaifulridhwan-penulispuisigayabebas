@@ -55,7 +55,7 @@
    <header class="conversation-head">
     <div class="voice-toolbar" role="group" aria-label="Kawalan suara">
      
-     <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">✦ Jom Voice Live</button>
+     <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">✦ Jom Voice Chat</button>
     </div>
     <div class="chat-controls">
      <div class="connection" id="connection" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="connectionText">Semak sambungan…</span></div>
@@ -97,8 +97,8 @@
    </div>
    <div class="voice-panel" id="voicePanel" hidden aria-label="Perbualan Voice Live">
     <div class="voice-panel-head">
-     <span class="voice-live-label"><span class="voice-live-dot"></span> SHAIFUL RIDHWAN A.I · JOM VOICE LIVE</span>
-     <div class="voice-panel-head-actions"><button type="button" id="voiceMinimize" class="voice-stop" aria-expanded="true" aria-label="Minimumkan panel Voice Live">Minimumkan</button><button type="button" id="voiceStop" class="voice-stop" aria-label="Tamatkan sesi Voice Live">Tamatkan sesi</button></div>
+     <span class="voice-live-label"><span class="voice-live-dot"></span> SHAIFUL RIDHWAN A.I · JOM VOICE CHAT</span>
+     <div class="voice-panel-head-actions"><button type="button" id="voiceMinimize" class="voice-stop" aria-expanded="true" aria-label="Minimize Voice Chat panel">Minimize</button><button type="button" id="voiceStop" class="voice-stop" aria-label="End Voice Chat session">End Session</button></div>
     </div>
     <div class="voice-avatar-stage" id="voiceAvatarStage" aria-label="Ruang avatar AI cahaya dan gelap"><div class="voice-avatar-glow" aria-hidden="true"></div><div class="voice-avatar-caption">SHAIFUL RIDHWAN A.I.</div></div>
     <div class="voice-wave" id="voiceWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -192,7 +192,7 @@ async function probe(){
   const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
    body:JSON.stringify({probe:true}),signal:controller.signal});
   const data=await res.json().catch(()=>({}));
-  if(res.ok&&data.ok)status("ready","Pelayan sedia","");
+  if(res.ok&&data.ok)status("ready","Connected","");
   else status("error","AI tak dapat bersambung",String(data.error||"Sambungan AI belum tersedia.").slice(0,250));
  }catch(e){status("error","Tiada sambungan","Cuba hubungi pelayan semula.");}
  finally{clearTimeout(timer);}
@@ -600,10 +600,10 @@ restore();renderIdeas();renderHistory();update();probe();
 })();
 </script>
 <script src="bilik-antara-identity.js?v=7" defer></script>
-<script src="bilik-antara-suite.js?v=2" defer></script>
+<script src="bilik-antara-suite.js?v=3" defer></script>
 <script src="bilik-antara-brain.js?v=3" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
-<script src="bilik-antara-voice.js?v=22" defer></script>
+<script src="bilik-antara-voice.js?v=23" defer></script>
 <script type="module" src="bilik-antara-avatar.js?v=4"></script>
 <script src="bilik-antara-voice-fallback.js?v=10" defer></script>
 </body>
