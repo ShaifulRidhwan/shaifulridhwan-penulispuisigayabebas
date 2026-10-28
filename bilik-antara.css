@@ -2702,3 +2702,27 @@ html[data-theme="light"] .multi-ai-row{background:rgba(255,255,255,.32);border-c
  .conversation-head button.multi-ai-trigger,
  .conversation-head button.multi-ai-trigger #connectionText{font-size:10px!important}
 }
+
+/* Optical alignment: center the Multi A.I. status light with DM Sans lettering. */
+.conversation-head button.multi-ai-trigger{
+ display:inline-flex!important;
+ align-items:center!important;
+ justify-content:center;
+ gap:7px!important;
+ line-height:1.25!important;
+}
+.conversation-head button.multi-ai-trigger .dot{
+ display:block;
+ flex:0 0 7px;
+ width:7px;height:7px;
+ margin:0!important;
+ position:relative;
+ top:-1px;
+ align-self:center;
+}
+.conversation-head button.multi-ai-trigger #connectionText{
+ display:block;
+ margin:0;
+ padding:0;
+ line-height:1.25!important;
+}
