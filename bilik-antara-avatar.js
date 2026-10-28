@@ -7,16 +7,9 @@ const stage=document.getElementById("voiceAvatarStage");
 if(panel&&stage){
 let active=false,renderer=null,scene=null,camera=null,root=null,face=null,raf=0,resize=null,context=null,blinkAt=0,started=0,loading=false,jawMotion=0,lipMotion=0,morphIndex=null,resizeFrame=0,lastWidth=0,lastHeight=0;
 const modelURL="https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette.glb";
-// Cache the exact PNG snapshot of the voice avatar: repeat visits need no WebGL portrait pass.
-const portraitCacheKey="bilik-antara-chat-portrait-png-v1";
-function showPortrait(picture){
- if(typeof picture!=="string"||!picture.startsWith("data:image/png;base64,")||picture.length>450000)return false;
- if(!/^[A-Za-z0-9+/=]+$/.test(picture.slice(22)))return false;
- document.documentElement.style.setProperty("--ai-chat-portrait",'url("'+picture+'")');
- document.documentElement.classList.add("chat-portrait-ready");
- return true;
-}
-const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+// The chat still is an exact pre-rendered frame of this same GLB model.
+ // No WebGL, GLTF decoding, or 3D assets run in the normal chat page.
+ const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 // Pre-index morph targets once; matching 900+ names every animation frame wastes CPU.
 function indexMorphTargets(){
  morphIndex=new Map();
@@ -122,79 +115,8 @@ async function begin(){
  }catch(err){console.warn("Voice avatar model not available",err);stop();stage.classList.add("avatar-unavailable");}
  finally{loading=false;}
 }
-// One-time square portrait taken from the SAME 3D face as Voice Chat.
-// The chat logo stays static to avoid dozens of active WebGL contexts.
-async function buildChatPortrait(){
- let smallRenderer=null,kt=null,model=null;
- try{
-  const [THREE,{GLTFLoader},{KTX2Loader},{MeshoptDecoder}]=await Promise.all([
-   import("three"),import("three/addons/loaders/GLTFLoader.js"),
-   import("three/addons/loaders/KTX2Loader.js"),import("three/addons/libs/meshopt_decoder.module.js")
-  ]);
-  smallRenderer=new THREE.WebGLRenderer({alpha:false,antialias:true,preserveDrawingBuffer:true,powerPreference:"low-power"});
-  smallRenderer.setSize(160,160,false);
-  smallRenderer.outputColorSpace=THREE.SRGBColorSpace;
-  smallRenderer.toneMapping=THREE.ACESFilmicToneMapping;
-  smallRenderer.toneMappingExposure=1.2;
-  kt=new KTX2Loader().setTranscoderPath("https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/libs/basis/").detectSupport(smallRenderer);
-  model=(await new GLTFLoader().setKTX2Loader(kt).setMeshoptDecoder(MeshoptDecoder).loadAsync(modelURL)).scene;
-  const scene=new THREE.Scene();scene.background=new THREE.Color(0x0a1019);scene.add(model);
-  scene.add(new THREE.HemisphereLight(0xaaa4c5,0x17131b,1.15));
-  const light=new THREE.DirectionalLight(0xf6d6ab,3.2);light.position.set(-2,3,4);scene.add(light);
-  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
-  const center=bounds.getCenter(new THREE.Vector3());
-  const scale=2.5/Math.max(size.y,.1);model.scale.setScalar(scale);
-  model.position.copy(center.multiplyScalar(-scale));model.updateMatrixWorld(true);
-  const head=model.getObjectByName("Wolf3D_Head");
-  const headBounds=head?new THREE.Box3().setFromObject(head):null;
-  const found=headBounds&&!headBounds.isEmpty()&&headBounds.getSize(new THREE.Vector3()).y>.02;
-  const target=found?headBounds.getCenter(new THREE.Vector3()):new THREE.Vector3(0,size.y*scale*.20,0);
-  const headHeight=found?headBounds.getSize(new THREE.Vector3()).y:size.y*scale*.18;
-  const camera=new THREE.PerspectiveCamera(34,1,.1,50);
-  camera.position.set(target.x,target.y-headHeight*.10,target.z+Math.max(.8,headHeight*2.6));
-  camera.lookAt(target.x,target.y-headHeight*.10,target.z);
-  camera.updateProjectionMatrix();
-  smallRenderer.render(scene,camera);
-  const picture=smallRenderer.domElement.toDataURL("image/png");
-  if(showPortrait(picture)){
-   try{localStorage.setItem(portraitCacheKey,picture);}catch(_){}
-  }
- }catch(err){console.warn("Chat avatar portrait unavailable; keeping monogram.",err);}
- finally{
-  kt?.dispose();
-  if(model)model.traverse(o=>{if(o.isMesh){o.geometry?.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];for(const mat of mats)mat?.dispose?.();}});
-  if(smallRenderer){smallRenderer.dispose();smallRenderer.forceContextLoss();}
- }
-}
-// Reuse the exact pixel-for-pixel portrait on return visits; render it only once.
-let portraitCached=false;
-try{portraitCached=showPortrait(localStorage.getItem(portraitCacheKey));}catch(_){}
-if(!portraitCached){
- // Avoid competing with chat startup on a first visit; keep the same portrait.
- const queuePortrait=()=>{
-  if(document.hidden){
-   const whenVisible=()=>{
-    if(!document.hidden){document.removeEventListener("visibilitychange",whenVisible);queuePortrait();}
-   };
-   document.addEventListener("visibilitychange",whenVisible);
-   return;
-  }
-  const buildWhenFree=()=>{
-   if(panel.hidden&&!active)buildChatPortrait();
-   else {
-    const onClose=new MutationObserver(()=>{
-     if(panel.hidden&&!active){onClose.disconnect();queuePortrait();}
-    });
-    onClose.observe(panel,{attributes:true,attributeFilter:["hidden"]});
-   }
-  };
-  if("requestIdleCallback" in window)window.requestIdleCallback(buildWhenFree,{timeout:9000});
-  else window.setTimeout(buildWhenFree,2800);
- };
- if(document.readyState==="complete")queuePortrait();
- else window.addEventListener("load",queuePortrait,{once:true});
-}
-const observer=new MutationObserver(()=>{if(panel.hidden){if(active)stop();}else if(!active&&!loading)begin();});
+// The live 3D avatar activates only when this module is imported on demand.
+ const observer=new MutationObserver(()=>{if(panel.hidden){if(active)stop();}else if(!active&&!loading)begin();});
 observer.observe(panel,{attributes:true,attributeFilter:["hidden"]});
 if(!panel.hidden)begin();
 window.addEventListener("pagehide",()=>{stop();observer.disconnect();},{once:true});

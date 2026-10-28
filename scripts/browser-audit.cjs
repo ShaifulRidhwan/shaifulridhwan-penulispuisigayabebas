@@ -79,6 +79,13 @@ async function chat(page,device){
  assert.equal(await page.locator("#voicePanel").isVisible(),false);
  await verifyLocalLinks(page);
  await snapshot(page,device+"-chat");
+ // Normal text chat must retain its real face without loading the 2.7 MB GLB,
+ // 3D engine or texture decoders before Voice Chat is opened.
+ const portrait=await page.locator(".message.ai").first().evaluate(node=>getComputedStyle(node,"::before").backgroundImage);
+ assert.match(portrait,/bilik-antara-chat-portrait\.png/,"The genuine avatar still must display in text chat");
+ const heavy=await page.evaluate(()=>performance.getEntriesByType("resource")
+  .map(entry=>entry.name).filter(url=>/three\.(?:module|core)\.js|brunette\.glb|GLTFLoader\.js|KTX2Loader\.js/.test(url)));
+ assert.deepEqual(heavy,[],"No 3D network dependency should load in ordinary text chat");
  await page.locator("#input").fill("Uji pengalaman menaip di Bilik Antara.");
  assert.equal(await page.locator("#sendBtn").isEnabled(),true);
  assert.equal(await page.locator("html").getAttribute("data-theme"),"dark","Chat retains its light-and-dark identity");
