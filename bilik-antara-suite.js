@@ -200,16 +200,50 @@ async function copyText(text){
  catch(_){notice("Pelayar menyekat fungsi salin. Pilih teks secara manual.");}
 }
 function renderMetrics(){
- section("Prestasi peranti ini");
- paragraph("Statistik ini dikumpul secara setempat daripada jawapan yang diterima, bukan laporan keseluruhan pengguna laman. Tiada data dihantar kepada sistem analitik luaran.");
- const values=[
-  ["Respons berjaya",metrics.calls||0],
-  ["Token dilaporkan",metrics.tokens||0],
-  ["Purata masa respons",metrics.durations?.length?Math.round(metrics.durations.reduce((a,b)=>a+b,0)/metrics.durations.length)/1000+" s":"Belum ada data"]
+ section("Prestasi Aksara · Peranti ini");
+ paragraph("Statistik daripada perbualan pelayar ini sahaja, bukan semua pengguna. Sejarah lama mungkin tidak mengandungi nama penyedia atau masa penuh.");
+ const successes=Math.max(0,Number(metrics.calls)||0),failures=Math.max(0,Number(metrics.failures)||0),total=successes+failures;
+ const valid=values=>(Array.isArray(values)?values:[]).filter(v=>Number.isFinite(v)&&v>=0);
+ const elapsed=valid(metrics.elapsed),backend=valid(metrics.durations);
+ const avg=values=>values.length?(values.reduce((a,b)=>a+b,0)/values.length/1000).toFixed(2)+" s":"Tiada data";
+ const sorted=[...elapsed].sort((a,b)=>a-b);
+ const med=sorted.length?(sorted[Math.floor((sorted.length-1)/2)]/1000).toFixed(2)+" s":"Tiada data";
+ const entries=[
+  ["Permintaan direkodkan",total],
+  ["Jawapan berjaya",successes],
+  ["Permintaan gagal",failures],
+  ["Kadar berjaya",total?(100*successes/total).toFixed(1)+"%":"Tiada data"],
+  ["Purata masa pengguna",avg(elapsed)],
+  ["Median masa pengguna",med],
+  ["Terpantas / terlama",elapsed.length?(Math.min(...elapsed)/1000).toFixed(2)+" / "+(Math.max(...elapsed)/1000).toFixed(2)+" s":"Tiada data"],
+  ["Purata masa backend",avg(backend)],
+  ["Token dilaporkan",Number(metrics.tokens||0).toLocaleString("ms-MY")],
+  ["Jawapan dengan laporan token",(metrics.reportedUsageCount||0)+" / "+successes],
+  ["Sampel masa pengguna",elapsed.length]
  ];
- for(const [k,v] of values){const row=make("div",undefined,"ba-metric");row.append(make("span",k),make("strong",v));content.appendChild(row);}
- controlRow(button("Padam statistik",()=>{metrics={calls:0,tokens:0,durations:[],times:[]};try{localStorage.removeItem(KEYS.metrics);}catch(_){}render();}));
- paragraph("Status carian langsung: dimatikan untuk mengelakkan ciri Google Search berbayar pada tier percuma Gemini 3.6.");
+ for(const [label,value] of entries){const row=make("div",undefined,"ba-metric");row.append(make("span",label),make("strong",value));content.appendChild(row);}
+ section("Pecahan model");
+ const providers=Object.entries(metrics.byProvider||{}).filter(([,v])=>v&&Number(v.calls)>0).sort((a,b)=>b[1].calls-a[1].calls);
+ if(!providers.length)paragraph("Tiada rekod model lagi. Jawapan baharu akan mengenal pasti penyedia.");
+ for(const [id,data]of providers){
+  const label=({gemini:"Google Gemini",groq:"Groq",mistral:"Mistral",openrouter:"OpenRouter",local:"Identiti setempat",unknown:"Tidak diketahui"})[id]||id;
+  const row=make("div",undefined,"ba-metric");row.append(make("span",label),make("strong",data.calls+" respons"));content.appendChild(row);
+ }
+ section("Aktiviti terkini");
+ paragraph("Sehingga 120 peristiwa setempat tanpa menyimpan kandungan soalan. Dipaparkan 12 yang terbaru.");
+ const events=Array.isArray(metrics.events)?metrics.events:[];
+ if(!events.length)paragraph("Belum ada aktiviti baharu untuk dipaparkan.");
+ for(const item of events.slice(-12).reverse()){
+  const row=make("div",undefined,"ba-metric ba-metric-event");
+  const date=new Date(item.at).toLocaleTimeString("ms-MY",{hour:"2-digit",minute:"2-digit"});
+  const text=item.ok?(item.provider||"Tidak diketahui"):"Gagal"+(item.code?" · "+String(item.code).slice(0,24):"");
+  row.append(make("span",date+" · "+text),make("strong",Number.isFinite(item.ms)?(item.ms/1000).toFixed(2)+" s":"—"));content.appendChild(row);
+ }
+ paragraph("Masa pengguna meliputi rangkaian dan pemprosesan. Masa backend dilaporkan pelayan. Token dikira hanya jika penyedia melaporkannya. Kejayaan permintaan bukan bukti ketepatan jawapan.");
+ controlRow(
+  button("Eksport JSON",()=>download("aksara-prestasi.json",JSON.stringify({exportedAt:new Date().toISOString(),metrics},null,2),"application/json")),
+  button("Padam statistik",()=>{if(!confirm("Padam statistik prestasi pada peranti ini?"))return;metrics=blankMetrics();try{localStorage.removeItem(KEYS.metrics);}catch(_){}render();})
+ );
 }
 function render(){
  content.replaceChildren();title.textContent=({sessions:"Sesi & sejarah",memory:"Memori pintar",workspace:"Ruang kerja",metrics:"Prestasi setempat"})[currentPanel]||"Bilik Antara";
