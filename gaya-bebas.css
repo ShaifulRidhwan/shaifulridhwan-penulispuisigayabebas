@@ -23,7 +23,7 @@ body{background:var(--bg);color:var(--text);font-family:'Archivo',system-ui,sans
   background-size:64px 64px;mask-image:radial-gradient(ellipse 90% 70% at 50% 30%,black 30%,transparent 80%)}
 .hero-glow{position:fixed;top:-20%;left:50%;transform:translateX(-50%);width:900px;height:900px;border-radius:50%;
   background:radial-gradient(circle,var(--hero-glow),transparent 65%);pointer-events:none;z-index:0;filter:blur(40px)}
-.progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:100;width:0;transition:width .1s linear}
+.progress{position:fixed;top:0;left:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));z-index:100;width:100%;transform:scaleX(0);transform-origin:left center;transition:transform .1s linear;will-change:transform}
 .wrap{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:0 1.5rem}
 nav{position:fixed;top:0;left:0;right:0;z-index:50;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
   background:color-mix(in srgb,var(--bg) 72%,transparent);border-bottom:1px solid var(--border)}
