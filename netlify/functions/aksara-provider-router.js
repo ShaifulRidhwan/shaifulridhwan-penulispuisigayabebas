@@ -54,4 +54,25 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,s
  }
  return {error:"all_providers_unavailable",attempts};
 }
-module.exports={complete,configured,enabled};
+// Live health checks use harmless short prompts, never any user's conversation.
+const healthCache={time:0,value:null};
+async function checkStatus(){
+ if(healthCache.value&&Date.now()-healthCache.time<90000)return healthCache.value;
+ const checks=await Promise.all(PROVIDERS.map(async provider=>{
+  const active=configured().some(p=>p.id===provider.id);
+  if(!active)return {id:provider.id,status:"off"};
+  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
+  try{
+   const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
+   if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
+   const response=await fetch(provider.url,{method:"POST",headers,body:JSON.stringify({
+    model:provider.model,messages:[{role:"user",content:"Jawab OK sahaja."}],max_tokens:80
+   }),signal:ctrl.signal});
+   return {id:provider.id,status:response.ok?"online":"offline"};
+  }catch(_){return {id:provider.id,status:"offline"};}
+  finally{clearTimeout(timer);}
+ }));
+ healthCache.time=Date.now();healthCache.value=checks;
+ return checks;
+}
+module.exports={complete,configured,enabled,checkStatus};
