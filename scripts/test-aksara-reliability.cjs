@@ -78,7 +78,7 @@ test("primary streaming hides reasoning and requires a terminal frame",async t=>
 test("fallback streaming never combines partial responses from different providers",async t=>{
  setup(t);process.env.MISTRAL_API_KEY="mock";process.env.MISTRAL_FREE_CONFIRMED="true";let attempts=0;
  const router=require("../netlify/functions/aksara-provider-router");
- global.fetch=async()=>{attempts++;return sse([{choices:[{delta:{content:"separuh"}}]}]);};
+ global.fetch=async()=>{attempts++;return sse([{choices:[{delta:{content:"separuh ".repeat(40)}}]}]);};
  await assert.rejects(router.complete({system:"persona",history:[],question:"Hai",onDelta:()=>{}}));assert.equal(attempts,1);
 });
 test("stream endpoint reuses the validated handler and emits a final committed answer",async t=>{
@@ -118,7 +118,7 @@ test("a finished SSE response does not need to wait for the provider to close it
  await readSSE(body,x=>values.push(x.text));assert.deepEqual(values,["siap"]);assert.equal(cancelled,1);
 });
 test("interrupted backup response returns a typed error from the main handler instead of throwing to the generic wrapper",async t=>{
- const handler=setup(t);global.fetch=async url=>url.includes("googleapis")?new Response("",{status:503}):sse([{choices:[{delta:{content:"Jawapan separa"}}]}]);
+ const handler=setup(t);global.fetch=async url=>url.includes("googleapis")?new Response("",{status:503}):sse([{choices:[{delta:{content:"Jawapan separa ".repeat(20)}}]}]);
  const chunks=[];const r=await handler(event({question:"Siapa Shaiful Ridhwan?"},{onDelta:x=>chunks.push(x)}));
  assert.equal(r.statusCode,502);assert.equal(JSON.parse(r.body).code,"STREAM_INTERRUPTED");assert.match(JSON.parse(r.body).error,/sandaran/);assert.ok(chunks.length);
 });
@@ -176,5 +176,31 @@ test("a truncated or malformed client stream is marked retryable even when the H
  for(const body of ['{"type":"start"}\n{"type":"delta","text":"separuh"}\n','{"type":"start"}\n{broken}\n']){
   const ask=make(async()=>new Response(body,{headers:{"content-type":"application/x-ndjson"}}),ReadableStream,"/stream","/json");
   await assert.rejects(ask({},new AbortController().signal,()=>{}),{code:"STREAM_INTERRUPTED",status:502});
+ }
+});
+test("classifier-only output is rejected before display and a conversational provider can answer instead",async t=>{
+ setup(t);process.env.MISTRAL_API_KEY="mock";process.env.MISTRAL_FREE_CONFIRMED="true";
+ const router=require("../netlify/functions/aksara-provider-router");const displayed=[];
+ global.fetch=async url=>url.includes("groq.com")?sse([{model:"example/guard",choices:[{delta:{content:"User Safety: safe\nResponse Safety: safe"},finish_reason:"stop"}]}]):reply("Aku Aksara A.I.");
+ const r=await router.complete({system:"persona",history:[],question:"siapa kau ek",onDelta:x=>displayed.push(x)});
+ assert.equal(r.provider,"mistral");assert.equal(r.reply,"Aku Aksara A.I.");assert.ok(!displayed.join("").includes("User Safety"));
+});
+test("classifier labels from an ordinary-looking model are also rejected, while a normal safety refusal remains valid",async t=>{
+ setup(t);const router=require("../netlify/functions/aksara-provider-router"),displayed=[];
+ global.fetch=async()=>sse([{model:"mock-chat",choices:[{delta:{content:"User Safety: safe\nResponse Safety: safe"},finish_reason:"stop"}]}]);
+ const bad=await router.complete({system:"persona",history:[],question:"Hai",onDelta:x=>displayed.push(x)});
+ assert.equal(bad.error,"all_providers_unavailable");assert.equal(displayed.length,0);
+});
+test("OpenRouter chat requests specify only reviewed free chat models and validate the buffered answer",async t=>{
+ setup(t);delete process.env.GROQ_API_KEY;process.env.OPENROUTER_API_KEY="mock";
+ const router=require("../netlify/functions/aksara-provider-router");let body;const displayed=[];
+ global.fetch=async(_url,opts)=>{body=JSON.parse(opts.body);return reply("Aku tak boleh bantu perbuatan itu, tetapi aku boleh cadangkan pilihan yang selamat.");};
+ const r=await router.complete({system:"persona",history:[],question:"Soalan",onDelta:x=>displayed.push(x)});
+ assert.equal(r.provider,"openrouter");assert.equal(body.model,undefined);assert.equal(body.stream,false);assert.equal(body.models.length,3);assert.ok(body.models.every(x=>x.endsWith(":free")&&!/guard|classifier|moderation/.test(x)));assert.equal(displayed.join(""),r.reply);
+});
+test("colloquial identity questions use the existing grounded Aksara introduction",async t=>{
+ const handler=setup(t);global.fetch=()=>{throw Error("Identity must not need a provider");};
+ for(const question of ["siapa kau ek","kau siapa weh?","siapa kau sebenarnya eh?"]){
+  const r=await handler(event({question}));assert.equal(r.statusCode,200,question);const data=JSON.parse(r.body);assert.equal(data.model,"project-identity");assert.match(data.reply,/Aksara A\.I\./);assert.doesNotMatch(data.reply,/User Safety:/);
  }
 });

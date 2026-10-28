@@ -129,7 +129,8 @@ function answerIdentity(question){
   const project=/(?:bilik antara|aksara a\.?i\.?|shaiful ridhwan a\.?i\.?|sistem (?:ini|kau)|projek (?:ini|ai|kau))/i.test(q);
   const self=/(?:\b(?:kau|awak|kamu|anda|you|yourself)\b|(?:\bai\b|\bkecerdasan buatan\b)\s+(?:ini|tu|kau|awak)\b)/i.test(q);
   const owner=/(?:shaiful|ridhwan|aksara)/i.test(q);
-  const directSelf=/^(?:(?:kau|awak|kamu|anda)\s+(?:ni\s+|ini\s+)?siapa|siapa\s+(?:kau|awak|kamu|anda)\s*(?:sebenarnya)?|who\s+are\s+you|siapa\s+diri\s+kau|kenalkan\s+diri\s+(?:kau|awak)|perkenalkan\s+diri(?:mu)?|apa\s+nama\s+(?:kau|awak|ai\s+ini)|nama\s+(?:kau|awak)\s+apa)$/i.test(q);
+  const selfQuestion=q.replace(/(?:\s+(?:ek|eh|weh|wei|lah|ni|tu|ye|ya|ke))+$/i,"");
+  const directSelf=/^(?:(?:kau|awak|kamu|anda)\s+(?:ni\s+|ini\s+)?siapa|siapa\s+(?:kau|awak|kamu|anda)\s*(?:sebenarnya)?|who\s+are\s+you|siapa\s+diri\s+kau|kenalkan\s+diri\s+(?:kau|awak)|perkenalkan\s+diri(?:mu)?|apa\s+nama\s+(?:kau|awak|ai\s+ini)|nama\s+(?:kau|awak)\s+apa)$/i.test(selfQuestion);
   const changes=/(?:apa|macam mana|bagaimana|senarai|cerita|terangkan|jelaskan|detail|butiran|what).{0,90}(?:ubah\s*suai|modifikasi|tambah\s*baik|upgrade|fungsi|ciri|feature|buat\s+(?:pada|kat|dekat)\s+(?:kau|ai)|bangunkan)|(?:ubah\s*suai|modifikasi|tambah\s*baik|upgrade|fungsi|ciri|feature).{0,90}(?:kau|ai|shaiful|bilik antara)/i.test(q);
   const created=/(?:siapa.{0,45}(?:cipta|buat|bina|bangun|bangunkan|hasilkan|reka|developer|pengasas|pencipta)|(?:cipta|dibina|dibuat|dicipta|dibangunkan|dibangunkan oleh|direka|created|built|made|developed).{0,45}(?:siapa|oleh siapa|you|kau|awak)|who\s+(?:made|built|created|developed)\s+you|(?:pencipta|pengasas|pembangun|developer)\s+(?:kau|awak|ai ini|bilik antara))/i.test(q);
   const trained=/(?:latih|latihan|train|trained|model asas|model bahasa|gemini|google|chatgpt)/i.test(q)&&

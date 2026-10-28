@@ -2918,5 +2918,23 @@ html[data-theme="light"] .identity h1 em{background-image:linear-gradient(110deg
 @keyframes antaraTitleReveal{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 @keyframes antaraTitleShimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
 @keyframes antaraTitleFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
-@media(prefers-reduced-motion:reduce){.identity h1,.identity h1 span,.identity h1 em{animation:none!important;transform:none}}
+
 @media(forced-colors:active){.identity h1 span,.identity h1 em{background:none;-webkit-text-fill-color:currentColor}}
+
+/* Cinematic title: orbiting halo, a travelling underline and brighter flowing type. */
+.identity h1{position:relative;isolation:isolate;animation:antaraTitleReveal 1.15s cubic-bezier(.2,.7,.25,1) both}
+.identity h1::before{content:"";position:absolute;inset:-12% -2%;z-index:-1;pointer-events:none;border-radius:50%;border:1px solid transparent;border-left-color:rgba(255,211,126,.75);border-right-color:rgba(128,182,232,.55);box-shadow:0 0 20px rgba(233,182,85,.12),inset 0 0 18px rgba(127,169,222,.09);animation:antaraHalo 9s ease-in-out infinite}
+.identity h1::after{content:"";position:absolute;left:12%;right:12%;bottom:-5px;height:2px;pointer-events:none;background:linear-gradient(90deg,transparent,#f2c576,#fff4d4,#82b4dc,transparent);box-shadow:0 0 14px rgba(244,204,135,.75);transform-origin:center;animation:antaraRay 4.6s ease-in-out infinite}
+.identity h1 span{animation:antaraTitleShimmer 4s ease-in-out infinite,antaraTitleFloat 4.8s ease-in-out infinite,antaraGoldGlow 4s ease-in-out infinite}
+.identity h1 em{animation:antaraTitleShimmer 4s ease-in-out -2s infinite,antaraTitleFloat 4.8s ease-in-out -2.4s infinite,antaraSilverGlow 4s ease-in-out -2s infinite}
+@keyframes antaraHalo{0%,100%{transform:rotate(-5deg) scaleX(.97);opacity:.35}50%{transform:rotate(5deg) scaleX(1.02);opacity:.9}}
+@keyframes antaraRay{0%,100%{transform:scaleX(.45);opacity:.25}50%{transform:scaleX(1);opacity:.95}}
+@keyframes antaraGoldGlow{0%,100%{text-shadow:0 2px 16px rgba(232,169,60,.25)}50%{text-shadow:0 0 22px rgba(255,213,132,.65),0 2px 35px rgba(221,160,58,.3)}}
+@keyframes antaraSilverGlow{0%,100%{text-shadow:0 2px 16px rgba(145,179,221,.2)}50%{text-shadow:0 0 22px rgba(233,238,248,.5),0 2px 35px rgba(128,173,225,.25)}}
+/* Keep the requested title motion active even when older global rules reduce ambience. */
+@media(prefers-reduced-motion:reduce){
+ .identity h1{animation:antaraTitleReveal 1.15s ease-out both!important}
+ .identity h1 span{animation:antaraTitleShimmer 4s ease-in-out infinite,antaraTitleFloat 4.8s ease-in-out infinite,antaraGoldGlow 4s ease-in-out infinite!important}
+ .identity h1 em{animation:antaraTitleShimmer 4s ease-in-out -2s infinite,antaraTitleFloat 4.8s ease-in-out -2.4s infinite,antaraSilverGlow 4s ease-in-out -2s infinite!important}
+ .identity h1::before{animation:antaraHalo 9s ease-in-out infinite!important}.identity h1::after{animation:antaraRay 4.6s ease-in-out infinite!important}
+}

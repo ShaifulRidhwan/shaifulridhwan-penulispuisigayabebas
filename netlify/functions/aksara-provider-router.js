@@ -34,6 +34,16 @@ const PROVIDERS=[
  {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
   url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"}
 ];
+const OPENROUTER_CHAT_MODELS=["poolside/laguna-s-2.1:free","google/gemma-4-31b-it:free","nvidia/nemotron-3.5-lightning:free"];
+const classifierModel=model=>/(?:guard|moderation|classifier|safety)/i.test(String(model||""));
+function classifierReply(text){
+ const value=String(text||"").replace(/\*\*/g,"").trim();
+ return /^(?:(?:user|response)\s+safety\s*:\s*(?:safe|unsafe|unknown|not safe|n\/a)[.\s]*)+$/i.test(value);
+}
+function validateChatReply(text,model){
+ if(classifierModel(model)||classifierReply(text))throw Object.assign(new Error("Provider returned classification metadata instead of a chat answer"),{status:502});
+}
+function openRouterBody(body){delete body.model;body.models=OPENROUTER_CHAT_MODELS;body.stream=false;return body;}
 const safeMessage=text=>boundedText(text,60000);
 function configured(){
  if(process.env.AKSARA_FREE_FALLBACKS!=="true")return [];
@@ -64,6 +74,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,d
    const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
    if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    const body={model:provider.model,messages,temperature:0.35,max_tokens:Math.min(6000,Math.max(400,maxTokens)),...(onDelta?{stream:true}:{} )};
+   if(provider.id==="openrouter")openRouterBody(body);
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.
    if(provider.id==="groq"){
      body.reasoning_effort=["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"medium";
@@ -73,24 +84,34 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,d
    if(!res.ok){const e=new Error("Provider HTTP "+res.status);e.status=res.status;throw e;}
    let data;
    if(onDelta&&res.body&&/text\/event-stream/i.test(res.headers?.get("content-type")||"")){
-    let full="",finish="",model=provider.model,usage=null;
+    let full="",finish="",model=provider.model,usage=null,started=false,sent=0;
     await readSSE(res.body,chunk=>{
-     if(chunk.model)model=chunk.model;if(chunk.usage)usage=chunk.usage;
+     if(chunk.model)model=chunk.model;
+     if(classifierModel(model))throw Object.assign(new Error("Classifier is not a chat model"),{status:502});
+     if(chunk.usage)usage=chunk.usage;
      const choice=chunk.choices?.[0];if(choice?.finish_reason)finish=choice.finish_reason;
      const delta=choice?.delta?.content;
      if(typeof delta==="string"&&delta){
       if(full.length+delta.length>40000)throw new Error("Jawapan melebihi had.");
-      if(!emitted)control.extend(deadline-Date.now());
-      full+=delta;emitted=true;onDelta(delta);
+      if(!started){control.extend(deadline-Date.now());started=true;}
+      full+=delta;
+      // Hold short prefixes so a two-line classifier report never reaches the UI.
+      if(full.length>=160&&!/^\s*(?:user|response)\s+safety\s*:/i.test(full)){
+       emitted=true;onDelta(full.slice(sent));sent=full.length;
+      }
      }
      return !finish;
     });
-    if(!finish)throw new Error("Aliran AI terputus sebelum tamat.");
+    if(!finish){if(full)throw Object.assign(new Error("Aliran AI terputus sebelum tamat."),{status:502});throw new Error("Empty response");}
+    validateChatReply(full,model);
+    if(full.length>sent){emitted=true;onDelta(full.slice(sent));}
     data={model,usage,choices:[{message:{content:full},finish_reason:finish}]};
    }else data=await res.json();
    const reply=data?.choices?.[0]?.message?.content;
    const text=typeof reply==="string"?reply:Array.isArray(reply)?reply.filter(p=>p.type==="text").map(p=>p.text).join(""):"";
    if(!text.trim())throw new Error("Empty response");
+   validateChatReply(text,data.model||provider.model);
+   if(onDelta&&provider.id==="openrouter"&&!emitted){emitted=true;onDelta(text);}
    cooldown.delete(provider.id);preferredProvider=provider.id;
    const finishReason=String(data?.choices?.[0]?.finish_reason||"");
    return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task};
@@ -125,6 +146,7 @@ async function crossReview({question,reply,originalProvider,task="general",timeo
    {role:"user",content:JSON.stringify({task,question:question.slice(0,2500),answer:reply.slice(0,5000)})}
   ];
   const body={model:reviewer.model,messages,max_tokens:350,temperature:0};
+  if(reviewer.id==="openrouter")openRouterBody(body);
   // Mistral supports OpenAI-compatible JSON object output.
   if(reviewer.id==="mistral")body.response_format={type:"json_object"};
   if(reviewer.id==="groq"){body.reasoning_effort="low";body.include_reasoning=false;}
@@ -153,13 +175,14 @@ async function checkStatus(){
    const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
    if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    const probeBody={model:provider.model,messages:[{role:"user",content:"Jawab OK sahaja."}],max_tokens:120};
+   if(provider.id==="openrouter")openRouterBody(probeBody);
    if(provider.id==="groq"){probeBody.reasoning_effort="low";probeBody.include_reasoning=false;}
    const response=await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(probeBody),signal:ctrl.signal});
    if(!response.ok)return {id:provider.id,status:"offline"};
    const data=await response.json();
    const content=data?.choices?.[0]?.message?.content;
    const valid=typeof content==="string"?content.trim().length>0:Array.isArray(content)&&content.some(x=>x?.type==="text"&&String(x.text||"").trim());
-   return {id:provider.id,status:valid?"online":"offline"};
+   return {id:provider.id,status:valid&&!classifierModel(data.model)&&!classifierReply(content)?"online":"offline"};
   }catch(_){return {id:provider.id,status:"offline"};}
   finally{clearTimeout(timer);}
  }));
