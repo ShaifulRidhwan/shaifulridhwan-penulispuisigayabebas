@@ -189,7 +189,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
 });
 test("Casual Malay UI uses Cakap instead of technical Dikte",()=>{
  assert.match(html,/id="voiceDictate"[^>]*>Cakap jadi teks<\/button>/);
- assert.match(html,/status\("ready","Multi AI Connected"/);
+ assert.match(html,/status\("ready","Multi A.I Connected"/);
  assert.match(js,/dictate\.textContent="🎙 Cakap"/);
  assert.match(js,/dictate\.textContent="■ Berhenti"/);
  assert.doesNotMatch(html,/>🎙 Dikte<\/button>/);
