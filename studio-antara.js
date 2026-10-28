@@ -187,9 +187,13 @@ $("docWord").addEventListener("click",async()=>{
       for(const li of node.children)if(li.tagName==="LI")addParagraph(li,{bullet:node.tagName==="UL",numbering:node.tagName==="OL"});
     }else addParagraph(node);
   }
+  const settings=layout();
+  const margin=({normal:1134,narrow:680,wide:1701})[settings.margins]||1134;
+  const dims=settings.size==="Letter"?{width:12240,height:15840}:{width:11906,height:16838};
+  const pageSize=settings.orientation==="landscape"?{width:dims.height,height:dims.width}:dims;
   const doc=new docx.Document({
    numbering:{config:[{reference:"studio-numbering",levels:[{level:0,format:"decimal",text:"%1.",alignment:"left"}]}]},
-   sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:1000,bottom:1000,left:1100,right:1100}}},children:rows}]
+   sections:[{properties:{page:{size:pageSize,margin:{top:margin,bottom:margin,left:margin,right:margin}}},children:rows}]
   });
   save(await docx.Packer.toBlob(doc),filename(val("docTitle")||"dokumen","docx"));
   notice("Dokumen Word telah dijana.");
