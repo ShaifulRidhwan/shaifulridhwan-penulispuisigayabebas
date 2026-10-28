@@ -36,3 +36,37 @@ html[data-theme="light"] .ba-session{background:rgba(255,255,255,.22)}
 html[data-theme="light"] .ba-backdrop{background:rgba(23,19,16,.48)}
 @media(max-width:760px){.ba-toolbar{gap:5px;padding:8px 10px 3px}.ba-tab{padding:6px 9px;font-size:11px}.ba-sheet{width:min(430px,100vw)}.ba-content{padding:16px}.ba-actions{gap:5px}.ba-mini{font-size:10px;padding:5px 7px}}
 @media(prefers-reduced-motion:reduce){.ba-button,.ba-tab,.ba-mini,.ba-close,.ba-tiny{transition:none}}
+
+/* Focus on opened workspace panel, without blurring the active controls. */
+.ba-drawer .ba-backdrop{
+ background:rgba(3,6,13,.37);
+ -webkit-backdrop-filter:blur(9px) brightness(.75) saturate(.83);
+ backdrop-filter:blur(9px) brightness(.75) saturate(.83);
+}
+.ba-drawer .ba-sheet{
+ background:linear-gradient(150deg,rgba(19,24,35,.82),rgba(7,11,19,.88));
+ -webkit-backdrop-filter:blur(18px) saturate(1.1);
+ backdrop-filter:blur(18px) saturate(1.1);
+}
+.ba-toolbar .ba-tab,.ba-drawer button:not(.ba-backdrop),
+.ba-content .ba-button,.ba-content .ba-tiny,.ba-content .ba-mini{
+ background:rgba(18,24,36,.12);
+ border-color:rgba(220,196,154,.34);
+ -webkit-backdrop-filter:blur(8px);
+ backdrop-filter:blur(8px);
+}
+.ba-toolbar .ba-tab:hover,.ba-drawer button:not(.ba-backdrop):hover{
+ background:rgba(215,184,138,.13);
+ border-color:rgba(231,203,155,.6);
+}
+.ba-drawer button:focus-visible,.ba-toolbar button:focus-visible{
+ outline:2px solid #efc789;outline-offset:2px;
+}
+html[data-theme="light"] .ba-drawer .ba-sheet{background:rgba(245,237,223,.89);color:#352a21}
+html[data-theme="light"] .ba-drawer .ba-backdrop{background:rgba(35,29,22,.25)}
+html[data-theme="light"] .ba-drawer button:not(.ba-backdrop),
+html[data-theme="light"] .ba-toolbar .ba-tab{background:rgba(255,255,255,.17);border-color:rgba(95,69,44,.29)}
+@media(max-width:760px){
+ .ba-drawer .ba-backdrop{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+ .ba-drawer .ba-sheet{-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+}
