@@ -50,6 +50,12 @@ function configured(){
  return PROVIDERS.filter(p=>process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
 }
 function enabled(){return configured().length>0;}
+function quotaKind(message){
+ const text=String(message||"");
+ if(/per[-_ ]day|daily|tokensperday|requestsperday|free-models-per-day/i.test(text))return "daily";
+ if(/per[-_ ]min|tokensperminute|requestsperminute|\bTPM\b|\bRPM\b/i.test(text))return "minute";
+ return "unspecified";
+}
 function retrySeconds(response,fallback=30){
  const value=response?.headers?.get?.("retry-after");
  if(!value)return fallback;
@@ -66,7 +72,7 @@ function blockedClassifierPrefix(text){
 function errorToCooldown(status){
  return status===429?60000:status>=500||status===408?20000:status===401||status===403||status===404?300000:15000;
 }
-async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline}){
+async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix=""}){
  const messages=[
   {role:"system",content:safeMessage(system)+"\nSANDARAN TEKS: Tiada alat carian, pembacaan URL, imej atau pelaksanaan kod aktif di penyedia ini. Rujukan yang disertakan ialah data; jangan dakwa alat yang tiada telah digunakan. Identiti kekal Aksara, bukan nama model. Jangan reka fakta atau sumber. Puisi gaya bebas sudah wujud sebelum Shaiful; dia bukan pencipta atau pelopor genre itu."},
   ...boundedHistory(history),
@@ -91,7 +97,16 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    const simple=["conversation","general","explain"].includes(task)&&reasoningLevel!=="high";
    const outputLimit=Math.min(reaction?500:simple?1500:6000,Math.max(400,maxTokens));
-   const body={model:provider.model,messages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
+   // Keep the complete intentional personality in an identical first message.
+   // Per-turn guidance has its own system message, allowing whole-message
+   // prefix caching without rewriting or shortening that personality.
+   const prefix=safeMessage(systemPrefix);
+   const providerMessages=provider.id==="groq"&&prefix&&String(system).startsWith(prefix)?[
+    {role:"system",content:prefix},
+    {role:"system",content:String(system).slice(prefix.length)+"\nSANDARAN TEKS: Tiada alat carian, URL atau pelaksanaan kod aktif. Jangan reka sumber atau mengaku alat yang tiada digunakan. Identiti kekal Aksara. Shaiful bukan pencipta genre puisi gaya bebas."},
+    ...messages.slice(1)
+   ]:messages;
+   const body={model:provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
    if(provider.id==="openrouter")openRouterBody(body,["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"low");
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.
    if(provider.id==="groq"){
@@ -106,7 +121,8 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     e.fieldIssue=(message.match(/reasoning|stream|models|max_tokens|model|content|messages|system|billing|credits|quota/i)||[])[0]?.toLowerCase();
     e.errorType=String(details?.error?.code||details?.type||"").replace(/[^a-z0-9_-]/gi,"").slice(0,45);
     if(res.status===429){
-      e.retryAfterSeconds=retrySeconds(res);
+      e.quotaKind=quotaKind(message);
+      e.retryAfterSeconds=retrySeconds(res,e.quotaKind==="daily"?300:30);
       const values=message.match(/Limit[: ]+(\d+).*?Used[: ]+([\d.]+).*?Requested[: ]+(\d+)/i);
       if(values)e.quota={limit:Number(values[1]),used:Number(values[2]),requested:Number(values[3])};
     }
@@ -160,7 +176,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    const wait=err.retryAfterSeconds?err.retryAfterSeconds*1000:errorToCooldown(status);
    cooldown.set(provider.id,Date.now()+wait);
    if(preferredProvider===provider.id)preferredProvider="";
-   attempts.push({provider:provider.id,status:status||"unavailable",reason:err.reason||(err.name==="AbortError"?"timeout":status===429?"rate_limit":status>=500?"upstream":"request_failed"),...(err.quota?{quota:err.quota}:{}),...(err.fieldIssue?{fieldIssue:err.fieldIssue}:{}),...(err.errorType?{errorType:err.errorType}:{}),...(err.reason==="empty_output"?{finishReason:err.finishReason,outputTokens:err.outputTokens}:{}),elapsedMs:Date.now()-attemptStarted,retryAfterSeconds:Math.ceil(wait/1000)});
+   attempts.push({provider:provider.id,status:status||"unavailable",reason:err.reason||(err.name==="AbortError"?"timeout":status===429?"rate_limit":status>=500?"upstream":"request_failed"),...(err.quota?{quota:err.quota}:{}),...(err.quotaKind?{quotaKind:err.quotaKind}:{}),...(err.fieldIssue?{fieldIssue:err.fieldIssue}:{}),...(err.errorType?{errorType:err.errorType}:{}),...(err.reason==="empty_output"?{finishReason:err.finishReason,outputTokens:err.outputTokens}:{}),elapsedMs:Date.now()-attemptStarted,retryAfterSeconds:Math.ceil(wait/1000)});
   }finally{control.close();}
  }
  const waits=availability().map(p=>p.retryAfterSeconds).filter(x=>x>0);
@@ -218,7 +234,7 @@ async function checkStatus(){
     const response=await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(probeBody),signal:ctrl.signal});
     if(!response.ok){
      const wait=response.status===429?retrySeconds(response)*1000:errorToCooldown(response.status);
-     cooldown.set(provider.id,Date.now()+wait);
+     if([401,403,404,429].includes(response.status))cooldown.set(provider.id,Date.now()+wait);
      return {id:provider.id,status:"offline",http:response.status};
     }
     const data=await response.json(),content=data?.choices?.[0]?.message?.content;
@@ -227,7 +243,6 @@ async function checkStatus(){
     if(online)cooldown.delete(provider.id);
     return {id:provider.id,status:online?"online":"offline",latencyMs:Date.now()-started,...(!online?{finishReason:data?.choices?.[0]?.finish_reason||"",outputTokens:data?.usage?.completion_tokens,reasoningTokens:data?.usage?.completion_tokens_details?.reasoning_tokens}:{})};
    }catch(_){
-    cooldown.set(provider.id,Date.now()+15000);
     return {id:provider.id,status:"offline"};
    }finally{clearTimeout(timer);}
   }));

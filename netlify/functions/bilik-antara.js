@@ -52,7 +52,7 @@ function headers(){
 }
 function result(code,data,H){
   if(code===200&&typeof data.reply==="string"&&data.mode!=="recorded-voice")data={...data,reply:ChatStyle.reply(data.reply)};
-  return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-4"})};
+  return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-5"})};
 }
 function throttle(ip,store=rateMap,limit=12){
   const now=Date.now();
@@ -85,6 +85,10 @@ async function callGemini({apiKey,model,contents,system,tools=[],thinkingLevel="
       const retryInfo=details?.error?.details?.find?.(x=>String(x?.["@type"]||"").endsWith("RetryInfo"));
       const seconds=Number.parseFloat(res.headers?.get?.("retry-after")||retryInfo?.retryDelay||"");
       if(Number.isFinite(seconds))error.retryAfterSeconds=Math.max(1,Math.ceil(seconds));
+      if(res.status===429){
+        const names=(details?.error?.details||[]).flatMap(x=>(x.violations||[]).map(v=>String(v.quotaId||""))).join(" ")+" "+String(details?.error?.message||"");
+        error.quotaKind=/perday|per[-_ ]day|daily/i.test(names)?"daily":/perminute|per[-_ ]min/i.test(names)?"minute":"unspecified";
+      }
       throw error;
     }
     if(!onDelta||!res.body||!/text\/event-stream/i.test(res.headers?.get("content-type")||""))return await res.json();
@@ -161,7 +165,7 @@ exports.handler=async event=>{
             return {id:"gemini",status:test?.candidates?.length?"online":"offline",latencyMs:Date.now()-time};
           }catch(e){
             if(e.status===429)geminiTextCooldownUntil=Date.now()+(e.retryAfterSeconds?e.retryAfterSeconds*1000:GEMINI_COOLDOWN_MS);
-            return {id:"gemini",status:"offline",...(e.status?{http:e.status}:{})};
+            return {id:"gemini",status:"offline",...(e.status?{http:e.status}:{}),...(e.quotaKind?{quotaKind:e.quotaKind}:{})};
           }
         })();
         try{google=await googleHealth.pending;googleHealth.value=google;googleHealth.time=Date.now();googleHealth.model=baseModel;}finally{googleHealth.pending=null;}
@@ -300,7 +304,7 @@ exports.handler=async event=>{
       alternativeTried=true;
       let alternative;
       try{
-        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...options});
+        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:PERSONALITY,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...options});
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
@@ -375,6 +379,7 @@ exports.handler=async event=>{
   }catch(error){
     if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
     if(streamed)return result(502,{code:"STREAM_INTERRUPTED",error:"Aliran jawapan terputus. Jawapan separa belum lengkap."},H);
+    providerFailures.push({provider:"gemini",status:error.status||"unavailable",reason:error.cooldownKnown?"quota_cooldown":error.name==="AbortError"?"timeout":"upstream",...(error.quotaKind?{quotaKind:error.quotaKind}:{})});
     if(error.status===429&&!error.cooldownKnown)geminiTextCooldownUntil=Math.max(geminiTextCooldownUntil,Date.now()+(error.retryAfterSeconds?error.retryAfterSeconds*1000:GEMINI_COOLDOWN_MS));
     const transient=[400,401,403,404,429,500,502,503,504].includes(error.status)||error.name==="AbortError"||error.name==="TypeError"||(!error.status&&error.name==="Error");
     if(transient&&textOnly&&Router.enabled()&&!alternativeTried){

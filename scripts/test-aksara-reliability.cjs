@@ -33,7 +33,7 @@ test("linguistic follow-up can use the fallback and receives the unchanged compl
  const handler=setup(t);let payload;
  global.fetch=async(url,opts)=>{if(url.includes("googleapis"))return new Response("",{status:429});payload=JSON.parse(opts.body);return reply("Tak semestinya sedih.");};
  const r=await handler(event({question:"Yang kedua tu mesti bermaksud sedih ke? Jawab pendek.",history:[{role:"user",content:"Bezakan sunyi dengan sepi"},{role:"assistant",content:"Sunyi berkaitan bunyi; sepi juga berkaitan kesendirian."}]}));
- assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).provider,"groq");assert.ok(payload.messages[0].content.includes(Brain.CORE));assert.ok(payload.messages[0].content.includes(Brain.TEXT_DELIVERY));assert.equal(payload.messages.length,4);
+ assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).provider,"groq");assert.ok(payload.messages[0].content.includes(Brain.CORE));assert.ok(payload.messages[0].content.includes(Brain.TEXT_DELIVERY));assert.equal(payload.messages.length,5);
 });
 test("fallback carries summaries, public works and consented memory/text rather than dropping context",async t=>{
  const handler=setup(t);let payload;
@@ -254,7 +254,7 @@ test("reaction guidance reaches the chosen provider together with the actual pre
  const handler=setup(t);let request;
  global.fetch=async(_url,opts)=>{request=JSON.parse(opts.body);return reply("Haa, dia yang bangunkan ruang ni.");};
  const history=[{role:"user",content:"siapa buat bilik antara no"},{role:"assistant",content:"Shaiful Ridhwan yang membangunkan Bilik Antara."}];
- const r=await handler(event({question:"ooo",history,preferredProvider:"groq"}));assert.equal(r.statusCode,200);assert.match(request.messages[0].content,/REAKSI PENDEK PADA GILIRAN TERAKHIR/);assert.equal(request.messages.at(-2).content,history[1].content);assert.equal(request.reasoning_effort,"low");
+ const r=await handler(event({question:"ooo",history,preferredProvider:"groq"}));assert.equal(r.statusCode,200);assert.match(request.messages.filter(x=>x.role==="system").map(x=>x.content).join("\n"),/REAKSI PENDEK PADA GILIRAN TERAKHIR/);assert.equal(request.messages.at(-2).content,history[1].content);assert.equal(request.reasoning_effort,"low");
 });
 test("accepting an offered action is not downgraded to a mere acknowledgement",()=>{
  const history=[{role:"user",content:"Tolong bantu tulis puisi"},{role:"assistant",content:"Nak aku buat versi empat rangkap?"}];
@@ -457,4 +457,20 @@ test("free multilingual OpenRouter text streams early and never exposes a reason
  const response=await router.complete({system:"persona",history:[],question:"Hai",onDelta:x=>displayed.push(x)});
  assert.equal(body.models[0],"google/gemma-4-31b-it:free");assert.equal(body.stream,true);
  assert.equal(response.provider,"openrouter");assert.equal(displayed.join(""),"Aku dengar.");
+});
+
+test("the unchanged personality is a stable first system message across tasks",async t=>{
+ const handler=setup(t),systems=[];
+ global.fetch=async(_url,options)=>{const body=JSON.parse(options.body);systems.push(body.messages.filter(x=>x.role==="system"));return reply("Jawapan sah.");};
+ await handler(event({question:"Aku cuma nak borak."}));
+ await handler(event({question:"Kenapa API kadang lambat?"}));
+ assert.equal(systems[0].length,2);assert.equal(systems[0][0].content,systems[1][0].content);
+ assert.ok(systems[0][0].content.includes(Brain.CORE));assert.notEqual(systems[0][1].content,systems[1][1].content);
+});
+test("daily free-provider exhaustion is distinguished from a short token window",async t=>{
+ const handler=setup(t);process.env.OPENROUTER_API_KEY="mock";
+ global.fetch=async url=>url.includes("openrouter")?Response.json({error:{code:429,message:"Rate limit exceeded: free-models-per-day"}},{status:429}):url.includes("googleapis")?new Response("",{status:429}):reply("Aku boleh jawab.");
+ const response=JSON.parse((await handler(event({question:"Aku datang nak borak.",preferredProvider:"openrouter"}))).body);
+ assert.equal(response.provider,"groq");assert.equal(response.routing.failedAttempts[0].quotaKind,"daily");
+ assert.equal(response.routing.failedAttempts[0].retryAfterSeconds,300);
 });
