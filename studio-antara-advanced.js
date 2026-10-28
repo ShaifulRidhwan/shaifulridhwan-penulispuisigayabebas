@@ -25,6 +25,7 @@ try{
 ids.forEach(id=>$(id).addEventListener("change",saveSettings));
 ["docHeader","docFooter"].forEach(id=>$(id).addEventListener("input",saveSettings));
 function insertHTML(html){
+ if(rich.tiptap&&rich.insertHTML){rich.insertHTML(html);return;}
  editor.focus();document.execCommand("insertHTML",false,html);rich.changed();
 }
 $("docTable").addEventListener("click",()=>{
