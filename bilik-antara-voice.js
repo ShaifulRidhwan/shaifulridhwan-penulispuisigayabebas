@@ -249,15 +249,21 @@ function onServerMessage(payload){
     if(!playbackBusy())sayStatus("Aku dah habis fikir. Kau boleh sambung.");
   }
   if(!c)return;
-  if(c.interrupted){stopAudioQueue();panel.classList.remove("voice-speaking");if(lastTurn)lastTurn.finished=true;}
+  if(c.interrupted){
+    stopAudioQueue();panel.classList.remove("voice-speaking");
+    if(lastTurn)lastTurn.finished=true;
+    sayStatus("Aku berhenti. Kau cakap je, aku dengar.");
+    // Discard any audio that accompanied the cancelled generation.
+    return;
+  }
   // Google can send interim words before the final transcript is available.
   // Showing them helps distinguish recognition issues from answer issues.
   if(c.interimInputTranscription?.text&&!c.inputTranscription?.text){
-    sayStatus("Sedang dengar: "+String(c.interimInputTranscription.text).slice(0,125));
+    sayStatus("Aku tengah dengar…");
   }
   if(c.inputTranscription&&c.inputTranscription.text){
     appendTranscript("user",c.inputTranscription.text);
-    sayStatus("Aku dengar: "+String(c.inputTranscription.text).slice(0,125));
+    sayStatus("Aku dengar. Sekejap, aku jawab…");
   }
   if(c.outputTranscription&&c.outputTranscription.text){
     appendTranscript("assistant",c.outputTranscription.text);
@@ -441,9 +447,9 @@ async function startLive(){
               endOfSpeechSensitivity:"END_SENSITIVITY_LOW",
               prefixPaddingMs:40,silenceDurationMs:950
             },
-            // Avoid false interruptions when the phone speaker leaks into its mic.
-            // Users can finish a thought after the model has completed its turn.
-            activityHandling:"NO_INTERRUPTION",
+            // Enable native Gemini Live barge-in: the user can speak over the AI.
+            // Gemini detects real speech and sends serverContent.interrupted.
+            activityHandling:"START_OF_ACTIVITY_INTERRUPTS",
             turnCoverage:"TURN_INCLUDES_ONLY_ACTIVITY"
           },
           inputAudioTranscription:{},
