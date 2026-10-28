@@ -2478,3 +2478,97 @@ html[data-theme="light"] body:not(.voice-focus):has(#settingsPanel[open]) .setti
  .conversation .voice-focus-veil{-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)}
  body.voice-focus .topbar,body.voice-focus .identity,body.voice-focus .footer-note{filter:blur(3px) brightness(.76)}
 }
+
+/* Composer 2026-10-28: one continuous glass surface, three quiet controls. */
+.conversation .composer{
+  display:flex;align-items:flex-end;gap:8px;
+  padding:7px 9px!important;
+  border:1px solid rgba(220,188,142,.38)!important;
+  border-radius:19px!important;
+  background:rgba(9,15,26,.35)!important;
+  -webkit-backdrop-filter:blur(12px) saturate(1.08);
+  backdrop-filter:blur(12px) saturate(1.08);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.055)!important;
+  transition:border-color .2s ease,box-shadow .2s ease,background .2s ease;
+}
+.conversation .composer:focus-within{
+  border-color:rgba(235,198,136,.64)!important;
+  background:rgba(11,17,28,.44)!important;
+  box-shadow:0 0 0 2px rgba(215,169,94,.075),inset 0 1px 0 rgba(255,255,255,.07)!important;
+}
+.conversation .composer textarea,
+.conversation .composer textarea:focus,
+.conversation .composer textarea:focus-visible{
+  flex:1 1 auto;min-width:0;
+  margin:0!important;padding:11px 4px!important;
+  min-height:44px!important;max-height:168px;
+  border:0!important;border-radius:0!important;outline:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:var(--ink);
+  font:400 16px/1.5 'DM Sans',sans-serif;
+  resize:none;
+  -webkit-appearance:none;appearance:none;
+}
+.conversation .composer .attach-label{
+  box-sizing:border-box;flex:0 0 44px;
+  width:44px;height:44px;min-width:44px;
+  display:grid;place-items:center;align-self:flex-end;
+  margin:0;padding:0;cursor:pointer;
+  border:1px solid transparent;border-radius:13px;
+  color:rgba(244,226,199,.78);
+  background:transparent!important;
+  transition:background .2s,color .2s,border-color .2s;
+}
+.conversation .composer .attach-label:hover,
+.conversation .composer .attach-label:focus-within{
+  color:#f8dfb3;background:rgba(240,204,148,.09)!important;
+  border-color:rgba(235,200,149,.18);
+}
+.conversation .composer .attach-label svg{
+  width:21px;height:21px;stroke-width:1.7;
+}
+.conversation .composer #sendBtn{
+  box-sizing:border-box;flex:0 0 44px;
+  width:44px;height:44px;min-width:44px;min-height:44px;
+  max-width:44px;max-height:44px;
+  margin:0;align-self:flex-end;padding:0;
+  display:grid;place-items:center;
+  border:1px solid rgba(236,199,138,.35)!important;
+  border-radius:13px!important;
+  color:#f2d4a3!important;
+  background:rgba(203,162,99,.14)!important;
+  box-shadow:none!important;
+  transform:none;
+  opacity:1;
+  transition:background .2s ease,border-color .2s ease,color .2s ease;
+}
+.conversation .composer #sendBtn:not(:disabled){
+  color:#20170c!important;
+  background:linear-gradient(135deg,rgba(240,207,145,.93),rgba(203,160,92,.9))!important;
+  border-color:rgba(244,209,153,.8)!important;
+}
+.conversation .composer #sendBtn:disabled{opacity:.52;cursor:default}
+.conversation .composer #sendBtn:hover:not(:disabled){
+  background:linear-gradient(135deg,#f5dca9,#dbb277)!important;
+  box-shadow:0 0 0 2px rgba(220,181,116,.12)!important;
+  transform:none;
+}
+.conversation .composer #sendBtn svg{width:19px;height:19px}
+html[data-theme="light"] .conversation .composer{
+  background:rgba(255,251,242,.62)!important;
+  border-color:rgba(108,80,48,.3)!important;
+}
+html[data-theme="light"] .conversation .composer:focus-within{
+  background:rgba(255,252,244,.76)!important;
+}
+html[data-theme="light"] .conversation .composer .attach-label{color:#665138}
+@media(max-width:420px){
+ .conversation .composer{gap:5px;padding:6px 7px!important;border-radius:16px!important}
+ .conversation .composer .attach-label{width:42px;height:42px;min-width:42px;flex-basis:42px}
+ .conversation .composer #sendBtn{
+  width:42px;height:42px;min-width:42px;min-height:42px;
+  max-width:42px;max-height:42px;flex-basis:42px;
+ }
+ .conversation .composer textarea{min-height:42px!important;padding:10px 3px!important}
+}
