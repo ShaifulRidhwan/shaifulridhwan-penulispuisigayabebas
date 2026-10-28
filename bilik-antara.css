@@ -2611,3 +2611,32 @@ html[data-theme="light"] .conversation .composer .attach-label{color:#665138}
  .messages.is-welcome .message.ai .bubble{font-size:15.5px}
  .messages .message .bubble .code-block{font-size:13px}
 }
+
+/* Chat reading scale and consistent modern starter typography. */
+.messages .message.ai .bubble,
+.messages .message.user .bubble,
+.messages.is-welcome .message.ai .bubble{
+  font-size:15px;
+  line-height:1.61;
+}
+.messages .message.user .bubble{line-height:1.55}
+.conversation .starters{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.conversation .starter{
+  font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:12px;
+  font-weight:500;
+  line-height:1.4;
+  letter-spacing:0;
+  padding:8px 12px;
+  min-height:38px;
+  white-space:normal;
+  text-align:left;
+}
+.conversation .starter::before{font-family:'DM Sans',sans-serif;margin-right:7px}
+@media(max-width:760px){
+ .messages .message.ai .bubble,
+ .messages .message.user .bubble,
+ .messages.is-welcome .message.ai .bubble{font-size:14.5px;line-height:1.62}
+ .conversation .starters{gap:6px;padding-inline:12px}
+ .conversation .starter{font-size:11.5px;padding:7px 10px;min-height:37px}
+}
