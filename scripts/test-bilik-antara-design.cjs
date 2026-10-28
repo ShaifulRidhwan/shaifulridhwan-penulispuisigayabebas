@@ -132,7 +132,7 @@ test("Feature icon consolidates sessions, performance, studio and keeps privacy 
 });
 
 test("Header chips stay optically aligned and feature interactions have gentle golden motion",()=>{
- assert.match(html,/href="bilik-antara\.css\?v=48"/);
+ assert.match(html,/href="bilik-antara\.css\?v=49"/);
  assert.match(css,/\.conversation-head #voiceLive,\s*\.conversation-head #connection,\s*\.conversation-head #settingsPanel > summary\s*\{/);
  assert.match(css,/height:42px;\s*min-height:42px!important;\s*max-height:42px/);
  assert.match(css,/@media\(max-width:760px\)\{[\s\S]*?\.conversation-head #voiceLive,\.conversation-head #connection/);
@@ -159,13 +159,13 @@ test("Rounded Aksara controls share Liquid Glass, preserve contrast and cap mobi
   assert.ok(css.includes(selector),"Missing common glass surface: "+selector);
  }
  assert.match(css,/--lg-reflection:/);
- assert.match(css,/radial-gradient\(ellipse 90% 85% at 14% -35%/);
+ assert.match(css,/linear-gradient\(145deg,rgba\(255,247,224,\.035\),rgba\(125,167,205,\.018\)\)/);
  assert.match(css,/inset 0 1px 0 var\(--lg-reflection\)/);
  assert.match(css,/\.conversation-head #connection\.ready/);
  assert.match(css,/\.conversation #settingsPanel \[?\.settings-card|\.conversation #settingsPanel \.settings-card/);
  assert.match(css,/\.conversation \.composer:focus-within/);
  assert.match(css,/\.messages \.message\.user \.bubble/);
- assert.match(css,/backdrop-filter:blur\(7px\)/);
+ assert.match(css,/backdrop-filter:blur\(2px\)/);
  assert.match(css,/prefers-reduced-motion:reduce/);
  assert.match(suite,/Match archive\/performance controls to Aksara's rounded Liquid Glass/);
  assert.match(suite,/\.ba-drawer :is\(\.ba-button,\.ba-mini,\.ba-tiny,\.ba-close,\.ba-session-title\)/);
@@ -173,9 +173,9 @@ test("Rounded Aksara controls share Liquid Glass, preserve contrast and cap mobi
 
 test("Clear Liquid Glass preserves background visibility and treats Send like a glass control",()=>{
  const clear=css.slice(css.indexOf("/* Liquid Glass · shared rounded surfaces"));
- assert.match(html,/href="bilik-antara\.css\?v=48"/);
- assert.match(clear,/Clear-glass revision: low-alpha reflections/);
- assert.match(clear,/rgba\(255,251,238,\.11\)/);
+ assert.match(html,/href="bilik-antara\.css\?v=49"/);
+ assert.match(clear,/clearer optical glass: transparent tint/);
+ assert.match(clear,/rgba\(255,247,224,\.035\)/);
  assert.match(clear,/backdrop-filter:blur\(5px\)/);
  assert.match(clear,/backdrop-filter:blur\(3px\)/);
  assert.match(clear,/\.conversation \.composer:focus-within\{/);
@@ -183,7 +183,21 @@ test("Clear Liquid Glass preserves background visibility and treats Send like a 
  assert.match(clear,/\.conversation \.composer #sendBtn:disabled\{/);
  assert.match(clear,/\.conversation \.composer #sendBtn:not\(:disabled\)\{/);
  assert.match(clear,/\.conversation \.composer #sendBtn:hover:not\(:disabled\)\{/);
- assert.match(clear,/rgba\(244,216,171,\.105\)/);
- assert.match(clear,/rgba\(253,223,174,\.19\)/);
+ assert.match(clear,/rgba\(244,216,171,\.055\)/);
+ assert.match(clear,/rgba\(253,223,174,\.115\)/);
  assert.doesNotMatch(clear,/rgba\(255,242,207,\.96\)/);
+});
+
+test("Voice and Multi AI pills share starter-question sizing and genuinely clearer glass",()=>{
+ const clear=css.slice(css.indexOf("/* Liquid Glass · shared rounded surfaces"));
+ const pills=clear.slice(clear.indexOf("/* Two header pills"),clear.indexOf("/* Readable menus"));
+ assert.match(pills,/\.conversation-head #voiceLive,\.conversation-head #connection\{/);
+ assert.match(pills,/height:38px!important;min-height:38px!important;max-height:38px!important/);
+ assert.match(pills,/padding:8px 12px!important/);
+ assert.match(pills,/font:500 12px\/1\.4 'DM Sans'/);
+ assert.match(clear,/@media\(max-width:760px\)\{[\s\S]*?height:37px!important;min-height:37px!important;max-height:37px!important/);
+ assert.match(clear,/\.conversation\{[\s\S]*?rgba\(15,17,25,\.20\)/);
+ assert.match(clear,/backdrop-filter:blur\(2px\)/);
+ assert.match(clear,/\.conversation \.composer #sendBtn:not\(:disabled\)\{/);
+ assert.doesNotMatch(clear,/rgba\(255,242,207,\.96\)|rgba\(214,172,111,\.91\)/);
 });
