@@ -170,8 +170,29 @@ async function buildChatPortrait(){
 let portraitCached=false;
 try{portraitCached=showPortrait(localStorage.getItem(portraitCacheKey));}catch(_){}
 if(!portraitCached){
- if("requestIdleCallback" in window)window.requestIdleCallback(()=>buildChatPortrait(),{timeout:2000});
- else window.setTimeout(buildChatPortrait,300);
+ // Avoid competing with chat startup on a first visit; keep the same portrait.
+ const queuePortrait=()=>{
+  if(document.hidden){
+   const whenVisible=()=>{
+    if(!document.hidden){document.removeEventListener("visibilitychange",whenVisible);queuePortrait();}
+   };
+   document.addEventListener("visibilitychange",whenVisible);
+   return;
+  }
+  const buildWhenFree=()=>{
+   if(panel.hidden&&!active)buildChatPortrait();
+   else {
+    const onClose=new MutationObserver(()=>{
+     if(panel.hidden&&!active){onClose.disconnect();queuePortrait();}
+    });
+    onClose.observe(panel,{attributes:true,attributeFilter:["hidden"]});
+   }
+  };
+  if("requestIdleCallback" in window)window.requestIdleCallback(buildWhenFree,{timeout:9000});
+  else window.setTimeout(buildWhenFree,2800);
+ };
+ if(document.readyState==="complete")queuePortrait();
+ else window.addEventListener("load",queuePortrait,{once:true});
 }
 const observer=new MutationObserver(()=>{if(panel.hidden){if(active)stop();}else if(!active&&!loading)begin();});
 observer.observe(panel,{attributes:true,attributeFilter:["hidden"]});
