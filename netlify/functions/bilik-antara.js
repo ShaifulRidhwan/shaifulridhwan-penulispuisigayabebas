@@ -280,7 +280,7 @@ exports.handler=async event=>{
     }
     log("error",{http:error.status||null,name:error.name||"unknown",ms:Date.now()-started});
     if(error.name==="AbortError")return result(504,{error:"Gemini mengambil masa terlalu lama. Cuba soalan lebih ringkas."},H);
-    if(error.status===429)return result(429,{code:"API_QUOTA",error:"Model utama dan sandaran belum dapat menjawab. Cuba kemudian.",retryAfterSeconds:120},H);
+    if(error.status===429)return result(429,{code:Router.enabled()?"ALL_PROVIDERS_BUSY":"API_QUOTA",error:Router.enabled()?"Semua penyedia AI yang tersedia belum dapat menjawab. Cuba lagi kemudian.":"Kuota model utama sedang penuh. Cuba lagi kemudian.",retryAfterSeconds:120},H);
     return result(502,{error:errorMessage(error.status||502)},H);
   }
 };
