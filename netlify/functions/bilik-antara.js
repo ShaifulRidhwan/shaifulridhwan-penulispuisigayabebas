@@ -8,6 +8,7 @@ const {extractTikTokHandle,researchPublicAccount}=require("./tiktok-public-resea
 const {publicReferences}=require("./antara-free-research");
 const Identity=require("../../bilik-antara-identity");
 const Brain=require("../../bilik-antara-brain");
+const Router=require("./aksara-provider-router");
 const DEFAULT_MODEL="gemini-3.6-flash";
 const SITE_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
 const MAX_BODY=5400000;
@@ -107,8 +108,8 @@ exports.handler=async event=>{
   try{payload=JSON.parse(event.body||"{}");}catch(e){return result(400,{error:"JSON tidak sah."},H);}
   if(!payload||typeof payload!=="object"||Array.isArray(payload))return result(400,{error:"Format permintaan tidak sah."},H);
   const apiKey=process.env.GEMINI_API_KEY,baseModel=freeModel(process.env.GEMINI_MODEL,DEFAULT_MODEL);
-  if(payload.probe===true)return result(apiKey?200:503,apiKey?{ok:true,backend:"ready",model:baseModel,geminiVerified:false}:{ok:false,error:"GEMINI_API_KEY tiada."},H);
-  if(!apiKey)return result(503,{error:"GEMINI_API_KEY belum ditetapkan di pelayan."},H);
+  if(payload.probe===true){const alternatives=Router.configured().map(p=>p.id);return result(apiKey||alternatives.length?200:503,{ok:!!(apiKey||alternatives.length),backend:apiKey?"ready":"fallback_ready",model:apiKey?baseModel:null,geminiVerified:false,alternativeProviders:alternatives},H);}
+  if(!apiKey&&!Router.enabled())return result(503,{error:"Tiada kunci AI aktif di pelayan."},H);
   const ip=(event.headers&&(event.headers["x-nf-client-connection-ip"]||"").split(",")[0])||"unknown";
   if(throttle(ip))return result(429,{code:"RATE_LIMIT",error:"Terlalu banyak permintaan dalam masa singkat. Cuba lagi sebentar."},H);
   const history=safeHistory(payload.history);
@@ -218,6 +219,7 @@ exports.handler=async event=>{
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
     works:!!poem,multimodal:media.length>0,model,review:intent.review});
   try{
+    if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
     const data=await callGemini({apiKey,model,system,contents,tools,thinkingLevel:plan.thinkingLevel,
       maxTokens,timeoutMs:18000});
     const candidate=data&&data.candidates&&data.candidates[0];
