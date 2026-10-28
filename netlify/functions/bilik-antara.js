@@ -15,6 +15,9 @@ const MAX_BODY=5400000;
 const MAX_QUESTION=32000;
 const MAX_MEDIA_ENCODED=4800000;
 const rateMap=new Map();
+// Warm Netlify instances remember quota exhaustion; no repeated Google calls while cooling down.
+let geminiTextCooldownUntil=0;
+const GEMINI_COOLDOWN_MS=120000;
 
 const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+Identity.PROMPT+"\n"+[
 "STUDIO ANTARA: Jika pengguna meminta e-mel, PDF atau Word siap dieksport, bantu hasilkan kandungan dan maklumkan bahawa pengguna boleh buka studio-antara.html serta pindahkan jawapan melalui butang Studio pada mesej. Studio mengendalikan eksport fail dalam pelayar. Penjanaan imej AI ada di studio-imej-beta.html sebagai BETA TEST berasingan; memerlukan peranti desktop yang sesuai, WebGPU, persetujuan dan muat turun model; jangan dakwa serasi dengan semua peranti atau boleh menjana imej terus melalui API sembang.",
@@ -220,6 +223,7 @@ exports.handler=async event=>{
     works:!!poem,multimodal:media.length>0,model,review:intent.review});
   try{
     if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
+    if(Date.now()<geminiTextCooldownUntil)throw Object.assign(new Error("Gemini quota cooling down"),{status:429});
     const data=await callGemini({apiKey,model,system,contents,tools,thinkingLevel:plan.thinkingLevel,
       maxTokens,timeoutMs:18000});
     const candidate=data&&data.candidates&&data.candidates[0];
@@ -257,6 +261,7 @@ exports.handler=async event=>{
     log("success",{depth:intent.depth,review:!!review,sources:sources.length,ms:output.durMs});
     return result(200,output,H);
   }catch(error){
+    if(error.status===429)geminiTextCooldownUntil=Math.max(geminiTextCooldownUntil,Date.now()+GEMINI_COOLDOWN_MS);
     const transient=[429,500,502,503,504].includes(error.status)||error.name==="AbortError";
     const textOnly=media.length===0&&!documentText&&!tiktokHandle&&!userMemory&&
       !(intent.sensitive||intent.search||intent.hasLink)&&question.length<=9000;
@@ -268,14 +273,14 @@ exports.handler=async event=>{
           mode:"fallback",aiMode:"automatic",model:alternative.model,provider:alternative.provider,
           reply:alternative.reply,sources:[],argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[],toolsOffered:[],
-          disclaimer:"Jawapan daripada model sandaran, tanpa semakan web langsung.",
+          disclaimer:"Jawapan daripada model sandaran ("+alternative.provider+"). Tiada semakan web langsung; butiran sejarah dan dakwaan khusus mungkin memerlukan pengesahan.",
           usage:alternative.usage,durMs:Date.now()-started
         },H);
       }
     }
     log("error",{http:error.status||null,name:error.name||"unknown",ms:Date.now()-started});
     if(error.name==="AbortError")return result(504,{error:"Gemini mengambil masa terlalu lama. Cuba soalan lebih ringkas."},H);
-    if(error.status===429)return result(429,{code:"API_QUOTA",error:errorMessage(429)},H);
+    if(error.status===429)return result(429,{code:"API_QUOTA",error:"Model utama dan sandaran belum dapat menjawab. Cuba kemudian.",retryAfterSeconds:120},H);
     return result(502,{error:errorMessage(error.status||502)},H);
   }
 };
