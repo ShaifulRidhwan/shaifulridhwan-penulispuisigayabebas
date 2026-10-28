@@ -166,6 +166,23 @@ $("docWord").addEventListener("click",async()=>{
       spacing:{after:tag==="BLOCKQUOTE"?260:160}}));
   }
   for(const node of root.children){
+    if(node.tagName==="HR"&&node.dataset.pageBreak==="true"){
+      rows.push(new docx.Paragraph({children:[new docx.PageBreak()]}));
+      continue;
+    }
+    if(node.tagName==="TABLE"){
+      const tableRows=[];
+      for(const tr of node.querySelectorAll("tr")){
+        const cells=[];
+        for(const cell of tr.children){
+          if(cell.tagName!=="TH"&&cell.tagName!=="TD")continue;
+          cells.push(new docx.TableCell({children:[new docx.Paragraph({children:runsFor(cell)})]}));
+        }
+        if(cells.length)tableRows.push(new docx.TableRow({children:cells}));
+      }
+      if(tableRows.length)rows.push(new docx.Table({rows:tableRows}));
+      continue;
+    }
     if(node.tagName==="UL"||node.tagName==="OL"){
       for(const li of node.children)if(li.tagName==="LI")addParagraph(li,{bullet:node.tagName==="UL",numbering:node.tagName==="OL"});
     }else addParagraph(node);
