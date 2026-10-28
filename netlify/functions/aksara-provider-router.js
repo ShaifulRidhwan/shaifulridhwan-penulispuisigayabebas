@@ -34,7 +34,7 @@ const PROVIDERS=[
  {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
   url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"}
 ];
-const OPENROUTER_CHAT_MODELS=["poolside/laguna-s-2.1:free","google/gemma-4-31b-it:free","nvidia/nemotron-3.5-lightning:free"];
+const OPENROUTER_CHAT_MODELS=["nvidia/nemotron-3.5-lightning:free","google/gemma-4-31b-it:free","poolside/laguna-s-2.1:free"];
 const classifierModel=model=>/(?:guard|moderation|classifier|safety)/i.test(String(model||""));
 function classifierReply(text){
  const value=String(text||"").replace(/\*\*/g,"").trim();
@@ -76,11 +76,13 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   try{
    const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
    if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
-   const body={model:provider.model,messages,temperature:0.35,max_tokens:Math.min(6000,Math.max(400,maxTokens)),...(onDelta?{stream:true}:{} )};
+   const simple=["conversation","general","explain"].includes(task)&&reasoningLevel!=="high";
+   const outputLimit=Math.min(simple?1500:6000,Math.max(400,maxTokens));
+   const body={model:provider.model,messages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
    if(provider.id==="openrouter")openRouterBody(body);
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.
    if(provider.id==="groq"){
-     body.reasoning_effort=["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"medium";
+     body.reasoning_effort=simple?"low":["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"medium";
      body.include_reasoning=false;
    }
    const res=await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(body),signal:control.signal});

@@ -264,15 +264,17 @@ exports.handler=async event=>{
     works:!!poem,multimodal:media.length>0,model,review:intent.review});
   const privateContext=!!(documentText||userMemory);
   const textOnly=media.length===0&&!tiktokHandle&&(!privateContext||payload.contextFallback===true)&&!(intent.sensitive||intent.search||intent.hasLink);
+  let providerFailures=[];
   async function useAlternative(options={}){
       let alternative;
       try{
-        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:8000,bufferedTimeoutMs:20000,deadline,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,...options});
+        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:4000,bufferedTimeoutMs:20000,deadline,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,...options});
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
         return result(502,{code:"STREAM_INTERRUPTED",error:"Aliran jawapan sandaran terputus sebelum lengkap. Jawapan separa dikekalkan; cuba semula untuk jawapan penuh.",interruption:fallbackError.interruption||"upstream"},H);
       }
+      if(alternative.attempts)providerFailures.push(...alternative.attempts);
       if(alternative.reply){
         lastTextProvider=alternative.provider;lastTextSuccessAt=Date.now();
         log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
@@ -298,7 +300,7 @@ exports.handler=async event=>{
     if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
     if(Date.now()<geminiTextCooldownUntil)throw Object.assign(new Error("Gemini quota cooling down"),{status:429});
     const data=await callGemini({apiKey,model,system,contents,tools,thinkingLevel:plan.thinkingLevel,
-      maxTokens,timeoutMs:Math.min(18000,remaining()),signal:event.signal,deadline,onDelta:emit&&!plan.doReview&&!tools.length?emit:null});
+      maxTokens,timeoutMs:Math.min(textOnly&&Router.enabled()?6500:18000,remaining()),signal:event.signal,deadline,onDelta:emit&&!plan.doReview&&!tools.length?emit:null});
     const candidate=data&&data.candidates&&data.candidates[0];
     const reply=parseReply(modelText(candidate));
     if(!reply)throw Object.assign(new Error("Empty candidate"),{status:502});
@@ -345,7 +347,7 @@ exports.handler=async event=>{
     log("error",{http:error.status||null,name:error.name||"unknown",ms:Date.now()-started});
     if(!textOnly&&Router.enabled())return result(error.status===429?429:503,{code:"CAPABILITY_UNAVAILABLE",error:privateContext&&payload.contextFallback!==true?"Model utama belum tersedia. Kau boleh benarkan sandaran memproses memori dan fail teks dalam Privasi & sesi, atau cuba lagi kemudian.":"Model yang menyokong permintaan ini belum tersedia. Sandaran teks tidak boleh menggantikan alat carian, audio, imej atau fungsi khusus ini.",retryAfterSeconds:30},H);
     if(error.name==="AbortError")return result(504,{error:"Gemini mengambil masa terlalu lama. Cuba soalan lebih ringkas."},H);
-    if(error.status===429)return result(429,{code:Router.enabled()?"ALL_PROVIDERS_BUSY":"API_QUOTA",error:Router.enabled()?"Semua penyedia AI yang tersedia belum dapat menjawab. Cuba lagi kemudian.":"Kuota model utama sedang penuh. Cuba lagi kemudian.",retryAfterSeconds:30},H);
-    return result(502,{error:errorMessage(error.status||502)},H);
+    if(error.status===429)return result(429,{code:Router.enabled()?"ALL_PROVIDERS_BUSY":"API_QUOTA",error:Router.enabled()?"Semua penyedia AI yang tersedia belum dapat menjawab. Cuba lagi kemudian.":"Kuota model utama sedang penuh. Cuba lagi kemudian.",retryAfterSeconds:30,providerFailures:providerFailures.slice(-6)},H);
+    return result(502,{error:errorMessage(error.status||502),providerFailures:providerFailures.slice(-6)},H);
   }
 };
