@@ -50,7 +50,7 @@ function handleSpokenControl(text){
  if(lastCommand===q&&Date.now()-lastCommandAt<1700)return true;
  lastCommand=q;lastCommandAt=Date.now();voiceMetrics.commands++;
  if(stop){suppressPlaybackUntilUser=true;stopAudioQueue();panel.classList.remove("voice-speaking");sayStatus("Baik, aku diam. Kau cakap je.");}
- else sayStatus("Aku dengar. Kau boleh sambung.");
+ else {suppressPlaybackUntilUser=false;sayStatus("Aku dengar. Kau boleh sambung.");}
  return true;
 }
 function handleVoiceTools(call){
