@@ -384,7 +384,9 @@ function addIdeas(items){
 async function compact(){
  if(compacting||history.length<20||history.length-summarizedThrough<12)return;
  const until=history.length-12;
- const segment=history.slice(summarizedThrough,until).slice(-18);
+ // Summarize contiguous turns only; never mark skipped turns as remembered.
+ const end=Math.min(until,summarizedThrough+18);
+ const segment=history.slice(summarizedThrough,end);
  if(segment.length<4)return;
  compacting=true;
  try{
@@ -393,7 +395,7 @@ async function compact(){
   if(!res.ok)throw Error("summary");
   const out=await res.json();
   if(out&&typeof out.summary==="string"&&out.summary.trim()){
-   summary=out.summary.slice(0,1800);summarizedThrough=until;save();
+   summary=out.summary.slice(0,1800);summarizedThrough=end;save();
   }
  }catch(e){}finally{compacting=false;}
 }
