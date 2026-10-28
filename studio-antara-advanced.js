@@ -96,6 +96,60 @@ $("docReplaceAll").addEventListener("click",()=>{
  if(count)rich.changed();
  $("docFindStatus").textContent=count+" padanan diganti.";
 });
+// Version history is local to this browser, with a small bounded snapshot list.
+const HISTORY_KEY="aksara:studio:document-versions:v1";
+let versions=[];
+try{const data=JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");if(Array.isArray(data))versions=data.slice(0,8).filter(x=>x&&typeof x.html==="string");}catch(_){}
+function refreshVersions(){
+ const list=$("docVersionList");list.replaceChildren();
+ for(let i=0;i<versions.length;i++){
+  const option=document.createElement("option");option.value=String(i);
+  option.textContent=new Date(versions[i].at).toLocaleString("ms-MY")+" · "+(versions[i].title||"Tanpa tajuk").slice(0,42);
+  list.appendChild(option);
+ }
+ $("docVersionsStatus").textContent=versions.length+" versi pada peranti.";
+}
+function saveVersion(){
+ const entry={at:Date.now(),title:$("docTitle").value,html:rich.getHTML(),layout:getLayout()};
+ if(!entry.html.trim())return;
+ if(JSON.stringify(entry).length>350000)return;
+ versions.unshift(entry);versions=versions.slice(0,8);
+ try{localStorage.setItem(HISTORY_KEY,JSON.stringify(versions));}catch(_){
+  versions=versions.slice(0,4);
+  try{localStorage.setItem(HISTORY_KEY,JSON.stringify(versions));}catch(__){}
+ }
+ refreshVersions();
+}
+$("docVersions").addEventListener("click",()=>{
+ const panel=$("docVersionsPanel");panel.hidden=!panel.hidden;
+ if(!panel.hidden)refreshVersions();
+});
+$("docRestoreVersion").addEventListener("click",()=>{
+ const entry=versions[Number($("docVersionList").value)];
+ if(!entry)return;
+ if(!confirm("Pulihkan versi ini? Kandungan semasa akan digantikan."))return;
+ saveVersion();
+ $("docTitle").value=entry.title||"";
+ rich.setHTML(entry.html);rich.saveDraft();
+ if(entry.layout){
+   if(["A4","Letter"].includes(entry.layout.size))$("docPageSize").value=entry.layout.size;
+   if(["normal","narrow","wide"].includes(entry.layout.margins))$("docMargins").value=entry.layout.margins;
+   if(["portrait","landscape"].includes(entry.layout.orientation))$("docOrientation").value=entry.layout.orientation;
+   $("docHeader").value=entry.layout.header||"";
+   $("docFooter").value=entry.layout.footer||"";
+   $("docPageNumbers").checked=entry.layout.numbers!==false;
+   saveSettings();
+ }
+ refreshVersions();$("docVersionsStatus").textContent="Versi dipulihkan.";
+});
+$("docSaveDraft").addEventListener("click",saveVersion);
+let previousSnapshot="";
+window.setInterval(()=>{
+ if(document.hidden)return;
+ const html=rich.getHTML();
+ if(html.length>0&&html!==previousSnapshot){saveVersion();previousSnapshot=html;}
+},5*60*1000);
+refreshVersions();
 window.StudioLayout={get:getLayout};
 emit();
 })();
