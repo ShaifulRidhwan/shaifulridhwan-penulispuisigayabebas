@@ -1,8 +1,6 @@
 /* Bilik Antara suite: light-weight glass UI, visually subordinate to the main chat. */
-.ba-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:9px 13px 5px;z-index:2;position:relative}
-.ba-button,.ba-tab,.ba-mini,.ba-close,.ba-tiny,.ba-session-title{font:inherit;cursor:pointer;color:inherit;background:transparent;border:1px solid rgba(185,175,155,.32);border-radius:9px;padding:8px 12px;transition:background .2s ease,border-color .2s ease}
-.ba-tab{font-size:12px;letter-spacing:.015em;padding:7px 12px;border-radius:20px;backdrop-filter:blur(8px);background:rgba(80,77,82,.12)}
-.ba-tab:hover,.ba-button:hover,.ba-tiny:hover,.ba-mini:hover{background:rgba(173,159,143,.18);border-color:rgba(210,194,165,.55)}
+.ba-button,.ba-mini,.ba-close,.ba-tiny,.ba-session-title{font:inherit;cursor:pointer;color:inherit;background:transparent;border:1px solid rgba(185,175,155,.32);border-radius:9px;padding:8px 12px;transition:background .2s ease,border-color .2s ease}
+.ba-button:hover,.ba-tiny:hover,.ba-mini:hover{background:rgba(173,159,143,.18);border-color:rgba(210,194,165,.55)}
 .ba-drawer[hidden]{display:none!important}
 .ba-drawer{position:fixed;inset:0;z-index:1500;display:flex;justify-content:flex-end;isolation:isolate}
 .ba-backdrop{position:absolute;inset:0;background:rgba(3,4,9,.72);border:0;cursor:pointer}
@@ -34,8 +32,8 @@
 
 
 
-@media(max-width:760px){.ba-toolbar{gap:5px;padding:8px 10px 3px}.ba-tab{padding:6px 9px;font-size:11px}.ba-sheet{width:min(430px,100vw)}.ba-content{padding:16px}.ba-actions{gap:5px}.ba-mini{font-size:10px;padding:5px 7px}}
-@media(prefers-reduced-motion:reduce){.ba-button,.ba-tab,.ba-mini,.ba-close,.ba-tiny{transition:none}}
+@media(max-width:760px){.ba-sheet{width:min(430px,100vw)}.ba-content{padding:16px}.ba-actions{gap:5px}.ba-mini{font-size:10px;padding:5px 7px}}
+@media(prefers-reduced-motion:reduce){.ba-button,.ba-mini,.ba-close,.ba-tiny{transition:none}}
 
 /* Focus on opened workspace panel, without blurring the active controls. */
 .ba-drawer .ba-backdrop{
@@ -48,18 +46,18 @@
  -webkit-backdrop-filter:blur(18px) saturate(1.1);
  backdrop-filter:blur(18px) saturate(1.1);
 }
-.ba-toolbar .ba-tab,.ba-drawer button:not(.ba-backdrop),
+.ba-drawer button:not(.ba-backdrop),
 .ba-content .ba-button,.ba-content .ba-tiny,.ba-content .ba-mini{
  background:rgba(18,24,36,.12);
  border-color:rgba(220,196,154,.34);
  -webkit-backdrop-filter:blur(8px);
  backdrop-filter:blur(8px);
 }
-.ba-toolbar .ba-tab:hover,.ba-drawer button:not(.ba-backdrop):hover{
+.ba-drawer button:not(.ba-backdrop):hover{
  background:rgba(215,184,138,.13);
  border-color:rgba(231,203,155,.6);
 }
-.ba-drawer button:focus-visible,.ba-toolbar button:focus-visible{
+.ba-drawer button:focus-visible{
  outline:2px solid #efc789;outline-offset:2px;
 }
 
