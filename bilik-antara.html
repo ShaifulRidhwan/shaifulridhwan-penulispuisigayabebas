@@ -24,7 +24,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=23">
+<link rel="stylesheet" href="bilik-antara.css?v=24">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=2">
 
 </head>
@@ -58,7 +58,7 @@
      <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">✦ Jom Voice Chat</button>
     </div>
     <div class="chat-controls">
-     <div class="connection" id="connection" role="status" aria-live="polite"><span class="dot" aria-hidden="true"></span><span id="connectionText">Semak sambungan…</span></div>
+     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI"><span class="dot" aria-hidden="true"></span><span id="connectionText">Semak Multi A.I.…</span></button>
      <details class="settings" id="settingsPanel">
       <summary aria-label="Privasi dan pengurusan perbualan" title="Privasi &amp; sesi">
        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>
@@ -74,6 +74,11 @@
      </details>
     </div>
    </header>
+   <dialog class="multi-ai-dialog" id="multiAiDialog" aria-labelledby="multiAiTitle">
+ <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I. · Sambungan</strong><p>Status disemak dengan permintaan ujian ringkas, bukan berdasarkan API key sahaja.</p></div><button type="button" id="multiAiClose" aria-label="Tutup status penyedia">×</button></div>
+ <div class="multi-ai-list" id="multiAiList" aria-live="polite"></div>
+ <div class="multi-ai-actions"><small id="multiAiChecked">Belum disemak</small><button type="button" id="multiAiRefresh">Semak semula</button></div>
+</dialog>
    <div id="voiceNotice" class="voice-notice" role="status" aria-live="polite" hidden></div>
     <div id="connectionInfo" class="connection-info" role="status" aria-live="polite"><span id="connectionInfoText"></span><button type="button" id="retryBtn">Cuba semula</button></div>
    <div class="messages" id="chat" role="log" aria-live="polite" aria-relevant="additions" aria-label="Mesej perbualan"></div>
@@ -166,7 +171,7 @@ try{setTheme(localStorage.getItem(THEME),false);}catch(e){setTheme("dark",false)
 ui.theme.addEventListener("click",()=>setTheme(ui.html.getAttribute("data-theme")==="dark"?"light":"dark",true));
 function status(kind,label,explain){
  ui.conn.className="connection"+(["ready","online"].includes(kind)?" ready":["error","limited"].includes(kind)?" error":"");
- ui.connText.textContent=label;
+ ui.connText.textContent=label==="Connected"?"Multi A.I. Connected":label;
  ui.connInfo.className="connection-info"+(explain?" active"+(["error","limited"].includes(kind)?" error":""):"");
  ui.connInfoText.textContent=explain||"";
  ui.retry.hidden=kind==="ready"||kind==="online"||kind==="limited";
@@ -185,6 +190,41 @@ async function probe(){
  finally{clearTimeout(timer);}
 }
 ui.retry.addEventListener("click",probe);
+const providers=[["gemini","Google Gemini"],["groq","Groq"],["mistral","Mistral"],["openrouter","OpenRouter"]];
+const multiDialog=el("multiAiDialog"),multiList=el("multiAiList"),multiChecked=el("multiAiChecked");
+let multiLastCheck=0,multiChecking=false;
+function renderProviderRows(rows){
+ multiList.replaceChildren();
+ for(const [id,name] of providers){
+  const item=(rows||[]).find(x=>x.id===id);
+  const state=item?.status||"checking";
+  const line=elem("div","multi-ai-row");
+  const nameText=elem("span","multi-ai-provider",name);
+  const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":"is-muted"),
+   state==="online"?"Terhubung":state==="offline"?"Tidak terhubung":state==="off"?"Tidak aktif":"Menyemak…");
+  line.append(nameText,statusText);multiList.appendChild(line);
+ }
+}
+async function checkProviders(force=false){
+ if(multiChecking)return;
+ if(!force&&Date.now()-multiLastCheck<20000)return;
+ multiChecking=true;el("multiAiRefresh").disabled=true;renderProviderRows();
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12500);
+ try{
+  const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({providerStatus:true}),signal:controller.signal});
+  if(!res.ok)throw Error("Semakan penyedia tidak tersedia");
+  const data=await res.json();if(!Array.isArray(data.providers))throw Error("Status tidak lengkap");
+  renderProviderRows(data.providers);multiLastCheck=Date.now();
+  multiChecked.textContent=data.someOnline?"Sekurang-kurangnya satu model boleh dihubungi.":"Tiada model berjaya disahkan sekarang.";
+  if(data.someOnline)status("ready","Connected","");
+ }catch(_){renderProviderRows([]);multiChecked.textContent="Semakan gagal. Status penyedia belum dapat disahkan.";}
+ finally{clearTimeout(timer);multiChecking=false;el("multiAiRefresh").disabled=false;}
+}
+ui.conn.addEventListener("click",()=>{if(!multiDialog.open)multiDialog.showModal();checkProviders();});
+el("multiAiClose").addEventListener("click",()=>multiDialog.close());
+el("multiAiRefresh").addEventListener("click",()=>{multiLastCheck=0;checkProviders(true);});
+multiDialog.addEventListener("click",e=>{if(e.target===multiDialog)multiDialog.close();});
 function scrollDown(){ui.chat.scrollTop=ui.chat.scrollHeight;}
 function strongText(target,text){
  const parts=String(text).split(/(\*\*[^*\n]+\*\*)/g);
