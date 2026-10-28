@@ -155,7 +155,9 @@ exports.handler=async event=>{
     const alternativeChecks=Router.checkStatus();
     let google={id:"gemini",status:"off"};
     if(apiKey){
-      if(googleHealth.value&&googleHealth.model===baseModel&&Date.now()-googleHealth.time<90000)google=googleHealth.value;
+      // A cached green probe must not hide a later real-chat quota failure.
+      if(Date.now()<geminiTextCooldownUntil)google={id:"gemini",status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((geminiTextCooldownUntil-Date.now())/1000)};
+      else if(googleHealth.value&&googleHealth.model===baseModel&&Date.now()-googleHealth.time<90000)google=googleHealth.value;
       else{
         if(!googleHealth.pending)googleHealth.pending=(async()=>{
           const time=Date.now();
@@ -174,8 +176,9 @@ exports.handler=async event=>{
     const alternatives=await alternativeChecks;
     const providers=[google,...alternatives];
     const fastest=providers.filter(p=>p.status==="online").sort((a,b)=>(a.latencyMs||0)-(b.latencyMs||0))[0];
-    if(fastest){lastTextProvider=fastest.id;lastTextSuccessAt=Date.now();}
-    return result(200,{ok:true,providers,preferredProvider:fastest?.id||"",checkedAt:Date.now(),someOnline:!!fastest,configuredCount:configured.length+(apiKey?1:0)},H);
+    const realSuccess=Date.now()-lastTextSuccessAt<90000?providers.find(p=>p.id===lastTextProvider&&p.status==="online"):null;
+    // A successful conversation outranks an artificial one-word speed test.
+    return result(200,{ok:true,providers,preferredProvider:(realSuccess||fastest)?.id||"",checkedAt:Date.now(),someOnline:!!fastest,configuredCount:configured.length+(apiKey?1:0)},H);
   }
 
   const ip=(event.headers&&(event.headers["x-nf-client-connection-ip"]||"").split(",")[0])||"unknown";
@@ -374,6 +377,7 @@ exports.handler=async event=>{
       disclaimer:warnings.join(" "),
       usage:data.usageMetadata||null,durMs:Date.now()-started,timings:timings()};
     lastTextProvider="gemini";lastTextSuccessAt=Date.now();
+    googleHealth.value={id:"gemini",status:"online",latencyMs:Date.now()-started};googleHealth.time=Date.now();googleHealth.model=baseModel;
     log("success",{depth:intent.depth,review:!!review,sources:sources.length,ms:output.durMs});
     return result(200,output,H);
   }catch(error){
