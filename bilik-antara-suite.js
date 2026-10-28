@@ -51,7 +51,7 @@ const backdrop=button("",()=>close(),"ba-backdrop");backdrop.setAttribute("aria-
 const head=convo.querySelector(".conversation-head");
 head.after(toolbar);
 document.body.appendChild(drawer); // keep fixed overlay outside clipped glass conversation
-const labels=[["sessions","Sesi"],["memory","Memori"],["metrics","Prestasi"]];
+const labels=[["sessions","Sesi & Memori"],["metrics","Prestasi"]];
 for(const [key,label] of labels)toolbar.appendChild(button(label,()=>open(key),"ba-tab"));
 toolbar.appendChild(button("Studio · E-mel & PDF",()=>{window.location.href="studio-antara.html";},"ba-tab"));
 function notice(message){
@@ -125,7 +125,7 @@ function renderSessions(){
  controlRow(button("+ Sesi baharu",()=>beginSession(null)),button("Eksport sesi ini",()=>{
   download("bilik-antara-sesi.md",sessionText(api.snapshot().history),"text/markdown;charset=utf-8");
  }));
- if(!api.remember()){paragraph("Penyimpanan perbualan belum diaktifkan. Hidupkannya melalui Privasi & sesi untuk menyimpan sejarah.");return;}
+ if(!api.remember()){paragraph("Penyimpanan perbualan belum diaktifkan. Hidupkannya melalui Privasi & sesi. Memori pilihan masih boleh diurus di bawah.");return;}
  const search=make("input");search.type="search";search.placeholder="Cari sejarah perbualan…";search.className="ba-input";
  content.appendChild(search);
  const results=make("div",undefined,"ba-list");content.appendChild(results);
@@ -152,7 +152,7 @@ function renderSessions(){
   button("Padam semua sejarah",()=>{if(!confirm("Padam SEMUA sesi yang disimpan pada peranti ini?"))return;archive=[];persistArchive();render();}));
 }
 function renderMemory(){
- section("Memori pilihan pengguna");
+ paragraph("Memori pilihan pengguna ialah nota berasingan daripada sejarah sesi.");
  paragraph("Memori ini berbeza daripada sejarah sesi. Nota yang kau tulis dan aktifkan dihantar sebagai konteks kepada Gemini. Nota pilihan tidak dihantar ke penyedia sandaran. Semua nota kekal di peranti sehingga kau padam.");
  const toggle=make("input");toggle.type="checkbox";toggle.checked=!!memory.enabled;
  const label=make("label"," Aktifkan memori");label.prepend(toggle);content.appendChild(label);
@@ -279,9 +279,8 @@ function renderMetrics(){
  );
 }
 function render(){
- content.replaceChildren();title.textContent=({sessions:"Sesi & sejarah",memory:"Memori pintar",workspace:"Ruang kerja",metrics:"Prestasi setempat"})[currentPanel]||"Bilik Antara";
- if(currentPanel==="sessions")renderSessions();
- else if(currentPanel==="memory")renderMemory();
+ content.replaceChildren();title.textContent=({sessions:"Sesi & Memori",workspace:"Ruang kerja",metrics:"Prestasi setempat"})[currentPanel]||"Bilik Antara";
+ if(currentPanel==="sessions"){renderSessions();section("Memori pilihan");renderMemory();}
  else if(currentPanel==="workspace")renderWorkspace();
  else if(currentPanel==="metrics")renderMetrics();
 }
