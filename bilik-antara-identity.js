@@ -104,6 +104,8 @@ function answerIdentity(question){
     /(?:kau|awak|ai ini|shaiful|ridhwan|bilik antara|gemini|google)/i.test(q);
   const person=/^(?:(?:siapa|who is|kenal\s+tak|cerita\s+pasal|terangkan\s+tentang|kenalkan|ceritakan\s+tentang)\s+)?shaiful\s+ridhwan(?:\s+(?:tu|itu|sebenarnya|wei|lah|ni))?(?:\s+siapa)?$/i.test(q)||
     /^(?:siapa\s+(?:sebenarnya\s+)?shaiful\s+ridhwan|shaiful\s+ridhwan\s+(?:tu|ni)\s+siapa|kau\s+kenal\s+(?:tak\s+)?shaiful\s+ridhwan)$/i.test(q);
+  // Questions about WHO built the AI must not be mistaken for modification lists.
+  if(created)return null;
   if((changes&&(project||self||owner))||(/^(?:modifikasi|perubahan|pengubahsuaian)\s+(?:kau|bilik antara|shaiful ridhwan a\.?i\.?)$/i.test(q))){
     return "Antara perkara yang Shaiful Ridhwan arahkan, bina dan ubah suai pada projek aku ialah:\n\n"+
       CHANGES.map((item,i)=>(i+1)+". "+item).join("\n")+
