@@ -5,7 +5,7 @@
 const panel=document.getElementById("voicePanel");
 const stage=document.getElementById("voiceAvatarStage");
 if(panel&&stage){
-let active=false,renderer=null,scene=null,camera=null,root=null,face=null,raf=0,resize=null,context=null,blinkAt=0,started=0,loading=false;
+let active=false,renderer=null,scene=null,camera=null,root=null,face=null,raf=0,resize=null,context=null,blinkAt=0,started=0,loading=false,jawMotion=0,lipMotion=0;
 const modelURL="https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette.glb";
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 function weights(names,value){if(!face?.morphTargetDictionary)return;for(const name of names){for(const [k,i] of Object.entries(face.morphTargetDictionary)){if(k===name||k.endsWith("."+name)){face.morphTargetInfluences[i]=value;}}}}
@@ -72,9 +72,18 @@ async function begin(){
    const duration=t-blinkAt,blink=(duration>=0&&duration<190)?Math.sin(duration/190*Math.PI):0;
    if(duration>190)blinkAt=t+1900+Math.random()*2800;
    weights(["eyeBlinkLeft","eyeBlinkRight"],blink*.9);
-   const mouth=speaking?.18+.14*Math.abs(Math.sin(t*.019)):.012;
-   weights(["jawOpen","mouthOpen","viseme_aa"],mouth);
-   weights(["mouthSmileLeft","mouthSmileRight"],speaking?.07:.03);
+   // Keep the jaw relaxed: driving jawOpen + mouthOpen + viseme_aa equally
+   // exaggerated the opening and made the avatar look startled while talking.
+   // A small smoothed syllable movement looks closer to natural conversation.
+   const syllable=Math.pow(Math.max(0,Math.sin(t*.014)+.32*Math.sin(t*.027)),2);
+   const targetJaw=speaking?clamp(.028+syllable*.064,.018,.115):.006;
+   const targetLips=speaking?clamp(.012+syllable*.048,.008,.085):.005;
+   jawMotion+=(targetJaw-jawMotion)*.18;
+   lipMotion+=(targetLips-lipMotion)*.21;
+   weights(["jawOpen"],jawMotion);
+   weights(["mouthOpen"],lipMotion*.45);
+   weights(["viseme_aa"],lipMotion*.55);
+   weights(["mouthSmileLeft","mouthSmileRight"],speaking?.025:.018);
    renderer.render(scene,camera);
   };
   raf=requestAnimationFrame(frame);
