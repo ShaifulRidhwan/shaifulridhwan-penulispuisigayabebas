@@ -40,7 +40,7 @@ const VOICE_TOOLS=[{functionDeclarations:[
 ]}];
 let advancedVoiceConfig=true,turnStartAt=0,lastCommand="",lastCommandAt=0,echoRiskSince=0;
 let voiceMetrics={startedAt:0,connections:0,reconnects:0,interruptions:0,commands:0,turns:0,audioChunks:0,echoRiskEvents:0,lastResponseLatencyMs:null};
-const voiceDiagnosticSnapshot=()=>({...voiceMetrics,connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,model:liveModel||"unknown",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
+const voiceDiagnosticSnapshot=()=>({...voiceMetrics,connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,advancedFeatures:advancedVoiceConfig,model:liveModel||"unknown",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
 window.BilikAntaraVoiceDiagnostics={snapshot:voiceDiagnosticSnapshot};
 function handleSpokenControl(text){
  const q=String(text||"").toLocaleLowerCase("ms-MY").replace(/[.,!?]+$/g,"").trim();
@@ -283,6 +283,8 @@ function onServerMessage(payload){
   }
   if(c?.waitingForInput===true)sayStatus("Aku dengar, sambung je.");
   if(!c)return;
+  // Respect the model waiting for the user to complete their thought.
+  if(c.waitingForInput===true&&!playbackBusy())sayStatus("Teruskan, aku sedang dengar.");
   if(c.interrupted){
     voiceMetrics.interruptions++;
     stopAudioQueue();panel.classList.remove("voice-speaking");
@@ -366,6 +368,16 @@ async function startLive(){
     });
     if(generation!==liveGeneration){clearTimeout(tokenTimer);stream.getTracks().forEach(t=>t.stop());return;}
     mediaStream=stream;
+    const micTrack=stream.getAudioTracks()[0];
+    if(micTrack){
+      micTrack.addEventListener("ended",()=>{
+        if(liveActive){showNotice("Mikrofon terputus. Sesi Voice dihentikan untuk keselamatan.");closeLive("Mikrofon terputus.");}
+      },{once:true});
+      // Read actual browser audio-processing settings rather than assuming they work.
+      const settings=micTrack.getSettings?.()||{};
+      voiceMetrics.echoCancellationActive=settings.echoCancellation===true;
+      voiceMetrics.noiseSuppressionActive=settings.noiseSuppression===true;
+    }
     const Audio=window.AudioContext||window.webkitAudioContext;
     micContext=new Audio({latencyHint:"interactive"});
     playContext=new Audio({latencyHint:"interactive"});
