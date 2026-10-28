@@ -689,7 +689,18 @@ async function submit(event){
  ui.input.value="";resize();update();
  const startedAt=performance.now();
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),165000);activeRequest=ctrl;
- let partial="",partialNode=null,partialBubble=null,firstTokenMs=null;
+ let partial="",partialNode=null,partialBubble=null,firstTokenMs=null,partialFrame=0;
+ // Coalesce streaming text into one update per painted frame, not one layout per token.
+ function cancelPartialFrame(){
+  if(partialFrame){cancelAnimationFrame(partialFrame);partialFrame=0;}
+ }
+ function drawPartial(){
+  partialFrame=0;
+  if(!partialBubble)return;
+  const nearBottom=ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight<100;
+  partialBubble.textContent=window.BilikAntaraChatStyle.reply(partial,{complete:false});
+  if(nearBottom)scrollDown();
+ }
  function receive(delta){
   if(firstTokenMs===null)firstTokenMs=Math.round(performance.now()-startedAt);
   partial+=delta;if(partial.length>40000)throw Error("Jawapan melebihi had.");
@@ -698,8 +709,7 @@ async function submit(event){
    partialNode.appendChild(elem("div","byline","Aksara A.I. · sedang menjawab"));
    partialBubble=elem("div","bubble");partialNode.appendChild(partialBubble);ui.chat.appendChild(partialNode);
   }
-  const nearBottom=ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight<100;
-  partialBubble.textContent=window.BilikAntaraChatStyle.reply(partial,{complete:false});if(nearBottom)scrollDown();
+  if(!partialFrame)partialFrame=requestAnimationFrame(drawPartial);
  }
  try{
   const payload={question,preferredProvider:Date.now()-lastProviderAt<90000?lastProvider:"",history:contextHistory(),contextFallback:ui.contextFallback.checked,
@@ -712,11 +722,13 @@ async function submit(event){
     offline?"Internet terputus. Aku akan cuba semula bila sambungan pulih. Tekan Henti untuk batalkan.":
      (reason==="capacity"?"Model sedang sibuk. Cuba lagi dalam ":"Percubaan semula "+attempt+"/2 dalam ")+seconds+" saat. Tekan Henti untuk batalkan."),
    attempt=>{
+    cancelPartialFrame();
     typing.remove();partialNode?.remove();partial="";partialNode=null;partialBubble=null;firstTokenMs=null;
     typing=showTyping();status("connecting","Menyambung semula · "+attempt+"/2","");
    });
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
   data.reply=window.BilikAntaraChatStyle.reply(data.reply);
+  cancelPartialFrame();
   typing.remove();partialNode?.remove();addMessage("assistant",data.reply,data);
   history.push({role:"user",content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
   history.push({role:"assistant",content:data.reply,sources:data.sources||[],
@@ -730,6 +742,7 @@ async function submit(event){
   if(data.model!=="project-identity"){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
   compact();
  }catch(error){
+  cancelPartialFrame();
   typing.remove();
   if(!stoppedByUser&&partial.trim()&&partialNode){
    partialNode.querySelector(".byline").textContent="Aksara A.I. · jawapan belum lengkap";
@@ -802,7 +815,7 @@ restore();renderIdeas();renderHistory();update();probe();
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-voice.js?v=33" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
-<script type="module" src="bilik-antara-avatar.js?v=6"></script>
+<script type="module" src="bilik-antara-avatar.js?v=7"></script>
 
 </body>
 </html>
