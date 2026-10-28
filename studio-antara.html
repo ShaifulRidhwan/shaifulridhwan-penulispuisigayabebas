@@ -9,7 +9,8 @@
 <link rel="icon" href="bilik-antara-woman-emblem.svg" type="image/svg+xml">
 <link rel="stylesheet" href="studio-antara.css?v=4">
 <script src="studio-antara-editor.js?v=2" defer></script>
-<script src="studio-antara.js?v=4" defer></script>
+<script src="studio-antara-advanced.js?v=1" defer></script>
+<script src="studio-antara.js?v=5" defer></script>
 
 </head>
 <body>
@@ -61,6 +62,31 @@
  <button type="button" id="docImport">Import .txt / .html</button>
  <input type="file" id="docFile" accept=".txt,.html,.htm,text/plain,text/html" hidden>
  <button type="button" id="docSaveDraft">Simpan draf</button>
+ <button type="button" id="docFind">Cari &amp; ganti</button>
+ <button type="button" id="docTable">Jadual</button>
+ <button type="button" id="docImage">Masukkan imej</button>
+ <input id="docImageFile" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+ <button type="button" id="docPageBreak">Pemisah halaman</button>
+</div>
+<details class="doc-layout-settings" id="docLayoutSettings">
+ <summary>Tetapan halaman, header &amp; footer</summary>
+ <div class="doc-layout-grid">
+  <label>Saiz kertas<select id="docPageSize"><option value="A4">A4</option><option value="Letter">US Letter</option></select></label>
+  <label>Margin<select id="docMargins"><option value="normal">Biasa · 20mm</option><option value="narrow">Sempit · 12mm</option><option value="wide">Luas · 30mm</option></select></label>
+  <label>Orientasi<select id="docOrientation"><option value="portrait">Potret</option><option value="landscape">Landskap</option></select></label>
+  <label>Header<input id="docHeader" maxlength="140" placeholder="Teks di bahagian atas halaman"></label>
+  <label>Footer<input id="docFooter" maxlength="140" placeholder="Teks di bahagian bawah halaman"></label>
+  <label class="doc-check"><input type="checkbox" id="docPageNumbers" checked> Nombor halaman dalam Word/PDF*</label>
+ </div>
+ <p class="hint">*Word menyokong nombor halaman automatik. PDF menggunakan tetapan cetak pelayar; nombor halaman automatik tidak dijamin dalam setiap pelayar.</p>
+</details>
+<div class="doc-find-panel" id="docFindPanel" hidden>
+ <label>Cari<input id="docFindText" placeholder="Teks yang dicari"></label>
+ <label>Ganti dengan<input id="docReplaceText" placeholder="Teks pengganti"></label>
+ <button type="button" id="docFindNext">Cari seterusnya</button>
+ <button type="button" id="docReplaceOne">Ganti pilihan</button>
+ <button type="button" id="docReplaceAll">Ganti semua</button>
+ <span id="docFindStatus" aria-live="polite"></span>
 </div>
 <div class="actions"><button id="docAI" class="primary" type="button">Bantu tulis dengan AI</button><button id="docPdf" type="button">Simpan sebagai PDF</button><button id="docWord" type="button">Eksport .docx</button><button id="docHtml" type="button">Eksport HTML</button><button id="docCopy" type="button">Salin</button></div>
 <p class="hint">PDF menggunakan fungsi cetak pelayar: pilih “Save as PDF / Simpan sebagai PDF”. Word dijana melalui pustaka sumber terbuka ketika diminta. Draf dokumen disimpan pada peranti ini sahaja.</p>
