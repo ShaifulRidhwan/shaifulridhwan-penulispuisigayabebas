@@ -115,15 +115,19 @@ $("emailCopy").addEventListener("click",()=>copy("Subjek: "+val("emailSubject")+
 $("docCopy").addEventListener("click",()=>copy(val("docTitle")+"\n\n"+(window.StudioRich?.getText()||val("docBody"))));
 $("docHtml").addEventListener("click",()=>{
  if(current!=="document")tab("document");
- const html="<!doctype html><html lang=\"ms\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Dokumen Studio Antara</title><style>body{max-width:750px;margin:42px auto;padding:20px;font:17px/1.65 Georgia,serif;color:#262626}h3{font-size:27px;line-height:1.25}.formatted-body p{white-space:pre-wrap;overflow-wrap:anywhere}.formatted-body h1,.formatted-body h2,.formatted-body h3{line-height:1.25}.formatted-body blockquote{border-left:3px solid #bbb;padding-left:15px;color:#555}.formatted-body a{color:#264a7a}.print-footer{border-top:1px solid #ddd;margin-top:50px;padding-top:12px;font:10px Arial,sans-serif;color:#666}@media print{body{max-width:none;margin:0;padding:0}p{orphans:2;widows:2}"+pageStyle()+"}</style></head><body>"+
+ const html="<!doctype html><html lang=\"ms\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Dokumen Studio Antara</title><style>body{max-width:750px;margin:42px auto;padding:20px;font:17px/1.65 Georgia,serif;color:#262626}h3{font-size:27px;line-height:1.25}.formatted-body p{white-space:pre-wrap;overflow-wrap:anywhere}.formatted-body h1,.formatted-body h2,.formatted-body h3{line-height:1.25}.formatted-body blockquote{border-left:3px solid #bbb;padding-left:15px;color:#555}.formatted-body a{color:#264a7a}.formatted-body table{border-collapse:collapse;width:100%;margin:12px 0}.formatted-body td,.formatted-body th{border:1px solid #888;padding:6px 8px}.formatted-body img{max-width:100%;height:auto}.formatted-body hr[data-page-break]{border:0;break-after:page;page-break-after:always}.document-running-header,.document-running-footer{font:10px Arial,sans-serif;color:#666}.print-footer{border-top:1px solid #ddd;margin-top:50px;padding-top:12px;font:10px Arial,sans-serif;color:#666}@media print{body{max-width:none;margin:0;padding:0}p{orphans:2;widows:2}"+pageStyle()+"}</style></head><body>"+
   preview.querySelector(".preview-paper").outerHTML+"</body></html>";
  textFile(html,filename(val("docTitle")||"dokumen","html"),"text/html;charset=utf-8");
 });
 $("docPdf").addEventListener("click",()=>{
  if(current!=="document")tab("document");
  documentPreview();notice("Pada dialog cetak, pilih Simpan sebagai PDF (Save as PDF).");
+ const existing=document.getElementById("studioDynamicPrint");
+ if(existing)existing.remove();
+ const style=document.createElement("style");style.id="studioDynamicPrint";style.textContent=pageStyle();
+ document.head.appendChild(style);
  const originalTitle=document.title;document.title=val("docTitle").trim()||"Dokumen Studio Antara";
- window.addEventListener("afterprint",()=>{document.title=originalTitle;},{once:true});
+ window.addEventListener("afterprint",()=>{document.title=originalTitle;style.remove();},{once:true});
  window.print();
 });
 $("docWord").addEventListener("click",async()=>{
@@ -211,6 +215,7 @@ try{
  }
 }catch(_){}
 window.StudioRich?.onChange(render);
+document.addEventListener("studio:layout",render);
 tab(location.hash.slice(1) in labels?location.hash.slice(1):current);
 window.StudioAntara={tab,render};
 })();
