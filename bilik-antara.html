@@ -24,7 +24,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=35">
+<link rel="stylesheet" href="bilik-antara.css?v=36">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=3">
 
 </head>
@@ -549,12 +549,16 @@ function showTyping(){
 // Stream when deployed; older deployments can still use the JSON endpoint.
 let streamAvailable=true;
 async function ask(payload,signal,onDelta){
+ const retryAfter=res=>{
+  const raw=res.headers.get("retry-after");if(!raw)return undefined;
+  const seconds=Number(raw);return Number.isFinite(seconds)?Math.max(0,seconds):Math.max(0,Math.ceil((Date.parse(raw)-Date.now())/1000))||undefined;
+ };
  const options={method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),signal};
  if(streamAvailable&&typeof ReadableStream!=="undefined"){
   const res=await fetch(STREAM_ENDPOINT,options);
   if([404,405,409,501].includes(res.status)||res.ok&&!/application\/x-ndjson/i.test(res.headers.get("content-type")||""))streamAvailable=false;
   else{
-   if(!res.ok){const data=await res.json().catch(()=>({}));throw Object.assign(new Error(data.error||"HTTP "+res.status),{status:res.status,...data});}
+   if(!res.ok){const data=await res.json().catch(()=>({}));throw Object.assign(new Error(data.error||"HTTP "+res.status),{status:res.status,retryAfterSeconds:retryAfter(res),...data});}
    const reader=res.body.getReader(),decoder=new TextDecoder();let buffer="",answer=null;
    function consume(line){
     if(!line.trim())return;const item=JSON.parse(line);
@@ -573,8 +577,57 @@ async function ask(payload,signal,onDelta){
   }
  }
  const res=await fetch(ENDPOINT,options),data=await res.json().catch(()=>({}));
- if(!res.ok)throw Object.assign(new Error(data.error||"HTTP "+res.status),{status:res.status,...data});
+ if(!res.ok)throw Object.assign(new Error(data.error||"HTTP "+res.status),{status:res.status,retryAfterSeconds:retryAfter(res),...data});
  return data;
+}
+function reconnectable(error){
+ if(["CAPABILITY_UNAVAILABLE","CANCELLED"].includes(error?.code))return false;
+ const code=Number(error?.status)||0;
+ return error?.code==="STREAM_INTERRUPTED"||[408,429,500,502,503,504].includes(code)||
+  error?.name==="TypeError"||error?.name==="AbortError";
+}
+function reconnectPause(ms,signal){
+ return new Promise((resolve,reject)=>{
+  if(signal.aborted){reject(new DOMException("Dihentikan","AbortError"));return;}
+  const abort=()=>{clearTimeout(timer);reject(new DOMException("Dihentikan","AbortError"));};
+  const timer=setTimeout(()=>{signal.removeEventListener("abort",abort);resolve();},ms);
+  signal.addEventListener("abort",abort,{once:true});
+ });
+}
+async function reconnectAttempt(payload,signal,onDelta){
+ const ctrl=new AbortController(),abort=()=>ctrl.abort();
+ if(signal.aborted)abort();else signal.addEventListener("abort",abort,{once:true});
+ const timer=setTimeout(()=>ctrl.abort(),34000);
+ try{return await ask(payload,ctrl.signal,onDelta);}
+ finally{clearTimeout(timer);signal.removeEventListener("abort",abort);}
+}
+async function askWithReconnect(payload,signal,onDelta,onWait,onRetry){
+ const deadline=Date.now()+165000;
+ for(let attempt=0;attempt<3;attempt++){
+  if(signal.aborted)throw new DOMException("Dihentikan","AbortError");
+  let failure;
+  try{return await reconnectAttempt(payload,signal,onDelta);}
+  catch(error){
+   if(signal.aborted||attempt===2||!reconnectable(error))throw error;
+   failure=error;
+  }
+  // Retry-After is a minimum wait, never shorten a server's cooldown.
+  const serverWait=Number(failure.retryAfterSeconds);
+  const delay=Number.isFinite(serverWait)&&serverWait>0?Math.ceil(serverWait*1000):
+   Number(failure.status)===429?30000:3000*(attempt+1);
+  const retryAt=Date.now()+delay;
+  if(retryAt+1000>deadline)throw failure;
+  while(true){
+   if(signal.aborted)throw new DOMException("Dihentikan","AbortError");
+   const now=Date.now(),offline=typeof navigator!=="undefined"&&navigator.onLine===false;
+   if(now>=deadline)throw failure;
+   if(now>=retryAt&&!offline)break;
+   onWait({attempt:attempt+1,seconds:Math.max(0,Math.ceil((retryAt-now)/1000)),offline});
+   await reconnectPause(Math.min(1000,deadline-now,offline?1000:Math.max(1,retryAt-now)),signal);
+  }
+  // A new attempt replaces any incomplete text; it never appends another answer to it.
+  onRetry(attempt+1);
+ }
 }
 async function submit(event){
  event.preventDefault();if(busy)return;
@@ -589,10 +642,10 @@ async function submit(event){
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
  busy=true;stoppedByUser=false;update();status("connecting","Sedang menjawab…","");ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
  const pendingUser=addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""));
- const typing=showTyping();
+ let typing=showTyping();
  ui.input.value="";resize();update();
  const startedAt=performance.now();
- const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),34000);activeRequest=ctrl;
+ const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),165000);activeRequest=ctrl;
  let partial="",partialNode=null,partialBubble=null,firstTokenMs=null;
  function receive(delta){
   if(firstTokenMs===null)firstTokenMs=Math.round(performance.now()-startedAt);
@@ -611,7 +664,14 @@ async function submit(event){
    documentText:selectedFile&&selectedFile.text||"",
    documentName:selectedFile&&selectedFile.name||"",
    media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt()||""};
-  const data=await ask(payload,ctrl.signal,receive);
+  const data=await askWithReconnect(payload,ctrl.signal,receive,
+   ({attempt,seconds,offline})=>status("connecting",offline?"Menunggu internet…":"Menyambung semula…",
+    offline?"Internet terputus. Aku akan cuba semula bila sambungan pulih. Tekan Henti untuk batalkan.":
+     "Percubaan semula "+attempt+"/2 dalam "+seconds+" saat. Tekan Henti untuk batalkan."),
+   attempt=>{
+    typing.remove();partialNode?.remove();partial="";partialNode=null;partialBubble=null;firstTokenMs=null;
+    typing=showTyping();status("connecting","Menyambung semula · "+attempt+"/2","");
+   });
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
   typing.remove();partialNode?.remove();addMessage("assistant",data.reply,data);
   history.push({role:"user",content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});

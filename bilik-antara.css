@@ -2901,3 +2901,22 @@ html[data-theme="light"] .multi-ai-row{background:rgba(255,255,255,.32);border-c
 #stopBtn{flex-shrink:0;min-height:40px;padding:8px 12px}
 #stopBtn[hidden]{display:none!important}
 .composer textarea::placeholder{opacity:.65}
+
+/* The two halves catch light at different moments without shifting the layout. */
+.identity h1{animation:antaraTitleReveal .9s ease-out both}
+.identity h1 span,.identity h1 em{
+ display:inline-block;
+ background-size:240% 100%;
+ -webkit-background-clip:text;background-clip:text;
+ -webkit-text-fill-color:transparent;
+ animation:antaraTitleShimmer 8s ease-in-out infinite,antaraTitleFloat 6s ease-in-out infinite;
+}
+.identity h1 span{background-image:linear-gradient(110deg,#dba14e 10%,#f4cf85 32%,#fff5d4 45%,#e8b35d 60%,#f4cf85 85%)}
+.identity h1 em{background-image:linear-gradient(110deg,#e1d8c7 10%,#fff8ed 32%,#f4cf85 45%,#fff8ed 60%,#e1d8c7 85%);animation-delay:-4s,-3s}
+html[data-theme="light"] .identity h1 span{background-image:linear-gradient(110deg,#79531e 10%,#ad782c 32%,#684118 45%,#ad782c 60%,#79531e 85%)}
+html[data-theme="light"] .identity h1 em{background-image:linear-gradient(110deg,#302b25 10%,#655035 32%,#9a6c29 45%,#302b25 60%,#655035 85%)}
+@keyframes antaraTitleReveal{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes antaraTitleShimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes antaraTitleFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@media(prefers-reduced-motion:reduce){.identity h1,.identity h1 span,.identity h1 em{animation:none!important;transform:none}}
+@media(forced-colors:active){.identity h1 span,.identity h1 em{background:none;-webkit-text-fill-color:currentColor}}

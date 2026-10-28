@@ -132,3 +132,41 @@ test("Cuba semula submits the preserved question, checks health only for an empt
  assert.deepEqual(run("",false,{name:"karya.txt"}),{submitted:1,probed:0});
  assert.deepEqual(run("Soalan",true,null),{submitted:0,probed:0});
 });
+
+function retryHarness(ask,{offline=false,onPause}={}){
+ const html=fs.readFileSync(path.join(__dirname,"../bilik-antara.html"),"utf8");
+ const start=html.indexOf('function reconnectable('),end=html.indexOf('async function submit',start);
+ let now=1000;const waits=[],nav={onLine:!offline};
+ const pause=async(ms,signal)=>{waits.push(ms);now+=ms;onPause?.({signal,nav,waits});if(signal.aborted)throw new DOMException("stop","AbortError");};
+ const make=new Function('ask','navigator','Date','wait',html.slice(start,end)+';const actualPause=reconnectPause;reconnectPause=wait;return {askWithReconnect,reconnectable,actualPause};');
+ return {...make(ask,nav,{now:()=>now},pause),waits,nav};
+}
+test("automatic reconnect retries transient failures twice, reuses the same question and replaces partial text before resending",async()=>{
+ let calls=0,text="",resets=0;const payload={question:"Soalan asal",history:[{role:"user",content:"Konteks"}]},seen=[];
+ const h=retryHarness(async(p,_signal,delta)=>{seen.push(p);calls++;delta(calls<3?"separuh lama":"jawapan baharu");if(calls<3)throw Object.assign(new TypeError("network"),{code:"STREAM_INTERRUPTED"});return {reply:"jawapan baharu"};});
+ const result=await h.askWithReconnect(payload,new AbortController().signal,d=>text+=d,()=>{},()=>{resets++;text="";});
+ assert.equal(result.reply,"jawapan baharu");assert.equal(calls,3);assert.equal(resets,2);assert.equal(text,"jawapan baharu");assert.ok(seen.every(x=>x===payload));assert.equal(h.waits.reduce((a,b)=>a+b,0),9000);
+});
+test("reconnect honors API cooldown, stops after the retry limit and never retries validation or unsupported-capability errors",async()=>{
+ let calls=0;
+ const h=retryHarness(async()=>{calls++;throw Object.assign(new Error("quota"),{status:429,retryAfterSeconds:30});});
+ await assert.rejects(h.askWithReconnect({},new AbortController().signal,()=>{},()=>{},()=>{}),{status:429});
+ assert.equal(calls,3);assert.equal(h.waits.reduce((a,b)=>a+b,0),60000);
+ for(const failure of [Object.assign(new Error("bad"),{status:400}),Object.assign(new Error("blocked"),{status:403}),Object.assign(new Error("unsupported"),{status:503,code:"CAPABILITY_UNAVAILABLE"})]){
+  let count=0;const h=retryHarness(async()=>{count++;throw failure;});
+  await assert.rejects(h.askWithReconnect({},new AbortController().signal,()=>{},()=>{},()=>{}));assert.equal(count,1);assert.equal(h.waits.length,0);
+ }
+});
+test("Henti cancels a pending reconnect countdown and an already-cancelled request makes no API call",async()=>{
+ const ctrl=new AbortController();let calls=0;
+ const h=retryHarness(async()=>{calls++;throw new TypeError("offline");},{onPause(){ctrl.abort();}});
+ await assert.rejects(h.askWithReconnect({},ctrl.signal,()=>{},()=>{},()=>{}),{name:"AbortError"});assert.equal(calls,1);
+ await assert.rejects(h.askWithReconnect({},ctrl.signal,()=>{},()=>{},()=>{}),{name:"AbortError"});assert.equal(calls,1);
+ const pausedCtrl=new AbortController(),promise=h.actualPause(10000,pausedCtrl.signal);pausedCtrl.abort();await assert.rejects(promise,{name:"AbortError"});
+});
+test("reconnect waits for internet recovery instead of repeatedly sending requests while offline",async()=>{
+ let calls=0,offlineStatuses=0;
+ const h=retryHarness(async()=>{calls++;if(calls===1)throw new TypeError("offline");assert.equal(h.nav.onLine,true);return {reply:"pulih"};},{offline:true,onPause({nav,waits}){if(waits.length===5)nav.onLine=true;}});
+ const r=await h.askWithReconnect({},new AbortController().signal,()=>{},({offline})=>{if(offline)offlineStatuses++;},()=>{});
+ assert.equal(r.reply,"pulih");assert.equal(calls,2);assert.ok(offlineStatuses>=5);assert.equal(h.waits.reduce((a,b)=>a+b,0),5000);
+});
