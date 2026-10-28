@@ -81,6 +81,54 @@ async function begin(){
  }catch(err){console.warn("Voice avatar model not available",err);stop();stage.classList.add("avatar-unavailable");}
  finally{loading=false;}
 }
+// One-time square portrait taken from the SAME 3D face as Voice Chat.
+// The chat logo stays static to avoid dozens of active WebGL contexts.
+async function buildChatPortrait(){
+ let smallRenderer=null,kt=null,model=null;
+ try{
+  const [THREE,{GLTFLoader},{KTX2Loader},{MeshoptDecoder}]=await Promise.all([
+   import("three"),import("three/addons/loaders/GLTFLoader.js"),
+   import("three/addons/loaders/KTX2Loader.js"),import("three/addons/libs/meshopt_decoder.module.js")
+  ]);
+  smallRenderer=new THREE.WebGLRenderer({alpha:false,antialias:true,preserveDrawingBuffer:true,powerPreference:"low-power"});
+  smallRenderer.setSize(160,160,false);
+  smallRenderer.outputColorSpace=THREE.SRGBColorSpace;
+  smallRenderer.toneMapping=THREE.ACESFilmicToneMapping;
+  smallRenderer.toneMappingExposure=1.2;
+  kt=new KTX2Loader().setTranscoderPath("https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/libs/basis/").detectSupport(smallRenderer);
+  model=(await new GLTFLoader().setKTX2Loader(kt).setMeshoptDecoder(MeshoptDecoder).loadAsync(modelURL)).scene;
+  const scene=new THREE.Scene();scene.background=new THREE.Color(0x0a1019);scene.add(model);
+  scene.add(new THREE.HemisphereLight(0xaaa4c5,0x17131b,1.15));
+  const light=new THREE.DirectionalLight(0xf6d6ab,3.2);light.position.set(-2,3,4);scene.add(light);
+  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
+  const center=bounds.getCenter(new THREE.Vector3());
+  const scale=2.5/Math.max(size.y,.1);model.scale.setScalar(scale);
+  model.position.copy(center.multiplyScalar(-scale));model.updateMatrixWorld(true);
+  const head=model.getObjectByName("Wolf3D_Head");
+  const headBounds=head?new THREE.Box3().setFromObject(head):null;
+  const found=headBounds&&!headBounds.isEmpty()&&headBounds.getSize(new THREE.Vector3()).y>.02;
+  const target=found?headBounds.getCenter(new THREE.Vector3()):new THREE.Vector3(0,size.y*scale*.20,0);
+  const headHeight=found?headBounds.getSize(new THREE.Vector3()).y:size.y*scale*.18;
+  const camera=new THREE.PerspectiveCamera(34,1,.1,50);
+  camera.position.set(target.x,target.y-headHeight*.10,target.z+Math.max(.8,headHeight*2.6));
+  camera.lookAt(target.x,target.y-headHeight*.10,target.z);
+  camera.updateProjectionMatrix();
+  smallRenderer.render(scene,camera);
+  const picture=smallRenderer.domElement.toDataURL("image/png");
+  if(picture.length>100){
+   document.documentElement.style.setProperty("--ai-chat-portrait",'url("'+picture+'")');
+   document.documentElement.classList.add("chat-portrait-ready");
+  }
+ }catch(err){console.warn("Chat avatar portrait unavailable; keeping monogram.",err);}
+ finally{
+  kt?.dispose();
+  if(model)model.traverse(o=>{if(o.isMesh){o.geometry?.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];for(const mat of mats)mat?.dispose?.();}});
+  if(smallRenderer){smallRenderer.dispose();smallRenderer.forceContextLoss();}
+ }
+}
+// Deferred for smooth initial chat painting. Avoid duplicate rendering once ready.
+if("requestIdleCallback" in window)window.requestIdleCallback(()=>buildChatPortrait(),{timeout:2000});
+else window.setTimeout(buildChatPortrait,300);
 const observer=new MutationObserver(()=>{if(panel.hidden){if(active)stop();}else if(!active&&!loading)begin();});
 observer.observe(panel,{attributes:true,attributeFilter:["hidden"]});
 if(!panel.hidden)begin();
