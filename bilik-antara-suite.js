@@ -280,14 +280,27 @@ function quickActions(){
 }
 window.addEventListener("ba:answered",event=>{
  const item=event.detail||{};
+ const provider=["gemini","groq","mistral","openrouter","local"].includes(item.provider)?item.provider:"unknown";
  metrics.calls=(metrics.calls||0)+1;
- metrics.tokens=(metrics.tokens||0)+Math.max(0,Number(item.usage?.totalTokenCount)||0);
- if(Number.isFinite(item.duration)&&item.duration>0){
-  metrics.durations=[...(metrics.durations||[]),item.duration].slice(-50);
+ const tokens=Number(item.usage?.totalTokenCount??item.usage?.total_tokens);
+ if(Number.isFinite(tokens)&&tokens>=0){
+  metrics.tokens=(metrics.tokens||0)+tokens;
+  metrics.reportedUsageCount=(metrics.reportedUsageCount||0)+1;
  }
- if(api.remember())write(KEYS.metrics,metrics);
- quickActions();
- if(currentPanel==="metrics")render();
+ if(Number.isFinite(item.duration)&&item.duration>=0)metrics.durations=[...metrics.durations,item.duration].slice(-50);
+ if(Number.isFinite(item.elapsedMs)&&item.elapsedMs>=0)metrics.elapsed=[...metrics.elapsed,item.elapsedMs].slice(-120);
+ const record=metrics.byProvider[provider]||{calls:0};
+ metrics.byProvider[provider]={calls:record.calls+1};
+ metrics.events=[...metrics.events,{at:Date.now(),ok:true,provider,ms:Number.isFinite(item.elapsedMs)?item.elapsedMs:null}].slice(-120);
+ persistMetrics();quickActions();if(currentPanel==="metrics")render();
+});
+window.addEventListener("ba:request-failed",event=>{
+ const item=event.detail||{};
+ metrics.failures=(metrics.failures||0)+1;
+ const elapsed=Number(item.elapsedMs);
+ if(Number.isFinite(elapsed)&&elapsed>=0)metrics.elapsed=[...metrics.elapsed,elapsed].slice(-120);
+ metrics.events=[...metrics.events,{at:Date.now(),ok:false,code:String(item.code||item.status||"UNKNOWN").slice(0,32),ms:Number.isFinite(elapsed)?elapsed:null}].slice(-120);
+ persistMetrics();if(currentPanel==="metrics")render();
 });
 const observer=new MutationObserver(()=>{if(!api.active())quickActions();});
 observer.observe($("chat"),{childList:true});
