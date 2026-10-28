@@ -75,3 +75,17 @@
  .preview-paper hr[data-page-break]{break-after:page;page-break-after:always;border:0;margin:0;height:0}
  .document-running-header,.document-running-footer{color:#555}
 }
+
+/* Structured Tiptap/ProseMirror document surface; old editor remains fallback. */
+.rich-document.tiptap-ready{padding:0;overflow:visible;min-height:340px}
+.rich-document.tiptap-ready .tiptap{
+ min-height:340px;outline:none;padding:clamp(17px,3vw,28px);
+ white-space:pre-wrap;overflow-wrap:anywhere;
+}
+.rich-document.tiptap-ready .tiptap:focus-visible{outline:none}
+.rich-document.tiptap-ready .ProseMirror-selectednode{outline:2px solid #b39053}
+.rich-document.tiptap-ready .selectedCell{background:rgba(167,190,216,.23)}
+.rich-document.tiptap-ready .tiptap table{border-collapse:collapse;table-layout:fixed;width:100%}
+.rich-document.tiptap-ready .tiptap td,.rich-document.tiptap-ready .tiptap th{border:1px solid #aaa;padding:7px;position:relative}
+.rich-document.tiptap-ready .tiptap img{max-width:100%;height:auto}
+@media(max-width:550px){.rich-document.tiptap-ready .tiptap{padding:18px;min-height:300px}}
