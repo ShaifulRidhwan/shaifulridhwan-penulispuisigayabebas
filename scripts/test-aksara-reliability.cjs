@@ -474,3 +474,47 @@ test("daily free-provider exhaustion is distinguished from a short token window"
  assert.equal(response.provider,"groq");assert.equal(response.routing.failedAttempts[0].quotaKind,"daily");
  assert.equal(response.routing.failedAttempts[0].retryAfterSeconds,300);
 });
+
+test("cached health cannot claim a quota-blocked provider is still online",async t=>{
+ setup(t);const router=require("../netlify/functions/aksara-provider-router");
+ let calls=0;
+ global.fetch=async()=>{calls++;return reply("OK");};
+ const first=await router.checkStatus();
+ assert.equal(first.find(x=>x.id==="groq").status,"online");
+ global.fetch=async()=>{calls++;return Response.json({error:{message:"Requests per minute exceeded"}},{status:429,headers:{"retry-after":"11"}});};
+ const failed=await router.complete({system:"persona",history:[],question:"Hai",only:["groq"],deadline:Date.now()+1000});
+ assert.equal(failed.error,"all_providers_unavailable");
+ const current=await router.checkStatus();
+ const groq=current.find(x=>x.id==="groq");
+ assert.equal(groq.status,"offline");
+ assert.equal(groq.reason,"cooldown");
+ assert.ok(groq.retryAfterSeconds>0&&groq.retryAfterSeconds<=11);
+ assert.equal(calls,2,"A cached health refresh does not consume a third completion");
+});
+test("a brief health probe never displaces a model that completed a real conversation",async t=>{
+ setup(t);process.env.MISTRAL_API_KEY="mock";process.env.MISTRAL_FREE_CONFIRMED="true";
+ const router=require("../netlify/functions/aksara-provider-router");
+ global.fetch=async url=>{
+  if(url.includes("mistral.ai"))await new Promise(resolve=>setTimeout(resolve,20));
+  return reply("OK");
+ };
+ const first=await router.complete({system:"persona",history:[],question:"Hai",only:["mistral"],deadline:Date.now()+1500});
+ assert.equal(first.provider,"mistral");
+ const health=await router.checkStatus();
+ assert.equal(health.find(x=>x.id==="groq").status,"online");
+ assert.equal(health.find(x=>x.id==="mistral").status,"online");
+ const next=await router.complete({system:"persona",history:[],question:"Sambung cerita",task:"technical",deadline:Date.now()+1500});
+ assert.equal(next.provider,"mistral","Routing follows a real successful response rather than a shorter OK probe");
+});
+test("health check treats a daily free-tier quota as unavailable without immediately probing again",async t=>{
+ setup(t);const router=require("../netlify/functions/aksara-provider-router");
+ let attempts=0;
+ global.fetch=async()=>{attempts++;return Response.json({error:{message:"Rate limit: free-models-per-day"}},{status:429});};
+ const status=await router.checkStatus();
+ const groq=status.find(x=>x.id==="groq");
+ assert.equal(groq.status,"offline");assert.equal(groq.quotaKind,"daily");
+ assert.ok(groq.retryAfterSeconds>=3500);
+ const again=await router.checkStatus();
+ assert.equal(again.find(x=>x.id==="groq").status,"offline");
+ assert.equal(attempts,1);
+});
