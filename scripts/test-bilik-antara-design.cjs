@@ -32,7 +32,7 @@ test("Final text, controls and simplified channel header",()=>{
  assert.doesNotMatch(html,/Aku kecerdasan buatan yang dibina oleh Shaiful Ridhwan/);
  assert.match(html,/AKSARA A\.I\./);
  assert.match(html,/oleh Shaiful Ridhwan/);
- assert.match(html,/<textarea[^>]+id="input" placeholder="[^\"]+"/);
+ assert.match(html,/<textarea[^>]+id="input" placeholder=""/);
  assert.doesNotMatch(html,/class="brand-mark|class="channel-seal/);
 });
 

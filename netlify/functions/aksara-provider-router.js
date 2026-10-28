@@ -80,8 +80,10 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,d
      const delta=choice?.delta?.content;
      if(typeof delta==="string"&&delta){
       if(full.length+delta.length>40000)throw new Error("Jawapan melebihi had.");
+      if(!emitted)control.extend(deadline-Date.now());
       full+=delta;emitted=true;onDelta(delta);
      }
+     return !finish;
     });
     if(!finish)throw new Error("Aliran AI terputus sebelum tamat.");
     data={model,usage,choices:[{message:{content:full},finish_reason:finish}]};
@@ -93,7 +95,12 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,d
    const finishReason=String(data?.choices?.[0]?.finish_reason||"");
    return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task};
   }catch(err){
-   if(signal?.aborted||emitted)throw err; // Never splice a second provider into a partial answer.
+   if(signal?.aborted)throw err;
+   if(emitted){
+    err.code="STREAM_INTERRUPTED";err.provider=provider.id;
+    err.interruption=err.name==="AbortError"?"timeout":"upstream";
+    throw err; // Never splice a second provider into a partial answer.
+   }
    const status=Number(err.status||0);
    cooldown.set(provider.id,Date.now()+errorToCooldown(status));
    if(preferredProvider===provider.id)preferredProvider="";

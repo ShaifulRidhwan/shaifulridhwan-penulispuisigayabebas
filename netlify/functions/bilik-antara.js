@@ -60,7 +60,7 @@ function errorMessage(status){
   return "Gemini tidak dapat membalas (HTTP "+status+").";
 }
 function log(stage,values){console.log("[bilik-antara] "+stage,values||{});}
-async function callGemini({apiKey,model,contents,system,tools=[],thinkingLevel="low",maxTokens=2000,timeoutMs=17000,json=false,signal,onDelta}){
+async function callGemini({apiKey,model,contents,system,tools=[],thinkingLevel="low",maxTokens=2000,timeoutMs=17000,json=false,signal,onDelta,deadline}){
   const control=requestControl(timeoutMs,signal);
   const body={systemInstruction:{parts:[{text:system}]},contents,
     ...(tools.length?{tools}:{}),
@@ -71,13 +71,14 @@ async function callGemini({apiKey,model,contents,system,tools=[],thinkingLevel="
       body:JSON.stringify(body),signal:control.signal});
     if(!res.ok){const error=new Error("Gemini HTTP "+res.status);error.status=res.status;throw error;}
     if(!onDelta||!res.body||!/text\/event-stream/i.test(res.headers?.get("content-type")||""))return await res.json();
-    let text="",candidate={},usageMetadata=null;
+    let text="",candidate={},usageMetadata=null,emitted=false;
     await readSSE(res.body,chunk=>{
       if(chunk.usageMetadata)usageMetadata=chunk.usageMetadata;
       const next=chunk.candidates?.[0];if(!next)return;
       candidate={...candidate,...next};
       const delta=(next.content?.parts||[]).filter(p=>typeof p.text==="string"&&!p.thought).map(p=>p.text).join("");
-      if(delta){if(text.length+delta.length>40000)throw new Error("Jawapan melebihi had.");text+=delta;onDelta(delta);}
+      if(delta){if(!emitted&&deadline){control.extend(deadline-Date.now());emitted=true;}if(text.length+delta.length>40000)throw new Error("Jawapan melebihi had.");text+=delta;onDelta(delta);}
+      return !candidate.finishReason;
     });
     if(!candidate.finishReason)throw new Error("Aliran AI terputus sebelum tamat.");
     return {candidates:[{...candidate,content:{parts:[{text}]}}],usageMetadata};
@@ -265,7 +266,7 @@ exports.handler=async event=>{
     if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
     if(Date.now()<geminiTextCooldownUntil)throw Object.assign(new Error("Gemini quota cooling down"),{status:429});
     const data=await callGemini({apiKey,model,system,contents,tools,thinkingLevel:plan.thinkingLevel,
-      maxTokens,timeoutMs:Math.min(18000,remaining()),signal:event.signal,onDelta:emit&&!plan.doReview&&!tools.length?emit:null});
+      maxTokens,timeoutMs:Math.min(18000,remaining()),signal:event.signal,deadline,onDelta:emit&&!plan.doReview&&!tools.length?emit:null});
     const candidate=data&&data.candidates&&data.candidates[0];
     const reply=parseReply(modelText(candidate));
     if(!reply)throw Object.assign(new Error("Empty candidate"),{status:502});
@@ -309,7 +310,14 @@ exports.handler=async event=>{
     const textOnly=media.length===0&&!tiktokHandle&&(!privateContext||payload.contextFallback===true)&&
       !(intent.sensitive||intent.search||intent.hasLink);
     if(transient&&textOnly&&Router.enabled()){
-      const alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:5000,deadline,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task});
+      let alternative;
+      try{
+        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:5000,deadline,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task});
+      }catch(fallbackError){
+        if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
+        log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
+        return result(502,{code:"STREAM_INTERRUPTED",error:"Aliran jawapan sandaran terputus sebelum lengkap. Jawapan separa dikekalkan; cuba semula untuk jawapan penuh.",interruption:fallbackError.interruption||"upstream"},H);
+      }
       if(alternative.reply){
         log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
         // Off by default, only eligible ordinary text. Never treat another LLM as a verified fact-checker.

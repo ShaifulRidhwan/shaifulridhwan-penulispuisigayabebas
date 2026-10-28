@@ -97,3 +97,38 @@ test("client NDJSON failures never trigger a duplicate JSON request; unavailable
  calls=[];ask=make(async url=>{calls.push(url);return url==="/stream"?new Response("missing",{status:404}):Response.json({reply:"ok"});},ReadableStream,"/stream","/json");
  assert.equal((await ask({},new AbortController().signal,()=>{})).reply,"ok");assert.deepEqual(calls,["/stream","/json"]);
 });
+
+test("a backup that starts responding gets the remaining global budget instead of a five-second body cutoff",async t=>{
+ setup(t);const router=require("../netlify/functions/aksara-provider-router");
+ let timer,cancelled=false;const chunks=[];
+ global.fetch=async(_url,{signal})=>new Response(new ReadableStream({
+  start(c){
+   const enc=new TextEncoder(),send=x=>c.enqueue(enc.encode("data: "+JSON.stringify(x)+"\n\n"));
+   signal.addEventListener("abort",()=>{clearTimeout(timer);c.error(new DOMException("abort","AbortError"));},{once:true});
+   send({choices:[{delta:{content:"Aku "}}]});
+   timer=setTimeout(()=>{send({choices:[{delta:{content:"selesai."},finish_reason:"stop"}]});},120);
+  },cancel(){cancelled=true;clearTimeout(timer);}
+ }),{headers:{"content-type":"text/event-stream"}});
+ const r=await router.complete({system:"persona",history:[],question:"Soalan",timeoutMs:40,deadline:Date.now()+1000,onDelta:x=>chunks.push(x)});
+ assert.equal(r.reply,"Aku selesai.");assert.equal(chunks.join(""),r.reply);assert.equal(cancelled,true);
+});
+test("a finished SSE response does not need to wait for the provider to close its socket",async()=>{
+ const enc=new TextEncoder();let cancelled=0,values=[];
+ const body=new ReadableStream({start(c){c.enqueue(enc.encode('data: {"text":"siap"}\n\ndata: [DONE]\n\n'));},cancel(){cancelled++;}});
+ await readSSE(body,x=>values.push(x.text));assert.deepEqual(values,["siap"]);assert.equal(cancelled,1);
+});
+test("interrupted backup response returns a typed error from the main handler instead of throwing to the generic wrapper",async t=>{
+ const handler=setup(t);global.fetch=async url=>url.includes("googleapis")?new Response("",{status:503}):sse([{choices:[{delta:{content:"Jawapan separa"}}]}]);
+ const chunks=[];const r=await handler(event({question:"Siapa Shaiful Ridhwan?"},{onDelta:x=>chunks.push(x)}));
+ assert.equal(r.statusCode,502);assert.equal(JSON.parse(r.body).code,"STREAM_INTERRUPTED");assert.match(JSON.parse(r.body).error,/sandaran/);assert.ok(chunks.length);
+});
+test("Cuba semula submits the preserved question, checks health only for an empty input, and ignores double clicks while busy",()=>{
+ const html=fs.readFileSync(path.join(__dirname,"../bilik-antara.html"),"utf8");
+ const start=html.indexOf('ui.retry.addEventListener("click",()=>{'),end=html.indexOf('const providers=',start);
+ const make=new Function('ui','busy','fileState','submit','probe',html.slice(start,end));
+ const run=(text,busy,file)=>{let listener,submitted=0,probed=0;make({retry:{addEventListener(_n,fn){listener=fn}},input:{value:text}},busy,file,()=>submitted++,()=>probed++);listener();return {submitted,probed};};
+ assert.deepEqual(run("siapa shaiful ridhwan",false,null),{submitted:1,probed:0});
+ assert.deepEqual(run("",false,null),{submitted:0,probed:1});
+ assert.deepEqual(run("",false,{name:"karya.txt"}),{submitted:1,probed:0});
+ assert.deepEqual(run("Soalan",true,null),{submitted:0,probed:0});
+});

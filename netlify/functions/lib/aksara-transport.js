@@ -24,17 +24,21 @@ function requestControl(timeoutMs,parent){
  const controller=new AbortController();
  const abort=()=>controller.abort(parent?.reason);
  if(parent?.aborted)abort();else parent?.addEventListener("abort",abort,{once:true});
- const timer=setTimeout(()=>controller.abort(),Math.max(1,timeoutMs));
- return {signal:controller.signal,close(){clearTimeout(timer);parent?.removeEventListener("abort",abort);}};
+ let timer=setTimeout(()=>controller.abort(),Math.max(1,timeoutMs));
+ return {signal:controller.signal,extend(ms){
+  if(controller.signal.aborted)return;
+  clearTimeout(timer);timer=setTimeout(()=>controller.abort(),Math.max(1,ms));
+ },close(){clearTimeout(timer);parent?.removeEventListener("abort",abort);}};
 }
 async function readSSE(body,consume){
  const reader=body.getReader(),decoder=new TextDecoder();let buffer="";
  const block=text=>{
   const data=text.split(/\r?\n/).filter(l=>l.startsWith("data:")).map(l=>l.slice(5).trimStart()).join("\n");
-  if(!data||data==="[DONE]")return;
+  if(data==="[DONE]")return false;
+  if(!data)return true;
   let parsed;try{parsed=JSON.parse(data);}catch(_){throw new Error("Aliran AI tidak sah.");}
   if(parsed.error)throw new Error("Aliran AI terhenti.");
-  consume(parsed);
+  return consume(parsed)!==false;
  };
  try{
   while(true){
@@ -42,7 +46,7 @@ async function readSSE(body,consume){
    buffer+=done?decoder.decode():decoder.decode(value,{stream:true});
    if(buffer.length>1000000)throw new Error("Aliran AI melebihi had.");
    const blocks=buffer.split(/\r?\n\r?\n/);buffer=blocks.pop()||"";
-   for(const text of blocks)block(text);
+   for(const text of blocks)if(block(text)===false)return;
    if(done){if(buffer.trim())block(buffer);break;}
   }
  }finally{try{await reader.cancel();}catch(_){}reader.releaseLock();}
