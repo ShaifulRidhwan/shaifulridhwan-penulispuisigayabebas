@@ -165,7 +165,20 @@ $("docWord").addEventListener("click",async()=>{
       ...(opts.numbering?{numbering:{reference:"studio-numbering",level:0}}:{}),
       spacing:{after:tag==="BLOCKQUOTE"?260:160}}));
   }
+  async function addImage(imgNode){
+    const src=imgNode.getAttribute("src")||"";
+    const m=/^data:image\/(png|jpeg|webp);base64,([a-z0-9+/=]+)$/i.exec(src);
+    if(!m)return;
+    const image=new Image();image.src=src;await image.decode();
+    const scale=Math.min(1,500/Math.max(image.naturalWidth,image.naturalHeight));
+    const width=Math.max(1,Math.round(image.naturalWidth*scale));
+    const height=Math.max(1,Math.round(image.naturalHeight*scale));
+    const data=Uint8Array.from(atob(m[2]),c=>c.charCodeAt(0));
+    rows.push(new docx.Paragraph({children:[new docx.ImageRun({data,transformation:{width,height},type:m[1]==="jpeg"?"jpg":m[1]})]}));
+  }
   for(const node of root.children){
+    if(node.tagName==="IMG"){await addImage(node);continue;}
+    if(node.querySelector("img")){for(const img of node.querySelectorAll("img"))await addImage(img);continue;}
     if(node.tagName==="HR"&&node.dataset.pageBreak==="true"){
       rows.push(new docx.Paragraph({children:[new docx.PageBreak()]}));
       continue;
