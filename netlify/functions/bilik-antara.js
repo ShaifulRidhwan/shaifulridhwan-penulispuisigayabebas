@@ -113,6 +113,27 @@ exports.handler=async event=>{
   const apiKey=process.env.GEMINI_API_KEY,baseModel=freeModel(process.env.GEMINI_MODEL,DEFAULT_MODEL);
   if(payload.probe===true){const alternatives=Router.configured().map(p=>p.id);return result(apiKey||alternatives.length?200:503,{ok:!!(apiKey||alternatives.length),backend:apiKey?"ready":"fallback_ready",model:apiKey?baseModel:null,geminiVerified:false,alternativeProviders:alternatives},H);}
   if(!apiKey&&!Router.enabled())return result(503,{error:"Tiada kunci AI aktif di pelayan."},H);
+  if(payload.providerStatus===true){
+    const ip=(event.headers&&(event.headers["x-nf-client-connection-ip"]||"").split(",")[0])||"unknown";
+    if(throttle(ip))return result(429,{error:"Terlalu banyak semakan. Cuba lagi sebentar."},H);
+    const configured=Router.configured();
+    const alternatives=await Router.checkStatus();
+    let google={id:"gemini",status:"off"};
+    if(apiKey){
+      if(Date.now()<geminiTextCooldownUntil)google={id:"gemini",status:"offline"};
+      else try{
+        const test=await callGemini({apiKey,model:baseModel,system:"Pemeriksaan sambungan, jawab ringkas.",contents:[{role:"user",parts:[{text:"Balas OK."}]}],
+          maxTokens:64,timeoutMs:5000});
+        google={id:"gemini",status:test?.candidates?.length?"online":"offline"};
+      }catch(e){
+        if(e.status===429)geminiTextCooldownUntil=Date.now()+GEMINI_COOLDOWN_MS;
+        google={id:"gemini",status:"offline"};
+      }
+    }
+    const providers=[google,...alternatives];
+    return result(200,{ok:true,providers,checkedAt:Date.now(),someOnline:providers.some(p=>p.status==="online"),configuredCount:configured.length+(apiKey?1:0)},H);
+  }
+
   const ip=(event.headers&&(event.headers["x-nf-client-connection-ip"]||"").split(",")[0])||"unknown";
   if(throttle(ip))return result(429,{code:"RATE_LIMIT",error:"Terlalu banyak permintaan dalam masa singkat. Cuba lagi sebentar."},H);
   const history=safeHistory(payload.history);
