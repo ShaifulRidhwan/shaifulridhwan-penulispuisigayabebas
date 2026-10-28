@@ -73,7 +73,7 @@ const setWave=(value)=>{waveform.style.setProperty("--voice-intensity",String(Ma
 const setButtonState=()=>{
   liveButton.setAttribute("aria-pressed",liveActive?"true":"false");
   liveButton.disabled=liveActive;
-  liveButton.textContent=liveActive?"● Sedang berbual":"✦ Jom Voice Chat";
+  liveButton.textContent=liveActive?"Sedang berbual":"Jom Voice Chat";
   panel.hidden=!liveActive;
   dictate.disabled=liveActive||!speechAPI;
   micButton.textContent=micEnabled?"Tutup mikrofon":"Buka mikrofon";
