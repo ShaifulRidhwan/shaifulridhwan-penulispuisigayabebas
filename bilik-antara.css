@@ -2338,8 +2338,7 @@ body:not(.voice-focus):has(#settingsPanel[open]) .topbar,
 body:not(.voice-focus):has(#settingsPanel[open]) .identity,
 body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.messages,
 body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.starters,
-body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.composer-area,
-body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.ba-toolbar{
+body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.composer-area{
   filter:blur(4px) brightness(.75);
   transition:filter .22s ease;
 }
@@ -2759,7 +2758,7 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .conversation>.glass-shadow-mist::after{background:radial-gradient(ellipse 19% 24% at 91% 31%,transparent 35%,rgba(139,171,214,.16) 62%,transparent 100%),radial-gradient(ellipse 18% 25% at 86% 61%,transparent 32%,rgba(112,139,191,.15) 61%,transparent 100%),radial-gradient(ellipse 14% 19% at 78% 74%,rgba(117,146,190,.08),transparent 100%);filter:blur(19px);animation:antaraSmokeHalo 9.3s ease-in-out infinite alternate}
 @keyframes antaraSmokeGlow{from{opacity:.35;transform:translate3d(2%,4%,0) rotate(-3deg) scale(.95)}to{opacity:.92;transform:translate3d(-3%,-4%,0) rotate(4deg) scale(1.08)}}
 @keyframes antaraSmokeHalo{from{opacity:.25;transform:translate3d(2%,3%,0) rotate(-4deg) scale(.93)}to{opacity:.9;transform:translate3d(-4%,-5%,0) rotate(5deg) scale(1.09)}}
-.conversation>.conversation-head,.conversation>.messages,.conversation>.composer-area,.conversation>.starters,.conversation>.ba-toolbar,.conversation>#connectionInfo{position:relative;z-index:2}
+.conversation>.conversation-head,.conversation>.messages,.conversation>.composer-area,.conversation>.starters,.conversation>#connectionInfo{position:relative;z-index:2}
 @media(max-width:760px){.conversation{-webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15)}.world-light-glow{width:72%;left:-30%}.conversation>.glass-shadow-mist::before{filter:blur(12px)}.conversation>.glass-shadow-mist::after{filter:blur(15px)}}
 /* The status dialogue and all call controls sit together at the bottom. */
 .voice-panel .voice-dialogue-dock{position:relative;z-index:3;display:flex;flex-direction:column;align-items:stretch;gap:10px;width:100%;margin-top:auto;flex:0 0 auto}
