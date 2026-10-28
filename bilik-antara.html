@@ -24,7 +24,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=14">
+<link rel="stylesheet" href="bilik-antara.css?v=15">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=1">
 
 </head>
@@ -94,6 +94,7 @@
    <div class="messages" id="chat" role="log" aria-live="polite" aria-relevant="additions" aria-label="Mesej perbualan"></div>
    <div class="starters" id="starters" aria-label="Soalan permulaan">
     <button class="starter" type="button">Siapa Aku</button>
+    <button class="starter starter-voice" type="button" data-action="voice" aria-label="Mulakan Jom Voice Chat">Malas nak taip? Jom guna Voice Chat</button>
    </div>
    <div class="voice-panel" id="voicePanel" hidden aria-label="Perbualan Voice Live">
     <div class="voice-panel-head">
@@ -477,6 +478,11 @@ ui.input.addEventListener("keydown",e=>{
 });
 ui.starters.querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
  if(busy)return;
+ if(btn.dataset.action==="voice"){
+  const live=el("voiceLive");
+  if(live&&!live.disabled)live.click();
+  return;
+ }
  ui.input.value=btn.textContent.trim();resize();update();ui.input.focus();ui.form.requestSubmit();
 }));
 function showTyping(){
@@ -608,7 +614,7 @@ restore();renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-brain.js?v=6" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-voice.js?v=26" defer></script>
-<script type="module" src="bilik-antara-avatar.js?v=4"></script>
+<script type="module" src="bilik-antara-avatar.js?v=5"></script>
 <script src="bilik-antara-voice-fallback.js?v=10" defer></script>
 </body>
 </html>
