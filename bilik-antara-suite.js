@@ -227,7 +227,21 @@ function renderMetrics(){
  if(!providers.length)paragraph("Tiada rekod model lagi. Jawapan baharu akan mengenal pasti penyedia.");
  for(const [id,data]of providers){
   const label=({gemini:"Google Gemini",groq:"Groq",mistral:"Mistral",openrouter:"OpenRouter",local:"Identiti setempat",unknown:"Tidak diketahui"})[id]||id;
-  const row=make("div",undefined,"ba-metric");row.append(make("span",label),make("strong",data.calls+" respons"));content.appendChild(row);
+  const row=make("div",undefined,"ba-metric");
+  const samples=(metrics.events||[]).filter(e=>e&&e.ok&&e.provider===id&&Number.isFinite(e.ms));
+  const time=samples.length?" · "+(samples.reduce((sum,e)=>sum+e.ms,0)/samples.length/1000).toFixed(2)+" s purata sampel":"";
+  row.append(make("span",label),make("strong",data.calls+" respons"+time));content.appendChild(row);
+ }
+ section("Punca kegagalan");
+ const failuresByCode={};
+ for(const entry of metrics.events||[]){
+  if(entry?.ok===false){const code=String(entry.code||"Tidak diketahui").slice(0,32);failuresByCode[code]=(failuresByCode[code]||0)+1;}
+ }
+ const reasons=Object.entries(failuresByCode).sort((a,b)=>b[1]-a[1]);
+ if(!reasons.length)paragraph("Tiada punca kegagalan yang direkodkan dalam aktiviti terkini.");
+ for(const [code,count]of reasons){
+  const row=make("div",undefined,"ba-metric");
+  row.append(make("span",code),make("strong",count+" kali"));content.appendChild(row);
  }
  section("Aktiviti terkini");
  paragraph("Sehingga 120 peristiwa setempat tanpa menyimpan kandungan soalan. Dipaparkan 12 yang terbaru.");
@@ -239,6 +253,8 @@ function renderMetrics(){
   const text=item.ok?(item.provider||"Tidak diketahui"):"Gagal"+(item.code?" · "+String(item.code).slice(0,24):"");
   row.append(make("span",date+" · "+text),make("strong",Number.isFinite(item.ms)?(item.ms/1000).toFixed(2)+" s":"—"));content.appendChild(row);
  }
+ section("Storan dan privasi");
+ paragraph("Sejarah sesi: "+(api.remember()?"diaktifkan":"dimatikan")+". Memori pilihan: "+(memory.enabled?"diaktifkan":"dimatikan")+". Sesi tersimpan: "+archive.length+". Peristiwa prestasi disimpan hanya jika Simpan sesi diaktifkan.");
  paragraph("Masa pengguna meliputi rangkaian dan pemprosesan. Masa backend dilaporkan pelayan. Token dikira hanya jika penyedia melaporkannya. Kejayaan permintaan bukan bukti ketepatan jawapan.");
  controlRow(
   button("Eksport JSON",()=>download("aksara-prestasi.json",JSON.stringify({exportedAt:new Date().toISOString(),metrics},null,2),"application/json")),
