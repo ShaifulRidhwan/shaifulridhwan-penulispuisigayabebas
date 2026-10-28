@@ -445,7 +445,7 @@ async function startLive(){
             automaticActivityDetection:{
               startOfSpeechSensitivity:"START_SENSITIVITY_HIGH",
               endOfSpeechSensitivity:"END_SENSITIVITY_LOW",
-              prefixPaddingMs:40,silenceDurationMs:950
+              prefixPaddingMs:80,silenceDurationMs:750
             },
             // Enable native Gemini Live barge-in: the user can speak over the AI.
             // Gemini detects real speech and sends serverContent.interrupted.
@@ -573,7 +573,15 @@ stopButton.addEventListener("click",()=>closeLive("Sembang suara dihentikan."));
 micButton.addEventListener("click",()=>{
   micEnabled=!micEnabled;
   if(mediaStream)mediaStream.getAudioTracks().forEach(t=>{t.enabled=micEnabled;});
-  if(!micEnabled)setWave(0);
+  // Tell Gemini's automatic VAD that microphone input has actually paused.
+  // Merely disabling the track can leave the server waiting for the turn to end.
+  if(!micEnabled){
+    setWave(0);
+    if(socket&&liveReady&&socket.readyState===WebSocket.OPEN){
+      try{socket.send(JSON.stringify({realtimeInput:{audioStreamEnd:true}}));}
+      catch(error){console.warn("Voice pause notification failed",error);}
+    }
+  }
   setButtonState();
   sayStatus(micEnabled?"Mikrofon aktif. Aku sedang mendengar.":"Mikrofon dimatikan.");
 });
