@@ -200,7 +200,7 @@ exports.handler=async event=>{
     (question.length<=85&&/^(?:dia|itu|ni|tu|mereka|yang|kalau|tapi|jadi|habis|pastu|so|betul|boleh|patut|maksud|sebab|akibat|kesan|contoh|lebih|kurang)\b/i.test(question)));
   if(contextual){intent.depth=intent.depth==="high"?"high":"medium";intent.review=false;}
   const plan=intelligencePlan(intent);
-  const identityReply=(!media.length&&!documentText&&!contextual)?Identity.answerIdentity(question):null;
+  const identityReply=(!media.length&&!documentText)?Identity.answerIdentity(question):null;
   if(identityReply)return result(200,{
     mode:"live",aiMode:"automatic",model:"project-identity",reply:identityReply,
     sources:[],argumentMap:[],truthAudit:[],thoughtLedger:[],hypothesis:"",
