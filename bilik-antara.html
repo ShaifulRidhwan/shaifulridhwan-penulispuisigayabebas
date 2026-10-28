@@ -589,7 +589,7 @@ async function submit(event){
 }
 ui.form.addEventListener("submit",submit);
 window.BilikAntaraBridge={
- snapshot:()=>({history:history.map(m=>({...m})),summary,thoughtLedger:ideas.slice(-12)}),
+ snapshot:()=>({history:history.map(m=>({...m})),summary,summarizedThrough,thoughtLedger:ideas.slice(-12)}),
  remember:()=>ui.remember.checked,
  load:entry=>{
   if(busy)return false;
