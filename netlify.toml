@@ -14,3 +14,10 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "SAMEORIGIN"
     Permissions-Policy = "camera=(), microphone=(self), geolocation=()"
+
+# Scoped browser caching for the Bilik Antara hero art.
+# The image URL is versioned in HTML + CSS to prevent stale updates.
+[[headers]]
+  for = "/bilik-antara-cover-art.jpg"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=300"
