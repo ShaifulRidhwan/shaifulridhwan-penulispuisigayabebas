@@ -47,7 +47,7 @@ function readReply(){
   const utterance=new window.SpeechSynthesisUtterance(reply.slice(0,2400));
   utterance.lang="ms-MY";utterance.rate=1;utterance.pitch=.95;
   const voices=window.speechSynthesis.getVoices();
-  const voice=voices.find(v=>/^ms[-_]/i.test(v.lang)&&/male|lelaki/i.test(v.name))
+  const voice=voices.find(v=>/^ms[-_]/i.test(v.lang)&&/(?:female|perempuan|wanita|zira|siti)/i.test(v.name))
    ||voices.find(v=>/^ms[-_]/i.test(v.lang));
   if(voice)utterance.voice=voice;
   window.speechSynthesis.speak(utterance);
