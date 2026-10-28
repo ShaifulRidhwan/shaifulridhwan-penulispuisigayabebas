@@ -81,13 +81,16 @@ async function chat(page,device){
  await snapshot(page,device+"-chat");
  await page.locator("#input").fill("Uji pengalaman menaip di Bilik Antara.");
  assert.equal(await page.locator("#sendBtn").isEnabled(),true);
- await page.locator("#themeToggle").click();
- assert.equal(await page.locator("html").getAttribute("data-theme"),"light");
+ assert.equal(await page.locator("html").getAttribute("data-theme"),"dark","Chat retains its light-and-dark identity");
+ await page.locator("#settingsPanel > summary").click();
+ await page.locator("#privacySettings > summary").click();
+ assert.equal(await page.locator("#voiceDictate").isVisible(),true,"Dictate is available within privacy settings");
+ await page.locator("#settingsPanel > summary").click();
  if(device==="mobile"){
   await page.locator("#input").focus();
   await snapshot(page,device+"-chat-focused");
  }
- log(device+" chat composer, opt-in voice and theme passed; no paid API calls made");
+ log(device+" chat composer, opt-in voice and privacy settings passed; no paid API calls made");
 }
 async function remoteProbe(browser){
  try{
