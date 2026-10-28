@@ -21,7 +21,19 @@ function base64(bytes){
  let parts=[];for(let i=0;i<bytes.length;i+=8192)parts.push(String.fromCharCode(...bytes.subarray(i,i+8192)));
  return btoa(parts.join(""));
 }
-const mimeHeader=value=>/[^\x20-\x7e]/.test(value)?"=?UTF-8?B?"+base64(utf8(value))+"?=":value;
+function mimeHeader(value){
+ const input=String(value||"").replace(/[\r\n]+/g," ").trim();
+ if(!/[^\x20-\x7e]/.test(input))return input;
+ // RFC 2047 encoded words <=75 characters, fold only between Unicode codepoints.
+ const chunks=[];let chunk="",length=0;
+ for(const character of input){
+   const bytes=utf8(character).length;
+   if(length+bytes>39&&chunk){chunks.push("=?UTF-8?B?"+base64(utf8(chunk))+"?=");chunk="";length=0;}
+   chunk+=character;length+=bytes;
+ }
+ if(chunk)chunks.push("=?UTF-8?B?"+base64(utf8(chunk))+"?=");
+ return chunks.join("\r\n ");
+}
 const mimeBody=value=>base64(utf8(String(value||"").replace(/\r?\n/g,"\r\n"))).match(/.{1,76}/g)?.join("\r\n")||"";
 const filename=(name,ext)=>(String(name||"hasil").normalize("NFKD").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\s+/g,"-").slice(0,55)||"hasil")+"."+ext;
 function save(blob,name){
