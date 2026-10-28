@@ -42,9 +42,9 @@ test("Regional voice selector is removed, leaving only colloquial Malaysian Mala
  assert.match(css,/\.conversation \.conversation-head\{display:flex/);
 });
 test("Short Malay words trigger a natural answer, not five requests to repeat",()=>{
- assert.match(js,/START_SENSITIVITY_HIGH/);
- assert.match(js,/prefixPaddingMs:80/);
- assert.match(js,/silenceDurationMs:750/);
+ assert.match(js,/START_SENSITIVITY_LOW/);
+ assert.match(js,/prefixPaddingMs:160/);
+ assert.match(js,/silenceDurationMs:1000/);
  assert.match(js,/START_OF_ACTIVITY_INTERRUPTS/);
  assert.match(js,/Perkataan pendek seperti 'lapar'/);
  assert.match(js,/PERKATAAN PENDEK SAH/);
@@ -263,16 +263,16 @@ test("Long-running Voice is opted in and reconnects in foreground without storin
  assert.match(js,/contextWindowCompression:\{slidingWindow:\{\}\}/);
  assert.match(js,/window\.removeEventListener\("ba:voice-renew",renewListener\)/);
  assert.match(js,/document\.hidden/);
- assert.match(js,/connectionAttempts>=2/);
+ assert.match(js,/connectionAttempts>=MAX_RECONNECT_ATTEMPTS/);
  assert.match(js,/connectedAt<9\*60\*1000/);
  assert.doesNotMatch(js,/localStorage\.setItem\([^;]*resumeHandle/);
  assert.match(html,/24 jam/);
  assert.match(html,/teks perbualan/);
 });
 test("Live speech detection tolerates Malay pauses and refuses to guess unclear speech",()=>{
- assert.match(js,/silenceDurationMs:750/);
- assert.match(js,/prefixPaddingMs:80/);
- assert.match(js,/START_SENSITIVITY_HIGH/);
+ assert.match(js,/silenceDurationMs:1000/);
+ assert.match(js,/prefixPaddingMs:160/);
+ assert.match(js,/START_SENSITIVITY_LOW/);
  assert.match(js,/TURN_INCLUDES_ONLY_ACTIVITY/);
  assert.match(js,/DENGAR BETUL-BETUL/);
  assert.match(js,/appendTranscript\("user"/);
@@ -460,8 +460,8 @@ test("Voice token request runs in parallel with microphone initialization",()=>{
  assert.ok(token>=0&&mic>=0&&token<mic,"start token while requesting microphone");
  assert.match(js,/tokenPromise\.catch\(\(\)=>\{\}\)/);
 });
-test("Voice resumption reuses microphone and keeps Google handle in memory only",async()=>{
- const items=new Map(),events=new Map();
+function voiceHarness(options={}){
+ const items=new Map(),events=new Map(),docEvents=new Map();
  const item=id=>{
   if(items.has(id))return items.get(id);
   const handlers={},attrs={};
@@ -471,11 +471,14 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
    querySelectorAll(){return [];},replaceChildren(){this.children=[];},appendChild(v){this.children.push(v);},disconnect(){}};
   items.set(id,x);return x;
  };
- const doc={getElementById:item,createElement:t=>item(t+"-"+items.size),addEventListener(){},hidden:false};
+ const doc={getElementById:item,createElement:t=>item(t+"-"+items.size),addEventListener:(n,fn)=>docEvents.set(n,fn),hidden:false};
  const track={enabled:true,addEventListener(){},getSettings(){return {}},stop(){this.stopped=true}};
  const stream={getTracks:()=>[track],getAudioTracks:()=>[track]};
- class Audio{constructor(){this.audioWorklet={addModule:async()=>{}};this.destination={};this.currentTime=0;}
-  resume(){return Promise.resolve()}close(){return Promise.resolve()}
+ const audioSources=[];
+ class Audio{static instances=[];constructor(){Audio.instances.push(this);this.state="running";this.resumeCount=0;this.audioWorklet={addModule:async()=>{}};this.destination={};this.currentTime=0;}
+  resume(){this.state="running";this.resumeCount++;return Promise.resolve()}close(){return Promise.resolve()}
+  createBuffer(_channels,frames,rate){return{duration:frames/rate,getChannelData:()=>new Float32Array(frames)}}
+  createBufferSource(){const source={connect(){},disconnect(){},start(){},stop(){this.stopped=true}};audioSources.push(source);return source;}
   createMediaStreamSource(){return{connect(){},disconnect(){}}}
   createGain(){return{gain:{value:1},connect(){},disconnect(){}}}
  }
@@ -495,23 +498,49 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
   removeEventListener:(n,fn)=>events.set(n,(events.get(n)||[]).filter(f=>f!==fn)),
   dispatchEvent:e=>(events.get(e.type)||[]).forEach(fn=>fn(e))
  };
- const nav={mediaDevices:{getUserMedia:async()=>stream}};
- let id=0;
- const fakeSet=()=>++id,fakeClear=()=>{};
+ const nav={onLine:true,mediaDevices:{getUserMedia:async()=>stream}};
+ let id=0,now=100000;
+ const timers=new Map();
+ const fakeSet=(fn,delay)=>{const idValue=++id;timers.set(idValue,{fn,at:now+delay});return idValue;};
+ const fakeClear=idValue=>timers.delete(idValue);
+ class Clock extends Date{static now(){return now;}}
+ const flush=async()=>{for(let i=0;i<40;i++)await Promise.resolve();};
+ const advance=async(ms)=>{
+  const target=now+ms;
+  for(let count=0;count<100;count++){
+   const next=[...timers].filter(([,t])=>t.at<=target).sort((a,b)=>a[1].at-b[1].at)[0];
+   if(!next)break;
+   now=next[1].at;timers.delete(next[0]);next[1].fn();await flush();
+   if(count===99)throw Error("timer loop");
+  }
+  now=target;await flush();
+ };
  const FakeEvent=class{constructor(type){this.type=type}};
  const modeRequests=[];
  const issue=async(_url,opts)=>{
   const body=JSON.parse(opts.body);modeRequests.push(body.mode||"auto");
+  if(options.tokenFailure&&called>0)return options.tokenFailure;
   return {ok:true,status:200,json:async()=>({
    token:"auth_tokens/test-"+(++called),
    model:body.mode==="standard"?"gemini-3.8-live":"gemini-3.8-live-extended-thinking",
    durationSeconds:600
   })};
  };
- new Function("document","window","navigator","WebSocket","AudioWorkletNode","setTimeout","clearTimeout","fetch","Event","AbortController","btoa","atob",js)(
+ new Function("document","window","navigator","WebSocket","AudioWorkletNode","setTimeout","clearTimeout","fetch","Event","AbortController","btoa","atob","Date",js)(
   doc,page,nav,Socket,Worklet,fakeSet,fakeClear,issue,FakeEvent,
-  class{constructor(){this.signal={aborted:false}}abort(){this.signal.aborted=true}},()=>"",()=>""
+  class{constructor(){this.signal={aborted:false}}abort(){this.signal.aborted=true}},x=>Buffer.from(x,"binary").toString("base64"),x=>Buffer.from(x,"base64").toString("binary"),Clock
  );
+ return {item,page,doc,nav,track,Socket,Audio,audioSources,events,modeRequests,advance,flush,
+  called:()=>called,
+  start:async()=>{await item("voiceLive").listener("click")();await flush();const ws=Socket.instances[0];await ws.onmessage({data:JSON.stringify({setupComplete:{}})});return ws;},
+  message:(ws,payload)=>ws.onmessage({data:JSON.stringify(payload)}),
+  disconnect:async(ws,code=1006)=>{ws.readyState=3;ws.onclose?.({code});await flush();},
+  visibility:async(hidden)=>{doc.hidden=hidden;docEvents.get("visibilitychange")?.();await flush();}
+ };
+}
+test("Voice resumption reuses microphone and keeps Google handle in memory only",async()=>{
+ const h=voiceHarness();
+ const {item,Socket,track,events,modeRequests}=h;
  await item("voiceLive").listener("click")();
  for(let n=0;n<4;n++)await Promise.resolve();
  const first=Socket.instances[0];
@@ -536,7 +565,7 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  assert.ok(second?.sent[0]?.setup);
  assert.equal(second.sent[0].setup.sessionResumption.handle,"HANDLE_ONLY_IN_MEMORY");
  assert.match(second.sent[0].setup.systemInstruction.parts[0].text,/Bahasa Melayu Malaysia/);
- assert.equal(called,2);
+ assert.equal(h.called(),2);
  assert.equal(second.sent[0].setup.generationConfig.thinkingConfig.thinkingLevel,"MEDIUM");
  await second.onclose({code:1008,reason:"unsupported extended setup"});
  for(let i=0;i<24;i++)await Promise.resolve();
@@ -545,7 +574,7 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  assert.equal(third.sent[0].setup.model,"models/gemini-3.8-live");
  assert.equal(third.sent[0].setup.generationConfig.thinkingConfig,undefined);
  assert.equal(modeRequests[2],"standard");
- assert.equal(called,3);
+ assert.equal(h.called(),3);
  assert.equal(track.stopped,undefined,"no new microphone permission when connection renews");
  await item("voiceStop").listener("click")();
  assert.equal(track.stopped,true,"stopping voice releases microphone");
@@ -570,3 +599,69 @@ test("Session creation has backend rate limiting",async()=>{
  const calls=[];run(x=>calls.push(x));
  assert.equal(calls.length,1); // callback returns immediately after retry
  });
+
+test("GoAway finishes buffered speech before renewal and keeps received audio at the deadline",async()=>{
+ const h=voiceHarness(),ws=await h.start();
+ const audio=Buffer.alloc(48000).toString("base64");
+ await h.message(ws,{serverContent:{modelTurn:{parts:[{inlineData:{data:audio,mimeType:"audio/pcm;rate=24000"}}]}}});
+ const source=h.audioSources[0];assert.ok(source);
+ await h.message(ws,{goAway:{timeLeft:"5s"}});
+ await h.flush();
+ assert.equal(h.called(),1,"Do not sever active speech when advance warning arrives");
+ await h.advance(3600);
+ assert.equal(h.called(),2,"Honor Google's deadline even if playback is still active");
+ assert.equal(source.stopped,undefined,"Transport renewal never discards already received speech");
+ await h.item("voiceStop").listener("click")();
+ assert.equal(source.stopped,true,"Explicit stop still discards speech immediately");
+});
+test("Repeated short-lived sockets back off and stop after three recoveries",async()=>{
+ const h=voiceHarness();let ws=await h.start();
+ for(let i=0;i<3;i++){
+  await h.disconnect(ws);
+  const count=h.called();await h.advance(799);
+  assert.equal(h.called(),count,"Do not spin immediately on a dropped socket");
+  await h.advance(6500);
+  ws=h.Socket.instances.at(-1);
+  await h.message(ws,{setupComplete:{}});
+ }
+ assert.equal(h.called(),4);
+ await h.disconnect(ws);await h.advance(6500);
+ assert.equal(h.called(),4,"A brief setup acknowledgment must not reset recovery budget");
+ assert.equal(h.track.stopped,true);
+});
+test("Offline waits without new credentials, online recovers, and stop cancels pending recovery",async()=>{
+ const h=voiceHarness(),ws=await h.start();
+ h.nav.onLine=false;h.page.dispatchEvent({type:"offline"});
+ await h.disconnect(ws);await h.advance(10000);
+ assert.equal(h.called(),1);
+ assert.equal(h.track.stopped,undefined);
+ h.nav.onLine=true;h.page.dispatchEvent({type:"online"});await h.flush();
+ assert.equal(h.called(),2);
+ const next=h.Socket.instances.at(-1);await h.message(next,{setupComplete:{}});
+ await h.disconnect(next);
+ await h.item("voiceStop").listener("click")();await h.advance(10000);
+ h.page.dispatchEvent({type:"online"});await h.flush();
+ assert.equal(h.called(),2,"Stop cannot be undone by a delayed timer or online event");
+});
+test("Returning to foreground resumes suspended audio without replacing a healthy socket",async()=>{
+ const h=voiceHarness();await h.start();
+ await h.visibility(true);
+ for(const context of h.Audio.instances)context.state="suspended";
+ await h.visibility(false);
+ assert.ok(h.Audio.instances.every(context=>context.state==="running"&&context.resumeCount>=2));
+ assert.equal(h.called(),1);
+ assert.equal(h.track.stopped,undefined);
+});
+test("Explicitly invalidated resumption handle is never reused",async()=>{
+ const h=voiceHarness(),ws=await h.start();
+ await h.message(ws,{sessionResumptionUpdate:{resumable:true,newHandle:"stale"}});
+ await h.message(ws,{sessionResumptionUpdate:{resumable:false}});
+ await h.disconnect(ws);await h.advance(800);
+ assert.deepEqual(h.Socket.instances.at(-1).sent[0].setup.sessionResumption,{});
+});
+test("Broker quota denial wrapped in 502 is definitive and never triggers token retry",async()=>{
+ const h=voiceHarness({tokenFailure:{ok:false,status:502,json:async()=>({reason:"TOKEN_HTTP_429",error:"Kuota penuh"})}});
+ const ws=await h.start();await h.disconnect(ws);await h.advance(10000);
+ assert.equal(h.modeRequests.length,2);
+ assert.equal(h.track.stopped,true);
+});

@@ -21,6 +21,8 @@ const languageLock=[
 const ENDPOINT="/.netlify/functions/bilik-antara-live-token";
 const SOCKET_BASE="wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token=";
 const MAX_DAY=24*60*60*1000; // Access window, NOT one 24-hour Google WebSocket.
+const MAX_RECONNECT_ATTEMPTS=3;
+const STABLE_CONNECTION_MS=30000;
 const CONNECTION_SPAN=8*60*1000; // Renew before Google's ~10-minute connection reset.
 let recognizer=null,dictating=false,liveGeneration=0;
 let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null,playGain=null;
@@ -31,7 +33,7 @@ let pendingAudio=[],pendingAudioBytes=0,audioQueueGeneration=0,modelTurnFinished
 const MAX_PENDING_AUDIO_BYTES=12*1024*1024; // ~4 minutes of mono PCM, bounded for phones
 const MAX_SCHEDULE_AHEAD=5; // seconds scheduled on AudioContext; rest remains in bounded queue
 let dayTimer=null,sessionStarted=0,resumeHandle="",liveModel="",reconnecting=false,connectionAttempts=0,renewListener=null,lastSpeechAt=0,connectedAt=0;
-let preferStandardFallback=false;
+let preferStandardFallback=false,recoverVoice=null,renewBy=0;
 const FALLBACK_CACHE_KEY="ba:live-standard-fallback:tab";
 const speechAPI=window.SpeechRecognition||window.webkitSpeechRecognition;
 const VOICE_TERMS=["Aksara A.I.","Aksara","Shaiful Ridhwan","puisigayabebas","Bilik Antara","The Coder Poet","Antara Cahaya dan Gelap"];
@@ -41,7 +43,7 @@ const VOICE_TOOLS=[{functionDeclarations:[
 ]}];
 let advancedVoiceConfig=true,turnStartAt=0,lastCommand="",lastCommandAt=0,echoRiskSince=0,suppressPlaybackUntilUser=false;
 let voiceMetrics={startedAt:0,connections:0,reconnects:0,interruptions:0,commands:0,turns:0,audioChunks:0,echoRiskEvents:0,lastResponseLatencyMs:null};
-const voiceDiagnosticSnapshot=()=>({...voiceMetrics,connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,advancedFeatures:advancedVoiceConfig,model:liveModel||"unknown",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
+const voiceDiagnosticSnapshot=()=>({...voiceMetrics,connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,advancedFeatures:advancedVoiceConfig,model:liveModel||"unknown",reconnectAttempts:connectionAttempts,microphoneState:micContext?.state||"closed",playbackState:playContext?.state||"closed",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
 window.BilikAntaraVoiceDiagnostics={snapshot:voiceDiagnosticSnapshot};
 function handleSpokenControl(text){
  const q=String(text||"").toLocaleLowerCase("ms-MY").replace(/[.,!?]+$/g,"").trim();
@@ -134,7 +136,7 @@ async function closeLive(reason){
   if(startAbort){startAbort.abort();startAbort=null;}
   if(sessionTimer){clearTimeout(sessionTimer);sessionTimer=null;}
   if(dayTimer){clearTimeout(dayTimer);dayTimer=null;}
-  resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;sessionStarted=0;lastSpeechAt=0;connectedAt=0;
+  resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;sessionStarted=0;lastSpeechAt=0;connectedAt=0;renewBy=0;recoverVoice=null;
   if(renewListener){window.removeEventListener("ba:voice-renew",renewListener);renewListener=null;}
   if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
    if(visibilityTimer){clearTimeout(visibilityTimer);visibilityTimer=null;}
@@ -263,11 +265,15 @@ function onServerMessage(payload){
   }
   if(payload.sessionResumptionUpdate){
     const update=payload.sessionResumptionUpdate;
-    if(update.resumable&&typeof update.newHandle==="string"&&update.newHandle)
+    if(update.resumable===false)resumeHandle="";
+    else if(update.resumable&&typeof update.newHandle==="string"&&update.newHandle)
       resumeHandle=update.newHandle; // In memory only. Never log, upload or persist.
   }
   if(payload.goAway){
-    sayStatus("Google akan menukar sambungan. Menyambung perbualan semula…");
+    // Google gives advance warning. Finish playback before changing sockets,
+    // bounded by its actual deadline rather than cutting off this sentence now.
+    const left=Number.parseFloat(payload.goAway.timeLeft);
+    renewBy=Date.now()+Math.max(0,(Number.isFinite(left)?left:10)*1000-1500);
     window.dispatchEvent(new Event("ba:voice-renew"));
   }
   const c=payload.serverContent;
@@ -404,18 +410,29 @@ async function startLive(){
       if(Date.now()-sessionStarted>=MAX_DAY){
         await closeLive("Tempoh maksimum penggunaan Voice hari ini (24 jam) tamat.");return;
       }
-      // Avoid severing a spoken sentence for scheduled renewals. A hard
-      // provider GoAway or a broken connection bypasses this short delay.
-      if(why==="Sambung berjadual"&&connectedAt&&Date.now()-connectedAt<9*60*1000&&
-         (Date.now()-lastSpeechAt<1600||playbackBusy()||reasoningActive)){
-        if(sessionTimer)clearTimeout(sessionTimer);
-        sessionTimer=setTimeout(()=>renewConnection(why),1600);
+      if(connectedAt&&Date.now()-connectedAt>=STABLE_CONNECTION_MS)connectionAttempts=0;
+      if(navigator.onLine===false){
+        liveReady=false;
+        sayStatus("Internet terputus. Aku tunggu rangkaian kembali…");
         return;
       }
-      if(connectionAttempts>=2){
-        showNotice("Sambungan semula gagal dua kali. Tekan Voice Live untuk mencuba sesi baharu.");
+      // Renew at a quiet boundary; a provider deadline bounds the wait.
+      // A broken transport needs immediate recovery instead.
+      const graceful=why==="Sambung berjadual"||why==="Pembaharuan Google";
+      const canWait=why==="Pembaharuan Google"?Date.now()<renewBy:
+        connectedAt&&Date.now()-connectedAt<9*60*1000;
+      if(graceful&&liveReady&&canWait&&
+         (Date.now()-lastSpeechAt<1600||playbackBusy()||reasoningActive)){
+        if(sessionTimer)clearTimeout(sessionTimer);
+        sessionTimer=setTimeout(()=>renewConnection(why),Math.max(50,Math.min(400,why==="Pembaharuan Google"?renewBy-Date.now():400)));
+        return;
+      }
+      if(connectionAttempts>=MAX_RECONNECT_ATTEMPTS){
+        showNotice("Sambungan masih tidak stabil selepas tiga cubaan. Tekan Jom Voice Chat untuk sesi baharu.");
         await closeLive("Tidak dapat menyambung semula secara automatik.");return;
       }
+      connectionAttempts++;
+      connectedAt=0;
       reconnecting=true;liveReady=false;
       if(sessionTimer){clearTimeout(sessionTimer);sessionTimer=null;}
       if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
@@ -436,10 +453,10 @@ async function startLive(){
         if(generation!==liveGeneration)return;
         if(!response.ok||!data?.token||!data?.model){
           const issue=new Error(data?.error||"Google menolak token sambungan semula (HTTP "+response.status+").");
-          issue.http=response.status;throw issue;
+          issue.http=response.status;
+          issue.definitive=/^TOKEN_HTTP_(400|401|403|404|429)$/.test(data?.reason||"");throw issue;
         }
         if(liveModel&&data.model!==liveModel)resumeHandle="";
-        connectionAttempts++;
         openConnection(data);
       }catch(e){
         if(generation!==liveGeneration)return;
@@ -448,27 +465,39 @@ async function startLive(){
         reconnecting=false;
         // Auth/permission/quota errors are definitive for this attempt. Never
         // burn further Google tokens trying to dodge a provider limit.
-        if([400,401,403,404,429].includes(e.http)){
+        if(e.definitive||[400,401,403,404,429].includes(e.http)){
           await closeLive(msg);return;
         }
-        if(connectionAttempts<2&&!document.hidden){
-          connectionAttempts++;
+        if(connectionAttempts<MAX_RECONNECT_ATTEMPTS&&!document.hidden){
           sessionTimer=setTimeout(()=>renewConnection("Mencuba sambungan Voice sekali lagi…"),2400);
         }else await closeLive(msg);
       }finally{if(!liveActive)reconnecting=false;}
     }
-    renewListener=()=>{if(generation===liveGeneration&&liveActive)renewConnection("Menyambung kerana sambungan Google hampir tamat…");};
+    recoverVoice=async(why)=>{
+      if(generation!==liveGeneration||!liveActive||document.hidden)return;
+      await Promise.allSettled([micContext?.resume(),playContext?.resume()]);
+      if(generation!==liveGeneration||!liveActive)return;
+      drainAudioQueue();
+      if(!liveReady||!socket||socket.readyState!==WebSocket.OPEN)renewConnection(why||"Memulihkan sambungan suara…");
+    };
+    renewListener=()=>{if(generation===liveGeneration&&liveActive)renewConnection("Pembaharuan Google");};
     window.addEventListener("ba:voice-renew",renewListener);
+    for(const context of [micContext,playContext])context.addEventListener?.("statechange",()=>{
+      if(generation===liveGeneration&&liveActive&&!document.hidden&&context.state==="suspended")recoverVoice?.();
+    });
     function openConnection(data){
       if(generation!==liveGeneration||!liveActive)return;
       if(socket){
         const old=socket;old.onclose=null;old.onerror=null;old.onmessage=null;
         try{old.close(1000,"Sambung semula");}catch(_){}
       }
-      liveReady=false;stopAudioQueue();panel.classList.remove("voice-speaking");
+      // Already received audio remains playable across transport renewal.
+      // Only a real interruption, mute or explicit stop discards that audio.
+      liveReady=false;
       const handle=resumeHandle;
       const ws=new WebSocket(SOCKET_BASE+encodeURIComponent(data.token));
-      let established=false;
+      let established=false,congestedAt=0;
+      let messageChain=Promise.resolve();
       socket=ws;liveModel=data.model;
       connectTimer=setTimeout(()=>{
         if(generation!==liveGeneration||socket!==ws||liveReady)return;
@@ -502,9 +531,9 @@ async function startLive(){
           sessionResumption:handle?{handle}:{},
           realtimeInputConfig:{
             automaticActivityDetection:{
-              startOfSpeechSensitivity:"START_SENSITIVITY_HIGH",
+              startOfSpeechSensitivity:"START_SENSITIVITY_LOW",
               endOfSpeechSensitivity:"END_SENSITIVITY_LOW",
-              prefixPaddingMs:80,silenceDurationMs:750
+              prefixPaddingMs:160,silenceDurationMs:1000
             },
             // Enable native Gemini Live barge-in: the user can speak over the AI.
             // Gemini detects real speech and sends serverContent.interrupted.
@@ -542,7 +571,12 @@ async function startLive(){
         }
         micNode.port.onmessage=event=>{
           if(generation!==liveGeneration||socket!==ws||!micEnabled||!liveReady||ws.readyState!==WebSocket.OPEN)return;
-          if(ws.bufferedAmount>250000)return; // avoid backpressure or stale audio
+          if(ws.bufferedAmount>250000){
+            if(!congestedAt)congestedAt=Date.now();
+            if(Date.now()-congestedAt>5000)renewConnection("Memulihkan aliran audio yang tersekat…");
+            return; // Don't send a backlog of stale microphone audio.
+          }
+          congestedAt=0;
           const {pcm,level}=event.data||{};
           if(!(pcm instanceof ArrayBuffer))return;
           if(Number(level)>0.028){
@@ -553,13 +587,15 @@ async function startLive(){
             }else echoRiskSince=0;
           }
           setWave((level||0)*4.6);
-          ws.send(JSON.stringify({realtimeInput:{audio:{
+          try{ws.send(JSON.stringify({realtimeInput:{audio:{
             data:bytesBase64(pcm),mimeType:"audio/pcm;rate=16000"
-          }}}));
+          }}}));}catch(_){renewConnection("Memulihkan penghantaran suara…");}
         };
         sayStatus("Sambungan dibuka. Menunggu pengesahan Google…");
       };
-      ws.onmessage=async event=>{
+      // Blob decoding is asynchronous; serialize frames so interruption,
+      // resumption and audio packets cannot overtake each other.
+      ws.onmessage=event=>{return messageChain=messageChain.then(async()=>{
         if(generation!==liveGeneration||socket!==ws)return;
         try{
           let raw=event.data;
@@ -573,7 +609,7 @@ async function startLive(){
           onServerMessage(parsed);
           if(parsed.setupComplete){
             established=true;
-            reconnecting=false;connectionAttempts=0;connectedAt=Date.now();
+            reconnecting=false;connectedAt=Date.now();renewBy=0;showNotice("");
             // The temporary token expires; use a fresh credential for each
             // new connection. The Live session may resume via in-memory handle.
             const renewMs=CONNECTION_SPAN;
@@ -581,7 +617,7 @@ async function startLive(){
             sessionTimer=setTimeout(()=>renewConnection("Sambung berjadual"),renewMs);
           }
         }catch(e){/* malformed payload is not audio or an instruction */}
-      };
+      });};
       ws.onerror=()=>{if(generation===liveGeneration&&socket===ws)sayStatus("Sambungan suara terputus. Cuba sambung semula…");};
       ws.onclose=event=>{
         if(generation!==liveGeneration||socket!==ws)return;
@@ -589,6 +625,13 @@ async function startLive(){
         if(sessionTimer){clearTimeout(sessionTimer);sessionTimer=null;}
         if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
         const code=Number(event.code)||1006;
+        voiceMetrics.lastCloseCode=code;
+        if(connectedAt&&Date.now()-connectedAt>=STABLE_CONNECTION_MS)connectionAttempts=0;
+        connectedAt=0;
+        if(navigator.onLine===false){
+          reconnecting=false;
+          sayStatus("Internet terputus. Aku tunggu rangkaian kembali…");return;
+        }
         if(!established&&data.model==="gemini-3.8-live-extended-thinking"&&
            !preferStandardFallback&&[1003,1006,1008,1011].includes(code)){
           preferStandardFallback=true;
@@ -606,7 +649,10 @@ async function startLive(){
         }
         if(!document.hidden&&Date.now()-sessionStarted<MAX_DAY){
           reconnecting=false;
-          renewConnection("Sambungan suara terputus. Menyambung semula…");
+          // Back off across rapidly failing sockets; setupComplete alone
+          // does not prove that a connection is stable.
+          sayStatus("Sambungan suara terputus. Menyambung semula…");
+          sessionTimer=setTimeout(()=>renewConnection("Menyambung semula suara…"),Math.min(6000,800*2**connectionAttempts));
         }else{
           closeLive("Sesi dihentikan apabila laman tidak aktif atau tempoh hari berakhir.");
         }
@@ -674,11 +720,19 @@ speakerButton.addEventListener("click",()=>{
   speakerEnabled=!speakerEnabled;
   if(!speakerEnabled)stopAudioQueue();
   setButtonState();
+  if(speakerEnabled)recoverVoice?.();
   sayStatus(speakerEnabled?"Suara AI dihidupkan.":"Suara AI disenyapkan.");
+});
+window.addEventListener("online",()=>{if(liveActive)recoverVoice?.("Internet kembali. Menyambung suara…");});
+window.addEventListener("offline",()=>{
+  if(!liveActive)return;
+  liveReady=false;
+  sayStatus("Internet terputus. Aku tunggu rangkaian kembali…");
 });
 window.addEventListener("pagehide",()=>{closeDictation();closeLive();});
 document.addEventListener("visibilitychange",()=>{
    if(visibilityTimer){clearTimeout(visibilityTimer);visibilityTimer=null;}
+   if(!document.hidden&&liveActive)recoverVoice?.("Memulihkan sesi suara…");
    if(document.hidden&&liveActive){
      // Permission prompts may briefly hide the page on mobile.
      visibilityTimer=setTimeout(()=>{
