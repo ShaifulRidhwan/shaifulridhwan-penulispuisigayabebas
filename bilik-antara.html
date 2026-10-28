@@ -153,7 +153,7 @@ const ENDPOINT="/.netlify/functions/bilik-antara";
 const STORAGE="bilik-antara-session-v2",THEME="bilik-antara-theme";
 const MEDIA=new Set(["application/pdf","image/jpeg","image/png","image/webp","image/gif",
  "audio/mpeg","audio/wav","audio/mp4","audio/ogg","video/mp4","video/webm"]);
-let history=[],summary="",ideas=[],summarizedThrough=0,compacting=false,fileState=null,busy=false;
+let history=[],summary="",ideas=[],summarizedThrough=0,compacting=false,conversationEpoch=0,fileState=null,busy=false;
 function elem(tag,cls,text){
  const e=document.createElement(tag);if(cls)e.className=cls;
  if(text!==undefined)e.textContent=String(text);return e;
@@ -333,7 +333,7 @@ function renderHistory(){
 function save(){
  if(!ui.remember.checked)return;
  try{localStorage.setItem(STORAGE,JSON.stringify({at:Date.now(),history,
-  summary:summary,thoughtLedger:ideas.slice(-12)}));window.dispatchEvent(new Event("ba:saved"));}
+  summary:summary,summarizedThrough,thoughtLedger:ideas.slice(-12)}));window.dispatchEvent(new Event("ba:saved"));}
  catch(e){ui.docStatus.textContent="Penyimpanan peranti tidak tersedia.";}
 }
 function restore(){
@@ -346,7 +346,7 @@ function restore(){
    ;
   summary=typeof stored.summary==="string"?stored.summary.slice(0,1800):"";
   ideas=Array.isArray(stored.thoughtLedger)?stored.thoughtLedger.slice(-12).filter(x=>x&&typeof x.idea==="string"):[];
-  summarizedThrough=Math.max(0,history.length-12);ui.remember.checked=true;
+  summarizedThrough=Number.isInteger(stored.summarizedThrough)?Math.max(0,Math.min(history.length,stored.summarizedThrough)):0;ui.remember.checked=true;
  }catch(e){}
 }
 function renderIdeas(){
@@ -388,13 +388,14 @@ async function compact(){
  const end=Math.min(until,summarizedThrough+18);
  const segment=history.slice(summarizedThrough,end);
  if(segment.length<4)return;
+ const epoch=conversationEpoch;
  compacting=true;
  try{
   const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
    body:JSON.stringify({summarize:true,summary,history:segment})});
   if(!res.ok)throw Error("summary");
   const out=await res.json();
-  if(out&&typeof out.summary==="string"&&out.summary.trim()){
+  if(epoch===conversationEpoch&&out&&typeof out.summary==="string"&&out.summary.trim()){
    summary=out.summary.slice(0,1800);summarizedThrough=end;save();
   }
  }catch(e){}finally{compacting=false;}
@@ -460,7 +461,7 @@ ui.forget.addEventListener("click",()=>{ideas=[];renderIdeas();save();});
 ui.clear.addEventListener("click",()=>{
  if(busy)return;
  if(history.length&&!window.confirm("Padam perbualan dan nota idea sesi ini?"))return;
- history=[];summary="";ideas=[];summarizedThrough=0;ui.remember.checked=false;
+ conversationEpoch++;history=[];summary="";ideas=[];summarizedThrough=0;ui.remember.checked=false;
  try{localStorage.removeItem(STORAGE);}catch(e){}
  discardFile();renderIdeas();renderHistory();ui.settings.open=false;
  window.dispatchEvent(new Event("ba:cleared"));
@@ -577,14 +578,15 @@ window.BilikAntaraBridge={
  remember:()=>ui.remember.checked,
  load:entry=>{
   if(busy)return false;
+  conversationEpoch++;
   history=Array.isArray(entry&&entry.history)?entry.history.filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string"):[];
   summary=typeof entry?.summary==="string"?entry.summary.slice(0,1800):"";
   ideas=Array.isArray(entry?.thoughtLedger)?entry.thoughtLedger.slice(-12):[];
-  summarizedThrough=Math.max(0,history.length-12);renderIdeas();renderHistory();save();return true;
+  summarizedThrough=Number.isInteger(entry?.summarizedThrough)?Math.max(0,Math.min(history.length,entry.summarizedThrough)):0;renderIdeas();renderHistory();save();return true;
  },
  fresh:()=>{
   if(busy)return false;
-  history=[];summary="";ideas=[];summarizedThrough=0;
+  conversationEpoch++;history=[];summary="";ideas=[];summarizedThrough=0;
   discardFile();renderIdeas();renderHistory();save();return true;
  },
  fill:text=>{ui.input.value=String(text||"");resize();update();ui.input.focus();},
@@ -595,7 +597,7 @@ window.BilikAntaraBridge={
   const valid=items.filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim()).map(m=>({role:m.role,content:m.content}));
   if(!valid.length)return false;
   history.push(...valid);
-  renderHistory();save();return true;
+  renderHistory();save();compact();return true;
  }
 };
 restore();renderIdeas();renderHistory();update();probe();
