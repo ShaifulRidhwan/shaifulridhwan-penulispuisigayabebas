@@ -27,8 +27,14 @@ let memory=read(KEYS.memory,{enabled:false,text:""});
 if(!memory||typeof memory!=="object")memory={enabled:false,text:""};
 let workspace=read(KEYS.workspace,{title:"",content:"",at:0});
 if(!workspace||typeof workspace!=="object")workspace={title:"",content:"",at:0};
-let metrics=read(KEYS.metrics,{calls:0,tokens:0,durations:[],times:[]});
-if(!metrics||typeof metrics!=="object")metrics={calls:0,tokens:0,durations:[],times:[]};
+const blankMetrics=()=>({calls:0,failures:0,tokens:0,reportedUsageCount:0,durations:[],elapsed:[],events:[],times:[],byProvider:{}});
+let metrics=read(KEYS.metrics,blankMetrics());
+if(!metrics||typeof metrics!=="object")metrics=blankMetrics();
+metrics={...blankMetrics(),...metrics,byProvider:metrics.byProvider&&typeof metrics.byProvider==="object"?metrics.byProvider:{},
+ events:Array.isArray(metrics.events)?metrics.events.slice(-120):[],
+ durations:Array.isArray(metrics.durations)?metrics.durations.slice(-50):[],
+ elapsed:Array.isArray(metrics.elapsed)?metrics.elapsed.slice(-120):[]};
+const persistMetrics=()=>{if(api.remember())write(KEYS.metrics,metrics);};
 let currentPanel="";
 const convo=document.querySelector(".conversation");
 if(!convo)return;
@@ -115,7 +121,7 @@ function sessionText(history){
 }
 function renderSessions(){
  section("Sejarah perbualan");
- paragraph("Sesi disimpan pada peranti ini sahaja apabila 'Simpan sesi pada peranti ini' diaktifkan. Tiada had bilangan sesi yang ditetapkan aplikasi; tertakluk pada ruang storan pelayar.");
+ paragraph("Sesi disimpan pada peranti ini sahaja apabila 'Simpan sesi pada peranti ini' diaktifkan. Arkib tetap tertakluk pada ruang storan pelayar; eksport JSON untuk sandaran sendiri.");
  controlRow(button("+ Sesi baharu",()=>beginSession(null)),button("Eksport sesi ini",()=>{
   download("bilik-antara-sesi.md",sessionText(api.snapshot().history),"text/markdown;charset=utf-8");
  }));
@@ -147,7 +153,7 @@ function renderSessions(){
 }
 function renderMemory(){
  section("Memori pilihan pengguna");
- paragraph("Memori ini berbeza daripada sejarah sesi. Hanya perkara yang kau tulis dan izinkan akan dihantar sebagai konteks kepada Gemini. Tidak menyimpan identiti atau butiran peribadi secara automatik.");
+ paragraph("Memori ini berbeza daripada sejarah sesi. Nota yang kau tulis dan aktifkan dihantar sebagai konteks kepada Gemini. Nota pilihan tidak dihantar ke penyedia sandaran. Semua nota kekal di peranti sehingga kau padam.");
  const toggle=make("input");toggle.type="checkbox";toggle.checked=!!memory.enabled;
  const label=make("label"," Aktifkan memori");label.prepend(toggle);content.appendChild(label);
  const field=make("textarea");field.className="ba-editor";field.rows=8;field.maxLength=8000;
