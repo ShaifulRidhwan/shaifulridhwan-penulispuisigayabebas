@@ -193,7 +193,17 @@ $("docWord").addEventListener("click",async()=>{
   const pageSize=settings.orientation==="landscape"?{width:dims.height,height:dims.width}:dims;
   const doc=new docx.Document({
    numbering:{config:[{reference:"studio-numbering",levels:[{level:0,format:"decimal",text:"%1.",alignment:"left"}]}]},
-   sections:[{properties:{page:{size:pageSize,margin:{top:margin,bottom:margin,left:margin,right:margin}}},children:rows}]
+   sections:[{
+     properties:{page:{size:pageSize,margin:{top:margin,bottom:margin,left:margin,right:margin}}},
+     headers:settings.header?{default:new docx.Header({children:[new docx.Paragraph({text:settings.header})]})}:undefined,
+     footers:settings.footer||settings.numbers?{default:new docx.Footer({children:[
+        new docx.Paragraph({children:[
+          ...(settings.footer?[new docx.TextRun(settings.footer+"   ")]:[]),
+          ...(settings.numbers?[new docx.TextRun("Halaman "),new docx.TextRun({children:[docx.PageNumber.CURRENT]})]:[])
+        ]})
+     ]})}:undefined,
+     children:rows
+   }]
   });
   save(await docx.Packer.toBlob(doc),filename(val("docTitle")||"dokumen","docx"));
   notice("Dokumen Word telah dijana.");
