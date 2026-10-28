@@ -510,7 +510,7 @@ ui.starters.querySelectorAll("button").forEach(btn=>btn.addEventListener("click"
   if(live&&!live.disabled)live.click();
   return;
  }
- ui.input.value=btn.textContent.trim();resize();update();ui.input.focus();ui.form.requestSubmit();
+ ui.input.value=btn.textContent.trim();resize();update();if(document.activeElement===ui.input)ui.input.blur();ui.form.requestSubmit();
 }));
 function showTyping(){
  const msg=elem("article","message ai");
