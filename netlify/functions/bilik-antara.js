@@ -287,7 +287,7 @@ exports.handler=async event=>{
     const textOnly=media.length===0&&!documentText&&!tiktokHandle&&!userMemory&&
       !(intent.sensitive||intent.search||intent.hasLink)&&question.length<=9000;
     if(transient&&textOnly&&Router.enabled()){
-      const alternative=await Router.complete({system,history,question,maxTokens:Math.min(maxTokens,1600),timeoutMs:4300,reasoningLevel:plan.thinkingLevel});
+      const alternative=await Router.complete({system,history,question,maxTokens:Math.min(maxTokens,1600),timeoutMs:4300,reasoningLevel:plan.thinkingLevel,task:intent.task});
       if(alternative.reply){
         log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
         return result(200,{
