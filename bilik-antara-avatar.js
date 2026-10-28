@@ -1,10 +1,12 @@
-/* Bilik Antara · FaceCap avatar, loaded only while Voice Live is open.
-   FaceCap source: Three.js example / Face Cap; see attribution below. */
+/* Bilik Antara · Female voice avatar, loaded only during Voice Live.
+   Avatar: TalkingHead example brunette.glb by Ready Player Me.
+   Source: https://github.com/met4citizen/TalkingHead
+   License: CC BY-NC 4.0 (noncommercial use with attribution). */
 const panel=document.getElementById("voicePanel");
 const stage=document.getElementById("voiceAvatarStage");
 if(panel&&stage){
 let active=false,renderer=null,scene=null,camera=null,root=null,face=null,raf=0,resize=null,context=null,blinkAt=0,started=0,loading=false;
-const modelURL="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r184/examples/models/gltf/facecap.glb";
+const modelURL="https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette.glb";
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 function weights(names,value){if(!face?.morphTargetDictionary)return;for(const name of names){for(const [k,i] of Object.entries(face.morphTargetDictionary)){if(k===name||k.endsWith("."+name)){face.morphTargetInfluences[i]=value;}}}}
 function stop(){
@@ -34,20 +36,24 @@ async function begin(){
   const gltf=await new GLTFLoader().setKTX2Loader(kt).setMeshoptDecoder(MeshoptDecoder).loadAsync(modelURL);
   kt.dispose();if(!active){gltf.scene.traverse(o=>{o.geometry?.dispose?.();});return;}
   root=gltf.scene;scene.add(root);
+  // Frame only the upper body: this model contains a whole character.
   const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
-  root.position.sub(center);const scale=1.45/Math.max(size.y,.1);root.scale.setScalar(scale);
-  // Center AFTER scaling: the previous unscaled offset put the face outside frame.
+  const scale=2.5/Math.max(size.y,.1);root.scale.setScalar(scale);
   const basePosition=center.clone().multiplyScalar(-scale);
   root.position.copy(basePosition);
+  const headTargetY=(bounds.max.y-center.y)*scale-size.y*scale*.21;
   const frameModel=()=>{
     if(!stage.clientWidth||!stage.clientHeight)return;
     const aspect=stage.clientWidth/stage.clientHeight;
     const vfov=THREE.MathUtils.degToRad(camera.fov);
-    const visibleHeight=Math.max(size.y*scale, size.x*scale/Math.max(aspect,.2));
-    const distance=(visibleHeight/Math.tan(vfov/2))*.9 + Math.max(size.z*scale,.2);
-    camera.position.set(0,0,Math.max(3.4,distance));camera.lookAt(0,0,0);
+    const desiredHeight=size.y*scale*.43;
+    const desiredWidth=size.x*scale*.88;
+    const fitHeight=Math.max(desiredHeight,desiredWidth/Math.max(aspect,.25));
+    const distance=fitHeight/(2*Math.tan(vfov/2)) + size.z*scale*.35;
+    camera.position.set(0,headTargetY,Math.max(1.7,distance));
+    camera.lookAt(0,headTargetY,0);
   };
-  face=root.getObjectByName("mesh_2")||null;
+  face=root.getObjectByName("Wolf3D_Head")||null;
   if(!face)root.traverse(o=>{if(!face&&o.morphTargetInfluences&&o.morphTargetDictionary)face=o;});
   root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;if(o.material){const m=o.material;m.side=THREE.FrontSide;if("roughness" in m)m.roughness=.5;if("metalness" in m)m.metalness=.22;}}});
   resize=new ResizeObserver(()=>{if(!renderer)return;const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;frameModel();camera.updateProjectionMatrix();});
