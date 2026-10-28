@@ -294,7 +294,7 @@ exports.handler=async event=>{
           mode:"fallback",aiMode:"automatic",model:alternative.model,provider:alternative.provider,
           reply:alternative.reply,sources:[],argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[],toolsOffered:[],
-          disclaimer:"Jawapan daripada model sandaran ("+alternative.provider+"). Tiada semakan web langsung; butiran sejarah dan dakwaan khusus mungkin memerlukan pengesahan.",
+          disclaimer:"Jawapan daripada model sandaran ("+alternative.provider+"). Tiada semakan web langsung; butiran sejarah dan dakwaan khusus mungkin memerlukan pengesahan."+(alternative.partial?" Jawapan model mungkin terpotong kerana had output.":""),
           usage:alternative.usage,durMs:Date.now()-started
         },H);
       }
