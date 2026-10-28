@@ -2826,3 +2826,129 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  .conversation #settingsPanel>summary{width:34px!important;height:34px!important}
  .conversation #settingsPanel .settings-card{width:min(350px,calc(100vw - 18px));right:-2px}
 }
+
+
+/* 2026-10-28 · Balanced header controls and quieter feature-menu motion. */
+.conversation-head #voiceLive,
+.conversation-head #connection,
+.conversation-head #settingsPanel > summary{
+ box-sizing:border-box;
+ height:42px;
+ min-height:42px!important;
+ max-height:42px;
+ border-radius:999px;
+ -webkit-tap-highlight-color:transparent;
+ touch-action:manipulation;
+ transition:background-color .24s ease,border-color .24s ease,
+            box-shadow .3s ease,color .24s ease,transform .3s cubic-bezier(.2,.75,.25,1);
+}
+.conversation-head #voiceLive{
+ display:inline-flex;align-items:center;justify-content:center;
+ padding:0 14px!important;
+ font:600 12px/1.25 'DM Sans',system-ui,sans-serif!important;
+ letter-spacing:0!important;
+ white-space:nowrap;
+}
+.conversation-head #connection{
+ padding:0 13px!important;
+ font:600 12px/1.25 'DM Sans',system-ui,sans-serif!important;
+}
+.conversation-head #connection #connectionText{
+ font:600 12px/1.25 'DM Sans',system-ui,sans-serif!important;
+}
+.conversation-head #settingsPanel > summary{
+ display:grid;place-items:center;width:42px!important;
+ padding:0!important;
+ outline-offset:3px;
+}
+.conversation-head #settingsPanel > summary:focus:not(:focus-visible){
+ outline:none!important;
+}
+.conversation-head #settingsPanel > summary:focus-visible{
+ outline:2px solid #f2c984!important;outline-offset:3px;
+}
+.conversation-head #settingsPanel > summary:active,
+.conversation-head #voiceLive:active,
+.conversation-head #connection:active{transform:scale(.97)}
+.conversation-head #settingsPanel[open] > summary{
+ color:#f1d6a7;
+ box-shadow:0 0 0 1px rgba(240,198,131,.19),0 0 20px rgba(217,174,102,.1),
+            inset 0 1px 0 rgba(255,244,217,.11);
+}
+.conversation #settingsPanel .settings-card{
+ transform-origin:calc(100% - 21px) top;
+ animation:aksaraFeaturesEnter .34s cubic-bezier(.18,.8,.25,1) both;
+ will-change:opacity,transform;
+}
+.conversation #settingsPanel.is-closing .settings-card{
+ animation:aksaraFeaturesExit .2s cubic-bezier(.4,0,.9,.7) both;
+ pointer-events:none;
+}
+@keyframes aksaraFeaturesEnter{
+ from{opacity:0;transform:translate3d(0,-9px,0) scale(.975)}
+ to{opacity:1;transform:translate3d(0,0,0) scale(1)}
+}
+@keyframes aksaraFeaturesExit{
+ from{opacity:1;transform:translate3d(0,0,0) scale(1)}
+ to{opacity:0;transform:translate3d(0,-6px,0) scale(.985)}
+}
+.conversation #settingsPanel .feature-hub-item{
+ -webkit-tap-highlight-color:transparent;
+ transition:background-color .25s ease,border-color .25s ease,
+            transform .3s cubic-bezier(.18,.8,.25,1),box-shadow .3s ease!important;
+}
+.conversation #settingsPanel .feature-hub-item:hover{
+ transform:translate3d(2px,0,0);
+ box-shadow:inset 0 1px 0 rgba(255,246,219,.1),0 8px 23px rgba(0,0,0,.11);
+}
+.conversation #settingsPanel .feature-hub-item:active{transform:scale(.988)}
+.conversation #settingsPanel .feature-hub-item:focus:not(:focus-visible){
+ outline:none;
+}
+.conversation #settingsPanel .feature-hub-item:focus-visible{
+ outline:2px solid #f2c984;outline-offset:2px;
+}
+.conversation #settingsPanel .feature-privacy>summary{
+ -webkit-tap-highlight-color:transparent;
+ transition:color .25s ease,background-color .25s ease;
+}
+.conversation #settingsPanel .feature-privacy>summary:hover{color:#fff0d2}
+.conversation #settingsPanel .feature-privacy>summary::after{
+ content:"+";display:inline-block;transition:transform .3s cubic-bezier(.2,.8,.2,1);
+}
+.conversation #settingsPanel .feature-privacy[open]>summary::after{
+ content:"+";transform:rotate(45deg)
+}
+.conversation #settingsPanel .feature-privacy[open] .feature-privacy-content{
+ animation:aksaraPrivacyReveal .3s cubic-bezier(.2,.8,.2,1) both;
+ transform-origin:top center;
+}
+@keyframes aksaraPrivacyReveal{
+ from{opacity:0;transform:translateY(-5px)}
+ to{opacity:1;transform:translateY(0)}
+}
+@media(max-width:760px){
+ .conversation-head #voiceLive,.conversation-head #connection,
+ .conversation-head #settingsPanel>summary{height:40px;min-height:40px!important;max-height:40px}
+ .conversation-head #voiceLive{font-size:11px!important;padding:0 10px!important}
+ .conversation-head #connection{padding:0 10px!important;font-size:11px!important}
+ .conversation-head #connection #connectionText{font-size:11px!important}
+ .conversation-head #settingsPanel>summary{width:40px!important}
+}
+@media(max-width:390px){
+ .conversation-head #voiceLive,.conversation-head #connection,
+ .conversation-head #settingsPanel>summary{height:38px;min-height:38px!important;max-height:38px}
+ .conversation-head #voiceLive{font-size:10px!important;padding:0 8px!important}
+ .conversation-head #connection{padding:0 8px!important}
+ .conversation-head #connection #connectionText{font-size:10px!important}
+ .conversation-head #settingsPanel>summary{width:38px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .conversation #settingsPanel .settings-card,
+ .conversation #settingsPanel.is-closing .settings-card,
+ .conversation #settingsPanel .feature-privacy[open] .feature-privacy-content{animation:none!important}
+ .conversation-head #voiceLive,.conversation-head #connection,.conversation-head #settingsPanel>summary,
+ .conversation #settingsPanel .feature-hub-item,
+ .conversation #settingsPanel .feature-privacy>summary::after{transition:none!important}
+ .conversation #settingsPanel .feature-hub-item:hover{transform:none}
+}
