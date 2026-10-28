@@ -119,7 +119,7 @@ test("a finished SSE response does not need to wait for the provider to close it
 });
 test("interrupted backup response returns a typed error from the main handler instead of throwing to the generic wrapper",async t=>{
  const handler=setup(t);global.fetch=async url=>url.includes("googleapis")?new Response("",{status:503}):sse([{choices:[{delta:{content:"Jawapan separa ".repeat(20)}}]}]);
- const chunks=[];const r=await handler(event({question:"Siapa Shaiful Ridhwan?"},{onDelta:x=>chunks.push(x)}));
+ const chunks=[];const r=await handler(event({question:"Terangkan warna langit"},{onDelta:x=>chunks.push(x)}));
  assert.equal(r.statusCode,502);assert.equal(JSON.parse(r.body).code,"STREAM_INTERRUPTED");assert.match(JSON.parse(r.body).error,/sandaran/);assert.ok(chunks.length);
 });
 test("Cuba semula submits the preserved question, checks health only for an empty input, and ignores double clicks while busy",()=>{
@@ -213,4 +213,20 @@ test("buffered OpenRouter answers are not cut off at the streaming first-token d
  });};
  const r=await router.complete({system:"persona",history:[],question:"Kenapa langit biru?",onDelta:()=>{},timeoutMs:30,bufferedTimeoutMs:600,deadline:Date.now()+1000});
  assert.equal(r.provider,"openrouter");assert.match(r.reply,/Jawapan lengkap/);assert.equal(calls,1);
+});
+test("direct founder biography needs no external model call but follow-up discussion stays generative",async t=>{
+ const handler=setup(t);global.fetch=()=>{throw Error("No inference needed");};
+ const r=await handler(event({question:"siapa shaiful ridhwan"}));assert.equal(r.statusCode,200);const d=JSON.parse(r.body);assert.equal(d.model,"project-identity");assert.match(d.reply,/The Coder Poet/);
+ assert.equal(require("../bilik-antara-identity").answerIdentity("Kenapa Shaiful gabungkan puisi dengan kod?"),null);
+});
+test("a session's last successful provider is tried directly, without waiting for Gemini to fail first",async t=>{
+ const handler=setup(t);process.env.OPENROUTER_API_KEY="mock";const requests=[];
+ global.fetch=async url=>{requests.push(url);assert.ok(url.includes("openrouter.ai"));return reply("Atom ialah unit asas jirim.");};
+ const r=await handler(event({question:"Apa itu atom?",preferredProvider:"openrouter"}));assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).provider,"openrouter");assert.equal(requests.length,1);
+});
+test("provider preference cannot bypass consent for private context, and a failed preferred provider still falls back",async t=>{
+ const handler=setup(t);process.env.OPENROUTER_API_KEY="mock";let backups=0,google=0;
+ global.fetch=async url=>{if(url.includes("openrouter")){backups++;return new Response("",{status:503});}google++;return Response.json({candidates:[{content:{parts:[{text:"Jawapan daripada Gemini."}]},finishReason:"STOP"}]});};
+ const privateReply=await handler(event({question:"Ringkaskan fail",documentText:"teks peribadi",preferredProvider:"openrouter"}));assert.equal(privateReply.statusCode,200);assert.equal(backups,0);
+ const fallback=await handler(event({question:"Apa itu graviti?",preferredProvider:"openrouter"}));assert.equal(fallback.statusCode,200);assert.equal(backups,1);assert.equal(google,2);
 });

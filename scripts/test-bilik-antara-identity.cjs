@@ -44,7 +44,7 @@ test("Siapa Aku answers project origin, enhancements and base-model provenance",
 });
 test("Verified Shaiful Ridhwan biography is rich, natural and attribution-safe",()=>{
  const detailed=ID.CREATOR_STORY;
- assert.equal(ID.answerIdentity("Siapa Shaiful Ridhwan?"),null,"General biography is generated using grounded profile context");
+ assert.equal(ID.answerIdentity("Siapa Shaiful Ridhwan?"),ID.CREATOR_INTRO,"Direct biography uses verified project facts without a slow inference call");
  assert.ok(detailed&&detailed.length>650,"Creator reply should not be two dry sentences");
  assert.match(detailed,/penulis puisi gaya bebas/i);
  assert.match(detailed,/puisigayabebas/);
@@ -53,8 +53,8 @@ test("Verified Shaiful Ridhwan biography is rich, natural and attribution-safe",
  assert.match(detailed,/Bilik Antara/);
  assert.match(ID.CREATOR_PROFILE.provenance,/Google.*Gemini/);
  assert.match(ID.CREATOR_PROFILE.role,/pembangun/i);
- assert.equal(ID.answerIdentity("Shaiful Ridhwan tu siapa?"),null);
- assert.equal(ID.answerIdentity("Kau kenal Shaiful Ridhwan?"),null);
+ assert.equal(ID.answerIdentity("Shaiful Ridhwan tu siapa?"),ID.CREATOR_INTRO);
+ assert.equal(ID.answerIdentity("Kau kenal Shaiful Ridhwan?"),ID.CREATOR_INTRO);
 });
 test("Creator is credited as builder of the application, not trainer of Gemini",()=>{
  const who=ID.answerIdentity("Siapa cipta kau?");

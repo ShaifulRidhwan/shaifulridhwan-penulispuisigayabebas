@@ -17,7 +17,7 @@ const MAX_QUESTION=32000;
 const MAX_MEDIA_ENCODED=4800000;
 const rateMap=new Map();
 // Warm Netlify instances remember quota exhaustion; no repeated Google calls while cooling down.
-let geminiTextCooldownUntil=0;
+let geminiTextCooldownUntil=0,lastTextProvider="",lastTextSuccessAt=0;
 const GEMINI_COOLDOWN_MS=120000;
 
 const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+Identity.PROMPT+"\n"+[
@@ -262,6 +262,38 @@ exports.handler=async event=>{
   const maxTokens=plan.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
     works:!!poem,multimodal:media.length>0,model,review:intent.review});
+  const privateContext=!!(documentText||userMemory);
+  const textOnly=media.length===0&&!tiktokHandle&&(!privateContext||payload.contextFallback===true)&&!(intent.sensitive||intent.search||intent.hasLink);
+  async function useAlternative(options={}){
+      let alternative;
+      try{
+        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:8000,bufferedTimeoutMs:20000,deadline,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,...options});
+      }catch(fallbackError){
+        if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
+        log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
+        return result(502,{code:"STREAM_INTERRUPTED",error:"Aliran jawapan sandaran terputus sebelum lengkap. Jawapan separa dikekalkan; cuba semula untuk jawapan penuh.",interruption:fallbackError.interruption||"upstream"},H);
+      }
+      if(alternative.reply){
+        lastTextProvider=alternative.provider;lastTextSuccessAt=Date.now();
+        log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
+        // Off by default, only eligible ordinary text. Never treat another LLM as a verified fact-checker.
+        const check=remaining()>1000?await Router.crossReview({question,reply:alternative.reply,originalProvider:alternative.provider,task:intent.task,timeoutMs:Math.min(3000,remaining())}):null;
+        return result(200,{
+          mode:"fallback",aiMode:"automatic",model:alternative.model,provider:alternative.provider,
+          reply:alternative.reply,sources:[],argumentMap:[],truthAudit:[],
+          thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[],toolsOffered:[],
+          disclaimer:"Jawapan daripada model sandaran ("+alternative.provider+"). Tiada semakan web langsung; butiran sejarah dan dakwaan khusus mungkin memerlukan pengesahan."+(alternative.partial?" Jawapan model mungkin terpotong kerana had output.":"")+(check?.flag?" Semakan model kedua mengesan kemungkinan isu: "+check.flag+" (belum disahkan secara bebas).":""),
+          usage:alternative.usage,durMs:Date.now()-started
+        },H);
+      }
+    return null;
+  }
+  const hint=(typeof payload.preferredProvider==="string"&&payload.preferredProvider)||
+    (Date.now()-lastTextSuccessAt<90000?lastTextProvider:"");
+  if(textOnly&&!tools.length&&!plan.doReview&&Router.configured().some(p=>p.id===hint)){
+    const fast=await useAlternative({only:[hint]});
+    if(fast&&(fast.statusCode===200||fast.statusCode===499||streamed))return fast;
+  }
   try{
     if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
     if(Date.now()<geminiTextCooldownUntil)throw Object.assign(new Error("Gemini quota cooling down"),{status:429});
@@ -299,6 +331,7 @@ exports.handler=async event=>{
       toolsUsed:actualTools,toolsOffered:tools.map(t=>Object.keys(t)[0]),
       disclaimer:warnings.join(" "),
       usage:data.usageMetadata||null,durMs:Date.now()-started};
+    lastTextProvider="gemini";lastTextSuccessAt=Date.now();
     log("success",{depth:intent.depth,review:!!review,sources:sources.length,ms:output.durMs});
     return result(200,output,H);
   }catch(error){
@@ -306,30 +339,8 @@ exports.handler=async event=>{
     if(streamed)return result(502,{code:"STREAM_INTERRUPTED",error:"Aliran jawapan terputus. Jawapan separa belum lengkap."},H);
     if(error.status===429)geminiTextCooldownUntil=Math.max(geminiTextCooldownUntil,Date.now()+GEMINI_COOLDOWN_MS);
     const transient=[400,401,403,404,429,500,502,503,504].includes(error.status)||error.name==="AbortError";
-    const privateContext=!!(documentText||userMemory);
-    const textOnly=media.length===0&&!tiktokHandle&&(!privateContext||payload.contextFallback===true)&&
-      !(intent.sensitive||intent.search||intent.hasLink);
     if(transient&&textOnly&&Router.enabled()){
-      let alternative;
-      try{
-        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:8000,bufferedTimeoutMs:20000,deadline,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task});
-      }catch(fallbackError){
-        if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
-        log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
-        return result(502,{code:"STREAM_INTERRUPTED",error:"Aliran jawapan sandaran terputus sebelum lengkap. Jawapan separa dikekalkan; cuba semula untuk jawapan penuh.",interruption:fallbackError.interruption||"upstream"},H);
-      }
-      if(alternative.reply){
-        log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
-        // Off by default, only eligible ordinary text. Never treat another LLM as a verified fact-checker.
-        const check=remaining()>1000?await Router.crossReview({question,reply:alternative.reply,originalProvider:alternative.provider,task:intent.task,timeoutMs:Math.min(3000,remaining())}):null;
-        return result(200,{
-          mode:"fallback",aiMode:"automatic",model:alternative.model,provider:alternative.provider,
-          reply:alternative.reply,sources:[],argumentMap:[],truthAudit:[],
-          thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[],toolsOffered:[],
-          disclaimer:"Jawapan daripada model sandaran ("+alternative.provider+"). Tiada semakan web langsung; butiran sejarah dan dakwaan khusus mungkin memerlukan pengesahan."+(alternative.partial?" Jawapan model mungkin terpotong kerana had output.":"")+(check?.flag?" Semakan model kedua mengesan kemungkinan isu: "+check.flag+" (belum disahkan secara bebas).":""),
-          usage:alternative.usage,durMs:Date.now()-started
-        },H);
-      }
+      const fallback=await useAlternative();if(fallback)return fallback;
     }
     log("error",{http:error.status||null,name:error.name||"unknown",ms:Date.now()-started});
     if(!textOnly&&Router.enabled())return result(error.status===429?429:503,{code:"CAPABILITY_UNAVAILABLE",error:privateContext&&payload.contextFallback!==true?"Model utama belum tersedia. Kau boleh benarkan sandaran memproses memori dan fail teks dalam Privasi & sesi, atau cuba lagi kemudian.":"Model yang menyokong permintaan ini belum tersedia. Sandaran teks tidak boleh menggantikan alat carian, audio, imej atau fungsi khusus ini.",retryAfterSeconds:30},H);

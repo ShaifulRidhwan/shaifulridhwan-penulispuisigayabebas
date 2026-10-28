@@ -145,8 +145,8 @@ function answerIdentity(question){
       "\n\nSemua itu ialah perubahan pada aplikasi Bilik Antara yang menggunakan Google Gemini, **bukan** bukti Shaiful melatih atau mencipta model asas sendiri. Senarai ini berdasarkan kod projek, bukan dakwaan aku mampu melakukan semua perkara tanpa had.";
   }
   if(directSelf)return INTRO;
-  // Let the model tailor founder stories and humor to the actual question.
-  if(person)return null;
+  // Direct biography comes from verified project facts; follow-ups remain generative.
+  if(person)return CREATOR_INTRO;
   if((created&&(project||self||owner))||
      /^(?:siapa\s+(?:yang\s+)?(?:buat|cipta|bangunkan)\s+bilik antara|siapa pengasas bilik antara)$/i.test(q))
     return null;
