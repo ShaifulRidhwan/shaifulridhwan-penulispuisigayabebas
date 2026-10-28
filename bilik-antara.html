@@ -152,15 +152,23 @@ const ui={
  docStatus:el("docStatus"),remove:el("removeAttachment"),settings:el("settingsPanel"),
  remember:el("rememberChat"),clear:el("clearChat"),notes:el("thoughtItems"),forget:el("forgetIdeas")
 };
-// Follow the visible viewport when Android/iOS keyboards open, without changing chat logic.
+// Keep mobile keyboard sizing current without repeated layout writes.
+let appliedAppHeight=null,viewportFrame=0;
 function syncViewport(){
  const view=window.visualViewport;
- if(window.innerWidth<=760&&view)document.documentElement.style.setProperty("--app-height",Math.round(view.height)+"px");
+ const height=window.innerWidth<=760&&view?Math.round(view.height)+"px":"";
+ if(height===appliedAppHeight)return;
+ appliedAppHeight=height;
+ if(height)document.documentElement.style.setProperty("--app-height",height);
  else document.documentElement.style.removeProperty("--app-height");
 }
+function queueViewportSync(){
+ if(viewportFrame)return;
+ viewportFrame=requestAnimationFrame(()=>{viewportFrame=0;syncViewport();});
+}
 syncViewport();
-window.addEventListener("resize",syncViewport,{passive:true});
-if(window.visualViewport)window.visualViewport.addEventListener("resize",syncViewport,{passive:true});
+window.addEventListener("resize",queueViewportSync,{passive:true});
+if(window.visualViewport)window.visualViewport.addEventListener("resize",queueViewportSync,{passive:true});
 const ENDPOINT="/.netlify/functions/bilik-antara";
 const STREAM_ENDPOINT="/.netlify/functions/bilik-antara-stream";
 const STORAGE="bilik-antara-session-v2";
