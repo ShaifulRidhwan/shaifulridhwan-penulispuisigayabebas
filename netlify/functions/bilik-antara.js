@@ -110,7 +110,7 @@ exports.handler=async event=>{
   if(payload.probe===true)return result(apiKey?200:503,apiKey?{ok:true,backend:"ready",model:baseModel,geminiVerified:false}:{ok:false,error:"GEMINI_API_KEY tiada."},H);
   if(!apiKey)return result(503,{error:"GEMINI_API_KEY belum ditetapkan di pelayan."},H);
   const ip=(event.headers&&(event.headers["x-nf-client-connection-ip"]||"").split(",")[0])||"unknown";
-  if(throttle(ip))return result(429,{error:"Had permintaan sementara telah dicapai."},H);
+  if(throttle(ip))return result(429,{code:"RATE_LIMIT",error:"Terlalu banyak permintaan dalam masa singkat. Cuba lagi sebentar."},H);
   const history=safeHistory(payload.history);
   if(payload.summarize===true){
     if(history.length<4)return result(400,{error:"Tidak cukup kandungan untuk ringkasan."},H);
@@ -160,7 +160,7 @@ exports.handler=async event=>{
     }
     log("voice_fallback_error",{http:voiceErr?.status||null,name:voiceErr?.name||"unknown"});
     if(voiceErr?.status===503)return result(503,{error:"Servis Gemini sedang sibuk (503). Cuba lagi tanpa merakam semula."},H);
-    if(voiceErr?.status===429)return result(429,{error:"Kuota Gemini sementara penuh. Cuba kemudian tanpa rakam semula."},H);
+    if(voiceErr?.status===429)return result(429,{code:"API_QUOTA",error:"Kuota Gemini sementara penuh. Cuba kemudian tanpa rakam semula."},H);
     if(voiceErr?.name==="AbortError")return result(504,{error:"Gemini mengambil masa terlalu lama untuk audio. Cuba lagi."},H);
     return result(502,{error:errorMessage(voiceErr?.status||502)},H);
   }
@@ -257,7 +257,7 @@ exports.handler=async event=>{
   }catch(error){
     log("error",{http:error.status||null,name:error.name||"unknown",ms:Date.now()-started});
     if(error.name==="AbortError")return result(504,{error:"Gemini mengambil masa terlalu lama. Cuba soalan lebih ringkas."},H);
-    if(error.status===429)return result(429,{error:errorMessage(429)},H);
+    if(error.status===429)return result(429,{code:"API_QUOTA",error:errorMessage(429)},H);
     return result(502,{error:errorMessage(error.status||502)},H);
   }
 };
