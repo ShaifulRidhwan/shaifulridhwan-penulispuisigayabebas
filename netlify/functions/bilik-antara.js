@@ -52,7 +52,7 @@ function headers(){
 }
 function result(code,data,H){
   if(code===200&&typeof data.reply==="string"&&data.mode!=="recorded-voice")data={...data,reply:ChatStyle.reply(data.reply)};
-  return {statusCode:code,headers:H,body:JSON.stringify(data)};
+  return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-4"})};
 }
 function throttle(ip,store=rateMap,limit=12){
   const now=Date.now();
@@ -319,7 +319,7 @@ exports.handler=async event=>{
           reply:alternative.reply,sources:publicSources.map(({title,url})=>({title,url})),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[],toolsOffered:[],
           disclaimer:"Jawapan daripada model sandaran ("+alternative.provider+"). "+(publicSources.length?"Rujukan ensiklopedia awam dilampirkan; maklumat terkini masih memerlukan pengesahan.":"Tiada semakan web langsung; butiran sejarah dan dakwaan khusus mungkin memerlukan pengesahan.")+(alternative.partial?" Jawapan model mungkin terpotong kerana had output.":"")+(check?.flag?" Semakan model kedua mengesan kemungkinan isu: "+check.flag+" (belum disahkan secara bebas).":""),
-          usage:alternative.usage,durMs:Date.now()-started,timings:timings()
+          usage:alternative.usage,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures}
         },H);
       }
     return null;

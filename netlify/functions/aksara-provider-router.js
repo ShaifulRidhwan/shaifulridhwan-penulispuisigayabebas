@@ -103,6 +103,8 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     const e=new Error("Provider HTTP "+res.status);e.status=res.status;
     const details=await res.json().catch(()=>({}));
     const message=String(details?.error?.message||details?.message||"");
+    e.fieldIssue=(message.match(/reasoning|stream|models|max_tokens|model|content|messages|system|billing|credits|quota/i)||[])[0]?.toLowerCase();
+    e.errorType=String(details?.error?.code||details?.type||"").replace(/[^a-z0-9_-]/gi,"").slice(0,45);
     if(res.status===429){
       e.retryAfterSeconds=retrySeconds(res);
       const values=message.match(/Limit[: ]+(\d+).*?Used[: ]+([\d.]+).*?Requested[: ]+(\d+)/i);
@@ -138,6 +140,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     control.extend(Math.min(bufferedTimeoutMs,firstResponseDeadline-Date.now()));
     data=await res.json();
    }
+   if(data?.error)throw Object.assign(new Error("Provider gateway error"),{status:Number(data.error.code)||502,reason:"gateway_error"});
    const reply=data?.choices?.[0]?.message?.content;
    const text=typeof reply==="string"?reply:Array.isArray(reply)?reply.filter(p=>p.type==="text").map(p=>p.text).join(""):"";
    if(!text.trim())throw Object.assign(new Error("Empty response"),{reason:"empty_output",finishReason:data?.choices?.[0]?.finish_reason||"",outputTokens:data?.usage?.completion_tokens});
@@ -145,7 +148,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    if(onDelta&&!emitted){emitted=true;onDelta(text);}
    cooldown.delete(provider.id);preferredProvider=provider.id;
    const finishReason=String(data?.choices?.[0]?.finish_reason||"");
-   return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task,elapsedMs:Date.now()-attemptStarted};
+   return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task,attempts,elapsedMs:Date.now()-attemptStarted};
   }catch(err){
    if(signal?.aborted)throw err;
    if(emitted){
@@ -157,7 +160,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    const wait=err.retryAfterSeconds?err.retryAfterSeconds*1000:errorToCooldown(status);
    cooldown.set(provider.id,Date.now()+wait);
    if(preferredProvider===provider.id)preferredProvider="";
-   attempts.push({provider:provider.id,status:status||"unavailable",reason:err.reason||(err.name==="AbortError"?"timeout":status===429?"rate_limit":status>=500?"upstream":"request_failed"),...(err.quota?{quota:err.quota}:{}),...(err.reason==="empty_output"?{finishReason:err.finishReason,outputTokens:err.outputTokens}:{}),elapsedMs:Date.now()-attemptStarted,retryAfterSeconds:Math.ceil(wait/1000)});
+   attempts.push({provider:provider.id,status:status||"unavailable",reason:err.reason||(err.name==="AbortError"?"timeout":status===429?"rate_limit":status>=500?"upstream":"request_failed"),...(err.quota?{quota:err.quota}:{}),...(err.fieldIssue?{fieldIssue:err.fieldIssue}:{}),...(err.errorType?{errorType:err.errorType}:{}),...(err.reason==="empty_output"?{finishReason:err.finishReason,outputTokens:err.outputTokens}:{}),elapsedMs:Date.now()-attemptStarted,retryAfterSeconds:Math.ceil(wait/1000)});
   }finally{control.close();}
  }
  const waits=availability().map(p=>p.retryAfterSeconds).filter(x=>x>0);
