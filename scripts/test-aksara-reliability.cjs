@@ -544,3 +544,15 @@ test("a quota-limited chat provider can recover in the same request once its rea
  assert.equal(r.statusCode,200);assert.equal(data.provider,"groq");assert.equal(calls,2);
  assert.match(data.reply,/pulih/);assert.equal(data.routing.failedAttempts[0].status,429);
 });
+
+test("a technical topic still follows the user's explanatory goal instead of inventing a coding task",()=>{
+ assert.equal(I.resolveIntent("Kenapa sistem API boleh jadi lambat?",[],false).task,"explain");
+ assert.equal(I.resolveIntent("Terangkan maksud database",[],false).task,"explain");
+ assert.equal(I.resolveIntent("Baiki API yang lambat ini",[],false).task,"technical");
+ assert.equal(I.resolveIntent("Semak ketepatan analisis mendalam algoritma ini",[],false).task,"technical");
+});
+test("math concepts do not require a code-only model, while explicit computations retain execution",()=>{
+ const concept=I.resolveIntent("Apa itu integral?",[],false);assert.equal(concept.task,"explain");assert.equal(concept.calculate,false);assert.deepEqual(I.getTools(concept),[]);
+ const why=I.resolveIntent("Kenapa 2+2 jadi 4?",[],false);assert.equal(why.task,"explain");assert.deepEqual(I.getTools(why),[]);
+ assert.ok(I.getTools(I.resolveIntent("Kirakan integral x kuasa dua",[],false)).some(x=>x.code_execution));
+});

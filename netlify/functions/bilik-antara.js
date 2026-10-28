@@ -28,7 +28,7 @@ const OSINT_GUIDANCE=["OSINT TIKTOK: Jika diminta menyemak akaun, hanya laporan 
 
 const TASK_GUIDANCE={
   conversation:"PERBUALAN: Balas secara semula jadi, dengar konteks dan sesuaikan humor. Jangan analisis logik pengguna tanpa diminta.",
-  explain:"PENERANGAN: Terangkan konsep dengan jelas, guna contoh mudah dan tahap pengetahuan pengguna. Jangan debat soalan ilmu biasa.",
+  explain:"PENERANGAN: Terangkan konsep dengan jelas, guna contoh mudah dan tahap pengetahuan pengguna. Untuk soalan ringkas yang tidak meminta perincian, sekitar 2–4 ayat sudah cukup. Jangan tambah tutorial panjang, senarai alat atau contoh kod melainkan diminta. Jangan debat soalan ilmu biasa.",
   creative:"KREATIF: Hasilkan atau sunting bahan yang diminta. Patuhi format, nada dan tujuan; jangan ganti hasil dengan ulasan falsafah.",
   technical:"PENYELESAIAN: Berikan penyelesaian, kod atau pengiraan yang praktikal. Semak andaian dan nyatakan langkah ujian bila sesuai.",
   research:"MAKLUMAT: Berikan jawapan langsung; bezakan pengetahuan sedia ada daripada penemuan carian. Jangan reka sumber.",
@@ -52,7 +52,7 @@ function headers(){
 }
 function result(code,data,H){
   if(code===200&&typeof data.reply==="string"&&data.mode!=="recorded-voice")data={...data,reply:ChatStyle.reply(data.reply)};
-  return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-6"})};
+  return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-7"})};
 }
 function throttle(ip,store=rateMap,limit=12){
   const now=Date.now();
