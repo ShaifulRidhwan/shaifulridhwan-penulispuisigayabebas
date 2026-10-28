@@ -5,7 +5,7 @@
 const panel=document.getElementById("voicePanel");
 const stage=document.getElementById("voiceAvatarStage");
 if(panel&&stage){
-let active=false,renderer=null,scene=null,camera=null,root=null,face=null,raf=0,resize=null,context=null,blinkAt=0,started=0,loading=false,jawMotion=0,lipMotion=0;
+let active=false,renderer=null,scene=null,camera=null,root=null,face=null,raf=0,resize=null,context=null,blinkAt=0,started=0,loading=false,jawMotion=0,lipMotion=0,morphIndex=null,resizeFrame=0,lastWidth=0,lastHeight=0;
 const modelURL="https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette.glb";
 // Cache the exact PNG snapshot of the voice avatar: repeat visits need no WebGL portrait pass.
 const portraitCacheKey="bilik-antara-chat-portrait-png-v1";
@@ -17,12 +17,25 @@ function showPortrait(picture){
  return true;
 }
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
-function weights(names,value){if(!face?.morphTargetDictionary)return;for(const name of names){for(const [k,i] of Object.entries(face.morphTargetDictionary)){if(k===name||k.endsWith("."+name)){face.morphTargetInfluences[i]=value;}}}}
+// Pre-index morph targets once; matching 900+ names every animation frame wastes CPU.
+function indexMorphTargets(){
+ morphIndex=new Map();
+ if(!face?.morphTargetDictionary)return;
+ for(const [key,index] of Object.entries(face.morphTargetDictionary)){
+  const name=key.slice(key.lastIndexOf(".")+1);
+  if(!morphIndex.has(name))morphIndex.set(name,[]);
+  morphIndex.get(name).push(index);
+ }
+}
+function weights(names,value){
+ if(!face?.morphTargetInfluences||!morphIndex)return;
+ for(const name of names)for(const index of morphIndex.get(name)||[])face.morphTargetInfluences[index]=value;
+}
 function stop(){
- active=false;cancelAnimationFrame(raf);raf=0;resize?.disconnect();resize=null;
+ active=false;cancelAnimationFrame(raf);raf=0;cancelAnimationFrame(resizeFrame);resizeFrame=0;resize?.disconnect();resize=null;
  if(renderer){renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();renderer=null;}
  if(scene){scene.traverse(o=>{if(o.isMesh){o.geometry?.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats)m?.dispose?.();}});}
- scene=null;camera=null;root=null;face=null;stage.classList.remove("avatar-ready","avatar-speaking","avatar-loading");
+ scene=null;camera=null;root=null;face=null;morphIndex=null;lastWidth=0;lastHeight=0;stage.classList.remove("avatar-ready","avatar-speaking","avatar-loading");
 }
 async function begin(){
  if(active||loading)return;active=true;loading=true;started=performance.now();stage.classList.add("avatar-loading");
@@ -70,8 +83,18 @@ async function begin(){
   };
   face=root.getObjectByName("Wolf3D_Head")||null;
   if(!face)root.traverse(o=>{if(!face&&o.morphTargetInfluences&&o.morphTargetDictionary)face=o;});
+  indexMorphTargets();
   root.traverse(o=>{if(o.isMesh){o.frustumCulled=false;if(o.material){const m=o.material;m.side=THREE.FrontSide;if("roughness" in m)m.roughness=.5;if("metalness" in m)m.metalness=.22;}}});
-  resize=new ResizeObserver(()=>{if(!renderer)return;const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;frameModel();camera.updateProjectionMatrix();});
+  resize=new ResizeObserver(()=>{
+   if(resizeFrame||!renderer)return;
+   resizeFrame=requestAnimationFrame(()=>{
+    resizeFrame=0;if(!renderer)return;
+    const w=stage.clientWidth,h=stage.clientHeight;
+    if(!w||!h||(w===lastWidth&&h===lastHeight))return;
+    lastWidth=w;lastHeight=h;renderer.setSize(w,h,false);
+    camera.aspect=w/h;frameModel();camera.updateProjectionMatrix();
+   });
+  });
   resize.observe(stage);frameModel();stage.classList.add("avatar-ready");stage.classList.remove("avatar-loading");blinkAt=performance.now()+2300;
   const frame=(t)=>{if(!active||!renderer)return;raf=requestAnimationFrame(frame);
    const speaking=panel.classList.contains("voice-speaking");
