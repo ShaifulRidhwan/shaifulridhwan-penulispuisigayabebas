@@ -18,7 +18,7 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
  assert.match(css,/bilik-antara-woman-emblem\.svg/);
  assert.equal(cover[0],0xff);assert.equal(cover[1],0xd8);
  assert.match(emblem,/<svg[^>]+viewBox="0 0 96 96"/);
- assert.ok(css.length<110000,"CSS bundle unexpectedly big");
+ assert.ok(css.length<112000,"CSS bundle unexpectedly big");
 });
 
 test("Final text, controls and simplified channel header",()=>{
@@ -200,4 +200,18 @@ test("Voice and Multi AI pills share starter-question sizing and genuinely clear
  assert.match(clear,/backdrop-filter:blur\(2px\)/);
  assert.match(clear,/\.conversation \.composer #sendBtn:not\(:disabled\)\{/);
  assert.doesNotMatch(clear,/rgba\(255,242,207,\.96\)|rgba\(214,172,111,\.91\)/);
+});
+
+test("AI bubbles match light glass and hand sparks fall toward woman without replacing title embers",()=>{
+ assert.match(css,/\.messages \.message\.ai \.bubble,\s*\.messages\.is-welcome \.message\.ai \.bubble\{/);
+ assert.match(css,/rgba\(243,226,198,\.048\)/);
+ assert.match(css,/\.world-hand-sparks\{/);
+ assert.match(css,/@keyframes handSparkDescent/);
+ assert.match(css,/translate3d\(calc\(20vw \+ var\(--dx,0px\)\),calc\(13dvh \+ var\(--dy,0px\)\),0\)/);
+ assert.match(css,/\.world-embers\{animation-duration:17s\}/);
+ assert.match(html,/class="world-hand-sparks" aria-hidden="true"/);
+ assert.equal((html.match(/style="--delay:/g)||[]).length,24);
+ assert.match(html,/Multi A\.I Connected/);
+ assert.doesNotMatch(html,/Multi AI Connected/);
+ assert.match(html,/href="bilik-antara\.css\?v=50"/);
 });
