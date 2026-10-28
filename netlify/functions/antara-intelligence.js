@@ -20,7 +20,7 @@ CONCEPTS.forEach((group,i)=>group.forEach(w=>{
 function safeText(value,max=32000){return typeof value==="string"?value.trim().slice(0,max):"";}
 function safeHistory(value){
   if(!Array.isArray(value))return [];
-  return value.slice(-18).filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim()).map(m=>({role:m.role,content:safeText(m.content,4000)}));
+  return value.slice(-24).filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim()).map(m=>({role:m.role,content:safeText(m.content,4000)}));
 }
 function tokenize(value){
   return [...new Set((String(value||"").toLowerCase().match(/[\p{L}\p{N}]+/gu)||[]).filter(w=>w.length>=3&&!STOP.has(w)))].slice(0,35);
