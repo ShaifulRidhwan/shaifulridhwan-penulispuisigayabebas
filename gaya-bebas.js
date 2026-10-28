@@ -167,12 +167,20 @@
     if(window.history&&history.replaceState)history.replaceState(null,'','#karya');
   });
 
+  // Keep the top progress line on the compositor, not in layout.
   var progress = document.getElementById('progress');
-  window.addEventListener('scroll', function(){
+  var progressFrame = 0;
+  function updateProgress(){
+    progressFrame = 0;
+    if(!progress)return;
     var h = document.documentElement;
-    var scrolled = h.scrollTop / (h.scrollHeight - h.clientHeight);
-    progress.style.width = (scrolled * 100) + '%';
-  }, {passive:true});
+    var maxScroll = Math.max(1,h.scrollHeight-h.clientHeight);
+    progress.style.transform = 'scaleX('+Math.max(0,Math.min(1,h.scrollTop/maxScroll))+')';
+  }
+  window.addEventListener('scroll',function(){
+    if(!progressFrame)progressFrame=requestAnimationFrame(updateProgress);
+  },{passive:true});
+  updateProgress();
 
   var io = ('IntersectionObserver' in window) ? new IntersectionObserver(function(entries){
     entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); } });
@@ -188,34 +196,74 @@
     document.querySelectorAll('.reveal').forEach(function(el){ el.classList.add('visible'); });
   }
 
+  // Cache every glow as a small sprite; preserve the existing particle field.
   var canvas = document.getElementById('bgCanvas');
-  var ctx = canvas.getContext('2d');
-  var particles = [];
-  function resize(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-  resize();
-  window.addEventListener('resize', resize);
-  var COUNT = Math.min(70, Math.floor(window.innerWidth / 18));
-  for(var i=0;i<COUNT;i++){
-    particles.push({x:Math.random()*canvas.width, y:Math.random()*canvas.height, r:Math.random()*1.8+.4, vx:(Math.random()-.5)*.42, vy:(Math.random()-.5)*.42, a:Math.random()*.5+.2});
-  }
-  function tick(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    var color = root.getAttribute('data-theme') === 'dark' ? '232,184,106' : '168,116,31';
-    particles.forEach(function(p){
-      p.x += p.vx; p.y += p.vy;
-      if(p.x < 0) p.x = canvas.width; if(p.x > canvas.width) p.x = 0;
-      if(p.y < 0) p.y = canvas.height; if(p.y > canvas.height) p.y = 0;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
-      ctx.fillStyle = 'rgba('+color+','+p.a+')';
-      ctx.shadowBlur = 8;
-      ctx.shadowColor = 'rgba('+color+',.6)';
-      ctx.fill();
+  var ctx = canvas && canvas.getContext('2d');
+  if(canvas && ctx){
+    var particles=[],raf=0,previousFrame=0,currentColor='',resizeFrame=0;
+    var COUNT=Math.min(70,Math.floor(window.innerWidth/18));
+    function resize(){
+      var oldWidth=canvas.width||window.innerWidth,oldHeight=canvas.height||window.innerHeight;
+      var newWidth=Math.max(1,window.innerWidth),newHeight=Math.max(1,window.innerHeight);
+      if(canvas.width===newWidth&&canvas.height===newHeight)return;
+      canvas.width=newWidth;canvas.height=newHeight;
+      particles.forEach(function(p){p.x*=newWidth/oldWidth;p.y*=newHeight/oldHeight;});
+    }
+    resize();
+    window.addEventListener('resize',function(){
+      if(resizeFrame)return;
+      resizeFrame=requestAnimationFrame(function(){resizeFrame=0;resize();});
+    },{passive:true});
+    for(var i=0;i<COUNT;i++){
+      particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,
+        r:Math.random()*1.8+.4,vx:(Math.random()-.5)*.42,
+        vy:(Math.random()-.5)*.42,a:Math.random()*.5+.2,sprite:null});
+    }
+    function cacheGlow(color){
+      particles.forEach(function(p){
+        var sprite=document.createElement('canvas');
+        sprite.width=40;sprite.height=40;
+        var brush=sprite.getContext('2d');
+        if(!brush)return;
+        brush.shadowBlur=8;
+        brush.shadowColor='rgba('+color+',.6)';
+        brush.fillStyle='rgba('+color+','+p.a+')';
+        brush.beginPath();brush.arc(20,20,p.r,0,Math.PI*2);brush.fill();
+        p.sprite=sprite;
+      });
+      currentColor=color;
+    }
+    function tick(now){
+      raf=0;
+      if(document.hidden)return;
+      var color=root.getAttribute('data-theme')==='dark'?'232,184,106':'168,116,31';
+      if(color!==currentColor)cacheGlow(color);
+      var step=previousFrame?Math.min(2,(now-previousFrame)/16.667):1;
+      previousFrame=now;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      particles.forEach(function(p){
+        p.x+=p.vx*step;p.y+=p.vy*step;
+        if(p.x<0)p.x+=canvas.width;else if(p.x>canvas.width)p.x-=canvas.width;
+        if(p.y<0)p.y+=canvas.height;else if(p.y>canvas.height)p.y-=canvas.height;
+        if(p.sprite)ctx.drawImage(p.sprite,p.x-20,p.y-20);
+      });
+      raf=requestAnimationFrame(tick);
+    }
+    function startParticles(){
+      if(document.hidden||raf)return;
+      previousFrame=0;
+      raf=requestAnimationFrame(tick);
+    }
+    function stopParticles(){
+      cancelAnimationFrame(raf);raf=0;previousFrame=0;
+    }
+    document.addEventListener('visibilitychange',function(){
+      if(document.hidden)stopParticles();else startParticles();
     });
-    ctx.shadowBlur = 0;
-    requestAnimationFrame(tick);
+    window.addEventListener('pagehide',stopParticles);
+    window.addEventListener('pageshow',startParticles);
+    startParticles();
   }
-  tick();
 })();
 
 
