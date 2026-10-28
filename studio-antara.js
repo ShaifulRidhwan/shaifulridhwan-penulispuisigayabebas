@@ -13,6 +13,16 @@ const el=(tag,text,cls)=>{
  return node;
 };
 const notice=text=>{status.textContent=String(text||"").slice(0,320);};
+const validEmail=()=>{const field=$("emailTo"),value=field.value.trim();return !value||field.checkValidity()&&!/[\r\n]/.test(value);};
+const requireEmail=()=>{if(!val("emailTo").trim()){notice("Masukkan alamat e-mel penerima dahulu.");$("emailTo").focus();return false;}
+ if(!validEmail()){notice("Alamat e-mel penerima tidak sah. Semak dahulu.");$("emailTo").focus();return false;}return true;};
+const utf8=string=>new TextEncoder().encode(String(string||""));
+function base64(bytes){
+ let parts=[];for(let i=0;i<bytes.length;i+=8192)parts.push(String.fromCharCode(...bytes.subarray(i,i+8192)));
+ return btoa(parts.join(""));
+}
+const mimeHeader=value=>/[^\x20-\x7e]/.test(value)?"=?UTF-8?B?"+base64(utf8(value))+"?=":value;
+const mimeBody=value=>base64(utf8(String(value||"").replace(/\r?\n/g,"\r\n"))).match(/.{1,76}/g)?.join("\r\n")||"";
 const filename=(name,ext)=>(String(name||"hasil").normalize("NFKD").replace(/[^a-z0-9-_ ]/gi,"").trim().replace(/\s+/g,"-").slice(0,55)||"hasil")+"."+ext;
 function save(blob,name){
  const url=URL.createObjectURL(blob),a=el("a");
@@ -40,7 +50,7 @@ function documentPreview(){
  const sheet=paper("Pratonton dokumen");
  sheet.appendChild(el("h3",val("docTitle")||"Dokumen Baharu"));
  paragraphs(sheet,val("docBody")||"Masukkan isi dokumen.");
- sheet.appendChild(el("div","Dihasilkan melalui Studio Antara · Shaiful Ridhwan A.I.","print-footer"));
+ sheet.appendChild(el("div","Dihasilkan melalui Studio Antara · Aksara A.I.","print-footer"));
  preview.replaceChildren(sheet);
 }
 function render(){if(current==="email")emailPreview();else documentPreview();}
@@ -57,13 +67,18 @@ function tab(name){
 }
 document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>tab(b.dataset.tab)));
 $("emailEml").addEventListener("click",()=>{
- const clean=v=>v.replace(/[\r\n]/g," ");
- const subject=clean(val("emailSubject")),to=clean(val("emailTo"));
- const content="To: "+to+"\r\nSubject: "+subject+"\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n"+val("emailBody").replace(/\r?\n/g,"\r\n");
+ if(!validEmail()){notice("Alamat penerima tidak sah. Betulkan sebelum eksport .eml.");$("emailTo").focus();return;}
+ const subject=val("emailSubject").replace(/[\r\n]+/g," ").trim();
+ const to=val("emailTo").trim();
+ const name=val("emailName").replace(/[\r\n]+/g," ").trim();
+ const recipient=to?(name?mimeHeader(name)+" <"+to+">":to):"";
+ const content="To: "+recipient+"\r\nSubject: "+mimeHeader(subject)+"\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n"+mimeBody(val("emailBody"))+"\r\n";
  textFile(content,filename(subject||"draf-email","eml"),"message/rfc822");
+ notice("Fail .eml disediakan. Semak penerima dan kandungan dalam aplikasi e-mel sebelum hantar.");
 });
 $("emailOpen").addEventListener("click",()=>{
- const to=val("emailTo");
+ if(!requireEmail())return;
+ const to=val("emailTo").trim();
  const url="mailto:"+encodeURIComponent(to)+"?subject="+encodeURIComponent(val("emailSubject"))+"&body="+encodeURIComponent(val("emailBody"));
  if(url.length>1800){notice("E-mel terlalu panjang untuk dibuka melalui pautan. Eksport .eml atau salin dahulu.");return;}
  window.location.href=url;
@@ -76,13 +91,15 @@ $("emailCopy").addEventListener("click",()=>copy("Subjek: "+val("emailSubject")+
 $("docCopy").addEventListener("click",()=>copy(val("docTitle")+"\n\n"+val("docBody")));
 $("docHtml").addEventListener("click",()=>{
  if(current!=="document")tab("document");
- const html="<!doctype html><html lang=\"ms\"><head><meta charset=\"utf-8\"><title>Dokumen Studio Antara</title><style>body{max-width:750px;margin:42px auto;padding:20px;font:17px/1.65 Georgia,serif;color:#262626}h3{font-size:27px}p{white-space:pre-wrap}</style></head><body>"+
+ const html="<!doctype html><html lang=\"ms\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Dokumen Studio Antara</title><style>body{max-width:750px;margin:42px auto;padding:20px;font:17px/1.65 Georgia,serif;color:#262626}h3{font-size:27px;line-height:1.25}p{white-space:pre-wrap;overflow-wrap:anywhere}.print-footer{border-top:1px solid #ddd;margin-top:50px;padding-top:12px;font:10px Arial,sans-serif;color:#666}@media print{body{max-width:none;margin:0;padding:0}p{orphans:2;widows:2}@page{size:A4;margin:17mm}}</style></head><body>"+
   preview.querySelector(".preview-paper").outerHTML+"</body></html>";
  textFile(html,filename(val("docTitle")||"dokumen","html"),"text/html;charset=utf-8");
 });
 $("docPdf").addEventListener("click",()=>{
  if(current!=="document")tab("document");
  documentPreview();notice("Pada dialog cetak, pilih Simpan sebagai PDF (Save as PDF).");
+ const originalTitle=document.title;document.title=val("docTitle").trim()||"Dokumen Studio Antara";
+ window.addEventListener("afterprint",()=>{document.title=originalTitle;},{once:true});
  window.print();
 });
 $("docWord").addEventListener("click",async()=>{
@@ -105,11 +122,14 @@ async function aiDraft(type){
  const prompt=type==="email"?
   "Sediakan isi e-mel berkualiti dalam Bahasa Melayu Malaysia. Jangan reka butiran. Hanya isi e-mel, bukan subjek. Penerima: "+(val("emailName")||"tidak dinyatakan")+". Subjek: "+val("emailSubject")+". Draf/arahan: "+(val("emailBody")||"E-mel formal ringkas."):
   "Sediakan dokumen tersusun dalam Bahasa Melayu Malaysia. Jangan reka fakta. Jenis: "+val("docTemplate")+". Tajuk: "+val("docTitle")+". Arahan/draf: "+(val("docBody")||"Susun pengenalan, isi dan penutup.");
+ const field=type==="email"?$("emailBody"):$("docBody");
+ const original=field.value;
  try{
   const res=await fetch("/.netlify/functions/bilik-antara",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({question:prompt})});
   const data=await res.json().catch(()=>({}));
   if(!res.ok||typeof data.reply!=="string"||!data.reply.trim())throw Error(data.error||"Respons AI tiada.");
-  (type==="email"?$("emailBody"):$("docBody")).value=data.reply;
+  if(field.value!==original){notice("Draf AI siap, tapi teks sudah diubah semasa menunggu. Aku tak akan menimpa suntingan kau. Salin respons daripada chat atau cuba semula.");return;}
+  field.value=data.reply;
   render();notice("Draf siap. Semak kandungan dan penerima sebelum digunakan.");
  }catch(e){notice("Bantuan AI belum tersedia: "+String(e.message||e).slice(0,150)+". Eksport manual tetap boleh digunakan.");}
  finally{busy=false;button.disabled=false;}
