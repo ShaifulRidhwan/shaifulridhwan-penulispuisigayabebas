@@ -194,8 +194,10 @@ function renderProviderRows(rows){
   const state=item?.status||"checking";
   const line=elem("div","multi-ai-row");
   const nameText=elem("span","multi-ai-provider",name);
+  const waitSeconds=Number(item?.retryAfterSeconds)||0;
+  const waitLabel=waitSeconds>0?"Jeda "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" saat"):"";
   const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":"is-muted"),
-   state==="online"?"Terhubung":state==="offline"?"Tidak terhubung":state==="off"?"Tidak aktif":"Menyemak…");
+   state==="online"?"Terhubung":state==="offline"?(waitLabel||"Tidak terhubung"):state==="off"?"Tidak aktif":"Menyemak…");
   line.append(nameText,statusText);multiList.appendChild(line);
  }
 }
@@ -213,7 +215,10 @@ async function checkProviders(force=false){
   const data=await res.json();if(!Array.isArray(data.providers))throw Error("Status tidak lengkap");
   renderProviderRows(data.providers);multiLastCheck=Date.now();
   const preferred=data.providers.find(p=>p.id===data.preferredProvider&&p.status==="online")||data.providers.find(p=>p.status==="online");
-  if(preferred&&providers.some(([id])=>id===preferred.id)){lastProvider=preferred.id;lastProviderAt=Date.now();}
+  // Preserve a recent real answer; the fastest tiny probe is not a speed benchmark.
+  if(preferred&&providers.some(([id])=>id===preferred.id)&&(!lastProvider||Date.now()-lastProviderAt>=90000)){
+   lastProvider=preferred.id;lastProviderAt=Date.now();
+  }
   multiChecked.textContent=data.someOnline?"Sekurang-kurangnya satu model boleh dihubungi.":"Tiada model berjaya disahkan sekarang.";
   if(!busy&&connectionRevision===revision){
    if(data.someOnline)status("ready","Multi AI Connected","");
