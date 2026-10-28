@@ -73,7 +73,8 @@ async function chat(page,device){
  await page.goto(BASE+"/bilik-antara.html",{waitUntil:"domcontentloaded",timeout:30000});
  await page.locator("#input").waitFor();
  await page.locator("#voiceLive").waitFor();
- await page.locator("#voiceDictate").waitFor();
+ await page.locator("#voiceDictate").waitFor({state:"attached"});
+ assert.equal(await page.locator("#voiceDictate").isVisible(),false,"Dictation stays in the collapsed privacy settings");
  await page.locator("#chat .message").first().waitFor({timeout:10000});
  assert.equal(await page.locator("#voicePanel").isVisible(),false);
  await verifyLocalLinks(page);
