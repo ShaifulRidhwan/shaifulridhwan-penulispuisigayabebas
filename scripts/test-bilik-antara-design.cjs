@@ -132,7 +132,7 @@ test("Feature icon consolidates sessions, performance, studio and keeps privacy 
 });
 
 test("Header chips stay optically aligned and feature interactions have gentle golden motion",()=>{
- assert.match(html,/href="bilik-antara\.css\?v=46"/);
+ assert.match(html,/href="bilik-antara\.css\?v=47"/);
  assert.match(css,/\.conversation-head #voiceLive,\s*\.conversation-head #connection,\s*\.conversation-head #settingsPanel > summary\s*\{/);
  assert.match(css,/height:42px;\s*min-height:42px!important;\s*max-height:42px/);
  assert.match(css,/@media\(max-width:760px\)\{[\s\S]*?\.conversation-head #voiceLive,\.conversation-head #connection/);
@@ -146,4 +146,27 @@ test("Header chips stay optically aligned and feature interactions have gentle g
  assert.match(html,/featureSummary\.addEventListener\("click",event=>/);
  assert.match(html,/function closeFeatureMenu\(\)/);
  assert.match(html,/if\(event\.key==="Escape"&&ui\.settings\.open\)/);
+});
+
+test("Rounded Aksara controls share Liquid Glass, preserve contrast and cap mobile blur",()=>{
+ const suite=fs.readFileSync("bilik-antara-suite.css","utf8");
+ assert.match(html,/href="bilik-antara-suite\.css\?v=6"/);
+ assert.match(css,/\/\* Liquid Glass · shared rounded surfaces/);
+ for(const selector of [".topbar .brand",".topbar .nav-link",
+  ".conversation-head #voiceLive",".conversation-head #connection",
+  ".conversation-head #settingsPanel>summary",".conversation .starter",
+  ".conversation #settingsPanel .feature-hub-item"]){
+  assert.ok(css.includes(selector),"Missing common glass surface: "+selector);
+ }
+ assert.match(css,/--lg-reflection:/);
+ assert.match(css,/radial-gradient\(ellipse 90% 85% at 14% -35%/);
+ assert.match(css,/inset 0 1px 0 var\(--lg-reflection\)/);
+ assert.match(css,/\.conversation-head #connection\.ready/);
+ assert.match(css,/\.conversation #settingsPanel \[?\.settings-card|\.conversation #settingsPanel \.settings-card/);
+ assert.match(css,/\.conversation \.composer:focus-within/);
+ assert.match(css,/\.messages \.message\.user \.bubble/);
+ assert.match(css,/backdrop-filter:blur\(7px\)/);
+ assert.match(css,/prefers-reduced-motion:reduce/);
+ assert.match(suite,/Match archive\/performance controls to Aksara's rounded Liquid Glass/);
+ assert.match(suite,/\.ba-drawer :is\(\.ba-button,\.ba-mini,\.ba-tiny,\.ba-close,\.ba-session-title\)/);
 });
