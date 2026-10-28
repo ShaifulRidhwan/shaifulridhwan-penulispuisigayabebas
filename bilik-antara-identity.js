@@ -51,7 +51,7 @@ const CODER_POET_ANSWER=[
  "Antara ciri pendekatannya ialah puisi bersiri duologi, trilogi dan tetralogi yang disusun kepada **4 rangkap dengan 4 baris setiap rangkap, jumlah 16 baris bagi setiap puisi**. Struktur itu pilihan kreatifnya sendiri, bukan peraturan umum semua sajak bebas. Jadi kebebasan pada pemikiran tidak semestinya menghapuskan disiplin bentuk.",
  "Sisi pengaturcaraan dan sastera itu juga berkait dengan Bilik Antara, projek yang Shaiful bina. Di dalamnya aku, **Aksara A.I.**, boleh menggunakan **empat pilihan enjin sembang teks: Google Gemini, Groq, Mistral dan OpenRouter**, bergantung pada konfigurasi, sambungan dan kuota. Voice Chat pula menggunakan Gemini Live. Shaiful membangunkan aplikasi dan integrasinya, bukannya mencipta model asas penyedia-penyedia tersebut.",
  "Pendek kata, dia memang pelik: bebas, tapi ada disiplin. 🤣"
-].join("\\n\\n");
+].join("\n\n");
 const CREATOR_PROFILE=Object.freeze({
   name:CREATOR,
   creativeName:"puisigayabebas",
@@ -118,7 +118,7 @@ function clean(question){return String(question||"").trim().toLocaleLowerCase("m
 function answerIdentity(question){
   const q=clean(question);
   if(q==="siapa aku"||q==="siapakah aku")return WHO_AM_I;
-  if(/^(?:(?:apa itu|apa maksud|siapa|terangkan|jelaskan|cerita (?:pasal|tentang)|kenalkan)\\s+)?(?:the\\s+)?coder\\s+poet(?:\\s+(?:shaiful|shaiful ridhwan|tu|itu|ni|sebenarnya))?$/.test(q))return CODER_POET_ANSWER;
+  if(/^(?:(?:apa itu|apa maksud|siapa|terangkan|jelaskan|cerita (?:pasal|tentang)|kenalkan)\s+)?(?:the\s+)?coder\s+poet(?:\s+(?:shaiful|shaiful ridhwan|tu|itu|ni|sebenarnya))?$/.test(q))return CODER_POET_ANSWER;
   if(/^(?:apa itu |apa maksud |terangkan |jelaskan |cerita (?:pasal|tentang) )?(?:puisi gaya bebas|puisigayabebas)(?: (?:shaiful|shaiful ridhwan|versi shaiful|yang shaiful bawa))?$/.test(q))return POETRY_ANSWER;
   const fourBrains="Satu AI, empat otak. Aku tetap Aksara A.I., tetapi sistem sembang teks aku boleh menggunakan Google Gemini, Groq, Mistral atau OpenRouter mengikut sambungan dan kuota yang tersedia.\n\nYang menyatukan semua ni ialah kerja pembangunan Shaiful Ridhwan: dia mereka bentuk Bilik Antara, mengintegrasikan penyedia AI, membina router sandaran dan menetapkan identiti serta gaya perbualan aku. Dia bukan pencipta model asas empat penyedia tu.\n\nSebab itu nama aku tetap Aksara walau model di belakang bertukar. Empat pilihan bukan bermaksud semuanya sentiasa online; status sebenar boleh disemak melalui Multi A.I. Connected.";
   const directFourBrains= /(?:\b(?:4|empat)\s*otak\b|\b(?:groq|mistral|openrouter)\b.{0,80}\b(?:gemini|groq|mistral|openrouter|otak|model|ai)\b|\b(?:otak|model|ai)\b.{0,80}\b(?:groq|mistral|openrouter)\b|\b(?:empat|4)\s*(?:model|penyedia)\b)/i.test(q);
