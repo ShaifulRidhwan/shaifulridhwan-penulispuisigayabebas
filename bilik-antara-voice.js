@@ -5,7 +5,7 @@
 const $=id=>document.getElementById(id);
 const dictate=$("voiceDictate"),liveButton=$("voiceLive"),notice=$("voiceNotice");
 const panel=$("voicePanel"),status=$("voiceStatus"),transcript=$("voiceTranscript");
-const stopButton=$("voiceStop"),minimizeButton=$("voiceMinimize"),micButton=$("voiceMuteMic"),speakerButton=$("voiceMuteSpeaker");
+const stopButton=$("voiceStop"),minimizeButton=$("voiceMinimize"),micButton=$("voiceMuteMic"),speakerButton=$("voiceMuteSpeaker"),volumeInput=$("voiceVolume"),volumeValue=$("voiceVolumeValue");
 const waveform=$("voiceWave"),input=$("input"),chat=$("chat");
 if(!dictate||!liveButton||!notice||!panel||!status||!transcript||!stopButton||!micButton||!speakerButton||!input||!chat)return;
 const sharedBrain=window.BilikAntaraBrain;
@@ -23,8 +23,9 @@ const SOCKET_BASE="wss://generativelanguage.googleapis.com/ws/google.ai.generati
 const MAX_DAY=24*60*60*1000; // Access window, NOT one 24-hour Google WebSocket.
 const CONNECTION_SPAN=8*60*1000; // Renew before Google's ~10-minute connection reset.
 let recognizer=null,dictating=false,liveGeneration=0;
-let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null;
+let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null,playGain=null;
 let liveActive=false,liveReady=false,micEnabled=true,speakerEnabled=true;
+let voiceVolume=0.4; // Applies to rendered audio; Android hardware volume remains separately controlled.
 let startAbort=null,sessionTimer=null,connectTimer=null,visibilityTimer=null,nextAudioTime=0,playSources=new Set(),lastTurn=null;
 let pendingAudio=[],pendingAudioBytes=0,audioQueueGeneration=0,modelTurnFinished=false,reasoningActive=false;
 const MAX_PENDING_AUDIO_BYTES=12*1024*1024; // ~4 minutes of mono PCM, bounded for phones
@@ -144,7 +145,7 @@ async function closeLive(reason){
   if(micSink){try{micSink.disconnect();}catch(e){}micSink=null;}
   if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;}
   const closingMic=micContext,closingPlayback=playContext;
-  micContext=null;playContext=null;
+  micContext=null;playContext=null;playGain=null;
   if(closingMic)try{await closingMic.close();}catch(e){}
   if(closingPlayback)try{await closingPlayback.close();}catch(e){}
   // Preserve completed voice dialogue in the shared in-page conversation.
@@ -216,7 +217,7 @@ function drainAudioQueue(){
       const buffer=decodePcm(item.data,item.rate);
       if(!buffer)continue;
       const node=playContext.createBufferSource();
-      node.buffer=buffer;node.connect(playContext.destination);
+      node.buffer=buffer;node.connect(playGain||playContext.destination);
       node.onended=()=>{
         playSources.delete(node);
         try{node.disconnect();}catch(_){}
@@ -381,6 +382,7 @@ async function startLive(){
     const Audio=window.AudioContext||window.webkitAudioContext;
     micContext=new Audio({latencyHint:"interactive"});
     playContext=new Audio({latencyHint:"interactive"});
+    playGain=playContext.createGain();playGain.gain.value=voiceVolume;playGain.connect(playContext.destination);
     await Promise.all([
       micContext.resume(),playContext.resume(),
       micContext.audioWorklet.addModule("./bilik-antara-pcm-worklet.js?v=2")
@@ -649,6 +651,18 @@ micButton.addEventListener("click",()=>{
   setButtonState();
   sayStatus(micEnabled?"Mikrofon aktif. Aku sedang mendengar.":"Mikrofon dimatikan.");
 });
+// Gain control takes effect immediately, including while speech is already playing.
+if(volumeInput){
+ const adjustVoiceVolume=()=>{
+   const val=Math.max(0,Math.min(100,Number(volumeInput.value)||0));
+   voiceVolume=val/100;
+   if(playGain&&playContext)playGain.gain.setTargetAtTime(voiceVolume,playContext.currentTime,0.025);
+   if(volumeValue)volumeValue.textContent=val+"%";
+   volumeInput.setAttribute("aria-valuetext",val+" peratus");
+ };
+ volumeInput.addEventListener("input",adjustVoiceVolume);
+ adjustVoiceVolume();
+}
 speakerButton.addEventListener("click",()=>{
   speakerEnabled=!speakerEnabled;
   if(!speakerEnabled)stopAudioQueue();
