@@ -2789,3 +2789,40 @@ html[data-theme="light"] .multi-ai-row{background:rgba(255,255,255,.32);border-c
  .topbar .theme-choices .theme-choice{width:23px;height:23px;min-width:23px;min-height:23px}
 }
 @media(max-width:390px){.topbar .theme-choices .theme-choice{width:21px;height:21px;min-width:21px;min-height:21px}}
+
+/* Focused glass settings: a tidy panel rather than an oversized rounded card. */
+.conversation #settingsPanel .settings-card{
+ border-radius:12px!important;
+ width:min(345px,calc(100vw - 36px));
+ padding:16px!important;
+ max-height:min(65dvh,490px);
+ scrollbar-width:thin;
+}
+.conversation #settingsPanel .settings-card .settings-actions{
+ gap:8px;align-items:center;
+}
+.conversation #settingsPanel .settings-card .voice-text-access{
+ margin-top:8px;
+}
+.conversation #settingsPanel .settings-card .outline-btn{
+ border-radius:9px!important;
+}
+/* Voice output loudness controls actual Web Audio gain, not just visual UI. */
+.voice-panel .voice-volume{
+ display:flex;align-items:center;justify-content:center;gap:9px;
+ width:100%;max-width:300px;margin:4px auto 0;
+ padding:5px 8px;border-radius:10px;
+ color:rgba(245,227,200,.86);
+ font:500 11px/1.4 'DM Sans',sans-serif;
+}
+.voice-panel .voice-volume span{white-space:nowrap}
+.voice-panel .voice-volume input{
+ flex:1;min-width:65px;max-width:190px;
+ accent-color:#d8b77f;cursor:pointer;touch-action:pan-x;
+}
+.voice-panel .voice-volume output{min-width:33px;text-align:right;font-variant-numeric:tabular-nums}
+.voice-panel.is-minimized .voice-volume{display:none}
+@media(max-width:390px){
+ .conversation #settingsPanel .settings-card{padding:13px!important}
+ .voice-panel .voice-volume{gap:6px;font-size:10px;padding:4px 2px}
+}
