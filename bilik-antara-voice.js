@@ -25,7 +25,7 @@ const CONNECTION_SPAN=8*60*1000; // Renew before Google's ~10-minute connection 
 let recognizer=null,dictating=false,liveGeneration=0;
 let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null,playGain=null;
 let liveActive=false,liveReady=false,micEnabled=true,speakerEnabled=true;
-let voiceVolume=0.4; // Applies to rendered audio; Android hardware volume remains separately controlled.
+let voiceVolume=0.16; // 40% slider uses a finer low-volume gain curve; device volume stays independent.
 let startAbort=null,sessionTimer=null,connectTimer=null,visibilityTimer=null,nextAudioTime=0,playSources=new Set(),lastTurn=null;
 let pendingAudio=[],pendingAudioBytes=0,audioQueueGeneration=0,modelTurnFinished=false,reasoningActive=false;
 const MAX_PENDING_AUDIO_BYTES=12*1024*1024; // ~4 minutes of mono PCM, bounded for phones
@@ -651,16 +651,23 @@ micButton.addEventListener("click",()=>{
   setButtonState();
   sayStatus(micEnabled?"Mikrofon aktif. Aku sedang mendengar.":"Mikrofon dimatikan.");
 });
-// Gain control takes effect immediately, including while speech is already playing.
+// Native range remains keyboard/touch accessible. Update the actual Web Audio gain on every movement.
 if(volumeInput){
  const adjustVoiceVolume=()=>{
    const val=Math.max(0,Math.min(100,Number(volumeInput.value)||0));
-   voiceVolume=val/100;
-   if(playGain&&playContext)playGain.gain.setTargetAtTime(voiceVolume,playContext.currentTime,0.025);
+   // A quadratic curve gives finer control at the quiet end, where mobile users need it.
+   voiceVolume=(val/100)**2;
+   if(playGain&&playContext){
+     const now=playContext.currentTime;
+     playGain.gain.cancelScheduledValues(now);
+     playGain.gain.setTargetAtTime(voiceVolume,now,0.012);
+   }
+   volumeInput.style.setProperty("--volume-fill",val+"%");
    if(volumeValue)volumeValue.textContent=val+"%";
    volumeInput.setAttribute("aria-valuetext",val+" peratus");
  };
- volumeInput.addEventListener("input",adjustVoiceVolume);
+ volumeInput.addEventListener("input",adjustVoiceVolume,{passive:true});
+ volumeInput.addEventListener("change",adjustVoiceVolume);
  adjustVoiceVolume();
 }
 speakerButton.addEventListener("click",()=>{
