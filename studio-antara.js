@@ -182,7 +182,7 @@ async function aiDraft(type){
   if(!res.ok||typeof data.reply!=="string"||!data.reply.trim())throw Error(data.error||"Respons AI tiada.");
   if((type==="email"?field.value:window.StudioRich.getHTML())!==original){notice("Draf AI siap, tetapi suntingan terbaru dikekalkan. Salin draf AI secara manual jika perlu.");return;}
   if(type==="email")field.value=data.reply;
-  else window.StudioRich.setText(data.reply);
+  else {window.StudioRich.setText(data.reply);window.StudioRich.saveDraft();}
   render();notice("Draf siap. Semak kandungan dan penerima sebelum digunakan.");
  }catch(e){notice("Bantuan AI belum tersedia: "+String(e.message||e).slice(0,150)+". Eksport manual tetap boleh digunakan.");}
  finally{busy=false;button.disabled=false;}
@@ -196,6 +196,7 @@ try{
  const data=raw?JSON.parse(raw):null;
  if(data&&typeof data.text==="string"){
   window.StudioRich?.setText(data.text.slice(0,100000));
+  window.StudioRich?.saveDraft();
   $("docTitle").value=String(data.title||"Draf daripada Bilik Antara").slice(0,140);
   sessionStorage.removeItem("bilik-antara-studio-transfer-v1");
   current="document";
