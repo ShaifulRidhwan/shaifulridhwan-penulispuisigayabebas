@@ -12,7 +12,6 @@ on:
       - "bilik-antara.css"
       - "bilik-antara-voice.js"
       - "scripts/browser-audit.cjs"
-      - "scripts/export-avatar-portrait.cjs"
       - ".github/workflows/browser-performance-audit.yml"
   workflow_dispatch:
 permissions:
@@ -37,9 +36,6 @@ jobs:
           for i in $(seq 1 20); do curl -fsS http://127.0.0.1:4177/ -o /dev/null && break; sleep 1; done
       - name: Browser desktop/mobile navigation and production probe
         run: node scripts/browser-audit.cjs
-      - name: Capture exact reusable AI portrait from 3D model
-        continue-on-error: true
-        run: node scripts/export-avatar-portrait.cjs
       - name: Lighthouse desktop and mobile
         if: always()
         continue-on-error: true
