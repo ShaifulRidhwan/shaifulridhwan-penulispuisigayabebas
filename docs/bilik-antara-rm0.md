@@ -56,3 +56,17 @@ Novel dan fail pembacanya tidak diubah.
 9. Semak panggilan Gemini dan Netlify sebenar; ujian sintaks/mock bukan bukti sambungan produksi.
 
 Status: fail dikomit ke main, ujian mock dan sintaks lulus; status deployment sebenar belum disahkan.
+
+### Ketahanan dan konteks (28 Oktober 2026)
+
+- Chat mencuba `bilik-antara-stream` (NDJSON) dengan handler, identiti dan penghalaan yang sama seperti API JSON. HTTP 404/405/501 beralih ke API JSON sebelum ada jawapan; ralat model tidak menghantar permintaan pendua.
+- Gemini dan penyedia sandaran mengalirkan teks untuk tugasan tanpa alat/semakan kedua. Tugasan dengan alat atau semakan lengkap dipulangkan selepas pemprosesan. Bingkai penamat diperlukan; sambungan terputus tidak dianggap lengkap dan tidak disambung dengan teks penyedia lain.
+- `Henti` membatalkan permintaan pelayar dan meneruskan isyarat pembatalan ke panggilan model apabila runtime menyokongnya. Jawapan separa yang dihentikan pengguna ditandakan, bukan dianggap lengkap. Ini bukan jaminan pembatalan bil di penyedia.
+- Had satu permintaan utama ialah kira-kira 28 saat, dengan sandaran berkongsi baki masa. Had pelayar 34 saat. Penyedia yang menolak model/akses juga boleh beralih kepada sandaran teks yang layak; tiada pengaktifan model berbayar.
+- Sejarah maksimum 24 mesej / 120,000 aksara; maksimum 32,000 aksara setiap mesej. Apabila terpaksa dipendekkan, awal dan penutup dikekalkan dengan penanda. Ringkasan sehingga 4,000 aksara. Ini masih konteks terhad, bukan ingatan tanpa had.
+- Fail mentah kekal dalam memori tab untuk soalan susulan sehingga dibuang, sesi ditukar atau tab ditutup. Arkib tidak menyimpan fail mentah; pengguna perlu melampirkannya semula selepas membuka sesi tersimpan.
+- Memori pilihan dan fail teks hanya layak ke penyedia sandaran selepas checkbox berasingan dalam **Privasi & sesi** dipilih. Media, fungsi carian/pautan dan kes sensitif masih memerlukan laluan yang menyokongnya. Kekurangan keupayaan dijelaskan, bukan dilabel semua model sibuk.
+- Status awal menunjukkan **AI dikonfigurasi**; hanya ujian sebenar atau respons berjaya mengesahkan sambungan. Statistik turut memisahkan masa teks pertama streaming daripada masa keseluruhan. Kejayaan teknikal tidak membuktikan ketepatan jawapan.
+- Fail `bilik-antara-brain.js` dan `bilik-antara-identity.js` dikekalkan; keseluruhan arahan personaliti turut dihantar ke sandaran tanpa potongan 18,000 aksara yang lama.
+
+Ujian luar talian: `node --test scripts/test-aksara-reliability.cjs`.

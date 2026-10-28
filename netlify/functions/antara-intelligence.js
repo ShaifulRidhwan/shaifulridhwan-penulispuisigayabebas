@@ -1,5 +1,6 @@
 "use strict";
 /* Bilik Antara: all capabilities are chosen by the server. No user-selectable modes. */
+const {boundedHistory}=require("./lib/aksara-transport");
 const POEMS = require("../../karya-index.json");
 const STOP = new Set("yang dan untuk pada dalam adalah dengan atau aku kamu saya tentang apa siapa boleh macam bila bukan cari puisi karya dari daripada sebuah antara tulis nak satu paling ini itu lagi ada kau kita mereka dia ke di pun akan tapi oleh serta sudah belum sudah sahaja sahaja adalah".split(" "));
 const CONCEPTS = [
@@ -18,10 +19,8 @@ CONCEPTS.forEach((group,i)=>group.forEach(w=>{
   WORDS.get(w).add(i);
 }));
 function safeText(value,max=32000){return typeof value==="string"?value.trim().slice(0,max):"";}
-function safeHistory(value){
-  if(!Array.isArray(value))return [];
-  return value.slice(-24).filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim()).map(m=>({role:m.role,content:safeText(m.content,4000)}));
-}
+function safeHistory(value){return boundedHistory(value);}
+
 function tokenize(value){
   return [...new Set((String(value||"").toLowerCase().match(/[\p{L}\p{N}]+/gu)||[]).filter(w=>w.length>=3&&!STOP.has(w)))].slice(0,35);
 }
@@ -63,7 +62,10 @@ function poemContext(question){
 function analyzeIntent(question,attachment){
   const q=safeText(question,32000).toLowerCase();
   const hasLink=/https?:\/\/[^\s]+/i.test(q);
-  const sensitive=/(?:bunuh diri|cederakan diri|kemurungan|depresi|depression|krisis|trauma|serangan panik|gangguan makan|kanser|barah|kematian|pemergian|duka|sedih|cemas|tertekan|kesedihan melampau|abuse|panic attack|suicide|self-harm|seksual|sexual assault)/i.test(q);
+  const explicitRisk=/(?:bunuh diri|cederakan diri|kemurungan|depresi|depression|krisis|trauma|serangan panik|gangguan makan|kanser|barah|abuse|panic attack|suicide|self-harm|seksual|sexual assault)/i.test(q);
+  const personalDistress=/(?:aku|saya|diriku|kawan aku|kawan saya|ibu|ayah|mak|bapa|adik|abang|kakak|isteri|suami|anak|dia)\b.{0,70}\b(?:sedih|cemas|tertekan|berduka|meninggal|kematian|pemergian|duka)\b/i.test(q)||/^(?:sedih|cemas|tertekan)(?: sangat| betul| ni| lah| do| wei)?[.!?]*$/i.test(q);
+  const languageQuestion=/(?:\b(?:perkataan|istilah|makna|maksud|definisi|bezakan|tatabahasa|sinonim|antonim)\b|bermaksud)/i.test(q);
+  const sensitive=explicitRisk||(personalDistress&&(!languageQuestion||/\b(?:aku|saya)\s+(?:(?:rasa|sedang|tengah|sangat)\s+)*(?:sedih|cemas|tertekan)\b/i.test(q)));
   const thought=/(?:bagaimana jika|kalau dunia|andaikan|bayangkan jika|hipotesis|eksperimen fikiran|what if|suppose|imagine if)/i.test(q);
   // Soalan yang panjang, "mengapa" dan "analisis" tidak semestinya permintaan berdebat.
   const debate=/(?:\b(?:kritik|kritikkan|kritikan|debat|debatkan|bahaskan|sanggah|patahkan|refute|debate)\b|bedah (?:hujah|logik)|uji (?:logik|hujah)|cari (?:kelemahan|percanggahan) (?:hujah|idea|alasan)|semak (?:logik|hujah)|bantah (?:pendapat|hujah)|counterargument|logical fallacy|apa (?:silap|lemah) (?:pada|dalam) hujah)/i.test(q);

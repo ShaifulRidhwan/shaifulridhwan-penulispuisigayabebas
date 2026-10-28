@@ -473,7 +473,7 @@ async function startLive(){
       connectTimer=setTimeout(()=>{
         if(generation!==liveGeneration||socket!==ws||liveReady)return;
         sayStatus("Google tidak mengesahkan sambungan Voice.");
-        if(!established&&advancedVoiceConfig&&[1003,1007,1008,1011].includes(code)){
+        if(!established&&advancedVoiceConfig){
            advancedVoiceConfig=false;resumeHandle="";reconnecting=false;
            renewConnection("Menyambung Voice tanpa ciri pilihan…");return;
          }

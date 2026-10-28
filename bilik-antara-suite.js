@@ -220,6 +220,7 @@ function renderMetrics(){
   ["Permintaan gagal",failures],
   ["Kadar berjaya",total?(100*successes/total).toFixed(1)+"%":"Tiada data"],
   ["Purata masa pengguna",avg(elapsed)],
+  ["Purata masa teks pertama · streaming",avg(events.filter(e=>e.ok===true&&Number.isFinite(e.firstTokenMs)).map(e=>e.firstTokenMs))],
   ["Median masa pengguna · semua permintaan",med],
   ["P90 masa pengguna · semua permintaan",pct(elapsed,.9)],
   ["P95 masa pengguna · semua permintaan",pct(elapsed,.95)],
@@ -324,7 +325,7 @@ window.addEventListener("ba:answered",event=>{
  if(Number.isFinite(item.elapsedMs)&&item.elapsedMs>=0)metrics.elapsed=[...metrics.elapsed,item.elapsedMs].slice(-120);
  const record=metrics.byProvider[provider]||{calls:0};
  metrics.byProvider[provider]={calls:record.calls+1};
- metrics.events=[...metrics.events,{at:Date.now(),ok:true,provider,ms:Number.isFinite(item.elapsedMs)?item.elapsedMs:null}].slice(-120);
+ metrics.events=[...metrics.events,{at:Date.now(),ok:true,provider,firstTokenMs:Number.isFinite(item.firstTokenMs)?item.firstTokenMs:null,ms:Number.isFinite(item.elapsedMs)?item.elapsedMs:null}].slice(-120);
  persistMetrics();quickActions();if(currentPanel==="metrics")render();
 });
 window.addEventListener("ba:request-failed",event=>{

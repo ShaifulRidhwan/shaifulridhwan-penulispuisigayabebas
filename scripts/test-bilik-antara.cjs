@@ -93,7 +93,7 @@ test("short recorded voice takes fast path without tools or second-pass review",
  const request=calls.at(-1).body;
  assert.equal(request.contents[0].parts[1].inlineData.mimeType,"audio/webm");
  assert.ok(!request.tools?.length,"fast audio must skip optional tools");
- assert.equal(request.generationConfig.maxOutputTokens,650);
+ assert.equal(request.generationConfig.maxOutputTokens,950);
 });
 test("recorded voice retries a temporary Google 503 once, then replies",async()=>{
  const old=global.fetch;let times=0;

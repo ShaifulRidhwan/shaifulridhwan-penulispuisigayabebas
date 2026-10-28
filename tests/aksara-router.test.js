@@ -19,7 +19,7 @@ function makeRouter({review=false,failGroq=false}={}){
   const content=isReview?JSON.stringify({issue:"",confidence:"low"}):"Aku Aksara A.I., boleh kita sambung?";
   return {ok:true,json:async()=>({model:"test",choices:[{message:{content},finish_reason:"stop"}]})};
  };
- const sandbox={module:{exports:{}},exports:{},process:{env},fetch:mockFetch,AbortController,
+ const sandbox={require:spec=>require("../netlify/functions/"+spec),DOMException,module:{exports:{}},exports:{},process:{env},fetch:mockFetch,AbortController,
   setTimeout,clearTimeout,Date,JSON,Number,String,Array,Map,Error};
  vm.runInNewContext(src,sandbox,{filename:"aksara-provider-router.js"});
  return {router:sandbox.module.exports,requests};

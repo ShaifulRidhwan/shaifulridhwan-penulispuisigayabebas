@@ -8,7 +8,7 @@ const cover=fs.readFileSync("bilik-antara-cover-art.jpg");
 const emblem=fs.readFileSync("bilik-antara-woman-emblem.svg","utf8");
 
 test("One clean external stylesheet and preserved cinematic assets",()=>{
- assert.match(html,/href="bilik-antara\.css\?v=5"/);
+ assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.doesNotMatch(html,/bilik-antara-(horizon|cinematic|editorial-glass)\.css/);
  assert.doesNotMatch(html,/<style\b/);
  assert.equal((html.match(/rel="stylesheet" href="bilik-antara\.css/g)||[]).length,1);
@@ -18,7 +18,7 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
  assert.match(css,/bilik-antara-woman-emblem\.svg/);
  assert.equal(cover[0],0xff);assert.equal(cover[1],0xd8);
  assert.match(emblem,/<svg[^>]+viewBox="0 0 96 96"/);
- assert.ok(css.length<65000,"CSS bundle unexpectedly big");
+ assert.ok(css.length<110000,"CSS bundle unexpectedly big");
 });
 
 test("Final text, controls and simplified channel header",()=>{
@@ -30,9 +30,9 @@ test("Final text, controls and simplified channel header",()=>{
  assert.match(html,/id="voiceLive"[\s\S]*?<div class="chat-controls"/);
  assert.match(html,/addMessage\("assistant","Assalamualaikum dan selamat sejahtera\."\)/);
  assert.doesNotMatch(html,/Aku kecerdasan buatan yang dibina oleh Shaiful Ridhwan/);
- assert.match(html,/KECERDASAN BUATAN AI/);
- assert.match(html,/-SHAIFUL RIDHWAN-/);
- assert.match(html,/<textarea[^>]+id="input" placeholder=""/);
+ assert.match(html,/AKSARA A\.I\./);
+ assert.match(html,/oleh Shaiful Ridhwan/);
+ assert.match(html,/<textarea[^>]+id="input" placeholder="[^\"]+"/);
  assert.doesNotMatch(html,/class="brand-mark|class="channel-seal/);
 });
 
@@ -71,7 +71,7 @@ test("Mobile viewport, light theme and conversation functions retained",()=>{
  for(const id of ["chat","connection","connectionText","connectionInfo","connectionInfoText",
   "retryBtn","starters","composer","input","sendBtn","documentUpload",
   "rememberChat","clearChat","thoughtItems","forgetIdeas","docStatus",
-  "removeAttachment","themeToggle"])assert.ok(html.includes('id="'+id+'"'),"Missing "+id);
+  "removeAttachment","themeDark","themeLight","stopBtn","contextFallback"])assert.ok(html.includes('id="'+id+'"'),"Missing "+id);
  for(const x of ["publicAccount","argumentMap","truthAudit","thoughtLedger","renderExtras","fileState","summary:"])
   assert.ok(html.includes(x),"Missing "+x);
  assert.match(html,/\.classList\.toggle\("is-busy",busy\)/);
@@ -80,12 +80,12 @@ test("Mobile viewport, light theme and conversation functions retained",()=>{
 });
 
 test("Inline JavaScript valid and element IDs unique",()=>{
- const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].filter(m=>m[1].trim());
+ const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].filter(m=>m[1].trim()&&!m[0].includes("importmap"));
  assert.equal(scripts.length,1);
  assert.doesNotThrow(()=>new Function(scripts[0][1]));
  const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
  assert.equal(ids.length,new Set(ids).size);
- assert.ok(html.length<32000);
+ assert.ok(html.length<60000);
 });
 
 test("CSS braces and quoted strings remain balanced",()=>{

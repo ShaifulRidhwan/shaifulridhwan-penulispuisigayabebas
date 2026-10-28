@@ -24,7 +24,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=34">
+<link rel="stylesheet" href="bilik-antara.css?v=35">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=3">
 
 </head>
@@ -69,8 +69,9 @@
       </summary>
       <div class="settings-card">
        <div class="settings-title">Privasi &amp; sesi</div>
-       <p>Perbualan dihantar kepada penyedia AI untuk dijawab. Penyedia sandaran boleh memproses mesej teks jika diaktifkan. Sejarah hanya disimpan di pelayar jika kau benarkan.</p>
+       <p>Perbualan dihantar kepada penyedia AI untuk dijawab. Penyedia sandaran boleh memproses mesej teks jika diaktifkan. Lampiran kekal dalam memori tab untuk soalan susulan sehingga dibuang atau tab ditutup; fail mentah tidak disimpan dalam arkib sesi. Sejarah hanya disimpan di pelayar jika kau benarkan.</p>
        <label class="settings-row"><input type="checkbox" id="rememberChat"><span>Simpan sesi pada peranti ini</span></label>
+       <label class="settings-row"><input type="checkbox" id="contextFallback"><span>Benarkan penyedia sandaran memproses memori pilihan dan fail teks yang aku lampirkan. Media kekal pada model yang menyokongnya.</span></label>
        <div class="settings-actions"><button class="outline-btn" id="clearChat" type="button">Padam perbualan</button></div>
        <div class="settings-actions voice-text-access"><button type="button" id="voiceDictate" class="voice-action" aria-pressed="false" title="Tukar suara kepada teks">Cakap jadi teks</button></div>
        <details id="ideaLedger"><summary>Nota idea</summary><ul id="thoughtItems"></ul><button class="outline-btn" id="forgetIdeas" type="button">Kosongkan nota idea</button></details>
@@ -116,7 +117,8 @@
       <span class="sr-only">Lampir fail</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.4 11.6-8.9 9a6.4 6.4 0 0 1-9.1-9.1L13 1.9a4.3 4.3 0 0 1 6.1 6.1l-9.5 9.5a2.2 2.2 0 0 1-3.1-3.1l8.6-8.6"/></svg>
      </label>
      <input class="sr-only" type="file" id="documentUpload" multiple accept=".txt,.md,.csv,.pdf,image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/webm,video/mp4,video/webm" aria-label="Pilih lampiran">
-     <textarea rows="1" id="input" placeholder="" aria-label="Tulis mesej untuk Aksara A.I."></textarea>
+     <textarea rows="1" id="input" placeholder="Tanya, kongsi idea atau lampirkan karya…" aria-label="Tulis mesej untuk Aksara A.I."></textarea>
+      <button type="button" id="stopBtn" class="outline-btn" aria-label="Hentikan respons" hidden>Henti</button>
       <button type="submit" id="sendBtn" class="send-btn" aria-label="Hantar soalan" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-9-3.6 18L11 13l-6-1Z"/><path d="m11 13 8-10"/></svg></button>
     </form>
    </div>
@@ -132,7 +134,7 @@ const ui={
  html:document.documentElement,shell:document.querySelector(".shell"),themeDark:el("themeDark"),themeLight:el("themeLight"),conn:el("connection"),
  connText:el("connectionText"),connInfo:el("connectionInfo"),connInfoText:el("connectionInfoText"),
  retry:el("retryBtn"),chat:el("chat"),starters:el("starters"),form:el("composer"),
- input:el("input"),send:el("sendBtn"),upload:el("documentUpload"),
+ input:el("input"),send:el("sendBtn"),stop:el("stopBtn"),contextFallback:el("contextFallback"),upload:el("documentUpload"),
  docStatus:el("docStatus"),remove:el("removeAttachment"),settings:el("settingsPanel"),
  remember:el("rememberChat"),clear:el("clearChat"),notes:el("thoughtItems"),forget:el("forgetIdeas")
 };
@@ -146,9 +148,11 @@ syncViewport();
 window.addEventListener("resize",syncViewport,{passive:true});
 if(window.visualViewport)window.visualViewport.addEventListener("resize",syncViewport,{passive:true});
 const ENDPOINT="/.netlify/functions/bilik-antara";
+const STREAM_ENDPOINT="/.netlify/functions/bilik-antara-stream";
 const STORAGE="bilik-antara-session-v2",THEME="bilik-antara-theme";
 const MEDIA=new Set(["application/pdf","image/jpeg","image/png","image/webp","image/gif",
- "audio/mpeg","audio/wav","audio/mp4","audio/ogg","video/mp4","video/webm"]);
+ "audio/mpeg","audio/wav","audio/mp4","audio/ogg","audio/webm","video/mp4","video/webm"]);
+let activeRequest=null,stoppedByUser=false;
 let history=[],summary="",ideas=[],summarizedThrough=0,compacting=false,conversationEpoch=0,fileState=null,busy=false,quotaCooldownUntil=0;
 function elem(tag,cls,text){
  const e=document.createElement(tag);if(cls)e.className=cls;
@@ -190,7 +194,7 @@ async function probe(){
   const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
    body:JSON.stringify({probe:true}),signal:controller.signal});
   const data=await res.json().catch(()=>({}));
-  if(res.ok&&data.ok)status("ready","Multi A.I. Ready","");
+  if(res.ok&&data.ok)status("configured","AI dikonfigurasi","");
   else status("error","AI tak dapat bersambung",String(data.error||"Sambungan AI belum tersedia.").slice(0,250));
  }catch(e){status("error","Tiada sambungan","Cuba hubungi pelayan semula.");}
  finally{clearTimeout(timer);}
@@ -223,7 +227,7 @@ async function checkProviders(force=false){
   const data=await res.json();if(!Array.isArray(data.providers))throw Error("Status tidak lengkap");
   renderProviderRows(data.providers);multiLastCheck=Date.now();
   multiChecked.textContent=data.someOnline?"Sekurang-kurangnya satu model boleh dihubungi.":"Tiada model berjaya disahkan sekarang.";
-  if(data.someOnline)status("ready","Connected","");
+  if(data.someOnline)status("ready","Disahkan melalui ujian","");
   else status("error","Multi A.I. Offline","");
  }catch(_){renderProviderRows([]);multiChecked.textContent="Semakan gagal. Status penyedia belum dapat disahkan.";}
  finally{clearTimeout(timer);multiChecking=false;el("multiAiRefresh").disabled=false;}
@@ -233,6 +237,16 @@ el("multiAiClose").addEventListener("click",()=>multiDialog.close());
 el("multiAiRefresh").addEventListener("click",()=>{multiLastCheck=0;checkProviders(true);});
 multiDialog.addEventListener("click",e=>{if(e.target===multiDialog)multiDialog.close();});
 function scrollDown(){ui.chat.scrollTop=ui.chat.scrollHeight;}
+function contextHistory(){
+ let budget=120000;const rows=[];
+ for(let i=history.length-1;i>=0&&rows.length<24&&budget>0;i--){
+  const m=history[i],text=String(m.content||""),limit=Math.min(32000,budget);
+  const marker="\n[... bahagian tengah dipendekkan kerana had konteks ...]\n";
+  const content=text.length<=limit?text:limit<marker.length?text.slice(-limit):text.slice(0,Math.ceil((limit-marker.length)*.6))+marker+text.slice(-Math.floor((limit-marker.length)*.4));
+  rows.unshift({role:m.role,content});budget-=content.length;
+ }
+ return rows;
+}
 function strongText(target,text){
  const parts=String(text).split(/(\*\*[^*\n]+\*\*)/g);
  for(const p of parts){
@@ -378,7 +392,7 @@ function restore(){
   }
   history=stored.history.filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string")
    ;
-  summary=typeof stored.summary==="string"?stored.summary.slice(0,1800):"";
+  summary=typeof stored.summary==="string"?stored.summary.slice(0,4000):"";
   ideas=Array.isArray(stored.thoughtLedger)?stored.thoughtLedger.slice(-12).filter(x=>x&&typeof x.idea==="string"):[];
   summarizedThrough=Number.isInteger(stored.summarizedThrough)?Math.max(0,Math.min(history.length,stored.summarizedThrough)):0;ui.remember.checked=true;
  }catch(e){}
@@ -426,11 +440,11 @@ async function compact(){
  compacting=true;
  try{
   const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({summarize:true,summary,history:segment})});
+   body:JSON.stringify({summarize:true,summary,history:segment}),signal:AbortSignal.timeout(28000)});
   if(!res.ok)throw Error("summary");
   const out=await res.json();
   if(epoch===conversationEpoch&&out&&typeof out.summary==="string"&&out.summary.trim()){
-   summary=out.summary.slice(0,1800);summarizedThrough=end;save();
+   summary=out.summary.slice(0,4000);summarizedThrough=end;save();
   }
  }catch(e){}finally{compacting=false;}
 }
@@ -441,7 +455,9 @@ function update(){
  ui.shell.classList.toggle("is-busy",busy);
  ui.send.disabled=busy||(!ui.input.value.trim()&&!fileState);
  ui.clear.disabled=busy;ui.upload.disabled=busy;ui.remove.disabled=busy;
+ ui.stop.hidden=!busy;ui.chat.setAttribute("aria-busy",String(busy));
 }
+ui.stop.addEventListener("click",()=>{stoppedByUser=true;activeRequest?.abort();});
 function discardFile(){
  fileState=null;ui.upload.value="";ui.docStatus.textContent="";ui.remove.hidden=true;update();
 }
@@ -525,7 +541,36 @@ function showTyping(){
  for(let i=0;i<3;i++)dots.appendChild(elem("i"));
  b.appendChild(dots);msg.appendChild(b);ui.chat.appendChild(msg);scrollDown();return msg;
 }
-// The optional streaming endpoint is not deployed; use the verified Netlify handler directly.
+// Stream when deployed; older deployments can still use the JSON endpoint.
+let streamAvailable=true;
+async function ask(payload,signal,onDelta){
+ const options={method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),signal};
+ if(streamAvailable&&typeof ReadableStream!=="undefined"){
+  const res=await fetch(STREAM_ENDPOINT,options);
+  if([404,405,501].includes(res.status)||res.ok&&!/application\/x-ndjson/i.test(res.headers.get("content-type")||""))streamAvailable=false;
+  else{
+   if(!res.ok){const data=await res.json().catch(()=>({}));throw Object.assign(new Error(data.error||"HTTP "+res.status),{status:res.status,...data});}
+   const reader=res.body.getReader(),decoder=new TextDecoder();let buffer="",answer=null;
+   function consume(line){
+    if(!line.trim())return;const item=JSON.parse(line);
+    if(item.type==="delta"&&typeof item.text==="string")onDelta(item.text);
+    if(item.type==="done")answer=item;
+    if(item.type==="error")throw Object.assign(new Error(item.error||"Permintaan gagal"),item);
+   }
+   try{
+    while(true){const {value,done}=await reader.read();buffer+=done?decoder.decode():decoder.decode(value,{stream:true});
+     if(buffer.length>500000)throw Error("Aliran respons melebihi had.");
+     const lines=buffer.split("\n");buffer=lines.pop()||"";for(const line of lines)consume(line);
+     if(done){if(buffer.trim())consume(buffer);break;}
+    }
+   }finally{try{await reader.cancel();}catch(_){}reader.releaseLock();}
+   if(!answer)throw Error("Aliran respons belum lengkap.");return answer;
+  }
+ }
+ const res=await fetch(ENDPOINT,options),data=await res.json().catch(()=>({}));
+ if(!res.ok)throw Object.assign(new Error(data.error||"HTTP "+res.status),{status:res.status,...data});
+ return data;
+}
 async function submit(event){
  event.preventDefault();if(busy)return;
  const typed=ui.input.value.trim();
@@ -536,44 +581,59 @@ async function submit(event){
   const seconds=Math.max(1,Math.ceil((quotaCooldownUntil-Date.now())/1000));
   status("limited","Cuba sebentar lagi","Had percubaan sementara aktif. Cuba semula selepas kira-kira "+seconds+" saat. Teks kau kekal dalam kotak taip.");return;
  }
- busy=true;update();ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
+ busy=true;stoppedByUser=false;update();ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
  const pendingUser=addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""));
  const typing=showTyping();
  ui.input.value="";resize();update();
  const startedAt=performance.now();
- const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),34000);
+ const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),34000);activeRequest=ctrl;
+ let partial="",partialNode=null,partialBubble=null,firstTokenMs=null;
+ function receive(delta){
+  if(firstTokenMs===null)firstTokenMs=Math.round(performance.now()-startedAt);
+  partial+=delta;if(partial.length>40000)throw Error("Jawapan melebihi had.");
+  if(!partialNode){
+   typing.remove();partialNode=elem("div","message ai is-partial");
+   partialNode.appendChild(elem("div","byline","Aksara A.I. · sedang menjawab"));
+   partialBubble=elem("div","bubble");partialNode.appendChild(partialBubble);ui.chat.appendChild(partialNode);
+  }
+  const nearBottom=ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight<100;
+  partialBubble.textContent=partial;if(nearBottom)scrollDown();
+ }
  try{
-  const payload={question,history:history.slice(-24).map(m=>({role:m.role,content:String(m.content||"").slice(0,1800)})),
+  const payload={question,history:contextHistory(),contextFallback:ui.contextFallback.checked,
    summary,thoughtLedger:ideas.slice(-8),
    documentText:selectedFile&&selectedFile.text||"",
    documentName:selectedFile&&selectedFile.name||"",
    media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt()||""};
-  let data;
-  {
-   const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify(payload),signal:ctrl.signal});
-   data=await res.json().catch(()=>({}));
-   if(!res.ok){
-    const error=new Error(String(data.error||"HTTP "+res.status));error.status=res.status;error.code=data.code||"";throw error;
-   }
-  }
+  const data=await ask(payload,ctrl.signal,receive);
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
-  typing.remove();addMessage("assistant",data.reply,data);
-  history.push({role:"user",content:question});
+  typing.remove();partialNode?.remove();addMessage("assistant",data.reply,data);
+  history.push({role:"user",content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
   history.push({role:"assistant",content:data.reply,sources:data.sources||[],
    argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
    publicAccount:data.publicAccount||null});
   
   addIdeas(data.thoughtLedger);save();
-  if(selectedFile&&selectedFile===fileState)discardFile();
-  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),provider:data.provider||((data.model==="project-identity")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
-  status(data.model==="project-identity"?"ready":"online",data.model==="project-identity"?"Multi A.I. Ready":"Connected","");
+  if(selectedFile&&selectedFile===fileState)ui.docStatus.textContent="Lampiran tersedia untuk soalan susulan · "+selectedFile.name;
+  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
+  status(data.model==="project-identity"?"configured":"online",data.model==="project-identity"?"Jawapan identiti setempat":"Jawapan diterima · "+(data.provider||"Gemini"),"");
   compact();
  }catch(error){
-  typing.remove();pendingUser.remove(); // Failed attempts must not masquerade as conversation history.
+  typing.remove();partialNode?.remove();pendingUser.remove();
+  if(stoppedByUser){
+   if(partial.trim()){
+    addMessage("user",question);
+    const content=partial+"\n\n[Jawapan separa — dihentikan pengguna.]";
+    addMessage("assistant",content,{disclaimer:"Jawapan ini dihentikan dan belum lengkap."});
+    history.push({role:"user",content:question},{role:"assistant",content,disclaimer:"Jawapan separa — dihentikan pengguna."});save();
+   }
+   status("configured","Respons dihentikan",partial?"Jawapan separa ditandakan dalam perbualan.":"Mesej kau kekal untuk dicuba semula.");
+  }else{
   const limited=error?.status===429||["API_QUOTA","RATE_LIMIT","ALL_PROVIDERS_BUSY"].includes(error?.code);
-  if(limited){
-   quotaCooldownUntil=Date.now()+60000; // Local retry guard, not a claim about Google reset time.
+  if(error.code==="CAPABILITY_UNAVAILABLE"){
+   status("error","Fungsi ini belum tersedia",String(error.message));
+  }else if(limited){
+   quotaCooldownUntil=Date.now()+Math.min(120,Math.max(5,Number(error.retryAfterSeconds)||30))*1000;
    const rateLimited=error?.code==="RATE_LIMIT",allBusy=error?.code==="ALL_PROVIDERS_BUSY";
    status("limited",rateLimited?"Terlalu banyak permintaan":allBusy?"Model AI sibuk":"Had API",rateLimited
     ?"Had permintaan sementara dicapai. Teks masih ada; cuba lagi selepas seketika."
@@ -583,10 +643,11 @@ async function submit(event){
    const desc=error?.name==="AbortError"?"Respons mengambil masa terlalu lama.":String(error?.message||"Ralat tidak diketahui.").slice(0,180);
    status("error","Permintaan gagal",desc+" Mesej kau dikekalkan untuk dicuba semula.");
   }
-  window.dispatchEvent(new CustomEvent("ba:request-failed",{detail:{elapsedMs:Math.round(performance.now()-startedAt),code:error?.code||"",status:Number(error?.status)||0}}));
+  }
+  if(!stoppedByUser)window.dispatchEvent(new CustomEvent("ba:request-failed",{detail:{elapsedMs:Math.round(performance.now()-startedAt),code:error?.code||"",status:Number(error?.status)||0}}));
   if(!ui.input.value.trim())ui.input.value=typed;
   resize();
- }finally{clearTimeout(timer);busy=false;update();}
+ }finally{clearTimeout(timer);activeRequest=null;busy=false;update();}
 }
 ui.form.addEventListener("submit",submit);
 window.BilikAntaraBridge={
@@ -594,9 +655,9 @@ window.BilikAntaraBridge={
  remember:()=>ui.remember.checked,
  load:entry=>{
   if(busy)return false;
-  conversationEpoch++;
+  conversationEpoch++;discardFile();
   history=Array.isArray(entry&&entry.history)?entry.history.filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string"):[];
-  summary=typeof entry?.summary==="string"?entry.summary.slice(0,1800):"";
+  summary=typeof entry?.summary==="string"?entry.summary.slice(0,4000):"";
   ideas=Array.isArray(entry?.thoughtLedger)?entry.thoughtLedger.slice(-12):[];
   summarizedThrough=Number.isInteger(entry?.summarizedThrough)?Math.max(0,Math.min(history.length,entry.summarizedThrough)):0;renderIdeas();renderHistory();save();return true;
  },
@@ -620,10 +681,10 @@ restore();renderIdeas();renderHistory();update();probe();
 })();
 </script>
 <script src="bilik-antara-identity.js?v=11" defer></script>
-<script src="bilik-antara-suite.js?v=7" defer></script>
+<script src="bilik-antara-suite.js?v=8" defer></script>
 <script src="bilik-antara-brain.js?v=8" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
-<script src="bilik-antara-voice.js?v=29" defer></script>
+<script src="bilik-antara-voice.js?v=30" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
 <script type="module" src="bilik-antara-avatar.js?v=6"></script>
 

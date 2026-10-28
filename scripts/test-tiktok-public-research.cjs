@@ -85,7 +85,8 @@ test("Chat automatically searches public TikTok handles and labels unavailable d
   assert.equal(data.publicAccount.profileUrl,"https://www.tiktok.com/@awam_123");
   assert.equal(data.publicAccount.profile,undefined);
   assert.equal(data.publicAccount.coordinates,undefined);
-  assert.ok(calls[0].request.tools.some(t=>t.google_search));
+  assert.ok(!calls[0].request.tools?.some(t=>t.google_search),"RM0 mode must not silently enable paid web grounding");
+  assert.match(data.reply,/belum dapat disahkan/);
   assert.match(calls[0].request.systemInstruction.parts[0].text,/Jangan.*koordinat/i);
   assert.equal(calls.length,1);
 });

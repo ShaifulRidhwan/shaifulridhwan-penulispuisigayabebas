@@ -26,19 +26,11 @@ function event(ip,host=origin){
  return {httpMethod:"POST",headers:{origin:host,"x-nf-client-connection-ip":ip},body:"{}"};
 }
 
-test("Recorded-audio fallback stays opt-in and does not expose any permanent API key",()=>{
- for(const id of ["voiceFallback","voiceFallbackStart","voiceFallbackStop","voiceFallbackStatus","voiceFallbackSpeak"]){
-  assert.match(html,new RegExp('id="'+id+'"'));
- }
- assert.match(html,/bilik-antara-voice-fallback\.js\?v=7/);
- assert.match(voiceFallback,/ba:voice-live-failed/);
- assert.match(js,/dispatchEvent\(new Event\("ba:voice-live-failed"\)\)/);
+test("Legacy recorded-audio UI stays unmounted and never embeds permanent keys",()=>{
+ assert.doesNotMatch(html,/<script[^>]+src="bilik-antara-voice-fallback/);
+ assert.doesNotMatch(html,/id="voiceFallback"/);
  assert.match(voiceFallback,/getUserMedia/);
  assert.match(voiceFallback,/MediaRecorder/);
- assert.match(voiceFallback,/sendOnStop/);
- assert.match(voiceFallback,/audio\/webm/);
- assert.match(voiceFallback,/\.netlify\/functions\/bilik-antara/);
- assert.match(intelligence,/"audio\/webm"/);
  assert.doesNotMatch(voiceFallback,/GEMINI_API_KEY|localStorage\.setItem|sessionStorage\.setItem/);
 });
 test("Regional voice selector is removed, leaving only colloquial Malaysian Malay",()=>{
@@ -46,18 +38,18 @@ test("Regional voice selector is removed, leaving only colloquial Malaysian Mala
  assert.doesNotMatch(css,/\.voice-dialect-bar/);
  assert.doesNotMatch(js,/dialectChoice|dialectSelect|voiceLocale|voiceDialect/);
  assert.doesNotMatch(fallback,/voiceLocale|voiceDialect|selectedVoiceStyle/);
- assert.match(html,/>✦ Jom Voice Live<\/button>/);
+ assert.match(html,/>✦ Jom Voice Chat<\/button>/);
  assert.match(css,/\.conversation \.conversation-head\{display:flex/);
 });
 test("Short Malay words trigger a natural answer, not five requests to repeat",()=>{
  assert.match(js,/START_SENSITIVITY_HIGH/);
- assert.match(js,/prefixPaddingMs:40/);
- assert.match(js,/silenceDurationMs:950/);
- assert.match(js,/NO_INTERRUPTION/);
+ assert.match(js,/prefixPaddingMs:80/);
+ assert.match(js,/silenceDurationMs:750/);
+ assert.match(js,/START_OF_ACTIVITY_INTERRUPTS/);
  assert.match(js,/Perkataan pendek seperti 'lapar'/);
  assert.match(js,/PERKATAAN PENDEK SAH/);
  assert.match(js,/c\.interimInputTranscription\?\.text/);
- assert.match(js,/Sedang dengar:/);
+ assert.match(js,/appendTranscript\("user"/);
  assert.match(js,/removeItem\("bilik-antara:voice-dialect:v1"\)/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/lapar/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/Jangan meminta ulang/);
@@ -88,7 +80,7 @@ test("A 12.5-second generated reply plays every chunk in order without truncatio
  const simulate=new Function("context",[
   "let pendingAudio=[],pendingAudioBytes=0,audioQueueGeneration=0,modelTurnFinished=false;",
   "const MAX_PENDING_AUDIO_BYTES=12*1024*1024,MAX_SCHEDULE_AHEAD=5;",
-  "let playSources=new Set(),nextAudioTime=0,playContext=context,speakerEnabled=true;",
+  "let playSources=new Set(),nextAudioTime=0,playContext=context,playGain=null,speakerEnabled=true,suppressPlaybackUntilUser=false;",
   "const panel={classList:{add(){},remove(){}}};let warnings=[];",
   "function decodePcm(){return {duration:.05}}",
   "function sayStatus(){} function showNotice(x){warnings.push(x)}",
@@ -166,9 +158,9 @@ test("Shaiful creator history, deeper reasoning and empathic voice share grounde
  assert.match(js,/modelTurnFinished=true/);
  assert.match(js,/reasoningActive=false/);
  assert.match(fallback,/projectIdentity\?\.VOICE_CREATOR_PROMPT\|\|""/);
- assert.match(html,/bilik-antara-brain\.js\?v=2/);
- assert.match(html,/bilik-antara-identity\.js\?v=3/);
- assert.match(html,/bilik-antara-voice\.js\?v=18/);
+ assert.match(html,/bilik-antara-brain\.js\?v=\d+/);
+ assert.match(html,/bilik-antara-identity\.js\?v=\d+/);
+ assert.match(html,/bilik-antara-voice\.js\?v=\d+/);
 });
 test("Microphone is allowed only for this site's origin",()=>{
  assert.match(netlify,/Permissions-Policy = "camera=\(\), microphone=\(self\), geolocation=\(\)"/);
@@ -180,8 +172,8 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
    assert.ok(html.includes('id="'+id+'"'),id);
  }
  assert.match(html,/id="voicePanel" hidden/);
- assert.match(html,/bilik-antara-voice\.js\?v=18/);
- assert.match(html,/bilik-antara\.css\?v=11/);
+ assert.match(html,/bilik-antara-voice\.js\?v=\d+/);
+ assert.match(html,/bilik-antara\.css\?v=\d+/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
  assert.match(html,/Audio dihantar kepada Google/i);
@@ -189,7 +181,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
  assert.doesNotMatch(js,/voice-read|readUtterance|speechSynthesis|equipRead/);
  assert.doesNotMatch(css,/\.voice-read\b|\.voice-autoread\b/);
  assert.match(html,/<header class="conversation-head">\s*<div class="voice-toolbar"/);
- assert.match(html,/Shaiful Ridhwan A\.I/);
+ assert.match(html,/Aksara A\.I/);
  assert.match(js,/showNotice\(message\)/);
  assert.doesNotMatch(js,/panel\.hidden=false/);
  assert.match(css,/\.voice-panel\[hidden\]\{display:none!important\}/);
@@ -197,7 +189,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
 });
 test("Casual Malay UI uses Cakap instead of technical Dikte",()=>{
  assert.match(html,/id="voiceDictate"[^>]*>Cakap jadi teks<\/button>/);
- assert.match(html,/status\("ready","Pelayan sedia"/);
+ assert.match(html,/status\("configured","AI dikonfigurasi"/);
  assert.match(js,/dictate\.textContent="🎙 Cakap"/);
  assert.match(js,/dictate\.textContent="■ Berhenti"/);
  assert.doesNotMatch(html,/>🎙 Dikte<\/button>/);
@@ -227,9 +219,9 @@ test("Fallback from retired Gemini models uses current Gemini Live",async()=>{
 test("Live streaming uses ephemeral token with PCM input/output and transcription",()=>{
  assert.match(js,/bilik-antara-live-token/);
  assert.match(js,/BidiGenerateContentConstrained\?access_token=/);
- assert.match(js,/inputAudioTranscription:\{\}/);
+ assert.match(js,/inputAudioTranscription:advancedVoiceConfig\?\{languageCodes:\["ms-MY"\]/);
  assert.match(js,/outputAudioTranscription:\{\}/);
- assert.match(js,/voiceName:"Charon"/);
+ assert.match(js,/voiceName:"Aoede"/);
  assert.match(js,/audio\/pcm;rate=16000/);
  assert.match(js,/decodePcm/);
  assert.match(js,/c\.interrupted/);
@@ -261,7 +253,7 @@ test("PCM worklet converts 44.1/48 kHz to 16 kHz using 40ms chunks with anti-ali
   assert.ok(posted.every(item=>item.pcm.byteLength===1280));
   assert.ok(posted.every(item=>Math.abs(new Int16Array(item.pcm)[0]-16384)<2));
  }
- assert.match(js,/pcm-worklet\.js\?v=2/);
+ assert.match(js,/pcm-worklet\.js\?v=\d+/);
  assert.doesNotMatch(pcm,/this\.phase\+=ratio/);
 });
 test("Long-running Voice is opted in and reconnects in foreground without storing resume handles",()=>{
@@ -275,15 +267,15 @@ test("Long-running Voice is opted in and reconnects in foreground without storin
  assert.match(js,/connectedAt<9\*60\*1000/);
  assert.doesNotMatch(js,/localStorage\.setItem\([^;]*resumeHandle/);
  assert.match(html,/24 jam/);
- assert.match(html,/transkrip/);
+ assert.match(html,/teks perbualan/);
 });
 test("Live speech detection tolerates Malay pauses and refuses to guess unclear speech",()=>{
- assert.match(js,/silenceDurationMs:950/);
- assert.match(js,/prefixPaddingMs:40/);
+ assert.match(js,/silenceDurationMs:750/);
+ assert.match(js,/prefixPaddingMs:80/);
  assert.match(js,/START_SENSITIVITY_HIGH/);
  assert.match(js,/TURN_INCLUDES_ONLY_ACTIVITY/);
  assert.match(js,/DENGAR BETUL-BETUL/);
- assert.match(js,/Aku dengar:/);
+ assert.match(js,/appendTranscript\("user"/);
 });
 test("First-person AI persona uses aku not saya in both regular and live models",()=>{
  assert.match(js,/WAJIB gunakan kata ganti diri pertama AKU, bukan SAYA/);
@@ -428,9 +420,9 @@ test("Unsupported Live token response presents actionable status rather than a f
   assert.doesNotMatch(js,/panel\.hidden=false/);
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
-test("Siapa Aku is the only welcome starter and workspace nav is hidden",()=>{
+test("Identity and poetry starters remain available and workspace nav is hidden",()=>{
  const match=[...html.matchAll(/<button class="starter"[^>]*>([^<]+)<\/button>/g)];
- assert.equal(match.length,1);
+ assert.equal(match.length,3);
  assert.equal(match[0][1],"Siapa Aku");
  const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
  assert.doesNotMatch(suite,/\["workspace","Ruang kerja"\]/);
@@ -456,34 +448,11 @@ test("Rejected Google token attempts are not counted as completed Live sessions"
   assert.equal((await handler(event(label))).statusCode,429);
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
-test("Fallback voice only records after an explicit user click and uses the original server-side key",()=>{
- assert.match(html,/id="voiceFallback"[^>]*hidden/);
- assert.match(html,/id="voiceFallbackStart"/);
- assert.match(html,/id="voiceFallbackStop"/);
-  assert.ok(html.indexOf('id="voiceFallbackStart"')<html.indexOf('id="sendBtn"'));
-  assert.ok(html.indexOf('id="voiceFallbackStop"')<html.indexOf('id="sendBtn"'));
-  assert.match(html,/id="voiceMinimize"/);
-  assert.match(html,/id="voiceFallbackMinimize"/);
-  assert.match(fallback,/voiceFallbackRetry/);
-  assert.match(fallback,/voiceFallback:true/);
-  assert.match(js,/minimizeButton\.addEventListener/);
-
- assert.match(html,/bilik-antara-voice-fallback\.js\?v=7/);
- assert.match(js,/ba:voice-live-failed/);
- assert.match(fallback,/addEventListener\("ba:voice-live-failed"/);
- assert.match(fallback,/start\.addEventListener\("click",async/);
- assert.match(fallback,/stop\.addEventListener\("click"/);
- assert.match(fallback,/getUserMedia/);
- assert.match(fallback,/new window\.MediaRecorder/);
- assert.match(fallback,/\.netlify\/functions\/bilik-antara/);
- assert.match(fallback,/audio\/webm/);
- assert.match(fallback,/2400000/);
- assert.match(fallback,/20000/);
- assert.match(fallback,/timer=setTimeout\(\(\)=>finish\(false\),20000\)/);
- assert.match(css,/\.voice-panel\.is-minimized/);
- assert.match(css,/\.composer-voice/);
- assert.match(css,/\.voice-fallback\.is-collapsed/);
- assert.doesNotMatch(fallback,/GEMINI_API_KEY|localStorage|indexedDB/);
+test("Live voice is opt-in and legacy recording never starts from the active page",()=>{
+ assert.match(html,/id="voiceLive"/);assert.match(html,/id="voiceMinimize"/);
+ assert.doesNotMatch(html,/<script[^>]+src="bilik-antara-voice-fallback/);
+ assert.match(js,/getUserMedia/);assert.match(js,/liveButton\.addEventListener/);
+ assert.doesNotMatch(js,/GEMINI_API_KEY|localStorage\.setItem\([^;]*resumeHandle/);
 });
 test("Voice token request runs in parallel with microphone initialization",()=>{
  const token=js.indexOf('const tokenPromise=fetch(ENDPOINT');
@@ -499,11 +468,11 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
   const x={hidden:false,disabled:false,style:{setProperty(){}},classList:{add(){},remove(){},toggle(){return true}},textContent:"",children:[],value:"",scrollHeight:0,
    addEventListener:(n,fn)=>handlers[n]=fn,listener:n=>handlers[n],
    setAttribute:(n,v)=>attrs[n]=v,getAttribute:n=>attrs[n],
-   replaceChildren(){this.children=[];},appendChild(v){this.children.push(v);},disconnect(){}};
+   querySelectorAll(){return [];},replaceChildren(){this.children=[];},appendChild(v){this.children.push(v);},disconnect(){}};
   items.set(id,x);return x;
  };
  const doc={getElementById:item,createElement:t=>item(t+"-"+items.size),addEventListener(){},hidden:false};
- const track={enabled:true,stop(){this.stopped=true}};
+ const track={enabled:true,addEventListener(){},getSettings(){return {}},stop(){this.stopped=true}};
  const stream={getTracks:()=>[track],getAudioTracks:()=>[track]};
  class Audio{constructor(){this.audioWorklet={addModule:async()=>{}};this.destination={};this.currentTime=0;}
   resume(){return Promise.resolve()}close(){return Promise.resolve()}
@@ -591,3 +560,13 @@ test("Session creation has backend rate limiting",async()=>{
   assert.equal((await handler(event("voice-test-limiter"))).statusCode,429);
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
+
+ test("Voice setup timeout downgrades optional configuration without an undefined close code",()=>{
+ const start=js.indexOf("connectTimer=setTimeout(()=>{",js.indexOf("const ws=new WebSocket"));
+ const end=js.indexOf("},20000)",start);
+ assert.ok(start>=0&&end>start);
+ const callback=js.slice(start+"connectTimer=setTimeout(()=>{".length,end);
+ const run=new Function("renewConnection",`let generation=1,liveGeneration=1,ws={},socket=ws,liveReady=false,established=false,advancedVoiceConfig=true,resumeHandle="old",reconnecting=true;function sayStatus(){};${callback};return {advancedVoiceConfig,resumeHandle,reconnecting};`);
+ const calls=[];run(x=>calls.push(x));
+ assert.equal(calls.length,1); // callback returns immediately after retry
+ });

@@ -2895,3 +2895,9 @@ html[data-theme="light"] .multi-ai-row{background:rgba(255,255,255,.32);border-c
 @media(max-width:390px){
   .voice-panel .voice-session-controls .voice-volume{gap:7px;padding:4px 8px}
 }
+
+/* Streaming uses plain text until a complete, formatted response is committed. */
+.message.is-partial .bubble{white-space:pre-wrap;overflow-wrap:anywhere}
+#stopBtn{flex-shrink:0;min-height:40px;padding:8px 12px}
+#stopBtn[hidden]{display:none!important}
+.composer textarea::placeholder{opacity:.65}

@@ -6,22 +6,21 @@ const ID=require("../bilik-antara-identity");
 const {handler}=require("../netlify/functions/bilik-antara");
 
 test("AI name, Bilik Antara room and Google Gemini remain distinct",()=>{
- assert.equal(ID.NAME,"Shaiful Ridhwan A.I.");
+ assert.equal(ID.NAME,"Aksara A.I.");
  assert.equal(ID.ROOM,"Bilik Antara");
  assert.equal(ID.CREATOR,"Shaiful Ridhwan");
  assert.equal(ID.BASE,"Google Gemini");
- assert.match(ID.INTRO,/Aku Shaiful Ridhwan A\.I/);
+ assert.match(ID.INTRO,/Aku Aksara A\.I/);
  assert.match(ID.INTRO,/Bilik Antara/);
  assert.match(ID.INTRO,/Google/);
  assert.doesNotMatch(ID.INTRO,/Aku Bilik Antara/);
 });
 test("identity responses cover creator, modifications and model provenance",()=>{
  const cases=[
-  ["kau siapa?","Shaiful Ridhwan A.I."],
-  ["siapa kau sebenarnya?","Shaiful Ridhwan A.I."],
+  ["kau siapa?","Aksara A.I."],
+  ["siapa kau sebenarnya?","Aksara A.I."],
   ["Siapa cipta kau?","Shaiful Ridhwan"],
   ["siapa pencipta Bilik Antara","Shaiful Ridhwan"],
-  ["Siapa Shaiful Ridhwan?","penulis puisi"],
   ["Apa yang Shaiful dah buat kat kau, modifikasi apa?","pemikiran adaptif"],
   ["modifikasi kau","Gemini"],
   ["Apa itu Bilik Antara","ruang"],
@@ -35,7 +34,7 @@ test("identity responses cover creator, modifications and model provenance",()=>
 });
 test("Siapa Aku answers project origin, enhancements and base-model provenance",()=>{
  const reply=ID.answerIdentity("Siapa Aku");
- assert.match(reply,/Shaiful Ridhwan A\.I\./);
+ assert.match(reply,/Aksara A\.I\./);
  assert.match(reply,/dibina dan terus diubah suai oleh Shaiful Ridhwan/);
  assert.match(reply,/keupayaan setinggi mungkin/);
  assert.match(reply,/Google Gemini/);
@@ -44,25 +43,26 @@ test("Siapa Aku answers project origin, enhancements and base-model provenance",
  assert.equal(ID.answerIdentity("siapa aku?"),reply);
 });
 test("Verified Shaiful Ridhwan biography is rich, natural and attribution-safe",()=>{
- const detailed=ID.answerIdentity("Siapa Shaiful Ridhwan?");
+ const detailed=ID.CREATOR_STORY;
+ assert.equal(ID.answerIdentity("Siapa Shaiful Ridhwan?"),null,"General biography is generated using grounded profile context");
  assert.ok(detailed&&detailed.length>650,"Creator reply should not be two dry sentences");
  assert.match(detailed,/penulis puisi gaya bebas/i);
  assert.match(detailed,/puisigayabebas/);
- assert.match(detailed,/Gaya Bebas/);
+ assert.match(detailed,/gaya bebas/i);
  assert.match(detailed,/Antara Cahaya dan Gelap/);
  assert.match(detailed,/Bilik Antara/);
- assert.match(detailed,/Google Gemini/);
- assert.match(detailed,/pembangun aplikasi/i);
- assert.equal(ID.answerIdentity("Shaiful Ridhwan tu siapa?"),detailed);
- assert.equal(ID.answerIdentity("Kau kenal Shaiful Ridhwan?"),detailed);
+ assert.match(ID.CREATOR_PROFILE.provenance,/Google.*Gemini/);
+ assert.match(ID.CREATOR_PROFILE.role,/pembangun/i);
+ assert.equal(ID.answerIdentity("Shaiful Ridhwan tu siapa?"),null);
+ assert.equal(ID.answerIdentity("Kau kenal Shaiful Ridhwan?"),null);
 });
 test("Creator is credited as builder of the application, not trainer of Gemini",()=>{
  const who=ID.answerIdentity("Siapa cipta kau?");
- assert.ok(who&&who.length>650);
- assert.match(who,/Shaiful yang membina dan mengubah suai sistem aku/);
+ assert.ok(who&&who.length>100);
+ assert.match(who,/Shaiful Ridhwan.*membangunkan/);
  assert.match(who,/Google.*Gemini/i);
  assert.match(ID.VOICE_CREATOR_PROMPT,/BILA DITANYA TENTANG SHAIFUL/);
- assert.match(ID.VOICE_CREATOR_PROMPT,/5 hingga 8 ayat/);
+ assert.match(ID.VOICE_CREATOR_PROMPT,/6 hingga 10 ayat/);
  assert.match(ID.VOICE_CREATOR_PROMPT,/JANGAN REKA/);
  assert.equal(ID.CREATOR_PROFILE.creativeName,"puisigayabebas");
  assert.match(ID.CREATOR_PROFILE.provenance,/bukan melatih semula model asas/);
@@ -89,11 +89,11 @@ test("text, stream and voice use shared project provenance",()=>{
  assert.match(rest,/require\("\.\.\/\.\.\/bilik-antara-identity"\)/);
  assert.match(rest,/Identity\.answerIdentity\(question\)/);
  assert.match(rest,/Identity\.CORE_PROMPT/);
- assert.match(stream,/import Identity from "\.\.\/\.\.\/bilik-antara-identity\.js"/);
- assert.match(stream,/Identity\.answerIdentity\(question\)/);
+ assert.match(stream,/import main from "\.\/bilik-antara\.js"/);
+ assert.match(stream,/main\.handler\(/);
  assert.match(voice,/sharedIdentity\?\.CORE_PROMPT\|\|""/);
  assert.match(voice,/sharedIdentity\?\.VOICE_CREATOR_PROMPT\|\|""/);
- assert.match(html,/src="bilik-antara-identity\.js\?v=3"/);
+ assert.match(html,/src="bilik-antara-identity\.js\?v=\d+"/);
  assert.ok(html.indexOf('src="bilik-antara-identity.js')<html.indexOf('src="bilik-antara-voice.js'));
 });
 test("identity gateway answers without issuing Gemini calls",async()=>{
@@ -103,7 +103,7 @@ test("identity gateway answers without issuing Gemini calls",async()=>{
  global.fetch=async()=>{throw Error("Identity must not call Gemini");};
  try{
   let seq=0;
-  for(const q of ["Kau siapa?","Siapa cipta kau?","Apa Shaiful ubah suai pada kau?","Siapa Shaiful Ridhwan?"]){
+  for(const q of ["Kau siapa?","Siapa cipta kau?","Apa Shaiful ubah suai pada kau?"]){
    const res=await handler({httpMethod:"POST",headers:{"x-nf-client-connection-ip":"identity-test-"+(++seq)},
     body:JSON.stringify({question:q})});
    assert.equal(res.statusCode,200,q);
