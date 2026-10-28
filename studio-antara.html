@@ -8,7 +8,8 @@
 <link rel="canonical" href="https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html">
 <link rel="icon" href="bilik-antara-woman-emblem.svg" type="image/svg+xml">
 <link rel="stylesheet" href="studio-antara.css?v=3">
-<script src="studio-antara.js?v=2" defer></script>
+<script src="studio-antara-editor.js?v=1" defer></script>
+<script src="studio-antara.js?v=3" defer></script>
 
 </head>
 <body>
@@ -36,9 +37,33 @@
 <section id="editor-document" class="panel" hidden>
 <label>Jenis dokumen<select id="docTemplate"><option value="report">Laporan</option><option value="letter">Surat rasmi</option><option value="resume">Resume</option><option value="proposal">Cadangan projek</option><option value="notes">Nota / artikel</option></select></label>
 <label>Tajuk<input id="docTitle" placeholder="Tajuk dokumen"></label>
-<label>Isi dokumen<textarea id="docBody" rows="18" placeholder="Masukkan kandungan. Satu perenggan bagi setiap blok teks."></textarea></label>
+<label for="richDocument">Isi dokumen</label>
+<div class="document-toolbar" id="docToolbar" role="toolbar" aria-label="Format dokumen">
+ <select id="docStyle" aria-label="Gaya perenggan"><option value="p">Perenggan</option><option value="h1">Tajuk 1</option><option value="h2">Tajuk 2</option><option value="h3">Tajuk 3</option><option value="blockquote">Petikan</option></select>
+ <button type="button" data-format="bold" title="Tebal" aria-label="Tebal"><b>B</b></button>
+ <button type="button" data-format="italic" title="Condong" aria-label="Condong"><i>I</i></button>
+ <button type="button" data-format="underline" title="Garis bawah" aria-label="Garis bawah"><u>U</u></button>
+ <button type="button" data-format="insertUnorderedList" title="Senarai berbulet" aria-label="Senarai berbulet">☷</button>
+ <button type="button" data-format="insertOrderedList" title="Senarai bernombor" aria-label="Senarai bernombor">1.</button>
+ <button type="button" data-format="justifyLeft" title="Jajar kiri" aria-label="Jajar kiri">☰</button>
+ <button type="button" data-format="justifyCenter" title="Jajar tengah" aria-label="Jajar tengah">≡</button>
+ <button type="button" data-format="justifyRight" title="Jajar kanan" aria-label="Jajar kanan">☷</button>
+ <button type="button" id="docLink" title="Tambah pautan" aria-label="Tambah pautan">↗</button>
+ <button type="button" data-format="undo" title="Undo" aria-label="Buat asal">↶</button>
+ <button type="button" data-format="redo" title="Redo" aria-label="Buat semula">↷</button>
+ <button type="button" id="docClear" title="Buang pemformatan" aria-label="Buang pemformatan">Tx</button>
+</div>
+<div id="richDocument" class="rich-document" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Isi dokumen boleh sunting" data-placeholder="Mula menulis di sini…"></div>
+<textarea id="docBody" hidden aria-hidden="true"></textarea>
+<div class="editor-meta"><span id="docCounts" aria-live="polite">0 perkataan · 0 aksara</span><span id="docSaved">Belum disimpan</span></div>
+<div class="editor-secondary-actions">
+ <button type="button" id="docNew">Dokumen baharu</button>
+ <button type="button" id="docImport">Import .txt / .html</button>
+ <input type="file" id="docFile" accept=".txt,.html,.htm,text/plain,text/html" hidden>
+ <button type="button" id="docSaveDraft">Simpan draf</button>
+</div>
 <div class="actions"><button id="docAI" class="primary" type="button">Bantu tulis dengan AI</button><button id="docPdf" type="button">Simpan sebagai PDF</button><button id="docWord" type="button">Eksport .docx</button><button id="docHtml" type="button">Eksport HTML</button><button id="docCopy" type="button">Salin</button></div>
-<p class="hint">PDF menggunakan fungsi cetak pelayar: pilih “Save as PDF / Simpan sebagai PDF”. Word dijana melalui pustaka sumber terbuka ketika diminta.</p>
+<p class="hint">PDF menggunakan fungsi cetak pelayar: pilih “Save as PDF / Simpan sebagai PDF”. Word dijana melalui pustaka sumber terbuka ketika diminta. Draf dokumen disimpan pada peranti ini sahaja.</p>
 </section>
 <p id="studioStatus" class="status" role="status" aria-live="polite"></p>
 </section>
