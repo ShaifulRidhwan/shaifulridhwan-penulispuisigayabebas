@@ -156,6 +156,19 @@ function answerIdentity(question){
     return ROOM+" ialah ruang sembang AI yang dibangunkan sebagai sebahagian daripada laman Shaiful Ridhwan. Pembantu dalam ruang itu bernama "+NAME+". Aku menggunakan "+BASE+" sebagai model asas, dengan ciri dan pengalaman yang dibina khusus untuk projek ini.";
   return null;
 }
-const exported={NAME,CREATOR,ROOM,BASE,SITE,REPO,CHANGES,INTRO,WHO_AM_I,CODER_POET_ANSWER,CREATOR_PROFILE,CREATOR_INTRO,CREATOR_STORY,VOICE_CREATOR_PROMPT,TECH,CORE_PROMPT,PROMPT,POETRY_METHOD,POETRY_ANSWER,needsDetail,answerIdentity};
+function answerReaction(question,history){
+  if(!/^(?:o{2,}|o+h+)$/.test(clean(question))||!Array.isArray(history)||history.length<2)return null;
+  const last=history[history.length-1],previous=history[history.length-2];
+  if(last?.role!=="assistant"||previous?.role!=="user")return null;
+  const grounded=answerIdentity(previous.content);
+  // Only a known factual identity exchange qualifies; free conversation stays generative.
+  if(!grounded||grounded!==last.content)return null;
+  const topic=clean(previous.content);
+  if(/(?:siapa|sapa).*(?:buat|cipta|bangun|pengasas|pembangun)|(?:pembangun|pengasas).*(?:kau|bilik antara)/.test(topic))return "Ha, dia yang bangunkan ruang ni.";
+  if(grounded===CREATOR_INTRO)return "Haa, itulah Shaiful, penulis dan programmer di sebalik ruang ni.";
+  if(grounded===INTRO)return "Haa, aku Aksara.";
+  return null;
+}
+const exported={NAME,CREATOR,ROOM,BASE,SITE,REPO,CHANGES,INTRO,WHO_AM_I,CODER_POET_ANSWER,CREATOR_PROFILE,CREATOR_INTRO,CREATOR_STORY,VOICE_CREATOR_PROMPT,TECH,CORE_PROMPT,PROMPT,POETRY_METHOD,POETRY_ANSWER,needsDetail,answerIdentity,answerReaction};
 if(typeof module!=="undefined"&&module.exports)module.exports=exported;
 if(typeof window!=="undefined")window.BilikAntaraIdentity=exported;

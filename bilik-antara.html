@@ -552,7 +552,7 @@ async function ask(payload,signal,onDelta){
  // Known project facts can be answered immediately by the already-loaded identity module.
  // Attachments always go through the server, even when their question mentions identity.
  if(typeof window!=="undefined"&&!payload.documentText&&(!payload.media||Array.isArray(payload.media)&&!payload.media.length)){
-  const local=window.BilikAntaraIdentity?.answerIdentity(payload.question);
+  const local=window.BilikAntaraIdentity?.answerIdentity(payload.question)||window.BilikAntaraIdentity?.answerReaction?.(payload.question,payload.history);
   if(local)return {reply:local,model:"project-identity",provider:"local",mode:"local",sources:[],durMs:0};
  }
  const retryAfter=res=>{
@@ -759,7 +759,7 @@ window.BilikAntaraBridge={
 restore();renderIdeas();renderHistory();update();probe();
 })();
 </script>
-<script src="bilik-antara-identity.js?v=13" defer></script>
+<script src="bilik-antara-identity.js?v=14" defer></script>
 <script src="bilik-antara-suite.js?v=8" defer></script>
 <script src="bilik-antara-brain.js?v=8" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>

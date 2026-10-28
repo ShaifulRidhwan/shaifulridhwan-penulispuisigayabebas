@@ -230,11 +230,11 @@ exports.handler=async event=>{
   const reactionGuidance=intent.reaction?
    "\nREAKSI PENDEK PADA GILIRAN TERAKHIR: Mesej pengguna ialah tanda mendengar atau memahami, bukan permintaan penerangan baharu. Rujuk jawapan AI paling akhir dalam sejarah, dan balas satu reaksi pendek yang sesuai dalam Bahasa Melayu Malaysia lisan. Jangan membuat kesimpulan tentang pendapat atau emosi pengguna. Jangan mencipta kaitan baharu, melompat ke cerita pengasas/puisi/coding, mengulang biografi, memuji tanpa sebab, menawarkan projek atau mengakhiri dengan soalan bantuan automatik. Jika tiada perkara perlu ditambah, satu ayat pendek sudah cukup. Jangan menggunakan frasa hafalan yang sama setiap kali; sesuaikan dengan perbualan sebenar. Jika konteks terdahulu sensitif, kekalkan nada tenang tanpa gurauan.":"";
   const plan=intelligencePlan(intent);
-  const identityReply=(!media.length&&!documentText)?Identity.answerIdentity(question):null;
+  const identityReply=(!media.length&&!documentText)?(Identity.answerIdentity(question)||Identity.answerReaction(question,history)):null;
   if(identityReply)return result(200,{
     mode:"live",aiMode:"automatic",model:"project-identity",reply:identityReply,
     sources:[],argumentMap:[],truthAudit:[],thoughtLedger:[],hypothesis:"",
-    reviewApplied:false,disclaimer:"Asal-usul dan ciri berdasarkan rekod projek; bukan latihan semula Gemini."
+    reviewApplied:false,disclaimer:intent.reaction?"":"Asal-usul dan ciri berdasarkan rekod projek; bukan latihan semula Gemini."
   },H);
   const tiktokHandle=extractTikTokHandle(question);
   const publicAccount=tiktokHandle?await researchPublicAccount(tiktokHandle):null;

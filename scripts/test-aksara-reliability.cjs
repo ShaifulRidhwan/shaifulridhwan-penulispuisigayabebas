@@ -266,3 +266,11 @@ test("plain acknowledgements do not inherit canned laughter or an automatic invi
  const r=await handler(event({question:"ooo",history:[{role:"user",content:"siapa buat bilik antara no"},{role:"assistant",content:"Shaiful Ridhwan yang membangunkan Bilik Antara."}],preferredProvider:"groq"}));
  assert.equal(r.statusCode,200);const text=JSON.parse(r.body).reply;assert.match(text,/faham/i);assert.doesNotMatch(text,/haha|apa-apa lagi|nak tanya/i);
 });
+test("the exact grounded identity exchange keeps a short ooo connected without another model call",async t=>{
+ const handler=setup(t),ID=require("../bilik-antara-identity");let calls=0;global.fetch=()=>{calls++;throw Error("No model needed for this grounded acknowledgement");};
+ const question="siapa buat bilik antara no",history=[{role:"user",content:question},{role:"assistant",content:ID.answerIdentity(question)}];
+ assert.equal(ID.answerReaction("ooo",history),"Ha, dia yang bangunkan ruang ni.");
+ const r=await handler(event({question:"ooo",history}));assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).reply,"Ha, dia yang bangunkan ruang ni.");assert.equal(calls,0);
+ assert.equal(ID.answerReaction("ooo",[{role:"user",content:"Kenapa langit biru?"},{role:"assistant",content:"Cahaya biru dihamburkan lebih kuat."}]),null);
+ assert.equal(ID.answerReaction("ooo tak faham",history),null);
+});
