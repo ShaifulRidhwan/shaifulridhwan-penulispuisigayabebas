@@ -69,11 +69,12 @@ function analyzeIntent(question,attachment){
   const thought=/(?:bagaimana jika|kalau dunia|andaikan|bayangkan jika|hipotesis|eksperimen fikiran|what if|suppose|imagine if)/i.test(q);
   // Soalan yang panjang, "mengapa" dan "analisis" tidak semestinya permintaan berdebat.
   const debate=/(?:\b(?:kritik|kritikkan|kritikan|debat|debatkan|bahaskan|sanggah|patahkan|refute|debate)\b|bedah (?:hujah|logik)|uji (?:logik|hujah)|cari (?:kelemahan|percanggahan) (?:hujah|idea|alasan)|semak (?:logik|hujah)|bantah (?:pendapat|hujah)|counterargument|logical fallacy|apa (?:silap|lemah) (?:pada|dalam) hujah)/i.test(q);
-  const explicitNews=/(?:terkini|terbaru|baru-baru|berita|harga|pasaran|kajian terkini|statistik terkini|sumber terbaru|siapa (?:presiden|perdana menteri|menteri|ceo)|is it true|latest|current|today(?:'s)? news|news|recent studies|verify|semak fakta|sahkan dakwaan)/i.test(q);
+  const explicitNews=/\b(?:terkini|terbaru|baru-baru|berita|harga|pasaran|kajian terkini|statistik terkini|sumber terbaru|siapa (?:presiden|perdana menteri|menteri|ceo)|is it true|latest|current|today(?:'s)? news|news|recent studies|verify|semak fakta|sahkan dakwaan)\b/i.test(q);
   const temporal=/(?:sekarang|hari ini|semalam|minggu ini|bulan ini|tahun ini|202[5-9])/i.test(q);
-  const asksCurrentFact=/(?:apa|siapa|berapa|bila|di mana|cuaca|suhu|status|jadual|cari|semak|laporan|statistik|keputusan|saham|nilai|terkini|current|how much|who is|when is|update)/i.test(q);
+  const asksCurrentFact=/\b(?:apa|siapa|berapa|bila|di mana|cuaca|suhu|status|jadual|cari|semak|laporan|statistik|keputusan|saham|nilai|terkini|current|how much|who is|when is|update)\b/i.test(q);
   const latest=explicitNews||(temporal&&asksCurrentFact);
-  const calculate=/(?:\d+\s*(?:[+\-*/^×÷]|darab|kali|bahagi|campur|tolak|peratus|percent)\s*\d+|\b(?:hitung|kira|kirakan|calculate|integral|derivative|terbitan|regresi|matriks|persamaan|equation|jalankan kod|graf data|formula|statistical)\b)/i.test(q);
+  const calculate=/(?:\d+\s*(?:[+\-*/^×÷]|darab|kali|bahagi|campur|tolak|peratus|percent)\s*\d+|\b(?:hitung|kirakan|calculate|integral|derivative|terbitan|regresi|matriks|persamaan|equation|jalankan kod|graf data|formula|statistical)\b)/i.test(q);
+  const simpleCalculation=/^(?:(?:berapa|kira|kirakan|hitung|calculate)\s+)?-?\d+(?:[.,]\d+)?\s*(?:[+*/%×÷-]|darab|kali|bahagi|campur|tolak)\s*-?\d+(?:[.,]\d+)?\s*[?=!.]*$/i.test(q);
   const technical=/(?:\b(?:kod|coding|javascript|python|html|css|sql|api|debug|ralat|bug|error|fungsi|program|algoritma|skrip|terminal|database)\b|baiki (?:kod|laman|aplikasi)|selesaikan (?:masalah|persamaan))/i.test(q);
   const creative=/(?:\b(?:tulis|tuliskan|hasilkan|karangkan|cipta|ciptakan|draf|karang|terjemah|terjemahkan|ringkaskan|olah|perkemas|rewrite|translate|summarize)\b|bantu (?:aku|saya) (?:menulis|hasilkan|cipta|cari idea)|idea (?:cerita|puisi|penulisan|caption|kapsyen))/i.test(q);
   const explain=/(?:\b(?:terangkan|jelaskan|ajar|belajar|fahami|maksud|definisi|kenapa|mengapa|bagaimana|cara|contoh|bezakan|bandingkan|explain|teach|how|why)\b|apa (?:itu|makna|maksud)|what is)/i.test(q);
@@ -83,12 +84,12 @@ function analyzeIntent(question,attachment){
   const task=(sensitive&&!creative)?"support":debate?"critique":thought?"hypothetical":
     creative?"creative":(calculate||technical)?"technical":latest?"research":
     explain?"explain":casual?"conversation":"general";
-  const depth=(sensitive&&!creative)?"medium":(deep||attachment||task==="critique"||task==="hypothetical")?"high":
+  const depth=simpleCalculation?"low":(sensitive&&!creative)?"medium":(deep||attachment||task==="critique"||task==="hypothetical")?"high":
     (calculate||technical||latest||q.length>135)?"medium":"low";
   const verification=!sensitive&&(debate||
-    (deep&&["technical","research","explain","general"].includes(task))||
+    (deep&&/\b(?:semak|sahkan|buktikan|pastikan|verify|audit)\b/i.test(q)&&["technical","research","explain","general"].includes(task))||
     (calculate&&/(?:semak|buktikan|pastikan|verify|check|banding)/i.test(q)));
-  return {task,depth,search:latest,calculate,thought,debate,works,hasLink,sensitive,
+  return {task,depth,search:latest,calculate,simpleCalculation,thought,debate,works,hasLink,sensitive,
     review:verification,attachment:!!attachment};
 }
 function resolveIntent(question,history,attachment){
@@ -97,8 +98,15 @@ function resolveIntent(question,history,attachment){
   const q=safeText(question,32000).toLowerCase().replace(/[!?.]+$/,"").trim();
   // Acknowledgements acknowledge the last turn; they are not requests for a new topic.
   const lastAssistant=[...history].reverse().find(m=>m?.role==="assistant"&&typeof m.content==="string");
-  const acceptingOffer=/^(?:ok(?:ay|ey)?|ya|ye|baik(?:lah)?)$/.test(q)&&/\b(?:nak|mahu|boleh)\s+aku\b[^?]*\?\s*$/i.test(lastAssistant?.content||"");
-  if(!acceptingOffer&&/^(?:o{2,}|o+h+|ah+a?|haa+|hmm+|ok(?:ay|ey)?|baik(?:lah)?|faham|aha|haha+|hehe+|betul|ya|ye)(?:\s+(?:lah|do|wei|tu|dah|okay|ok))?$/.test(q)){
+  const lastOffer=String(lastAssistant?.content||"").replace(/[\p{Extended_Pictographic}\p{Regional_Indicator}\uFE0F\u200D\u{1F3FB}-\u{1F3FF}]/gu,"").trim();
+  const acceptingOffer=/^(?:ok(?:ay|ey)?|ya|ye|baik(?:lah)?)$/.test(q)&&/\b(?:nak|mahu|boleh)\s+aku\b[^?]*\?\s*$/i.test(lastOffer);
+  if(acceptingOffer){
+    const previous=[...history].reverse().find(m=>m?.role==="user"&&typeof m.content==="string");
+    const prior=previous?analyzeIntent(previous.content,false):current;
+    return {...prior,contextFollowUp:true,acceptingOffer:true,review:false};
+  }
+  const asking=/\?\s*$/.test(question);
+  if(!asking&&/^(?:menarik(?: juga| jugak)?|best|cun|nice|o{2,}|o+h+|ah+a?|haa+|hmm+|ok(?:ay|ey)?|baik(?:lah)?|faham|aha|haha+|hehe+|betul|ya|ye)(?:\s+(?:lah|do|wei|tu|dah|okay|ok))?$/.test(q)){
     const priorUser=[...history].reverse().find(m=>m?.role==="user"&&typeof m.content==="string");
     const support=priorUser&&analyzeIntent(priorUser.content,false).sensitive;
     return {...current,task:support?"support":"conversation",depth:"low",sensitive:!!support,search:false,calculate:false,works:false,review:false,thought:false,debate:false,reaction:true};
@@ -119,14 +127,14 @@ function resolveIntent(question,history,attachment){
 function intelligencePlan(intent){
   // OutputTokens includes Gemini's hidden thinking tokens: a tight cap can lead to blank replies.
   return {thinkingLevel:intent.depth,
-    maxTokens:intent.depth==="high"?10000:intent.depth==="medium"?5600:2500,
+    maxTokens:intent.reaction?700:intent.simpleCalculation?800:intent.depth==="high"?10000:intent.depth==="medium"?5600:2500,
     doReview:!!intent.review};
 }
 function getTools(intent){
   const tools=[];
   // RM0 edition: Google Search grounding is not enabled because the API free tier does not cover it.
   // Wikipedia references (separate bounded adapter) and free URL Context remain available.
-  if(intent.calculate&&process.env.ENABLE_CODE_EXECUTION!=="false")tools.push({code_execution:{}});
+  if(intent.calculate&&!intent.simpleCalculation&&process.env.ENABLE_CODE_EXECUTION!=="false")tools.push({code_execution:{}});
   if(intent.hasLink&&process.env.ENABLE_URL_CONTEXT!=="false")tools.push({url_context:{}});
   return tools;
 }
@@ -170,8 +178,11 @@ function modelText(candidate){
 }
 function parseReply(text){
   if(!text)return "";
-  try{const obj=JSON.parse(text);if(obj&&typeof obj.reply==="string")return obj.reply;}catch(e){}
-  return String(text).replace(/^```(?:json)?\s*|\s*```$/gi,"").trim();
+  const value=String(text).trim();
+  const wrapped=value.match(/^```json\s*([\s\S]*?)\s*```$/i);
+  try{const obj=JSON.parse(wrapped?wrapped[1]:value);if(obj&&typeof obj.reply==="string")return obj.reply;}catch(_){}
+  // A real code block is part of the answer, not a transport envelope.
+  return value;
 }
 const ALLOWED_MIMES=new Set([
  "application/pdf","image/jpeg","image/png","image/webp","image/gif",

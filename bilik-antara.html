@@ -24,13 +24,13 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=43">
+<link rel="stylesheet" href="bilik-antara.css?v=44">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=4">
 
 </head>
 <body>
 <div class="shell">
- <div class="world-scene" aria-hidden="true"><div class="world-art"></div><div class="world-haze"></div><div class="world-embers"></div></div>
+ <div class="world-scene" aria-hidden="true"><div class="world-art"></div><div class="world-haze"></div><div class="world-light-glow"></div><div class="world-embers"></div></div>
  <header class="topbar">
   <a class="brand" href="index.html" title="Kembali ke laman utama Gaya Bebas">
    <span class="brand-name"><span>AKSARA A.I.</span><span>oleh Shaiful Ridhwan</span></span>
@@ -48,7 +48,6 @@
    <div class="chapter-ornament" aria-hidden="true"><span>✦</span></div>
   </section>
   <section class="conversation" aria-label="Ruang perbualan">
-   <div class="glass-meteor" aria-hidden="true"><i class="meteor-flight"></i></div>
    <div class="glass-shadow-mist" aria-hidden="true"></div>
    <header class="conversation-head">
     <div class="voice-toolbar" role="group" aria-label="Kawalan suara">
@@ -213,6 +212,8 @@ async function checkProviders(force=false){
   if(!res.ok)throw Error("Semakan penyedia tidak tersedia");
   const data=await res.json();if(!Array.isArray(data.providers))throw Error("Status tidak lengkap");
   renderProviderRows(data.providers);multiLastCheck=Date.now();
+  const preferred=data.providers.find(p=>p.id===data.preferredProvider&&p.status==="online")||data.providers.find(p=>p.status==="online");
+  if(preferred&&providers.some(([id])=>id===preferred.id)){lastProvider=preferred.id;lastProviderAt=Date.now();}
   multiChecked.textContent=data.someOnline?"Sekurang-kurangnya satu model boleh dihubungi.":"Tiada model berjaya disahkan sekarang.";
   if(!busy&&connectionRevision===revision){
    if(data.someOnline)status("ready","Multi AI Connected","");
@@ -576,7 +577,7 @@ async function ask(payload,signal,onDelta){
  return data;
 }
 function reconnectable(error){
- if(["CAPABILITY_UNAVAILABLE","CANCELLED"].includes(error?.code))return false;
+ if(error?.retryable===false||["CAPABILITY_UNAVAILABLE","CANCELLED"].includes(error?.code))return false;
  const code=Number(error?.status)||0;
  return error?.code==="STREAM_INTERRUPTED"||[408,429,500,502,503,504].includes(code)||
   error?.name==="TypeError"||error?.name==="AbortError";
@@ -592,7 +593,7 @@ function reconnectPause(ms,signal){
 async function reconnectAttempt(payload,signal,onDelta){
  const ctrl=new AbortController(),abort=()=>ctrl.abort();
  if(signal.aborted)abort();else signal.addEventListener("abort",abort,{once:true});
- const timer=setTimeout(()=>ctrl.abort(),34000);
+ const timer=setTimeout(()=>ctrl.abort(),42000);
  try{return await ask(payload,ctrl.signal,onDelta);}
  finally{clearTimeout(timer);signal.removeEventListener("abort",abort);}
 }
@@ -617,7 +618,7 @@ async function askWithReconnect(payload,signal,onDelta,onWait,onRetry){
    const now=Date.now(),offline=typeof navigator!=="undefined"&&navigator.onLine===false;
    if(now>=deadline)throw failure;
    if(now>=retryAt&&!offline)break;
-   onWait({attempt:attempt+1,seconds:Math.max(0,Math.ceil((retryAt-now)/1000)),offline});
+   onWait({attempt:attempt+1,seconds:Math.max(0,Math.ceil((retryAt-now)/1000)),offline,reason:failure.code==="ALL_PROVIDERS_BUSY"||Number(failure.status)===429?"capacity":"network"});
    await reconnectPause(Math.min(1000,deadline-now,offline?1000:Math.max(1,retryAt-now)),signal);
   }
   // A new attempt replaces any incomplete text; it never appends another answer to it.
@@ -660,9 +661,9 @@ async function submit(event){
    documentName:selectedFile&&selectedFile.name||"",
    media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt()||""};
   const data=await askWithReconnect(payload,ctrl.signal,receive,
-   ({attempt,seconds,offline})=>status("connecting",offline?"Menunggu internet…":"Menyambung semula…",
+   ({attempt,seconds,offline,reason})=>status("connecting",offline?"Menunggu internet…":reason==="capacity"?"Menunggu model tersedia…":"Menyambung semula…",
     offline?"Internet terputus. Aku akan cuba semula bila sambungan pulih. Tekan Henti untuk batalkan.":
-     "Percubaan semula "+attempt+"/2 dalam "+seconds+" saat. Tekan Henti untuk batalkan."),
+     (reason==="capacity"?"Model sedang sibuk. Cuba lagi dalam ":"Percubaan semula "+attempt+"/2 dalam ")+seconds+" saat. Tekan Henti untuk batalkan."),
    attempt=>{
     typing.remove();partialNode?.remove();partial="";partialNode=null;partialBubble=null;firstTokenMs=null;
     typing=showTyping();status("connecting","Menyambung semula · "+attempt+"/2","");
@@ -748,7 +749,7 @@ window.BilikAntaraBridge={
 restore();renderIdeas();renderHistory();update();probe();
 })();
 </script>
-<script src="bilik-antara-identity.js?v=16" defer></script>
+<script src="bilik-antara-identity.js?v=17" defer></script>
 <script src="bilik-antara-suite.js?v=9" defer></script>
 <script src="bilik-antara-brain.js?v=9" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>

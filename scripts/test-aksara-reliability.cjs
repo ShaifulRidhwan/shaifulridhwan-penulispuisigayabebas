@@ -226,9 +226,9 @@ test("a session's last successful provider is tried directly, without waiting fo
 });
 test("provider preference cannot bypass consent for private context, and a failed preferred provider still falls back",async t=>{
  const handler=setup(t);process.env.OPENROUTER_API_KEY="mock";let backups=0,google=0;
- global.fetch=async url=>{if(url.includes("openrouter")){backups++;return new Response("",{status:503});}google++;return Response.json({candidates:[{content:{parts:[{text:"Jawapan daripada Gemini."}]},finishReason:"STOP"}]});};
+ global.fetch=async url=>{if(url.includes("openrouter")){backups++;return new Response("",{status:503});}if(url.includes("groq.com"))return reply("Jawapan daripada Groq.");google++;return Response.json({candidates:[{content:{parts:[{text:"Jawapan daripada Gemini."}]},finishReason:"STOP"}]});};
  const privateReply=await handler(event({question:"Ringkaskan fail",documentText:"teks peribadi",preferredProvider:"openrouter"}));assert.equal(privateReply.statusCode,200);assert.equal(backups,0);
- const fallback=await handler(event({question:"Apa itu graviti?",preferredProvider:"openrouter"}));assert.equal(fallback.statusCode,200);assert.equal(backups,1);assert.equal(google,2);
+ const fallback=await handler(event({question:"Apa itu graviti?",preferredProvider:"openrouter"}));assert.equal(fallback.statusCode,200);assert.equal(backups,1);assert.equal(google,1);assert.equal(JSON.parse(fallback.body).provider,"groq");
 });
 test("short conversational follow-ups use bounded output and low reasoning, while complex work keeps its larger budget",async t=>{
  setup(t);const router=require("../netlify/functions/aksara-provider-router");let payload;
@@ -300,7 +300,7 @@ test("opening the page tests providers before showing Connected and never instal
  const source=html.slice(html.indexOf("async function checkProviders("),html.indexOf('ui.conn.addEventListener("click"'));
  let resolve,requests=[],states=[];
  const pending=new Promise(done=>resolve=done);
- const run=new Function("fetch","status","renderProviderRows","el","multiChecked","ENDPOINT",'let busy=false,multiChecking=false,multiLastCheck=0,connectionRevision=0;'+source+';return checkProviders;')(
+ const run=new Function("fetch","status","renderProviderRows","el","multiChecked","ENDPOINT",'let busy=false,multiChecking=false,multiLastCheck=0,connectionRevision=0,lastProvider="",lastProviderAt=0;const providers=[["gemini"],["groq"]];'+source+';return checkProviders;')(
   async(_url,opts)=>{requests.push(JSON.parse(opts.body));return pending;},(...args)=>states.push(args),()=>{},()=>({}),{},"/mock"
  );
  const waiting=run(true);
@@ -311,4 +311,91 @@ test("opening the page tests providers before showing Connected and never instal
  const suite=fs.readFileSync(path.join(__dirname,"../bilik-antara-suite.js"),"utf8");
  assert.doesNotMatch(suite,/function quickActions|bubble\.appendChild\(row\)/);
  assert.match(html,/if\(data\.disclaimer\)/,"Fallback provenance is retained");
+});
+
+test("first ordinary text turn selects a configured chat provider without waiting for Google",async t=>{
+ const handler=setup(t),calls=[];let payload;
+ global.fetch=async(url,options)=>{calls.push(url);payload=JSON.parse(options.body);assert.ok(url.includes("groq.com"));return reply("Sambungan terus.");};
+ const r=await handler(event({question:"Aku cuma datang nak borak."}));
+ assert.equal(r.statusCode,200);assert.equal(calls.length,1);
+ assert.ok(payload.messages[0].content.includes(Brain.CORE),"Keep the whole intentional personality");
+ const identity=require("../bilik-antara-identity");
+ assert.ok(!payload.messages[0].content.includes(identity.PROMPT),"An unrelated chat must not carry the full creator dossier");
+ assert.ok(JSON.parse(r.body).timings.systemChars<19000);
+});
+test("the screenshot acknowledgement is grounded, contextual and needs no network",async t=>{
+ const handler=setup(t),ID=require("../bilik-antara-identity"),style=require("../bilik-antara-chat-style");
+ global.fetch=()=>{throw Error("No model required for a grounded acknowledgement");};
+ const q="siapa shaiful ridhwan",history=[{role:"user",content:q},{role:"assistant",content:style.reply(ID.answerIdentity(q))}];
+ const r=JSON.parse((await handler(event({question:"menarik",history}))).body);
+ assert.equal(r.model,"project-identity");assert.match(r.reply,/penulisan dan coding/);assert.equal(style.count(r.reply),2);
+ assert.equal(ID.answerReaction("menarik?",history),null,"A question is not a passive acknowledgement");
+});
+test("Malay casual wording does not accidentally require a calculator or current-news provider",()=>{
+ for(const q of ["Aku kira dia memang macam tu", "Aku lapar sekarang", "Cerita kau berharga", "Menarik juga."]){
+  const intent=I.resolveIntent(q,[],false);assert.equal(intent.search,false,q);assert.equal(intent.calculate,false,q);
+ }
+ const basic=I.resolveIntent("Kira 18 + 24",[],false);assert.equal(basic.simpleCalculation,true);assert.deepEqual(I.getTools(basic),[]);
+ assert.ok(I.getTools(I.resolveIntent("Kirakan integral x kuasa dua",[],false)).some(x=>x.code_execution));
+ assert.equal(I.resolveIntent("menarik",[],false).reaction,true);
+ assert.ok(!I.resolveIntent("menarik?",[],false).reaction);
+});
+test("accepting an offer still executes it when two emoji follow the question",()=>{
+ const history=[{role:"user",content:"Terangkan graviti"},{role:"assistant",content:"Graviti menarik jirim. Nak aku beri contoh? 🙂 ✨"}];
+ const intent=I.resolveIntent("ok",history,false);
+ assert.equal(intent.acceptingOffer,true);assert.equal(intent.task,"explain");assert.ok(!intent.reaction);
+});
+test("a short streamed reply reaches the reader before its terminal event",async t=>{
+ setup(t);const router=require("../netlify/functions/aksara-provider-router");let end,displayed=[];
+ const body=new ReadableStream({start(controller){
+  controller.enqueue(new TextEncoder().encode('data: '+JSON.stringify({model:"chat",choices:[{delta:{content:"Haa, betul."}}]})+'\n\n'));
+  end=()=>{controller.enqueue(new TextEncoder().encode('data: '+JSON.stringify({choices:[{delta:{},finish_reason:"stop"}]})+'\n\n'));controller.close();};
+ }});
+ global.fetch=async()=>new Response(body,{headers:{"content-type":"text/event-stream"}});
+ const pending=router.complete({system:"persona",history:[],question:"Hai",onDelta:x=>displayed.push(x)});
+ for(let i=0;i<25;i++)await Promise.resolve();
+ assert.equal(displayed.join(""),"Haa, betul.","Do not hold a short answer until 160 characters or completion");
+ end();assert.equal((await pending).reply,"Haa, betul.");
+});
+test("buffered Groq gets the full response budget, not a streaming first-token deadline",async t=>{
+ setup(t);const router=require("../netlify/functions/aksara-provider-router");
+ global.fetch=async(_url,{signal})=>new Promise((resolve,reject)=>{
+  const timer=setTimeout(()=>resolve(reply("Jawapan lengkap.")),80);
+  signal.addEventListener("abort",()=>{clearTimeout(timer);reject(new DOMException("abort","AbortError"));},{once:true});
+ });
+ const answer=await router.complete({system:"persona",history:[],question:"Soalan",timeoutMs:20,bufferedTimeoutMs:500,deadline:Date.now()+1000});
+ assert.equal(answer.provider,"groq");assert.equal(answer.reply,"Jawapan lengkap.");
+});
+test("provider Retry-After is propagated and a failed provider is not attempted twice",async t=>{
+ const handler=setup(t);let groq=0,google=0;
+ global.fetch=async url=>{if(url.includes("groq.com")){groq++;return new Response("",{status:429,headers:{"retry-after":"7"}});}google++;return new Response("",{status:429});};
+ const r=await handler(event({question:"Aku cuma nak borak"})),data=JSON.parse(r.body);
+ assert.equal(r.statusCode,503);assert.equal(data.code,"ALL_PROVIDERS_BUSY");assert.equal(groq,1);assert.equal(google,1);
+ assert.ok(data.retryAfterSeconds>0&&data.retryAfterSeconds<=7);assert.equal(data.providerFailures[0].status,429);assert.equal(data.providerFailures[0].reason,"rate_limit");
+});
+test("health checks are coalesced and do not consume the conversation request limit",async t=>{
+ const handler=setup(t);let calls=0;
+ global.fetch=async url=>{calls++;return url.includes("groq.com")?reply("OK"):Response.json({candidates:[{content:{parts:[{text:"OK"}]}}]});};
+ const request=event({providerStatus:true});request.headers["x-nf-client-connection-ip"]="shared-health-test";
+ const results=await Promise.all([handler(request),handler(request),handler(request),handler(request),handler(request),handler(request)]);
+ assert.ok(results.every(r=>r.statusCode===200));assert.equal(calls,2,"One Google and one Groq health request shared by all openings");
+ assert.equal(JSON.parse(results[0].body).someOnline,true);assert.ok(JSON.parse(results[0].body).preferredProvider);
+ const chat=event({question:"siapa kau"});chat.headers=request.headers;
+ assert.equal((await handler(chat)).statusCode,200,"Health traffic cannot consume chat capacity");
+});
+test("a failed Google network path can still use the healthy chat provider",async t=>{
+ const handler=setup(t),calls=[];
+ global.fetch=async url=>{calls.push(url);if(url.includes("googleapis"))throw new TypeError("network");return reply("Aku boleh jawab.");};
+ const r=await handler(event({question:"Apa itu atom?",preferredProvider:"gemini"}));
+ assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).provider,"groq");assert.equal(calls.length,2);
+});
+test("code fences and explicit JSON reply envelopes keep distinct meanings",()=>{
+ const code='```python\nprint("Hai")\n```';assert.equal(I.parseReply(code),code);
+ const json='```json\n{"reply":"Hai"}\n```';assert.equal(I.parseReply(json),"Hai");
+ assert.equal(I.parseReply('```json\n{"answer": 42}\n```'),'```json\n{"answer": 42}\n```');
+});
+test("complexity alone does not silently add another model review",()=>{
+ const long="Terangkan bagaimana algoritma komputer memproses data. "+"Beri penerangan lengkap dengan contoh. ".repeat(10);
+ const ordinary=I.resolveIntent(long,[],false);assert.equal(ordinary.depth,"high");assert.equal(ordinary.review,false);
+ assert.equal(I.resolveIntent("Semak ketepatan analisis mendalam algoritma ini",[],false).review,true);
 });

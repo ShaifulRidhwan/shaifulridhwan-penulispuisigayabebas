@@ -59,7 +59,7 @@ test("deep argument generates second-pass review, map, and uncertain truth audit
 test("free-mode research, code and URL context without any selector",async()=>{
   await handler(event({question:"Berita terkini kajian sains?"},"search"));
   assert.ok(!latestPrimary().tools||!latestPrimary().tools.some(t=>t.google_search),"Paid search must be disabled in RM0 mode");
-  await handler(event({question:"Kira 18 + 24"},"math"));
+  await handler(event({question:"Kirakan integral x kuasa dua dari 1 hingga 100"},"math"));
   assert.ok(latestPrimary().tools.some(t=>t.code_execution));
   await handler(event({question:"Baca https://example.com dan ulas kandungan"},"url"));
   assert.ok(latestPrimary().tools.some(t=>t.url_context));
@@ -163,7 +163,7 @@ test("ordinary explanation stays conversational rather than forcing debate",asyn
 });
 test("hard technical tasks get adaptive output headroom and correctness review",async()=>{
   const start=calls.length;
-  const reply=await handler(event({question:"Analisis mendalam tentang algoritma dan ralat kod Python ini: for i in range(4): print(i)"},"technical-deep"));
+  const reply=await handler(event({question:"Semak ketepatan analisis mendalam tentang algoritma dan ralat kod Python ini: for i in range(4): print(i)"},"technical-deep"));
   assert.equal(reply.statusCode,200);
   const first=calls[start].body;
   assert.equal(first.generationConfig.thinkingConfig.thinkingLevel,"high");
@@ -181,7 +181,7 @@ test("follow-up inherits previous research, but explicit new task resets tools",
   assert.ok(!latestPrimary().tools||!latestPrimary().tools.some(t=>t.google_search));
 });
 test("tool offers are not falsely reported as tool executions",async()=>{
-  const response=await handler(event({question:"Kira 28 + 6"},"tool-fidelity"));
+  const response=await handler(event({question:"Jalankan kod Python untuk mengira regresi data ini"},"tool-fidelity"));
   const parsed=JSON.parse(response.body);
   assert.ok(parsed.toolsOffered.includes("code_execution"));
   assert.deepEqual(parsed.toolsUsed,[],"Fake Gemini response did not actually execute any tool");

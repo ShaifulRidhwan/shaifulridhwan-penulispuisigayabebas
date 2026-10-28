@@ -100,6 +100,13 @@ const CORE_PROMPT=[
   "KUALITI PERBUALAN: Jawab mengikut maksud sebenar soalan dan konteks dialog terkini. Elakkan biodata berulang, ayat hafalan, pujian kosong dan respons terpotong. Untuk pertanyaan santai tentang Shaiful, boleh selit satu gurauan baharu yang relevan mengenai ketelitiannya dalam coding. Untuk soalan susulan seperti kenapa atau macam mana, teruskan topik tanpa mengulang pengenalan.",
   "Untuk soalan santai tentang Shaiful, ikut susunan puisigayabebas, The Coder Poet, Bilik Antara, kemudian satu sindiran ringan yang relevan tentang ketelitian codingnya. Elakkan gurauan pada soalan fakta ringkas atau topik serius."
 ].join("\n");
+// Stable identity facts for unrelated text turns; the full dossier is still
+// supplied when identity/creator information is actually requested.
+const RUNTIME_PROMPT=[
+ "Kau Aksara A.I. dalam Bilik Antara, dibangunkan Shaiful Ridhwan. Shaiful membina aplikasi, integrasi dan identiti, bukan melatih model asas pihak ketiga. Nama AI bukan Shaiful atau Bilik Antara.",
+ "Satu Aksara dengan pilihan enjin teks Google Gemini, Groq, Mistral dan OpenRouter mengikut konfigurasi, sambungan dan kuota. Suara Live menggunakan Gemini. Jangan dakwa semua model sentiasa online.",
+ "Terangkan asal-usul atau biodata hanya apabila ditanya; utamakan topik pengguna dan sejarah dialog. Jangan mereka fakta tentang pengasas."
+].join("\n");
 function needsDetail(question){
   return /(?:aksara|shaiful|ridhwan|bilik antara|identiti|pencipta|modifikasi|ubah suai|pengasas|asal.usul|siapa (?:kau|awak)|kau siapa|awak siapa|model (?:kau|ai ini)|siapa (?:yang )?buat kau)/i.test(String(question||""));
 }
@@ -158,19 +165,26 @@ function answerIdentity(question){
   return null;
 }
 function answerReaction(question,history){
-  if(!/^(?:o{2,}|o+h+)$/.test(clean(question))||!Array.isArray(history)||history.length<2)return null;
+  if(/\?\s*$/.test(String(question||"")))return null;
+  if(!/^(?:o{2,}|o+h+|menarik|menarik juga|menarik jugak|faham|baik|ok(?:ay|ey)?)$/.test(clean(question))||!Array.isArray(history)||history.length<2)return null;
   const last=history[history.length-1],previous=history[history.length-2];
   if(last?.role!=="assistant"||previous?.role!=="user")return null;
   const grounded=answerIdentity(previous.content);
   // Only a known factual identity exchange qualifies; free conversation stays generative.
   const style=globalThis.BilikAntaraChatStyle||(typeof require==="function"?require("./bilik-antara-chat-style"):null);
   if(!grounded||(grounded!==last.content&&style?.reply(grounded)!==last.content))return null;
-  const topic=clean(previous.content);
+  const topic=clean(previous.content),reaction=clean(question);
+  if(/^menarik/.test(reaction)){
+    if(grounded===CREATOR_INTRO||grounded===CODER_POET_ANSWER)return "Haa, penulisan dan coding bertemu dalam projek yang sama.";
+    if(grounded===POETRY_ANSWER)return "Haa, bentuknya bebas; pilihan katanya tetap kena teliti.";
+    return "Haa, itulah sedikit cerita di sebalik ruang ni.";
+  }
+  if(/^(?:faham|baik|ok(?:ay|ey)?)$/.test(reaction))return "Haa, macam tu ceritanya.";
   if(/(?:siapa|sapa).*(?:buat|cipta|bangun|pengasas|pembangun)|(?:pembangun|pengasas).*(?:kau|bilik antara)/.test(topic))return "Ha, dia yang bangunkan ruang ni.";
   if(grounded===CREATOR_INTRO)return "Haa, itulah Shaiful, penulis dan programmer di sebalik ruang ni.";
   if(grounded===INTRO)return "Haa, aku Aksara.";
   return null;
 }
-const exported={NAME,CREATOR,ROOM,BASE,SITE,REPO,CHANGES,INTRO,WHO_AM_I,CODER_POET_ANSWER,CREATOR_PROFILE,CREATOR_INTRO,CREATOR_STORY,VOICE_CREATOR_PROMPT,TECH,CORE_PROMPT,PROMPT,POETRY_METHOD,POETRY_ANSWER,needsDetail,answerIdentity,answerReaction};
+const exported={NAME,CREATOR,ROOM,BASE,SITE,REPO,CHANGES,INTRO,WHO_AM_I,CODER_POET_ANSWER,CREATOR_PROFILE,CREATOR_INTRO,CREATOR_STORY,VOICE_CREATOR_PROMPT,TECH,CORE_PROMPT,RUNTIME_PROMPT,PROMPT,POETRY_METHOD,POETRY_ANSWER,needsDetail,answerIdentity,answerReaction};
 if(typeof module!=="undefined"&&module.exports)module.exports=exported;
 if(typeof window!=="undefined")window.BilikAntaraIdentity=exported;
