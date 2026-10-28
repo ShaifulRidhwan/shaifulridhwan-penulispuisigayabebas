@@ -549,6 +549,12 @@ function showTyping(){
 // Stream when deployed; older deployments can still use the JSON endpoint.
 let streamAvailable=true;
 async function ask(payload,signal,onDelta){
+ // Known project facts can be answered immediately by the already-loaded identity module.
+ // Attachments always go through the server, even when their question mentions identity.
+ if(typeof window!=="undefined"&&!payload.documentText&&(!payload.media||Array.isArray(payload.media)&&!payload.media.length)){
+  const local=window.BilikAntaraIdentity?.answerIdentity(payload.question);
+  if(local)return {reply:local,model:"project-identity",provider:"local",mode:"local",sources:[],durMs:0};
+ }
  const retryAfter=res=>{
   const raw=res.headers.get("retry-after");if(!raw)return undefined;
   const seconds=Number(raw);return Number.isFinite(seconds)?Math.max(0,seconds):Math.max(0,Math.ceil((Date.parse(raw)-Date.now())/1000))||undefined;

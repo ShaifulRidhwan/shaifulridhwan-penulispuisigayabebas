@@ -236,3 +236,10 @@ test("short conversational follow-ups use bounded output and low reasoning, whil
  await router.complete({system:"persona",history:[],question:"Bagi contoh",task:"explain",reasoningLevel:"medium",maxTokens:5600});assert.equal(payload.max_tokens,1500);assert.equal(payload.reasoning_effort,"low");
  await router.complete({system:"persona",history:[],question:"Analisis kod",task:"technical",reasoningLevel:"high",maxTokens:6000});assert.equal(payload.max_tokens,6000);assert.equal(payload.reasoning_effort,"high");
 });
+test("loaded project facts answer immediately in the browser without a network call, while attachments still reach the server",async()=>{
+ const html=fs.readFileSync(path.join(__dirname,"../bilik-antara.html"),"utf8"),start=html.indexOf("let streamAvailable=true;"),end=html.indexOf("function reconnectable",start);
+ const make=new Function("fetch","ReadableStream","STREAM_ENDPOINT","ENDPOINT","window",html.slice(start,end)+";return ask;");
+ let calls=0;const ask=make(async()=>{calls++;return new Response('{"type":"done","reply":"Analisis fail","model":"mock"}\n',{headers:{"content-type":"application/x-ndjson"}});},ReadableStream,"/stream","/json",{BilikAntaraIdentity:require("../bilik-antara-identity")});
+ const direct=await ask({question:"siapa shaiful ridhwan"},new AbortController().signal,()=>{});assert.equal(direct.model,"project-identity");assert.match(direct.reply,/The Coder Poet/);assert.equal(calls,0);
+ const attached=await ask({question:"siapa shaiful ridhwan",media:[{mimeType:"image/png",data:"mock"}]},new AbortController().signal,()=>{});assert.equal(attached.reply,"Analisis fail");assert.equal(calls,1);
+});
