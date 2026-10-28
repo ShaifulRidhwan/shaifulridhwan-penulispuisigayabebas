@@ -290,11 +290,13 @@ exports.handler=async event=>{
       const alternative=await Router.complete({system,history,question,maxTokens:Math.min(maxTokens,1600),timeoutMs:4300,reasoningLevel:plan.thinkingLevel,task:intent.task});
       if(alternative.reply){
         log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
+        // Off by default, only eligible ordinary text. Never treat another LLM as a verified fact-checker.
+        const check=await Router.crossReview({question,reply:alternative.reply,originalProvider:alternative.provider,task:intent.task,timeoutMs:3000});
         return result(200,{
           mode:"fallback",aiMode:"automatic",model:alternative.model,provider:alternative.provider,
           reply:alternative.reply,sources:[],argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[],toolsOffered:[],
-          disclaimer:"Jawapan daripada model sandaran ("+alternative.provider+"). Tiada semakan web langsung; butiran sejarah dan dakwaan khusus mungkin memerlukan pengesahan."+(alternative.partial?" Jawapan model mungkin terpotong kerana had output.":""),
+          disclaimer:"Jawapan daripada model sandaran ("+alternative.provider+"). Tiada semakan web langsung; butiran sejarah dan dakwaan khusus mungkin memerlukan pengesahan."+(alternative.partial?" Jawapan model mungkin terpotong kerana had output.":"")+(check?.flag?" Semakan model kedua mengesan kemungkinan isu: "+check.flag+" (belum disahkan secara bebas).":""),
           usage:alternative.usage,durMs:Date.now()-started
         },H);
       }
