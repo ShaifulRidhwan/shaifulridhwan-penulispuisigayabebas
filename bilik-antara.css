@@ -2804,8 +2804,9 @@ html[data-theme="light"] .multi-ai-row{background:rgba(255,255,255,.32);border-c
 .conversation #settingsPanel .settings-card .voice-text-access{
  margin-top:8px;
 }
-.conversation #settingsPanel .settings-card .outline-btn{
- border-radius:9px!important;
+.conversation #settingsPanel .settings-card .outline-btn,
+.conversation #settingsPanel .settings-card .voice-action{
+ border-radius:999px!important;
 }
 /* Voice output loudness controls actual Web Audio gain, not just visual UI. */
 .voice-panel .voice-volume{
