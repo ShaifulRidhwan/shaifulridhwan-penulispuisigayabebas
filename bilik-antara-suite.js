@@ -201,27 +201,43 @@ async function copyText(text){
 }
 function renderMetrics(){
  section("Prestasi Aksara · Peranti ini");
- paragraph("Statistik daripada perbualan pelayar ini sahaja, bukan semua pengguna. Sejarah lama mungkin tidak mengandungi nama penyedia atau masa penuh.");
+ paragraph("Statistik sembang teks pada pelayar ini sahaja, bukan semua pengguna atau Voice Live. Kejayaan teknikal tidak menjamin jawapan tepat. Rekod lama mungkin tidak lengkap.");
  const successes=Math.max(0,Number(metrics.calls)||0),failures=Math.max(0,Number(metrics.failures)||0),total=successes+failures;
  const valid=values=>(Array.isArray(values)?values:[]).filter(v=>Number.isFinite(v)&&v>=0);
  const elapsed=valid(metrics.elapsed),backend=valid(metrics.durations);
  const avg=values=>values.length?(values.reduce((a,b)=>a+b,0)/values.length/1000).toFixed(2)+" s":"Tiada data";
  const sorted=[...elapsed].sort((a,b)=>a-b);
- const med=sorted.length?(sorted[Math.floor((sorted.length-1)/2)]/1000).toFixed(2)+" s":"Tiada data";
+ const pct=(arr,p)=>{if(!arr.length)return "Tiada data";const a=[...arr].sort((x,y)=>x-y),pos=(a.length-1)*p,lo=Math.floor(pos),hi=Math.ceil(pos);return ((a[lo]+(a[hi]-a[lo])*(pos-lo))/1000).toFixed(2)+" s";};
+ const med=pct(elapsed,.5);
+ const events=Array.isArray(metrics.events)?metrics.events:[];
+ const recent=events.filter(e=>e&&Number.isFinite(e.at)&&e.at>=Date.now()-86400000);
+ const successful=recent.filter(e=>e.ok===true).length;
+ const successMs=events.filter(e=>e?.ok===true&&Number.isFinite(e.ms)&&e.ms>=0).map(e=>e.ms);
+ const failMs=events.filter(e=>e?.ok===false&&Number.isFinite(e.ms)&&e.ms>=0).map(e=>e.ms);
  const entries=[
   ["Permintaan direkodkan",total],
   ["Jawapan berjaya",successes],
   ["Permintaan gagal",failures],
   ["Kadar berjaya",total?(100*successes/total).toFixed(1)+"%":"Tiada data"],
   ["Purata masa pengguna",avg(elapsed)],
-  ["Median masa pengguna",med],
+  ["Median masa pengguna · semua permintaan",med],
+  ["P90 masa pengguna · semua permintaan",pct(elapsed,.9)],
+  ["P95 masa pengguna · semua permintaan",pct(elapsed,.95)],
+  ["Purata masa jawapan berjaya · log",avg(successMs)],
+  ["Purata masa permintaan gagal · log",avg(failMs)],
+  ["Permintaan dalam log 24 jam",recent.length],
+  ["Kejayaan dalam log 24 jam",recent.length?(100*successful/recent.length).toFixed(1)+"% ("+successful+"/"+recent.length+")":"Tiada data"],
   ["Terpantas / terlama",elapsed.length?(Math.min(...elapsed)/1000).toFixed(2)+" / "+(Math.max(...elapsed)/1000).toFixed(2)+" s":"Tiada data"],
   ["Purata masa backend",avg(backend)],
   ["Token dilaporkan",Number(metrics.tokens||0).toLocaleString("ms-MY")],
   ["Jawapan dengan laporan token",(metrics.reportedUsageCount||0)+" / "+successes],
-  ["Sampel masa pengguna",elapsed.length]
+  ["Sampel masa pengguna",elapsed.length],
+  ["Sampel masa backend",backend.length],
+  ["Liputan laporan token",successes?(100*(metrics.reportedUsageCount||0)/successes).toFixed(1)+"%":"Tiada data"]
  ];
  for(const [label,value] of entries){const row=make("div",undefined,"ba-metric");row.append(make("span",label),make("strong",value));content.appendChild(row);}
+ paragraph("Masa pengguna merangkumi permintaan berjaya dan gagal. Purata berjaya/gagal berdasarkan maksimum 120 peristiwa terkini; masa backend menggunakan sehingga 50 sampel.");
+ paragraph("Token hanya dikira apabila penyedia melaporkan nilai sah. Tiada laporan token bukan bermaksud penggunaan sifar.");
  section("Pecahan model");
  const providers=Object.entries(metrics.byProvider||{}).filter(([,v])=>v&&Number(v.calls)>0).sort((a,b)=>b[1].calls-a[1].calls);
  if(!providers.length)paragraph("Tiada rekod model lagi. Jawapan baharu akan mengenal pasti penyedia.");
@@ -230,22 +246,23 @@ function renderMetrics(){
   const row=make("div",undefined,"ba-metric");
   const samples=(metrics.events||[]).filter(e=>e&&e.ok&&e.provider===id&&Number.isFinite(e.ms));
   const time=samples.length?" · "+(samples.reduce((sum,e)=>sum+e.ms,0)/samples.length/1000).toFixed(2)+" s purata sampel":"";
-  row.append(make("span",label),make("strong",data.calls+" respons"+time));content.appendChild(row);
+  row.append(make("span",label),make("strong",data.calls+" respons · "+(successes?(100*data.calls/successes).toFixed(1)+"%":"—")+time));content.appendChild(row);
  }
+ paragraph("Pecahan penyedia menunjukkan model yang akhirnya menjawab, bukan semua percubaan sandaran. Purata per penyedia berdasarkan maksimum 120 peristiwa.");
  section("Punca kegagalan");
  const failuresByCode={};
  for(const entry of metrics.events||[]){
   if(entry?.ok===false){const code=String(entry.code||"Tidak diketahui").slice(0,32);failuresByCode[code]=(failuresByCode[code]||0)+1;}
  }
  const reasons=Object.entries(failuresByCode).sort((a,b)=>b[1]-a[1]);
- if(!reasons.length)paragraph("Tiada punca kegagalan yang direkodkan dalam aktiviti terkini.");
+ if(!reasons.length)paragraph("Tiada punca kegagalan dalam log terkini.");
+ paragraph("Punca kegagalan hanya dikira daripada maksimum 120 peristiwa terakhir, bukan keseluruhan sejarah.");
  for(const [code,count]of reasons){
   const row=make("div",undefined,"ba-metric");
   row.append(make("span",code),make("strong",count+" kali"));content.appendChild(row);
  }
  section("Aktiviti terkini");
  paragraph("Sehingga 120 peristiwa setempat tanpa menyimpan kandungan soalan. Dipaparkan 12 yang terbaru.");
- const events=Array.isArray(metrics.events)?metrics.events:[];
  if(!events.length)paragraph("Belum ada aktiviti baharu untuk dipaparkan.");
  for(const item of events.slice(-12).reverse()){
   const row=make("div",undefined,"ba-metric ba-metric-event");
@@ -255,7 +272,7 @@ function renderMetrics(){
  }
  section("Storan dan privasi");
  paragraph("Sejarah sesi: "+(api.remember()?"diaktifkan":"dimatikan")+". Memori pilihan: "+(memory.enabled?"diaktifkan":"dimatikan")+". Sesi tersimpan: "+archive.length+". Peristiwa prestasi disimpan hanya jika Simpan sesi diaktifkan.");
- paragraph("Masa pengguna meliputi rangkaian dan pemprosesan. Masa backend dilaporkan pelayan. Token dikira hanya jika penyedia melaporkannya. Kejayaan permintaan bukan bukti ketepatan jawapan.");
+ paragraph("Masa pengguna meliputi rangkaian dan pemprosesan. Masa backend dilaporkan pelayan. Rekod aktiviti terhad kepada 120 peristiwa, sampel masa pengguna 120 dan backend 50. Kejayaan permintaan bukan bukti ketepatan jawapan. Voice Live tidak termasuk.");
  controlRow(
   button("Eksport JSON",()=>download("aksara-prestasi.json",JSON.stringify({exportedAt:new Date().toISOString(),metrics},null,2),"application/json")),
   button("Padam statistik",()=>{if(!confirm("Padam statistik prestasi pada peranti ini?"))return;metrics=blankMetrics();try{localStorage.removeItem(KEYS.metrics);}catch(_){}render();})
@@ -298,7 +315,8 @@ window.addEventListener("ba:answered",event=>{
  const item=event.detail||{};
  const provider=["gemini","groq","mistral","openrouter","local"].includes(item.provider)?item.provider:"unknown";
  metrics.calls=(metrics.calls||0)+1;
- const tokens=Number(item.usage?.totalTokenCount??item.usage?.total_tokens);
+ const rawTokens=item.usage?.totalTokenCount??item.usage?.total_tokens;
+ const tokens=rawTokens===null||rawTokens===undefined||rawTokens===""?NaN:Number(rawTokens);
  if(Number.isFinite(tokens)&&tokens>=0){
   metrics.tokens=(metrics.tokens||0)+tokens;
   metrics.reportedUsageCount=(metrics.reportedUsageCount||0)+1;
