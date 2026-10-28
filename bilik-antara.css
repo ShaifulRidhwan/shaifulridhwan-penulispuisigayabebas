@@ -2303,3 +2303,9 @@ html[data-theme="light"] .voice-action,html[data-theme="light"]
 .voice-avatar-stage.avatar-speaking .voice-avatar-glow{opacity:.9;transform:scale(1.08);transition:transform .7s ease,opacity .7s ease}
 .voice-avatar-stage.avatar-unavailable:before{content:"Avatar 3D tidak dapat dimuatkan";position:absolute;top:49%;left:0;right:0;text-align:center;color:#b8a98f;font-size:13px}
 @media(max-width:600px){.voice-avatar-stage{min-height:min(48vh,430px);border-radius:18px}}
+
+/* Voice-only portrait: use all available width and height, retain controls. */
+.voice-panel:not(.is-minimized){height:min(72dvh,680px);max-height:none;min-height:390px;bottom:auto}
+.voice-panel:not(.is-minimized) .voice-avatar-stage{box-sizing:border-box;width:100%;max-width:none;align-self:stretch;flex:1 1 auto;min-height:180px;height:auto;margin:0}
+.voice-panel .voice-avatar-canvas{inset:0!important;width:100%!important;height:100%!important;max-width:none!important;display:block!important}
+@media(max-width:760px){.voice-panel:not(.is-minimized){height:min(73dvh,630px);min-height:380px;max-height:none}.voice-panel:not(.is-minimized) .voice-avatar-stage{min-height:180px}}
