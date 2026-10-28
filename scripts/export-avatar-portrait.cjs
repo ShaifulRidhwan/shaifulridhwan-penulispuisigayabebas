@@ -21,6 +21,7 @@ const {chromium}=require("playwright");
   const size=image.readUInt32BE(16),height=image.readUInt32BE(20);
   if(size!==160||height!==160)throw Error("Unexpected 3D portrait size "+size+"x"+height);
   fs.writeFileSync("audit-avatar-portrait.png",image);
+  console.log("[portrait-base64]"+image.toString("base64"));
   console.log("[portrait] exact 3D avatar frame extracted: "+size+"x"+height+", "+image.length+" bytes; no redesign");
  }finally{await browser.close();}
 })().catch(e=>{console.error("[portrait] "+(e.stack||e));process.exitCode=1;});
