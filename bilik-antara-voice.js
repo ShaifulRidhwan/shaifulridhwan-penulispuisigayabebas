@@ -39,7 +39,7 @@ const setWave=(value)=>{waveform.style.setProperty("--voice-intensity",String(Ma
 const setButtonState=()=>{
   liveButton.setAttribute("aria-pressed",liveActive?"true":"false");
   liveButton.disabled=liveActive;
-  liveButton.textContent=liveActive?"● Sedang berbual":"✦ Jom Voice Live";
+  liveButton.textContent=liveActive?"● Sedang berbual":"✦ Jom Voice Chat";
   panel.hidden=!liveActive;
   dictate.disabled=liveActive||!speechAPI;
   micButton.textContent=micEnabled?"Tutup mikrofon":"Buka mikrofon";
@@ -295,7 +295,7 @@ async function startLive(){
   closeDictation();showNotice("");
   const fb=document.getElementById("voiceFallback");if(fb)fb.hidden=true;
   panel.classList.remove("is-minimized");
-  if(minimizeButton){minimizeButton.textContent="Minimumkan";minimizeButton.setAttribute("aria-expanded","true");}
+  if(minimizeButton){minimizeButton.textContent="Minimize";minimizeButton.setAttribute("aria-expanded","true");}
   const speakingRule=languageLock;
   liveActive=true;liveReady=false;micEnabled=true;speakerEnabled=true;
   sessionStarted=Date.now();resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;lastSpeechAt=0;connectedAt=0;
@@ -559,9 +559,9 @@ async function startLive(){
 liveButton.addEventListener("click",startLive);
 if(minimizeButton)minimizeButton.addEventListener("click",()=>{
  const minimized=panel.classList.toggle("is-minimized");
- minimizeButton.textContent=minimized?"Buka":"Minimumkan";
+ minimizeButton.textContent=minimized?"Expand":"Minimize";
  minimizeButton.setAttribute("aria-expanded",String(!minimized));
- minimizeButton.setAttribute("aria-label",minimized?"Buka panel Voice Live":"Minimumkan panel Voice Live");
+ minimizeButton.setAttribute("aria-label",minimized?"Expand Voice Chat panel":"Minimize Voice Chat panel");
 });
 stopButton.addEventListener("click",()=>closeLive("Sembang suara dihentikan."));
 micButton.addEventListener("click",()=>{
