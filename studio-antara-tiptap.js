@@ -73,7 +73,11 @@ async function start(){
   bridge.setHTML=html=>editor.commands.setContent(bridgeSanitize(html));
   bridge.setText=text=>editor.commands.setContent(plainToHTML(text));
   bridge.saveDraft=saveDraft;
-  bridge.changed=()=>{updateStatus();document.dispatchEvent(new Event("studio:editor-change"));};
+  let autosaveTimer=null;
+  bridge.changed=()=>{
+   updateStatus();window.StudioAntara?.render?.();
+   clearTimeout(autosaveTimer);autosaveTimer=setTimeout(saveDraft,1100);
+  };
   bridge.insertHTML=html=>editor.chain().focus().insertContent(bridgeSanitize(html)).run();
   bridge.editor=root;
   bridge.tiptap=editor;
@@ -134,6 +138,28 @@ async function start(){
    if(input===null)return;
    if(!/^https?:\/\//i.test(input)){ $("docSaved").textContent="Pautan mesti bermula dengan http:// atau https://";return; }
    editor.chain().focus().setLink({href:input}).run();
+  },true);
+  // Legacy button handlers operate directly on contenteditable DOM.
+  // Keep them from mutating ProseMirror's managed document.
+  $("docNew").addEventListener("click",event=>{
+   event.preventDefault();event.stopImmediatePropagation();
+   if((editor.getText().trim()||$("docTitle").value.trim())&&!confirm("Mulakan dokumen baharu? Draf semasa akan diganti."))return;
+   editor.commands.clearContent();$("docTitle").value="";$("docTemplate").value="report";
+   try{localStorage.removeItem(STORAGE);}catch(_){}
+   updateStatus();editor.commands.focus();
+  },true);
+  $("docFile").addEventListener("change",async event=>{
+   event.stopImmediatePropagation();
+   const file=event.target.files?.[0];event.target.value="";
+   if(!file||file.size>500000){$("docSaved").textContent="Fail tidak sah atau lebih 500 KB.";return;}
+   if(editor.getText().trim()&&!confirm("Gantikan dokumen dengan fail ini?"))return;
+   try{
+    const contents=await file.text();
+    if(/\.html?$/i.test(file.name))bridge.setHTML(contents);
+    else bridge.setText(contents);
+    if(!$("docTitle").value.trim())$("docTitle").value=file.name.replace(/\.[^.]+$/,"").slice(0,140);
+    saveDraft();
+   }catch(_){$("docSaved").textContent="Gagal import fail.";}
   },true);
   // Structured tables and page breaks require model-aware insertion.
   $("docTable").addEventListener("click",event=>{
