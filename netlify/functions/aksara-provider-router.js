@@ -74,7 +74,11 @@ async function checkStatus(){
    const response=await fetch(provider.url,{method:"POST",headers,body:JSON.stringify({
     model:provider.model,messages:[{role:"user",content:"Jawab OK sahaja."}],max_tokens:80
    }),signal:ctrl.signal});
-   return {id:provider.id,status:response.ok?"online":"offline"};
+   if(!response.ok)return {id:provider.id,status:"offline"};
+   const data=await response.json();
+   const content=data?.choices?.[0]?.message?.content;
+   const valid=typeof content==="string"?content.trim().length>0:Array.isArray(content)&&content.some(x=>x?.type==="text"&&String(x.text||"").trim());
+   return {id:provider.id,status:valid?"online":"offline"};
   }catch(_){return {id:provider.id,status:"offline"};}
   finally{clearTimeout(timer);}
  }));
