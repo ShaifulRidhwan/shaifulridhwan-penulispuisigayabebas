@@ -24,7 +24,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=19">
+<link rel="stylesheet" href="bilik-antara.css?v=20">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=2">
 
 </head>
@@ -75,21 +75,6 @@
     </div>
    </header>
    <div id="voiceNotice" class="voice-notice" role="status" aria-live="polite" hidden></div>
-   <div id="voiceFallback" class="voice-fallback is-collapsed" hidden aria-label="Suara sandaran">
-     <div class="voice-fallback-head">
-      <strong class="voice-fallback-title">Suara sandaran · bukan Live</strong>
-      <button type="button" id="voiceFallbackMinimize" aria-expanded="false" aria-controls="voiceFallbackBody" aria-label="Buka panel suara">Buka</button>
-     </div>
-     <div id="voiceFallbackBody" class="voice-fallback-body">
-      <p>Tekan mikrofon di sebelah Hantar untuk merakam. Audio hanya dihantar apabila kau menekan Henti &amp; hantar.</p>
-      <div class="voice-fallback-buttons">
-       <button type="button" id="voiceFallbackRetry" hidden disabled>Cuba lagi tanpa rakam semula</button>
-       <button type="button" id="voiceFallbackSpeak" hidden disabled>🔊 Dengar jawapan</button>
-       
-      </div>
-      <div id="voiceFallbackStatus" role="status" aria-live="polite"></div>
-     </div>
-    </div>
     <div id="connectionInfo" class="connection-info" role="status" aria-live="polite"><span id="connectionInfoText"></span><button type="button" id="retryBtn">Cuba semula</button></div>
    <div class="messages" id="chat" role="log" aria-live="polite" aria-relevant="additions" aria-label="Mesej perbualan"></div>
    <div class="starters" id="starters" aria-label="Soalan permulaan">
@@ -120,8 +105,6 @@
      </label>
      <input class="sr-only" type="file" id="documentUpload" multiple accept=".txt,.md,.csv,.pdf,image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/webm,video/mp4,video/webm" aria-label="Pilih lampiran">
      <textarea rows="1" id="input" placeholder="" aria-label="Tulis mesej untuk Aksara A.I."></textarea>
-     <button type="button" id="voiceFallbackStart" class="composer-voice" aria-label="Rakam soalan" aria-pressed="false" title="Rakam soalan suara"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4m-4 0h8"/></svg></button>
-      <button type="button" id="voiceFallbackStop" class="composer-voice is-recording" aria-label="Henti dan hantar rakaman" title="Henti dan hantar rakaman" hidden disabled>■</button>
       <button type="submit" id="sendBtn" class="send-btn" aria-label="Hantar soalan" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-9-3.6 18L11 13l-6-1Z"/><path d="m11 13 8-10"/></svg></button>
     </form>
     <div class="composer-hint"><span>Enter untuk hantar · Shift + Enter untuk baris baharu</span><span>Teks panjang disokong · tertakluk pada kapasiti API</span></div>
@@ -617,6 +600,6 @@ restore();renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-voice.js?v=27" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
 <script type="module" src="bilik-antara-avatar.js?v=6"></script>
-<script src="bilik-antara-voice-fallback.js?v=10" defer></script>
+
 </body>
 </html>
