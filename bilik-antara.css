@@ -2827,3 +2827,14 @@ html[data-theme="light"] .multi-ai-row{background:rgba(255,255,255,.32);border-c
  .conversation #settingsPanel .settings-card{padding:13px!important}
  .voice-panel .voice-volume{gap:6px;font-size:10px;padding:4px 2px}
 }
+
+/* Compact dictate pill in privacy settings, matching neighboring action. */
+.conversation #settingsPanel .settings-card #voiceDictate{
+ box-sizing:border-box!important;
+ width:auto!important;max-width:max-content!important;
+ min-height:38px!important;height:38px!important;
+ padding:7px 14px!important;
+ border-radius:999px!important;
+ font:600 11px/1.25 'DM Sans',system-ui,sans-serif!important;
+ letter-spacing:0!important;
+}
