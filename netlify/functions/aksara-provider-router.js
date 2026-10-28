@@ -163,6 +163,11 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    validateChatReply(text,data.model||provider.model);
    if(onDelta&&!emitted){emitted=true;onDelta(text);}
    cooldown.delete(provider.id);preferredProvider=provider.id;
+   // A real answer is stronger evidence than a cached synthetic health probe.
+   if(healthCache.value){
+    healthCache.value=healthCache.value.map(x=>x.id===provider.id?{...x,status:"online",latencyMs:Date.now()-attemptStarted,retryAfterSeconds:0}:x);
+    healthCache.time=Date.now();
+   }
    const finishReason=String(data?.choices?.[0]?.finish_reason||"");
    return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task,attempts,elapsedMs:Date.now()-attemptStarted};
   }catch(err){
@@ -216,14 +221,21 @@ async function crossReview({question,reply,originalProvider,task="general",timeo
 
 // Live health checks use harmless short prompts, never any user's conversation.
 const healthCache={time:0,value:null,pending:null};
+function reflectCooldown(checks){
+ return checks.map(item=>{
+  const seconds=Math.max(0,Math.ceil(((cooldown.get(item.id)||0)-Date.now())/1000));
+  return seconds?{...item,status:"offline",reason:"cooldown",retryAfterSeconds:seconds}:item;
+ });
+}
 async function checkStatus(){
- if(healthCache.value&&Date.now()-healthCache.time<90000)return healthCache.value;
+ // A recent success probe can turn stale immediately if a real chat hits quota.
+ if(healthCache.value&&Date.now()-healthCache.time<90000)return reflectCooldown(healthCache.value);
  if(healthCache.pending)return healthCache.pending;
  healthCache.pending=(async()=>{
   const checks=await Promise.all(PROVIDERS.map(async provider=>{
    const active=configured().some(p=>p.id===provider.id);
    if(!active)return {id:provider.id,status:"off"};
-   if(Date.now()<(cooldown.get(provider.id)||0))return {id:provider.id,status:"offline"};
+   if(Date.now()<(cooldown.get(provider.id)||0))return {id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
     const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
@@ -233,9 +245,12 @@ async function checkStatus(){
     if(provider.id==="groq"){probeBody.reasoning_effort="low";probeBody.include_reasoning=false;}
     const response=await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(probeBody),signal:ctrl.signal});
     if(!response.ok){
-     const wait=response.status===429?retrySeconds(response)*1000:errorToCooldown(response.status);
+     // A daily quota is not a transient five-second outage. Respect its reset.
+     const details=response.status===429?await response.json().catch(()=>({})):null;
+     const kind=quotaKind(String(details?.error?.message||details?.message||""));
+     const wait=response.status===429?retrySeconds(response,kind==="daily"?3600:30)*1000:errorToCooldown(response.status);
      if([401,403,404,429].includes(response.status))cooldown.set(provider.id,Date.now()+wait);
-     return {id:provider.id,status:"offline",http:response.status};
+     return {id:provider.id,status:"offline",http:response.status,...(response.status===429?{reason:"quota",quotaKind:kind,retryAfterSeconds:Math.ceil(wait/1000)}:{})};
     }
     const data=await response.json(),content=data?.choices?.[0]?.message?.content;
     const valid=typeof content==="string"?content.trim().length>0:Array.isArray(content)&&content.some(x=>x?.type==="text"&&String(x.text||"").trim());
@@ -247,9 +262,10 @@ async function checkStatus(){
    }finally{clearTimeout(timer);}
   }));
   const fastest=checks.filter(p=>p.status==="online").sort((a,b)=>a.latencyMs-b.latencyMs)[0];
-  if(fastest)preferredProvider=fastest.id;
+  // Never let a one-word probe displace a provider that completed a real chat.
+  if(fastest&&!preferredProvider)preferredProvider=fastest.id;
   healthCache.time=Date.now();healthCache.value=checks;
-  return checks;
+  return reflectCooldown(checks);
  })();
  try{return await healthCache.pending;}finally{healthCache.pending=null;}
 }
