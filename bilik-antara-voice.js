@@ -33,7 +33,7 @@ let dayTimer=null,sessionStarted=0,resumeHandle="",liveModel="",reconnecting=fal
 let preferStandardFallback=false;
 const FALLBACK_CACHE_KEY="ba:live-standard-fallback:tab";
 const speechAPI=window.SpeechRecognition||window.webkitSpeechRecognition;
-const VOICE_TERMS=["Shaiful Ridhwan","puisigayabebas","Bilik Antara","The Coder Poet","Antara Cahaya dan Gelap"];
+const VOICE_TERMS=["Aksara A.I.","Aksara","Shaiful Ridhwan","puisigayabebas","Bilik Antara","The Coder Poet","Antara Cahaya dan Gelap"];
 const VOICE_TOOLS=[{functionDeclarations:[
 {name:"get_local_time",description:"Dapatkan waktu tempatan peranti apabila ditanya waktu sekarang.",parameters:{type:"OBJECT",properties:{}}},
 {name:"get_voice_session_status",description:"Dapatkan diagnostik sambungan voice tanpa teks atau rakaman suara.",parameters:{type:"OBJECT",properties:{}}}
@@ -519,7 +519,7 @@ async function startLive(){
             "Apabila ditanya tentang Shaiful Ridhwan secara terbuka, jangan jawab dua ayat sahaja. Gunakan profil pengasas yang diberikan: jelaskan peranan penulis dan pembangun Bilik Antara dengan 6 hingga 10 ayat lengkap, dalam nada bercerita yang santai. Jika soalan cuma siapa pembangun, jawab ringkas dan tepat.",
             speakingRule,
             sharedBrain?.VOICE_GUIDANCE||"",
-            "Kau Shaiful Ridhwan A.I. di Bilik Antara. Shaiful Ridhwan ialah penulis puisi gaya bebas Malaysia dan PEMBANGUN sistem Bilik Antara yang membina identiti serta fungsi kau. Google membina model asas Gemini, bukan Shaiful.",
+            "Kau Aksara A.I., boleh dipanggil Aksara, di Bilik Antara. Jika ditanya siapa kau, jawab Aksara. Shaiful Ridhwan ialah pembangun kau, bukan nama kau. Shaiful Ridhwan ialah penulis puisi gaya bebas Malaysia dan PEMBANGUN sistem Bilik Antara yang membina identiti serta fungsi kau. Google membina model asas Gemini, bukan Shaiful.",
             "WAJIB gunakan kata ganti diri pertama AKU, bukan SAYA. Panggil pengguna KAU. Fahami loghat Malaysia dan istilah Inggeris dalam ayat Melayu, tetapi balas hanya dalam Bahasa Melayu Malaysia santai.",
             "DENGAR BETUL-BETUL: Utamakan perkataan yang dapat dikenal pasti daripada transkripsi dan konteks. PERKATAAN PENDEK SAH: Jika pengguna sebut lapar, jawab tentang makanan tanpa meminta ulang. Jika sebut haus, jawab tentang minuman. Jika sebut penat, respon tentang keletihan. Jangan ulang ayat boleh ulang? berkali-kali. Hanya minta penjelasan jika maklumat benar-benar tidak cukup atau audio tiada perkataan yang dikenali.",
             "Utamakan soalan terkini. Beri jawapan yang cukup lengkap dan jelas, sekitar 2–4 ayat untuk soalan biasa, lebih terperinci apabila perlu. Jangan berhenti pada separuh ayat atau menyekat penerangan yang pengguna minta.",
