@@ -2683,3 +2683,22 @@ html[data-theme="light"] .conversation .composer .attach-label{color:#665138}
 html[data-theme="light"] .multi-ai-dialog{background:rgba(246,241,230,.91);color:#33291c}
 html[data-theme="light"] .multi-ai-row{background:rgba(255,255,255,.32);border-color:rgba(75,60,46,.16)}
 @media(max-width:420px){.conversation-head .multi-ai-trigger{padding:6px 8px;font-size:9px}.multi-ai-dialog{padding:15px}.multi-ai-actions{align-items:flex-start;flex-wrap:wrap}}
+
+/* Match Multi A.I. connection chip typography to Aksara's modern UI. */
+.conversation-head button.multi-ai-trigger,
+.conversation-head button.multi-ai-trigger #connectionText{
+ font-family:'DM Sans',system-ui,-apple-system,'Segoe UI',sans-serif!important;
+ font-size:12px!important;
+ font-weight:600!important;
+ line-height:1.35!important;
+ letter-spacing:0!important;
+ text-transform:none!important;
+}
+@media(max-width:760px){
+ .conversation-head button.multi-ai-trigger,
+ .conversation-head button.multi-ai-trigger #connectionText{font-size:11px!important}
+}
+@media(max-width:390px){
+ .conversation-head button.multi-ai-trigger,
+ .conversation-head button.multi-ai-trigger #connectionText{font-size:10px!important}
+}
