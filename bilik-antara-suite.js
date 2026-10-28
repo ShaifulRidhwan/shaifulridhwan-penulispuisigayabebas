@@ -82,7 +82,7 @@ function snapshotCurrent(){
  const old=archive[idx]||{};
  const first=snapshot.history.find(x=>x.role==="user");
  const entry={id:activeId,title:(first&&first.content||"Perbualan baharu").slice(0,75),at:Date.now(),
-  pinned:!!old.pinned,history:snapshot.history,summary:snapshot.summary,thoughtLedger:snapshot.thoughtLedger};
+  pinned:!!old.pinned,history:snapshot.history,summary:snapshot.summary,summarizedThrough:snapshot.summarizedThrough,thoughtLedger:snapshot.thoughtLedger};
  if(idx>=0)archive.splice(idx,1);archive.unshift(entry);persistArchive();
 }
 window.addEventListener("ba:saved",snapshotCurrent);
