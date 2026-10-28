@@ -88,7 +88,7 @@ function analyzeIntent(question,attachment){
     creative?"creative":(calculate||technicalAction)?"technical":latest?"research":
     explain?"explain":technical?"technical":casual?"conversation":"general";
   const depth=simpleCalculation?"low":(sensitive&&!creative)?"medium":(deep||attachment||task==="critique"||task==="hypothetical")?"high":
-    (calculate||technical||latest||q.length>135)?"medium":"low";
+    (calculate||technicalAction||latest||q.length>135)?"medium":"low";
   const verification=!sensitive&&(debate||
     (deep&&/\b(?:semak|sahkan|buktikan|pastikan|verify|audit)\b/i.test(q)&&["technical","research","explain","general"].includes(task))||
     (calculate&&/(?:semak|buktikan|pastikan|verify|check|banding)/i.test(q)));
@@ -148,7 +148,8 @@ function freeModel(name,fallback="gemini-3.6-flash"){
 function chooseModel(defaultModel,intent){
   const base=freeModel(defaultModel);
   const advanced=freeModel(process.env.GEMINI_MODEL_COMPLEX,base);
-  return intent.depth==="high"?advanced:base;
+  const fast=freeModel(process.env.GEMINI_MODEL_FAST,"gemini-3.1-flash-lite");
+  return intent.depth==="high"?advanced:fast;
 }
 function sourceList(candidate){
   const chunks=candidate&&candidate.groundingMetadata&&candidate.groundingMetadata.groundingChunks;

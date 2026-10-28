@@ -5,7 +5,7 @@ const {boundedHistory,boundedText,readSSE}=require("../netlify/functions/lib/aks
 const I=require("../netlify/functions/antara-intelligence"),Brain=require("../bilik-antara-brain");
 const ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
 const savedFetch=global.fetch;
-const envKeys=["GEMINI_API_KEY","AKSARA_FREE_FALLBACKS","GROQ_API_KEY","GROQ_FREE_CONFIRMED","MISTRAL_API_KEY","MISTRAL_FREE_CONFIRMED","OPENROUTER_API_KEY"];
+const envKeys=["GEMINI_API_KEY","AKSARA_FREE_FALLBACKS","GROQ_API_KEY","GROQ_FREE_CONFIRMED","MISTRAL_API_KEY","MISTRAL_FREE_CONFIRMED","OPENROUTER_API_KEY","GEMINI_MODEL_FAST","GEMINI_MODEL_COMPLEX"];
 function setup(t){
  const old=Object.fromEntries(envKeys.map(k=>[k,process.env[k]]));
  Object.assign(process.env,{GEMINI_API_KEY:"mock",AKSARA_FREE_FALLBACKS:"true",GROQ_API_KEY:"mock",GROQ_FREE_CONFIRMED:"true"});
@@ -555,4 +555,30 @@ test("math concepts do not require a code-only model, while explicit computation
  const concept=I.resolveIntent("Apa itu integral?",[],false);assert.equal(concept.task,"explain");assert.equal(concept.calculate,false);assert.deepEqual(I.getTools(concept),[]);
  const why=I.resolveIntent("Kenapa 2+2 jadi 4?",[],false);assert.equal(why.task,"explain");assert.deepEqual(I.getTools(why),[]);
  assert.ok(I.getTools(I.resolveIntent("Kirakan integral x kuasa dua",[],false)).some(x=>x.code_execution));
+});
+
+test("light turns choose an allowlisted low-latency Gemini model while deep tasks keep the larger model",t=>{
+ setup(t);
+ assert.equal(I.chooseModel("gemini-3.6-flash",{depth:"low"}),"gemini-3.1-flash-lite");
+ assert.equal(I.chooseModel("gemini-3.6-flash",{depth:"high"}),"gemini-3.6-flash");
+ process.env.GEMINI_MODEL_FAST="paid-or-unreviewed-model";
+ assert.equal(I.chooseModel("gemini-3.6-flash",{depth:"low"}),"gemini-3.1-flash-lite");
+});
+test("model-specific quota blocks that model, and project-wide quota blocks every Gemini variant",async t=>{
+ for(const modelScoped of [true,false]){
+  const handler=setup(t);let google=0;
+  global.fetch=async url=>{
+   if(!url.includes("googleapis"))return reply("Sandaran tersedia.");
+   google++;
+   if(url.includes("gemini-3.1-flash-lite"))return Response.json({error:{details:[
+    {"@type":"type.googleapis.com/google.rpc.QuotaFailure",violations:[{quotaId:modelScoped?"GenerateContentRequestsPerDayPerProjectPerModel-FreeTier":"GenerateContentRequestsPerDayPerProject"}]},
+    {"@type":"type.googleapis.com/google.rpc.RetryInfo",retryDelay:"30s"}
+   ]}},{status:429});
+   return Response.json({candidates:[{content:{parts:[{text:"Jawapan model besar."}]},finishReason:"STOP"}]});
+  };
+  await handler(event({question:"Apa itu atom?",preferredProvider:"gemini"}));
+  const result=JSON.parse((await handler(event({question:"Analisis mendalam algoritma komputer.",preferredProvider:"gemini"}))).body);
+  assert.equal(google,modelScoped?2:1);
+  assert.equal(result.model,modelScoped?"gemini-3.6-flash":"mock");
+ }
 });

@@ -40,10 +40,10 @@ test("one automatic intelligence: no user mode required or honored",async()=>{
   const a=await handler(event({question:"Hai, salam?"},"hi"));
   assert.equal(a.statusCode,200);
   assert.equal(JSON.parse(a.body).aiMode,"automatic");
-  assert.equal(latestPrimary().generationConfig.thinkingConfig.thinkingLevel,"low");
+  assert.equal(latestPrimary().generationConfig.thinkingConfig.thinkingLevel,"minimal");
   const b=await handler(event({question:"Hai lagi",insightMode:"bedah"},"nomode"));
   assert.equal(b.statusCode,200);
-  assert.equal(latestPrimary().generationConfig.thinkingConfig.thinkingLevel,"low");
+  assert.equal(latestPrimary().generationConfig.thinkingConfig.thinkingLevel,"minimal");
 });
 test("deep argument generates second-pass review, map, and uncertain truth audit",async()=>{
   const r=await handler(event({question:"Kritik hujah aku: mengapa paradoks kebebasan memilih perlu diuji?"},"deep"));
@@ -157,7 +157,7 @@ test("ordinary explanation stays conversational rather than forcing debate",asyn
   assert.equal(response.statusCode,200);
   const first=calls[start].body;
   assert.match(first.systemInstruction.parts[0].text,/PENERANGAN:/);
-  assert.equal(first.generationConfig.thinkingConfig.thinkingLevel,"low");
+  assert.equal(first.generationConfig.thinkingConfig.thinkingLevel,"minimal");
   assert.equal(first.generationConfig.maxOutputTokens,2500);
   assert.equal(calls.length,start+1,"Ordinary factual explanation should not trigger a second API call");
 });
