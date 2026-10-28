@@ -132,7 +132,7 @@ test("Feature icon consolidates sessions, performance, studio and keeps privacy 
 });
 
 test("Header chips stay optically aligned and feature interactions have gentle golden motion",()=>{
- assert.match(html,/href="bilik-antara\.css\?v=49"/);
+ assert.match(html,/href="bilik-antara\.css\?v=50"/);
  assert.match(css,/\.conversation-head #voiceLive,\s*\.conversation-head #connection,\s*\.conversation-head #settingsPanel > summary\s*\{/);
  assert.match(css,/height:42px;\s*min-height:42px!important;\s*max-height:42px/);
  assert.match(css,/@media\(max-width:760px\)\{[\s\S]*?\.conversation-head #voiceLive,\.conversation-head #connection/);
@@ -173,7 +173,7 @@ test("Rounded Aksara controls share Liquid Glass, preserve contrast and cap mobi
 
 test("Clear Liquid Glass preserves background visibility and treats Send like a glass control",()=>{
  const clear=css.slice(css.indexOf("/* Liquid Glass · clearer optical glass"));
- assert.match(html,/href="bilik-antara\.css\?v=49"/);
+ assert.match(html,/href="bilik-antara\.css\?v=50"/);
  assert.match(clear,/clearer optical glass: transparent tint/);
  assert.match(clear,/rgba\(255,247,224,\.035\)/);
  assert.match(clear,/backdrop-filter:blur\(5px\)/);
