@@ -37,7 +37,7 @@ async function readSSE(body,consume){
   if(data==="[DONE]")return false;
   if(!data)return true;
   let parsed;try{parsed=JSON.parse(data);}catch(_){throw new Error("Aliran AI tidak sah.");}
-  if(parsed.error)throw new Error("Aliran AI terhenti.");
+  if(parsed.error)throw Object.assign(new Error("Aliran AI terhenti."),{status:Number(parsed.error.code)||502});
   return consume(parsed)!==false;
  };
  try{

@@ -22,12 +22,9 @@ const googleHealth={time:0,value:null,pending:null,model:""};
 let geminiTextCooldownUntil=0,lastTextProvider="",lastTextSuccessAt=0;
 const GEMINI_COOLDOWN_MS=120000;
 
-const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+Identity.RUNTIME_PROMPT+"\n"+[
-"STUDIO ANTARA: Jika pengguna meminta e-mel, PDF atau Word siap dieksport, bantu hasilkan kandungan dan maklumkan bahawa pengguna boleh buka studio-antara.html serta salin kandungan ke Studio melalui navigasi di atas chat. Studio mengendalikan eksport fail dalam pelayar. Penjanaan imej AI ada di studio-imej-beta.html sebagai BETA TEST berasingan; memerlukan peranti desktop yang sesuai, WebGPU, persetujuan dan muat turun model; jangan dakwa serasi dengan semua peranti atau boleh menjana imej terus melalui API sembang.",
-"OSINT TIKTOK: Jika diminta menyemak akaun, hanya laporan metadata profil yang benar-benar awam atau disahkan melalui TikTok API rasmi. Utamakan handle, nama paparan, bio (tanpa maklumat hubungan peribadi), verified, followers/following/video/likes dan pautan bio awam. Bezakan data API rasmi daripada hasil carian yang belum disahkan.",
-"OSINT PRIVASI: Jangan cuba mengenal pasti pemilik sebenar akaun pseudonim, menghubungkan akaun tersembunyi, keluarga, nombor peribadi, e-mel, IP, peranti atau lokasi fizikal pengguna. Jangan terbitkan latitud, longitud, koordinat GPS, rumah, sekolah, tempat kerja, lokasi masa nyata atau infer lokasi daripada gambar, geotag, catatan, video atau masa siaran. Negara hanya boleh disebut sebagai pernyataan sukarela dalam bio yang disahkan, bukan lokasi sebenar.",
-"Jangan menganggap username membuktikan akaun itu wujud. Jika TikTok Research API tiada akses, terangkan maklumat profil belum disahkan dan rujuk pautan awam sahaja. Jangan reka tarikh pendaftaran akaun atau ID dalaman."
-].join("\n");
+const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+Identity.RUNTIME_PROMPT+"\n"+"OSINT PRIVASI: Jangan cuba mengenal pasti pemilik sebenar akaun pseudonim, menghubungkan akaun tersembunyi, keluarga, nombor peribadi, e-mel, IP, peranti atau lokasi fizikal pengguna. Jangan terbitkan latitud, longitud, koordinat GPS, rumah, sekolah, tempat kerja, lokasi masa nyata atau infer lokasi daripada gambar, geotag, catatan, video atau masa siaran. Negara hanya boleh disebut sebagai pernyataan sukarela dalam bio yang disahkan, bukan lokasi sebenar.";
+const STUDIO_GUIDANCE="STUDIO ANTARA: Jika pengguna meminta e-mel, PDF atau Word siap dieksport, bantu hasilkan kandungan dan maklumkan bahawa pengguna boleh buka studio-antara.html serta salin kandungan ke Studio melalui navigasi di atas chat. Studio mengendalikan eksport fail dalam pelayar. Penjanaan imej AI ada di studio-imej-beta.html sebagai BETA TEST berasingan; memerlukan peranti desktop yang sesuai, WebGPU, persetujuan dan muat turun model; jangan dakwa serasi dengan semua peranti atau boleh menjana imej terus melalui API sembang.";
+const OSINT_GUIDANCE=["OSINT TIKTOK: Jika diminta menyemak akaun, hanya laporan metadata profil yang benar-benar awam atau disahkan melalui TikTok API rasmi. Utamakan handle, nama paparan, bio (tanpa maklumat hubungan peribadi), verified, followers/following/video/likes dan pautan bio awam. Bezakan data API rasmi daripada hasil carian yang belum disahkan.","Jangan menganggap username membuktikan akaun itu wujud. Jika TikTok Research API tiada akses, terangkan maklumat profil belum disahkan dan rujuk pautan awam sahaja. Jangan reka tarikh pendaftaran akaun atau ID dalaman."].join("\n");
 
 const TASK_GUIDANCE={
   conversation:"PERBUALAN: Balas secara semula jadi, dengar konteks dan sesuaikan humor. Jangan analisis logik pengguna tanpa diminta.",
@@ -82,7 +79,14 @@ async function callGemini({apiKey,model,contents,system,tools=[],thinkingLevel="
     const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+(onDelta?":streamGenerateContent?alt=sse":":generateContent"),{
       method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":apiKey},
       body:JSON.stringify(body),signal:control.signal});
-    if(!res.ok){const error=new Error("Gemini HTTP "+res.status);error.status=res.status;throw error;}
+    if(!res.ok){
+      const error=new Error("Gemini HTTP "+res.status);error.status=res.status;
+      const details=await res.json().catch(()=>({}));
+      const retryInfo=details?.error?.details?.find?.(x=>String(x?.["@type"]||"").endsWith("RetryInfo"));
+      const seconds=Number.parseFloat(res.headers?.get?.("retry-after")||retryInfo?.retryDelay||"");
+      if(Number.isFinite(seconds))error.retryAfterSeconds=Math.max(1,Math.ceil(seconds));
+      throw error;
+    }
     if(!onDelta||!res.body||!/text\/event-stream/i.test(res.headers?.get("content-type")||""))return await res.json();
     let text="",candidate={},usageMetadata=null,emitted=false;
     await readSSE(res.body,chunk=>{
@@ -125,7 +129,7 @@ async function reviewAnswer({apiKey,model,question,reply,sources,evidence,intent
   return review;
 }
 exports.handler=async event=>{
-  const started=Date.now(),deadline=started+28000,H=headers();
+  const started=Date.now(),deadline=started+24000,H=headers();
   const remaining=()=>Math.max(1,deadline-Date.now());
   let streamed=false,firstTextMs=null;
   const emit=typeof event.onDelta==="function"?text=>{if(!text)return;if(firstTextMs===null)firstTextMs=Date.now()-started;streamed=true;event.onDelta(text);}:null;
@@ -156,7 +160,7 @@ exports.handler=async event=>{
             const test=await callGemini({apiKey,model:baseModel,system:"Pemeriksaan sambungan, jawab ringkas.",contents:[{role:"user",parts:[{text:"Balas OK."}]}],maxTokens:64,timeoutMs:5000,signal:event.signal});
             return {id:"gemini",status:test?.candidates?.length?"online":"offline",latencyMs:Date.now()-time};
           }catch(e){
-            if(e.status===429)geminiTextCooldownUntil=Date.now()+GEMINI_COOLDOWN_MS;
+            if(e.status===429)geminiTextCooldownUntil=Date.now()+(e.retryAfterSeconds?e.retryAfterSeconds*1000:GEMINI_COOLDOWN_MS);
             return {id:"gemini",status:"offline",...(e.status?{http:e.status}:{})};
           }
         })();
@@ -275,8 +279,8 @@ exports.handler=async event=>{
   const tools=getTools({...intent,search:intent.search||!!tiktokHandle});
   const model=chooseModel(baseModel,intent);
   const detailedIdentity=Identity.needsDetail(question)||intent.works||/\b(?:puisi|sajak|pantun|gurindam|penulisan|coder poet)\b/i.test(question);
-  const system=PERSONALITY+"\n"+(detailedIdentity?Identity.CORE_PROMPT+"\n"+Identity.PROMPT:"")+"\n"+(TASK_GUIDANCE[intent.task]||TASK_GUIDANCE.general)+
-      "\nPENDEKATAN CERDAS: Kenal pasti tugas sebenar, pecahkan masalah rumit kepada submasalah yang perlu, semak pengiraan dan andaian, pilih alat hanya apabila alat menambah bukti. Utamakan jawapan yang boleh diuji berbanding bunyi yakin. Jangan dedahkan nota penalaran dalaman. Jangan mengaku melakukan semakan yang tidak dibuat."+
+  const system=PERSONALITY+"\n"+(/\b(?:studio|pdf|word|e-?mel|eksport|imej|gambar)\b/i.test(question)?STUDIO_GUIDANCE+"\n":"")+(tiktokHandle||/\b(?:osint|akaun|username|tiktok|profil)\b/i.test(question)?OSINT_GUIDANCE+"\n":"")+(detailedIdentity?Identity.CORE_PROMPT+"\n"+Identity.PROMPT:"")+"\n"+(TASK_GUIDANCE[intent.task]||TASK_GUIDANCE.general)+
+      (intent.depth==="high"||intent.task==="technical"?"\nPENDEKATAN CERDAS: Kenal pasti tugas sebenar, pecahkan masalah rumit kepada submasalah yang perlu, semak pengiraan dan andaian, pilih alat hanya apabila alat menambah bukti. Utamakan jawapan yang boleh diuji berbanding bunyi yakin. Jangan dedahkan nota penalaran dalaman. Jangan mengaku melakukan semakan yang tidak dibuat.":"")+
       (intent.thought?"\nEKSPERIMEN PEMIKIRAN: nyatakan andaian jelas dan kesan yang dijangka, jangan bentangkan andaian sebagai fakta.":"")+
       (intent.debate?"\nKRITIK HUJAH: cari premis lemah, bantahan paling kuat, dan nilai bukti dengan tegas.":"")+
       (intent.search?"\nFAKTA TERKINI: gunakan carian jika tersedia; bezakan sumber yang benar-benar dijumpai daripada pengetahuan sedia ada. Jika tiada sumber disahkan, nyatakan ketidakpastian.":"")+
@@ -296,7 +300,7 @@ exports.handler=async event=>{
       alternativeTried=true;
       let alternative;
       try{
-        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:8000,bufferedTimeoutMs:20000,deadline,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...options});
+        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...options});
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
@@ -330,7 +334,7 @@ exports.handler=async event=>{
   }
   try{
     if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
-    if(Date.now()<geminiTextCooldownUntil)throw Object.assign(new Error("Gemini quota cooling down"),{status:429});
+    if(Date.now()<geminiTextCooldownUntil)throw Object.assign(new Error("Gemini quota cooling down"),{status:429,cooldownKnown:true,retryAfterSeconds:Math.max(1,Math.ceil((geminiTextCooldownUntil-Date.now())/1000))});
     const data=await callGemini({apiKey,model,system,contents,tools,thinkingLevel:plan.thinkingLevel,
       maxTokens,timeoutMs:Math.min(textOnly&&Router.enabled()?6500:18000,remaining()),signal:event.signal,deadline,onDelta:emit&&!plan.doReview&&!tools.length?emit:null});
     const candidate=data&&data.candidates&&data.candidates[0];
@@ -371,7 +375,7 @@ exports.handler=async event=>{
   }catch(error){
     if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
     if(streamed)return result(502,{code:"STREAM_INTERRUPTED",error:"Aliran jawapan terputus. Jawapan separa belum lengkap."},H);
-    if(error.status===429)geminiTextCooldownUntil=Math.max(geminiTextCooldownUntil,Date.now()+GEMINI_COOLDOWN_MS);
+    if(error.status===429&&!error.cooldownKnown)geminiTextCooldownUntil=Math.max(geminiTextCooldownUntil,Date.now()+(error.retryAfterSeconds?error.retryAfterSeconds*1000:GEMINI_COOLDOWN_MS));
     const transient=[400,401,403,404,429,500,502,503,504].includes(error.status)||error.name==="AbortError"||error.name==="TypeError"||(!error.status&&error.name==="Error");
     if(transient&&textOnly&&Router.enabled()&&!alternativeTried){
       const fallback=await useAlternative();if(fallback)return fallback;

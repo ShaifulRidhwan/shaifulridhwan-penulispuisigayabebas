@@ -22,8 +22,18 @@ export default async function(request){
    const emit=value=>{if(!cancelled&&!abort.signal.aborted)controller.enqueue(encoder.encode(JSON.stringify(value)+"\n"));};
    emit({type:"start",version:1});
    try{
-    const response=await main.handler({httpMethod:"POST",headers:Object.fromEntries(request.headers),body,
-     signal:abort.signal,onDelta:text=>emit({type:"delta",text})});
+    // Always send a terminal event before the platform's 30-second limit,
+    // including when an upstream reader ignores cancellation.
+    let timeout;
+    const budget=new Promise(resolve=>{timeout=setTimeout(()=>{
+      emit({type:"error",status:504,code:"STREAM_INTERRUPTED",error:"Model mengambil masa terlalu lama. Teks kau dikekalkan.",retryAfterSeconds:3});
+      stop();resolve(null);
+    },26000);});
+    let response;
+    try{response=await Promise.race([main.handler({httpMethod:"POST",headers:Object.fromEntries(request.headers),body,
+      signal:abort.signal,onDelta:text=>emit({type:"delta",text})}),budget]);}
+    finally{clearTimeout(timeout);}
+    if(!response)return;
     const data=JSON.parse(response.body||"{}");
     if(response.statusCode>=400)emit({type:"error",status:response.statusCode,...data});
     else emit({type:"done",...data});

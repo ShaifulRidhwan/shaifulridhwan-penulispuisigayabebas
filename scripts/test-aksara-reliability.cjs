@@ -399,3 +399,49 @@ test("complexity alone does not silently add another model review",()=>{
  const ordinary=I.resolveIntent(long,[],false);assert.equal(ordinary.depth,"high");assert.equal(ordinary.review,false);
  assert.equal(I.resolveIntent("Semak ketepatan analisis mendalam algoritma ini",[],false).review,true);
 });
+
+test("OpenRouter health leaves room for visible text rather than spending the whole probe on reasoning",async t=>{
+ setup(t);delete process.env.GROQ_API_KEY;process.env.OPENROUTER_API_KEY="mock";
+ const router=require("../netlify/functions/aksara-provider-router");let body;
+ global.fetch=async(_url,options)=>{body=JSON.parse(options.body);return reply("OK");};
+ const rows=await router.checkStatus();assert.equal(rows.find(x=>x.id==="openrouter").status,"online");
+ assert.equal(body.max_tokens,512);assert.equal(body.reasoning.effort,"low");assert.equal(body.reasoning.exclude,true);
+});
+test("the stream watchdog sends a terminal error and cancels a hung upstream",async()=>{
+ const source=fs.readFileSync(path.join(__dirname,"../netlify/functions/bilik-antara-stream.mjs"),"utf8").replace(/^import main[^\n]*\n/,"").replace("export default async function", "return async function");
+ let trigger,upstreamSignal;
+ const stream=new Function("main","setTimeout","clearTimeout",source)(
+  {handler:async event=>{upstreamSignal=event.signal;return new Promise(()=>{});}},
+  (callback,delay)=>{assert.equal(delay,26000);trigger=callback;return 1;},()=>{}
+ );
+ const response=await stream(new Request(ORIGIN,{method:"POST",headers:{origin:ORIGIN},body:'{"question":"ujian"}'}));
+ const reader=response.body.getReader(),decoder=new TextDecoder();
+ assert.equal(JSON.parse(decoder.decode((await reader.read()).value)).type,"start");
+ trigger();
+ const terminal=JSON.parse(decoder.decode((await reader.read()).value));
+ assert.equal(terminal.type,"error");assert.equal(terminal.status,504);assert.equal(upstreamSignal.aborted,true);
+ assert.equal((await reader.read()).done,true);
+});
+test("upstream RetryInfo is honored and an existing Google cooldown is never extended by another user question",async t=>{
+ const handler=setup(t);let now=100000,google=0;
+ t.mock.method(Date,"now",()=>now);
+ global.fetch=async url=>{
+  if(url.includes("groq.com"))return new Response("",{status:429,headers:{"retry-after":"2"}});
+  google++;
+  if(google===1)return Response.json({error:{details:[{"@type":"type.googleapis.com/google.rpc.RetryInfo",retryDelay:"2s"}]}},{status:429});
+  return Response.json({candidates:[{content:{parts:[{text:"Sambungan pulih."}]},finishReason:"STOP"}]});
+ };
+ const payload={question:"Apa itu atom?",preferredProvider:"gemini"};
+ await handler(event(payload));now+=1500;await handler(event(payload));
+ assert.equal(google,1,"Do not call a quota-limited provider before its wait expires");
+ now+=601;const response=await handler(event(payload));
+ assert.equal(google,2,"A repeated question must not push a two-second wait forward by two minutes");assert.equal(response.statusCode,200);
+});
+test("failed provider chains stop at the first-response budget instead of consuming the whole answer deadline",async t=>{
+ setup(t);process.env.MISTRAL_API_KEY="mock";process.env.MISTRAL_FREE_CONFIRMED="true";
+ const router=require("../netlify/functions/aksara-provider-router");let now=100000,calls=0;
+ t.mock.method(Date,"now",()=>now);
+ global.fetch=async()=>{calls++;now+=200;return new Response("",{status:503});};
+ await router.complete({system:"persona",history:[],question:"Hai",deadline:now+5000,firstResponseDeadline:now+600});
+ assert.equal(calls,1,"Preserve time to report failure or try the primary; don't run a chain until platform timeout");
+});
