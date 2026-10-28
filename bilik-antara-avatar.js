@@ -7,6 +7,15 @@ const stage=document.getElementById("voiceAvatarStage");
 if(panel&&stage){
 let active=false,renderer=null,scene=null,camera=null,root=null,face=null,raf=0,resize=null,context=null,blinkAt=0,started=0,loading=false,jawMotion=0,lipMotion=0;
 const modelURL="https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette.glb";
+// Cache the exact PNG snapshot of the voice avatar: repeat visits need no WebGL portrait pass.
+const portraitCacheKey="bilik-antara-chat-portrait-png-v1";
+function showPortrait(picture){
+ if(typeof picture!=="string"||!picture.startsWith("data:image/png;base64,")||picture.length>450000)return false;
+ if(!/^[A-Za-z0-9+/=]+$/.test(picture.slice(22)))return false;
+ document.documentElement.style.setProperty("--ai-chat-portrait",'url("'+picture+'")');
+ document.documentElement.classList.add("chat-portrait-ready");
+ return true;
+}
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
 function weights(names,value){if(!face?.morphTargetDictionary)return;for(const name of names){for(const [k,i] of Object.entries(face.morphTargetDictionary)){if(k===name||k.endsWith("."+name)){face.morphTargetInfluences[i]=value;}}}}
 function stop(){
@@ -124,9 +133,8 @@ async function buildChatPortrait(){
   camera.updateProjectionMatrix();
   smallRenderer.render(scene,camera);
   const picture=smallRenderer.domElement.toDataURL("image/png");
-  if(picture.length>100){
-   document.documentElement.style.setProperty("--ai-chat-portrait",'url("'+picture+'")');
-   document.documentElement.classList.add("chat-portrait-ready");
+  if(showPortrait(picture)){
+   try{localStorage.setItem(portraitCacheKey,picture);}catch(_){}
   }
  }catch(err){console.warn("Chat avatar portrait unavailable; keeping monogram.",err);}
  finally{
@@ -135,9 +143,13 @@ async function buildChatPortrait(){
   if(smallRenderer){smallRenderer.dispose();smallRenderer.forceContextLoss();}
  }
 }
-// Deferred for smooth initial chat painting. Avoid duplicate rendering once ready.
-if("requestIdleCallback" in window)window.requestIdleCallback(()=>buildChatPortrait(),{timeout:2000});
-else window.setTimeout(buildChatPortrait,300);
+// Reuse the exact pixel-for-pixel portrait on return visits; render it only once.
+let portraitCached=false;
+try{portraitCached=showPortrait(localStorage.getItem(portraitCacheKey));}catch(_){}
+if(!portraitCached){
+ if("requestIdleCallback" in window)window.requestIdleCallback(()=>buildChatPortrait(),{timeout:2000});
+ else window.setTimeout(buildChatPortrait,300);
+}
 const observer=new MutationObserver(()=>{if(panel.hidden){if(active)stop();}else if(!active&&!loading)begin();});
 observer.observe(panel,{attributes:true,attributeFilter:["hidden"]});
 if(!panel.hidden)begin();
