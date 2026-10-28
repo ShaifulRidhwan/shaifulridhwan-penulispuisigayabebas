@@ -2938,3 +2938,14 @@ html[data-theme="light"] .identity h1 em{background-image:linear-gradient(110deg
  .identity h1 em{animation:antaraTitleShimmer 4s ease-in-out -2s infinite,antaraTitleFloat 4.8s ease-in-out -2.4s infinite,antaraSilverGlow 4s ease-in-out -2s infinite!important}
  .identity h1::before{animation:antaraHalo 9s ease-in-out infinite!important}.identity h1::after{animation:antaraRay 4.6s ease-in-out infinite!important}
 }
+
+/* Moving reflections stay on the pane, below every interactive/chat layer. */
+.conversation{isolation:isolate;-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);box-shadow:0 24px 75px rgba(0,0,0,.28),inset 1px 1px 0 rgba(255,241,214,.38),inset -1px -1px 0 rgba(128,178,225,.24)}
+.conversation::before{content:"";display:block;position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:inherit;background:radial-gradient(ellipse at 12% 12%,rgba(255,224,165,.18),transparent 52%),radial-gradient(ellipse at 88% 86%,rgba(142,191,230,.12),transparent 55%);background-size:160% 160%;animation:antaraGlassDepth 9s ease-in-out infinite alternate}
+.conversation::after{inset:-20% -45%;z-index:0;background:linear-gradient(108deg,transparent 31%,rgba(255,241,209,.025) 40%,rgba(255,243,214,.18) 47%,rgba(255,255,255,.23) 49%,rgba(166,208,240,.12) 51%,transparent 60%);animation:antaraGlassReflection 6.8s ease-in-out infinite;will-change:transform,opacity}
+.conversation>.conversation-head,.conversation>.messages,.conversation>.composer-area,.conversation>.starters,.conversation>.ba-toolbar,.conversation>#connectionInfo{position:relative;z-index:1}
+@keyframes antaraGlassReflection{0%{transform:translate3d(-42%,0,0);opacity:.2}45%{opacity:.75}75%{opacity:.45}100%{transform:translate3d(42%,0,0);opacity:.18}}
+@keyframes antaraGlassDepth{0%{background-position:0% 10%,100% 90%;opacity:.45}100%{background-position:100% 80%,0% 20%;opacity:.8}}
+html[data-theme="light"] .conversation::after{background:linear-gradient(108deg,transparent 32%,rgba(255,255,255,.16) 42%,rgba(255,255,255,.65) 49%,rgba(180,154,111,.12) 53%,transparent 61%)}
+@media(max-width:760px){.conversation{-webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15)}}
+@media(prefers-reduced-motion:reduce){.conversation::before{animation:antaraGlassDepth 9s ease-in-out infinite alternate!important}.conversation::after{animation:antaraGlassReflection 6.8s ease-in-out infinite!important}}

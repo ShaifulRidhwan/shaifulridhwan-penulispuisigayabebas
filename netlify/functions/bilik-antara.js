@@ -218,7 +218,9 @@ exports.handler=async event=>{
   // A short elliptical reply needs the previous topic even when keyword routing misses it.
   const contextual=history.length>0&&(followUp||
     (question.length<=85&&/^(?:dia|itu|ni|tu|mereka|yang|kalau|tapi|jadi|habis|pastu|so|betul|boleh|patut|maksud|sebab|akibat|kesan|contoh|lebih|kurang)\b/i.test(question)));
-  if(contextual){intent.depth=intent.depth==="high"?"high":"medium";intent.review=false;}
+  if(contextual&&!intent.reaction){intent.depth=intent.depth==="high"?"high":"medium";intent.review=false;}
+  const reactionGuidance=intent.reaction?
+   "\nREAKSI PENDEK PADA GILIRAN TERAKHIR: Mesej pengguna ialah tanda mendengar atau memahami, bukan permintaan penerangan baharu. Rujuk jawapan AI paling akhir dalam sejarah, dan balas satu reaksi pendek yang sesuai dalam Bahasa Melayu Malaysia lisan. Jangan membuat kesimpulan tentang pendapat atau emosi pengguna. Jangan mencipta kaitan baharu, melompat ke cerita pengasas/puisi/coding, mengulang biografi, memuji tanpa sebab, menawarkan projek atau mengakhiri dengan soalan bantuan automatik. Jika tiada perkara perlu ditambah, satu ayat pendek sudah cukup. Jangan menggunakan frasa hafalan yang sama setiap kali; sesuaikan dengan perbualan sebenar. Jika konteks terdahulu sensitif, kekalkan nada tenang tanpa gurauan.":"";
   const plan=intelligencePlan(intent);
   const identityReply=(!media.length&&!documentText)?Identity.answerIdentity(question):null;
   if(identityReply)return result(200,{
@@ -257,7 +259,7 @@ exports.handler=async event=>{
       (intent.search?"\nFAKTA TERKINI: gunakan carian jika tersedia; bezakan sumber yang benar-benar dijumpai daripada pengetahuan sedia ada. Jika tiada sumber disahkan, nyatakan ketidakpastian.":"")+
       (intent.hasLink?"\nPAUTAN: semak kandungan URL dengan alat URL Context jika tersedia. Jika kandungan tidak dapat diakses, akui dan jangan buat ringkasan rekaan.":"")+
       "\nPERSEMBAHAN KREATIF: Jika diminta menyanyi, cipta lirik lagu ORIGINAL pendek dalam Bahasa Melayu santai, dengan rangkap dan korus ringkas. Jangan menolak permintaan nyanyian original secara automatik. Jangan hasilkan semula lirik penuh lagu komersial atau menyamar sebagai penyanyi asal. Dalam mod teks, nyatakan bahawa jawapan ialah lirik, bukan rakaman suara."+
-      followUpGuidance+
+      followUpGuidance+reactionGuidance+
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
   const maxTokens=plan.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,

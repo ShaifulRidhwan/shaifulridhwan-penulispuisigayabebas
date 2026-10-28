@@ -243,3 +243,16 @@ test("loaded project facts answer immediately in the browser without a network c
  const direct=await ask({question:"siapa shaiful ridhwan"},new AbortController().signal,()=>{});assert.equal(direct.model,"project-identity");assert.match(direct.reply,/The Coder Poet/);assert.equal(calls,0);
  const attached=await ask({question:"siapa shaiful ridhwan",media:[{mimeType:"image/png",data:"mock"}]},new AbortController().signal,()=>{});assert.equal(attached.reply,"Analisis fail");assert.equal(calls,1);
 });
+test("short acknowledgements stay on the last conversational turn instead of inheriting founder stories or technical tasks",()=>{
+ const h=[{role:"user",content:"siapa buat bilik antara no"},{role:"assistant",content:"Shaiful Ridhwan yang membangunkan Bilik Antara."}];
+ for(const question of ["ooo","ohh","hmm","ok","faham","haha"]){const intent=I.resolveIntent(question,h,false);assert.equal(intent.reaction,true,question);assert.equal(intent.task,"conversation");assert.equal(intent.depth,"low");assert.equal(intent.search,false);assert.equal(intent.works,false);}
+ assert.notEqual(I.resolveIntent("Jelaskan lagi kenapa dia buat sistem ini",h,false).reaction,true);
+ assert.notEqual(I.resolveIntent("ooo",h,true).reaction,true,"Attachments must still be analysed");
+ assert.equal(I.resolveIntent("ooo",[{role:"user",content:"Aku sedih sangat"},{role:"assistant",content:"Aku dengar."}],false).task,"support");
+});
+test("reaction guidance reaches the chosen provider together with the actual previous dialogue",async t=>{
+ const handler=setup(t);let request;
+ global.fetch=async(_url,opts)=>{request=JSON.parse(opts.body);return reply("Haa, dia yang bangunkan ruang ni.");};
+ const history=[{role:"user",content:"siapa buat bilik antara no"},{role:"assistant",content:"Shaiful Ridhwan yang membangunkan Bilik Antara."}];
+ const r=await handler(event({question:"ooo",history,preferredProvider:"groq"}));assert.equal(r.statusCode,200);assert.match(request.messages[0].content,/REAKSI PENDEK PADA GILIRAN TERAKHIR/);assert.equal(request.messages.at(-2).content,history[1].content);assert.equal(request.reasoning_effort,"low");
+});

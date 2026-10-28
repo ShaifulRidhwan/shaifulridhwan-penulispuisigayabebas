@@ -95,6 +95,12 @@ function resolveIntent(question,history,attachment){
   const current=analyzeIntent(question,attachment);
   if(attachment||!Array.isArray(history)||current.sensitive)return current;
   const q=safeText(question,32000).toLowerCase().replace(/[!?.]+$/,"").trim();
+  // Acknowledgements acknowledge the last turn; they are not requests for a new topic.
+  if(/^(?:o{2,}|o+h+|ah+a?|haa+|hmm+|ok(?:ay|ey)?|baik(?:lah)?|faham|aha|haha+|hehe+|betul|ya|ye)(?:\s+(?:lah|do|wei|tu|dah|okay|ok))?$/.test(q)){
+    const priorUser=[...history].reverse().find(m=>m?.role==="user"&&typeof m.content==="string");
+    const support=priorUser&&analyzeIntent(priorUser.content,false).sensitive;
+    return {...current,task:support?"support":"conversation",depth:"low",sensitive:!!support,search:false,calculate:false,works:false,review:false,thought:false,debate:false,reaction:true};
+  }
   // Preserve the preceding user goal for truly elliptical follow-ups and corrections.
   const reference=/^(?:lagi|teruskan|sambung|jelaskan lagi|terangkan lagi|hurai lagi|lebih mendalam|lebih terperinci|lebih detail|bagi contoh|contoh lain|macam mana|kenapa|mengapa|yang kedua|yang ketiga|yang tadi|yang tu|dia|itu|lanjutkan|bukan macam tu|bukan tu|maksud aku|yang lain|pastu)$/.test(q);
   if(!reference)return current;
