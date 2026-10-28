@@ -139,7 +139,7 @@ const ENDPOINT="/.netlify/functions/bilik-antara";
 const STORAGE="bilik-antara-session-v2",THEME="bilik-antara-theme";
 const MEDIA=new Set(["application/pdf","image/jpeg","image/png","image/webp","image/gif",
  "audio/mpeg","audio/wav","audio/mp4","audio/ogg","video/mp4","video/webm"]);
-let history=[],summary="",ideas=[],summarizedThrough=0,compacting=false,conversationEpoch=0,fileState=null,busy=false;
+let history=[],summary="",ideas=[],summarizedThrough=0,compacting=false,conversationEpoch=0,fileState=null,busy=false,quotaCooldownUntil=0;
 function elem(tag,cls,text){
  const e=document.createElement(tag);if(cls)e.className=cls;
  if(text!==undefined)e.textContent=String(text);return e;
@@ -165,13 +165,14 @@ function setTheme(value,save){
 try{setTheme(localStorage.getItem(THEME),false);}catch(e){setTheme("dark",false);}
 ui.theme.addEventListener("click",()=>setTheme(ui.html.getAttribute("data-theme")==="dark"?"light":"dark",true));
 function status(kind,label,explain){
- ui.conn.className="connection"+(["ready","online"].includes(kind)?" ready":kind==="error"?" error":"");
+ ui.conn.className="connection"+(["ready","online"].includes(kind)?" ready":["error","limited"].includes(kind)?" error":"");
  ui.connText.textContent=label;
- ui.connInfo.className="connection-info"+(explain?" active"+(kind==="error"?" error":""):"");
+ ui.connInfo.className="connection-info"+(explain?" active"+(["error","limited"].includes(kind)?" error":""):"");
  ui.connInfoText.textContent=explain||"";
- ui.retry.hidden=kind==="ready"||kind==="online";
+ ui.retry.hidden=kind==="ready"||kind==="online"||kind==="limited";
 }
 async function probe(){
+ if(Date.now()<quotaCooldownUntil){status("limited","Had API","Kuota Gemini sementara penuh. Mesej kau masih ada; cuba lagi selepas beberapa ketika.");return;}
  status("connecting","Menyemak…","");
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),14000);
  try{
@@ -522,8 +523,12 @@ async function submit(event){
  if(!typed&&!fileState)return;
  const question=typed||"Analisis lampiran ini dan bezakan fakta daripada perkara yang belum disahkan.";
  const selectedFile=fileState;
+ if(Date.now()<quotaCooldownUntil){
+  const seconds=Math.max(1,Math.ceil((quotaCooldownUntil-Date.now())/1000));
+  status("limited","Had API","Kuota Gemini belum tersedia. Cuba lagi selepas kira-kira "+seconds+" saat. Teks kau kekal dalam kotak taip.");return;
+ }
  busy=true;update();ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
- addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""));
+ const pendingUser=addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""));
  const typing=showTyping();
  ui.input.value="";resize();update();
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),34000);
@@ -539,7 +544,7 @@ async function submit(event){
     body:JSON.stringify(payload),signal:ctrl.signal});
    data=await res.json().catch(()=>({}));
    if(!res.ok){
-    const error=new Error(String(data.error||"HTTP "+res.status));error.status=res.status;throw error;
+    const error=new Error(String(data.error||"HTTP "+res.status));error.status=res.status;error.code=data.code||"";throw error;
    }
   }
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
@@ -555,10 +560,15 @@ async function submit(event){
   status("online","Connected","");
   compact();
  }catch(error){
-  typing.remove();
-  const desc=error&&error.name==="AbortError"?"Sambungan mengambil masa terlalu lama. Cuba semula.":String(error&&error.message||"Ralat tidak diketahui.").slice(0,300);
-  addMessage("assistant","Permintaan belum berjaya: "+desc);
-  status("error","Sambungan terganggu","Mesej atau lampiran masih ada untuk dicuba semula.");
+  typing.remove();pendingUser.remove(); // Failed attempts must not masquerade as conversation history.
+  const limited=error?.status===429||error?.code==="API_QUOTA";
+  if(limited){
+   quotaCooldownUntil=Date.now()+60000; // Local retry guard, not a claim about Google reset time.
+   status("limited","Had API","Kuota Gemini sementara penuh. Mesej kau masih ada; cuba lagi sebentar nanti.");
+  }else{
+   const desc=error?.name==="AbortError"?"Respons mengambil masa terlalu lama.":String(error?.message||"Ralat tidak diketahui.").slice(0,180);
+   status("error","Permintaan gagal",desc+" Mesej kau dikekalkan untuk dicuba semula.");
+  }
   if(!ui.input.value.trim())ui.input.value=typed;
   resize();
  }finally{clearTimeout(timer);busy=false;update();}
