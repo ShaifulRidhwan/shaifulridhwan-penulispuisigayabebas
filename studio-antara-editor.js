@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id);
 const editor=$("richDocument"),title=$("docTitle"),saved=$("docSaved"),counts=$("docCounts");
 if(!editor)return;
 const KEY="aksara:studio:document-draft:v1";
-const SAFE_TAGS=new Set(["P","DIV","BR","H1","H2","H3","BLOCKQUOTE","STRONG","B","EM","I","U","S","UL","OL","LI","A"]);
+const SAFE_TAGS=new Set(["P","DIV","BR","H1","H2","H3","BLOCKQUOTE","STRONG","B","EM","I","U","S","UL","OL","LI","A","TABLE","THEAD","TBODY","TR","TH","TD","IMG","HR"]);
 let dirty=false,saveTimer=null,changeCallback=()=>{};
 function sanitize(markup){
  const parsed=new DOMParser().parseFromString(String(markup||""),"text/html");
@@ -13,14 +13,19 @@ function sanitize(markup){
   for(const node of [...parent.childNodes]){
    if(node.nodeType===8){node.remove();continue;}
    if(node.nodeType!==1){if(node.nodeType!==3)node.remove();continue;}
-   if(["SCRIPT","STYLE","SVG","MATH","IFRAME","OBJECT","FORM","IMG","VIDEO","AUDIO","INPUT","BUTTON","META"].includes(node.tagName)){node.remove();continue;}
+   if(["SCRIPT","STYLE","SVG","MATH","IFRAME","OBJECT","FORM","VIDEO","AUDIO","INPUT","BUTTON","META"].includes(node.tagName)){node.remove();continue;}
    const safeHref=node.tagName==="A"&&/^https?:\/\//i.test(node.getAttribute("href")||"")?node.getAttribute("href"):null;
+   const safeImage=node.tagName==="IMG"&&/^data:image\/(png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(node.getAttribute("src")||"")&&(node.getAttribute("src")||"").length<240000?node.getAttribute("src"):null;
+   const isBreak=node.tagName==="HR"&&node.getAttribute("data-page-break")==="true";
+   if(node.tagName==="IMG"&&!safeImage){node.remove();continue;}
    walk(node);
    if(!SAFE_TAGS.has(node.tagName)){node.replaceWith(...[...node.childNodes]);continue;}
    const align=/^text-align:\s*(left|center|right|justify)\s*;?$/i.exec((node.getAttribute("style")||"").trim());
    for(const attr of [...node.attributes])node.removeAttribute(attr.name);
    if(align)node.style.textAlign=align[1].toLowerCase();
    if(node.tagName==="A"&&safeHref){node.setAttribute("href",safeHref);node.setAttribute("rel","noopener noreferrer");}
+   if(node.tagName==="IMG"&&safeImage){node.setAttribute("src",safeImage);node.setAttribute("alt","Ilustrasi dokumen");}
+   if(isBreak)node.setAttribute("data-page-break","true");
   }
  }
  walk(parsed.body);
@@ -40,7 +45,7 @@ function saveDraft(){
  clearTimeout(saveTimer);
  const data={title:title.value,template:$("docTemplate").value,html:getHTML(),at:Date.now()};
  try{
-  if(JSON.stringify(data).length>350000){saved.textContent="Draf terlalu besar untuk simpanan automatik";return false;}
+  if(JSON.stringify(data).length>1500000){saved.textContent="Draf terlalu besar untuk simpanan automatik";return false;}
   localStorage.setItem(KEY,JSON.stringify(data));dirty=false;saved.textContent="Disimpan pada peranti";return true;
  }catch(_){saved.textContent="Simpanan tidak tersedia";return false;}
 }
@@ -100,6 +105,6 @@ editor.addEventListener("paste",event=>{
 editor.addEventListener("input",()=>update());
 title.addEventListener("input",()=>{dirty=true;clearTimeout(saveTimer);saveTimer=setTimeout(saveDraft,950);});
 $("docTemplate").addEventListener("change",()=>{clearTimeout(saveTimer);saveTimer=setTimeout(saveDraft,950);});
-window.StudioRich={getHTML,getText,setHTML,setText,saveDraft,restoreDraft,onChange:fn=>{changeCallback=fn;}};
+window.StudioRich={getHTML,getText,setHTML,setText,saveDraft,restoreDraft,onChange:fn=>{changeCallback=fn;},changed:()=>update(),editor};
 restoreDraft();update(false);
 })();
