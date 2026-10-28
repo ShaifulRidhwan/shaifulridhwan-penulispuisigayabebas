@@ -2726,3 +2726,14 @@ html[data-theme="light"] .multi-ai-row{background:rgba(255,255,255,.32);border-c
  padding:0;
  line-height:1.25!important;
 }
+
+/* Compact theme control beside the DM Sans navigation. */
+.topbar #themeToggle{width:34px;height:34px;min-width:34px;min-height:34px;padding:0;border-radius:50%;}
+.topbar #themeToggle svg{width:14px;height:14px;stroke-width:1.65;}
+@media(max-width:760px){
+ .topbar #themeToggle{width:28px;height:28px;min-width:28px;min-height:28px;}
+ .topbar #themeToggle svg{width:13px;height:13px;}
+}
+@media(max-width:390px){
+ .topbar #themeToggle{width:27px;height:27px;min-width:27px;min-height:27px;}
+}
