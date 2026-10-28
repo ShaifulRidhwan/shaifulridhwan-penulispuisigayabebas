@@ -34,7 +34,7 @@ const PROVIDERS=[
  {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
   url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"}
 ];
-const OPENROUTER_CHAT_MODELS=["nvidia/nemotron-3.5-lightning:free","google/gemma-4-31b-it:free","poolside/laguna-s-2.1:free"];
+const OPENROUTER_CHAT_MODELS=["google/gemma-4-31b-it:free","nvidia/nemotron-3.5-lightning:free","poolside/laguna-s-2.1:free"];
 const classifierModel=model=>/(?:guard|moderation|classifier|safety)/i.test(String(model||""));
 function classifierReply(text){
  const value=String(text||"").replace(/\*\*/g,"").trim();
@@ -43,7 +43,7 @@ function classifierReply(text){
 function validateChatReply(text,model){
  if(classifierModel(model)||classifierReply(text))throw Object.assign(new Error("Provider returned classification metadata instead of a chat answer"),{status:502});
 }
-function openRouterBody(body,effort="low"){delete body.model;body.models=OPENROUTER_CHAT_MODELS;body.stream=false;body.reasoning={effort,exclude:true};return body;}
+function openRouterBody(body,effort="low"){delete body.model;body.models=OPENROUTER_CHAT_MODELS;body.stream=body.stream===true;body.reasoning={effort,exclude:true};return body;}
 const safeMessage=text=>boundedText(text,60000);
 function configured(){
  if(process.env.AKSARA_FREE_FALLBACKS!=="true")return [];
@@ -80,9 +80,9 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   if(skip.includes(provider.id)||Date.now()<(cooldown.get(provider.id)||0))continue;
   if(signal?.aborted)throw new DOMException("Dihentikan","AbortError");
   const remaining=Math.min(deadline,firstResponseDeadline)-Date.now();if(remaining<500)break;
-  // OpenRouter is deliberately buffered for validation: its limit must cover
-  // the whole answer, not the short time-to-first-token used for streaming.
-  const attemptBudget=!onDelta||provider.id==="openrouter"?bufferedTimeoutMs:timeoutMs;
+  // All selected models are reviewed chat models. Stream their visible text
+  // through the same classifier-prefix guard; JSON clients get a full-answer budget.
+  const attemptBudget=!onDelta?bufferedTimeoutMs:timeoutMs;
   const attemptStarted=Date.now();
   const control=requestControl(Math.min(attemptBudget,remaining),signal);
   let emitted=false;

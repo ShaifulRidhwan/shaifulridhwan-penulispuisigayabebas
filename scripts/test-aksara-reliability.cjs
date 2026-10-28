@@ -191,12 +191,12 @@ test("classifier labels from an ordinary-looking model are also rejected, while 
  const bad=await router.complete({system:"persona",history:[],question:"Hai",onDelta:x=>displayed.push(x)});
  assert.equal(bad.error,"all_providers_unavailable");assert.equal(displayed.length,0);
 });
-test("OpenRouter chat requests specify only reviewed free chat models and validate the buffered answer",async t=>{
+test("OpenRouter chat requests specify only reviewed free chat models and validate a JSON response",async t=>{
  setup(t);delete process.env.GROQ_API_KEY;process.env.OPENROUTER_API_KEY="mock";
  const router=require("../netlify/functions/aksara-provider-router");let body;const displayed=[];
  global.fetch=async(_url,opts)=>{body=JSON.parse(opts.body);return reply("Aku tak boleh bantu perbuatan itu, tetapi aku boleh cadangkan pilihan yang selamat.");};
  const r=await router.complete({system:"persona",history:[],question:"Soalan",onDelta:x=>displayed.push(x)});
- assert.equal(r.provider,"openrouter");assert.equal(body.model,undefined);assert.equal(body.stream,false);assert.equal(body.models.length,3);assert.ok(body.models.every(x=>x.endsWith(":free")&&!/guard|classifier|moderation/.test(x)));assert.equal(displayed.join(""),r.reply);
+ assert.equal(r.provider,"openrouter");assert.equal(body.model,undefined);assert.equal(body.stream,true);assert.equal(body.models.length,3);assert.ok(body.models.every(x=>x.endsWith(":free")&&!/guard|classifier|moderation/.test(x)));assert.equal(displayed.join(""),r.reply);
 });
 test("colloquial identity questions use the existing grounded Aksara introduction",async t=>{
  const handler=setup(t);global.fetch=()=>{throw Error("Identity must not need a provider");};
@@ -204,14 +204,14 @@ test("colloquial identity questions use the existing grounded Aksara introductio
   const r=await handler(event({question}));assert.equal(r.statusCode,200,question);const data=JSON.parse(r.body);assert.equal(data.model,"project-identity");assert.match(data.reply,/Aksara A\.I\./);assert.doesNotMatch(data.reply,/User Safety:/);
  }
 });
-test("buffered OpenRouter answers are not cut off at the streaming first-token deadline",async t=>{
+test("non-streaming OpenRouter clients get the full-answer budget",async t=>{
  setup(t);delete process.env.GROQ_API_KEY;process.env.OPENROUTER_API_KEY="mock";
  const router=require("../netlify/functions/aksara-provider-router");let calls=0;
  global.fetch=async(_url,{signal})=>{calls++;return new Promise((resolve,reject)=>{
   const timer=setTimeout(()=>resolve(reply("Jawapan lengkap yang mengambil masa sedikit lebih lama.")),100);
   signal.addEventListener("abort",()=>{clearTimeout(timer);reject(new DOMException("abort","AbortError"));},{once:true});
  });};
- const r=await router.complete({system:"persona",history:[],question:"Kenapa langit biru?",onDelta:()=>{},timeoutMs:30,bufferedTimeoutMs:600,deadline:Date.now()+1000});
+ const r=await router.complete({system:"persona",history:[],question:"Kenapa langit biru?",timeoutMs:30,bufferedTimeoutMs:600,deadline:Date.now()+1000});
  assert.equal(r.provider,"openrouter");assert.match(r.reply,/Jawapan lengkap/);assert.equal(calls,1);
 });
 test("direct founder biography needs no external model call but follow-up discussion stays generative",async t=>{
@@ -444,4 +444,17 @@ test("failed provider chains stop at the first-response budget instead of consum
  global.fetch=async()=>{calls++;now+=200;return new Response("",{status:503});};
  await router.complete({system:"persona",history:[],question:"Hai",deadline:now+5000,firstResponseDeadline:now+600});
  assert.equal(calls,1,"Preserve time to report failure or try the primary; don't run a chain until platform timeout");
+});
+
+test("free multilingual OpenRouter text streams early and never exposes a reasoning delta",async t=>{
+ setup(t);delete process.env.GROQ_API_KEY;process.env.OPENROUTER_API_KEY="mock";
+ const router=require("../netlify/functions/aksara-provider-router");let body;const displayed=[];
+ global.fetch=async(_url,options)=>{
+  body=JSON.parse(options.body);
+  return sse([{model:"google/gemma-4-31b-it:free",choices:[{delta:{reasoning:"hidden planning"}}]},
+   {choices:[{delta:{content:"Aku dengar."}}]},{choices:[{delta:{},finish_reason:"stop"}]}]);
+ };
+ const response=await router.complete({system:"persona",history:[],question:"Hai",onDelta:x=>displayed.push(x)});
+ assert.equal(body.models[0],"google/gemma-4-31b-it:free");assert.equal(body.stream,true);
+ assert.equal(response.provider,"openrouter");assert.equal(displayed.join(""),"Aku dengar.");
 });
