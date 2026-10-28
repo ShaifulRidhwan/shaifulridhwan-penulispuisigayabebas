@@ -3151,3 +3151,69 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 @media(prefers-reduced-motion:reduce){
  .conversation-head #voiceLive::before{animation:none}
 }
+
+
+/* Small chapter heading: gold and midnight-blue converge, distinct from the main title. */
+.identity .eyebrow .eyebrow-convergence{
+ position:relative;display:inline-block;isolation:isolate;white-space:nowrap;
+}
+.identity .eyebrow .eyebrow-caption{
+ position:relative;z-index:1;display:inline-block;
+ background:linear-gradient(100deg,#f0c477 6%,#fff1c9 38%,#d4d5dd 52%,#96b7d9 82%,#f0c477 100%);
+ background-size:200% 100%;-webkit-background-clip:text;background-clip:text;
+ -webkit-text-fill-color:transparent;
+ animation:antaraEyebrowInk 10s ease-in-out infinite;
+}
+.identity .eyebrow .eyebrow-ray{
+ position:absolute;z-index:0;bottom:-3px;width:50%;height:1px;pointer-events:none;
+ opacity:0;will-change:transform,opacity;
+}
+.identity .eyebrow .eyebrow-ray--light{
+ left:0;transform-origin:left center;
+ background:linear-gradient(90deg,transparent,#eab768 45%,#fff0c8);
+ box-shadow:0 0 7px rgba(255,196,94,.65);
+ animation:antaraEyebrowGold 10s ease-in-out infinite;
+}
+.identity .eyebrow .eyebrow-ray--shadow{
+ right:0;transform-origin:right center;
+ background:linear-gradient(270deg,transparent,#648fbe 45%,#d3e9ff);
+ box-shadow:0 0 7px rgba(113,165,226,.6);
+ animation:antaraEyebrowBlue 10s ease-in-out infinite;
+}
+.identity .eyebrow .eyebrow-meeting{
+ position:absolute;z-index:2;left:50%;bottom:-5px;width:5px;height:5px;
+ background:#fff5df;border-radius:50%;pointer-events:none;
+ box-shadow:0 0 5px #fff4d5,0 0 12px rgba(241,200,138,.7),0 0 14px rgba(132,181,233,.55);
+ opacity:0;transform:translateX(-50%) scale(.35);will-change:transform,opacity;
+ animation:antaraEyebrowMeet 10s ease-in-out infinite;
+}
+@keyframes antaraEyebrowInk{
+ 0%,100%{background-position:0% 50%}
+ 48%{background-position:100% 50%}
+ 76%{background-position:70% 50%}
+}
+@keyframes antaraEyebrowGold{
+ 0%,12%,100%{opacity:0;transform:scaleX(0)}
+ 22%{opacity:.45;transform:scaleX(.2)}
+ 45%,53%{opacity:.95;transform:scaleX(1)}
+ 67%{opacity:0;transform:scaleX(.85)}
+}
+@keyframes antaraEyebrowBlue{
+ 0%,17%,100%{opacity:0;transform:scaleX(0)}
+ 27%{opacity:.4;transform:scaleX(.23)}
+ 45%,53%{opacity:.9;transform:scaleX(1)}
+ 67%{opacity:0;transform:scaleX(.85)}
+}
+@keyframes antaraEyebrowMeet{
+ 0%,39%,62%,100%{opacity:0;transform:translateX(-50%) scale(.35)}
+ 46%,50%{opacity:1;transform:translateX(-50%) scale(1.4)}
+ 55%{opacity:.55;transform:translateX(-50%) scale(.85)}
+}
+@media(forced-colors:active){
+ .identity .eyebrow .eyebrow-caption{background:none;-webkit-text-fill-color:currentColor}
+ .identity .eyebrow .eyebrow-ray,.identity .eyebrow .eyebrow-meeting{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .identity .eyebrow .eyebrow-caption{animation:none;background-position:35% 50%}
+ .identity .eyebrow .eyebrow-ray,.identity .eyebrow .eyebrow-meeting{animation:none;opacity:0}
+}
