@@ -61,9 +61,11 @@ test("Faster ambience and animated translucent glass layer",()=>{
  assert.ok(!css.includes("@import"));
 });
 
-test("Mobile viewport, light theme and conversation functions retained",()=>{
+test("Mobile viewport, permanent dark theme and conversation functions retained",()=>{
  assert.match(css,/@media\(max-width:760px\)/);
- assert.match(css,/html\[data-theme="light"\] body/);
+ assert.doesNotMatch(css,/data-theme="light"/);
+ assert.doesNotMatch(html,/id="themeLight"|id="themeDark"|function setTheme/);
+ assert.match(html,/<meta name="color-scheme" content="dark">/);
  assert.match(css,/\.shell\.is-busy/);
  assert.match(css,/\.composer textarea\{\s*font-size:16px/);
  assert.match(html,/visualViewport/);
@@ -71,7 +73,7 @@ test("Mobile viewport, light theme and conversation functions retained",()=>{
  for(const id of ["chat","connection","connectionText","connectionInfo","connectionInfoText",
   "retryBtn","starters","composer","input","sendBtn","documentUpload",
   "rememberChat","clearChat","thoughtItems","forgetIdeas","docStatus",
-  "removeAttachment","themeDark","themeLight","stopBtn","contextFallback"])assert.ok(html.includes('id="'+id+'"'),"Missing "+id);
+  "removeAttachment","stopBtn","contextFallback"])assert.ok(html.includes('id="'+id+'"'),"Missing "+id);
  for(const x of ["publicAccount","argumentMap","truthAudit","thoughtLedger","renderExtras","fileState","summary:"])
   assert.ok(html.includes(x),"Missing "+x);
  assert.match(html,/\.classList\.toggle\("is-busy",busy\)/);

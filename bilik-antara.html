@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#070911">
 <meta name="description" content="Aksara A.I. ialah pembantu kecerdasan buatan berbahasa Melayu santai dalam Bilik Antara, dibangunkan oleh Shaiful Ridhwan. Sembang teks, Voice Chat, pembelajaran dan penulisan.">
 <meta name="author" content="Shaiful Ridhwan">
-<meta name="color-scheme" content="dark light">
+<meta name="color-scheme" content="dark">
 <title>Aksara A.I. | Bilik Antara oleh Shaiful Ridhwan</title>
 <link rel="canonical" href="https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html">
 <meta name="robots" content="index,follow,max-image-preview:large">
@@ -24,8 +24,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=38">
-<link rel="stylesheet" href="bilik-antara-suite.css?v=3">
+<link rel="stylesheet" href="bilik-antara.css?v=39">
+<link rel="stylesheet" href="bilik-antara-suite.css?v=4">
 
 </head>
 <body>
@@ -39,15 +39,7 @@
    <a class="nav-link" href="index.html">Laman utama</a>
    <a class="nav-link" href="studio-antara.html">Studio</a>
    <a class="nav-link" href="antara-cahaya-dan-gelap.html">Novel</a>
-   <div class="theme-choices" role="group" aria-label="Pilihan tema">
-
-    <button class="theme-choice" type="button" id="themeLight" title="Tema cahaya" aria-label="Tema cahaya" aria-pressed="false">
-     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-    </button>
-    <button class="theme-choice" type="button" id="themeDark" title="Tema gelap" aria-label="Tema gelap" aria-pressed="true">
-     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.5A8.2 8.2 0 0 1 8.5 4a8.5 8.5 0 1 0 11.5 11.5Z"/></svg>
-    </button>
-   </div>  </nav>
+  </nav>
  </header>
  <main class="app-shell">
   <section class="identity" aria-label="Identiti Bilik Antara">
@@ -56,6 +48,7 @@
    <div class="chapter-ornament" aria-hidden="true"><span>✦</span></div>
   </section>
   <section class="conversation" aria-label="Ruang perbualan">
+   <div class="glass-shadow-mist" aria-hidden="true"></div>
    <header class="conversation-head">
     <div class="voice-toolbar" role="group" aria-label="Kawalan suara">
      
@@ -101,6 +94,7 @@
     </div>
     <div class="voice-avatar-stage" id="voiceAvatarStage" aria-label="Ruang avatar AI cahaya dan gelap"><div class="voice-avatar-glow" aria-hidden="true"></div><div class="voice-avatar-caption">AKSARA A.I.</div></div>
     <div class="voice-wave" id="voiceWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="voice-dialogue-dock">
     <div id="voiceStatus" class="voice-status" role="status" aria-live="polite">Belum bersambung.</div>
     <div id="voiceTranscript" class="voice-transcript" hidden aria-hidden="true"></div>
     <div class="voice-session-controls">
@@ -108,7 +102,7 @@
      <button type="button" id="voiceMuteSpeaker" aria-pressed="true">Senyapkan suara</button>
      <label class="voice-volume" for="voiceVolume"><span>Volume AI</span><input type="range" id="voiceVolume" min="0" max="100" step="1" value="40" aria-label="Volume suara Aksara" aria-valuetext="40 peratus"/><output id="voiceVolumeValue" for="voiceVolume">40%</output></label>
     </div>
-    <p class="voice-privacy">Mikrofon aktif hanya selepas kau mulakan Voice Live. Setiap sambungan Google kira-kira 10 minit; sistem akan cuba sambung semula tanpa meminta mikrofon berulang kali, sehingga 24 jam jika tab kekal aktif. Sambungan, kuota dan kelancaran tidak dijamin. Voice menggunakan Bahasa Melayu Malaysia santai. Audio dihantar kepada Google. Selepas sesi tamat, teks perbualan yang tersedia disambungkan ke sejarah chat tanpa dipaparkan semasa Voice Live; ia hanya disimpan pada peranti jika pilihan ingat sesi diaktifkan.</p>
+    </div>
    </div>
    <div class="composer-area">
     <div id="docStatus" role="status" aria-live="polite"></div><button type="button" id="removeAttachment" hidden aria-label="Buang lampiran">× Buang lampiran</button>
@@ -131,7 +125,7 @@
 "use strict";
 const el=id=>document.getElementById(id);
 const ui={
- html:document.documentElement,shell:document.querySelector(".shell"),themeDark:el("themeDark"),themeLight:el("themeLight"),conn:el("connection"),
+ html:document.documentElement,shell:document.querySelector(".shell"),conn:el("connection"),
  connText:el("connectionText"),connInfo:el("connectionInfo"),connInfoText:el("connectionInfoText"),
  retry:el("retryBtn"),chat:el("chat"),starters:el("starters"),form:el("composer"),
  input:el("input"),send:el("sendBtn"),stop:el("stopBtn"),contextFallback:el("contextFallback"),upload:el("documentUpload"),
@@ -149,7 +143,7 @@ window.addEventListener("resize",syncViewport,{passive:true});
 if(window.visualViewport)window.visualViewport.addEventListener("resize",syncViewport,{passive:true});
 const ENDPOINT="/.netlify/functions/bilik-antara";
 const STREAM_ENDPOINT="/.netlify/functions/bilik-antara-stream";
-const STORAGE="bilik-antara-session-v2",THEME="bilik-antara-theme";
+const STORAGE="bilik-antara-session-v2";
 const MEDIA=new Set(["application/pdf","image/jpeg","image/png","image/webp","image/gif",
  "audio/mpeg","audio/wav","audio/mp4","audio/ogg","audio/webm","video/mp4","video/webm"]);
 let activeRequest=null,stoppedByUser=false,failedPreview=null,lastProvider="",lastProviderAt=0;
@@ -167,25 +161,18 @@ function link(parent,label,url){
  const a=elem("a","",String(label||"Lihat sumber").slice(0,120));
  a.href=safe;a.rel="noopener noreferrer";a.target="_blank";parent.appendChild(a);return true;
 }
-function setTheme(value,save){
- value=value==="light"?"light":"dark";
- ui.html.setAttribute("data-theme",value);
- ui.themeDark.setAttribute("aria-pressed",value==="dark"?"true":"false");
- ui.themeLight.setAttribute("aria-pressed",value==="light"?"true":"false");
- const meta=document.querySelector('meta[name="theme-color"]');
- if(meta)meta.content=value==="light"?"#e8ddc7":"#070911";
- if(save)try{localStorage.setItem(THEME,value);}catch(e){}
-}
-try{setTheme(localStorage.getItem(THEME),false);}catch(e){setTheme("dark",false);}
-ui.themeDark.addEventListener("click",()=>setTheme("dark",true));
-ui.themeLight.addEventListener("click",()=>setTheme("light",true));
+// Bilik Antara uses one permanent dark palette, including returning browsers.
+ui.html.setAttribute("data-theme","dark");
+try{localStorage.removeItem("bilik-antara-theme");}catch(_){}
 function status(kind,label,explain){
  ui.conn.className="connection multi-ai-trigger"+(["ready","online"].includes(kind)?" ready":["error","limited"].includes(kind)?" error":"");
- ui.connText.textContent=label==="Connected"?"Multi A.I. Connected":label;
+ ui.connText.textContent=label==="Connected"?"Multi AI Connected":label;
+ ui.conn.title=kind==="configured"&&label==="Multi AI Connected"?"Pelayan Multi AI bersambung. Tekan untuk menyemak setiap model.":"Semak sambungan model AI";
  ui.connInfo.className="connection-info"+(explain?" active"+(["error","limited"].includes(kind)?" error":""):"");
  ui.connInfoText.textContent=explain||"";
  ui.retry.hidden=kind==="ready"||kind==="online"||kind==="limited";
 }
+window.addEventListener("ba:voice-connected",()=>status("online","Multi AI Connected",""));
 async function probe(){
  if(Date.now()<quotaCooldownUntil){status("limited","Had API","Kuota Gemini sementara penuh. Mesej kau masih ada; cuba lagi selepas beberapa ketika.");return;}
  status("connecting","Menyemak…","");
@@ -194,7 +181,7 @@ async function probe(){
   const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
    body:JSON.stringify({probe:true}),signal:controller.signal});
   const data=await res.json().catch(()=>({}));
-  if(res.ok&&data.ok)status("configured","AI dikonfigurasi","");
+  if(res.ok&&data.ok)status("configured","Multi AI Connected","");
   else status("error","AI tak dapat bersambung",String(data.error||"Sambungan AI belum tersedia.").slice(0,250));
  }catch(e){status("error","Tiada sambungan","Cuba hubungi pelayan semula.");}
  finally{clearTimeout(timer);}
@@ -230,7 +217,7 @@ async function checkProviders(force=false){
   const data=await res.json();if(!Array.isArray(data.providers))throw Error("Status tidak lengkap");
   renderProviderRows(data.providers);multiLastCheck=Date.now();
   multiChecked.textContent=data.someOnline?"Sekurang-kurangnya satu model boleh dihubungi.":"Tiada model berjaya disahkan sekarang.";
-  if(data.someOnline)status("ready","Disahkan melalui ujian","");
+  if(data.someOnline)status("ready","Multi AI Connected","");
   else status("error","Multi A.I. Offline","");
  }catch(_){renderProviderRows([]);multiChecked.textContent="Semakan gagal. Status penyedia belum dapat disahkan.";}
  finally{clearTimeout(timer);multiChecking=false;el("multiAiRefresh").disabled=false;}
@@ -689,7 +676,7 @@ async function submit(event){
   addIdeas(data.thoughtLedger);save();
   if(selectedFile&&selectedFile===fileState)ui.docStatus.textContent="Lampiran tersedia untuk soalan susulan · "+selectedFile.name;
   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
-  status(data.model==="project-identity"?"configured":"online",data.model==="project-identity"?"Jawapan identiti setempat":"Jawapan diterima · "+(data.provider||"Gemini"),"");
+  status(data.model==="project-identity"?"configured":"online",data.model==="project-identity"?"Jawapan identiti setempat":"Multi AI Connected","");
   if(data.model!=="project-identity"){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
   compact();
  }catch(error){
@@ -763,7 +750,7 @@ restore();renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-suite.js?v=8" defer></script>
 <script src="bilik-antara-brain.js?v=8" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
-<script src="bilik-antara-voice.js?v=31" defer></script>
+<script src="bilik-antara-voice.js?v=32" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
 <script type="module" src="bilik-antara-avatar.js?v=6"></script>
 

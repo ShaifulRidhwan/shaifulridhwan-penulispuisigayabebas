@@ -54,7 +54,7 @@ test("Short Malay words trigger a natural answer, not five requests to repeat",(
  assert.match(sharedBrain.VOICE_GUIDANCE,/lapar/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/Jangan meminta ulang/);
  assert.match(fallback,/Perkataan pendek seperti lapar/);
- assert.match(html,/Bahasa Melayu Malaysia santai/);
+ assert.match(js,/Bahasa Melayu Malaysia santai/);
 });
 test("Long generated speech is buffered and does not cut off after three seconds",()=>{
  assert.match(js,/function drainAudioQueue\(\)/);
@@ -176,7 +176,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
  assert.match(html,/bilik-antara\.css\?v=\d+/);
  assert.match(html,/id="composer"/);
  assert.match(html,/aria-live="polite"/);
- assert.match(html,/Audio dihantar kepada Google/i);
+ assert.doesNotMatch(html,/class="voice-privacy"|Mikrofon aktif hanya selepas/);
  assert.doesNotMatch(html,/id="voiceAutoplay"|Baca jawapan/);
  assert.doesNotMatch(js,/voice-read|readUtterance|speechSynthesis|equipRead/);
  assert.doesNotMatch(css,/\.voice-read\b|\.voice-autoread\b/);
@@ -189,7 +189,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
 });
 test("Casual Malay UI uses Cakap instead of technical Dikte",()=>{
  assert.match(html,/id="voiceDictate"[^>]*>Cakap jadi teks<\/button>/);
- assert.match(html,/status\("configured","AI dikonfigurasi"/);
+ assert.match(html,/status\("configured","Multi AI Connected"/);
  assert.match(js,/dictate\.textContent="🎙 Cakap"/);
  assert.match(js,/dictate\.textContent="■ Berhenti"/);
  assert.doesNotMatch(html,/>🎙 Dikte<\/button>/);
@@ -266,8 +266,8 @@ test("Long-running Voice is opted in and reconnects in foreground without storin
  assert.match(js,/connectionAttempts>=MAX_RECONNECT_ATTEMPTS/);
  assert.match(js,/connectedAt<9\*60\*1000/);
  assert.doesNotMatch(js,/localStorage\.setItem\([^;]*resumeHandle/);
- assert.match(html,/24 jam/);
- assert.match(html,/teks perbualan/);
+ assert.match(js,/MAX_DAY=24\*60\*60\*1000/);
+ assert.match(js,/BilikAntaraBridge\?\.addVoice/);
 });
 test("Live speech detection tolerates Malay pauses and refuses to guess unclear speech",()=>{
  assert.match(js,/silenceDurationMs:1000/);

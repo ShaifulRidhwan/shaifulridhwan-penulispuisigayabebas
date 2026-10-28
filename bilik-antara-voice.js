@@ -260,6 +260,7 @@ function onServerMessage(payload){
   if(payload.setupComplete){
     voiceMetrics.connections++;if(voiceMetrics.connections>1)voiceMetrics.reconnects++;
     liveReady=true;
+    window.dispatchEvent(new Event("ba:voice-connected"));
     if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
     sayStatus("Bersambung · Bahasa Melayu santai. Cakap sahaja, aku sedang dengar.");return;
   }
