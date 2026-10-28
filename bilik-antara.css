@@ -2737,3 +2737,33 @@ html[data-theme="light"] .multi-ai-row{background:rgba(255,255,255,.32);border-c
 @media(max-width:390px){
  .topbar #themeToggle{width:27px;height:27px;min-width:27px;min-height:27px;}
 }
+
+/* Two quiet theme icons, no oversized circular toggle beside the navigation. */
+.topbar .theme-choices{
+ display:inline-flex;align-items:center;justify-content:center;gap:1px;
+ flex:none;margin-left:2px;
+}
+.topbar .theme-choice{
+ display:grid;place-items:center;
+ width:24px;height:30px;min-width:24px;min-height:30px;padding:0;
+ border:0;border-radius:7px;background:transparent;box-shadow:none;
+ color:var(--muted);opacity:.53;cursor:pointer;
+ transition:color .18s ease,opacity .18s ease,background .18s ease;
+}
+.topbar .theme-choice svg{
+ display:block;width:12px;height:12px;
+ fill:none;stroke:currentColor;stroke-width:1.7;
+ stroke-linecap:round;stroke-linejoin:round;
+}
+.topbar .theme-choice[aria-pressed="true"]{color:var(--gold);opacity:1}
+.topbar .theme-choice:hover{opacity:1;background:rgba(214,181,127,.09)}
+.topbar .theme-choice:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+@media(max-width:760px){
+ .topbar .theme-choices{gap:0;margin-left:0}
+ .topbar .theme-choice{width:21px;min-width:21px;height:28px;min-height:28px}
+ .topbar .theme-choice svg{width:11px;height:11px}
+}
+@media(max-width:390px){
+ .topbar .theme-choice{width:19px;min-width:19px}
+ .topbar .theme-choice svg{width:10px;height:10px}
+}
