@@ -130,3 +130,20 @@ test("Feature icon consolidates sessions, performance, studio and keeps privacy 
  assert.match(css,/\.conversation #settingsPanel \.feature-hub-item/);
  assert.match(css,/\.conversation>\.messages\.is-welcome/);
 });
+
+test("Header chips stay optically aligned and feature interactions have gentle golden motion",()=>{
+ assert.match(html,/href="bilik-antara\.css\?v=46"/);
+ assert.match(css,/\.conversation-head #voiceLive,\s*\.conversation-head #connection,\s*\.conversation-head #settingsPanel > summary\s*\{/);
+ assert.match(css,/height:42px;\s*min-height:42px!important;\s*max-height:42px/);
+ assert.match(css,/@media\(max-width:760px\)\{[\s\S]*?\.conversation-head #voiceLive,\.conversation-head #connection/);
+ assert.match(css,/@keyframes aksaraFeaturesEnter/);
+ assert.match(css,/@keyframes aksaraFeaturesExit/);
+ assert.match(css,/\.conversation #settingsPanel\.is-closing \.settings-card/);
+ assert.match(css,/\.conversation-head #settingsPanel > summary:focus-visible/);
+ assert.match(css,/-webkit-tap-highlight-color:transparent/);
+ assert.match(css,/@keyframes aksaraPrivacyReveal/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+ assert.match(html,/featureSummary\.addEventListener\("click",event=>/);
+ assert.match(html,/function closeFeatureMenu\(\)/);
+ assert.match(html,/if\(event\.key==="Escape"&&ui\.settings\.open\)/);
+});
