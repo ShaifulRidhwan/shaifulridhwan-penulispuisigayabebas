@@ -14,27 +14,14 @@ function sanitize(markup){
    if(node.nodeType===8){node.remove();continue;}
    if(node.nodeType!==1){if(node.nodeType!==3)node.remove();continue;}
    if(["SCRIPT","STYLE","SVG","MATH","IFRAME","OBJECT","FORM","IMG","VIDEO","AUDIO","INPUT","BUTTON","META"].includes(node.tagName)){node.remove();continue;}
+   const safeHref=node.tagName==="A"&&/^https?:\/\//i.test(node.getAttribute("href")||"")?node.getAttribute("href"):null;
    walk(node);
    if(!SAFE_TAGS.has(node.tagName)){node.replaceWith(...[...node.childNodes]);continue;}
    for(const attr of [...node.attributes])node.removeAttribute(attr.name);
-   if(node.tagName==="A"){
-     const raw=String(node.getAttribute("href")||"");
-     // The href is restored from the original parsed DOM by the HTML walker below.
-     if(raw)node.setAttribute("href",raw);
-   }
+   if(node.tagName==="A"&&safeHref){node.setAttribute("href",safeHref);node.setAttribute("rel","noopener noreferrer");}
   }
  }
- // Copy safe URLs before stripping the remaining attributes.
- parsed.body.querySelectorAll("a").forEach(a=>{
-  const href=a.getAttribute("href")||"";
-  a.dataset.safeHref=/^https?:\/\//i.test(href)?href:"";
- });
  walk(parsed.body);
- parsed.body.querySelectorAll("a").forEach(a=>{
-  const href=a.dataset.safeHref;
-  a.removeAttribute("data-safe-href");
-  if(href){a.setAttribute("href",href);a.setAttribute("rel","noopener noreferrer");}
- });
  return parsed.body.innerHTML;
 }
 function getHTML(){return sanitize(editor.innerHTML);}
