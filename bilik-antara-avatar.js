@@ -41,17 +41,23 @@ async function begin(){
   const scale=2.5/Math.max(size.y,.1);root.scale.setScalar(scale);
   const basePosition=center.clone().multiplyScalar(-scale);
   root.position.copy(basePosition);
-  const headTargetY=(bounds.max.y-center.y)*scale-size.y*scale*.21;
+  // Camera follows the actual head, not the center of the whole character.
   const frameModel=()=>{
-    if(!stage.clientWidth||!stage.clientHeight)return;
-    const aspect=stage.clientWidth/stage.clientHeight;
-    const vfov=THREE.MathUtils.degToRad(camera.fov);
-    const desiredHeight=size.y*scale*.43;
-    const desiredWidth=size.x*scale*.88;
-    const fitHeight=Math.max(desiredHeight,desiredWidth/Math.max(aspect,.25));
-    const distance=fitHeight/(2*Math.tan(vfov/2)) + size.z*scale*.35;
-    camera.position.set(0,headTargetY,Math.max(1.7,distance));
-    camera.lookAt(0,headTargetY,0);
+    const w=stage.clientWidth,h=stage.clientHeight;
+    if(!w||!h)return;
+    root.updateMatrixWorld(true);
+    const headMesh=root.getObjectByName("Wolf3D_Head");
+    const headBox=headMesh?new THREE.Box3().setFromObject(headMesh):null;
+    const validHead=headBox&&!headBox.isEmpty()&&headBox.getSize(new THREE.Vector3()).y>0.02;
+    const target=validHead?headBox.getCenter(new THREE.Vector3()):new THREE.Vector3(0,size.y*scale*.20,0);
+    // Keep head in the upper half and show neck/shoulders below it.
+    const headHeight=validHead?headBox.getSize(new THREE.Vector3()).y:size.y*scale*.18;
+    const headWidth=validHead?headBox.getSize(new THREE.Vector3()).x:size.x*scale*.35;
+    const visibleHeight=Math.max(headHeight*2.55,headWidth*1.8/(w/h),.42);
+    const fov=THREE.MathUtils.degToRad(camera.fov);
+    const distance=visibleHeight/(2*Math.tan(fov/2));
+    camera.position.set(target.x,target.y-headHeight*.38,target.z+Math.max(.75,distance));
+    camera.lookAt(target.x,target.y-headHeight*.38,target.z);
   };
   face=root.getObjectByName("Wolf3D_Head")||null;
   if(!face)root.traverse(o=>{if(!face&&o.morphTargetInfluences&&o.morphTargetDictionary)face=o;});
