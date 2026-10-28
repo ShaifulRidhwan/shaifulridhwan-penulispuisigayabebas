@@ -2838,3 +2838,60 @@ html[data-theme="light"] .multi-ai-row{background:rgba(255,255,255,.32);border-c
  font:600 11px/1.25 'DM Sans',system-ui,sans-serif!important;
  letter-spacing:0!important;
 }
+
+/* Voice volume v2: transparent glass control, large touch target and precise thumb. */
+.voice-panel .voice-session-controls .voice-volume{
+  box-sizing:border-box;
+  width:min(100%,360px);max-width:360px;
+  min-height:48px;
+  margin:5px auto 0;padding:5px 9px;
+  border:1px solid rgba(236,205,162,.22);
+  border-radius:999px;
+  background:rgba(8,15,26,.09);
+  -webkit-backdrop-filter:blur(9px);
+  backdrop-filter:blur(9px);
+  color:rgba(251,237,215,.92);
+  gap:11px;
+}
+.voice-panel .voice-volume input[type="range"]{
+  -webkit-appearance:none;appearance:none;
+  display:block;flex:1 1 auto;
+  width:100%;min-width:80px;max-width:none;
+  height:40px;margin:0;padding:0;
+  border:0;outline:0;
+  border-radius:999px;
+  background:transparent;
+  cursor:pointer;
+  touch-action:pan-x;
+  -webkit-tap-highlight-color:transparent;
+}
+.voice-panel .voice-volume input[type="range"]::-webkit-slider-runnable-track{
+  height:6px;border-radius:999px;border:0;
+  background:linear-gradient(to right,rgba(221,180,112,.95) 0 var(--volume-fill,40%),rgba(225,226,233,.23) var(--volume-fill,40%) 100%);
+}
+.voice-panel .voice-volume input[type="range"]::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:22px;height:22px;
+  margin-top:-8px;border-radius:50%;
+  border:2px solid rgba(254,239,213,.88);
+  background:rgba(204,164,104,.96);
+  box-shadow:0 1px 10px rgba(0,0,0,.25);
+}
+.voice-panel .voice-volume input[type="range"]::-moz-range-track{
+  height:6px;border:0;border-radius:999px;
+  background:linear-gradient(to right,rgba(221,180,112,.95) 0 var(--volume-fill,40%),rgba(225,226,233,.23) var(--volume-fill,40%) 100%);
+}
+.voice-panel .voice-volume input[type="range"]::-moz-range-thumb{
+  width:19px;height:19px;border-radius:50%;
+  border:2px solid rgba(254,239,213,.88);
+  background:rgba(204,164,104,.96);
+  box-shadow:0 1px 10px rgba(0,0,0,.25);
+}
+.voice-panel .voice-volume input[type="range"]:focus-visible{
+  outline:2px solid rgba(236,199,139,.85);
+  outline-offset:2px;
+}
+.voice-panel .voice-volume output{min-width:36px}
+@media(max-width:390px){
+  .voice-panel .voice-session-controls .voice-volume{gap:7px;padding:4px 8px}
+}
