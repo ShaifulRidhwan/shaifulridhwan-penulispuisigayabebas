@@ -785,14 +785,31 @@ position:absolute;inset:-12%;z-index:1;
  animation:hazeDrift 14s ease-in-out infinite alternate;
 }
 .world-embers{
-position:absolute;inset:0;z-index:2;opacity:.55;
- background-image:
- radial-gradient(circle,rgba(255,220,149,.9) 1px,transparent 2px),
- radial-gradient(circle,rgba(255,211,136,.65) 1px,transparent 2px),
- radial-gradient(circle,rgba(239,193,123,.85) .7px,transparent 1.7px);
- background-size:193px 217px,287px 311px,149px 167px;
- background-position:11px 58px,91px 120px,39px 11px;
- animation:embersRise 35s linear infinite;
+ position:absolute;inset:0;z-index:2;opacity:.55;overflow:hidden;
+}
+/* Three separately composited repeating star layers. Their travel distances
+   equal two exact tile heights, preserving the original seamless parallax. */
+.world-embers i{
+ position:absolute;top:0;left:0;right:0;display:block;
+ height:calc(100% + var(--ember-travel));
+ background-repeat:repeat;pointer-events:none;
+ animation:embersTravel 35s linear infinite;
+ will-change:transform;
+}
+.world-embers i:nth-child(1){
+ --ember-travel:334px;
+ background-image:radial-gradient(circle,rgba(239,193,123,.85) .7px,transparent 1.7px);
+ background-size:149px 167px;background-position:39px 11px;
+}
+.world-embers i:nth-child(2){
+ --ember-travel:622px;
+ background-image:radial-gradient(circle,rgba(255,211,136,.65) 1px,transparent 2px);
+ background-size:287px 311px;background-position:91px 120px;
+}
+.world-embers i:nth-child(3){
+ --ember-travel:434px;
+ background-image:radial-gradient(circle,rgba(255,220,149,.9) 1px,transparent 2px);
+ background-size:193px 217px;background-position:11px 58px;
 }
 
 
@@ -802,8 +819,8 @@ to{transform:scale(1.09) translateY(-.8%)}
 @keyframes hazeDrift{
 to{transform:translate(2.5%,-1%);opacity:1}
 }
-@keyframes embersRise{
-to{background-position:11px -376px,91px -502px,39px -323px}
+@keyframes embersTravel{
+ to{transform:translate3d(0,calc(-1 * var(--ember-travel)),0)}
 }
 .topbar, .app-shell, .footer-note{
 position:relative;z-index:1
@@ -1124,7 +1141,7 @@ padding-bottom:5px
 }
 }
 @media(prefers-reduced-motion:reduce){
-.world-art, .world-haze, .world-embers{
+.world-art, .world-haze, .world-embers i{
 animation:none!important
 }
 }
@@ -1831,7 +1848,7 @@ display:none
 /* Final motion: faster atmosphere and gentle transparent glass sweep. */
 .world-art{animation-duration:11s}
 .world-haze{animation-duration:7s}
-.world-embers{animation-duration:17s}
+.world-embers i{animation-duration:17s}
 .conversation::after{
   content:"";
   display:block;
