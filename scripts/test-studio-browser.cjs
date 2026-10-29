@@ -16,6 +16,8 @@ async function main(){
    const data=route.request().postDataJSON();calls.push({url:route.request().url(),...data});
    if(route.request().url().includes('enhance'))return route.fulfill({json:{ok:true,prompt:data.prompt+', clear visual composition',method:'ai',note:'Draf ujian. Semak dulu.'}});
    if(data.prompt.includes('fail429'))return route.fulfill({status:429,json:{error:'Had ujian dicapai.'}});
+   if(data.prompt.includes('limit429'))return route.fulfill({status:429,headers:{'Retry-After':'75'},json:{error:'Had 8 percubaan dalam 10 minit dah dicapai.',scope:'studio'}});
+   if(data.prompt.includes('ovh429'))return route.fulfill({status:429,headers:{'Retry-After':'55'},json:{error:'OVHcloud Beta sedang terhad.',scope:'ovh'}});
    if(data.prompt.includes('slow')){await new Promise(r=>setTimeout(r,1800));try{await route.fulfill({json:{}});}catch(_){}return;}
    const s=C.settings(data);if(s.model==='klein'&&s.seed===null)s.seed=42;const image=png(s.width,s.height);
    await route.fulfill({json:{ok:true,image:image.toString('base64'),mime:'image/png',settings:s,promptUsed:C.compose(s),modelName:C.models[s.model].name,width:s.width,height:s.height,durationMs:100}});
@@ -38,7 +40,31 @@ async function main(){
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'No horizontal overflow');
   await page.locator('#resultTitle').scrollIntoViewIfNeeded();await page.screenshot({path:'studio-audit-artifacts/'+label+'.png',fullPage:true});
   page.once('dialog',d=>d.accept());await page.locator('#clearHistory').click();await page.waitForFunction(()=>document.querySelector('#historyCount').textContent==='0 hasil');
-  assert.deepEqual(errors,[]);console.log(JSON.stringify({label,width,noAutomaticAI:true,regenerate:true,variation:true,history:true,download:true,cancel:true,errors}));await context.close();
+  await page.locator('#imagePrompt').fill('limit429 countdown');
+  await page.locator('#generateImage').click();
+  await page.locator('#cooldownStatus').waitFor({state:'visible'});
+  assert.match(await page.locator('#cooldownStatus').textContent(),/Had Studio dicapai.*01:1[0-5]/);
+  assert.equal(await page.locator('#generateImage').isDisabled(),true);
+  const callsBeforeRefresh=calls.length;
+  await page.reload();
+  assert.equal(calls.length,callsBeforeRefresh,'Reload must not trigger an AI call');
+  await page.locator('#cooldownStatus').waitFor({state:'visible'});
+  assert.equal(await page.locator('#generateImage').isDisabled(),true,'Studio countdown persists across reload');
+  await page.evaluate(()=>localStorage.setItem('studio-antara-cooldown-v1:studio',String(Date.now()-1000)));
+  await page.reload();
+  assert.equal(await page.locator('#generateImage').isEnabled(),true,'Expired countdown clears on refresh');
+  await page.locator('#imageModel').selectOption('ovh');
+  await page.locator('#imagePrompt').fill('ovh429 countdown');
+  await page.locator('#generateImage').click();
+  await page.locator('#cooldownStatus').waitFor({state:'visible'});
+  assert.match(await page.locator('#cooldownStatus').textContent(),/OVHcloud Beta terhad/);
+  assert.equal(await page.locator('#generateImage').isDisabled(),true);
+  await page.locator('#imageModel').selectOption('klein');
+  assert.equal(await page.locator('#generateImage').isEnabled(),true,'Cloudflare models stay available after OVH 429');
+  assert.equal(await page.locator('#cooldownStatus').isHidden(),true);
+  await page.locator('#imageModel').selectOption('ovh');
+  assert.equal(await page.locator('#generateImage').isDisabled(),true,'OVH-only cooldown resumes when reselected');
+  assert.deepEqual(errors,[]);console.log(JSON.stringify({label,width,noAutomaticAI:true,regenerate:true,variation:true,history:true,download:true,cancel:true,cooldown:true,errors}));await context.close();
  }}finally{await browser.close();server.close();}
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});
