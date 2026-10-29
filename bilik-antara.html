@@ -51,7 +51,7 @@
 <link rel="apple-touch-icon" sizes="192x192" href="/favicon-aksara-ai-192.png?v=1">
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="bilik-antara-cover-art.jpg?v=2" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=67">
+<link rel="stylesheet" href="bilik-antara.css?v=68">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
@@ -72,6 +72,12 @@
  <main class="app-shell">
   <section class="conversation" aria-label="Ruang perbualan">
    <h1 class="sr-only">Bilik Antara, Aksara A.I.</h1>
+   <div class="glass-frame-orbit" aria-hidden="true">
+    <span class="frame-orbit__beam frame-orbit__beam--light"></span>
+    <span class="frame-orbit__beam frame-orbit__beam--light-echo"></span>
+    <span class="frame-orbit__beam frame-orbit__beam--shadow"></span>
+    <span class="frame-orbit__beam frame-orbit__beam--shadow-echo"></span>
+   </div>
    <div class="glass-shadow-mist" aria-hidden="true"></div>
    <header class="conversation-head">
     <div class="voice-toolbar" role="group" aria-label="Kawalan suara">
@@ -129,7 +135,6 @@
     <button class="starter" type="button">Siapa Aku</button>
     <button class="starter" type="button">The Coder Poet</button>
     <button class="starter" type="button">Apa itu Puisi Gaya Bebas</button>
-    <button class="starter starter-voice" type="button" data-action="voice" aria-label="Mulakan Jom Voice Chat">Malas nak taip? Jom guna Voice Chat</button>
    </div>
    <div class="voice-focus-veil" id="voiceFocusVeil" aria-hidden="true"></div>
    <div class="voice-panel" id="voicePanel" hidden aria-label="Perbualan Voice Live">
@@ -670,11 +675,6 @@ ui.input.addEventListener("keydown",e=>{
 });
 ui.starters.querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
  if(busy)return;
- if(btn.dataset.action==="voice"){
-  const live=el("voiceLive");
-  if(live&&!live.disabled)live.click();
-  return;
- }
  ui.input.value=btn.textContent.trim();resize();update();if(document.activeElement===ui.input)ui.input.blur();ui.form.requestSubmit();
 }));
 function showTyping(){
