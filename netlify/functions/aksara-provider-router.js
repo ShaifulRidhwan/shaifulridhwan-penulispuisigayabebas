@@ -147,6 +147,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     ...messages.slice(1)
    ]:messages;
    const body={model:selectedRequestyModel||provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
+   if(provider.id==="requesty")delete body.temperature; // Heterogeneous free models need only shared OpenAI-compatible core fields.
    if(provider.id==="openrouter")openRouterBody(body,["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"low");
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.
    if(provider.id==="groq"){
@@ -315,7 +316,10 @@ async function checkStatus(){
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
     if(provider.id==="requesty"){
-     if(Date.now()-recentRequesty.at<90000)return {id:provider.id,status:"online",model:recentRequesty.model,reason:"recent_reply"};
+     if(Date.now()-recentRequesty.at<90000){
+      const models=await Requesty.freeModels({signal:ctrl.signal});
+      return {id:provider.id,status:"online",model:recentRequesty.model,models,reason:"recent_reply"};
+     }
      const models=await Requesty.freeModels({signal:ctrl.signal});
      return {id:provider.id,status:models.length?"ready":"offline",reason:models.length?"catalog_verified":"free_model_unavailable",modelCount:models.length,models};
     }
