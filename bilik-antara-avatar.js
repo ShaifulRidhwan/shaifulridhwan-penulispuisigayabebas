@@ -5,7 +5,7 @@
 const panel=document.getElementById("voicePanel");
 const stage=document.getElementById("voiceAvatarStage");
 if(panel&&stage){
-let active=false,renderer=null,scene=null,camera=null,root=null,face=null,raf=0,resize=null,context=null,blinkAt=0,started=0,loading=false,jawMotion=0,lipMotion=0,morphIndex=null,resizeFrame=0,lastWidth=0,lastHeight=0,emotion="neutral",emotionUntil=0,emotionLevel=0,expressionWeights={},tearMeshes=[],audioArray=null,audioSpectrum=null,audioAnalyser=null,mouthRound=0;
+let active=false,renderer=null,scene=null,camera=null,root=null,face=null,raf=0,resize=null,context=null,blinkAt=0,started=0,loading=false,jawMotion=0,lipMotion=0,morphIndex=null,resizeFrame=0,lastWidth=0,lastHeight=0,emotion="neutral",emotionUntil=0,emotionLevel=0,expressionWeights={},tearMeshes=[],audioArray=null,audioSpectrum=null,audioAnalyser=null,mouthRound=0,resumeDraw=null;
 const modelURL="https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@166b443a445eeb63a4ea02270aa9e7d6ba8b4d88/avatars/brunette.glb";
 // The chat still is an exact pre-rendered frame of this same GLB model.
  // No WebGL, GLTF decoding, or 3D assets run in the normal chat page.
@@ -64,7 +64,7 @@ function audioLevel(){
  return level;
 }
 function stop(){
- active=false;cancelAnimationFrame(raf);raf=0;cancelAnimationFrame(resizeFrame);resizeFrame=0;resize?.disconnect();resize=null;
+ resumeDraw=null;active=false;cancelAnimationFrame(raf);raf=0;cancelAnimationFrame(resizeFrame);resizeFrame=0;resize?.disconnect();resize=null;
  if(renderer){renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();renderer=null;}
  if(scene){scene.traverse(o=>{if(o.isMesh){o.geometry?.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats)m?.dispose?.();}});}
  scene=null;camera=null;root=null;face=null;morphIndex=null;tearMeshes=[];audioArray=null;audioSpectrum=null;audioAnalyser=null;mouthRound=0;emotion="neutral";emotionLevel=0;expressionWeights={};lastWidth=0;lastHeight=0;stage.classList.remove("avatar-ready","avatar-speaking","avatar-loading");
@@ -141,10 +141,11 @@ async function begin(){
    });
   });
   resize.observe(stage);frameModel();stage.classList.add("avatar-ready");stage.classList.remove("avatar-loading");blinkAt=performance.now()+2300;
-  const frame=(t)=>{if(!active||!renderer)return;raf=requestAnimationFrame(frame);
+  const frame=(t)=>{raf=0;if(!active||!renderer)return;
    // The 3D canvas is fully hidden when minimized. Preserve the active voice,
    // model and speaking state, but skip all invisible WebGL drawing work.
    if(panel.classList.contains("is-minimized")||document.hidden)return;
+   raf=requestAnimationFrame(frame);
    const speaking=panel.classList.contains("voice-speaking");
    stage.classList.toggle("avatar-speaking",speaking);
    root.rotation.y=Math.sin(t*.0004)*.075;root.rotation.x=Math.sin(t*.00031)*.025+(emotion==="laugh"?Math.sin(t*.012)*.012:0);
@@ -188,13 +189,22 @@ async function begin(){
    }
    renderer.render(scene,camera);
   };
-  raf=requestAnimationFrame(frame);
+  // Pause the render loop entirely while hidden; resume without reloading GLB or audio.
+  resumeDraw=()=>{
+   if(active&&renderer&&!raf&&!document.hidden&&!panel.classList.contains("is-minimized"))raf=requestAnimationFrame(frame);
+  };
+  resumeDraw();
  }catch(err){console.warn("Voice avatar model not available",err);stop();stage.classList.add("avatar-unavailable");}
  finally{loading=false;}
 }
 // The live 3D avatar activates only when this module is imported on demand.
- const observer=new MutationObserver(()=>{if(panel.hidden){if(active)stop();}else if(!active&&!loading)begin();});
-observer.observe(panel,{attributes:true,attributeFilter:["hidden"]});
+ const observer=new MutationObserver(()=>{
+  if(panel.hidden){if(active)stop();}
+  else if(!active&&!loading)begin();
+  else resumeDraw?.();
+ });
+observer.observe(panel,{attributes:true,attributeFilter:["hidden","class"]});
+document.addEventListener("visibilitychange",()=>resumeDraw?.());
 if(!panel.hidden)begin();
 window.addEventListener("pagehide",()=>{stop();observer.disconnect();window.removeEventListener("ba:voice-avatar-text",onAvatarText);},{once:true});
 }
