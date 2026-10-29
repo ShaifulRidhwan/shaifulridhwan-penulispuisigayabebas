@@ -10,3 +10,7 @@
 .model-beta-info{display:block;margin:10px 0 12px;padding:12px 14px;border:1px solid rgba(240,193,116,.42);border-radius:13px;background:rgba(45,34,20,.34);font:400 12px/1.6 'DM Sans',sans-serif;color:#ecdfca}
 .model-beta-info strong{display:block;color:#f4d49b;font-weight:700;margin-bottom:3px}
 .model-beta-info[hidden]{display:none!important}
+
+/* Countdown for provider or shared Studio rate limits; the rest of Studio remains unchanged. */
+.cooldown-status{margin:12px 0 0;font:500 12px/1.65 'DM Sans',sans-serif;color:#e8d3b3;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.cooldown-status[hidden]{display:none!important}

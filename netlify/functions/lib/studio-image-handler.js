@@ -27,7 +27,13 @@ function createHandler({fetchImpl=fetch,reserve=Quota.reserve,env=process.env,ti
    const started=Date.now();let upstream;
    try{upstream=await fetchImpl(url,{method:'POST',headers,body,signal:ctrl.signal});}catch(error){if(error.name==='AbortError')throw error;throw Error(ovh?'OVHcloud Beta tak dapat dihubungi. Cuba Klein atau Schnell.':'Sambungan ke Cloudflare terputus. Cuba lagi sebentar.');}
    if(!upstream.ok){
-    if(upstream.status===429)return response(429,{error:ovh?'OVHcloud Beta sedang terhad (429). Cuba semula kemudian atau pilih Klein/Schnell.':'Had atau kuota Cloudflare dah dicapai. Cuba kemudian.'},60);
+    if(upstream.status===429){
+     const retry=upstream.headers.get('retry-after');
+     let seconds=/^\d+$/.test(retry||'')?Number(retry):NaN;
+     if(!Number.isFinite(seconds)&&retry){const date=Date.parse(retry);if(Number.isFinite(date))seconds=Math.ceil((date-Date.now())/1000);}
+     seconds=Number.isFinite(seconds)&&seconds>0?Math.min(86400,Math.ceil(seconds)):60;
+     return response(429,{error:ovh?'OVHcloud Beta sedang terhad (429). Cuba semula kemudian atau pilih Klein/Schnell.':'Had atau kuota Cloudflare dah dicapai. Cuba kemudian.',scope:ovh?'ovh':'cloudflare'},seconds);
+    }
     if([401,403].includes(upstream.status))return response(502,{error:ovh?'OVHcloud Beta menolak akses tanpa token. Model ini belum stabil; pilih Klein/Schnell.':'Cloudflare menolak kebenaran penjanaan. Pemilik perlu semak token.'});
     return response(502,{error:ovh?'OVHcloud Beta belum berjaya menjana imej (HTTP '+upstream.status+'). Cuba Klein atau Schnell.':'Cloudflare tak berjaya menjana imej (HTTP '+upstream.status+'). Cuba model atau tetapan lain.'});
    }
@@ -44,7 +50,7 @@ function createHandler({fetchImpl=fetch,reserve=Quota.reserve,env=process.env,ti
    if(s.model==='klein'&&(info.width!==s.width||info.height!==s.height))throw Error('Cloudflare memulangkan saiz berbeza daripada tetapan. Hasil tak dianggap nisbah natif yang diminta.');
    if(ovh&&(info.width!==1024||info.height!==1024))throw Error('OVHcloud Beta memulangkan saiz di luar spesifikasi 1024 × 1024.');
    return response(200,{ok:true,image:bytes.toString('base64'),...info,settings:s,promptUsed,modelName:Config.models[s.model].name,durationMs:Date.now()-started,estimatedNeurons});
-  }catch(error){return response(error.status|| (error.name==='AbortError'?504:502),{error:error.name==='AbortError'?'Penjanaan terlalu lama. Kau boleh cuba lagi.':error.message?.slice(0,240)||'Sambungan gagal.'},error.retryAfter);}
+  }catch(error){return response(error.status|| (error.name==='AbortError'?504:502),{error:error.name==='AbortError'?'Penjanaan terlalu lama. Kau boleh cuba lagi.':error.message?.slice(0,240)||'Sambungan gagal.',...(error.status===429?{scope:'studio'}:{})},error.retryAfter);}
   finally{clearTimeout(timer);if(release)await release();}
  };
 }

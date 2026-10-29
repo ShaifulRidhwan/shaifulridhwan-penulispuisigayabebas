@@ -1,13 +1,63 @@
 (function(){
 'use strict';
-const $=id=>document.getElementById(id),C=window.StudioConfig,H=window.StudioHistory;
-const form=$('imageForm');if(!form||!C)return;
+const $=id=>document.getElementById(id),C=window.StudioConfig,H=window.StudioHistory,D=window.StudioCooldown;
+const form=$('imageForm');if(!form||!C||!D)return;
 const ui={prompt:$('imagePrompt'),count:$('promptCount'),style:$('imageStyle'),ratio:$('imageRatio'),quality:$('imageQuality'),model:$('imageModel'),seed:$('imageSeed'),go:$('generateImage'),stop:$('stopImage'),status:$('generationStatus'),result:$('generatedImage'),empty:$('resultEmpty'),loading:$('stageLoading'),indicator:$('resultIndicator'),meta:$('imageMetadata'),download:$('downloadImage')};
 let busy=false,controller=null,current=null,imageUrl=null,galleryRows=[],galleryLimit=6,galleryEpoch=0,thumbUrls=[],originalPrompt=null;
+const cooldownStorage=(()=>{try{return window.localStorage;}catch(_){return null;}})();
+const cooldownUntil=Object.fromEntries(D.SCOPES.map(scope=>[scope,D.read(scope,cooldownStorage)]));
+let cooldownTickId=null,wasCooldownVisible=false;
 const qualityName=value=>({fast:'Pantas',balanced:'Seimbang',detail:'Detail'}[value]||value);
 const text=(el,value)=>{el.textContent=value;};
 function announce(message,error=false){text(ui.status,message);ui.status.classList.toggle('is-error',error);}
 function count(){text(ui.count,ui.prompt.value.length+' / 1200');}
+function cooldownFor(model){
+ const now=Date.now(),shared=cooldownUntil.studio;
+ if(D.remaining(shared,now))return {scope:'studio',seconds:D.remaining(shared,now)};
+ const provider=model==='ovh'?'ovh':'cloudflare',seconds=D.remaining(cooldownUntil[provider],now);
+ return seconds?{scope:provider,seconds}:null;
+}
+function cooldownCopy(wait){
+ const duration=D.format(wait.seconds);
+ if(wait.scope==='ovh')return 'OVHcloud Beta terhad. Boleh cuba lagi dalam '+duration+'. Klein dan Schnell masih boleh digunakan.';
+ if(wait.scope==='cloudflare')return 'Cloudflare terhad. Boleh cuba lagi dalam '+duration+'. OVHcloud Beta masih boleh dipilih.';
+ return 'Had Studio dicapai. Boleh cuba menjana lagi dalam '+duration+'. Kira detik kekal selepas refresh.';
+}
+function updateCooldown(){
+ const wait=cooldownFor(ui.model.value),notice=$('cooldownStatus');
+ notice.hidden=!wait;if(wait)text(notice,cooldownCopy(wait));
+ if(!busy){
+  ui.go.disabled=!!wait;
+  if(wait)ui.go.textContent='Cuba lagi dalam '+D.format(wait.seconds);
+  else if(!ui.go.querySelector('span')){const arrow=document.createElement('span');arrow.setAttribute('aria-hidden','true');arrow.textContent='↗';ui.go.replaceChildren(document.createTextNode('✦ Jana imej '),arrow);}
+  if(current){
+   const blocked=!!cooldownFor(current.settings.model);
+   $('regenerateImage').disabled=blocked;
+   $('variationImage').disabled=blocked||current.settings.model!=='klein';
+  }
+  if(wasCooldownVisible&&!wait&&ui.status.classList.contains('is-error'))announce('Had untuk model pilihan dah tamat atau model lain masih boleh digunakan.');
+ }
+ wasCooldownVisible=!!wait;
+}
+function refreshCountdown(){
+ for(const scope of D.SCOPES){if(cooldownUntil[scope]&&D.remaining(cooldownUntil[scope])===0){cooldownUntil[scope]=0;D.clear(scope,cooldownStorage);}}
+ updateCooldown();
+ if(!D.SCOPES.some(scope=>D.remaining(cooldownUntil[scope]))&&cooldownTickId!==null){clearInterval(cooldownTickId);cooldownTickId=null;}
+}
+function ensureCountdown(){if(cooldownTickId===null)cooldownTickId=setInterval(refreshCountdown,1000);refreshCountdown();}
+function rememberRateLimit(res,data){
+ const seconds=D.parseRetryAfter(res.headers.get('Retry-After'));
+ if(!seconds)return;
+ const scope=D.SCOPES.includes(data.scope)?data.scope:'studio';
+ cooldownUntil[scope]=D.save(scope,seconds,cooldownStorage);
+ ensureCountdown();
+}
+window.addEventListener('storage',event=>{
+ if(!event.key?.startsWith(D.PREFIX))return;
+ const scope=event.key.slice(D.PREFIX.length);if(!D.SCOPES.includes(scope))return;
+ cooldownUntil[scope]=D.read(scope,cooldownStorage);if(cooldownUntil[scope])ensureCountdown();else refreshCountdown();
+});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCountdown();});
 function selected(){return C.settings({prompt:ui.prompt.value,style:ui.style.value,ratio:ui.ratio.value,quality:ui.quality.value,model:ui.model.value,seed:ui.seed.value===''?null:Number(ui.seed.value)});}
 function describe(){
  const klein=ui.model.value==='klein',ovh=ui.model.value==='ovh';
@@ -17,6 +67,7 @@ function describe(){
  text($('modelNote'),ovh?'OVHcloud SDXL (Beta): 1024 × 1024 sahaja. Tiada seed atau kawalan resolusi.':klein?'Klein menjana nisbah ini secara natif. Kualiti menukar resolusi; langkahnya kekal 4. Tiada crop pada hasil.':'Schnell: output segi empat; kualiti menggunakan 2, 4 atau 8 langkah. Nisbah lain dan variasi seed tersedia pada Klein.');
  text($('quotaContext'),ovh?'OVHcloud menggunakan had API awam tersendiri, bukan kuota Neurons Cloudflare. Keberkesanan sambungan tanpa token belum disahkan.':'Bajet ini untuk Studio sahaja. Kuota akaun Cloudflare dikongsi, dan had percuma sebenar bergantung pada pelan akaun.');
  try{const s=C.settings({prompt:'Contoh visual',style:ui.style.value,ratio:ui.ratio.value,model:ui.model.value,quality:ui.quality.value,seed:null});text($('quotaEstimate'),ovh?'OVHcloud SDXL (Beta) · 1024 × 1024 px · 0 Neurons Cloudflare · API mungkin gagal atau terhad.':C.models[s.model].name+' · '+(klein?s.width+' × '+s.height+' px':'saiz sebenar disahkan selepas siap')+' · '+s.steps+' langkah. Rizab bajet konservatif: '+C.estimate(s)+' Neurons / percubaan.');}catch(_){}
+ updateCooldown();
 }
 for(const [id,preset] of Object.entries(C.presets)){const option=document.createElement('option');option.value=id;option.textContent=preset.name;ui.style.append(option);}ui.style.value='antara';
 ui.prompt.addEventListener('input',count);
@@ -51,11 +102,14 @@ async function render(meta,blob,signal){
 }
 async function thumbnail(img){const canvas=document.createElement('canvas'),scale=Math.min(1,240/Math.max(img.naturalWidth,img.naturalHeight));canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Thumbnail tak dapat disimpan.')),'image/jpeg',.75));}
 async function generate(settings){
- if(busy)return;if(!navigator.onLine){announce('Internet terputus. Prompt kau masih ada; cuba bila dah online.',true);return;}
+ if(busy)return;
+ const waiting=cooldownFor(settings.model);
+ if(waiting){updateCooldown();announce(cooldownCopy(waiting),true);return;}
+ if(!navigator.onLine){announce('Internet terputus. Prompt kau masih ada; cuba bila dah online.',true);return;}
  const startedAt=Date.now(),ctrl=new AbortController();controller=ctrl;const timer=setTimeout(()=>ctrl.abort(),55000);setBusy(true);announce(settings.model==='ovh'?'OVHcloud SDXL Beta sedang dicuba. Sambungan mungkin gagal atau lambat.':'Cloudflare sedang menjana imej. Setiap percubaan menggunakan kuota.');
  try{
   const res=await fetch('/.netlify/functions/studio-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:settings.prompt,style:settings.style,model:settings.model,quality:settings.quality,ratio:settings.ratio,seed:settings.seed}),signal:ctrl.signal});
-  const data=await res.json();if(!res.ok)throw Error(data.error||'Penjanaan gagal. Cuba lagi nanti.');if(!data.ok||!data.settings)throw Error('Respons pelayan tak lengkap.');
+  const data=await res.json();if(!res.ok){if(res.status===429)rememberRateLimit(res,data);throw Error(data.error||'Penjanaan gagal. Cuba lagi nanti.');}if(!data.ok||!data.settings)throw Error('Respons pelayan tak lengkap.');
   const blob=imageBlob(data.image,data.mime),meta={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),createdAt:Date.now(),settings:data.settings,promptUsed:data.promptUsed,modelName:data.modelName,durationMs:Date.now()-startedAt,cloudMs:data.durationMs};
   const img=await render(meta,blob,ctrl.signal);ui.stop.hidden=true;clearTimeout(timer);if(matchMedia('(max-width:680px)').matches)$('resultTitle').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});let saved=true;
   try{await H.put(meta,blob,await thumbnail(img));}catch(_){saved=false;}
@@ -117,7 +171,7 @@ $('historyGrid').addEventListener('click',async event=>{
   if(action==='regen'){if(!busy)generate({...meta.settings});return;}
   if(busy){announce('Tunggu penjanaan selesai dulu.');return;}
   const saved=await H.get(meta.id);if(!saved?.blob)throw Error('Imej tak ditemui dalam storan.');
-  if(action==='view'){await render(meta,saved.blob);$('variationImage').disabled=meta.settings.model!=='klein';$('resultTitle').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
+  if(action==='view'){await render(meta,saved.blob);$('variationImage').disabled=meta.settings.model!=='klein';updateCooldown();$('resultTitle').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
   if(action==='save'){const url=URL.createObjectURL(saved.blob),a=document.createElement('a');a.href=url;a.download='studio-antara-'+meta.id+(saved.blob.type==='image/png'?'.png':'.jpg');document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
  }catch(error){text($('historyStatus'),error.message||'Tak dapat buka hasil ini.');}
 });
@@ -127,4 +181,5 @@ window.addEventListener('pagehide',event=>{controller?.abort();if(!event.persist
 function removeOldImageRuntime(){if('caches' in window)caches.delete('web-txt2img-v1').catch(()=>{});if(navigator.serviceWorker?.getRegistrations){const old=new URL('studio-imej-sw.js',location.href).href;navigator.serviceWorker.getRegistrations().then(rows=>rows.forEach(r=>{if([r.active?.scriptURL,r.waiting?.scriptURL,r.installing?.scriptURL].includes(old))r.unregister().catch(()=>{});})).catch(()=>{});}}
 if('requestIdleCallback' in window)requestIdleCallback(removeOldImageRuntime,{timeout:7000});else setTimeout(removeOldImageRuntime,2000);
 count();describe();
+if(D.SCOPES.some(scope=>D.remaining(cooldownUntil[scope])))ensureCountdown();
 })();

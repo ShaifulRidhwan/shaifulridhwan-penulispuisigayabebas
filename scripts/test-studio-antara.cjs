@@ -1,6 +1,7 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const C=require('../studio-antara-config');
+const D=require('../studio-antara-cooldown');
 const {createHandler}=require('../netlify/functions/lib/studio-image-handler');
 const {createHandler:enhancer}=require('../netlify/functions/lib/studio-enhance-handler');
 const {reserve}=require('../netlify/functions/lib/studio-quota');
@@ -121,4 +122,37 @@ test('OVH Beta UI is manual, readable and no old hand particle layer remains',()
  assert.ok(hub.indexOf('id="featureStudio"')<hub.indexOf('id="featureMetrics"'));
  assert.ok(hub.indexOf('id="featureMetrics"')<hub.indexOf('id="featureSessions"'));
  assert.match(hub,/Prestasi A.I/);
+});
+
+test('Countdown formats and survives refresh without storing prompts or images',()=>{
+ const data=new Map(),storage={getItem:k=>data.get(k)??null,setItem:(k,v)=>data.set(k,v),removeItem:k=>data.delete(k)};
+ const now=1761753600000,end=D.save('studio',135,storage,now);
+ assert.equal(D.read('studio',storage,now+1000),end);
+ assert.equal(D.remaining(end,now),135);assert.equal(D.remaining(end,now+2500),133);
+ assert.equal(D.format(135),'02:15');assert.equal(D.format(3661),'1:01:01');
+ assert.equal(D.parseRetryAfter('75',now),75);assert.equal(D.parseRetryAfter('Thu, 29 Oct 2026 16:02:00 GMT',now)>0,true);
+ assert.equal(D.parseRetryAfter('bad',now),0);
+ assert.equal(data.size,1);assert.match([...data.keys()][0],/studio-antara-cooldown-v1:studio/);
+ assert.equal(D.read('studio',storage,end+1),0);assert.equal(data.size,0);
+ assert.equal(D.save('unrecognized',12,storage,now),0);
+});
+test('429 responses provide Retry-After with correct provider scope and never expose upstream data',async()=>{
+ for(const model of ['ovh','schnell']){
+  const h=createHandler({env,reserve:quota,fetchImpl:async()=>new Response('PRIVATE UPSTREAM',{status:429,headers:{'Retry-After':'73'}})});
+  const res=await h(event({model}));assert.equal(res.statusCode,429);assert.equal(res.headers['Retry-After'],'73');
+  assert.equal(JSON.parse(res.body).scope,model==='ovh'?'ovh':'cloudflare');
+  assert.doesNotMatch(res.body,/PRIVATE UPSTREAM/);
+ }
+ const limited=Object.assign(Error('Had 8 percubaan dalam 10 minit dah dicapai.'),{status:429,retryAfter:428});
+ const h=createHandler({env,reserve:async()=>{throw limited;},fetchImpl:async()=>{throw Error('never call AI');}});
+ const res=await h(event({model:'ovh'}));assert.equal(res.statusCode,429);assert.equal(res.headers['Retry-After'],'428');
+ assert.equal(JSON.parse(res.body).scope,'studio');
+});
+test('Studio countdown UI is accessible and does not request inference on load',()=>{
+ const html=fs.readFileSync('studio-antara.html','utf8');
+ assert.match(html,/id="cooldownStatus"[^>]*role="timer"[^>]*aria-live="off"/);
+ assert.match(html,/studio-antara-cooldown\.js\?v=1/);
+ const script=fs.readFileSync('studio-antara-cloud.js','utf8');
+ assert.match(script,/rememberRateLimit/);assert.match(script,/cooldownFor/);
+ assert.doesNotMatch(script,/localStorage\.setItem/);
 });
