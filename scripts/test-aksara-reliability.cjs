@@ -272,6 +272,14 @@ test("a follow-up retains dialogue and Aksara's personality when a provider fail
  assert.match(googleBody.systemInstruction.parts[0].text,/mwehehe/i);
  assert.match(googleBody.systemInstruction.parts[0].text,/jangan reka atau meneka kejadian, tabiat, emosi, tidur/i);
 });
+test("creator humour is generated with a reminder not to invent private habits",async t=>{
+ const handler=setup(t);let request;
+ global.fetch=async(_url,opts)=>{request=JSON.parse(opts.body);return reply("Puisi bebas, tapi rangkap pun ada grid. Mwehehe. 😈📜");};
+ const response=await handler(event({question:"Usik sikit pencipta kau secara santai",preferredProvider:"groq"}));
+ assert.equal(response.statusCode,200);assert.equal(JSON.parse(response.body).provider,"groq");
+ const system=request.messages.filter(m=>m.role==="system").map(m=>m.content).join("\n");
+ assert.match(system,/USIKAN BERASASKAN FAKTA/);assert.match(system,/Jangan cipta atau meneka tabiat, waktu tidur/);
+});
 test("accepting an offered action is not downgraded to a mere acknowledgement",()=>{
  const history=[{role:"user",content:"Tolong bantu tulis puisi"},{role:"assistant",content:"Nak aku buat versi empat rangkap?"}];
  assert.notEqual(I.resolveIntent("ok",history,false).reaction,true);assert.notEqual(I.resolveIntent("ya",history,false).reaction,true);

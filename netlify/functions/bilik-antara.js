@@ -311,6 +311,7 @@ exports.handler=async event=>{
   const tools=getTools({...intent,search:intent.search||!!tiktokHandle});
   const model=chooseModel(baseModel,intent);
   const detailedIdentity=Identity.needsDetail(question)||intent.works||/\b(?:puisi|sajak|pantun|gurindam|penulisan|coder poet)\b/i.test(question);
+  const creatorHumour=detailedIdentity&&/\b(?:usik|usikan|sindir|sindiran|gurau|bergurau|lawak|jenaka)\b/i.test(question);
   const system=PERSONALITY+"\n"+(/\b(?:studio|pdf|word|e-?mel|eksport|imej|gambar)\b/i.test(question)?STUDIO_GUIDANCE+"\n":"")+(tiktokHandle||/\b(?:osint|akaun|username|tiktok|profil)\b/i.test(question)?OSINT_GUIDANCE+"\n":"")+(detailedIdentity?Identity.CORE_PROMPT+"\n"+Identity.PROMPT:"")+"\n"+(TASK_GUIDANCE[intent.task]||TASK_GUIDANCE.general)+
       (intent.depth==="high"||intent.task==="technical"?"\nPENDEKATAN CERDAS: Kenal pasti tugas sebenar, pecahkan masalah rumit kepada submasalah yang perlu, semak pengiraan dan andaian, pilih alat hanya apabila alat menambah bukti. Utamakan jawapan yang boleh diuji berbanding bunyi yakin. Jangan dedahkan nota penalaran dalaman. Jangan mengaku melakukan semakan yang tidak dibuat.":"")+
       (intent.thought?"\nEKSPERIMEN PEMIKIRAN: nyatakan andaian jelas dan kesan yang dijangka, jangan bentangkan andaian sebagai fakta.":"")+
@@ -319,6 +320,7 @@ exports.handler=async event=>{
       (intent.hasLink?"\nPAUTAN: semak kandungan URL dengan alat URL Context jika tersedia. Jika kandungan tidak dapat diakses, akui dan jangan buat ringkasan rekaan.":"")+
       (/(?:nyanyi|lagu|korus|sing)/i.test(question)?"\nPERSEMBAHAN KREATIF: Jika diminta menyanyi, cipta lirik lagu ORIGINAL pendek dalam Bahasa Melayu santai, dengan rangkap dan korus ringkas. Jangan menolak permintaan nyanyian original secara automatik. Jangan hasilkan semula lirik penuh lagu komersial atau menyamar sebagai penyanyi asal. Dalam mod teks, nyatakan bahawa jawapan ialah lirik, bukan rakaman suara.":"")+
       followUpGuidance+reactionGuidance+(intent.acceptingOffer?"\nPENGGUNA MENERIMA TAWARAN dalam jawapan terakhir. Terus lakukan apa yang ditawarkan dengan konteks yang sudah diberi; jangan bertanya semula tawaran yang sama.":"")+
+      (creatorHumour?"\nUSIKAN BERASASKAN FAKTA: Usik hanya ciri projek yang diketahui, seperti pilihan bentuk puisi bersiri atau usaha mengubah suai Aksara. Jangan cipta atau meneka tabiat, waktu tidur, emosi, kebimbangan, peristiwa atau kehidupan peribadi Shaiful, walaupun sebagai perbandingan atau gurauan. Boleh selit ‘mwehehe’ di hujung jika sesuai.":"")+
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
   const maxTokens=plan.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
