@@ -6,18 +6,20 @@
  * Groq/Mistral require explicit confirmation of an account's free tier.
  */
 const {boundedHistory,boundedText,requestControl,readSSE}=require("./lib/aksara-transport");
+const Requesty=require("./aksara-requesty");
 const cooldown=new Map();
 let preferredProvider=""; // Best recent successful fallback within the current warm function instance.
 let recentOpenRouter={model:"",at:0}; // Real replies only, never synthetic status.
+let recentRequesty={model:"",at:0};
 // Task categories are routing preferences, not unverified claims about model quality.
 const TASK_PRIORITY={
- technical:["groq","mistral","openrouter"],
- critique:["groq","mistral","openrouter"],
- hypothetical:["groq","mistral","openrouter"],
- creative:["mistral","groq","openrouter"],
- conversation:["groq","mistral","openrouter"],
- explain:["groq","mistral","openrouter"],
- general:["groq","mistral","openrouter"]
+ technical:["groq","mistral","openrouter","requesty"],
+ critique:["groq","mistral","openrouter","requesty"],
+ hypothetical:["groq","mistral","openrouter","requesty"],
+ creative:["mistral","groq","openrouter","requesty"],
+ conversation:["groq","mistral","openrouter","requesty"],
+ explain:["groq","mistral","openrouter","requesty"],
+ general:["groq","mistral","openrouter","requesty"]
 };
 function rankProviders(available,task,prefer=""){
  const rank=TASK_PRIORITY[task]||TASK_PRIORITY.general;
@@ -33,7 +35,9 @@ const PROVIDERS=[
  {id:"mistral",key:"MISTRAL_API_KEY",allow:"MISTRAL_FREE_CONFIRMED",
   url:"https://api.mistral.ai/v1/chat/completions",model:"mistral-small-latest"},
  {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
-  url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"}
+  url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"},
+ {id:"requesty",key:"REQUESTY_API_KEY",allow:null,
+  url:Requesty.API+"/chat/completions",model:null}
 ];
 // OpenRouter chooses from its current free chat-model pool; no stale hardcoded model list.
 const classifierModel=model=>/(?:guard|moderation|classifier|safety)/i.test(String(model||""));
@@ -55,7 +59,7 @@ function openRouterBody(body,effort="low"){
 const safeMessage=text=>boundedText(text,60000);
 function configured(){
  if(process.env.AKSARA_FREE_FALLBACKS!=="true")return [];
- return PROVIDERS.filter(p=>process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
+ return PROVIDERS.filter(p=>p.id==="requesty"?Requesty.configured():process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
 }
 function enabled(){return configured().length>0;}
 function quotaKind(message){
@@ -86,7 +90,7 @@ function blockedClassifierPrefix(text){
 function errorToCooldown(status){
  return status===429?60000:status>=500||status===408?20000:status===401||status===403||status===404?300000:15000;
 }
-async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix="",mediaImages=[]}){
+async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix="",mediaImages=[],allowRequesty=false}){
  const images=Array.isArray(mediaImages)?mediaImages.slice(0,3).filter(x=>
    x&&["image/jpeg","image/png","image/webp"].includes(x.mimeType)&&
    typeof x.data==="string"&&x.data.length<=4800000&&/^[A-Za-z0-9+/]+={0,2}$/.test(x.data)):[];
@@ -102,7 +106,10 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
  const attempts=[];
  const available=configured();
  // Prefer the provider that recently completed a real answer. Preserve default order otherwise.
- const ordered=rankProviders(available,task,prefer).filter(p=>(!images.length||p.id==="openrouter")&&(!Array.isArray(only)||only.includes(p.id)));
+ const ordered=rankProviders(available,task,prefer).filter(p=>
+  (!images.length||p.id==="openrouter")&&
+  (p.id!=="requesty"||allowRequesty===true)&&
+  (!Array.isArray(only)||only.includes(p.id)));
  for(const provider of ordered){
   if(skip.includes(provider.id)||Date.now()<(cooldown.get(provider.id)||0))continue;
   if(signal?.aborted)throw new DOMException("Dihentikan","AbortError");
@@ -114,7 +121,14 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   const control=requestControl(Math.min(attemptBudget,remaining),signal);
   let emitted=false;
   try{
+   // Verify free-tier pricing every five minutes before any Requesty inference.
+   // Never choose a paid or unknown-price model from a gateway fallback policy.
+   const selectedRequestyModel=provider.id==="requesty"?await Requesty.modelFor(task,control.signal):null;
+   if(provider.id==="requesty"&&!selectedRequestyModel){
+     throw Object.assign(new Error("No verified free Requesty model"),{status:503,reason:"free_model_unavailable"});
+   }
    const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
+   if(provider.id==="requesty"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    const simple=["conversation","general","explain"].includes(task)&&reasoningLevel!=="high";
    const outputLimit=Math.min(reaction?500:simple?1500:6000,Math.max(400,maxTokens));
@@ -127,7 +141,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     {role:"system",content:String(system).slice(prefix.length)+"\nSANDARAN TEKS: Tiada alat carian, URL atau pelaksanaan kod aktif. Jangan reka sumber atau mengaku alat yang tiada digunakan. Identiti kekal Aksara. Shaiful bukan pencipta genre puisi gaya bebas."},
     ...messages.slice(1)
    ]:messages;
-   const body={model:provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
+   const body={model:selectedRequestyModel||provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
    if(provider.id==="openrouter")openRouterBody(body,["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"low");
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.
    if(provider.id==="groq"){
@@ -151,7 +165,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    }
    let data;
    if(onDelta&&res.body&&/text\/event-stream/i.test(res.headers?.get("content-type")||"")){
-    let full="",finish="",model=provider.model,usage=null,started=false,sent=0;
+    let full="",finish="",model=selectedRequestyModel||provider.model,usage=null,started=false,sent=0;
     await readSSE(res.body,chunk=>{
      if(chunk.model)model=chunk.model;
      if(classifierModel(model))throw Object.assign(new Error("Classifier is not a chat model"),{status:502});
@@ -181,17 +195,18 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    const reply=data?.choices?.[0]?.message?.content;
    const text=typeof reply==="string"?reply:Array.isArray(reply)?reply.filter(p=>p.type==="text").map(p=>p.text).join(""):"";
    if(!text.trim())throw Object.assign(new Error("Empty response"),{reason:"empty_output",finishReason:data?.choices?.[0]?.finish_reason||"",outputTokens:data?.usage?.completion_tokens});
-   validateChatReply(text,data.model||provider.model);
+   validateChatReply(text,data.model||selectedRequestyModel||provider.model);
    if(onDelta&&!emitted){emitted=true;onDelta(text);}
    cooldown.delete(provider.id);preferredProvider=provider.id;
    if(provider.id==="openrouter")recentOpenRouter={model:data.model||provider.model,at:Date.now()};
+   if(provider.id==="requesty")recentRequesty={model:selectedRequestyModel,at:Date.now()};
    // A real answer is stronger evidence than a cached synthetic health probe.
    if(healthCache.value){
-    healthCache.value=healthCache.value.map(x=>x.id===provider.id?{...x,status:"online",model:data.model||provider.model,latencyMs:Date.now()-attemptStarted,retryAfterSeconds:0}:x);
+    healthCache.value=healthCache.value.map(x=>x.id===provider.id?{...x,status:"online",model:data.model||selectedRequestyModel||provider.model,latencyMs:Date.now()-attemptStarted,retryAfterSeconds:0}:x);
     healthCache.time=Date.now();
    }
    const finishReason=String(data?.choices?.[0]?.finish_reason||"");
-   return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task,attempts,elapsedMs:Date.now()-attemptStarted};
+   return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||selectedRequestyModel||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task,attempts,elapsedMs:Date.now()-attemptStarted};
   }catch(err){
    if(signal?.aborted)throw err;
    if(emitted){
@@ -213,7 +228,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
 async function crossReview({question,reply,originalProvider,task="general",timeoutMs=3500}){
  if(process.env.AKSARA_CROSS_REVIEW!=="true"||!["technical","explain","critique"].includes(task))return null;
  if(!question||!reply||question.length>2500||reply.length>5000)return null;
- const reviewer=configured().find(p=>p.id!==originalProvider&&Date.now()>=(cooldown.get(p.id)||0));
+ const reviewer=configured().find(p=>p.id!==originalProvider&&p.id!=="requesty"&&Date.now()>=(cooldown.get(p.id)||0));
  if(!reviewer)return null;
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),timeoutMs);
  try{
@@ -294,6 +309,11 @@ async function checkStatus(){
    if(Date.now()<(cooldown.get(provider.id)||0))return {id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
+    if(provider.id==="requesty"){
+     if(Date.now()-recentRequesty.at<90000)return {id:provider.id,status:"online",model:recentRequesty.model,reason:"recent_reply"};
+     const models=await Requesty.freeModels({signal:ctrl.signal});
+     return {id:provider.id,status:models.length?"ready":"offline",reason:models.length?"catalog_verified":"free_model_unavailable",modelCount:models.length};
+    }
     if(provider.id==="openrouter"){
      if(Date.now()-recentOpenRouter.at<90000)return {id:provider.id,status:"online",model:recentOpenRouter.model,reason:"recent_reply"};
      // Account authentication does not consume the shared inference quota.
