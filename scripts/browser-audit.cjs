@@ -133,6 +133,26 @@ async function chat(page,device){
  assert.equal(await page.locator("#voiceDictate").isVisible(),true,"Dictate is available within privacy settings");
  await page.locator("#settingsPanel > summary").click();
  if(device==="mobile"){
+  const history=Array.from({length:24},(_,i)=>({role:i%2?"assistant":"user",content:"Ujian sejarah perbualan "+i+". "+"Teks yang cukup panjang untuk menguji tatal. ".repeat(3)}));
+  await page.evaluate(history=>window.BilikAntaraBridge.load({history}),history);
+  await page.waitForTimeout(100);
+  await page.locator("#input").focus();
+  // Android's resizes-content mode makes both the layout and visual viewport
+  // smaller when the keyboard opens. Emulate that change without a real IME.
+  await page.setViewportSize({width:390,height:480});
+  await page.waitForTimeout(150);
+  const keyboard=await page.evaluate(()=>{
+   const chat=document.querySelector('#chat'),composer=document.querySelector('.composer').getBoundingClientRect();
+   return {bottomGap:chat.scrollHeight-chat.scrollTop-chat.clientHeight,composerBottom:composer.bottom,
+    viewport:window.innerHeight,rootOverflow:document.documentElement.scrollHeight-document.documentElement.clientHeight};
+  });
+  assert.ok(keyboard.composerBottom<=keyboard.viewport,"Composer remains visible above keyboard");
+  assert.ok(keyboard.bottomGap<8,"Latest message remains visible when the keyboard opens");
+  assert.ok(keyboard.rootOverflow<=1,"Keyboard must not add a scrollable blank page");
+  await page.locator('#chat').evaluate(el=>{el.scrollTop=0;});
+  await page.setViewportSize({width:390,height:844});
+  await page.waitForTimeout(150);
+  assert.equal(await page.locator('#chat').evaluate(el=>el.scrollTop),0,"Resizing must not pull a user away from older messages");
   await page.locator("#input").focus();
   await snapshot(page,device+"-chat-focused");
  }

@@ -2,7 +2,7 @@
 <html lang="ms" data-theme="dark" class="chat-portrait-ready">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#070911">
 <meta name="description" content="Aksara A.I. ialah pembantu kecerdasan buatan berbahasa Melayu santai dalam Bilik Antara, dibangunkan oleh Shaiful Ridhwan. Sembang teks, Voice Chat, pembelajaran dan penulisan.">
 <meta name="author" content="Shaiful Ridhwan">
@@ -200,9 +200,13 @@ function syncViewport(){
  const keyboardVisible=document.activeElement===ui.input&&stableAppHeight-currentHeight>120;
  const height=window.innerWidth<=760?(keyboardVisible?currentHeight:stableAppHeight)+"px":"";
  if(height===appliedAppHeight)return;
+ // Keep the newest message visible when the keyboard changes the chat height,
+ // but never pull a reader away from older messages they intentionally viewed.
+ const followBottom=appliedAppHeight!==null&&ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight<48;
  appliedAppHeight=height;
  if(height)document.documentElement.style.setProperty("--app-height",height);
  else document.documentElement.style.removeProperty("--app-height");
+ if(followBottom)scrollDown();
 }
 function queueViewportSync(){
  if(viewportFrame)return;

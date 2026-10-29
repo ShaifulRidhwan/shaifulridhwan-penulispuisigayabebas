@@ -127,6 +127,7 @@ test("Mobile viewport, permanent dark theme and conversation functions retained"
  assert.doesNotMatch(css,/data-theme="light"/);
  assert.doesNotMatch(html,/id="themeLight"|id="themeDark"|function setTheme/);
  assert.match(html,/<meta name="color-scheme" content="dark">/);
+ assert.match(html,/<meta name="viewport"[^>]*interactive-widget=resizes-content/);
  assert.match(css,/\.shell\.is-busy/);
  assert.match(css,/\.composer textarea\{\s*font-size:16px/);
  assert.match(html,/visualViewport/);
