@@ -13,6 +13,14 @@ async function pick(page,id,value){
  await dialog.waitFor({state:'visible'});
  const color=await dialog.evaluate(el=>getComputedStyle(el).backgroundImage);
  assert.match(color,/gradient/,'Picker must use dark custom theme');
+ const center=await dialog.evaluate(el=>{
+  const box=el.getBoundingClientRect();
+  return {difference:Math.abs((box.top+box.bottom)/2-innerHeight/2),
+          within:box.top>=-1&&box.bottom<=innerHeight+1,
+          background:getComputedStyle(el).backgroundImage};
+ });
+ assert.ok(center.difference<12,'Picker should appear at viewport center, not bottom: '+JSON.stringify(center));
+ assert.ok(center.within,'Picker must fit inside viewport');
  const option=page.locator('.studio-picker-option[data-value="'+value+'"]');
  if(page.viewportSize().width<=680)await option.tap();else await option.click();
  assert.equal(await page.locator('#'+id).inputValue(),value);
@@ -78,13 +86,25 @@ async function main(){
     modalFill:modal.backgroundImage,modalBlur:modal.backdropFilter,
     heroFont:hero.fontFamily,headingFont:heading.fontFamily,
     promptWeight:css('#enhancePrompt').fontWeight,
-    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('studio-antara.css?v=13'))
+    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('studio-antara.css?v=14'))
    };
   });
-  assert.equal(visual.stylesheet,true,'Fresh Studio 2.2 CSS must load');
+  assert.equal(visual.stylesheet,true,'Fresh Studio 2.3 CSS must load');
   for(const key of ['cardFill','resultFill','galleryFill','modalFill'])assert.match(visual[key],/gradient/,'Missing unified glass gradient: '+key);
   for(const key of ['cardBlur','fieldBlur','triggerBlur','modalBlur'])assert.match(visual[key],/blur/,'Missing translucent glass blur: '+key);
-  assert.match(visual.heroFont,/Space Grotesk/);assert.match(visual.headingFont,/DM Sans/);
+  assert.match(visual.heroFont,/DM Sans/);assert.match(visual.headingFont,/DM Sans/);
+  const galleryLayout=await page.locator('#historyPanel > summary').evaluate(el=>{
+   const title=el.querySelector('.gallery-title'),meta=el.querySelector('.gallery-meta'),badge=el.querySelector('#historyCount'),arrow=el.querySelector('.gallery-chevron');
+   const a=title.getBoundingClientRect(),b=meta.getBoundingClientRect(),c=badge.getBoundingClientRect(),d=arrow.getBoundingClientRect();
+   return {grouped:!!(title&&meta&&badge&&arrow),ordered:a.right<b.left&&c.right<d.left,
+     badgeRadius:getComputedStyle(badge).borderRadius,oldArrow:getComputedStyle(el,'::after').content,
+     titleFont:getComputedStyle(title).fontFamily};
+  });
+  assert.equal(galleryLayout.grouped,true);
+  assert.equal(galleryLayout.ordered,true,'Gallery title and compact count/chevron must not overlap');
+  assert.match(galleryLayout.badgeRadius,/999px/);
+  assert.equal(galleryLayout.oldArrow,'none','Old duplicate gallery arrow must be hidden');
+  assert.match(galleryLayout.titleFont,/DM Sans/);
   assert.equal(visual.promptWeight,'600','Enhance pill must use the refined typography');
   await auditPickers(page,calls);
   await page.locator('#imagePrompt').fill('enhance503 subjek asal');await page.locator('#enhancePrompt').click();await page.locator('#enhancePanel').waitFor({state:'visible'});
