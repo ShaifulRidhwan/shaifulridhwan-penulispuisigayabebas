@@ -23,7 +23,9 @@ test('Studio is cloud-only, image-only and all client JS parses',()=>{
 test('Studio 2.4 removes redundant copy and decorative icons without hiding functional notices',()=>{
  const html=fs.readFileSync('studio-antara.html','utf8'),script=fs.readFileSync('studio-antara-cloud.js','utf8');
  assert.match(html,/<section class="glass-card creator" aria-labelledby="studioTitle">/);
- assert.match(html,/<h1 id="studioTitle" class="studio-card-title">STUDIO <span>ANTARA\.<\/span><\/h1>/);
+ assert.match(html,/<h1 id="studioTitle" class="studio-card-title">STUDIO <span>ANTARA<\/span><\/h1>/);
+ assert.match(html,/<h2 id="resultTitle">Ruang visual<\/h2>/);
+ assert.doesNotMatch(html,/<span class="brand-mark">AKSARA<\/span>/);
  assert.match(html,/<textarea id="imagePrompt"[^>]*placeholder="Apa yang kau nak lihat\?"/);
  assert.match(html,/<p class="generation-status" id="generationStatus"[^>]*hidden><\/p>/);
  assert.match(html,/<p id="imageMetadata" class="image-meta" hidden><\/p>/);
