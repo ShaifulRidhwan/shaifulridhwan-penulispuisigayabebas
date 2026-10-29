@@ -284,7 +284,7 @@ exports.handler=async event=>{
   if(identityReply)return result(200,{
     mode:"live",aiMode:"automatic",model:"project-identity",reply:identityReply,
     sources:[],argumentMap:[],truthAudit:[],thoughtLedger:[],hypothesis:"",
-    reviewApplied:false,disclaimer:intent.reaction?"":"Asal-usul dan ciri berdasarkan rekod projek; bukan latihan semula Gemini."
+    reviewApplied:false,disclaimer:intent.reaction?"":"Info ni berdasarkan rekod projek Aksara."
   },H);
   const tiktokHandle=extractTikTokHandle(question);
   const publicAccount=tiktokHandle?await researchPublicAccount(tiktokHandle):null;
@@ -349,7 +349,7 @@ exports.handler=async event=>{
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
-        return result(502,{code:"STREAM_INTERRUPTED",error:"Aliran jawapan sandaran terputus sebelum lengkap. Jawapan separa dikekalkan; cuba semula untuk jawapan penuh.",interruption:fallbackError.interruption||"upstream"},H);
+        return result(502,{code:"STREAM_INTERRUPTED",error:"Jawapan model sandaran terputus sebelum habis. Jawapan yang sempat keluar masih ada; cuba lagi untuk jawapan penuh.",interruption:fallbackError.interruption||"upstream"},H);
       }
       if(alternative.attempts)providerFailures.push(...alternative.attempts);
       if(alternative.retryAfterSeconds)providerRetrySeconds=alternative.retryAfterSeconds;
@@ -363,7 +363,7 @@ exports.handler=async event=>{
           mode:"fallback",aiMode:"automatic",model:alternative.model,provider:alternative.provider,
           reply:alternative.reply,sources:publicSources.map(({title,url})=>({title,url})),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[],toolsOffered:[],
-          disclaimer:"Model sandaran: "+({groq:"Groq",mistral:"Mistral",openrouter:"OpenRouter",requesty:"Requesty",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.search?" · Carian web langsung tidak tersedia pada model sandaran; maklumat terkini belum disahkan.":""),
+          disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",mistral:"Mistral",openrouter:"OpenRouter",requesty:"Requesty",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.search?" · Model sandaran ni tak dapat check web secara live. Info terkini belum disahkan.":""),
           usage:alternative.usage,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures}
         },H);
       }
@@ -416,10 +416,10 @@ exports.handler=async event=>{
     if(candidate&&candidate.content&&Array.isArray(candidate.content.parts)&&candidate.content.parts.some(p=>p&&p.executableCode))actualTools.push("code_execution");
     if(candidate&&candidate.urlContextMetadata&&Array.isArray(candidate.urlContextMetadata.urlMetadata)&&candidate.urlContextMetadata.urlMetadata.some(x=>x&&x.urlRetrievalStatus==="URL_RETRIEVAL_STATUS_SUCCESS"))actualTools.push("url_context");
     const warnings=[];
-    if(candidate&&candidate.finishReason&&candidate.finishReason!=="STOP")warnings.push("Jawapan mungkin tidak lengkap ("+candidate.finishReason+").");
-    if(intent.search&&!tools.some(t=>t.google_search))warnings.push("Carian web langsung dimatikan dalam tetapan RM0. Maklumat terkini belum disahkan.");
-    else if(intent.search&&!sources.length)warnings.push("Tiada rujukan carian yang dapat disahkan untuk jawapan ini.");
-    if(intent.hasLink&&!actualTools.includes("url_context")&&!sources.length)warnings.push("Kandungan pautan tidak dapat disahkan daripada metadata alat.");
+    if(candidate&&candidate.finishReason&&candidate.finishReason!=="STOP")warnings.push("Jawapan ni mungkin belum lengkap · "+candidate.finishReason+".");
+    if(intent.search&&!tools.some(t=>t.google_search))warnings.push("Live web search belum aktif, jadi info terkini belum disahkan.");
+    else if(intent.search&&!sources.length)warnings.push("Aku belum jumpa sumber yang dapat disahkan untuk jawapan ni.");
+    if(intent.hasLink&&!actualTools.includes("url_context")&&!sources.length)warnings.push("Aku belum dapat pastikan link ni berjaya dibaca.");
     const output={mode:"live",aiMode:"automatic",provider:"gemini",model,reply:revised,sources,
       ...(publicAccount?{publicAccount}:{}),
       argumentMap:review?review.argumentMap:[],truthAudit:review?review.truthAudit:[],
@@ -434,7 +434,7 @@ exports.handler=async event=>{
     return result(200,output,H);
   }catch(error){
     if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
-    if(streamed)return result(502,{code:"STREAM_INTERRUPTED",error:"Aliran jawapan terputus. Jawapan separa belum lengkap."},H);
+    if(streamed)return result(502,{code:"STREAM_INTERRUPTED",error:"Jawapan terputus sebelum habis."},H);
     providerFailures.push({provider:"gemini",status:error.status||"unavailable",reason:error.cooldownKnown?"quota_cooldown":error.name==="AbortError"?"timeout":"upstream",...(error.quotaKind?{quotaKind:error.quotaKind,quotaScope:error.quotaScope}:{})});
     googleCooldown(model,error);
     const transient=[400,401,403,404,429,500,502,503,504].includes(error.status)||error.name==="AbortError"||error.name==="TypeError"||(!error.status&&error.name==="Error");
@@ -442,7 +442,7 @@ exports.handler=async event=>{
       const fallback=await useAlternative();if(fallback)return fallback;
     }
     log("error",{http:error.status||null,name:error.name||"unknown",ms:Date.now()-started});
-    if(!textOnly&&!imageOnly&&Router.enabled())return result(error.status===429?429:503,{code:"CAPABILITY_UNAVAILABLE",error:privateContext&&payload.contextFallback!==true?"Model utama belum tersedia. Kau boleh benarkan sandaran memproses memori dan fail teks dalam Privasi & sesi, atau cuba lagi kemudian.":"Model yang menyokong permintaan ini belum tersedia. Sandaran teks tidak boleh menggantikan alat carian, audio, imej atau fungsi khusus ini.",retryAfterSeconds:30},H);
+    if(!textOnly&&!imageOnly&&Router.enabled())return result(error.status===429?429:503,{code:"CAPABILITY_UNAVAILABLE",error:privateContext&&payload.contextFallback!==true?"Model utama belum available. Kalau kau benarkan dalam Privasi & Tetapan, model sandaran boleh baca memori dan fail teks kau.":"Model untuk function ni belum available. Sandaran teks tak boleh handle semua benda macam audio, imej dan carian.",retryAfterSeconds:30},H);
     if((textOnly||imageOnly)&&Router.enabled()&&alternativeTried){
       const recovered=Router.availability().filter(p=>p.retryAfterSeconds===0&&
         providerFailures.some(f=>f.provider===p.provider&&f.status===429)).map(p=>p.provider);
@@ -453,9 +453,9 @@ exports.handler=async event=>{
         if(recovery&&(recovery.statusCode===200||recovery.statusCode===499||streamed))return recovery;
       }
       const wait=Router.retryAfterSeconds(providerRetrySeconds);
-      return result(503,{code:"ALL_PROVIDERS_BUSY",error:"Model yang tersedia belum dapat menjawab. Teks kau dikekalkan.",retryAfterSeconds:wait,retryable:!([400,401,403,404].includes(error.status)&&providerFailures.length&&providerFailures.every(x=>[400,401,403,404,413,422].includes(x.status))),providerFailures:providerFailures.slice(-6),durMs:Date.now()-started,timings:timings()},H);
+      return result(503,{code:"ALL_PROVIDERS_BUSY",error:"Model belum dapat jawab. Mesej kau masih ada.",retryAfterSeconds:wait,retryable:!([400,401,403,404].includes(error.status)&&providerFailures.length&&providerFailures.every(x=>[400,401,403,404,413,422].includes(x.status))),providerFailures:providerFailures.slice(-6),durMs:Date.now()-started,timings:timings()},H);
     }
-    if(error.name==="AbortError")return result(504,{error:"Model mengambil masa terlalu lama. Teks kau dikekalkan.",durMs:Date.now()-started},H);
+    if(error.name==="AbortError")return result(504,{error:"Model ambil masa lama sangat. Mesej kau masih ada.",durMs:Date.now()-started},H);
     if(error.status===429)return result(429,{code:Router.enabled()?"ALL_PROVIDERS_BUSY":"API_QUOTA",error:Router.enabled()?"Semua penyedia AI yang tersedia belum dapat menjawab. Cuba lagi kemudian.":"Kuota model utama sedang penuh. Cuba lagi kemudian.",retryAfterSeconds:30,providerFailures:providerFailures.slice(-6)},H);
     return result(502,{error:errorMessage(error.status||502),providerFailures:providerFailures.slice(-6)},H);
   }

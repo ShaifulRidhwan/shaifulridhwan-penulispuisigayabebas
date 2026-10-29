@@ -86,7 +86,7 @@
      <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Jom Voice Chat</button>
     </div>
     <div class="chat-controls">
-     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status lima penyedia AI dan model yang tersedia"><span class="dot" aria-hidden="true"></span><span id="connectionText">Semak Multi A.I.…</span></button>
+     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status lima penyedia AI dan model yang tersedia"><span class="dot" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
      <details class="settings" id="settingsPanel">
       <summary aria-label="Buka Ciri dan Fungsi Aksara" title="Ciri &amp; Fungsi">
        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
@@ -146,7 +146,7 @@
     <div class="voice-avatar-stage" id="voiceAvatarStage" aria-label="Ruang avatar AI cahaya dan gelap"><div class="voice-avatar-glow" aria-hidden="true"></div><div class="voice-avatar-caption">AKSARA A.I.</div></div>
     <div class="voice-wave" id="voiceWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
     <div class="voice-dialogue-dock">
-    <div id="voiceStatus" class="voice-status" role="status" aria-live="polite">Belum bersambung.</div>
+    <div id="voiceStatus" class="voice-status" role="status" aria-live="polite">Belum connect lagi.</div>
     <div id="voiceTranscript" class="voice-transcript" hidden aria-hidden="true"></div>
     <div class="voice-session-controls">
      <button type="button" id="voiceMuteMic" aria-pressed="true">Tutup mikrofon</button>
@@ -250,7 +250,7 @@ function status(kind,label,explain){
 }
 window.addEventListener("ba:voice-connected",()=>status("online","Multi A.I Connected",""));
 async function probe(){
- if(Date.now()<quotaCooldownUntil){status("limited","Had API","Kuota AI sementara penuh. Cuba lagi sebentar.");return;}
+ if(Date.now()<quotaCooldownUntil){status("limited","Kuota API tengah penuh","Kuota AI tengah penuh. Kita try lagi nanti.");return;}
  return checkProviders(true);
 }
 ui.retry.addEventListener("click",()=>{
@@ -277,9 +277,9 @@ function renderProviderRows(rows,catalog=null){
   const line=elem(expandable?"summary":"div","multi-ai-row"+(expandable?" multi-ai-expand-trigger":""));
   const nameText=elem("span","multi-ai-provider",name);
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
-  const waitLabel=waitSeconds>0?"Jeda "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" saat"):"";
+  const waitLabel=waitSeconds>0?"Tunggu "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" saat"):"";
   const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":state==="ready"?"is-ready":"is-muted"),
-   state==="online"?"Terhubung":state==="ready"?"Sedia":state==="offline"?(waitLabel||"Tidak terhubung"):state==="off"?"Tidak aktif":"Menyemak…");
+   state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?(waitLabel||"Offline"):state==="off"?"Belum aktif":"Checking…");
   line.append(nameText,statusText);
   if(!expandable){multiList.appendChild(line);continue;}
   const group=elem("details","multi-ai-provider-details");
@@ -300,13 +300,13 @@ function renderProviderRows(rows,catalog=null){
     const shortName=elem("span","multi-ai-model-name",shortOpenRouterName(model));
     const liveModel=(item?.status==="online"&&item.model===model.id)||
       (id==="openrouter"&&model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000);
-    const statusLabel=elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Terhubung":"Tersenarai");
+    const statusLabel=elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Connected":"Dalam senarai");
     child.append(shortName,statusLabel);modelList.appendChild(child);
    }
-   if(shownModels?.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Senarai terdahulu. Semakan katalog terkini gagal."));
+   if(shownModels?.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Ni senarai lama. Aku tak dapat check senarai terbaru."));
   }else{
-   const message=id==="requesty"?(state==="off"?"Belum diaktifkan":state==="checking"?"Menyemak model…":"Tiada model yang disahkan sekarang."):
-    !catalog?"Memuatkan model…":catalog.status==="unavailable"?"Senarai model belum tersedia.":"Tiada model disenaraikan.";
+   const message=id==="requesty"?(state==="off"?"Belum aktif":state==="checking"?"Checking model…":"Belum ada model yang confirmed."):
+    !catalog?"Loading model…":catalog.status==="unavailable"?"Senarai model belum available.":"Belum ada model dalam senarai.";
    modelList.appendChild(elem("p","multi-ai-model-note",message));
   }
   group.appendChild(modelList);multiList.appendChild(group);
@@ -316,7 +316,7 @@ async function checkProviders(force=false){
  if(multiChecking)return;
  if(!force&&Date.now()-multiLastCheck<20000)return;
  multiChecking=true;el("multiAiRefresh").disabled=true;renderProviderRows(null,multiCatalog);
- if(!busy)status("connecting","Menguji sambungan AI…","");
+ if(!busy)status("connecting","Sekejap, aku check connection…","");
  const revision=connectionRevision;
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12500);
  try{
@@ -338,11 +338,11 @@ async function checkProviders(force=false){
   if(!busy&&connectionRevision===revision){
    if(data.someOnline)status("ready","Multi A.I Connected","");
    else if(data.someReady)status("configured","Multi A.I Connected","");
-   else status("error","Multi AI Offline","");
+   else status("error","Multi A.I tengah offline","");
   }
  }catch(_){ui.requestyConsent.disabled=true;ui.requestyConsent.checked=false;
   renderProviderRows([],multiCatalog?{...multiCatalog,status:"stale"}:null);
-  if(!busy&&connectionRevision===revision)status("error","Sambungan belum disahkan","");
+  if(!busy&&connectionRevision===revision)status("error","Connection belum confirm","");
  }
  finally{clearTimeout(timer);multiChecking=false;el("multiAiRefresh").disabled=false;}
 }
@@ -511,7 +511,7 @@ function save(){
  if(!ui.remember.checked)return;
  try{localStorage.setItem(STORAGE,JSON.stringify({at:Date.now(),history,
   summary:summary,summarizedThrough,thoughtLedger:ideas.slice(-12)}));window.dispatchEvent(new Event("ba:saved"));}
- catch(e){ui.docStatus.textContent="Penyimpanan peranti tidak tersedia.";}
+ catch(e){ui.docStatus.textContent="Sesi tak dapat disimpan pada device ni.";}
 }
 function restore(){
  try{
@@ -601,32 +601,32 @@ async function readFiles(files){
    const name=String(file.name||"fail").slice(0,100);
    const ext=(name.split(".").pop()||"").toLowerCase();
    if(["txt","md","csv"].includes(ext)){
-    if(file.size>100000)throw Error("Fail teks melebihi kapasiti satu permintaan. Pecahkan dokumen.");
+    if(file.size>100000)throw Error("Fail teks ni terlalu besar untuk sekali hantar. Cuba pecahkan dulu.");
     texts.push("[FAIL: "+name+"]\n"+await file.text());
    }else{
     let mime=aliases[file.type]||file.type;
     if(ext==="pdf")mime="application/pdf";
     if(ext==="m4a")mime="audio/mp4";
-    if(!MEDIA.has(mime)||!file.size)throw Error("Jenis lampiran tidak disokong.");
+    if(!MEDIA.has(mime)||!file.size)throw Error("Jenis fail ni aku belum boleh baca.");
     totalBytes+=file.size;
-    if(totalBytes>3600000)throw Error("Kapasiti gabungan media kira-kira 3.6 MB.");
+    if(totalBytes>3600000)throw Error("Jumlah media terlalu besar. Had gabungan lebih kurang 3.6 MB.");
     const encoded=await new Promise((resolve,reject)=>{
      const reader=new FileReader();
      reader.onload=()=>resolve(String(reader.result||"").split(",")[1]||"");
-     reader.onerror=()=>reject(Error("Gagal membaca fail."));reader.readAsDataURL(file);
+     reader.onerror=()=>reject(Error("Aku tak dapat baca fail ni."));reader.readAsDataURL(file);
     });
-    if(!encoded)throw Error("Fail kosong.");
+    if(!encoded)throw Error("Fail ni kosong.");
     attachments.push({name,mimeType:mime,data:encoded});
    }
    names.push(name);
   }
   const combined=texts.join("\n\n");
-  if(combined.length>100000)throw Error("Jumlah teks melebihi kapasiti satu permintaan. Pecahkan dokumen.");
+  if(combined.length>100000)throw Error("Jumlah teks terlalu banyak untuk sekali hantar. Cuba pecahkan dulu.");
   fileState={name:names.join(", ").slice(0,240),text:combined,media:attachments};
-  ui.docStatus.textContent=names.length+" fail dilampirkan · "+names.join(", ").slice(0,180);
+  ui.docStatus.textContent=names.length+" fail dah attach · "+names.join(", ").slice(0,180);
   ui.remove.hidden=false;
  }catch(e){
-  discardFile();ui.docStatus.textContent=String(e.message||"Lampiran tidak dapat dibaca.");
+  discardFile();ui.docStatus.textContent=String(e.message||"Aku tak dapat baca attachment ni.");
  }
  update();
 }
@@ -787,10 +787,10 @@ async function submit(event){
  const selectedFile=fileState;
  if(Date.now()<quotaCooldownUntil){
   const seconds=Math.max(1,Math.ceil((quotaCooldownUntil-Date.now())/1000));
-  status("limited","Cuba sebentar lagi","Had percubaan sementara aktif. Cuba semula selepas kira-kira "+seconds+" saat. Teks kau kekal dalam kotak taip.");return;
+  status("limited","Tunggu jap ya…","Tunggu lebih kurang "+seconds+" saat ya. Mesej kau masih ada dalam chatbox.");return;
  }
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
- busy=true;stoppedByUser=false;update();status("connecting","Sedang menjawab…","");ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
+ busy=true;stoppedByUser=false;update();status("connecting","Sekejap, aku jawab…","");ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
  const pendingUser=addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""));
  let typing=showTyping();
  ui.input.value="";resize();update();
@@ -813,7 +813,7 @@ async function submit(event){
   partial+=delta;if(partial.length>40000)throw Error("Jawapan melebihi had.");
   if(!partialNode){
    typing.remove();partialNode=elem("div","message ai is-partial");
-   partialNode.appendChild(elem("div","byline","Aksara A.I. · sedang menjawab"));
+   partialNode.appendChild(elem("div","byline","Aksara A.I. · tengah jawab"));
    partialBubble=elem("div","bubble");partialNode.appendChild(partialBubble);ui.chat.appendChild(partialNode);
   }
   if(!partialFrame)partialFrame=requestAnimationFrame(drawPartial);
@@ -825,13 +825,13 @@ async function submit(event){
    documentName:selectedFile&&selectedFile.name||"",
    media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt()||""};
   const data=await askWithReconnect(payload,ctrl.signal,receive,
-   ({attempt,seconds,offline,reason})=>status("connecting",offline?"Menunggu internet…":reason==="capacity"?"Menunggu model tersedia…":"Menyambung semula…",
-    offline?"Internet terputus. Aku akan cuba semula bila sambungan pulih. Tekan Henti untuk batalkan.":
-     (reason==="capacity"?"Model sedang sibuk. Cuba lagi dalam ":"Percubaan semula "+attempt+"/2 dalam ")+seconds+" saat. Tekan Henti untuk batalkan."),
+   ({attempt,seconds,offline,reason})=>status("connecting",offline?"Internet hilang. Aku tunggu jap…":reason==="capacity"?"Model tengah busy. Tunggu jap…":"Aku try sambung balik…",
+    offline?"Internet putus. Aku tunggu dia kembali, lepas tu try lagi. Tekan Henti kalau nak cancel.":
+     (reason==="capacity"?"Model tengah busy. Aku try lagi dalam "+seconds+" saat. Nak cancel, tekan Henti.":"Aku try lagi dalam "+seconds+" saat · cubaan "+attempt+"/2.")),
    attempt=>{
     cancelPartialFrame();
     typing.remove();partialNode?.remove();partial="";partialNode=null;partialBubble=null;firstTokenMs=null;
-    typing=showTyping();status("connecting","Menyambung semula · "+attempt+"/2","");
+    typing=showTyping();status("connecting","Connecting balik · "+attempt+"/2","");
    });
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
   data.reply=window.BilikAntaraChatStyle.reply(data.reply);
@@ -843,9 +843,9 @@ async function submit(event){
    publicAccount:data.publicAccount||null});
   
   addIdeas(data.thoughtLedger);save();
-  if(selectedFile&&selectedFile===fileState)ui.docStatus.textContent="Lampiran tersedia untuk soalan susulan · "+selectedFile.name;
+  if(selectedFile&&selectedFile===fileState)ui.docStatus.textContent="Fail ni masih ada kalau kau nak tanya lagi · "+selectedFile.name;
   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
-  status(data.model==="project-identity"?"configured":"online",data.model==="project-identity"?"Jawapan identiti setempat":"Multi A.I Connected","");
+  status(data.model==="project-identity"?"configured":"online",data.model==="project-identity"?"Jawapan tersedia Aksara":"Multi A.I Connected","");
   if(data.model!=="project-identity"){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
   if(data.provider==="openrouter"&&typeof data.model==="string"){lastOpenRouterModel=data.model;lastOpenRouterAt=Date.now();}
   compact();
@@ -853,32 +853,32 @@ async function submit(event){
   cancelPartialFrame();
   typing.remove();
   if(!stoppedByUser&&partial.trim()&&partialNode){
-   partialNode.querySelector(".byline").textContent="Aksara A.I. · jawapan belum lengkap";
-   partialBubble.textContent=partial+"\n\n[Aliran terputus. Tekan Cuba semula untuk meminta jawapan penuh.]";
+   partialNode.querySelector(".byline").textContent="Aksara A.I. · jawapan terputus";
+   partialBubble.textContent=partial+"\n\n[Jawapan terputus. Tekan Cuba semula kalau nak aku jawab penuh.]";
    failedPreview={user:pendingUser,node:partialNode};
   }else{partialNode?.remove();pendingUser.remove();}
   if(stoppedByUser){
    if(partial.trim()){
     addMessage("user",question);
-    const content=partial+"\n\n[Jawapan separa — dihentikan pengguna.]";
-    addMessage("assistant",content,{disclaimer:"Jawapan ini dihentikan dan belum lengkap."});
-    history.push({role:"user",content:question},{role:"assistant",content,disclaimer:"Jawapan separa — dihentikan pengguna."});save();
+    const content=partial+"\n\n[Jawapan dihentikan sebelum habis.]";
+    addMessage("assistant",content,{disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});
+    history.push({role:"user",content:question},{role:"assistant",content,disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});save();
    }
-   status("configured","Respons dihentikan",partial?"Jawapan separa ditandakan dalam perbualan.":"Mesej kau kekal untuk dicuba semula.");
+   status("configured","Okay, aku stop dulu",partial?"Jawapan yang sempat keluar masih ada dalam chat.":"Mesej kau masih ada kalau nak try lagi.");
   }else{
   const limited=error?.status===429||["API_QUOTA","RATE_LIMIT","ALL_PROVIDERS_BUSY"].includes(error?.code);
   if(error.code==="CAPABILITY_UNAVAILABLE"){
-   status("error","Fungsi ini belum tersedia",String(error.message));
+   status("error","Function ni belum available",String(error.message));
   }else if(limited){
    quotaCooldownUntil=Date.now()+Math.min(120,Math.max(5,Number(error.retryAfterSeconds)||30))*1000;
    const rateLimited=error?.code==="RATE_LIMIT",allBusy=error?.code==="ALL_PROVIDERS_BUSY";
-   status("limited",rateLimited?"Terlalu banyak permintaan":allBusy?"Model AI sibuk":"Had API",rateLimited
-    ?"Had permintaan sementara dicapai. Teks masih ada; cuba lagi selepas seketika."
-    :allBusy?"Model utama dan sandaran belum tersedia. Teks kau masih ada; cuba lagi kemudian."
-    :"Kuota Gemini sementara penuh. Mesej kau masih ada; cuba lagi sebentar nanti.");
+   status("limited",rateLimited?"Request tengah banyak":allBusy?"Model tengah busy":"Kuota API tengah penuh",rateLimited
+    ?"Request tengah banyak dalam masa singkat. Mesej kau masih ada, cuba lagi jap."
+    :allBusy?"Otak utama dengan sandaran belum dapat jawab. Mesej kau masih ada, kita try lagi nanti."
+    :"Kuota Gemini tengah penuh. Mesej kau masih ada, cuba lagi nanti.");
   }else{
-   const desc=error?.name==="AbortError"?"Respons mengambil masa terlalu lama.":String(error?.message||"Ralat tidak diketahui.").slice(0,180);
-   status("error","Permintaan gagal",desc+" Mesej kau dikekalkan untuk dicuba semula.");
+   const desc=error?.name==="AbortError"?"Jawapan ambil masa lama sangat.":String(error?.message||"Ada error yang aku tak dapat kenal pasti.").slice(0,180);
+   status("error","Alamak, tak lepas",desc+" Mesej kau masih ada kalau nak try lagi.");
   }
   }
   if(!stoppedByUser)window.dispatchEvent(new CustomEvent("ba:request-failed",{detail:{elapsedMs:Math.round(performance.now()-startedAt),code:error?.code||"",status:Number(error?.status)||0}}));
@@ -922,7 +922,7 @@ restore();renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-brain.js?v=10" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-dialek.js?v=2" defer></script>
-<script src="bilik-antara-voice.js?v=37" defer></script>
+<script src="bilik-antara-voice.js?v=38" defer></script>
 <script src="bilik-antara-rim-sparks.js?v=2" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
 <script>

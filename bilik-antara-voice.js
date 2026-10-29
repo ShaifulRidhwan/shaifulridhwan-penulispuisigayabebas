@@ -21,7 +21,7 @@ function scheduleDialectSwitch(phrase){
  pendingDialect={...desired,request:voicePlainText(phrase).slice(-950)};
  // The previous regional accent must not keep speaking after a switch is heard.
  suppressPlaybackUntilUser=true;stopAudioQueue();panel.classList.remove("voice-speaking");
- sayStatus("Menetapkan loghat "+desired.label+"…");
+ sayStatus("Jap, aku set loghat "+desired.label+"…");
  // Google may transcribe the same utterance incrementally.
  dialectTimer=setTimeout(()=>{
    dialectTimer=null;
@@ -76,8 +76,8 @@ function handleSpokenControl(text){
  if(!stop&&!resume)return false;
  if(lastCommand===q&&Date.now()-lastCommandAt<1700)return true;
  lastCommand=q;lastCommandAt=Date.now();voiceMetrics.commands++;
- if(stop){suppressPlaybackUntilUser=true;stopAudioQueue();panel.classList.remove("voice-speaking");sayStatus("Baik, aku diam. Kau cakap je.");}
- else {suppressPlaybackUntilUser=false;sayStatus("Aku dengar. Kau boleh sambung.");}
+ if(stop){suppressPlaybackUntilUser=true;stopAudioQueue();panel.classList.remove("voice-speaking");sayStatus("Okay, aku diam. Kau cakap je.");}
+ else {suppressPlaybackUntilUser=false;sayStatus("Aku dengar. Sambung je.");}
  return true;
 }
 function handleVoiceTools(call){
@@ -253,7 +253,7 @@ function drainAudioQueue(){
         drainAudioQueue();
         if(!playbackBusy()){
           panel.classList.remove("voice-speaking");
-          if(modelTurnFinished)sayStatus("Aku dah habis jawab. Aku sedang dengar.");
+          if(modelTurnFinished)sayStatus("Dah siap. Aku dengar kau pula.");
         }
       };
       const when=Math.max(playContext.currentTime+.025,nextAudioTime||0);
@@ -262,7 +262,7 @@ function drainAudioQueue(){
       playSources.add(node);
       panel.classList.add("voice-speaking");
       scheduled++;
-    }catch(_){showNotice("Sebahagian audio tidak dapat dimainkan. Semak sambungan atau mulakan sesi baharu.");}
+    }catch(_){showNotice("Sebahagian suara aku tak dapat dimainkan. Check connection atau mula sesi baru.");}
   }
 }
 function queueAudio(data,mime){
@@ -273,7 +273,7 @@ function queueAudio(data,mime){
   const bytes=Math.floor(data.length*3/4);
   if(bytes>MAX_PENDING_AUDIO_BYTES||pendingAudioBytes+bytes>MAX_PENDING_AUDIO_BYTES){
     // Bound memory on mobile. Explicitly report pressure, never discard silently.
-    showNotice("Audio jawapan melebihi kapasiti memori telefon. Cuba minta jawapan lebih berperingkat.");
+    showNotice("Jawapan suara ni terlalu besar untuk diproses. Cuba minta aku jawab sikit-sikit.");
     return;
   }
   modelTurnFinished=false;
@@ -298,14 +298,14 @@ function onServerMessage(payload){
         socket.send(JSON.stringify({clientContent:{
           turns:[{role:"user",parts:[{text:replay}]}],turnComplete:true
         }}));
-        sayStatus("Loghat "+dialectControl.label(activeDialect)+" aktif. Aku sedang menjawab…");
+        sayStatus("Loghat "+dialectControl.label(activeDialect)+" dah aktif. Aku tengah jawab…");
       }catch(_){
         // Keep the spoken request available if the new socket closes early.
         replayDialectRequest=replay;dialectSwitching=true;
-        sayStatus("Sambungan suara tidak stabil. Memulihkan loghat pilihan…");
+        sayStatus("Connection tak stabil. Aku cuba kekalkan loghat kau…");
       }
     }else{
-      sayStatus("Bersambung · "+(dialectControl?.label(activeDialect)||"Bahasa Melayu santai")+". Aku sedang dengar.");
+      sayStatus("Dah connected · "+(dialectControl?.label(activeDialect)||"Bahasa Melayu santai")+". Aku dengar.");
     }
     return;
   }
@@ -328,22 +328,22 @@ function onServerMessage(payload){
   const thinkingState=String(c?.interactionStatus||payload.interactionStatus||"").toUpperCase();
   if(thinkingState==="IN_PROGRESS"){
     reasoningActive=true;
-    if(!playbackBusy())sayStatus("Aku sedang fikir dan susun jawapan…");
+    if(!playbackBusy())sayStatus("Hmm, jap aku fikir…");
   }else if(thinkingState==="IDLE"){
     reasoningActive=false;
     modelTurnFinished=true;
-    if(!playbackBusy())sayStatus("Aku dah habis fikir. Kau boleh sambung.");
+    if(!playbackBusy())sayStatus("Okay, dah siap fikir. Kau boleh sambung.");
   }
-  if(c?.waitingForInput===true)sayStatus("Aku dengar, sambung je.");
+  if(c?.waitingForInput===true)sayStatus("Haa, sambung je. Aku dengar.");
   if(!c)return;
   // Respect the model waiting for the user to complete their thought.
-  if(c.waitingForInput===true&&!playbackBusy())sayStatus("Teruskan, aku sedang dengar.");
+  if(c.waitingForInput===true&&!playbackBusy())sayStatus("Haa, sambung je. Aku dengar.");
   const wasInterrupted=!!c.interrupted;
   if(wasInterrupted){
     voiceMetrics.interruptions++;
     stopAudioQueue();panel.classList.remove("voice-speaking");
     if(lastTurn)lastTurn.finished=true;
-    sayStatus("Aku berhenti. Kau cakap je, aku dengar.");
+    sayStatus("Okay, aku stop. Kau cakap je.");
     // An interruption can share a packet with fresh input transcription.
     // Keep that user request, but never play cancelled model audio.
     if(!c.inputTranscription?.text)return;
@@ -358,7 +358,7 @@ function onServerMessage(payload){
     if(!handleSpokenControl(c.inputTranscription.text))suppressPlaybackUntilUser=false;
     appendTranscript("user",c.inputTranscription.text);
     scheduleDialectSwitch(lastTurn?.text||c.inputTranscription.text);
-    if(!pendingDialect&&!dialectSwitching)sayStatus("Aku dengar. Sekejap, aku jawab…");
+    if(!pendingDialect&&!dialectSwitching)sayStatus("Okay, aku dengar. Sekejap aku jawab…");
   }
   // Ignore audio/transcription generated using the dialect that is being replaced.
   if(pendingDialect||dialectSwitching||wasInterrupted){
@@ -368,7 +368,7 @@ function onServerMessage(payload){
   if(c.outputTranscription&&c.outputTranscription.text){
     if(turnStartAt){voiceMetrics.lastResponseLatencyMs=Math.round(performance.now()-turnStartAt);turnStartAt=0;}
     appendTranscript("assistant",c.outputTranscription.text);
-    sayStatus("Aku sedang menjawab…");
+    sayStatus("Aku tengah jawab…");
   }
   for(const part of (c.modelTurn&&c.modelTurn.parts)||[]){
     if(part.inlineData&&part.inlineData.data&&String(part.inlineData.mimeType||"").startsWith("audio/")){
@@ -380,14 +380,14 @@ function onServerMessage(payload){
     if(lastTurn)lastTurn.finished=true;
     if(thinkingState==="IN_PROGRESS"||reasoningActive){
       modelTurnFinished=false; // intermediary audio, not the final deep-thinking answer
-      if(!playbackBusy())sayStatus("Aku tengah fikir bahagian seterusnya…");
+      if(!playbackBusy())sayStatus("Jap, aku fikir sambungan dia…");
     }else{
       modelTurnFinished=true;
       // Generation ending and audio playback ending are different events.
-      if(playbackBusy())sayStatus("Aku sedang habiskan jawapan…");
+      if(playbackBusy())sayStatus("Jap, aku habiskan jawapan…");
       else {
         panel.classList.remove("voice-speaking");
-        sayStatus("Aku sedang dengar. Kau boleh bercakap.");
+        sayStatus("Aku dengar. Cakap je.");
       }
     }
   }
@@ -397,7 +397,7 @@ async function startLive(){
   if(!window.isSecureContext||!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||
      !(window.AudioContext||window.webkitAudioContext)||!window.AudioWorkletNode||!window.WebSocket){
     liveButton.title="Voice Live perlukan sambungan selamat dan pelayar yang sesuai.";
-    const message="Pelayar ini tak menyokong Voice Live.";
+    const message="Browser ni tak support Voice Live.";
     sayStatus(message);showNotice(message);return;
   }
   closeDictation();showNotice("");
@@ -414,7 +414,7 @@ async function startLive(){
   sessionStarted=Date.now();resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;lastSpeechAt=0;connectedAt=0;
   try{preferStandardFallback=window.sessionStorage?.getItem(FALLBACK_CACHE_KEY)==="1";}catch(_){preferStandardFallback=false;}
   lastTurn=null;transcript.replaceChildren();panel.classList.remove("voice-speaking");
-  setButtonState();sayStatus("Meminta kebenaran mikrofon…");
+  setButtonState();sayStatus("Sekejap, aku nak access mikrofon…");
   const generation=++liveGeneration;
   // Begin token request in parallel with microphone permission and audio setup,
   // so network latency doesn't accumulate after the user's permission dialog.
@@ -435,7 +435,7 @@ async function startLive(){
     const micTrack=stream.getAudioTracks()[0];
     if(micTrack){
       micTrack.addEventListener("ended",()=>{
-        if(liveActive){showNotice("Mikrofon terputus. Sesi Voice dihentikan untuk keselamatan.");closeLive("Mikrofon terputus.");}
+        if(liveActive){showNotice("Mic terputus, jadi sesi Voice dah berhenti.");closeLive("Mikrofon terputus.");}
       },{once:true});
       // Read actual browser audio-processing settings rather than assuming they work.
       const settings=micTrack.getSettings?.()||{};
@@ -451,7 +451,7 @@ async function startLive(){
       micContext.audioWorklet.addModule("./bilik-antara-pcm-worklet.js?v=2")
     ]);
     if(generation!==liveGeneration){clearTimeout(tokenTimer);return;}
-    sayStatus("Menyambung kepada Gemini Live…");
+    sayStatus("Tengah connect ke Gemini Live…");
     const {res,body}=await tokenPromise;
     clearTimeout(tokenTimer);
     if(!res.ok||!body.token||!body.model){
@@ -465,12 +465,12 @@ async function startLive(){
     async function renewConnection(why){
       if(generation!==liveGeneration||!liveActive||reconnecting||document.hidden)return;
       if(Date.now()-sessionStarted>=MAX_DAY){
-        await closeLive("Tempoh maksimum penggunaan Voice hari ini (24 jam) tamat.");return;
+        await closeLive("Sesi 24 jam dah tamat. Nak sambung, mula sesi baru ya.");return;
       }
       if(connectedAt&&Date.now()-connectedAt>=STABLE_CONNECTION_MS)connectionAttempts=0;
       if(navigator.onLine===false){
         liveReady=false;
-        sayStatus("Internet terputus. Aku tunggu rangkaian kembali…");
+        sayStatus("Internet putus. Aku tunggu dia kembali…");
         return;
       }
       // Renew at a quiet boundary; a provider deadline bounds the wait.
@@ -485,15 +485,15 @@ async function startLive(){
         return;
       }
       if(connectionAttempts>=MAX_RECONNECT_ATTEMPTS){
-        showNotice("Sambungan masih tidak stabil selepas tiga cubaan. Tekan Jom Voice Chat untuk sesi baharu.");
-        await closeLive("Tidak dapat menyambung semula secara automatik.");return;
+        showNotice("Aku dah try tiga kali, tapi connection masih tak stabil. Tekan Jom Voice Chat untuk mula sesi baru.");
+        await closeLive("Aku tak dapat connect balik sendiri.");return;
       }
       connectionAttempts++;
       connectedAt=0;
       reconnecting=true;liveReady=false;
       if(sessionTimer){clearTimeout(sessionTimer);sessionTimer=null;}
       if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
-      sayStatus(why||"Menyambung Voice Live semula…");
+      sayStatus(({"Sambung berjadual":"Sambung semula ikut jadual…","Pembaharuan Google":"Tengah renew connection Google…"})[why]||why||"Tengah connect suara balik…");
       try{
         // Fresh one-use temporary credential, never the server API key.
         const tokenCtl=new AbortController();startAbort=tokenCtl;
@@ -526,7 +526,7 @@ async function startLive(){
           await closeLive(msg);return;
         }
         if(connectionAttempts<MAX_RECONNECT_ATTEMPTS&&!document.hidden){
-          sessionTimer=setTimeout(()=>renewConnection("Mencuba sambungan Voice sekali lagi…"),2400);
+          sessionTimer=setTimeout(()=>renewConnection("Aku try connect sekali lagi…"),2400);
         }else await closeLive(msg);
       }finally{if(!liveActive)reconnecting=false;}
     }
@@ -539,8 +539,8 @@ async function startLive(){
       resumeHandle="";connectionAttempts=0;
       voiceMetrics.dialectSwitches=(voiceMetrics.dialectSwitches||0)+1;
       stopAudioQueue();suppressPlaybackUntilUser=true;
-      sayStatus("Menukar ke loghat "+request.label+"…");
-      if(!reconnecting)renewConnection("Menukar ke loghat "+request.label+"…");
+      sayStatus("Okay, aku tukar loghat "+request.label+"…");
+      if(!reconnecting)renewConnection("Okay, aku tukar loghat "+request.label+"…");
       // A reconnect in progress will use the current activeDialect and no handle.
     };
     recoverVoice=async(why)=>{
@@ -548,7 +548,7 @@ async function startLive(){
       await Promise.allSettled([micContext?.resume(),playContext?.resume()]);
       if(generation!==liveGeneration||!liveActive)return;
       drainAudioQueue();
-      if(!liveReady||!socket||socket.readyState!==WebSocket.OPEN)renewConnection(why||"Memulihkan sambungan suara…");
+      if(!liveReady||!socket||socket.readyState!==WebSocket.OPEN)renewConnection(why||"Aku cuba pulihkan connection suara…");
     };
     renewListener=()=>{if(generation===liveGeneration&&liveActive)renewConnection("Pembaharuan Google");};
     window.addEventListener("ba:voice-renew",renewListener);
@@ -571,10 +571,10 @@ async function startLive(){
       socket=ws;liveModel=data.model;
       connectTimer=setTimeout(()=>{
         if(generation!==liveGeneration||socket!==ws||liveReady)return;
-        sayStatus("Google tidak mengesahkan sambungan Voice.");
+        sayStatus("Google belum confirm connection Voice.");
         if(!established&&advancedVoiceConfig){
            advancedVoiceConfig=false;resumeHandle="";reconnecting=false;
-           renewConnection("Menyambung Voice tanpa ciri pilihan…");return;
+           renewConnection("Aku try connect Voice tanpa setting tambahan…");return;
          }
          if(!established&&data.model==="gemini-3.8-live-extended-thinking"&&!preferStandardFallback){
           preferStandardFallback=true;
@@ -582,7 +582,7 @@ async function startLive(){
         }
         if(handle)resumeHandle="";
         reconnecting=false;
-        renewConnection("Menyambung melalui Voice Live yang serasi…");
+        renewConnection("Aku try sambung guna Voice Live yang compatible…");
       },20000);
       ws.onopen=()=>{
         if(generation!==liveGeneration||socket!==ws)return;
@@ -646,7 +646,7 @@ async function startLive(){
           if(generation!==liveGeneration||socket!==ws||!micEnabled||!liveReady||ws.readyState!==WebSocket.OPEN)return;
           if(ws.bufferedAmount>250000){
             if(!congestedAt)congestedAt=Date.now();
-            if(Date.now()-congestedAt>5000)renewConnection("Memulihkan aliran audio yang tersekat…");
+            if(Date.now()-congestedAt>5000)renewConnection("Audio tersekat jap. Aku cuba pulihkan…");
             return; // Don't send a backlog of stale microphone audio.
           }
           congestedAt=0;
@@ -662,9 +662,9 @@ async function startLive(){
           setWave((level||0)*4.6);
           try{ws.send(JSON.stringify({realtimeInput:{audio:{
             data:bytesBase64(pcm),mimeType:"audio/pcm;rate=16000"
-          }}}));}catch(_){renewConnection("Memulihkan penghantaran suara…");}
+          }}}));}catch(_){renewConnection("Suara kau tersekat masa dihantar. Aku cuba pulihkan…");}
         };
-        sayStatus("Sambungan dibuka. Menunggu pengesahan Google…");
+        sayStatus("Connection dah buka. Tunggu Google confirm…");
       };
       // Blob decoding is asynchronous; serialize frames so interruption,
       // resumption and audio packets cannot overtake each other.
@@ -691,7 +691,7 @@ async function startLive(){
           }
         }catch(e){/* malformed payload is not audio or an instruction */}
       });};
-      ws.onerror=()=>{if(generation===liveGeneration&&socket===ws)sayStatus("Sambungan suara terputus. Cuba sambung semula…");};
+      ws.onerror=()=>{if(generation===liveGeneration&&socket===ws)sayStatus("Suara terputus. Aku try connect balik…");};
       ws.onclose=event=>{
         if(generation!==liveGeneration||socket!==ws)return;
         liveReady=false;
@@ -703,19 +703,19 @@ async function startLive(){
         connectedAt=0;
         if(navigator.onLine===false){
           reconnecting=false;
-          sayStatus("Internet terputus. Aku tunggu rangkaian kembali…");return;
+          sayStatus("Internet putus. Aku tunggu dia kembali…");return;
         }
         if(!established&&data.model==="gemini-3.8-live-extended-thinking"&&
            !preferStandardFallback&&[1003,1006,1008,1011].includes(code)){
           preferStandardFallback=true;
           try{window.sessionStorage?.setItem(FALLBACK_CACHE_KEY,"1");}catch(_){}
           reconnecting=false;
-          renewConnection("Model Deep Thinking ditolak. Menyambung Voice biasa…");
+          renewConnection("Deep Thinking tak lepas. Aku try Voice biasa…");
           return;
         }
         if(code===1008&&handle)resumeHandle=""; // session handle may be stale
         if([1008,4001,4401,4429].includes(code)&&!handle){
-          const message="Google menolak sambungan Voice (WS "+code+"). Semak akses, kuota atau konfigurasi.";
+          const message="Google tolak connection Voice · WS "+code+". Check akses, kuota atau setting API.";
           showNotice(message);closeLive(message);
           window.dispatchEvent(new Event("ba:voice-live-failed"));
           return;
@@ -724,22 +724,22 @@ async function startLive(){
           reconnecting=false;
           // Back off across rapidly failing sockets; setupComplete alone
           // does not prove that a connection is stable.
-          sayStatus("Sambungan suara terputus. Menyambung semula…");
-          sessionTimer=setTimeout(()=>renewConnection("Menyambung semula suara…"),Math.min(6000,800*2**connectionAttempts));
+          sayStatus("Suara terputus. Aku try connect balik…");
+          sessionTimer=setTimeout(()=>renewConnection("Tengah connect suara balik…"),Math.min(6000,800*2**connectionAttempts));
         }else{
           closeLive("Sesi dihentikan apabila laman tidak aktif atau tempoh hari berakhir.");
         }
       };
     }
-    dayTimer=setTimeout(()=>closeLive("Tempoh maksimum 24 jam tamat. Mulakan sesi baharu jika perlu."),MAX_DAY);
+    dayTimer=setTimeout(()=>closeLive("Sesi 24 jam dah tamat. Nak sambung, mula sesi baru ya."),MAX_DAY);
     openConnection(body);
   }catch(e){
     clearTimeout(tokenTimer);
     const message=e&&e.name==="AbortError"?
-      "Permintaan token suara terlalu lama. Cuba semula apabila sambungan stabil.":
+      "Connection suara ambil masa lama sangat. Try lagi bila internet okay.":
       e&&e.name==="NotAllowedError"?
-      "Kebenaran mikrofon ditolak pelayar. Benarkan akses mikrofon kepada Bilik Antara dan cuba semula.":
-      e&&e.name==="NotFoundError"?"Tiada mikrofon dikesan.":
+      "Aku tak dapat access mikrofon. Benarkan dulu dalam browser, lepas tu try lagi.":
+      e&&e.name==="NotFoundError"?"Aku tak jumpa mikrofon.":
       String(e&&e.message||"Tak dapat sambungkan suara.").slice(0,180);
     sayStatus(message);
     await closeLive(message);
@@ -768,7 +768,7 @@ micButton.addEventListener("click",()=>{
     }
   }
   setButtonState();
-  sayStatus(micEnabled?"Mikrofon aktif. Aku sedang mendengar.":"Mikrofon dimatikan.");
+  sayStatus(micEnabled?"Mic dah buka. Aku dengar.":"Mic dah tutup.");
 });
 // Native range remains keyboard/touch accessible. Update the actual Web Audio gain on every movement.
 if(volumeInput){
@@ -794,13 +794,13 @@ speakerButton.addEventListener("click",()=>{
   if(!speakerEnabled)stopAudioQueue();
   setButtonState();
   if(speakerEnabled)recoverVoice?.();
-  sayStatus(speakerEnabled?"Suara AI dihidupkan.":"Suara AI disenyapkan.");
+  sayStatus(speakerEnabled?"Suara aku dah buka.":"Suara aku dah mute.");
 });
-window.addEventListener("online",()=>{if(liveActive)recoverVoice?.("Internet kembali. Menyambung suara…");});
+window.addEventListener("online",()=>{if(liveActive)recoverVoice?.("Internet dah okay. Aku try sambung suara…");});
 window.addEventListener("offline",()=>{
   if(!liveActive)return;
   liveReady=false;
-  sayStatus("Internet terputus. Aku tunggu rangkaian kembali…");
+  sayStatus("Internet putus. Aku tunggu dia kembali…");
 });
 window.addEventListener("pagehide",()=>{closeDictation();closeLive();});
 document.addEventListener("visibilitychange",()=>{

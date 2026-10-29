@@ -26,7 +26,7 @@ export default async function(request){
     // including when an upstream reader ignores cancellation.
     let timeout;
     const budget=new Promise(resolve=>{timeout=setTimeout(()=>{
-      emit({type:"error",status:504,code:"STREAM_INTERRUPTED",error:"Model mengambil masa terlalu lama. Teks kau dikekalkan.",retryAfterSeconds:3});
+      emit({type:"error",status:504,code:"STREAM_INTERRUPTED",error:"Model ambil masa lama sangat. Mesej kau masih ada.",retryAfterSeconds:3});
       stop();resolve(null);
     },26000);});
     let response;
@@ -37,7 +37,7 @@ export default async function(request){
     const data=JSON.parse(response.body||"{}");
     if(response.statusCode>=400)emit({type:"error",status:response.statusCode,...data});
     else emit({type:"done",...data});
-   }catch(_){emit({type:"error",status:502,code:"STREAM_INTERRUPTED",error:"Sambungan jawapan terputus. Cuba semula."});}
+   }catch(_){emit({type:"error",status:502,code:"STREAM_INTERRUPTED",error:"Connection jawapan terputus. Cuba lagi."});}
    finally{
     request.signal.removeEventListener("abort",stop);
     if(!cancelled){try{controller.close();}catch(_){}}

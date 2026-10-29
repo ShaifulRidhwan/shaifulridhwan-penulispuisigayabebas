@@ -560,7 +560,7 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  await first.onmessage({data:JSON.stringify({serverContent:{interactionStatus:"IN_PROGRESS",turnComplete:true}})});
  assert.match(item("voiceStatus").textContent,/fikir/);
  await first.onmessage({data:JSON.stringify({serverContent:{interactionStatus:"IDLE",turnComplete:true}})});
- assert.match(item("voiceStatus").textContent,/sedang dengar/);
+ assert.match(item("voiceStatus").textContent,/Aku dengar/);
  await first.onmessage({data:JSON.stringify({sessionResumptionUpdate:{resumable:true,newHandle:"HANDLE_ONLY_IN_MEMORY"}})});
  await first.onmessage({data:JSON.stringify({goAway:{timeLeft:"15s"}})});
  for(let n=0;n<24;n++)await Promise.resolve();
@@ -591,6 +591,19 @@ test("Session creation has backend rate limiting",async()=>{
   for(let i=0;i<5;i++)assert.equal((await handler(event("voice-test-limiter"))).statusCode,200);
   assert.equal((await handler(event("voice-test-limiter"))).statusCode,429);
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
+});
+
+test("voice status stays conversational while keeping listening and mic controls functional",async()=>{
+ const h=voiceHarness(),ws=await h.start();
+ await h.message(ws,{serverContent:{interactionStatus:"IN_PROGRESS"}});
+ assert.equal(h.item("voiceStatus").textContent,"Hmm, jap aku fikir…");
+ await h.message(ws,{serverContent:{waitingForInput:true}});
+ assert.equal(h.item("voiceStatus").textContent,"Haa, sambung je. Aku dengar.");
+ h.item("voiceMuteMic").listener("click")();
+ assert.equal(h.item("voiceStatus").textContent,"Mic dah tutup.");assert.equal(h.track.enabled,false);
+ h.item("voiceMuteMic").listener("click")();
+ assert.equal(h.item("voiceStatus").textContent,"Mic dah buka. Aku dengar.");assert.equal(h.track.enabled,true);
+ await h.item("voiceStop").listener("click")();assert.equal(h.track.stopped,true);
 });
 
  test("Voice setup timeout downgrades optional configuration without an undefined close code",()=>{
