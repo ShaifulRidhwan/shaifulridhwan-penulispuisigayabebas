@@ -323,7 +323,7 @@ exports.handler=async event=>{
   const imageOnly=payload.mediaFallback===true&&media.length>0&&media.length<=3&&
     media.every(x=>["image/jpeg","image/png","image/webp"].includes(x.mimeType))&&
     Router.configured().some(p=>p.id==="openrouter")&&!tiktokHandle&&
-    (!privateContext||payload.contextFallback===true)&&!(intent.sensitive||intent.hasLink);
+    !(intent.sensitive||intent.hasLink);
   // Text research can use the existing public references when Gemini is down.
   // Never claim a live web/URL tool ran on the fallback route.
   const textOnly=media.length===0&&!tiktokHandle&&(!privateContext||payload.contextFallback===true)&&!(intent.sensitive||intent.hasLink);
@@ -334,7 +334,7 @@ exports.handler=async event=>{
       alternativeTried=true;
       let alternative;
       try{
-        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:PERSONALITY,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
+        alternative=await Router.complete({system,history,question:(imageOnly&&payload.contextFallback!==true?question+work+references:question+doc+work+sessionNotes+references),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:PERSONALITY,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
