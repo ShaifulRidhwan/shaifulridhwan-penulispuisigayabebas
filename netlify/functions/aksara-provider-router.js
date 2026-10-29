@@ -224,6 +224,41 @@ async function crossReview({question,reply,originalProvider,task="general",timeo
  finally{clearTimeout(timer);}
 }
 
+// Public model metadata, not individual availability probes. Do not spend free chat quota.
+const freeCatalogCache={time:0,value:null,pending:null};
+async function freeCatalog(){
+ const now=Date.now();
+ if(freeCatalogCache.value&&now-freeCatalogCache.time<600000)return freeCatalogCache.value;
+ if(freeCatalogCache.pending)return freeCatalogCache.pending;
+ freeCatalogCache.pending=(async()=>{
+  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),3500);
+  try{
+   const headers={"Accept":"application/json"};
+   if(process.env.OPENROUTER_API_KEY)headers.Authorization="Bearer "+process.env.OPENROUTER_API_KEY;
+   const response=await fetch("https://openrouter.ai/api/v1/models?output_modalities=text",{method:"GET",headers,signal:ctrl.signal});
+   if(!response.ok)throw new Error("OpenRouter catalog HTTP "+response.status);
+   const body=await response.json();
+   if(!Array.isArray(body?.data))throw new Error("Invalid OpenRouter catalog");
+   const models=body.data.filter(model=>{
+    if(typeof model?.id!=="string"||!model.id.endsWith(":free"))return false;
+    const outputs=model.architecture?.output_modalities;
+    return !Array.isArray(outputs)||outputs.includes("text");
+   }).map(model=>({
+    id:model.id.slice(0,140),
+    name:String(model.name||model.id).slice(0,140)
+   })).sort((a,b)=>a.name.localeCompare(b.name,"ms"));
+   const result={status:"ready",models:models.slice(0,150),total:models.length,checkedAt:Date.now()};
+   freeCatalogCache.time=Date.now();freeCatalogCache.value=result;
+   return result;
+  }catch(_){
+   // A failed metadata read does not mean models are offline.
+   if(freeCatalogCache.value)return {...freeCatalogCache.value,status:"stale"};
+   return {status:"unavailable",models:[],total:0};
+  }finally{clearTimeout(timer);}
+ })();
+ try{return await freeCatalogCache.pending;}finally{freeCatalogCache.pending=null;}
+}
+
 // Live health checks use harmless short prompts, never any user's conversation.
 const healthCache={time:0,value:null,pending:null};
 function reflectCooldown(checks){
@@ -274,4 +309,4 @@ async function checkStatus(){
  })();
  try{return await healthCache.pending;}finally{healthCache.pending=null;}
 }
-module.exports={complete,configured,enabled,checkStatus,rankProviders,crossReview,availability,retryAfterSeconds};
+module.exports={complete,configured,enabled,checkStatus,freeCatalog,rankProviders,crossReview,availability,retryAfterSeconds};
