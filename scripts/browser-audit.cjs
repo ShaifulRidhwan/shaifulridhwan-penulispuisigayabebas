@@ -98,17 +98,23 @@ async function chat(page,device){
  const surface=await page.evaluate(()=>{
   const css=selector=>getComputedStyle(document.querySelector(selector));
   const glass=css(".conversation"),haze=css(".world-haze"),star=css(".world-embers i");
-  const sparks=css(".world-hand-sparks i"),title=css(".identity h1"),body=css("body");
+  const sparks=css(".world-hand-sparks i"),body=css("body");
+  const rect=document.querySelector(".conversation").getBoundingClientRect();
+  const app=document.querySelector(".app-shell").getBoundingClientRect();
   return {glass:glass.backdropFilter||glass.webkitBackdropFilter,
    haze:haze.animationName,stars:star.animationName,sparks:sparks.animationName,
-   titleFont:title.fontFamily,bodyFont:body.fontFamily,
+   chatTop:rect.top,chatHeight:rect.height,appTop:app.top,
+   redundantHero:!!document.querySelector(".identity,.eyebrow,.chapter-ornament"),
+   bodyFont:body.fontFamily,
    suite:!!document.querySelector('link[href="bilik-antara-suite.css?v=6"]')?.sheet};
  });
  assert.match(surface.glass,/blur\(/,"Liquid Glass must retain its original blur");
  assert.match(surface.haze,/hazeDrift/,"Black fog animation must stay");
  assert.match(surface.stars,/embersTravel/,"Star particles must keep moving");
  assert.match(surface.sparks,/handSparkDescent/,"Hand sparks must keep falling");
- assert.match(surface.titleFont,/Fraunces/,"Title typography must be unchanged");
+ assert.equal(surface.redundantHero,false,"Large title introduction and its animations must be removed");
+ assert.ok(surface.chatTop-surface.appTop<30,"Chat starts at the top of the main area");
+ assert.ok(surface.chatHeight>300,"Chat fills the hero's former vertical space");
  assert.match(surface.bodyFont,/DM Sans/,"Chat typography must be unchanged");
  assert.equal(surface.suite,true,"Extra panel styles must load");
  await snapshot(page,device+"-chat");
