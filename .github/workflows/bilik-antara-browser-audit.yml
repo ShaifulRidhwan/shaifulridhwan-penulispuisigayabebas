@@ -1,0 +1,42 @@
+name: Bilik Antara Browser Audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/bilik-antara-browser-audit.yml"
+permissions:
+  contents: read
+concurrency:
+  group: bilik-antara-browser-audit
+  cancel-in-progress: true
+jobs:
+  visual-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install browser test runtime
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.0
+          npx playwright install --with-deps chromium
+      - name: Audit desktop/mobile, animations, glass, privacy UI, and keyboard
+        run: |
+          python3 -m http.server 4177 --bind 127.0.0.1 > /tmp/aksara-audit-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in 1 2 3 4 5; do
+            if curl -sf http://127.0.0.1:4177/bilik-antara.html > /dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/test-bilik-antara-browser.cjs
+      - name: Upload browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bilik-antara-desktop-mobile-visual
+          path: browser-audit-artifacts/
+          if-no-files-found: ignore
