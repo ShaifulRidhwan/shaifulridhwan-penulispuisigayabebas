@@ -39,7 +39,7 @@ test('Studio 2.4 removes redundant copy and decorative icons without hiding func
  assert.match(html,/<h2 id="resultTitle">RUANG <span>VISUAL<\/span><\/h2>/);
  assert.match(html,/<a class="home-link" href="index\.html">LAMAN UTAMA<\/a>/);
  assert.match(html,/<span id="resultIndicator" class="result-indicator is-waiting">MENUNGGU<\/span>/);
- assert.match(html,/studio-antara\.css\?v=16/);
+ assert.match(html,/studio-antara\.css\?v=17/);
  assert.match(html,/studio-antara-cloud\.js\?v=8/);
  assert.match(script,/ui\.indicator\.classList\.toggle\('is-waiting'/);
  assert.match(script,/ui\.indicator\.classList\.remove\('is-waiting'\)/);
