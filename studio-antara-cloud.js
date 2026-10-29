@@ -10,10 +10,13 @@ function announce(message,error=false){text(ui.status,message);ui.status.classLi
 function count(){text(ui.count,ui.prompt.value.length+' / 1200');}
 function selected(){return C.settings({prompt:ui.prompt.value,style:ui.style.value,ratio:ui.ratio.value,quality:ui.quality.value,model:ui.model.value,seed:ui.seed.value===''?null:Number(ui.seed.value)});}
 function describe(){
- const klein=ui.model.value==='klein';ui.seed.disabled=busy||!klein;
+ const klein=ui.model.value==='klein',ovh=ui.model.value==='ovh';
+ ui.seed.disabled=busy||!klein;ui.quality.disabled=busy||ovh;
  if(!klein){ui.ratio.value='1:1';ui.seed.value='';}
- text($('modelNote'),klein?'Klein menjana nisbah ini secara natif. Kualiti menukar resolusi; langkahnya kekal 4. Tiada crop pada hasil.':'Schnell: output segi empat; kualiti menggunakan 2, 4 atau 8 langkah. Nisbah lain dan variasi seed tersedia pada Klein.');
- try{const s=C.settings({prompt:'Contoh visual',style:ui.style.value,ratio:ui.ratio.value,model:ui.model.value,quality:ui.quality.value,seed:null});text($('quotaEstimate'),C.models[s.model].name+' · '+(klein?s.width+' × '+s.height+' px':'saiz sebenar disahkan selepas siap')+' · '+s.steps+' langkah. Rizab bajet konservatif: '+C.estimate(s)+' Neurons / percubaan.');}catch(_){}
+ $('modelBetaInfo').hidden=!ovh;
+ text($('modelNote'),ovh?'OVHcloud SDXL (Beta): 1024 × 1024 sahaja. Tiada seed atau kawalan resolusi.':klein?'Klein menjana nisbah ini secara natif. Kualiti menukar resolusi; langkahnya kekal 4. Tiada crop pada hasil.':'Schnell: output segi empat; kualiti menggunakan 2, 4 atau 8 langkah. Nisbah lain dan variasi seed tersedia pada Klein.');
+ text($('quotaContext'),ovh?'OVHcloud menggunakan had API awam tersendiri, bukan kuota Neurons Cloudflare. Keberkesanan sambungan tanpa token belum disahkan.':'Bajet ini untuk Studio sahaja. Kuota akaun Cloudflare dikongsi, dan had percuma sebenar bergantung pada pelan akaun.');
+ try{const s=C.settings({prompt:'Contoh visual',style:ui.style.value,ratio:ui.ratio.value,model:ui.model.value,quality:ui.quality.value,seed:null});text($('quotaEstimate'),ovh?'OVHcloud SDXL (Beta) · 1024 × 1024 px · 0 Neurons Cloudflare · API mungkin gagal atau terhad.':C.models[s.model].name+' · '+(klein?s.width+' × '+s.height+' px':'saiz sebenar disahkan selepas siap')+' · '+s.steps+' langkah. Rizab bajet konservatif: '+C.estimate(s)+' Neurons / percubaan.');}catch(_){}
 }
 for(const [id,preset] of Object.entries(C.presets)){const option=document.createElement('option');option.value=id;option.textContent=preset.name;ui.style.append(option);}ui.style.value='antara';
 ui.prompt.addEventListener('input',count);
@@ -42,14 +45,14 @@ async function render(meta,blob,signal){
  ui.result.src=url;ui.result.alt='Imej AI: '+meta.settings.prompt.slice(0,180);ui.result.hidden=false;ui.empty.hidden=true;
  text(ui.meta,meta.modelName+' · '+img.naturalWidth+' × '+img.naturalHeight+' px · '+C.presets[meta.settings.style].name+' · '+(meta.settings.seed===null?'Seed automatik tanpa kawalan':('Seed '+meta.settings.seed))+' · '+(meta.durationMs/1000).toFixed(1)+' saat');
  ui.download.href=url;ui.download.download='studio-antara-'+meta.id+(blob.type==='image/png'?'.png':'.jpg');$('resultActions').hidden=false;$('variationNote').hidden=false;$('usedPromptPanel').hidden=false;
- $('variationImage').disabled=busy||meta.settings.model!=='klein';text($('usedPrompt'),meta.promptUsed+'\n\n'+new Date(meta.createdAt).toLocaleString('ms-MY')+' · '+meta.settings.ratio+' · '+qualityName(meta.settings.quality)+' · '+meta.settings.steps+' langkah');
+ $('variationImage').disabled=busy||meta.settings.model!=='klein';text($('usedPrompt'),meta.promptUsed+'\n\n'+new Date(meta.createdAt).toLocaleString('ms-MY')+' · '+meta.settings.ratio+' · '+qualityName(meta.settings.quality)+' · '+(meta.settings.model==='ovh'?'SDXL Beta':meta.settings.steps+' langkah'));
  text(ui.indicator,'SIAP');
  return img;
 }
 async function thumbnail(img){const canvas=document.createElement('canvas'),scale=Math.min(1,240/Math.max(img.naturalWidth,img.naturalHeight));canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Thumbnail tak dapat disimpan.')),'image/jpeg',.75));}
 async function generate(settings){
  if(busy)return;if(!navigator.onLine){announce('Internet terputus. Prompt kau masih ada; cuba bila dah online.',true);return;}
- const startedAt=Date.now(),ctrl=new AbortController();controller=ctrl;const timer=setTimeout(()=>ctrl.abort(),55000);setBusy(true);announce('Cloudflare sedang menjana imej. Setiap percubaan menggunakan kuota.');
+ const startedAt=Date.now(),ctrl=new AbortController();controller=ctrl;const timer=setTimeout(()=>ctrl.abort(),55000);setBusy(true);announce(settings.model==='ovh'?'OVHcloud SDXL Beta sedang dicuba. Sambungan mungkin gagal atau lambat.':'Cloudflare sedang menjana imej. Setiap percubaan menggunakan kuota.');
  try{
   const res=await fetch('/.netlify/functions/studio-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:settings.prompt,style:settings.style,model:settings.model,quality:settings.quality,ratio:settings.ratio,seed:settings.seed}),signal:ctrl.signal});
   const data=await res.json();if(!res.ok)throw Error(data.error||'Penjanaan gagal. Cuba lagi nanti.');if(!data.ok||!data.settings)throw Error('Respons pelayan tak lengkap.');
