@@ -2565,6 +2565,7 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .multi-ai-state::before{content:"";width:8px;height:8px;flex:none;border-radius:50%;background:#a3a3a3}
 .multi-ai-state.is-online{color:#94e8b4}.multi-ai-state.is-online::before{background:#55d691;box-shadow:0 0 8px rgba(85,214,145,.4)}
 .multi-ai-state.is-offline{color:#f3a3a2}.multi-ai-state.is-offline::before{background:#e88080;box-shadow:0 0 7px rgba(232,128,128,.3)}
+.multi-ai-state.is-ready{color:#e6c88f}.multi-ai-state.is-ready::before{background:#d6b66e;box-shadow:0 0 6px rgba(214,182,110,.25)}
 .multi-ai-state.is-muted{color:#bcb3a7}
 .multi-ai-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:17px}
 .multi-ai-actions small{font:11px/1.45 'DM Sans',sans-serif;opacity:.72}
