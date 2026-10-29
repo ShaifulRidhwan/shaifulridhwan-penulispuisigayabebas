@@ -90,6 +90,37 @@ test("Living Glass Frame keeps chat minimal and animates only its outer rim",()=
  assert.equal((html.match(/style="--delay:/g)||[]).length,24,"Hand-spark particles must survive");
 });
 
+test("Golden light and shadow collide before spawning rim sparks, never by arbitrary animation timer",()=>{
+ const {contact,rangeFor}=require("../bilik-antara-rim-sparks.js");
+ const a={left:100,top:12,width:40,height:4};
+ const b={left:130,top:12,width:40,height:4};
+ assert.deepEqual(contact(a,b,38),{x:135,y:14,distance:30});
+ assert.equal(contact(a,b,25),null,"No flash until beams actually touch");
+ assert.equal(contact(a,{left:350,top:12,width:40,height:4},38),null);
+ assert.equal(contact(a,b,NaN),null);
+ assert.equal(rangeFor(128,148),68,"Desktop collision window is capped");
+ assert.equal(rangeFor(44,53),28,"Mobile collision window is bounded");
+ const observer=fs.readFileSync("bilik-antara-rim-sparks.js","utf8");
+ assert.match(observer,/const hit=contact\(a,b,threshold\)/);
+ assert.match(observer,/gold\.getBoundingClientRect\(\),b=dark\.getBoundingClientRect\(\)/);
+ assert.match(observer,/now-lastSample>=80/);
+ assert.match(observer,/lastBurst>950/);
+ assert.match(observer,/visibilitychange/);
+ assert.match(observer,/prefers-reduced-motion: reduce/);
+ assert.match(observer,/root\.cancelAnimationFrame\(raf\)/);
+ assert.match(observer,/root\.ResizeObserver/);
+ assert.match(html,/src="bilik-antara-rim-sparks\.js\?v=\d+" defer/);
+ assert.match(html,/class="frame-orbit__impact" aria-hidden="true"/);
+ assert.equal((html.match(/<i><\/i>/g)||[]).length,8,"Eight new impact flecks");
+ for(const effect of ["aksaraImpactFlash","aksaraImpactRing","aksaraImpactParticle"]){
+  assert.match(css,new RegExp("@keyframes "+effect));
+ }
+ assert.match(css,/\.frame-orbit__impact\.is-active i/);
+ assert.match(css,/\.frame-orbit__impact\{display:none!important\}/);
+ assert.match(css,/@media\(max-width:760px\)\{\.frame-orbit__impact\{--spark-scale:\.8\}\}/);
+ assert.equal((html.match(/style="--delay:/g)||[]).length,24,"All original hand sparks remain");
+});
+
 test("Mobile viewport, permanent dark theme and conversation functions retained",()=>{
  assert.match(css,/@media\(max-width:760px\)/);
  assert.doesNotMatch(css,/data-theme="light"/);
