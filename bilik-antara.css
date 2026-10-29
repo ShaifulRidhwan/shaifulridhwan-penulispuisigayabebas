@@ -3098,3 +3098,65 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  .frame-orbit__beam--shadow{offset-distance:50%!important}
  .frame-orbit__beam--light-echo,.frame-orbit__beam--shadow-echo{display:none}
 }
+
+
+/* Collision sparks: fired at real gold/shadow beam contact, never on a timer.
+   Only tiny transforms and opacity animate. Existing world particles stay intact. */
+.frame-orbit__impact{
+ position:absolute;top:0;left:0;z-index:5;width:0;height:0;pointer-events:none;
+ transform:translate3d(var(--impact-x,0px),var(--impact-y,0px),0) scale(var(--spark-scale,1));
+}
+.frame-orbit__impact::before,.frame-orbit__impact::after{
+ content:"";position:absolute;top:0;left:0;opacity:0;pointer-events:none;
+}
+.frame-orbit__impact::before{
+ width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;
+ background:radial-gradient(circle,rgba(255,250,221,.97) 0 8%,rgba(251,207,127,.72) 15%,rgba(144,184,230,.36) 32%,transparent 71%);
+ box-shadow:0 0 14px rgba(246,205,148,.24),0 0 22px rgba(95,148,218,.17);
+}
+.frame-orbit__impact::after{
+ width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
+ border:1px solid rgba(250,215,158,.82);border-right-color:rgba(122,175,226,.9);
+ box-shadow:0 0 8px rgba(253,215,153,.29);
+}
+.frame-orbit__impact.is-active::before{animation:aksaraImpactFlash .58s ease-out both}
+.frame-orbit__impact.is-active::after{animation:aksaraImpactRing .62s ease-out both}
+.frame-orbit__impact i{
+ position:absolute;left:-1.5px;top:-1.5px;display:block;
+ width:3px;height:3px;border-radius:50%;opacity:0;pointer-events:none;
+ background:#ffe3a4;box-shadow:0 0 5px rgba(255,230,181,.64);
+}
+.frame-orbit__impact i:nth-child(even){
+ background:#a9d6ff;box-shadow:0 0 5px rgba(134,189,244,.62);
+}
+.frame-orbit__impact i:nth-child(1){--dx:-23px;--dy:-16px}
+.frame-orbit__impact i:nth-child(2){--dx:19px;--dy:-18px}
+.frame-orbit__impact i:nth-child(3){--dx:-28px;--dy:4px}
+.frame-orbit__impact i:nth-child(4){--dx:28px;--dy:5px}
+.frame-orbit__impact i:nth-child(5){--dx:-16px;--dy:20px}
+.frame-orbit__impact i:nth-child(6){--dx:17px;--dy:23px}
+.frame-orbit__impact i:nth-child(7){--dx:-4px;--dy:-26px}
+.frame-orbit__impact i:nth-child(8){--dx:5px;--dy:27px}
+.frame-orbit__impact.is-active i{
+ animation:aksaraImpactParticle .58s cubic-bezier(.19,.75,.2,1) both;
+}
+.frame-orbit__impact.is-active i:nth-child(2n){animation-delay:25ms}
+.frame-orbit__impact.is-active i:nth-child(3n){animation-delay:50ms}
+@keyframes aksaraImpactFlash{
+ 0%{opacity:0;transform:scale(.35)}
+ 15%{opacity:1;transform:scale(1.15)}
+ 100%{opacity:0;transform:scale(1.75)}
+}
+@keyframes aksaraImpactRing{
+ 0%{opacity:0;transform:scale(.3) rotate(-18deg)}
+ 18%{opacity:.9}
+ 100%{opacity:0;transform:scale(2.6) rotate(13deg)}
+}
+@keyframes aksaraImpactParticle{
+ 0%{opacity:0;transform:translate3d(0,0,0) scale(.5)}
+ 17%{opacity:1}
+ 100%{opacity:0;transform:translate3d(var(--dx),var(--dy),0) scale(.25)}
+}
+@media(max-width:760px){.frame-orbit__impact{--spark-scale:.8}}
+@supports not (offset-path:inset(2px round 22px)){.frame-orbit__impact{display:none!important}}
+@media(prefers-reduced-motion:reduce){.frame-orbit__impact{display:none!important}}
