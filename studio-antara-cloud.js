@@ -54,7 +54,7 @@ async function generate(settings){
   const res=await fetch('/.netlify/functions/studio-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:settings.prompt,style:settings.style,model:settings.model,quality:settings.quality,ratio:settings.ratio,seed:settings.seed}),signal:ctrl.signal});
   const data=await res.json();if(!res.ok)throw Error(data.error||'Penjanaan gagal. Cuba lagi nanti.');if(!data.ok||!data.settings)throw Error('Respons pelayan tak lengkap.');
   const blob=imageBlob(data.image,data.mime),meta={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),createdAt:Date.now(),settings:data.settings,promptUsed:data.promptUsed,modelName:data.modelName,durationMs:data.durationMs};
-  const img=await render(meta,blob,ctrl.signal);if(matchMedia('(max-width:680px)').matches)$('resultTitle').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});let saved=true;
+  const img=await render(meta,blob,ctrl.signal);ui.stop.hidden=true;clearTimeout(timer);if(matchMedia('(max-width:680px)').matches)$('resultTitle').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});let saved=true;
   try{await H.put(meta,blob,await thumbnail(img));}catch(_){saved=false;}
   announce('Imej dah siap dalam '+(data.durationMs/1000).toFixed(1)+' saat.'+(saved?' Disimpan pada peranti ini.':' Sejarah tak dapat disimpan (storan penuh atau tak tersedia). Simpan imej sekarang.'));
   if($('historyPanel').open)await refreshHistory();
@@ -65,7 +65,7 @@ form.addEventListener('submit',e=>{e.preventDefault();if(busy)return;try{generat
 $('regenerateImage').addEventListener('click',()=>{if(current)generate({...current.settings});});
 function differentSeed(seed){let next;do{const array=new Uint32Array(1);crypto.getRandomValues(array);next=array[0]&2147483647;}while(next===seed);return next;}
 $('variationImage').addEventListener('click',()=>{if(current?.settings.model==='klein')generate({...current.settings,seed:differentSeed(current.settings.seed)});});
-async function copy(value){try{await navigator.clipboard.writeText(value);announce('Prompt dah disalin.');}catch(_){ui.prompt.value=value.slice(0,1200);count();ui.prompt.focus();ui.prompt.select();announce('Tak dapat salin automatik. Teks dipilih; tekan Salin pada peranti kau.',true);}}
+async function copy(value){try{await navigator.clipboard.writeText(value);announce('Prompt dah disalin.');}catch(_){let box=$('copyFallback');if(!box){box=document.createElement('textarea');box.id='copyFallback';box.readOnly=true;box.setAttribute('aria-label','Prompt untuk disalin secara manual');$('resultActions').after(box);}box.hidden=false;box.value=value;box.focus();box.select();announce('Tak dapat salin automatik. Teks dipilih; tekan Salin pada peranti kau.',true);}}
 $('copyPrompt').addEventListener('click',()=>{if(current)copy(current.promptUsed);});
 // Enhancing is always explicit. Reviewing a draft never consumes an image request.
 $('enhanceEnabled').addEventListener('change',()=>{$('enhancePrompt').hidden=!$('enhanceEnabled').checked;if(!$('enhanceEnabled').checked)$('enhancePanel').hidden=true;});

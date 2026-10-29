@@ -19,7 +19,8 @@ function createHandler({fetchImpl=fetch,reserve=Quota.reserve,env=process.env,ti
    if(s.model==='klein'){
     body=new FormData();for(const [key,value] of Object.entries({prompt:promptUsed,width:s.width,height:s.height,seed:s.seed}))body.set(key,String(value));
    }else{headers['Content-Type']='application/json';body=JSON.stringify({prompt:promptUsed,steps:s.steps});}
-   const started=Date.now(),upstream=await fetchImpl('https://api.cloudflare.com/client/v4/accounts/'+env.CLOUDFLARE_ACCOUNT_ID+'/ai/run/'+Config.models[s.model].id,{method:'POST',headers,body,signal:ctrl.signal});
+   const started=Date.now();let upstream;
+   try{upstream=await fetchImpl('https://api.cloudflare.com/client/v4/accounts/'+env.CLOUDFLARE_ACCOUNT_ID+'/ai/run/'+Config.models[s.model].id,{method:'POST',headers,body,signal:ctrl.signal});}catch(error){if(error.name==='AbortError')throw error;throw Error('Sambungan ke Cloudflare terputus. Cuba lagi sebentar.');}
    if(!upstream.ok){
     if(upstream.status===429)return response(429,{error:'Had atau kuota Cloudflare dah dicapai. Cuba kemudian.'},60);
     if([401,403].includes(upstream.status))return response(502,{error:'Cloudflare menolak kebenaran penjanaan. Pemilik perlu semak token.'});

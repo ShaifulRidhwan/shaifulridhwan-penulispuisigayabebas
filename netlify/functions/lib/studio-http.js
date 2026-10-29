@@ -1,5 +1,4 @@
 'use strict';
-const {createHash}=require('node:crypto');
 const HEADERS={'Cache-Control':'no-store','Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff','X-Robots-Tag':'noindex'};
 const response=(status,data,retryAfter)=>({statusCode:status,headers:{...HEADERS,...(retryAfter?{'Retry-After':String(retryAfter)}:{})},body:JSON.stringify(data)});
 function input(event){
