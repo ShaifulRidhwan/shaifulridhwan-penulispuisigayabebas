@@ -1,0 +1,32 @@
+{
+  "id": "/",
+  "name": "Gaya Bebas | Shaiful Ridhwan",
+  "short_name": "Gaya Bebas",
+  "description": "Laman rasmi puisi gaya bebas, sastera dan falsafah oleh Shaiful Ridhwan.",
+  "lang": "ms",
+  "start_url": "/",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#101018",
+  "theme_color": "#101018",
+  "icons": [
+    {
+      "src": "/favicon-gaya-bebas-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-gaya-bebas-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-gaya-bebas.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
