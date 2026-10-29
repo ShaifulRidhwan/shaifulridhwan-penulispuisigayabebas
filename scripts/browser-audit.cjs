@@ -98,11 +98,11 @@ async function chat(page,device){
  const surface=await page.evaluate(()=>{
   const css=selector=>getComputedStyle(document.querySelector(selector));
   const glass=css(".conversation"),haze=css(".world-haze"),star=css(".world-embers i");
-  const sparks=css(".world-hand-sparks i"),body=css("body");
+  const body=css("body");
   const rect=document.querySelector(".conversation").getBoundingClientRect();
   const app=document.querySelector(".app-shell").getBoundingClientRect();
   return {glass:glass.backdropFilter||glass.webkitBackdropFilter,
-   haze:haze.animationName,stars:star.animationName,sparks:sparks.animationName,
+   haze:haze.animationName,stars:star.animationName,
    chatTop:rect.top,chatHeight:rect.height,appTop:app.top,
    redundantHero:!!document.querySelector(".identity,.eyebrow,.chapter-ornament"),
    bodyFont:body.fontFamily,
@@ -111,7 +111,7 @@ async function chat(page,device){
  assert.match(surface.glass,/blur\(/,"Liquid Glass must retain its original blur");
  assert.match(surface.haze,/hazeDrift/,"Black fog animation must stay");
  assert.match(surface.stars,/embersTravel/,"Star particles must keep moving");
- assert.match(surface.sparks,/handSparkDescent/,"Hand sparks must keep falling");
+ assert.equal(await page.locator(".world-hand-sparks").count(),0,"Obsolete hand sparks must be removed");
  assert.equal(surface.redundantHero,false,"Large title introduction and its animations must be removed");
  assert.ok(surface.chatTop-surface.appTop<30,"Chat starts at the top of the main area");
  assert.ok(surface.chatHeight>300,"Chat fills the hero's former vertical space");

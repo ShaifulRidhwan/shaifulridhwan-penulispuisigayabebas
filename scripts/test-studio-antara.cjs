@@ -84,3 +84,41 @@ test('Modern request adapter bounds request body and uses trusted Netlify contex
  const res=await adapt(req,{ip:'trusted-ip'},async event=>{seen=event;return {statusCode:200,headers:{'content-type':'application/json'},body:'{"ok":true}'};});assert.equal(res.status,200);assert.equal(seen.headers.host,'example.netlify.app');assert.equal(seen.headers['x-nf-client-connection-ip'],'trusted-ip');
  const big=new Request(req.url,{method:'POST',body:'x'.repeat(8000)});assert.equal((await adapt(big,{},()=>{throw Error('must not invoke')})).status,413);
 });
+
+test('OVH Beta stays opt-in, has square output and never spends Cloudflare Neurons',()=>{
+ const s=C.settings({prompt:'Malam yang tenang',model:'ovh',ratio:'1:1',quality:'detail'});
+ assert.equal(s.width,1024);assert.equal(s.height,1024);assert.equal(s.steps,null);assert.equal(C.estimate(s),0);
+ assert.throws(()=>C.settings({prompt:'Malam yang tenang',model:'ovh',ratio:'9:16'}));
+ assert.throws(()=>C.settings({prompt:'Malam yang tenang',model:'ovh',seed:1}));
+ assert.equal(C.settings({prompt:'Malam yang tenang'}).model,'schnell');
+});
+test('Manual OVH Beta calls anonymous endpoint, checks image bytes and avoids Cloudflare secrets',async()=>{
+ let cost=-1,calls=0;const h=createHandler({env:{},reserve:async(e,n)=>{cost=n;return async()=>{};},fetchImpl:async(url,opts)=>{
+  calls++;assert.equal(url,'https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/images/generations');
+  assert.equal(opts.headers.Authorization,undefined);assert.equal(opts.method,'POST');
+  assert.deepEqual(JSON.parse(opts.body),{model:'stable-diffusion-xl-base-v10',prompt:C.compose(C.settings({prompt:'Wanita berdiri dalam cahaya.',style:'antara',model:'ovh'})),size:'1024x1024'});
+  return Response.json({data:[{b64_json:png().toString('base64')}]});
+ }});
+ const out=await h(event({model:'ovh'}));assert.equal(out.statusCode,200);assert.equal(cost,0);assert.equal(calls,1);
+ const data=JSON.parse(out.body);assert.equal(data.modelName,'OVHcloud SDXL · Beta');assert.equal(data.estimatedNeurons,0);
+ assert.equal(data.width,1024);assert.equal(data.height,1024);assert.doesNotMatch(out.body,/test-private-token/);
+});
+test('OVH Beta failures do not auto-fallback or leak upstream bodies',async()=>{
+ for(const status of [401,403,429,503]){
+  let calls=0,released=0;
+  const h=createHandler({env:{},reserve:async()=>async()=>released++,fetchImpl:async()=>{calls++;return new Response('HIDDEN_TOKEN',{status});}});
+  const out=await h(event({model:'ovh'}));assert.equal(calls,1);assert.equal(released,1);
+  assert.equal(out.statusCode,status===429?429:502);assert.doesNotMatch(out.body,/HIDDEN_TOKEN/);
+ }
+});
+test('OVH Beta UI is manual, readable and no old hand particle layer remains',()=>{
+ const html=fs.readFileSync('studio-antara.html','utf8'),script=fs.readFileSync('studio-antara-cloud.js','utf8');
+ assert.ok(html.includes('<option value="ovh">OVHcloud SDXL · Beta</option>'));
+ assert.match(html,/id="modelBetaInfo"/);assert.match(script,/modelBetaInfo/);
+ const bilik=fs.readFileSync('bilik-antara.html','utf8'),css=fs.readFileSync('bilik-antara.css','utf8');
+ assert.doesNotMatch(bilik,/world-hand-sparks/);assert.doesNotMatch(css,/world-hand-sparks/);
+ const hub=bilik.slice(bilik.indexOf('<div class="feature-hub"'),bilik.indexOf('<details class="feature-privacy"'));
+ assert.ok(hub.indexOf('id="featureStudio"')<hub.indexOf('id="featureMetrics"'));
+ assert.ok(hub.indexOf('id="featureMetrics"')<hub.indexOf('id="featureSessions"'));
+ assert.match(hub,/Prestasi A.I/);
+});
