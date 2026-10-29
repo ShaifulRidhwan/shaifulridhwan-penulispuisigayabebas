@@ -2,7 +2,7 @@
 // CI-only visual regression: the real supplied wallpapers, no AI inference.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {execFileSync}=require('node:child_process'),{chromium}=require('playwright');
-const base=process.env.BACKGROUND_BASE_SHA||'3edd611c94bccb940ede511a229a41b3167bdb45';
+const base=process.env.BACKGROUND_BASE_SHA||'HEAD^';
 const url=process.env.AUDIT_BASE||'http://127.0.0.1:4177';
 const out='browser-audit-artifacts';fs.mkdirSync(out,{recursive:true});
 const original=Object.fromEntries(['bilik-antara.html','bilik-antara.css'].map(f=>[f,execFileSync('git',['show',base+':'+f],{encoding:'utf8'})]));
@@ -31,7 +31,7 @@ async function inspect(browser,width,height,mode){
  await page.evaluate(()=>document.fonts.ready);
  const result=await state(page);
  assert.equal(result.overflow,false,mode+' '+width+' horizontal overflow');
- assert.equal(result.particles,0,'Obsolete hand sparks must stay absent in baseline and current versions');
+ if(mode!=='before')assert.equal(result.particles,0,'Obsolete hand sparks must remain absent in current and fallback versions');
  assert.match(result.effects['.world-art'][0],/worldBreath/);
  assert.match(result.effects['.world-haze'][0],/hazeDrift/);
  assert.match(result.effects['.world-embers i'][0],/embersTravel/);

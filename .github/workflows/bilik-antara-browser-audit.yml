@@ -44,7 +44,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Audit desktop/mobile, animations, glass, privacy UI, and keyboard
         env:
-          BACKGROUND_BASE_SHA: ${{ github.event.pull_request.base.sha || '3edd611c94bccb940ede511a229a41b3167bdb45' }}
+          BACKGROUND_BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before || 'HEAD^' }}
         run: |
           python3 -m http.server 4177 --bind 127.0.0.1 > /tmp/aksara-audit-server.log 2>&1 &
           server_pid=$!
