@@ -32,6 +32,14 @@ test("identity responses cover creator, modifications and model provenance",()=>
   assert.match(response,new RegExp(expected,"i"),q);
  }
 });
+test("Gemini provenance questions answer Google directly without confusing Aksara's developer",()=>{
+ for(const question of ["Gemini tu model siapa?","Gemini model siapa?","Siapa yang bangunkan Gemini?","Gemini dibangunkan oleh siapa?"]){
+  const response=ID.answerIdentity(question);
+  assert.match(response,/Gemini dibangunkan oleh Google/i,question);
+  assert.match(response,/Shaiful.*Aksara/i,question);
+ }
+ assert.doesNotMatch(ID.answerIdentity("Siapa cipta kau?"),/^Gemini dibangunkan oleh Google/);
+});
 test("Siapa Aku answers project origin, enhancements and base-model provenance",()=>{
  const reply=ID.answerIdentity("Siapa Aku");
  assert.match(reply,/Aksara A\.I\./);
