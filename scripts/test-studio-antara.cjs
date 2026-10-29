@@ -113,7 +113,7 @@ test('OVH Beta failures do not auto-fallback or leak upstream bodies',async()=>{
 });
 test('OVH Beta UI is manual, readable and no old hand particle layer remains',()=>{
  const html=fs.readFileSync('studio-antara.html','utf8'),script=fs.readFileSync('studio-antara-cloud.js','utf8');
- assert.match(html,/<option value="ovh">OVHcloud SDXL · Beta<\\/option>/);
+ assert.ok(html.includes('<option value="ovh">OVHcloud SDXL · Beta</option>'));
  assert.match(html,/id="modelBetaInfo"/);assert.match(script,/modelBetaInfo/);
  const bilik=fs.readFileSync('bilik-antara.html','utf8'),css=fs.readFileSync('bilik-antara.css','utf8');
  assert.doesNotMatch(bilik,/world-hand-sparks/);assert.doesNotMatch(css,/world-hand-sparks/);
