@@ -81,6 +81,19 @@ test("Calm glass frame keeps the chat clear and preserves background particles",
  assert.equal((html.match(/style="--delay:/g)||[]).length,24,"Original background particles remain");
 });
 
+test("Composited glass label, original ambient motion and older-browser rim fallback are retained",()=>{
+ assert.match(html,/href="bilik-antara\.css\?v=73"/);
+ assert.match(css,/\.voice-panel \.voice-live-label::after\{/);
+ assert.match(css,/@keyframes voiceIdentityBorderLight\{/);
+ assert.match(css,/@keyframes voiceIdentityBreath\{\s*0%,100%\{transform:scale\(1\)\}/);
+ assert.doesNotMatch(css,/@keyframes voiceIdentityBreath\{[\s\S]*?border-color:/);
+ assert.match(css,/animation:voiceIdentityShimmer 4\.8s ease-in-out infinite/);
+ assert.match(css,/\.conversation>\.glass-frame-orbit \.frame-glow\{display:none\}/);
+ assert.match(css,/@keyframes frameLightBreathe/);
+ assert.match(css,/@keyframes frameShadowBreathe/);
+ assert.equal((html.match(/style="--delay:/g)||[]).length,24);
+});
+
 test("Mobile viewport, permanent dark theme and conversation functions retained",()=>{
  assert.match(css,/@media\(max-width:760px\)/);
  assert.doesNotMatch(css,/data-theme="light"/);
