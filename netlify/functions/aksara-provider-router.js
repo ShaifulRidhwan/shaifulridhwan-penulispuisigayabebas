@@ -317,7 +317,7 @@ async function checkStatus(){
     if(provider.id==="requesty"){
      if(Date.now()-recentRequesty.at<90000)return {id:provider.id,status:"online",model:recentRequesty.model,reason:"recent_reply"};
      const models=await Requesty.freeModels({signal:ctrl.signal});
-     return {id:provider.id,status:models.length?"ready":"offline",reason:models.length?"catalog_verified":"free_model_unavailable",modelCount:models.length};
+     return {id:provider.id,status:models.length?"ready":"offline",reason:models.length?"catalog_verified":"free_model_unavailable",modelCount:models.length,models};
     }
     if(provider.id==="openrouter"){
      if(Date.now()-recentOpenRouter.at<90000)return {id:provider.id,status:"online",model:recentOpenRouter.model,reason:"recent_reply"};
