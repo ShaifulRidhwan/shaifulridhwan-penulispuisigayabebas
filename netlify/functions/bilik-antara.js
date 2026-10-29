@@ -169,6 +169,7 @@ exports.handler=async event=>{
     if(throttle(ip,healthRateMap,6))return result(429,{code:"STATUS_RATE_LIMIT",error:"Terlalu banyak semakan. Cuba lagi sebentar.",retryAfterSeconds:Math.max(1,Math.ceil((healthRateMap.get(ip).start+60000-Date.now())/1000))},H);
     const configured=Router.configured();
     const alternativeChecks=Router.checkStatus();
+    const freeModelsCheck=Router.freeCatalog();
     const googleHealth=googleHealthFor(fastModel);
     let google={id:"gemini",status:"off"};
     if(apiKey){
@@ -190,12 +191,12 @@ exports.handler=async event=>{
         try{google=await googleHealth.pending;googleHealth.value=google;googleHealth.time=Date.now();}finally{googleHealth.pending=null;}
       }
     }
-    const alternatives=await alternativeChecks;
+    const [alternatives,freeModels]=await Promise.all([alternativeChecks,freeModelsCheck]);
     const providers=[google,...alternatives];
     const fastest=providers.filter(p=>p.status==="online").sort((a,b)=>(a.latencyMs||0)-(b.latencyMs||0))[0];
     const realSuccess=Date.now()-lastTextSuccessAt<90000?providers.find(p=>p.id===lastTextProvider&&p.status==="online"):null;
     // A successful conversation outranks an artificial one-word speed test.
-    return result(200,{ok:true,providers,preferredProvider:(realSuccess||fastest)?.id||"",checkedAt:Date.now(),someOnline:!!fastest,configuredCount:configured.length+(apiKey?1:0)},H);
+    return result(200,{ok:true,providers,freeModels,preferredProvider:(realSuccess||fastest)?.id||"",checkedAt:Date.now(),someOnline:!!fastest,configuredCount:configured.length+(apiKey?1:0)},H);
   }
 
   const ip=(event.headers&&(event.headers["x-nf-client-connection-ip"]||"").split(",")[0])||"unknown";
