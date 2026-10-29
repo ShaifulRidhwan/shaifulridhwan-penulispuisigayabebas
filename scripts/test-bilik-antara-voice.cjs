@@ -687,7 +687,7 @@ test("The true 3D voice avatar only skips invisible frame drawing while the voic
  const avatar=fs.readFileSync("bilik-antara-avatar.js","utf8");
  const html=fs.readFileSync("bilik-antara.html","utf8");
  const css=fs.readFileSync("bilik-antara.css","utf8");
- assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=12"\)/);
+ assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=13"\)/);
  assert.match(avatar,/panel\.classList\.contains\("is-minimized"\)\|\|document\.hidden/);
  assert.match(avatar,/renderer\.render\(scene,camera\)/);
  assert.match(avatar,/weights\(\["jawOpen"\],jawMotion\)/);
@@ -716,4 +716,12 @@ test("Avatar synchronizes facial meshes, responds to audio and uses conservative
  assert.equal(emotionFor("air mata"),"cry");
  assert.equal(emotionFor("aku takziah"),"sad");
  assert.equal(emotionFor("cerita tentang teknologi"),"neutral");
+});
+
+test("Messy bun trial is opt-in and retains the original hair when geometry is unavailable",()=>{
+ const avatar=fs.readFileSync("bilik-antara-avatar.js","utf8");
+ assert.match(avatar,/new URLSearchParams\(window\.location\.search\)\.get\("gaya"\)==="messybun"/);
+ const start=avatar.indexOf("function installMessyBun(THREE,model,mergeGeometries){"),end=avatar.indexOf("function stop(){",start);
+ const fn=new Function(avatar.slice(start,end)+";return installMessyBun")();
+ assert.equal(fn({}, {getObjectByName(){return null}}),false);
 });
