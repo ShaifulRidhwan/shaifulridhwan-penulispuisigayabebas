@@ -96,6 +96,10 @@ async function main(){
   assert.match(visual.navBlur,/blur/,'Studio navigation needs Bilik-style glass');
   assert.match(visual.navFill,/gradient/);
   assert.equal(await page.locator('.hero').count(),0,'Standalone hero should be removed');
+  assert.equal(await page.locator('.topbar').locator('a').count(),2,'Header should retain only Bilik Antara and Gaya Bebas');
+  assert.equal(await page.locator('.topbar .brand-mark').count(),0,'Top AKSARA mark should be absent');
+  assert.equal(await page.locator('#studioTitle').textContent(),'STUDIO ANTARA');
+  assert.equal(await page.locator('#resultTitle').textContent(),'Ruang visual');
   assert.equal(await page.locator('.creator > .card-top #studioTitle').count(),1,'Title is within creator glass');
   assert.equal(await page.locator('#imagePrompt').getAttribute('placeholder'),'Apa yang kau nak lihat?');
   assert.equal(await page.locator('#modelNote').count(),0,'Redundant model prose must be absent');
