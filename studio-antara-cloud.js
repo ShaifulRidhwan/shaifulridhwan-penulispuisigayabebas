@@ -141,5 +141,23 @@ form.addEventListener("submit",async event=>{
   setBusy(false);
  }
 });
+// Remove only obsolete model cache and the old image-specific service worker.
+// Never clear unrelated website storage or service workers.
+function removeOldImageRuntime(){
+ if("caches" in window&&typeof caches.delete==="function"){
+  caches.delete("web-txt2img-v1").catch(()=>{});
+ }
+ if("serviceWorker" in navigator&&typeof navigator.serviceWorker.getRegistrations==="function"){
+  const oldScript=new URL("studio-imej-sw.js",window.location.href).href;
+  navigator.serviceWorker.getRegistrations().then(registrations=>{
+   registrations.forEach(reg=>{
+    const urls=[reg.active?.scriptURL,reg.waiting?.scriptURL,reg.installing?.scriptURL];
+    if(urls.includes(oldScript))reg.unregister().catch(()=>{});
+   });
+  }).catch(()=>{});
+ }
+}
+if("requestIdleCallback" in window)window.requestIdleCallback(removeOldImageRuntime,{timeout:7000});
+else setTimeout(removeOldImageRuntime,2000);
 window.addEventListener("pagehide",()=>{if(imageUrl)URL.revokeObjectURL(imageUrl);});
 })();
