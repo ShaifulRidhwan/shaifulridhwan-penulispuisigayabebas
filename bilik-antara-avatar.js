@@ -70,7 +70,7 @@ function stop(){
  scene=null;camera=null;root=null;face=null;morphIndex=null;tearMeshes=[];audioArray=null;audioSpectrum=null;audioAnalyser=null;mouthRound=0;emotion="neutral";emotionLevel=0;expressionWeights={};lastWidth=0;lastHeight=0;stage.classList.remove("avatar-ready","avatar-speaking","avatar-loading");
 }
 async function begin(){
- if(active||loading)return;active=true;loading=true;started=performance.now();stage.classList.add("avatar-loading");
+ if(active||loading)return;active=true;loading=true;started=performance.now();stage.classList.remove("avatar-unavailable");stage.classList.add("avatar-loading");
  try{
   const [THREE,{GLTFLoader},{KTX2Loader},{MeshoptDecoder}]=await Promise.all([
    import("three"),import("three/addons/loaders/GLTFLoader.js"),
@@ -87,8 +87,10 @@ async function begin(){
   const key=new THREE.DirectionalLight(0xeac58d,2.15);key.position.set(-2.8,2.4,3.0);scene.add(key);
   const rim=new THREE.DirectionalLight(0x56708c,2.4);rim.position.set(2.5,1.4,-1.0);scene.add(rim);
   const kt=new KTX2Loader().setTranscoderPath("https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/libs/basis/").detectSupport(renderer);
-  const gltf=await new GLTFLoader().setKTX2Loader(kt).setMeshoptDecoder(MeshoptDecoder).loadAsync(modelURL);
-  kt.dispose();if(!active){gltf.scene.traverse(o=>{o.geometry?.dispose?.();});return;}
+  let gltf;
+  try{gltf=await new GLTFLoader().setKTX2Loader(kt).setMeshoptDecoder(MeshoptDecoder).loadAsync(modelURL);}
+  finally{kt.dispose();} // Release transcoder resources even when network/model loading fails.
+  if(!active){gltf.scene.traverse(o=>{o.geometry?.dispose?.();});return;}
   root=gltf.scene;scene.add(root);
   // Frame only the upper body: this model contains a whole character.
   const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
