@@ -2,279 +2,115 @@
 const test=require("node:test");
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
-const html=fs.readFileSync("studio-antara.html","utf8");
-const studioCss=fs.readFileSync("studio-antara.css","utf8");
-const docJs=fs.readFileSync("studio-antara.js","utf8");
-const imgHtml=fs.readFileSync("studio-imej-beta.html","utf8");
-const imgJs=fs.readFileSync("studio-imej-beta.js","utf8");
-const manifest=fs.readFileSync("studio-imej-config.js","utf8");
-const diagSource=fs.readFileSync("studio-device-diagnostics.js","utf8");
-const worker=fs.readFileSync("studio-imej-sw.js","utf8");
-const chat=fs.readFileSync("bilik-antara.html","utf8");
-const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
-const sitemap=fs.readFileSync("sitemap.xml","utf8");
-
-test("Studio has email and PDF/Word only; no heavy image runtime on ordinary page",()=>{
- for(const word of ['data-tab="email"','data-tab="document"','id="emailBody"','id="docPdf"','id="docWord"'])
-  assert.ok(html.includes(word),word);
- for(const old of ['data-tab="table"','data-tab="chart"','data-tab="poster"','data-tab="image"',
- 'id="tableData"','id="chartData"','id="posterTitle"','studio-imej-beta.js'])
-  assert.ok(!html.includes(old),"Removed UI still in Studio: "+old);
- assert.ok(!/createPoster|drawChart|parseCSV|navigator\.gpu/.test(docJs),"Heavy/retired script remains.");
- assert.match(html,/href="studio-imej-beta\.html"/);
- const opens=(html.match(/<section\b/g)||[]).length;
- assert.equal(opens,(html.match(/<\/section>/g)||[]).length);
-});
-test("email/PDF/Word exports still operate without an extra paid image API",()=>{
- for(const x of ['id="emailEml"','id="emailOpen"','id="docHtml"','id="docPdf"','id="docWord"'])
-  assert.match(html,new RegExp(x));
- assert.match(docJs,/message\/rfc822/);
- assert.match(docJs,/mailto:/);
- assert.match(docJs,/window\.print\(\)/);
- assert.match(docJs,/docx@9\.11\.0/);
- assert.match(docJs,/fetch\("\/\.netlify\/functions\/bilik-antara"/);
- assert.doesNotMatch(docJs,/web-txt2img|sd-turbo/);
-});
-test("print stylesheet keeps the page wrapper visible so PDF is not blank",()=>{
- assert.match(studioCss,/\.site\{display:block!important/);
- assert.doesNotMatch(studioCss,/\.site,\.topbar,\.intro,\.tabs/);
- assert.match(studioCss,/@page\{size:A4/);
-});
-test("BETA image has a separate page, explicit warning, consent and cache controls",()=>{
- for(const id of ["checkDevice","deviceStatus","deviceDetails","modelConsent","checkCache",
-  "prefetchModel","backgroundModel","cancelDownload","clearModel","checkCache","activateModel",
-  "generateImage","downloadImage","modelProgress","gpuStatus"]){
-  assert.match(imgHtml,new RegExp('id="'+id+'"'),id);
- }
- assert.match(imgHtml,/BETA TEST/g);
- assert.match(imgHtml,/ANDROID \/ iOS/);
- assert.match(imgHtml,/2\.34 GiB/);
- assert.match(imgHtml,/studio-imej-config\.js\?v=1/);
- assert.match(imgHtml,/studio-device-diagnostics\.js\?v=1/);
- assert.match(imgHtml,/id="copyDiagnostic"/);
- assert.ok(imgHtml.indexOf("studio-imej-config.js")<imgHtml.indexOf("studio-imej-beta.js"));
- assert.match(diagSource,/Android\|iPhone\|iPad\|iPod\|Mobile/);
- assert.match(imgJs,/const D=window\.StudioDeviceDiagnostics/);
- assert.match(imgJs,/mobile&&!ui\.mobileRisk\.checked/);
- assert.match(imgJs,/if\(mobile&&engine!=="worker"\)/);
- assert.match(imgJs,/storageNeeded/);
- assert.match(imgJs,/backgroundFetch\.fetch/);
- assert.match(imgJs,/cache\.put\(url,payload\)/);
- assert.match(imgJs,/typeof sdk\?\.loadModel/);
- assert.match(imgJs,/sdk\.loadModel/);
-});
-test("Background Fetch service worker is restricted to model files and doesn't intercept the site",()=>{
- assert.match(worker,/backgroundfetchsuccess/);
- assert.match(worker,/backgroundfetchfail/);
- assert.match(worker,/backgroundfetchabort/);
- assert.match(worker,/record\.responseReady/);
- assert.match(worker,/cache\.put\(record\.request,response\)/);
- assert.match(worker,/C\.isModelFile\(record\.request\.url\)/);
- assert.doesNotMatch(worker,/addEventListener\("fetch"/);
- const C=Function("let self={};let globalThis=self;"+manifest+";return self.StudioImejConfig")();
- assert.equal(C.files.length,3);
- assert.equal(C.cacheName,"web-txt2img-v1");
- assert.ok(C.files.every(x=>x.startsWith("https://huggingface.co/schmuell/sd-turbo-ort-web/resolve/main/")));
- assert.ok(C.modelBytes>2*1024*1024*1024);
- assert.equal(C.isModelFile("https://example.com/secret"),false);
-});
-test("Bilik Antara links Studio and sitemap includes both separate pages",()=>{
- assert.match(chat,/href="studio-antara\.html"/);
- assert.match(suite,/bilik-antara-studio-transfer-v1/);
- assert.match(sitemap,/studio-antara\.html/);
- assert.match(sitemap,/studio-imej-beta\.html/);
-});
-function browser(ua,{background=false,desktopGpu=false,mobileGpu=false,quota=10*1024**3,hideQuota=false}={}){
- const handlers=new Map(),nodes=new Map();
- function element(id){
-  if(nodes.has(id))return nodes.get(id);
-  const obj={id,textContent:"",value:"",checked:false,hidden:false,disabled:true,children:[],style:{},
-   addEventListener(event,fn){handlers.set(id+":"+event,fn);},
-   replaceChildren(){this.children=[];},
-   append(...args){this.children.push(...args);},
-   appendChild(x){this.children.push(x);},
-   removeAttribute(){},setAttribute(){},classList:{add(){},remove(){},toggle(){}},
-   click(){const fn=handlers.get(id+":click");return fn&&fn();}};
-  nodes.set(id,obj);return obj;
- }
- const doc={getElementById:element,createElement:tag=>element("anon-"+tag+"-"+Math.random()),addEventListener(){},hidden:false};
- const C=Function("let self={};"+manifest+";return self.StudioImejConfig")();
- const diagModule={exports:{}};
- new Function("module","window","setTimeout","clearTimeout",diagSource)(diagModule,undefined,setTimeout,clearTimeout);
- const window={StudioImejConfig:C,StudioDeviceDiagnostics:diagModule.exports,isSecureContext:true,addEventListener(){},caches:true};
- const data=new Map(),cache={
-  match:async url=>data.get(String(url))||null,
-  put:async(url,res)=>{data.set(String(url),res);},
-  delete:async url=>data.delete(String(url))
- };
- const caches={open:async()=>cache};
- let network=0,backgroundCalls=0;
- const bg={
-  async get(){return null;},
-  async fetch(){backgroundCalls++;return {result:"",downloadTotal:C.modelBytes,downloaded:0,addEventListener(){},abort:async()=>true};}
- };
- const navigator={
-  userAgent:ua,userAgentData:{mobile:/Android|iPhone|iPad|iPod/i.test(ua)},deviceMemory:desktopGpu?16:4,hardwareConcurrency:8,
-  storage:{estimate:async()=>(hideQuota?{}:{quota,usage:0}),persist:async()=>true},
-  gpu:(desktopGpu||mobileGpu)?{requestAdapter:async()=>({features:new Set(["shader-f16"])})}:undefined,
-  serviceWorker:background?{register:async()=>({backgroundFetch:bg}),addEventListener(){}}:undefined
- };
- const fakeFetch=async(url)=>{
-  network++;
-  return {ok:true,status:200,type:"cors",headers:{get:()=>String(800*1024*1024)}};
- };
- const invoke=new Function("window","document","navigator","caches","fetch","Request","AbortController","confirm","setTimeout","URL","Blob",imgJs);
- invoke(window,doc,navigator,caches,fakeFetch,class{constructor(url){this.url=url;}},class{constructor(){this.signal={aborted:false}}abort(){this.signal.aborted=true}},()=>true,()=>0,URL,Blob);
- return {window,nodes,handlers,C,data,get network(){return network},get backgroundCalls(){return backgroundCalls}};
+const vm=require("node:vm");
+const read=p=>fs.readFileSync(p,"utf8");
+const page=read("studio-antara.html");
+const style=read("studio-antara.css");
+const client=read("studio-antara-cloud.js");
+const server=read("netlify/functions/studio-image.js");
+function loadBackend(fetchImpl,env={}){
+ const exports={};
+ vm.runInNewContext(server,{
+   exports,process:{env},fetch:fetchImpl,AbortController,Buffer,URL,Map,Date,
+   setTimeout,clearTimeout,console
+ },{filename:"studio-image.js"});
+ return exports.handler;
 }
-test("browser device metadata is labeled as approximate and never invented",async()=>{
- const diag={exports:{}};
- new Function("module","window","setTimeout","clearTimeout",diagSource)(diag,undefined,setTimeout,clearTimeout);
- const nav={
-  userAgent:"Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/130",
-  userAgentData:{mobile:true,platform:"Android",
-   getHighEntropyValues:async()=>({platform:"Android",platformVersion:"16",model:"Example 12 Pro",fullVersionList:[{brand:"Chromium",version:"130"}]})},
-  brave:{isBrave:async()=>true},
-  deviceMemory:8,hardwareConcurrency:8,
-  storage:{estimate:async()=>({quota:8*1024**3,usage:1*1024**3}),persisted:async()=>false},
-  gpu:{requestAdapter:async()=>({info:{description:"GPU yang dilaporkan",architecture:"sample"},
-    features:new Set(["shader-f16"]),limits:{maxBufferSize:268435456,maxStorageBufferBindingSize:134217728}})}
- };
- const d=await diag.exports.inspect(nav,{secure:true,minimumStorageBytes:2*1024**3});
- assert.equal(d.platform.os,"Android");
- assert.equal(d.platform.model,"Example 12 Pro");
- assert.equal(d.browser,"Brave");
- assert.equal(d.mobile,true);
- assert.equal(d.gpu.accessible,true,"Android WebGPU adapter must still be probed");
- assert.equal(d.gpu.name,"GPU yang dilaporkan");
- assert.equal(d.memory,8);
- assert.equal(d.storage.remaining,7*1024**3);
- assert.ok(d.notes.some(note=>note.includes("BUKAN ruang fizikal")));
+function request(overrides={}){
+ const body={prompt:"A cinematic moonlit skyline above the sea",style:"cinematic",steps:4,seed:null,...overrides};
+ return {httpMethod:"POST",headers:{
+   host:"example.netlify.app",
+   origin:"https://example.netlify.app",
+   "content-type":"application/json",
+   "x-nf-client-connection-ip":"198.51.100.22"
+ },body:JSON.stringify(body)};
+}
+const env={CLOUDFLARE_ACCOUNT_ID:"a".repeat(32),CLOUDFLARE_API_TOKEN:"fake-private-test-token"};
+function goodResponse(){
+ return {status:200,ok:true,headers:{get:()=>"application/json"},json:async()=>({
+  success:true,result:{image:Buffer.alloc(200,77).toString("base64")}
+ })};
+}
+test("Studio loads only lightweight cloud image files",()=>{
+ assert.match(page,/studio-antara-cloud\.js\?v=/);
+ assert.match(page,/studio-antara\.css\?v=/);
+ assert.match(page,/id="imageForm"/);
+ assert.match(page,/id="videoStudio"/);
+ assert.match(page,/Akan datang/);
+ assert.doesNotMatch(page,/WebGPU|SD.Turbo|studio-imej|web-txt2img/i);
+ assert.doesNotMatch(style,/SD.Turbo|studio-imej|web-txt2img/i);
+ new vm.Script(client,{filename:"studio-antara-cloud.js"});
+ new vm.Script(server,{filename:"netlify/functions/studio-image.js"});
 });
-test("Android browser in desktop-site mode is still reported as Android",async()=>{
- const diag={exports:{}};
- new Function("module","window","setTimeout","clearTimeout",diagSource)(diag,undefined,setTimeout,clearTimeout);
- const result=await diag.exports.inspect({
-  userAgent:"Mozilla/5.0 (Linux; Android 16) AppleWebKit/537.36 Chrome/130",
-  userAgentData:{mobile:false,platform:"Android"},
-  storage:{estimate:async()=>({quota:5*1024**3,usage:0})},
-  gpu:{requestAdapter:async()=>({info:{description:"GPU Android"},features:new Set(),limits:{maxBufferSize:268435456}})}
- },{secure:true,minimumStorageBytes:3*1024**3});
- assert.equal(result.platform.os,"Android");
- assert.equal(result.mobile,true);
- assert.equal(result.gpu.accessible,true);
+test("Legacy local-image runtime files have been deleted",()=>{
+ const removed=[
+  "studio-imej-beta.html","studio-imej-beta.js","studio-imej-beta.css",
+  "studio-imej-config.js","studio-imej-worker.js","studio-imej-sw.js",
+  "studio-device-diagnostics.js",
+  "studio-antara.js","studio-antara-editor.js",
+  "studio-antara-tiptap.js","studio-antara-advanced.js"
+ ];
+ for(const path of removed)assert.equal(fs.existsSync(path),false,path+" still exists");
+ assert.match(client,/caches\.delete\("web-txt2img-v1"\)/);
+ assert.match(client,/getRegistrations/);
 });
-test("unknown device metadata stays unknown, not labeled as weak hardware",async()=>{
- const diag={exports:{}};
- new Function("module","window","setTimeout","clearTimeout",diagSource)(diag,undefined,setTimeout,clearTimeout);
- const report=await diag.exports.inspect({userAgent:"GenericBrowser",userAgentData:{mobile:false},
-  gpu:{requestAdapter:async()=>null}}, {secure:true,minimumStorageBytes:2*1024**3});
- assert.equal(report.platform.model,diag.exports.UNKNOWN);
- assert.equal(report.memory,null);
- assert.equal(report.storage.remaining,null);
- assert.equal(report.gpu.accessible,false);
- assert.equal(report.platform.os,diag.exports.UNKNOWN);
-});
-test("Android with no WebGPU can still download; inference remains disabled",async()=>{
- const b=browser("Mozilla/5.0 (Linux; Android 16) AppleWebKit Brave");
- const status=await b.window.StudioImejBeta.deviceCheck();
- assert.ok(status.mobile);
- assert.ok(!status.gpuAllowed);
- assert.equal(b.nodes.get("prefetchModel").disabled,true,"explicit consent remains mandatory");
- b.nodes.get("modelConsent").checked=true;
- b.handlers.get("modelConsent:change")();
- assert.equal(b.nodes.get("prefetchModel").disabled,false,"Android must be allowed to download");
- assert.equal(b.nodes.get("activateModel").disabled,true,"downloading must not activate GPU");
- await b.handlers.get("prefetchModel:click")();
- assert.equal(b.network,3,"mobile may fetch model files by explicit request");
- assert.equal(b.data.size,3);
- assert.equal(b.nodes.get("activateModel").disabled,true,"GPU inference stays guarded on mobile");
-});
-test("Android and iOS WebGPU phones can opt in to worker-based inference after download",async()=>{
- for(const ua of ["Mozilla/5.0 (Linux; Android 16) Chrome/156 Mobile",
-                  "Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) AppleWebKit/605.1.15 Safari/605.1.15"]){
-  const b=browser(ua,{mobileGpu:true});
-  const report=await b.window.StudioImejBeta.deviceCheck();
-  assert.equal(report.mobile,true);
-  assert.equal(report.gpuAllowed,true,"Mobile WebGPU must not be hard-coded off");
-  b.nodes.get("modelConsent").checked=true;
-  b.handlers.get("modelConsent:change")();
-  await b.handlers.get("prefetchModel:click")();
-  assert.equal(b.data.size,3);
-  assert.equal(b.nodes.get("activateModel").disabled,true,"Risk consent must be separate");
-  b.nodes.get("mobileGpuConsent").checked=true;
-  b.handlers.get("mobileGpuConsent:change")();
-  assert.equal(b.nodes.get("activateModel").disabled,false,"User may explicitly try a real WebGPU device");
+test("Image API validates prompt, style and quality without calling Cloudflare",async()=>{
+ let called=false;
+ const handler=loadBackend(async()=>{called=true;throw Error("should not fetch");},env);
+ for(const [field,value] of [
+  ["prompt","x"],["style","surprise"],["steps",999],["seed",-3]
+ ]){
+   const res=await handler(request({[field]:value}));
+   assert.equal(res.statusCode,400,field);
  }
+ assert.equal(called,false);
 });
-test("Mobile layout places prompt before model download and hides diagnostics by default",()=>{
- assert.ok(imgHtml.indexOf('id="imagePrompt"')<imgHtml.indexOf('id="prefetchModel"'));
- assert.ok(imgHtml.indexOf('id="generatedImage"')<imgHtml.indexOf('id="deviceDetails"'));
- assert.match(imgHtml,/<details id="devicePanel"/);
- assert.doesNotMatch(imgHtml,/<details id="devicePanel"[^>]*\bopen\b/);
- assert.match(imgHtml,/id="mobileGpuConsent"/);
- assert.match(imgHtml,/id="imagePrompt"/);
+test("Image API refuses cross-origin requests",async()=>{
+ const handler=loadBackend(async()=>goodResponse(),env);
+ const req=request();
+ req.headers.origin="https://not-our-site.invalid";
+ const res=await handler(req);
+ assert.equal(res.statusCode,403);
 });
-test("unknown or low estimated browser quota does not disable opt-in download",async()=>{
- for(const opts of [{hideQuota:true},{quota:300*1024**2}]){
-  const b=browser("Mozilla/5.0 (Linux; Android 16) AppleWebKit Brave",opts);
-  await b.window.StudioImejBeta.deviceCheck();
-  b.nodes.get("modelConsent").checked=true;
-  b.handlers.get("modelConsent:change")();
-  assert.equal(b.nodes.get("prefetchModel").disabled,false,"estimate is a warning, not a block");
-  assert.equal(b.nodes.get("activateModel").disabled,true);
+test("Image API reports missing Cloudflare credentials safely",async()=>{
+ let called=false;
+ const handler=loadBackend(async()=>{called=true;}, {});
+ const res=await handler(request());
+ assert.equal(res.statusCode,503);
+ assert.equal(called,false);
+});
+test("Cloudflare FLUX request is authenticated on server and returns real image payload",async()=>{
+ let url="",options=null;
+ const handler=loadBackend(async(u,o)=>{url=u;options=o;return goodResponse();},env);
+ const res=await handler(request({steps:8,seed:42}));
+ const body=JSON.parse(res.body);
+ assert.equal(res.statusCode,200);
+ assert.equal(body.ok,true);
+ assert.equal(body.mime,"image/jpeg");
+ assert.ok(body.image.length>100);
+ assert.equal(body.steps,8);
+ assert.equal(body.seed,42);
+ assert.match(url,/\/ai\/run\/@cf\/black-forest-labs\/flux-1-schnell$/);
+ assert.equal(options.headers.Authorization,"Bearer fake-private-test-token");
+ assert.equal(JSON.parse(options.body).steps,8);
+ assert.equal(JSON.parse(options.body).seed,42);
+ assert.match(JSON.parse(options.body).prompt,/cinematic photography/);
+ assert.doesNotMatch(res.body,/fake-private-test-token/);
+});
+test("Cloudflare free-tier limit is surfaced without exposing private error details",async()=>{
+ const handler=loadBackend(async()=>({status:429,ok:false,headers:{get:()=>"application/json"}}),env);
+ const res=await handler(request());
+ assert.equal(res.statusCode,429);
+ assert.match(JSON.parse(res.body).error,/kuota|had/i);
+});
+test("Basic per-instance request limit stops repeated calls",async()=>{
+ let calls=0;
+ const handler=loadBackend(async()=>{calls++;return goodResponse();},env);
+ for(let i=0;i<3;i++){
+  const res=await handler(request());
+  assert.equal(res.statusCode,200);
  }
-});
-test("Desktop prefetch caches whole model files and reuses them without repeating requests",async()=>{
- const b=browser("Mozilla/5.0 (X11; Linux x86_64) Chrome", {desktopGpu:true});
- const status=await b.window.StudioImejBeta.deviceCheck();
- assert.equal(status.gpuAllowed,true);
- b.nodes.get("modelConsent").checked=true;
- b.handlers.get("modelConsent:change")();
- await b.handlers.get("prefetchModel:click")();
- assert.equal(b.network,3);
- assert.equal(b.data.size,3);
- assert.equal(await b.window.StudioImejBeta.cacheCounts(),3);
- await b.handlers.get("prefetchModel:click")();
- assert.equal(b.network,3,"cached assets should not be re-downloaded");
-});
-test("Unsupported Background Fetch stays hidden with an honest active-tab explanation",async()=>{
- const b=browser("Mozilla/5.0 (iPhone; CPU iPhone OS 26_0 like Mac OS X) Safari");
- await b.window.StudioImejBeta.deviceCheck();
- b.nodes.get("modelConsent").checked=true;
- b.handlers.get("modelConsent:change")();
- assert.equal(b.nodes.get("backgroundModel").hidden,true);
- assert.equal(b.nodes.get("backgroundModel").disabled,true);
- assert.match(b.nodes.get("downloadModeNote").textContent,/tidak tersedia/i);
- assert.match(b.nodes.get("downloadModeNote").textContent,/tab kekal terbuka/i);
- assert.equal(b.nodes.get("prefetchModel").disabled,false);
-});
-test("Supported Background Fetch is visible and describes its experimental limitations",async()=>{
- const b=browser("Mozilla/5.0 (Linux; Android 16) Chrome/156 Mobile",{background:true});
- await b.window.StudioImejBeta.deviceCheck();
- b.nodes.get("modelConsent").checked=true;
- b.handlers.get("modelConsent:change")();
- assert.equal(b.nodes.get("backgroundModel").hidden,false);
- assert.equal(b.nodes.get("backgroundModel").disabled,false);
- assert.match(b.nodes.get("downloadModeNote").textContent,/Background Fetch/i);
-});
-test("Download progress reports streamed bytes without allocating a complete model file",()=>{
- assert.match(imgJs,/new TransformStream/);
- assert.match(imgJs,/response\.body\.pipeThrough\(transform\)/);
- assert.match(imgJs,/downloadedBytes/);
- assert.match(imgJs,/downloadTotal:Math\.ceil\(C\.modelBytes\*1\.25\)/);
- assert.match(imgHtml,/studio-imej-beta\.js\?v=8/);
- assert.doesNotMatch(imgJs,/response\.arrayBuffer\(\)/);
-});
-test("Background fetch is opt-in and mobile remains GPU-blocked even if available",async()=>{
- const b=browser("Mozilla/5.0 (Linux; Android 16) Brave",{background:true});
- await b.window.StudioImejBeta.deviceCheck();
- assert.equal(b.nodes.get("backgroundModel").disabled,true);
- b.nodes.get("modelConsent").checked=true;
- b.handlers.get("modelConsent:change")();
- assert.equal(b.nodes.get("backgroundModel").disabled,false);
- await b.handlers.get("backgroundModel:click")();
- assert.equal(b.backgroundCalls,1);
- assert.equal(b.nodes.get("activateModel").disabled,true);
- assert.equal(b.network,0,"no normal fetch during background download");
+ const fourth=await handler(request());
+ assert.equal(fourth.statusCode,429);
+ assert.equal(calls,3);
 });
