@@ -2,10 +2,9 @@
 // Strongly consistent compare-and-swap ledger across Netlify instances.
 // Stores only daily counters, salted IP hashes and short leases; never prompts/images.
 const {createHash,randomUUID}=require('node:crypto');
-const {getStore,connectLambda}=require('@netlify/blobs');
+const {getStore}=require('@netlify/blobs');
 const failure=(message,status=503,retryAfter=60)=>Object.assign(new Error(message),{status,retryAfter});
 async function reserve(event,cost,kind='image',deps={}){
- if(event.blobs)connectLambda(event);
  const store=deps.store||getStore({name:'studio-antara-quota-v2',consistency:'strong'});
  const now=deps.now||Date.now(),day=new Date(now).toISOString().slice(0,10),key='day/'+day;
  const ip=String(event.headers?.['x-nf-client-connection-ip']||'unknown').slice(0,80);

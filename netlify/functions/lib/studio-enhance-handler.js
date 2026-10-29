@@ -1,7 +1,7 @@
 'use strict';
-const Config=require('../../studio-antara-config');
-const {input,response,readLimited}=require('./lib/studio-http');
-const Quota=require('./lib/studio-quota');
+const Config=require('../../../studio-antara-config');
+const {input,response,readLimited}=require('./studio-http');
+const Quota=require('./studio-quota');
 function createHandler({fetchImpl=fetch,reserve=Quota.reserve,env=process.env,timeout=9000}={}){
  return async event=>{
   let release,timer;

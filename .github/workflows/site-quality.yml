@@ -16,7 +16,7 @@ on:
       - "studio-antara.html"
       - "studio-antara*.js"
       - "studio-antara.css"
-      - "netlify/functions/studio-*.js"
+      - "netlify/functions/studio-*.*"
       - "netlify/functions/lib/studio-*.js"
       - "scripts/test-studio-*.cjs"
       - "package.json"
@@ -45,7 +45,7 @@ on:
       - "studio-antara.html"
       - "studio-antara*.js"
       - "studio-antara.css"
-      - "netlify/functions/studio-*.js"
+      - "netlify/functions/studio-*.*"
       - "netlify/functions/lib/studio-*.js"
       - "scripts/test-studio-*.cjs"
       - "package.json"
@@ -72,7 +72,8 @@ jobs:
           node --check gaya-bebas.js
           node --check karya-data.js
           node --check studio-antara-cloud.js
-          node --check netlify/functions/studio-image.js
+          node --check netlify/functions/studio-image.mjs
+          node --check netlify/functions/studio-enhance.mjs
           npm run test:studio
           node --test scripts/test-site-quality.cjs
           node --test scripts/test-site-metadata.cjs

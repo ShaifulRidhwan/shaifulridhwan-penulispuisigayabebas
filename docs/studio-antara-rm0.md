@@ -39,6 +39,8 @@ Pilihan:
 
 `@netlify/blobs` ialah satu-satunya kebergantungan runtime baharu, khusus backend, untuk kawalan bajet atomik. `fake-indexeddb` hanya dependency ujian. Frontend tiada library baharu.
 
+Fungsi Studio menggunakan format moden Netlify (`studio-image.mjs` / `studio-enhance.mjs`) supaya SDK menerima endpoint uncached yang diperlukan untuk strong consistency. Format Lambda lama melalui `connectLambda` tidak membawa konfigurasi uncached tersebut.
+
 Ledger Blobs site-wide, strong consistency, conditional `onlyIfNew` / `onlyIfMatch`:
 - Maksimum 2 permintaan serentak merentas instance; lease 70 saat, upstream imej dibatalkan selepas 45 saat.
 - Maksimum 8 percubaan imej per 10 minit bagi hash IP harian. Header IP dipercayai ialah `x-nf-client-connection-ip` daripada Netlify.

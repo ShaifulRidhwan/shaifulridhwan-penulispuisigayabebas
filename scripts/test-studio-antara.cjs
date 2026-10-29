@@ -1,8 +1,8 @@
 'use strict';
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 const C=require('../studio-antara-config');
-const {createHandler}=require('../netlify/functions/studio-image');
-const {createHandler:enhancer}=require('../netlify/functions/studio-enhance');
+const {createHandler}=require('../netlify/functions/lib/studio-image-handler');
+const {createHandler:enhancer}=require('../netlify/functions/lib/studio-enhance-handler');
 const {reserve}=require('../netlify/functions/lib/studio-quota');
 const {imageInfo}=require('../netlify/functions/lib/studio-http');
 const env={CLOUDFLARE_ACCOUNT_ID:'a'.repeat(32),CLOUDFLARE_API_TOKEN:'test-private-token'};
@@ -77,4 +77,10 @@ test('Prompt enhancement fallback preserves the original, long prompts are never
 test('Explicit prompt AI uses an isolated free Groq call and validates editable output',async()=>{
  let called=0;const h=enhancer({env:{GROQ_API_KEY:'fake',GROQ_FREE_CONFIRMED:'true'},reserve:quota,fetchImpl:async(u,o)=>{called++;assert.match(u,/groq/);return Response.json({choices:[{message:{content:JSON.stringify({prompt:'A woman standing in golden light, clear composition.'})}}]});}});
  const e=event();e.body=JSON.stringify({prompt:'Wanita berdiri dalam cahaya.'});const r=await h(e);assert.equal(called,1);assert.equal(JSON.parse(r.body).method,'ai');
+});
+test('Modern request adapter bounds request body and uses trusted Netlify context IP',async()=>{
+ const adapt=require('../netlify/functions/lib/studio-request');let seen;
+ const req=new Request('https://example.netlify.app/.netlify/functions/studio-image',{method:'POST',headers:{Origin:'https://example.netlify.app','Content-Type':'application/json'},body:'{}'});
+ const res=await adapt(req,{ip:'trusted-ip'},async event=>{seen=event;return {statusCode:200,headers:{'content-type':'application/json'},body:'{"ok":true}'};});assert.equal(res.status,200);assert.equal(seen.headers.host,'example.netlify.app');assert.equal(seen.headers['x-nf-client-connection-ip'],'trusted-ip');
+ const big=new Request(req.url,{method:'POST',body:'x'.repeat(8000)});assert.equal((await adapt(big,{},()=>{throw Error('must not invoke')})).status,413);
 });
