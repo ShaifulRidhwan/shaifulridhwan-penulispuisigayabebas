@@ -322,21 +322,35 @@ async function activate(){
   if(typeof sdk?.loadModel!=="function"||typeof sdk?.generateImage!=="function")
    throw new Error("Runtime tidak lengkap.");
   engine="direct";client=null;
-  if(typeof Worker!=="undefined"&&sdk.Txt2ImgWorkerClient?.createDefault){
-   let candidate=null;
+  if(typeof Worker!=="undefined"&&typeof sdk.Txt2ImgWorkerClient==="function"){
+   let candidate=null,worker=null,timeoutId=null,workerIssue="";
    try{
-    candidate=sdk.Txt2ImgWorkerClient.createDefault();
+    // Worker entry must be same-origin. CDN ESM modules may be imported INSIDE it.
+    worker=new Worker(new URL("./studio-imej-worker.js?v=1",window.location.href),{
+     type:"module",name:"studio-antara-webgpu"
+    });
+    const workerFailure=new Promise((_,reject)=>{
+     worker.addEventListener("error",event=>reject(new Error(event.message||"Skrip Worker GPU gagal dijalankan.")),{once:true});
+     worker.addEventListener("messageerror",()=>reject(new Error("Mesej Worker GPU tidak dapat dibaca.")),{once:true});
+    });
+    worker.addEventListener("message",event=>{
+     if(event.data?.type==="result"&&event.data.ok===false)
+      workerIssue=String(event.data.message||event.data.reason||"Ralat Worker");
+    });
+    candidate=new sdk.Txt2ImgWorkerClient(worker);
+    ui.imgNote.textContent="BETA TEST: Menyemak WebGPU di dalam Worker setempat...";
     const caps=await Promise.race([
-     candidate.detect(),
-     new Promise((_,reject)=>setTimeout(()=>reject(new Error("Worker tidak responsif")),6500))
+     candidate.detect(),workerFailure,
+     new Promise((_,reject)=>{timeoutId=setTimeout(()=>reject(new Error("Worker tidak responsif semasa memuat runtime GPU.")),30000);})
     ]);
     if(caps?.webgpu){client=candidate;engine="worker";}
-    else throw Error("Worker WebGPU tidak tersedia.");
+    else throw Error(workerIssue||"WebGPU tidak tersedia di dalam Worker walaupun halaman boleh mengakses GPU.");
    }catch(e){
     try{candidate?.terminate();}catch(_){}
+    if(!candidate)try{worker?.terminate();}catch(_){}
     client=null;
     if(mobile)throw Error("Mod pekerja WebGPU tidak tersedia pada pelayar mudah alih ini: "+String(e.message||e));
-   }
+   }finally{if(timeoutId!==null)clearTimeout(timeoutId);}
   }
   if(mobile&&engine!=="worker")
    throw Error("Percubaan mudah alih memerlukan Web Worker yang berfungsi; pemprosesan terus pada tab dimatikan untuk mengurangkan risiko crash.");
