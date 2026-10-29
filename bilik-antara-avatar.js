@@ -90,6 +90,9 @@ async function begin(){
   });
   resize.observe(stage);frameModel();stage.classList.add("avatar-ready");stage.classList.remove("avatar-loading");blinkAt=performance.now()+2300;
   const frame=(t)=>{if(!active||!renderer)return;raf=requestAnimationFrame(frame);
+   // The 3D canvas is fully hidden when minimized. Preserve the active voice,
+   // model and speaking state, but skip all invisible WebGL drawing work.
+   if(panel.classList.contains("is-minimized")||document.hidden)return;
    const speaking=panel.classList.contains("voice-speaking");
    stage.classList.toggle("avatar-speaking",speaking);
    root.rotation.y=Math.sin(t*.0004)*.075;root.rotation.x=Math.sin(t*.00031)*.025;
