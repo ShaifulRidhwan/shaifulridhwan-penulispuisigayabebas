@@ -14,6 +14,13 @@ on:
       - "antara-cahaya-dan-gelap.html"
       - "assets/novel/pembaca.html"
       - "studio-antara.html"
+      - "studio-antara*.js"
+      - "studio-antara.css"
+      - "netlify/functions/studio-*.js"
+      - "netlify/functions/lib/studio-*.js"
+      - "scripts/test-studio-*.cjs"
+      - "package.json"
+      - "package-lock.json"
       - "sitemap.xml"
       - "robots.txt"
       - "favicon-*.svg"
@@ -36,6 +43,13 @@ on:
       - "antara-cahaya-dan-gelap.html"
       - "assets/novel/pembaca.html"
       - "studio-antara.html"
+      - "studio-antara*.js"
+      - "studio-antara.css"
+      - "netlify/functions/studio-*.js"
+      - "netlify/functions/lib/studio-*.js"
+      - "scripts/test-studio-*.cjs"
+      - "package.json"
+      - "package-lock.json"
       - "sitemap.xml"
       - "robots.txt"
       - "favicon-*.svg"
@@ -51,12 +65,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      - name: Install Studio quota and test dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Syntax and editorial, SEO and archive checks
         run: |
           node --check gaya-bebas.js
           node --check karya-data.js
           node --check studio-antara-cloud.js
           node --check netlify/functions/studio-image.js
-          node --test scripts/test-studio-antara.cjs
+          npm run test:studio
           node --test scripts/test-site-quality.cjs
           node --test scripts/test-site-metadata.cjs
