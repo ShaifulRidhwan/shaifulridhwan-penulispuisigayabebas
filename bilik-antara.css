@@ -702,7 +702,7 @@ position:absolute;z-index:0;inset:0;overflow:hidden;
 .world-art{
 position:absolute;inset:-2.5%;
   will-change:transform;
- background-image:url("./bilik-antara-cover-art.jpg?v=2");
+ background-image:url("./bilik-antara-bg-desktop.webp"),url("./bilik-antara-cover-art.jpg?v=2");
  background-size:cover;background-position:center 48%;background-repeat:no-repeat;
  transform:scale(1.035);transform-origin:center;
  animation:worldBreath 22s ease-in-out infinite alternate;
@@ -3073,3 +3073,11 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  65%,100%{transform:translateX(45%);opacity:0}
 }
 @media(max-width:390px){.voice-panel .voice-live-label{padding:7px 10px}}
+
+/* Cinematic wallpaper trial: background asset selection only. Keep original as fallback until assets are uploaded. */
+@media(max-width:760px){
+  .world-art{
+    background-image:url("./bilik-antara-bg-mobile.webp"),url("./bilik-antara-cover-art.jpg?v=2");
+    background-position:center 48%;
+  }
+}
