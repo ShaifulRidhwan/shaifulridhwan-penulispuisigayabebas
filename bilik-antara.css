@@ -3014,3 +3014,7 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
     background-position:center 48%;
   }
 }
+
+/* Performance cleanup: remove unused moving light/smoke overlays while preserving glass and artwork. */
+.conversation::before{animation:none;will-change:auto;opacity:.55}
+.world-haze,.world-light-glow,.conversation>.glass-shadow-mist{display:none!important;animation:none!important}
