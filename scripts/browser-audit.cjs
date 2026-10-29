@@ -140,6 +140,7 @@ async function novel(page,device){
  assert.equal(await reader.locator("#fontUp").count(),1,"Reader must preserve adjustable font size");
  assert.equal(await reader.locator("#nextBtn").count(),1,"Reader must preserve page-turn navigation");
  await snapshot(page,device+"-novel-open");
+ await reader.locator("#tocBtn").click();
  await reader.locator("#backToCover").click();
  assert.equal(await page.locator("#readerHost").isVisible(),false,"Back-to-cover must work");
  log(device+" novel artwork, animations, reader loading and navigation passed");
