@@ -65,7 +65,7 @@ test("Faster ambience and animated translucent glass layer",()=>{
  assert.ok(!css.includes("@import"));
 });
 
-test("Calm glass frame keeps the chat clear and preserves background particles",()=>{
+test("Calm glass frame keeps the chat clear and preserves ambient particles",()=>{
  const starterLabels=[...html.matchAll(/<button class="starter" type="button">([^<]+)<\/button>/g)].map(m=>m[1]);
  assert.deepEqual(starterLabels,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas"]);
  assert.match(html,/<div class="glass-frame-orbit" aria-hidden="true">/);
@@ -77,11 +77,12 @@ test("Calm glass frame keeps the chat clear and preserves background particles",
  assert.match(css,/animation:frameLightBreathe 12s ease-in-out infinite/);
  assert.match(css,/animation:frameShadowBreathe 12s ease-in-out infinite/);
  assert.match(css,/@keyframes embersTravel/);
- assert.match(css,/@keyframes handSparkDescent/);
- assert.equal((html.match(/style="--delay:/g)||[]).length,24,"Original background particles remain");
+ assert.doesNotMatch(css,/@keyframes handSparkDescent/);
+ assert.equal((html.match(/style="--delay:/g)||[]).length,0,"Hand sparks removed");
+  assert.match(html,/class="world-embers"/);
 });
 
-test("Composited glass label, original ambient motion and older-browser rim fallback are retained",()=>{
+test("Composited glass label, ambient motion and older-browser rim fallback are retained",()=>{
  assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.match(css,/\.voice-panel \.voice-live-label::after\{/);
  assert.match(css,/@keyframes voiceIdentityBorderLight\{/);
@@ -91,7 +92,7 @@ test("Composited glass label, original ambient motion and older-browser rim fall
  assert.match(css,/\.conversation>\.glass-frame-orbit \.frame-glow\{display:none\}/);
  assert.match(css,/@keyframes frameLightBreathe/);
  assert.match(css,/@keyframes frameShadowBreathe/);
- assert.equal((html.match(/style="--delay:/g)||[]).length,24);
+ assert.equal((html.match(/style="--delay:/g)||[]).length,0);
 });
 
 test("Mobile viewport, permanent dark theme and conversation functions retained",()=>{
@@ -236,15 +237,14 @@ test("Voice and Multi AI pills share starter-question sizing and genuinely clear
  assert.doesNotMatch(clear,/rgba\(255,242,207,\.96\)|rgba\(214,172,111,\.91\)/);
 });
 
-test("AI bubbles and all original background and hand particles remain after title removal",()=>{
+test("AI bubbles and ambient background particles remain without hand sparks",()=>{
  assert.match(css,/\.messages \.message\.ai \.bubble,\s*\.messages\.is-welcome \.message\.ai \.bubble\{/);
  assert.match(css,/rgba\(243,226,198,\.048\)/);
- assert.match(css,/\.world-hand-sparks\{/);
- assert.match(css,/@keyframes handSparkDescent/);
- assert.match(css,/translate3d\(calc\(20vw \+ var\(--dx,0px\)\),calc\(13dvh \+ var\(--dy,0px\)\),0\)/);
+ assert.doesNotMatch(css,/\.world-hand-sparks\{/);
+ assert.doesNotMatch(css,/@keyframes handSparkDescent/);
  assert.match(css,/\.world-embers i\{animation-duration:17s\}/);
- assert.match(html,/class="world-hand-sparks" aria-hidden="true"/);
- assert.equal((html.match(/style="--delay:/g)||[]).length,24);
+ assert.doesNotMatch(html,/class="world-hand-sparks"/);
+ assert.equal((html.match(/style="--delay:/g)||[]).length,0);
  assert.match(html,/Multi A\.I Connected/);
  assert.doesNotMatch(html,/Multi AI Connected/);
  assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
