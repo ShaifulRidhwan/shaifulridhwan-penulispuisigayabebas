@@ -728,6 +728,14 @@ test("The original brunette hair remains unmodified and is pinned to a fixed GLB
  assert.match(html,/TalkingHead<\/a> \(lesen CC BY-NC 4\.0/);
 });
 
+test("Failed 3D loading disposes transcoder and a retry resets the fallback label",()=>{
+ const avatar=fs.readFileSync("bilik-antara-avatar.js","utf8");
+ assert.match(avatar,/try\{gltf=await new GLTFLoader\(\)/);
+ assert.match(avatar,/finally\{kt\.dispose\(\);\}/);
+ assert.match(avatar,/stage\.classList\.remove\("avatar-unavailable"\);stage\.classList\.add\("avatar-loading"\)/);
+ assert.match(avatar,/stage\.classList\.add\("avatar-unavailable"\)/);
+});
+
 test("3D renderer stops scheduling frames when minimized or in a hidden tab",()=>{
  const avatar=fs.readFileSync("bilik-antara-avatar.js","utf8");
  assert.match(avatar,/const frame=\(t\)=>\{raf=0;if\(!active\|\|!renderer\)return/);
