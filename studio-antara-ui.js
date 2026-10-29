@@ -6,7 +6,7 @@ if(!selects.length)return;
 const backdrop=document.createElement('div');
 backdrop.className='studio-picker-backdrop';
 backdrop.hidden=true;
-backdrop.innerHTML='<div class="studio-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="studioPickerTitle"><div class="studio-picker-heading"><span id="studioPickerTitle"></span><button class="studio-picker-close" type="button" aria-label="Tutup pilihan">×</button></div><div class="studio-picker-options" role="group"></div></div>';
+backdrop.innerHTML='<div id="studioPickerDialog" class="studio-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="studioPickerTitle"><div class="studio-picker-heading"><span id="studioPickerTitle"></span><button class="studio-picker-close" type="button" aria-label="Tutup pilihan">×</button></div><div class="studio-picker-options" role="group"></div></div>';
 document.body.append(backdrop);
 const heading=backdrop.querySelector('#studioPickerTitle');
 const list=backdrop.querySelector('.studio-picker-options');
@@ -27,7 +27,7 @@ function close(){
  if(backdrop.hidden)return;
  backdrop.hidden=true;
  document.body.classList.remove('studio-picker-open');
- const prev=trigger;active=null;trigger=null;list.replaceChildren();
+ const prev=trigger;prev?.setAttribute('aria-expanded','false');active=null;trigger=null;list.replaceChildren();
  prev?.focus({preventScroll:true});
 }
 function choose(value){
@@ -55,18 +55,21 @@ function open(select){
   list.append(button);
  }
  if(!list.children.length){close();return;}
- backdrop.hidden=false;document.body.classList.add('studio-picker-open');
- (list.querySelector('[aria-pressed="true"]')||list.firstElementChild).focus({preventScroll:true});
+ backdrop.hidden=false;document.body.classList.add('studio-picker-open');trigger.setAttribute('aria-expanded','true');
+ const selected=list.querySelector('[aria-pressed="true"]')||list.firstElementChild;
+ selected.focus({preventScroll:true});selected.scrollIntoView({block:'nearest'});
 }
 for(const select of selects){
  const button=document.createElement('button');
  button.type='button';button.className='studio-picker-trigger';
+ button.setAttribute('aria-haspopup','dialog');button.setAttribute('aria-controls','studioPickerDialog');button.setAttribute('aria-expanded','false');
  const caption=document.createElement('span');button.append(caption);
  select.classList.add('native-select-hidden');
  select.after(button);select._studioButton=button;
  sync(select);
  button.addEventListener('click',()=>open(select));
- select.addEventListener('change',()=>sync(select));
+ // Model/ratio changes can update another select programmatically in describe().
+ select.addEventListener('change',()=>selects.forEach(sync));
  new MutationObserver(()=>sync(select)).observe(select,{attributes:true,attributeFilter:['disabled']});
 }
 closeButton.addEventListener('click',close);
