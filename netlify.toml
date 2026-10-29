@@ -20,4 +20,26 @@
 [[headers]]
   for = "/bilik-antara-cover-art.jpg"
   [headers.values]
-    Cache-Control = "public, max-age=3600, stale-while-revalidate=300"
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+# Versioned CSS and avatar resources may be reused on repeat visits.
+# Every visual change must bump its ?v= query string in the referring HTML.
+[[headers]]
+  for = "/bilik-antara.css"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/bilik-antara-suite.css"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/bilik-antara-chat-portrait.png"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/gaya-bebas.css"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
