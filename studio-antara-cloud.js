@@ -21,7 +21,7 @@ function describe(){
 for(const [id,preset] of Object.entries(C.presets)){const option=document.createElement('option');option.value=id;option.textContent=preset.name;ui.style.append(option);}ui.style.value='antara';
 ui.prompt.addEventListener('input',count);
 ui.prompt.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){e.preventDefault();form.requestSubmit();}});
-ui.ratio.addEventListener('change',()=>{if(ui.ratio.value!=='1:1'&&ui.model.value==='schnell'){ui.model.value='klein';announce('Nisbah ini menggunakan FLUX.2 Klein. Belum ada permintaan dihantar.');}describe();});
+ui.ratio.addEventListener('change',()=>{if(ui.ratio.value!=='1:1'&&ui.model.value!=='klein'){ui.model.value='klein';announce('Nisbah ini menggunakan FLUX.2 Klein. Belum ada permintaan dihantar.');}describe();});
 [ui.model,ui.quality,ui.style].forEach(el=>el.addEventListener('change',describe));
 document.querySelectorAll('[data-prompt]').forEach(button=>button.addEventListener('click',()=>{if(busy)return;ui.prompt.value=button.dataset.prompt;count();ui.prompt.focus();}));
 function setBusy(value,mode='image'){
