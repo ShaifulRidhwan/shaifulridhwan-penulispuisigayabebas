@@ -74,7 +74,7 @@ test("Living Glass Frame keeps chat minimal and animates only its outer rim",()=
  assert.match(html,/<div class="glass-frame-orbit" aria-hidden="true">/);
  for(const tone of ["light","light-echo","shadow","shadow-echo"]){
   assert.match(html,new RegExp('class="frame-orbit__beam frame-orbit__beam--'+tone+'"'));
-  assert.match(css,new RegExp('\\\\.frame-orbit__beam--'+tone+'\\\\{'));
+  assert.ok(css.includes('.frame-orbit__beam--'+tone+'{'),"Missing matching rim CSS for "+tone);
  }
  assert.match(css,/\.conversation>\.glass-frame-orbit\{[\s\S]*?pointer-events:none/);
  assert.match(css,/offset-path:inset\(2px round 22px\)/);
