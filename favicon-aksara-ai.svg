@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Aksara A.I.">
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1e293a"/><stop offset=".55" stop-color="#0d1725"/><stop offset="1" stop-color="#07101c"/></linearGradient>
+    <linearGradient id="light" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0c4"/><stop offset=".55" stop-color="#e6bc76"/><stop offset="1" stop-color="#bb8b49"/></linearGradient>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="17" fill="url(#night)" stroke="#c6a16d" stroke-opacity=".7" stroke-width="1.6"/>
+  <path d="M7 17C15 8 25 6 38 8" fill="none" stroke="#f3dcad" stroke-opacity=".28" stroke-width="2.4" stroke-linecap="round"/>
+  <path d="M15 47 29.5 17c.9-1.8 3.1-1.8 4 0L48 47M23 37h18" fill="none" stroke="url(#light)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="49.5" cy="14.5" r="3" fill="#a7d5ed"/>
+  <path d="M49.5 7v4.3m0 6.5V22M42 14.5h4.3m6.5 0H57" stroke="#aed8ed" stroke-width="1.1" stroke-linecap="round" opacity=".65"/>
+  <path d="M16 53h31" stroke="#bfdfed" stroke-opacity=".35" stroke-width="1.4" stroke-linecap="round"/>
+</svg>
