@@ -687,7 +687,7 @@ test("The true 3D voice avatar only skips invisible frame drawing while the voic
  const avatar=fs.readFileSync("bilik-antara-avatar.js","utf8");
  const html=fs.readFileSync("bilik-antara.html","utf8");
  const css=fs.readFileSync("bilik-antara.css","utf8");
- assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=13"\)/);
+ assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=14"\)/);
  assert.match(avatar,/panel\.classList\.contains\("is-minimized"\)\|\|document\.hidden/);
  assert.match(avatar,/renderer\.render\(scene,camera\)/);
  assert.match(avatar,/weights\(\["jawOpen"\],jawMotion\)/);
@@ -718,10 +718,23 @@ test("Avatar synchronizes facial meshes, responds to audio and uses conservative
  assert.equal(emotionFor("cerita tentang teknologi"),"neutral");
 });
 
-test("Messy bun trial is opt-in and retains the original hair when geometry is unavailable",()=>{
+
+test("The original brunette hair remains unmodified and is pinned to a fixed GLB revision",()=>{
  const avatar=fs.readFileSync("bilik-antara-avatar.js","utf8");
- assert.match(avatar,/new URLSearchParams\(window\.location\.search\)\.get\("gaya"\)==="messybun"/);
- const start=avatar.indexOf("function installMessyBun(THREE,model,mergeGeometries){"),end=avatar.indexOf("function stop(){",start);
- const fn=new Function(avatar.slice(start,end)+";return installMessyBun")();
- assert.equal(fn({}, {getObjectByName(){return null}}),false);
+ const html=fs.readFileSync("bilik-antara.html","utf8");
+ assert.match(avatar,/TalkingHead@166b443a445eeb63a4ea02270aa9e7d6ba8b4d88\/avatars\/brunette\.glb/);
+ assert.doesNotMatch(avatar,/MessyBun|messybun|installMessyBun|mergeGeometries/);
+ assert.doesNotMatch(html,/messybun/i);
+ assert.match(html,/TalkingHead<\/a> \(lesen CC BY-NC 4\.0/);
+});
+
+test("3D renderer stops scheduling frames when minimized or in a hidden tab",()=>{
+ const avatar=fs.readFileSync("bilik-antara-avatar.js","utf8");
+ assert.match(avatar,/const frame=\(t\)=>\{raf=0;if\(!active\|\|!renderer\)return/);
+ assert.match(avatar,/if\(panel\.classList\.contains\("is-minimized"\)\|\|document\.hidden\)return;/);
+ assert.match(avatar,/resumeDraw=\(\)=>\{/);
+ assert.match(avatar,/!raf&&!document\.hidden&&!panel\.classList\.contains\("is-minimized"\)/);
+ assert.match(avatar,/attributeFilter:\["hidden","class"\]/);
+ assert.match(avatar,/document\.addEventListener\("visibilitychange",\(\)=>resumeDraw\?\.\(\)\)/);
+ assert.match(avatar,/resumeDraw=null;active=false;/);
 });
