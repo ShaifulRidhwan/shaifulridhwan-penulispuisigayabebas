@@ -1,0 +1,32 @@
+{
+  "id": "/antara-cahaya-dan-gelap.html",
+  "name": "Antara Cahaya dan Gelap | Shaiful Ridhwan",
+  "short_name": "Antara Cahaya dan Gelap",
+  "description": "Prosa falsafah Antara Cahaya dan Gelap oleh Shaiful Ridhwan.",
+  "lang": "ms",
+  "start_url": "/antara-cahaya-dan-gelap.html",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#111113",
+  "theme_color": "#111113",
+  "icons": [
+    {
+      "src": "/favicon-antara-cahaya-dan-gelap-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-antara-cahaya-dan-gelap-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-antara-cahaya-dan-gelap.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
