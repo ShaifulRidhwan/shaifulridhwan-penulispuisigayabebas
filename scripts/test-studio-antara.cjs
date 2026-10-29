@@ -14,7 +14,9 @@ const quota=async()=>async()=>{};
 test('Studio is cloud-only, image-only and all client JS parses',()=>{
  const html=fs.readFileSync('studio-antara.html','utf8');
  assert.doesNotMatch(html,/id="tabVideo"|WebGPU|SD.Turbo|onnx/i);
- for(const name of ['studio-antara-cloud.js','studio-antara-config.js','studio-antara-history.js'])new vm.Script(fs.readFileSync(name,'utf8'));
+ assert.match(html,/id="enhancePrompt"/);assert.doesNotMatch(html,/id="enhanceEnabled"/);
+ assert.match(html,/studio-antara-ui\.js\?v=1/);
+ for(const name of ['studio-antara-cloud.js','studio-antara-ui.js','studio-antara-config.js','studio-antara-history.js'])new vm.Script(fs.readFileSync(name,'utf8'));
  assert.match(fs.readFileSync('studio-antara-history.js','utf8'),/indexedDB\.open/);
  assert.doesNotMatch(fs.readFileSync('studio-antara-cloud.js','utf8'),/localStorage\.setItem/);
 });
