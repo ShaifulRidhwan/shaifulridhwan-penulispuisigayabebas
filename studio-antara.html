@@ -25,12 +25,12 @@
 <title>Studio Antara | Jana Imej AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500&display=swap">
-<link rel="stylesheet" href="studio-antara.css?v=14">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="studio-antara.css?v=15">
 <script src="studio-antara-config.js?v=2" defer></script>
 <script src="studio-antara-history.js?v=1" defer></script>
 <script src="studio-antara-cooldown.js?v=1" defer></script>
-<script src="studio-antara-cloud.js?v=6" defer></script>
+<script src="studio-antara-cloud.js?v=7" defer></script>
 <script src="studio-antara-ui.js?v=2" defer></script>
 <script type="application/ld+json">{
  "@context":"https://schema.org",
@@ -46,25 +46,19 @@
 <body>
 <div class="studio-shell">
 <header class="topbar">
-  <a class="back-link" href="bilik-antara.html"><span aria-hidden="true">←</span> BILIK ANTARA</a>
-  <span class="brand-mark"><span class="brand-light"></span> AKSARA <span class="brand-muted">/ STUDIO</span></span>
-  <a class="home-link" href="index.html">GAYA BEBAS <span aria-hidden="true">↗</span></a>
+  <a class="back-link" href="bilik-antara.html">BILIK ANTARA</a>
+  <span class="brand-mark">AKSARA</span>
+  <a class="home-link" href="index.html">GAYA BEBAS</a>
 </header>
 <main>
- <section class="hero" aria-labelledby="studioTitle">
-  <p class="eyebrow">RUANG KREATIF CAHAYA DAN GELAP</p>
-  <h1 id="studioTitle">STUDIO <span>ANTARA.</span></h1>
-  <p>Bayangkan. Perkemas. Jadikan visual.</p>
-  <div class="hero-facts"><span>Cloudflare · OVHcloud Beta</span><span>Imej kekal pada peranti kau</span></div>
- </section>
  <div class="workspace">
-  <section class="glass-card creator" aria-labelledby="creatorTitle">
-   <div class="card-top"><div><span class="step-label">01 / IDEA KAU</span><h2 id="creatorTitle">Mula dengan imaginasi.</h2></div><span class="tiny-star" aria-hidden="true">✦</span></div>
+  <section class="glass-card creator" aria-labelledby="studioTitle">
+   <div class="card-top"><h1 id="studioTitle" class="studio-card-title">STUDIO <span>ANTARA.</span></h1></div>
    <form id="imageForm">
-    <label for="imagePrompt" class="input-label">Apa yang kau nak lihat?</label>
+    <label for="imagePrompt" class="input-label sr-only">Apa yang kau nak lihat?</label>
     <div class="prompt-compose">
-     <textarea id="imagePrompt" rows="4" minlength="4" maxlength="1200" required placeholder="Contoh: Wanita berdiri dalam cahaya keemasan, kabus biru gelap di belakangnya..."></textarea>
-     <div class="prompt-tools"><span class="prompt-shortcut">Ctrl / ⌘ + Enter untuk jana</span><output id="promptCount" for="imagePrompt">0 / 1200</output><button type="button" id="enhancePrompt" aria-controls="enhancePanel">✦ Perkemas A.I</button></div>
+     <textarea id="imagePrompt" rows="4" minlength="4" maxlength="1200" required placeholder="Apa yang kau nak lihat?"></textarea>
+     <div class="prompt-tools"><span class="prompt-shortcut">Ctrl / ⌘ + Enter untuk jana</span><output id="promptCount" for="imagePrompt">0 / 1200</output><button type="button" id="enhancePrompt" aria-controls="enhancePanel">Perkemas A.I</button></div>
     </div>
     <div class="idea-chips"><button type="button" data-prompt="Siluet wanita berdiri di antara cahaya keemasan dan bayang biru gelap">Cahaya &amp; gelap</button><button type="button" data-prompt="Langit berbintang di atas lautan tenang dengan pantulan bulan">Langit &amp; renungan</button></div>
     <div id="enhancePanel" class="enhance-panel" hidden>
@@ -78,23 +72,22 @@
      <label for="imageQuality">Kualiti<select id="imageQuality" aria-label="Kualiti"><option value="fast">Pantas</option><option value="balanced" selected>Seimbang</option><option value="detail">Detail</option></select></label>
      <label for="imageModel">Model<select id="imageModel" aria-label="Model"><option value="schnell">FLUX.1 Schnell</option><option value="klein">FLUX.2 Klein 4B</option><option value="ovh">OVHcloud SDXL · Beta</option></select></label>
     </div>
-    <p class="model-note" id="modelNote"></p>
     <p id="modelBetaInfo" class="model-beta-info" role="status" hidden><strong>OVHcloud SDXL · Beta / Tidak stabil</strong><span> Model ini masih dalam ujian. Hasil hanya 1024 × 1024 (1:1), tanpa kawalan seed. Penjanaan boleh lambat atau gagal kerana had API awam. Pilihan ini manual sahaja, tidak termasuk fallback automatik. Jika gagal, pilih Klein atau Schnell sendiri. Prompt dihantar kepada OVHcloud hanya apabila kau tekan Jana Imej.</span></p>
     <details class="advanced"><summary>Seed &amp; cara kuota digunakan</summary><label for="imageSeed">Seed pilihan<input id="imageSeed" type="number" min="0" max="2147483647" step="1" placeholder="Automatik" disabled></label><p id="seedNote">Kawalan seed tersedia pada Klein. Schnell menggunakan sampel baharu.</p><p id="quotaEstimate"></p><p id="quotaContext">Bajet ini untuk Studio sahaja. Kuota akaun Cloudflare dikongsi, dan had percuma sebenar bergantung pada pelan akaun.</p><p class="small-note">Prompt dihantar kepada penyedia model pilihan bila kau tekan Jana. Perkemas A.I menggunakan Groq bila kau pilih; mod ringan tak menghantar prompt. Henti tak menjamin kuota yang dah digunakan dapat dipulangkan.</p></details>
-    <div class="create-actions"><button class="generate-btn" id="generateImage" type="submit">✦ Jana imej <span aria-hidden="true">↗</span></button><button id="stopImage" type="button" hidden>Henti</button></div>
+    <div class="create-actions"><button class="generate-btn" id="generateImage" type="submit">Jana imej</button><button id="stopImage" type="button" hidden>Henti</button></div>
     <p id="cooldownStatus" class="cooldown-status" role="timer" aria-live="off" hidden></p>
-    <p class="generation-status" id="generationStatus" role="status" aria-live="polite">Dah sedia. Cerita je apa yang kau bayangkan.</p>
+    <p class="generation-status" id="generationStatus" role="status" aria-live="polite" hidden></p>
    </form>
   </section>
   <section class="glass-card result" aria-labelledby="resultTitle">
-   <div class="card-top"><div><span class="step-label">02 / HASIL KAU</span><h2 id="resultTitle">Ruang visual.</h2></div><span id="resultIndicator" class="result-indicator">MENUNGGU</span></div>
+   <div class="card-top"><h2 id="resultTitle">Ruang visual.</h2><span id="resultIndicator" class="result-indicator">MENUNGGU</span></div>
    <div class="result-stage" id="resultStage" aria-busy="false">
-    <div class="result-empty" id="resultEmpty"><div class="visual-symbol" aria-hidden="true">✦</div><strong>Idea kau bermula di sini.</strong><p>Hasil sebenar muncul selepas penjanaan siap.</p></div>
+    <div class="result-empty" id="resultEmpty"><p>Hasil imej akan muncul di sini.</p></div>
     <img id="generatedImage" alt="Hasil imej AI yang dijana" hidden decoding="async">
     <div class="stage-loading" id="stageLoading" hidden aria-hidden="true"><div class="loading-orbit"></div><span>IMAGINASI SEDANG DIBENTUK</span></div>
    </div>
-   <p id="imageMetadata" class="image-meta">Tanpa model besar pada peranti.</p>
-   <div id="resultActions" class="result-actions" hidden><button type="button" id="regenerateImage">Jana semula</button><button type="button" id="variationImage">Variasi seed</button><button type="button" id="copyPrompt">Salin prompt</button><a id="downloadImage" download="studio-antara.jpg" href="#">Simpan imej ↓</a></div>
+   <p id="imageMetadata" class="image-meta" hidden></p>
+   <div id="resultActions" class="result-actions" hidden><button type="button" id="regenerateImage">Jana semula</button><button type="button" id="variationImage">Variasi seed</button><button type="button" id="copyPrompt">Salin prompt</button><a id="downloadImage" download="studio-antara.jpg" href="#">Simpan imej</a></div>
    <p id="variationNote" class="small-note" hidden>Variasi menggunakan prompt dan gaya sama dengan seed lain; ini bukan suntingan imej asal. Pada Schnell, gunakan Jana semula atau pilih Klein untuk kawalan seed.</p>
    <details class="used-prompt" id="usedPromptPanel" hidden><summary>Prompt &amp; tetapan hasil</summary><pre id="usedPrompt"></pre></details>
   </section>
