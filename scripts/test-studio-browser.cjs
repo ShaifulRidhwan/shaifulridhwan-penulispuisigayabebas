@@ -79,20 +79,37 @@ async function main(){
    const css=selector=>getComputedStyle(document.querySelector(selector));
    const card=css('.creator'),result=css('.result'),gallery=css('.gallery'),
     field=css('.prompt-compose'),trigger=css('.studio-picker-trigger'),
-    modal=css('.studio-picker-dialog'),hero=css('.hero h1'),heading=css('.card-top h2');
+    modal=css('.studio-picker-dialog'),hero=css('.creator #studioTitle'),heading=css('.result .card-top h2'),nav=css('.topbar');
    return {
     cardFill:card.backgroundImage,resultFill:result.backgroundImage,galleryFill:gallery.backgroundImage,
     cardBlur:card.backdropFilter,fieldBlur:field.backdropFilter,triggerBlur:trigger.backdropFilter,
     modalFill:modal.backgroundImage,modalBlur:modal.backdropFilter,
-    heroFont:hero.fontFamily,headingFont:heading.fontFamily,
+    heroFont:hero.fontFamily,headingFont:heading.fontFamily,navBlur:nav.backdropFilter,navFill:nav.backgroundImage,
     promptWeight:css('#enhancePrompt').fontWeight,
-    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('studio-antara.css?v=14'))
+    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('studio-antara.css?v=15'))
    };
   });
-  assert.equal(visual.stylesheet,true,'Fresh Studio 2.3 CSS must load');
+  assert.equal(visual.stylesheet,true,'Fresh Studio 2.4 CSS must load');
   for(const key of ['cardFill','resultFill','galleryFill','modalFill'])assert.match(visual[key],/gradient/,'Missing unified glass gradient: '+key);
   for(const key of ['cardBlur','fieldBlur','triggerBlur','modalBlur'])assert.match(visual[key],/blur/,'Missing translucent glass blur: '+key);
   assert.match(visual.heroFont,/DM Sans/);assert.match(visual.headingFont,/DM Sans/);
+  assert.match(visual.navBlur,/blur/,'Studio navigation needs Bilik-style glass');
+  assert.match(visual.navFill,/gradient/);
+  assert.equal(await page.locator('.hero').count(),0,'Standalone hero should be removed');
+  assert.equal(await page.locator('.creator > .card-top #studioTitle').count(),1,'Title is within creator glass');
+  assert.equal(await page.locator('#imagePrompt').getAttribute('placeholder'),'Apa yang kau nak lihat?');
+  assert.equal(await page.locator('#modelNote').count(),0,'Redundant model prose must be absent');
+  assert.equal(await page.locator('#generationStatus').isHidden(),true,'Idle status should not occupy vertical space');
+  assert.equal(await page.locator('#imageMetadata').isHidden(),true,'Metadata only appears with real results');
+  assert.equal(await page.locator('#resultEmpty .visual-symbol').count(),0,'Empty visual should have no decorative star');
+  assert.equal(await page.locator('#enhancePrompt').textContent(),'Perkemas A.I');
+  assert.equal(await page.locator('#generateImage').textContent(),'Jana imej');
+  const navLayout=await page.locator('.topbar').evaluate(el=>{
+   const bar=el.getBoundingClientRect(),items=[...el.children].map(child=>child.getBoundingClientRect());
+   return {within:items.every(r=>r.left>=bar.left-1&&r.right<=bar.right+1),allPills:[...el.children].every(child=>getComputedStyle(child).borderRadius!=='0px')};
+  });
+  assert.equal(navLayout.within,true,'Header glass buttons must fit mobile');
+  assert.equal(navLayout.allPills,true,'Header links and brand need consistent glass pills');
   const galleryLayout=await page.locator('#historyPanel > summary').evaluate(el=>{
    const title=el.querySelector('.gallery-title'),meta=el.querySelector('.gallery-meta'),badge=el.querySelector('#historyCount'),arrow=el.querySelector('.gallery-chevron');
    const a=title.getBoundingClientRect(),b=meta.getBoundingClientRect(),c=badge.getBoundingClientRect(),d=arrow.getBoundingClientRect();
