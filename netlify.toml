@@ -67,3 +67,9 @@
   for = "/bilik-antara-pcm-worklet.js"
   [headers.values]
     Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+# Only Studio needs the distributed budget SDK. Preserve other function bundles.
+[functions."studio-image"]
+  external_node_modules = ["@netlify/blobs"]
+[functions."studio-enhance"]
+  external_node_modules = ["@netlify/blobs"]
