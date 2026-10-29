@@ -85,7 +85,7 @@
          <label class="settings-row"><input type="checkbox" id="rememberChat"><span>Simpan sesi pada peranti ini</span></label>
          <label class="settings-row"><input type="checkbox" id="contextFallback"><span>Benarkan penyedia sandaran memproses memori pilihan dan fail teks yang aku lampirkan.</span></label>
          <label class="settings-row"><input type="checkbox" id="allowOpenRouterImages"><span>Benarkan OpenRouter memproses imej jika Gemini tidak tersedia (pilihan).</span></label>
-         <label class="settings-row"><input type="checkbox" id="allowRequesty"><span>Benarkan Requesty memproses mesej dan sejarah sembang teks sebagai sandaran jika tersedia. Model terpilih mungkin menyimpan data untuk latihan. Jangan gunakan untuk maklumat peribadi atau sulit. Nota memori, lampiran, topik sensitif dan carian tidak dihantar ke Requesty.</span></label>
+         <label class="settings-row"><input type="checkbox" id="allowRequesty" disabled><span>Benarkan Requesty memproses mesej dan sejarah sembang teks sebagai sandaran jika tersedia. Model terpilih mungkin menyimpan data untuk latihan. Jangan gunakan untuk maklumat peribadi atau sulit. Nota memori, lampiran, topik sensitif dan carian tidak dihantar ke Requesty.</span></label>
          <div class="settings-actions"><button class="outline-btn" id="clearChat" type="button">Padam perbualan</button></div>
          <div class="settings-actions voice-text-access"><button type="button" id="voiceDictate" class="voice-action" aria-pressed="false" title="Tukar suara kepada teks">Cakap jadi teks</button></div>
          <details id="ideaLedger"><summary>Nota idea</summary><ul id="thoughtItems"></ul><button class="outline-btn" id="forgetIdeas" type="button">Kosongkan nota idea</button></details>
@@ -275,6 +275,10 @@ async function checkProviders(force=false){
   if(!res.ok)throw Error("Semakan penyedia tidak tersedia");
   const data=await res.json();if(!Array.isArray(data.providers))throw Error("Status tidak lengkap");
   multiCatalog=data.freeModels||null;
+  const requesty=data.providers.find(p=>p.id==="requesty");
+  const requestyReady=["ready","online"].includes(requesty?.status);
+  ui.requestyConsent.disabled=!requestyReady;
+  if(!requestyReady)ui.requestyConsent.checked=false;
   renderProviderRows(data.providers,multiCatalog);multiLastCheck=Date.now();
   const preferred=data.providers.find(p=>p.id===data.preferredProvider&&["online","ready"].includes(p.status))||data.providers.find(p=>p.status==="online");
   // Preserve a recent real answer; the fastest tiny probe is not a speed benchmark.
@@ -287,7 +291,8 @@ async function checkProviders(force=false){
    else if(data.someReady)status("configured","Multi A.I Connected","");
    else status("error","Multi AI Offline","");
   }
- }catch(_){renderProviderRows([],multiCatalog?{...multiCatalog,status:"stale"}:null);multiChecked.textContent="Semakan gagal. Status penyedia belum dapat disahkan.";
+ }catch(_){ui.requestyConsent.disabled=true;ui.requestyConsent.checked=false;
+  renderProviderRows([],multiCatalog?{...multiCatalog,status:"stale"}:null);multiChecked.textContent="Semakan gagal. Status penyedia belum dapat disahkan.";
   if(!busy&&connectionRevision===revision)status("error","Sambungan belum disahkan","");
  }
  finally{clearTimeout(timer);multiChecking=false;el("multiAiRefresh").disabled=false;}
