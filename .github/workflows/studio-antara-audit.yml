@@ -1,0 +1,46 @@
+name: Studio Antara Browser Audit
+on:
+  pull_request:
+    paths:
+      - "studio-antara*"
+      - "netlify/functions/studio-*"
+      - "netlify/functions/lib/studio-*"
+      - "scripts/test-studio-*"
+      - ".github/workflows/studio-antara-audit.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  studio-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install CI browser tools only
+        run: |
+          npm install --no-save --ignore-scripts --no-audit --no-fund playwright@1.58.2 lighthouse@12.6.0
+          npx playwright install --with-deps chromium
+      - name: Desktop and two mobile sizes with labelled API fixtures
+        run: node scripts/test-studio-browser.cjs
+      - name: Lighthouse Studio static page
+        run: |
+          python3 -m http.server 4180 --bind 127.0.0.1 > /tmp/studio-lh.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in 1 2 3 4 5; do curl -fsS http://127.0.0.1:4180/studio-antara.html -o /dev/null && break; sleep 1; done
+          export CHROME_PATH="$(node -e "process.stdout.write(require('playwright').chromium.executablePath())")"
+          npx lighthouse http://127.0.0.1:4180/studio-antara.html --chrome-flags="--headless --no-sandbox" --preset=desktop --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=studio-audit-artifacts/lighthouse-desktop.json --quiet
+          npx lighthouse http://127.0.0.1:4180/studio-antara.html --chrome-flags="--headless --no-sandbox" --form-factor=mobile --screenEmulation.mobile --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=studio-audit-artifacts/lighthouse-mobile.json --quiet
+          node - <<'NODE'
+          const fs=require('fs');for(const mode of ['desktop','mobile']){const d=JSON.parse(fs.readFileSync('studio-audit-artifacts/lighthouse-'+mode+'.json'));console.log('Studio Lighthouse',mode,JSON.stringify(Object.fromEntries(Object.entries(d.categories).map(([k,v])=>[k,Math.round(v.score*100)]))));}
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: studio-browser-lighthouse
+          path: studio-audit-artifacts/
+          if-no-files-found: warn

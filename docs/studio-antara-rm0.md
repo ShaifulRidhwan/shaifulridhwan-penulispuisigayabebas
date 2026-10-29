@@ -9,7 +9,7 @@ Studio ini khusus untuk jana imej melalui Cloudflare Workers AI dan Netlify Func
 | FLUX.1 Schnell | Pantas 2 langkah; Seimbang 4; Detail 8 | Output segi empat. Dimensi sebenar dibaca daripada imej hasil. | Tidak dihantar: dokumentasi skema hanya menyenaraikan prompt dan steps. |
 | FLUX.2 Klein 4B | Pantas / Seimbang / Detail memilih resolusi. Langkah kekal 4; tidak menghantar `steps` atau `guidance`. | Dimensi natif di bawah; bukan crop. | Integer 0–2147483647; kosong menjana seed rawak pada backend. |
 
-Cloudflare menerima Klein melalui multipart FormData, berbeza daripada JSON Schnell. Tiada input imej atau image-to-image dibangunkan. Variasi bermaksud prompt/preset/nisbah/kualiti sama, seed berbeza. Pada Schnell, gunakan jana semula untuk sampel baharu; butang variasi seed dinyahaktifkan dengan penerangan. Jana semula Klein mengekalkan seed sebenar hasil itu; ia boleh menghasilkan semula imej yang sama. Reproducibility boleh berubah jika penyedia menukar versi model.
+Cloudflare menerima Klein melalui multipart FormData, berbeza daripada JSON Schnell. Tiada input imej atau image-to-image dibangunkan. Variasi bermaksud prompt/preset/nisbah/kualiti sama, seed berbeza. Pada Schnell, gunakan jana semula untuk sampel baharu; butang variasi seed dinyahaktifkan dengan penerangan. Jana semula Klein mengekalkan seed sebenar hasil itu; seed yang sama tidak menjamin fail serupa tepat. Ujian live seed 42 menghasilkan hash imej berbeza walaupun tetapan sama; jangan menjanjikan reproducibility piksel tepat.
 
 | Nisbah | Pantas | Seimbang | Detail |
 |---|---|---|---|
@@ -39,11 +39,11 @@ Pilihan:
 
 `@netlify/blobs` ialah satu-satunya kebergantungan runtime baharu, khusus backend, untuk kawalan bajet atomik. `fake-indexeddb` hanya dependency ujian. Frontend tiada library baharu.
 
-Fungsi Studio menggunakan format moden Netlify (`studio-image.mjs` / `studio-enhance.mjs`) supaya SDK menerima endpoint uncached yang diperlukan untuk strong consistency. Format Lambda lama melalui `connectLambda` tidak membawa konfigurasi uncached tersebut.
+Fungsi Studio menggunakan format moden Netlify (`studio-image.mjs` / `studio-enhance.mjs`) supaya SDK menerima endpoint uncached yang diperlukan untuk strong consistency. Format Lambda lama melalui `connectLambda` tidak membawa konfigurasi uncached tersebut. SDK diimport pada entrypoint ESM dan disenaraikan dalam `external_node_modules` untuk dua fungsi Studio sahaja supaya dependency dipakejkan oleh Netlify.
 
 Ledger Blobs site-wide, strong consistency, conditional `onlyIfNew` / `onlyIfMatch`:
 - Maksimum 2 permintaan serentak merentas instance; lease 70 saat, upstream imej dibatalkan selepas 45 saat.
-- Maksimum 8 percubaan imej per 10 minit bagi hash IP harian. Header IP dipercayai ialah `x-nf-client-connection-ip` daripada Netlify.
+- Maksimum 8 percubaan imej per 10 minit bagi hash IP harian. IP dipercayai diambil daripada `context.ip` runtime Netlify; browser tidak memilih identiti IP ledger.
 - Setiap percubaan merizab Neurons anggaran konservatif sebelum inference. Gagal/henti tetap dikira; tiada refund yang boleh menggandakan bajet.
 - Schnell merizab untuk 16 tile (lebih tinggi daripada output biasa) dan steps. Klein merizab mengikut tile dimensi diminta. Tambahan margin 15%. Ini anggaran berdasarkan harga semasa, bukan bacaan bil Cloudflare.
 - Perkemas AI dihadkan satu per minit bagi hash IP, 50 sehari untuk seluruh Studio.
