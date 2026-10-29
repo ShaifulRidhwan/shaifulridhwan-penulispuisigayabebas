@@ -82,7 +82,7 @@ async function chat(page,device){
  await page.waitForFunction(()=>{
   const sheet=document.querySelector('link[href="bilik-antara-suite.css?v=6"]');
   return sheet?.media==="all"&&!!sheet.sheet;
- },{timeout:10000});
+ },null,{timeout:10000});
  const surface=await page.evaluate(()=>{
   const css=selector=>getComputedStyle(document.querySelector(selector));
   const glass=css(".conversation"),haze=css(".world-haze"),star=css(".world-embers i");
@@ -92,7 +92,7 @@ async function chat(page,device){
    titleFont:title.fontFamily,bodyFont:body.fontFamily,
    suite:!!document.querySelector('link[href="bilik-antara-suite.css?v=6"]')?.sheet};
  });
- assert.match(surface.glass,/blur\\(/,"Liquid Glass must retain its original blur");
+ assert.match(surface.glass,/blur\(/,"Liquid Glass must retain its original blur");
  assert.match(surface.haze,/hazeDrift/,"Black fog animation must stay");
  assert.match(surface.stars,/embersTravel/,"Star particles must keep moving");
  assert.match(surface.sparks,/handSparkDescent/,"Hand sparks must keep falling");
