@@ -1,118 +1,138 @@
 <!doctype html>
 <html lang="ms" data-theme="dark">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#080b13">
-<meta name="description" content="Studio Antara: makmal jana imej AI pada peranti dengan WebGPU, kawalan model, penjanaan imej dan pratonton hasil. Ciri beta tersedia mengikut kemampuan peranti.">
-<title>Studio Antara | Jana Imej AI</title>
-<link rel="canonical" href="https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html">
+<meta name="description" content="Studio Antara oleh Aksara A.I. Jana imej melalui Cloudflare Workers AI tanpa memasang model. Makmal video sedang dipersiapkan.">
 <meta name="author" content="Shaiful Ridhwan">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ms_MY">
-<meta property="og:site_name" content="Gaya Bebas — Shaiful Ridhwan">
-<meta property="og:title" content="Studio Antara | Jana Imej AI">
-<meta property="og:description" content="Studio Antara, makmal jana imej AI menggunakan WebGPU pada peranti. Fungsi beta bergantung pada sokongan pelayar dan kemampuan GPU.">
+<meta property="og:site_name" content="Gaya Bebas · Shaiful Ridhwan">
+<meta property="og:title" content="Studio Antara | Imej & Video">
+<meta property="og:description" content="Jana imej AI dengan FLUX melalui Cloudflare, terus dalam pelayar. Video bakal menyusul.">
 <meta property="og:url" content="https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html">
 <meta property="og:image" content="https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara-cover-art.jpg">
-<meta property="og:image:alt" content="Ilustrasi cahaya dan gelap dalam ekosistem Aksara A.I.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Studio Antara | Jana Imej AI">
-<meta name="twitter:description" content="Cuba jana imej AI secara setempat menggunakan WebGPU di Studio Antara. Ketersediaan bergantung pada peranti.">
+<meta name="twitter:title" content="Studio Antara | Imej & Video">
 <meta name="twitter:image" content="https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara-cover-art.jpg">
+<link rel="canonical" href="https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html">
 <link rel="icon" type="image/svg+xml" href="/favicon-aksara-ai.svg?v=1">
 <link rel="icon" type="image/png" sizes="192x192" href="/favicon-aksara-ai-192.png?v=1">
 <link rel="apple-touch-icon" sizes="192x192" href="/favicon-aksara-ai-192.png?v=1">
 <link rel="manifest" href="/studio-antara.webmanifest">
+<title>Studio Antara | Jana Imej AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="studio-antara.css?v=8">
+<script src="studio-antara-cloud.js?v=1" defer></script>
 <script type="application/ld+json">{
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "@id": "https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html#app",
-  "name": "Studio Antara",
-  "applicationCategory": "MultimediaApplication",
-  "description": "Studio Antara ialah makmal jana imej AI menggunakan WebGPU pada peranti, dengan sokongan terhad mengikut pelayar dan perkakasan.",
-  "operatingSystem": "Web",
-  "inLanguage": "ms",
-  "url": "https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html",
-  "author": {
-    "@id": "https://shaifulridhwan-penulispuisigayabebas.netlify.app/#author"
-  },
-  "isPartOf": {
-    "@id": "https://shaifulridhwan-penulispuisigayabebas.netlify.app/#website"
-  }
+ "@context":"https://schema.org",
+ "@type":"WebApplication",
+ "name":"Studio Antara",
+ "applicationCategory":"MultimediaApplication",
+ "description":"Studio Antara menyediakan penjanaan imej AI berasaskan Cloudflare Workers AI. Fungsi video dalam perancangan.",
+ "operatingSystem":"Web",
+ "inLanguage":"ms",
+ "url":"https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html"
 }</script>
-<link rel="stylesheet" href="studio-antara.css?v=6">
-<link rel="stylesheet" href="studio-imej-beta.css?v=2">
-<script src="studio-imej-config.js?v=1" defer></script>
-<script src="studio-device-diagnostics.js?v=1" defer></script>
-<script src="studio-imej-beta.js?v=9" defer></script>
 </head>
-<body class="mobile-studio">
-<div class="site">
+<body>
+<div class="studio-shell">
 <header class="topbar">
-<a class="brand" href="bilik-antara.html">← BILIK ANTARA</a>
-<span class="brand-sub">AKSARA A.I. · STUDIO</span>
-<a href="index.html">LAMAN UTAMA</a>
+  <a class="back-link" href="bilik-antara.html"><span aria-hidden="true">←</span> BILIK ANTARA</a>
+  <span class="brand-mark"><span class="brand-light"></span> AKSARA <span class="brand-muted">/ STUDIO</span></span>
+  <a class="home-link" href="index.html">GAYA BEBAS <span aria-hidden="true">↗</span></a>
 </header>
 <main>
-<section class="mobile-intro">
-<div class="intro-eyebrow">STUDIO ANTARA / MAKMAL IMEJ</div>
-<div class="mobile-heading"><h1>Jana imej AI</h1><span class="beta">BETA TEST</span></div>
-<p>Eksperimen model AI pada peranti sendiri. WebGPU dan storan yang besar diperlukan. Tiada caj API imej, tetapi bukan semua telefon mampu menjalankan model.</p>
-</section>
-<div class="mobile-studio-layout">
-<section class="mobile-generator card" aria-labelledby="generatorTitle">
-<div class="panel-head"><h2 id="generatorTitle">Cipta imej</h2><span class="meta">512 × 512</span></div>
-<label for="imagePrompt">Terangkan imej yang kau mahukan
-<textarea id="imagePrompt" rows="4" maxlength="700" placeholder="Contoh: Perpustakaan futuristik yang disinari cahaya senja, suasana sinematik..."></textarea></label>
-<details class="compact-options"><summary>Pengaturan tambahan</summary>
-<label for="imageSeed">Seed (pilihan)<input id="imageSeed" type="number" min="0" max="2147483647" value="42"></label>
-</details>
-<div class="mobile-primary-actions actions">
-<button id="activateModel" type="button" disabled>Aktifkan AI pada GPU</button>
-<button id="generateImage" class="primary" type="button" disabled>Jana imej · BETA TEST</button>
-<button id="stopImage" type="button" disabled>Henti</button>
-</div>
-<p id="gpuStatus" class="status" role="status" aria-live="polite">Semak model dan GPU sebelum menjana imej.</p>
-<progress id="imageProgress" max="100" value="0" hidden></progress>
-<p id="imageProgressNote" class="hint" aria-live="polite"></p>
-</section>
-<section class="mobile-result card" aria-labelledby="resultTitle">
-<div class="panel-head"><h2 id="resultTitle">Hasil</h2><button id="downloadImage" type="button" disabled>Simpan PNG</button></div>
-<div id="previewPlaceholder" class="image-empty"><span>✦</span><p>Imej sebenar akan muncul di sini selepas AI berjaya menjana hasil.</p></div>
-<div id="studioImageOutput" hidden><img id="generatedImage" alt="Imej yang benar-benar dijana oleh AI pada GPU peranti"><p class="hint">Hasil SD-Turbo · BETA TEST · 512 × 512</p></div>
-</section>
-<section class="mobile-model card" aria-label="Pengurusan model AI">
-<div class="panel-head"><h2>Sediakan model AI</h2><span class="beta">BETA TEST</span></div>
-<p class="compact-lead">Model SD-Turbo perlu dimuat turun sekali, sekitar <strong>2.34 GiB</strong>. Muat turun dan penjanaan ialah proses berasingan.</p>
-<label class="consent"><input id="modelConsent" type="checkbox"> Aku setuju menggunakan data internet dan storan peranti untuk memuat turun model besar ini.</label>
-<div class="actions model-actions">
-<button id="prefetchModel" class="primary" type="button" disabled>Muat turun / sambung</button>
-<button id="backgroundModel" type="button" disabled hidden>Muat turun latar (eksperimen)</button>
-<button id="cancelDownload" type="button" disabled>Batal</button>
-</div>
-<p id="cacheStatus" class="status" role="status" aria-live="polite">Menyemak model yang tersimpan...</p>
-<p id="downloadModeNote" class="hint" aria-live="polite">Mengesan sokongan muat turun latar. Jika tidak disokong, muat turun biasa memerlukan tab ini kekal terbuka.</p>
-<progress id="modelProgress" max="100" value="0" hidden></progress>
-<p id="modelProgressNote" class="hint" aria-live="polite"></p>
-<label class="consent mobile-risk-consent"><input id="mobileGpuConsent" type="checkbox"> <span><strong>Cuba penjanaan GPU pada telefon (BETA).</strong> Aku faham model besar ini mungkin membuat tab beku atau crash walaupun WebGPU dikesan.</span></label>
-<details class="compact-options"><summary>Cache model & bantuan muat turun</summary>
-<div class="actions"><button id="checkCache" type="button">Semak cache</button><button id="clearModel" type="button" disabled>Padam cache model</button></div>
-<p class="hint">Muat turun dalam tab boleh menunjukkan kemajuan fail dan disimpan dalam cache apabila lengkap. Jika pelayar menggantung atau menutup tab, proses mungkin terhenti. Muat turun latar sebenar hanya disediakan apabila API Background Fetch berfungsi. Sambung semula menggunakan fail lengkap yang telah dicache, bukan bait separa.</p>
-</details>
-</section>
-<details id="devicePanel" class="mobile-diagnostic card">
-<summary><span><strong>Maklumat peranti</strong><small>WebGPU, pelayar dan storan · pilihan</small></span><span class="device-chevron">⌄</span></summary>
-<div class="diagnostic-content">
-<p id="deviceStatus" class="status" role="status" aria-live="polite">Pemeriksaan ringkas sedang dijalankan.</p>
-<div class="actions"><button id="checkDevice" type="button">Periksa semula</button><button id="copyDiagnostic" type="button" disabled>Salin laporan</button></div>
-<div id="deviceDetails" class="device-details"></div>
-<p class="hint">RAM dan kuota laman ialah anggaran yang pelayar dedahkan. WebGPU adapter bukan jaminan penjanaan model berat akan berjaya.</p>
-</div>
-</details>
-<p class="mobile-footer-note">BETA TEST · Tiada imej contoh palsu. Jika peranti tidak mampu menjalankan model, sistem akan menerangkan kegagalan tanpa menjanjikan hasil.</p>
-</div>
+  <div class="hero">
+    <div class="eyebrow"><span class="tiny-star" aria-hidden="true">✦</span> RUANG KREATIF ANTARA CAHAYA DAN GELAP</div>
+    <h1>STUDIO <span>ANTARA.</span></h1>
+    <p>Daripada sebaris imaginasi, lahir sebuah visual. Tanpa muat turun model besar dan tanpa meninggalkan pelayar.</p>
+    <div class="hero-facts"><span><i class="fact-dot"></i> Cloudflare Workers AI</span><span>FLUX.1 Schnell</span><span>Mesra telefon</span></div>
+  </div>
+  <div class="studio-tabs" role="tablist" aria-label="Pilihan Studio">
+    <button class="studio-tab is-active" id="tabImage" role="tab" aria-controls="imageStudio" aria-selected="true" type="button">
+      <span aria-hidden="true">◈</span> Jana Imej
+    </button>
+    <button class="studio-tab" id="tabVideo" role="tab" aria-controls="videoStudio" aria-selected="false" type="button">
+      <span aria-hidden="true">▣</span> Jana Video <small>Akan datang</small>
+    </button>
+  </div>
+  <section id="imageStudio" role="tabpanel" aria-labelledby="tabImage">
+    <div class="workspace">
+      <section class="glass-card creator" aria-labelledby="creatorTitle">
+        <div class="card-top">
+          <div><span class="step-label">01 / CIPTA</span><h2 id="creatorTitle">Bayangkan sesuatu.</h2></div>
+          <span class="engine-label">TEXT → IMAGE</span>
+        </div>
+        <form id="imageForm">
+          <label for="imagePrompt" class="input-label">Apa yang kau nak lihat?</label>
+          <textarea id="imagePrompt" name="prompt" rows="5" minlength="4" maxlength="1200" required placeholder="Ceritakan suasana, subjek, cahaya dan butiran yang kau bayangkan..."></textarea>
+          <div class="prompt-tools"><span>Lebih jelas arahan, lebih tepat hasilnya.</span><output id="promptCount" for="imagePrompt">0 / 1200</output></div>
+          <p class="sub-label">Cuba idea ini</p>
+          <div class="idea-chips">
+            <button type="button" class="idea-chip" data-prompt="Siluet wanita di antara cahaya keemasan dan kabus hitam, serpihan kaca berkilau, komposisi sinematik">Cahaya & Gelap</button>
+            <button type="button" class="idea-chip" data-prompt="Perpustakaan futuristik dengan tangga berputar, cahaya matahari menembusi tingkap tinggi, suasana tenang">Dunia Futuristik</button>
+            <button type="button" class="idea-chip" data-prompt="Langit malam dipenuhi bintang di atas lautan tenang, bulan sabit dan pantulan cahaya, komposisi minimalis">Langit & Bintang</button>
+          </div>
+          <p class="sub-label">Gaya visual</p>
+          <div class="style-grid" role="group" aria-label="Gaya imej">
+            <button class="style-chip is-selected" data-style="cinematic" aria-pressed="true" type="button">Sinematik</button>
+            <button class="style-chip" data-style="realistic" aria-pressed="false" type="button">Fotorealistik</button>
+            <button class="style-chip" data-style="illustration" aria-pressed="false" type="button">Ilustrasi</button>
+            <button class="style-chip" data-style="minimal" aria-pressed="false" type="button">Minimalis</button>
+            <button class="style-chip" data-style="fantasy" aria-pressed="false" type="button">Fantasi</button>
+          </div>
+          <details class="advanced">
+            <summary>Tetapan tambahan <span aria-hidden="true">⌄</span></summary>
+            <div class="advanced-grid">
+              <label for="qualitySteps">Kualiti imej <select id="qualitySteps" name="steps"><option value="4">Pantas · 4 langkah</option><option value="8">Lebih terperinci · 8 langkah</option></select></label>
+              <label for="imageSeed">Seed (pilihan) <input id="imageSeed" type="number" min="0" max="2147483647" step="1" placeholder="Automatik"></label>
+            </div>
+            <p>8 langkah menggunakan lebih banyak kuota pemprosesan. Seed sama boleh membantu menghasilkan variasi yang konsisten.</p>
+          </details>
+          <div class="create-actions">
+            <button class="generate-btn" id="generateImage" type="submit"><span aria-hidden="true">✦</span> Jana Imej <span aria-hidden="true">↗</span></button>
+            <button class="stop-btn" id="stopImage" type="button" hidden>Henti</button>
+          </div>
+          <p class="generation-status" id="generationStatus" role="status" aria-live="polite">Sedia untuk menjadikan imaginasi sebuah imej.</p>
+          <p class="small-note">Hasil dijana oleh Cloudflare Workers AI. Had kuota percuma mungkin terpakai. Prompt dihantar kepada penyedia AI untuk diproses.</p>
+        </form>
+      </section>
+      <section class="glass-card result" aria-labelledby="resultTitle">
+        <div class="card-top">
+          <div><span class="step-label">02 / HASIL</span><h2 id="resultTitle">Ruang visual.</h2></div>
+          <span class="result-indicator" id="resultIndicator">MENUNGGU</span>
+        </div>
+        <div class="result-stage" id="resultStage">
+          <div class="result-empty" id="resultEmpty">
+            <div class="visual-symbol" aria-hidden="true"><span class="visual-halo"></span><span class="visual-core"></span><span class="visual-glint">✦</span></div>
+            <strong>Belum ada imej.</strong><p>Setiap gambaran bermula dengan satu ayat.</p>
+          </div>
+          <img id="generatedImage" alt="Hasil imej AI yang dijana" hidden>
+          <div class="stage-loading" id="stageLoading" hidden aria-hidden="true"><div class="loading-orbit"></div><span>SEDANG MENJANA</span></div>
+        </div>
+        <div class="result-footer">
+          <span id="imageMetadata">FLUX.1 SCHNELL · OUTPUT JPEG</span>
+          <a id="downloadImage" class="download-btn" download="studio-antara.jpg" href="#" hidden>Simpan imej ↓</a>
+        </div>
+      </section>
+    </div>
+  </section>
+  <section id="videoStudio" role="tabpanel" aria-labelledby="tabVideo" hidden>
+    <div class="glass-card video-soon">
+      <span class="step-label">FASA SETERUSNYA / MOTION LAB</span>
+      <div class="video-visual" aria-hidden="true"><span class="play-symbol">▷</span></div>
+      <h2>Imaginasi yang bergerak.</h2>
+      <p>Penjanaan video pendek masih dalam pembangunan. Kami belum mengaktifkan API video atau mengenakan sebarang penggunaan video.</p>
+      <span class="video-pill">Text-to-Video · Image-to-Video · Dalam perancangan</span>
+    </div>
+  </section>
 </main>
-<footer>STUDIO ANTARA · ANDROID / iOS FIRST · PROJEK SHAIFUL RIDHWAN</footer>
+<footer class="studio-footer"><span>STUDIO ANTARA · AKSARA A.I.</span><span>CAHAYA MENCIPTA BENTUK · GELAP MEMBERI DIMENSI</span></footer>
 </div>
-</body></html>
+</body>
+</html>
