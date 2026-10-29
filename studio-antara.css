@@ -337,3 +337,201 @@ textarea::placeholder,input::placeholder{
  .studio-picker-backdrop{background:rgba(2,7,16,.83);backdrop-filter:none;-webkit-backdrop-filter:none}
  .studio-picker-trigger,.prompt-compose{background:rgba(18,24,35,.95);backdrop-filter:none;-webkit-backdrop-filter:none}
 }
+
+/* Studio Antara 2.3: centered picker, calmer headline, extra-translucent glass.
+   All visual adjustments preserve contrast, safe areas and the underlying runtime. */
+:root{
+ --glass-stroke:rgba(247,232,217,.31);
+ --glass-sheen:rgba(255,255,255,.15);
+ --glass-shadow:0 12px 34px rgba(0,0,0,.13);
+ --glass-blur:16px;
+}
+body{
+ background:
+  radial-gradient(ellipse 78% 39% at -18% 17%,rgba(208,148,89,.35),transparent 88%),
+  radial-gradient(ellipse 76% 46% at 113% 29%,rgba(66,120,195,.36),transparent 86%),
+  radial-gradient(ellipse 90% 38% at 26% 87%,rgba(131,105,140,.13),transparent 92%),
+  #090d18;
+}
+.hero h1{
+ font-family:'DM Sans',system-ui,sans-serif;
+ font-weight:700;
+ font-optical-sizing:auto;
+ line-height:1.1;
+ letter-spacing:-.035em;
+ word-spacing:.018em;
+ text-wrap:balance;
+}
+.hero h1 span{font-weight:700}
+.card-top h2{
+ font-family:'DM Sans',system-ui,sans-serif;
+ font-weight:600;
+ letter-spacing:-.018em;
+}
+.glass-card{
+ background:
+  linear-gradient(138deg,rgba(255,246,232,.06) 0%,rgba(125,143,169,.034) 38%,rgba(12,24,45,.055) 100%);
+ border-color:var(--glass-stroke);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.18),
+            inset 1px 0 0 rgba(255,255,255,.035),
+            0 13px 32px rgba(0,0,0,.12);
+ backdrop-filter:blur(var(--glass-blur)) saturate(148%);
+ -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(148%);
+}
+.prompt-compose{
+ background:linear-gradient(135deg,rgba(239,232,222,.045),rgba(15,26,49,.075));
+ border-color:rgba(252,231,204,.31);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.11);
+ backdrop-filter:blur(13px) saturate(140%);
+ -webkit-backdrop-filter:blur(13px) saturate(140%);
+}
+.studio-picker-trigger{
+ background:linear-gradient(127deg,rgba(236,224,217,.092),rgba(18,35,60,.07));
+ border-color:rgba(252,229,208,.3);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.12);
+ backdrop-filter:blur(15px) saturate(148%);
+ -webkit-backdrop-filter:blur(15px) saturate(148%);
+}
+.studio-picker-trigger:not(:disabled):hover,
+.studio-picker-trigger[aria-expanded="true"]{
+ background:linear-gradient(127deg,rgba(245,229,205,.14),rgba(30,48,75,.09));
+}
+.idea-chips button,
+.inline-actions button,
+.result-actions button,
+.gallery-toolbar button,
+#restorePrompt,
+#moreHistory,
+#enhancePrompt{
+ background:linear-gradient(125deg,rgba(255,249,237,.09),rgba(17,32,55,.075));
+ border-color:rgba(249,230,204,.28);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.11);
+}
+.enhance-panel,.history-card{
+ background:linear-gradient(145deg,rgba(254,239,214,.065),rgba(16,28,49,.065));
+ border-color:rgba(249,226,202,.25);
+}
+.result-stage{
+ background:radial-gradient(ellipse at 38% 33%,rgba(213,169,101,.07),transparent 63%),
+ linear-gradient(145deg,rgba(255,255,255,.028),rgba(12,24,43,.065));
+ border-color:rgba(249,231,209,.18);
+}
+.studio-picker-backdrop{
+ background:rgba(2,7,15,.35);
+ backdrop-filter:blur(11px) saturate(125%);
+ -webkit-backdrop-filter:blur(11px) saturate(125%);
+ align-items:center;
+ justify-content:center;
+ padding:16px;
+}
+.studio-picker-dialog{
+ width:min(420px,100%);
+ max-height:min(76dvh,650px);
+ background:linear-gradient(145deg,rgba(79,89,109,.51),rgba(33,51,76,.47) 49%,rgba(19,34,57,.49));
+ border:1px solid rgba(251,233,209,.41);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 18px 55px rgba(0,0,0,.29);
+ backdrop-filter:blur(22px) saturate(153%);
+ -webkit-backdrop-filter:blur(22px) saturate(153%);
+}
+.studio-picker-option{
+ background:linear-gradient(125deg,rgba(255,255,255,.064),rgba(11,26,45,.065));
+ border-color:rgba(251,228,201,.105);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.055);
+}
+.studio-picker-option[aria-pressed="true"]{
+ background:linear-gradient(110deg,rgba(238,195,137,.22),rgba(34,46,64,.14));
+ border-color:rgba(247,213,167,.51);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 0 20px rgba(237,194,118,.055);
+}
+/* Keep the history count and disclosure arrow as one compact control. */
+.gallery>summary{
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ gap:12px;
+ min-height:48px;
+ font-family:'DM Sans',system-ui,sans-serif;
+ font-weight:600;
+ letter-spacing:-.018em;
+}
+.gallery>summary::after{content:none}
+.gallery-title{
+ flex:1;
+ min-width:0;
+ font-size:15px;
+ line-height:1.3;
+ color:#f4ede7;
+}
+.gallery-meta{
+ flex:none;
+ display:inline-flex;
+ align-items:center;
+ justify-content:flex-end;
+ gap:9px;
+ margin-left:auto;
+}
+.gallery-count,
+#historyCount{
+ margin:0;
+ padding:5px 10px;
+ border:1px solid rgba(245,217,178,.27);
+ border-radius:999px;
+ font-size:11px;
+ font-weight:600;
+ letter-spacing:0;
+ line-height:1.3;
+ color:#e5d1b5;
+ white-space:nowrap;
+ background:linear-gradient(120deg,rgba(255,239,213,.11),rgba(27,45,68,.07));
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+}
+.gallery-chevron{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ width:20px;
+ min-height:26px;
+ line-height:1;
+ font-size:20px;
+ font-weight:500;
+ color:#f3ce92;
+ transition:transform .2s ease;
+}
+.gallery[open] .gallery-chevron{transform:rotate(180deg)}
+@media(max-width:680px){
+ :root{--glass-blur:14px}
+ body{
+  background:
+   radial-gradient(ellipse 100% 38% at -34% 18%,rgba(206,146,89,.35),transparent 85%),
+   radial-gradient(ellipse 100% 48% at 134% 36%,rgba(69,123,195,.39),transparent 86%),
+   #090d18;
+ }
+ .hero h1{font-size:clamp(28px,8.1vw,35px);letter-spacing:-.035em;line-height:1.12}
+ .glass-card{backdrop-filter:blur(14px) saturate(140%);-webkit-backdrop-filter:blur(14px) saturate(140%)}
+ .studio-picker-backdrop{
+  align-items:center;
+  justify-content:center;
+  padding: max(12px,env(safe-area-inset-top)) 14px max(12px,env(safe-area-inset-bottom));
+  background:rgba(2,7,15,.34);
+  backdrop-filter:blur(10px) saturate(126%);
+  -webkit-backdrop-filter:blur(10px) saturate(126%);
+ }
+ .studio-picker-dialog{
+  width:min(395px,100%);
+  max-height:min(76dvh,640px);
+  border-radius:22px;
+  backdrop-filter:blur(20px) saturate(146%);
+  -webkit-backdrop-filter:blur(20px) saturate(146%);
+ }
+ .gallery>summary{min-height:45px}
+ .gallery-title{font-size:14px}
+ .gallery-meta{gap:6px}
+ #historyCount{padding:5px 9px;font-size:10px}
+ .gallery-chevron{width:17px;font-size:18px}
+}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more){
+ .glass-card,.studio-picker-dialog{background:rgba(18,25,39,.97);backdrop-filter:none;-webkit-backdrop-filter:none}
+ .studio-picker-backdrop{background:rgba(2,7,16,.85);backdrop-filter:none;-webkit-backdrop-filter:none}
+ .studio-picker-trigger,.prompt-compose{background:rgba(18,24,35,.96);backdrop-filter:none;-webkit-backdrop-filter:none}
+ .gallery-count{background:#1c2738}
+}
