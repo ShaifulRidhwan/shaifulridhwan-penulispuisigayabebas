@@ -20,6 +20,18 @@ test('Studio is cloud-only, image-only and all client JS parses',()=>{
  assert.match(fs.readFileSync('studio-antara-history.js','utf8'),/indexedDB\.open/);
  assert.doesNotMatch(fs.readFileSync('studio-antara-cloud.js','utf8'),/localStorage\.setItem/);
 });
+test('Studio audit rejects orphaned styles after removing old UI phases',()=>{
+ const html=fs.readFileSync('studio-antara.html','utf8');
+ const css=fs.readFileSync('studio-antara.css','utf8');
+ assert.match(html,/studio-antara\.css\?v=17/);
+ for(const old of ['hero','hero-facts','eyebrow','step-label','tiny-star','visual-symbol','enhance-row','model-note','brand-mark','brand-light','brand-muted']){
+  const pattern=new RegExp('(^|[^a-zA-Z0-9_-])\\.'+old+'(?![a-zA-Z0-9_-])');
+  assert.doesNotMatch(css,pattern,'Old unused selector should not survive: '+old);
+ }
+ for(const live of ['.studio-picker-dialog','.studio-picker-trigger','.glass-card','#enhancePrompt','#generateImage','studioGlassBreath']){
+  assert.ok(css.includes(live),'Active glass selector is missing: '+live);
+ }
+});
 test('Studio 2.4 removes redundant copy and decorative icons without hiding functional notices',()=>{
  const html=fs.readFileSync('studio-antara.html','utf8'),script=fs.readFileSync('studio-antara-cloud.js','utf8');
  assert.match(html,/<section class="glass-card creator" aria-labelledby="studioTitle">/);
