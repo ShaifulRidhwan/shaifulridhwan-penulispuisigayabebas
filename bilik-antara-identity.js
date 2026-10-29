@@ -34,7 +34,7 @@ const CHANGES=Object.freeze([
   "Memori pilihan, sejarah perbualan setempat, carian sesi, ruang kerja draf, eksport dan tindakan pantas.",
   "Reka bentuk Bilik Antara bertema cahaya dan gelap serta perlindungan privasi, kawalan penyalahgunaan dan kuota."
 ]);
-const INTRO="Aku "+NAME+", pembantu kecerdasan buatan di ruang "+ROOM+". Projek ini dicipta dan dibangunkan di bawah hala tuju "+CREATOR+". Sembang teks aku boleh dijalankan melalui model Gemini atau model penyedia sandaran, bergantung pada sambungan. Shaiful membina sistem ini, bukan melatih model asas tersebut.";
+const INTRO="Aku "+NAME+", pembantu kecerdasan buatan di ruang "+ROOM+". Projek ini dicipta dan dibangunkan di bawah hala tuju "+CREATOR+". Sembang teks aku boleh dijalankan melalui model Google Gemini atau model penyedia sandaran, bergantung pada sambungan. Shaiful membina sistem ini, bukan melatih model asas tersebut.";
 const WHO_AM_I=[
  "Aku **Aksara A.I.**, pembantu AI dalam Bilik Antara yang dibangunkan oleh Shaiful Ridhwan.",
  "Shaiful gabungkan beberapa API seperti Gemini, Groq dan OpenRouter, kemudian bina sistem penghalaan, identiti dan cara aku berbual. Voice Chat pula guna Gemini Live dengan modifikasi code tersendiri.",
@@ -147,7 +147,7 @@ function answerIdentity(question){
   const person=/^(?:(?:siapa|who is|kenal\s+tak|cerita\s+pasal|terangkan\s+tentang|kenalkan|ceritakan\s+tentang)\s+)?shaiful\s+ridhwan(?:\s+(?:tu|itu|sebenarnya|wei|lah|ni))?(?:\s+siapa)?$/i.test(q)||
     /^(?:siapa\s+(?:sebenarnya\s+)?shaiful\s+ridhwan|shaiful\s+ridhwan\s+(?:tu|ni)\s+siapa|kau\s+kenal\s+(?:tak\s+)?shaiful\s+ridhwan)$/i.test(q);
   // Questions about WHO built the AI must not be mistaken for modification lists.
-  if(created&&(project||self||owner))return "Shaiful Ridhwan yang membangunkan aku, Aksara A.I., dalam Bilik Antara. Dia membina dan mengubah suai aplikasi ini menggunakan model asas pihak ketiga; teks boleh menggunakan Gemini atau penyedia sandaran mengikut ketersediaan, manakala Voice Live menggunakan Gemini.";
+  if(created&&(project||self||owner))return "Shaiful Ridhwan yang membangunkan aku, Aksara A.I., dalam Bilik Antara. Dia membina dan mengubah suai aplikasi ini menggunakan model asas pihak ketiga; teks boleh menggunakan Google Gemini atau penyedia sandaran mengikut ketersediaan, manakala Voice Live menggunakan Google Gemini.";
   if((changes&&(project||self||owner))||(/^(?:modifikasi|perubahan|pengubahsuaian)\s+(?:kau|bilik antara|shaiful ridhwan a\.?i\.?)$/i.test(q))){
     return "Antara perkara yang Shaiful Ridhwan arahkan, bina dan ubah suai pada projek aku ialah:\n\n"+
       CHANGES.map((item,i)=>(i+1)+". "+item).join("\n")+
