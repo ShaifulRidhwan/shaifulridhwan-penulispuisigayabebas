@@ -277,9 +277,9 @@ function renderProviderRows(rows,catalog=null){
   const line=elem(expandable?"summary":"div","multi-ai-row"+(expandable?" multi-ai-expand-trigger":""));
   const nameText=elem("span","multi-ai-provider",name);
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
-  const waitLabel=waitSeconds>0?"Tunggu "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" saat"):"";
+  const waitLabel=waitSeconds>0?"Retry in "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" sec"):"";
   const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":state==="ready"?"is-ready":"is-muted"),
-   state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?(waitLabel||"Offline"):state==="off"?"Belum aktif":"Checking…");
+   state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?(waitLabel||"Offline"):state==="off"?"Not active":"Checking…");
   line.append(nameText,statusText);
   if(!expandable){multiList.appendChild(line);continue;}
   const group=elem("details","multi-ai-provider-details");
@@ -300,13 +300,13 @@ function renderProviderRows(rows,catalog=null){
     const shortName=elem("span","multi-ai-model-name",shortOpenRouterName(model));
     const liveModel=(item?.status==="online"&&item.model===model.id)||
       (id==="openrouter"&&model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000);
-    const statusLabel=elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Connected":"Dalam senarai");
+    const statusLabel=elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Connected":"Listed");
     child.append(shortName,statusLabel);modelList.appendChild(child);
    }
-   if(shownModels?.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Ni senarai lama. Aku tak dapat check senarai terbaru."));
+   if(shownModels?.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Showing a saved list; the latest list is unavailable."));
   }else{
-   const message=id==="requesty"?(state==="off"?"Belum aktif":state==="checking"?"Checking model…":"Belum ada model yang confirmed."):
-    !catalog?"Loading model…":catalog.status==="unavailable"?"Senarai model belum available.":"Belum ada model dalam senarai.";
+   const message=id==="requesty"?(state==="off"?"Not active":state==="checking"?"Checking models…":"No confirmed models yet."):
+    !catalog?"Loading models…":catalog.status==="unavailable"?"Model list unavailable.":"No models listed yet.";
    modelList.appendChild(elem("p","multi-ai-model-note",message));
   }
   group.appendChild(modelList);multiList.appendChild(group);
