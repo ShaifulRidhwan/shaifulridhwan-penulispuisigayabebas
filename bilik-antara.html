@@ -25,7 +25,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg?v=2" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=61">
+<link rel="stylesheet" href="bilik-antara.css?v=62">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
@@ -225,41 +225,50 @@ function shortOpenRouterName(model){
  return name.length>26?name.slice(0,25).trimEnd()+"…":name;
 }
 function renderProviderRows(rows,catalog=null){
+ // Keep the user's open/closed choices when a status refresh redraws the list.
+ const openGroups=new Set([...multiList.querySelectorAll("details[data-provider]")].filter(x=>x.open).map(x=>x.dataset.provider));
+ const hasPreviousGroups=multiList.querySelector("details[data-provider]")!==null;
  multiList.replaceChildren();
  for(const [id,name] of providers){
   const item=(rows||[]).find(x=>x.id===id);
   const state=item?.status||"checking";
-  const line=elem("div","multi-ai-row");
+  const expandable=id==="openrouter"||id==="requesty";
+  const line=elem(expandable?"summary":"div","multi-ai-row"+(expandable?" multi-ai-expand-trigger":""));
   const nameText=elem("span","multi-ai-provider",name);
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
   const waitLabel=waitSeconds>0?"Jeda "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" saat"):"";
   const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":state==="ready"?"is-ready":"is-muted"),
    state==="online"?"Terhubung":state==="ready"?"Sedia":state==="offline"?(waitLabel||"Tidak terhubung"):state==="off"?"Tidak aktif":"Menyemak…");
-  line.append(nameText,statusText);multiList.appendChild(line);
-  if(id!=="openrouter"&&id!=="requesty")continue;
+  line.append(nameText,statusText);
+  if(!expandable){multiList.appendChild(line);continue;}
+  const group=elem("details","multi-ai-provider-details");
+  group.dataset.provider=id;
+  group.open=hasPreviousGroups&&openGroups.has(id);
+  group.appendChild(line);
+  const modelList=elem("div","multi-ai-model-list");
   const models=id==="requesty"?(Array.isArray(item?.models)?item.models.map(x=>({id:x,name:String(x).split("/").pop()})):[]):catalog?.models;
   const shownModels=id==="requesty"?{models,status:item?.status}:catalog;
-  // Show OpenRouter catalog entries directly underneath their provider.
-  // Catalog membership is not a live health test; don't mark individual models online.
+  // Catalog membership does not prove individual models are online.
   if(Array.isArray(models)&&models.length){
    for(const model of models){
     if(!model||typeof model.id!=="string")continue;
     const child=elem("div","multi-ai-model-row");
     const fullName=String(model.name||model.id).slice(0,140);
     child.title=fullName+" · "+model.id.slice(0,140);
-    child.setAttribute("aria-label",fullName+", status dikemas kini daripada hasil penggunaan sebenar jika pernah menjawab");
+    child.setAttribute("aria-label",fullName+", status berdasarkan penggunaan sebenar jika sudah diuji");
     const shortName=elem("span","multi-ai-model-name",shortOpenRouterName(model));
     const liveModel=(item?.status==="online"&&item.model===model.id)||
       (id==="openrouter"&&model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000);
     const statusLabel=elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Terhubung":"Tersenarai");
-    child.append(shortName,statusLabel);multiList.appendChild(child);
+    child.append(shortName,statusLabel);modelList.appendChild(child);
    }
-   if(shownModels?.status==="stale")multiList.appendChild(elem("p","multi-ai-model-note","Senarai terdahulu. Semakan katalog terkini gagal."));
+   if(shownModels?.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Senarai terdahulu. Semakan katalog terkini gagal."));
   }else{
    const message=id==="requesty"?(state==="off"?"Belum diaktifkan":state==="checking"?"Menyemak model…":"Tiada model yang disahkan sekarang."):
     !catalog?"Memuatkan model…":catalog.status==="unavailable"?"Senarai model belum tersedia.":"Tiada model disenaraikan.";
-   multiList.appendChild(elem("p","multi-ai-model-note",message));
+   modelList.appendChild(elem("p","multi-ai-model-note",message));
   }
+  group.appendChild(modelList);multiList.appendChild(group);
  }
 }
 async function checkProviders(force=false){
