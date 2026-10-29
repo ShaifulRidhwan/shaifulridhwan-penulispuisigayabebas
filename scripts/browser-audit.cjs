@@ -120,6 +120,30 @@ async function chat(page,device){
  }
  log(device+" chat composer, opt-in voice and privacy settings passed; no paid API calls made");
 }
+async function novel(page,device){
+ await page.goto(BASE+"/antara-cahaya-dan-gelap.html",{waitUntil:"domcontentloaded",timeout:30000});
+ await page.locator("#cover .cv-art").waitFor({state:"visible"});
+ const initial=await page.evaluate(()=>{
+  const style=selector=>getComputedStyle(document.querySelector(selector));
+  const art=style("#cover .cv-art"),glow=style("#cover .cv-shine"),fog=style("#cover .cv-smoke"),title=style("#cover h1");
+  return {art:art.backgroundImage,glow:glow.animationName,fog:fog.animationName,font:title.fontFamily};
+ });
+ assert.match(initial.art,/cover-01\\.jpg/,"Original novel cover art must remain");
+ assert.match(initial.glow,/cvShine/,"Novel light must keep glowing");
+ assert.match(initial.fog,/cvDrift/,"Novel shadow fog must keep moving");
+ assert.match(initial.font,/Georgia/,"Novel cover typography must stay the same");
+ await snapshot(page,device+"-novel-cover");
+ await page.locator("#startReading").click();
+ assert.equal(await page.locator("#readerHost").isVisible(),true,"Reader host must open");
+ const reader=page.frameLocator("#novelFrame");
+ await reader.locator("#backToCover").waitFor({state:"attached",timeout:30000});
+ assert.equal(await reader.locator("#fontUp").count(),1,"Reader must preserve adjustable font size");
+ assert.equal(await reader.locator("#nextBtn").count(),1,"Reader must preserve page-turn navigation");
+ await snapshot(page,device+"-novel-open");
+ await reader.locator("#backToCover").click();
+ assert.equal(await page.locator("#readerHost").isVisible(),false,"Back-to-cover must work");
+ log(device+" novel artwork, animations, reader loading and navigation passed");
+}
 async function remoteProbe(browser){
  try{
   const res=await fetch(REMOTE+"/",{signal:AbortSignal.timeout(12000)});
@@ -161,6 +185,7 @@ async function main(){
    });
    await home(page,dev.label);
    await chat(page,dev.label);
+   await novel(page,dev.label);
    await context.close();
   }
   assert.deepEqual(errors,[],"Browser JavaScript errors found");
