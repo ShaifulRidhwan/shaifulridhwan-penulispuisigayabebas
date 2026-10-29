@@ -27,7 +27,9 @@ function updateCooldown(){
  const wait=cooldownFor(ui.model.value),notice=$('cooldownStatus');
  notice.hidden=!wait;if(wait)text(notice,cooldownCopy(wait));
  if(!busy){
-  ui.go.disabled=!!wait;ui.go.textContent=wait?'Cuba lagi dalam '+D.format(wait.seconds):'✦ Jana imej ↗';
+  ui.go.disabled=!!wait;
+  if(wait)ui.go.textContent='Cuba lagi dalam '+D.format(wait.seconds);
+  else if(!ui.go.querySelector('span')){const arrow=document.createElement('span');arrow.setAttribute('aria-hidden','true');arrow.textContent='↗';ui.go.replaceChildren(document.createTextNode('✦ Jana imej '),arrow);}
   if(current){
    const blocked=!!cooldownFor(current.settings.model);
    $('regenerateImage').disabled=blocked;
