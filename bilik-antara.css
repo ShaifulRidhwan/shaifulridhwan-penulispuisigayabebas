@@ -1942,8 +1942,30 @@ display:none
   position:relative;z-index:1;
 }
 .voice-live-label{font:600 11px/1.4 'DM Sans',sans-serif;letter-spacing:.18em;color:#f4d8a6}
-.voice-live-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;background:#edb668;box-shadow:0 0 14px #edb668;animation:antaraPulse 1.2s ease-in-out infinite}
-@keyframes antaraPulse{50%{opacity:.35;transform:scale(.73)}}
+.voice-live-dot{
+ display:inline-block;position:relative;flex:none;width:12px;height:12px;
+ border-radius:50%;margin-right:7px;
+ background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.87) 0%,rgba(251,234,199,.5) 24%,rgba(206,168,114,.22) 54%,rgba(33,42,58,.26) 100%);
+ border:1px solid rgba(252,229,192,.5);
+ box-shadow:inset 0 1px 2px rgba(255,255,255,.42),inset 0 -2px 3px rgba(12,19,30,.32),0 0 10px rgba(229,186,128,.22);
+ -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+ animation:antaraVoiceGlassPulse 2.3s ease-in-out infinite;
+ will-change:transform,opacity;
+}
+.voice-live-dot::after{
+ content:"";position:absolute;inset:-5px;border-radius:inherit;
+ border:1px solid rgba(241,213,166,.28);
+ box-shadow:0 0 10px rgba(231,189,124,.16);
+ pointer-events:none;animation:antaraVoiceGlassHalo 2.3s ease-in-out infinite;
+}
+@keyframes antaraVoiceGlassPulse{
+ 0%,100%{transform:scale(.96);opacity:.76}
+ 50%{transform:scale(1.13);opacity:1}
+}
+@keyframes antaraVoiceGlassHalo{
+ 0%,100%{transform:scale(.84);opacity:.15}
+ 50%{transform:scale(1.15);opacity:.65}
+}
 .voice-panel button{
   min-height:36px;cursor:pointer;border-radius:999px;
   padding:7px 13px;border:1px solid rgba(240,199,139,.4);
@@ -2009,7 +2031,7 @@ display:none
   .voice-panel{inset:37px 5px 110px}
 }
 @media(prefers-reduced-motion:reduce){
-  .voice-panel::before,.voice-wave i,.voice-live-dot{animation:none}
+  .voice-panel::before,.voice-wave i,.voice-live-dot,.voice-live-dot::after{animation:none}
 }
 
 
@@ -2589,8 +2611,17 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .multi-ai-state.is-offline{color:#f3a3a2}.multi-ai-state.is-offline::before{background:#e88080;box-shadow:0 0 7px rgba(232,128,128,.3)}
 .multi-ai-state.is-ready{color:#e6c88f}.multi-ai-state.is-ready::before{background:#d6b66e;box-shadow:0 0 6px rgba(214,182,110,.25)}
 .multi-ai-state.is-muted{color:#bcb3a7}
-.multi-ai-actions{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:17px}
-.multi-ai-actions small{font:11px/1.45 'DM Sans',sans-serif;opacity:.72}
+.multi-ai-actions{display:block;width:100%;margin-top:13px}
+.multi-ai-actions #multiAiRefresh{
+ display:flex;align-items:center;justify-content:center;
+ width:100%;min-height:49px;margin:0;padding:12px 16px;
+ border-radius:13px;border:1px solid rgba(231,203,157,.3);
+ background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.015));
+ -webkit-backdrop-filter:blur(16px) saturate(1.15);backdrop-filter:blur(16px) saturate(1.15);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 5px 18px rgba(0,0,0,.15);
+ font:600 12px/1.35 'DM Sans',sans-serif;
+}
+.multi-ai-actions #multiAiRefresh:hover{background:rgba(255,255,255,.095)}
 
 /* Compact model rows follow OpenRouter in the same list. No nested panel. */
 .multi-ai-model-row{
@@ -2620,7 +2651,7 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  .multi-ai-dialog{width:calc(100vw - 22px)}
 }
 
-@media(max-width:420px){.conversation-head .multi-ai-trigger{padding:6px 8px;font-size:9px}.multi-ai-dialog{padding:15px}.multi-ai-actions{align-items:flex-start;flex-wrap:wrap}}
+@media(max-width:420px){.conversation-head .multi-ai-trigger{padding:6px 8px;font-size:9px}.multi-ai-dialog{padding:15px}}
 
 /* Match Multi A.I. connection chip typography to Aksara's modern UI. */
 .conversation-head button.multi-ai-trigger,
