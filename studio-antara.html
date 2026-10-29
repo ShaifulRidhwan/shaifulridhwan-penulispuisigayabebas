@@ -1,112 +1,84 @@
 <!doctype html>
 <html lang="ms" data-theme="dark">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#080b13">
-<title>Studio Antara | E-mel, PDF dan Word</title>
-<meta name="description" content="Studio Antara: penyunting dokumen berformat dengan PDF, Word, HTML, simpan draf, serta e-mel. Imej AI BETA TEST di halaman berasingan.">
+<meta name="description" content="Studio Antara: makmal jana imej AI pada peranti dengan WebGPU, kawalan model, penjanaan imej dan pratonton hasil. Ciri beta tersedia mengikut kemampuan peranti.">
+<title>Studio Antara | Jana Imej AI</title>
 <link rel="canonical" href="https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html">
-<link rel="icon" href="bilik-antara-woman-emblem.svg" type="image/svg+xml">
+<link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="stylesheet" href="studio-antara.css?v=6">
-<script src="studio-antara-editor.js?v=4" defer></script>
-<script src="studio-antara-advanced.js?v=4" defer></script>
-<script src="studio-antara.js?v=7" defer></script>
-<script src="studio-antara-tiptap.js?v=2" defer></script>
-
+<link rel="stylesheet" href="studio-imej-beta.css?v=2">
+<script src="studio-imej-config.js?v=1" defer></script>
+<script src="studio-device-diagnostics.js?v=1" defer></script>
+<script src="studio-imej-beta.js?v=8" defer></script>
 </head>
-<body>
+<body class="mobile-studio">
 <div class="site">
-<header class="topbar"><a class="brand" href="bilik-antara.html">← BILIK ANTARA</a><span class="brand-sub">AKSARA A.I. · STUDIO</span><a href="index.html">LAMAN UTAMA</a></header>
+<header class="topbar">
+<a class="brand" href="bilik-antara.html">← BILIK ANTARA</a>
+<span class="brand-sub">AKSARA A.I. · STUDIO</span>
+<a href="index.html">LAMAN UTAMA</a>
+</header>
 <main>
-<div class="intro"><p class="overline">STUDIO ANTARA / MAKMAL KREATIF</p><h1>Daripada idea<br><em>kepada hasil.</em></h1><p>Tulis e-mel dan dokumen, semak serta eksport dalam pelayar. Makmal imej AI BETA TEST berada di halaman berasingan supaya Studio kekal ringan.</p></div>
-<nav class="tabs" aria-label="Jenis projek">
-<button class="tab active" data-tab="email" aria-selected="true">E-mel</button>
-<button class="tab" data-tab="document">PDF & Word</button>
-
-<a class="studio-image-link" href="studio-imej-beta.html">IMEJ AI <span class="beta">BETA TEST</span> ↗</a>
-</nav>
-<div class="work-area">
-<section class="edit card" aria-label="Editor projek">
-<div class="panel-head"><h2 id="sectionTitle">Draf e-mel</h2><span class="meta">Draf pada peranti · Bantuan AI melalui pelayan</span></div>
-<section id="editor-email" class="panel">
-<label>Nama penerima (pilihan)<input id="emailName" placeholder="Contoh: Pengurus Sumber Manusia"></label>
-<label>Alamat e-mel penerima (pilihan)<input id="emailTo" inputmode="email" type="email" autocomplete="off" placeholder="nama@contoh.com"></label>
-<label>Subjek<input id="emailSubject" placeholder="Permohonan latihan industri"></label>
-<label>Mesej<textarea id="emailBody" rows="14" placeholder="Assalamualaikum dan salam sejahtera,&#10;&#10;..."></textarea></label>
-<div class="actions"><button id="emailAI" class="primary" type="button">Bantu draf dengan AI</button><button id="emailEml" type="button">Eksport .eml</button><button id="emailOpen" type="button">Buka aplikasi e-mel</button><button id="emailCopy" type="button">Salin</button></div>
-<p class="hint">Tiada e-mel dihantar secara automatik. Kau semak dan hantar sendiri.</p>
+<section class="mobile-intro">
+<div class="intro-eyebrow">STUDIO ANTARA / MAKMAL IMEJ</div>
+<div class="mobile-heading"><h1>Jana imej AI</h1><span class="beta">BETA TEST</span></div>
+<p>Eksperimen model AI pada peranti sendiri. WebGPU dan storan yang besar diperlukan. Tiada caj API imej, tetapi bukan semua telefon mampu menjalankan model.</p>
 </section>
-<section id="editor-document" class="panel" hidden>
-<label>Jenis dokumen<select id="docTemplate"><option value="report">Laporan</option><option value="letter">Surat rasmi</option><option value="resume">Resume</option><option value="proposal">Cadangan projek</option><option value="notes">Nota / artikel</option></select></label>
-<label>Tajuk<input id="docTitle" placeholder="Tajuk dokumen"></label>
-<label for="richDocument">Isi dokumen</label>
-<div class="document-toolbar" id="docToolbar" role="toolbar" aria-label="Format dokumen">
- <select id="docStyle" aria-label="Gaya perenggan"><option value="p">Perenggan</option><option value="h1">Tajuk 1</option><option value="h2">Tajuk 2</option><option value="h3">Tajuk 3</option><option value="blockquote">Petikan</option></select>
- <button type="button" data-format="bold" title="Tebal" aria-label="Tebal"><b>B</b></button>
- <button type="button" data-format="italic" title="Condong" aria-label="Condong"><i>I</i></button>
- <button type="button" data-format="underline" title="Garis bawah" aria-label="Garis bawah"><u>U</u></button>
- <button type="button" data-format="insertUnorderedList" title="Senarai berbulet" aria-label="Senarai berbulet">☷</button>
- <button type="button" data-format="insertOrderedList" title="Senarai bernombor" aria-label="Senarai bernombor">1.</button>
- <button type="button" data-format="justifyLeft" title="Jajar kiri" aria-label="Jajar kiri">☰</button>
- <button type="button" data-format="justifyCenter" title="Jajar tengah" aria-label="Jajar tengah">≡</button>
- <button type="button" data-format="justifyRight" title="Jajar kanan" aria-label="Jajar kanan">☷</button>
- <button type="button" id="docLink" title="Tambah pautan" aria-label="Tambah pautan">↗</button>
- <button type="button" data-format="undo" title="Undo" aria-label="Buat asal">↶</button>
- <button type="button" data-format="redo" title="Redo" aria-label="Buat semula">↷</button>
- <button type="button" id="docClear" title="Buang pemformatan" aria-label="Buang pemformatan">Tx</button>
-</div>
-<div id="richDocument" class="rich-document" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Isi dokumen boleh sunting" data-placeholder="Mula menulis di sini…"></div>
-<textarea id="docBody" hidden aria-hidden="true"></textarea>
-<div class="editor-meta"><span id="docCounts" aria-live="polite">0 perkataan · 0 aksara</span><span id="docSaved">Belum disimpan</span></div>
-<div class="editor-secondary-actions">
- <button type="button" id="docNew">Dokumen baharu</button>
- <button type="button" id="docImport">Import .txt / .html</button>
- <input type="file" id="docFile" accept=".txt,.html,.htm,text/plain,text/html" hidden>
- <button type="button" id="docSaveDraft">Simpan draf</button>
- <button type="button" id="docVersions">Sejarah versi</button>
- <button type="button" id="docFind">Cari &amp; ganti</button>
- <button type="button" id="docTable">Jadual</button>
- <button type="button" id="docImage">Masukkan imej</button>
- <input id="docImageFile" type="file" accept="image/png,image/jpeg,image/webp" hidden>
- <button type="button" id="docPageBreak">Pemisah halaman</button>
-</div>
-<details class="doc-layout-settings" id="docLayoutSettings">
- <summary>Tetapan halaman, header &amp; footer</summary>
- <div class="doc-layout-grid">
-  <label>Saiz kertas<select id="docPageSize"><option value="A4">A4</option><option value="Letter">US Letter</option></select></label>
-  <label>Margin<select id="docMargins"><option value="normal">Biasa · 20mm</option><option value="narrow">Sempit · 12mm</option><option value="wide">Luas · 30mm</option></select></label>
-  <label>Orientasi<select id="docOrientation"><option value="portrait">Potret</option><option value="landscape">Landskap</option></select></label>
-  <label>Header<input id="docHeader" maxlength="140" placeholder="Teks di bahagian atas halaman"></label>
-  <label>Footer<input id="docFooter" maxlength="140" placeholder="Teks di bahagian bawah halaman"></label>
-  <label class="doc-check"><input type="checkbox" id="docPageNumbers" checked> Nombor halaman dalam Word/PDF*</label>
- </div>
- <p class="hint">*Word menyokong nombor halaman automatik. PDF menggunakan tetapan cetak pelayar; nombor halaman automatik tidak dijamin dalam setiap pelayar.</p>
+<div class="mobile-studio-layout">
+<section class="mobile-generator card" aria-labelledby="generatorTitle">
+<div class="panel-head"><h2 id="generatorTitle">Cipta imej</h2><span class="meta">512 × 512</span></div>
+<label for="imagePrompt">Terangkan imej yang kau mahukan
+<textarea id="imagePrompt" rows="4" maxlength="700" placeholder="Contoh: Perpustakaan futuristik yang disinari cahaya senja, suasana sinematik..."></textarea></label>
+<details class="compact-options"><summary>Pengaturan tambahan</summary>
+<label for="imageSeed">Seed (pilihan)<input id="imageSeed" type="number" min="0" max="2147483647" value="42"></label>
 </details>
-<div class="doc-find-panel" id="docVersionsPanel" hidden>
- <label>Versi tersimpan<select id="docVersionList" aria-label="Pilih versi draf"></select></label>
- <button type="button" id="docRestoreVersion">Pulihkan versi</button>
- <span id="docVersionsStatus" aria-live="polite"></span>
+<div class="mobile-primary-actions actions">
+<button id="activateModel" type="button" disabled>Aktifkan AI pada GPU</button>
+<button id="generateImage" class="primary" type="button" disabled>Jana imej · BETA TEST</button>
+<button id="stopImage" type="button" disabled>Henti</button>
 </div>
-<div class="doc-find-panel" id="docFindPanel" hidden>
- <label>Cari<input id="docFindText" placeholder="Teks yang dicari"></label>
- <label>Ganti dengan<input id="docReplaceText" placeholder="Teks pengganti"></label>
- <button type="button" id="docFindNext">Cari seterusnya</button>
- <button type="button" id="docReplaceOne">Ganti pilihan</button>
- <button type="button" id="docReplaceAll">Ganti semua</button>
- <span id="docFindStatus" aria-live="polite"></span>
+<p id="gpuStatus" class="status" role="status" aria-live="polite">Semak model dan GPU sebelum menjana imej.</p>
+<progress id="imageProgress" max="100" value="0" hidden></progress>
+<p id="imageProgressNote" class="hint" aria-live="polite"></p>
+</section>
+<section class="mobile-result card" aria-labelledby="resultTitle">
+<div class="panel-head"><h2 id="resultTitle">Hasil</h2><button id="downloadImage" type="button" disabled>Simpan PNG</button></div>
+<div id="previewPlaceholder" class="image-empty"><span>✦</span><p>Imej sebenar akan muncul di sini selepas AI berjaya menjana hasil.</p></div>
+<div id="studioImageOutput" hidden><img id="generatedImage" alt="Imej yang benar-benar dijana oleh AI pada GPU peranti"><p class="hint">Hasil SD-Turbo · BETA TEST · 512 × 512</p></div>
+</section>
+<section class="mobile-model card" aria-label="Pengurusan model AI">
+<div class="panel-head"><h2>Sediakan model AI</h2><span class="beta">BETA TEST</span></div>
+<p class="compact-lead">Model SD-Turbo perlu dimuat turun sekali, sekitar <strong>2.34 GiB</strong>. Muat turun dan penjanaan ialah proses berasingan.</p>
+<label class="consent"><input id="modelConsent" type="checkbox"> Aku setuju menggunakan data internet dan storan peranti untuk memuat turun model besar ini.</label>
+<div class="actions model-actions">
+<button id="prefetchModel" class="primary" type="button" disabled>Muat turun / sambung</button>
+<button id="backgroundModel" type="button" disabled hidden>Muat turun latar (eksperimen)</button>
+<button id="cancelDownload" type="button" disabled>Batal</button>
 </div>
-<div class="actions"><button id="docAI" class="primary" type="button">Bantu tulis dengan AI</button><button id="docPdf" type="button">Simpan sebagai PDF</button><button id="docWord" type="button">Eksport .docx</button><button id="docHtml" type="button">Eksport HTML</button><button id="docCopy" type="button">Salin</button></div>
-<p class="hint">PDF menggunakan fungsi cetak pelayar: pilih “Save as PDF / Simpan sebagai PDF”. Word dijana melalui pustaka sumber terbuka ketika diminta. Draf dokumen disimpan pada peranti ini sahaja.</p>
+<p id="cacheStatus" class="status" role="status" aria-live="polite">Menyemak model yang tersimpan...</p>
+<p id="downloadModeNote" class="hint" aria-live="polite">Mengesan sokongan muat turun latar. Jika tidak disokong, muat turun biasa memerlukan tab ini kekal terbuka.</p>
+<progress id="modelProgress" max="100" value="0" hidden></progress>
+<p id="modelProgressNote" class="hint" aria-live="polite"></p>
+<label class="consent mobile-risk-consent"><input id="mobileGpuConsent" type="checkbox"> <span><strong>Cuba penjanaan GPU pada telefon (BETA).</strong> Aku faham model besar ini mungkin membuat tab beku atau crash walaupun WebGPU dikesan.</span></label>
+<details class="compact-options"><summary>Cache model & bantuan muat turun</summary>
+<div class="actions"><button id="checkCache" type="button">Semak cache</button><button id="clearModel" type="button" disabled>Padam cache model</button></div>
+<p class="hint">Muat turun dalam tab boleh menunjukkan kemajuan fail dan disimpan dalam cache apabila lengkap. Jika pelayar menggantung atau menutup tab, proses mungkin terhenti. Muat turun latar sebenar hanya disediakan apabila API Background Fetch berfungsi. Sambung semula menggunakan fail lengkap yang telah dicache, bukan bait separa.</p>
+</details>
 </section>
-<p id="studioStatus" class="status" role="status" aria-live="polite"></p>
-</section>
-<section class="preview card" aria-label="Pratonton projek">
-<div class="panel-head"><h2>Pratonton</h2><span id="previewKind" class="meta">E-mel</span></div>
-<div id="studioPreview" class="preview-content"></div>
-
-</section>
+<details id="devicePanel" class="mobile-diagnostic card">
+<summary><span><strong>Maklumat peranti</strong><small>WebGPU, pelayar dan storan · pilihan</small></span><span class="device-chevron">⌄</span></summary>
+<div class="diagnostic-content">
+<p id="deviceStatus" class="status" role="status" aria-live="polite">Pemeriksaan ringkas sedang dijalankan.</p>
+<div class="actions"><button id="checkDevice" type="button">Periksa semula</button><button id="copyDiagnostic" type="button" disabled>Salin laporan</button></div>
+<div id="deviceDetails" class="device-details"></div>
+<p class="hint">RAM dan kuota laman ialah anggaran yang pelayar dedahkan. WebGPU adapter bukan jaminan penjanaan model berat akan berjaya.</p>
+</div>
+</details>
+<p class="mobile-footer-note">BETA TEST · Tiada imej contoh palsu. Jika peranti tidak mampu menjalankan model, sistem akan menerangkan kegagalan tanpa menjanjikan hasil.</p>
 </div>
 </main>
-<footer>STUDIO ANTARA · DI ANTARA CAHAYA & GELAP · PROJEK SHAIFUL RIDHWAN</footer>
+<footer>STUDIO ANTARA · ANDROID / iOS FIRST · PROJEK SHAIFUL RIDHWAN</footer>
 </div>
 </body></html>
