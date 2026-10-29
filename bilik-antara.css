@@ -2560,6 +2560,28 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .multi-ai-dialog button:disabled{opacity:.48;cursor:wait}
 .multi-ai-list{display:grid;gap:8px}
 .multi-ai-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1px solid rgba(222,193,151,.16);border-radius:10px;background:rgba(255,255,255,.025)}
+
+/* Native expandable provider rows: compact by default, keyboard accessible. */
+.multi-ai-provider-details{min-width:0}
+.multi-ai-provider-details > summary{list-style:none}
+.multi-ai-provider-details > summary::-webkit-details-marker{display:none}
+.multi-ai-provider-details > .multi-ai-expand-trigger{cursor:pointer;padding-right:32px;position:relative}
+.multi-ai-provider-details > .multi-ai-expand-trigger::after{
+ content:"";position:absolute;right:13px;top:50%;
+ width:7px;height:7px;border-right:1.5px solid #d8c6ab;border-bottom:1.5px solid #d8c6ab;
+ transform:translateY(-65%) rotate(45deg);
+ transition:transform .2s ease;
+}
+.multi-ai-provider-details[open] > .multi-ai-expand-trigger::after{transform:translateY(-25%) rotate(225deg)}
+.multi-ai-provider-details > summary:hover{background:rgba(255,255,255,.06)}
+.multi-ai-provider-details > summary:focus-visible{outline:2px solid #eec98e;outline-offset:2px}
+.multi-ai-model-list{
+ display:grid;gap:0;max-height:min(290px,40dvh);overflow-y:auto;
+ overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:rgba(226,199,160,.36) transparent;
+ padding:4px 0 5px;
+}
+.multi-ai-provider-details:not([open]) > .multi-ai-model-list{display:none}
+
 .multi-ai-provider{font:600 13px 'DM Sans',sans-serif}
 .multi-ai-state{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font:500 11px 'DM Sans',sans-serif}
 .multi-ai-state::before{content:"";width:8px;height:8px;flex:none;border-radius:50%;background:#a3a3a3}
