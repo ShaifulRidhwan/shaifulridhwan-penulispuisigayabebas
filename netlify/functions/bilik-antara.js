@@ -175,7 +175,10 @@ exports.handler=async event=>{
     if(throttle(ip,healthRateMap,6))return result(429,{code:"STATUS_RATE_LIMIT",error:"Terlalu banyak semakan. Cuba lagi sebentar.",retryAfterSeconds:Math.max(1,Math.ceil((healthRateMap.get(ip).start+60000-Date.now())/1000))},H);
     const configured=Router.configured();
     const alternativeChecks=Router.checkStatus();
-    const freeModelsCheck=Router.freeCatalog();
+    // Skip public OpenRouter catalogue fetch entirely when this provider is not configured.
+    // Health checks must remain cheap for free-tier traffic and initial page loads.
+    const freeModelsCheck=configured.some(p=>p.id==="openrouter")
+      ?Router.freeCatalog():Promise.resolve({status:"unavailable",models:[],total:0});
     const googleHealth=googleHealthFor(fastModel);
     let google={id:"gemini",status:"off"};
     if(apiKey){
