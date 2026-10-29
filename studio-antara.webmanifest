@@ -1,0 +1,32 @@
+{
+  "id": "/studio-antara.html",
+  "name": "Studio Antara | Jana Imej",
+  "short_name": "Studio Antara",
+  "description": "Studio Antara untuk penjanaan imej AI, paparan hasil dan alat kreatif pada peranti.",
+  "lang": "ms",
+  "start_url": "/studio-antara.html",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#080b13",
+  "theme_color": "#080b13",
+  "icons": [
+    {
+      "src": "/favicon-aksara-ai-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-aksara-ai-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-aksara-ai.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
