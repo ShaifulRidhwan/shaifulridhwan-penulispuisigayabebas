@@ -49,14 +49,14 @@ async function render(meta,blob,signal){
 async function thumbnail(img){const canvas=document.createElement('canvas'),scale=Math.min(1,240/Math.max(img.naturalWidth,img.naturalHeight));canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Thumbnail tak dapat disimpan.')),'image/jpeg',.75));}
 async function generate(settings){
  if(busy)return;if(!navigator.onLine){announce('Internet terputus. Prompt kau masih ada; cuba bila dah online.',true);return;}
- const ctrl=new AbortController();controller=ctrl;const timer=setTimeout(()=>ctrl.abort(),55000);setBusy(true);announce('Cloudflare sedang menjana imej. Setiap percubaan menggunakan kuota.');
+ const startedAt=Date.now(),ctrl=new AbortController();controller=ctrl;const timer=setTimeout(()=>ctrl.abort(),55000);setBusy(true);announce('Cloudflare sedang menjana imej. Setiap percubaan menggunakan kuota.');
  try{
   const res=await fetch('/.netlify/functions/studio-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:settings.prompt,style:settings.style,model:settings.model,quality:settings.quality,ratio:settings.ratio,seed:settings.seed}),signal:ctrl.signal});
   const data=await res.json();if(!res.ok)throw Error(data.error||'Penjanaan gagal. Cuba lagi nanti.');if(!data.ok||!data.settings)throw Error('Respons pelayan tak lengkap.');
-  const blob=imageBlob(data.image,data.mime),meta={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),createdAt:Date.now(),settings:data.settings,promptUsed:data.promptUsed,modelName:data.modelName,durationMs:data.durationMs};
+  const blob=imageBlob(data.image,data.mime),meta={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),createdAt:Date.now(),settings:data.settings,promptUsed:data.promptUsed,modelName:data.modelName,durationMs:Date.now()-startedAt,cloudMs:data.durationMs};
   const img=await render(meta,blob,ctrl.signal);ui.stop.hidden=true;clearTimeout(timer);if(matchMedia('(max-width:680px)').matches)$('resultTitle').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});let saved=true;
   try{await H.put(meta,blob,await thumbnail(img));}catch(_){saved=false;}
-  announce('Imej dah siap dalam '+(data.durationMs/1000).toFixed(1)+' saat.'+(saved?' Disimpan pada peranti ini.':' Sejarah tak dapat disimpan (storan penuh atau tak tersedia). Simpan imej sekarang.'));
+  announce('Imej dah siap dalam '+(meta.durationMs/1000).toFixed(1)+' saat.'+(saved?' Disimpan pada peranti ini.':' Sejarah tak dapat disimpan (storan penuh atau tak tersedia). Simpan imej sekarang.'));
   if($('historyPanel').open)await refreshHistory();
  }catch(error){announce(error.name==='AbortError'?'Permintaan dihentikan atau masa menunggu tamat. Kuota untuk permintaan yang dah dihantar mungkin tetap digunakan.':error.message||'Sambungan gagal. Prompt kau masih ada.',true);}
  finally{clearTimeout(timer);if(controller===ctrl)controller=null;setBusy(false);}
