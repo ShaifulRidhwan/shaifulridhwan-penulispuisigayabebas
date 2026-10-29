@@ -535,3 +535,147 @@ body{
  .studio-picker-trigger,.prompt-compose{background:rgba(18,24,35,.96);backdrop-filter:none;-webkit-backdrop-filter:none}
  .gallery-count{background:#1c2738}
 }
+
+/* Studio Antara 2.4: content-first glass layout.
+   Hero lives inside the creator; navigation matches Bilik Antara's glass pills. */
+.studio-shell{padding-top:14px}
+.topbar{
+ min-height:62px;
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ gap:9px;
+ padding:9px 12px;
+ border:1px solid rgba(247,226,196,.25);
+ border-radius:19px;
+ background:linear-gradient(115deg,rgba(247,235,218,.075),rgba(24,40,64,.065));
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 8px 24px rgba(0,0,0,.11);
+ backdrop-filter:blur(15px) saturate(145%);
+ -webkit-backdrop-filter:blur(15px) saturate(145%);
+ font-family:'DM Sans',system-ui,sans-serif;
+ letter-spacing:.045em;
+}
+.topbar .back-link,.topbar .home-link,.topbar .brand-mark{
+ display:inline-flex;
+ align-items:center;
+ justify-content:center;
+ min-width:0;
+ flex:0 1 auto;
+ min-height:36px;
+ padding:8px 12px;
+ border:1px solid rgba(245,226,194,.27);
+ border-radius:999px;
+ background:linear-gradient(120deg,rgba(250,234,208,.095),rgba(106,145,192,.07));
+ box-shadow:inset 0 1px 0 rgba(255,247,224,.11);
+ backdrop-filter:blur(9px) saturate(140%);
+ -webkit-backdrop-filter:blur(9px) saturate(140%);
+ color:#f1e6dc;
+ font-size:11px;
+ font-weight:600;
+ line-height:1.3;
+ white-space:nowrap;
+ text-align:center;
+ transition:background .2s,border-color .2s;
+}
+.topbar .back-link:hover,.topbar .home-link:hover{
+ background:rgba(222,189,142,.13);
+ border-color:rgba(246,207,155,.5);
+}
+.topbar .brand-mark{
+ flex:0 0 auto;
+ border-radius:13px;
+ color:#f4cf97;
+ font-weight:700;
+ letter-spacing:.09em;
+}
+main>.workspace{margin-top:18px}
+.creator .card-top{margin:0 0 14px;justify-content:flex-start}
+.studio-card-title{
+ margin:0;
+ font-family:'DM Sans',system-ui,sans-serif;
+ font-size:clamp(26px,2.9vw,38px);
+ font-weight:700;
+ line-height:1.15;
+ letter-spacing:-.031em;
+ color:#f6eee6;
+ text-wrap:balance;
+}
+.studio-card-title span{color:#f0ca8d}
+.creator #imageForm{margin-top:0}
+.sr-only{
+ position:absolute!important;
+ width:1px!important;
+ height:1px!important;
+ padding:0!important;
+ margin:-1px!important;
+ overflow:hidden!important;
+ clip:rect(0,0,0,0)!important;
+ white-space:nowrap!important;
+ border:0!important;
+}
+.prompt-compose{margin-top:0}
+.prompt-compose #imagePrompt::placeholder{color:#bdb6b7;opacity:.92}
+.generate-btn{
+ justify-content:center;
+ text-align:center;
+}
+.generate-btn span{display:none}
+.result .card-top{margin-bottom:14px}
+.result .card-top h2{
+ margin:0;
+ font-family:'DM Sans',system-ui,sans-serif;
+ font-size:22px;
+ font-weight:600;
+ letter-spacing:-.025em;
+}
+.result-empty{padding:42px 20px}
+.result-empty p{
+ margin:0;
+ color:#c6bdba;
+ font-size:13px;
+ line-height:1.65;
+ font-weight:400;
+}
+.generation-status{margin:10px 0 0}
+.generation-status[hidden],.image-meta[hidden]{display:none!important}
+@media(max-width:900px){
+ .topbar{gap:7px}
+ .topbar .back-link,.topbar .home-link,.topbar .brand-mark{padding:8px 9px}
+ .studio-card-title{font-size:clamp(25px,3.5vw,33px)}
+}
+@media(max-width:680px){
+ .studio-shell{padding-top:10px}
+ .topbar{
+  min-height:54px;
+  gap:5px;
+  padding:7px 8px;
+  border-radius:17px;
+  letter-spacing:0;
+ }
+ .topbar .back-link,.topbar .home-link,.topbar .brand-mark{
+  min-height:34px;
+  padding:7px 8px;
+  font-size:9px;
+  letter-spacing:.015em;
+ }
+ .topbar .brand-mark{letter-spacing:.055em}
+ main>.workspace{margin-top:12px}
+ .creator .card-top{margin-bottom:12px}
+ .studio-card-title{
+  font-size:clamp(26px,7.2vw,31px);
+  letter-spacing:-.028em;
+  line-height:1.18;
+ }
+ .result .card-top h2{font-size:20px}
+ .result-empty{padding:35px 15px}
+ .result-empty p{font-size:12px}
+}
+@media(max-width:360px){
+ .topbar{padding-inline:5px;gap:3px}
+ .topbar .back-link,.topbar .home-link,.topbar .brand-mark{font-size:8px;padding:7px 6px}
+ .studio-card-title{font-size:26px}
+}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more){
+ .topbar{background:rgba(18,25,39,.97);backdrop-filter:none;-webkit-backdrop-filter:none}
+ .topbar .back-link,.topbar .home-link,.topbar .brand-mark{background:#222e40;backdrop-filter:none;-webkit-backdrop-filter:none}
+}
