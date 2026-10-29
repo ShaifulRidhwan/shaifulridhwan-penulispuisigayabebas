@@ -78,6 +78,27 @@ async function chat(page,device){
  await page.locator("#chat .message").first().waitFor({timeout:10000});
  assert.equal(await page.locator("#voicePanel").isVisible(),false);
  await verifyLocalLinks(page);
+ // Async CSS must become fully effective, and every original effect must remain.
+ await page.waitForFunction(()=>{
+  const sheet=document.querySelector('link[href="bilik-antara-suite.css?v=6"]');
+  return sheet?.media==="all"&&!!sheet.sheet;
+ },{timeout:10000});
+ const surface=await page.evaluate(()=>{
+  const css=selector=>getComputedStyle(document.querySelector(selector));
+  const glass=css(".conversation"),haze=css(".world-haze"),star=css(".world-embers i");
+  const sparks=css(".world-hand-sparks i"),title=css(".identity h1"),body=css("body");
+  return {glass:glass.backdropFilter||glass.webkitBackdropFilter,
+   haze:haze.animationName,stars:star.animationName,sparks:sparks.animationName,
+   titleFont:title.fontFamily,bodyFont:body.fontFamily,
+   suite:!!document.querySelector('link[href="bilik-antara-suite.css?v=6"]')?.sheet};
+ });
+ assert.match(surface.glass,/blur\\(/,"Liquid Glass must retain its original blur");
+ assert.match(surface.haze,/hazeDrift/,"Black fog animation must stay");
+ assert.match(surface.stars,/embersTravel/,"Star particles must keep moving");
+ assert.match(surface.sparks,/handSparkDescent/,"Hand sparks must keep falling");
+ assert.match(surface.titleFont,/Fraunces/,"Title typography must be unchanged");
+ assert.match(surface.bodyFont,/DM Sans/,"Chat typography must be unchanged");
+ assert.equal(surface.suite,true,"Extra panel styles must load");
  await snapshot(page,device+"-chat");
  // Normal text chat must retain its real face without loading the 2.7 MB GLB,
  // 3D engine or texture decoders before Voice Chat is opened.
