@@ -4,18 +4,18 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#080b13">
-<meta name="description" content="Studio Antara oleh Aksara A.I. Jana imej melalui Cloudflare Workers AI tanpa memasang model. Makmal video sedang dipersiapkan.">
+<meta name="description" content="Studio Antara oleh Aksara A.I. Jana imej melalui Cloudflare Workers AI tanpa memasang model. Sejarah setempat, preset visual dan kawalan penjanaan.">
 <meta name="author" content="Shaiful Ridhwan">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="ms_MY">
 <meta property="og:site_name" content="Gaya Bebas · Shaiful Ridhwan">
-<meta property="og:title" content="Studio Antara | Imej & Video">
-<meta property="og:description" content="Jana imej AI dengan FLUX melalui Cloudflare, terus dalam pelayar. Video bakal menyusul.">
+<meta property="og:title" content="Studio Antara | Jana Imej AI">
+<meta property="og:description" content="Jana imej AI dengan FLUX melalui Cloudflare, terus dalam pelayar. Kawal gaya dan cipta variasi baharu.">
 <meta property="og:url" content="https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html">
 <meta property="og:image" content="https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara-cover-art.jpg">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Studio Antara | Imej & Video">
+<meta name="twitter:title" content="Studio Antara | Jana Imej AI">
 <meta name="twitter:image" content="https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara-cover-art.jpg">
 <link rel="canonical" href="https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html">
 <link rel="icon" type="image/svg+xml" href="/favicon-aksara-ai.svg?v=1">
@@ -26,14 +26,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="studio-antara.css?v=8">
-<script src="studio-antara-cloud.js?v=1" defer></script>
+<link rel="stylesheet" href="studio-antara.css?v=9">
+<script src="studio-antara-config.js?v=1" defer></script>
+<script src="studio-antara-history.js?v=1" defer></script>
+<script src="studio-antara-cloud.js?v=2" defer></script>
 <script type="application/ld+json">{
  "@context":"https://schema.org",
  "@type":"WebApplication",
  "name":"Studio Antara",
  "applicationCategory":"MultimediaApplication",
- "description":"Studio Antara menyediakan penjanaan imej AI berasaskan Cloudflare Workers AI. Fungsi video dalam perancangan.",
+ "description":"Studio Antara menyediakan penjanaan imej AI berasaskan Cloudflare Workers AI.",
  "operatingSystem":"Web",
  "inLanguage":"ms",
  "url":"https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html"
@@ -47,90 +49,54 @@
   <a class="home-link" href="index.html">GAYA BEBAS <span aria-hidden="true">↗</span></a>
 </header>
 <main>
-  <div class="hero">
-    <div class="eyebrow"><span class="tiny-star" aria-hidden="true">✦</span> RUANG KREATIF ANTARA CAHAYA DAN GELAP</div>
-    <h1>STUDIO <span>ANTARA.</span></h1>
-    <p>Daripada sebaris imaginasi, lahir sebuah visual. Tanpa muat turun model besar dan tanpa meninggalkan pelayar.</p>
-    <div class="hero-facts"><span><i class="fact-dot"></i> Cloudflare Workers AI</span><span>FLUX.1 Schnell</span><span>Mesra telefon</span></div>
-  </div>
-  <div class="studio-tabs" role="tablist" aria-label="Pilihan Studio">
-    <button class="studio-tab is-active" id="tabImage" role="tab" aria-controls="imageStudio" aria-selected="true" type="button">
-      <span aria-hidden="true">◈</span> Jana Imej
-    </button>
-    <button class="studio-tab" id="tabVideo" role="tab" aria-controls="videoStudio" aria-selected="false" type="button">
-      <span aria-hidden="true">▣</span> Jana Video <small>Akan datang</small>
-    </button>
-  </div>
-  <section id="imageStudio" role="tabpanel" aria-labelledby="tabImage">
-    <div class="workspace">
-      <section class="glass-card creator" aria-labelledby="creatorTitle">
-        <div class="card-top">
-          <div><span class="step-label">01 / CIPTA</span><h2 id="creatorTitle">Bayangkan sesuatu.</h2></div>
-          <span class="engine-label">TEXT → IMAGE</span>
-        </div>
-        <form id="imageForm">
-          <label for="imagePrompt" class="input-label">Apa yang kau nak lihat?</label>
-          <textarea id="imagePrompt" name="prompt" rows="5" minlength="4" maxlength="1200" required placeholder="Ceritakan suasana, subjek, cahaya dan butiran yang kau bayangkan..."></textarea>
-          <div class="prompt-tools"><span>Lebih jelas arahan, lebih tepat hasilnya.</span><output id="promptCount" for="imagePrompt">0 / 1200</output></div>
-          <p class="sub-label">Cuba idea ini</p>
-          <div class="idea-chips">
-            <button type="button" class="idea-chip" data-prompt="Siluet wanita di antara cahaya keemasan dan kabus hitam, serpihan kaca berkilau, komposisi sinematik">Cahaya & Gelap</button>
-            <button type="button" class="idea-chip" data-prompt="Perpustakaan futuristik dengan tangga berputar, cahaya matahari menembusi tingkap tinggi, suasana tenang">Dunia Futuristik</button>
-            <button type="button" class="idea-chip" data-prompt="Langit malam dipenuhi bintang di atas lautan tenang, bulan sabit dan pantulan cahaya, komposisi minimalis">Langit & Bintang</button>
-          </div>
-          <p class="sub-label">Gaya visual</p>
-          <div class="style-grid" role="group" aria-label="Gaya imej">
-            <button class="style-chip is-selected" data-style="cinematic" aria-pressed="true" type="button">Sinematik</button>
-            <button class="style-chip" data-style="realistic" aria-pressed="false" type="button">Fotorealistik</button>
-            <button class="style-chip" data-style="illustration" aria-pressed="false" type="button">Ilustrasi</button>
-            <button class="style-chip" data-style="minimal" aria-pressed="false" type="button">Minimalis</button>
-            <button class="style-chip" data-style="fantasy" aria-pressed="false" type="button">Fantasi</button>
-          </div>
-          <details class="advanced">
-            <summary>Tetapan tambahan <span aria-hidden="true">⌄</span></summary>
-            <div class="advanced-grid">
-              <label for="qualitySteps">Kualiti imej <select id="qualitySteps" name="steps"><option value="4">Pantas · 4 langkah</option><option value="8">Lebih terperinci · 8 langkah</option></select></label>
-              <label for="imageSeed">Seed (pilihan) <input id="imageSeed" type="number" min="0" max="2147483647" step="1" placeholder="Automatik"></label>
-            </div>
-            <p>8 langkah menggunakan lebih banyak kuota pemprosesan. Seed sama boleh membantu menghasilkan variasi yang konsisten.</p>
-          </details>
-          <div class="create-actions">
-            <button class="generate-btn" id="generateImage" type="submit"><span aria-hidden="true">✦</span> Jana Imej <span aria-hidden="true">↗</span></button>
-            <button class="stop-btn" id="stopImage" type="button" hidden>Henti</button>
-          </div>
-          <p class="generation-status" id="generationStatus" role="status" aria-live="polite">Sedia untuk menjadikan imaginasi sebuah imej.</p>
-          <p class="small-note">Hasil dijana oleh Cloudflare Workers AI. Had kuota percuma mungkin terpakai. Prompt dihantar kepada penyedia AI untuk diproses.</p>
-        </form>
-      </section>
-      <section class="glass-card result" aria-labelledby="resultTitle">
-        <div class="card-top">
-          <div><span class="step-label">02 / HASIL</span><h2 id="resultTitle">Ruang visual.</h2></div>
-          <span class="result-indicator" id="resultIndicator">MENUNGGU</span>
-        </div>
-        <div class="result-stage" id="resultStage">
-          <div class="result-empty" id="resultEmpty">
-            <div class="visual-symbol" aria-hidden="true"><span class="visual-halo"></span><span class="visual-core"></span><span class="visual-glint">✦</span></div>
-            <strong>Belum ada imej.</strong><p>Setiap gambaran bermula dengan satu ayat.</p>
-          </div>
-          <img id="generatedImage" alt="Hasil imej AI yang dijana" hidden>
-          <div class="stage-loading" id="stageLoading" hidden aria-hidden="true"><div class="loading-orbit"></div><span>SEDANG MENJANA</span></div>
-        </div>
-        <div class="result-footer">
-          <span id="imageMetadata">FLUX.1 SCHNELL · OUTPUT JPEG</span>
-          <a id="downloadImage" class="download-btn" download="studio-antara.jpg" href="#" hidden>Simpan imej ↓</a>
-        </div>
-      </section>
+ <section class="hero" aria-labelledby="studioTitle">
+  <p class="eyebrow">RUANG KREATIF CAHAYA DAN GELAP</p>
+  <h1 id="studioTitle">STUDIO <span>ANTARA.</span></h1>
+  <p>Bayangkan. Perkemas. Jadikan visual.</p>
+  <div class="hero-facts"><span>Cloudflare Workers AI</span><span>Imej kekal pada peranti kau</span></div>
+ </section>
+ <div class="workspace">
+  <section class="glass-card creator" aria-labelledby="creatorTitle">
+   <div class="card-top"><div><span class="step-label">01 / IDEA KAU</span><h2 id="creatorTitle">Mula dengan imaginasi.</h2></div><span class="tiny-star" aria-hidden="true">✦</span></div>
+   <form id="imageForm">
+    <label for="imagePrompt" class="input-label">Apa yang kau nak lihat?</label>
+    <textarea id="imagePrompt" rows="5" minlength="4" maxlength="1200" required placeholder="Contoh: Wanita berdiri dalam cahaya keemasan, kabus biru gelap di belakangnya..."></textarea>
+    <div class="prompt-tools"><span>Ctrl / ⌘ + Enter untuk jana</span><output id="promptCount" for="imagePrompt">0 / 1200</output></div>
+    <div class="idea-chips"><button type="button" data-prompt="Siluet wanita berdiri di antara cahaya keemasan dan bayang biru gelap">Cahaya &amp; gelap</button><button type="button" data-prompt="Langit berbintang di atas lautan tenang dengan pantulan bulan">Langit &amp; renungan</button></div>
+    <div class="enhance-row"><label><input type="checkbox" id="enhanceEnabled"> Bantu perkemas prompt</label><button type="button" id="enhancePrompt" hidden>Perkemas dengan AI</button></div>
+    <div id="enhancePanel" class="enhance-panel" hidden>
+     <label for="enhancedPrompt">Draf untuk kau semak dan edit</label><textarea id="enhancedPrompt" rows="4" maxlength="1200"></textarea>
+     <p id="enhanceNote">Semak maksud asal sebelum guna.</p>
+     <div class="inline-actions"><button type="button" id="useEnhanced">Guna draf ini</button><button type="button" id="lightEnhance">Guna mod ringan</button><button type="button" id="cancelEnhanced">Batal</button></div>
     </div>
-  </section>
-  <section id="videoStudio" role="tabpanel" aria-labelledby="tabVideo" hidden>
-    <div class="glass-card video-soon">
-      <span class="step-label">FASA SETERUSNYA / MOTION LAB</span>
-      <div class="video-visual" aria-hidden="true"><span class="play-symbol">▷</span></div>
-      <h2>Imaginasi yang bergerak.</h2>
-      <p>Penjanaan video pendek masih dalam pembangunan. Kami belum mengaktifkan API video atau mengenakan sebarang penggunaan video.</p>
-      <span class="video-pill">Text-to-Video · Image-to-Video · Dalam perancangan</span>
+    <div class="control-grid">
+     <label for="imageStyle">Preset visual<select id="imageStyle" aria-label="Preset visual"></select></label>
+     <label for="imageRatio">Nisbah imej<select id="imageRatio" aria-label="Nisbah imej"><option value="1:1">1:1 · Segi empat</option><option value="4:5">4:5 · Potret</option><option value="9:16">9:16 · Story / TikTok</option><option value="16:9">16:9 · Mendatar</option><option value="3:2">3:2 · Fotografi</option></select></label>
+     <label for="imageQuality">Kualiti<select id="imageQuality" aria-label="Kualiti"><option value="fast">Pantas</option><option value="balanced" selected>Seimbang</option><option value="detail">Detail</option></select></label>
+     <label for="imageModel">Model<select id="imageModel" aria-label="Model"><option value="schnell">FLUX.1 Schnell</option><option value="klein">FLUX.2 Klein 4B</option></select></label>
     </div>
+    <p class="model-note" id="modelNote"></p>
+    <details class="advanced"><summary>Seed &amp; cara kuota digunakan</summary><label for="imageSeed">Seed pilihan<input id="imageSeed" type="number" min="0" max="2147483647" step="1" placeholder="Automatik" disabled></label><p id="seedNote">Kawalan seed tersedia pada Klein. Schnell menggunakan sampel baharu.</p><p id="quotaEstimate"></p><p>Bajet ini untuk Studio sahaja. Kuota akaun Cloudflare dikongsi, dan had percuma sebenar bergantung pada pelan akaun.</p></details>
+    <div class="create-actions"><button class="generate-btn" id="generateImage" type="submit">✦ Jana imej <span aria-hidden="true">↗</span></button><button id="stopImage" type="button" hidden>Henti</button></div>
+    <p class="generation-status" id="generationStatus" role="status" aria-live="polite">Dah sedia. Cerita je apa yang kau bayangkan.</p>
+    <p class="small-note">Prompt dihantar ke Cloudflare bila kau tekan Jana. Perkemas AI menggunakan Groq bila kau pilih; mod ringan tak menghantar prompt. Henti tak menjamin kuota yang dah digunakan dapat dipulangkan.</p>
+   </form>
   </section>
+  <section class="glass-card result" aria-labelledby="resultTitle">
+   <div class="card-top"><div><span class="step-label">02 / HASIL KAU</span><h2 id="resultTitle">Ruang visual.</h2></div><span id="resultIndicator" class="result-indicator">MENUNGGU</span></div>
+   <div class="result-stage" id="resultStage" aria-busy="false">
+    <div class="result-empty" id="resultEmpty"><div class="visual-symbol" aria-hidden="true">✦</div><strong>Idea kau bermula di sini.</strong><p>Hasil sebenar muncul selepas penjanaan siap.</p></div>
+    <img id="generatedImage" alt="Hasil imej AI yang dijana" hidden decoding="async">
+    <div class="stage-loading" id="stageLoading" hidden aria-hidden="true"><div class="loading-orbit"></div><span>IMAGINASI SEDANG DIBENTUK</span></div>
+   </div>
+   <p id="imageMetadata" class="image-meta">Tanpa model besar pada peranti.</p>
+   <div id="resultActions" class="result-actions" hidden><button type="button" id="regenerateImage">Jana semula</button><button type="button" id="variationImage">Variasi seed</button><button type="button" id="copyPrompt">Salin prompt</button><a id="downloadImage" download="studio-antara.jpg" href="#">Simpan imej ↓</a></div>
+   <p id="variationNote" class="small-note" hidden>Variasi menggunakan prompt dan gaya sama dengan seed lain; ini bukan suntingan imej asal. Pada Schnell, gunakan Jana semula atau pilih Klein untuk kawalan seed.</p>
+   <details class="used-prompt" id="usedPromptPanel" hidden><summary>Prompt &amp; tetapan hasil</summary><pre id="usedPrompt"></pre></details>
+  </section>
+ </div>
+ <details class="glass-card gallery" id="historyPanel"><summary><span>Galeri pada peranti ini</span><span id="historyCount">Buka sejarah</span></summary><p class="small-note">Sehingga 24 hasil / 30 MB. Hasil terlama dibuang bila had dicapai. Pelayar boleh membersihkan storan; simpan imej penting sendiri.</p><div class="gallery-toolbar"><button type="button" id="refreshHistory">Muat semula</button><button type="button" id="clearHistory">Kosongkan sejarah</button></div><p id="historyStatus" role="status" aria-live="polite"></p><div id="historyGrid" class="history-grid"></div><button type="button" id="moreHistory" hidden>Lihat lagi</button></details>
+ <noscript><p>Hidupkan JavaScript untuk menggunakan Studio.</p></noscript>
 </main>
 <footer class="studio-footer"><span>STUDIO ANTARA · AKSARA A.I.</span><span>CAHAYA MENCIPTA BENTUK · GELAP MEMBERI DIMENSI</span></footer>
 </div>
