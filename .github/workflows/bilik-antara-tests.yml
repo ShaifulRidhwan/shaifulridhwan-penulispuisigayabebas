@@ -61,6 +61,7 @@ jobs:
           node --check netlify/functions/bilik-antara.js
           node --check netlify/functions/bilik-antara-live-token.js
           node --check bilik-antara-voice.js
+          node --check bilik-antara-rim-sparks.js
           node --check bilik-antara-pcm-worklet.js
           node --check netlify/functions/antara-intelligence.js
           node --check netlify/functions/tiktok-public-research.js
