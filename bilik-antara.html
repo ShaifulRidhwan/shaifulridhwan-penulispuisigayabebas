@@ -83,7 +83,7 @@
      <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Jom Voice Chat</button>
     </div>
     <div class="chat-controls">
-     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status lima penyedia AI dan model yang tersedia"><span class="dot" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
+     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model yang tersedia"><span class="dot" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
      <details class="settings" id="settingsPanel">
       <summary aria-label="Buka Ciri dan Fungsi Aksara" title="Ciri &amp; Fungsi">
        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
@@ -107,6 +107,7 @@
        <details class="feature-privacy" id="privacySettings">
         <summary>Privasi &amp; Tetapan</summary>
         <div class="feature-privacy-content">
+         <p>Avatar 3D Voice menggunakan model contoh brunette daripada <a href="https://github.com/met4citizen/TalkingHead" target="_blank" rel="noopener noreferrer">TalkingHead</a> (lesen CC BY-NC 4.0 untuk penggunaan bukan komersial). Ia bukan model 3D yang dibina oleh laman ini.</p>
          <p>Perbualan dihantar kepada penyedia AI untuk dijawab. Penyedia sandaran boleh memproses mesej teks jika diaktifkan. Imej boleh dihantar ke OpenRouter hanya jika kau mengizinkannya melalui pilihan di bawah dan Gemini tidak tersedia. Lampiran kekal dalam memori tab untuk soalan susulan sehingga dibuang atau tab ditutup; fail mentah tidak disimpan dalam arkib sesi. Sejarah hanya disimpan di pelayar jika kau benarkan.</p>
          <label class="settings-row"><input type="checkbox" id="rememberChat"><span>Simpan sesi pada peranti ini</span></label>
          <label class="settings-row"><input type="checkbox" id="contextFallback"><span>Benarkan penyedia sandaran memproses memori pilihan dan fail teks yang aku lampirkan.</span></label>
@@ -931,7 +932,7 @@ restore();renderIdeas();renderHistory();update();probe();
  document.getElementById("voiceLive")?.addEventListener("click",()=>{
   if(loading||loaded)return;
   loading=true;
-  import("./bilik-antara-avatar.js?v=13").then(()=>{loaded=true;}).catch(error=>{
+  import("./bilik-antara-avatar.js?v=14").then(()=>{loaded=true;}).catch(error=>{
    loading=false;console.warn("Voice avatar unavailable",error);
   });
  });
