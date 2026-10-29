@@ -86,7 +86,7 @@ test("Mobile viewport, permanent dark theme and conversation functions retained"
 });
 
 test("Inline JavaScript valid and element IDs unique",()=>{
- const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].filter(m=>m[1].trim()&&!m[0].includes("importmap"));
+ const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].filter(m=>m[1].trim()&&!/type=["\'](?:importmap|application\/ld\+json)["\']/.test(m[0]));
  assert.ok(scripts.length>=1);
  for(const script of scripts)assert.doesNotThrow(()=>new Function(script[1]));
  const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
@@ -232,7 +232,7 @@ test("Consistent DM Sans chat typography and independent animated voice icon",()
  assert.match(css,/#voiceLive\[aria-pressed="true"\]::before/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
  assert.match(voice,/liveButton\.textContent=liveActive\?"Sedang berbual":"Jom Voice Chat"/);
- assert.match(html,/src="bilik-antara-voice\.js\?v=33"/);
+ assert.match(html,/src="bilik-antara-voice\.js\?v=\d+"/);
  assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.match(css,/\.conversation-head button\.multi-ai-trigger \.dot/);
 });
