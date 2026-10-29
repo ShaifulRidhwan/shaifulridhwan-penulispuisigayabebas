@@ -15,7 +15,8 @@ Hanya Studio, fungsi imej/prompt khusus, helper quota/HTTP, dokumentasi, depende
 - Browser cloud: desktop dan iframe viewport 390px diperiksa. API mock dilabel jelas pada preview setempat dan tidak dimasukkan ke repo/produksi.
 - Aliran browser mock berjaya: jana, nisbah auto memilih Klein, variasi dengan seed lain, buka hasil lama, jana semula, draf perkemas dan batal, ralat 429 sambil mengekalkan prompt/hasil, padam satu, kosongkan galeri, simpan selepas reload, pembatalan permintaan perlahan.
 - Desktop mencetuskan download Blob sebenar. Clipboard automatik disekat oleh browser ujian; fallback textarea dipilih dan prompt asal kekal.
-- Lighthouse CLI setempat tiada. Workflow Studio khusus ditambah untuk ujian Chromium 1440/390/320px dan Lighthouse desktop/mobile dalam GitHub Actions; hasilnya perlu dibaca daripada run sebenar. Tiada dakwaan ujian Safari iOS fizikal.
+- [GitHub Actions Studio audit 40898805913](https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/actions/runs/40898805913) lulus pada commit `6593cb3d2b76e0c26634a547f0d3a9736a9fd3e1`: Chromium desktop 1440px, telefon 390px dan kecil 320px. Ketiga-tiganya mengesahkan tiada AI automatik, regenerate, seed variation, galeri selepas reload, muat turun fail sebenar, pembatalan, 429, tiada horizontal overflow dan tiada pageerror. API browser ialah fixture dilabel mock, bukan bukti Cloudflare.
+- Lighthouse Studio pada static server CI: desktop Performance 100 / Accessibility 100 / Best Practices 100 / SEO 100; mobile 94 / 100 / 96 / 100. Skor makmal ini mengukur pemuatan halaman, bukan kepantasan inference atau rangkaian produksi. Laporan JSON dan screenshot dilampirkan sebagai artifact run tersebut. Tiada dakwaan ujian Safari iOS fizikal.
 
 ## Prestasi yang diukur
 
@@ -52,3 +53,5 @@ Semua dimensi dibaca daripada header JPEG sebenar, tanpa crop. Seed 43 menghasil
 Perkemas prompt sebenar melalui Groq berjaya HTTP 200, method=ai, masa keseluruhan executor 8,582 ms. Input Melayu seorang wanita dalam cahaya keemasan diperkemas kepada komposisi visual Inggeris sambil mengekalkan subjek tunggal.
 
 Sampel Schnell sebelum 10,191 ms berbanding selepas 9,786 ms bukan benchmark terkawal. Jangan mendakwa keseluruhan sistem sentiasa lebih pantas: Klein lebih fleksibel tetapi lebih perlahan. UI memaparkan masa tunggu client sebenar; masa inference upstream disimpan berasingan. Tiada key atau respons provider mentah dimasukkan dalam laporan.
+
+Ujian browser produksi selepas ujian live turut mengesahkan HTTP 429 per-IP dipaparkan tanpa membuang prompt; had 8 percubaan telah dicapai oleh siri pengesahan sebenar. Tiada retry automatik atau bypass kuota dibuat.
