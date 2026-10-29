@@ -6,7 +6,7 @@ const panel=document.getElementById("voicePanel");
 const stage=document.getElementById("voiceAvatarStage");
 if(panel&&stage){
 let active=false,renderer=null,scene=null,camera=null,root=null,face=null,raf=0,resize=null,context=null,blinkAt=0,started=0,loading=false,jawMotion=0,lipMotion=0,morphIndex=null,resizeFrame=0,lastWidth=0,lastHeight=0,emotion="neutral",emotionUntil=0,emotionLevel=0,expressionWeights={},tearMeshes=[],audioArray=null,audioSpectrum=null,audioAnalyser=null,mouthRound=0;
-const modelURL="https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@main/avatars/brunette.glb";
+const modelURL="https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@166b443a445eeb63a4ea02270aa9e7d6ba8b4d88/avatars/brunette.glb";
 // The chat still is an exact pre-rendered frame of this same GLB model.
  // No WebGL, GLTF decoding, or 3D assets run in the normal chat page.
  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
@@ -63,57 +63,6 @@ function audioLevel(){
  }else mouthRound=0;
  return level;
 }
-// A lightweight trial hairstyle, built around the existing head and hair mesh.
-function installMessyBun(THREE,model,mergeGeometries){
- const hair=model.getObjectByName("Wolf3D_Hair");
- const position=hair?.geometry?.getAttribute("position"),index=hair?.geometry?.getIndex();
- if(!hair||!position||!index)return false;
- const original=hair.geometry,trimmed=original.clone(),kept=[];
- // Keep the fringe and crown, while shortening the original hanging hair.
- for(let i=0;i<index.count;i+=3){
-  const a=index.getX(i),b=index.getX(i+1),c=index.getX(i+2);
-  if(Math.min(position.getY(a),position.getY(b),position.getY(c))>1.565)kept.push(a,b,c);
- }
- if(!kept.length)return false;
- trimmed.setIndex(kept);
- const group=new THREE.Group();group.name="Aksara_MessyBun";
- const locks=[];
- const dark=new THREE.MeshStandardMaterial({color:0x171311,roughness:.83,metalness:0});
- const strands=new THREE.MeshStandardMaterial({color:0x30241e,roughness:.82,metalness:0});
- const bun=new THREE.Mesh(new THREE.SphereGeometry(.071,20,14),dark);
- bun.position.set(0,1.745,-.115);bun.scale.set(1.12,.74,.82);group.add(bun);
- const lobes=new THREE.InstancedMesh(new THREE.SphereGeometry(.025,10,7),dark,28);
- const transform=new THREE.Object3D();
- for(let i=0;i<28;i++){
-  const angle=i*2.39996,r=.034+.019*((i%4)/3);
-  transform.position.set(Math.cos(angle)*r,1.746+Math.sin(angle)*r*.68,-.15+(i%3)*.012);
-  transform.scale.set(1.05,.7,.65);transform.updateMatrix();lobes.setMatrixAt(i,transform.matrix);
- }
- group.add(lobes);
- // Fine irregular locks frame the face; swept strands lead back to the bun.
- for(let i=0;i<26;i++){
-  const side=i%2?1:-1,j=Math.floor(i/2),dx=(j-6)*.003;
-  const points=[
-   new THREE.Vector3(side*(.067+dx),1.69+(j%3)*.006,.085),
-   new THREE.Vector3(side*(.104+dx*.4),1.73+(j%4)*.004,.016),
-   new THREE.Vector3(side*(.072+dx*.6),1.775-(j%3)*.005,-.065),
-   new THREE.Vector3(side*(.014+dx),1.75+(j%4)*.004,-.12)
-  ];
-  const curve=new THREE.CatmullRomCurve3(points);
-  locks.push(new THREE.TubeGeometry(curve,14,.0014+(j%3)*.00035,4,false));
- }
- for(let side of [-1,1])for(let i=0;i<3;i++){
-  const x=side*(.082+i*.004);
-  const curve=new THREE.CatmullRomCurve3([
-   new THREE.Vector3(x,1.682,.091),new THREE.Vector3(x+side*.009,1.63,.102),
-   new THREE.Vector3(x+side*(.015+i*.002),1.575,.094),new THREE.Vector3(x+side*.011,1.54-(i%2)*.015,.08)
-  ]);
-  locks.push(new THREE.TubeGeometry(curve,12,.0014,4,false));
- }
- const merged=mergeGeometries(locks);locks.forEach(g=>g.dispose());
- if(merged)group.add(new THREE.Mesh(merged,strands));
- model.add(group);hair.geometry=trimmed;original.dispose();return true;
-}
 function stop(){
  active=false;cancelAnimationFrame(raf);raf=0;cancelAnimationFrame(resizeFrame);resizeFrame=0;resize?.disconnect();resize=null;
  if(renderer){renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();renderer=null;}
@@ -141,13 +90,6 @@ async function begin(){
   const gltf=await new GLTFLoader().setKTX2Loader(kt).setMeshoptDecoder(MeshoptDecoder).loadAsync(modelURL);
   kt.dispose();if(!active){gltf.scene.traverse(o=>{o.geometry?.dispose?.();});return;}
   root=gltf.scene;scene.add(root);
-  if(new URLSearchParams(window.location.search).get("gaya")==="messybun"){
-   try{
-    const {mergeGeometries}=await import("three/addons/utils/BufferGeometryUtils.js");
-    if(active)installMessyBun(THREE,root,mergeGeometries);
-   }catch(err){console.warn("Messy bun unavailable",err);}
-   if(!active)return;
-  }
   // Frame only the upper body: this model contains a whole character.
   const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
   const scale=2.5/Math.max(size.y,.1);root.scale.setScalar(scale);
