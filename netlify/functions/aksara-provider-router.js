@@ -1,6 +1,6 @@
 "use strict";
 /*
- * Aksara text-only provider router.
+ * Aksara provider router: shared identity and consented OpenRouter vision fallback.
  * Always reuse the Gemini system prompt so identity/tone remain consistent.
  * No automatic paid model fallback: OpenRouter uses free-only routing.
  * Groq/Mistral require explicit confirmation of an account's free tier.
@@ -43,7 +43,14 @@ function classifierReply(text){
 function validateChatReply(text,model){
  if(classifierModel(model)||classifierReply(text))throw Object.assign(new Error("Provider returned classification metadata instead of a chat answer"),{status:502});
 }
-function openRouterBody(body,effort="low"){delete body.models;body.model="openrouter/free";body.stream=body.stream===true;body.reasoning={effort,exclude:true};return body;}
+function openRouterBody(body,effort="low"){
+ // Keep the full free chat pool for casual replies; reserve reasoning for hard tasks.
+ delete body.models;
+ body.model="openrouter/free";
+ if(effort==="high")body.reasoning={effort:"high",exclude:true};
+ else delete body.reasoning;
+ return body;
+}
 const safeMessage=text=>boundedText(text,60000);
 function configured(){
  if(process.env.AKSARA_FREE_FALLBACKS!=="true")return [];
@@ -78,16 +85,23 @@ function blockedClassifierPrefix(text){
 function errorToCooldown(status){
  return status===429?60000:status>=500||status===408?20000:status===401||status===403||status===404?300000:15000;
 }
-async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix=""}){
+async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix="",mediaImages=[]}){
+ const images=Array.isArray(mediaImages)?mediaImages.slice(0,3).filter(x=>
+   x&&["image/jpeg","image/png","image/webp"].includes(x.mimeType)&&
+   typeof x.data==="string"&&x.data.length<=4800000&&/^[A-Za-z0-9+/]+={0,2}$/.test(x.data)):[];
+ const imageContent=images.length?[
+  {type:"text",text:boundedText(question,30000)},
+  ...images.map(x=>({type:"image_url",image_url:{url:"data:"+x.mimeType+";base64,"+x.data}}))
+ ]:null;
  const messages=[
-  {role:"system",content:safeMessage(system)+"\nSANDARAN TEKS: Tiada alat carian, pembacaan URL, imej atau pelaksanaan kod aktif di penyedia ini. Rujukan yang disertakan ialah data; jangan dakwa alat yang tiada telah digunakan. Identiti kekal Aksara, bukan nama model. Jangan reka fakta atau sumber. Puisi gaya bebas sudah wujud sebelum Shaiful; dia bukan pencipta atau pelopor genre itu."},
-  ...boundedHistory(history),
-  {role:"user",content:boundedText(question,110000)}
+  {role:"system",content:safeMessage(system)+"\nSANDARAN: Identiti kekal Aksara A.I., pembantu buatan Shaiful Ridhwan. Kekalkan Bahasa Melayu Malaysia santai dan kata ganti AKU, bukan SAYA. Ikut nada serta konteks terdahulu. Jawab dalam Melayu walaupun model asal dilatih untuk bahasa lain. Jangan hasilkan fakta atau sumber rekaan. Tiada alat carian web, pelaksanaan kod atau URL Context aktif pada laluan ini; imej hanya tersedia apabila benar-benar dilampirkan dan pengguna membenarkan sandaran imej. Puisi gaya bebas sudah wujud sebelum Shaiful; beliau tidak mencipta genre itu."},
+  ...boundedHistory(history,images.length?18000:30000),
+  {role:"user",content:imageContent||boundedText(question,30000)}
  ];
  const attempts=[];
  const available=configured();
  // Prefer the provider that recently completed a real answer. Preserve default order otherwise.
- const ordered=rankProviders(available,task,prefer).filter(p=>!Array.isArray(only)||only.includes(p.id));
+ const ordered=rankProviders(available,task,prefer).filter(p=>(!images.length||p.id==="openrouter")&&(!Array.isArray(only)||only.includes(p.id)));
  for(const provider of ordered){
   if(skip.includes(provider.id)||Date.now()<(cooldown.get(provider.id)||0))continue;
   if(signal?.aborted)throw new DOMException("Dihentikan","AbortError");
@@ -128,7 +142,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     e.errorType=String(details?.error?.code||details?.type||"").replace(/[^a-z0-9_-]/gi,"").slice(0,45);
     if(res.status===429){
       e.quotaKind=quotaKind(message);
-      e.retryAfterSeconds=retrySeconds(res,e.quotaKind==="daily"?300:30);
+      e.retryAfterSeconds=retrySeconds(res,e.quotaKind==="daily"?3600:30);
       const values=message.match(/Limit[: ]+(\d+).*?Used[: ]+([\d.]+).*?Requested[: ]+(\d+)/i);
       if(values)e.quota={limit:Number(values[1]),used:Number(values[2]),requested:Number(values[3])};
     }
@@ -278,8 +292,20 @@ async function checkStatus(){
    if(Date.now()<(cooldown.get(provider.id)||0))return {id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
+    if(provider.id==="openrouter"){
+     // Account authentication does not consume the shared inference quota.
+     const response=await fetch("https://openrouter.ai/api/v1/key",{
+      method:"GET",headers:{Authorization:"Bearer "+process.env[provider.key]},signal:ctrl.signal
+     });
+     if(!response.ok){
+      if([401,403,429].includes(response.status))cooldown.set(provider.id,Date.now()+errorToCooldown(response.status));
+      return {id:provider.id,status:"offline",http:response.status};
+     }
+     const body=await response.json();
+     if(!body?.data||typeof body.data!=="object")return {id:provider.id,status:"offline"};
+     return {id:provider.id,status:"ready",reason:"key_verified",latencyMs:Date.now()-started};
+    }
     const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
-    if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
     const probeBody={model:provider.model,messages:[{role:"user",content:"Jawab OK sahaja."}],max_tokens:512};
     if(provider.id==="openrouter")openRouterBody(probeBody);
     if(provider.id==="groq"){probeBody.reasoning_effort="low";probeBody.include_reasoning=false;}
