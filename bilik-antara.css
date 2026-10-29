@@ -2582,6 +2582,8 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  font:500 11px/1.4 'DM Sans',sans-serif;color:#dfd4c4;
 }
 .multi-ai-model-state{flex:none;font:500 10px 'DM Sans',sans-serif;color:#bdb4a7}
+.multi-ai-model-state.is-online{color:#94e8b4}
+.multi-ai-model-state.is-online::before{background:#55d691;box-shadow:0 0 7px rgba(85,214,145,.36)}
 .multi-ai-model-state::before{
  content:"";display:inline-block;width:6px;height:6px;border-radius:50%;
  background:#9a9895;margin-right:5px;vertical-align:1px;
