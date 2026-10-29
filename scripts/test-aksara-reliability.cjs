@@ -256,6 +256,21 @@ test("reaction guidance reaches the chosen provider together with the actual pre
  const history=[{role:"user",content:"siapa buat bilik antara no"},{role:"assistant",content:"Shaiful Ridhwan yang membangunkan Bilik Antara."}];
  const r=await handler(event({question:"ooo",history,preferredProvider:"groq"}));assert.equal(r.statusCode,200);assert.match(request.messages.filter(x=>x.role==="system").map(x=>x.content).join("\n"),/REAKSI PENDEK PADA GILIRAN TERAKHIR/);assert.equal(request.messages.at(-2).content,history[1].content);assert.equal(request.reasoning_effort,"low");
 });
+test("a follow-up retains dialogue and Aksara's personality when a provider fails over",async t=>{
+ const handler=setup(t);let googleBody;
+ global.fetch=async(url,opts)=>{
+  if(url.includes("groq.com"))return new Response("",{status:503});
+  googleBody=JSON.parse(opts.body);
+  return Response.json({candidates:[{content:{parts:[{text:"Supaya ada pilihan bila model sibuk."}]},finishReason:"STOP"}]});
+ };
+ const history=[{role:"user",content:"Siapa Aku"},{role:"assistant",content:require("../bilik-antara-identity").answerIdentity("Siapa Aku")}];
+ const response=await handler(event({question:"Kenapa?",history,preferredProvider:"groq"}));
+ const result=JSON.parse(response.body);
+ assert.equal(response.statusCode,200);assert.equal(result.provider,"gemini");
+ assert.equal(googleBody.contents[0].parts[0].text,"Siapa Aku");
+ assert.equal(googleBody.contents[1].parts[0].text,history[1].content);
+ assert.match(googleBody.systemInstruction.parts[0].text,/mwehehe/i);
+});
 test("accepting an offered action is not downgraded to a mere acknowledgement",()=>{
  const history=[{role:"user",content:"Tolong bantu tulis puisi"},{role:"assistant",content:"Nak aku buat versi empat rangkap?"}];
  assert.notEqual(I.resolveIntent("ok",history,false).reaction,true);assert.notEqual(I.resolveIntent("ya",history,false).reaction,true);
@@ -266,13 +281,13 @@ test("plain acknowledgements do not inherit canned laughter or an automatic invi
  const r=await handler(event({question:"ooo",history:[{role:"user",content:"siapa buat bilik antara no"},{role:"assistant",content:"Shaiful Ridhwan yang membangunkan Bilik Antara."}],preferredProvider:"groq"}));
  assert.equal(r.statusCode,200);const text=JSON.parse(r.body).reply;assert.match(text,/faham/i);assert.doesNotMatch(text,/haha|apa-apa lagi|nak tanya/i);
 });
-test("the exact grounded identity exchange keeps a short ooo connected without another model call",async t=>{
- const handler=setup(t),ID=require("../bilik-antara-identity");let calls=0;global.fetch=()=>{calls++;throw Error("No model needed for this grounded acknowledgement");};
+test("a short acknowledgement after a known identity answer uses the model and previous conversation",async t=>{
+ const handler=setup(t),ID=require("../bilik-antara-identity");let calls=0,request;global.fetch=async(_url,opts)=>{calls++;request=JSON.parse(opts.body);return reply("Haa, dia yang bangunkan ruang ni.");};
  const question="siapa buat bilik antara no",history=[{role:"user",content:question},{role:"assistant",content:ID.answerIdentity(question)}];
- assert.equal(ID.answerReaction("ooo",history),"Ha, dia yang bangunkan ruang ni.");
- const r=await handler(event({question:"ooo",history}));assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).reply,"Ha, dia yang bangunkan ruang ni. 🙂 ✨");assert.equal(calls,0);
- assert.equal(ID.answerReaction("ooo",[{role:"user",content:"Kenapa langit biru?"},{role:"assistant",content:"Cahaya biru dihamburkan lebih kuat."}]),null);
- assert.equal(ID.answerReaction("ooo tak faham",history),null);
+ const r=await handler(event({question:"ooo",history,preferredProvider:"groq"}));
+ assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).provider,"groq");assert.equal(calls,1);
+ assert.equal(request.messages.at(-2).content,history[1].content);
+ assert.equal(request.messages.at(-1).content,"ooo");
 });
 
 test("chat enforces two complete emoji graphemes and preserves literal code",()=>{
@@ -291,7 +306,8 @@ test("emoji formatting preserves grounded identity follow-up continuity",()=>{
  const ID=require("../bilik-antara-identity"),style=require("../bilik-antara-chat-style");
  const question="siapa buat bilik antara no";
  const history=[{role:"user",content:question},{role:"assistant",content:style.reply(ID.answerIdentity(question))}];
- assert.equal(ID.answerReaction("ooo",history),"Ha, dia yang bangunkan ruang ni.");
+ assert.equal(style.count(history[1].content),2);
+ assert.equal(I.resolveIntent("ooo",history,false).reaction,true);
 });
 test("opening the page tests providers before showing Connected and never installs message actions",async()=>{
  const html=fs.readFileSync(path.join(__dirname,"../bilik-antara.html"),"utf8");
@@ -323,13 +339,13 @@ test("first ordinary text turn selects a configured chat provider without waitin
  assert.ok(!payload.messages[0].content.includes(identity.PROMPT),"An unrelated chat must not carry the full creator dossier");
  assert.ok(JSON.parse(r.body).timings.systemChars<19000);
 });
-test("the screenshot acknowledgement is grounded, contextual and needs no network",async t=>{
+test("a founder acknowledgement is generated from the actual previous dialogue",async t=>{
  const handler=setup(t),ID=require("../bilik-antara-identity"),style=require("../bilik-antara-chat-style");
- global.fetch=()=>{throw Error("No model required for a grounded acknowledgement");};
+ let request;global.fetch=async(_url,opts)=>{request=JSON.parse(opts.body);return reply("Haa, penulisan dan coding bertemu dalam projek yang sama.");};
  const q="siapa shaiful ridhwan",history=[{role:"user",content:q},{role:"assistant",content:style.reply(ID.answerIdentity(q))}];
- const r=JSON.parse((await handler(event({question:"menarik",history}))).body);
- assert.equal(r.model,"project-identity");assert.match(r.reply,/penulisan dan coding/);assert.equal(style.count(r.reply),2);
- assert.equal(ID.answerReaction("menarik?",history),null,"A question is not a passive acknowledgement");
+ const r=JSON.parse((await handler(event({question:"menarik",history,preferredProvider:"groq"}))).body);
+ assert.equal(r.provider,"groq");assert.match(r.reply,/penulisan dan coding/);assert.equal(style.count(r.reply),2);
+ assert.equal(request.messages.at(-2).content,history[1].content);
 });
 test("Malay casual wording does not accidentally require a calculator or current-news provider",()=>{
  for(const q of ["Aku kira dia memang macam tu", "Aku lapar sekarang", "Cerita kau berharga", "Menarik juga."]){

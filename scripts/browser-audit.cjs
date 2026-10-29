@@ -118,6 +118,22 @@ async function chat(page,device){
  assert.match(surface.bodyFont,/DM Sans/,"Chat typography must be unchanged");
  assert.equal(surface.suite,true,"Extra panel styles must load");
  await snapshot(page,device+"-chat");
+ // Prepared answers keep the same typing feedback for at least three seconds.
+ await page.waitForFunction(()=>!!window.BilikAntaraIdentity);
+ await page.evaluate(()=>{window.__localAnswerStarted=performance.now();document.querySelector('.starter').click();});
+ await page.waitForTimeout(2000);
+ assert.equal(await page.locator('#connectionText').textContent(),"Sekejap, aku jawab…");
+ assert.equal(await page.locator('#chat .typing').count(),1,"Typing feedback stays visible while the local answer waits");
+ await page.waitForFunction(()=>document.querySelector('#connectionText')?.textContent==='Jawapan tersedia Aksara');
+ assert.ok(await page.evaluate(()=>performance.now()-window.__localAnswerStarted)>=3000,"Prepared answer waits at least three seconds");
+ assert.match(await page.locator('#chat').textContent(),/Aku Aksara A\.I\./);
+ // Henti must cancel the local wait and keep the user's message for retry.
+ await page.locator('#input').fill('The Coder Poet');
+ await page.locator('#composer').evaluate(el=>el.requestSubmit());
+ await page.locator('#stopBtn').click();
+ await page.waitForFunction(()=>document.querySelector('#connectionText')?.textContent==='Okay, aku stop dulu');
+ assert.equal(await page.locator('#input').inputValue(),'The Coder Poet');
+ await page.evaluate(()=>window.BilikAntaraBridge.fresh());
  // Normal text chat must retain its real face without loading the 2.7 MB GLB,
  // 3D engine or texture decoders before Voice Chat is opened.
  const portrait=await page.locator(".message.ai").first().evaluate(node=>getComputedStyle(node,"::before").backgroundImage);

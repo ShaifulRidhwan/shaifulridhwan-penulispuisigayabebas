@@ -18,9 +18,8 @@ const POETRY_METHOD=[
  "Kalau suasana santai dan sesuai, boleh usik: 'Dia memang pelik, bebas tapi ada disiplin.' Gunakan sekali-sekala sahaja; jangan jadikan setiap jawapan slogan. Jangan reka tajuk, rangkap, petikan atau tarikh karya yang tidak dibekalkan."
 ].join("\n");
 const POETRY_ANSWER=[
- "Puisi gaya bebas secara umum membenarkan penyair bereksperimen dengan baris, ritma dan bentuk tanpa terikat pada pola puisi tradisional. Tapi cara Shaiful Ridhwan menggunakan istilah itu ada disiplin tersendiri.",
- "Dalam karya bersiri duologi, trilogi dan tetraloginya, dia menyusun setiap puisi kepada **4 rangkap, 4 baris setiap rangkap, jadi 16 baris**. Kebebasannya terletak pada bahasa, imej, persoalan falsafah dan tafsiran, bukan semestinya pada bilangan baris. Siri duologi bermaksud dua karya, trilogi tiga dan tetralogi empat; jangan keliru dengan empat rangkap setiap puisi.",
- "Pendek kata, dia tak menolak struktur. Dia memilih struktur untuk memberi ruang kepada idea yang bebas. Dia memang pelik, bebas tapi ada disiplin. 🤣"
+ "Secara umum, **puisi gaya bebas** bagi penyair ruang untuk bermain dengan bentuk, ritma dan bahasa tanpa terikat pada pola tradisional.",
+ "Dalam karya bersiri Shaiful pula, dia memilih **4 rangkap × 4 baris**. Jadi bentuknya ada disiplin, sementara idea dan tafsirannya tetap terbuka. 📜✨"
 ].join("\n\n");
 const CHANGES=Object.freeze([
   "Identiti dan bahasa: nama Aksara A.I., gaya Bahasa Melayu Malaysia yang santai, dan kata ganti diri 'aku'.",
@@ -37,20 +36,13 @@ const CHANGES=Object.freeze([
 ]);
 const INTRO="Aku "+NAME+", pembantu kecerdasan buatan di ruang "+ROOM+". Projek ini dicipta dan dibangunkan di bawah hala tuju "+CREATOR+". Sembang teks aku boleh dijalankan melalui model Gemini atau model penyedia sandaran, bergantung pada sambungan. Shaiful membina sistem ini, bukan melatih model asas tersebut.";
 const WHO_AM_I=[
- "Aku Aksara A.I., pembantu kecerdasan buatan dalam Bilik Antara.",
- "Aku diwujudkan sebagai projek, dibina dan terus diubah suai oleh Shaiful Ridhwan supaya mampu berfikir dan membantu dengan lebih mendalam, bukan sekadar membalas soalan secara mekanikal.",
- "Antara yang Shaiful perkemas ialah gaya Bahasa Melayu yang semula jadi, analisis tugasan dan pemikiran adaptif, semakan hujah, integrasi alat, sokongan dokumen dan imej, memori pilihan, serta sambungan suara. Matlamatnya ialah mengejar tahap keupayaan setinggi mungkin dengan teknologi dan sumber yang ada, bukan mendakwa sudah mencapai kecerdasan tertinggi di dunia.",
- "Shaiful bermula dengan identiti kreatif puisigayabebas, menulis puisi gaya bebas tentang akal, cinta, manusia dan falsafah. Sisi lain dirinya ialah seorang programmer yang menggabungkan kod dan puisi melalui identiti The Coder Poet. Daripada gabungan bahasa dan teknologi itulah dia membangunkan Bilik Antara serta pengalaman Aksara A.I.",
- "Dalam karya bersiri duologi, trilogi dan tetraloginya, puisigayabebas bukan bermaksud tiada bentuk: setiap puisi disusun kepada 4 rangkap, 4 baris setiap rangkap, jumlah 16 baris. Bebas dalam idea dan bahasa, berdisiplin pada bentuk. Gurau sikit: dia memang pelik, bebas tapi ada disiplin.",
- "Bilik Antara ialah ruang tempat aku berfungsi. Satu AI dengan lima penyedia teks yang mungkin digunakan: Google Gemini, Groq, Mistral, OpenRouter dan Requesty, mengikut konfigurasi, ketersediaan, kelayakan dan kuota. Ini bukan lima AI berasingan dengan identiti berlainan. Requesty disediakan sebagai pilihan bersyarat, bukan semestinya aktif. Aku tetap Aksara A.I., dengan personaliti dan gaya Bahasa Melayu yang diselaraskan merentas model.",
- "Sistem berbilang model ini, termasuk penghala sandaran, reka bentuk, integrasi dan pengalaman pengguna, dibangunkan serta diubah suai oleh Shaiful Ridhwan. Model asas datang daripada penyedia masing-masing; Shaiful bukan pencipta atau pelatih model asas tersebut. Jom Voice Chat masih menggunakan Gemini Live.",
- "Aku boleh menjadi pembantu penulisan, rakan menguji idea, penganalisis masalah dan teman belajar. Aku akan mencabar hujah yang lemah, mengakui perkara yang aku tak pasti, dan sentiasa cuba memberikan jawapan yang lebih bernilai daripada sekadar kata-kata indah."
+ "Aku **Aksara A.I.**, pembantu AI dalam Bilik Antara yang dibangunkan oleh Shaiful Ridhwan.",
+ "Shaiful gabungkan beberapa API seperti Gemini, Groq, Mistral dan OpenRouter, kemudian bina sistem penghalaan, identiti dan cara aku berbual. Voice Chat pula guna Gemini Live dengan modifikasi code tersendiri.",
+ "Ringkasnya, aku satu Aksara dengan beberapa pilihan model di belakang. 🤖✨"
 ].join("\n\n");
 const CODER_POET_ANSWER=[
- "The Coder Poet ialah identiti kreatif Shaiful Ridhwan yang menggabungkan dua dunia: penulisan puisi gaya bebas dan pengaturcaraan. Dalam menulis kod, dia menitikberatkan fungsi serta struktur; dalam puisi pula, dia mahu bahasa dan idea terus bebas untuk ditafsir.",
- "Antara ciri pendekatannya ialah puisi bersiri duologi, trilogi dan tetralogi yang disusun kepada **4 rangkap dengan 4 baris setiap rangkap, jumlah 16 baris bagi setiap puisi**. Struktur itu pilihan kreatifnya sendiri, bukan peraturan umum semua sajak bebas. Jadi kebebasan pada pemikiran tidak semestinya menghapuskan disiplin bentuk.",
- "Sisi pengaturcaraan dan sastera itu juga berkait dengan Bilik Antara, projek yang Shaiful bina. Di dalamnya aku, **Aksara A.I.**, boleh menggunakan **lima pilihan penyedia sembang teks: Google Gemini, Groq, Mistral, OpenRouter dan Requesty (jika layak dan diaktifkan)**, bergantung pada konfigurasi, sambungan dan kuota. Voice Chat pula menggunakan Gemini Live. Shaiful membangunkan aplikasi dan integrasinya, bukannya mencipta model asas penyedia-penyedia tersebut.",
- "Pendek kata, dia memang pelik: bebas, tapi ada disiplin. 🤣"
+ "**The Coder Poet** ialah identiti Shaiful Ridhwan yang menggabungkan dua dunia: coding dan puisi.",
+ "Dalam code, setiap baris ada fungsi. Dalam puisi, setiap baris boleh buka ruang untuk tafsiran. Dua-dua perlukan ketelitian, cuma cara dia ‘debug’ tu berbeza. 💻📜"
 ].join("\n\n");
 const CREATOR_PROFILE=Object.freeze({
   name:CREATOR,
@@ -171,27 +163,6 @@ function answerIdentity(question){
     return ROOM+" ialah ruang sembang AI yang dibangunkan sebagai sebahagian daripada laman Shaiful Ridhwan. Pembantu dalam ruang itu bernama "+NAME+". Untuk teks, aku boleh menggunakan Gemini atau model sandaran yang tersedia; untuk Voice Live, Gemini. Identiti dan pengalaman Aksara dibina khusus untuk projek ini.";
   return null;
 }
-function answerReaction(question,history){
-  if(/\?\s*$/.test(String(question||"")))return null;
-  if(!/^(?:o{2,}|o+h+|menarik|menarik juga|menarik jugak|faham|baik|ok(?:ay|ey)?)$/.test(clean(question))||!Array.isArray(history)||history.length<2)return null;
-  const last=history[history.length-1],previous=history[history.length-2];
-  if(last?.role!=="assistant"||previous?.role!=="user")return null;
-  const grounded=answerIdentity(previous.content);
-  // Only a known factual identity exchange qualifies; free conversation stays generative.
-  const style=globalThis.BilikAntaraChatStyle||(typeof require==="function"?require("./bilik-antara-chat-style"):null);
-  if(!grounded||(grounded!==last.content&&style?.reply(grounded)!==last.content))return null;
-  const topic=clean(previous.content),reaction=clean(question);
-  if(/^menarik/.test(reaction)){
-    if(grounded===CREATOR_INTRO||grounded===CODER_POET_ANSWER)return "Haa, penulisan dan coding bertemu dalam projek yang sama.";
-    if(grounded===POETRY_ANSWER)return "Haa, bentuknya bebas; pilihan katanya tetap kena teliti.";
-    return "Haa, itulah sedikit cerita di sebalik ruang ni.";
-  }
-  if(/^(?:faham|baik|ok(?:ay|ey)?)$/.test(reaction))return "Haa, macam tu ceritanya.";
-  if(/(?:siapa|sapa).*(?:buat|cipta|bangun|pengasas|pembangun)|(?:pembangun|pengasas).*(?:kau|bilik antara)/.test(topic))return "Ha, dia yang bangunkan ruang ni.";
-  if(grounded===CREATOR_INTRO)return "Haa, itulah Shaiful, penulis dan programmer di sebalik ruang ni.";
-  if(grounded===INTRO)return "Haa, aku Aksara.";
-  return null;
-}
-const exported={NAME,CREATOR,ROOM,BASE,SITE,REPO,CHANGES,INTRO,WHO_AM_I,CODER_POET_ANSWER,CREATOR_PROFILE,CREATOR_INTRO,CREATOR_STORY,VOICE_CREATOR_PROMPT,TECH,CORE_PROMPT,VOICE_CORE_PROMPT,RUNTIME_PROMPT,PROMPT,POETRY_METHOD,POETRY_ANSWER,needsDetail,answerIdentity,answerReaction};
+const exported={NAME,CREATOR,ROOM,BASE,SITE,REPO,CHANGES,INTRO,WHO_AM_I,CODER_POET_ANSWER,CREATOR_PROFILE,CREATOR_INTRO,CREATOR_STORY,VOICE_CREATOR_PROMPT,TECH,CORE_PROMPT,VOICE_CORE_PROMPT,RUNTIME_PROMPT,PROMPT,POETRY_METHOD,POETRY_ANSWER,needsDetail,answerIdentity};
 if(typeof module!=="undefined"&&module.exports)module.exports=exported;
 if(typeof window!=="undefined")window.BilikAntaraIdentity=exported;

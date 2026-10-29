@@ -44,14 +44,13 @@ test("Gemini provenance questions answer Google directly without confusing Aksar
  }
  assert.doesNotMatch(ID.answerIdentity("Siapa cipta kau?"),/^Gemini dibangunkan oleh Google/);
 });
-test("Siapa Aku answers project origin, enhancements and base-model provenance",()=>{
+test("Siapa Aku gives a concise project introduction and describes its models",()=>{
  const reply=ID.answerIdentity("Siapa Aku");
  assert.match(reply,/Aksara A\.I\./);
- assert.match(reply,/dibina dan terus diubah suai oleh Shaiful Ridhwan/);
- assert.match(reply,/keupayaan setinggi mungkin/);
- assert.match(reply,/Google Gemini/);
- assert.match(reply,/bukan mendakwa sudah mencapai kecerdasan tertinggi di dunia/);
- assert.doesNotMatch(reply,/^Aku (?:sudah|telah) mencapai kecerdasan tertinggi/m);
+ assert.match(reply,/dibangunkan oleh Shaiful Ridhwan/);
+ assert.match(reply,/Gemini, Groq, Mistral dan OpenRouter/);
+ assert.match(reply,/Voice Chat.*Gemini Live/);
+ assert.ok(reply.length<500,"First answer leaves detail for a follow-up");
  assert.equal(ID.answerIdentity("siapa aku?"),reply);
 });
 test("Verified Shaiful Ridhwan biography is rich, natural and attribution-safe",()=>{

@@ -695,7 +695,7 @@ async function ask(payload,signal,onDelta){
  // Known project facts can be answered immediately by the already-loaded identity module.
  // Attachments always go through the server, even when their question mentions identity.
  if(typeof window!=="undefined"&&!payload.documentText&&(!payload.media||Array.isArray(payload.media)&&!payload.media.length)){
-  const local=window.BilikAntaraIdentity?.answerIdentity(payload.question)||window.BilikAntaraIdentity?.answerReaction?.(payload.question,payload.history);
+  const local=window.BilikAntaraIdentity?.answerIdentity(payload.question);
   if(local)return {reply:local,model:"project-identity",provider:"local",mode:"local",sources:[],durMs:0};
  }
  const retryAfter=res=>{
@@ -833,6 +833,9 @@ async function submit(event){
     typing.remove();partialNode?.remove();partial="";partialNode=null;partialBubble=null;firstTokenMs=null;
     typing=showTyping();status("connecting","Connecting balik · "+attempt+"/2","");
    });
+  // Locally prepared answers still show the typing state for at least three seconds.
+  // The wait shares the stop signal; ordinary generated replies are never delayed.
+  if(data.model==="project-identity")await reconnectPause(Math.max(0,3000-(performance.now()-startedAt)),ctrl.signal);
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
   data.reply=window.BilikAntaraChatStyle.reply(data.reply);
   cancelPartialFrame();
@@ -917,9 +920,9 @@ window.BilikAntaraBridge={
 restore();renderIdeas();renderHistory();update();probe();
 })();
 </script>
-<script src="bilik-antara-identity.js?v=24" defer></script>
+<script src="bilik-antara-identity.js?v=25" defer></script>
 <script src="bilik-antara-suite.js?v=11" defer></script>
-<script src="bilik-antara-brain.js?v=10" defer></script>
+<script src="bilik-antara-brain.js?v=11" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-dialek.js?v=2" defer></script>
 <script src="bilik-antara-voice.js?v=38" defer></script>
