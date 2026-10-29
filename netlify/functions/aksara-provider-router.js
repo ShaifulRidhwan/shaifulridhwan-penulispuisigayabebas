@@ -34,7 +34,7 @@ const PROVIDERS=[
  {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
   url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"}
 ];
-const OPENROUTER_CHAT_MODELS=["google/gemma-4-31b-it:free","nvidia/nemotron-3.5-lightning:free","poolside/laguna-s-2.1:free"];
+// OpenRouter chooses from its current free chat-model pool; no stale hardcoded model list.
 const classifierModel=model=>/(?:guard|moderation|classifier|safety)/i.test(String(model||""));
 function classifierReply(text){
  const value=String(text||"").replace(/\*\*/g,"").trim();
@@ -43,7 +43,7 @@ function classifierReply(text){
 function validateChatReply(text,model){
  if(classifierModel(model)||classifierReply(text))throw Object.assign(new Error("Provider returned classification metadata instead of a chat answer"),{status:502});
 }
-function openRouterBody(body,effort="low"){delete body.model;body.models=OPENROUTER_CHAT_MODELS;body.stream=body.stream===true;body.reasoning={effort,exclude:true};return body;}
+function openRouterBody(body,effort="low"){delete body.models;body.model="openrouter/free";body.stream=body.stream===true;body.reasoning={effort,exclude:true};return body;}
 const safeMessage=text=>boundedText(text,60000);
 function configured(){
  if(process.env.AKSARA_FREE_FALLBACKS!=="true")return [];
