@@ -73,3 +73,46 @@
   external_node_modules = ["@netlify/blobs"]
 [functions."studio-enhance"]
   external_node_modules = ["@netlify/blobs"]
+
+# Cache large static artwork and versioned Studio assets across repeat visits.
+# Keep HTML documents uncached so future deployments appear promptly.
+[[headers]]
+  for = "/bilik-antara-bg-mobile.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/bilik-antara-bg-desktop.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/studio-antara.css"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/studio-antara-config.js"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/studio-antara-history.js"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/studio-antara-cooldown.js"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/studio-antara-cloud.js"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
+[[headers]]
+  for = "/studio-antara-ui.js"
+  [headers.values]
+    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+
