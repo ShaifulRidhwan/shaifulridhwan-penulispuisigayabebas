@@ -111,7 +111,8 @@ test("Golden light and shadow collide before spawning rim sparks, never by arbit
  assert.match(observer,/root\.ResizeObserver/);
  assert.match(html,/src="bilik-antara-rim-sparks\.js\?v=\d+" defer/);
  assert.match(html,/class="frame-orbit__impact" aria-hidden="true"/);
- assert.equal((html.match(/<i><\/i>/g)||[]).length,8,"Eight new impact flecks");
+ const impactMarkup=html.match(/<span class="frame-orbit__impact" aria-hidden="true">([\s\S]*?)<\/span>/)?.[1]||"";
+ assert.equal((impactMarkup.match(/<i><\/i>/g)||[]).length,8,"Eight new impact flecks");
  for(const effect of ["aksaraImpactFlash","aksaraImpactRing","aksaraImpactParticle"]){
   assert.match(css,new RegExp("@keyframes "+effect));
  }
