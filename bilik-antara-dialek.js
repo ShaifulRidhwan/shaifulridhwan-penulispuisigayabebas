@@ -32,7 +32,7 @@ function detectRequest(raw){
   for(const m of text.matchAll(f.rx)){
    const index=m.index+m[0].length-f.word.length;
    const prefix=text.slice(Math.max(0,index-50),index).trim();
-   const negated=f.d.id!=="standard"&&/(?:^|\s)(?:jangan|bukan|tak nak|tak mahu|tidak mahu|tanpa)(?:\s+(?:cakap|guna|pakai|buat|loghat|dialek)){0,2}$/.test(prefix);
+   const negated=f.d.id!=="standard"&&/(?:^|\s)(?:jangan|bukan|tak nak|tak mahu|tidak mahu|tanpa)(?:\s+(?:cakap|guna|pakai|buat|loghat|dialek|campur|campurkan|gabung|gabungkan|bawa|selit|selitkan)){0,2}$/.test(prefix);
    matches.push({d:f.d,index,length:f.word.length,negated});
   }
  }
