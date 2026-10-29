@@ -174,6 +174,7 @@ async function closeLive(reason){
   if(mediaStream){mediaStream.getTracks().forEach(t=>t.stop());mediaStream=null;}
   const closingMic=micContext,closingPlayback=playContext;
   micContext=null;playContext=null;playGain=null;
+  delete window.AksaraVoiceAudio;
   if(closingMic)try{await closingMic.close();}catch(e){}
   if(closingPlayback)try{await closingPlayback.close();}catch(e){}
   // Preserve completed voice dialogue in the shared in-page conversation.
@@ -213,6 +214,7 @@ function appendTranscript(role,segment){
   else if(!lastTurn.text.endsWith(text))lastTurn.text=(lastTurn.text+" "+text).trim();
   lastTurn.text=lastTurn.text.slice(-2800);
   lastTurn.words.textContent=lastTurn.text;
+  if(role==="assistant"&&typeof CustomEvent==="function")window.dispatchEvent(new CustomEvent("ba:voice-avatar-text",{detail:{text:lastTurn.text}}));
   while(transcript.children.length>36)transcript.firstElementChild.remove();
   transcript.scrollTop=transcript.scrollHeight;
 }
@@ -245,7 +247,7 @@ function drainAudioQueue(){
       const buffer=decodePcm(item.data,item.rate);
       if(!buffer)continue;
       const node=playContext.createBufferSource();
-      node.buffer=buffer;node.connect(playGain||playContext.destination);
+      node.buffer=buffer;node.connect(playContext.__aksaraAnalyser||playGain||playContext.destination);
       node.onended=()=>{
         playSources.delete(node);
         try{node.disconnect();}catch(_){}
@@ -446,6 +448,12 @@ async function startLive(){
     micContext=new Audio({latencyHint:"interactive"});
     playContext=new Audio({latencyHint:"interactive"});
     playGain=playContext.createGain();playGain.gain.value=voiceVolume;playGain.connect(playContext.destination);
+    try{
+      if(typeof playContext.createAnalyser==="function"){
+        const analyser=playContext.createAnalyser();analyser.fftSize=512;analyser.smoothingTimeConstant=.65;analyser.connect(playGain);
+        playContext.__aksaraAnalyser=analyser;window.AksaraVoiceAudio={analyser,context:playContext};
+      }
+    }catch(_){delete window.AksaraVoiceAudio;}
     await Promise.all([
       micContext.resume(),playContext.resume(),
       micContext.audioWorklet.addModule("./bilik-antara-pcm-worklet.js?v=2")

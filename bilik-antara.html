@@ -922,7 +922,7 @@ restore();renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-brain.js?v=12" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-dialek.js?v=2" defer></script>
-<script src="bilik-antara-voice.js?v=38" defer></script>
+<script src="bilik-antara-voice.js?v=39" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
 <script>
 /* Retain the exact live 3D face, but initialize its renderer only in Voice Chat. */
@@ -931,7 +931,7 @@ restore();renderIdeas();renderHistory();update();probe();
  document.getElementById("voiceLive")?.addEventListener("click",()=>{
   if(loading||loaded)return;
   loading=true;
-  import("./bilik-antara-avatar.js?v=11").then(()=>{loaded=true;}).catch(error=>{
+  import("./bilik-antara-avatar.js?v=12").then(()=>{loaded=true;}).catch(error=>{
    loading=false;console.warn("Voice avatar unavailable",error);
   });
  });

@@ -483,6 +483,7 @@ function voiceHarness(options={}){
   createBuffer(_channels,frames,rate){return{duration:frames/rate,getChannelData:()=>new Float32Array(frames)}}
   createBufferSource(){const source={connect(){},disconnect(){},start(){},stop(){this.stopped=true}};audioSources.push(source);return source;}
   createMediaStreamSource(){return{connect(){},disconnect(){}}}
+  createAnalyser(){return{fftSize:512,connect(){},disconnect(){},getFloatTimeDomainData(data){data.fill(0)}}}
   createGain(){return{gain:{value:1},connect(){},disconnect(){}}}
  }
  class Worklet{constructor(){this.port={onmessage:null}}connect(){}disconnect(){}}
@@ -686,9 +687,33 @@ test("The true 3D voice avatar only skips invisible frame drawing while the voic
  const avatar=fs.readFileSync("bilik-antara-avatar.js","utf8");
  const html=fs.readFileSync("bilik-antara.html","utf8");
  const css=fs.readFileSync("bilik-antara.css","utf8");
- assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=11"\)/);
+ assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=12"\)/);
  assert.match(avatar,/panel\.classList\.contains\("is-minimized"\)\|\|document\.hidden/);
  assert.match(avatar,/renderer\.render\(scene,camera\)/);
  assert.match(avatar,/weights\(\["jawOpen"\],jawMotion\)/);
  assert.match(css,/\.voice-panel\.is-minimized \.voice-avatar-stage\{display:none!important\}/);
+});
+
+test("Avatar synchronizes facial meshes, responds to audio and uses conservative transcript cues",()=>{
+ const avatar=fs.readFileSync("bilik-antara-avatar.js","utf8");
+ const start=avatar.indexOf("function indexMorphTargets(){"),end=avatar.indexOf("function stop(){",start);
+ assert.ok(start>=0&&end>start);
+ const make=new Function(`
+  const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+  let morphIndex=null,audioArray=null,audioSpectrum=null,audioAnalyser=null,mouthRound=0,emotion="neutral",emotionUntil=0;
+  const meshes=[0,1,2].map(()=>({morphTargetDictionary:{jawOpen:0},morphTargetInfluences:[0]}));
+  const root={traverse(fn){meshes.forEach(fn)}};
+  const analyser={fftSize:4,getFloatTimeDomainData(a){a.fill(.04)}};
+  const window={AksaraVoiceAudio:{analyser},addEventListener(){}};
+  ${avatar.slice(start,end)}
+  indexMorphTargets();weights(["jawOpen"],.2);
+  return {meshes,level:audioLevel(),emotionFor};
+ `);
+ const {meshes,level,emotionFor}=make();
+ assert.deepEqual(meshes.map(x=>x.morphTargetInfluences[0]),[.2,.2,.2]);
+ assert.ok(level>.3&&level<.33);
+ assert.equal(emotionFor("mwehehe"),"laugh");
+ assert.equal(emotionFor("air mata"),"cry");
+ assert.equal(emotionFor("aku takziah"),"sad");
+ assert.equal(emotionFor("cerita tentang teknologi"),"neutral");
 });
