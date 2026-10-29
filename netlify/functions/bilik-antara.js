@@ -61,6 +61,12 @@ function headers(){
     "Access-Control-Allow-Headers":"Content-Type","Access-Control-Allow-Methods":"POST, OPTIONS",
     "Vary":"Origin","Cache-Control":"no-store","Content-Type":"application/json; charset=utf-8"};
 }
+// Only the recorded-voice path uses this. Text chat keeps its two-emoji policy.
+function speechPlain(value){
+ return String(value||"")
+  .replace(/[\p{Extended_Pictographic}\p{Regional_Indicator}\p{Emoji_Modifier}\uFE0F\u200D\u20E3]/gu,"")
+  .replace(/ {2,}/g," ").trim();
+}
 function result(code,data,H){
   if(code===200&&typeof data.reply==="string"&&data.mode!=="recorded-voice")data={...data,reply:ChatStyle.reply(data.reply)};
   return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-9"})};
@@ -235,8 +241,8 @@ exports.handler=async event=>{
   if(payload.voiceFallback===true){
     const audioOnly=media.length===1&&/^audio\/(?:webm|ogg|mp4|mpeg|wav)$/.test(media[0].mimeType);
     if(!audioOnly)return result(400,{error:"Mod suara memerlukan satu rakaman audio yang sah."},H);
-    const voiceSystem=Brain.CORE+"\n"+Brain.VOICE_GUIDANCE+"\n"+Identity.CORE_PROMPT+"\nJawab rakaman audio dalam Bahasa Melayu Malaysia santai dengan kata ganti aku. Kenal pasti niat, nada dan konteks sebelum menjawab; tegur hujah secara tegas apabila sesuai tanpa menghina orang. Jika audio tidak jelas, jangan reka kandungan dan minta ulang sekali sahaja.";
-    const voiceContents=[...history.slice(-10).map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content.slice(0,1200)}]})),{role:"user",parts:[
+    const voiceSystem=Brain.CORE+"\n"+Brain.VOICE_GUIDANCE+"\n"+(Identity.VOICE_CORE_PROMPT||Identity.CORE_PROMPT)+"\nMOD SUARA: Jangan hasilkan atau sebut emoji, wink, nama emoji atau simbol visual. Gunakan Melayu Malaysia santai atau loghat negeri apabila pengguna meminta atau bertutur dalam loghat itu dengan jelas. Jawab rakaman audio dalam Bahasa Melayu Malaysia dengan kata ganti aku. Kenal pasti niat, nada dan konteks sebelum menjawab; tegur hujah secara tegas apabila sesuai tanpa menghina orang. Jika audio tidak jelas, jangan reka kandungan dan minta ulang sekali sahaja.";
+    const voiceContents=[...history.slice(-10).map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:speechPlain(m.content).slice(0,1200)}]})),{role:"user",parts:[
       {text:"Dengar soalan dalam audio dan jawab. Jangan terangkan proses transkripsi."},
       {inlineData:{mimeType:media[0].mimeType,data:media[0].data}}
     ]}];
@@ -245,7 +251,7 @@ exports.handler=async event=>{
       try{
         const voiceData=await callGemini({apiKey,model:baseModel,system:voiceSystem,
           contents:voiceContents,tools:[],thinkingLevel:"low",maxTokens:950,timeoutMs:10000});
-        const replyText=parseReply(modelText(voiceData?.candidates?.[0]));
+        const replyText=speechPlain(parseReply(modelText(voiceData?.candidates?.[0])));
         if(!replyText)return result(502,{error:"AI tidak dapat memahami audio. Cuba rakam dengan lebih jelas."},H);
         return result(200,{reply:replyText,model:baseModel,mode:"recorded-voice",
           sources:[],reviewApplied:false,durMs:Date.now()-started},H);
