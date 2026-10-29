@@ -2,15 +2,15 @@
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{margin:0;min-width:320px;min-height:100dvh;background:#080b13;color:var(--text);font:15px/1.6 "DM Sans",system-ui,sans-serif;overflow-x:hidden}
-body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;background:radial-gradient(ellipse 62% 48% at 8% 12%,rgba(210,150,78,.12),transparent 72%),radial-gradient(ellipse 65% 48% at 98% 76%,rgba(53,108,155,.17),transparent 70%),linear-gradient(155deg,#080b13,#11131d 50%,#080b13)}
-body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.2;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:64px 64px;mask-image:linear-gradient(to bottom,transparent,black 30%,transparent 90%)}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 62% 48% at 8% 12%,rgba(210,150,78,.12),transparent 72%),radial-gradient(ellipse 65% 48% at 98% 76%,rgba(53,108,155,.17),transparent 70%),linear-gradient(155deg,#080b13,#11131d 50%,#080b13)}
+body::after{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.2;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:64px 64px;mask-image:linear-gradient(to bottom,transparent,black 30%,transparent 90%)}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer;color:inherit}
 button:disabled{cursor:not-allowed;opacity:.5}
 button,a,textarea,input,select{-webkit-tap-highlight-color:transparent}
 button:focus-visible,a:focus-visible,textarea:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
 [hidden]{display:none!important}
-.studio-shell{width:min(1200px,100%);padding:0 clamp(16px,3vw,42px);margin-inline:auto}
+.studio-shell{position:relative;z-index:1;width:min(1200px,100%);padding:0 clamp(16px,3vw,42px);margin-inline:auto}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:76px;border-bottom:1px solid var(--line)}
 .topbar a{text-decoration:none;color:#d4ccc0;letter-spacing:.095em;font-size:11px;font-weight:700;white-space:nowrap}
 .back-link span{font-size:18px;vertical-align:-1px;margin-right:5px}
