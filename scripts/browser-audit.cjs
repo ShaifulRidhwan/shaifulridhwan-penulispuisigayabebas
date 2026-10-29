@@ -32,6 +32,18 @@ async function home(page,device){
  await page.locator(".work").first().waitFor({timeout:15000});
  assert.equal(await page.locator(".work").count(),6,"Six editorial selections must appear");
  await verifyLocalLinks(page);
+ await page.waitForFunction(()=>{
+  const font=document.querySelector('link[href*="family=Syne"]');
+  return font?.media==="all"&&!!font.sheet;
+ },null,{timeout:12000});
+ const homeStyles=await page.evaluate(()=>({
+  heading:getComputedStyle(document.querySelector(".hero-title")).fontFamily,
+  body:getComputedStyle(document.body).fontFamily,
+  fonts:document.querySelectorAll('link[rel="preconnect"][href="https://fonts.googleapis.com"]').length
+ }));
+ assert.match(homeStyles.heading,/Syne/,"Original Syne hero typeface must remain");
+ assert.match(homeStyles.body,/Archivo/,"Original Archivo body typeface must remain");
+ assert.equal(homeStyles.fonts,1,"Google Fonts preconnect must not be duplicated");
  await snapshot(page,device+"-home-initial");
  await page.locator('[data-cat="all"]').click();
  assert.equal(await page.locator(".work").count(),33,"All poems accessible");
@@ -138,6 +150,7 @@ async function novel(page,device){
  const reader=page.frameLocator("#novelFrame");
  await reader.locator("#backToCover").waitFor({state:"attached",timeout:30000});
  assert.equal(await reader.locator("#fontUp").count(),1,"Reader must preserve adjustable font size");
+ assert.equal(await reader.locator('link[href*="family=Fraunces"]').count(),1,"Paginated reader must retain its original blocking font CSS");
  assert.equal(await reader.locator("#nextBtn").count(),1,"Reader must preserve page-turn navigation");
  await snapshot(page,device+"-novel-open");
  await reader.locator("#tocBtn").click();
