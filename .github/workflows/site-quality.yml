@@ -55,5 +55,8 @@ jobs:
         run: |
           node --check gaya-bebas.js
           node --check karya-data.js
+          node --check studio-antara-cloud.js
+          node --check netlify/functions/studio-image.js
+          node --test scripts/test-studio-antara.cjs
           node --test scripts/test-site-quality.cjs
           node --test scripts/test-site-metadata.cjs
