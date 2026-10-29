@@ -194,9 +194,10 @@ exports.handler=async event=>{
     const [alternatives,freeModels]=await Promise.all([alternativeChecks,freeModelsCheck]);
     const providers=[google,...alternatives];
     const fastest=providers.filter(p=>p.status==="online").sort((a,b)=>(a.latencyMs||0)-(b.latencyMs||0))[0];
+    const ready=providers.find(p=>p.status==="ready");
     const realSuccess=Date.now()-lastTextSuccessAt<90000?providers.find(p=>p.id===lastTextProvider&&p.status==="online"):null;
     // A successful conversation outranks an artificial one-word speed test.
-    return result(200,{ok:true,providers,freeModels,preferredProvider:(realSuccess||fastest)?.id||"",checkedAt:Date.now(),someOnline:!!fastest,configuredCount:configured.length+(apiKey?1:0)},H);
+    return result(200,{ok:true,providers,freeModels,preferredProvider:(realSuccess||fastest||ready)?.id||"",checkedAt:Date.now(),someOnline:!!fastest,someReady:!!ready,configuredCount:configured.length+(apiKey?1:0)},H);
   }
 
   const ip=(event.headers&&(event.headers["x-nf-client-connection-ip"]||"").split(",")[0])||"unknown";
@@ -317,7 +318,15 @@ exports.handler=async event=>{
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
     works:!!poem,multimodal:media.length>0,model,review:intent.review});
   const privateContext=!!(documentText||userMemory);
-  const textOnly=media.length===0&&!tiktokHandle&&(!privateContext||payload.contextFallback===true)&&!(intent.sensitive||intent.search||intent.hasLink);
+  // Opt-in image fallback: other media stay on Gemini. Never silently send
+  // attached images or private session notes to an extra provider.
+  const imageOnly=payload.mediaFallback===true&&media.length>0&&media.length<=3&&
+    media.every(x=>["image/jpeg","image/png","image/webp"].includes(x.mimeType))&&
+    Router.configured().some(p=>p.id==="openrouter")&&!tiktokHandle&&
+    (!privateContext||payload.contextFallback===true)&&!(intent.sensitive||intent.hasLink);
+  // Text research can use the existing public references when Gemini is down.
+  // Never claim a live web/URL tool ran on the fallback route.
+  const textOnly=media.length===0&&!tiktokHandle&&(!privateContext||payload.contextFallback===true)&&!(intent.sensitive||intent.hasLink);
   let providerFailures=[],alternativeTried=false,quotaRecoveryTried=false,providerRetrySeconds=3;
   const preparationMs=Date.now()-started;
   const timings=()=>({preparationMs,firstTextMs,systemChars:system.length,historyChars:history.reduce((n,m)=>n+m.content.length,0)});
@@ -325,7 +334,7 @@ exports.handler=async event=>{
       alternativeTried=true;
       let alternative;
       try{
-        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:PERSONALITY,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...options});
+        alternative=await Router.complete({system,history,question:question+doc+work+sessionNotes+references,maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:PERSONALITY,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
@@ -338,12 +347,12 @@ exports.handler=async event=>{
         lastTextProvider=alternative.provider;lastTextSuccessAt=Date.now();
         log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
         // Off by default, only eligible ordinary text. Never treat another LLM as a verified fact-checker.
-        const check=remaining()>1000?await Router.crossReview({question,reply:alternative.reply,originalProvider:alternative.provider,task:intent.task,timeoutMs:Math.min(3000,remaining())}):null;
+        const check=!imageOnly&&remaining()>1000?await Router.crossReview({question,reply:alternative.reply,originalProvider:alternative.provider,task:intent.task,timeoutMs:Math.min(3000,remaining())}):null;
         return result(200,{
           mode:"fallback",aiMode:"automatic",model:alternative.model,provider:alternative.provider,
           reply:alternative.reply,sources:publicSources.map(({title,url})=>({title,url})),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[],toolsOffered:[],
-          disclaimer:"Model sandaran: "+({groq:"Groq",mistral:"Mistral",openrouter:"OpenRouter",gemini:"Gemini"}[alternative.provider]||alternative.provider),
+          disclaimer:"Model sandaran: "+({groq:"Groq",mistral:"Mistral",openrouter:"OpenRouter",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.search?" · Carian web langsung tidak tersedia pada model sandaran; maklumat terkini belum disahkan.":""),
           usage:alternative.usage,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures}
         },H);
       }
@@ -418,12 +427,12 @@ exports.handler=async event=>{
     providerFailures.push({provider:"gemini",status:error.status||"unavailable",reason:error.cooldownKnown?"quota_cooldown":error.name==="AbortError"?"timeout":"upstream",...(error.quotaKind?{quotaKind:error.quotaKind,quotaScope:error.quotaScope}:{})});
     googleCooldown(model,error);
     const transient=[400,401,403,404,429,500,502,503,504].includes(error.status)||error.name==="AbortError"||error.name==="TypeError"||(!error.status&&error.name==="Error");
-    if(transient&&textOnly&&Router.enabled()&&!alternativeTried){
+    if(transient&&(textOnly||imageOnly)&&Router.enabled()&&!alternativeTried){
       const fallback=await useAlternative();if(fallback)return fallback;
     }
     log("error",{http:error.status||null,name:error.name||"unknown",ms:Date.now()-started});
-    if(!textOnly&&Router.enabled())return result(error.status===429?429:503,{code:"CAPABILITY_UNAVAILABLE",error:privateContext&&payload.contextFallback!==true?"Model utama belum tersedia. Kau boleh benarkan sandaran memproses memori dan fail teks dalam Privasi & sesi, atau cuba lagi kemudian.":"Model yang menyokong permintaan ini belum tersedia. Sandaran teks tidak boleh menggantikan alat carian, audio, imej atau fungsi khusus ini.",retryAfterSeconds:30},H);
-    if(textOnly&&Router.enabled()&&alternativeTried){
+    if(!textOnly&&!imageOnly&&Router.enabled())return result(error.status===429?429:503,{code:"CAPABILITY_UNAVAILABLE",error:privateContext&&payload.contextFallback!==true?"Model utama belum tersedia. Kau boleh benarkan sandaran memproses memori dan fail teks dalam Privasi & sesi, atau cuba lagi kemudian.":"Model yang menyokong permintaan ini belum tersedia. Sandaran teks tidak boleh menggantikan alat carian, audio, imej atau fungsi khusus ini.",retryAfterSeconds:30},H);
+    if((textOnly||imageOnly)&&Router.enabled()&&alternativeTried){
       const recovered=Router.availability().filter(p=>p.retryAfterSeconds===0&&
         providerFailures.some(f=>f.provider===p.provider&&f.status===429)).map(p=>p.provider);
       if(!quotaRecoveryTried&&recovered.length&&remaining()>2000){
