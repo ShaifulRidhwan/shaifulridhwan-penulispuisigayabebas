@@ -8,8 +8,6 @@ const html=fs.readFileSync("bilik-antara.html","utf8");
 const css=fs.readFileSync("bilik-antara.css","utf8");
 const js=fs.readFileSync("bilik-antara-voice.js","utf8");
 const pcm=fs.readFileSync("bilik-antara-pcm-worklet.js","utf8");
-const fallback=fs.readFileSync("bilik-antara-voice-fallback.js","utf8");
-const voiceFallback=fs.readFileSync("bilik-antara-voice-fallback.js","utf8");
 const brainJs=fs.readFileSync("bilik-antara-brain.js","utf8");
 const identityJs=fs.readFileSync("bilik-antara-identity.js","utf8");
 const identityModule={exports:{}};
@@ -26,18 +24,17 @@ function event(ip,host=origin){
  return {httpMethod:"POST",headers:{origin:host,"x-nf-client-connection-ip":ip},body:"{}"};
 }
 
-test("Legacy recorded-audio UI stays unmounted and never embeds permanent keys",()=>{
+test("Retired recorded-audio UI is absent from source and active live page",()=>{
+ assert.equal(fs.existsSync("bilik-antara-voice-fallback.js"),false);
  assert.doesNotMatch(html,/<script[^>]+src="bilik-antara-voice-fallback/);
  assert.doesNotMatch(html,/id="voiceFallback"/);
- assert.match(voiceFallback,/getUserMedia/);
- assert.match(voiceFallback,/MediaRecorder/);
- assert.doesNotMatch(voiceFallback,/GEMINI_API_KEY|localStorage\.setItem|sessionStorage\.setItem/);
+ assert.doesNotMatch(css,/\.voice-fallback|\.composer-voice|#voiceFallback(Start|Stop|Status)/);
+ assert.doesNotMatch(js,/getElementById\("voiceFallback"\)/);
 });
 test("Regional voice selector is removed, leaving only colloquial Malaysian Malay",()=>{
  assert.doesNotMatch(html,/id="voiceDialect"|voice-dialect-bar|bilik-antara-voice-locale/);
  assert.doesNotMatch(css,/\.voice-dialect-bar/);
  assert.doesNotMatch(js,/dialectChoice|dialectSelect|voiceLocale|voiceDialect/);
- assert.doesNotMatch(fallback,/voiceLocale|voiceDialect|selectedVoiceStyle/);
   assert.match(html,/>Jom Voice Chat<\/button>/);
   assert.match(js,/liveButton\.textContent=liveActive\?"Sedang berbual":"Jom Voice Chat"/);
   assert.match(css,/\.conversation-head #voiceLive::before/);
@@ -56,7 +53,6 @@ test("Short Malay words trigger a natural answer, not five requests to repeat",(
  assert.match(js,/removeItem\("bilik-antara:voice-dialect:v1"\)/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/lapar/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/Jangan meminta ulang/);
- assert.match(fallback,/Perkataan pendek seperti lapar/);
  assert.match(js,/Bahasa Melayu Malaysia santai/);
 });
 test("Long generated speech is buffered and does not cut off after three seconds",()=>{
@@ -160,7 +156,6 @@ test("Shaiful creator history, deeper reasoning and empathic voice share grounde
  assert.match(js,/interactionStatus/);
  assert.match(js,/modelTurnFinished=true/);
  assert.match(js,/reasoningActive=false/);
- assert.match(fallback,/projectIdentity\?\.VOICE_CREATOR_PROMPT\|\|""/);
  assert.match(html,/bilik-antara-brain\.js\?v=\d+/);
  assert.match(html,/bilik-antara-identity\.js\?v=\d+/);
  assert.match(html,/bilik-antara-voice\.js\?v=\d+/);
@@ -394,14 +389,12 @@ test("A 400 audio-configuration rejection can recover using an allowlisted model
   assert.ok(!res.body.includes("fake-permanent-api-key-test"));
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
-test("Voice composer microphone and send share identical 44px and responsive dimensions",()=>{
- assert.match(css,/2026-10-27: Match microphone and send touch targets/);
- assert.match(css,/\.composer #voiceFallbackStart,/);
- assert.match(css,/\.composer #voiceFallbackStop,/);
- assert.match(css,/\.composer #sendBtn/);
+test("Active send button retains responsive 44px, 40px and 38px touch target",()=>{
+ assert.match(css,/\.composer #sendBtn\{/);
  assert.match(css,/width:44px;height:44px/);
  assert.match(css,/width:40px;height:40px/);
  assert.match(css,/width:38px;height:38px/);
+ assert.match(html,/id="voiceDictate"/);
 });
 test("Voice connection has explicit token and websocket watchdogs",()=>{
  assert.match(js,/const tokenTimer=setTimeout\(\(\)=>controller\.abort\(\),26000\)/);
