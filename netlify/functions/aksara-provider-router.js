@@ -185,7 +185,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    cooldown.delete(provider.id);preferredProvider=provider.id;
    // A real answer is stronger evidence than a cached synthetic health probe.
    if(healthCache.value){
-    healthCache.value=healthCache.value.map(x=>x.id===provider.id?{...x,status:"online",latencyMs:Date.now()-attemptStarted,retryAfterSeconds:0}:x);
+    healthCache.value=healthCache.value.map(x=>x.id===provider.id?{...x,status:"online",model:data.model||provider.model,latencyMs:Date.now()-attemptStarted,retryAfterSeconds:0}:x);
     healthCache.time=Date.now();
    }
    const finishReason=String(data?.choices?.[0]?.finish_reason||"");
