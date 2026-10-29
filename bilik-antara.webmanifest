@@ -1,0 +1,32 @@
+{
+  "id": "/bilik-antara.html",
+  "name": "Aksara A.I. | Bilik Antara",
+  "short_name": "Aksara A.I.",
+  "description": "Aksara A.I. di Bilik Antara, pembantu AI Bahasa Melayu Malaysia oleh Shaiful Ridhwan.",
+  "lang": "ms",
+  "start_url": "/bilik-antara.html",
+  "scope": "/",
+  "display": "browser",
+  "background_color": "#070911",
+  "theme_color": "#070911",
+  "icons": [
+    {
+      "src": "/favicon-aksara-ai-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-aksara-ai-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon-aksara-ai.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
