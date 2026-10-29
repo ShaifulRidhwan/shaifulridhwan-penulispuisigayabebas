@@ -8,8 +8,8 @@ const src=fs.readFileSync("netlify/functions/aksara-provider-router.js","utf8");
 function makeRouter({review=false,failGroq=false}={}){
  const requests=[];
  const env={
-  AKSARA_FREE_FALLBACKS:"true",GROQ_FREE_CONFIRMED:"true",MISTRAL_FREE_CONFIRMED:"true",
-  GROQ_API_KEY:"test",MISTRAL_API_KEY:"test",OPENROUTER_API_KEY:"test",
+  AKSARA_FREE_FALLBACKS:"true",GROQ_FREE_CONFIRMED:"true",
+  GROQ_API_KEY:"test",OPENROUTER_API_KEY:"test",
   ...(review?{AKSARA_CROSS_REVIEW:"true"}:{})
  };
  const mockFetch=async(url,opts)=>{
@@ -27,24 +27,24 @@ function makeRouter({review=false,failGroq=false}={}){
 async function main(){
  {
   const {router,requests}=makeRouter();
-  assert.equal(router.rankProviders(router.configured(),"creative")[0].id,"mistral");
+  assert.equal(router.rankProviders(router.configured(),"creative")[0].id,"groq");
   const messages=Array.from({length:24},(_,i)=>({role:i%2?"assistant":"user",content:"Mesej "+i}));
   const result=await router.complete({system:"Identiti Aksara A.I.",history:messages,question:"Sambung",task:"creative",timeoutMs:1000});
-  assert.equal(result.provider,"mistral");
+  assert.equal(result.provider,"groq");
   assert.equal(requests[0].payload.messages.length,26);
   assert.match(requests[0].payload.messages[0].content,/Identiti Aksara A.I./);
-  assert.equal(await router.crossReview({question:"ujian",reply:"jawapan",originalProvider:"mistral",task:"technical"}),null);
+  assert.equal(await router.crossReview({question:"ujian",reply:"jawapan",originalProvider:"groq",task:"technical"}),null);
  }
  {
   const {router,requests}=makeRouter({review:true,failGroq:true});
   const response=await router.complete({system:"Identiti",history:[],question:"Bantu kod",task:"technical",timeoutMs:1000});
-  assert.equal(response.provider,"mistral");
+  assert.equal(response.provider,"openrouter");
   const check=await router.crossReview({question:"Semak fakta",reply:"Jawapan",originalProvider:"groq",task:"technical",timeoutMs:1000});
   assert.equal(check.checked,true);
-  assert.equal(check.reviewer,"mistral");
-  const reviewCall=requests.find(r=>r.payload.response_format?.type==="json_object");
-  assert.ok(reviewCall,"Mistral review uses structured JSON");
+  assert.equal(check.reviewer,"openrouter");
+  const reviewCall=requests.find(r=>r.payload.model==="openrouter/free"&&r.payload.messages?.[0]?.content.includes("pemeriksa ketelitian"));
+  assert.ok(reviewCall,"OpenRouter free reviewer receives the structured JSON-only prompt");
  }
- console.log("AKSARA router smoke tests PASS (offline mock)");
+ console.log("AKSARA router smoke tests PASS (Groq + OpenRouter offline mocks)");
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});
