@@ -65,61 +65,20 @@ test("Faster ambience and animated translucent glass layer",()=>{
  assert.ok(!css.includes("@import"));
 });
 
-test("Living Glass Frame keeps chat minimal and animates only its outer rim",()=>{
+test("Calm glass frame keeps the chat clear and preserves background particles",()=>{
  const starterLabels=[...html.matchAll(/<button class="starter" type="button">([^<]+)<\/button>/g)].map(m=>m[1]);
  assert.deepEqual(starterLabels,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas"]);
- assert.doesNotMatch(html,/Malas nak taip\?|starter-voice|data-action="voice"/);
- assert.doesNotMatch(css,/\.starter\.starter-voice/);
- assert.match(html,/id="voiceLive"[^>]*>Jom Voice Chat<\/button>/);
  assert.match(html,/<div class="glass-frame-orbit" aria-hidden="true">/);
- for(const tone of ["light","light-echo","shadow","shadow-echo"]){
-  assert.match(html,new RegExp('class="frame-orbit__beam frame-orbit__beam--'+tone+'"'));
-  assert.ok(css.includes('.frame-orbit__beam--'+tone+'{'),"Missing matching rim CSS for "+tone);
- }
+ assert.match(html,/frame-glow--light/);
+ assert.match(html,/frame-glow--shadow/);
+ assert.doesNotMatch(html,/frame-orbit__impact|bilik-antara-rim-sparks/);
  assert.match(css,/\.conversation>\.glass-frame-orbit\{[\s\S]*?pointer-events:none/);
- assert.match(css,/offset-path:inset\(2px round 22px\)/);
- assert.match(css,/@keyframes aksaraRimFlow\{from\{offset-distance:0%\}to\{offset-distance:100%\}\}/);
- assert.match(css,/animation:aksaraRimFlow 15\.6s linear infinite/);
- assert.match(css,/animation:aksaraRimFlow 18\.2s linear -6s infinite reverse/);
- assert.match(css,/\.shell\.is-busy \.frame-orbit__beam--light/);
- assert.match(css,/@supports not \(offset-path:inset\(2px round 22px\)\)/);
- assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{[\s\S]*?\.frame-orbit__beam\{animation:none!important/);
- assert.doesNotMatch(css,/@keyframes aksaraRimFlow\{[^}]*filter:/);
+ assert.match(css,/mask-composite:exclude/);
+ assert.match(css,/animation:frameLightBreathe 12s ease-in-out infinite/);
+ assert.match(css,/animation:frameShadowBreathe 12s ease-in-out infinite/);
  assert.match(css,/@keyframes embersTravel/);
  assert.match(css,/@keyframes handSparkDescent/);
- assert.equal((html.match(/style="--delay:/g)||[]).length,24,"Hand-spark particles must survive");
-});
-
-test("Golden light and shadow collide before spawning rim sparks, never by arbitrary animation timer",()=>{
- const {contact,rangeFor}=require("../bilik-antara-rim-sparks.js");
- const a={left:100,top:12,width:40,height:4};
- const b={left:130,top:12,width:40,height:4};
- assert.deepEqual(contact(a,b,38),{x:135,y:14,distance:30});
- assert.equal(contact(a,b,25),null,"No flash until beams actually touch");
- assert.equal(contact(a,{left:350,top:12,width:40,height:4},38),null);
- assert.equal(contact(a,b,NaN),null);
- assert.equal(rangeFor(128,148),68,"Desktop collision window is capped");
- assert.equal(rangeFor(44,53),28,"Mobile collision window is bounded");
- const observer=fs.readFileSync("bilik-antara-rim-sparks.js","utf8");
- assert.match(observer,/const hit=contact\(a,b,threshold\)/);
- assert.match(observer,/gold\.getBoundingClientRect\(\),b=dark\.getBoundingClientRect\(\)/);
- assert.match(observer,/now-lastSample>=80/);
- assert.match(observer,/lastBurst>950/);
- assert.match(observer,/visibilitychange/);
- assert.match(observer,/prefers-reduced-motion: reduce/);
- assert.match(observer,/root\.cancelAnimationFrame\(raf\)/);
- assert.match(observer,/root\.ResizeObserver/);
- assert.match(html,/src="bilik-antara-rim-sparks\.js\?v=\d+" defer/);
- assert.match(html,/class="frame-orbit__impact" aria-hidden="true"/);
- const impactMarkup=html.match(/<span class="frame-orbit__impact" aria-hidden="true">([\s\S]*?)<\/span>/)?.[1]||"";
- assert.equal((impactMarkup.match(/<i><\/i>/g)||[]).length,8,"Eight new impact flecks");
- for(const effect of ["aksaraImpactFlash","aksaraImpactRing","aksaraImpactParticle"]){
-  assert.match(css,new RegExp("@keyframes "+effect));
- }
- assert.match(css,/\.frame-orbit__impact\.is-active i/);
- assert.match(css,/\.frame-orbit__impact\{display:none!important\}/);
- assert.match(css,/@media\(max-width:760px\)\{\.frame-orbit__impact\{--spark-scale:\.8\}\}/);
- assert.equal((html.match(/style="--delay:/g)||[]).length,24,"All original hand sparks remain");
+ assert.equal((html.match(/style="--delay:/g)||[]).length,24,"Original background particles remain");
 });
 
 test("Mobile viewport, permanent dark theme and conversation functions retained",()=>{

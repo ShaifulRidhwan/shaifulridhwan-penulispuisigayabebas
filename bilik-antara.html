@@ -51,7 +51,7 @@
 <link rel="apple-touch-icon" sizes="192x192" href="/favicon-aksara-ai-192.png?v=1">
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="bilik-antara-cover-art.jpg?v=2" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=71">
+<link rel="stylesheet" href="bilik-antara.css?v=72">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
@@ -73,11 +73,8 @@
   <section class="conversation" aria-label="Ruang perbualan">
    <h1 class="sr-only">Bilik Antara, Aksara A.I.</h1>
    <div class="glass-frame-orbit" aria-hidden="true">
-    <span class="frame-orbit__beam frame-orbit__beam--light"></span>
-    <span class="frame-orbit__beam frame-orbit__beam--light-echo"></span>
-    <span class="frame-orbit__beam frame-orbit__beam--shadow"></span>
-    <span class="frame-orbit__beam frame-orbit__beam--shadow-echo"></span>
-    <span class="frame-orbit__impact" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+    <span class="frame-glow frame-glow--light"></span>
+    <span class="frame-glow frame-glow--shadow"></span>
    </div>
    <div class="glass-shadow-mist" aria-hidden="true"></div>
    <header class="conversation-head">
@@ -926,7 +923,6 @@ restore();renderIdeas();renderHistory();update();probe();
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-dialek.js?v=2" defer></script>
 <script src="bilik-antara-voice.js?v=38" defer></script>
-<script src="bilik-antara-rim-sparks.js?v=2" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
 <script>
 /* Retain the exact live 3D face, but initialize its renderer only in Voice Chat. */

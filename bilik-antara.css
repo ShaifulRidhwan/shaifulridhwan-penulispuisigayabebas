@@ -2996,145 +2996,40 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  }
 }
 
-/* Living Glass Frame: translucent gold and dark-blue light orbit the glass rim.
-   Four small moving elements. No JS timer, canvas, moving blur, or full-surface repaint. */
+/* Calm glass rim: gold and blue glows drift towards and away from one another. */
 .conversation>.glass-frame-orbit{
- position:absolute;inset:0;z-index:7;pointer-events:none;
- width:100%;height:100%;overflow:hidden;border-radius:inherit;
- isolation:isolate;contain:layout style paint;
-}
-.conversation>.glass-frame-orbit::before,
-.conversation>.glass-frame-orbit::after{
- content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+ position:absolute;inset:0;z-index:7;pointer-events:none;overflow:hidden;
+ border-radius:inherit;isolation:isolate;contain:layout style paint;
+ padding:2px;
+ -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+ -webkit-mask-composite:xor;
+ mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+ mask-composite:exclude;
 }
 .conversation>.glass-frame-orbit::before{
- border:1px solid rgba(240,205,151,.14);
- box-shadow:inset 0 0 0 1px rgba(135,175,216,.055);
+ content:"";position:absolute;inset:0;border:1px solid rgba(232,208,177,.18);
+ border-radius:inherit;pointer-events:none;
 }
-.conversation>.glass-frame-orbit::after{
- background:radial-gradient(ellipse 13% 13% at 0% 0%,rgba(252,218,162,.1),transparent 90%),
-            radial-gradient(ellipse 14% 14% at 100% 100%,rgba(77,109,157,.1),transparent 90%);
+.frame-glow{position:absolute;inset:0;pointer-events:none;will-change:transform,opacity}
+.frame-glow--light{
+ background:radial-gradient(ellipse 70% 85% at 0% 48%,rgba(255,219,157,.95),rgba(222,170,92,.39) 45%,transparent 78%);
+ animation:frameLightBreathe 12s ease-in-out infinite;
 }
-.frame-orbit__beam{
- position:absolute;top:0;left:0;display:block;height:2px;
- pointer-events:none;opacity:.8;border-radius:999px;
- offset-path:inset(2px round 22px);offset-anchor:center;offset-rotate:auto;
- -webkit-mask-image:linear-gradient(90deg,transparent,#000 18%,#000 70%,transparent);
- mask-image:linear-gradient(90deg,transparent,#000 18%,#000 70%,transparent);
+.frame-glow--shadow{
+ background:radial-gradient(ellipse 70% 85% at 100% 52%,rgba(154,195,244,.73),rgba(41,76,129,.51) 48%,transparent 78%);
+ animation:frameShadowBreathe 12s ease-in-out infinite;
 }
-.frame-orbit__beam--light{
- width:clamp(65px,11vw,128px);
- background:linear-gradient(90deg,transparent,rgba(242,188,98,.48) 26%,#fff2c7 57%,rgba(247,196,104,.72) 77%,transparent);
- box-shadow:0 0 6px rgba(248,202,132,.72),0 0 14px rgba(235,174,76,.31);
- animation:aksaraRimFlow 15.6s linear infinite;
+@keyframes frameLightBreathe{
+ 0%,100%{transform:translateX(-12%);opacity:.5}
+ 50%{transform:translateX(20%);opacity:.95}
 }
-.frame-orbit__beam--light-echo{
- width:clamp(34px,6vw,66px);height:1px;opacity:.52;
- background:linear-gradient(90deg,transparent,rgba(253,227,176,.78),rgba(255,247,217,.97),transparent);
- box-shadow:0 0 7px rgba(245,208,149,.49);
- animation:aksaraRimFlow 15.6s linear -2.1s infinite;
+@keyframes frameShadowBreathe{
+ 0%,100%{transform:translateX(12%);opacity:.5}
+ 50%{transform:translateX(-20%);opacity:.9}
 }
-.frame-orbit__beam--shadow{
- width:clamp(75px,13vw,148px);height:3px;
- background:linear-gradient(90deg,transparent,rgba(6,14,29,.86) 23%,rgba(73,112,164,.73) 51%,rgba(13,27,46,.84) 76%,transparent);
- box-shadow:0 0 0 1px rgba(9,20,39,.27),0 0 11px rgba(84,125,184,.36),0 0 22px rgba(2,8,21,.4);
- animation:aksaraRimFlow 18.2s linear -6s infinite reverse;
+@supports not ((mask-composite:exclude) or (-webkit-mask-composite:xor)){
+ .conversation>.glass-frame-orbit{display:none}
 }
-.frame-orbit__beam--shadow-echo{
- width:clamp(37px,7vw,82px);height:2px;opacity:.59;
- background:linear-gradient(90deg,transparent,rgba(31,60,99,.67),rgba(135,177,222,.85),transparent);
- box-shadow:0 0 8px rgba(103,149,206,.45);
- animation:aksaraRimFlow 18.2s linear -3.1s infinite reverse;
-}
-@keyframes aksaraRimFlow{from{offset-distance:0%}to{offset-distance:100%}}
-/* Existing busy state adds restrained movement while Aksara is answering. */
-.shell.is-busy .frame-orbit__beam--light,
-.shell.is-busy .frame-orbit__beam--light-echo{animation-duration:11.8s;opacity:.92}
-.shell.is-busy .frame-orbit__beam--shadow,
-.shell.is-busy .frame-orbit__beam--shadow-echo{animation-duration:14s;opacity:.82}
-@media(max-width:760px){
- .frame-orbit__beam{offset-path:inset(2px round 16px)}
- .frame-orbit__beam--light{width:clamp(44px,17vw,76px)}
- .frame-orbit__beam--shadow{width:clamp(53px,20vw,93px)}
- .frame-orbit__beam--light-echo{width:35px}
- .frame-orbit__beam--shadow-echo{width:40px}
- .conversation>.glass-frame-orbit::after{opacity:.7}
-}
-/* Older browsers show two static glints instead of a broken moving orbit. */
-@supports not (offset-path:inset(2px round 22px)){
- .frame-orbit__beam{animation:none!important;offset-path:none}
- .frame-orbit__beam--light{top:1px;left:12%}
- .frame-orbit__beam--shadow{top:auto;bottom:1px;left:auto;right:8%}
- .frame-orbit__beam--light-echo,.frame-orbit__beam--shadow-echo{display:none}
-}
-/* Full motion is the default. Only explicit OS reduced-motion gets a static rim. */
-@media(prefers-reduced-motion:reduce){
- .frame-orbit__beam{animation:none!important;offset-distance:0%!important}
- .frame-orbit__beam--shadow{offset-distance:50%!important}
- .frame-orbit__beam--light-echo,.frame-orbit__beam--shadow-echo{display:none}
-}
-
-
-/* Collision sparks: fired at real gold/shadow beam contact, never on a timer.
-   Only tiny transforms and opacity animate. Existing world particles stay intact. */
-.frame-orbit__impact{
- position:absolute;top:0;left:0;z-index:5;width:0;height:0;pointer-events:none;
- transform:translate3d(var(--impact-x,0px),var(--impact-y,0px),0) scale(var(--spark-scale,1));
-}
-.frame-orbit__impact::before,.frame-orbit__impact::after{
- content:"";position:absolute;top:0;left:0;opacity:0;pointer-events:none;
-}
-.frame-orbit__impact::before{
- width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;
- background:radial-gradient(circle,rgba(255,250,221,.97) 0 8%,rgba(251,207,127,.72) 15%,rgba(144,184,230,.36) 32%,transparent 71%);
- box-shadow:0 0 14px rgba(246,205,148,.24),0 0 22px rgba(95,148,218,.17);
-}
-.frame-orbit__impact::after{
- width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;
- border:1px solid rgba(250,215,158,.82);border-right-color:rgba(122,175,226,.9);
- box-shadow:0 0 8px rgba(253,215,153,.29);
-}
-.frame-orbit__impact.is-active::before{animation:aksaraImpactFlash .58s ease-out both}
-.frame-orbit__impact.is-active::after{animation:aksaraImpactRing .62s ease-out both}
-.frame-orbit__impact i{
- position:absolute;left:-1.5px;top:-1.5px;display:block;
- width:3px;height:3px;border-radius:50%;opacity:0;pointer-events:none;
- background:#ffe3a4;box-shadow:0 0 5px rgba(255,230,181,.64);
-}
-.frame-orbit__impact i:nth-child(even){
- background:#a9d6ff;box-shadow:0 0 5px rgba(134,189,244,.62);
-}
-.frame-orbit__impact i:nth-child(1){--dx:-23px;--dy:-16px}
-.frame-orbit__impact i:nth-child(2){--dx:19px;--dy:-18px}
-.frame-orbit__impact i:nth-child(3){--dx:-28px;--dy:4px}
-.frame-orbit__impact i:nth-child(4){--dx:28px;--dy:5px}
-.frame-orbit__impact i:nth-child(5){--dx:-16px;--dy:20px}
-.frame-orbit__impact i:nth-child(6){--dx:17px;--dy:23px}
-.frame-orbit__impact i:nth-child(7){--dx:-4px;--dy:-26px}
-.frame-orbit__impact i:nth-child(8){--dx:5px;--dy:27px}
-.frame-orbit__impact.is-active i{
- animation:aksaraImpactParticle .58s cubic-bezier(.19,.75,.2,1) both;
-}
-.frame-orbit__impact.is-active i:nth-child(2n){animation-delay:25ms}
-.frame-orbit__impact.is-active i:nth-child(3n){animation-delay:50ms}
-@keyframes aksaraImpactFlash{
- 0%{opacity:0;transform:scale(.35)}
- 15%{opacity:1;transform:scale(1.15)}
- 100%{opacity:0;transform:scale(1.75)}
-}
-@keyframes aksaraImpactRing{
- 0%{opacity:0;transform:scale(.3) rotate(-18deg)}
- 18%{opacity:.9}
- 100%{opacity:0;transform:scale(2.6) rotate(13deg)}
-}
-@keyframes aksaraImpactParticle{
- 0%{opacity:0;transform:translate3d(0,0,0) scale(.5)}
- 17%{opacity:1}
- 100%{opacity:0;transform:translate3d(var(--dx),var(--dy),0) scale(.25)}
-}
-@media(max-width:760px){.frame-orbit__impact{--spark-scale:.8}}
-@supports not (offset-path:inset(2px round 22px)){.frame-orbit__impact{display:none!important}}
-@media(prefers-reduced-motion:reduce){.frame-orbit__impact{display:none!important}}
 
 /* Voice identity: animated glass around both lines, with no separate orb. */
 .voice-panel .voice-live-label{
