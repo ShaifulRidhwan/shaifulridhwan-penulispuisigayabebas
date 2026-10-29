@@ -40,6 +40,7 @@ test("Gemini provenance questions answer Google directly without confusing Aksar
   assert.match(response,/API Gemini, Groq, Mistral dan OpenRouter/i,question);
   assert.match(response,/Requesty sebagai pilihan bersyarat/i,question);
   assert.match(response,/penghalaan.*penyedia/i,question);
+  assert.match(response,/Voice Chat menggunakan Gemini Live dengan modifikasi tersendiri/i,question);
  }
  assert.doesNotMatch(ID.answerIdentity("Siapa cipta kau?"),/^Gemini dibangunkan oleh Google/);
 });
