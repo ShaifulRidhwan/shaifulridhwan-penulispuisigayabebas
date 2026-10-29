@@ -668,3 +668,14 @@ test("Broker quota denial wrapped in 502 is definitive and never triggers token 
  assert.equal(h.modeRequests.length,2);
  assert.equal(h.track.stopped,true);
 });
+
+test("The true 3D voice avatar only skips invisible frame drawing while the voice session continues",()=>{
+ const avatar=fs.readFileSync("bilik-antara-avatar.js","utf8");
+ const html=fs.readFileSync("bilik-antara.html","utf8");
+ const css=fs.readFileSync("bilik-antara.css","utf8");
+ assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=11"\)/);
+ assert.match(avatar,/panel\.classList\.contains\("is-minimized"\)\|\|document\.hidden/);
+ assert.match(avatar,/renderer\.render\(scene,camera\)/);
+ assert.match(avatar,/weights\(\["jawOpen"\],jawMotion\)/);
+ assert.match(css,/\.voice-panel\.is-minimized \.voice-avatar-stage\{display:none!important\}/);
+});
