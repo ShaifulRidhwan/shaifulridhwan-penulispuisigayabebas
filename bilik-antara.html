@@ -832,7 +832,7 @@ restore();renderIdeas();renderHistory();update();probe();
  document.getElementById("voiceLive")?.addEventListener("click",()=>{
   if(loading||loaded)return;
   loading=true;
-  import("./bilik-antara-avatar.js?v=10").then(()=>{loaded=true;}).catch(error=>{
+  import("./bilik-antara-avatar.js?v=11").then(()=>{loaded=true;}).catch(error=>{
    loading=false;console.warn("Voice avatar unavailable",error);
   });
  });
