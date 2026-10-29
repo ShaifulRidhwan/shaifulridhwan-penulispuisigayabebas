@@ -270,6 +270,7 @@ test("a follow-up retains dialogue and Aksara's personality when a provider fail
  assert.equal(googleBody.contents[0].parts[0].text,"Siapa Aku");
  assert.equal(googleBody.contents[1].parts[0].text,history[1].content);
  assert.match(googleBody.systemInstruction.parts[0].text,/mwehehe/i);
+ assert.match(googleBody.systemInstruction.parts[0].text,/jangan reka atau meneka kejadian, tabiat, emosi, tidur/i);
 });
 test("accepting an offered action is not downgraded to a mere acknowledgement",()=>{
  const history=[{role:"user",content:"Tolong bantu tulis puisi"},{role:"assistant",content:"Nak aku buat versi empat rangkap?"}];
