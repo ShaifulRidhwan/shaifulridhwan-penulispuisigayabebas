@@ -125,12 +125,11 @@ $('variationImage').addEventListener('click',()=>{if(current?.settings.model==='
 async function copy(value){try{await navigator.clipboard.writeText(value);announce('Prompt dah disalin.');}catch(_){let box=$('copyFallback');if(!box){box=document.createElement('textarea');box.id='copyFallback';box.readOnly=true;box.setAttribute('aria-label','Prompt untuk disalin secara manual');$('resultActions').after(box);}box.hidden=false;box.value=value;box.focus();box.select();announce('Tak dapat salin automatik. Teks dipilih; tekan Salin pada peranti kau.',true);}}
 $('copyPrompt').addEventListener('click',()=>{if(current)copy(current.promptUsed);});
 // Enhancing is always explicit. Reviewing a draft never consumes an image request.
-$('enhanceEnabled').addEventListener('change',()=>{$('enhancePrompt').hidden=!$('enhanceEnabled').checked;if(!$('enhanceEnabled').checked)$('enhancePanel').hidden=true;});
 function draft(prompt,note){$('enhancePanel').hidden=false;$('enhancedPrompt').value=prompt;text($('enhanceNote'),note);}
 $('lightEnhance').addEventListener('click',()=>draft(C.lightEnhance(ui.prompt.value),'Mod ringan: tambah panduan visual umum sahaja; bukan terjemahan AI.'));
 $('cancelEnhanced').addEventListener('click',()=>{$('enhancePanel').hidden=true;});
 $('useEnhanced').addEventListener('click',()=>{const value=$('enhancedPrompt').value.trim();if(value.length<4||value.length>1200){announce('Draf mesti 4 hingga 1200 aksara.',true);return;}originalPrompt=ui.prompt.value;ui.prompt.value=value;count();$('enhancePanel').hidden=true;$('restorePrompt').hidden=false;announce('Draf digunakan. Kau masih boleh edit atau pulangkan prompt asal.');});
-const restore=document.createElement('button');restore.id='restorePrompt';restore.type='button';restore.textContent='Pulangkan prompt asal';restore.hidden=true;$('enhanceEnabled').closest('.enhance-row').after(restore);
+const restore=document.createElement('button');restore.id='restorePrompt';restore.type='button';restore.textContent='Pulangkan prompt asal';restore.hidden=true;document.querySelector('.prompt-compose').after(restore);
 restore.addEventListener('click',()=>{if(originalPrompt!==null){ui.prompt.value=originalPrompt;count();originalPrompt=null;}restore.hidden=true;});
 $('enhancePrompt').addEventListener('click',async()=>{
  if(busy)return;const prompt=ui.prompt.value.trim();if(prompt.length<4||prompt.length>850){draft(C.lightEnhance(prompt),'Prompt panjang: guna mod ringan atau edit sendiri. AI menerima hingga 850 aksara.');return;}

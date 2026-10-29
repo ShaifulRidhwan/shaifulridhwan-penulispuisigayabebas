@@ -1,5 +1,11 @@
 name: Studio Antara Browser Audit
 on:
+  push:
+    branches: [main]
+    paths:
+      - "studio-antara*"
+      - "scripts/test-studio-*"
+      - ".github/workflows/studio-antara-audit.yml"
   pull_request:
     paths:
       - "studio-antara*"
@@ -26,6 +32,27 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Desktop and two mobile sizes with labelled API fixtures
         run: node scripts/test-studio-browser.cjs
+      - name: Verify Netlify assets and audit production with intercepted mock APIs
+        if: github.event_name == 'push'
+        env:
+          AUDIT_BASE: https://shaifulridhwan-penulispuisigayabebas.netlify.app
+        run: |
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const digest=b=>crypto.createHash('sha256').update(b).digest('hex');
+          (async()=>{for(let attempt=0;attempt<12;attempt++){
+            try{
+              const html=await fetch(process.env.AUDIT_BASE+'/studio-antara.html',{cache:'no-store'}).then(r=>r.text());
+              if(!html.includes('studio-antara-ui.js?v=2'))throw Error('Netlify still serves the earlier HTML');
+              for(const file of ['studio-antara-ui.js','studio-antara-cloud.js','studio-antara.css']){
+                const response=await fetch(process.env.AUDIT_BASE+'/'+file,{cache:'no-store'});
+                if(!response.ok||digest(Buffer.from(await response.arrayBuffer()))!==digest(fs.readFileSync(file)))throw Error('Netlify asset not current: '+file);
+              }
+              console.log('Netlify production HTML and three asset hashes verified. No inference requested.');return;
+            }catch(error){console.log('Deployment check '+(attempt+1)+': '+error.message);if(attempt===11)throw error;await new Promise(r=>setTimeout(r,10000));}
+          }})().catch(error=>{console.error(error);process.exitCode=1;});
+          NODE
+          node scripts/test-studio-browser.cjs
       - name: Lighthouse Studio static page
         run: |
           python3 -m http.server 4180 --bind 127.0.0.1 > /tmp/studio-lh.log 2>&1 &

@@ -26,11 +26,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@500&display=swap">
-<link rel="stylesheet" href="studio-antara.css?v=11">
+<link rel="stylesheet" href="studio-antara.css?v=12">
 <script src="studio-antara-config.js?v=2" defer></script>
 <script src="studio-antara-history.js?v=1" defer></script>
 <script src="studio-antara-cooldown.js?v=1" defer></script>
-<script src="studio-antara-cloud.js?v=5" defer></script>
+<script src="studio-antara-cloud.js?v=6" defer></script>
+<script src="studio-antara-ui.js?v=2" defer></script>
 <script type="application/ld+json">{
  "@context":"https://schema.org",
  "@type":"WebApplication",
@@ -61,10 +62,11 @@
    <div class="card-top"><div><span class="step-label">01 / IDEA KAU</span><h2 id="creatorTitle">Mula dengan imaginasi.</h2></div><span class="tiny-star" aria-hidden="true">✦</span></div>
    <form id="imageForm">
     <label for="imagePrompt" class="input-label">Apa yang kau nak lihat?</label>
-    <textarea id="imagePrompt" rows="5" minlength="4" maxlength="1200" required placeholder="Contoh: Wanita berdiri dalam cahaya keemasan, kabus biru gelap di belakangnya..."></textarea>
-    <div class="prompt-tools"><span>Ctrl / ⌘ + Enter untuk jana</span><output id="promptCount" for="imagePrompt">0 / 1200</output></div>
+    <div class="prompt-compose">
+     <textarea id="imagePrompt" rows="4" minlength="4" maxlength="1200" required placeholder="Contoh: Wanita berdiri dalam cahaya keemasan, kabus biru gelap di belakangnya..."></textarea>
+     <div class="prompt-tools"><span class="prompt-shortcut">Ctrl / ⌘ + Enter untuk jana</span><output id="promptCount" for="imagePrompt">0 / 1200</output><button type="button" id="enhancePrompt" aria-controls="enhancePanel">✦ Perkemas A.I</button></div>
+    </div>
     <div class="idea-chips"><button type="button" data-prompt="Siluet wanita berdiri di antara cahaya keemasan dan bayang biru gelap">Cahaya &amp; gelap</button><button type="button" data-prompt="Langit berbintang di atas lautan tenang dengan pantulan bulan">Langit &amp; renungan</button></div>
-    <div class="enhance-row"><label><input type="checkbox" id="enhanceEnabled"> Bantu perkemas prompt</label><button type="button" id="enhancePrompt" hidden>Perkemas dengan AI</button></div>
     <div id="enhancePanel" class="enhance-panel" hidden>
      <label for="enhancedPrompt">Draf untuk kau semak dan edit</label><textarea id="enhancedPrompt" rows="4" maxlength="1200"></textarea>
      <p id="enhanceNote">Semak maksud asal sebelum guna.</p>
@@ -78,11 +80,10 @@
     </div>
     <p class="model-note" id="modelNote"></p>
     <p id="modelBetaInfo" class="model-beta-info" role="status" hidden><strong>OVHcloud SDXL · Beta / Tidak stabil</strong><span> Model ini masih dalam ujian. Hasil hanya 1024 × 1024 (1:1), tanpa kawalan seed. Penjanaan boleh lambat atau gagal kerana had API awam. Pilihan ini manual sahaja, tidak termasuk fallback automatik. Jika gagal, pilih Klein atau Schnell sendiri. Prompt dihantar kepada OVHcloud hanya apabila kau tekan Jana Imej.</span></p>
-    <details class="advanced"><summary>Seed &amp; cara kuota digunakan</summary><label for="imageSeed">Seed pilihan<input id="imageSeed" type="number" min="0" max="2147483647" step="1" placeholder="Automatik" disabled></label><p id="seedNote">Kawalan seed tersedia pada Klein. Schnell menggunakan sampel baharu.</p><p id="quotaEstimate"></p><p id="quotaContext">Bajet ini untuk Studio sahaja. Kuota akaun Cloudflare dikongsi, dan had percuma sebenar bergantung pada pelan akaun.</p></details>
+    <details class="advanced"><summary>Seed &amp; cara kuota digunakan</summary><label for="imageSeed">Seed pilihan<input id="imageSeed" type="number" min="0" max="2147483647" step="1" placeholder="Automatik" disabled></label><p id="seedNote">Kawalan seed tersedia pada Klein. Schnell menggunakan sampel baharu.</p><p id="quotaEstimate"></p><p id="quotaContext">Bajet ini untuk Studio sahaja. Kuota akaun Cloudflare dikongsi, dan had percuma sebenar bergantung pada pelan akaun.</p><p class="small-note">Prompt dihantar kepada penyedia model pilihan bila kau tekan Jana. Perkemas A.I menggunakan Groq bila kau pilih; mod ringan tak menghantar prompt. Henti tak menjamin kuota yang dah digunakan dapat dipulangkan.</p></details>
     <div class="create-actions"><button class="generate-btn" id="generateImage" type="submit">✦ Jana imej <span aria-hidden="true">↗</span></button><button id="stopImage" type="button" hidden>Henti</button></div>
     <p id="cooldownStatus" class="cooldown-status" role="timer" aria-live="off" hidden></p>
     <p class="generation-status" id="generationStatus" role="status" aria-live="polite">Dah sedia. Cerita je apa yang kau bayangkan.</p>
-    <p class="small-note">Prompt dihantar kepada penyedia model pilihan bila kau tekan Jana. Perkemas AI menggunakan Groq bila kau pilih; mod ringan tak menghantar prompt. Henti tak menjamin kuota yang dah digunakan dapat dipulangkan.</p>
    </form>
   </section>
   <section class="glass-card result" aria-labelledby="resultTitle">
