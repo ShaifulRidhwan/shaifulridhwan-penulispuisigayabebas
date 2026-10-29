@@ -26,11 +26,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap">
-<link rel="stylesheet" href="studio-antara.css?v=15">
+<link rel="stylesheet" href="studio-antara.css?v=16">
 <script src="studio-antara-config.js?v=2" defer></script>
 <script src="studio-antara-history.js?v=1" defer></script>
 <script src="studio-antara-cooldown.js?v=1" defer></script>
-<script src="studio-antara-cloud.js?v=7" defer></script>
+<script src="studio-antara-cloud.js?v=8" defer></script>
 <script src="studio-antara-ui.js?v=2" defer></script>
 <script type="application/ld+json">{
  "@context":"https://schema.org",
@@ -47,7 +47,7 @@
 <div class="studio-shell">
 <header class="topbar">
   <a class="back-link" href="bilik-antara.html">BILIK ANTARA</a>
-  <a class="home-link" href="index.html">GAYA BEBAS</a>
+  <a class="home-link" href="index.html">LAMAN UTAMA</a>
 </header>
 <main>
  <div class="workspace">
@@ -79,7 +79,7 @@
    </form>
   </section>
   <section class="glass-card result" aria-labelledby="resultTitle">
-   <div class="card-top"><h2 id="resultTitle">Ruang visual</h2><span id="resultIndicator" class="result-indicator">MENUNGGU</span></div>
+   <div class="card-top"><h2 id="resultTitle">RUANG <span>VISUAL</span></h2><span id="resultIndicator" class="result-indicator is-waiting">MENUNGGU</span></div>
    <div class="result-stage" id="resultStage" aria-busy="false">
     <div class="result-empty" id="resultEmpty"><p>Hasil imej akan muncul di sini.</p></div>
     <img id="generatedImage" alt="Hasil imej AI yang dijana" hidden decoding="async">
@@ -91,7 +91,7 @@
    <details class="used-prompt" id="usedPromptPanel" hidden><summary>Prompt &amp; tetapan hasil</summary><pre id="usedPrompt"></pre></details>
   </section>
  </div>
- <details class="glass-card gallery" id="historyPanel"><summary><span class="gallery-title">Galeri pada peranti ini</span><span class="gallery-meta"><span id="historyCount" class="gallery-count">Buka sejarah</span><span class="gallery-chevron" aria-hidden="true">⌄</span></span></summary><p class="small-note">Sehingga 24 hasil / 30 MB. Hasil terlama dibuang bila had dicapai. Pelayar boleh membersihkan storan; simpan imej penting sendiri.</p><div class="gallery-toolbar"><button type="button" id="refreshHistory">Muat semula</button><button type="button" id="clearHistory">Kosongkan sejarah</button></div><p id="historyStatus" role="status" aria-live="polite"></p><div id="historyGrid" class="history-grid"></div><button type="button" id="moreHistory" hidden>Lihat lagi</button></details>
+ <details class="glass-card gallery" id="historyPanel"><summary><span class="gallery-title">Galeri pada peranti ini</span><span class="gallery-meta"><span id="historyCount" class="gallery-count">Buka sejarah</span><span class="gallery-chevron" aria-hidden="true"></span></span></summary><p class="small-note">Sehingga 24 hasil / 30 MB. Hasil terlama dibuang bila had dicapai. Pelayar boleh membersihkan storan; simpan imej penting sendiri.</p><div class="gallery-toolbar"><button type="button" id="refreshHistory">Muat semula</button><button type="button" id="clearHistory">Kosongkan sejarah</button></div><p id="historyStatus" role="status" aria-live="polite"></p><div id="historyGrid" class="history-grid"></div><button type="button" id="moreHistory" hidden>Lihat lagi</button></details>
  <noscript><p>Hidupkan JavaScript untuk menggunakan Studio.</p></noscript>
 </main>
 <footer class="studio-footer"><span>STUDIO ANTARA · AKSARA A.I.</span><span>CAHAYA MENCIPTA BENTUK · GELAP MEMBERI DIMENSI</span></footer>

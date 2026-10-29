@@ -79,7 +79,10 @@ function setBusy(value,mode='image'){
  form.querySelectorAll('button,input,textarea,select').forEach(el=>{el.disabled=value;});ui.stop.disabled=false;ui.stop.hidden=!value;
  $('resultActions').querySelectorAll('button').forEach(el=>{el.disabled=value||(el.id==='variationImage'&&current?.settings.model!=='klein');});
  ui.loading.hidden=!(value&&mode==='image');$('resultStage').setAttribute('aria-busy',String(value&&mode==='image'));
- text(ui.go,value?'Sekejap…':'Jana imej');text(ui.indicator,value&&mode==='image'?'MENJANA':current?'SIAP':'MENUNGGU');
+ text(ui.go,value?'Sekejap…':'Jana imej');
+ const indicatorText=value&&mode==='image'?'MENJANA':current?'SIAP':'MENUNGGU';
+ text(ui.indicator,indicatorText);
+ ui.indicator.classList.toggle('is-waiting',indicatorText==='MENUNGGU');
  if(!value)describe();
 }
 ui.stop.addEventListener('click',()=>controller?.abort());
@@ -96,7 +99,7 @@ async function render(meta,blob,signal){
  ui.meta.hidden=false;text(ui.meta,meta.modelName+' · '+img.naturalWidth+' × '+img.naturalHeight+' px · '+C.presets[meta.settings.style].name+' · '+(meta.settings.seed===null?'Seed automatik tanpa kawalan':('Seed '+meta.settings.seed))+' · '+(meta.durationMs/1000).toFixed(1)+' saat');
  ui.download.href=url;ui.download.download='studio-antara-'+meta.id+(blob.type==='image/png'?'.png':'.jpg');$('resultActions').hidden=false;$('variationNote').hidden=false;$('usedPromptPanel').hidden=false;
  $('variationImage').disabled=busy||meta.settings.model!=='klein';text($('usedPrompt'),meta.promptUsed+'\n\n'+new Date(meta.createdAt).toLocaleString('ms-MY')+' · '+meta.settings.ratio+' · '+qualityName(meta.settings.quality)+' · '+(meta.settings.model==='ovh'?'SDXL Beta':meta.settings.steps+' langkah'));
- text(ui.indicator,'SIAP');
+ text(ui.indicator,'SIAP');ui.indicator.classList.remove('is-waiting');
  return img;
 }
 async function thumbnail(img){const canvas=document.createElement('canvas'),scale=Math.min(1,240/Math.max(img.naturalWidth,img.naturalHeight));canvas.width=Math.max(1,Math.round(img.naturalWidth*scale));canvas.height=Math.max(1,Math.round(img.naturalHeight*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Thumbnail tak dapat disimpan.')),'image/jpeg',.75));}

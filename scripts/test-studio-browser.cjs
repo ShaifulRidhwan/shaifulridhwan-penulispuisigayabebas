@@ -86,10 +86,10 @@ async function main(){
     modalFill:modal.backgroundImage,modalBlur:modal.backdropFilter,
     heroFont:hero.fontFamily,headingFont:heading.fontFamily,navBlur:nav.backdropFilter,navFill:nav.backgroundImage,
     promptWeight:css('#enhancePrompt').fontWeight,
-    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('studio-antara.css?v=15'))
+    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('studio-antara.css?v=16'))
    };
   });
-  assert.equal(visual.stylesheet,true,'Fresh Studio 2.4 CSS must load');
+  assert.equal(visual.stylesheet,true,'Fresh Studio 2.5 CSS must load');
   for(const key of ['cardFill','resultFill','galleryFill','modalFill'])assert.match(visual[key],/gradient/,'Missing unified glass gradient: '+key);
   for(const key of ['cardBlur','fieldBlur','triggerBlur','modalBlur'])assert.match(visual[key],/blur/,'Missing translucent glass blur: '+key);
   assert.match(visual.heroFont,/DM Sans/);assert.match(visual.headingFont,/DM Sans/);
@@ -99,7 +99,27 @@ async function main(){
   assert.equal(await page.locator('.topbar').locator('a').count(),2,'Header should retain only Bilik Antara and Gaya Bebas');
   assert.equal(await page.locator('.topbar .brand-mark').count(),0,'Top AKSARA mark should be absent');
   assert.equal(await page.locator('#studioTitle').textContent(),'STUDIO ANTARA');
-  assert.equal(await page.locator('#resultTitle').textContent(),'Ruang visual');
+  assert.equal(await page.locator('#resultTitle').textContent(),'RUANG VISUAL');
+  assert.equal(await page.locator('#resultTitle span').textContent(),'VISUAL');
+  assert.equal(await page.locator('.topbar .home-link').textContent(),'LAMAN UTAMA');
+  const headlineGold=await page.locator('#resultTitle span').evaluate(el=>getComputedStyle(el).color);
+  const studioGold=await page.locator('#studioTitle span').evaluate(el=>getComputedStyle(el).color);
+  assert.equal(headlineGold,studioGold,'VISUAL must use exactly the same gold as ANTARA');
+  const breath=await page.evaluate(()=>{
+   const style=(selector)=>getComputedStyle(document.querySelector(selector),'::before');
+   const motion=['#enhancePrompt','#generateImage','#resultIndicator'].map(selector=>({
+    selector,animation:style(selector).animationName,opacity:style(selector).opacity
+   }));
+   const indicator=document.querySelector('#resultIndicator');
+   return {motion,waiting:indicator.classList.contains('is-waiting'),label:indicator.textContent};
+  });
+  assert.equal(breath.waiting,true);assert.equal(breath.label,'MENUNGGU');
+  for(const item of breath.motion)assert.match(item.animation,/studioGlassBreath/,'Missing glass breathing on '+item.selector);
+  await page.emulateMedia({reducedMotion:'reduce'});
+  for(const selector of ['#enhancePrompt','#generateImage','#resultIndicator']){
+   assert.equal(await page.locator(selector).evaluate(el=>getComputedStyle(el,'::before').animationName),'none','Reduced motion must disable breathing: '+selector);
+  }
+  await page.emulateMedia({reducedMotion:'no-preference'});
   assert.equal(await page.locator('.creator > .card-top #studioTitle').count(),1,'Title is within creator glass');
   assert.equal(await page.locator('#imagePrompt').getAttribute('placeholder'),'Apa yang kau nak lihat?');
   assert.equal(await page.locator('#modelNote').count(),0,'Redundant model prose must be absent');
@@ -125,6 +145,24 @@ async function main(){
   assert.equal(galleryLayout.ordered,true,'Gallery title and compact count/chevron must not overlap');
   assert.match(galleryLayout.badgeRadius,/999px/);
   assert.equal(galleryLayout.oldArrow,'none','Old duplicate gallery arrow must be hidden');
+  const chevrons=await page.evaluate(()=>{
+    const field=document.querySelector('#imageRatio + .studio-picker-trigger');
+    const arrow=document.querySelector('.gallery-chevron');
+    const pickerShape=getComputedStyle(field,'::after'),galleryShape=getComputedStyle(arrow,'::before');
+    const box=field.getBoundingClientRect(),gbox=arrow.getBoundingClientRect();
+    return {pickerContent:pickerShape.content,galleryContent:galleryShape.content,
+      pickerBottom:pickerShape.borderBottomStyle,galleryBottom:galleryShape.borderBottomStyle,
+      pickerAlign:getComputedStyle(field).alignItems,
+      galleryAlign:getComputedStyle(arrow).alignItems,
+      galleryCenter:(gbox.top+gbox.bottom)/2,
+      badgeCenter:(document.querySelector('#historyCount').getBoundingClientRect().top+document.querySelector('#historyCount').getBoundingClientRect().bottom)/2,
+      fieldHeight:box.height};
+  });
+  assert.equal(chevrons.pickerBottom,'solid');
+  assert.equal(chevrons.galleryBottom,'solid');
+  assert.equal(chevrons.pickerAlign,'center');
+  assert.equal(chevrons.galleryAlign,'center');
+  assert.ok(Math.abs(chevrons.galleryCenter-chevrons.badgeCenter)<=2,'Gallery chevron must be vertically centered with result count');
   assert.match(galleryLayout.titleFont,/DM Sans/);
   assert.equal(visual.promptWeight,'600','Enhance pill must use the refined typography');
   await auditPickers(page,calls);
@@ -136,6 +174,8 @@ async function main(){
   await page.locator('#enhancedPrompt').fill(prompt+' dengan cahaya senja');await page.locator('#useEnhanced').click();assert.ok((await page.locator('#imagePrompt').inputValue()).includes('senja'));await page.locator('#restorePrompt').click();assert.equal(await page.locator('#imagePrompt').inputValue(),prompt);
   await pick(page,'imageRatio','9:16');assert.equal(await page.locator('#imageModel').inputValue(),'klein');assert.equal(await page.locator('#imageModel + button span').textContent(),C.models.klein.name,'Automatic model switch updates the visible caption');await pick(page,'imageQuality','fast');await pick(page,'imageStyle','falsafah');
   await page.locator('#generateImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);await page.locator('#generatedImage').waitFor({state:'visible'});
+  assert.equal(await page.locator('#resultIndicator').textContent(),'SIAP');
+  assert.equal(await page.locator('#resultIndicator').evaluate(el=>el.classList.contains('is-waiting')),false,'Breathing must stop after generation');
   const first=calls.at(-1);assert.equal(first.ratio,'9:16');assert.equal(first.style,'falsafah');assert.match(await page.locator('#imageMetadata').textContent(),/288 × 512/);
   await page.locator('#variationImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);const variation=calls.at(-1);assert.notEqual(variation.seed,42);assert.equal(variation.prompt,prompt);assert.equal(variation.style,'falsafah');
   await page.locator('#regenerateImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);assert.equal(calls.at(-1).seed,variation.seed);
