@@ -10,7 +10,7 @@ const sizes=[[1920,1080],[1366,768],[390,844],[360,800]];
 async function state(page){return page.evaluate(()=>{
  const css=s=>getComputedStyle(document.querySelector(s));
  const geometry=Object.fromEntries(['.topbar','.app-shell','.conversation','.composer','#input','#voiceLive','#connection'].map(s=>{const r=document.querySelector(s).getBoundingClientRect();return [s,[r.x,r.y,r.width,r.height].map(n=>Math.round(n*10)/10)];}));
- const effects=Object.fromEntries(['.world-art','.world-haze','.world-embers i','.world-hand-sparks i','.frame-glow--light','.frame-glow--shadow','.voice-live-label'].map(s=>{const a=css(s);return [s,[a.animationName,a.animationDuration,a.animationPlayState]];}));
+ const effects=Object.fromEntries(['.world-art','.world-haze','.world-embers i','.frame-glow--light','.frame-glow--shadow','.voice-live-label'].map(s=>{const a=css(s);return [s,[a.animationName,a.animationDuration,a.animationPlayState]];}));
  const glass=Object.fromEntries(['.conversation','.composer','.settings-card','.voice-live-label'].map(s=>{const a=css(s);return [s,[a.backgroundColor,a.backdropFilter||a.webkitBackdropFilter,a.borderRadius,a.color,a.fontFamily]];}));
  return {geometry,effects,glass,width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,background:css('.world-art').backgroundImage,position:css('.world-art').backgroundPosition,particles:document.querySelectorAll('.world-hand-sparks i').length};
 });}
@@ -31,11 +31,10 @@ async function inspect(browser,width,height,mode){
  await page.evaluate(()=>document.fonts.ready);
  const result=await state(page);
  assert.equal(result.overflow,false,mode+' '+width+' horizontal overflow');
- assert.equal(result.particles,24);
+ assert.equal(result.particles,mode==='before'?24:0, 'Only obsolete hand sparks are removed');
  assert.match(result.effects['.world-art'][0],/worldBreath/);
  assert.match(result.effects['.world-haze'][0],/hazeDrift/);
  assert.match(result.effects['.world-embers i'][0],/embersTravel/);
- assert.match(result.effects['.world-hand-sparks i'][0],/handSparkDescent/);
  assert.equal(result.effects['.frame-glow--light'][0],'frameLightBreathe');
  assert.equal(result.effects['.frame-glow--shadow'][0],'frameShadowBreathe');
  if(mode!=='before'){
