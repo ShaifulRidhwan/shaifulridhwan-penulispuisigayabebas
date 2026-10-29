@@ -8,6 +8,7 @@
 const {boundedHistory,boundedText,requestControl,readSSE}=require("./lib/aksara-transport");
 const cooldown=new Map();
 let preferredProvider=""; // Best recent successful fallback within the current warm function instance.
+let recentOpenRouter={model:"",at:0}; // Real replies only, never synthetic status.
 // Task categories are routing preferences, not unverified claims about model quality.
 const TASK_PRIORITY={
  technical:["groq","mistral","openrouter"],
@@ -108,7 +109,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   const remaining=Math.min(deadline,firstResponseDeadline)-Date.now();if(remaining<500)break;
   // All selected models are reviewed chat models. Stream their visible text
   // through the same classifier-prefix guard; JSON clients get a full-answer budget.
-  const attemptBudget=!onDelta?bufferedTimeoutMs:timeoutMs;
+  const attemptBudget=provider.id==="openrouter"?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,reasoningLevel==="high"?12000:8500):(!onDelta?bufferedTimeoutMs:timeoutMs);
   const attemptStarted=Date.now();
   const control=requestControl(Math.min(attemptBudget,remaining),signal);
   let emitted=false;
@@ -183,6 +184,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    validateChatReply(text,data.model||provider.model);
    if(onDelta&&!emitted){emitted=true;onDelta(text);}
    cooldown.delete(provider.id);preferredProvider=provider.id;
+   if(provider.id==="openrouter")recentOpenRouter={model:data.model||provider.model,at:Date.now()};
    // A real answer is stronger evidence than a cached synthetic health probe.
    if(healthCache.value){
     healthCache.value=healthCache.value.map(x=>x.id===provider.id?{...x,status:"online",model:data.model||provider.model,latencyMs:Date.now()-attemptStarted,retryAfterSeconds:0}:x);
@@ -293,6 +295,7 @@ async function checkStatus(){
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
     if(provider.id==="openrouter"){
+     if(Date.now()-recentOpenRouter.at<90000)return {id:provider.id,status:"online",model:recentOpenRouter.model,reason:"recent_reply"};
      // Account authentication does not consume the shared inference quota.
      const response=await fetch("https://openrouter.ai/api/v1/key",{
       method:"GET",headers:{Authorization:"Bearer "+process.env[provider.key]},signal:ctrl.signal
