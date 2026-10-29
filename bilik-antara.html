@@ -157,11 +157,20 @@ const ui={
  remember:el("rememberChat"),clear:el("clearChat"),notes:el("thoughtItems"),forget:el("forgetIdeas"),
  mediaFallback:el("allowOpenRouterImages"),requestyConsent:el("allowRequesty")
 };
-// Keep mobile keyboard sizing current without repeated layout writes.
+// Stable mobile viewport: browser toolbar changes must not relayout a glass-heavy chat
+// on every animation frame. Only keyboard focus or orientation changes can resize it.
 let appliedAppHeight=null,viewportFrame=0;
+let viewportWidth=window.innerWidth;
+let stableAppHeight=Math.round(window.visualViewport?.height||window.innerHeight);
 function syncViewport(){
  const view=window.visualViewport;
- const height=window.innerWidth<=760&&view?Math.round(view.height)+"px":"";
+ if(Math.abs(window.innerWidth-viewportWidth)>20){
+  viewportWidth=window.innerWidth;
+  stableAppHeight=Math.round(view?.height||window.innerHeight);
+ }
+ const currentHeight=Math.round(view?.height||window.innerHeight);
+ const keyboardVisible=document.activeElement===ui.input&&stableAppHeight-currentHeight>120;
+ const height=window.innerWidth<=760?(keyboardVisible?currentHeight:stableAppHeight)+"px":"";
  if(height===appliedAppHeight)return;
  appliedAppHeight=height;
  if(height)document.documentElement.style.setProperty("--app-height",height);
