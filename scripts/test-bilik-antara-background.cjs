@@ -31,7 +31,7 @@ async function inspect(browser,width,height,mode){
  await page.evaluate(()=>document.fonts.ready);
  const result=await state(page);
  assert.equal(result.overflow,false,mode+' '+width+' horizontal overflow');
- assert.equal(result.particles,mode==='before'?24:0, 'Only obsolete hand sparks are removed');
+ assert.equal(result.particles,0,'Obsolete hand sparks must stay absent in baseline and current versions');
  assert.match(result.effects['.world-art'][0],/worldBreath/);
  assert.match(result.effects['.world-haze'][0],/hazeDrift/);
  assert.match(result.effects['.world-embers i'][0],/embersTravel/);
