@@ -90,7 +90,7 @@ function blockedClassifierPrefix(text){
 function errorToCooldown(status){
  return status===429?60000:status>=500||status===408?20000:status===401||status===403||status===404?300000:15000;
 }
-async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix="",mediaImages=[],allowRequesty=false}){
+async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix="",mediaImages=[],allowRequesty=false,requestyQuestion=""}){
  const images=Array.isArray(mediaImages)?mediaImages.slice(0,3).filter(x=>
    x&&["image/jpeg","image/png","image/webp"].includes(x.mimeType)&&
    typeof x.data==="string"&&x.data.length<=4800000&&/^[A-Za-z0-9+/]+={0,2}$/.test(x.data)):[];
@@ -116,7 +116,8 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   const remaining=Math.min(deadline,firstResponseDeadline)-Date.now();if(remaining<500)break;
   // All selected models are reviewed chat models. Stream their visible text
   // through the same classifier-prefix guard; JSON clients get a full-answer budget.
-  const attemptBudget=provider.id==="openrouter"?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,reasoningLevel==="high"?12000:8500):(!onDelta?bufferedTimeoutMs:timeoutMs);
+  const attemptBudget=provider.id==="openrouter"?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,reasoningLevel==="high"?12000:8500):
+   provider.id==="requesty"?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,9000):(!onDelta?bufferedTimeoutMs:timeoutMs);
   const attemptStarted=Date.now();
   const control=requestControl(Math.min(attemptBudget,remaining),signal);
   let emitted=false;
@@ -136,7 +137,11 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    // Per-turn guidance has its own system message, allowing whole-message
    // prefix caching without rewriting or shortening that personality.
    const prefix=safeMessage(systemPrefix);
-   const providerMessages=provider.id==="groq"&&prefix&&String(system).startsWith(prefix)?[
+   const providerMessages=provider.id==="requesty"?[
+    messages[0],
+    ...boundedHistory(history,14000),
+    {role:"user",content:boundedText(requestyQuestion||question,30000)}
+   ]:provider.id==="groq"&&prefix&&String(system).startsWith(prefix)?[
     {role:"system",content:prefix},
     {role:"system",content:String(system).slice(prefix.length)+"\nSANDARAN TEKS: Tiada alat carian, URL atau pelaksanaan kod aktif. Jangan reka sumber atau mengaku alat yang tiada digunakan. Identiti kekal Aksara. Shaiful bukan pencipta genre puisi gaya bebas."},
     ...messages.slice(1)
