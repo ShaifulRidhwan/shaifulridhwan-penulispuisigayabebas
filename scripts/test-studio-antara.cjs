@@ -20,6 +20,21 @@ test('Studio is cloud-only, image-only and all client JS parses',()=>{
  assert.match(fs.readFileSync('studio-antara-history.js','utf8'),/indexedDB\.open/);
  assert.doesNotMatch(fs.readFileSync('studio-antara-cloud.js','utf8'),/localStorage\.setItem/);
 });
+test('Studio 2.4 removes redundant copy and decorative icons without hiding functional notices',()=>{
+ const html=fs.readFileSync('studio-antara.html','utf8'),script=fs.readFileSync('studio-antara-cloud.js','utf8');
+ assert.match(html,/<section class="glass-card creator" aria-labelledby="studioTitle">/);
+ assert.match(html,/<h1 id="studioTitle" class="studio-card-title">STUDIO <span>ANTARA\.<\/span><\/h1>/);
+ assert.match(html,/<textarea id="imagePrompt"[^>]*placeholder="Apa yang kau nak lihat\?"/);
+ assert.match(html,/<p class="generation-status" id="generationStatus"[^>]*hidden><\/p>/);
+ assert.match(html,/<p id="imageMetadata" class="image-meta" hidden><\/p>/);
+ assert.doesNotMatch(html,/RUANG KREATIF CAHAYA DAN GELAP|Bayangkan\. Perkemas\. Jadikan visual\.|Mula dengan imaginasi\.|01 \/ IDEA KAU|02 \/ HASIL KAU|Dah sedia\. Cerita je apa yang kau bayangkan\.|Idea kau bermula di sini\.|Tanpa model besar pada peranti\.|Schnell: output segi empat/);
+ assert.doesNotMatch(html,/✦|↗|←|↓/);
+ assert.doesNotMatch(script,/modelNote|✦|↗/);
+ assert.match(html,/<header class="topbar">/);
+ assert.match(html,/<a class="back-link" href="bilik-antara\.html">BILIK ANTARA<\/a>/);
+ assert.match(script,/ui\.status\.hidden=!message/);
+ assert.match(script,/ui\.meta\.hidden=false/);
+});
 test('Every preset affects the actual model prompt',()=>{
  assert.equal(Object.keys(C.presets).length,11);
  for(const style of Object.keys(C.presets)){const s=C.settings({prompt:'Seekor kucing',style});assert.ok(C.compose(s).startsWith('Seekor kucing'));if(style!=='none')assert.ok(C.compose(s).length>s.prompt.length);}
