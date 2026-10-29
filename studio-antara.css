@@ -87,3 +87,253 @@ body.studio-picker-open{overflow:hidden}
  .studio-picker-option{min-height:48px}
  .studio-footer{margin-top:25px}
 }
+
+/* Studio Antara 2.2 — unified translucent glass and typography.
+   One material language across form, result, gallery and modal.
+   Purely presentational: image generation and provider handling untouched. */
+:root{
+ --ink:#f7f0e7;
+ --muted:#c1bcc0;
+ --line:rgba(247,226,197,.19);
+ --glass-stroke:rgba(250,231,204,.25);
+ --glass-sheen:rgba(255,255,255,.12);
+ --glass-shadow:0 18px 46px rgba(0,0,0,.19);
+ --glass-blur:14px;
+}
+body{
+ background:
+  radial-gradient(ellipse 65% 36% at -9% 13%,rgba(202,144,78,.28),transparent 88%),
+  radial-gradient(ellipse 74% 39% at 112% 27%,rgba(65,109,178,.29),transparent 86%),
+  radial-gradient(ellipse 68% 30% at 45% 73%,rgba(55,78,128,.12),transparent 95%),
+  #080b13;
+}
+body,button,input,select,textarea{font-family:'DM Sans',system-ui,sans-serif}
+.topbar{font-weight:500;letter-spacing:.065em;border-bottom-color:rgba(249,227,204,.15)}
+.brand-mark{font-weight:700;letter-spacing:.09em}
+.hero h1{font-family:'Space Grotesk','DM Sans',sans-serif;font-weight:500;letter-spacing:-.054em}
+h2,.card-top h2{font-family:'DM Sans',sans-serif;font-weight:600;letter-spacing:-.038em;line-height:1.25}
+.eyebrow,.step-label{font-weight:600;letter-spacing:.16em}
+.hero>p:not(.eyebrow){font-weight:400;letter-spacing:-.01em;color:#c5c0c0}
+.glass-card{
+ background:linear-gradient(134deg,rgba(249,238,224,.085) 0%,rgba(65,75,98,.075) 38%,rgba(8,14,26,.14) 100%);
+ border:1px solid var(--glass-stroke);
+ box-shadow:inset 0 1px 0 var(--glass-sheen),inset 0 -1px 0 rgba(255,255,255,.017),var(--glass-shadow);
+ backdrop-filter:blur(var(--glass-blur)) saturate(132%);
+ -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(132%);
+ border-radius:23px;
+}
+.creator,.result,.gallery{color:var(--ink)}
+.input-label,#imageForm>label,.control-grid label{
+ color:#e0d8d2;
+ font-size:12px;
+ font-weight:500;
+ line-height:1.45;
+ letter-spacing:.005em;
+}
+.prompt-compose{
+ background:linear-gradient(130deg,rgba(7,12,23,.23),rgba(22,35,55,.105));
+ border:1px solid rgba(245,226,202,.23);
+ border-radius:17px;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.06);
+ backdrop-filter:blur(11px);
+ -webkit-backdrop-filter:blur(11px);
+}
+.prompt-compose:focus-within{
+ border-color:rgba(249,208,146,.7);
+ box-shadow:0 0 0 2px rgba(242,201,132,.11),inset 0 1px 0 rgba(255,255,255,.09);
+}
+.prompt-compose #imagePrompt{
+ font-size:13.5px;
+ font-weight:400;
+ line-height:1.6;
+ letter-spacing:.005em;
+ color:#faf2e6;
+}
+textarea::placeholder,input::placeholder{
+ color:#b4aeb2;
+ opacity:.88;
+ font-weight:400;
+}
+.prompt-compose .prompt-tools{
+ border-top-color:rgba(249,229,207,.11);
+ font-size:10px;
+ color:#bcb7bb;
+}
+#promptCount{font-size:10px;font-variant-numeric:tabular-nums;letter-spacing:.015em}
+#enhancePrompt{
+ min-height:34px;
+ border-radius:999px;
+ padding:7px 11px;
+ font-size:11px;
+ font-weight:600;
+ color:#f4d29d;
+ background:linear-gradient(125deg,rgba(247,213,162,.115),rgba(255,255,255,.025));
+ border-color:rgba(246,212,163,.32);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.09);
+}
+#enhancePrompt:not(:disabled):hover{
+ background:linear-gradient(125deg,rgba(247,213,162,.18),rgba(255,255,255,.055));
+}
+.idea-chips button,.inline-actions button,.result-actions button,.gallery-toolbar button,#restorePrompt,#moreHistory{
+ font-size:11px;
+ font-weight:500;
+ color:#e9dfd5;
+ background:linear-gradient(135deg,rgba(250,235,210,.065),rgba(14,22,38,.075));
+ border-color:rgba(248,229,203,.19);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.045);
+}
+.idea-chips button{border-radius:99px}
+.enhance-panel{
+ background:linear-gradient(140deg,rgba(246,231,209,.08),rgba(14,24,40,.13));
+ border-color:var(--glass-stroke);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.065);
+}
+.enhance-panel label{font-weight:500;color:#e5dcd3}
+.enhance-panel textarea,.advanced input{
+ background:rgba(10,17,30,.22);
+ border-color:rgba(249,226,197,.21);
+}
+.control-grid{gap:12px 12px}
+.control-grid label{font-size:12px}
+.studio-picker-trigger{
+ min-height:46px;
+ margin-top:6px;
+ padding:10px 12px;
+ border-radius:15px;
+ color:#f4ece3;
+ font-size:13px;
+ font-weight:500;
+ letter-spacing:-.012em;
+ border:1px solid rgba(247,228,208,.23);
+ background:linear-gradient(122deg,rgba(240,230,219,.07),rgba(20,37,60,.13));
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.065);
+ backdrop-filter:blur(11px);
+ -webkit-backdrop-filter:blur(11px);
+}
+.studio-picker-trigger:after{font-size:17px;font-weight:400;color:#e8c68e}
+.studio-picker-trigger:not(:disabled):hover,.studio-picker-trigger[aria-expanded="true"]{
+ border-color:rgba(247,213,163,.51);
+ background:linear-gradient(122deg,rgba(246,225,198,.11),rgba(25,45,70,.16));
+}
+.model-note,.image-meta,#seedNote,#quotaEstimate,#quotaContext,.advanced .small-note,.result .small-note{
+ color:#c4bfc0;
+ font-size:11px;
+ font-weight:400;
+ line-height:1.6;
+ letter-spacing:.002em;
+}
+.advanced{border-top-color:rgba(248,227,204,.17)}
+.advanced summary,.used-prompt summary{
+ color:#e7deda;
+ font-size:12px;
+ font-weight:500;
+}
+.advanced[open] summary{color:#f3d3a0}
+.generate-btn{
+ background:linear-gradient(112deg,#f5d39c 0%,#e8c086 52%,#d6ab6b 100%);
+ color:#21170c;
+ border:1px solid rgba(255,236,197,.43);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.41),0 8px 25px rgba(11,9,8,.12);
+ font-size:15px;
+ font-weight:700;
+ letter-spacing:-.014em;
+}
+.generate-btn:not(:disabled):hover{background:linear-gradient(112deg,#ffe0ab,#ebc58d,#e0b474)}
+.generation-status{color:#e7d7bd;font-size:12px;font-weight:400}
+.result-indicator{
+ background:rgba(241,213,171,.055);
+ border-color:rgba(244,219,185,.3);
+ font-weight:600;
+}
+.result-stage{
+ background:radial-gradient(ellipse at 42% 30%,rgba(208,162,96,.09),transparent 67%),linear-gradient(140deg,rgba(5,10,21,.14),rgba(20,37,58,.1));
+ border:1px solid rgba(249,233,207,.11);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.028);
+}
+.result-empty strong{font-weight:600}
+.gallery>summary{font-weight:600;letter-spacing:-.02em}
+.history-card{
+ background:linear-gradient(145deg,rgba(249,235,211,.065),rgba(13,23,39,.12));
+ border-color:rgba(244,221,186,.19);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+}
+.result-actions a{border-color:rgba(244,213,166,.32);background:rgba(240,210,162,.075)}
+.model-beta-info{
+ background:linear-gradient(135deg,rgba(112,78,36,.18),rgba(24,26,37,.13));
+ border-color:rgba(239,193,121,.36);
+}
+.studio-footer{border-top-color:rgba(246,219,186,.16);color:#bdb6b9}
+/* The sheet must be translucent, not an opaque dark rectangle. */
+.studio-picker-backdrop{
+ background:rgba(2,7,15,.43);
+ backdrop-filter:blur(10px) saturate(125%);
+ -webkit-backdrop-filter:blur(10px) saturate(125%);
+}
+.studio-picker-dialog{
+ background:linear-gradient(150deg,rgba(43,51,65,.76) 0%,rgba(20,32,50,.7) 55%,rgba(14,23,39,.68) 100%);
+ border:1px solid rgba(246,223,190,.34);
+ border-radius:23px;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.17),0 18px 58px rgba(0,0,0,.33);
+ backdrop-filter:blur(23px) saturate(142%);
+ -webkit-backdrop-filter:blur(23px) saturate(142%);
+}
+.studio-picker-heading{
+ padding:15px 17px 9px;
+ font-size:13.5px;
+ font-weight:600;
+ letter-spacing:.012em;
+ color:#f3d19b;
+}
+.studio-picker-close{
+ width:35px;
+ min-height:35px;
+ border-radius:12px;
+ font-size:19px;
+ font-weight:400;
+ color:#f5e7d8;
+ border-color:rgba(249,226,200,.22);
+ background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(15,25,41,.1));
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+}
+.studio-picker-options{padding:6px 11px 12px}
+.studio-picker-option{
+ min-height:47px;
+ padding:11px 15px;
+ margin-top:5px;
+ border-radius:15px;
+ font-size:13px;
+ font-weight:500;
+ letter-spacing:-.005em;
+ color:#f2e8df;
+ border:1px solid rgba(245,226,203,.055);
+ background:linear-gradient(120deg,rgba(244,230,215,.052),rgba(20,35,56,.095));
+}
+.studio-picker-option:not(:disabled):hover{
+ background:linear-gradient(120deg,rgba(248,228,196,.11),rgba(33,52,76,.17));
+ border-color:rgba(248,225,192,.19);
+}
+.studio-picker-option[aria-pressed="true"]{
+ color:#f9d7a6;
+ background:linear-gradient(115deg,rgba(240,202,146,.19),rgba(57,55,56,.12));
+ border-color:rgba(244,204,148,.37);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 22px rgba(230,184,112,.04);
+}
+.studio-picker-option[aria-pressed="true"]:after{font-size:16px;color:#f8d199}
+@media(max-width:680px){
+ :root{--glass-blur:12px;--glass-shadow:0 12px 30px rgba(0,0,0,.14)}
+ .glass-card{border-radius:21px}
+ h1{letter-spacing:-.065em}
+ .card-top h2{font-size:20px;line-height:1.28}
+ .prompt-compose #imagePrompt{font-size:13px;line-height:1.55}
+ .studio-picker-trigger{min-height:44px;font-size:12.5px;padding:9px 11px}
+ .studio-picker-backdrop{background:rgba(2,7,16,.39);backdrop-filter:blur(9px);-webkit-backdrop-filter:blur(9px)}
+ .studio-picker-dialog{border-radius:23px;backdrop-filter:blur(19px) saturate(130%);-webkit-backdrop-filter:blur(19px) saturate(130%)}
+ .studio-picker-heading{font-size:13px}
+ .studio-picker-option{font-size:12.5px;min-height:47px}
+ .generate-btn{font-size:15px}
+}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more){
+ .glass-card,.studio-picker-dialog{background:rgba(18,25,39,.96);backdrop-filter:none;-webkit-backdrop-filter:none}
+ .studio-picker-backdrop{background:rgba(2,7,16,.83);backdrop-filter:none;-webkit-backdrop-filter:none}
+ .studio-picker-trigger,.prompt-compose{background:rgba(18,24,35,.95);backdrop-filter:none;-webkit-backdrop-filter:none}
+}
