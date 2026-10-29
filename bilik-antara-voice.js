@@ -294,10 +294,16 @@ function onServerMessage(payload){
     if(switched&&replay&&socket?.readyState===WebSocket.OPEN){
       // Fresh Gemini Live setup means the old regional accent is not in its memory.
       // Replay just the request that triggered the switch, not any older dialect audio.
-      socket.send(JSON.stringify({clientContent:{
-        turns:[{role:"user",parts:[{text:replay}]}],turnComplete:true
-      }}));
-      sayStatus("Loghat "+dialectControl.label(activeDialect)+" aktif. Aku sedang menjawab…");
+      try{
+        socket.send(JSON.stringify({clientContent:{
+          turns:[{role:"user",parts:[{text:replay}]}],turnComplete:true
+        }}));
+        sayStatus("Loghat "+dialectControl.label(activeDialect)+" aktif. Aku sedang menjawab…");
+      }catch(_){
+        // Keep the spoken request available if the new socket closes early.
+        replayDialectRequest=replay;dialectSwitching=true;
+        sayStatus("Sambungan suara tidak stabil. Memulihkan loghat pilihan…");
+      }
     }else{
       sayStatus("Bersambung · "+(dialectControl?.label(activeDialect)||"Bahasa Melayu santai")+". Aku sedang dengar.");
     }
@@ -332,13 +338,15 @@ function onServerMessage(payload){
   if(!c)return;
   // Respect the model waiting for the user to complete their thought.
   if(c.waitingForInput===true&&!playbackBusy())sayStatus("Teruskan, aku sedang dengar.");
-  if(c.interrupted){
+  const wasInterrupted=!!c.interrupted;
+  if(wasInterrupted){
     voiceMetrics.interruptions++;
     stopAudioQueue();panel.classList.remove("voice-speaking");
     if(lastTurn)lastTurn.finished=true;
     sayStatus("Aku berhenti. Kau cakap je, aku dengar.");
-    // Discard any audio that accompanied the cancelled generation.
-    return;
+    // An interruption can share a packet with fresh input transcription.
+    // Keep that user request, but never play cancelled model audio.
+    if(!c.inputTranscription?.text)return;
   }
   // Google can send interim words before the final transcript is available.
   // Showing them helps distinguish recognition issues from answer issues.
@@ -353,7 +361,7 @@ function onServerMessage(payload){
     if(!pendingDialect&&!dialectSwitching)sayStatus("Aku dengar. Sekejap, aku jawab…");
   }
   // Ignore audio/transcription generated using the dialect that is being replaced.
-  if(pendingDialect||dialectSwitching){
+  if(pendingDialect||dialectSwitching||wasInterrupted){
     if(c.turnComplete&&lastTurn)lastTurn.finished=true;
     return;
   }
