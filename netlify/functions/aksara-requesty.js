@@ -32,6 +32,7 @@ function configured(){
  return process.env.AKSARA_FREE_FALLBACKS==="true" &&
   process.env.REQUESTY_ACCOUNT_HOLDER_ELIGIBLE==="true" &&
   process.env.REQUESTY_DATA_POLICY_REVIEWED==="true" &&
+  process.env.REQUESTY_END_USER_ELIGIBILITY_VERIFIED==="true" &&
   typeof process.env.REQUESTY_API_KEY==="string" &&
   process.env.REQUESTY_API_KEY.length>8;
 }
