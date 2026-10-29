@@ -679,3 +679,129 @@ main>.workspace{margin-top:18px}
  .topbar{background:rgba(18,25,39,.97);backdrop-filter:none;-webkit-backdrop-filter:none}
  .topbar .back-link,.topbar .home-link,.topbar .brand-mark{background:#222e40;backdrop-filter:none;-webkit-backdrop-filter:none}
 }
+
+/* Studio Antara 2.5: optically centered vector chevrons, title harmony and calm glass breathing.
+   Animate only a lightweight translucent overlay, never the blur or the layout. */
+.result #resultTitle{
+ font-family:'DM Sans',system-ui,sans-serif;
+ font-weight:700;
+ letter-spacing:-.027em;
+ line-height:1.17;
+ color:#f6eee6;
+}
+.result #resultTitle span{
+ font-weight:700;
+ color:#f0ca8d; /* Same gold as STUDIO ANTARA. */
+}
+/* Typography glyphs have uneven baselines on Android; draw both chevrons as CSS geometry. */
+.studio-picker-trigger::after{
+ content:"";
+ display:block;
+ width:9px;
+ height:9px;
+ min-width:9px;
+ flex:0 0 9px;
+ align-self:center;
+ margin:0 4px 0 0;
+ padding:0;
+ border:0;
+ border-right:2px solid #e8c68e;
+ border-bottom:2px solid #e8c68e;
+ border-radius:0;
+ box-sizing:border-box;
+ transform:translateY(-2px) rotate(45deg);
+}
+.gallery-chevron{
+ display:inline-flex;
+ flex:0 0 20px;
+ width:20px;
+ height:26px;
+ min-height:26px;
+ padding:0;
+ align-items:center;
+ justify-content:center;
+ font-size:0;
+ line-height:0;
+ transform-origin:center;
+}
+.gallery-chevron::before{
+ content:"";
+ display:block;
+ width:9px;
+ height:9px;
+ box-sizing:border-box;
+ border-right:2px solid #f3ce92;
+ border-bottom:2px solid #f3ce92;
+ transform:translateY(-2px) rotate(45deg);
+}
+.gallery[open] .gallery-chevron{transform:rotate(180deg)}
+/* Paint-only reflective glass pulse: no scaling, sliding, or backdrop-filter animation. */
+#enhancePrompt,
+#generateImage,
+#resultIndicator.is-waiting{
+ position:relative;
+ isolation:isolate;
+ overflow:hidden;
+}
+#enhancePrompt::before,
+#generateImage::before,
+#resultIndicator.is-waiting::before{
+ content:"";
+ position:absolute;
+ inset:0;
+ z-index:0;
+ pointer-events:none;
+ border-radius:inherit;
+ background:linear-gradient(115deg,rgba(255,255,255,.015),rgba(255,250,237,.3) 46%,rgba(255,255,255,.02));
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px rgba(253,221,176,.12);
+ opacity:.17;
+ animation:studioGlassBreath 4.8s ease-in-out infinite;
+}
+#enhancePrompt{
+ background:linear-gradient(120deg,rgba(240,205,154,.14),rgba(45,65,94,.095));
+ border-color:rgba(247,215,169,.37);
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 0 16px rgba(235,191,124,.035);
+}
+#enhancePrompt::before{
+ animation-delay:-1.15s;
+ background:linear-gradient(110deg,rgba(248,220,178,.035),rgba(250,236,210,.24) 50%,rgba(118,163,213,.08));
+}
+#generateImage{
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.43),0 7px 26px rgba(219,164,87,.11);
+}
+#generateImage::before{
+ animation-delay:-2.4s;
+ background:linear-gradient(110deg,rgba(255,255,255,.015),rgba(255,255,255,.27) 48%,rgba(255,255,255,.015));
+}
+#resultIndicator.is-waiting{
+ color:#f6d49c;
+ border-color:rgba(244,212,165,.38);
+ background:linear-gradient(120deg,rgba(242,208,159,.095),rgba(30,48,73,.1));
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
+}
+#resultIndicator.is-waiting::before{
+ animation-delay:-.4s;
+ background:linear-gradient(110deg,rgba(250,237,210,.015),rgba(255,236,203,.22) 52%,rgba(108,154,198,.06));
+}
+@keyframes studioGlassBreath{
+ 0%,100%{opacity:.15}
+ 49%{opacity:.82}
+}
+#enhancePrompt:disabled::before,
+#generateImage:disabled::before{animation:none;opacity:.12}
+@media(max-width:680px){
+ .gallery-chevron{flex-basis:18px;width:18px;min-height:26px;height:26px}
+ .studio-picker-trigger::after{width:8px;height:8px;min-width:8px;flex-basis:8px}
+}
+@media(prefers-reduced-motion:reduce){
+ #enhancePrompt::before,#generateImage::before,#resultIndicator.is-waiting::before{
+  animation:none!important;
+  opacity:.32;
+ }
+}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more){
+ #enhancePrompt::before,#generateImage::before,#resultIndicator.is-waiting::before{
+  animation:none;
+  opacity:.08;
+ }
+}
