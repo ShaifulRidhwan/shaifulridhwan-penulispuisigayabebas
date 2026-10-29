@@ -243,7 +243,7 @@ function renderMetrics(){
  const providers=Object.entries(metrics.byProvider||{}).filter(([,v])=>v&&Number(v.calls)>0).sort((a,b)=>b[1].calls-a[1].calls);
  if(!providers.length)paragraph("Tiada rekod model lagi. Jawapan baharu akan mengenal pasti penyedia.");
  for(const [id,data]of providers){
-  const label=({gemini:"Google Gemini",groq:"Groq",mistral:"Mistral",openrouter:"OpenRouter",local:"Identiti setempat",unknown:"Tidak diketahui"})[id]||id;
+  const label=({gemini:"Google Gemini",groq:"Groq",mistral:"Mistral",openrouter:"OpenRouter",requesty:"Requesty",local:"Identiti setempat",unknown:"Tidak diketahui"})[id]||id;
   const row=make("div",undefined,"ba-metric");
   const samples=(metrics.events||[]).filter(e=>e&&e.ok&&e.provider===id&&Number.isFinite(e.ms));
   const time=samples.length?" · "+(samples.reduce((sum,e)=>sum+e.ms,0)/samples.length/1000).toFixed(2)+" s purata sampel":"";
@@ -287,7 +287,7 @@ function render(){
 }
 window.addEventListener("ba:answered",event=>{
  const item=event.detail||{};
- const provider=["gemini","groq","mistral","openrouter","local"].includes(item.provider)?item.provider:"unknown";
+ const provider=["gemini","groq","mistral","openrouter","requesty","local"].includes(item.provider)?item.provider:"unknown";
  metrics.calls=(metrics.calls||0)+1;
  const rawTokens=item.usage?.totalTokenCount??item.usage?.total_tokens;
  const tokens=rawTokens===null||rawTokens===undefined||rawTokens===""?NaN:Number(rawTokens);
