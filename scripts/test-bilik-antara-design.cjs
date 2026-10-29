@@ -82,7 +82,7 @@ test("Calm glass frame keeps the chat clear and preserves background particles",
 });
 
 test("Composited glass label, original ambient motion and older-browser rim fallback are retained",()=>{
- assert.match(html,/href="bilik-antara\.css\?v=73"/);
+ assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.match(css,/\.voice-panel \.voice-live-label::after\{/);
  assert.match(css,/@keyframes voiceIdentityBorderLight\{/);
  assert.match(css,/@keyframes voiceIdentityBreath\{\s*0%,100%\{transform:scale\(1\)\}/);

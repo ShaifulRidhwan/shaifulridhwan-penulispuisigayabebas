@@ -1,6 +1,13 @@
 name: Bilik Antara Browser Audit
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "bilik-antara.html"
+      - "bilik-antara.css"
+      - "bilik-antara-bg-*.webp"
+      - "scripts/test-bilik-antara-background.cjs"
+      - ".github/workflows/bilik-antara-browser-audit.yml"
   push:
     branches: [main]
     paths:
@@ -16,6 +23,8 @@ jobs:
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -24,6 +33,8 @@ jobs:
           npm install --no-save --no-audit --no-fund playwright@1.56.0
           npx playwright install --with-deps chromium
       - name: Audit desktop/mobile, animations, glass, privacy UI, and keyboard
+        env:
+          BACKGROUND_BASE_SHA: ${{ github.event.pull_request.base.sha || '3edd611c94bccb940ede511a229a41b3167bdb45' }}
         run: |
           python3 -m http.server 4177 --bind 127.0.0.1 > /tmp/aksara-audit-server.log 2>&1 &
           server_pid=$!
@@ -33,6 +44,7 @@ jobs:
             sleep 1
           done
           node scripts/test-bilik-antara-browser.cjs
+          node scripts/test-bilik-antara-background.cjs
       - name: Upload browser screenshots
         if: always()
         uses: actions/upload-artifact@v4

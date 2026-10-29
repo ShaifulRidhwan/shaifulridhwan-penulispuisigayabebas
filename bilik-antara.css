@@ -3074,7 +3074,7 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 }
 @media(max-width:390px){.voice-panel .voice-live-label{padding:7px 10px}}
 
-/* Cinematic wallpaper trial: background asset selection only. Keep original as fallback until assets are uploaded. */
+/* Responsive wallpaper only; the original image remains underneath as a load-error fallback. */
 @media(max-width:760px){
   .world-art{
     background-image:url("./bilik-antara-bg-mobile.webp"),url("./bilik-antara-cover-art.jpg?v=2");
