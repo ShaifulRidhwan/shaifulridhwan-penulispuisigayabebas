@@ -1703,12 +1703,17 @@ window.addEventListener('resize',updateContinuousProgress);
     requestAnimationFrame(throttle);
 
     /* ---- 3. Progress bar section tick marks ---- */
+    var tickLayoutSignature = '';
     function addTicks(){
       try{
         var bar = document.querySelector('.progress-bar');
         var ss = window.sectionStart;
         var pages = window.pages;
         if(!bar || !ss || !pages || pages.length===0) return;
+        // Pagination can change after fonts/viewport changes; rebuild only then.
+        // Keep identical positions, counts, colors and tick visuals.
+        var signature=pages.length+'|'+ss.join(',');
+        if(signature===tickLayoutSignature) return;
         var existing = bar.querySelectorAll('.tick');
         for(var e=0;e<existing.length;e++) existing[e].remove();
         for(var i=0;i<ss.length;i++){
@@ -1718,6 +1723,7 @@ window.addEventListener('resize',updateContinuousProgress);
           tick.style.left = pct + '%';
           bar.appendChild(tick);
         }
+        tickLayoutSignature=signature;
       }catch(e){}
     }
     setTimeout(addTicks, 1500);
