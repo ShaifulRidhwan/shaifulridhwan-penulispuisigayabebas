@@ -1,7 +1,7 @@
 'use strict';
-const Config=require('../../studio-antara-config');
-const Quota=require('./lib/studio-quota');
-const {response,input,readLimited,imageInfo}=require('./lib/studio-http');
+const Config=require('../../../studio-antara-config');
+const Quota=require('./studio-quota');
+const {response,input,readLimited,imageInfo}=require('./studio-http');
 const {randomInt}=require('node:crypto');
 function createHandler({fetchImpl=fetch,reserve=Quota.reserve,env=process.env,timeout=45000}={}){
  return async event=>{
