@@ -25,7 +25,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg?v=2" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=56">
+<link rel="stylesheet" href="bilik-antara.css?v=57">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
@@ -57,7 +57,7 @@
      <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Jom Voice Chat</button>
     </div>
     <div class="chat-controls">
-     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI"><span class="dot" aria-hidden="true"></span><span id="connectionText">Semak Multi A.I.…</span></button>
+     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model percuma OpenRouter"><span class="dot" aria-hidden="true"></span><span id="connectionText">Semak Multi A.I.…</span></button>
      <details class="settings" id="settingsPanel">
       <summary aria-label="Buka Ciri dan Fungsi Aksara" title="Ciri &amp; Fungsi">
        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
@@ -94,7 +94,7 @@
     </div>
    </header>
    <dialog class="multi-ai-dialog" id="multiAiDialog" aria-labelledby="multiAiTitle">
- <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I. · Sambungan</strong><p>Status disemak dengan permintaan ujian ringkas, bukan berdasarkan API key sahaja.</p></div><button type="button" id="multiAiClose" aria-label="Tutup status penyedia">×</button></div>
+ <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I. · Sambungan</strong><p>Empat penyedia diuji secara langsung. Model percuma OpenRouter dipaparkan daripada katalog tanpa menghabiskan kuota ujian.</p></div><button type="button" id="multiAiClose" aria-label="Tutup status penyedia">×</button></div>
  <div class="multi-ai-list" id="multiAiList" aria-live="polite"></div>
  <div class="multi-ai-actions"><small id="multiAiChecked">Belum disemak</small><button type="button" id="multiAiRefresh">Semak semula</button></div>
 </dialog>
@@ -215,8 +215,8 @@ ui.retry.addEventListener("click",()=>{
 });
 const providers=[["gemini","Google Gemini"],["groq","Groq"],["mistral","Mistral"],["openrouter","OpenRouter"]];
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList"),multiChecked=el("multiAiChecked");
-let multiLastCheck=0,multiChecking=false;
-function renderProviderRows(rows){
+let multiLastCheck=0,multiChecking=false,multiCatalog=null;
+function renderProviderRows(rows,catalog=null){
  multiList.replaceChildren();
  for(const [id,name] of providers){
   const item=(rows||[]).find(x=>x.id===id);
@@ -229,11 +229,36 @@ function renderProviderRows(rows){
    state==="online"?"Terhubung":state==="offline"?(waitLabel||"Tidak terhubung"):state==="off"?"Tidak aktif":"Menyemak…");
   line.append(nameText,statusText);multiList.appendChild(line);
  }
+ // Individual free models are discovered, NOT probed. Only the parent OpenRouter
+ // row reflects a real test, so never give catalog entries green/online badges.
+ const group=elem("details","multi-ai-free-group");group.open=true;
+ const summary=elem("summary","multi-ai-free-summary");
+ const total=Number.isInteger(catalog?.total)?catalog.total:null;
+ summary.append(elem("span","",total===null?"Model percuma OpenRouter":("Model percuma OpenRouter · "+total)));
+ group.appendChild(summary);
+ group.appendChild(elem("p","multi-ai-free-note","Senarai model :free daripada OpenRouter. “Tersenarai” bukan pengesahan model sedang online. Model dipilih secara automatik dan berkongsi had akaun OpenRouter."));
+ const list=elem("div","multi-ai-free-list");
+ if(Array.isArray(catalog?.models)&&catalog.models.length){
+  for(const model of catalog.models){
+   if(!model||typeof model.id!=="string")continue;
+   const line=elem("div","multi-ai-model-row");
+   const label=elem("div","multi-ai-model-text");
+   label.append(elem("span","multi-ai-model-name",String(model.name||model.id).slice(0,140)),
+    elem("small","multi-ai-model-id",model.id.slice(0,140)));
+   const state=elem("span","multi-ai-model-state","Tersenarai");
+   line.append(label,state);list.appendChild(line);
+  }
+  if(catalog.status==="stale")group.appendChild(elem("p","multi-ai-free-note","Katalog terdahulu dipaparkan kerana semakan terkini gagal."));
+ }else{
+  const message=!catalog?"Sedang memuatkan senarai…":catalog.status==="unavailable"?"Senarai tidak dapat dimuatkan sekarang. Ini bukan bermaksud semua model offline.":"Tiada model :free tersenarai buat masa ini.";
+  list.appendChild(elem("p","multi-ai-free-empty",message));
+ }
+ group.appendChild(list);multiList.appendChild(group);
 }
 async function checkProviders(force=false){
  if(multiChecking)return;
  if(!force&&Date.now()-multiLastCheck<20000)return;
- multiChecking=true;el("multiAiRefresh").disabled=true;renderProviderRows();
+ multiChecking=true;el("multiAiRefresh").disabled=true;renderProviderRows(null,multiCatalog);
  if(!busy)status("connecting","Menguji sambungan AI…","");
  const revision=connectionRevision;
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12500);
@@ -242,7 +267,8 @@ async function checkProviders(force=false){
    body:JSON.stringify({providerStatus:true}),signal:controller.signal});
   if(!res.ok)throw Error("Semakan penyedia tidak tersedia");
   const data=await res.json();if(!Array.isArray(data.providers))throw Error("Status tidak lengkap");
-  renderProviderRows(data.providers);multiLastCheck=Date.now();
+  multiCatalog=data.freeModels||null;
+  renderProviderRows(data.providers,multiCatalog);multiLastCheck=Date.now();
   const preferred=data.providers.find(p=>p.id===data.preferredProvider&&p.status==="online")||data.providers.find(p=>p.status==="online");
   // Preserve a recent real answer; the fastest tiny probe is not a speed benchmark.
   if(preferred&&providers.some(([id])=>id===preferred.id)&&(!lastProvider||Date.now()-lastProviderAt>=90000)){
@@ -253,7 +279,7 @@ async function checkProviders(force=false){
    if(data.someOnline)status("ready","Multi A.I Connected","");
    else status("error","Multi AI Offline","");
   }
- }catch(_){renderProviderRows([]);multiChecked.textContent="Semakan gagal. Status penyedia belum dapat disahkan.";
+ }catch(_){renderProviderRows([],multiCatalog?{...multiCatalog,status:"stale"}:null);multiChecked.textContent="Semakan gagal. Status penyedia belum dapat disahkan.";
   if(!busy&&connectionRevision===revision)status("error","Sambungan belum disahkan","");
  }
  finally{clearTimeout(timer);multiChecking=false;el("multiAiRefresh").disabled=false;}
@@ -819,7 +845,7 @@ window.BilikAntaraBridge={
 restore();renderIdeas();renderHistory();update();probe();
 })();
 </script>
-<script src="bilik-antara-identity.js?v=17" defer></script>
+<script src="bilik-antara-identity.js?v=18" defer></script>
 <script src="bilik-antara-suite.js?v=10" defer></script>
 <script src="bilik-antara-brain.js?v=9" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
