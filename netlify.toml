@@ -52,12 +52,6 @@
 
 # This asset is referenced with a versioned URL; preserve fast repeat visits.
 [[headers]]
-  for = "/karya-data.js"
-  [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
-
-# This asset is referenced with a versioned URL; preserve fast repeat visits.
-[[headers]]
   for = "/bilik-antara-voice.js"
   [headers.values]
     Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
@@ -71,23 +65,5 @@
 # This asset is referenced with a versioned URL; preserve fast repeat visits.
 [[headers]]
   for = "/bilik-antara-pcm-worklet.js"
-  [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
-
-# This asset is referenced with a versioned URL; preserve fast repeat visits.
-[[headers]]
-  for = "/bilik-antara-suite.js"
-  [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
-
-# This asset is referenced with a versioned URL; preserve fast repeat visits.
-[[headers]]
-  for = "/bilik-antara-identity.js"
-  [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
-
-# This asset is referenced with a versioned URL; preserve fast repeat visits.
-[[headers]]
-  for = "/bilik-antara-brain.js"
   [headers.values]
     Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
