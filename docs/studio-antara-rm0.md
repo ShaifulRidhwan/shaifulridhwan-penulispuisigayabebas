@@ -1,54 +1,49 @@
-# Studio Antara RM0 — Pembetulan keselamatan muat turun dan Imej AI BETA TEST
+# Studio Antara · Cloudflare Workers AI
 
-**26 Oktober 2026.** Dua halaman ringan:
+## Apa yang digunakan sekarang
 
-- `studio-antara.html`: e-mel serta PDF/Word sahaja. Fungsi jadual, graf dan poster telah **dibuang** daripada antaramuka dan skrip utama.
-- `studio-imej-beta.html`: eksperimen imej AI **BETA TEST** dalam halaman berasingan. Tiada SDK atau muat turun model dipasang di halaman Studio biasa.
+Studio Antara ialah halaman **jana imej melalui REST API Cloudflare Workers AI**. Model pertama ialah **FLUX.1 Schnell** (`@cf/black-forest-labs/flux-1-schnell`). Pengunjung tidak memasang enjin GPU atau memuat turun model besar. Backend memproses API menggunakan Netlify Function `netlify/functions/studio-image.js`.
 
-## Studio utama
+Video belum diaktifkan. Tab "Jana Video" hanyalah penerangan fasa akan datang, tanpa panggilan API dan tanpa mendakwa video berjaya dihasilkan.
 
-E-mel mempunyai editor, draf Gemini (tertakluk kuota RM0), eksport .eml, salin dan buka aplikasi e-mel tanpa menghantar e-mel secara automatik. Dokumen mempunyai editor, draf Gemini, cetak sebagai PDF melalui pelayar, eksport HTML serta DOCX melalui pustaka sumber terbuka yang dimuat apabila pengguna meminta. Jawapan daripada Bilik Antara masih boleh dipindahkan ke Studio melalui butang Studio, menggunakan sessionStorage.
+## Tetapan rahsia Netlify
 
-## Muat turun latar: sokongan sebenar, bukan janji umum
+- `CLOUDFLARE_ACCOUNT_ID` : Account ID daripada Cloudflare
+- `CLOUDFLARE_API_TOKEN` : token Workers AI dengan kebenaran yang diperlukan
 
-- Background Fetch API ialah ciri pelayar eksperimen dan tidak tersedia pada Safari/iOS; Brave Android boleh berbeza mengikut versi/polisi. Jangan anggap sokongan hanya daripada nama pelayar.
-- Antaramuka kini **menyembunyikan** butang muat turun latar apabila `ServiceWorkerRegistration.backgroundFetch` tidak tersedia. Status memberitahu pengguna supaya menggunakan **Muat turun / sambung** dengan tab kekal terbuka.
-- Jika API ditawarkan tetapi operasi ditolak, halaman memaparkan ralat sebenar dan menerangkan pilihan muat turun dalam tab. Aplikasi tidak berpura-pura muat turun berjaya.
-- Muat turun dalam tab menggunakan `fetch` dan `Cache.put` dengan pemantauan strim menggunakan `TransformStream`, menunjukkan kemajuan MB bagi **fail semasa** apabila data strim tersedia. Tidak menggunakan `arrayBuffer()` untuk membaca keseluruhan model ke memori.
-- Jika tab ditutup atau sistem menggantung aplikasi, muat turun biasa boleh berhenti. Sambung semula hanya bermaksud melangkau **fail lengkap** yang disimpan dalam cache; muat turun bait separa belum disokong.
-- Background Fetch yang tersedia masih boleh gagal pada model 2.34 GiB, had storan, URL luaran atau kuasa pengurusan latar pelayar. Tiada kaedah web percuma yang boleh menjamin muat turun OS-level dengan aplikasi ditutup pada setiap Android dan iOS.
+Token tidak disalurkan ke browser. Jangan menyimpan kunci API dalam fail JS atau commit. Persekitaran deployment mesti mempunyai kedua-dua pemboleh ubah tersebut.
 
-## Imej AI BETA TEST
+## Aliran aplikasi
 
-**Mengapa diasingkan?** Brave Android memaparkan “Aw, Snap!” ketika model besar dimuat. Kejadian ini konsisten dengan risiko tab kehabisan memori tetapi screenshot sahaja bukan bukti mutlak punca crash. SD-Turbo memerlukan beberapa fail ONNX sekitar **2.34 GiB** untuk dimuat dan kemudian disediakan pada GPU. Pemindahan model ke Cache Storage kini dipisahkan daripada inisialisasi runtime GPU.
+1. `studio-antara.html` memuat gaya ringan `studio-antara.css` dan `studio-antara-cloud.js`.
+2. Browser menghantar prompt, pilihan gaya, langkah 4/8 dan seed kepada `/.netlify/functions/studio-image`.
+3. Netlify mengesahkan saiz/jenis input, Origin, format, had percubaan asas serta tetapan rahsia.
+4. Backend meminta Cloudflare Workers AI menjana imej.
+5. Cloudflare memulangkan imej JPEG dalam base64. Browser memaparkan hasil menggunakan Blob URL dan menyediakan simpan fail.
+6. Keputusan tidak disimpan dalam pangkalan data. Pengguna boleh menyimpan imej pada peranti mereka.
 
-Peringkat:
-1. Semak jenis peranti, WebGPU API, RAM yang didedahkan pelayar dan anggaran kuota storan. Tiada SDK besar dimuat ketika halaman dibuka.
-2. Dapatkan persetujuan sebelum muat turun 2.34 GiB. Butang muat turun biasa menggunakan `fetch` dan `Cache.put` untuk menyimpan setiap fail lengkap dalam Cache Storage tanpa `arrayBuffer()` yang memperuntuk keseluruhan fail pada JavaScript.
-3. Pilihan **Background Fetch** sebenar dengan service worker hanya diaktifkan jika API pelayar menyokongnya. Jika tidak, jangan berjanji boleh terus memuat turun selepas tab ditutup.
-4. **Sambung semula** bermaksud guna semula komponen model yang sudah lengkap disimpan. Komponen yang terputus mungkin dimuat turun sekali lagi; tiada sokongan sambung pada aras bait yang dijanjikan.
-5. Selepas tiga fail model selesai, pengguna **Android, iOS atau desktop** yang mempunyai WebGPU boleh cuba mengaktifkan model dan menjana imej 512 × 512. Pada telefon, diperlukan **persetujuan tambahan khusus untuk risiko inferens berat**, serta Web Worker yang berfungsi. Tiada pemprosesan berat terus pada thread halaman mudah alih.
+## Had, kos dan keselamatan
 
-**Mobile-first (Android/iOS):** editor prompt dan pratonton kini di hadapan. Pengurus model berada selepas pratonton. Pemeriksaan teknikal dipindahkan ke panel <details> tertutup dengan ketinggian terkawal apabila dibuka; laporan penuh boleh disalin. Muat turun model boleh dicuba selepas persetujuan walaupun kuota storan tidak diketahui. Pengaktifan GPU **tidak lagi menghalang telefon semata-mata kerana ia mudah alih**. Jika WebGPU adapter tersedia dan model selesai dimuat, pengguna boleh memberi persetujuan risiko khusus untuk mencuba **Web Worker sahaja**. Pelayar boleh tetap kehabisan memori atau crash akibat SD-Turbo 2.34 GiB. Ini bukan model kecil yang dioptimumkan khas untuk telefon, dan belum diuji pada perkakasan sebenar. Background Fetch hanya muncul jika disokong.
+Cloudflare Workers AI mempunyai alokasi Neurons percuma harian yang dikongsi semua panggilan pada akaun. Kualiti 8 langkah memerlukan lebih pemprosesan berbanding 4 langkah. Pada pelan Free, Cloudflare boleh menolak permintaan selepas kuota habis. **Jangan andaikan jumlah imej percuma harian sentiasa sama**; lihat dashboard Cloudflare untuk penggunaan sebenar.
 
-**Keselamatan dan privasi:** tiada API penjana imej berbayar; model/pustaka dimuat daripada sumber luar selepas persetujuan. Pengurusan cache hanya menyentuh tiga URL ONNX SD-Turbo dalam cache `web-txt2img-v1`, tanpa memadam data laman lain. Muat turun latar boleh dihentikan dan persetujuan boleh ditarik balik. Muat turun dan memori adalah perbelanjaan data/storan/perkakasan peranti pengguna, bukan kapasiti tanpa had.
+Netlify Function mengehadkan saiz prompt, menyekat parameter tidak dikenali, menetapkan masa tamat, dan mempunyai had asas berdasarkan IP serta bilangan permintaan serentak dalam **satu instance**. Had ini bukan had global yang kekal antara instance; bagi laman dengan trafik tinggi, gunakan Turnstile dan storan had global sebelum membuka trafik awam berskala besar.
 
-## Fail terlibat
+Jangan beri token API kepada pengguna. Fungsi video tidak berkongsi token atau penggunaan fungsi imej.
 
-- `studio-antara.html`, `studio-antara.js`, `studio-antara.css`
-- `studio-imej-beta.html`, `studio-imej-beta.css`, `studio-imej-beta.js`
-- `studio-imej-config.js` (manifes URL model tepat), `studio-imej-sw.js` (Background Fetch sahaja)
-- `scripts/test-studio-antara.cjs`
-- Pautan Bilik Antara, AI backend dan sitemap dikemaskini.
+## Pembersihan versi terdahulu
 
-## Ujian selepas Netlify deploy
+Fail aplikasi penjanaan setempat yang tidak lagi digunakan dipadam daripada repositori. Studio baharu juga cuba menghapuskan cache model lama menggunakan nama cache tepat dan membatalkan pendaftaran service worker model lama sahaja, tanpa menyentuh cache atau service worker fungsi website lain. Perubahan ini hanya berkesan pada peranti yang melawat Studio selepas deployment baharu.
 
-1. Brave Android: masuk Studio tanpa crash; hanya E-mel dan PDF/Word, pautan Imej AI BETA TEST.
-2. Android dan iOS: buka halaman imej. Prompt, butang jana dan hasil mesti kelihatan dahulu; diagnostik mesti tertutup. Muat turun biasa dibenarkan dengan persetujuan. Pengaktifan GPU memerlukan cache penuh, WebGPU adapter dan persetujuan khusus risiko. Jika Web Worker gagal, paparkan mesej bukannya memaksa inferens pada thread halaman.
-3. Desktop: uji dialog persetujuan, pemeriksaan storan, Cache Storage, muat turun satu fail, muat turun semula dan padam tiga fail model.
-4. Pelayar yang menyokong Background Fetch: muat turun berjaya melalui service worker, buka semula halaman dan semak cache. Jika API tiada, butang muat turun latar tidak aktif.
-5. Android/iOS WebGPU yang sesuai dan desktop: uji pengaktifan serta satu imej sebenar apabila model sudah dicache. Runtime pihak ketiga dan penggunaan memori mungkin gagal; jangan anggap ujian simulasi membuktikan kompatibiliti.
-6. Uji e-mel, cetak PDF serta eksport DOCX; pastikan fungsi lain kekal lancar.
-7. Jalankan `node --test scripts/test-studio-antara.cjs` dan regresi Bilik Antara.
+## Ujian
 
-**Status pengesahan:** ujian kod/mock mengesahkan aliran kawalan, UI dan keizinan setakat yang diuji. Ia **tidak** membuktikan peranti Brave atau GPU sebenar berjaya menjana imej atau Background Fetch disokong pada peranti pengguna. Label **BETA TEST** mesti kekal sehingga ujian lapangan lulus.
+Jalankan:
+
+`node --test scripts/test-studio-antara.cjs`
+
+Ujian setempat memeriksa HTML, JavaScript, validasi backend serta simulasi respons Cloudflare. Ia **tidak membuktikan** akaun Cloudflare benar-benar dapat menjana imej. Ujian end-to-end memerlukan deployment Netlify yang mempunyai dua environment variable dan kuota Workers AI yang tersedia.
+
+Langkah smoke selepas deploy:
+- Buka Studio pada Android dan desktop, pastikan tiada muat turun model.
+- Jana imej dengan arahan ringkas dan sahkan hasil JPEG serta butang simpan.
+- Uji gaya, 4/8 langkah, seed dan mesej kuota.
+- Pastikan Bilik Antara dan Voice Live tidak berubah.
