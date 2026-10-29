@@ -11,6 +11,9 @@ on:
       - "bilik-antara.html"
       - "bilik-antara.css"
       - "bilik-antara-voice.js"
+      - "bilik-antara-avatar.js"
+      - "antara-cahaya-dan-gelap.html"
+      - "assets/novel/pembaca.html"
       - "scripts/browser-audit.cjs"
       - ".github/workflows/browser-performance-audit.yml"
   workflow_dispatch:
@@ -45,9 +48,11 @@ jobs:
           npx lighthouse http://127.0.0.1:4177/ --chrome-flags="--headless --no-sandbox" --form-factor=mobile --screenEmulation.mobile --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=audit-lighthouse-mobile.json --quiet
           npx lighthouse http://127.0.0.1:4177/bilik-antara.html --chrome-flags="--headless --no-sandbox" --preset=desktop --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=audit-lighthouse-chat-desktop.json --quiet
           npx lighthouse http://127.0.0.1:4177/bilik-antara.html --chrome-flags="--headless --no-sandbox" --form-factor=mobile --screenEmulation.mobile --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=audit-lighthouse-chat-mobile.json --quiet
+          npx lighthouse http://127.0.0.1:4177/antara-cahaya-dan-gelap.html --chrome-flags="--headless --no-sandbox" --preset=desktop --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=audit-lighthouse-novel-desktop.json --quiet
+          npx lighthouse http://127.0.0.1:4177/antara-cahaya-dan-gelap.html --chrome-flags="--headless --no-sandbox" --form-factor=mobile --screenEmulation.mobile --max-wait-for-load=30000 --only-categories=performance,accessibility,best-practices,seo --output=json --output-path=audit-lighthouse-novel-mobile.json --quiet
           node - <<'NODE'
           const fs=require("node:fs");
-          for(const mode of ["desktop","mobile","chat-desktop","chat-mobile"]){
+          for(const mode of ["desktop","mobile","chat-desktop","chat-mobile","novel-desktop","novel-mobile"]){
             try{
               const j=JSON.parse(fs.readFileSync("audit-lighthouse-"+mode+".json"));
               console.log("[Lighthouse] "+mode+" "+JSON.stringify(Object.fromEntries(Object.entries(j.categories).map(([name,x])=>[name,Math.round(x.score*100)]))));
