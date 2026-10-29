@@ -551,8 +551,8 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  assert.ok(first?.sent[0]?.setup);
  assert.deepEqual(first.sent[0].setup.sessionResumption,{});
  const spoken=first.sent[0].setup.systemInstruction.parts[0].text;
- assert.match(spoken,/RESPOND ONLY IN MALAY/);
- assert.match(spoken,/NEVER SWITCH TO SPANISH/);
+ assert.match(spoken,/Bahasa asas ialah Bahasa Melayu Malaysia santai/);
+ assert.match(spoken,/Jangan tiba-tiba tukar bahasa asing/);
  assert.ok(spoken.includes(sharedBrain.CORE),"Voice prompt shares common persona");
  assert.ok(spoken.includes(sharedBrain.VOICE_GUIDANCE),"Voice prompt adds voice-specific intelligence guidance");
  assert.ok(spoken.includes(creatorIdentity.VOICE_CREATOR_PROMPT),"Creator profile is available to Voice");
