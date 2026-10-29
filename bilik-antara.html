@@ -25,7 +25,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg?v=2" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=57">
+<link rel="stylesheet" href="bilik-antara.css?v=58">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
@@ -57,7 +57,7 @@
      <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Jom Voice Chat</button>
     </div>
     <div class="chat-controls">
-     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model percuma OpenRouter"><span class="dot" aria-hidden="true"></span><span id="connectionText">Semak Multi A.I.…</span></button>
+     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model OpenRouter"><span class="dot" aria-hidden="true"></span><span id="connectionText">Semak Multi A.I.…</span></button>
      <details class="settings" id="settingsPanel">
       <summary aria-label="Buka Ciri dan Fungsi Aksara" title="Ciri &amp; Fungsi">
        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
@@ -94,7 +94,7 @@
     </div>
    </header>
    <dialog class="multi-ai-dialog" id="multiAiDialog" aria-labelledby="multiAiTitle">
- <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I. · Sambungan</strong><p>Empat penyedia diuji secara langsung. Model percuma OpenRouter dipaparkan daripada katalog tanpa menghabiskan kuota ujian.</p></div><button type="button" id="multiAiClose" aria-label="Tutup status penyedia">×</button></div>
+ <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I. · Sambungan</strong><p>Status penyedia diuji secara langsung. Model OpenRouter ditandakan “Tersenarai” sehingga diuji secara individu.</p></div><button type="button" id="multiAiClose" aria-label="Tutup status penyedia">×</button></div>
  <div class="multi-ai-list" id="multiAiList" aria-live="polite"></div>
  <div class="multi-ai-actions"><small id="multiAiChecked">Belum disemak</small><button type="button" id="multiAiRefresh">Semak semula</button></div>
 </dialog>
@@ -216,6 +216,11 @@ ui.retry.addEventListener("click",()=>{
 const providers=[["gemini","Google Gemini"],["groq","Groq"],["mistral","Mistral"],["openrouter","OpenRouter"]];
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList"),multiChecked=el("multiAiChecked");
 let multiLastCheck=0,multiChecking=false,multiCatalog=null;
+function shortOpenRouterName(model){
+ const full=String(model.name||model.id||"Model").replace(/^[^:]{1,24}:\s*/,"").trim();
+ const name=full||String(model.id||"Model").split("/").pop().replace(/:free$/,"");
+ return name.length>26?name.slice(0,25).trimEnd()+"…":name;
+}
 function renderProviderRows(rows,catalog=null){
  multiList.replaceChildren();
  for(const [id,name] of providers){
@@ -228,32 +233,26 @@ function renderProviderRows(rows,catalog=null){
   const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":"is-muted"),
    state==="online"?"Terhubung":state==="offline"?(waitLabel||"Tidak terhubung"):state==="off"?"Tidak aktif":"Menyemak…");
   line.append(nameText,statusText);multiList.appendChild(line);
- }
- // Individual free models are discovered, NOT probed. Only the parent OpenRouter
- // row reflects a real test, so never give catalog entries green/online badges.
- const group=elem("details","multi-ai-free-group");group.open=true;
- const summary=elem("summary","multi-ai-free-summary");
- const total=Number.isInteger(catalog?.total)?catalog.total:null;
- summary.append(elem("span","",total===null?"Model percuma OpenRouter":("Model percuma OpenRouter · "+total)));
- group.appendChild(summary);
- group.appendChild(elem("p","multi-ai-free-note","Senarai model :free daripada OpenRouter. “Tersenarai” bukan pengesahan model sedang online. Model dipilih secara automatik dan berkongsi had akaun OpenRouter."));
- const list=elem("div","multi-ai-free-list");
- if(Array.isArray(catalog?.models)&&catalog.models.length){
-  for(const model of catalog.models){
-   if(!model||typeof model.id!=="string")continue;
-   const line=elem("div","multi-ai-model-row");
-   const label=elem("div","multi-ai-model-text");
-   label.append(elem("span","multi-ai-model-name",String(model.name||model.id).slice(0,140)),
-    elem("small","multi-ai-model-id",model.id.slice(0,140)));
-   const state=elem("span","multi-ai-model-state","Tersenarai");
-   line.append(label,state);list.appendChild(line);
+  if(id!=="openrouter")continue;
+  // Show OpenRouter catalog entries directly underneath their provider.
+  // Catalog membership is not a live health test; don't mark individual models online.
+  if(Array.isArray(catalog?.models)&&catalog.models.length){
+   for(const model of catalog.models){
+    if(!model||typeof model.id!=="string")continue;
+    const child=elem("div","multi-ai-model-row");
+    const fullName=String(model.name||model.id).slice(0,140);
+    child.title=fullName+" · "+model.id.slice(0,140);
+    child.setAttribute("aria-label",fullName+", tersenarai, belum diuji secara individu");
+    const shortName=elem("span","multi-ai-model-name",shortOpenRouterName(model));
+    const statusLabel=elem("span","multi-ai-model-state","Tersenarai");
+    child.append(shortName,statusLabel);multiList.appendChild(child);
+   }
+   if(catalog.status==="stale")multiList.appendChild(elem("p","multi-ai-model-note","Senarai terdahulu. Semakan katalog terkini gagal."));
+  }else{
+   const message=!catalog?"Memuatkan model…":catalog.status==="unavailable"?"Senarai model belum tersedia.":"Tiada model disenaraikan.";
+   multiList.appendChild(elem("p","multi-ai-model-note",message));
   }
-  if(catalog.status==="stale")group.appendChild(elem("p","multi-ai-free-note","Katalog terdahulu dipaparkan kerana semakan terkini gagal."));
- }else{
-  const message=!catalog?"Sedang memuatkan senarai…":catalog.status==="unavailable"?"Senarai tidak dapat dimuatkan sekarang. Ini bukan bermaksud semua model offline.":"Tiada model :free tersenarai buat masa ini.";
-  list.appendChild(elem("p","multi-ai-free-empty",message));
  }
- group.appendChild(list);multiList.appendChild(group);
 }
 async function checkProviders(force=false){
  if(multiChecking)return;
