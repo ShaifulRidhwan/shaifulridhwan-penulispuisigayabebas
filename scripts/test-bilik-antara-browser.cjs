@@ -25,14 +25,14 @@ async function audit(browser,label,options){
   const state=await page.evaluate(()=>{
    const style=sel=>getComputedStyle(document.querySelector(sel));
    const frame=style(".glass-frame-orbit"),light=style(".frame-glow--light"),dark=style(".frame-glow--shadow");
-   const haze=style(".world-haze"),spark=style(".world-hand-sparks i");
+   const haze=style(".world-haze");
    const glass=style(".conversation"),rect=document.querySelector(".conversation").getBoundingClientRect();
    const resource=performance.getEntriesByType("resource").map(x=>x.name);
    return {
     width:window.innerWidth,documentWidth:document.documentElement.scrollWidth,
     chatTop:rect.top,chatHeight:rect.height,
     framePointer:frame.pointerEvents,lightAnimation:light.animationName,darkAnimation:dark.animationName,
-    hazeAnimation:haze.animationName,handSparkAnimation:spark.animationName,
+    hazeAnimation:haze.animationName,
     glass:glass.backdropFilter||glass.webkitBackdropFilter,
     bodyFont:style("body").fontFamily,
     heavyAssets:resource.filter(x=>/brunette\.glb|GLTFLoader|KTX2Loader|three\.module/.test(x)),
@@ -47,10 +47,10 @@ async function audit(browser,label,options){
   assert.equal(state.lightAnimation,"frameLightBreathe");
   assert.equal(state.darkAnimation,"frameShadowBreathe");
   assert.match(state.hazeAnimation,/hazeDrift/);
-  assert.match(state.handSparkAnimation,/handSparkDescent/);
+  assert.equal(state.handSparks,0,"Obsolete hand sparks must not render");
   assert.match(state.glass,/blur\(/);
   assert.match(state.bodyFont,/DM Sans/);
-  assert.equal(state.handSparks,24);
+  assert.equal(await page.locator(".world-embers i").count(),3,"Ambient particles remain");
   assert.deepEqual(state.heavyAssets,[],"3D assets must stay lazy until Voice Chat");
   assert.equal(await page.locator("#voicePanel").isVisible(),false,"Voice must be opt-in");
   await page.screenshot({path:path.join(OUT,label+"-chat.png"),animations:"disabled"});
@@ -93,7 +93,7 @@ async function main(){
  try{
   const live=await fetch("https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html",{signal:AbortSignal.timeout(9000)});
   const text=await live.text();
-  console.log("Production HTTP "+live.status+"; current CSS revision present: "+text.includes("bilik-antara.css?v=73"));
+  console.log("Production HTTP "+live.status+"; current CSS revision present: "+/bilik-antara\.css\?v=\d+/.test(text));
  }catch(e){console.log("Production verification unavailable: "+String(e.message||e).slice(0,140));}
 }
 main().catch(err=>{console.error(err);process.exitCode=1;});
