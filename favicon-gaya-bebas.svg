@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Gaya Bebas GB">
+  <defs><linearGradient id="night" x2="1" y2="1"><stop stop-color="#21202b"/><stop offset="1" stop-color="#0d0e16"/></linearGradient></defs>
+  <rect x="1" y="1" width="62" height="62" rx="15" fill="url(#night)" stroke="#a98449" stroke-opacity=".65" stroke-width="2"/>
+  <path d="M12 14H52" stroke="#f5d49a" stroke-opacity=".25" stroke-width="1.5"/>
+  <text x="32" y="43" font-family="Arial,Helvetica,sans-serif" font-size="26" font-weight="800" fill="#f3ce8a" text-anchor="middle" letter-spacing="-1">GB</text>
+</svg>
