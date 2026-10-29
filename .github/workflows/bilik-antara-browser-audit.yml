@@ -5,12 +5,22 @@ on:
     paths:
       - "bilik-antara.html"
       - "bilik-antara.css"
+      - "bilik-antara-suite.css"
+      - "bilik-antara-*.js"
       - "bilik-antara-bg-*.webp"
+      - "scripts/test-bilik-antara-browser.cjs"
       - "scripts/test-bilik-antara-background.cjs"
       - ".github/workflows/bilik-antara-browser-audit.yml"
   push:
     branches: [main]
     paths:
+      - "bilik-antara.html"
+      - "bilik-antara.css"
+      - "bilik-antara-suite.css"
+      - "bilik-antara-*.js"
+      - "bilik-antara-bg-*.webp"
+      - "scripts/test-bilik-antara-browser.cjs"
+      - "scripts/test-bilik-antara-background.cjs"
       - ".github/workflows/bilik-antara-browser-audit.yml"
 permissions:
   contents: read

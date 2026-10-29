@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - "studio-antara*"
+      - "netlify/functions/studio-*"
+      - "netlify/functions/lib/studio-*"
       - "scripts/test-studio-*"
       - ".github/workflows/studio-antara-audit.yml"
   pull_request:

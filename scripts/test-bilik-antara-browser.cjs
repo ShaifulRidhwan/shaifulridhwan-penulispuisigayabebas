@@ -53,6 +53,12 @@ async function audit(browser,label,options){
   assert.equal(await page.locator(".world-embers i").count(),3,"Ambient particles remain");
   assert.deepEqual(state.heavyAssets,[],"3D assets must stay lazy until Voice Chat");
   assert.equal(await page.locator("#voicePanel").isVisible(),false,"Voice must be opt-in");
+  // Removed recorder assets must never run, while active microphone/dictation remain available.
+  assert.equal(await page.locator("#voiceFallback, #voiceFallbackStart, #voiceFallbackStop").count(),0);
+  assert.equal(await page.locator("#voiceDictate").count(),1);
+  assert.equal(await page.locator("#sendBtn").count(),1);
+  assert.equal(await page.locator(".composer #sendBtn").evaluate(el=>getComputedStyle(el).minWidth)!=="0px",true);
+  assert.equal(state.heavyAssets.some(x=>x.includes("bilik-antara-voice-fallback")),false);
   await page.screenshot({path:path.join(OUT,label+"-chat.png"),animations:"disabled"});
 
   // Inspect the new Voice glass label without initiating microphone/paid API calls.
@@ -87,6 +93,7 @@ async function main(){
  try{
   await audit(browser,"desktop",{viewport:{width:1440,height:900},deviceScaleFactor:1});
   await audit(browser,"mobile",{viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:true,hasTouch:true});
+  await audit(browser,"small-mobile",{viewport:{width:320,height:720},deviceScaleFactor:2,isMobile:true,hasTouch:true});
   console.log("Bilik Antara browser audit PASS\n"+JSON.stringify(results,null,2));
  }finally{await browser.close();}
  // Production is informational: Netlify may still be paused for build-minute limits.

@@ -86,10 +86,10 @@ async function main(){
     modalFill:modal.backgroundImage,modalBlur:modal.backdropFilter,
     heroFont:hero.fontFamily,headingFont:heading.fontFamily,navBlur:nav.backdropFilter,navFill:nav.backgroundImage,
     promptWeight:css('#enhancePrompt').fontWeight,
-    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('studio-antara.css?v=16'))
+    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('studio-antara.css?v=17'))
    };
   });
-  assert.equal(visual.stylesheet,true,'Fresh Studio 2.5 CSS must load');
+  assert.equal(visual.stylesheet,true,'Audited Studio CSS must load');
   for(const key of ['cardFill','resultFill','galleryFill','modalFill'])assert.match(visual[key],/gradient/,'Missing unified glass gradient: '+key);
   for(const key of ['cardBlur','fieldBlur','triggerBlur','modalBlur'])assert.match(visual[key],/blur/,'Missing translucent glass blur: '+key);
   assert.match(visual.heroFont,/DM Sans/);assert.match(visual.headingFont,/DM Sans/);
