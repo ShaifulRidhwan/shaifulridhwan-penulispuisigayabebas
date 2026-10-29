@@ -66,6 +66,26 @@ async function main(){
   await page.goto(BASE+'/studio-antara.html',{waitUntil:'domcontentloaded'});
   await page.evaluate(()=>{const mark=document.createElement('div');mark.textContent='UJIAN MOCK · BUKAN HASIL CLOUDFLARE';mark.style='position:fixed;top:0;left:0;right:0;z-index:9999;background:#6b4725;color:white;text-align:center;font:12px sans-serif;padding:4px';document.body.append(mark);});
   assert.equal(calls.length,0,'No AI requests on page load');assert.equal(await page.locator('#imageStyle option').count(),11);
+  // Studio 2.2: protect the shared glass material and typography across sizes.
+  const visual=await page.evaluate(()=>{
+   const css=selector=>getComputedStyle(document.querySelector(selector));
+   const card=css('.creator'),result=css('.result'),gallery=css('.gallery'),
+    field=css('.prompt-compose'),trigger=css('.studio-picker-trigger'),
+    modal=css('.studio-picker-dialog'),hero=css('.hero h1'),heading=css('.card-top h2');
+   return {
+    cardFill:card.backgroundImage,resultFill:result.backgroundImage,galleryFill:gallery.backgroundImage,
+    cardBlur:card.backdropFilter,fieldBlur:field.backdropFilter,triggerBlur:trigger.backdropFilter,
+    modalFill:modal.backgroundImage,modalBlur:modal.backdropFilter,
+    heroFont:hero.fontFamily,headingFont:heading.fontFamily,
+    promptWeight:css('#enhancePrompt').fontWeight,
+    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('studio-antara.css?v=13'))
+   };
+  });
+  assert.equal(visual.stylesheet,true,'Fresh Studio 2.2 CSS must load');
+  for(const key of ['cardFill','resultFill','galleryFill','modalFill'])assert.match(visual[key],/gradient/,'Missing unified glass gradient: '+key);
+  for(const key of ['cardBlur','fieldBlur','triggerBlur','modalBlur'])assert.match(visual[key],/blur/,'Missing translucent glass blur: '+key);
+  assert.match(visual.heroFont,/Space Grotesk/);assert.match(visual.headingFont,/DM Sans/);
+  assert.equal(visual.promptWeight,'600','Enhance pill must use the refined typography');
   await auditPickers(page,calls);
   await page.locator('#imagePrompt').fill('enhance503 subjek asal');await page.locator('#enhancePrompt').click();await page.locator('#enhancePanel').waitFor({state:'visible'});
   assert.match(await page.locator('#enhancedPrompt').inputValue(),/enhance503 subjek asal/);const lightCalls=calls.length;
