@@ -128,7 +128,7 @@ async function novel(page,device){
   const art=style("#cover .cv-art"),glow=style("#cover .cv-shine"),fog=style("#cover .cv-smoke"),title=style("#cover h1");
   return {art:art.backgroundImage,glow:glow.animationName,fog:fog.animationName,font:title.fontFamily};
  });
- assert.match(initial.art,/cover-01\\.jpg/,"Original novel cover art must remain");
+ assert.match(initial.art,/cover-01\.jpg/,"Original novel cover art must remain");
  assert.match(initial.glow,/cvShine/,"Novel light must keep glowing");
  assert.match(initial.fog,/cvDrift/,"Novel shadow fog must keep moving");
  assert.match(initial.font,/Georgia/,"Novel cover typography must stay the same");
