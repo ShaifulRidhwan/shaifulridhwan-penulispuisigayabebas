@@ -25,7 +25,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg?v=2" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=62">
+<link rel="stylesheet" href="bilik-antara.css?v=63">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
@@ -75,7 +75,7 @@
         </button>
         <a class="feature-hub-item" id="featureStudio" href="studio-antara.html">
          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h8l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M15 3v5h5M9 13h7M9 17h7"/></svg>
-         <span><strong>Studio · E-mel &amp; PDF</strong><small>Penulisan dan eksport dokumen</small></span><span class="feature-hub-arrow" aria-hidden="true">›</span>
+         <span><strong>Studio · Jana Imej</strong><small>Makmal penjanaan imej AI</small></span><span class="feature-hub-arrow" aria-hidden="true">›</span>
         </a>
        </div>
        <details class="feature-privacy" id="privacySettings">
@@ -98,7 +98,7 @@
    <dialog class="multi-ai-dialog" id="multiAiDialog" aria-labelledby="multiAiTitle">
  <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I. · Sambungan</strong><p>Status menunjukkan penyedia yang tersedia. Model disenaraikan sehingga benar-benar berjaya menjawab.</p></div><button type="button" id="multiAiClose" aria-label="Tutup status penyedia">×</button></div>
  <div class="multi-ai-list" id="multiAiList" aria-live="polite"></div>
- <div class="multi-ai-actions"><small id="multiAiChecked">Belum disemak</small><button type="button" id="multiAiRefresh">Semak semula</button></div>
+ <div class="multi-ai-actions"><button type="button" id="multiAiRefresh">Semak semula</button></div>
 </dialog>
    <div id="voiceNotice" class="voice-notice" role="status" aria-live="polite" hidden></div>
     <div id="connectionInfo" class="connection-info" role="status" aria-live="polite"><span id="connectionInfoText"></span><button type="button" id="retryBtn">Cuba semula</button></div>
@@ -217,7 +217,7 @@ ui.retry.addEventListener("click",()=>{
  if(ui.input.value.trim()||fileState)submit({preventDefault(){}});else probe();
 });
 const providers=[["gemini","Google Gemini"],["groq","Groq"],["mistral","Mistral"],["openrouter","OpenRouter"],["requesty","Requesty"]];
-const multiDialog=el("multiAiDialog"),multiList=el("multiAiList"),multiChecked=el("multiAiChecked");
+const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
 let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0;
 function shortOpenRouterName(model){
  const full=String(model.name||model.id||"Model").replace(/^[^:]{1,24}:\s*/,"").trim().replace(/^[\w.-]+\//,"");
@@ -294,14 +294,13 @@ async function checkProviders(force=false){
   if(preferred&&providers.some(([id])=>id===preferred.id)&&(!lastProvider||Date.now()-lastProviderAt>=90000)){
    lastProvider=preferred.id;lastProviderAt=Date.now();
   }
-  multiChecked.textContent=data.someOnline?"Sekurang-kurangnya satu model telah menjawab ujian.":data.someReady?"Penyedia sedia untuk menerima permintaan.":"Tiada sambungan berjaya disahkan sekarang.";
   if(!busy&&connectionRevision===revision){
    if(data.someOnline)status("ready","Multi A.I Connected","");
    else if(data.someReady)status("configured","Multi A.I Connected","");
    else status("error","Multi AI Offline","");
   }
  }catch(_){ui.requestyConsent.disabled=true;ui.requestyConsent.checked=false;
-  renderProviderRows([],multiCatalog?{...multiCatalog,status:"stale"}:null);multiChecked.textContent="Semakan gagal. Status penyedia belum dapat disahkan.";
+  renderProviderRows([],multiCatalog?{...multiCatalog,status:"stale"}:null);
   if(!busy&&connectionRevision===revision)status("error","Sambungan belum disahkan","");
  }
  finally{clearTimeout(timer);multiChecking=false;el("multiAiRefresh").disabled=false;}
