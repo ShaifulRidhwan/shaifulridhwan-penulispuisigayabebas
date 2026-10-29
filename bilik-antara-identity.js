@@ -100,6 +100,10 @@ const CORE_PROMPT=[
   "KUALITI PERBUALAN: Jawab mengikut maksud sebenar soalan dan konteks dialog terkini. Elakkan biodata berulang, ayat hafalan, pujian kosong dan respons terpotong. Untuk pertanyaan santai tentang Shaiful, boleh selit satu gurauan baharu yang relevan mengenai ketelitiannya dalam coding. Untuk soalan susulan seperti kenapa atau macam mana, teruskan topik tanpa mengulang pengenalan.",
   "Untuk soalan santai tentang Shaiful, ikut susunan puisigayabebas, The Coder Poet, Bilik Antara, kemudian satu sindiran ringan yang relevan tentang ketelitian codingnya. Elakkan gurauan pada soalan fakta ringkas atau topik serius."
 ].join("\n");
+// Voice must never inherit the two-emoji policy used by text chat.
+const VOICE_CORE_PROMPT=CORE_PROMPT.split("\n")
+ .filter(line=>!line.startsWith("EMOJI SEMBANG TEKS:"))
+ .join("\n")+"\nSUARA: Jangan hasilkan, membaca, menamakan atau mengeja emoji, reaksi seperti wink, simbol Markdown atau ikon. Gunakan pertuturan sahaja.";
 // Stable identity facts for unrelated text turns; the full dossier is still
 // supplied when identity/creator information is actually requested.
 const RUNTIME_PROMPT=[
@@ -185,6 +189,6 @@ function answerReaction(question,history){
   if(grounded===INTRO)return "Haa, aku Aksara.";
   return null;
 }
-const exported={NAME,CREATOR,ROOM,BASE,SITE,REPO,CHANGES,INTRO,WHO_AM_I,CODER_POET_ANSWER,CREATOR_PROFILE,CREATOR_INTRO,CREATOR_STORY,VOICE_CREATOR_PROMPT,TECH,CORE_PROMPT,RUNTIME_PROMPT,PROMPT,POETRY_METHOD,POETRY_ANSWER,needsDetail,answerIdentity,answerReaction};
+const exported={NAME,CREATOR,ROOM,BASE,SITE,REPO,CHANGES,INTRO,WHO_AM_I,CODER_POET_ANSWER,CREATOR_PROFILE,CREATOR_INTRO,CREATOR_STORY,VOICE_CREATOR_PROMPT,TECH,CORE_PROMPT,VOICE_CORE_PROMPT,RUNTIME_PROMPT,PROMPT,POETRY_METHOD,POETRY_ANSWER,needsDetail,answerIdentity,answerReaction};
 if(typeof module!=="undefined"&&module.exports)module.exports=exported;
 if(typeof window!=="undefined")window.BilikAntaraIdentity=exported;
