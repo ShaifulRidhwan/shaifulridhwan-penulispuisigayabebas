@@ -133,6 +133,8 @@ function answerIdentity(question){
   if(directFourBrains&&fourBrainsQuestion)return fourBrains;
   if(/^(?:kau (?:ni )?aksara(?: a\.?i\.?)?|aksara(?: a\.?i\.?)? (?:tu )?siapa|siapa aksara(?: a\.?i\.?)?|nama (?:kau|awak) aksara(?: a\.?i\.?)?)$/i.test(q))return INTRO;
   if(!q||q.length>240||/\b(?:contoh ayat|petikan|watak|novel|cerita|skrip|lakonan|roleplay|terjemah|translate)\b/i.test(q))return null;
+  // A creative request about the creator is not a request for a fixed biography.
+  if(/\b(?:usik|usikan|sindir|sindiran|gurau|bergurau|lawak|jenaka|pendapat)\b/i.test(q))return null;
   const project=/(?:bilik antara|aksara a\.?i\.?|shaiful ridhwan a\.?i\.?|sistem (?:ini|kau)|projek (?:ini|ai|kau))/i.test(q);
   const self=/(?:\b(?:kau|awak|kamu|anda|you|yourself)\b|(?:\bai\b|\bkecerdasan buatan\b)\s+(?:ini|tu|kau|awak)\b)/i.test(q);
   const owner=/(?:shaiful|ridhwan|aksara)/i.test(q);

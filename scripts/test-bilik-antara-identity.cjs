@@ -84,6 +84,11 @@ test("unrelated questions cannot be misattributed to project creator",()=>{
   "Siapa pencipta model bahasa?","Terangkan sains","Boleh tulis cerita pasal siapa kau?"
  ])assert.equal(ID.answerIdentity(q),null,q);
 });
+test("creator teasing requests go to the conversational model instead of a canned introduction",()=>{
+ for(const q of ["Bagi satu usikan santai tentang pembangun kau", "Sindir pencipta kau sikit", "Apa pendapat kau tentang pencipta kau?"])
+  assert.equal(ID.answerIdentity(q),null,q);
+ assert.ok(ID.answerIdentity("Siapa pencipta kau?"));
+});
 test("modifications are grounded and Gemini model training is not attributed to Shaiful",()=>{
  assert.ok(ID.CHANGES.length>=8);
  assert.match(ID.PROMPT,/bukan melatih|tidak.*melatih/i);
