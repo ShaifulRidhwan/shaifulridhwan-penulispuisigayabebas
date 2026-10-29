@@ -51,7 +51,7 @@
 <link rel="apple-touch-icon" sizes="192x192" href="/favicon-aksara-ai-192.png?v=1">
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="bilik-antara-cover-art.jpg?v=2" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=72">
+<link rel="stylesheet" href="bilik-antara.css?v=73">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
@@ -933,7 +933,7 @@ restore();renderIdeas();renderHistory();update();probe();
   if(loading||loaded)return;
   loading=true;
   import("./bilik-antara-avatar.js?v=14").then(()=>{loaded=true;}).catch(error=>{
-   loading=false;console.warn("Voice avatar unavailable",error);
+   loading=false;document.getElementById("voiceAvatarStage")?.classList.add("avatar-unavailable");console.warn("Voice avatar unavailable",error);
   });
  });
 })();
