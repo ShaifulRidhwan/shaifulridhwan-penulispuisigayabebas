@@ -23,8 +23,11 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
 });
 
 test("Final text, controls and simplified channel header",()=>{
- assert.match(html,/<h1><span>BILIK<\/span> <em>ANTARA<\/em><\/h1>/);
- assert.match(html,/<span class="eyebrow-caption">DI ANTARA CAHAYA DAN GELAP<\/span>/);
+ assert.match(html,/<h1 class="sr-only">Bilik Antara, Aksara A\.I\.<\/h1>/);
+ assert.doesNotMatch(html,/class="identity"|class="eyebrow-convergence"|class="chapter-ornament"/);
+ assert.doesNotMatch(css,/\.identity\b|\.eyebrow\b|\.chapter-ornament\b|antaraTitleReveal|antaraTitleShimmer|antaraEyebrowInk|antaraHalo\b/);
+ assert.match(css,/\.app-shell>\.conversation\{[\s\S]*?flex:1 1 auto/);
+ assert.match(css,/@media\(max-width:760px\)\{[\s\S]*?\.app-shell>\.conversation/);
  assert.doesNotMatch(html,/Saluran Antara/);
  assert.doesNotMatch(html,/class="conversation-heading"/);
  assert.match(html,/class="conversation-head">\s*<div class="voice-toolbar"/);
@@ -203,7 +206,7 @@ test("Voice and Multi AI pills share starter-question sizing and genuinely clear
  assert.doesNotMatch(clear,/rgba\(255,242,207,\.96\)|rgba\(214,172,111,\.91\)/);
 });
 
-test("AI bubbles match light glass and hand sparks fall toward woman without replacing title embers",()=>{
+test("AI bubbles and all original background and hand particles remain after title removal",()=>{
  assert.match(css,/\.messages \.message\.ai \.bubble,\s*\.messages\.is-welcome \.message\.ai \.bubble\{/);
  assert.match(css,/rgba\(243,226,198,\.048\)/);
  assert.match(css,/\.world-hand-sparks\{/);
