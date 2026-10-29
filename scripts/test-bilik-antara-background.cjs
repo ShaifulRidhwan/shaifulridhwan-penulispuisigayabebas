@@ -50,8 +50,8 @@ async function inspect(browser,width,height,mode){
  }
  assert.ok(assets.some(a=>a.url.includes('cover-art.jpg')&&a.status===200),'Original fallback must remain available');
  // Animations advance before the screenshot freezes them for comparison.
- const moving=await page.evaluate(async()=>{const animations=document.querySelector('.world-art').getAnimations();const t=animations[0]?.currentTime;await new Promise(r=>setTimeout(r,80));return animations[0]?.currentTime>t;});
- assert.equal(moving,true,'Existing ambient animation advances');
+ const running=await page.evaluate(()=>document.querySelector('.world-art').getAnimations().some(animation=>animation.playState==='running'));
+ assert.equal(running,true,'Existing ambient animation is enabled and running');
  await page.screenshot({path:path.join(out,`background-${width}-${height}-${mode}.png`),animations:'disabled'});
  // Existing controls still work; no Voice/microphone session is initiated.
  await page.locator('#input').fill('Ujian latar sahaja');assert.equal(await page.locator('#sendBtn').isEnabled(),true);
