@@ -25,7 +25,7 @@
 <noscript><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;1,8..60,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <link rel="icon" type="image/svg+xml" href="bilik-antara-woman-emblem.svg">
 <link rel="preload" href="bilik-antara-cover-art.jpg?v=2" as="image" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=63">
+<link rel="stylesheet" href="bilik-antara.css?v=64">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
@@ -309,7 +309,8 @@ ui.conn.addEventListener("click",()=>{if(!multiDialog.open)multiDialog.showModal
 el("multiAiClose").addEventListener("click",()=>multiDialog.close());
 el("multiAiRefresh").addEventListener("click",()=>{multiLastCheck=0;checkProviders(true);});
 multiDialog.addEventListener("click",e=>{if(e.target===multiDialog)multiDialog.close();});
-function scrollDown(){ui.chat.scrollTop=ui.chat.scrollHeight;}
+let restoringHistory=false;
+function scrollDown(){if(!restoringHistory)ui.chat.scrollTop=ui.chat.scrollHeight;}
 function contextHistory(){
  let budget=120000;const rows=[];
  for(let i=history.length-1;i>=0&&rows.length<24&&budget>0;i--){
@@ -359,10 +360,11 @@ function format(target,text){
  }
 }
 function addMessage(role,text,data){
- const msg=elem("article","message "+(role==="user"?"user":"ai"));
+ const msg=elem("article","message "+(role==="user"?"user":"ai")+(restoringHistory?" is-restored":""));
  msg.appendChild(elem("div","byline",role==="user"?"Kau":"Aksara A.I."));
  const bubble=elem("div","bubble");
- format(bubble,role==="user"?text:window.BilikAntaraChatStyle.reply(text));
+ // A Live Voice transcript is not a text-chat answer; keep its content undecorated.
+ format(bubble,role==="user"||data?.mode==="voice"?text:window.BilikAntaraChatStyle.reply(text));
  if(role!=="user"&&data)renderExtras(bubble,data);
  msg.appendChild(bubble);ui.chat.appendChild(msg);scrollDown();return msg;
 }
@@ -446,11 +448,15 @@ function welcome(){
 }
 function renderHistory(){
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
- ui.chat.textContent="";
- ui.chat.classList.toggle("is-welcome",history.length===0);
- for(const m of history)addMessage(m.role,m.content,m.role==="assistant"?m:null);
- ui.starters.hidden=history.length>0;
- if(!history.length)welcome();
+ restoringHistory=true; // No synchronous scrolling for each restored bubble.
+ try{
+  ui.chat.textContent="";
+  ui.chat.classList.toggle("is-welcome",history.length===0);
+  for(const m of history)addMessage(m.role,m.content,m.role==="assistant"?m:null);
+  ui.starters.hidden=history.length>0;
+  if(!history.length)welcome();
+ }finally{restoringHistory=false;}
+ scrollDown(); // One layout after the entire history is ready.
 }
 function save(){
  if(!ui.remember.checked)return;
@@ -858,7 +864,7 @@ window.BilikAntaraBridge={
  latest:()=>history.length?history[history.length-1]:null,
  addVoice:items=>{
   if(busy||!Array.isArray(items)||!items.length)return false;
-  const valid=items.filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim()).map(m=>({role:m.role,content:m.content}));
+  const valid=items.filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string"&&m.content.trim()).map(m=>({role:m.role,content:m.content,mode:"voice"}));
   if(!valid.length)return false;
   history.push(...valid);
   renderHistory();save();compact();return true;
@@ -867,11 +873,11 @@ window.BilikAntaraBridge={
 restore();renderIdeas();renderHistory();update();probe();
 })();
 </script>
-<script src="bilik-antara-identity.js?v=19" defer></script>
+<script src="bilik-antara-identity.js?v=20" defer></script>
 <script src="bilik-antara-suite.js?v=11" defer></script>
-<script src="bilik-antara-brain.js?v=9" defer></script>
+<script src="bilik-antara-brain.js?v=10" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
-<script src="bilik-antara-voice.js?v=33" defer></script>
+<script src="bilik-antara-voice.js?v=34" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
 <script>
 /* Retain the exact live 3D face, but initialize its renderer only in Voice Chat. */
