@@ -34,11 +34,12 @@
 
   const prefersLess=root.matchMedia?.("(prefers-reduced-motion: reduce)");
   let visible=true,raf=0,active=false,lastSample=-Infinity,lastBurst=-Infinity;
-  let near=false,threshold=36,clearTimer=0,destroyed=false;
+  let near=false,hasSeparated=false,threshold=36,clearTimer=0,destroyed=false;
 
   function measure(){
    threshold=rangeFor(gold.offsetWidth,dark.offsetWidth);
    near=false;
+   hasSeparated=false;
   }
   function burst(point){
    const bounds=frame.getBoundingClientRect();
@@ -65,7 +66,7 @@
     const a=gold.getBoundingClientRect(),b=dark.getBoundingClientRect();
     const hit=contact(a,b,threshold);
     if(hit){
-     if(!near&&now-lastBurst>950){
+     if(hasSeparated&&!near&&now-lastBurst>950){
       burst(hit);
       lastBurst=now;
      }
@@ -73,7 +74,10 @@
     }else{
      const dx=(a.left+a.width/2)-(b.left+b.width/2);
      const dy=(a.top+a.height/2)-(b.top+b.height/2);
-     if(dx*dx+dy*dy>(threshold*1.5)**2)near=false;
+     if(dx*dx+dy*dy>(threshold*1.5)**2){
+      near=false;
+      hasSeparated=true;
+     }
     }
    }
    raf=root.requestAnimationFrame(frameTick);
@@ -81,7 +85,7 @@
   function sync(){
    if(!canRun()){
     if(raf){root.cancelAnimationFrame(raf);raf=0;}
-    active=false;near=false;
+    active=false;near=false;hasSeparated=false;
     return;
    }
    if(!active){
@@ -105,7 +109,7 @@
   const onPageShow=()=>sync();
   const onPageHide=()=>{
    if(raf){root.cancelAnimationFrame(raf);raf=0;}
-   active=false;near=false;
+   active=false;near=false;hasSeparated=false;
   };
   doc.addEventListener("visibilitychange",onVisibility);
   root.addEventListener("resize",onResize,{passive:true});
