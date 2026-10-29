@@ -191,12 +191,12 @@ test("classifier labels from an ordinary-looking model are also rejected, while 
  const bad=await router.complete({system:"persona",history:[],question:"Hai",onDelta:x=>displayed.push(x)});
  assert.equal(bad.error,"all_providers_unavailable");assert.equal(displayed.length,0);
 });
-test("OpenRouter chat requests specify only reviewed free chat models and validate a JSON response",async t=>{
+test("OpenRouter chat uses the free auto-router and validates a JSON response",async t=>{
  setup(t);delete process.env.GROQ_API_KEY;process.env.OPENROUTER_API_KEY="mock";
  const router=require("../netlify/functions/aksara-provider-router");let body;const displayed=[];
  global.fetch=async(_url,opts)=>{body=JSON.parse(opts.body);return reply("Aku tak boleh bantu perbuatan itu, tetapi aku boleh cadangkan pilihan yang selamat.");};
  const r=await router.complete({system:"persona",history:[],question:"Soalan",onDelta:x=>displayed.push(x)});
- assert.equal(r.provider,"openrouter");assert.equal(body.model,undefined);assert.equal(body.stream,true);assert.equal(body.models.length,3);assert.ok(body.models.every(x=>x.endsWith(":free")&&!/guard|classifier|moderation/.test(x)));assert.equal(displayed.join(""),r.reply);
+ assert.equal(r.provider,"openrouter");assert.equal(body.model,"openrouter/free");assert.equal(body.stream,true);assert.equal(body.models,undefined);assert.equal(body.reasoning,undefined);assert.equal(displayed.join(""),r.reply);
 });
 test("colloquial identity questions use the existing grounded Aksara introduction",async t=>{
  const handler=setup(t);global.fetch=()=>{throw Error("Identity must not need a provider");};
@@ -325,7 +325,7 @@ test("opening the page tests providers before showing Connected and never instal
  const source=html.slice(html.indexOf("async function checkProviders("),html.indexOf('ui.conn.addEventListener("click"'));
  let resolve,requests=[],states=[];
  const pending=new Promise(done=>resolve=done);
- const run=new Function("fetch","status","renderProviderRows","el","multiChecked","ENDPOINT",'let busy=false,multiChecking=false,multiLastCheck=0,connectionRevision=0,lastProvider="",lastProviderAt=0;const providers=[["gemini"],["groq"]];'+source+';return checkProviders;')(
+ const run=new Function("fetch","status","renderProviderRows","el","multiChecked","ENDPOINT",'let busy=false,multiChecking=false,multiLastCheck=0,multiCatalog=null,connectionRevision=0,lastProvider="",lastProviderAt=0;const providers=[["gemini"],["groq"],["openrouter"],["requesty"]];const ui={requestyConsent:{checked:false,disabled:true}};'+source+';return checkProviders;')(
   async(_url,opts)=>{requests.push(JSON.parse(opts.body));return pending;},(...args)=>states.push(args),()=>{},()=>({}),{},"/mock"
  );
  const waiting=run(true);
@@ -425,12 +425,12 @@ test("complexity alone does not silently add another model review",()=>{
  assert.equal(I.resolveIntent("Semak ketepatan analisis mendalam algoritma ini",[],false).review,true);
 });
 
-test("OpenRouter health leaves room for visible text rather than spending the whole probe on reasoning",async t=>{
+test("OpenRouter health checks key validity without consuming inference quota",async t=>{
  setup(t);delete process.env.GROQ_API_KEY;process.env.OPENROUTER_API_KEY="mock";
  const router=require("../netlify/functions/aksara-provider-router");let body;
- global.fetch=async(_url,options)=>{body=JSON.parse(options.body);return reply("OK");};
- const rows=await router.checkStatus();assert.equal(rows.find(x=>x.id==="openrouter").status,"online");
- assert.equal(body.max_tokens,512);assert.equal(body.reasoning.effort,"low");assert.equal(body.reasoning.exclude,true);
+ global.fetch=async(url,options)=>{body={url,method:options.method};return Response.json({data:{label:"free",limit:0}});};
+ const rows=await router.checkStatus();assert.equal(rows.find(x=>x.id==="openrouter").status,"ready");
+ assert.match(body.url,/openrouter\.ai\/api\/v1\/key$/);assert.equal(body.method,"GET");
 });
 test("the stream watchdog sends a terminal error and cancels a hung upstream",async()=>{
  const source=fs.readFileSync(path.join(__dirname,"../netlify/functions/bilik-antara-stream.mjs"),"utf8").replace(/^import main[^\n]*\n/,"").replace("export default async function", "return async function");
@@ -480,7 +480,7 @@ test("free multilingual OpenRouter text streams early and never exposes a reason
    {choices:[{delta:{content:"Aku dengar."}}]},{choices:[{delta:{},finish_reason:"stop"}]}]);
  };
  const response=await router.complete({system:"persona",history:[],question:"Hai",onDelta:x=>displayed.push(x)});
- assert.equal(body.models[0],"google/gemma-4-31b-it:free");assert.equal(body.stream,true);
+ assert.equal(body.model,"openrouter/free");assert.equal(body.models,undefined);assert.equal(body.stream,true);
  assert.equal(response.provider,"openrouter");assert.equal(displayed.join(""),"Aku dengar.");
 });
 
@@ -497,7 +497,7 @@ test("daily free-provider exhaustion is distinguished from a short token window"
  global.fetch=async url=>url.includes("openrouter")?Response.json({error:{code:429,message:"Rate limit exceeded: free-models-per-day"}},{status:429}):url.includes("googleapis")?new Response("",{status:429}):reply("Aku boleh jawab.");
  const response=JSON.parse((await handler(event({question:"Aku datang nak borak.",preferredProvider:"openrouter"}))).body);
  assert.equal(response.provider,"groq");assert.equal(response.routing.failedAttempts[0].quotaKind,"daily");
- assert.equal(response.routing.failedAttempts[0].retryAfterSeconds,300);
+ assert.equal(response.routing.failedAttempts[0].retryAfterSeconds,3600);
 });
 
 test("cached health cannot claim a quota-blocked provider is still online",async t=>{
