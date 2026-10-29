@@ -403,7 +403,6 @@ async function startLive(){
     sayStatus(message);showNotice(message);return;
   }
   closeDictation();showNotice("");
-  const fb=document.getElementById("voiceFallback");if(fb)fb.hidden=true;
   panel.classList.remove("is-minimized");
   if(minimizeButton){minimizeButton.textContent="Minimize";minimizeButton.setAttribute("aria-expanded","true");}
   const speakingRule=languageLock;
