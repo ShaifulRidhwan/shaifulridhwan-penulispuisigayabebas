@@ -11,6 +11,15 @@ on:
       - "karya-index.json"
       - "bilik-antara.html"
       - "scripts/test-site-quality.cjs"
+      - "antara-cahaya-dan-gelap.html"
+      - "assets/novel/pembaca.html"
+      - "studio-antara.html"
+      - "sitemap.xml"
+      - "robots.txt"
+      - "favicon-*.svg"
+      - "favicon-*.png"
+      - "*.webmanifest"
+      - "scripts/test-site-metadata.cjs"
       - ".github/workflows/site-quality.yml"
   push:
     branches: [main]
@@ -24,6 +33,15 @@ on:
       - "karya-index.json"
       - "bilik-antara.html"
       - "scripts/test-site-quality.cjs"
+      - "antara-cahaya-dan-gelap.html"
+      - "assets/novel/pembaca.html"
+      - "studio-antara.html"
+      - "sitemap.xml"
+      - "robots.txt"
+      - "favicon-*.svg"
+      - "favicon-*.png"
+      - "*.webmanifest"
+      - "scripts/test-site-metadata.cjs"
       - ".github/workflows/site-quality.yml"
 jobs:
   test:
@@ -38,3 +56,4 @@ jobs:
           node --check gaya-bebas.js
           node --check karya-data.js
           node --test scripts/test-site-quality.cjs
+          node --test scripts/test-site-metadata.cjs
