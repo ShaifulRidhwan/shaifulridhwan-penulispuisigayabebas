@@ -65,6 +65,31 @@ test("Faster ambience and animated translucent glass layer",()=>{
  assert.ok(!css.includes("@import"));
 });
 
+test("Living Glass Frame keeps chat minimal and animates only its outer rim",()=>{
+ const starterLabels=[...html.matchAll(/<button class="starter" type="button">([^<]+)<\/button>/g)].map(m=>m[1]);
+ assert.deepEqual(starterLabels,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas"]);
+ assert.doesNotMatch(html,/Malas nak taip\?|starter-voice|data-action="voice"/);
+ assert.doesNotMatch(css,/\.starter\.starter-voice/);
+ assert.match(html,/id="voiceLive"[^>]*>Jom Voice Chat<\/button>/);
+ assert.match(html,/<div class="glass-frame-orbit" aria-hidden="true">/);
+ for(const tone of ["light","light-echo","shadow","shadow-echo"]){
+  assert.match(html,new RegExp('class="frame-orbit__beam frame-orbit__beam--'+tone+'"'));
+  assert.match(css,new RegExp('\\\\.frame-orbit__beam--'+tone+'\\\\{'));
+ }
+ assert.match(css,/\.conversation>\.glass-frame-orbit\{[\s\S]*?pointer-events:none/);
+ assert.match(css,/offset-path:inset\(2px round 22px\)/);
+ assert.match(css,/@keyframes aksaraRimFlow\{from\{offset-distance:0%\}to\{offset-distance:100%\}\}/);
+ assert.match(css,/animation:aksaraRimFlow 15\.6s linear infinite/);
+ assert.match(css,/animation:aksaraRimFlow 18\.2s linear -6s infinite reverse/);
+ assert.match(css,/\.shell\.is-busy \.frame-orbit__beam--light/);
+ assert.match(css,/@supports not \(offset-path:inset\(2px round 22px\)\)/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{[\s\S]*?\.frame-orbit__beam\{animation:none!important/);
+ assert.doesNotMatch(css,/@keyframes aksaraRimFlow\{[^}]*filter:/);
+ assert.match(css,/@keyframes embersTravel/);
+ assert.match(css,/@keyframes handSparkDescent/);
+ assert.equal((html.match(/style="--delay:/g)||[]).length,24,"Hand-spark particles must survive");
+});
+
 test("Mobile viewport, permanent dark theme and conversation functions retained",()=>{
  assert.match(css,/@media\(max-width:760px\)/);
  assert.doesNotMatch(css,/data-theme="light"/);
