@@ -37,7 +37,7 @@ test("Gemini provenance questions answer Google directly without confusing Aksar
   const response=ID.answerIdentity(question);
   assert.match(response,/Gemini dibangunkan oleh Google/i,question);
   assert.match(response,/Shaiful.*Aksara/i,question);
-  assert.match(response,/API Gemini, Groq, Mistral dan OpenRouter/i,question);
+  assert.match(response,/API Gemini, Groq dan OpenRouter/i,question);
   assert.match(response,/Requesty sebagai pilihan bersyarat/i,question);
   assert.match(response,/penghalaan.*penyedia/i,question);
   assert.match(response,/Voice Chat pula menggunakan Gemini Live dengan modifikasi code tersendiri/i,question);
@@ -48,7 +48,7 @@ test("Siapa Aku gives a concise project introduction and describes its models",(
  const reply=ID.answerIdentity("Siapa Aku");
  assert.match(reply,/Aksara A\.I\./);
  assert.match(reply,/dibangunkan oleh Shaiful Ridhwan/);
- assert.match(reply,/Gemini, Groq, Mistral dan OpenRouter/);
+ assert.match(reply,/Gemini, Groq dan OpenRouter/);
  assert.match(reply,/Voice Chat.*Gemini Live/);
  assert.ok(reply.length<500,"First answer leaves detail for a follow-up");
  assert.equal(ID.answerIdentity("siapa aku?"),reply);

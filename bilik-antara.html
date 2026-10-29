@@ -254,7 +254,7 @@ ui.retry.addEventListener("click",()=>{
  if(busy)return;
  if(ui.input.value.trim()||fileState)submit({preventDefault(){}});else probe();
 });
-const providers=[["gemini","Google Gemini"],["groq","Groq"],["openrouter","OpenRouter"],["requesty","Requesty"],["mistral","Mistral"]];
+const providers=[["gemini","Google Gemini"],["groq","Groq"],["openrouter","OpenRouter"],["requesty","Requesty"]];
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
 let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0;
 function shortOpenRouterName(model){
@@ -917,7 +917,7 @@ window.BilikAntaraBridge={
 restore();renderIdeas();renderHistory();update();probe();
 })();
 </script>
-<script src="bilik-antara-identity.js?v=26" defer></script>
+<script src="bilik-antara-identity.js?v=27" defer></script>
 <script src="bilik-antara-suite.js?v=11" defer></script>
 <script src="bilik-antara-brain.js?v=12" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>

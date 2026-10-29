@@ -3,7 +3,7 @@
  * Aksara provider router: shared identity and consented OpenRouter vision fallback.
  * Always reuse the Gemini system prompt so identity/tone remain consistent.
  * No automatic paid model fallback: OpenRouter uses free-only routing.
- * Groq/Mistral require explicit confirmation of an account's free tier.
+ * Groq requires explicit confirmation of an account's free tier.
  */
 const {boundedHistory,boundedText,requestControl,readSSE}=require("./lib/aksara-transport");
 const Requesty=require("./aksara-requesty");
@@ -13,13 +13,13 @@ let recentOpenRouter={model:"",at:0}; // Real replies only, never synthetic stat
 let recentRequesty={model:"",at:0};
 // Task categories are routing preferences, not unverified claims about model quality.
 const TASK_PRIORITY={
- technical:["groq","mistral","openrouter","requesty"],
- critique:["groq","mistral","openrouter","requesty"],
- hypothetical:["groq","mistral","openrouter","requesty"],
- creative:["mistral","groq","openrouter","requesty"],
- conversation:["groq","mistral","openrouter","requesty"],
- explain:["groq","mistral","openrouter","requesty"],
- general:["groq","mistral","openrouter","requesty"]
+ technical:["groq","openrouter","requesty"],
+ critique:["groq","openrouter","requesty"],
+ hypothetical:["groq","openrouter","requesty"],
+ creative:["groq","openrouter","requesty"],
+ conversation:["groq","openrouter","requesty"],
+ explain:["groq","openrouter","requesty"],
+ general:["groq","openrouter","requesty"]
 };
 function rankProviders(available,task,prefer=""){
  const rank=TASK_PRIORITY[task]||TASK_PRIORITY.general;
@@ -32,8 +32,6 @@ function rankProviders(available,task,prefer=""){
 const PROVIDERS=[
  {id:"groq",key:"GROQ_API_KEY",allow:"GROQ_FREE_CONFIRMED",
   url:"https://api.groq.com/openai/v1/chat/completions",model:"openai/gpt-oss-120b"},
- {id:"mistral",key:"MISTRAL_API_KEY",allow:"MISTRAL_FREE_CONFIRMED",
-  url:"https://api.mistral.ai/v1/chat/completions",model:"mistral-small-latest"},
  {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
   url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"},
  {id:"requesty",key:"REQUESTY_API_KEY",allow:null,
@@ -246,8 +244,6 @@ async function crossReview({question,reply,originalProvider,task="general",timeo
   ];
   const body={model:reviewer.model,messages,max_tokens:350,temperature:0};
   if(reviewer.id==="openrouter")openRouterBody(body);
-  // Mistral supports OpenAI-compatible JSON object output.
-  if(reviewer.id==="mistral")body.response_format={type:"json_object"};
   if(reviewer.id==="groq"){body.reasoning_effort="low";body.include_reasoning=false;}
   const response=await fetch(reviewer.url,{method:"POST",headers,body:JSON.stringify(body),signal:ctrl.signal});
   if(!response.ok)return null;

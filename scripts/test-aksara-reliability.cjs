@@ -55,7 +55,7 @@ test("probe distinguishes configuration from a successful model call",async t=>{
  const r=JSON.parse((await handler(event({probe:true}))).body);assert.equal(r.connectionState,"configured");assert.equal(r.geminiVerified,false);
 });
 test("sequential backup attempts obey one deadline and cancellation stops a pending provider",async t=>{
- setup(t);process.env.MISTRAL_API_KEY="mock";process.env.MISTRAL_FREE_CONFIRMED="true";process.env.OPENROUTER_API_KEY="mock";
+ setup(t);process.env.OPENROUTER_API_KEY="mock";
  const router=require("../netlify/functions/aksara-provider-router");let attempts=0;
  global.fetch=async(_url,{signal})=>{attempts++;return new Promise((_resolve,reject)=>signal.addEventListener("abort",()=>reject(new DOMException("abort","AbortError")),{once:true}));};
  const start=Date.now();await router.complete({system:"persona",history:[],question:"Hai",timeoutMs:600,deadline:Date.now()+1000});assert.equal(attempts,1);assert.ok(Date.now()-start<1100);
@@ -76,7 +76,7 @@ test("primary streaming hides reasoning and requires a terminal frame",async t=>
  const failed=await handler(event({question:"Hai"},{onDelta:()=>{}}));assert.equal(JSON.parse(failed.body).code,"STREAM_INTERRUPTED");
 });
 test("fallback streaming never combines partial responses from different providers",async t=>{
- setup(t);process.env.MISTRAL_API_KEY="mock";process.env.MISTRAL_FREE_CONFIRMED="true";let attempts=0;
+ setup(t);process.env.OPENROUTER_API_KEY="mock";let attempts=0;
  const router=require("../netlify/functions/aksara-provider-router");
  global.fetch=async()=>{attempts++;return sse([{choices:[{delta:{content:"separuh ".repeat(40)}}]}]);};
  await assert.rejects(router.complete({system:"persona",history:[],question:"Hai",onDelta:()=>{}}));assert.equal(attempts,1);
@@ -179,11 +179,11 @@ test("a truncated or malformed client stream is marked retryable even when the H
  }
 });
 test("classifier-only output is rejected before display and a conversational provider can answer instead",async t=>{
- setup(t);process.env.MISTRAL_API_KEY="mock";process.env.MISTRAL_FREE_CONFIRMED="true";
+ setup(t);process.env.OPENROUTER_API_KEY="mock";
  const router=require("../netlify/functions/aksara-provider-router");const displayed=[];
  global.fetch=async url=>url.includes("groq.com")?sse([{model:"example/guard",choices:[{delta:{content:"User Safety: safe\nResponse Safety: safe"},finish_reason:"stop"}]}]):reply("Aku Aksara A.I.");
  const r=await router.complete({system:"persona",history:[],question:"siapa kau ek",onDelta:x=>displayed.push(x)});
- assert.equal(r.provider,"mistral");assert.equal(r.reply,"Aku Aksara A.I.");assert.ok(!displayed.join("").includes("User Safety"));
+ assert.equal(r.provider,"openrouter");assert.equal(r.reply,"Aku Aksara A.I.");assert.ok(!displayed.join("").includes("User Safety"));
 });
 test("classifier labels from an ordinary-looking model are also rejected, while a normal safety refusal remains valid",async t=>{
  setup(t);const router=require("../netlify/functions/aksara-provider-router"),displayed=[];
@@ -463,7 +463,7 @@ test("upstream RetryInfo is honored and an existing Google cooldown is never ext
  assert.equal(google,2,"A repeated question must not push a two-second wait forward by two minutes");assert.equal(response.statusCode,200);
 });
 test("failed provider chains stop at the first-response budget instead of consuming the whole answer deadline",async t=>{
- setup(t);process.env.MISTRAL_API_KEY="mock";process.env.MISTRAL_FREE_CONFIRMED="true";
+ setup(t);process.env.OPENROUTER_API_KEY="mock";
  const router=require("../netlify/functions/aksara-provider-router");let now=100000,calls=0;
  t.mock.method(Date,"now",()=>now);
  global.fetch=async()=>{calls++;now+=200;return new Response("",{status:503});};
@@ -517,19 +517,19 @@ test("cached health cannot claim a quota-blocked provider is still online",async
  assert.equal(calls,2,"A cached health refresh does not consume a third completion");
 });
 test("a brief health probe never displaces a model that completed a real conversation",async t=>{
- setup(t);process.env.MISTRAL_API_KEY="mock";process.env.MISTRAL_FREE_CONFIRMED="true";
+ setup(t);process.env.OPENROUTER_API_KEY="mock";
  const router=require("../netlify/functions/aksara-provider-router");
  global.fetch=async url=>{
-  if(url.includes("mistral.ai"))await new Promise(resolve=>setTimeout(resolve,20));
+  if(url.includes("openrouter.ai"))await new Promise(resolve=>setTimeout(resolve,20));
   return reply("OK");
  };
- const first=await router.complete({system:"persona",history:[],question:"Hai",only:["mistral"],deadline:Date.now()+1500});
- assert.equal(first.provider,"mistral");
+ const first=await router.complete({system:"persona",history:[],question:"Hai",only:["openrouter"],deadline:Date.now()+1500});
+ assert.equal(first.provider,"openrouter");
  const health=await router.checkStatus();
  assert.equal(health.find(x=>x.id==="groq").status,"online");
- assert.equal(health.find(x=>x.id==="mistral").status,"online");
+ assert.equal(health.find(x=>x.id==="openrouter").status,"online");
  const next=await router.complete({system:"persona",history:[],question:"Sambung cerita",task:"technical",deadline:Date.now()+1500});
- assert.equal(next.provider,"mistral","Routing follows a real successful response rather than a shorter OK probe");
+ assert.equal(next.provider,"openrouter","Routing follows a real successful response rather than a shorter OK probe");
 });
 test("health check treats a daily free-tier quota as unavailable without immediately probing again",async t=>{
  setup(t);const router=require("../netlify/functions/aksara-provider-router");
@@ -545,11 +545,11 @@ test("health check treats a daily free-tier quota as unavailable without immedia
 });
 
 test("a ready provider wins the retry countdown over other providers still in cooldown",async t=>{
- const handler=setup(t);process.env.MISTRAL_API_KEY="mock";process.env.MISTRAL_FREE_CONFIRMED="true";
+ const handler=setup(t);process.env.OPENROUTER_API_KEY="mock";
  let now=100000,groq=0;t.mock.method(Date,"now",()=>now);
  global.fetch=async url=>{
   if(url.includes("groq.com")){groq++;return new Response("",{status:429,headers:{"retry-after":groq===1?"2":"1"}});}
-  if(url.includes("mistral.ai"))return new Response("",{status:429,headers:{"retry-after":"30"}});
+  if(url.includes("openrouter.ai"))return new Response("",{status:429,headers:{"retry-after":"30"}});
   now+=3000;throw new DOMException("primary timed out","AbortError");
  };
  const r=await handler(event({question:"Aku cuma nak borak"})),data=JSON.parse(r.body);
@@ -638,4 +638,13 @@ test("a failed short quota recovery is not repeated again after another model ti
  };
  const response=await handler(event({question:"Terangkan apa itu api."}));
  assert.equal(response.statusCode,503);assert.equal(calls,2,"A request gets at most one recovery attempt");
+});
+
+test("Mistral direct provider remains disabled even when its keys are still configured",async t=>{
+ setup(t);process.env.MISTRAL_API_KEY="mock";process.env.MISTRAL_FREE_CONFIRMED="true";
+ const router=require("../netlify/functions/aksara-provider-router");
+ assert.ok(!router.configured().some(p=>p.id==="mistral"));
+ let calls=[];global.fetch=async url=>{calls.push(String(url));return reply("Hai");};
+ await router.checkStatus();await router.complete({system:"persona",history:[],question:"Hai"});
+ assert.ok(calls.every(url=>!url.includes("api.mistral.ai")));
 });
