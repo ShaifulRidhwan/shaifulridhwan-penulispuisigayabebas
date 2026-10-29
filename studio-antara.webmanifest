@@ -1,8 +1,8 @@
 {
   "id": "/studio-antara.html",
-  "name": "Studio Antara | Jana Imej",
+  "name": "Studio Antara | Jana Imej AI",
   "short_name": "Studio Antara",
-  "description": "Studio Antara untuk penjanaan imej AI, paparan hasil dan alat kreatif pada peranti.",
+  "description": "Jana imej melalui Cloudflare Workers AI tanpa memuat turun model. Fungsi video sedang dipersiapkan.",
   "lang": "ms",
   "start_url": "/studio-antara.html",
   "scope": "/",
