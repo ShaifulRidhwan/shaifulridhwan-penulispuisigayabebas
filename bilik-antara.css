@@ -3317,3 +3317,44 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  .identity .eyebrow .eyebrow-caption{animation:none;background-position:35% 50%}
  .identity .eyebrow .eyebrow-ray,.identity .eyebrow .eyebrow-meeting{animation:none;opacity:0}
 }
+
+/* 2026-10-29: consistent optical-glass navigation height, including the Aksara identity. */
+.topbar .brand,.topbar .nav-link{
+  box-sizing:border-box;
+  min-height:36px;
+  height:36px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.topbar .brand{padding-inline:11px;flex-shrink:0}
+@media(max-width:760px){
+  .topbar .brand,.topbar .nav-link{height:31px;min-height:31px}
+  .topbar .brand{padding-inline:8px}
+}
+@media(max-width:390px){
+  .topbar .brand{padding-inline:6px}
+}
+/* Scrolling is native and inertial; static history never replays entrance animation.
+   Avoid costly smooth-scroll interpolation while expensive glass layers are present. */
+.conversation .messages{
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
+  scroll-behavior:auto!important;
+  contain:layout style;
+  scrollbar-color:rgba(241,217,183,.42) rgba(155,180,211,.045);
+  scrollbar-width:thin;
+}
+.conversation .messages .message.is-restored{animation:none}
+.conversation .messages::-webkit-scrollbar{width:7px}
+.conversation .messages::-webkit-scrollbar-track{
+  background:linear-gradient(180deg,rgba(250,235,211,.018),rgba(157,187,221,.045));
+  border-radius:999px;
+}
+.conversation .messages::-webkit-scrollbar-thumb{
+  border:2px solid transparent;
+  background:linear-gradient(180deg,rgba(252,232,191,.62),rgba(151,189,222,.44)) padding-box;
+  border-radius:999px;
+  box-shadow:inset 0 0 0 1px rgba(255,251,232,.14);
+}
