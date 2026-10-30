@@ -19,7 +19,7 @@ test("Katalog mempunyai metadata dan pautan karya utama",()=>{
  assert.match(page,/class="aksara-nav-link" href="bilik-antara\.html">Bilik Antara<\/a>/);
  assert.match(page,/aksara-header\.css\?v=1/);
  assert.match(page,/id="books"/);
- assert.match(page,/id="archiveBooks"/);
+ assert.doesNotMatch(page,/id="archiveBooks"/);
 });
 test("Kod JavaScript katalog boleh dihuraikan",()=>{
  assert.ok(scripts.length>0);
@@ -53,11 +53,12 @@ test("Integrasi Bilik Antara adalah tambahan dan tidak mengubah studio",()=>{
  assert.ok(bilik.indexOf('id="featureStudio"')<bilik.indexOf('id="featureLibrary"'));
  assert.ok(bilik.indexOf('id="featureLibrary"')<bilik.indexOf('id="featureMetrics"'));
 });
-test("Hak cipta dan kawalan pemuatan di luar pelayan dinyatakan",()=>{
- assert.match(page,/hak cipta terjemahan/i);
- assert.match(page,/copyright=false/);
+test("Katalog curated masih guna pautan buku selamat dan simpanan setempat",()=>{
+ assert.match(page,/const allowed=u=>/);
+ assert.match(page,/p\.protocol==="https:"/);
  assert.match(page,/localStorage/);
- assert.match(page,/rel="noopener noreferrer"/);
+ assert.match(page,/noopener noreferrer/);
+ assert.doesNotMatch(page,/fetchArchive|gutendex\.com|copyright=false|archiveBooks/);
 });
 
 test("Navigasi Novel masuk terus pembaca, Karya ke katalog",()=>{
@@ -93,7 +94,7 @@ test("Glass, mobile single-column dan imej kulit buku",()=>{
  assert.doesNotMatch(page,/PILIHAN EDITOR/);
  assert.doesNotMatch(page,/class="feature"/);
  assert.match(page,/assets\/novel\/cover-01\.jpg/);
- assert.ok(page.includes("perpustakaan-aksara.css?v=4"));
+ assert.ok(page.includes("perpustakaan-aksara.css?v=5"));
 });
 
 
@@ -105,8 +106,19 @@ test("Novel catalog opens immediately beneath shared header without the old intr
  assert.doesNotMatch(page,/class="intro"/);
  assert.match(page,/<header class="aksara-header">/);
  assert.match(page,/<span class="aksara-name">AKSARA Novel<\/span>/);
- assert.match(css,/\.collection\{padding:18px 0 18px\}/);
- assert.match(css,/@media\(max-width:690px\)[^\n]+\.collection\{padding-top:14px\}/);
+ assert.match(css,/\.collection\{padding:18px 0 40px\}/);
+ assert.match(css,/@media\(max-width:690px\)[^\n]+\.collection\{padding:14px 0 32px\}/);
  assert.doesNotMatch(css,/\.intro(?:\{|>)/);
- assert.match(page,/id="archiveBooks"/);
+ assert.doesNotMatch(page,/id="archiveBooks"/);
+});
+
+
+test("Archive and footer removal leaves only curated books and no dead hooks",()=>{
+ assert.doesNotMatch(page,/<section class="archive"|<footer\b|ARKIB TERBUKA|Teroka katalog dunia|Ribuan karya untuk diteroka/);
+ assert.doesNotMatch(page,/id="explore"|id="more"|id="archiveStatus"|archiveNext|archiveLoaded|archiveEntries|renderArchiveBookmarks|fetchArchive|gutendex\.com/);
+ assert.doesNotMatch(css,/\.archive(?:\{|[- >.])|\.more\{|footer\{/);
+ assert.match(page,/<main>\s*<h1 class="sr">Katalog novel AKSARA<\/h1>\s*<section class="collection"/);
+ assert.match(page,/DATA\.map\(b=>bookCard\(b\)\)/);
+ assert.match(page,/persist\(\);render\(\)/);
+ assert.match(css,/\.collection\{padding:18px 0 40px\}/);
 });
