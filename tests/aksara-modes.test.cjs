@@ -519,9 +519,10 @@ test("Session archive import validates schema and strips unsafe extra fields",()
  assert.equal(restored[0].history[0].sources,undefined);
  assert.equal(restored[0].history[0].locationLabel,undefined);
  assert.equal(restored[0].id,undefined,"import must create fresh IDs in the client");
+ assert.equal(U.importArchive([{history:[{role:"assistant",content:"x".repeat(40000)}]}])[0].history[0].content.length,40000);
  assert.throws(()=>U.importArchive({notSessions:true}),/Format arkib/);
  assert.throws(()=>U.importArchive([{history:[{role:"admin",content:"evil"}]}]),/mesej yang tidak sah/);
- assert.throws(()=>U.importArchive([{history:[{role:"user",content:"x".repeat(32001)}]}]),/mesej yang tidak sah/);
+ assert.throws(()=>U.importArchive([{history:[{role:"user",content:"x".repeat(45001)}]}]),/mesej yang tidak sah/);
  assert.throws(()=>U.importArchive(Array.from({length:101},()=>entry)),/maksimum 100/);
 });
 
@@ -553,10 +554,14 @@ test("Delete conversation keeps the visitor's save preference; consent remains e
  assert.doesNotMatch(html,/ui\.remember\.checked=false;ui\.mediaFallback\.checked=false/);
  assert.match(html,/localStorage\.removeItem\(STORAGE\)/);
  assert.match(html,/ui\.remember\.checked\?"on":"off"/);
+ assert.match(html,/memoryForPrompt\(question\)/);
  const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
  assert.match(suite,/function clearAllArchive\(\)/);
  assert.match(suite,/function removeArchiveEntry\(item\)/);
  assert.match(suite,/titleEdited=old\.titleEdited===true/);
  assert.match(suite,/Import arkib JSON/);
  assert.match(suite,/memoryForPrompt:question=>/);
+ assert.match(suite,/Bawa konteks sesi ini/);
+ assert.match(suite,/Pratonton memori tersimpan/);
+ assert.match(suite,/sessionSearchTerm=""/);
 });
