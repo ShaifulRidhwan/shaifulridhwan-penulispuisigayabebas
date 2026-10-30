@@ -194,6 +194,8 @@ function cognitivePlan(intent,base,profile){
 }
 function cognitiveGuidance(profile){
  if(!profile||profile.focus==="support")return "";
+ // Ordinary chat keeps a very small prompt; deep protocols are opt-in by intent.
+ if(profile.focus==="general"&&profile.depth==="low")return "KECERDASAN RINGKAS: Jawab niat sebenar pengguna dalam Bahasa Melayu natural, berasaskan fakta tanpa mereka sumber, dan jangan panjangkan soalan mudah.";
  const specific=COGNITIVE_PROTOCOL[profile.focus]||COGNITIVE_PROTOCOL.general;
  return COGNITIVE_FOUNDATION+"\n"+specific+
   (profile.followUp&&profile.focus!=="contextual"?"\n"+COGNITIVE_PROTOCOL.contextual:"");
