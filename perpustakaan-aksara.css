@@ -109,6 +109,3 @@ footer a:hover{color:var(--gold)}
  .book:first-child .art img{object-fit:cover;object-position:center center}
 }
 
-/* The first book follows the shared navigation without an oversized hero gap. */
-.novel-shell main>.collection{padding-top:18px}
-@media(max-width:690px){.novel-shell main>.collection{padding-top:14px}}
