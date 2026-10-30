@@ -52,7 +52,7 @@
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="bilik-antara-bg-desktop.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="bilik-antara-bg-mobile.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=82">
+<link rel="stylesheet" href="bilik-antara.css?v=83">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
@@ -163,6 +163,7 @@
      <input class="sr-only" type="file" id="documentUpload" multiple accept=".txt,.md,.csv,.pdf,image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/webm,video/mp4,video/webm" aria-label="Pilih lampiran">
      <textarea rows="1" id="input" placeholder="" aria-label="Tulis mesej untuk Aksara A.I."></textarea>
       <button type="button" id="stopBtn" class="outline-btn" aria-label="Hentikan respons" hidden>Henti</button>
+      <button type="button" id="thoughtMode" class="thought-mode" aria-label="Aktifkan mod GELAP" aria-pressed="false" title="Mod CAHAYA: gaya Aksara asal"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg></button>
       <button type="submit" id="sendBtn" class="send-btn" aria-label="Hantar soalan" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-9-3.6 18L11 13l-6-1Z"/><path d="m11 13 8-10"/></svg></button>
     </form>
    </div>
@@ -249,6 +250,18 @@ if(window.visualViewport)window.visualViewport.addEventListener("resize",queueVi
 const ENDPOINT="/.netlify/functions/bilik-antara";
 const STREAM_ENDPOINT="/.netlify/functions/bilik-antara-stream";
 const STORAGE="bilik-antara-session-v2";
+// One shared chat brain and history; mode only controls the response identity.
+let thoughtMode="cahaya";
+const modeButton=document.getElementById("thoughtMode");
+function setThoughtMode(mode){
+ thoughtMode=mode==="gelap"?"gelap":"cahaya";
+ modeButton.setAttribute("aria-pressed",String(thoughtMode==="gelap"));
+ modeButton.setAttribute("aria-label",thoughtMode==="gelap"?"Mod GELAP aktif. Tukar kepada CAHAYA":"Mod CAHAYA aktif. Tukar kepada GELAP");
+ modeButton.title=thoughtMode==="gelap"?"GELAP · falsafah moden, kritis dan sinis":"CAHAYA · personaliti Aksara asal";
+ modeButton.innerHTML=thoughtMode==="gelap"?'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5 8.5 8.5 0 1 0 20.5 14.3Z"/></svg>':'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>';
+}
+modeButton.addEventListener("click",()=>setThoughtMode(thoughtMode==="cahaya"?"gelap":"cahaya"));
+setThoughtMode("cahaya");
 const MEDIA=new Set(["application/pdf","image/jpeg","image/png","image/webp","image/gif",
  "audio/mpeg","audio/wav","audio/mp4","audio/ogg","audio/webm","video/mp4","video/webm"]);
 let activeRequest=null,stoppedByUser=false,failedPreview=null,lastProvider="",lastProviderAt=0;
@@ -850,7 +863,7 @@ async function submit(event){
   if(!partialFrame)partialFrame=requestAnimationFrame(drawPartial);
  }
  try{
-  const payload={question,preferredProvider:Date.now()-lastProviderAt<90000?lastProvider:"",history:contextHistory(),contextFallback:ui.contextFallback.checked,
+  const payload={question,thoughtMode,preferredProvider:Date.now()-lastProviderAt<90000?lastProvider:"",history:contextHistory(),contextFallback:ui.contextFallback.checked,
    summary,thoughtLedger:ideas.slice(-8),mediaFallback:ui.mediaFallback.checked,requestyConsent:ui.requestyConsent.checked,
    documentText:selectedFile&&selectedFile.text||"",
    documentName:selectedFile&&selectedFile.name||"",
