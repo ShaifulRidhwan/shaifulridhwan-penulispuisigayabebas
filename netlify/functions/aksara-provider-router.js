@@ -128,8 +128,14 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   // through the same classifier-prefix guard; JSON clients get a full-answer budget.
   const attemptBudget=(provider.id==="openrouter"||provider.id==="orcarouter")?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,reasoningLevel==="high"?12000:8500):
    provider.id==="requesty"?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,9000):(!onDelta?bufferedTimeoutMs:timeoutMs);
+  // When earlier providers time out, reserve a small first-response window for
+  // layer two. Otherwise Groq+OpenRouter could consume all 14s and Orca would
+  // never get a chance, despite being correctly configured.
+  const orcaPending=provider.id!=="orcarouter"&&ordered.includes(secondLayer)&&
+    !skip.includes("orcarouter")&&Date.now()>=(cooldown.get("orcarouter")||0);
+  const orcaReserve=orcaPending?Math.min(3500,Math.max(0,remaining-1000)):0;
   const attemptStarted=Date.now();
-  const control=requestControl(Math.min(attemptBudget,remaining),signal);
+  const control=requestControl(Math.min(attemptBudget,Math.max(500,remaining-orcaReserve)),signal);
   let emitted=false;
   try{
    // Verify free-tier pricing every five minutes before any Requesty inference.
