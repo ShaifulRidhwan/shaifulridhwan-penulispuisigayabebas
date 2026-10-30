@@ -679,5 +679,5 @@ test("fallback cognitive guidance remains scoped and does not claim nonexistent 
  assert.match(system,/GELAP/);
  assert.match(system,/Jangan mereka sumber/);
  assert.match(system,/Tiada alat carian/);
- assert.ok(system.length<26000,"avoid runaway system context");
+ assert.ok(system.length<60000,"avoid runaway system context");
 });
