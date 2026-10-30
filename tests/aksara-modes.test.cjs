@@ -609,7 +609,7 @@ test("All three Aksara pages share one measured glass topbar with distinct conte
   assert.match(markup,/aksara-brand-name/);
   assert.ok(markup.includes('class="aksara-name">'+role+"</span>"),role);
   assert.ok(markup.includes('class="aksara-credit">oleh Shaiful Ridhwan</span>'),role);
-  assert.match(markup,/class="aksara-nav"/);
+  assert.match(markup,/class="(?:nav-actions )?aksara-nav"/);
   for(const label of other)assert.ok(markup.includes(">"+label+"</a>"),label+" missing: "+role);
  }
  assert.doesNotMatch(novel,/<span class="brand-icon">/);
