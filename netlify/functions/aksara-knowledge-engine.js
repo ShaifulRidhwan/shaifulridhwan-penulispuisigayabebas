@@ -52,24 +52,4 @@ function format(results){
   results.map(x=>"["+x.id+"] "+x.title+" ("+(x.kind==="private"?"nota pengguna":"karya awam")+")\n"+x.excerpt).join("\n\n")+
   "\n[TAMAT KNOWLEDGE ENGINE]\nJangan petik sumber ini sebagai bukti berita terkini. Hanya gunakan petikan yang benar-benar relevan dan nyatakan apabila tiada bukti yang mencukupi.";
 }
-
-/* Hybrid RAG: public vector similarity + existing lexical/concept retrieval.
- * Any private notes are processed solely by the current request-scoped lexical
- * path. They are NEVER transmitted to Workers AI or stored in Vectorize. */
-async function retrieveHybrid(options={}){
- const local=retrieve(options);
- if(options.includePublic===false||options.vectorConsent!==true)return local;
- const Vector=require("./aksara-vector-rag");
- const semantic=await Vector.retrieve(String(options.question||""),{timeout:2400,topK:4});
- if(!semantic.length)return local;
- const unique=new Set(),out=[];
- for(const row of [...semantic,...local]){
-  const identity=String(row.title||"").trim().toLocaleLowerCase("ms-MY")+"|"+String(row.kind||"");
-  if(!identity||unique.has(identity))continue;
-  unique.add(identity);out.push(row);
-  if(out.length>=Math.min(5,Math.max(2,options.limit||4)))break;
- }
- return out;
-}
-module.exports={retrieve,retrieveHybrid,format,score,similarity,CONCEPTS};
-
+module.exports={retrieve,format,score,similarity,CONCEPTS};
