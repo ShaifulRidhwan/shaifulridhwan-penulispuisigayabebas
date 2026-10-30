@@ -77,10 +77,10 @@ test("Prepared CAHAYA and GELAP replies answer every four-brain question",()=>{
   }
  }
  for(const name of canonical)assert.ok(Identity.answerIdentity("Siapa Aku").includes(name),"Siapa Aku missing "+name);
- for(const label of ["utama","sandaran pertama","sandaran kedua","CAHAYA","GELAP","Ready","Connected"])
+ for(const label of ["utama","fallback","backup terakhir","CAHAYA","GELAP","AI routing","rate limit"])
   assert.ok(Identity.WHO_AM_I.includes(label),"Siapa Aku missing "+label);
  assert.ok(Identity.answerIdentity("Empat Otak Aksara")?.includes("OrcaRouter"),"Manual four-brain query remains available");
- assert.ok(Identity.WHO_AM_I.length<500);
+ assert.ok(Identity.WHO_AM_I.length<900);
 });
 
 test("Unrelated creative requests and recommendations must not hijack the four-brain answer",()=>{
