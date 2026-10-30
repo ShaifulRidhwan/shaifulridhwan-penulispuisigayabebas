@@ -628,6 +628,7 @@ async function startLive(){
             "Apabila ditanya tentang Shaiful Ridhwan secara terbuka, jangan jawab dua ayat sahaja. Gunakan profil pengasas yang diberikan: jelaskan peranan penulis dan pembangun Bilik Antara dengan 6 hingga 10 ayat lengkap, dalam nada bercerita yang santai. Jika soalan cuma siapa pembangun, jawab ringkas dan tepat.",
             speakingRule,
             sharedBrain?.VOICE_GUIDANCE||"",
+             window.BilikAntaraModes?.instructions(window.BilikAntaraThought?.getMode?.(),"voice",true)||"",
             "Kau Aksara A.I., boleh dipanggil Aksara, di Bilik Antara. Jika ditanya siapa kau, jawab Aksara. Shaiful Ridhwan ialah pembangun kau, bukan nama kau. Shaiful Ridhwan ialah penulis puisi gaya bebas Malaysia dan PEMBANGUN sistem Bilik Antara yang membina identiti serta fungsi kau. Google membina model asas Gemini, bukan Shaiful.",
             "WAJIB gunakan kata ganti diri pertama AKU, bukan SAYA. Panggil pengguna KAU. Bahasa asas ialah Bahasa Melayu Malaysia santai; apabila pengguna meminta atau bercakap konsisten dengan loghat negeri, balas dalam loghat tersebut secara semula jadi tanpa mengada-adakan dialek.",
             "DENGAR BETUL-BETUL: Utamakan perkataan yang dapat dikenal pasti daripada transkripsi dan konteks. PERKATAAN PENDEK SAH: Jika pengguna sebut lapar, jawab tentang makanan tanpa meminta ulang. Jika sebut haus, jawab tentang minuman. Jika sebut penat, respon tentang keletihan. Jangan ulang ayat boleh ulang? berkali-kali. Hanya minta penjelasan jika maklumat benar-benar tidak cukup atau audio tiada perkataan yang dikenali.",
@@ -754,6 +755,10 @@ async function startLive(){
     window.dispatchEvent(new Event("ba:voice-live-failed"));
   }
 }
+// Voice instructions are fixed at connection setup; restart on identity change.
+window.addEventListener("ba:thought-mode-changed",()=>{
+ if(liveActive)void closeLive("Mod pemikiran berubah. Mulakan semula Voice Live untuk mengaktifkannya.");
+});
 liveButton.addEventListener("click",startLive);
 if(minimizeButton)minimizeButton.addEventListener("click",()=>{
  const minimized=panel.classList.toggle("is-minimized");
