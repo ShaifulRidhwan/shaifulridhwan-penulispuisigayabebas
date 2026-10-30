@@ -20,53 +20,53 @@
 [[headers]]
   for = "/bilik-antara-cover-art.jpg"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 # Versioned CSS and avatar resources may be reused on repeat visits.
 # Every visual change must bump its ?v= query string in the referring HTML.
 [[headers]]
   for = "/bilik-antara.css"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/bilik-antara-suite.css"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/bilik-antara-chat-portrait.png"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/gaya-bebas.css"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 # This asset is referenced with a versioned URL; preserve fast repeat visits.
 [[headers]]
   for = "/gaya-bebas.js"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 # This asset is referenced with a versioned URL; preserve fast repeat visits.
 [[headers]]
   for = "/bilik-antara-voice.js"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 # This asset is referenced with a versioned URL; preserve fast repeat visits.
 [[headers]]
   for = "/bilik-antara-avatar.js"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 # This asset is referenced with a versioned URL; preserve fast repeat visits.
 [[headers]]
   for = "/bilik-antara-pcm-worklet.js"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 # Only Studio needs the distributed budget SDK. Preserve other function bundles.
 [functions."studio-image"]
@@ -75,44 +75,45 @@
   external_node_modules = ["@netlify/blobs"]
 
 # Cache large static artwork and versioned Studio assets across repeat visits.
+# Bump ?v= references when changing any cached asset; do not use immutable for frequently edited files.
 # Keep HTML documents uncached so future deployments appear promptly.
 [[headers]]
   for = "/bilik-antara-bg-mobile.webp"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/bilik-antara-bg-desktop.webp"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/studio-antara.css"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/studio-antara-config.js"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/studio-antara-history.js"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/studio-antara-cooldown.js"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/studio-antara-cloud.js"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 [[headers]]
   for = "/studio-antara-ui.js"
   [headers.values]
-    Cache-Control = "public, max-age=604800, stale-while-revalidate=86400"
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
