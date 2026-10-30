@@ -129,7 +129,9 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
    if(provider.id==="requesty"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
-   const simple=["conversation","general","explain"].includes(task)&&reasoningLevel!=="high";
+   // Preserve medium reasoning for concept and follow-up questions. Only genuine
+   // low-effort turns should be reduced to the fastest GPT-OSS setting.
+   const simple=(reaction||["conversation","general","explain"].includes(task))&&reasoningLevel==="low";
    const outputLimit=Math.min(reaction?500:simple?1500:6000,Math.max(400,maxTokens));
    // Keep the complete intentional personality in an identical first message.
    // Per-turn guidance has its own system message, allowing whole-message
