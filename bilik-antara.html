@@ -953,9 +953,10 @@ async function submit(event){
   
   addIdeas(data.thoughtLedger);save();
   if(selectedFile&&selectedFile===fileState)ui.docStatus.textContent="Fail ni masih ada kalau kau nak tanya lagi · "+selectedFile.name;
-  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
-  status(data.model==="project-identity"?"configured":"online",data.model==="project-identity"?"Jawapan tersedia Aksara":"Multi A.I Connected","");
-  if(data.model!=="project-identity"){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
+  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
+  const localAnswer=data.model==="project-identity"||data.model==="local-reflection";
+  status(localAnswer?"configured":"online",localAnswer?"Jawapan tersedia Aksara":"Multi A.I Connected","");
+  if(!localAnswer){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
   if(data.provider==="openrouter"&&typeof data.model==="string"){lastOpenRouterModel=data.model;lastOpenRouterAt=Date.now();}
   compact();
  }catch(error){
