@@ -15,6 +15,12 @@ async function run(){
    await page.goto(base+"/perpustakaan-aksara.html",{waitUntil:"domcontentloaded"});
    await page.locator(".book").first().waitFor({timeout:15000});
    assert.equal(await page.locator(".book").count(),15,"15 curated books load");
+   assert.equal(await page.locator(".archive, footer, #explore, #archiveBooks").count(),0,"Removed Gutenberg archive and footer must not reappear");
+   const tail=await page.locator(".collection").evaluate(el=>({
+    paddingBottom:parseFloat(getComputedStyle(el).paddingBottom),
+    lastBottom:el.getBoundingClientRect().bottom
+   }));
+   assert.ok(tail.paddingBottom>=30&&tail.paddingBottom<=48,viewport.name+": catalog should end with balanced spacing");
    assert.equal(await page.locator(".intro").count(),0,"Old novel introduction must be removed");
    const firstGap=await page.evaluate(()=>{
     const header=document.querySelector(".aksara-header").getBoundingClientRect();

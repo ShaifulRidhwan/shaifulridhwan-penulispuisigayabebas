@@ -4,11 +4,11 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#090c11">
 <title>Novel | Perpustakaan AKSARA · Sastera & Falsafah</title>
-<meta name="description" content="Terokai novel Antara Cahaya dan Gelap oleh Shaiful Ridhwan, sastera falsafah dan arkib Project Gutenberg dalam Perpustakaan AKSARA.">
+<meta name="description" content="Terokai koleksi novel dan sastera falsafah pilihan, termasuk Antara Cahaya dan Gelap oleh Shaiful Ridhwan.">
 <link rel="icon" type="image/svg+xml" href="favicon-aksara-ai.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;1,9..144,400&display=swap">
-<link rel="stylesheet" href="perpustakaan-aksara.css?v=4">
+<link rel="stylesheet" href="perpustakaan-aksara.css?v=5">
 <link rel="stylesheet" href="aksara-header.css?v=1">
 
 </head>
@@ -28,8 +28,7 @@
 <main>
 <h1 class="sr">Katalog novel AKSARA</h1>
 <section class="collection" id="koleksi" aria-label="Senarai novel"><div id="books" class="books"></div><p id="empty" class="empty" hidden>Tiada novel dalam pilihan ini. Cuba penapis lain.</p></section>
-<section class="archive" aria-labelledby="archiveTitle"><p class="eyebrow">ARKIB TERBUKA</p><h2 id="archiveTitle">Ribuan karya untuk diteroka</h2><p>Terokai rekod buku Project Gutenberg melalui Gutendex, dimuat secara berperingkat. Tiada ribuan fail dimasukkan ke laman ini. Setiap judul membawa kau ke sumber asal.</p><p class="legal">Perhatian: Domain awam Amerika Syarikat tidak semestinya domain awam Malaysia. Hak cipta terjemahan dan edisi berlainan perlu diperiksa sebelum diterbitkan semula. Katalog ini menyediakan pautan ke penerbit asal, bukan salinan buku.</p><button class="btn primary" id="explore" type="button">Teroka katalog dunia ↗</button><p class="archive-status" id="archiveStatus" role="status" aria-live="polite">Arkib memerlukan sambungan Internet.</p><div id="archiveBooks" class="books"></div><button class="btn more" id="more" type="button" hidden>Muat lebih banyak</button></section>
-</main><footer><span>© Perpustakaan AKSARA · Shaiful Ridhwan</span><span><a href="https://www.gutenberg.org/" rel="noopener noreferrer" target="_blank">Project Gutenberg</a> · <a href="https://ms.wikisource.org/" target="_blank" rel="noopener noreferrer">Wikisumber</a></span></footer>
+</main>
 </div>
 <script>
 (function(){
@@ -72,8 +71,8 @@ const key="aksara-library-bookmarks-v1";let saved=new Set();
 try{const raw=JSON.parse(localStorage.getItem(key)||"[]");if(Array.isArray(raw))saved=new Set(raw.filter(x=>typeof x==="string").slice(0,1000))}catch(_){}
 const el=id=>document.getElementById(id);
 function persist(){try{localStorage.setItem(key,JSON.stringify(Array.from(saved)))}catch(_){}}
-function saveButton(id){const b=document.createElement("button");b.type="button";b.className="bookmark";b.dataset.id=id;b.textContent=saved.has(id)?"★":"☆";b.setAttribute("aria-label",saved.has(id)?"Buang daripada simpanan":"Simpan buku");b.setAttribute("aria-pressed",saved.has(id)?"true":"false");b.addEventListener("click",()=>{if(saved.has(id))saved.delete(id);else saved.add(id);persist();render();renderArchiveBookmarks();});return b}
-function bookCard(b,archive){
+function saveButton(id){const b=document.createElement("button");b.type="button";b.className="bookmark";b.dataset.id=id;b.textContent=saved.has(id)?"★":"☆";b.setAttribute("aria-label",saved.has(id)?"Buang daripada simpanan":"Simpan buku");b.setAttribute("aria-pressed",saved.has(id)?"true":"false");b.addEventListener("click",()=>{if(saved.has(id))saved.delete(id);else saved.add(id);persist();render();});return b}
+function bookCard(b){
  const [id,title,author,lang,genre,description,url,c1,c2,cta,cover]=b;
  const card=document.createElement("article");card.className="book";
  const art=document.createElement("a");art.className="art";art.style.setProperty("--c1",c1||"#28343c");art.style.setProperty("--c2",c2||"#11151d");art.href=url;if(id!=="aksara-original"){art.target="_blank";art.rel="noopener noreferrer";}art.setAttribute("aria-label","Buka "+title);
@@ -96,15 +95,10 @@ function bookCard(b,archive){
 }
 
 function render(){
- el("books").replaceChildren(...DATA.map(b=>bookCard(b,false)));
+ el("books").replaceChildren(...DATA.map(b=>bookCard(b)));
 }
 render();
-let archiveNext="",archiveLoaded=false,archiveEntries=[];const base="https://gutendex.com/books/?languages=en&copyright=false&topic=fiction";
-function renderArchiveBookmarks(){el("archiveBooks").querySelectorAll("button.bookmark").forEach(b=>{const id=b.dataset.id;if(!id)return;b.textContent=saved.has(id)?"★":"☆";b.setAttribute("aria-pressed",saved.has(id)?"true":"false")})}
-async function fetchArchive(url){const btn=el("explore"),more=el("more");btn.disabled=true;more.disabled=true;el("archiveStatus").textContent="Mengambil rekod arkib...";try{const response=await fetch(url,{headers:{"Accept":"application/json"},signal:AbortSignal.timeout(12000)});if(!response.ok)throw Error("HTTP "+response.status);const j=await response.json();if(!Array.isArray(j.results))throw Error("Format tidak sah");const added=[];for(const b of j.results){if(!Number.isInteger(b.id)||typeof b.title!=="string")continue;const id="gutenberg-"+b.id;const author=(b.authors||[]).map(a=>a.name).filter(x=>typeof x==="string").join(", ")||"Pengarang tidak dinyatakan";const cover=b.formats&&b.formats["image/jpeg"];added.push([id,b.title,author,"en","novel","Rekod arkib Project Gutenberg. Semak status hak cipta untuk lokasi kau.","https://www.gutenberg.org/ebooks/"+b.id,"#334b55","#101820","Buka di Gutenberg ↗",cover])}
-archiveEntries.push(...added);el("archiveBooks").append(...added.map(b=>bookCard(b,true)));archiveNext=typeof j.next==="string"&&j.next.startsWith("https://gutendex.com/books/")?j.next:"";more.hidden=!archiveNext;archiveLoaded=true;el("archiveStatus").textContent=archiveEntries.length+" judul dipaparkan · "+Number(j.count||0).toLocaleString("ms-MY")+" rekod berpadanan dalam katalog (status hak cipta Malaysia perlu disemak).";btn.textContent="Arkib dibuka ✓";btn.disabled=true
-}catch(err){el("archiveStatus").textContent="Arkib belum dapat dimuatkan. Cuba lagi kemudian atau lawati Gutenberg terus.";btn.disabled=false;btn.textContent="Cuba semula ↗"}finally{more.disabled=false}}
-el("explore").addEventListener("click",()=>{if(!archiveLoaded)fetchArchive(base)});el("more").addEventListener("click",()=>{if(archiveNext)fetchArchive(archiveNext)});
+
 })();
 </script>
 </body></html>
