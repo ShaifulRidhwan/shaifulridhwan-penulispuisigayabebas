@@ -95,3 +95,16 @@ footer a:hover{color:var(--gold)}
 @media(max-width:690px){.shell{width:min(1170px,calc(100% - 28px))}.top{min-height:70px;align-items:flex-start;padding:17px 0;flex-direction:column;gap:10px}.top nav{justify-content:flex-start}.intro{padding:49px 2px 33px}.intro>p:last-of-type{font-size:13px}.feature{grid-template-columns:116px minmax(0,1fr);gap:14px;padding:14px;border-radius:21px}.feature h2{font-size:clamp(21px,5vw,33px);margin:7px 0}.feature .desc{font-size:11px;line-height:1.5}.feature .author{font-size:10px;margin-bottom:7px}.feature .eyebrow{font-size:8px;letter-spacing:.09em}.feature .cover{border-radius:10px}.feature .actions{margin-top:11px}.feature .btn{padding:8px 11px;min-height:36px;font-size:11px}.heading{flex-direction:column;align-items:start;gap:4px}.collection{padding-top:45px}.toolbar{padding:14px 13px;gap:14px;border-radius:18px}.filter-groups{gap:13px}.filter-pill{font-size:10px;padding:8px 11px}.books{grid-template-columns:1fr;gap:12px}.book{display:grid;grid-template-columns:minmax(104px,32%) minmax(0,1fr);gap:15px;align-items:stretch;padding:12px;border-radius:18px}.art{aspect-ratio:3/4.1;min-height:180px;margin:0;padding:8px}.art .initial{font-size:19px}.book-info{padding:4px 1px 2px 0}.book h3{font-size:20px;margin:5px 0}.writer{font-size:11px}.description{font-size:11px;line-height:1.55;margin:9px 0 13px}.foot{padding-top:8px}.foot>a{font-size:11px}.bookmark{width:36px;height:36px}.archive{margin-top:48px;padding:45px 0 60px}}
 @media(max-width:375px){.book{grid-template-columns:101px minmax(0,1fr);gap:11px}.book h3{font-size:18px}.book .description{font-size:10.5px}.feature{grid-template-columns:100px minmax(0,1fr)}.feature h2{font-size:20px}.filter-pill{padding:7px 9px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.feature,.book,.btn,.filter-pill{animation:none!important;transition:none!important}}
+
+/* V3: clear the marked UI and make the first novel cover fill a portrait frame. */
+.intro{padding-bottom:15px}
+.collection{padding-top:12px}
+.book:first-child .art{aspect-ratio:9/16;min-height:0;padding:0}
+.book:first-child .art img{object-fit:cover;object-position:center center;background:#0d1119}
+.book:first-child .art .ornament{display:none}
+@media(max-width:690px){
+ .intro{padding:30px 2px 12px}
+ .collection{padding-top:10px}
+ .book:first-child .art{aspect-ratio:9/16;min-height:0}
+ .book:first-child .art img{object-fit:cover;object-position:center center}
+}
