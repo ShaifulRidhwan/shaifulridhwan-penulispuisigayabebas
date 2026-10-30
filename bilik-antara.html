@@ -52,7 +52,7 @@
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="bilik-antara-bg-desktop.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="bilik-antara-bg-mobile.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=86">
+<link rel="stylesheet" href="bilik-antara.css?v=87">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
@@ -130,7 +130,7 @@
 </dialog>
    <dialog class="multi-ai-dialog thought-mode-dialog" id="thoughtModeDialog" aria-labelledby="thoughtModeTitle" aria-describedby="thoughtModeSummary">
     <div class="multi-ai-head">
-     <div><strong id="thoughtModeTitle">Mode</strong><p id="thoughtModeSummary">Pilih cara Aksara A.I. menjawab.</p></div>
+     <div><strong id="thoughtModeTitle">Thinking Mode</strong><p id="thoughtModeSummary">Pilih cara Aksara A.I. berfikir dan menjawab.</p></div>
      <button type="button" id="thoughtModeClose" aria-label="Tutup pilihan mod">×</button>
     </div>
     <div class="multi-ai-list thought-mode-list" role="group" aria-label="Pilihan mod pemikiran">
@@ -146,6 +146,20 @@
      </button>
     </div>
    </dialog>
+   <dialog class="multi-ai-dialog attachment-dialog" id="attachmentDialog" aria-labelledby="attachmentTitle" aria-describedby="attachmentHelp">
+ <div class="multi-ai-head"><div><strong id="attachmentTitle">Tambah lampiran</strong><p id="attachmentHelp">Pilih jenis fail. Had saiz dan privasi sedia ada kekal.</p></div><button type="button" id="attachmentClose" aria-label="Tutup pilihan lampiran">×</button></div>
+ <div class="attachment-options">
+ <button type="button" class="attachment-option" data-attachment-type="photo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="2"/><path d="m4 17 5-5 4 4 3-3 5 4"/></svg><span><strong>Photo</strong><small>JPG, PNG, WebP, GIF</small></span><span aria-hidden="true">›</span></button>
+ <button type="button" class="attachment-option" data-attachment-type="video"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 6 3-6 3z"/></svg><span><strong>Video</strong><small>MP4 atau WebM pendek</small></span><span aria-hidden="true">›</span></button>
+ <button type="button" class="attachment-option" data-attachment-type="files"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></svg><span><strong>Files</strong><small>PDF, teks, dokumen dan audio</small></span><span aria-hidden="true">›</span></button>
+ </div>
+</dialog>
+<dialog class="multi-ai-dialog meta-location-dialog" id="metaLocationDialog" aria-labelledby="metaLocationTitle" aria-describedby="metaLocationHelp">
+ <div class="multi-ai-head"><div><strong id="metaLocationTitle">Lokasi mesej</strong><p id="metaLocationHelp">Pilihan. Isi bandar atau negeri sahaja. Tiada GPS automatik, dan lokasi ini tidak dihantar kepada model A.I.</p></div><button type="button" id="metaLocationClose" aria-label="Tutup lokasi">×</button></div>
+ <label for="messageLocationInput">Lokasi umum (pilihan)</label>
+ <input id="messageLocationInput" type="text" maxlength="80" autocomplete="off" placeholder="Contoh: Shah Alam, Selangor">
+ <div class="meta-location-actions"><button id="metaLocationClear" type="button">Padam lokasi</button><button id="metaLocationSave" type="button">Simpan untuk mesej baharu</button></div>
+</dialog>
    <div id="voiceNotice" class="voice-notice" role="status" aria-live="polite" hidden></div>
     <div id="connectionInfo" class="connection-info" role="status" aria-live="polite"><span id="connectionInfoText"></span><button type="button" id="retryBtn">Cuba semula</button></div>
    <div class="messages" id="chat" role="log" aria-live="polite" aria-relevant="additions" aria-label="Mesej perbualan"></div>
@@ -175,14 +189,17 @@
    <div class="composer-area">
     <div id="docStatus" role="status" aria-live="polite"></div><button type="button" id="removeAttachment" hidden aria-label="Buang lampiran">× Buang lampiran</button>
     <form class="composer" id="composer">
-     <label class="attach-label" for="documentUpload" title="Lampir PDF, imej, audio, video pendek atau teks">
+     <button type="button" class="attach-label" id="attachmentTrigger" aria-haspopup="dialog" aria-controls="attachmentDialog" aria-expanded="false" aria-label="Pilih Photo, Video atau Files" title="Tambah lampiran">
       <span class="sr-only">Lampir fail</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.4 11.6-8.9 9a6.4 6.4 0 0 1-9.1-9.1L13 1.9a4.3 4.3 0 0 1 6.1 6.1l-9.5 9.5a2.2 2.2 0 0 1-3.1-3.1l8.6-8.6"/></svg>
-     </label>
+     </button>
      <input class="sr-only" type="file" id="documentUpload" multiple accept=".txt,.md,.csv,.pdf,image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/webm,video/mp4,video/webm" aria-label="Pilih lampiran">
+     <input class="sr-only" type="file" id="attachmentPhoto" multiple accept="image/jpeg,image/png,image/webp,image/gif" aria-label="Pilih gambar">
+     <input class="sr-only" type="file" id="attachmentVideo" multiple accept="video/mp4,video/webm" aria-label="Pilih video">
+     <input class="sr-only" type="file" id="attachmentFiles" multiple accept=".txt,.md,.csv,.pdf,.mp3,.m4a,.wav,.ogg,.webm,audio/*,application/pdf,text/plain,text/markdown,text/csv" aria-label="Pilih fail atau audio">
      <textarea rows="1" id="input" placeholder="" aria-label="Tulis mesej untuk Aksara A.I."></textarea>
       <button type="button" id="stopBtn" class="outline-btn" aria-label="Hentikan respons" hidden>Henti</button>
-      <button type="button" id="thoughtMode" class="thought-mode" data-mode="cahaya" aria-label="Pilih mod pemikiran. Aktif: Cahaya" aria-haspopup="dialog" aria-controls="thoughtModeDialog" aria-expanded="false" title="Mode · Cahaya">
-       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5"/><circle cx="16" cy="17" r="2.5"/></svg>
+      <button type="button" id="thoughtMode" class="thought-mode" data-mode="cahaya" aria-label="Thinking Mode. Aktif: Cahaya" aria-haspopup="dialog" aria-controls="thoughtModeDialog" aria-expanded="false" title="Thinking Mode · Cahaya">
+       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="5.5" width="13" height="13" rx="2.5"/><path d="M9.3 9.3h5.4v5.4H9.3zM9 2v3.5M15 2v3.5M9 18.5V22M15 18.5V22M2 9h3.5M2 15h3.5M18.5 9H22M18.5 15H22"/></svg>
       </button>
       <button type="submit" id="sendBtn" class="send-btn" aria-label="Hantar soalan" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-9-3.6 18L11 13l-6-1Z"/><path d="m11 13 8-10"/></svg></button>
     </form>
@@ -298,8 +315,8 @@ function setThoughtMode(mode,notify=false){
  const changed=thoughtMode!==next;
  thoughtMode=next;
  modeButton.dataset.mode=thoughtMode;
- modeButton.setAttribute("aria-label","Pilih mod pemikiran. Aktif: "+(thoughtMode==="gelap"?"Gelap":"Cahaya"));
- modeButton.title="Mode · "+(thoughtMode==="gelap"?"Gelap":"Cahaya");
+ modeButton.setAttribute("aria-label","Thinking Mode. Aktif: "+(thoughtMode==="gelap"?"Gelap":"Cahaya"));
+ modeButton.title="Thinking Mode · "+(thoughtMode==="gelap"?"Gelap":"Cahaya");
  for(const choice of modeChoices){
   const active=choice.dataset.modeOption===thoughtMode;
   choice.classList.toggle("is-selected",active);
@@ -328,6 +345,32 @@ const MEDIA=new Set(["application/pdf","image/jpeg","image/png","image/webp","im
  "audio/mpeg","audio/wav","audio/mp4","audio/ogg","audio/webm","video/mp4","video/webm"]);
 let activeRequest=null,stoppedByUser=false,failedPreview=null,lastProvider="",lastProviderAt=0;
 let history=[],summary="",ideas=[],summarizedThrough=0,compacting=false,conversationEpoch=0,fileState=null,busy=false,quotaCooldownUntil=0;
+let messageLocation=""; // Tab-only, manually set; NEVER included in requests to models.
+const attachmentTrigger=el("attachmentTrigger"),attachmentDialog=el("attachmentDialog"),attachmentClose=el("attachmentClose");
+const attachmentInputs={photo:el("attachmentPhoto"),video:el("attachmentVideo"),files:el("attachmentFiles")};
+const placeDialog=el("metaLocationDialog"),placeInput=el("messageLocationInput");
+function showPlaceDialog(){placeInput.value=messageLocation;placeDialog.showModal();placeInput.focus();}
+el("metaLocationClose").addEventListener("click",()=>placeDialog.close());
+el("metaLocationSave").addEventListener("click",()=>{
+ messageLocation=placeInput.value.trim().replace(/\s+/g," ").slice(0,80);
+ placeDialog.close();
+});
+el("metaLocationClear").addEventListener("click",()=>{messageLocation="";placeInput.value="";placeDialog.close();});
+placeDialog.addEventListener("click",event=>{if(event.target===placeDialog)placeDialog.close();});
+placeInput.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();el("metaLocationSave").click();}});
+attachmentTrigger.addEventListener("click",()=>{if(!busy){attachmentDialog.showModal();attachmentTrigger.setAttribute("aria-expanded","true");}});
+attachmentClose.addEventListener("click",()=>attachmentDialog.close());
+attachmentDialog.addEventListener("click",event=>{if(event.target===attachmentDialog)attachmentDialog.close();});
+attachmentDialog.addEventListener("close",()=>{attachmentTrigger.setAttribute("aria-expanded","false");attachmentTrigger.focus({preventScroll:true});});
+for(const option of attachmentDialog.querySelectorAll("[data-attachment-type]")){
+ option.addEventListener("click",()=>{if(busy)return;
+  const field=attachmentInputs[option.dataset.attachmentType];
+  if(!field)return;attachmentDialog.close();field.click();
+ });
+}
+for(const field of Object.values(attachmentInputs)){
+ field.addEventListener("change",()=>{const files=Array.from(field.files||[]);field.value="";if(files.length)readFiles(files);});
+}
 function elem(tag,cls,text){
  const e=document.createElement(tag);if(cls)e.className=cls;
  if(text!==undefined)e.textContent=String(text);return e;
@@ -514,6 +557,20 @@ function format(target,text){
   }
  }
 }
+function renderMessageMeta(msg,role,data){
+ const ms=Number(data?.timestamp);
+ if(!Number.isFinite(ms)||ms<946684800000||ms>Date.now()+3600000)return;
+ const at=new Date(ms),line=elem("div","message-meta");
+ const stamp=elem("time","message-clock",(role==="user"?"Dihantar":"Diterima")+" · "+
+  at.toLocaleDateString("ms-MY",{day:"numeric",month:"short"})+" "+
+  at.toLocaleTimeString("ms-MY",{hour:"2-digit",minute:"2-digit",hour12:false}));
+ stamp.dateTime=at.toISOString();stamp.title=at.toLocaleString("ms-MY");line.appendChild(stamp);
+ const place=String(data?.locationLabel||"").trim().slice(0,80);
+ if(place){const tag=elem("span","message-place","Lokasi umum · "+place);tag.title="Diisi oleh pengguna, bukan lokasi GPS.";line.appendChild(tag);}
+ else if(role==="user"){const select=elem("button","message-place-action","Tetapkan lokasi");select.type="button";
+  select.setAttribute("aria-label","Tetapkan lokasi umum bagi mesej baharu");select.addEventListener("click",showPlaceDialog);line.appendChild(select);}
+ msg.appendChild(line);
+}
 function addMessage(role,text,data){
  const msg=elem("article","message "+(role==="user"?"user":"ai")+(restoringHistory?" is-restored":""));
  msg.appendChild(elem("div","byline",role==="user"?"Kau":"Aksara A.I."));
@@ -521,7 +578,7 @@ function addMessage(role,text,data){
  // A Live Voice transcript is not a text-chat answer; keep its content undecorated.
  format(bubble,role==="user"||data?.mode==="voice"?text:window.BilikAntaraChatStyle.reply(text,{mode:data?.thoughtMode||"cahaya"}));
  if(role!=="user"&&data)renderExtras(bubble,data);
- msg.appendChild(bubble);ui.chat.appendChild(msg);scrollDown();return msg;
+ msg.appendChild(bubble);renderMessageMeta(msg,role,data);ui.chat.appendChild(msg);scrollDown();return msg;
 }
 function renderExtras(bubble,data){
  const sources=Array.isArray(data.sources)?data.sources.slice(0,8):[];
@@ -599,7 +656,7 @@ function renderExtras(bubble,data){
  if(data.disclaimer)bubble.appendChild(elem("div","aside-note",String(data.disclaimer).slice(0,450)));
 }
 function welcome(){
- addMessage("assistant","Assalamualaikum dan selamat sejahtera.");
+ addMessage("assistant","Ada apa yang kau nak faham, bina, atau persoalkan hari ni?",{timestamp:Date.now(),thoughtMode});
 }
 function renderHistory(){
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
@@ -607,7 +664,7 @@ function renderHistory(){
  try{
   ui.chat.textContent="";
   ui.chat.classList.toggle("is-welcome",history.length===0);
-  for(const m of history)addMessage(m.role,m.content,m.role==="assistant"?m:null);
+  for(const m of history)addMessage(m.role,m.content,m);
   ui.starters.hidden=history.length>0;
   if(!history.length)welcome();
  }finally{restoringHistory=false;}
@@ -690,13 +747,14 @@ function resize(){
 function update(){
  ui.shell.classList.toggle("is-busy",busy);
  ui.send.disabled=busy||(!ui.input.value.trim()&&!fileState);
+ attachmentTrigger.disabled=busy;
  ui.clear.disabled=busy;ui.upload.disabled=busy;ui.remove.disabled=busy;
  ui.retry.disabled=busy;
  ui.stop.hidden=!busy;ui.chat.setAttribute("aria-busy",String(busy));
 }
 ui.stop.addEventListener("click",()=>{stoppedByUser=true;activeRequest?.abort();});
 function discardFile(){
- fileState=null;ui.upload.value="";ui.docStatus.textContent="";ui.remove.hidden=true;update();
+ fileState=null;ui.upload.value="";for(const field of Object.values(attachmentInputs))field.value="";ui.docStatus.textContent="";ui.remove.hidden=true;update();
 }
 async function readFiles(files){
  discardFile();if(!files||!files.length)return;
@@ -893,13 +951,14 @@ async function submit(event){
  const question=typed||"Analisis lampiran ini dan bezakan fakta daripada perkara yang belum disahkan.";
  const selectedFile=fileState;
  const requestMode=thoughtMode; // Keep each response tied to the mode used at Send.
+ const sentAt=Date.now(),sentLocation=messageLocation;
  if(Date.now()<quotaCooldownUntil){
   const seconds=Math.max(1,Math.ceil((quotaCooldownUntil-Date.now())/1000));
   status("limited","Tunggu jap ya…","Tunggu lebih kurang "+seconds+" saat ya. Mesej kau masih ada dalam chatbox.");return;
  }
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
  busy=true;stoppedByUser=false;update();status("connecting","Sekejap, aku jawab…","");ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
- const pendingUser=addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""));
+ const pendingUser=addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""),{timestamp:sentAt,locationLabel:sentLocation});
  let typing=showTyping();
  ui.input.value="";resize();update();
  const startedAt=performance.now();
@@ -947,9 +1006,11 @@ async function submit(event){
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
   data.reply=window.BilikAntaraChatStyle.reply(data.reply,{mode:data.thoughtMode||requestMode});
   cancelPartialFrame();
-  typing.remove();partialNode?.remove();addMessage("assistant",data.reply,data);
-  history.push({role:"user",content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
-  history.push({role:"assistant",content:data.reply,thoughtMode:requestMode,sources:data.sources||[],
+  typing.remove();partialNode?.remove();
+  const receivedAt=Date.now();
+  addMessage("assistant",data.reply,{...data,timestamp:receivedAt,locationLabel:sentLocation});
+  history.push({role:"user",timestamp:sentAt,locationLabel:sentLocation,content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
+  history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,thoughtMode:requestMode,sources:data.sources||[],
    argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
    publicAccount:data.publicAccount||null});
   
@@ -971,10 +1032,11 @@ async function submit(event){
   }else{partialNode?.remove();pendingUser.remove();}
   if(stoppedByUser){
    if(partial.trim()){
-    addMessage("user",question);
+    addMessage("user",question,{timestamp:sentAt,locationLabel:sentLocation});
     const content=partial+"\n\n[Jawapan dihentikan sebelum habis.]";
-    addMessage("assistant",content,{disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});
-    history.push({role:"user",content:question},{role:"assistant",content,disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});save();
+    const stoppedAt=Date.now();
+    addMessage("assistant",content,{timestamp:stoppedAt,locationLabel:sentLocation,thoughtMode:requestMode,disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});
+    history.push({role:"user",content:question,timestamp:sentAt,locationLabel:sentLocation},{role:"assistant",content,timestamp:stoppedAt,locationLabel:sentLocation,thoughtMode:requestMode,disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});save();
    }
    status("configured","Okay, aku stop dulu",partial?"Jawapan yang sempat keluar masih ada dalam chat.":"Mesej kau masih ada kalau nak try lagi.");
   }else{

@@ -32,7 +32,7 @@ test("Final text, controls and simplified channel header",()=>{
  assert.doesNotMatch(html,/class="conversation-heading"/);
  assert.match(html,/class="conversation-head">\s*<div class="voice-toolbar"/);
  assert.match(html,/id="voiceLive"[\s\S]*?<div class="chat-controls"/);
- assert.match(html,/addMessage\("assistant","Assalamualaikum dan selamat sejahtera\."\)/);
+ assert.match(html,/addMessage\("assistant","Ada apa yang kau nak faham, bina, atau persoalkan hari ni\?"\s*,/);
  assert.doesNotMatch(html,/Aku kecerdasan buatan yang dibina oleh Shaiful Ridhwan/);
  assert.match(html,/AKSARA A\.I\./);
  assert.match(html,/oleh Shaiful Ridhwan/);
