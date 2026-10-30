@@ -951,6 +951,7 @@ async function submit(event){
  const question=typed||"Analisis lampiran ini dan bezakan fakta daripada perkara yang belum disahkan.";
  const selectedFile=fileState;
  const requestMode=thoughtMode; // Keep each response tied to the mode used at Send.
+ const sentAt=Date.now(),sentLocation=messageLocation;
  if(Date.now()<quotaCooldownUntil){
   const seconds=Math.max(1,Math.ceil((quotaCooldownUntil-Date.now())/1000));
   status("limited","Tunggu jap ya…","Tunggu lebih kurang "+seconds+" saat ya. Mesej kau masih ada dalam chatbox.");return;
