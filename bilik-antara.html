@@ -861,8 +861,9 @@ ui.forget.addEventListener("click",()=>{ideas=[];renderIdeas();save();});
 ui.clear.addEventListener("click",()=>{
  if(busy)return;
  if(history.length&&!window.confirm("Padam perbualan dan nota idea sesi ini?"))return;
- conversationEpoch++;history=[];summary="";ideas=[];summarizedThrough=0;ui.remember.checked=false;ui.mediaFallback.checked=false;
- try{localStorage.setItem(SESSION_PREF_STORAGE,"off");localStorage.removeItem(STORAGE);}catch(e){}
+ conversationEpoch++;history=[];summary="";ideas=[];summarizedThrough=0;ui.mediaFallback.checked=false;
+ // Deleting a conversation must not silently change the visitor\'s storage preference.
+ try{localStorage.removeItem(STORAGE);}catch(e){}
  discardFile();renderIdeas();renderHistory();ui.settings.open=false;
  window.dispatchEvent(new Event("ba:cleared"));
 });
@@ -1050,7 +1051,7 @@ async function submit(event){
    summary,thoughtLedger:ideas.slice(-8),mediaFallback:ui.mediaFallback.checked,
    documentText:selectedFile&&selectedFile.text||"",
    documentName:selectedFile&&selectedFile.name||"",
-   media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt()||""};
+   media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt(question)||""};
   const data=await askWithReconnect(payload,ctrl.signal,receive,
    ({attempt,seconds,offline,reason})=>status("connecting",offline?"Internet hilang. Aku tunggu jap…":reason==="capacity"?"Model tengah busy. Tunggu jap…":"Aku try sambung balik…",
     offline?"Internet putus. Aku tunggu dia kembali, lepas tu try lagi. Tekan Henti kalau nak cancel.":
@@ -1156,7 +1157,8 @@ renderIdeas();renderHistory();update();probe();
 })();
 </script>
 <script src="bilik-antara-identity.js?v=28" defer></script>
-<script src="bilik-antara-suite.js?v=12" defer></script>
+<script src="bilik-antara-session-utils.js?v=1" defer></script>
+<script src="bilik-antara-suite.js?v=13" defer></script>
 <script src="bilik-antara-brain.js?v=13" defer></script>
 <script src="bilik-antara-modes.js?v=4" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
