@@ -96,6 +96,7 @@ async function main(){
   assert.match(visual.navBlur,/blur/,'Studio navigation needs Bilik-style glass');
   assert.match(visual.navFill,/gradient/);
   assert.equal(await page.locator('.hero').count(),0,'Standalone hero should be removed');
+  assert.equal(await page.locator('.studio-footer').count(),0,'Redundant Studio slogan footer must be gone');
   assert.equal(await page.locator('.topbar .aksara-nav-link').count(),3,'Studio should link to Main, Bilik Antara and Novel');
   assert.equal(await page.locator('.topbar .aksara-brand').count(),1,'Studio should have its own Aksara identity');
   assert.equal(await page.locator('.topbar .brand-mark').count(),0,'Top AKSARA mark should be absent');
