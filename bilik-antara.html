@@ -53,6 +53,7 @@
 <link rel="preload" href="bilik-antara-bg-desktop.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="bilik-antara-bg-mobile.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
 <link rel="stylesheet" href="bilik-antara.css?v=91">
+<link rel="stylesheet" href="aksara-header.css?v=1">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=7" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=7"></noscript>
 
@@ -60,14 +61,14 @@
 <body>
 <div class="shell">
  <div class="world-scene" aria-hidden="true"><div class="world-art"></div><div class="world-embers"><i></i><i></i><i></i></div></div>
- <header class="topbar">
-  <a class="brand" href="index.html" title="Kembali ke laman utama Gaya Bebas">
-   <span class="brand-name"><span>AKSARA A.I.</span><span>oleh Shaiful Ridhwan</span></span>
+ <header class="topbar aksara-header">
+  <a class="brand aksara-brand" href="index.html" title="Kembali ke laman utama Gaya Bebas">
+   <span class="brand-name aksara-brand-name"><span class="aksara-name">AKSARA A.I</span><span class="aksara-credit">oleh Shaiful Ridhwan</span></span>
   </a>
-  <nav class="nav-actions" aria-label="Navigasi laman">
-   <a class="nav-link" href="index.html">Laman utama</a>
-   <a class="nav-link" href="studio-antara.html">Studio</a>
-   <a class="nav-link" href="perpustakaan-aksara.html">Novel</a>
+  <nav class="nav-actions aksara-nav" aria-label="Navigasi laman">
+   <a class="nav-link aksara-nav-link" href="index.html">Laman utama</a>
+   <a class="nav-link aksara-nav-link" href="studio-antara.html">Studio</a>
+   <a class="nav-link aksara-nav-link" href="perpustakaan-aksara.html">Novel</a>
   </nav>
  </header>
  <main class="app-shell">
@@ -608,7 +609,7 @@ function addMessage(role,text,data){
  msg.appendChild(elem("div","byline",role==="user"?"Kau":"Aksara A.I."));
  const bubble=elem("div","bubble");
  // A Live Voice transcript is not a text-chat answer; keep its content undecorated.
- format(bubble,role==="user"||data?.mode==="voice"?text:window.BilikAntaraChatStyle.reply(text,{mode:data?.thoughtMode||"cahaya"}));
+ format(bubble,role==="user"||data?.mode==="voice"||data?.intro===true?text:window.BilikAntaraChatStyle.reply(text,{mode:data?.thoughtMode||"cahaya"}));
  if(role!=="user"&&data)renderExtras(bubble,data);
  msg.appendChild(bubble);renderMessageMeta(msg,role,data);ui.chat.appendChild(msg);scrollDown();return msg;
 }
@@ -707,7 +708,7 @@ function renderExtras(bubble,data){
  if(data.disclaimer)bubble.appendChild(elem("div","aside-note",String(data.disclaimer).slice(0,450)));
 }
 function welcome(){
- addMessage("assistant","Antara aksara dan code,\nGAYA yang bebas,\nBEBAS dalam bentuk,\nLUAS dalam pemikiran.",{timestamp:Date.now(),thoughtMode});
+ addMessage("assistant","Antara aksara dan code,\nGAYA yang bebas,\nBEBAS dalam bentuk,\nLUAS dalam pemikiran.",{timestamp:Date.now(),thoughtMode,intro:true});
 }
 function renderHistory(){
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
