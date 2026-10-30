@@ -402,11 +402,6 @@ exports.handler=async event=>{
   // Text research can use the existing public references when Gemini is down.
   // Never claim a live web/URL tool ran on the fallback route.
   const textOnly=media.length===0&&!tiktokHandle&&(!privateContext||payload.contextFallback===true)&&!(intent.sensitive||intent.hasLink);
-  // Requesty free-plan model endpoints may retain content for training.
-  // Consent for a normal fallback never implies consent to Requesty.
-  // Sensitive topics, links, attachments, memory notes and research are excluded.
-  const requestyAllowed=payload.requestyConsent===true&&textOnly&&!privateContext&&
-    !intent.sensitive&&!intent.search&&!intent.hasLink&&media.length===0;
   let providerFailures=[],alternativeTried=false,quotaRecoveryTried=false,providerRetrySeconds=3;
   const preparationMs=Date.now()-started;
   const timings=()=>({preparationMs,firstTextMs,systemChars:system.length,historyChars:history.reduce((n,m)=>n+m.content.length,0)});
@@ -414,7 +409,7 @@ exports.handler=async event=>{
       alternativeTried=true;
       let alternative;
       try{
-        alternative=await Router.complete({system,history,question:(imageOnly&&payload.contextFallback!==true?question+work+references:question+doc+work+sessionNotes+references+identityGrounding),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,allowRequesty:requestyAllowed,requestyQuestion:question+work+references+identityGrounding,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
+        alternative=await Router.complete({system,history,question:(imageOnly&&payload.contextFallback!==true?question+work+references:question+doc+work+sessionNotes+references+identityGrounding),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
@@ -432,7 +427,7 @@ exports.handler=async event=>{
           mode:"fallback",aiMode:"automatic",thoughtMode,model:alternative.model,provider:alternative.provider,
           reply:alternative.reply,sources:publicSources.map(({title,url})=>({title,url})),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[],toolsOffered:[],
-          disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",orcarouter:"OrcaRouter",requesty:"Requesty",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.search?" · Model sandaran ni tak dapat check web secara live. Info terkini belum disahkan.":""),
+          disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",orcarouter:"OrcaRouter",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.search?" · Model sandaran ni tak dapat check web secara live. Info terkini belum disahkan.":""),
           usage:alternative.usage,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures}
         },H);
       }
