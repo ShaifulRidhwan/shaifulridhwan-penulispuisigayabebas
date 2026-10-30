@@ -67,7 +67,7 @@ const VOICE_TOOLS=[{functionDeclarations:[
 ]}];
 let advancedVoiceConfig=true,turnStartAt=0,lastCommand="",lastCommandAt=0,echoRiskSince=0,suppressPlaybackUntilUser=false;
 let voiceMetrics={startedAt:0,connections:0,reconnects:0,interruptions:0,commands:0,turns:0,audioChunks:0,echoRiskEvents:0,lastResponseLatencyMs:null};
-const voiceDiagnosticSnapshot=()=>({...voiceMetrics,connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,advancedFeatures:advancedVoiceConfig,model:liveModel||"unknown",dialect:activeDialect,dialectSwitching,reconnectAttempts:connectionAttempts,microphoneState:micContext?.state||"closed",playbackState:playContext?.state||"closed",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
+const voiceDiagnosticSnapshot=()=>({...voiceMetrics,connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,advancedFeatures:advancedVoiceConfig,model:liveModel||"unknown",thoughtMode:window.BilikAntaraThought?.getMode?.()||"cahaya",dialect:activeDialect,dialectSwitching,reconnectAttempts:connectionAttempts,microphoneState:micContext?.state||"closed",playbackState:playContext?.state||"closed",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
 window.BilikAntaraVoiceDiagnostics={snapshot:voiceDiagnosticSnapshot};
 function handleSpokenControl(text){
  const q=String(text||"").toLocaleLowerCase("ms-MY").replace(/[.,!?]+$/g,"").trim();
