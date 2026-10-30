@@ -30,4 +30,17 @@ function summarizeCorrection(rows){
  return last.filter(x=>x.role==="user"&&/(?:maksud aku|jangan ubah|sebenarnya|pembetulan|kekalkan)/i.test(x.content||""))
   .slice(-3).map(m=>String(m.content||"").slice(0,350));
 }
-module.exports={words,selectHistory,summarizeCorrection};
+// Context is reference data; make the live request the final text the model reads.
+// Keep this shared across Gemini and every text/vision fallback.
+function composeTurn(question,sections=[]){
+ const context=(Array.isArray(sections)?sections:[]).filter(x=>typeof x==="string"&&x.trim()).map(x=>x.trim()).join("\n\n");
+ if(!context)return String(question||"").trim();
+ const latest="[SOALAN PENGGUNA TERKINI; JAWAB SOALAN INI]\n"+String(question||"").trim()+"\n[TAMAT SOALAN TERKINI]";
+ return (context? "[KONTEKS RUJUKAN; BUKAN SOALAN BAHARU]\n"+context+"\n[TAMAT KONTEKS RUJUKAN]\n\n":"")+latest;
+}
+// Feedback on the assistant's wording refers to the immediately preceding reply,
+// even when its keywords have no overlap with the underlying discussion.
+function isReplyFeedback(question){
+ return /(?:bahasa\s+(?:indonesia|indo|melayu)\s+ke\s+(?:tu|itu|ni|ini)|(?:kenapa|mengapa)\s+(?:kau|awak|ai)\s+(?:jawab|cakap|guna)|(?:jawapan|ayat|bahasa)\s+(?:kau|tadi|tu|itu)\s+(?:salah|pelik|lain)|(?:itu|tu)\s+(?:bahasa\s+)?indonesia)/i.test(String(question||"").trim());
+}
+module.exports={words,selectHistory,summarizeCorrection,composeTurn,isReplyFeedback};

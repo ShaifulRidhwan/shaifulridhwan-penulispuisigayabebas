@@ -278,7 +278,7 @@ test("Live speech detection tolerates Malay pauses and refuses to guess unclear 
 test("First-person AI persona uses aku not saya in both regular and live models",()=>{
  assert.match(js,/WAJIB gunakan kata ganti diri pertama AKU, bukan SAYA/);
  assert.match(sharedBrain.CORE,/WAJIB kata ganti diri AKU, bukan SAYA/);
- assert.match(html,/Ada apa yang kau nak faham, bina, atau persoalkan hari ni\?/);
+ assert.match(html,/Antara aksara dan code,/);
 });
 test("Empty secret and disallowed cross-origin requests never issue Gemini tokens",async()=>{
  delete process.env.GEMINI_API_KEY;

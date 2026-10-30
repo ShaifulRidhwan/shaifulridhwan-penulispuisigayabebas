@@ -117,8 +117,8 @@
         <summary>Privasi &amp; Tetapan</summary>
         <div class="feature-privacy-content">
          <p>Avatar 3D Voice menggunakan model contoh brunette daripada <a href="https://github.com/met4citizen/TalkingHead" target="_blank" rel="noopener noreferrer">TalkingHead</a> (lesen CC BY-NC 4.0 untuk penggunaan bukan komersial). Ia bukan model 3D yang dibina oleh laman ini.</p>
-         <p>Perbualan dihantar kepada penyedia AI untuk dijawab. Penyedia sandaran boleh memproses mesej teks jika diaktifkan. Imej boleh dihantar ke OpenRouter hanya jika kau mengizinkannya melalui pilihan di bawah dan Gemini tidak tersedia. Lampiran kekal dalam memori tab untuk soalan susulan sehingga dibuang atau tab ditutup; fail mentah tidak disimpan dalam arkib sesi. Sejarah hanya disimpan di pelayar jika kau benarkan.</p>
-         <label class="settings-row"><input type="checkbox" id="rememberChat"><span>Simpan sesi pada peranti ini</span></label>
+         <p>Perbualan dihantar kepada penyedia AI untuk dijawab. Penyedia sandaran boleh memproses mesej teks jika diaktifkan. Imej boleh dihantar ke OpenRouter hanya jika kau mengizinkannya melalui pilihan di bawah dan Gemini tidak tersedia. Lampiran kekal dalam memori tab untuk soalan susulan sehingga dibuang atau tab ditutup; fail mentah tidak disimpan dalam arkib sesi. Sejarah perbualan disimpan pada peranti ini secara default, dan kau boleh matikannya pada bila-bila masa melalui pilihan di bawah.</p>
+         <label class="settings-row"><input type="checkbox" id="rememberChat" checked><span>Simpan sesi pada peranti ini</span></label>
          <label class="settings-row"><input type="checkbox" id="contextFallback"><span>Benarkan penyedia sandaran memproses memori pilihan dan fail teks yang aku lampirkan.</span></label>
          <label class="settings-row"><input type="checkbox" id="allowOpenRouterImages"><span>Benarkan OpenRouter memproses imej jika Gemini tidak tersedia (pilihan).</span></label>
          <div class="settings-actions"><button class="outline-btn" id="clearChat" type="button">Padam perbualan</button></div>
@@ -318,6 +318,7 @@ if(window.visualViewport)window.visualViewport.addEventListener("resize",queueVi
 const ENDPOINT="/.netlify/functions/bilik-antara";
 const STREAM_ENDPOINT="/.netlify/functions/bilik-antara-stream";
 const STORAGE="bilik-antara-session-v2";
+const SESSION_PREF_STORAGE="bilik-antara-session-save-pref-v1"; // Explicit opt-out survives reload; no chat content here.
 const MODE_STORAGE="bilik-antara-mode-v1"; // Preference only; never store chat text here.
 // CAHAYA keeps the original Aksara brain; GELAP changes its response identity.
 let thoughtMode="cahaya";
@@ -728,6 +729,9 @@ function save(){
 }
 function restore(){
  try{
+  // New visitors save locally by default, but an explicit opt-out always wins.
+  if(localStorage.getItem(SESSION_PREF_STORAGE)==="off"){ui.remember.checked=false;return;}
+  ui.remember.checked=true;
   const stored=JSON.parse(localStorage.getItem(STORAGE)||"null");
   if(!stored||!Array.isArray(stored.history)){
    localStorage.removeItem(STORAGE);return;
@@ -737,7 +741,7 @@ function restore(){
   summary=typeof stored.summary==="string"?stored.summary.slice(0,4000):"";
   setThoughtMode(stored.thoughtMode);
   ideas=Array.isArray(stored.thoughtLedger)?stored.thoughtLedger.slice(-12).filter(x=>x&&typeof x.idea==="string"):[];
-  summarizedThrough=Number.isInteger(stored.summarizedThrough)?Math.max(0,Math.min(history.length,stored.summarizedThrough)):0;ui.remember.checked=true;
+  summarizedThrough=Number.isInteger(stored.summarizedThrough)?Math.max(0,Math.min(history.length,stored.summarizedThrough)):0;
  }catch(e){}
 }
 function renderIdeas(){
@@ -848,6 +852,7 @@ async function readFiles(files){
 ui.upload.addEventListener("change",()=>readFiles(Array.from(ui.upload.files||[])));
 ui.remove.addEventListener("click",discardFile);
 ui.remember.addEventListener("change",()=>{
+ try{localStorage.setItem(SESSION_PREF_STORAGE,ui.remember.checked?"on":"off");}catch(_){}
  if(ui.remember.checked)save();
  else try{localStorage.removeItem(STORAGE);}catch(e){}
  window.dispatchEvent(new CustomEvent("ba:storage",{detail:{enabled:ui.remember.checked}}));
@@ -856,7 +861,8 @@ ui.forget.addEventListener("click",()=>{ideas=[];renderIdeas();save();});
 ui.clear.addEventListener("click",()=>{
  if(busy)return;
  if(history.length&&!window.confirm("Padam perbualan dan nota idea sesi ini?"))return;
- conversationEpoch++;history=[];summary="";ideas=[];summarizedThrough=0;ui.remember.checked=false;ui.mediaFallback.checked=false;
+ conversationEpoch++;history=[];summary="";ideas=[];summarizedThrough=0;ui.mediaFallback.checked=false;
+ // Deleting a conversation must not silently change the visitor\'s storage preference.
  try{localStorage.removeItem(STORAGE);}catch(e){}
  discardFile();renderIdeas();renderHistory();ui.settings.open=false;
  window.dispatchEvent(new Event("ba:cleared"));
@@ -1045,7 +1051,7 @@ async function submit(event){
    summary,thoughtLedger:ideas.slice(-8),mediaFallback:ui.mediaFallback.checked,
    documentText:selectedFile&&selectedFile.text||"",
    documentName:selectedFile&&selectedFile.name||"",
-   media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt()||""};
+   media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt(question)||""};
   const data=await askWithReconnect(payload,ctrl.signal,receive,
    ({attempt,seconds,offline,reason})=>status("connecting",offline?"Internet hilang. Aku tunggu jap…":reason==="capacity"?"Model tengah busy. Tunggu jap…":"Aku try sambung balik…",
     offline?"Internet putus. Aku tunggu dia kembali, lepas tu try lagi. Tekan Henti kalau nak cancel.":
@@ -1151,7 +1157,8 @@ renderIdeas();renderHistory();update();probe();
 })();
 </script>
 <script src="bilik-antara-identity.js?v=28" defer></script>
-<script src="bilik-antara-suite.js?v=11" defer></script>
+<script src="bilik-antara-session-utils.js?v=1" defer></script>
+<script src="bilik-antara-suite.js?v=13" defer></script>
 <script src="bilik-antara-brain.js?v=13" defer></script>
 <script src="bilik-antara-modes.js?v=4" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>

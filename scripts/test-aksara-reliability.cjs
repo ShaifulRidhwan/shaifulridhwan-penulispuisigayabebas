@@ -684,3 +684,51 @@ test("fallback cognitive guidance remains scoped and does not claim nonexistent 
  assert.match(system,/Tiada alat carian/);
  assert.ok(system.length<60000,"avoid runaway system context");
 });
+
+
+test("Pipeline 2.0 keeps the latest question after all reference notes",()=>{
+ const Context=require("../netlify/functions/aksara-context-manager");
+ const turn=Context.composeTurn("bahasa indonesia ke tu",["[NOTA] Studio Antara lama","[MEMORI] cerita lain"]);
+ assert.ok(turn.includes("Studio Antara lama"));
+ assert.ok(turn.indexOf("Studio Antara lama")<turn.indexOf("[SOALAN PENGGUNA TERKINI"));
+ assert.ok(turn.endsWith("bahasa indonesia ke tu"+String.fromCharCode(10)+"[TAMAT SOALAN TERKINI]"));
+ assert.equal(Context.isReplyFeedback("bahasa indonesia ke tu"),true);
+ assert.equal(Context.isReplyFeedback("siapa aku"),false);
+});
+
+test("Pipeline 2.0 fallback protects unconsented summaries and follows language feedback",async t=>{
+ const handler=setup(t);let sent;
+ global.fetch=async(url,opts)=>{
+  if(url.includes("googleapis"))return new Response("",{status:503});
+  sent=JSON.parse(opts.body);return reply("Betul, gaya bahasa aku tadi tersasar.");
+ };
+ const res=await handler(event({
+  question:"bahasa indonesia ke tu",
+  history:[{role:"user",content:"Apa pandangan kau?"},{role:"assistant",content:"Kamu kelihatan sangat praktikal."}],
+  summary:"RAHSIA RINGKASAN: projek lama bukan soalan sekarang",
+  thoughtLedger:[{idea:"NOTA PERIBADI TIDAK BOLEH BOCOR"}],
+  contextFallback:false
+ }));
+ assert.equal(res.statusCode,200);assert.equal(JSON.parse(res.body).provider,"groq");
+ const last=sent.messages.at(-1).content;
+ assert.ok(last.endsWith("bahasa indonesia ke tu"+String.fromCharCode(10)+"[TAMAT SOALAN TERKINI]"));
+ assert.ok(!last.includes("RAHSIA RINGKASAN"));
+ assert.ok(!last.includes("NOTA PERIBADI"));
+ assert.ok(sent.messages.some(m=>m.role==="assistant"&&m.content.includes("Kamu kelihatan")));
+ assert.ok(sent.messages.some(m=>m.role==="system"&&m.content.includes("MAKLUM BALAS TERHADAP JAWAPAN")));
+});
+
+test("Pipeline 2.0 fallback retains explicitly consented notes before the newest question",async t=>{
+ const handler=setup(t);let sent;
+ global.fetch=async(url,opts)=>{
+  if(url.includes("googleapis"))return new Response("",{status:503});
+  sent=JSON.parse(opts.body);return reply("Aku jawab soalan terkini.");
+ };
+ const r=await handler(event({question:"bahasa indonesia ke tu",history:[{role:"assistant",content:"Kamu boleh teruskan."}],
+  summary:"Sesi lama mengenai buku",memoryNotes:"Guna Bahasa Melayu santai",contextFallback:true}));
+ assert.equal(r.statusCode,200);
+ const text=sent.messages.at(-1).content;
+ assert.ok(text.includes("Sesi lama mengenai buku"));
+ assert.ok(text.includes("Guna Bahasa Melayu santai"));
+ assert.ok(text.endsWith("bahasa indonesia ke tu"+String.fromCharCode(10)+"[TAMAT SOALAN TERKINI]"));
+});
