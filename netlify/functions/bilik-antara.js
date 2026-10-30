@@ -221,7 +221,7 @@ exports.handler=async event=>{
 
   const ip=(event.headers&&(event.headers["x-nf-client-connection-ip"]||"").split(",")[0])||"unknown";
   if(throttle(ip))return result(429,{code:"RATE_LIMIT",error:"Terlalu banyak permintaan dalam masa singkat. Cuba lagi sebentar.",retryAfterSeconds:Math.max(1,Math.ceil((rateMap.get(ip).start+60000-Date.now())/1000))},H);
-  const history=safeHistory(payload.history);
+  let history=safeHistory(payload.history);
   if(payload.summarize===true){
     if(history.length<4)return result(400,{error:"Tidak cukup kandungan untuk ringkasan."},H);
     try{
@@ -242,6 +242,7 @@ exports.handler=async event=>{
   const question=safeText(payload.question,MAX_QUESTION);
   const thoughtMode=Modes.normalize(payload.thoughtMode);
   if(!question)return result(400,{error:"Tulis soalan dahulu."},H);
+  history=Context.selectHistory(history,question);
   const rawMedia=payload.media===undefined||payload.media===null?[]:(Array.isArray(payload.media)?payload.media:[payload.media]);
   const media=rawMedia.map(sanitizeMedia);
   if(media.some(x=>!x)||media.reduce((n,x)=>n+x.data.length,0)>MAX_MEDIA_ENCODED)
