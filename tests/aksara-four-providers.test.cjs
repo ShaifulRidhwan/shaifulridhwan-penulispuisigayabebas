@@ -50,7 +50,7 @@ test("Default starter lists four brains; user interface and provider registry ag
 });
 
 test("Every default question has a prepared answer without obsolete provider claims",()=>{
- const starters=[...html.matchAll(/<button class="starter" type="button">([^<]+)<\\/button>/g)].map(m=>m[1]);
+ const starters=[...html.matchAll(/<button class="starter" type="button">([^<]+)<[/]button>/g)].map(m=>m[1]);
  assert.deepEqual(starters,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas","Empat Otak Aksara"]);
  for(const question of starters){
   const answer=Identity.answerIdentity(question);
@@ -59,7 +59,7 @@ test("Every default question has a prepared answer without obsolete provider cla
  }
  for(const name of canonical){
   assert.ok(Identity.answerIdentity("Siapa Aku").includes(name));
-  assert.ok(Modes.localIdentity("Siapa Aku",Identity).includes(name));
+  assert.ok(Identity.CORE_PROMPT.includes(name));
  }
 });
 
