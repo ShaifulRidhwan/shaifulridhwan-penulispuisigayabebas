@@ -79,6 +79,8 @@ function speechPlain(value){
   .replace(/ {2,}/g," ").trim();
 }
 function result(code,data,H){
+  if(code===200&&typeof data?.reply==="string")Ops.record("success");
+  else if(code>=400)Ops.record("error");
   if(code===200&&typeof data.reply==="string"&&data.mode!=="recorded-voice")data={...data,reply:ChatStyle.reply(data.reply,{mode:data.thoughtMode})};
   return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-9"})};
 }
@@ -386,7 +388,7 @@ exports.handler=async event=>{
       (creatorHumour?"\nUSIKAN BERASASKAN FAKTA: Usik hanya ciri projek yang diketahui, seperti pilihan bentuk puisi bersiri atau usaha mengubah suai Aksara. Jangan cipta atau meneka tabiat, waktu tidur, emosi, kebimbangan, peristiwa atau kehidupan peribadi Shaiful, walaupun sebagai perbandingan atau gurauan. Boleh selit ‘mwehehe’ di hujung jika sesuai.":"")+
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
   const activeModeInstruction="\nMOD AKTIF UNTUK JAWAPAN INI: "+(thoughtMode==="gelap"?"GELAP. Jawab dengan falsafah moden dan pemeriksaan premis apabila relevan, tetapi jangan merosakkan soalan fakta atau arahan teknikal.":"CAHAYA. Jawab secara santai, jelas dan praktikal; jangan menyamar sebagai GELAP.")+". Dua mod dalam Bilik Antara adalah gaya pemikiran/respons, bukan dua model API. Jika ditanya, terangkan kedua-dua mod serta cara menukarnya pada ikon pelaras di sebelah Hantar. Jangan mendakwa menggunakan model khusus kerana mod.";
-   const system=baseSystem+"\n"+cognitiveGuidance(cognition)+activeModeInstruction+(thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false)+"\n"+Modes.contextGuidance(thoughtMode,question,history):"");
+   const system=baseSystem+"\n"+cognitiveGuidance(cognition)+"\n"+Research.guidance(researchResult)+activeModeInstruction+(thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false)+"\n"+Modes.contextGuidance(thoughtMode,question,history):"");
   const maxTokens=plan.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
     works:!!poem,multimodal:media.length>0,model,review:intent.review,cognitiveFocus:cognition.focus,reasoningLevel:plan.thinkingLevel});
