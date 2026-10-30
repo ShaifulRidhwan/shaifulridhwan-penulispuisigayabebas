@@ -56,6 +56,23 @@
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
+<style>
+/* Aksara: butang hantar lebih bercahaya, tanpa mengubah fungsi disabled */
+.send-btn:not(:disabled){
+ color:#ffe7a4;
+ border-color:rgba(255,212,120,.72);
+ background:linear-gradient(145deg,rgba(255,205,106,.30),rgba(164,111,36,.18));
+ box-shadow:0 0 0 1px rgba(255,214,137,.20) inset,0 0 18px rgba(255,186,69,.28),0 0 32px rgba(255,190,80,.12);
+ text-shadow:0 0 12px rgba(255,220,150,.75);
+ transition:background .2s,border-color .2s,box-shadow .2s,transform .2s;
+}
+.send-btn:not(:disabled) svg{stroke:#ffe4a1;filter:drop-shadow(0 0 5px rgba(255,206,110,.65));}
+.send-btn:not(:disabled):hover,.send-btn:not(:disabled):focus-visible{
+ border-color:rgba(255,230,165,.95);
+ box-shadow:0 0 0 1px rgba(255,222,153,.35) inset,0 0 24px rgba(255,187,65,.43);
+}
+@media(prefers-reduced-motion:reduce){.send-btn{transition:none!important}}
+</style>
 </head>
 <body>
 <div class="shell">
@@ -599,9 +616,7 @@ function renderMessageMeta(msg,role,data){
   at.toLocaleTimeString("ms-MY",{hour:"2-digit",minute:"2-digit",hour12:false}));
  stamp.dateTime=at.toISOString();stamp.title=at.toLocaleString("ms-MY");line.appendChild(stamp);
  const place=String(data?.locationLabel||"").trim().slice(0,80);
- if(place){const tag=elem("span","message-place","Lokasi umum · "+place);tag.title="Diisi oleh pengguna, bukan lokasi GPS.";line.appendChild(tag);}
- else if(role==="user"){const select=elem("button","message-place-action","Tetapkan lokasi");select.type="button";
-  select.setAttribute("aria-label","Tetapkan lokasi umum bagi mesej baharu");select.addEventListener("click",showPlaceDialog);line.appendChild(select);}
+ // Metadata mesej hanya memaparkan masa; tetapan lokasi kekal di tempat lain.
  msg.appendChild(line);
 }
 function addMessage(role,text,data){
