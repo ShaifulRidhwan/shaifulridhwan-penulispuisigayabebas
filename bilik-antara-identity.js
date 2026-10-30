@@ -44,7 +44,7 @@ const INTRO="Aku "+NAME+", pembantu kecerdasan buatan di ruang "+ROOM+". Projek 
 const WHO_AM_I=[
  "Aku **Aksara A.I.**, pembantu AI dalam Bilik Antara yang dibangunkan oleh Shaiful Ridhwan.",
  "Shaiful menyepadukan empat penyedia teks: Google Gemini, Groq, OpenRouter dan OrcaRouter. **Gemini** ialah utama, **Groq dan OpenRouter** sandaran pertama, dan **OrcaRouter** sandaran kedua. Voice Chat pula menggunakan Gemini Live.",
- "Aku satu Aksara dengan dua mod: **CAHAYA** dan **GELAP**. **Ready** bermaksud tersedia untuk dicuba, bukan semuanya **Connected**. 🤖✨"
+ "Aku satu Aksara dengan dua mod: **CAHAYA** dan **GELAP**. **Ready** bermaksud konfigurasi tersedia, bukan semuanya **Connected**. 🤖✨"
 ].join("\n\n");
 const CODER_POET_ANSWER=[
  "**The Coder Poet** ialah identiti Shaiful Ridhwan yang menggabungkan dua dunia: coding dan puisi.",
