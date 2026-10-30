@@ -26,20 +26,31 @@ test("GELAP contains mature philosophy, evidence discipline and support boundari
  assert.ok(Modes.instructions("gelap","technical",false).includes("TEKNIKAL GELAP"));
  assert.ok(Modes.instructions("gelap","voice",true).includes("SUARA GELAP LANGSUNG"));
 });
-test("the visible control is before Send and provides labels",()=>{
+test("Mode control is compact, accessible, and opens a shared glass dialog",()=>{
  const mode=html.indexOf('id="thoughtMode"');
  const send=html.indexOf('id="sendBtn"');
  assert.ok(mode>0&&send>mode);
- assert.ok(html.includes('class="thought-mode-label"'));
- assert.ok(html.includes('class="thought-mode-sun"'));
- assert.ok(html.includes('class="thought-mode-moon"'));
+ assert.ok(html.includes('aria-controls="thoughtModeDialog"'));
+ assert.ok(html.includes('aria-haspopup="dialog"'));
+ assert.ok(html.includes('class="multi-ai-dialog thought-mode-dialog"'));
+ assert.ok(html.includes('id="thoughtModeTitle">Mode</strong>'));
+ assert.ok(html.includes('data-mode-option="cahaya"'));
+ assert.ok(html.includes('data-mode-option="gelap"'));
+ assert.ok(html.includes('class="thought-choice-copy"'));
+ assert.ok(html.includes('class="thought-choice-sun"')===false); // uses scalable SVG class
+ assert.ok(html.includes('thought-choice-sun'));
+ assert.ok(html.includes('thought-choice-moon'));
+ assert.ok(html.includes('modeDialog.showModal()'));
+ assert.ok(html.includes('modeDialog.close()'));
  assert.ok(html.includes("modeButton.dataset.mode=thoughtMode"));
+ assert.ok(html.includes('if(notify&&changed)'));
  assert.ok(html.includes("const payload={question,thoughtMode,"));
  assert.ok(css.includes('#thoughtMode[data-mode="gelap"]'));
+ assert.ok(css.includes('.thought-mode-dialog .thought-choice-copy small'));
 });
 test("browser modules load before voice and retain cache-busted versions",()=>{
  assert.ok(html.indexOf("bilik-antara-modes.js?v=1")<html.indexOf("bilik-antara-voice.js?v=41"));
- assert.ok(html.includes("bilik-antara.css?v=85"));
+ assert.ok(html.includes("bilik-antara.css?v=86"));
  assert.ok(html.includes('window.BilikAntaraThought=Object.freeze'));
 });
 test("both network paths share mode policy and voice restarts on change",()=>{
