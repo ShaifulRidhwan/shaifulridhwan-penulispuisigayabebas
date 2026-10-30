@@ -40,11 +40,9 @@ async function main(){
   const response=await router.complete({system:"Identiti",history:[],question:"Bantu kod",task:"technical",timeoutMs:1000});
   assert.equal(response.provider,"openrouter");
   const check=await router.crossReview({question:"Semak fakta",reply:"Jawapan",originalProvider:"groq",task:"technical",timeoutMs:1000});
-  assert.equal(check.checked,true);
-  assert.equal(check.reviewer,"openrouter");
-  const reviewCall=requests.find(r=>r.payload.model==="openrouter/free"&&r.payload.messages?.[0]?.content.includes("pemeriksa ketelitian"));
-  assert.ok(reviewCall,"OpenRouter free reviewer receives the structured JSON-only prompt");
+  assert.equal(check,null,"Optional reviews cannot consume last-resort OpenRouter quota");
+  assert.equal(requests.filter(r=>r.payload.messages?.[0]?.content.includes("pemeriksa ketelitian")).length,0);
  }
- console.log("AKSARA router smoke tests PASS (Groq + OpenRouter offline mocks)");
+ console.log("AKSARA router smoke tests PASS (primary + universal backup, offline mocks)");
 }
 main().catch(e=>{console.error(e);process.exitCode=1;});
