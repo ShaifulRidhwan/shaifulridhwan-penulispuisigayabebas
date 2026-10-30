@@ -55,9 +55,16 @@ function openRouterBody(body,effort="low"){
  return body;
 }
 const safeMessage=text=>boundedText(text,60000);
+function envEnabled(name){return String(process.env[name]||"").trim().toLowerCase()==="true";}
+function orcaConfig(){
+ if(!envEnabled("AKSARA_FREE_FALLBACKS"))return {active:false,reason:"fallback_disabled"};
+ if(!envEnabled("AKSARA_ORCAROUTER_LAYER2"))return {active:false,reason:"layer_disabled"};
+ if(!String(process.env.ORCAROUTER_API_KEY||"").trim())return {active:false,reason:"missing_key"};
+ return {active:true,reason:"configured_not_probed"};
+}
 function configured(){
- if(process.env.AKSARA_FREE_FALLBACKS!=="true")return [];
- return PROVIDERS.filter(p=>p.id==="requesty"?Requesty.configured():p.id==="orcarouter"?process.env.AKSARA_ORCAROUTER_LAYER2==="true"&&!!process.env[p.key]:process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
+ if(!envEnabled("AKSARA_FREE_FALLBACKS"))return [];
+ return PROVIDERS.filter(p=>p.id==="requesty"?Requesty.configured():p.id==="orcarouter"?orcaConfig().active:process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
 }
 function enabled(){return configured().length>0;}
 function quotaKind(message){
@@ -318,7 +325,7 @@ async function checkStatus(){
  healthCache.pending=(async()=>{
   const checks=await Promise.all(PROVIDERS.map(async provider=>{
    const active=configured().some(p=>p.id===provider.id);
-   if(!active)return {id:provider.id,status:"off"};
+   if(!active)return {id:provider.id,status:"off",...(provider.id==="orcarouter"?{reason:orcaConfig().reason}:{})};
    if(Date.now()<(cooldown.get(provider.id)||0))return {id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
