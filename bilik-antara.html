@@ -52,7 +52,7 @@
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="bilik-antara-bg-desktop.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="bilik-antara-bg-mobile.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=85">
+<link rel="stylesheet" href="bilik-antara.css?v=86">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
@@ -128,6 +128,24 @@
  <div class="multi-ai-list" id="multiAiList" aria-live="polite"></div>
  <div class="multi-ai-actions"><button type="button" id="multiAiRefresh">Semak semula</button></div>
 </dialog>
+   <dialog class="multi-ai-dialog thought-mode-dialog" id="thoughtModeDialog" aria-labelledby="thoughtModeTitle" aria-describedby="thoughtModeSummary">
+    <div class="multi-ai-head">
+     <div><strong id="thoughtModeTitle">Mode</strong><p id="thoughtModeSummary">Pilih cara Aksara A.I. menjawab.</p></div>
+     <button type="button" id="thoughtModeClose" aria-label="Tutup pilihan mod">×</button>
+    </div>
+    <div class="multi-ai-list thought-mode-list" role="group" aria-label="Pilihan mod pemikiran">
+     <button type="button" class="multi-ai-row thought-mode-choice is-selected" data-mode-option="cahaya" aria-pressed="true">
+      <svg class="thought-choice-icon thought-choice-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
+      <span class="thought-choice-copy"><strong>Cahaya</strong><small>Gaya Aksara asal. Santai, jelas dan responsif.</small></span>
+      <span class="thought-choice-check" aria-hidden="true">✓</span>
+     </button>
+     <button type="button" class="multi-ai-row thought-mode-choice" data-mode-option="gelap" aria-pressed="false">
+      <svg class="thought-choice-icon thought-choice-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5 8.5 8.5 0 1 0 20.5 14.3Z"/></svg>
+      <span class="thought-choice-copy"><strong>Gelap</strong><small>Falsafah moden. Mendalam, kritis dan sinis.</small></span>
+      <span class="thought-choice-check" aria-hidden="true">✓</span>
+     </button>
+    </div>
+   </dialog>
    <div id="voiceNotice" class="voice-notice" role="status" aria-live="polite" hidden></div>
     <div id="connectionInfo" class="connection-info" role="status" aria-live="polite"><span id="connectionInfoText"></span><button type="button" id="retryBtn">Cuba semula</button></div>
    <div class="messages" id="chat" role="log" aria-live="polite" aria-relevant="additions" aria-label="Mesej perbualan"></div>
@@ -163,10 +181,8 @@
      <input class="sr-only" type="file" id="documentUpload" multiple accept=".txt,.md,.csv,.pdf,image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/webm,video/mp4,video/webm" aria-label="Pilih lampiran">
      <textarea rows="1" id="input" placeholder="" aria-label="Tulis mesej untuk Aksara A.I."></textarea>
       <button type="button" id="stopBtn" class="outline-btn" aria-label="Hentikan respons" hidden>Henti</button>
-      <button type="button" id="thoughtMode" class="thought-mode" data-mode="cahaya" aria-label="Mod CAHAYA aktif, tekan untuk GELAP" aria-pressed="false" title="CAHAYA · gaya Aksara asal">
-       <svg class="thought-mode-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42"/></svg>
-       <svg class="thought-mode-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5 8.5 8.5 0 1 0 20.5 14.3Z"/></svg>
-       <span class="thought-mode-label">CAHAYA</span>
+      <button type="button" id="thoughtMode" class="thought-mode" data-mode="cahaya" aria-label="Pilih mod pemikiran. Aktif: Cahaya" aria-haspopup="dialog" aria-controls="thoughtModeDialog" aria-expanded="false" title="Mode · Cahaya">
+       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5"/><circle cx="16" cy="17" r="2.5"/></svg>
       </button>
       <button type="submit" id="sendBtn" class="send-btn" aria-label="Hantar soalan" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-9-3.6 18L11 13l-6-1Z"/><path d="m11 13 8-10"/></svg></button>
     </form>
@@ -258,20 +274,40 @@ if(window.visualViewport)window.visualViewport.addEventListener("resize",queueVi
 const ENDPOINT="/.netlify/functions/bilik-antara";
 const STREAM_ENDPOINT="/.netlify/functions/bilik-antara-stream";
 const STORAGE="bilik-antara-session-v2";
-// CAHAYA retains the existing brain. GELAP changes the response policy per request.
+// CAHAYA keeps the original Aksara brain; GELAP changes its response identity.
 let thoughtMode="cahaya";
 const modeButton=document.getElementById("thoughtMode");
+const modeDialog=document.getElementById("thoughtModeDialog");
+const modeClose=document.getElementById("thoughtModeClose");
+const modeChoices=[...modeDialog.querySelectorAll("[data-mode-option]")];
 function setThoughtMode(mode,notify=false){
- thoughtMode=mode==="gelap"?"gelap":"cahaya";
+ const next=mode==="gelap"?"gelap":"cahaya";
+ const changed=thoughtMode!==next;
+ thoughtMode=next;
  modeButton.dataset.mode=thoughtMode;
- modeButton.setAttribute("aria-pressed",String(thoughtMode==="gelap"));
- modeButton.setAttribute("aria-label",thoughtMode==="gelap"?"Mod GELAP aktif, tekan untuk CAHAYA":"Mod CAHAYA aktif, tekan untuk GELAP");
- modeButton.title=thoughtMode==="gelap"?"GELAP · kritis, sinis dan falsafah moden":"CAHAYA · gaya Aksara asal";
- modeButton.querySelector(".thought-mode-label").textContent=thoughtMode.toUpperCase();
- if(notify)window.dispatchEvent(new CustomEvent("ba:thought-mode-changed",{detail:{mode:thoughtMode}}));
+ modeButton.setAttribute("aria-label","Pilih mod pemikiran. Aktif: "+(thoughtMode==="gelap"?"Gelap":"Cahaya"));
+ modeButton.title="Mode · "+(thoughtMode==="gelap"?"Gelap":"Cahaya");
+ for(const choice of modeChoices){
+  const active=choice.dataset.modeOption===thoughtMode;
+  choice.classList.toggle("is-selected",active);
+  choice.setAttribute("aria-pressed",String(active));
+ }
+ if(notify&&changed)window.dispatchEvent(new CustomEvent("ba:thought-mode-changed",{detail:{mode:thoughtMode}}));
 }
 window.BilikAntaraThought=Object.freeze({getMode:()=>thoughtMode});
-modeButton.addEventListener("click",()=>setThoughtMode(thoughtMode==="cahaya"?"gelap":"cahaya",true));
+modeButton.addEventListener("click",()=>{
+ if(!modeDialog.open){modeDialog.showModal();modeButton.setAttribute("aria-expanded","true");}
+});
+modeChoices.forEach(choice=>choice.addEventListener("click",()=>{
+ setThoughtMode(choice.dataset.modeOption,true);
+ modeDialog.close();
+}));
+modeClose.addEventListener("click",()=>modeDialog.close());
+modeDialog.addEventListener("click",event=>{if(event.target===modeDialog)modeDialog.close();});
+modeDialog.addEventListener("close",()=>{
+ modeButton.setAttribute("aria-expanded","false");
+ modeButton.focus({preventScroll:true});
+});
 setThoughtMode("cahaya");
 const MEDIA=new Set(["application/pdf","image/jpeg","image/png","image/webp","image/gif",
  "audio/mpeg","audio/wav","audio/mp4","audio/ogg","audio/webm","video/mp4","video/webm"]);
