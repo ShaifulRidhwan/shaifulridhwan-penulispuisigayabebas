@@ -104,6 +104,10 @@
          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 10h18M8 2v4M16 2v4M8 15h8"/></svg>
          <span><strong>Sesi &amp; Memori</strong><small>Sejarah, arkib dan ingatan pilihan</small></span><span class="feature-hub-arrow" aria-hidden="true">›</span>
         </button>
+        <button type="button" class="feature-hub-item" id="featureKnowledge" aria-haspopup="dialog" aria-controls="knowledgeDialog" aria-expanded="false">
+         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5c3-1.5 5.5-1.5 8 .2 2.5-1.7 5-1.7 8-.2V19c-3-1.5-5.5-1.5-8 .2-2.5-1.7-5-1.7-8-.2zM12 5.7v13.5"/></svg>
+         <span><strong>Pengetahuan &amp; Rujukan</strong><small>Karya · ensiklopedia · pengiraan selamat</small></span><span class="feature-hub-arrow" aria-hidden="true">›</span>
+        </button>
        </div>
        <details class="feature-privacy" id="privacySettings">
         <summary>Privasi &amp; Tetapan</summary>
@@ -128,7 +132,15 @@
  <div class="multi-ai-list" id="multiAiList" aria-live="polite"></div>
  <div class="multi-ai-actions"><button type="button" id="multiAiRefresh">Semak semula</button></div>
 </dialog>
-   <dialog class="multi-ai-dialog thought-mode-dialog" id="thoughtModeDialog" aria-labelledby="thoughtModeTitle" aria-describedby="thoughtModeSummary">
+   <dialog class="multi-ai-dialog" id="knowledgeDialog" aria-labelledby="knowledgeTitle" aria-describedby="knowledgeDescription">
+ <div class="multi-ai-head"><div><strong id="knowledgeTitle">Pengetahuan &amp; Rujukan</strong><p id="knowledgeDescription">Aksara menggunakan rujukan yang tersedia, nota sesi yang kau benarkan, dan alat pengiraan terhad. Carian semantik masih versi setempat, bukan pangkalan vektor.</p></div><button type="button" id="knowledgeClose" aria-label="Tutup Pengetahuan dan Rujukan">×</button></div>
+ <div class="multi-ai-actions">
+  <button type="button" class="outline-btn" data-knowledge-question="Cari karya Aksara tentang aporia dan pengetahuan.">Jelajah karya</button>
+  <button type="button" class="outline-btn" data-knowledge-question="Cari rujukan Wikipedia tentang falsafah dan terangkan dengan sumber yang diperoleh.">Cari rujukan</button>
+  <button type="button" class="outline-btn" data-knowledge-question="Kira (12+8)*3">Uji pengiraan</button>
+ </div>
+</dialog>
+<dialog class="multi-ai-dialog thought-mode-dialog" id="thoughtModeDialog" aria-labelledby="thoughtModeTitle" aria-describedby="thoughtModeSummary">
     <div class="multi-ai-head">
      <div><strong id="thoughtModeTitle">Thinking Mode</strong><p id="thoughtModeSummary">Pilih cara Aksara A.I. berfikir dan menjawab.</p></div>
      <button type="button" id="thoughtModeClose" aria-label="Tutup pilihan mod">×</button>
@@ -323,6 +335,23 @@ function setThoughtMode(mode,notify=false){
   choice.setAttribute("aria-pressed",String(active));
  }
  if(notify&&changed)window.dispatchEvent(new CustomEvent("ba:thought-mode-changed",{detail:{mode:thoughtMode}}));
+}
+const knowledgeDialog=el("knowledgeDialog"),knowledgeTrigger=el("featureKnowledge");
+knowledgeTrigger.addEventListener("click",()=>{
+ ui.settings.open=false;
+ knowledgeDialog.showModal();knowledgeTrigger.setAttribute("aria-expanded","true");
+});
+el("knowledgeClose").addEventListener("click",()=>knowledgeDialog.close());
+knowledgeDialog.addEventListener("click",event=>{if(event.target===knowledgeDialog)knowledgeDialog.close();});
+knowledgeDialog.addEventListener("close",()=>{
+ knowledgeTrigger.setAttribute("aria-expanded","false");
+ knowledgeTrigger.focus({preventScroll:true});
+});
+for(const action of knowledgeDialog.querySelectorAll("[data-knowledge-question]")){
+ action.addEventListener("click",()=>{
+  ui.input.value=action.dataset.knowledgeQuestion||"";
+  knowledgeDialog.close();ui.input.dispatchEvent(new Event("input",{bubbles:true}));ui.input.focus({preventScroll:true});
+ });
 }
 window.BilikAntaraThought=Object.freeze({getMode:()=>thoughtMode});
 modeButton.addEventListener("click",()=>{
