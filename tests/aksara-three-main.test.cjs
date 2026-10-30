@@ -71,3 +71,26 @@ test("Bilik Antara tests Groq/Orca and Gemini before universal OpenRouter backup
  assert.ok(calls.includes("groq")&&calls.includes("orcarouter")&&calls.includes("gemini"),calls.join(","));
  assert.equal(calls.at(-1),"openrouter",calls.join(","));
 });
+
+test("Streaming chat reaches OpenRouter even after the 14s primary response window has expired",async t=>{
+ setup();const handler=require("../netlify/functions/bilik-antara").handler,calls=[];
+ let clock=100000;
+ t.mock.method(Date,"now",()=>clock);
+ global.fetch=async url=>{
+  const id=provider(url);calls.push(id);
+  if(id==="groq"||id==="orcarouter"){clock+=6000;return fail();}
+  if(id==="gemini"){clock+=3000;return fail();}
+  return ok(id);
+ };
+ const chunks=[];
+ const response=await handler({httpMethod:"POST",
+  headers:{origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app","x-nf-client-connection-ip":"routing-stream-deadline-test"},
+  body:JSON.stringify({question:"Terangkan perbezaan bit dan bait",preferredProvider:"openrouter"}),
+  onDelta:x=>chunks.push(x)
+ });
+ const data=JSON.parse(response.body);
+ assert.equal(response.statusCode,200,JSON.stringify(data));
+ assert.equal(data.provider,"openrouter");
+ assert.equal(calls.at(-1),"openrouter",calls.join(","));
+ assert.ok(chunks.join("").includes("Aku Aksara"),"Streaming backup must emit visible text");
+});
