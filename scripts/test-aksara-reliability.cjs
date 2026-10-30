@@ -59,8 +59,10 @@ test("sequential backup attempts obey one deadline and cancellation stops a pend
  const router=require("../netlify/functions/aksara-provider-router");let attempts=0;
  global.fetch=async(_url,{signal})=>{attempts++;return new Promise((_resolve,reject)=>signal.addEventListener("abort",()=>reject(new DOMException("abort","AbortError")),{once:true}));};
  const start=Date.now();await router.complete({system:"persona",history:[],question:"Hai",timeoutMs:600,deadline:Date.now()+1000});assert.equal(attempts,1);assert.ok(Date.now()-start<1100);
+ delete require.cache[require.resolve("../netlify/functions/aksara-provider-router")];
+ const cleanRouter=require("../netlify/functions/aksara-provider-router");
  const ctrl=new AbortController();setTimeout(()=>ctrl.abort(),20);
- await assert.rejects(router.complete({system:"persona",history:[],question:"Hai",signal:ctrl.signal,skip:["groq"],deadline:Date.now()+1000}),{name:"AbortError"});
+ await assert.rejects(cleanRouter.complete({system:"persona",history:[],question:"Hai",signal:ctrl.signal,skip:["groq"],deadline:Date.now()+1000}),{name:"AbortError"});
 });
 test("SSE decodes split UTF-8, CRLF and multiple frames, and rejects upstream error frames",async()=>{
  const bytes=new TextEncoder().encode('data: {"text":"é 🌙"}\r\n\r\ndata: {"text":"akhir"}\n\ndata: [DONE]\n\n');let at=0;const values=[];
