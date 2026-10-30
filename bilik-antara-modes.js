@@ -34,7 +34,6 @@ function localIdentity(question,identity){
  if(!identity||typeof question!=="string")return null;
  const q=question.trim().toLocaleLowerCase("ms-MY").replace(/[?!.،]+$/g,"").trim();
  // GELAP uses the same verified four-provider facts, not an unrelated stock answer.
- if(q==="siapa aku"||q==="siapakah aku")return "Aku "+identity.NAME+" dalam "+identity.ROOM+", dibangunkan oleh "+identity.CREATOR+". Ada empat penyedia teks: "+identity.TEXT_PROVIDERS.join(", ")+". Gemini ialah utama, Groq dan OpenRouter sandaran pertama, OrcaRouter sandaran kedua. Voice Live menggunakan Gemini. CAHAYA dan GELAP ialah dua pendekatan dalam satu Aksara, bukan dua model lain. Aku tak patut mengaku semua penyedia Connected jika sekadar dikonfigurasikan.";
  if(identity.isProviderQuestion?.(q))return identity.FOUR_PROVIDER_GELAP;
  const self=/^(?:ko\s+(?:ni\s+|ini\s+)?siapa|kau\s+(?:ni\s+|ini\s+)?siapa|siapa\s+(?:kau|awak|kamu)(?:\s+sebenarnya)?|kau\s+siapa\s+sebenarnya|who\s+are\s+you|kenalkan\s+diri\s+kau|nama\s+kau\s+apa|siapa\s+aksara(?:\s+a\.?i\.?)?)$/i.test(q);
  if(self)return "Aku "+identity.NAME+", sebuah kecerdasan buatan dalam "+identity.ROOM+" yang dibangunkan oleh "+identity.CREATOR+". Ada dua cara aku menjawab: CAHAYA yang santai dan praktikal, GELAP yang kritis dan berfalsafah. Sekarang GELAP aktif. Kedua-duanya menggunakan enjin A.I. yang sama. Aku tak mendakwa memahami hidup seperti manusia. Dalam mod GELAP, tugas aku bukan menghias jawapan supaya menyenangkan hati, tetapi memeriksa apa yang benar, apa yang kita andaikan, dan di mana hujah mula runtuh.";
