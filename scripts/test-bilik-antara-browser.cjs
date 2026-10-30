@@ -128,6 +128,34 @@ async function audit(browser,label,options){
    assert.ok(composer&&viewport&&composer.y+composer.height<=viewport.height+6,label+" composer clipped after Mode dialog");
   }
 
+  const attachmentTrigger=page.locator("#attachmentTrigger"),attachmentDialog=page.locator("#attachmentDialog");
+  await attachmentTrigger.click();
+  assert.equal(await attachmentDialog.isVisible(),true,"Glass attachment dialog opens");
+  assert.equal(await attachmentDialog.locator("[data-attachment-type]").count(),3);
+  const chooserPromise=page.waitForEvent("filechooser");
+  await attachmentDialog.locator('[data-attachment-type="files"]').click();
+  const chooser=await chooserPromise;
+  await chooser.setFiles({name:"browser-check.txt",mimeType:"text/plain",buffer:Buffer.from("aksara attachment test")});
+  await page.locator("#removeAttachment").waitFor({state:"visible"});
+  assert.match(await page.locator("#docStatus").innerText(),/browser-check.txt/);
+  await page.locator("#removeAttachment").click();
+  await attachmentTrigger.click();
+  await page.keyboard.press("Escape");
+  assert.equal(await attachmentDialog.isVisible(),false);
+  const locationDialog=page.locator("#metaLocationDialog");
+  await page.evaluate(()=>document.getElementById("metaLocationDialog").showModal());
+  await locationDialog.locator("#messageLocationInput").fill("Shah Alam, Selangor");
+  await locationDialog.locator("#metaLocationSave").click();
+  assert.equal(await locationDialog.isVisible(),false);
+  await page.evaluate(()=>window.BilikAntaraBridge.load({history:[
+    {role:"user",content:"uji lokasi dan waktu",timestamp:Date.now()-60000,locationLabel:"Shah Alam, Selangor"},
+    {role:"assistant",content:"uji masa diterima",timestamp:Date.now(),locationLabel:"Shah Alam, Selangor",thoughtMode:"cahaya"}
+  ]}));
+  assert.equal(await page.locator(".message-meta").count(),2);
+  assert.equal(await page.locator(".message-place").count(),2);
+  assert.match(await page.locator(".message-clock").first().innerText(),/Dihantar/);
+  assert.match(await page.locator(".message-clock").last().innerText(),/Diterima/);
+  await page.evaluate(()=>window.BilikAntaraBridge.fresh());
   assert.equal(await page.locator(".composer #sendBtn").evaluate(el=>getComputedStyle(el).minWidth)!=="0px",true);
   assert.equal(state.heavyAssets.some(x=>x.includes("bilik-antara-voice-fallback")),false);
   await page.screenshot({path:path.join(OUT,label+"-chat.png"),animations:"disabled"});
