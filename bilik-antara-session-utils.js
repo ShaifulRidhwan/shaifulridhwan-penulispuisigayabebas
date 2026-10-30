@@ -47,10 +47,10 @@ function importArchive(raw){
  if(!sessions||sessions.length>100)throw new Error("Format arkib tak sah atau terlalu banyak sesi (maksimum 100).");
  let total=0;
  return sessions.map(entry=>{
-  if(!entry||typeof entry!=="object"||!Array.isArray(entry.history)||!entry.history.length||entry.history.length>300)
-   throw new Error("Ada sesi yang kosong atau melebihi 300 mesej.");
+  if(!entry||typeof entry!=="object"||!Array.isArray(entry.history)||!entry.history.length||entry.history.length>1000)
+   throw new Error("Ada sesi yang kosong atau melebihi 1,000 mesej.");
   const history=entry.history.map(m=>{
-   if(!m||!["user","assistant"].includes(m.role)||typeof m.content!=="string"||!m.content.trim()||m.content.length>32000)
+   if(!m||!["user","assistant"].includes(m.role)||typeof m.content!=="string"||!m.content.trim()||m.content.length>45000)
     throw new Error("Arkib mengandungi mesej yang tidak sah.");
    total+=m.content.length;
    return {role:m.role,content:m.content, ...(Number.isFinite(m.timestamp)&&m.timestamp>0?{timestamp:m.timestamp}:{}),
