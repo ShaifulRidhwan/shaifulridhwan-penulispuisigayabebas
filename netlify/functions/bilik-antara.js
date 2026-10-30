@@ -17,6 +17,7 @@ const Context=require("./aksara-context-manager");
 const Knowledge=require("./aksara-knowledge-engine");
 const SafeTools=require("./aksara-safe-tools");
 const Research=require("./aksara-research-workflow");
+const Studio=require("./aksara-studio-awareness");
 const {requestControl,readSSE,waitFor}=require("./lib/aksara-transport");
 const DEFAULT_MODEL="gemini-3.6-flash";
 const SITE_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
@@ -45,7 +46,7 @@ const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+Identity.RUNTIME_PROM
 const GELAP_PERSONALITY=PERSONALITY.replace(Brain.TEXT_DELIVERY,Modes.DELIVERY);
 
 const GELAP_IDENTITY_CORE=Identity.CORE_PROMPT.split("\n").filter(line=>!line.startsWith("EMOJI SEMBANG TEKS:")).join("\n");
-const STUDIO_GUIDANCE="STUDIO ANTARA: Penjanaan imej tersedia di studio-antara.html menggunakan Cloudflare Workers AI melalui Netlify. Imej dijana di pelayan; pengguna tidak perlu memuat turun model berat. Studio belum menjana video. Jangan dakwa model sembang boleh menjana imej terus tanpa alat yang disambungkan.";
+const STUDIO_GUIDANCE=Studio.SYSTEM_GUIDANCE;
 const OSINT_GUIDANCE=["OSINT TIKTOK: Jika diminta menyemak akaun, hanya laporan metadata profil yang benar-benar awam atau disahkan melalui TikTok API rasmi. Utamakan handle, nama paparan, bio (tanpa maklumat hubungan peribadi), verified, followers/following/video/likes dan pautan bio awam. Bezakan data API rasmi daripada hasil carian yang belum disahkan.","Jangan menganggap username membuktikan akaun itu wujud. Jika TikTok Research API tiada akses, terangkan maklumat profil belum disahkan dan rujuk pautan awam sahaja. Jangan reka tarikh pendaftaran akaun atau ID dalaman."].join("\n");
 
 const TASK_GUIDANCE={
@@ -255,6 +256,13 @@ exports.handler=async event=>{
   if(typeof payload.documentText==="string"&&payload.documentText.length>100000)return result(413,{error:"Kandungan fail teks terlalu besar untuk satu permintaan. Bahagikan dokumen."},H);
   const documentText=safeText(payload.documentText,100000);
   const documentName=safeText(payload.documentName,100);
+  // Inform users about Studio; never open it for them automatically.
+  const studioInfo=Studio.localReply(question,{hasAttachment:!!(media.length||documentText)});
+  if(studioInfo)return result(200,{
+   mode:"live",aiMode:"automatic",model:"local-studio",provider:"local",
+   thoughtMode,reply:studioInfo.reply,studioHint:true,
+   sources:[],toolsUsed:[],reviewApplied:false,disclaimer:""
+  },H);
   // Local deterministic arithmetic only; the client cannot submit code to run.
   const calculatorCall=flags.toolExecutionEnabled&&!media.length&&!documentText
    ?SafeTools.calculatorIntent(question):null;
