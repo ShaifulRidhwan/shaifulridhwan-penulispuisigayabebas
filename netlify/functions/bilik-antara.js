@@ -409,7 +409,7 @@ exports.handler=async event=>{
   try{
     if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
     if(googleWait(model)>0)throw Object.assign(new Error("Gemini quota cooling down"),{status:429,cooldownKnown:true,retryAfterSeconds:googleWait(model)});
-    const data=await callGemini({apiKey,model,system,contents,tools,thinkingLevel:intent.depth==="low"&&model.includes("flash-lite")?"minimal":plan.thinkingLevel,
+    const data=await callGemini({apiKey,model,system,contents,tools,thinkingLevel:plan.thinkingLevel==="high"?"high":intent.depth==="low"&&model.includes("flash-lite")?"minimal":plan.thinkingLevel,
       maxTokens,timeoutMs:Math.min(textOnly&&Router.enabled()?6500:18000,remaining()),signal:event.signal,deadline,onDelta:emit&&!plan.doReview&&!tools.length?emit:null});
     const candidate=data&&data.candidates&&data.candidates[0];
     const reply=reactionReply(parseReply(modelText(candidate)),intent,history);
