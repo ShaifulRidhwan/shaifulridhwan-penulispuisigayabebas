@@ -66,19 +66,18 @@ test("Navigasi Novel masuk terus pembaca, Karya ke katalog",()=>{
  assert.match(novel,/openBook\(savedPage\(\)>0\)/);
  assert.match(novel,/frame\.src="assets\/novel\/pembaca\.html"/);
 });
-test("Penapis guna chips aksesibel tanpa dropdown Android",()=>{
- assert.doesNotMatch(page,/<select\b/i);
- assert.match(page,/data-language="en"/);
- assert.match(page,/data-language="ms"/);
+test("Katalog ringkas tanpa teks dan kawalan bertanda",()=>{
+ assert.doesNotMatch(page,/<select\\b/i);
  assert.doesNotMatch(page,/id="search"/);
- assert.match(page,/new URL\(u,window\.location\.href\)/);
- assert.match(page,/new URL\(images\[i\+\+\],window\.location\.href\)\.href/);
- assert.doesNotMatch(page,/data-language="id"/);
- assert.doesNotMatch(page,/data-category="hikayat"/);
- assert.match(page,/data-category="falsafah"/);
- assert.match(page,/data-category="saved"/);
- assert.match(page,/aria-pressed="true"/);
- assert.match(page,/querySelectorAll\("\[data-"\+group\+"\]"/);
+ assert.doesNotMatch(page,/class="toolbar"/);
+ assert.doesNotMatch(page,/class="heading"/);
+ assert.doesNotMatch(page,/class="pills"/);
+ assert.doesNotMatch(page,/data-language=/);
+ assert.doesNotMatch(page,/data-category=/);
+ assert.doesNotMatch(page,/PILIHAN EDITOR/);
+ assert.match(page,/new URL\\(u,window\\.location\\.href\\)/);
+ assert.match(page,/new URL\\(images\\[i\\+\\+\\],window\\.location\\.href\\)\\.href/);
+ assert.match(css,/\\.book:first-child \\.art\\{aspect-ratio:9\\/16/);
 });
 test("Glass, mobile single-column dan imej kulit buku",()=>{
  assert.match(css,/backdrop-filter:blur\(23px\)/);
