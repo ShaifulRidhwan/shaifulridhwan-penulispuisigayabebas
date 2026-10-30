@@ -488,7 +488,7 @@ function renderProviderRows(rows,catalog=null){
     const statusLabel=elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Connected":"Listed");
     child.append(shortName,statusLabel);modelList.appendChild(child);
    }
-   if(id==="orcarouter")modelList.appendChild(elem("p","multi-ai-model-note","Public free-tier listing · may change; Ready is not a verified response."));
+   
    if(shownModels?.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Showing a saved list; the latest list is unavailable."));
   }else{
    const message=id==="orcarouter"?(state==="off"?"Not active":"Free model list unavailable."):id==="requesty"?(state==="off"?"Not active":state==="checking"?"Checking models…":"No confirmed models yet."):
