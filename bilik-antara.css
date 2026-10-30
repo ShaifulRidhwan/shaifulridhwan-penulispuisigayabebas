@@ -2421,14 +2421,14 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .conversation::after{content:none;animation:none!important}
 .world-light-glow{position:absolute;inset:10% auto -8% -24%;width:63%;z-index:4;pointer-events:none;background:radial-gradient(ellipse at 22% 48%,rgba(255,231,169,.32),rgba(244,185,93,.14) 32%,transparent 67%);transform-origin:left center;animation:antaraLeftGlow 5.8s ease-in-out infinite alternate;will-change:transform,opacity}
 .world-light-glow::after{content:"";position:absolute;inset:12% 24% 8% 1%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,244,215,.16),rgba(245,193,111,.09) 40%,transparent 70%);filter:blur(15px)}
-@keyframes antaraLeftGlow{from{opacity:.38;transform:scale(.95) translate3d(-1%,1%,0)}to{opacity:.9;transform:scale(1.07) translate3d(1%,-1%,0)}}
+
 @keyframes antaraAmbientPane{from{opacity:.4}to{opacity:.85}}
 .conversation>.glass-shadow-mist{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:visible;contain:none;background:none;border-radius:inherit;animation:none}
 .conversation>.glass-shadow-mist::before,.conversation>.glass-shadow-mist::after{content:"";position:absolute;inset:0;pointer-events:none;transform-origin:88% 52%;will-change:transform,opacity}
 .conversation>.glass-shadow-mist::before{background:radial-gradient(ellipse 23% 28% at 91% 38%,rgba(0,1,5,.85),rgba(2,5,12,.28) 54%,transparent 100%),radial-gradient(ellipse 20% 26% at 83% 66%,rgba(1,3,10,.75),transparent 100%);filter:blur(16px);animation:antaraSmokeGlow 7.8s ease-in-out infinite alternate}
 .conversation>.glass-shadow-mist::after{background:radial-gradient(ellipse 19% 24% at 91% 31%,transparent 35%,rgba(139,171,214,.16) 62%,transparent 100%),radial-gradient(ellipse 18% 25% at 86% 61%,transparent 32%,rgba(112,139,191,.15) 61%,transparent 100%),radial-gradient(ellipse 14% 19% at 78% 74%,rgba(117,146,190,.08),transparent 100%);filter:blur(19px);animation:antaraSmokeHalo 9.3s ease-in-out infinite alternate}
-@keyframes antaraSmokeGlow{from{opacity:.35;transform:translate3d(2%,4%,0) rotate(-3deg) scale(.95)}to{opacity:.92;transform:translate3d(-3%,-4%,0) rotate(4deg) scale(1.08)}}
-@keyframes antaraSmokeHalo{from{opacity:.25;transform:translate3d(2%,3%,0) rotate(-4deg) scale(.93)}to{opacity:.9;transform:translate3d(-4%,-5%,0) rotate(5deg) scale(1.09)}}
+
+
 .conversation>.conversation-head,.conversation>.messages,.conversation>.composer-area,.conversation>.starters,.conversation>#connectionInfo{position:relative;z-index:2}
 @media(max-width:760px){.conversation{-webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15)}.world-light-glow{width:72%;left:-30%}.conversation>.glass-shadow-mist::before{filter:blur(12px)}.conversation>.glass-shadow-mist::after{filter:blur(15px)}}
 /* The status dialogue and all call controls sit together at the bottom. */
