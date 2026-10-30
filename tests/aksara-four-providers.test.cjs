@@ -77,10 +77,39 @@ test("Prepared CAHAYA and GELAP replies answer every four-brain question",()=>{
   }
  }
  for(const name of canonical)assert.ok(Identity.answerIdentity("Siapa Aku").includes(name),"Siapa Aku missing "+name);
- for(const label of ["utama","sandaran pertama","sandaran kedua","CAHAYA","GELAP","Ready","Connected"])
+ for(const label of ["utama","fallback","backup terakhir","CAHAYA","GELAP","AI routing","rate limit"])
   assert.ok(Identity.WHO_AM_I.includes(label),"Siapa Aku missing "+label);
  assert.ok(Identity.answerIdentity("Empat Otak Aksara")?.includes("OrcaRouter"),"Manual four-brain query remains available");
- assert.ok(Identity.WHO_AM_I.length<500);
+ assert.ok(Identity.WHO_AM_I.length<900);
+});
+
+test("Locked Malay casual + English technical language applies to Gemini, all fallbacks and Voice",()=>{
+ const Brain=require("../bilik-antara-brain");
+ const html=fs.readFileSync("bilik-antara.html","utf8");
+ const css=fs.readFileSync("bilik-antara.css","utf8");
+ const who=Identity.answerIdentity("Siapa Aku");
+ const coder=Identity.answerIdentity("The Coder Poet");
+ for(const term of ["AI routing","backend","fallback","rate limit","kuota"]){
+  assert.match(who,new RegExp(term,"i"),"Siapa Aku missing "+term);
+ }
+ for(const term of ["XDA Developers","Twister Kernel","modify kernel","optimize performance","debugging","overclocking","bootloop","Dulu aku debug code"]){
+  assert.match(coder,new RegExp(term,"i"),"The Coder Poet missing "+term);
+ }
+ assert.match(Identity.TECH_STYLE,/GAYA BAHASA AKSARA \(STANDARD\)/);
+ assert.match(Brain.CORE,/GAYA BAHASA STANDARD/);
+ assert.match(Brain.VOICE_GUIDANCE,/English technical terms/);
+ assert.match(Identity.RUNTIME_PROMPT,/English technical terms/);
+ assert.match(Identity.VOICE_CORE_PROMPT,/English technical terms/);
+ assert.doesNotMatch(who+coder,/penghalaan|sandaran lapisan/i);
+ const starters=[...html.matchAll(/<button class="starter" type="button">([^<]+)<[/]button>/g)].map(x=>x[1]);
+ assert.deepEqual(starters,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas"]);
+ assert.match(html,/starterFollowUpTarget=starterText==="Siapa Aku"\?"The Coder Poet":""/);
+ assert.match(html,/coderPoetFollowUp:followUpTarget==="The Coder Poet"/);
+ assert.match(html,/if\(data\?\.coderPoetFollowUp===true\)/);
+ assert.match(html,/Nak tahu tentang "The Coder Poet" pulak ke/);
+ assert.match(css,/\.msg-followup-btn/);
+ assert.match(html,/bilik-antara-identity\.js\?v=28/);
+ assert.match(html,/bilik-antara-brain\.js\?v=13/);
 });
 
 test("Unrelated creative requests and recommendations must not hijack the four-brain answer",()=>{

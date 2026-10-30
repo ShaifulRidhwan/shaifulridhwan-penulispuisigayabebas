@@ -47,11 +47,25 @@ test("Gemini provenance questions answer Google directly without confusing Aksar
 test("Siapa Aku gives a concise project introduction and describes its models",()=>{
  const reply=ID.answerIdentity("Siapa Aku");
  assert.match(reply,/Aksara A\.I\./);
- assert.match(reply,/dibangunkan oleh Shaiful Ridhwan/);
+ assert.match(reply,/Shaiful Ridhwan bina/);
  assert.match(reply,/Gemini, Groq, OpenRouter dan OrcaRouter/);
  assert.match(reply,/Voice Chat.*Gemini Live/);
- assert.ok(reply.length<500,"First answer leaves detail for a follow-up");
+ assert.ok(reply.length<900,"First answer keeps technical detail without becoming a long dossier");
+ assert.match(reply,/AI routing/);
+ assert.match(reply,/fallback/);
+ assert.match(reply,/rate limit/);
  assert.equal(ID.answerIdentity("siapa aku?"),reply);
+});
+test("The Coder Poet keeps the real Android kernel background and English technical vocabulary",()=>{
+ const reply=ID.answerIdentity("The Coder Poet");
+ for(const phrase of ["XDA Developers","Twister Kernel","coding","debugging","overclocking","bootloop","optimize performance","debug code","debug diri sendiri"]){
+  assert.ok(reply.includes(phrase),"Coder Poet missing "+phrase);
+ }
+ assert.match(ID.TECH_STYLE,/Malay|Bahasa Melayu/);
+ for(const word of ["backend","fallback","rate limit","kernel","debug","performance"]){
+  assert.ok(ID.TECH_STYLE.includes(word),"Technical standard missing "+word);
+ }
+ assert.doesNotMatch(reply,/penghalaan|sandaran lapisan/i);
 });
 test("Verified Shaiful Ridhwan biography is rich, natural and attribution-safe",()=>{
  const detailed=ID.CREATOR_STORY;
