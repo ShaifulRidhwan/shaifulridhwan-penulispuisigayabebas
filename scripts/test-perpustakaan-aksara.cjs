@@ -15,7 +15,7 @@ test("Katalog mempunyai metadata dan pautan karya utama",()=>{
  assert.match(page,/<html lang="ms">/);
  assert.match(page,/name="viewport"/);
  assert.match(page,/assets\/novel\/cover-01\.jpg/);
- assert.match(page,/href="antara-cahaya-dan-gelap\.html\?baca=1"/);
+ assert.match(page,/href="perpustakaan-aksara\.html" aria-current="page">Novel<\/a>/);
  assert.match(page,/id="books"/);
  assert.match(page,/id="archiveBooks"/);
 });
@@ -33,9 +33,11 @@ test("Koleksi pilihan mengandungi penulis dan bahasa sasaran",()=>{
  assert.ok(books.some(b=>b[2]==="Fyodor Dostoevsky"));
  assert.ok(books.some(b=>b[2]==="Albert Camus"));
  assert.ok(books.some(b=>b[3]==="ms"));
- assert.ok(books.some(b=>b[3]==="id"));
+ assert.ok(books.some(b=>b[0]==="aksara-original"&&b[3]==="ms"));
+ assert.ok(!books.some(b=>["mel-hangtuah","indo-sitti"].includes(b[0])));
  for(const book of books){
-  assert.equal(book.length,10,"Setiap rekod mempunyai sepuluh medan");
+  assert.ok(book.length===10||book.length===11,"Rekod boleh mempunyai imej kulit buku");
+  if(book[0]==="aksara-original"){assert.equal(book[6],"antara-cahaya-dan-gelap.html?baca=1");continue;}
   const url=new URL(book[6]);
   assert.equal(url.protocol,"https:");
   assert.ok(["www.gutenberg.org","standardebooks.org","www.penguinrandomhouse.com","ms.wikisource.org","id.wikisource.org"].includes(url.hostname),"Sumber luar tidak disahkan: "+url.hostname);
@@ -57,8 +59,8 @@ test("Hak cipta dan kawalan pemuatan di luar pelayan dinyatakan",()=>{
 });
 
 test("Navigasi Novel masuk terus pembaca, Karya ke katalog",()=>{
- assert.match(bilik,/href="antara-cahaya-dan-gelap\.html\?baca=1">Novel<\/a>/);
- assert.match(bilik,/<strong>Karya · Perpustakaan AKSARA<\/strong>/);
+ assert.match(bilik,/href="perpustakaan-aksara\.html">Novel<\/a>/);
+ assert.match(bilik,/<strong>Novel · Perpustakaan AKSARA<\/strong>/);
  assert.match(index,/href="antara-cahaya-dan-gelap\.html\?baca=1">Baca Novel<\/a>/);
  assert.match(novel,/URLSearchParams\(window\.location\.search\)\.get\("baca"\)==="1"/);
  assert.match(novel,/openBook\(savedPage\(\)>0\)/);
@@ -68,6 +70,8 @@ test("Penapis guna chips aksesibel tanpa dropdown Android",()=>{
  assert.doesNotMatch(page,/<select\b/i);
  assert.match(page,/data-language="en"/);
  assert.match(page,/data-language="ms"/);
+ assert.doesNotMatch(page,/data-language="id"/);
+ assert.doesNotMatch(page,/data-category="hikayat"/);
  assert.match(page,/data-category="falsafah"/);
  assert.match(page,/data-category="saved"/);
  assert.match(page,/aria-pressed="true"/);
@@ -82,5 +86,8 @@ test("Glass, mobile single-column dan imej kulit buku",()=>{
  assert.match(page,/pg2554\.cover\.medium\.jpg/);
  assert.match(page,/img\.addEventListener\("error",next\)/);
  assert.match(page,/pg2554-images\.html/);
+ assert.doesNotMatch(page,/PILIHAN EDITOR/);
+ assert.doesNotMatch(page,/class="feature"/);
+ assert.match(page,/assets\/novel\/cover-01\.jpg/);
  assert.match(page,/perpustakaan-aksara\.css\?v=2/);
 });

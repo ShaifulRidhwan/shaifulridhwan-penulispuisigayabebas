@@ -14,7 +14,7 @@ async function run(){
    const errors=[];page.on("pageerror",e=>errors.push(e.message));
    await page.goto(base+"/perpustakaan-aksara.html",{waitUntil:"domcontentloaded"});
    await page.locator(".book").first().waitFor({timeout:15000});
-   assert.equal(await page.locator(".book").count(),16,"16 curated books load");
+   assert.equal(await page.locator(".book").count(),15,"15 curated books load");
    assert.equal(await page.locator("select").count(),0,"No native select exists");
    const pos=await page.evaluate(()=>({x:document.documentElement.scrollWidth,w:document.documentElement.clientWidth,grid:getComputedStyle(document.querySelector(".books")).gridTemplateColumns,glass:getComputedStyle(document.querySelector(".book")).backdropFilter}));
    assert.ok(pos.x<=pos.w+2,viewport.name+": unwanted horizontal scrolling "+JSON.stringify(pos));
@@ -34,7 +34,7 @@ async function run(){
   const page=await browser.newPage({viewport:{width:390,height:844}});
   await page.goto(base+"/bilik-antara.html",{waitUntil:"domcontentloaded"});
   const nav=page.locator(".topbar .nav-actions a",{hasText:"Novel"});
-  assert.match(await nav.getAttribute("href"),/antara-cahaya-dan-gelap\.html\?baca=1/,"Novel nav destination");
+  assert.match(await nav.getAttribute("href"),/perpustakaan-aksara\.html/,"Novel nav destination");
   await page.goto(base+"/antara-cahaya-dan-gelap.html?baca=1",{waitUntil:"domcontentloaded"});
   await page.locator("#readerHost:not([hidden])").waitFor({timeout:15000});
   await page.frameLocator("#novelFrame").locator("#reader").waitFor({timeout:15000});
