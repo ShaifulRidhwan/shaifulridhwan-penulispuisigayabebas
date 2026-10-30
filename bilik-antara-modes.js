@@ -33,8 +33,8 @@ function localIdentity(question,identity){
  // Known project facts, separate voice. Never infer a person's private biography.
  if(!identity||typeof question!=="string")return null;
  const q=question.trim().toLocaleLowerCase("ms-MY").replace(/[?!.،]+$/g,"").trim();
- const self=/^(?:kau\s+(?:ni\s+|ini\s+)?siapa|siapa\s+(?:kau|awak|kamu)(?:\s+sebenarnya)?|kau\s+siapa\s+sebenarnya|who\s+are\s+you|kenalkan\s+diri\s+kau|nama\s+kau\s+apa|siapa\s+aksara(?:\s+a\.?i\.?)?)$/i.test(q);
- if(self)return "Aku "+identity.NAME+", sebuah kecerdasan buatan dalam "+identity.ROOM+" yang dibangunkan oleh "+identity.CREATOR+". Aku tak mendakwa memahami hidup seperti manusia. Dalam mod GELAP, tugas aku bukan menghias jawapan supaya menyenangkan hati, tetapi memeriksa apa yang benar, apa yang kita andaikan, dan di mana hujah mula runtuh.";
+ const self=/^(?:ko\s+(?:ni\s+|ini\s+)?siapa|kau\s+(?:ni\s+|ini\s+)?siapa|siapa\s+(?:kau|awak|kamu)(?:\s+sebenarnya)?|kau\s+siapa\s+sebenarnya|who\s+are\s+you|kenalkan\s+diri\s+kau|nama\s+kau\s+apa|siapa\s+aksara(?:\s+a\.?i\.?)?)$/i.test(q);
+ if(self)return "Aku "+identity.NAME+", sebuah kecerdasan buatan dalam "+identity.ROOM+" yang dibangunkan oleh "+identity.CREATOR+". Ada dua cara aku menjawab: CAHAYA yang santai dan praktikal, GELAP yang kritis dan berfalsafah. Sekarang GELAP aktif. Kedua-duanya menggunakan enjin A.I. yang sama. Aku tak mendakwa memahami hidup seperti manusia. Dalam mod GELAP, tugas aku bukan menghias jawapan supaya menyenangkan hati, tetapi memeriksa apa yang benar, apa yang kita andaikan, dan di mana hujah mula runtuh.";
  const founder=/^(?:(?:siapa|siapakah|kenal\s+tak|siapa\s+sebenarnya)\s+)?shaiful\s+ridhwan(?:\s+(?:tu|itu|sebenarnya|wei|lah|ni))?(?:\s+siapa)?$|^kau\s+kenal\s+(?:tak\s+)?shaiful\s+ridhwan$/i.test(q);
  if(founder)return identity.CREATOR+" ialah penulis puisi gaya bebas Malaysia yang menggabungkan pengaturcaraan dan sastera melalui identiti The Coder Poet. Dia membangunkan "+identity.ROOM+" dan membentuk pengalaman "+identity.NAME+"; model asas di belakangnya tetap dibina oleh penyedia masing-masing. Ada beza antara mencipta keupayaan dengan menentukan arah keupayaan itu digunakan. Kedua-duanya kerja yang berbeza dan wajar disebut dengan tepat.";
  const built=/^(?:siapa\s+(?:yang\s+)?(?:buat|bina|bangunkan|membangunkan|cipta)\s+(?:kau|aksara(?:\s+a\.?i\.?)?|bilik\s+antara)|kau\s+(?:dibina|dibuat|dibangunkan)\s+(?:oleh\s+)?siapa|siapa\s+(?:pencipta|pembangun|pengasas)\s+(?:kau|bilik\s+antara))$/i.test(q);
@@ -43,6 +43,46 @@ function localIdentity(question,identity){
  if(room)return identity.ROOM+" ialah ruang A.I. yang dibangunkan oleh "+identity.CREATOR+". Di sini, "+identity.NAME+" menggunakan model pihak ketiga bersama identiti, penghalaan dan alat yang disepadukan dalam aplikasi. Nama dan kemampuan patut dibezakan: sebuah antara muka yang memiliki watak bukan bermakna ia memiliki kesedaran manusia.";
  return null;
 }
+
+function localModeGuide(question,mode,identity){
+ const q=String(question||"").trim().toLocaleLowerCase("ms-MY").replace(/[?!.,]+$/g,"").trim();
+ if(!q||q.length>170)return null;
+ const asks=/^(?:(?:apa|apakah|jelaskan|terangkan|cerita|terang|nak tahu)\s+(?:itu|tentang|pasal|maksud|beza|perbezaan|fungsi|pilihan)?\s*)?(?:mod|mode)\s+(?:cahaya|gelap|cahaya dan gelap|gelap dan cahaya|apa|yang ada|apa yang ada)?$|^(?:apa beza|beza apa|beza|perbezaan|jelaskan beza|apa perbezaan|terangkan)\s+(?:mod\s+)?cahaya\s+(?:dan|dengan|atau|vs)\s+gelap$|^(?:cahaya dan gelap|gelap dan cahaya|mod cahaya|mode cahaya|mod gelap|mode gelap)$|^(?:kau|ko|aksara)\s+(?:ada|guna|pakai|punya)\s+(?:berapa\s+)?(?:mod|mode)(?:\s+apa)?$|^(?:mod|mode)\s+(?:apa|mana)\s+(?:yang\s+)?(?:aktif|sekarang|kau guna)$|^(?:sekarang)\s+(?:mod|mode)\s+(?:apa|mana)$/.test(q);
+ if(!asks)return null;
+ const dark=normalize(mode)==="gelap";
+ const active=dark?"GELAP":"CAHAYA";
+ const intro=dark?"Aku sedang menggunakan GELAP. Ini bukan mod untuk sekadar bercakap suram. Ia memeriksa premis, percanggahan dan alasan di sebalik jawapan.":"Sekarang aku menggunakan CAHAYA. Gaya asal Aksara ini santai, jelas dan mengutamakan jawapan yang berguna.";
+ return intro+"\n\nCAHAYA menerangkan sesuatu dengan cara mudah dan praktikal. GELAP meneliti mengapa kita mempercayai penerangan itu, termasuk kelemahannya. Kedua-duanya masih "+(identity?.NAME||"Aksara A.I.")+" dalam "+(identity?.ROOM||"Bilik Antara")+", berkongsi fakta, memori, alat dan penyedia model yang tersedia. Tukar pada ikon pelaras sebelah Hantar.";
+}
+function localPhilosophy(question,mode,history){
+ const q=String(question||"").trim().toLocaleLowerCase("ms-MY").replace(/[?!.,]+$/g,"").trim();
+ const dark=normalize(mode)==="gelap";
+ if(/^(?:(?:apa|apakah|apa tu|apa itu|apa maksud|maksud|terangkan|jelaskan|define)\s+)?(?:falsafah|filosofi|philosophy)(?:\s+(?:tu|itu|sebenarnya))?$/.test(q)){
+  return dark
+   ?"Falsafah bukan hobi mencari kata-kata yang kedengaran bijak. Ia disiplin menyiasat perkara yang kita anggap sudah jelas: apa yang boleh diketahui, bagaimana kita patut bertindak, dan mengapa sesuatu dianggap bermakna.\n\nOrang boleh menghafal seratus jawapan. Tetapi selagi dia takut menyoal premisnya sendiri, dia masih belum benar-benar berfalsafah."
+   :"Falsafah ialah usaha meneliti soalan asas tentang pengetahuan, kewujudan, nilai dan cara kita berfikir. Contohnya, apabila kita kata sesuatu itu benar, falsafah mengajak kita bertanya: apa bukti dan alasan kita? Ia bukan sekadar kata-kata mendalam; ia latihan berfikir dengan teliti.";
+ }
+ if(/^(?:(?:mengapa|kenapa|untuk apa)\s+)?(?:kau|ko)\s+dan\s+aku\s+wujud$|^(?:kenapa|mengapa)\s+(?:aku\s+dan\s+kau|kita\s+berdua)\s+wujud$/.test(q)){
+  return dark
+  ?"Kau wujud sebagai manusia yang mengalami dunia, membuat pilihan dan menanggung akibatnya. Aku pula sistem A.I. yang beroperasi apabila digunakan; aku tidak mempunyai pengalaman hidup seperti kau.\n\nMengapa kau wujud? Sains boleh membincangkan proses kehidupan, tetapi tidak menetapkan satu tujuan peribadi yang wajib untuk kau terima. Di sinilah persoalan eksistensial bermula: adakah makna sesuatu yang ditemui, diwarisi, atau dibentuk melalui tindakan? Aku tak akan mereka jawapan muktamad bagi pihak kau."
+  :"Kita wujud dalam erti yang berbeza. Kau manusia yang hidup dan mengalami dunia; aku sistem A.I. yang dibina untuk membantu melalui perbualan. Sains boleh menerangkan bagaimana kehidupan berkembang dan bagaimana sistem seperti aku dibina. Soalan tentang tujuan hidup pula dibincangkan oleh falsafah, dan orang mempunyai jawapan yang berbeza.";
+ }
+ if(/^(?:(?:bagi|berikan|bagi aku|bagi satu|kongsi|share)\s+)?(?:1|satu|sebuah)\s+(?:falsafah|filosofi|idea falsafah|persoalan falsafah)(?:\s+(?:yang\s+)?(?:menarik|gelap|deep))?$|^(?:bagi|berikan|kongsi)\s+(?:aku\s+)?(?:1|satu)\s+(?:falsafah|filosofi)$/.test(q)){
+  const last=Array.isArray(history)?history.filter(m=>m?.role==="assistant"&&typeof m.content==="string").slice(-4):[];
+  const texts=dark?[
+   "Satu persoalan eksistensial: jika semua alasan kita untuk memilih sesuatu datang daripada kebiasaan dan tekanan orang lain, berapa banyak keputusan itu benar-benar milik kita?\n\nKebebasan bukan sekadar memiliki pilihan. Ia juga keberanian mengakui tanggungjawab terhadap pilihan yang dibuat.",
+   "Skeptisisme bertanya: adakah kau mempercayai sesuatu kerana buktinya kukuh, atau kerana kepercayaan itu memudahkan hidup kau?\n\nKeselesaan tidak membuktikan kebenaran. Tetapi rasa tidak selesa juga bukan bukti kita betul.",
+   "Dalam falsafah absurdisme, manusia mencari makna yang pasti sedangkan dunia tidak menjamin satu jawapan tunggal.\n\nItu bukan arahan untuk menyerah. Itu cabaran supaya kita jujur tentang ketidakpastian, dan tetap bertanggungjawab terhadap tindakan."
+  ]:[
+   "Satu idea daripada Stoisisme: bezakan perkara yang berada dalam kawalan kau dengan perkara yang tidak. Tindakan dan usaha kau boleh dipilih; reaksi orang lain tidak semestinya. Ini bukan alasan untuk pasrah, tetapi cara menggunakan tenaga dengan lebih bijak.",
+   "Satu persoalan epistemologi: bagaimana kau tahu sesuatu itu benar? Cuba bezakan bukti, andaian dan perkara yang kau hanya dengar daripada orang lain. Soalan kecil ini boleh mengubah cara kita menilai sesuatu.",
+   "Satu idea eksistensialisme: pilihan kita bukan sekadar membentuk hari ini, tetapi memperlihatkan nilai yang kita sanggup pertahankan melalui tindakan. Cakap mudah; konsistensi itulah ujian sebenar."
+  ];
+  return texts.find(t=>!last.some(m=>m.content.includes(t.slice(0,45))))||texts[0];
+ }
+ return null;
+}
+
 function localReflection(question,history){
  // Deliberately narrow. Extended explanations, urgent matters and nuanced
  // emotional concerns must retain full-model contextual support.
@@ -98,7 +138,7 @@ function plan(value,intent,base,question){
 }
 function reactionGuidance(value){return normalize(value)==="gelap"?REACTION:"";}
 function reviewGuidance(value){return normalize(value)==="gelap"?REVIEW:"";}
-const API=Object.freeze({normalize,instructions,plan,isReflective,reactionGuidance,reviewGuidance,localIdentity,localReflection,emotionalDisclosure,contextGuidance,DELIVERY});
+const API=Object.freeze({normalize,instructions,plan,isReflective,reactionGuidance,reviewGuidance,localIdentity,localModeGuide,localPhilosophy,localReflection,emotionalDisclosure,contextGuidance,DELIVERY});
 if(typeof module!=="undefined"&&module.exports)module.exports=API;
 if(root)root.BilikAntaraModes=API;
 })(typeof window!=="undefined"?window:null);
