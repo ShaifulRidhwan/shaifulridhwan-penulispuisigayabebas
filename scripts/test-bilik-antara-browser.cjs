@@ -54,6 +54,32 @@ async function audit(browser,label,options){
   assert.equal(await page.locator(".world-embers i").count(),3,"Ambient particles remain");
   assert.deepEqual(state.heavyAssets,[],"3D assets must stay lazy until Voice Chat");
   assert.equal(await page.locator("#voicePanel").isVisible(),false,"Voice must be opt-in");
+  if(label!=="desktop"){
+   // Android expands its browser toolbar without changing the layout viewport.
+   // This mock shrinks only the VisualViewport and must keep composer onscreen.
+   const toolbar=await page.evaluate(async()=>{
+    const viewport=window.visualViewport;
+    if(!viewport)return {skipped:true};
+    const ownHeight=Object.getOwnPropertyDescriptor(viewport,"height");
+    const visible=Math.round(window.innerHeight-110);
+    Object.defineProperty(viewport,"height",{configurable:true,get:()=>visible});
+    viewport.dispatchEvent(new Event("resize"));
+    await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
+    const rect=selector=>document.querySelector(selector).getBoundingClientRect();
+    const measured={visible,composerBottom:rect(".composer").bottom,modeBottom:rect("#thoughtMode").bottom,
+     sendBottom:rect("#sendBtn").bottom,shellBottom:rect(".shell").bottom};
+    if(ownHeight)Object.defineProperty(viewport,"height",ownHeight);
+    else delete viewport.height;
+    viewport.dispatchEvent(new Event("resize"));
+    await new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done)));
+    return measured;
+   });
+   assert.ok(!toolbar.skipped,label+" requires VisualViewport");
+   assert.ok(toolbar.composerBottom<=toolbar.visible+3,label+" composer behind browser toolbar: "+JSON.stringify(toolbar));
+   assert.ok(toolbar.modeBottom<=toolbar.visible+3,label+" mode control clipped: "+JSON.stringify(toolbar));
+   assert.ok(toolbar.sendBottom<=toolbar.visible+3,label+" Send clipped: "+JSON.stringify(toolbar));
+   assert.ok(toolbar.shellBottom<=toolbar.visible+3,label+" shell too tall: "+JSON.stringify(toolbar));
+  }
   // Removed recorder assets must never run, while active microphone/dictation remain available.
   assert.equal(await page.locator("#voiceFallback, #voiceFallbackStart, #voiceFallbackStop").count(),0);
   assert.equal(await page.locator("#voiceDictate").count(),1);
