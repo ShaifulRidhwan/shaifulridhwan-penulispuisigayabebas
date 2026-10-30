@@ -520,7 +520,12 @@ exports.handler=async event=>{
     if(transient&&(textOnly||imageOnly)&&Router.enabled()){
       // If Groq/Orca already failed, try only the universal OpenRouter backup.
       // Otherwise use the full ranked chain, including primary text providers.
-      const fallback=await useAlternative(alternativeTried?{only:backupTextProviders}:{});
+      // Once Gemini fails, the earlier first-token window has already been
+      // spent on primaries. Grant the remaining request deadline to the final
+      // fallback instead of suppressing it on streaming conversations.
+      const fallback=await useAlternative(alternativeTried?
+        {only:backupTextProviders,firstResponseDeadline:deadline}:
+        {firstResponseDeadline:deadline});
       if(fallback)return fallback;
     }
     log("error",{http:error.status||null,name:error.name||"unknown",ms:Date.now()-started});
