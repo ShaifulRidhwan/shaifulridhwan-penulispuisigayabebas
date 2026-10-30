@@ -13,13 +13,14 @@ function pair(text){
 }
 function reply(value,options={}){
  const text=String(value||"");if(!text.trim())return text;
+ const dark=options.mode==="gelap";
  let seen=0;
  // Count whole graphemes: flags, skin tones and joined families are one emoji.
  // Literal code is content, not conversational decoration: never rewrite it.
  const clean=text.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`)/g).map((part,index)=>
-  index%2?part:glyphs(part).map(g=>emoji.test(g)?(++seen<=2?g:""):g).join("")
+  index%2?part:glyphs(part).map(g=>emoji.test(g)?(++seen<=(dark?0:2)?g:""):g).join("")
  ).join("").replace(/[ \t]+\n/g,"\n").trimEnd();
- if(options.complete===false||seen>=2)return clean;
+ if(dark||options.complete===false||seen>=2)return clean;
  const needed=pair(text).filter(x=>!clean.includes(x)).slice(0,2-seen);
  return clean+" "+needed.join(" ");
 }
