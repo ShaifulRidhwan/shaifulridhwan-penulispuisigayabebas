@@ -108,3 +108,41 @@
  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)
 }}
 @media(prefers-reduced-motion:reduce){.ba-drawer :is(.ba-button,.ba-mini,.ba-tiny,.ba-close,.ba-session-title){transition:none}}
+
+
+/* Session archive: titles are editorial headings, not giant Liquid Glass pills. */
+.ba-drawer .ba-session{
+ display:flex;flex-direction:column;gap:11px;padding:14px 15px;
+ border-radius:16px;border:1px solid rgba(241,216,179,.19);
+ background:linear-gradient(125deg,rgba(231,213,187,.055),rgba(122,162,203,.04) 92%);
+ box-shadow:inset 0 1px 0 rgba(255,247,229,.07);
+ min-width:0;
+}
+.ba-session-head{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.ba-session-info{display:flex;flex-direction:column;align-items:flex-start;gap:4px;flex:1;min-width:0}
+.ba-session-kicker{font:650 10px/1.3 'DM Sans',sans-serif;letter-spacing:.13em;color:rgba(232,208,174,.76)}
+.ba-drawer .ba-session button.ba-session-title{
+ display:block;width:100%;min-width:0;max-width:100%;padding:0;margin:0;
+ border:0;border-radius:3px;background:transparent;box-shadow:none;
+ -webkit-backdrop-filter:none;backdrop-filter:none;
+ font:650 16px/1.35 'DM Sans',sans-serif;color:#f5e9d8;text-align:left;
+ text-shadow:0 1px 5px rgba(0,0,0,.22);
+ overflow-wrap:anywhere;word-break:normal;
+ transition:color .18s ease;transform:none;
+}
+.ba-drawer .ba-session button.ba-session-title:hover{
+ color:#fff9ef;background:transparent;box-shadow:none;text-decoration:underline;text-underline-offset:3px;
+}
+.ba-drawer .ba-session button.ba-session-title:active{transform:none}
+.ba-session-date{font:400 11px/1.5 'DM Sans',sans-serif;color:rgba(223,221,220,.72);font-variant-numeric:tabular-nums}
+.ba-session-pinned{font:550 10px/1.3 'DM Sans',sans-serif;color:#efd4a4;border:1px solid rgba(230,191,138,.22);background:rgba(214,169,100,.08);border-radius:999px;padding:5px 8px;white-space:nowrap}
+.ba-drawer .ba-session-actions{
+ margin:0;padding:10px 0 0;border-top:1px solid rgba(235,207,167,.15);
+ gap:7px;width:100%;align-items:center;
+}
+.ba-session-actions .ba-tiny{font-size:11px;line-height:1.3;padding:6px 11px}
+.ba-memory-template-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:2px 0 12px}
+.ba-memory-template-hint{font:400 11px/1.5 'DM Sans',sans-serif;color:rgba(227,218,205,.76)}
+.ba-drawer .ba-memory-template{font-size:11px;padding:6px 11px}
+@media(max-width:430px){.ba-drawer .ba-session{padding:13px}.ba-drawer .ba-session button.ba-session-title{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.ba-drawer .ba-session button.ba-session-title{transition:none}}
