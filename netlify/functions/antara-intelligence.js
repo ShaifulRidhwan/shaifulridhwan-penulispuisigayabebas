@@ -156,11 +156,11 @@ function cognitiveProfile(question,history,intent,mode="cahaya"){
  if(intent?.simpleCalculation)return {...safe,focus:"quantitative",reasoningLevel:"low"};
  if(intent?.reaction)return {...safe,focus:"contextual",reasoningLevel:"low"};
  const contextual=!!(h.length&&(intent?.contextFollowUp||/^(?:kenapa|mengapa|macam mana|bagaimana|contoh lain|lagi|jelaskan lagi|maksudnya|jadi|habis|betul ke|apa buktinya|sambung|teruskan|yang tadi|bukan tu)[!?.\s]*$/i.test(raw)));
- const argument=!!intent?.debate||/(?:\b(?:benarkah|betulkah|sahih|valid|kontradiksi|percanggahan|bias|fallacy|hipokrasi|munafik)\b|bukti (?:apa|untuk|bahawa)|uji (?:andaian|dakwaan)|kritik (?:pendapat|idea)|apa kelemahan)/i.test(q);
+ const argument=!!intent?.debate||/(?:\b(?:benarkah|betulkah|sahih|valid|kontradiksi|percanggahan|bias|fallacy|hipokrasi|munafik)\b|bukti (?:apa|untuk|bahawa)|(?:dakwaan|tuduhan|hujah).{0,100}(?:bukti|benar|sah|lemah)|uji (?:andaian|dakwaan)|kritik (?:pendapat|idea)|apa kelemahan)/i.test(q);
  const deliberation=/(?:\b(?:patutkah|wajarkah|perlukah|pilihan terbaik|mana lebih|trade.?off|pro dan kontra|pros and cons|risiko|keputusan|strategi|bandingkan)\b|lebih baik.*(?:atau|berbanding)|pilih.*(?:antara|atau)|antara .{3,60} dan .{3,60} mana)/i.test(q);
  const quantitative=!!intent?.calculate||/(?:kebarangkalian|probabiliti|regresi|statistik|varians|purata|simpangan piawai|persamaan|integral|derivatif|korelasi|algoritma (?:kira|hitung))/i.test(q)&&!/(?:apa itu|maksud|definisi|terangkan|jelaskan)/i.test(q);
  const debugging=intent?.task==="technical"&&/(?:ralat|error|bug|debug|tak (?:jalan|berfungsi)|gagal|rosak|punca|baiki|fix|uji|unit test|profiler|optimi[sz])/i.test(q);
- const philosophy=/(?:\b(?:falsafah|filosofi|eksistensial|absurd|nihilis|epistemologi|metafizik|ontologi|etika|paradoks|kesedaran|determinisme)\b|makna (?:hidup|kewujudan)|tujuan (?:hidup|kita|manusia)|manusia.*(?:bebas|wujud|percaya)|mengapa.*(?:wujud|bermakna|pilihan|kebenaran)|apa ertinya (?:hidup|bebas))/i.test(q);
+ const philosophy=/(?:\b(?:falsafah|filosofi|eksistensial|absurd|nihilis|epistemologi|metafizik|ontologi|etika|paradoks|kesedaran|determinisme)\b|makna (?:hidup|kewujudan)|\bkewujudan\b|tujuan (?:hidup|kita|manusia)|manusia.*(?:bebas|wujud|percaya)|mengapa.*(?:wujud|bermakna|pilihan|kebenaran)|apa ertinya (?:hidup|bebas))/i.test(q);
  const claim=/(?:adakah|benarkah|betul ke|apakah benar|sahkan|semak fakta|bukti|kajian)/i.test(q);
  const complex=(raw.length>130&&/(?:\bdan\b|\batau\b|,\s|;)/i.test(q))||/^(?:terangkan|jelaskan|analisis|bandingkan|kritikkan|kaji|buktikan).*?(?:secara mendalam|terperinci|langkah demi langkah|dari pelbagai sudut)/i.test(q);
  let focus="general";
