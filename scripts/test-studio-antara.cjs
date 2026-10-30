@@ -23,7 +23,7 @@ test('Studio is cloud-only, image-only and all client JS parses',()=>{
 test('Studio audit rejects orphaned styles after removing old UI phases',()=>{
  const html=fs.readFileSync('studio-antara.html','utf8');
  const css=fs.readFileSync('studio-antara.css','utf8');
- assert.match(html,/studio-antara\.css\?v=18/);
+ assert.match(html,/studio-antara\.css\?v=19/);
  for(const old of ['hero','hero-facts','eyebrow','step-label','tiny-star','visual-symbol','enhance-row','model-note','brand-mark','brand-light','brand-muted']){
   const pattern=new RegExp('(^|[^a-zA-Z0-9_-])\\.'+old+'(?![a-zA-Z0-9_-])');
   assert.doesNotMatch(css,pattern,'Old unused selector should not survive: '+old);
@@ -39,7 +39,7 @@ test('Studio 2.4 removes redundant copy and decorative icons without hiding func
  assert.match(html,/<h2 id="resultTitle" class="sr-only">Pratonton hasil imej<\/h2>/);
  assert.match(html,/<a class="aksara-nav-link" href="index\.html">Laman utama<\/a>/);
  assert.match(html,/<div class="result-stage-footer"><span id="resultIndicator" class="result-indicator is-waiting">MENUNGGU<\/span><\/div>/);
- assert.match(html,/studio-antara\.css\?v=18/);
+ assert.match(html,/studio-antara\.css\?v=19/);
  assert.match(html,/studio-antara-cloud\.js\?v=8/);
  assert.match(script,/ui\.indicator\.classList\.toggle\('is-waiting'/);
  assert.match(script,/ui\.indicator\.classList\.remove\('is-waiting'\)/);
@@ -208,4 +208,15 @@ test('Studio 2.6 keeps visual headings accessible but hidden, with glass status 
  assert.match(css,/\.result \.result-stage-footer #resultIndicator\{/);
  assert.match(script,/\$\('resultStage'\)\.scrollIntoView/);
  assert.doesNotMatch(script,/\$\('resultTitle'\)\.scrollIntoView/);
+});
+
+
+test('Studio removes duplicate footer but keeps visual preview and gallery',()=>{
+ const html=fs.readFileSync('studio-antara.html','utf8');
+ const css=fs.readFileSync('studio-antara.css','utf8');
+ assert.doesNotMatch(html,/<footer\b|studio-footer|CAHAYA MENCIPTA BENTUK/);
+ assert.doesNotMatch(css,/\.studio-footer\{/);
+ assert.match(html,/<details class="glass-card gallery" id="historyPanel"/);
+ assert.match(html,/<section class="glass-card result"/);
+ assert.match(css,/\.studio-shell main\{padding-bottom:clamp\(22px,3\.5vw,40px\)\}/);
 });
