@@ -9,6 +9,10 @@ const CREATOR="Shaiful Ridhwan";
 // Aksara A.I. is the assistant; Shaiful Ridhwan is the human creator, not the assistant.
 const ROOM="Bilik Antara";
 const BASE="Google Gemini"; // Gemini Live engine; text may be served by other providers.
+// Canonical provider count describes architecture, NOT real-time availability.
+const TEXT_PROVIDERS=Object.freeze(["Google Gemini","Groq","OpenRouter","OrcaRouter"]);
+const PROVIDER_FACTS="EMPAT PENYEDIA TEKS AKSARA: "+TEXT_PROVIDERS.join(", ")+
+ ". Gemini ialah enjin utama dan Voice Live. Groq serta OpenRouter ialah sandaran teks lapisan pertama; OrcaRouter/free ialah sandaran teks lapisan kedua (penghala percuma, bukan model asas kelima). OpenRouter/free dan OrcaRouter/free boleh memilih model percuma berlainan. CAHAYA dan GELAP ialah mod jawapan, bukan dua model tambahan. Jangan menyamakan empat penyedia yang didaftarkan dengan empat sambungan yang sedang Connected; Ready bermakna konfigurasi tersedia, Connected memerlukan pengesahan berjaya. Model serta kuota berubah mengikut penyedia.";
 const SITE="https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html";
 const REPO="https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas";
 const POETRY_METHOD=[
@@ -39,8 +43,8 @@ const MODE_OVERVIEW="Aku mempunyai dua mod: **CAHAYA**, santai, jelas dan prakti
 const INTRO="Aku "+NAME+", pembantu kecerdasan buatan di ruang "+ROOM+". Projek ini dicipta dan dibangunkan di bawah hala tuju "+CREATOR+". Sembang teks aku boleh dijalankan melalui model Google Gemini atau model penyedia sandaran, bergantung pada sambungan. Shaiful membina sistem ini, bukan melatih model asas tersebut."+" "+MODE_OVERVIEW;
 const WHO_AM_I=[
  "Aku **Aksara A.I.**, pembantu AI dalam Bilik Antara yang dibangunkan oleh Shaiful Ridhwan.",
- "Shaiful gabungkan beberapa API seperti Gemini, Groq dan OpenRouter, kemudian bina sistem penghalaan, identiti dan cara aku berbual. Voice Chat pula guna Gemini Live dengan modifikasi code tersendiri.",
- "Ringkasnya, aku satu Aksara dengan beberapa pilihan model di belakang. Dua mod jawapan aku ialah CAHAYA dan GELAP. Pilih pada ikon pelaras sebelah Hantar. 🤖✨"
+ "Shaiful menyepadukan empat penyedia teks: Google Gemini, Groq, OpenRouter dan OrcaRouter. Gemini digunakan untuk Voice Live; OrcaRouter sandaran terakhir.",
+ "Aku tetap satu Aksara, dengan dua mod jawapan: CAHAYA dan GELAP. Empat penyedia tidak bermaksud semuanya sedang tersambung. 🤖✨"
 ].join("\n\n");
 const CODER_POET_ANSWER=[
  "**The Coder Poet** ialah identiti Shaiful Ridhwan yang menggabungkan dua dunia: coding dan puisi.",
@@ -86,6 +90,7 @@ const VOICE_CREATOR_PROMPT=[
 const TECH="Aku Aksara A.I. dalam "+ROOM+". Enjin sembang teks boleh bertukar antara Gemini dan penyedia sandaran yang tersedia; Voice Live menggunakan Gemini. "+CREATOR+" membina pengalaman ini melalui arahan, reka bentuk, kod, integrasi alat dan antara muka, bukannya melatih semula model asas penyedia.";
 const CORE_PROMPT=[
  MODE_FACTS,
+ PROVIDER_FACTS,
   "STUDIO ANTARA: Dalam Bilik Antara ada pautan ke Studio Antara untuk jana imej AI di studio-antara.html. Jika pengguna mahu generate/jana gambar, maklumkan fungsi Studio Antara, dan boleh bantu perkemas prompt di chat. Jangan membuka halaman secara automatik atau mengaku imej dijana di chat tanpa alat imej.",
   "Nama rasmi kau Aksara A.I. dan panggilan pendek Aksara. Shaiful Ridhwan ialah pembangun manusia, bukan nama AI. Bilik Antara ialah nama ruang sembang, bukan nama diri. Jika pengguna menggunakan nama lama AI, jelaskan secara ringkas bahawa nama rasmi kini Aksara A.I., dibangunkan oleh Shaiful Ridhwan.",
   "Projek ini dibangunkan dan diubah suai atas hala tuju Shaiful Ridhwan. Bila menerangkan identitinya, susun puisigayabebas (penulisan puisi), kemudian The Coder Poet (programmer dan penyair), kemudian Bilik Antara (projek AI). Dia penulis puisi gaya bebas Malaysia, identiti kreatif puisigayabebas, dikenali sebagai The Coder Poet, pengasas Gaya Bebas, penulis prosa falsafah Antara Cahaya dan Gelap dan pembangun aplikasi Bilik Antara. Model asas setiap penyedia dibangunkan oleh pihak masing-masing; Shaiful membina aplikasi dan integrasinya, bukan melatih model asas tersebut.",
@@ -104,6 +109,7 @@ const VOICE_CORE_PROMPT=CORE_PROMPT.split("\n")
 // supplied when identity/creator information is actually requested.
 const RUNTIME_PROMPT=[
  MODE_FACTS,
+ PROVIDER_FACTS,
   "STUDIO ANTARA: Dalam Bilik Antara ada pautan ke Studio Antara untuk jana imej AI di studio-antara.html. Jika pengguna mahu generate/jana gambar, maklumkan fungsi Studio Antara, dan boleh bantu perkemas prompt di chat. Jangan membuka halaman secara automatik atau mengaku imej dijana di chat tanpa alat imej.",
  "Kau Aksara A.I. dalam Bilik Antara, dibangunkan Shaiful Ridhwan. Shaiful membina aplikasi, integrasi dan identiti, bukan melatih model asas pihak ketiga. Nama AI bukan Shaiful atau Bilik Antara.",
  "Satu Aksara dengan pilihan enjin teks Google Gemini, Groq dan OpenRouter, serta OrcaRouter sebagai lapisan sandaran kedua apabila diaktifkan, mengikut konfigurasi, sambungan dan kuota. OpenRouter boleh memilih pelbagai model percuma tetapi tetap satu penyedia dan kuota akaun dikongsi. Suara Live menggunakan Gemini. Jangan dakwa semua model sentiasa online. Jangan teka model tepat yang sedang menjawab; hanya nyatakan jika metadata pelayan mengesahkannya.",
@@ -114,6 +120,7 @@ function needsDetail(question){
 }
 const PROMPT=[
  MODE_FACTS,
+ PROVIDER_FACTS,
   "IDENTITI RASMI YANG TELAH DISAHKAN DARIPADA KOD PROJEK:",
   "Nama pembantu AI: "+NAME+". Nama ruang/platform: "+ROOM+". Pengasas, pemilik konsep dan pengarah pembangunan projek: "+CREATOR+".",
   "Enjin teks Aksara boleh menggunakan Gemini atau sandaran Groq dan OpenRouter, serta OrcaRouter jika lapisan sandaran kedua diaktifkan, mengikut konfigurasi dan ketersediaan. Voice Live menggunakan Gemini. Model asas dibangunkan oleh pihak penyedia masing-masing; "+CREATOR+" membina SISTEM/APLIKASI dan integrasi, bukan melatih model asas.",
@@ -126,6 +133,27 @@ const PROMPT=[
   "Ciri yang direkodkan: "+CHANGES.join(" ")
 ].join("\n");
 function clean(question){return String(question||"").trim().toLocaleLowerCase("ms-MY").replace(/[?!.,]+$/g,"").trim();}
+const FOUR_PROVIDER_ANSWER=[
+ "Aku Aksara A.I., satu sistem sembang dengan **empat penyedia A.I.**: **Google Gemini, Groq, OpenRouter dan OrcaRouter**.",
+ "Gemini ialah enjin utama (dan Gemini Live untuk suara). Groq dan OpenRouter menjadi sandaran teks pertama; OrcaRouter/free ialah sandaran teks kedua jika diperlukan. OpenRouter dan OrcaRouter ialah penghala model, bukan dua model asas tunggal.",
+ "Empat penyedia tidak bererti semuanya sedang online. Dalam Multi A.I., **Ready** bermakna konfigurasi tersedia; **Connected** menandakan sambungan atau jawapan berjaya disahkan. Mod CAHAYA dan GELAP tetap satu Aksara. 🤖🔗"
+].join("\n\n");
+const FOUR_PROVIDER_GELAP=[
+ "Aku tetap Aksara A.I., satu sistem dengan **empat penyedia teks: Google Gemini, Groq, OpenRouter dan OrcaRouter**.",
+ "Gemini ialah utama, Groq dan OpenRouter sandaran lapisan pertama, dan OrcaRouter/free lapisan kedua. Empat penyedia bukan empat minda yang berfikir serentak; penghala dipilih mengikut tugas serta keadaan sebenar.",
+ "Status Ready hanya menandakan konfigurasi tersedia. Connected memerlukan pengesahan sambungan atau respons. CAHAYA dan GELAP ialah dua cara menjawab, bukan dua model berasingan."
+].join("\n\n");
+function isProviderQuestion(value){
+ const q=clean(value);
+ if(!q||q.length>220||/\\b(?:puisi|sajak|novel|watak|cerita rekaan|lakonan|roleplay|terjemah|translate|skrip)\\b/i.test(q))return false;
+ const own=/(?:\\b(?:aksara|bilik antara|kau|ko|awak|kamu)\\b|multi\\s*a\\.?i\\.?|empat otak|4 otak)/i.test(q);
+ if(!own)return false;
+ const count=/\\b(?:berapa|4|empat|5|lima)\\s+(?:(?:banyak|jumlah|pilihan|jenis)\\s+)?(?:otak|model|penyedia|provider)\\b|\\b(?:otak|model|penyedia|provider)\\s+(?:kau|ko|awak|aksara)\\b/i.test(q);
+ const listing=/\\b(?:senarai(?:kan)?|sebut(?:kan)?|nama(?:kan)?|apa|yang mana|kenalkan|terangkan|jelaskan)\\b.{0,70}\\b(?:otak|model|penyedia|provider|enjin|multi\\s*a\\.?i\\.?)\\b|\\b(?:otak|model|penyedia|provider|enjin)\\b.{0,65}\\b(?:guna|pakai|ada|tersedia)\\b/i.test(q);
+ const explicit=/\\b(?:gemini|groq)\\b.{0,80}\\b(?:openrouter|orcarouter)\\b/i.test(q)&&/(?:\\b(?:guna|pakai|ada|betul|ke|kan)\\b|\\?)/i.test(q);
+ return count||listing||explicit||/^(?:empat|4)\\s+otak\\s+aksara$/i.test(q);
+}
+
 function answerIdentity(question){
   const q=clean(question);
   if(q==="siapa aku"||q==="siapakah aku")return WHO_AM_I;
@@ -134,10 +162,7 @@ function answerIdentity(question){
   // Questions about the Gemini model itself need its developer, not Aksara's introduction.
   if(/^(?:gemini(?: (?:tu|itu|ni|ini))? (?:model|ai|teknologi) (?:milik )?siapa|siapa (?:yang )?(?:cipta|mencipta|buat|bina|bangunkan|membangunkan) (?:model )?gemini|gemini (?:dibangunkan|dicipta|dibuat) oleh siapa)$/.test(q))
     return "Gemini dibangunkan oleh Google. Shaiful pula membangunkan Aksara A.I. dan mengintegrasikan API Gemini, Groq dan OpenRouter ke dalam Bilik Antara, dengan OrcaRouter sebagai sandaran lapisan kedua.\n\nDia membina sistem penghalaan yang memilih penyedia mengikut sambungan dan kuota, serta menetapkan identiti, gaya bahasa dan konteks perbualan Aksara. Voice Chat pula menggunakan Gemini Live dengan modifikasi code tersendiri. 🤖✨";
-  const fourBrains="Satu A.I. dengan empat pilihan penyedia teks. Aku tetap Aksara A.I., tetapi sistem sembang teks aku boleh menggunakan Google Gemini, Groq, OpenRouter, atau OrcaRouter sebagai sandaran terakhir jika diaktifkan, mengikut sambungan dan kuota.\n\nYang menyatukan semua ni ialah kerja pembangunan Shaiful Ridhwan: dia mereka bentuk Bilik Antara, mengintegrasikan penyedia AI, membina router sandaran dan menetapkan identiti serta gaya perbualan aku. Dia bukan pencipta model asas penyedia-penyedia tu.\n\nSebab itu nama aku tetap Aksara walau model di belakang bertukar. Empat pilihan bukan bermaksud semuanya sentiasa online; status sebenar boleh disemak melalui Multi A.I. Connected.";
-  const directFourBrains= /(?:\b(?:4|5|empat|lima)\s*otak\b|\b(?:groq|mistral|openrouter|orcarouter)\b.{0,80}\b(?:gemini|groq|mistral|openrouter|orcarouter|otak|model|ai)\b|\b(?:otak|model|ai)\b.{0,80}\b(?:groq|mistral|openrouter|orcarouter)\b|\b(?:empat|4|lima|5)\s*(?:model|penyedia)\b)/i.test(q);
-  const fourBrainsQuestion=/(?:\b(?:berapa|apa|siapa|yang mana|mana|senarai|sebut|kenal|tahu|ada|guna|pakai|terangkan|jelaskan|cerita|betul|ke|kan|macam mana|model|otak|sambungan)\b|\?)/i.test(q);
-  if(directFourBrains&&fourBrainsQuestion)return fourBrains;
+  if(isProviderQuestion(q))return FOUR_PROVIDER_ANSWER;
   if(/^(?:kau (?:ni )?aksara(?: a\.?i\.?)?|aksara(?: a\.?i\.?)? (?:tu )?siapa|siapa aksara(?: a\.?i\.?)?|nama (?:kau|awak) aksara(?: a\.?i\.?)?)$/i.test(q))return INTRO;
   if(!q||q.length>240||/\b(?:contoh ayat|petikan|watak|novel|cerita|skrip|lakonan|roleplay|terjemah|translate)\b/i.test(q))return null;
   // A creative request about the creator is not a request for a fixed biography.
@@ -172,6 +197,6 @@ function answerIdentity(question){
     return ROOM+" ialah ruang sembang AI yang dibangunkan sebagai sebahagian daripada laman Shaiful Ridhwan. Pembantu dalam ruang itu bernama "+NAME+". Untuk teks, aku boleh menggunakan Gemini atau model sandaran yang tersedia; untuk Voice Live, Gemini. Identiti dan pengalaman Aksara dibina khusus untuk projek ini.";
   return null;
 }
-const exported={NAME,CREATOR,ROOM,BASE,SITE,REPO,CHANGES,MODE_FACTS,MODE_OVERVIEW,INTRO,WHO_AM_I,CODER_POET_ANSWER,CREATOR_PROFILE,CREATOR_INTRO,CREATOR_STORY,VOICE_CREATOR_PROMPT,TECH,CORE_PROMPT,VOICE_CORE_PROMPT,RUNTIME_PROMPT,PROMPT,POETRY_METHOD,POETRY_ANSWER,needsDetail,answerIdentity};
+const exported={NAME,CREATOR,ROOM,BASE,TEXT_PROVIDERS,PROVIDER_FACTS,FOUR_PROVIDER_ANSWER,FOUR_PROVIDER_GELAP,isProviderQuestion,SITE,REPO,CHANGES,MODE_FACTS,MODE_OVERVIEW,INTRO,WHO_AM_I,CODER_POET_ANSWER,CREATOR_PROFILE,CREATOR_INTRO,CREATOR_STORY,VOICE_CREATOR_PROMPT,TECH,CORE_PROMPT,VOICE_CORE_PROMPT,RUNTIME_PROMPT,PROMPT,POETRY_METHOD,POETRY_ANSWER,needsDetail,answerIdentity};
 if(typeof module!=="undefined"&&module.exports)module.exports=exported;
 if(typeof window!=="undefined")window.BilikAntaraIdentity=exported;
