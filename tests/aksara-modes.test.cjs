@@ -120,7 +120,7 @@ test("identity, fallback, review and frontend share the complete GELAP mode",()=
  assert.ok(backend.includes('aiMode:"automatic",thoughtMode,model:alternative.model'));
  assert.ok(html.includes("const requestMode=thoughtMode"));
  assert.ok(html.includes('data.reply=window.BilikAntaraChatStyle.reply(data.reply,{mode:data.thoughtMode||requestMode})'));
- assert.ok(html.includes('history.push({role:"assistant",content:data.reply,thoughtMode:requestMode'));
+ assert.ok(html.includes('history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,thoughtMode:requestMode'));
  assert.ok(html.includes('summary:summary,summarizedThrough,thoughtMode'));
  assert.ok(html.includes("setThoughtMode(stored.thoughtMode)"));
 });
