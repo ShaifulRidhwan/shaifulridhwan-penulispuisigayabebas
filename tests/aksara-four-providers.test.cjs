@@ -32,7 +32,7 @@ test("Canonical identity contains four providers and clear capability/status sem
 });
 
 test("Default starter lists four brains; user interface and provider registry agree",()=>{
- assert.match(html,/>Empat Otak Aksara<\/button>/);
+ assert.doesNotMatch(html,/<button class="starter" type="button">Empat Otak Aksara<\/button>/);
  assert.match(html,/aria-label="Lihat status empat penyedia AI/);
  assert.doesNotMatch(html,/status lima penyedia AI/i);
  const found=html.match(/const providers=(\[\[.+?\]\]);/);
@@ -51,7 +51,7 @@ test("Default starter lists four brains; user interface and provider registry ag
 
 test("Every default question has a prepared answer without obsolete provider claims",()=>{
  const starters=[...html.matchAll(/<button class="starter" type="button">([^<]+)<[/]button>/g)].map(m=>m[1]);
- assert.deepEqual(starters,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas","Empat Otak Aksara"]);
+ assert.deepEqual(starters,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas"]);
  for(const question of starters){
   const answer=Identity.answerIdentity(question);
   assert.ok(typeof answer==="string"&&answer.length>80,"Missing prepared answer for "+question);
@@ -76,6 +76,10 @@ test("Prepared CAHAYA and GELAP replies answer every four-brain question",()=>{
    if(mode==="GELAP")assert.doesNotMatch(reply,/🤖|🔗/);
   }
  }
+ for(const name of canonical)assert.ok(Identity.answerIdentity("Siapa Aku").includes(name),"Siapa Aku missing "+name);
+ for(const label of ["utama","sandaran pertama","sandaran kedua","CAHAYA","GELAP","Ready","Connected"])
+  assert.ok(Identity.WHO_AM_I.includes(label),"Siapa Aku missing "+label);
+ assert.ok(Identity.answerIdentity("Empat Otak Aksara")?.includes("OrcaRouter"),"Manual four-brain query remains available");
  assert.ok(Identity.WHO_AM_I.length<500);
 });
 
