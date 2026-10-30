@@ -448,11 +448,13 @@ test("Pipeline phase 2 defaults to local session saving and optional memory, wit
  assert.match(html, /id="allowOpenRouterImages">/);
  assert.match(html, /const SESSION_PREF_STORAGE="bilik-antara-session-save-pref-v1"/);
  assert.match(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,ui\.remember\.checked\?"on":"off"\)/);
- assert.match(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,"off"\)/);
- assert.match(html, /bilik-antara-suite\.js\?v=12/);
+ assert.doesNotMatch(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,"off"\)/);
+ assert.match(html, /bilik-antara-session-utils\.js\?v=1/);
+ assert.match(html, /bilik-antara-suite\.js\?v=13/);
  assert.match(suite, /let memory=read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
- assert.match(suite, /memory=\{enabled:false,text:""\};write\(KEYS\.memory,memory\)/);
- assert.match(suite, /hanya dihantar ke penyedia sandaran apabila kau benarkan/);
+ assert.match(suite, /const disabled=\{enabled:false,text:""\}/);
+ assert.match(suite, /write\(KEYS\.memory,disabled\)/);
+ assert.match(suite, /sandaran hanya jika kau benarkan/);
 });
 
 test("Pipeline phase 2 respects saved session opt-out across reloads",()=>{
@@ -478,4 +480,83 @@ test("Pipeline phase 2 respects saved session opt-out across reloads",()=>{
   assert.equal(ctx.ui.remember.checked,scenario.expectedChecked,JSON.stringify(scenario));
   assert.equal(ctx.history.length,scenario.historySize,JSON.stringify(scenario));
  }
+});
+
+
+
+test("Session memory 2.1 selects relevant notes locally with a fixed budget",()=>{
+ const U=require("../bilik-antara-session-utils.js");
+ assert.equal(U.selectMemory("Aku suka bahasa Melayu santai.","Berapa harga?"),"Aku suka bahasa Melayu santai.");
+ const long=["Aku suka Bahasa Melayu santai dan ayat yang ringkas."];
+ for(let i=0;i<18;i++)long.push("Nota sejarah angkasa "+i+": penemuan purba dalam gugusan bintang dan manuskrip lama.");
+ long.push("Projek Twister Kernel: sumber Android, CPU dan performance tuning.");
+ const all=long.join("\n");
+ assert.ok(all.length>1400);
+ const found=U.selectMemory(all,"Bagaimana aku improve Twister Kernel dan CPU?");
+ assert.match(found,/Twister Kernel/);
+ assert.match(found,/Bahasa Melayu santai/);
+ assert.doesNotMatch(found,/Nota sejarah angkasa 0:/);
+ assert.ok(found.length<=2800);
+ const absent=U.selectMemory(all,"Resipi masak kari ayam");
+ assert.doesNotMatch(absent,/Twister Kernel/);
+ assert.match(absent,/Bahasa Melayu santai/);
+ assert.ok(absent.length<all.length);
+});
+
+test("Session archive import validates schema and strips unsafe extra fields",()=>{
+ const U=require("../bilik-antara-session-utils.js");
+ const entry={id:"s-old",title:"Aksara lama",titleEdited:true,pinned:true,
+  at:12345,summary:"Nota sesi",history:[
+   {role:"user",content:"Salam",timestamp:1200,locationLabel:"private",sources:[{url:"javascript:alert(1)"}]},
+   {role:"assistant",content:"Waalaikumussalam",timestamp:1201}
+  ]};
+ const restored=U.importArchive([entry]);
+ assert.equal(restored.length,1);
+ assert.equal(restored[0].title,"Aksara lama");
+ assert.equal(restored[0].titleEdited,true);
+ assert.equal(restored[0].pinned,true);
+ assert.equal(restored[0].history[0].content,"Salam");
+ assert.equal(restored[0].history[0].sources,undefined);
+ assert.equal(restored[0].history[0].locationLabel,undefined);
+ assert.equal(restored[0].id,undefined,"import must create fresh IDs in the client");
+ assert.throws(()=>U.importArchive({notSessions:true}),/Format arkib/);
+ assert.throws(()=>U.importArchive([{history:[{role:"admin",content:"evil"}]}]),/mesej yang tidak sah/);
+ assert.throws(()=>U.importArchive([{history:[{role:"user",content:"x".repeat(32001)}]}]),/mesej yang tidak sah/);
+ assert.throws(()=>U.importArchive(Array.from({length:101},()=>entry)),/maksimum 100/);
+});
+
+test("Deleting an open session also clears its active snapshot, so autosave cannot resurrect it",()=>{
+ const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
+ const a=suite.indexOf("function persistArchive(){"),b=suite.indexOf('window.addEventListener("ba:saved"');
+ const c=suite.indexOf("function rotateActiveSession(){"),d=suite.indexOf("function renderSessions(){");
+ assert.ok(a>=0&&b>a&&c>b&&d>c);
+ const persisted=new Map();
+ let activeHistory=[{role:"user",content:"Sesi peribadi"}];
+ let idIndex=0;
+ const scope={
+  archive:[{id:"s-original",title:"Rahsia",history:activeHistory,pinned:false,at:1}],
+  activeId:"s-original",KEYS:{archive:"archive"},PREFIX:"memory",
+  api:{remember:()=>true,active:()=>false,
+   snapshot:()=>({history:activeHistory,summary:"",summarizedThrough:0,thoughtLedger:[]}),
+   fresh:()=>{activeHistory=[];return true;}},
+  write:(key,value)=>{persisted.set(key,JSON.parse(JSON.stringify(value)));return true;},
+  localStorage:{removeItem:key=>persisted.delete(key)},
+  sessionStorage:{setItem:(key,value)=>persisted.set(key,value)},
+  notice:()=>{},freshId:()=>"fresh-"+(++idIndex)
+ };
+ vm.runInNewContext(suite.slice(a,b)+"\n"+suite.slice(c,d)+"\nremoveArchiveEntry(archive[0]);snapshotCurrent();",scope);
+ assert.equal(scope.archive.length,0,"deleted session must not reappear when saved");
+ assert.equal(activeHistory.length,0,"the open conversation must be cleared");
+ assert.equal(scope.activeId,"fresh-1");
+});
+test("Delete conversation keeps the visitor's save preference; consent remains explicit",()=>{
+ assert.doesNotMatch(html,/ui\.remember\.checked=false;ui\.mediaFallback\.checked=false/);
+ assert.match(html,/localStorage\.removeItem\(STORAGE\)/);
+ assert.match(html,/ui\.remember\.checked\?"on":"off"/);
+ const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
+ assert.match(suite,/function clearAllArchive\(\)/);
+ assert.match(suite,/function removeArchiveEntry\(item\)/);
+ assert.match(suite,/titleEdited=old\.titleEdited===true/);
+ assert.match(suite,/Import arkib JSON/);
+ assert.match(suite,/memoryForPrompt:question=>/);
 });
