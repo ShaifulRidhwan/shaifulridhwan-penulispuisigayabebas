@@ -1865,7 +1865,7 @@ padding:6px 10px
 /* Chat identity: reuse a captured still of the actual female 3D Voice Chat avatar. */
 html.chat-portrait-ready .message.ai::before{
  content:"";white-space:normal;
- background-image:url("./bilik-antara-chat-portrait.png?v=1");
+ background-image:url("./bilik-antara-chat-portrait.webp?v=1");
  background-color:#0a1019;background-position:50% 37%;background-size:cover;background-repeat:no-repeat;
  color:transparent;border-color:rgba(251,215,151,.7);
  box-shadow:0 0 0 3px rgba(6,8,13,.26),0 2px 13px rgba(0,0,0,.24);

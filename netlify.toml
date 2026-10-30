@@ -35,7 +35,7 @@
     Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 [[headers]]
-  for = "/bilik-antara-chat-portrait.png"
+  for = "/bilik-antara-chat-portrait.webp"
   [headers.values]
     Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
