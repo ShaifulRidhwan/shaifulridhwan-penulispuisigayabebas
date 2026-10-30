@@ -9,6 +9,9 @@
     "fake-indexeddb": "6.2.4"
   },
   "scripts": {
-    "test:studio": "node --test scripts/test-studio-antara.cjs scripts/test-studio-history.cjs"
+    "test:studio": "node --test scripts/test-studio-antara.cjs scripts/test-studio-history.cjs",
+    "eval:aksara": "node scripts/aksara-evaluation-lab.cjs",
+    "control:aksara": "node scripts/aksara-control-center.cjs",
+    "test:aksara-platform": "node --test tests/aksara-modes.test.cjs"
   }
 }

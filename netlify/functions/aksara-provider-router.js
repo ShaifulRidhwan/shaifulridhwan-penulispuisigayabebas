@@ -7,6 +7,7 @@
  */
 const {boundedHistory,boundedText,requestControl,readSSE}=require("./lib/aksara-transport");
 const Requesty=require("./aksara-requesty");
+const Registry=require("./aksara-model-registry");
 const cooldown=new Map();
 let preferredProvider=""; // Best recent successful fallback within the current warm function instance.
 let recentOpenRouter={model:"",at:0}; // Real replies only, never synthetic status.
@@ -22,16 +23,9 @@ const TASK_PRIORITY={
  general:["groq","openrouter","requesty"]
 };
 function rankProviders(available,task,prefer="",qualityFirst=false){
- const rank=TASK_PRIORITY[task]||TASK_PRIORITY.general;
- return [...available].sort((a,b)=>{
-  // Deep reasoning prioritizes a known reasoning-capable model over a sticky
-  // recent free-pool choice whose actual model can change each request.
-  const ah=qualityFirst?(a.id==="groq"?3:0):(a.id===prefer?2:a.id===preferredProvider?1:0);
-  const bh=qualityFirst?(b.id==="groq"?3:0):(b.id===prefer?2:b.id===preferredProvider?1:0);
-  if(ah!==bh)return bh-ah;
-  return rank.indexOf(a.id)-rank.indexOf(b.id);
- });
+ return Registry.select(available,{task,thinking:qualityFirst?"high":"low",prefer,last:preferredProvider});
 }
+
 const PROVIDERS=[
  {id:"groq",key:"GROQ_API_KEY",allow:"GROQ_FREE_CONFIRMED",
   url:"https://api.groq.com/openai/v1/chat/completions",model:"openai/gpt-oss-120b"},
@@ -207,6 +201,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    validateChatReply(text,data.model||selectedRequestyModel||provider.model);
    if(onDelta&&!emitted){emitted=true;onDelta(text);}
    cooldown.delete(provider.id);preferredProvider=provider.id;
+   Registry.observe(provider.id,{ok:true,latencyMs:Date.now()-attemptStarted});
    if(provider.id==="openrouter")recentOpenRouter={model:data.model||provider.model,at:Date.now()};
    if(provider.id==="requesty")recentRequesty={model:selectedRequestyModel,at:Date.now()};
    // A real answer is stronger evidence than a cached synthetic health probe.
@@ -223,6 +218,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     err.interruption=err.name==="AbortError"?"timeout":"upstream";
     throw err; // Never splice a second provider into a partial answer.
    }
+   Registry.observe(provider.id,{ok:false,latencyMs:Date.now()-attemptStarted});
    const status=Number(err.status||0);
    const wait=err.retryAfterSeconds?err.retryAfterSeconds*1000:errorToCooldown(status);
    cooldown.set(provider.id,Date.now()+wait);
