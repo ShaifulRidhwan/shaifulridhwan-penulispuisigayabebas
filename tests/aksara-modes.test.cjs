@@ -450,7 +450,7 @@ test("Pipeline phase 2 defaults to local session saving and optional memory, wit
  assert.match(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,ui\.remember\.checked\?"on":"off"\)/);
  assert.doesNotMatch(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,"off"\)/);
  assert.match(html, /bilik-antara-session-utils\.js\?v=1/);
- assert.match(html, /bilik-antara-suite\.js\?v=13/);
+ assert.match(html, /bilik-antara-suite\.js\?v=14/);
  assert.match(suite, /let memory=read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
  assert.match(suite, /const disabled=\{enabled:false,text:""\}/);
  assert.match(suite, /write\(KEYS\.memory,disabled\)/);
@@ -564,4 +564,32 @@ test("Delete conversation keeps the visitor's save preference; consent remains e
  assert.match(suite,/Bawa konteks sesi ini/);
  assert.match(suite,/Pratonton memori tersimpan/);
  assert.match(suite,/sessionSearchTerm=""/);
+});
+
+
+test("Session archive titles render as compact headings and preserve functional controls",()=>{
+ const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
+ const css=fs.readFileSync("bilik-antara-suite.css","utf8");
+ assert.match(suite,/const head=make\("div",undefined,"ba-session-head"\)/);
+ assert.match(suite,/const kicker=make\("span","TOPIK SESI","ba-session-kicker"\)/);
+ assert.match(suite,/const summary=button\(item\.title,\(\)=>beginSession\(item\),"ba-session-title"\)/);
+ assert.match(suite,/summary\.setAttribute\("aria-label","Buka sesi: "\+item\.title\)/);
+ assert.match(suite,/const date=make\("time",/);
+ assert.match(suite,/const controls=make\("div",undefined,"ba-row ba-session-actions"\)/);
+ assert.match(suite,/row\.append\(head,controls\)/);
+ assert.match(css,/\.ba-drawer \.ba-session button\.ba-session-title\{/);
+ assert.match(css,/-webkit-backdrop-filter:none;backdrop-filter:none;/);
+ assert.match(css,/background:transparent;box-shadow:none;/);
+ assert.match(html,/bilik-antara-suite\.css\?v=7/);
+ assert.match(html,/bilik-antara-suite\.js\?v=14/);
+});
+
+test("Optional memory starter stays editable and is never automatically saved",()=>{
+ const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
+ assert.match(suite,/const templateButton=button\("Isi templat cadangan"/);
+ assert.match(suite,/Templat belum disimpan/);
+ assert.match(suite,/field\.value\.trim\(\)\)\{notice\("Nota dalam editor tak diubah/);
+ assert.match(suite,/if\(updated\.text\.includes\("\[tulis sendiri\]"\)\)/);
+ assert.match(suite,/if\(!write\(KEYS\.memory,updated\)\)return;/);
+ assert.doesNotMatch(suite,/let memory=read\(KEYS\.memory,\{enabled:true,text:"Pilihan jawapan:/);
 });
