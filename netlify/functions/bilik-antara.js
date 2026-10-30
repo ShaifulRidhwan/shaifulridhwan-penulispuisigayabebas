@@ -432,7 +432,7 @@ exports.handler=async event=>{
           mode:"fallback",aiMode:"automatic",thoughtMode,model:alternative.model,provider:alternative.provider,
           reply:alternative.reply,sources:publicSources.map(({title,url})=>({title,url})),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[],toolsOffered:[],
-          disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",requesty:"Requesty",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.search?" · Model sandaran ni tak dapat check web secara live. Info terkini belum disahkan.":""),
+          disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",orcarouter:"OrcaRouter",requesty:"Requesty",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.search?" · Model sandaran ni tak dapat check web secara live. Info terkini belum disahkan.":""),
           usage:alternative.usage,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures}
         },H);
       }

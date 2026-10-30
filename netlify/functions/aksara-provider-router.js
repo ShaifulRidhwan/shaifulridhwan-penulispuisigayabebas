@@ -33,10 +33,9 @@ const PROVIDERS=[
   url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"},
  {id:"requesty",key:"REQUESTY_API_KEY",allow:null,
   url:Requesty.API+"/chat/completions",model:null},
- // Second-layer only. Explicit owner approval is required because gateway routing
- // is free but the selected upstream model can charge for inference.
- {id:"orcarouter",key:"ORCAROUTER_API_KEY",allow:"ORCAROUTER_COST_APPROVED",
-  url:"https://api.orcarouter.ai/v1/chat/completions",model:process.env.ORCAROUTER_MODEL||"orcarouter/auto"}
+ // Second-layer only: fixed zero-cost free router, never the paid auto router.
+ {id:"orcarouter",key:"ORCAROUTER_API_KEY",allow:null,
+  url:"https://api.orcarouter.ai/v1/chat/completions",model:"orcarouter/free"}
 ];
 // OpenRouter chooses from its current free chat-model pool; no stale hardcoded model list.
 const classifierModel=model=>/(?:guard|moderation|classifier|safety)/i.test(String(model||""));
@@ -58,7 +57,7 @@ function openRouterBody(body,effort="low"){
 const safeMessage=text=>boundedText(text,60000);
 function configured(){
  if(process.env.AKSARA_FREE_FALLBACKS!=="true")return [];
- return PROVIDERS.filter(p=>p.id==="requesty"?Requesty.configured():p.id==="orcarouter"?process.env.AKSARA_ORCAROUTER_LAYER2==="true"&&!!process.env[p.key]&&process.env[p.allow]==="true":process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
+ return PROVIDERS.filter(p=>p.id==="requesty"?Requesty.configured():p.id==="orcarouter"?process.env.AKSARA_ORCAROUTER_LAYER2==="true"&&!!process.env[p.key]:process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
 }
 function enabled(){return configured().length>0;}
 function quotaKind(message){
@@ -154,7 +153,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    ]:messages;
    const body={model:selectedRequestyModel||provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
    // Keep OrcaRouter payload on the widely compatible OpenAI core fields.
-   if(provider.id==="orcarouter")delete body.temperature;
+   if(provider.id==="orcarouter"){body.model="orcarouter/free";delete body.temperature;}
    if(provider.id==="requesty")delete body.temperature; // Heterogeneous free models need only shared OpenAI-compatible core fields.
    if(provider.id==="openrouter")openRouterBody(body,["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"low");
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.

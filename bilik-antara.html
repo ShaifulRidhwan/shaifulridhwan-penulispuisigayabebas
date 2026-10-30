@@ -439,7 +439,7 @@ ui.retry.addEventListener("click",()=>{
  if(busy)return;
  if(ui.input.value.trim()||fileState)submit({preventDefault(){}});else probe();
 });
-const providers=[["gemini","Google Gemini"],["groq","Groq"],["openrouter","OpenRouter"],["requesty","Requesty"]];
+const providers=[["gemini","Google Gemini"],["groq","Groq"],["openrouter","OpenRouter"],["orcarouter","OrcaRouter"],["requesty","Requesty"]];
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
 let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0;
 function shortOpenRouterName(model){
