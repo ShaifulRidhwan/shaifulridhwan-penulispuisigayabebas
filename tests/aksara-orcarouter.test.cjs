@@ -3,14 +3,13 @@ const test=require("node:test");
 const assert=require("node:assert/strict");
 
 // Isolated mocked transport: no visitor data and no real OrcaRouter inference.
-const keys=["AKSARA_FREE_FALLBACKS","AKSARA_ORCAROUTER_LAYER2","ORCAROUTER_API_KEY","OPENROUTER_API_KEY","GROQ_API_KEY","REQUESTY_API_KEY"];
+const keys=["AKSARA_FREE_FALLBACKS","AKSARA_ORCAROUTER_LAYER2","ORCAROUTER_API_KEY","OPENROUTER_API_KEY","GROQ_API_KEY"];
 const original=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
 process.env.AKSARA_FREE_FALLBACKS="true";
 process.env.AKSARA_ORCAROUTER_LAYER2="true";
 process.env.ORCAROUTER_API_KEY="test-not-a-real-key";
 delete process.env.OPENROUTER_API_KEY;
 delete process.env.GROQ_API_KEY;
-delete process.env.REQUESTY_API_KEY;
 
 const Router=require("../netlify/functions/aksara-provider-router");
 const Registry=require("../netlify/functions/aksara-model-registry");
