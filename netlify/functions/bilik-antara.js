@@ -37,6 +37,7 @@ const GEMINI_COOLDOWN_MS=120000;
 const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+Identity.RUNTIME_PROMPT+"\n"+"OSINT PRIVASI: Jangan cuba mengenal pasti pemilik sebenar akaun pseudonim, menghubungkan akaun tersembunyi, keluarga, nombor peribadi, e-mel, IP, peranti atau lokasi fizikal pengguna. Jangan terbitkan latitud, longitud, koordinat GPS, rumah, sekolah, tempat kerja, lokasi masa nyata atau infer lokasi daripada gambar, geotag, catatan, video atau masa siaran. Negara hanya boleh disebut sebagai pernyataan sukarela dalam bio yang disahkan, bukan lokasi sebenar.";
 // GELAP inherits every shared capability, fact and safety policy but has its own delivery contract.
 const GELAP_PERSONALITY=PERSONALITY.replace(Brain.TEXT_DELIVERY,Modes.DELIVERY);
+const GELAP_IDENTITY_CORE=Identity.CORE_PROMPT.split("\n").filter(line=>!line.startsWith("EMOJI SEMBANG TEKS:")).join("\n");
 const STUDIO_GUIDANCE="STUDIO ANTARA: Penjanaan imej tersedia di studio-antara.html menggunakan Cloudflare Workers AI melalui Netlify. Imej dijana di pelayan; pengguna tidak perlu memuat turun model berat. Studio belum menjana video. Jangan dakwa model sembang boleh menjana imej terus tanpa alat yang disambungkan.";
 const OSINT_GUIDANCE=["OSINT TIKTOK: Jika diminta menyemak akaun, hanya laporan metadata profil yang benar-benar awam atau disahkan melalui TikTok API rasmi. Utamakan handle, nama paparan, bio (tanpa maklumat hubungan peribadi), verified, followers/following/video/likes dan pautan bio awam. Bezakan data API rasmi daripada hasil carian yang belum disahkan.","Jangan menganggap username membuktikan akaun itu wujud. Jika TikTok Research API tiada akses, terangkan maklumat profil belum disahkan dan rujuk pautan awam sahaja. Jangan reka tarikh pendaftaran akaun atau ID dalaman."].join("\n");
 
@@ -64,7 +65,7 @@ function headers(){
     "Access-Control-Allow-Headers":"Content-Type","Access-Control-Allow-Methods":"POST, OPTIONS",
     "Vary":"Origin","Cache-Control":"no-store","Content-Type":"application/json; charset=utf-8"};
 }
-// Only the recorded-voice path uses this. Text chat keeps its two-emoji policy.
+// Audio replies always omit emoji. For text, formatter policy depends on thoughtMode.
 function speechPlain(value){
  return String(value||"")
   .replace(/[\p{Extended_Pictographic}\p{Regional_Indicator}\p{Emoji_Modifier}\uFE0F\u200D\u20E3]/gu,"")
@@ -324,7 +325,7 @@ exports.handler=async event=>{
   const detailedIdentity=Identity.needsDetail(question)||intent.works||/\b(?:puisi|sajak|pantun|gurindam|penulisan|coder poet)\b/i.test(question);
   const creatorHumour=detailedIdentity&&/\b(?:usik|usikan|sindir|sindiran|gurau|bergurau|lawak|jenaka)\b/i.test(question);
   const personality=thoughtMode==="gelap"?GELAP_PERSONALITY:PERSONALITY;
-   const baseSystem=personality+"\n"+(/\b(?:studio|pdf|word|e-?mel|eksport|imej|gambar)\b/i.test(question)?STUDIO_GUIDANCE+"\n":"")+(tiktokHandle||/\b(?:osint|akaun|username|tiktok|profil)\b/i.test(question)?OSINT_GUIDANCE+"\n":"")+(detailedIdentity?Identity.CORE_PROMPT+"\n"+Identity.PROMPT:"")+"\n"+(TASK_GUIDANCE[intent.task]||TASK_GUIDANCE.general)+
+   const baseSystem=personality+"\n"+(/\b(?:studio|pdf|word|e-?mel|eksport|imej|gambar)\b/i.test(question)?STUDIO_GUIDANCE+"\n":"")+(tiktokHandle||/\b(?:osint|akaun|username|tiktok|profil)\b/i.test(question)?OSINT_GUIDANCE+"\n":"")+(detailedIdentity?(thoughtMode==="gelap"?GELAP_IDENTITY_CORE:Identity.CORE_PROMPT)+"\n"+Identity.PROMPT:"")+"\n"+(TASK_GUIDANCE[intent.task]||TASK_GUIDANCE.general)+
       (intent.depth==="high"||intent.task==="technical"?"\nPENDEKATAN CERDAS: Kenal pasti tugas sebenar, pecahkan masalah rumit kepada submasalah yang perlu, semak pengiraan dan andaian, pilih alat hanya apabila alat menambah bukti. Utamakan jawapan yang boleh diuji berbanding bunyi yakin. Jangan dedahkan nota penalaran dalaman. Jangan mengaku melakukan semakan yang tidak dibuat.":"")+
       (intent.thought?"\nEKSPERIMEN PEMIKIRAN: nyatakan andaian jelas dan kesan yang dijangka, jangan bentangkan andaian sebagai fakta.":"")+
       (intent.debate?"\nKRITIK HUJAH: cari premis lemah, bantahan paling kuat, dan nilai bukti dengan tegas.":"")+
