@@ -154,6 +154,9 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     {role:"system",content:String(system).slice(prefix.length)+"\nSANDARAN TEKS: Tiada alat carian, URL atau pelaksanaan kod aktif. Jangan reka sumber atau mengaku alat yang tiada digunakan. Identiti kekal Aksara. Shaiful bukan pencipta genre puisi gaya bebas."},
     ...messages.slice(1)
    ]:messages;
+   if(provider.id==="openrouter"||provider.id==="orcarouter"){
+    providerMessages=[{...providerMessages[0],content:providerMessages[0].content+freeQuality(task,reasoningLevel)},...providerMessages.slice(1)];
+   }
    if(provider.id==="orcarouter"){
     // Preserve full shared Aksara instructions and context, with a short
     // mode/language reminder for the heterogeneous free-model router.
@@ -331,9 +334,6 @@ async function checkStatus(){
    if(Date.now()<(cooldown.get(provider.id)||0))return {id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
-    if(provider.id==="openrouter"||provider.id==="orcarouter"){
-     providerMessages=[{...providerMessages[0],content:providerMessages[0].content+freeQuality(task,reasoningLevel)},...providerMessages.slice(1)];
-    }
     if(provider.id==="orcarouter"){
      // No inference probe. Connected requires a genuine recent chat reply.
      if(Date.now()-recentOrcaRouter.at<90000)return {id:provider.id,status:"online",model:recentOrcaRouter.model,reason:"recent_reply"};
