@@ -40,3 +40,5 @@ Set `AKSARA_ORCAROUTER_LAYER2=false` and redeploy.
 - `Listed` on DeepSeek means an official public model listing, not guaranteed model selection or verified availability. Actual response metadata may identify a different free upstream model.
 
 Run `npm run test:aksara-platform` to check mocked free-only routing, identity and history propagation, SSE streaming, first-layer priority, image isolation and HTTP 429 handling. **Mock tests do not replace a real end-to-end API-key check**; real connectivity and quota eligibility remain unverified until an authentic user message is routed through OrcaRouter.
+
+The provider chain now reserves up to 3.5 seconds of its initial response deadline for OrcaRouter when earlier text providers are timing out, so the second layer has a practical chance to respond. This reservation is not applied when OrcaRouter is disabled, cooling down, or excluded by media consent.
