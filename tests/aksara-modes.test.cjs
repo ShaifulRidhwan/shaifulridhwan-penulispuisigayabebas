@@ -350,9 +350,10 @@ test("Both modes use the same intelligence protocol; GELAP remains independently
 test("High-reasoning provider routing prefers an explicit reasoning model over a random free pool",()=>{
  const router=require("../netlify/functions/aksara-provider-router");
  const list=[{id:"openrouter"},{id:"orcarouter"},{id:"groq"}];
- assert.equal(router.rankProviders(list,"general","openrouter",false)[0].id,"openrouter");
+ assert.equal(router.rankProviders(list,"general","openrouter",false)[0].id,"orcarouter");
  assert.equal(router.rankProviders(list,"general","openrouter",true)[0].id,"groq");
- assert.equal(router.rankProviders([{id:"openrouter"},{id:"orcarouter"}],"general","openrouter",true)[0].id,"openrouter");
+ assert.equal(router.rankProviders([{id:"openrouter"},{id:"orcarouter"}],"general","openrouter",true)[0].id,"orcarouter");
+ assert.equal(router.rankProviders(list,"general","openrouter",false).at(-1).id,"openrouter","Preferred backup cannot jump ahead of primaries");
  assert.equal(list[0].id,"openrouter","Provider ranking does not mutate caller list");
 });
 
