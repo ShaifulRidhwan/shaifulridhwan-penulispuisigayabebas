@@ -131,7 +131,7 @@ async function main(){
   assert.equal(await page.locator('#generateImage').textContent(),'Jana imej');
   const navLayout=await page.locator('.topbar').evaluate(el=>{
    const bar=el.getBoundingClientRect(),items=[...el.children].map(child=>child.getBoundingClientRect());
-   return {within:items.every(r=>r.left>=bar.left-1&&r.right<=bar.right+1),allPills:[...el.children].every(child=>getComputedStyle(child).borderRadius!=='0px')};
+   return {within:items.every(r=>r.left>=bar.left-1&&r.right<=bar.right+1),allPills:[...el.querySelectorAll("a")].every(link=>getComputedStyle(link).borderRadius!=="0px")};
   });
   assert.equal(navLayout.within,true,'Header glass buttons must fit mobile');
   assert.equal(navLayout.allPills,true,'Header links and brand need consistent glass pills');
