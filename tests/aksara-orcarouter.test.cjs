@@ -84,6 +84,37 @@ test("OrcaRouter streaming uses standard SSE without exposing reasoning",async()
  }finally{global.fetch=old;}
 });
 
+test("OrcaRouter remains after Groq when a first-layer reply succeeds",async()=>{
+ const oldFetch=global.fetch,oldKey=process.env.GROQ_API_KEY,oldFlag=process.env.GROQ_FREE_CONFIRMED;
+ const calls=[];process.env.GROQ_API_KEY="test-not-a-real-key";process.env.GROQ_FREE_CONFIRMED="true";
+ global.fetch=async(url)=>{
+  calls.push(url);
+  return {ok:true,status:200,headers:{get:()=>"application/json"},
+   json:async()=>({model:"openai/gpt-oss-120b",choices:[{message:{content:"Jawapan Groq berjaya."},finish_reason:"stop"}]})};
+ };
+ try{
+  const response=await Router.complete({system:"Aksara",history:[],question:"Tanya sesuatu",deadline:Date.now()+12000});
+  assert.equal(response.provider,"groq");
+  assert.equal(calls.length,1);
+  assert.match(calls[0],/api.groq.com/);
+ }finally{
+  global.fetch=oldFetch;
+  if(oldKey===undefined)delete process.env.GROQ_API_KEY;else process.env.GROQ_API_KEY=oldKey;
+  if(oldFlag===undefined)delete process.env.GROQ_FREE_CONFIRMED;else process.env.GROQ_FREE_CONFIRMED=oldFlag;
+ }
+});
+
+test("Existing image consent cannot send attachments to OrcaRouter",async()=>{
+ const old=global.fetch;let calls=0;
+ global.fetch=async()=>{calls++;throw Error("Orca must not see image bytes");};
+ try{
+  const result=await Router.complete({system:"Aksara",history:[],question:"Baca foto",
+   mediaImages:[{mimeType:"image/png",data:"YWJj"}],only:["orcarouter"],deadline:Date.now()+12000});
+  assert.equal(result.error,"all_providers_unavailable");
+  assert.equal(calls,0);
+ }finally{global.fetch=old;}
+});
+
 test("OrcaRouter honors Retry-After 429 instead of hammering free quota",async()=>{
  const old=global.fetch;
  global.fetch=async()=>({ok:false,status:429,headers:{get:k=>k==="retry-after"?"65":null},
