@@ -280,7 +280,7 @@ test("Cognitive orchestration selects useful task protocols rather than generic 
   const rank={low:0,medium:1,high:2};
   assert.ok(rank[profile.depth]>=rank[minDepth],question+" depth "+profile.depth);
   const guidance=Intelligence.cognitiveGuidance(profile);
-  assert.ok(guidance.includes("KAEDAH AKSARA"),question);
+  assert.ok(guidance.includes(focus==="general"&&minDepth==="low"?"KECERDASAN RINGKAS":"KAEDAH AKSARA"),question);
   assert.ok(guidance.length<4500,"bounded guidance, no enormous prompt inflation");
  }
 });
