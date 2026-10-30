@@ -240,6 +240,15 @@ const ui={
 // Stable mobile viewport: browser toolbar changes must not relayout a glass-heavy chat
 // on every animation frame. Only keyboard focus or orientation changes can resize it.
 let appliedAppHeight=null,viewportFrame=0;
+// Record whether the reader was at the newest message BEFORE CSS 100dvh shrinks.
+// Measuring only after a keyboard resize gives a false "scrolled up" result.
+let followOnInputResize=false;
+ui.input.addEventListener("focus",()=>{
+ followOnInputResize=ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight<48;
+});
+ui.input.addEventListener("blur",()=>{followOnInputResize=false;});
+ui.chat.addEventListener("wheel",()=>{followOnInputResize=false;},{passive:true});
+ui.chat.addEventListener("touchmove",()=>{followOnInputResize=false;},{passive:true});
 let viewportWidth=window.innerWidth;
 let stableAppHeight=Math.round(window.visualViewport?.height||window.innerHeight);
 function syncViewport(){
@@ -258,7 +267,9 @@ function syncViewport(){
  if(height===appliedAppHeight)return;
  // Keep the newest message visible when the keyboard changes the chat height,
  // but never pull a reader away from older messages they intentionally viewed.
- const followBottom=appliedAppHeight!==null&&ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight<48;
+ const currentGap=ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight;
+ const focusedKeyboardShrink=document.activeElement===ui.input&&currentHeight<stableAppHeight-80;
+ const followBottom=appliedAppHeight!==null&&(currentGap<48||(focusedKeyboardShrink&&followOnInputResize));
  appliedAppHeight=height;
  if(height)document.documentElement.style.setProperty("--app-height",height);
  else document.documentElement.style.removeProperty("--app-height");
