@@ -771,3 +771,132 @@ main>.workspace{margin-top:18px}
   opacity:.08;
  }
 }
+
+
+/* Studio 2.6: content-first glass. Keep chat-header identity and image runtime unchanged.
+   No backdrop-filter animation; only the lightweight reflective overlay breathes. */
+.creator #imageForm{margin-top:0}
+.creator .prompt-compose{margin-top:0}
+.creator .prompt-compose #imagePrompt{
+ min-height:clamp(158px,21dvh,238px);
+ padding-top:17px;
+}
+/* Critical CTA should look like Aksara glass, not an opaque yellow slab. */
+.creator #generateImage{
+ min-height:52px;
+ padding:12px 17px;
+ border-radius:15px;
+ border:1px solid rgba(246,210,159,.51);
+ color:#f5d9ae;
+ font:650 15px/1.25 'DM Sans',system-ui,sans-serif;
+ letter-spacing:.012em;
+ background:linear-gradient(120deg,rgba(249,220,174,.145),rgba(103,145,188,.08) 70%),
+            rgba(15,24,39,.23);
+ box-shadow:inset 0 1px 0 rgba(255,252,235,.19),
+            inset 0 -1px 0 rgba(132,170,209,.075),
+            0 7px 24px rgba(1,6,17,.13);
+ -webkit-backdrop-filter:blur(13px) saturate(135%);
+ backdrop-filter:blur(13px) saturate(135%);
+ text-shadow:0 1px 5px rgba(2,7,15,.25);
+ transition:border-color .22s,background-color .22s,box-shadow .22s;
+}
+.creator #generateImage:not(:disabled):hover{
+ color:#ffeac7;
+ border-color:rgba(250,224,184,.77);
+ background:linear-gradient(120deg,rgba(249,222,185,.22),rgba(109,154,198,.11) 70%),
+            rgba(18,28,45,.3);
+ box-shadow:inset 0 1px 0 rgba(255,252,235,.25),0 7px 25px rgba(2,8,20,.16);
+}
+.creator #generateImage:focus-visible{outline:2px solid #f3d49d;outline-offset:3px}
+.creator #generateImage::before{
+ background:linear-gradient(112deg,rgba(255,254,248,.012),rgba(255,242,210,.18) 48%,rgba(151,184,218,.06));
+ opacity:.15;
+}
+/* Result title remains screen-reader-only; the image stage fills its old space. */
+.result .result-stage{
+ min-height:clamp(425px,53dvh,670px);
+ display:flex;
+ flex-direction:column;
+ align-items:stretch;
+ justify-content:flex-start;
+ overflow:hidden;
+ padding:0;
+ border-radius:18px;
+}
+.result .result-empty{
+ flex:1 1 auto;
+ min-height:235px;
+ width:100%;
+ display:grid;
+ place-items:center;
+ text-align:center;
+ padding:36px 18px;
+}
+.result .result-empty p{margin:0}
+.result #generatedImage:not([hidden]){
+ width:100%;
+ max-height:760px;
+ flex:1 1 auto;
+ min-height:0;
+ align-self:center;
+ object-fit:contain;
+}
+/* Matching prompt-tools footer: status lives at the lower-right, not in a top header. */
+.result .result-stage-footer{
+ position:relative;
+ z-index:2;
+ width:100%;
+ flex:0 0 auto;
+ min-height:57px;
+ display:flex;
+ justify-content:flex-end;
+ align-items:center;
+ gap:9px;
+ padding:9px 12px;
+ margin-top:auto;
+ border-top:1px solid rgba(246,221,188,.13);
+ background:linear-gradient(115deg,rgba(241,218,185,.038),rgba(45,68,94,.078)),
+            rgba(8,15,27,.13);
+}
+.result .result-stage-footer #resultIndicator{
+ display:inline-flex;
+ justify-content:center;
+ align-items:center;
+ min-height:34px;
+ padding:7px 13px;
+ border:1px solid rgba(247,219,180,.36);
+ border-radius:999px;
+ color:#f4d49e;
+ font:650 10px/1.25 'DM Sans',system-ui,sans-serif;
+ letter-spacing:.085em;
+ background:linear-gradient(125deg,rgba(246,218,177,.12),rgba(69,103,141,.075));
+ box-shadow:inset 0 1px 0 rgba(255,253,239,.11),0 3px 13px rgba(4,9,17,.09);
+ -webkit-backdrop-filter:blur(8px) saturate(125%);
+ backdrop-filter:blur(8px) saturate(125%);
+}
+.result #stageLoading{z-index:1}
+@media(max-width:680px){
+ .creator .prompt-compose #imagePrompt{min-height:clamp(158px,20dvh,230px)}
+ .result .result-stage{min-height:clamp(355px,46dvh,520px)}
+ .result .result-empty{min-height:240px}
+ .result .result-stage-footer{min-height:53px;padding:8px 11px}
+ .creator #generateImage{-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px)}
+}
+@media(prefers-reduced-motion:reduce){
+ .creator #generateImage{transition:none}
+}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more){
+ .creator #generateImage{
+  background:#263347;
+  border-color:#d8bb8d;
+  color:#ffe7c0;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+ }
+ .result .result-stage-footer{background:#1b2535}
+ .result .result-stage-footer #resultIndicator{
+  background:#2b384a;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+ }
+}

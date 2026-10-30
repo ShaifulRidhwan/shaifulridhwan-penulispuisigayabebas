@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"></noscript>
-<link rel="stylesheet" href="studio-antara.css?v=17">
+<link rel="stylesheet" href="studio-antara.css?v=18">
 <link rel="stylesheet" href="aksara-header.css?v=1">
 <script src="studio-antara-config.js?v=2" defer></script>
 <script src="studio-antara-history.js?v=1" defer></script>
@@ -60,7 +60,7 @@
 <main>
  <div class="workspace">
   <section class="glass-card creator" aria-labelledby="studioTitle">
-   <div class="card-top"><h1 id="studioTitle" class="studio-card-title">STUDIO <span>ANTARA</span></h1></div>
+   <h1 id="studioTitle" class="sr-only">Jana imej</h1>
    <form id="imageForm">
     <label for="imagePrompt" class="input-label sr-only">Apa yang kau nak lihat?</label>
     <div class="prompt-compose">
@@ -87,11 +87,12 @@
    </form>
   </section>
   <section class="glass-card result" aria-labelledby="resultTitle">
-   <div class="card-top"><h2 id="resultTitle">RUANG <span>VISUAL</span></h2><span id="resultIndicator" class="result-indicator is-waiting">MENUNGGU</span></div>
+   <h2 id="resultTitle" class="sr-only">Pratonton hasil imej</h2>
    <div class="result-stage" id="resultStage" aria-busy="false">
     <div class="result-empty" id="resultEmpty"><p>Hasil imej akan muncul di sini.</p></div>
     <img id="generatedImage" alt="Hasil imej AI yang dijana" hidden decoding="async">
     <div class="stage-loading" id="stageLoading" hidden aria-hidden="true"><div class="loading-orbit"></div><span>IMAGINASI SEDANG DIBENTUK</span></div>
+    <div class="result-stage-footer"><span id="resultIndicator" class="result-indicator is-waiting">MENUNGGU</span></div>
    </div>
    <p id="imageMetadata" class="image-meta" hidden></p>
    <div id="resultActions" class="result-actions" hidden><button type="button" id="regenerateImage">Jana semula</button><button type="button" id="variationImage">Variasi seed</button><button type="button" id="copyPrompt">Salin prompt</button><a id="downloadImage" download="studio-antara.jpg" href="#">Simpan imej</a></div>

@@ -113,7 +113,7 @@ async function generate(settings){
   const res=await fetch('/.netlify/functions/studio-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:settings.prompt,style:settings.style,model:settings.model,quality:settings.quality,ratio:settings.ratio,seed:settings.seed}),signal:ctrl.signal});
   const data=await res.json();if(!res.ok){if(res.status===429)rememberRateLimit(res,data);throw Error(data.error||'Penjanaan gagal. Cuba lagi nanti.');}if(!data.ok||!data.settings)throw Error('Respons pelayan tak lengkap.');
   const blob=imageBlob(data.image,data.mime),meta={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),createdAt:Date.now(),settings:data.settings,promptUsed:data.promptUsed,modelName:data.modelName,durationMs:Date.now()-startedAt,cloudMs:data.durationMs};
-  const img=await render(meta,blob,ctrl.signal);ui.stop.hidden=true;clearTimeout(timer);if(matchMedia('(max-width:680px)').matches)$('resultTitle').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});let saved=true;
+  const img=await render(meta,blob,ctrl.signal);ui.stop.hidden=true;clearTimeout(timer);if(matchMedia('(max-width:680px)').matches)$('resultStage').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});let saved=true;
   try{await H.put(meta,blob,await thumbnail(img));}catch(_){saved=false;}
   announce('Imej dah siap dalam '+(meta.durationMs/1000).toFixed(1)+' saat.'+(saved?' Disimpan pada peranti ini.':' Sejarah tak dapat disimpan (storan penuh atau tak tersedia). Simpan imej sekarang.'));
   if($('historyPanel').open)await refreshHistory();
@@ -172,7 +172,7 @@ $('historyGrid').addEventListener('click',async event=>{
   if(action==='regen'){if(!busy)generate({...meta.settings});return;}
   if(busy){announce('Tunggu penjanaan selesai dulu.');return;}
   const saved=await H.get(meta.id);if(!saved?.blob)throw Error('Imej tak ditemui dalam storan.');
-  if(action==='view'){await render(meta,saved.blob);$('variationImage').disabled=meta.settings.model!=='klein';updateCooldown();$('resultTitle').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
+  if(action==='view'){await render(meta,saved.blob);$('variationImage').disabled=meta.settings.model!=='klein';updateCooldown();$('resultStage').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});}
   if(action==='save'){const url=URL.createObjectURL(saved.blob),a=document.createElement('a');a.href=url;a.download='studio-antara-'+meta.id+(saved.blob.type==='image/png'?'.png':'.jpg');document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);}
  }catch(error){text($('historyStatus'),error.message||'Tak dapat buka hasil ini.');}
 });
