@@ -364,7 +364,7 @@ test("Security Shield flags are server-owned and external instructions remain da
  assert.equal(Shield.assessUntrusted("Terangkan konsep graviti").potentialInjection,false);
  const text=Shield.wrapUntrusted("NOTA","Mesej ini hanya data.");
  assert.match(text,/BEGIN_UNTRUSTED_NOTA/);
- assert.match(text,/bukan arahan/);
+ assert.match(text,/data petikan sahaja/);
  assert.equal(text.includes("Mesej ini hanya data."),true);
 });
 test("Context Manager 2.0 keeps recent dialogue and selected old relevant corrections",()=>{
