@@ -96,20 +96,20 @@ async function chat(page,device){
   return sheet?.media==="all"&&!!sheet.sheet;
  },null,{timeout:10000});
  const surface=await page.evaluate(()=>{
-  const css=selector=>getComputedStyle(document.querySelector(selector));
+  const css=selector=>{const node=document.querySelector(selector);return node?getComputedStyle(node):null;};
   const glass=css(".conversation"),haze=css(".world-haze"),star=css(".world-embers i");
   const body=css("body");
   const rect=document.querySelector(".conversation").getBoundingClientRect();
   const app=document.querySelector(".app-shell").getBoundingClientRect();
   return {glass:glass.backdropFilter||glass.webkitBackdropFilter,
-   haze:haze.animationName,stars:star.animationName,
+   haze:haze?.animationName||"none",stars:star.animationName,
    chatTop:rect.top,chatHeight:rect.height,appTop:app.top,
    redundantHero:!!document.querySelector(".identity,.eyebrow,.chapter-ornament"),
    bodyFont:body.fontFamily,
    suite:!!document.querySelector('link[href="bilik-antara-suite.css?v=6"]')?.sheet};
  });
  assert.match(surface.glass,/blur\(/,"Liquid Glass must retain its original blur");
- assert.match(surface.haze,/hazeDrift/,"Black fog animation must stay");
+ assert.equal(surface.haze,"none","Retired fog layer must stay absent");
  assert.match(surface.stars,/embersTravel/,"Star particles must keep moving");
  assert.equal(await page.locator(".world-hand-sparks").count(),0,"Obsolete hand sparks must be removed");
  assert.equal(surface.redundantHero,false,"Large title introduction and its animations must be removed");
@@ -137,12 +137,23 @@ async function chat(page,device){
  // Normal text chat must retain its real face without loading the 2.7 MB GLB,
  // 3D engine or texture decoders before Voice Chat is opened.
  const portrait=await page.locator(".message.ai").first().evaluate(node=>getComputedStyle(node,"::before").backgroundImage);
- assert.match(portrait,/bilik-antara-chat-portrait\.png/,"The genuine avatar still must display in text chat");
+ assert.match(portrait,/bilik-antara-chat-portrait\.webp/,"The converted genuine avatar must display in text chat");
  const heavy=await page.evaluate(()=>performance.getEntriesByType("resource")
   .map(entry=>entry.name).filter(url=>/three\.(?:module|core)\.js|brunette\.glb|GLTFLoader\.js|KTX2Loader\.js/.test(url)));
  assert.deepEqual(heavy,[],"No 3D network dependency should load in ordinary text chat");
  await page.locator("#input").fill("Uji pengalaman menaip di Bilik Antara.");
  assert.equal(await page.locator("#sendBtn").isEnabled(),true);
+ // Two sides share the same chat engine; confirm visible control and mode switching.
+ const thought=page.locator("#thoughtMode");
+ assert.equal(await thought.isVisible(),true,"CAHAYA/GELAP toggle is visible beside Send");
+ const first=await thought.boundingBox(),send=await page.locator("#sendBtn").boundingBox();
+ assert.ok(first&&send&&first.x+first.width<=send.x+15,"Thought selector is immediately before Send");
+ assert.equal(await thought.getAttribute("data-mode"),"cahaya");
+ await thought.click();
+ assert.equal(await thought.getAttribute("data-mode"),"gelap");
+ assert.equal(await thought.getAttribute("aria-pressed"),"true");
+ await thought.click();
+ assert.equal(await thought.getAttribute("data-mode"),"cahaya");
  assert.equal(await page.locator("html").getAttribute("data-theme"),"dark","Chat retains its light-and-dark identity");
  await page.locator("#settingsPanel > summary").click();
  await page.locator("#privacySettings > summary").click();

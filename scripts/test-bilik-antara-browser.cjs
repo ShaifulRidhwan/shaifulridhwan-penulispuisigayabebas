@@ -25,14 +25,15 @@ async function audit(browser,label,options){
   const state=await page.evaluate(()=>{
    const style=sel=>getComputedStyle(document.querySelector(sel));
    const frame=style(".glass-frame-orbit"),light=style(".frame-glow--light"),dark=style(".frame-glow--shadow");
-   const haze=style(".world-haze");
+   const hazeNode=document.querySelector(".world-haze");
+    const haze=hazeNode?getComputedStyle(hazeNode):null;
    const glass=style(".conversation"),rect=document.querySelector(".conversation").getBoundingClientRect();
    const resource=performance.getEntriesByType("resource").map(x=>x.name);
    return {
     width:window.innerWidth,documentWidth:document.documentElement.scrollWidth,
     chatTop:rect.top,chatHeight:rect.height,
     framePointer:frame.pointerEvents,lightAnimation:light.animationName,darkAnimation:dark.animationName,
-    hazeAnimation:haze.animationName,
+    hazeAnimation:haze?.animationName||"none",
     glass:glass.backdropFilter||glass.webkitBackdropFilter,
     bodyFont:style("body").fontFamily,
     heavyAssets:resource.filter(x=>/brunette\.glb|GLTFLoader|KTX2Loader|three\.module/.test(x)),
@@ -46,7 +47,7 @@ async function audit(browser,label,options){
   assert.equal(state.framePointer,"none");
   assert.equal(state.lightAnimation,"frameLightBreathe");
   assert.equal(state.darkAnimation,"frameShadowBreathe");
-  assert.match(state.hazeAnimation,/hazeDrift/);
+  assert.equal(state.hazeAnimation,"none","Removed smoke/haze must remain inactive");
   assert.equal(state.handSparks,0,"Obsolete hand sparks must not render");
   assert.match(state.glass,/blur\(/);
   assert.match(state.bodyFont,/DM Sans/);
@@ -57,6 +58,17 @@ async function audit(browser,label,options){
   assert.equal(await page.locator("#voiceFallback, #voiceFallbackStart, #voiceFallbackStop").count(),0);
   assert.equal(await page.locator("#voiceDictate").count(),1);
   assert.equal(await page.locator("#sendBtn").count(),1);
+   const thought=page.locator("#thoughtMode");
+   assert.equal(await thought.count(),1,"Thought selector must exist beside Send");
+   assert.equal(await thought.isVisible(),true,label+" thought selector is hidden");
+   assert.equal(await thought.getAttribute("data-mode"),"cahaya");
+   const thoughtBounds=await thought.boundingBox(),sendBounds=await page.locator("#sendBtn").boundingBox();
+   assert.ok(thoughtBounds&&sendBounds&&thoughtBounds.x+thoughtBounds.width<=sendBounds.x+15,label+" thought mode not beside Send");
+   await thought.click();
+   assert.equal(await thought.getAttribute("data-mode"),"gelap");
+   assert.equal(await thought.getAttribute("aria-pressed"),"true");
+   await thought.click();
+   assert.equal(await thought.getAttribute("data-mode"),"cahaya");
   assert.equal(await page.locator(".composer #sendBtn").evaluate(el=>getComputedStyle(el).minWidth)!=="0px",true);
   assert.equal(state.heavyAssets.some(x=>x.includes("bilik-antara-voice-fallback")),false);
   await page.screenshot({path:path.join(OUT,label+"-chat.png"),animations:"disabled"});
