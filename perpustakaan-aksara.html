@@ -38,7 +38,7 @@ section.collection{padding:68px 0 14px}.heading{display:flex;align-items:end;jus
 "use strict";
 const DATA=[
 ["kafka-trial","The Trial","Franz Kafka","en","falsafah","Sebuah perbicaraan tanpa penjelasan; kuasa, absurditi dan ketidakpastian.","https://standardebooks.org/ebooks/franz-kafka/the-trial/edwin-muir_willa-muir","#363c48","#161b27","Rujukan edisi"],
-["kafka-meta","The Metamorphosis","Franz Kafka","en","falsafah","Perubahan, keterasingan dan harga sebuah identiti.","https://www.gutenberg.org/ebooks/5200","#4d443e","#171919","Edisi percuma¹"],
+["kafka-meta","The Metamorphosis","Franz Kafka","en","falsafah","Perubahan, keterasingan dan harga sebuah identiti.","https://www.gutenberg.org/ebooks/5200","#4d443e","#171919","Edisi percuma"],
 ["kafka-castle","The Castle","Franz Kafka","en","falsafah","Pencarian makna di tengah birokrasi yang tidak terjangkau.","https://standardebooks.org/ebooks/franz-kafka","#314050","#12141d","Rujukan edisi"],
 ["dost-crime","Crime and Punishment","Fyodor Dostoevsky","en","falsafah","Moral, rasa bersalah dan pertanggungjawaban.","https://www.gutenberg.org/ebooks/2554","#48372f","#19171c","Baca di sumber"],
 ["dost-brothers","The Brothers Karamazov","Fyodor Dostoevsky","en","falsafah","Iman, keraguan dan kehendak bebas dalam sebuah keluarga.","https://www.gutenberg.org/ebooks/28054","#2d4551","#111c26","Baca di sumber"],
@@ -58,7 +58,7 @@ const key="aksara-library-bookmarks-v1";let saved=new Set();
 try{const raw=JSON.parse(localStorage.getItem(key)||"[]");if(Array.isArray(raw))saved=new Set(raw.filter(x=>typeof x==="string").slice(0,1000))}catch(_){}
 const el=id=>document.getElementById(id);
 function persist(){try{localStorage.setItem(key,JSON.stringify(Array.from(saved)))}catch(_){}}
-function saveButton(id){const b=document.createElement("button");b.type="button";b.className="bookmark";b.textContent=saved.has(id)?"★":"☆";b.setAttribute("aria-label",saved.has(id)?"Buang daripada simpanan":"Simpan buku");b.setAttribute("aria-pressed",saved.has(id)?"true":"false");b.addEventListener("click",()=>{if(saved.has(id))saved.delete(id);else saved.add(id);persist();render();renderArchiveBookmarks();});return b}
+function saveButton(id){const b=document.createElement("button");b.type="button";b.className="bookmark";b.dataset.id=id;b.textContent=saved.has(id)?"★":"☆";b.setAttribute("aria-label",saved.has(id)?"Buang daripada simpanan":"Simpan buku");b.setAttribute("aria-pressed",saved.has(id)?"true":"false");b.addEventListener("click",()=>{if(saved.has(id))saved.delete(id);else saved.add(id);persist();render();renderArchiveBookmarks();});return b}
 function bookCard(b,archive){const [id,title,author,lang,genre,description,url,c1,c2,cta,cover]=b;const card=document.createElement("article");card.className="book";
 const art=document.createElement("div");art.className="art";art.style.setProperty("--c1",c1||"#34424b");art.style.setProperty("--c2",c2||"#111820");const ornament=document.createElement("div");ornament.className="ornament";art.append(ornament);
 if(cover && /^https:\/\/www\.gutenberg\.org\//.test(cover)){const img=document.createElement("img");img.src=cover;img.alt="";img.loading="lazy";img.decoding="async";img.referrerPolicy="no-referrer";img.addEventListener("error",()=>img.remove());art.append(img)}else{const t=document.createElement("span");t.className="initial";t.textContent=title;art.append(t)}
