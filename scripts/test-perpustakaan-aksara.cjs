@@ -7,12 +7,15 @@ const vm=require("node:vm");
 const root=path.resolve(__dirname,"..");
 const page=fs.readFileSync(path.join(root,"perpustakaan-aksara.html"),"utf8");
 const bilik=fs.readFileSync(path.join(root,"bilik-antara.html"),"utf8");
+const novel=fs.readFileSync(path.join(root,"antara-cahaya-dan-gelap.html"),"utf8");
+const index=fs.readFileSync(path.join(root,"index.html"),"utf8");
+const css=fs.readFileSync(path.join(root,"perpustakaan-aksara.css"),"utf8");
 const scripts=[...page.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
 test("Katalog mempunyai metadata dan pautan karya utama",()=>{
  assert.match(page,/<html lang="ms">/);
  assert.match(page,/name="viewport"/);
  assert.match(page,/assets\/novel\/cover-01\.jpg/);
- assert.match(page,/href="antara-cahaya-dan-gelap\.html"/);
+ assert.match(page,/href="antara-cahaya-dan-gelap\.html\?baca=1"/);
  assert.match(page,/id="books"/);
  assert.match(page,/id="archiveBooks"/);
 });
@@ -22,7 +25,7 @@ test("Kod JavaScript katalog boleh dihuraikan",()=>{
 });
 test("Koleksi pilihan mengandungi penulis dan bahasa sasaran",()=>{
  const source=scripts.join("\n");
- const m=source.match(/const DATA=(\[[\s\S]*?\]);\s*const key=/);
+ const m=source.match(/const DATA=(\[[\s\S]*?\]);\s*const COVER_MAP=/);
  assert.ok(m,"Data katalog tidak ditemui");
  const books=vm.runInNewContext(m[1]);
  assert.ok(books.length>=15);
@@ -51,4 +54,33 @@ test("Hak cipta dan kawalan pemuatan di luar pelayan dinyatakan",()=>{
  assert.match(page,/copyright=false/);
  assert.match(page,/localStorage/);
  assert.match(page,/rel="noopener noreferrer"/);
+});
+
+test("Navigasi Novel masuk terus pembaca, Karya ke katalog",()=>{
+ assert.match(bilik,/href="antara-cahaya-dan-gelap\.html\?baca=1">Novel<\/a>/);
+ assert.match(bilik,/<strong>Karya · Perpustakaan AKSARA<\/strong>/);
+ assert.match(index,/href="antara-cahaya-dan-gelap\.html\?baca=1">Baca Novel<\/a>/);
+ assert.match(novel,/URLSearchParams\(window\.location\.search\)\.get\("baca"\)==="1"/);
+ assert.match(novel,/openBook\(savedPage\(\)>0\)/);
+ assert.match(novel,/frame\.src="assets\/novel\/pembaca\.html"/);
+});
+test("Penapis guna chips aksesibel tanpa dropdown Android",()=>{
+ assert.doesNotMatch(page,/<select\b/i);
+ assert.match(page,/data-language="en"/);
+ assert.match(page,/data-language="ms"/);
+ assert.match(page,/data-category="falsafah"/);
+ assert.match(page,/data-category="saved"/);
+ assert.match(page,/aria-pressed="true"/);
+ assert.match(page,/querySelectorAll\("\[data-"\+group\+"\]"/);
+});
+test("Glass, mobile single-column dan imej kulit buku",()=>{
+ assert.match(css,/backdrop-filter:blur\(23px\)/);
+ assert.match(css,/@media\(max-width:690px\)/);
+ assert.match(css,/\.books\{grid-template-columns:1fr/);
+ assert.match(page,/const COVER_MAP=\{/);
+ assert.match(page,/covers\.openlibrary\.org/);
+ assert.match(page,/pg2554\.cover\.medium\.jpg/);
+ assert.match(page,/img\.addEventListener\("error",next\)/);
+ assert.match(page,/pg2554-images\.html/);
+ assert.match(page,/perpustakaan-aksara\.css\?v=2/);
 });
