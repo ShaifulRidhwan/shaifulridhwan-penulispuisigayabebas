@@ -1032,10 +1032,11 @@ async function submit(event){
   }else{partialNode?.remove();pendingUser.remove();}
   if(stoppedByUser){
    if(partial.trim()){
-    addMessage("user",question);
+    addMessage("user",question,{timestamp:sentAt,locationLabel:sentLocation});
     const content=partial+"\n\n[Jawapan dihentikan sebelum habis.]";
-    addMessage("assistant",content,{disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});
-    history.push({role:"user",content:question},{role:"assistant",content,disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});save();
+    const stoppedAt=Date.now();
+    addMessage("assistant",content,{timestamp:stoppedAt,locationLabel:sentLocation,thoughtMode:requestMode,disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});
+    history.push({role:"user",content:question,timestamp:sentAt,locationLabel:sentLocation},{role:"assistant",content,timestamp:stoppedAt,locationLabel:sentLocation,thoughtMode:requestMode,disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});save();
    }
    status("configured","Okay, aku stop dulu",partial?"Jawapan yang sempat keluar masih ada dalam chat.":"Mesej kau masih ada kalau nak try lagi.");
   }else{
