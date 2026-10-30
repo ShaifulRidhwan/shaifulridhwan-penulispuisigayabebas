@@ -1,7 +1,7 @@
 "use strict";
 /* Bilik Antara Autonomi: one personality, automatic research, reasoning and critique. */
 const {
-  safeText,safeHistory,poemContext,resolveIntent,intelligencePlan,getTools,freeModel,chooseModel,
+  safeText,safeHistory,poemContext,resolveIntent,intelligencePlan,cognitiveProfile,cognitivePlan,cognitiveGuidance,getTools,freeModel,chooseModel,
   sourceList,groundingEvidence,modelText,parseReply,sanitizeMedia,parseReview
 }=require("./antara-intelligence");
 const {extractTikTokHandle,researchPublicAccount}=require("./tiktok-public-research");
@@ -37,13 +37,7 @@ const GEMINI_COOLDOWN_MS=120000;
 const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+Identity.RUNTIME_PROMPT+"\n"+"OSINT PRIVASI: Jangan cuba mengenal pasti pemilik sebenar akaun pseudonim, menghubungkan akaun tersembunyi, keluarga, nombor peribadi, e-mel, IP, peranti atau lokasi fizikal pengguna. Jangan terbitkan latitud, longitud, koordinat GPS, rumah, sekolah, tempat kerja, lokasi masa nyata atau infer lokasi daripada gambar, geotag, catatan, video atau masa siaran. Negara hanya boleh disebut sebagai pernyataan sukarela dalam bio yang disahkan, bukan lokasi sebenar.";
 // GELAP inherits every shared capability, fact and safety policy but has its own delivery contract.
 const GELAP_PERSONALITY=PERSONALITY.replace(Brain.TEXT_DELIVERY,Modes.DELIVERY);
-const INTELLIGENCE_GUIDANCE=[
- "AKSARA INTELLIGENCE: Kenal pasti tujuan soalan, bukan hanya kata kunci. Sebelum menjawab, periksa sama ada soalan baharu ialah susulan kepada perbualan, pembetulan, andaian, pertanyaan praktikal, hujah atau permintaan kreatif. Gunakan konteks relevan tanpa mengulangi biografi, sambutan atau jawapan terdahulu.",
- "KETELITIAN: Bezakan perkara yang diketahui, inferens yang boleh dipertahankan, dan perkara yang perlu disemak. Jika soalan mempunyai beberapa tafsiran, pilih tafsiran paling munasabah lalu nyatakan andaian hanya apabila penting. Jangan mereka petikan tokoh, sumber, peristiwa, ketepatan model atau pengiraan.",
- "KEDALAMAN ADAPTIF: Soalan fakta ringkas perlu jawapan ringkas. Soalan falsafah sebenar perlu sekurang-kurangnya satu hujah yang diperiksa, contoh atau bantahan yang relevan, bukan definisi kamus kosong atau petikan motivasi. Untuk teknikal, nyatakan punca yang boleh diuji, langkah pembaikan dan cara mengesahkan. Untuk perasaan, jangan meneka sebab dan jangan jadikan ketegasan sebagai kekejaman.",
- "KESINAMBUNGAN: Untuk 'kenapa', 'lagi', 'macam mana', 'contoh lain', 'betul ke', 'tah la' atau bantahan ringkas, baca giliran terakhir sebelum memilih arah jawapan. Jangan menjawab seolah-olah perbualan baru bermula.",
- "SEMAK SENDIRI: Pastikan jawapan benar-benar menjawab pertanyaan, tidak bercanggah dengan fakta dan mod aktif, dan tidak menjanjikan kemampuan yang tiada. Tidak perlu menunjukkan proses penaakulan dalaman atau memanjangkan jawapan untuk kelihatan pintar."
-].join("\n");
+
 const GELAP_IDENTITY_CORE=Identity.CORE_PROMPT.split("\n").filter(line=>!line.startsWith("EMOJI SEMBANG TEKS:")).join("\n");
 const STUDIO_GUIDANCE="STUDIO ANTARA: Penjanaan imej tersedia di studio-antara.html menggunakan Cloudflare Workers AI melalui Netlify. Imej dijana di pelayan; pengguna tidak perlu memuat turun model berat. Studio belum menjana video. Jangan dakwa model sembang boleh menjana imej terus tanpa alat yang disambungkan.";
 const OSINT_GUIDANCE=["OSINT TIKTOK: Jika diminta menyemak akaun, hanya laporan metadata profil yang benar-benar awam atau disahkan melalui TikTok API rasmi. Utamakan handle, nama paparan, bio (tanpa maklumat hubungan peribadi), verified, followers/following/video/likes dan pautan bio awam. Bezakan data API rasmi daripada hasil carian yang belum disahkan.","Jangan menganggap username membuktikan akaun itu wujud. Jika TikTok Research API tiada akses, terangkan maklumat profil belum disahkan dan rujuk pautan awam sahaja. Jangan reka tarikh pendaftaran akaun atau ID dalaman."].join("\n");
@@ -295,7 +289,10 @@ exports.handler=async event=>{
   if(contextual&&!intent.reaction){intent.depth=intent.depth==="high"?"high":"medium";intent.review=false;}
   const reactionGuidance=intent.reaction?
    "\nREAKSI PENDEK PADA GILIRAN TERAKHIR: Mesej pengguna ialah tanda mendengar atau memahami, bukan permintaan penerangan baharu. Rujuk jawapan AI paling akhir dalam sejarah, dan balas satu reaksi pendek yang sesuai dalam Bahasa Melayu Malaysia lisan. Jangan membuat kesimpulan tentang pendapat atau emosi pengguna. Jangan mencipta kaitan baharu atau melompat ke cerita pengasas/puisi/coding jika tiada kaitan. Jika pengasas memang topik dan suasana santai, boleh usik secara ringan tanpa mereka fakta. Jangan mengulang biografi, memuji tanpa sebab, menawarkan projek atau mengakhiri dengan soalan bantuan automatik. Jika tiada perkara perlu ditambah, satu ayat pendek sudah cukup. Jangan menggunakan frasa hafalan yang sama setiap kali; sesuaikan dengan perbualan sebenar. Jika konteks terdahulu sensitif, kekalkan nada tenang tanpa gurauan.":"";
-  const plan=Modes.plan(thoughtMode,intent,intelligencePlan(intent),question);
+  // First select a problem-solving protocol, then request only the reasoning it merits.
+  // Neither the private history nor untrusted documents become system instructions.
+  const cognition=cognitiveProfile(question,history,intent,thoughtMode);
+  const plan=cognitivePlan(intent,Modes.plan(thoughtMode,intent,intelligencePlan(intent),question),cognition);
   const identityReply=(!media.length&&!documentText)?Identity.answerIdentity(question):null;
    // Verified mode guide and selected elementary philosophy have independent
    // mode-aware local answers; no cheap fallback can override their meaning.
@@ -354,7 +351,7 @@ exports.handler=async event=>{
   const contents=history.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}));
   contents.push({role:"user",parts:userParts});
   const tools=getTools({...intent,search:intent.search||!!tiktokHandle});
-  const model=chooseModel(baseModel,thoughtMode==="gelap"&&plan.thinkingLevel==="high"?{...intent,depth:"high"}:intent);
+  const model=chooseModel(baseModel,{...intent,depth:plan.thinkingLevel});
   const detailedIdentity=Identity.needsDetail(question)||intent.works||/\b(?:puisi|sajak|pantun|gurindam|penulisan|coder poet)\b/i.test(question);
   const creatorHumour=detailedIdentity&&/\b(?:usik|usikan|sindir|sindiran|gurau|bergurau|lawak|jenaka)\b/i.test(question);
   const personality=thoughtMode==="gelap"?GELAP_PERSONALITY:PERSONALITY;
@@ -369,10 +366,10 @@ exports.handler=async event=>{
       (creatorHumour?"\nUSIKAN BERASASKAN FAKTA: Usik hanya ciri projek yang diketahui, seperti pilihan bentuk puisi bersiri atau usaha mengubah suai Aksara. Jangan cipta atau meneka tabiat, waktu tidur, emosi, kebimbangan, peristiwa atau kehidupan peribadi Shaiful, walaupun sebagai perbandingan atau gurauan. Boleh selit ‘mwehehe’ di hujung jika sesuai.":"")+
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
   const activeModeInstruction="\nMOD AKTIF UNTUK JAWAPAN INI: "+(thoughtMode==="gelap"?"GELAP. Jawab dengan falsafah moden dan pemeriksaan premis apabila relevan, tetapi jangan merosakkan soalan fakta atau arahan teknikal.":"CAHAYA. Jawab secara santai, jelas dan praktikal; jangan menyamar sebagai GELAP.")+". Dua mod dalam Bilik Antara adalah gaya pemikiran/respons, bukan dua model API. Jika ditanya, terangkan kedua-dua mod serta cara menukarnya pada ikon pelaras di sebelah Hantar. Jangan mendakwa menggunakan model khusus kerana mod.";
-   const system=baseSystem+"\n"+INTELLIGENCE_GUIDANCE+activeModeInstruction+(thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false)+"\n"+Modes.contextGuidance(thoughtMode,question,history):"");
+   const system=baseSystem+"\n"+cognitiveGuidance(cognition)+activeModeInstruction+(thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false)+"\n"+Modes.contextGuidance(thoughtMode,question,history):"");
   const maxTokens=plan.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
-    works:!!poem,multimodal:media.length>0,model,review:intent.review});
+    works:!!poem,multimodal:media.length>0,model,review:intent.review,cognitiveFocus:cognition.focus,reasoningLevel:plan.thinkingLevel});
   const privateContext=!!(documentText||userMemory);
   // Opt-in image fallback: other media stay on Gemini. Never silently send
   // attached images or private session notes to an extra provider.

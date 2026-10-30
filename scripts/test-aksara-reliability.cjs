@@ -230,10 +230,11 @@ test("provider preference cannot bypass consent for private context, and a faile
  const privateReply=await handler(event({question:"Ringkaskan fail",documentText:"teks peribadi",preferredProvider:"openrouter"}));assert.equal(privateReply.statusCode,200);assert.equal(backups,0);
  const fallback=await handler(event({question:"Apa itu graviti?",preferredProvider:"openrouter"}));assert.equal(fallback.statusCode,200);assert.equal(backups,1);assert.equal(google,1);assert.equal(JSON.parse(fallback.body).provider,"groq");
 });
-test("short conversational follow-ups use bounded output and low reasoning, while complex work keeps its larger budget",async t=>{
+test("explicit medium reasoning stays medium, while acknowledgements and trivial turns remain fast",async t=>{
  setup(t);const router=require("../netlify/functions/aksara-provider-router");let payload;
  global.fetch=async(_url,opts)=>{payload=JSON.parse(opts.body);return reply("Contoh mudah.");};
- await router.complete({system:"persona",history:[],question:"Bagi contoh",task:"explain",reasoningLevel:"medium",maxTokens:5600});assert.equal(payload.max_tokens,1500);assert.equal(payload.reasoning_effort,"low");
+ await router.complete({system:"persona",history:[],question:"Bagi contoh",task:"explain",reasoningLevel:"medium",maxTokens:5600});assert.equal(payload.max_tokens,5600);assert.equal(payload.reasoning_effort,"medium");
+ await router.complete({system:"persona",history:[],question:"Menarik",task:"conversation",reaction:true,reasoningLevel:"medium",maxTokens:5600});assert.equal(payload.max_tokens,500);assert.equal(payload.reasoning_effort,"low");
  await router.complete({system:"persona",history:[],question:"Analisis kod",task:"technical",reasoningLevel:"high",maxTokens:6000});assert.equal(payload.max_tokens,6000);assert.equal(payload.reasoning_effort,"high");
 });
 test("loaded project facts answer immediately in the browser without a network call, while attachments still reach the server",async()=>{
@@ -648,4 +649,36 @@ test("Mistral direct provider remains disabled even when its keys are still conf
  let calls=[];global.fetch=async url=>{calls.push(String(url));return reply("Hai");};
  await router.checkStatus();await router.complete({system:"persona",history:[],question:"Hai"});
  assert.ok(calls.every(url=>!url.includes("api.mistral.ai")));
+});
+
+test("cognitive router sends genuine high and medium effort to Groq while greetings stay low",async t=>{
+ const handler=setup(t);const requests=[];
+ global.fetch=async(_url,opts)=>{requests.push(JSON.parse(opts.body));return reply("Aku teliti dahulu premis dan bukti yang benar-benar tersedia.");};
+ const cases=[
+  ["Benarkah semua hujah tentang teknologi sah apabila hanya disokong pendapat peribadi? Kritikan secara mendalam.", "high","UJI HUJAH"],
+  ["Kenapa manusia mencari makna hidup?", "medium","PEMIKIRAN FALSAFAH"],
+  ["Woi", "low","KECERDASAN RINGKAS"]
+ ];
+ for(const [question,effort,protocol] of cases){
+  const r=await handler(event({question,preferredProvider:"groq"}));
+  assert.equal(r.statusCode,200,question);
+  const body=requests.at(-1);
+  assert.equal(body.reasoning_effort,effort,question);
+  const prompts=body.messages.filter(x=>x.role==="system").map(x=>x.content).join("\n");
+  assert.match(prompts,new RegExp(protocol),question);
+  if(effort!=="low")assert.match(prompts,/KALIBRASI BUKTI/);
+  assert.equal(body.include_reasoning,false,"No hidden reasoning should be shown to users");
+ }
+});
+test("fallback cognitive guidance remains scoped and does not claim nonexistent tools",async t=>{
+ const handler=setup(t);const reqs=[];
+ global.fetch=async(_url,opts)=>{reqs.push(JSON.parse(opts.body));return reply("Tiada sumber live disahkan, jadi dakwaan itu belum boleh dipastikan.");};
+ const r=await handler(event({question:"Bandingkan pilihan A dan B serta risiko privasi dan kos dalam jangka panjang secara mendalam.",preferredProvider:"groq",thoughtMode:"gelap"}));
+ assert.equal(r.statusCode,200);
+ const system=reqs.at(-1).messages.filter(m=>m.role==="system").map(m=>m.content).join("\n");
+ assert.match(system,/PERTIMBANGAN PILIHAN/);
+ assert.match(system,/GELAP/);
+ assert.match(system,/Jangan mereka sumber/);
+ assert.match(system,/Tiada alat carian/);
+ assert.ok(system.length<60000,"avoid runaway system context");
 });
