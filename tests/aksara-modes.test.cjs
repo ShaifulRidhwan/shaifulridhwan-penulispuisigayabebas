@@ -265,7 +265,7 @@ test("Every new text response records both delivery and receipt times with optio
  assert.ok(css.includes('.message-meta'));
 });
 test("Welcome line prompts genuine curiosity instead of repeating legacy greeting",()=>{
- assert.ok(html.includes("Ada apa yang kau nak faham, bina, atau persoalkan hari ni?"));
+ assert.ok(html.includes("Antara aksara dan code,"));
  assert.ok(!html.includes('addMessage("assistant","Assalamualaikum dan selamat sejahtera."'));
 });
 
