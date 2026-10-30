@@ -17,8 +17,7 @@
 <header class="top"><a class="brand" href="bilik-antara.html"><span class="brand-icon">✧</span><span><strong>AKSARA A.I.</strong><small>oleh Shaiful Ridhwan</small></span></a><nav aria-label="Navigasi"><a href="index.html">Laman Utama</a><a href="bilik-antara.html">Bilik Antara</a><a href="studio-antara.html">Studio</a><a href="perpustakaan-aksara.html" aria-current="page">Novel</a></nav></header>
 <main>
 <section class="intro" aria-labelledby="title"><p class="eyebrow">AKSARA / PERPUSTAKAAN NOVEL</p><h1 id="title">DUNIA DALAM <em>AKSARA.</em></h1><p>Novel dan sastera falsafah pilihan. Sesebuah cerita mungkin tamat, tetapi pertanyaannya tidak semestinya.</p><div class="pills"><span>Novel Asli</span><span>Sastera & Falsafah</span><span>Melayu · English</span></div></section>
-<section class="collection" id="koleksi" aria-labelledby="collectionTitle"><div class="heading"><div><p class="eyebrow">PERPUSTAKAAN AKSARA</p><h2 id="collectionTitle">Koleksi Novel</h2></div><p id="count" class="count" role="status" aria-live="polite"></p></div><div class="toolbar" role="search" aria-label="Cari dan tapis novel">
-<label class="search-field"><span class="sr">Cari novel atau penulis</span><input type="search" id="search" placeholder="Cari novel, penulis atau tema..." maxlength="100" autocomplete="off"></label>
+<section class="collection" id="koleksi" aria-labelledby="collectionTitle"><div class="heading"><div><p class="eyebrow">PERPUSTAKAAN AKSARA</p><h2 id="collectionTitle">Koleksi Novel</h2></div><p id="count" class="count" role="status" aria-live="polite"></p></div><div class="toolbar" role="group" aria-label="Tapis koleksi novel">
 <div class="filter-groups">
 <fieldset class="filter-group"><legend>Bahasa</legend><div class="filters" role="group" aria-label="Tapis mengikut bahasa">
 <button class="filter-pill" type="button" data-language="all" aria-pressed="true">Semua</button>
@@ -33,7 +32,7 @@
 
 <button class="filter-pill" type="button" data-category="saved" aria-pressed="false">Disimpan ☆</button>
 </div></fieldset>
-</div></div><div id="books" class="books"></div><p id="empty" class="empty" hidden>Tiada tajuk sepadan. Cuba carian atau penapis lain.</p></section>
+</div></div><div id="books" class="books"></div><p id="empty" class="empty" hidden>Tiada novel dalam pilihan ini. Cuba penapis lain.</p></section>
 <section class="archive" aria-labelledby="archiveTitle"><p class="eyebrow">ARKIB TERBUKA</p><h2 id="archiveTitle">Ribuan karya untuk diteroka</h2><p>Terokai rekod buku Project Gutenberg melalui Gutendex, dimuat secara berperingkat. Tiada ribuan fail dimasukkan ke laman ini. Setiap judul membawa kau ke sumber asal.</p><p class="legal">Perhatian: Domain awam Amerika Syarikat tidak semestinya domain awam Malaysia. Hak cipta terjemahan dan edisi berlainan perlu diperiksa sebelum diterbitkan semula. Katalog ini menyediakan pautan ke penerbit asal, bukan salinan buku.</p><button class="btn primary" id="explore" type="button">Teroka katalog dunia ↗</button><p class="archive-status" id="archiveStatus" role="status" aria-live="polite">Arkib memerlukan sambungan Internet.</p><div id="archiveBooks" class="books"></div><button class="btn more" id="more" type="button" hidden>Muat lebih banyak</button></section>
 </main><footer><span>© Perpustakaan AKSARA · Shaiful Ridhwan</span><span><a href="https://www.gutenberg.org/" rel="noopener noreferrer" target="_blank">Project Gutenberg</a> · <a href="https://ms.wikisource.org/" target="_blank" rel="noopener noreferrer">Wikisumber</a></span></footer>
 </div>
@@ -86,10 +85,10 @@ function bookCard(b,archive){
  const ornament=document.createElement("div");ornament.className="ornament";
  const placeholder=document.createElement("span");placeholder.className="initial";placeholder.textContent=title;art.append(ornament,placeholder);
  const images=cover?[cover]:(COVER_MAP[id]||[]);
- const allowed=u=>{try{const p=new URL(u);return (p.protocol==="https:"&&["www.gutenberg.org","covers.openlibrary.org"].includes(p.hostname))||(p.origin===window.location.origin&&p.pathname.endsWith("/assets/novel/cover-01.jpg"))}catch(e){return false}};
+ const allowed=u=>{try{const p=new URL(u,window.location.href);return (p.protocol==="https:"&&["www.gutenberg.org","covers.openlibrary.org"].includes(p.hostname))||(p.origin===window.location.origin&&p.pathname.endsWith("/assets/novel/cover-01.jpg"))}catch(e){return false}};
  if(images.length){
   const img=document.createElement("img");img.alt="";img.loading="lazy";img.decoding="async";img.referrerPolicy="no-referrer";
-  let i=0;const next=()=>{while(i<images.length&&!allowed(images[i]))i++;if(i>=images.length){img.remove();return}img.src=images[i++];};
+  let i=0;const next=()=>{while(i<images.length&&!allowed(images[i]))i++;if(i>=images.length){img.remove();return}img.src=new URL(images[i++],window.location.href).href;};
   img.addEventListener("error",next);art.append(img);next();
  }
  const info=document.createElement("div");info.className="book-info";
@@ -103,14 +102,12 @@ function bookCard(b,archive){
 
 const filters={language:"all",category:"all"};
 function render(){
- const q=el("search").value.trim().toLocaleLowerCase("ms");
  const lang=filters.language,category=filters.category;
- const matches=DATA.filter(b=>(lang==="all"||b[3]===lang)&&(category==="all"||category==="saved"&&saved.has(b[0])||category===b[4])&&(!q||[b[1],b[2],b[5],b[4]].join(" ").toLocaleLowerCase("ms").includes(q)));
+ const matches=DATA.filter(b=>(lang==="all"||b[3]===lang)&&(category==="all"||category==="saved"&&saved.has(b[0])||category===b[4]));
  el("books").replaceChildren(...matches.map(b=>bookCard(b,false)));
  el("empty").hidden=matches.length>0;
  el("count").textContent=matches.length+" daripada "+DATA.length+" novel dan karya sastera";
 }
-el("search").addEventListener("input",render);
 for(const group of ["language","category"]){
  document.querySelectorAll("[data-"+group+"]").forEach(btn=>btn.addEventListener("click",()=>{
   filters[group]=btn.dataset[group];

@@ -70,6 +70,9 @@ test("Penapis guna chips aksesibel tanpa dropdown Android",()=>{
  assert.doesNotMatch(page,/<select\b/i);
  assert.match(page,/data-language="en"/);
  assert.match(page,/data-language="ms"/);
+ assert.doesNotMatch(page,/id="search"/);
+ assert.match(page,/new URL\(u,window\.location\.href\)/);
+ assert.match(page,/new URL\(images\[i\+\+\],window\.location\.href\)\.href/);
  assert.doesNotMatch(page,/data-language="id"/);
  assert.doesNotMatch(page,/data-category="hikayat"/);
  assert.match(page,/data-category="falsafah"/);
