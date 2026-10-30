@@ -11,6 +11,7 @@ const Brain=require("../../bilik-antara-brain");
 const Modes=require("../../bilik-antara-modes");
 const ChatStyle=require("../../bilik-antara-chat-style");
 const Router=require("./aksara-provider-router");
+const Ops=require("./aksara-ops");
 const Security=require("./aksara-security-shield");
 const Context=require("./aksara-context-manager");
 const Knowledge=require("./aksara-knowledge-engine");
@@ -165,6 +166,7 @@ async function reviewAnswer({apiKey,model,question,reply,sources,evidence,intent
 }
 exports.handler=async event=>{
   const started=Date.now(),deadline=started+24000,H=headers(),flags=Security.flags();
+  Ops.record("request");
   const remaining=()=>Math.max(1,deadline-Date.now());
   let streamed=false,firstTextMs=null;
   const emit=typeof event.onDelta==="function"?text=>{if(!text)return;if(firstTextMs===null)firstTextMs=Date.now()-started;streamed=true;event.onDelta(text);}:null;
