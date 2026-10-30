@@ -183,6 +183,24 @@ async function audit(browser,label,options){
    assert.ok(keyboard.width<=396,"Horizontal overflow after keyboard resize");
    await page.screenshot({path:path.join(OUT,label+"-keyboard.png"),animations:"disabled"});
   }
+  if(label==="desktop"){
+   // Typed identity questions remain clean. The contextual suggestion belongs
+   // ONLY to a real starter click, and navigates nowhere by itself.
+   await page.evaluate(()=>window.BilikAntaraBridge.fresh());
+   await page.locator("#input").fill("Siapa Aku");
+   await page.locator("#composer").evaluate(form=>form.requestSubmit());
+   await page.waitForFunction(()=>[...document.querySelectorAll(".message.ai .bubble")].some(el=>el.textContent.includes("AI routing")),{timeout:12000});
+   assert.equal(await page.locator(".msg-followup-btn").count(),0,"No suggestion for manually typed prompts");
+   await page.evaluate(()=>window.BilikAntaraBridge.fresh());
+   await page.locator("#starters .starter").first().click();
+   const suggestion=page.locator(".msg-followup-btn");
+   await suggestion.waitFor({state:"visible",timeout:12000});
+   assert.match(await suggestion.innerText(),/Nak tahu tentang "The Coder Poet" pulak ke/);
+   await suggestion.click();
+   await page.waitForFunction(()=>[...document.querySelectorAll(".message.ai .bubble")].some(el=>el.textContent.includes("Twister Kernel")),{timeout:12000});
+   assert.equal(await page.locator(".msg-followup-btn").count(),1,"Do not chain suggestions after The Coder Poet");
+   await page.screenshot({path:path.join(OUT,"desktop-coder-poet-followup.png"),animations:"disabled"});
+  }
   assert.deepEqual(errors,[],"Browser console or asset errors");
   results.push({device:label,pass:true,...state});
  }finally{await context.close();}
