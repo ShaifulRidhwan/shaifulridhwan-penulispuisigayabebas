@@ -33,6 +33,8 @@ function localIdentity(question,identity){
  // Known project facts, separate voice. Never infer a person's private biography.
  if(!identity||typeof question!=="string")return null;
  const q=question.trim().toLocaleLowerCase("ms-MY").replace(/[?!.،]+$/g,"").trim();
+ // GELAP uses the same verified four-provider facts, not an unrelated stock answer.
+ if(identity.isProviderQuestion?.(q))return identity.FOUR_PROVIDER_GELAP;
  const self=/^(?:ko\s+(?:ni\s+|ini\s+)?siapa|kau\s+(?:ni\s+|ini\s+)?siapa|siapa\s+(?:kau|awak|kamu)(?:\s+sebenarnya)?|kau\s+siapa\s+sebenarnya|who\s+are\s+you|kenalkan\s+diri\s+kau|nama\s+kau\s+apa|siapa\s+aksara(?:\s+a\.?i\.?)?)$/i.test(q);
  if(self)return "Aku "+identity.NAME+", sebuah kecerdasan buatan dalam "+identity.ROOM+" yang dibangunkan oleh "+identity.CREATOR+". Ada dua cara aku menjawab: CAHAYA yang santai dan praktikal, GELAP yang kritis dan berfalsafah. Sekarang GELAP aktif. Kedua-duanya menggunakan enjin A.I. yang sama. Aku tak mendakwa memahami hidup seperti manusia. Dalam mod GELAP, tugas aku bukan menghias jawapan supaya menyenangkan hati, tetapi memeriksa apa yang benar, apa yang kita andaikan, dan di mana hujah mula runtuh.";
  const founder=/^(?:(?:siapa|siapakah|kenal\s+tak|siapa\s+sebenarnya)\s+)?shaiful\s+ridhwan(?:\s+(?:tu|itu|sebenarnya|wei|lah|ni))?(?:\s+siapa)?$|^kau\s+kenal\s+(?:tak\s+)?shaiful\s+ridhwan$/i.test(q);

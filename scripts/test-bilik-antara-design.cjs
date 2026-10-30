@@ -67,7 +67,7 @@ test("Faster ambience and animated translucent glass layer",()=>{
 
 test("Calm glass frame keeps the chat clear and preserves ambient particles",()=>{
  const starterLabels=[...html.matchAll(/<button class="starter" type="button">([^<]+)<\/button>/g)].map(m=>m[1]);
- assert.deepEqual(starterLabels,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas"]);
+ assert.deepEqual(starterLabels,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas","Empat Otak Aksara"]);
  assert.match(html,/<div class="glass-frame-orbit" aria-hidden="true">/);
  assert.match(html,/frame-glow--light/);
  assert.match(html,/frame-glow--shadow/);

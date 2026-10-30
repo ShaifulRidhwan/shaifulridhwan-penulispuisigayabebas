@@ -152,7 +152,7 @@ async function audit(browser,label,options){
     {role:"assistant",content:"uji masa diterima",timestamp:Date.now(),locationLabel:"Shah Alam, Selangor",thoughtMode:"cahaya"}
   ]}));
   assert.equal(await page.locator(".message-meta").count(),2);
-  assert.equal(await page.locator(".message-place").count(),2);
+  assert.equal(await page.locator(".message-place").count(),0,"Chatbox metadata shows time only, never the optional location label");
   assert.match(await page.locator(".message-clock").first().innerText(),/Dihantar/);
   assert.match(await page.locator(".message-clock").last().innerText(),/Diterima/);
   await page.evaluate(()=>window.BilikAntaraBridge.fresh());

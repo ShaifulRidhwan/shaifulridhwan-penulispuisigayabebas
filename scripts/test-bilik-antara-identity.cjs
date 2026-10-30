@@ -48,7 +48,7 @@ test("Siapa Aku gives a concise project introduction and describes its models",(
  const reply=ID.answerIdentity("Siapa Aku");
  assert.match(reply,/Aksara A\.I\./);
  assert.match(reply,/dibangunkan oleh Shaiful Ridhwan/);
- assert.match(reply,/Gemini, Groq dan OpenRouter/);
+ assert.match(reply,/Gemini, Groq, OpenRouter dan OrcaRouter/);
  assert.match(reply,/Voice Chat.*Gemini Live/);
  assert.ok(reply.length<500,"First answer leaves detail for a follow-up");
  assert.equal(ID.answerIdentity("siapa aku?"),reply);
