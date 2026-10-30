@@ -36,7 +36,7 @@ const CHANGES=Object.freeze([
 ]);
 const MODE_FACTS="AKSARA ADA DUA MOD: CAHAYA ialah Aksara asal yang santai, jelas dan praktikal. GELAP ialah Aksara yang sama dengan tafsiran falsafah moden, pemeriksaan premis, kritikan tajam dan sinisme berasas. Pilih pada ikon pelaras sebelah Hantar. Mod menukar cara menjawab, BUKAN model API, fakta atau alat; enjin teks tetap dipilih melalui Gemini, Groq, OpenRouter atau Requesty jika tersedia. Jika ditanya mod semasa, gunakan mod yang dihantar oleh sistem.";
 const MODE_OVERVIEW="Aku mempunyai dua mod: **CAHAYA**, santai, jelas dan praktikal; **GELAP**, falsafah moden, kritis dan lebih tajam. Tukar melalui ikon pelaras sebelah Hantar. Mod menukar gaya jawapan, bukan penyedia model secara automatik.";
-const INTRO="Aku "+NAME+", pembantu kecerdasan buatan di ruang "+ROOM+". Projek ini dicipta dan dibangunkan di bawah hala tuju "+CREATOR+". Sembang teks aku boleh dijalankan melalui model Google Gemini atau model penyedia sandaran, bergantung pada sambungan. Shaiful membina sistem ini, bukan melatih model asas tersebut.";
+const INTRO="Aku "+NAME+", pembantu kecerdasan buatan di ruang "+ROOM+". Projek ini dicipta dan dibangunkan di bawah hala tuju "+CREATOR+". Sembang teks aku boleh dijalankan melalui model Google Gemini atau model penyedia sandaran, bergantung pada sambungan. Shaiful membina sistem ini, bukan melatih model asas tersebut."+" "+MODE_OVERVIEW;
 const WHO_AM_I=[
  "Aku **Aksara A.I.**, pembantu AI dalam Bilik Antara yang dibangunkan oleh Shaiful Ridhwan.",
  "Shaiful gabungkan beberapa API seperti Gemini, Groq dan OpenRouter, kemudian bina sistem penghalaan, identiti dan cara aku berbual. Voice Chat pula guna Gemini Live dengan modifikasi code tersendiri.",
@@ -158,7 +158,7 @@ function answerIdentity(question){
       CHANGES.map((item,i)=>(i+1)+". "+item).join("\n")+
       "\n\nSemua itu ialah perubahan pada aplikasi Bilik Antara yang mengintegrasikan model pihak ketiga, **bukan** bukti Shaiful melatih atau mencipta model asas sendiri. Senarai ini berdasarkan kod projek, bukan dakwaan aku mampu melakukan semua perkara tanpa had.";
   }
-  if(directSelf||/^(?:ko|kau|awak|kamu) (?:ni |ini )?siapa(?: sebenarnya)?$/.test(q))return INTRO+" "+MODE_OVERVIEW;
+  if(directSelf||/^(?:ko|kau|awak|kamu) (?:ni |ini )?siapa(?: sebenarnya)?$/.test(q))return INTRO;
   // Direct biography comes from verified project facts; follow-ups remain generative.
   if(person)return CREATOR_INTRO;
   if((created&&(project||self||owner))||
