@@ -349,10 +349,10 @@ test("Both modes use the same intelligence protocol; GELAP remains independently
 
 test("High-reasoning provider routing prefers an explicit reasoning model over a random free pool",()=>{
  const router=require("../netlify/functions/aksara-provider-router");
- const list=[{id:"openrouter"},{id:"requesty"},{id:"groq"}];
+ const list=[{id:"openrouter"},{id:"orcarouter"},{id:"groq"}];
  assert.equal(router.rankProviders(list,"general","openrouter",false)[0].id,"openrouter");
  assert.equal(router.rankProviders(list,"general","openrouter",true)[0].id,"groq");
- assert.equal(router.rankProviders([{id:"openrouter"},{id:"requesty"}],"general","openrouter",true)[0].id,"openrouter");
+ assert.equal(router.rankProviders([{id:"openrouter"},{id:"orcarouter"}],"general","openrouter",true)[0].id,"openrouter");
  assert.equal(list[0].id,"openrouter","Provider ranking does not mutate caller list");
 });
 
@@ -397,7 +397,7 @@ test("Structured tool gateway never executes arbitrary code and rejects unknown 
  assert.equal(SafeTools.calculatorIntent("kenapa manusia mencari makna?"),null);
 });
 test("Intelligence Router 2.0 weighs capability and observations without mutating preferences",()=>{
- const providers=[{id:"openrouter"},{id:"groq"},{id:"requesty"}];
+ const providers=[{id:"openrouter"},{id:"groq"},{id:"orcarouter"}];
  assert.equal(Registry.select(providers,{thinking:"high",prefer:"openrouter"})[0].id,"groq");
  assert.equal(Registry.select(providers,{thinking:"low",prefer:"openrouter"})[0].id,"openrouter");
  Registry.observe("groq",{ok:true,latencyMs:250});
