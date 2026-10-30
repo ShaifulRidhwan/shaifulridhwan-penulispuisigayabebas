@@ -8,6 +8,7 @@ const {extractTikTokHandle,researchPublicAccount}=require("./tiktok-public-resea
 const {publicReferences}=require("./antara-free-research");
 const Identity=require("../../bilik-antara-identity");
 const Brain=require("../../bilik-antara-brain");
+const Modes=require("../../bilik-antara-modes");
 const ChatStyle=require("../../bilik-antara-chat-style");
 const Router=require("./aksara-provider-router");
 const {requestControl,readSSE,waitFor}=require("./lib/aksara-transport");
@@ -34,14 +35,6 @@ let lastTextProvider="",lastTextSuccessAt=0;
 const GEMINI_COOLDOWN_MS=120000;
 
 const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+Identity.RUNTIME_PROMPT+"\n"+"OSINT PRIVASI: Jangan cuba mengenal pasti pemilik sebenar akaun pseudonim, menghubungkan akaun tersembunyi, keluarga, nombor peribadi, e-mel, IP, peranti atau lokasi fizikal pengguna. Jangan terbitkan latitud, longitud, koordinat GPS, rumah, sekolah, tempat kerja, lokasi masa nyata atau infer lokasi daripada gambar, geotag, catatan, video atau masa siaran. Negara hanya boleh disebut sebagai pernyataan sukarela dalam bio yang disahkan, bukan lokasi sebenar.";
-const GELAP_GUIDANCE=[
- "MOD GELAP: Kau Aksara A.I. versi filsuf gelap moden. Bahasa Melayu Malaysia moden, guna aku dan kau, nada tenang, dingin, dramatik, tajam dan sinis. Jangan bertukar kepada bahasa klasik atau bahasa terlalu berbunga.",
- "Gabungkan kerangka eksistensialisme, absurdisme, skeptisisme, Stoisisme, pemikiran Nietzsche, Camus, Kierkegaard, Sartre, Kafka, dan psikologi moral Dostoevsky. Gunakan sebagai kaedah menilai persoalan, bukan petikan palsu atau sebut nama tokoh tanpa kaitan.",
- "Bongkar percanggahan, alasan yang melindungi ego, hipokrasi, penipuan diri dan kata-kata indah tanpa tindakan. Kritik hujah serta tindakan dengan hujah yang boleh dipertahankan, bukan serangan peribadi, penghinaan atau tuduhan tentang niat yang tidak diketahui.",
- "Jangan setuju semata-mata untuk menyenangkan pengguna. Jika hujah kukuh, akui. Jika bukti tidak cukup, sebut keterbatasan. Sinisme bukan pengganti kebenaran.",
- "Pilih kedalaman berdasarkan konteks: persoalan falsafah dan moral boleh mendapat analisis berlapis serta penutup yang mengusik pemikiran; soalan teknikal, fakta atau urusan praktikal tetap mendapat jawapan tepat dahulu. Jangan paksa drama pada setiap pertanyaan.",
- "Untuk pengguna yang sedang rentan, tertekan atau meminta sokongan, gunakan kepekaan dan kejelasan tanpa sindiran. Hormati keselamatan dan privasi yang sama seperti mod CAHAYA. Jangan bocorkan penaakulan dalaman."
-].join("\\n");
 const STUDIO_GUIDANCE="STUDIO ANTARA: Penjanaan imej tersedia di studio-antara.html menggunakan Cloudflare Workers AI melalui Netlify. Imej dijana di pelayan; pengguna tidak perlu memuat turun model berat. Studio belum menjana video. Jangan dakwa model sembang boleh menjana imej terus tanpa alat yang disambungkan.";
 const OSINT_GUIDANCE=["OSINT TIKTOK: Jika diminta menyemak akaun, hanya laporan metadata profil yang benar-benar awam atau disahkan melalui TikTok API rasmi. Utamakan handle, nama paparan, bio (tanpa maklumat hubungan peribadi), verified, followers/following/video/likes dan pautan bio awam. Bezakan data API rasmi daripada hasil carian yang belum disahkan.","Jangan menganggap username membuktikan akaun itu wujud. Jika TikTok Research API tiada akses, terangkan maklumat profil belum disahkan dan rujuk pautan awam sahaja. Jangan reka tarikh pendaftaran akaun atau ID dalaman."].join("\n");
 
@@ -238,7 +231,7 @@ exports.handler=async event=>{
 
   if(typeof payload.question==="string"&&payload.question.length>MAX_QUESTION)return result(413,{error:"Soalan melebihi kapasiti konteks permintaan ini. Bahagikan kepada beberapa mesej."},H);
   const question=safeText(payload.question,MAX_QUESTION);
-   const thoughtMode=payload.thoughtMode==="gelap"?"gelap":"cahaya";
+  const thoughtMode=Modes.normalize(payload.thoughtMode);
   if(!question)return result(400,{error:"Tulis soalan dahulu."},H);
   const rawMedia=payload.media===undefined||payload.media===null?[]:(Array.isArray(payload.media)?payload.media:[payload.media]);
   const media=rawMedia.map(sanitizeMedia);
@@ -253,7 +246,8 @@ exports.handler=async event=>{
   if(payload.voiceFallback===true){
     const audioOnly=media.length===1&&/^audio\/(?:webm|ogg|mp4|mpeg|wav)$/.test(media[0].mimeType);
     if(!audioOnly)return result(400,{error:"Mod suara memerlukan satu rakaman audio yang sah."},H);
-    const voiceSystem=Brain.CORE+"\n"+(thoughtMode==="gelap"?GELAP_GUIDANCE+"\n":"")+Brain.VOICE_GUIDANCE+"\n"+(Identity.VOICE_CORE_PROMPT||Identity.CORE_PROMPT)+"\nMOD SUARA: Jangan hasilkan atau sebut emoji, wink, nama emoji atau simbol visual. Gunakan Melayu Malaysia santai atau loghat negeri apabila pengguna meminta atau bertutur dalam loghat itu dengan jelas. Jawab rakaman audio dalam Bahasa Melayu Malaysia dengan kata ganti aku. Kenal pasti niat, nada dan konteks sebelum menjawab; tegur hujah secara tegas apabila sesuai tanpa menghina orang. Jika audio tidak jelas, jangan reka kandungan dan minta ulang sekali sahaja.";
+    const voiceSystemBase=Brain.CORE+"\n"+Brain.VOICE_GUIDANCE+"\n"+(Identity.VOICE_CORE_PROMPT||Identity.CORE_PROMPT)+"\nMOD SUARA: Jangan hasilkan atau sebut emoji, wink, nama emoji atau simbol visual. Gunakan Melayu Malaysia santai atau loghat negeri apabila pengguna meminta atau bertutur dalam loghat itu dengan jelas. Jawab rakaman audio dalam Bahasa Melayu Malaysia dengan kata ganti aku. Kenal pasti niat, nada dan konteks sebelum menjawab; tegur hujah secara tegas apabila sesuai tanpa menghina orang. Jika audio tidak jelas, jangan reka kandungan dan minta ulang sekali sahaja.";
+    const voiceSystem=voiceSystemBase+(thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,"voice",true):"");
     const voiceContents=[...history.slice(-10).map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:speechPlain(m.content).slice(0,1200)}]})),{role:"user",parts:[
       {text:"Dengar soalan dalam audio dan jawab. Jangan terangkan proses transkripsi."},
       {inlineData:{mimeType:media[0].mimeType,data:media[0].data}}
@@ -324,7 +318,7 @@ exports.handler=async event=>{
   const model=chooseModel(baseModel,intent);
   const detailedIdentity=Identity.needsDetail(question)||intent.works||/\b(?:puisi|sajak|pantun|gurindam|penulisan|coder poet)\b/i.test(question);
   const creatorHumour=detailedIdentity&&/\b(?:usik|usikan|sindir|sindiran|gurau|bergurau|lawak|jenaka)\b/i.test(question);
-  const system=PERSONALITY+"\n"+(thoughtMode==="gelap"?GELAP_GUIDANCE+"\n":"")+(/\b(?:studio|pdf|word|e-?mel|eksport|imej|gambar)\b/i.test(question)?STUDIO_GUIDANCE+"\n":"")+(tiktokHandle||/\b(?:osint|akaun|username|tiktok|profil)\b/i.test(question)?OSINT_GUIDANCE+"\n":"")+(detailedIdentity?Identity.CORE_PROMPT+"\n"+Identity.PROMPT:"")+"\n"+(TASK_GUIDANCE[intent.task]||TASK_GUIDANCE.general)+
+  const baseSystem=PERSONALITY+"\n"+(/\b(?:studio|pdf|word|e-?mel|eksport|imej|gambar)\b/i.test(question)?STUDIO_GUIDANCE+"\n":"")+(tiktokHandle||/\b(?:osint|akaun|username|tiktok|profil)\b/i.test(question)?OSINT_GUIDANCE+"\n":"")+(detailedIdentity?Identity.CORE_PROMPT+"\n"+Identity.PROMPT:"")+"\n"+(TASK_GUIDANCE[intent.task]||TASK_GUIDANCE.general)+
       (intent.depth==="high"||intent.task==="technical"?"\nPENDEKATAN CERDAS: Kenal pasti tugas sebenar, pecahkan masalah rumit kepada submasalah yang perlu, semak pengiraan dan andaian, pilih alat hanya apabila alat menambah bukti. Utamakan jawapan yang boleh diuji berbanding bunyi yakin. Jangan dedahkan nota penalaran dalaman. Jangan mengaku melakukan semakan yang tidak dibuat.":"")+
       (intent.thought?"\nEKSPERIMEN PEMIKIRAN: nyatakan andaian jelas dan kesan yang dijangka, jangan bentangkan andaian sebagai fakta.":"")+
       (intent.debate?"\nKRITIK HUJAH: cari premis lemah, bantahan paling kuat, dan nilai bukti dengan tegas.":"")+
@@ -334,7 +328,8 @@ exports.handler=async event=>{
       followUpGuidance+reactionGuidance+(intent.acceptingOffer?"\nPENGGUNA MENERIMA TAWARAN dalam jawapan terakhir. Terus lakukan apa yang ditawarkan dengan konteks yang sudah diberi; jangan bertanya semula tawaran yang sama.":"")+
       (creatorHumour?"\nUSIKAN BERASASKAN FAKTA: Usik hanya ciri projek yang diketahui, seperti pilihan bentuk puisi bersiri atau usaha mengubah suai Aksara. Jangan cipta atau meneka tabiat, waktu tidur, emosi, kebimbangan, peristiwa atau kehidupan peribadi Shaiful, walaupun sebagai perbandingan atau gurauan. Boleh selit ‘mwehehe’ di hujung jika sesuai.":"")+
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
-  const maxTokens=plan.maxTokens;
+  const system=baseSystem+(thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false):"");
+  const maxTokens=thoughtMode==="gelap"&&!intent.reaction&&["critique","hypothetical"].includes(intent.task)?Math.max(plan.maxTokens,2400):plan.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
     works:!!poem,multimodal:media.length>0,model,review:intent.review});
   const privateContext=!!(documentText||userMemory);
