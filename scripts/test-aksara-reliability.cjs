@@ -320,7 +320,8 @@ test("emoji formatting preserves grounded identity follow-up continuity",()=>{
 });
 test("opening the page tests providers before showing Connected and never installs message actions",async()=>{
  const html=fs.readFileSync(path.join(__dirname,"../bilik-antara.html"),"utf8");
- assert.match(html,/restore\(\);renderIdeas\(\);renderHistory\(\);update\(\);probe\(\);/);
+ assert.match(html,/restore\(\);[\s\S]{0,240}renderIdeas\(\);renderHistory\(\);update\(\);probe\(\);/);
+  assert.match(html,/localStorage\.getItem\(MODE_STORAGE\)/,"Mode preference is restored without delaying provider check");
  assert.match(html,/async function probe\(\)\{[\s\S]*?return checkProviders\(true\)/);
  const source=html.slice(html.indexOf("async function checkProviders("),html.indexOf('ui.conn.addEventListener("click"'));
  let resolve,requests=[],states=[];

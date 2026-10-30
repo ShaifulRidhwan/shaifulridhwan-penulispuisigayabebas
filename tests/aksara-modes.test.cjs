@@ -10,6 +10,7 @@ const backend=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
 const voice=fs.readFileSync("bilik-antara-voice.js","utf8");
 const ChatStyle=require("../bilik-antara-chat-style");
 const Brain=require("../bilik-antara-brain");
+const Identity=require("../bilik-antara-identity");
 
 test("default and untrusted mode values never override CAHAYA",()=>{
  assert.equal(Modes.normalize(undefined),"cahaya");
@@ -24,7 +25,7 @@ test("GELAP contains mature philosophy, evidence discipline and support boundari
   assert.ok(p.includes(word),word);
  }
  assert.ok(p.includes("KRITIK GELAP"));
- assert.ok(Modes.instructions("gelap","support",false).includes("SOKONGAN GELAP"));
+ assert.ok(Modes.instructions("gelap","support",false).includes("SOKONGAN FALSAFAH GELAP"));
  assert.ok(Modes.instructions("gelap","technical",false).includes("TEKNIKAL GELAP"));
  assert.ok(Modes.instructions("gelap","voice",true).includes("SUARA GELAP LANGSUNG"));
 });
@@ -51,7 +52,7 @@ test("Mode control is compact, accessible, and opens a shared glass dialog",()=>
  assert.ok(css.includes('.thought-mode-dialog .thought-choice-copy small'));
 });
 test("browser modules load before voice and retain cache-busted versions",()=>{
- assert.ok(html.indexOf("bilik-antara-modes.js?v=2")<html.indexOf("bilik-antara-voice.js?v=42"));
+ assert.ok(html.indexOf("bilik-antara-modes.js?v=3")<html.indexOf("bilik-antara-voice.js?v=42"));
  assert.ok(html.includes("bilik-antara.css?v=86"));
  assert.ok(html.includes('window.BilikAntaraThought=Object.freeze'));
 });
@@ -101,7 +102,9 @@ test("GELAP thinking follows real intent instead of a decorative token cap",()=>
  assert.ok(reaction.maxTokens>=1400);
  const technical=Modes.plan("gelap",{task:"technical"},base,"Betulkan CSS ini");
  assert.equal(technical.thinkingLevel,"low");
- assert.deepEqual(Modes.plan("gelap",{task:"support",sensitive:true},base,"Aku sedih"),base);
+ const reflective=Modes.plan("gelap",{task:"support",sensitive:true},base,"Aku sedih");
+ assert.equal(reflective.thinkingLevel,"medium");
+ assert.equal(Modes.plan("gelap",{task:"support",sensitive:true},base,"Kecemasan dan bahaya sekarang").thinkingLevel,"low");
  assert.ok(Modes.reactionGuidance("gelap").includes("REAKSI RINGKAS GELAP"));
  assert.equal(Modes.reactionGuidance("cahaya"),"");
 });
@@ -120,4 +123,69 @@ test("identity, fallback, review and frontend share the complete GELAP mode",()=
  assert.ok(html.includes('history.push({role:"assistant",content:data.reply,thoughtMode:requestMode'));
  assert.ok(html.includes('summary:summary,summarizedThrough,thoughtMode'));
  assert.ok(html.includes("setThoughtMode(stored.thoughtMode)"));
+});
+
+test("GELAP local identity never returns CAHAYA canned biography or two emojis",()=>{
+ for(const [question,phrase] of [
+  ["kau siapa","Aku Aksara A.I."],
+  ["siapa kau","Aku Aksara A.I."],
+  ["siapa shaiful ridhwan","The Coder Poet"],
+  ["siapa yang bina kau","Shaiful Ridhwan"],
+  ["apa itu bilik antara","Aksara A.I."]
+ ]){
+  const light=Identity.answerIdentity(question);
+  const dark=Modes.localIdentity(question,Identity);
+  assert.ok(typeof dark==="string"&&dark.includes(phrase),question);
+  assert.notEqual(dark,light,"GELAP should have a distinct local response for "+question);
+  assert.equal(ChatStyle.count(ChatStyle.reply(dark,{mode:"gelap"})),0,question);
+ }
+ assert.equal(Modes.localIdentity("kau suka Dostoevsky?",Identity),null);
+ assert.equal(Modes.localIdentity("siapa aku",Identity),null,"Do not treat existential question as bot identity");
+ assert.equal(Modes.localIdentity("random question",Identity),null);
+});
+test("GELAP emotional reflection is context-aware and CAHAYA stays untouched",()=>{
+ const before=[{role:"user",content:"aku sedih"},{role:"assistant",content:"Apa yang memberatkan fikiran?"}];
+ const first=Modes.contextGuidance("gelap","aku sedih",[]);
+ assert.match(first,/sudut falsafah/i);
+ assert.match(first,/jangan memaksa luahan/i);
+ assert.equal(Modes.contextGuidance("cahaya","aku sedih",before),"");
+ const follow=Modes.contextGuidance("gelap","tah la",before);
+ assert.match(follow,/SUSULAN KESENYAPAN GELAP/);
+ assert.match(follow,/batas mengetahui diri sendiri/);
+ assert.equal(Modes.contextGuidance("gelap","tah la",[{role:"user",content:"Apa itu CSS?"}]),"");
+ assert.ok(Modes.instructions("gelap","support").includes("Jangan guna respons kaunseling automatik"));
+});
+test("server uses distinct local GELAP identity and emotion prompt for every provider",()=>{
+ assert.ok(backend.includes('Modes.localIdentity(question,Identity)'));
+ assert.ok(backend.includes("if(darkIdentity)return result(200"));
+ assert.ok(backend.includes('Modes.contextGuidance(thoughtMode,question,history)'));
+ assert.ok(backend.includes("Identity.RUNTIME_PROMPT"));
+ assert.ok(backend.includes("model:\"project-identity\",thoughtMode"));
+});
+
+test("GELAP short emotional messages have context-safe, philosophical local reflections",()=>{
+ const sad=Modes.localReflection("aku sedih",[]);
+ assert.match(sad,/Kesedihan tak semestinya/);
+ assert.match(sad,/kepastian palsu/);
+ assert.equal(ChatStyle.count(sad),0);
+ const history=[
+  {role:"user",content:"aku sedih"},
+  {role:"assistant",content:sad}
+ ];
+ const follow=Modes.localReflection("tah la",history);
+ assert.match(follow,/batas pengetahuan/);
+ assert.doesNotMatch(follow,/aku ada di sini|ceritalah/i);
+ assert.equal(Modes.localReflection("tah la",[{role:"user",content:"kenapa CSS rosak?"}]),null);
+ assert.equal(Modes.localReflection("aku sedih sebab aku gagal peperiksaan",[]),null,"Substantive context stays with real model");
+ assert.equal(Modes.localReflection("aku sedih",[{role:"user",content:"aku dalam krisis"}]),null,"Safety context stays with real model");
+ assert.ok(backend.includes('Modes.localReflection(question,history)'));
+ assert.ok(backend.includes('model:"local-reflection"'));
+ assert.ok(html.includes('data.model==="local-reflection"'));
+});
+
+test("mode preference survives reload independently from opt-in conversation history",()=>{
+ assert.ok(html.includes('const MODE_STORAGE="bilik-antara-mode-v1"'));
+ assert.ok(html.includes('localStorage.setItem(MODE_STORAGE,thoughtMode)'));
+ assert.ok(html.includes('const lastMode=localStorage.getItem(MODE_STORAGE)'));
+ assert.ok(html.includes('if(lastMode==="gelap"||lastMode==="cahaya")setThoughtMode(lastMode)'));
 });

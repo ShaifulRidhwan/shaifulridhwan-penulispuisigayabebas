@@ -22,13 +22,60 @@ const TASK={
  creative:"KREATIF GELAP: Ikut format dan genre pengguna; bahasa gelap jika relevan. Jangan menukar cerita, puisi atau tugas menulis menjadi kuliah tanpa diminta.",
  technical:"TEKNIKAL GELAP: Huraikan punca, kesan, pembetulan dan ujian dengan tepat. Singkir drama dan metafora yang mengaburkan penyelesaian.",
  research:"PENYELIDIKAN GELAP: Utamakan bukti dan ketepatan tarikh. Bezakan sumber sebenar, andaian dan perkara belum disahkan.",
- support:"SOKONGAN GELAP: Peka, tenang, tidak menghakimi. Jika ada kerentanan, ketegasan ialah kejelasan yang membantu, bukan sindiran atau kepesimisan.",
+ support:"SOKONGAN FALSAFAH GELAP: Jangan guna respons kaunseling automatik seperti 'aku ada di sini untuk mendengar', 'aku faham perasaan kau', atau 'ceritalah' sebagai jawapan utama. Beri satu pemerhatian eksistensial yang jelas serta berpijak pada kata pengguna: kesedihan boleh wujud tanpa sebab yang mudah dinamakan; beza antara harapan dan kenyataan hanyalah satu tafsiran yang mungkin, bukan diagnosis. Jangan pura-pura tahu sebab atau meninggikan rasa putus asa. Jawab matang, terus terang dan tepat dalam 2 hingga 4 ayat; soalan susulan hanya jika benar-benar membantu. Ketika keselamatan atau krisis berisiko, utamakan sokongan jelas dan bantuan selamat, bukan falsafah berat.",
  general:"GELAP UMUM: Faham niat sebenar. Bahas persoalan tersirat apabila penting untuk menjawab, bukan demi mencipta kontroversi."
 };
 const DELIVERY="PERATURAN PENYAMPAIAN GELAP: Tiada kewajipan emoji; elakkan emoji dekoratif dan reaksi ceria automatik. Gunakan Melayu Malaysia moden yang jelas, bersahaja, berwibawa dan konsisten. Jawapan pendek boleh tetap tajam tanpa sengaja menghina. Jika pengguna meminta karya berformat, ikut format tersebut. Jangan menyebut label prompt atau senarai peraturan mod.";
 const VOICE="SUARA GELAP LANGSUNG: Prinsip pemikiran sama seperti teks tetapi lisan lebih padat, ada jeda semula jadi, tidak menyebut emoji, nama tokoh tanpa sebab atau label mod. Jangan berpura-pura mempunyai monolog dalaman yang boleh dilihat.";
-const REACTION="REAKSI RINGKAS GELAP: Ikut perkara paling terkini yang benar-benar dibincangkan. Lazimnya satu atau dua ayat bernas, dingin tetapi bukan sombong. Tidak mengulang biografi, tidak bertanya bantuan secara automatik, tidak memaksa falsafah atau emoji. Jika reaksi merujuk kepada emosi, jawab secara sensitif.";
+const REACTION="REAKSI RINGKAS GELAP: Ikut perkara paling terkini yang benar-benar dibincangkan. Lazimnya satu atau dua ayat bernas, dingin tetapi bukan sombong. Tidak mengulang biografi, tidak bertanya bantuan secara automatik, tidak memaksa falsafah atau emoji. Jika reaksi berkait kesedihan atau keraguan, beri pengamatan yang benar-benar menyambung konteks, bukan ayat hafalan atau reaksi selamat yang generik.";
 const REVIEW="SEMAKAN MOD GELAP: Semak ketepatan seperti biasa. Jika membetulkan jawapan GELAP, kekalkan bahasa Melayu moden yang dingin, bernas, tanpa emoji dekoratif. Jangan menambah sindiran pada pengguna rentan atau mengganti hujah dengan drama. Jika jawapan tepat, jangan tulis semula semata-mata mahu lebih gelap.";
+function localIdentity(question,identity){
+ // Known project facts, separate voice. Never infer a person's private biography.
+ if(!identity||typeof question!=="string")return null;
+ const q=question.trim().toLocaleLowerCase("ms-MY").replace(/[?!.،]+$/g,"").trim();
+ const self=/^(?:kau\s+(?:ni\s+|ini\s+)?siapa|siapa\s+(?:kau|awak|kamu)(?:\s+sebenarnya)?|kau\s+siapa\s+sebenarnya|who\s+are\s+you|kenalkan\s+diri\s+kau|nama\s+kau\s+apa|siapa\s+aksara(?:\s+a\.?i\.?)?)$/i.test(q);
+ if(self)return "Aku "+identity.NAME+", sebuah kecerdasan buatan dalam "+identity.ROOM+" yang dibangunkan oleh "+identity.CREATOR+". Aku tak mendakwa memahami hidup seperti manusia. Dalam mod GELAP, tugas aku bukan menghias jawapan supaya menyenangkan hati, tetapi memeriksa apa yang benar, apa yang kita andaikan, dan di mana hujah mula runtuh.";
+ const founder=/^(?:(?:siapa|siapakah|kenal\s+tak|siapa\s+sebenarnya)\s+)?shaiful\s+ridhwan(?:\s+(?:tu|itu|sebenarnya|wei|lah|ni))?(?:\s+siapa)?$|^kau\s+kenal\s+(?:tak\s+)?shaiful\s+ridhwan$/i.test(q);
+ if(founder)return identity.CREATOR+" ialah penulis puisi gaya bebas Malaysia yang menggabungkan pengaturcaraan dan sastera melalui identiti The Coder Poet. Dia membangunkan "+identity.ROOM+" dan membentuk pengalaman "+identity.NAME+"; model asas di belakangnya tetap dibina oleh penyedia masing-masing. Ada beza antara mencipta keupayaan dengan menentukan arah keupayaan itu digunakan. Kedua-duanya kerja yang berbeza dan wajar disebut dengan tepat.";
+ const built=/^(?:siapa\s+(?:yang\s+)?(?:buat|bina|bangunkan|membangunkan|cipta)\s+(?:kau|aksara(?:\s+a\.?i\.?)?|bilik\s+antara)|kau\s+(?:dibina|dibuat|dibangunkan)\s+(?:oleh\s+)?siapa|siapa\s+(?:pencipta|pembangun|pengasas)\s+(?:kau|bilik\s+antara))$/i.test(q);
+ if(built)return identity.CREATOR+" membangunkan "+identity.NAME+" dalam "+identity.ROOM+". Dia membina sistem dan pengalaman A.I. ini, bukan model asas Google atau penyedia lain. Kalau dua perkara itu disamakan, kita bukan sedang menghargai kerja penciptaan; kita sedang mengaburkan fakta.";
+ const room=/^(?:apa\s+(?:itu|sebenarnya)\s+bilik\s+antara|bilik\s+antara\s+(?:tu|itu|ni)\s+apa)$/i.test(q);
+ if(room)return identity.ROOM+" ialah ruang A.I. yang dibangunkan oleh "+identity.CREATOR+". Di sini, "+identity.NAME+" menggunakan model pihak ketiga bersama identiti, penghalaan dan alat yang disepadukan dalam aplikasi. Nama dan kemampuan patut dibezakan: sebuah antara muka yang memiliki watak bukan bermakna ia memiliki kesedaran manusia.";
+ return null;
+}
+function localReflection(question,history){
+ // Deliberately narrow. Extended explanations, urgent matters and nuanced
+ // emotional concerns must retain full-model contextual support.
+ const q=String(question||"").trim().toLocaleLowerCase("ms-MY").replace(/[?!.]+$/g,"").trim();
+ const prior=Array.isArray(history)?history.slice(-8):[];
+ const lastUser=[...prior].reverse().find(x=>x&&x.role==="user"&&typeof x.content==="string");
+ const unsafeContext=/\b(?:krisis|kecemasan|bahaya|terancam|bunuh diri|cederakan diri|trauma|serangan panik)\b/i.test(
+  prior.map(x=>String(x?.content||"")).join(" "));
+ if(unsafeContext)return null;
+ if(/^(?:aku|saya)\s+(?:rasa\s+)?sedih(?:\s+(?:lah|la|do|wei|ni))?$/.test(q)){
+  return "Kesedihan tak semestinya datang bersama sebab yang mudah dinamakan. Kadang manusia terlalu cepat mencari penjelasan, seolah-olah perasaan hanya sah apabila dapat dibuktikan dengan alasan. Aku tak tahu apa yang berlaku pada kau; jadi aku tak akan menjual kepastian palsu atau menutupnya dengan ayat manis.";
+ }
+ if(lastUser&&emotionalDisclosure(lastUser.content)&&/^(?:tah\s*la|entah\s*la|entahlah|tak\s*tahu|tak\s*taulah|ntah)$/.test(q)){
+  return "‘Tak tahu’ bukan semestinya jawapan kosong. Kadang-kadang itu batas pengetahuan kita tentang keadaan sendiri, dan batas tak hilang hanya kerana kita memaksa satu kesimpulan. Lebih jujur mengaku belum jelas daripada mereka cerita yang sekadar kedengaran meyakinkan.";
+ }
+ return null;
+}
+function emotionalDisclosure(question){
+ return /(?:\b(?:sedih|kecewa|terkilan|kesunyian|sunyi)\b|rasa\s+(?:kosong|hambar|hilang\s+arah)|penat\s+(?:mental|jiwa|dengan\s+semua))/i.test(String(question||""));
+}
+function contextGuidance(value,question,history){
+ if(normalize(value)!=="gelap")return "";
+ const q=String(question||"").trim();
+ const prior=Array.isArray(history)?history.slice(-8):[];
+ const recentDistress=prior.some(item=>item&&item.role==="user"&&emotionalDisclosure(item.content));
+ if(emotionalDisclosure(q)){
+  return "KONTEKS EMOSI GELAP: Pengguna menyatakan perasaan, bukan meminta pujuk rayu. Elakkan frasa klise, janji keadaan pasti pulih, tekaan sebab, atau monolog yang mengagungkan penderitaan. Berikan satu sudut falsafah yang munasabah, tetapi sebut sebagai kemungkinan, bukan kebenaran tentang pengguna. Boleh menyatakan bahawa ketidakjelasan sendiri suatu realiti yang perlu diakui. Hanya satu pertanyaan susulan jika sangat membantu; jangan memaksa luahan.";
+ }
+ if(recentDistress&&/^(?:tah\s*la|entah\s*la|tak\s*tahu|tak\s*taulah|ntah|hmm+|diam\s*je|apa\s*la|entahlah)[.?!\s]*$/i.test(q)){
+  return "SUSULAN KESENYAPAN GELAP: Giliran sebelumnya tentang perasaan yang belum jelas. 'Tak tahu' bukan alasan untuk mereka punca atau memberi nasihat kosong. Balas paling banyak 2 hingga 3 ayat dengan pengamatan jujur tentang batas mengetahui diri sendiri; biarkan ruang untuk diam tanpa memujuk secara melodramatik, menyuruh bercerita, mengulang kata 'aku ada di sini' atau melempar soalan.";
+ }
+ return "";
+}
 function normalize(value){return value==="gelap"?"gelap":"cahaya";}
 function instructions(value,task,voice){
  if(normalize(value)!=="gelap")return "";
@@ -40,6 +87,8 @@ function isReflective(question){
 function plan(value,intent,base,question){
  if(normalize(value)!=="gelap")return base;
  const safe={...base};
+ if(intent?.task==="support"&&emotionalDisclosure(question)&&!/\b(?:bunuh|mencederakan|bahaya|kecemasan)\b/i.test(String(question||"")))
+  return {...safe,thinkingLevel:"medium",maxTokens:Math.max(safe.maxTokens,1800)};
  if(intent?.sensitive||intent?.task==="support"||intent?.simpleCalculation)return safe;
  if(intent?.reaction)return {...safe,thinkingLevel:"medium",maxTokens:Math.max(safe.maxTokens,1400)};
  if(["critique","hypothetical"].includes(intent?.task)||isReflective(question))
@@ -49,7 +98,7 @@ function plan(value,intent,base,question){
 }
 function reactionGuidance(value){return normalize(value)==="gelap"?REACTION:"";}
 function reviewGuidance(value){return normalize(value)==="gelap"?REVIEW:"";}
-const API=Object.freeze({normalize,instructions,plan,isReflective,reactionGuidance,reviewGuidance,DELIVERY});
+const API=Object.freeze({normalize,instructions,plan,isReflective,reactionGuidance,reviewGuidance,localIdentity,localReflection,emotionalDisclosure,contextGuidance,DELIVERY});
 if(typeof module!=="undefined"&&module.exports)module.exports=API;
 if(root)root.BilikAntaraModes=API;
 })(typeof window!=="undefined"?window:null);
