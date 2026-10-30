@@ -164,7 +164,8 @@ function cognitiveProfile(question,history,intent,mode="cahaya"){
  const claim=/(?:adakah|benarkah|betul ke|apakah benar|sahkan|semak fakta|bukti|kajian)/i.test(q);
  const complex=(raw.length>130&&/(?:\bdan\b|\batau\b|,\s|;)/i.test(q))||/^(?:terangkan|jelaskan|analisis|bandingkan|kritikkan|kaji|buktikan).*?(?:secara mendalam|terperinci|langkah demi langkah|dari pelbagai sudut)/i.test(q);
  let focus="general";
- if(quantitative)focus="quantitative";
+ if(intent?.search&&!intent?.calculate)focus="research";
+ else if(quantitative)focus="quantitative";
  else if(debugging)focus="debugging";
  else if(argument&&intent?.task!=="creative")focus="argument";
  else if(deliberation&&intent?.task!=="creative")focus="decision";
