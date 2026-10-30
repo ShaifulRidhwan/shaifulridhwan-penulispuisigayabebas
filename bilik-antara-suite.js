@@ -23,8 +23,8 @@ function freshId(){return "s"+Date.now().toString(36)+Math.random().toString(36)
 let activeId="";
 try{activeId=sessionStorage.getItem(PREFIX+"-active")||freshId();sessionStorage.setItem(PREFIX+"-active",activeId);}catch(_){activeId=freshId();}
 let archive=Array.isArray(read(KEYS.archive,[]))?read(KEYS.archive,[]):[];
-let memory=read(KEYS.memory,{enabled:false,text:""});
-if(!memory||typeof memory!=="object")memory={enabled:false,text:""};
+let memory=read(KEYS.memory,{enabled:true,text:""});
+if(!memory||typeof memory!=="object"||typeof memory.enabled!=="boolean")memory={enabled:true,text:""};
 let workspace=read(KEYS.workspace,{title:"",content:"",at:0});
 if(!workspace||typeof workspace!=="object")workspace={title:"",content:"",at:0};
 const blankMetrics=()=>({calls:0,failures:0,tokens:0,reportedUsageCount:0,durations:[],elapsed:[],events:[],times:[],byProvider:{}});
@@ -153,7 +153,7 @@ function renderSessions(){
 }
 function renderMemory(){
  paragraph("Memori pilihan pengguna ialah nota berasingan daripada sejarah sesi.");
- paragraph("Memori ini berbeza daripada sejarah sesi. Nota yang kau tulis dan aktifkan dihantar sebagai konteks kepada Gemini. Nota pilihan tidak dihantar ke penyedia sandaran. Semua nota kekal di peranti sehingga kau padam.");
+ paragraph("Memori ini berbeza daripada sejarah sesi. Nota yang kau tulis dan aktifkan dihantar sebagai konteks kepada Gemini. Nota pilihan hanya dihantar ke penyedia sandaran apabila kau benarkan melalui Privasi & sesi. Nota kekal di peranti sehingga kau padam.");
  const toggle=make("input");toggle.type="checkbox";toggle.checked=!!memory.enabled;
  const label=make("label"," Aktifkan memori");label.prepend(toggle);content.appendChild(label);
  const field=make("textarea");field.className="ba-editor";field.rows=8;field.maxLength=8000;
@@ -165,7 +165,7 @@ function renderMemory(){
   write(KEYS.memory,memory);notice("Pilihan memori disimpan pada peranti.");render();
  }),button("Padam memori",()=>{
   if(!confirm("Padam semua memori pilihan di peranti ini?"))return;
-  memory={enabled:false,text:""};try{localStorage.removeItem(KEYS.memory);}catch(_){}
+  memory={enabled:false,text:""};write(KEYS.memory,memory); // Preserve deliberate opt-out without keeping deleted note text.
   notice("Memori pilihan dipadam.");render();
  }));
  paragraph("Elakkan memasukkan kata laluan, maklumat kesihatan atau butiran sulit. Tetapan ini khusus untuk pelayar/peranti yang sedang digunakan.");
