@@ -4,6 +4,7 @@
 const CAPS=Object.freeze({
  groq:Object.freeze({reasoning:"high",text:true,vision:false,cost:"verified-free-only"}),
  openrouter:Object.freeze({reasoning:"variable",text:true,vision:true,cost:"free-pool"}),
+ orcarouter:Object.freeze({reasoning:"variable",text:true,vision:false,cost:"free-pool"}),
  requesty:Object.freeze({reasoning:"unknown",text:true,vision:false,cost:"verified-free-only"})
 });
 const samples=new Map();
