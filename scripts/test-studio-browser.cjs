@@ -79,14 +79,14 @@ async function main(){
    const css=selector=>getComputedStyle(document.querySelector(selector));
    const card=css('.creator'),result=css('.result'),gallery=css('.gallery'),
     field=css('.prompt-compose'),trigger=css('.studio-picker-trigger'),
-    modal=css('.studio-picker-dialog'),hero=css('.creator #studioTitle'),heading=css('.result .card-top h2'),nav=css('.topbar');
+    modal=css('.studio-picker-dialog'),hero=css('.creator #imagePrompt'),heading=css('.result #resultIndicator'),nav=css('.topbar');
    return {
     cardFill:card.backgroundImage,resultFill:result.backgroundImage,galleryFill:gallery.backgroundImage,
     cardBlur:card.backdropFilter,fieldBlur:field.backdropFilter,triggerBlur:trigger.backdropFilter,
     modalFill:modal.backgroundImage,modalBlur:modal.backdropFilter,
     heroFont:hero.fontFamily,headingFont:heading.fontFamily,navBlur:nav.backdropFilter,navFill:nav.backgroundImage,
     promptWeight:css('#enhancePrompt').fontWeight,
-    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('studio-antara.css?v=17'))
+    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('studio-antara.css?v=18'))
    };
   });
   assert.equal(visual.stylesheet,true,'Audited Studio CSS must load');
@@ -99,13 +99,28 @@ async function main(){
   assert.equal(await page.locator('.topbar .aksara-nav-link').count(),3,'Studio should link to Main, Bilik Antara and Novel');
   assert.equal(await page.locator('.topbar .aksara-brand').count(),1,'Studio should have its own Aksara identity');
   assert.equal(await page.locator('.topbar .brand-mark').count(),0,'Top AKSARA mark should be absent');
-  assert.equal(await page.locator('#studioTitle').textContent(),'STUDIO ANTARA');
-  assert.equal(await page.locator('#resultTitle').textContent(),'RUANG VISUAL');
-  assert.equal(await page.locator('#resultTitle span').textContent(),'VISUAL');
+  assert.equal(await page.locator('#studioTitle').textContent(),'Jana imej');
+  assert.equal(await page.locator('#resultTitle').textContent(),'Pratonton hasil imej');
+  assert.equal(await page.locator('.creator .card-top, .result .card-top').count(),0,'No oversized section headlines should remain');
   assert.equal(await page.locator('.topbar .aksara-nav-link[href="index.html"]').textContent(),'Laman utama');
-  const headlineGold=await page.locator('#resultTitle span').evaluate(el=>getComputedStyle(el).color);
-  const studioGold=await page.locator('#studioTitle span').evaluate(el=>getComputedStyle(el).color);
-  assert.equal(headlineGold,studioGold,'VISUAL must use exactly the same gold as ANTARA');
+  const layout=await page.evaluate(()=>{
+   const rect=selector=>document.querySelector(selector).getBoundingClientRect();
+   const stage=rect('#resultStage'),footer=rect('.result-stage-footer'),status=rect('#resultIndicator'),prompt=rect('#imagePrompt'),
+    creator=rect('.creator'),cta=document.querySelector('#generateImage'),style=getComputedStyle(cta);
+   return {
+    stageHeight:stage.height,
+    badgeDocked:Math.abs(status.right-(footer.right-12))<=4&&status.bottom<footer.bottom+1&&status.top>=footer.top-1,
+    footerBottom:Math.abs(footer.bottom-stage.bottom)<2,
+    promptNearTop:prompt.top-creator.top<42,
+    ctaBackground:style.backgroundImage,ctaBlur:style.backdropFilter,ctaColor:style.color
+   };
+  });
+  assert.ok(layout.stageHeight>=(width<=680?340:400),'Preview stage must fill the old heading space');
+  assert.equal(layout.badgeDocked,true,'Waiting badge must sit inside the lower-right preview footer');
+  assert.equal(layout.footerBottom,true,'Status footer must be attached to the preview bottom');
+  assert.equal(layout.promptNearTop,true,'Prompt should start at the top of the creator card');
+  assert.match(layout.ctaBackground,/gradient/,'Jana imej must be glass, not solid yellow');
+  assert.match(layout.ctaBlur,/blur/,'Jana imej should retain translucent backdrop blur');
   const breath=await page.evaluate(()=>{
    const style=(selector)=>getComputedStyle(document.querySelector(selector),'::before');
    const motion=['#enhancePrompt','#generateImage','#resultIndicator'].map(selector=>({
@@ -121,7 +136,8 @@ async function main(){
    assert.equal(await page.locator(selector).evaluate(el=>getComputedStyle(el,'::before').animationName),'none','Reduced motion must disable breathing: '+selector);
   }
   await page.emulateMedia({reducedMotion:'no-preference'});
-  assert.equal(await page.locator('.creator > .card-top #studioTitle').count(),1,'Title is within creator glass');
+  assert.equal(await page.locator('.creator > .card-top #studioTitle').count(),0,'Oversized creator heading must be removed');
+  assert.equal(await page.locator('#studioTitle').getAttribute('class'),'sr-only');
   assert.equal(await page.locator('#imagePrompt').getAttribute('placeholder'),'Apa yang kau nak lihat?');
   assert.equal(await page.locator('#modelNote').count(),0,'Redundant model prose must be absent');
   assert.equal(await page.locator('#generationStatus').isHidden(),true,'Idle status should not occupy vertical space');
