@@ -1,0 +1,29 @@
+name: Aksara identity regression tests
+on:
+  pull_request:
+    paths:
+      - 'bilik-antara*'
+      - 'netlify/functions/bilik-antara.js'
+      - 'tests/aksara-modes.test.cjs'
+  push:
+    branches: [main]
+    paths:
+      - 'bilik-antara*'
+      - 'netlify/functions/bilik-antara.js'
+      - 'tests/aksara-modes.test.cjs'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          node --check bilik-antara-modes.js
+          node --check bilik-antara-voice.js
+          node --check netlify/functions/bilik-antara.js
+          node --test tests/aksara-modes.test.cjs
