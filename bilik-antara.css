@@ -3016,18 +3016,44 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .conversation::before{animation:none;will-change:auto;opacity:.55}
 .world-haze,.world-light-glow,.conversation>.glass-shadow-mist{display:none!important;animation:none!important}
 
-/* Aksara dual thought modes: isolated, compositor-safe control beside Send. */
+/* Aksara CAHAYA / GELAP: explicit icon and label alongside Send.
+   Do not alter the chat container, keyboard viewport or animated glass. */
 .conversation .composer #thoughtMode{
- box-sizing:border-box;flex:0 0 40px;width:40px;height:44px;min-width:40px;
- display:grid;place-items:center;align-self:flex-end;margin:0;padding:0;
- border:1px solid rgba(244,213,166,.30);border-radius:13px;
- background:rgba(255,242,215,.035);color:#e7c68d;
+ box-sizing:border-box;flex:0 0 87px;width:87px;min-width:87px;height:44px;
+ display:inline-flex;align-items:center;justify-content:center;gap:5px;
+ align-self:flex-end;margin:0;padding:0 6px;
+ border:1px solid rgba(245,208,157,.44);border-radius:13px;
+ background:linear-gradient(145deg,rgba(238,201,140,.085),rgba(19,31,49,.12));
+ color:#e7c68d;
  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
  transition:background-color .2s,border-color .2s,color .2s;
+ -webkit-tap-highlight-color:transparent;
 }
-.conversation .composer #thoughtMode svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.conversation .composer #thoughtMode[aria-pressed="true"]{color:#acc3eb;border-color:rgba(154,185,232,.64);background:rgba(100,124,171,.14)}
-.conversation .composer #thoughtMode:hover{border-color:rgba(250,220,175,.7)}
+.conversation .composer #thoughtMode svg{
+ flex:0 0 18px;width:18px;height:18px;fill:none;stroke:currentColor;
+ stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;
+}
+.conversation .composer #thoughtMode .thought-mode-moon{display:none}
+.conversation .composer #thoughtMode .thought-mode-label{
+ font:650 9px/1.2 'DM Sans',system-ui,sans-serif;
+ letter-spacing:.035em;white-space:nowrap;
+}
+.conversation .composer #thoughtMode[data-mode="gelap"]{
+ color:#b5c9ee;
+ border-color:rgba(154,185,232,.66);
+ background:linear-gradient(145deg,rgba(113,139,190,.19),rgba(19,31,49,.18));
+}
+.conversation .composer #thoughtMode[data-mode="gelap"] .thought-mode-sun{display:none}
+.conversation .composer #thoughtMode[data-mode="gelap"] .thought-mode-moon{display:block}
+.conversation .composer #thoughtMode:hover{border-color:rgba(250,220,175,.8)}
 .conversation .composer #thoughtMode:focus-visible{outline:2px solid #e9ca96!important;outline-offset:2px}
-@media(max-width:420px){.conversation .composer #thoughtMode{flex-basis:36px;width:36px;height:42px;min-width:36px}}
-@media(max-width:350px){.conversation .composer #thoughtMode{flex-basis:32px;width:32px;min-width:32px}}
+@media(max-width:420px){
+ .conversation .composer #thoughtMode{
+  flex-basis:77px;width:77px;min-width:77px;height:42px;gap:4px;padding-inline:4px;
+ }
+ .conversation .composer #thoughtMode .thought-mode-label{font-size:8px;letter-spacing:0}
+}
+@media(max-width:350px){
+ .conversation .composer #thoughtMode{flex-basis:40px;width:40px;min-width:40px}
+ .conversation .composer #thoughtMode .thought-mode-label{display:none}
+}
