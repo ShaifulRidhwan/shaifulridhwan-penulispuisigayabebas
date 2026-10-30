@@ -494,6 +494,8 @@ resume.addEventListener("click",function(e){e.preventDefault();openBook(true)});
 window.addEventListener("pageshow",syncResume);
 document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!host.hidden)showCover()});
 syncResume();
+// Pautan Novel dari AKSARA masuk terus ke pembaca; kulit buku biasa kekal untuk lawatan manual.
+if(new URLSearchParams(window.location.search).get("baca")==="1"){openBook(savedPage()>0)}
 })();</script>
 </body>
 </html>
