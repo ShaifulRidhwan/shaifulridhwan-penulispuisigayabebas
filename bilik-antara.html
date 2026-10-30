@@ -706,7 +706,7 @@ function renderExtras(bubble,data){
  if(data.disclaimer)bubble.appendChild(elem("div","aside-note",String(data.disclaimer).slice(0,450)));
 }
 function welcome(){
- addMessage("assistant","Ada apa yang kau nak faham, bina, atau persoalkan hari ni?",{timestamp:Date.now(),thoughtMode});
+ addMessage("assistant","Antara aksara dan code,\nGAYA yang bebas,\nBEBAS dalam bentuk,\nLUAS dalam pemikiran.",{timestamp:Date.now(),thoughtMode});
 }
 function renderHistory(){
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
