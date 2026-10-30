@@ -3016,44 +3016,70 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .conversation::before{animation:none;will-change:auto;opacity:.55}
 .world-haze,.world-light-glow,.conversation>.glass-shadow-mist{display:none!important;animation:none!important}
 
-/* Aksara CAHAYA / GELAP: explicit icon and label alongside Send.
-   Do not alter the chat container, keyboard viewport or animated glass. */
+/* Thought mode: compact trigger. Existing glass dialog recipe is shared with Multi A.I. */
 .conversation .composer #thoughtMode{
- box-sizing:border-box;flex:0 0 87px;width:87px;min-width:87px;height:44px;
- display:inline-flex;align-items:center;justify-content:center;gap:5px;
- align-self:flex-end;margin:0;padding:0 6px;
- border:1px solid rgba(245,208,157,.44);border-radius:13px;
- background:linear-gradient(145deg,rgba(238,201,140,.085),rgba(19,31,49,.12));
- color:#e7c68d;
+ box-sizing:border-box;flex:0 0 44px;width:44px;height:44px;min-width:44px;
+ display:grid;place-items:center;align-self:flex-end;margin:0;padding:0;
+ border:1px solid rgba(245,208,157,.43);border-radius:13px;
+ color:#e7c68d;background:linear-gradient(145deg,rgba(238,201,140,.085),rgba(19,31,49,.12));
  -webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
- transition:background-color .2s,border-color .2s,color .2s;
+ transition:color .2s,border-color .2s,background-color .2s;
  -webkit-tap-highlight-color:transparent;
 }
 .conversation .composer #thoughtMode svg{
- flex:0 0 18px;width:18px;height:18px;fill:none;stroke:currentColor;
+ width:21px;height:21px;fill:none;stroke:currentColor;
  stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;
 }
-.conversation .composer #thoughtMode .thought-mode-moon{display:none}
-.conversation .composer #thoughtMode .thought-mode-label{
- font:650 9px/1.2 'DM Sans',system-ui,sans-serif;
- letter-spacing:.035em;white-space:nowrap;
-}
 .conversation .composer #thoughtMode[data-mode="gelap"]{
- color:#b5c9ee;
- border-color:rgba(154,185,232,.66);
+ color:#b5c9ee;border-color:rgba(154,185,232,.66);
  background:linear-gradient(145deg,rgba(113,139,190,.19),rgba(19,31,49,.18));
 }
-.conversation .composer #thoughtMode[data-mode="gelap"] .thought-mode-sun{display:none}
-.conversation .composer #thoughtMode[data-mode="gelap"] .thought-mode-moon{display:block}
 .conversation .composer #thoughtMode:hover{border-color:rgba(250,220,175,.8)}
 .conversation .composer #thoughtMode:focus-visible{outline:2px solid #e9ca96!important;outline-offset:2px}
+/* Inherits .multi-ai-dialog header, body glass and backdrop unchanged. */
+.thought-mode-dialog{width:min(410px,calc(100vw - 28px))}
+.thought-mode-dialog .thought-mode-list{gap:10px}
+.thought-mode-dialog .thought-mode-choice{
+ box-sizing:border-box;width:100%;min-height:78px;
+ display:grid;grid-template-columns:28px minmax(0,1fr) 18px;
+ align-items:center;gap:12px;padding:12px 14px;
+ text-align:left;cursor:pointer;
+ border-radius:13px;
+}
+.thought-mode-dialog .thought-mode-choice:hover{background-color:rgba(250,219,171,.065)!important}
+.thought-mode-dialog .thought-mode-choice:focus-visible{outline:2px solid #eec98e!important;outline-offset:2px}
+.thought-mode-dialog .thought-mode-choice.is-selected{
+ outline:1px solid rgba(240,207,157,.72);
+ outline-offset:-1px;
+}
+.thought-mode-dialog .thought-mode-choice[data-mode-option="gelap"].is-selected{
+ outline-color:rgba(167,193,239,.75);
+}
+.thought-mode-dialog .thought-choice-icon{
+ width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.6;
+ stroke-linecap:round;stroke-linejoin:round;
+}
+.thought-mode-dialog .thought-choice-sun{color:#eac17c}
+.thought-mode-dialog .thought-choice-moon{color:#b5c9ee}
+.thought-mode-dialog .thought-choice-copy{display:flex;flex-direction:column;gap:4px;min-width:0}
+.thought-mode-dialog .thought-choice-copy strong{
+ font:650 14px/1.3 'DM Sans',system-ui,sans-serif;
+ color:#f5e9d8;
+}
+.thought-mode-dialog .thought-choice-copy small{
+ display:block;font:400 11px/1.5 'DM Sans',system-ui,sans-serif;
+ color:#c6bbac;letter-spacing:0;
+}
+.thought-mode-dialog .thought-choice-check{
+ color:#ebc890;opacity:0;font-size:16px;text-align:center;
+}
+.thought-mode-dialog .thought-mode-choice.is-selected .thought-choice-check{opacity:1}
+.thought-mode-dialog .thought-mode-choice[data-mode-option="gelap"] .thought-choice-check{color:#b5c9ee}
 @media(max-width:420px){
  .conversation .composer #thoughtMode{
-  flex-basis:77px;width:77px;min-width:77px;height:42px;gap:4px;padding-inline:4px;
+  flex-basis:40px;width:40px;min-width:40px;height:42px;
  }
- .conversation .composer #thoughtMode .thought-mode-label{font-size:8px;letter-spacing:0}
-}
-@media(max-width:350px){
- .conversation .composer #thoughtMode{flex-basis:40px;width:40px;min-width:40px}
- .conversation .composer #thoughtMode .thought-mode-label{display:none}
+ .thought-mode-dialog{padding:15px}
+ .thought-mode-dialog .thought-mode-choice{gap:10px;min-height:73px;padding:11px}
+ .thought-mode-dialog .thought-choice-copy small{font-size:10.5px}
 }
