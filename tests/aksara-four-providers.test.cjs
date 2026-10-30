@@ -21,7 +21,7 @@ test("Canonical identity contains four providers and clear capability/status sem
  assert.deepEqual(Identity.TEXT_PROVIDERS,canonical);
  for(const name of canonical){
   assert.ok(Identity.WHO_AM_I.includes(name),"Siapa Aku missing "+name);
-  assert.ok(Identity.INTRO||Identity.CORE_PROMPT.includes(name));
+  assert.ok(Identity.INTRO.includes(name)||Identity.CORE_PROMPT.includes(name));
   assert.ok(Identity.RUNTIME_PROMPT.includes(name),"Runtime missing "+name);
   assert.ok(Identity.VOICE_CORE_PROMPT.includes(name),"Voice missing "+name);
   assert.ok(brain.includes(name),"Brain missing "+name);
@@ -47,6 +47,20 @@ test("Default starter lists four brains; user interface and provider registry ag
  assert.match(backend,/id:"gemini"/);
  assert.doesNotMatch(html,/Requesty|requesty/i);
  assert.doesNotMatch(router,/Requesty|requesty/i);
+});
+
+test("Every default question has a prepared answer without obsolete provider claims",()=>{
+ const starters=[...html.matchAll(/<button class="starter" type="button">([^<]+)<\\/button>/g)].map(m=>m[1]);
+ assert.deepEqual(starters,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas","Empat Otak Aksara"]);
+ for(const question of starters){
+  const answer=Identity.answerIdentity(question);
+  assert.ok(typeof answer==="string"&&answer.length>80,"Missing prepared answer for "+question);
+  assert.doesNotMatch(answer,/Requesty|lima penyedia|5 otak/i,question);
+ }
+ for(const name of canonical){
+  assert.ok(Identity.answerIdentity("Siapa Aku").includes(name));
+  assert.ok(Modes.localIdentity("Siapa Aku",Identity).includes(name));
+ }
 });
 
 test("Prepared CAHAYA and GELAP replies answer every four-brain question",()=>{
