@@ -37,7 +37,7 @@ test('Studio 2.4 removes redundant copy and decorative icons without hiding func
  assert.match(html,/<section class="glass-card creator" aria-labelledby="studioTitle">/);
  assert.match(html,/<h1 id="studioTitle" class="studio-card-title">STUDIO <span>ANTARA<\/span><\/h1>/);
  assert.match(html,/<h2 id="resultTitle">RUANG <span>VISUAL<\/span><\/h2>/);
- assert.match(html,/<a class="home-link" href="index\.html">LAMAN UTAMA<\/a>/);
+ assert.match(html,/<a class="aksara-nav-link" href="index\.html">Laman utama<\/a>/);
  assert.match(html,/<span id="resultIndicator" class="result-indicator is-waiting">MENUNGGU<\/span>/);
  assert.match(html,/studio-antara\.css\?v=17/);
  assert.match(html,/studio-antara-cloud\.js\?v=8/);
@@ -50,8 +50,8 @@ test('Studio 2.4 removes redundant copy and decorative icons without hiding func
  assert.doesNotMatch(html,/RUANG KREATIF CAHAYA DAN GELAP|Bayangkan\. Perkemas\. Jadikan visual\.|Mula dengan imaginasi\.|01 \/ IDEA KAU|02 \/ HASIL KAU|Dah sedia\. Cerita je apa yang kau bayangkan\.|Idea kau bermula di sini\.|Tanpa model besar pada peranti\.|Schnell: output segi empat/);
  assert.doesNotMatch(html,/✦|↗|←|↓/);
  assert.doesNotMatch(script,/modelNote|✦|↗/);
- assert.match(html,/<header class="topbar">/);
- assert.match(html,/<a class="back-link" href="bilik-antara\.html">BILIK ANTARA<\/a>/);
+ assert.match(html,/<header class="topbar aksara-header">/);
+ assert.match(html,/<a class="aksara-nav-link" href="bilik-antara\.html">Bilik Antara<\/a>/);
  assert.match(script,/ui\.status\.hidden=!message/);
  assert.match(script,/ui\.meta\.hidden=false/);
 });
