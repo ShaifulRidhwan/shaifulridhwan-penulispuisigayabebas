@@ -145,15 +145,20 @@ async function chat(page,device){
  assert.equal(await page.locator("#sendBtn").isEnabled(),true);
  // Two sides share the same chat engine; confirm visible control and mode switching.
  const thought=page.locator("#thoughtMode");
- assert.equal(await thought.isVisible(),true,"CAHAYA/GELAP toggle is visible beside Send");
+ const modeDialog=page.locator("#thoughtModeDialog");
+ assert.equal(await thought.isVisible(),true,"Mode trigger is visible beside Send");
  const first=await thought.boundingBox(),send=await page.locator("#sendBtn").boundingBox();
- assert.ok(first&&send&&first.x+first.width<=send.x+15,"Thought selector is immediately before Send");
+ assert.ok(first&&send&&first.x+first.width<=send.x+15,"Mode selector is immediately before Send");
  assert.equal(await thought.getAttribute("data-mode"),"cahaya");
  await thought.click();
+ assert.equal(await modeDialog.isVisible(),true);
+ await modeDialog.locator('[data-mode-option="gelap"]').click();
  assert.equal(await thought.getAttribute("data-mode"),"gelap");
- assert.equal(await thought.getAttribute("aria-pressed"),"true");
+ assert.equal(await modeDialog.isVisible(),false);
  await thought.click();
+ await modeDialog.locator('[data-mode-option="cahaya"]').click();
  assert.equal(await thought.getAttribute("data-mode"),"cahaya");
+ assert.equal(await modeDialog.isVisible(),false);
  assert.equal(await page.locator("html").getAttribute("data-theme"),"dark","Chat retains its light-and-dark identity");
  await page.locator("#settingsPanel > summary").click();
  await page.locator("#privacySettings > summary").click();
