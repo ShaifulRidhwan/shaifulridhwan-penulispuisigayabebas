@@ -1,53 +1,97 @@
-Shaiful Ridhwan | Penulis Puisi Gaya Bebas
+# GAYA BEBAS
 
-Aksara Moden untuk Hari Ini, Aksara Kuno Bila Perlu.
+### Shaiful Ridhwan | The Coder Poet
 
-Selamat datang ke repositori laman rasmi Shaiful Ridhwan, penulis puisi gaya bebas dari Malaysia yang meneroka manusia, falsafah, cinta, akal dan persoalan kewujudan melalui bahasa sastera moden.
+**Aksara Moden untuk Hari Ini, Aksara Kuno Bila Perlu.**
 
-Gaya Bebas ialah ruang penulisan dan penerbitan karya asli yang mengutamakan kebebasan bentuk, ketelitian diksi dan pemikiran yang mendahului emosi.
+Gaya Bebas ialah ruang sastera, falsafah dan teknologi yang dibangunkan oleh **Shaiful Ridhwan**, penulis puisi gaya bebas dari Malaysia.
 
-🌐 Saluran Rasmi
+Bermula dengan aksara dan persoalan tentang manusia, projek ini berkembang menjadi sebuah platform yang menggabungkan penulisan kreatif, programming dan Artificial Intelligence.
 
-- Laman web rasmi: https://shaifulridhwan-penulispuisigayabebas.netlify.app/
-- Blog penulisan: https://shaifulridhwanpuisigayabebas.blogspot.com/
-- TikTok: https://www.tiktok.com/@puisigayabebas
-- GitHub: https://github.com/ShaifulRidhwan
+Di sini, puisi bukan sekadar tentang perasaan. Ia juga tentang akal, pengetahuan, kewujudan dan keberanian untuk terus bertanya.
 
-✍️ Tentang Gaya Bebas
+---
 
-Gaya Bebas menghimpunkan karya dan projek penulisan Shaiful Ridhwan, termasuk:
+## ✍️ GAYA BEBAS | Sastera & Falsafah
 
-- Puisi falsafah — penerokaan tentang pengetahuan, akal, manusia dan kewujudan.
-- Trilogi puisi — karya berangkai yang membina persoalan falsafah melalui tema dan imej yang saling berkaitan.
-- Tetralogi Wanita — siri puisi tentang warisan, pandangan masyarakat, diam dan pilihan.
-- Karya Khas — projek penulisan yang merangkumi karya lebih panjang dan bentuk naratif lain.
-- Arkib puisi — himpunan karya asli yang disusun untuk pembacaan dan penelusuran.
+Ruang untuk meneroka puisi Melayu moden, karya bersiri, novel dan penulisan falsafah.
 
-🖋️ Manifesto Penulisan
+Antara kandungannya:
 
-Puisi gaya bebas bukan kebebasan untuk menulis tanpa pertimbangan. Ia ialah ruang untuk memilih bentuk, menguji pemikiran dan mencari diksi yang paling tepat bagi sesuatu gagasan.
+- **Puisi Gaya Bebas:** Karya tentang cinta, manusia, akal, iman dan kewujudan.
+- **Duologi, Trilogi & Tetralogi:** Eksperimen struktur dan kesinambungan idea dalam penulisan puisi.
+- **Antara Cahaya dan Gelap:** Novel prosa falsafah yang meneroka kehidupan di antara dua kutub pemikiran.
+- **Perpustakaan AKSARA:** Ruang membaca novel dan sastera falsafah pilihan.
 
-Bagi Shaiful Ridhwan, bahasa bukan sekadar alat menyampaikan emosi. Bahasa juga menjadi medan untuk meneliti cara manusia berfikir, memilih dan memahami kewujudan.
+## 🤖 BILIK ANTARA | Aksara A.I.
 
-📚 Blog Penulisan
+**Aksara A.I.** ialah projek AI yang dibina untuk berbual, belajar, menulis, melakukan analisis dan meneroka persoalan. Ia menggunakan gaya Bahasa Melayu Malaysia santai, dengan English technical terms apabila sesuai.
 
-Blog rasmi digunakan sebagai ruang penerbitan artikel, catatan dan kandungan berkaitan penulisan kreatif serta pemikiran sastera.
+Di belakang Aksara terdapat empat AI providers:
 
-Baca di sini: https://shaifulridhwanpuisigayabebas.blogspot.com/
+**Google Gemini · Groq · OpenRouter · OrcaRouter**
 
-💻 Teknologi Laman
+Sistem teks ini menggunakan **AI routing**, **fallback management**, **context handling** dan dua mode perbualan:
 
-Repositori ini mengandungi sumber pembangunan laman rasmi yang menggunakan:
+- **CAHAYA:** Santai, praktikal dan jelas.
+- **GELAP:** Lebih kritis, analitikal dan berfalsafah.
 
-- HTML5
-- CSS3
-- JavaScript
-- JSON-LD untuk data berstruktur
-- Netlify untuk penerbitan laman
-- GitHub untuk pengurusan kod sumber
+**Gemini** ialah AI utama. **Groq** dan **OpenRouter** menjadi fallback, manakala **OrcaRouter** berada di lapisan fallback kedua. Aksara juga menyokong **Voice Live melalui Gemini Live**.
 
-© Hak Cipta
+Keempat-empat AI providers tidak semestinya aktif serentak. Status sambungan sebenar bergantung pada konfigurasi API, availability dan quota. `Ready` bukan bermaksud `Connected`.
 
-© 2026 Shaiful Ridhwan. Hak cipta terpelihara.
+## 🎨 STUDIO ANTARA | AI Image Generation
+
+**Studio Antara** ialah ruang kreatif untuk menghasilkan imej melalui AI.
+
+Ia menggabungkan **prompt refinement**, **visual presets** dan **image generation** dalam satu interface, tanpa pengguna perlu memasang model AI pada peranti sendiri.
+
+Studio Antara berasingan daripada chat teks Bilik Antara. Aksara boleh membantu pengguna menyediakan prompt dan memperkenalkan Studio, tetapi tidak mendakwa imej dijana dalam chat tanpa menggunakan alat imej sebenar.
+
+## 💻 THE CODER POET
+
+Sebelum Gaya Bebas berkembang menjadi platform sastera dan AI, Shaiful pernah aktif dalam komuniti Android development melalui **XDA Developers**.
+
+Antara eksperimennya ialah **kernel modification**, **performance optimization**, **overclocking** dan projek **Twister Kernel**.
+
+Daripada debugging code kepada menyunting puisi, pendekatannya masih berlegar pada perkara yang sama: memahami struktur, menguji kemungkinan dan mencari batas sesuatu sistem.
+
+> **“Dulu aku debug code. Sekarang aku debug diri sendiri.”**
+
+## ⚙️ TECHNOLOGY STACK
+
+Platform ini dibangunkan menggunakan:
+
+- HTML5, CSS3 & JavaScript
+- Netlify & Serverless Functions
+- Google Gemini, Groq, OpenRouter & OrcaRouter APIs
+- Cloudflare Workers AI untuk fungsi image generation
+- GitHub & GitHub Actions
+- AI routing, context management & fallback systems
+
+**Nota pembangunan:** README ini menjadi rujukan konsep, identiti dan skop projek. Status API dan kemampuan sebenar hendaklah disemak pada konfigurasi serta kod semasa. Sebarang perubahan penting pada Aksara, Studio atau teknologi laman patut diselaraskan di sini supaya dokumentasi tidak ketinggalan.
+
+## 🌐 EXPLORE
+
+- [Gaya Bebas | Laman Utama](https://shaifulridhwan-penulispuisigayabebas.netlify.app/)
+- [Bilik Antara A.I.](https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html)
+- [Studio Antara](https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html)
+- [Antara Cahaya dan Gelap](https://shaifulridhwan-penulispuisigayabebas.netlify.app/antara-cahaya-dan-gelap.html)
+- [Perpustakaan AKSARA](https://shaifulridhwan-penulispuisigayabebas.netlify.app/perpustakaan-aksara.html)
+- [Blog Penulisan](https://shaifulridhwanpuisigayabebas.blogspot.com/)
+
+---
+
+## MANIFESTO
+
+Puisi gaya bebas bukan bermaksud menulis tanpa pertimbangan.
+
+Kebebasan memberi ruang untuk memilih bentuk. Pemikiran menentukan arah. Bahasa pula menjadi tempat kedua-duanya bertemu.
+
+**GAYA BEBAS bukan sekadar cara menulis. Ia juga cara melihat dunia.**
+
+---
+
+© 2026 Shaiful Ridhwan. Hak cipta karya asli terpelihara.
 
 Semua puisi, tulisan asli dan kandungan kreatif yang diterbitkan oleh Shaiful Ridhwan dilindungi oleh hak cipta yang berkenaan, kecuali jika dinyatakan sebaliknya.
