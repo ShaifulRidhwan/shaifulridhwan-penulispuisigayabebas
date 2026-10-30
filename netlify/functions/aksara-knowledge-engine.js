@@ -58,7 +58,7 @@ function format(results){
  * path. They are NEVER transmitted to Workers AI or stored in Vectorize. */
 async function retrieveHybrid(options={}){
  const local=retrieve(options);
- if(options.includePublic===false)return local;
+ if(options.includePublic===false||options.vectorConsent!==true)return local;
  const Vector=require("./aksara-vector-rag");
  const semantic=await Vector.retrieve(String(options.question||""),{timeout:2400,topK:4});
  if(!semantic.length)return local;
