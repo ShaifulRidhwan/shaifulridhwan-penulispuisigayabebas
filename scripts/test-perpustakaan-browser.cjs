@@ -20,11 +20,11 @@ async function run(){
    assert.ok(pos.x<=pos.w+2,viewport.name+": unwanted horizontal scrolling "+JSON.stringify(pos));
    assert.ok(pos.glass&&pos.glass!=="none",viewport.name+": glass blur must be active");
    if(viewport.name==="mobile")assert.equal(pos.grid.trim().split(/\s+/).length,1,"mobile cards must form one column");
-   await page.locator('[data-language="ms"]').click();
-   assert.equal(await page.locator("#books .book").count(),1,"Melayu filter");
-   assert.equal(await page.locator('[data-language="ms"]').getAttribute("aria-pressed"),"true");
-   await page.locator('[data-language="all"]').click();
-   assert.equal(await page.locator("#search").count(),0,"No search field for small catalog");
+   assert.equal(await page.locator(".toolbar,.heading,.pills").count(),0,"Marked headings and filters removed");
+   assert.equal(await page.locator("#search").count(),0,"Search stays removed");
+   const cover=page.locator(".book").first().locator(".art");
+   const ratio=await cover.evaluate(el=>{const b=el.getBoundingClientRect();return b.width/b.height});
+   assert.ok(Math.abs(ratio-9/16)<0.03,"Original novel cover uses portrait 9:16 ratio");
    await page.screenshot({path:path.join(screenshots,"karya-"+viewport.name+".png"),fullPage:viewport.name==="desktop"});
    assert.deepEqual(errors,[],viewport.name+": JavaScript exceptions");
    await page.close();
@@ -38,7 +38,7 @@ async function run(){
   await page.frameLocator("#novelFrame").locator("#reader").waitFor({timeout:15000});
   assert.equal(await page.locator("#cover.is-reading").count(),1,"Reader opens automatically");
   await page.close();
-  console.log("Perpustakaan browser audit passed for mobile/desktop, filtering, glass, direct reading.");
+  console.log("Perpustakaan browser audit passed for mobile/desktop, clean layout, portrait cover, glass, direct reading.");
  }finally{await browser.close()}
 }
 run().catch(e=>{console.error(e);process.exitCode=1});
