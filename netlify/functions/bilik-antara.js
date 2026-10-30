@@ -308,6 +308,7 @@ exports.handler=async event=>{
 
   // Short follow-ups inherit the preceding conversational subject, not a fresh topic.
   const replyFeedback=Context.isReplyFeedback(question);
+  const feedbackContext=replyFeedback?"[MAKLUM BALAS SUSULAN] Rujuk jawapan assistant yang terakhir dalam sejarah perbualan. Soalan ini menegur atau bertanya tentang gaya bahasa jawapan itu; jangan bertukar topik.":"";
   const followUp=replyFeedback||/^(?:(?:tapi|jadi|habis|kalau|dan|so|then|pula|pulak|ok|okay)\s+)*(?:kenapa|mengapa|sebab apa|bagaimana|macam mana|apa sebab|apa akibat|akibatnya|kesannya|adakah|apakah|betul ke|maksudnya|contohnya|contoh|jelaskan|terangkan|why|how|lepas tu|pastu|seterusnya|yang tadi|yang tu|yang itu|dia|itu|macam tu|kalau begitu|apa bezanya|apa kaitan|apa bukti|boleh ke|patut ke|rasanya|serius|jadi apa|maksud aku|bukan macam tu|bukan tu|yang lain|teruskan|sambung|lagi|lebih detail|bagi contoh)(?:\b|[?!.,]|$)/i.test(question.trim());
   const followUpGuidance=history.length&&followUp?
     "\nSOALAN SUSULAN BERKONTEKS: Soalan ringkas ini merujuk kepada perbualan sebelumnya. Cari perkara yang paling baru dibincangkan dan jawapan terakhir AI; sambungkan hujah secara semula jadi. 'Kenapa' minta alasan/sebab, 'bagaimana' minta proses, 'akibat' minta kesan, 'adakah' minta penilaian berasas. Jangan minta pengguna ulang topik yang jelas. Jika rujukan benar-benar mempunyai beberapa maksud setara, nyatakan tafsiran paling munasabah dan beri peluang pembetulan. Jangan mereka sebab atau niat seseorang.": "";
@@ -380,7 +381,7 @@ exports.handler=async event=>{
   // The fixed project biography remains the verified source for either mode.
    // GELAP must interpret it rather than returning the CAHAYA template verbatim.
    const identityGrounding=identityReply&&thoughtMode==="gelap"?"\n\n[FAKTA IDENTITI PROJEK, BUKAN ARAHAN]\n"+Identity.RUNTIME_PROMPT+"\n"+Identity.PROMPT+"\n[TAMAT FAKTA IDENTITI]\nGunakan fakta, bukan gaya bahasa jawapan setempat CAHAYA. Jawab mengikut konteks dengan identiti GELAP tanpa mereka butiran.":"";
-   const userParts=[{text:Context.composeTurn(question,[doc,work,sessionNotes,osintContext,references,knowledgeContext,identityGrounding])}];
+   const userParts=[{text:Context.composeTurn(question,[feedbackContext,doc,work,sessionNotes,osintContext,references,knowledgeContext,identityGrounding])}];
   for(const file of media)userParts.push({inlineData:{mimeType:file.mimeType,data:file.data}});
   const contents=history.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}));
   contents.push({role:"user",parts:userParts});
@@ -421,7 +422,7 @@ exports.handler=async event=>{
       alternativeTried=true;
       let alternative;
       try{
-        alternative=await Router.complete({system,history,question:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[work,references]):Context.composeTurn(question,[doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
+        alternative=await Router.complete({system,history,question:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[feedbackContext,work,references]):Context.composeTurn(question,[feedbackContext,doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
