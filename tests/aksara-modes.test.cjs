@@ -162,3 +162,23 @@ test("server uses distinct local GELAP identity and emotion prompt for every pro
  assert.ok(backend.includes("Identity.RUNTIME_PROMPT"));
  assert.ok(backend.includes("model:\"project-identity\",thoughtMode"));
 });
+
+test("GELAP short emotional messages have context-safe, philosophical local reflections",()=>{
+ const sad=Modes.localReflection("aku sedih",[]);
+ assert.match(sad,/Kesedihan tak semestinya/);
+ assert.match(sad,/kepastian palsu/);
+ assert.equal(ChatStyle.count(sad),0);
+ const history=[
+  {role:"user",content:"aku sedih"},
+  {role:"assistant",content:sad}
+ ];
+ const follow=Modes.localReflection("tah la",history);
+ assert.match(follow,/batas pengetahuan/);
+ assert.doesNotMatch(follow,/aku ada di sini|ceritalah/i);
+ assert.equal(Modes.localReflection("tah la",[{role:"user",content:"kenapa CSS rosak?"}]),null);
+ assert.equal(Modes.localReflection("aku sedih sebab aku gagal peperiksaan",[]),null,"Substantive context stays with real model");
+ assert.equal(Modes.localReflection("aku sedih",[{role:"user",content:"aku dalam krisis"}]),null,"Safety context stays with real model");
+ assert.ok(backend.includes('Modes.localReflection(question,history)'));
+ assert.ok(backend.includes('model:"local-reflection"'));
+ assert.ok(html.includes('data.model==="local-reflection"'));
+});
