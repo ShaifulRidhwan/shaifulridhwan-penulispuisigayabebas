@@ -439,3 +439,43 @@ test("Aksara offline evaluation lab stays separate from live model performance c
  assert.equal(center.scope,"local diagnostic; not live site telemetry");
  assert.ok(center.evaluation.total>=lab.total);
 });
+
+
+test("Pipeline phase 2 defaults to local session saving and optional memory, without third-party consent",()=>{
+ const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
+ assert.match(html, /id="rememberChat" checked/);
+ assert.match(html, /id="contextFallback">/);
+ assert.match(html, /id="allowOpenRouterImages">/);
+ assert.match(html, /const SESSION_PREF_STORAGE="bilik-antara-session-save-pref-v1"/);
+ assert.match(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,ui\.remember\.checked\?"on":"off"\)/);
+ assert.match(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,"off"\)/);
+ assert.match(html, /bilik-antara-suite\.js\?v=12/);
+ assert.match(suite, /let memory=read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
+ assert.match(suite, /memory=\{enabled:false,text:""\};write\(KEYS\.memory,memory\)/);
+ assert.match(suite, /hanya dihantar ke penyedia sandaran apabila kau benarkan/);
+});
+
+test("Pipeline phase 2 respects saved session opt-out across reloads",()=>{
+ const fn=html.match(/function restore\(\)\{[\s\S]*?\n\}(?=\nfunction renderIdeas\()/);
+ assert.ok(fn,"Restore function must be testable");
+ const saved=JSON.stringify({history:[{role:"user",content:"hello"}],summary:"old"});
+ const cases=[
+  {pref:null,stored:null,expectedChecked:true,historySize:0},
+  {pref:"off",stored:saved,expectedChecked:false,historySize:0},
+  {pref:"on",stored:saved,expectedChecked:true,historySize:1},
+ ];
+ for(const scenario of cases){
+  const values=new Map();
+  if(scenario.pref!==null)values.set("pref",scenario.pref);
+  if(scenario.stored!==null)values.set("storage",scenario.stored);
+  const ctx={
+   localStorage:{getItem:k=>values.get(k)??null,removeItem:k=>values.delete(k)},
+   ui:{remember:{checked:true}},STORAGE:"storage",SESSION_PREF_STORAGE:"pref",
+   history:[],summary:"",ideas:[],summarizedThrough:0,
+   setThoughtMode:()=>{}
+  };
+  vm.runInNewContext(fn[0]+"\nrestore();",ctx);
+  assert.equal(ctx.ui.remember.checked,scenario.expectedChecked,JSON.stringify(scenario));
+  assert.equal(ctx.history.length,scenario.historySize,JSON.stringify(scenario));
+ }
+});
