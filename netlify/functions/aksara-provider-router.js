@@ -32,7 +32,11 @@ const PROVIDERS=[
  {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
   url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"},
  {id:"requesty",key:"REQUESTY_API_KEY",allow:null,
-  url:Requesty.API+"/chat/completions",model:null}
+  url:Requesty.API+"/chat/completions",model:null},
+ // Second-layer only. Explicit owner approval is required because gateway routing
+ // is free but the selected upstream model can charge for inference.
+ {id:"orcarouter",key:"ORCAROUTER_API_KEY",allow:"ORCAROUTER_COST_APPROVED",
+  url:"https://api.orcarouter.ai/v1/chat/completions",model:process.env.ORCAROUTER_MODEL||"orcarouter/auto"}
 ];
 // OpenRouter chooses from its current free chat-model pool; no stale hardcoded model list.
 const classifierModel=model=>/(?:guard|moderation|classifier|safety)/i.test(String(model||""));
@@ -54,7 +58,7 @@ function openRouterBody(body,effort="low"){
 const safeMessage=text=>boundedText(text,60000);
 function configured(){
  if(process.env.AKSARA_FREE_FALLBACKS!=="true")return [];
- return PROVIDERS.filter(p=>p.id==="requesty"?Requesty.configured():process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
+ return PROVIDERS.filter(p=>p.id==="requesty"?Requesty.configured():p.id==="orcarouter"?process.env.AKSARA_ORCAROUTER_LAYER2==="true"&&!!process.env[p.key]&&process.env[p.allow]==="true":process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
 }
 function enabled(){return configured().length>0;}
 function quotaKind(message){
@@ -101,10 +105,14 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
  const attempts=[];
  const available=configured();
  // Prefer the provider that recently completed a real answer. Preserve default order otherwise.
- const ordered=rankProviders(available,task,prefer,reasoningLevel==="high").filter(p=>
+ const ordered=rankProviders(available.filter(p=>p.id!=="orcarouter"),task,prefer,reasoningLevel==="high").filter(p=>
   (!images.length||p.id==="openrouter")&&
   (p.id!=="requesty"||allowRequesty===true)&&
   (!Array.isArray(only)||only.includes(p.id)));
+ // OrcaRouter is deliberately the LAST attempt, never the primary model.
+ // The existing image consent only authorizes OpenRouter, not OrcaRouter.
+ const secondLayer=available.find(p=>p.id==="orcarouter");
+ if(secondLayer&&!images.length&&(!Array.isArray(only)||only.includes("orcarouter")))ordered.push(secondLayer);
  for(const provider of ordered){
   if(skip.includes(provider.id)||Date.now()<(cooldown.get(provider.id)||0))continue;
   if(signal?.aborted)throw new DOMException("Dihentikan","AbortError");
@@ -125,6 +133,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    }
    const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
    if(provider.id==="requesty"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
+   if(provider.id==="orcarouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    // Preserve medium reasoning for concept and follow-up questions. Only genuine
    // low-effort turns should be reduced to the fastest GPT-OSS setting.
@@ -144,6 +153,8 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     ...messages.slice(1)
    ]:messages;
    const body={model:selectedRequestyModel||provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
+   // Keep OrcaRouter payload on the widely compatible OpenAI core fields.
+   if(provider.id==="orcarouter")delete body.temperature;
    if(provider.id==="requesty")delete body.temperature; // Heterogeneous free models need only shared OpenAI-compatible core fields.
    if(provider.id==="openrouter")openRouterBody(body,["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"low");
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.
@@ -233,7 +244,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
 async function crossReview({question,reply,originalProvider,task="general",timeoutMs=3500}){
  if(process.env.AKSARA_CROSS_REVIEW!=="true"||!["technical","explain","critique"].includes(task))return null;
  if(!question||!reply||question.length>2500||reply.length>5000)return null;
- const reviewer=configured().find(p=>p.id!==originalProvider&&p.id!=="requesty"&&Date.now()>=(cooldown.get(p.id)||0));
+ const reviewer=configured().find(p=>p.id!==originalProvider&&p.id!=="requesty"&&p.id!=="orcarouter"&&Date.now()>=(cooldown.get(p.id)||0));
  if(!reviewer)return null;
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),timeoutMs);
  try{
@@ -312,6 +323,10 @@ async function checkStatus(){
    if(Date.now()<(cooldown.get(provider.id)||0))return {id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
+    if(provider.id==="orcarouter"){
+     // No inference or token spend for a health check; this is configuration-only.
+     return {id:provider.id,status:"ready",reason:"configured_not_probed"};
+    }
     if(provider.id==="requesty"){
      if(Date.now()-recentRequesty.at<90000){
       const models=await Requesty.freeModels({signal:ctrl.signal});
