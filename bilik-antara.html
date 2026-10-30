@@ -1009,8 +1009,8 @@ async function submit(event){
   typing.remove();partialNode?.remove();
   const receivedAt=Date.now();
   addMessage("assistant",data.reply,{...data,timestamp:receivedAt,locationLabel:sentLocation});
-  history.push({role:"user",content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
-  history.push({role:"assistant",content:data.reply,thoughtMode:requestMode,sources:data.sources||[],
+  history.push({role:"user",timestamp:sentAt,locationLabel:sentLocation,content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
+  history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,thoughtMode:requestMode,sources:data.sources||[],
    argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
    publicAccount:data.publicAccount||null});
   
