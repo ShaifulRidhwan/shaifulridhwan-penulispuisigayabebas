@@ -612,6 +612,12 @@ function addMessage(role,text,data){
  msg.appendChild(bubble);renderMessageMeta(msg,role,data);ui.chat.appendChild(msg);scrollDown();return msg;
 }
 function renderExtras(bubble,data){
+ if(data?.studioHint===true){
+  const area=elem("div","msg-sources");
+  area.appendChild(elem("span","section-label","Jana gambar di Studio Antara"));
+  link(area,"Buka Studio Antara","https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html");
+  bubble.appendChild(area);
+ }
  const sources=Array.isArray(data.sources)?data.sources.slice(0,8):[];
  if(sources.length){
   const area=elem("div","msg-sources");area.appendChild(elem("span","section-label","Sumber semakan"));
@@ -1042,13 +1048,13 @@ async function submit(event){
   addMessage("assistant",data.reply,{...data,timestamp:receivedAt,locationLabel:sentLocation});
   history.push({role:"user",timestamp:sentAt,locationLabel:sentLocation,content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
   history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,thoughtMode:requestMode,sources:data.sources||[],
-   argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
+   studioHint:data.studioHint===true,argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
    publicAccount:data.publicAccount||null});
   
   addIdeas(data.thoughtLedger);save();
   if(selectedFile&&selectedFile===fileState)ui.docStatus.textContent="Fail ni masih ada kalau kau nak tanya lagi · "+selectedFile.name;
-  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
-  const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge";
+  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
+  const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio";
   status(localAnswer?"configured":"online",localAnswer?"Jawapan tersedia Aksara":"Multi A.I Connected","");
   if(!localAnswer){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
   if(data.provider==="openrouter"&&typeof data.model==="string"){lastOpenRouterModel=data.model;lastOpenRouterAt=Date.now();}
