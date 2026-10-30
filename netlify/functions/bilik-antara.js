@@ -251,6 +251,15 @@ exports.handler=async event=>{
   if(typeof payload.documentText==="string"&&payload.documentText.length>100000)return result(413,{error:"Kandungan fail teks terlalu besar untuk satu permintaan. Bahagikan dokumen."},H);
   const documentText=safeText(payload.documentText,100000);
   const documentName=safeText(payload.documentName,100);
+  // Local deterministic arithmetic only; the client cannot submit code to run.
+  const calculatorCall=flags.toolExecutionEnabled&&!media.length&&!documentText
+   ?SafeTools.calculatorIntent(question):null;
+  if(calculatorCall){
+   const calculated=SafeTools.execute(calculatorCall,{enabled:true});
+   if(calculated.ok)return result(200,{mode:"live",aiMode:"automatic",model:"local-calculator",
+    thoughtMode,reply:calculatorCall.arguments.expression+" = "+calculated.result,
+    sources:[],toolsUsed:["calculate"],reviewApplied:false,disclaimer:"Pengiraan setempat."},H);
+  }
 
   // Opt-in short audio recordings: avoid search, historical context, tools and
   // secondary review. One short retry for Google's transient service failures.
