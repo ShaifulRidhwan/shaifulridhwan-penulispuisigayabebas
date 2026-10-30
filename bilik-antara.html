@@ -455,7 +455,7 @@ function renderProviderRows(rows,catalog=null){
  for(const [id,name] of providers){
   const item=(rows||[]).find(x=>x.id===id);
   const state=item?.status||"checking";
-  const expandable=id==="openrouter"||id==="requesty";
+  const expandable=id==="openrouter"||id==="orcarouter"||id==="requesty";
   const line=elem(expandable?"summary":"div","multi-ai-row"+(expandable?" multi-ai-expand-trigger":""));
   const nameText=elem("span","multi-ai-provider",name);
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
@@ -470,8 +470,10 @@ function renderProviderRows(rows,catalog=null){
   group.open=hasPreviousGroups&&openGroups.has(id);
   group.appendChild(line);
   const modelList=elem("div","multi-ai-model-list");
-  const models=id==="requesty"?(Array.isArray(item?.models)?item.models.map(x=>({id:x,name:String(x).split("/").pop()})):[]):catalog?.models;
-  const shownModels=id==="requesty"?{models,status:item?.status}:catalog;
+  // Public free-tier listing from OrcaRouter (2026-10-30); not an authenticated workspace probe.
+  const orcaFreeModels=[{id:"deepseek/deepseek-v4-flash-free",name:"DeepSeek V4 Flash Free"}];
+  const models=id==="orcarouter"?(state==="off"?[]:orcaFreeModels):id==="requesty"?(Array.isArray(item?.models)?item.models.map(x=>({id:x,name:String(x).split("/").pop()})):[]):catalog?.models;
+  const shownModels=id==="orcarouter"?{models,status:"public_listing"}:id==="requesty"?{models,status:item?.status}:catalog;
   // Catalog membership does not prove individual models are online.
   if(Array.isArray(models)&&models.length){
    for(const model of models){
@@ -486,9 +488,10 @@ function renderProviderRows(rows,catalog=null){
     const statusLabel=elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Connected":"Listed");
     child.append(shortName,statusLabel);modelList.appendChild(child);
    }
+   if(id==="orcarouter")modelList.appendChild(elem("p","multi-ai-model-note","Public free-tier listing · may change; Ready is not a verified response."));
    if(shownModels?.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Showing a saved list; the latest list is unavailable."));
   }else{
-   const message=id==="requesty"?(state==="off"?"Not active":state==="checking"?"Checking models…":"No confirmed models yet."):
+   const message=id==="orcarouter"?(state==="off"?"Not active":"Free model list unavailable."):id==="requesty"?(state==="off"?"Not active":state==="checking"?"Checking models…":"No confirmed models yet."):
     !catalog?"Loading models…":catalog.status==="unavailable"?"Model list unavailable.":"No models listed yet.";
    modelList.appendChild(elem("p","multi-ai-model-note",message));
   }
