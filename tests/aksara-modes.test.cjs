@@ -593,3 +593,39 @@ test("Optional memory starter stays editable and is never automatically saved",(
  assert.match(suite,/if\(!write\(KEYS\.memory,updated\)\)return;/);
  assert.doesNotMatch(suite,/let memory=read\(KEYS\.memory,\{enabled:true,text:"Pilihan jawapan:/);
 });
+
+
+test("All three Aksara pages share one measured glass topbar with distinct contextual identities",()=>{
+ const studio=fs.readFileSync("studio-antara.html","utf8");
+ const novel=fs.readFileSync("perpustakaan-aksara.html","utf8");
+ const shared=fs.readFileSync("aksara-header.css","utf8");
+ const pages=[
+  {html,role:"AKSARA A.I",other:["Laman utama","Studio","Novel"]},
+  {html:studio,role:"AKSARA Studio",other:["Laman utama","Bilik Antara","Novel"]},
+  {html:novel,role:"AKSARA Novel",other:["Laman utama","Bilik Antara","Studio"]}
+ ];
+ for(const {html:markup,role,other} of pages){
+  assert.match(markup,/aksara-header\.css\?v=1/);
+  assert.match(markup,/aksara-brand-name/);
+  assert.ok(markup.includes('class="aksara-name">'+role+"</span>"),role);
+  assert.ok(markup.includes('class="aksara-credit">oleh Shaiful Ridhwan</span>'),role);
+  assert.match(markup,/class="aksara-nav"/);
+  for(const label of other)assert.ok(markup.includes(">"+label+"</a>"),label+" missing: "+role);
+ }
+ assert.doesNotMatch(novel,/<span class="brand-icon">/);
+ assert.doesNotMatch(studio,/class="back-link"/);
+ assert.match(shared,/\.studio-shell > \.aksara-header,/);
+ assert.match(shared,/\.novel-shell > \.aksara-header/);
+ assert.match(shared,/backdrop-filter:blur\(12px\) saturate\(1\.15\)/);
+ assert.match(shared,/height:31px/);
+ assert.match(shared,/flex-wrap:nowrap/);
+});
+
+test("Current Aksara introduction renders verbatim without two automatic chat emojis",()=>{
+ assert.match(html,/Antara aksara dan code,\\nGAYA yang bebas,\\nBEBAS dalam bentuk,\\nLUAS dalam pemikiran\./);
+ assert.match(html,/thoughtMode,intro:true/);
+ assert.match(html,/data\?\.intro===true\?text:window\.BilikAntaraChatStyle\.reply/);
+ assert.doesNotMatch(html,/addMessage\("assistant","Ada apa yang kau nak faham/);
+ // Normal AI answers retain their usual chat-style processing.
+ assert.match(html,/window\.BilikAntaraChatStyle\.reply\(data\.reply,/);
+});
