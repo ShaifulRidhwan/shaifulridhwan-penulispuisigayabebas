@@ -164,7 +164,7 @@ async function reviewAnswer({apiKey,model,question,reply,sources,evidence,intent
   return review;
 }
 exports.handler=async event=>{
-  const started=Date.now(),deadline=started+24000,H=headers();
+  const started=Date.now(),deadline=started+24000,H=headers(),flags=Security.flags();
   const remaining=()=>Math.max(1,deadline-Date.now());
   let streamed=false,firstTextMs=null;
   const emit=typeof event.onDelta==="function"?text=>{if(!text)return;if(firstTextMs===null)firstTextMs=Date.now()-started;streamed=true;event.onDelta(text);}:null;
@@ -242,6 +242,7 @@ exports.handler=async event=>{
   const question=safeText(payload.question,MAX_QUESTION);
   const thoughtMode=Modes.normalize(payload.thoughtMode);
   if(!question)return result(400,{error:"Tulis soalan dahulu."},H);
+  if(!flags.aiEnabled)return result(503,{code:"AKSARA_PAUSED",error:"Aksara sedang menjalani penyelenggaraan."},H);
   history=Context.selectHistory(history,question);
   const rawMedia=payload.media===undefined||payload.media===null?[]:(Array.isArray(payload.media)?payload.media:[payload.media]);
   const media=rawMedia.map(sanitizeMedia);
