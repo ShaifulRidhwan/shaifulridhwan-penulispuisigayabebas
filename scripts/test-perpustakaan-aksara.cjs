@@ -93,5 +93,20 @@ test("Glass, mobile single-column dan imej kulit buku",()=>{
  assert.doesNotMatch(page,/PILIHAN EDITOR/);
  assert.doesNotMatch(page,/class="feature"/);
  assert.match(page,/assets\/novel\/cover-01\.jpg/);
- assert.ok(page.includes("perpustakaan-aksara.css?v=3"));
+ assert.ok(page.includes("perpustakaan-aksara.css?v=4"));
+});
+
+
+test("Novel catalog opens immediately beneath shared header without the old introduction",()=>{
+ assert.match(page,/<main>\s*<h1 class="sr">Katalog novel AKSARA<\/h1>\s*<section class="collection" id="koleksi"/);
+ for(const removed of ["AKSARA / PERPUSTAKAAN NOVEL","DUNIA DALAM","Novel dan sastera falsafah pilihan.","Sesebuah cerita mungkin tamat"]){
+  assert.ok(!page.includes(removed),"Removed introductory prose must stay absent: "+removed);
+ }
+ assert.doesNotMatch(page,/class="intro"/);
+ assert.match(page,/<header class="aksara-header">/);
+ assert.match(page,/<span class="aksara-name">AKSARA Novel<\/span>/);
+ assert.match(css,/\.collection\{padding:18px 0 18px\}/);
+ assert.match(css,/@media\(max-width:690px\)[^\n]+\.collection\{padding-top:14px\}/);
+ assert.doesNotMatch(css,/\.intro(?:\{|>)/);
+ assert.match(page,/id="archiveBooks"/);
 });
