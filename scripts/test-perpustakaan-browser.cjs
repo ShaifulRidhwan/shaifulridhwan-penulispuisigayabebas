@@ -15,6 +15,13 @@ async function run(){
    await page.goto(base+"/perpustakaan-aksara.html",{waitUntil:"domcontentloaded"});
    await page.locator(".book").first().waitFor({timeout:15000});
    assert.equal(await page.locator(".book").count(),15,"15 curated books load");
+   assert.equal(await page.locator(".intro").count(),0,"Old novel introduction must be removed");
+   const firstGap=await page.evaluate(()=>{
+    const header=document.querySelector(".aksara-header").getBoundingClientRect();
+    const first=document.querySelector(".book").getBoundingClientRect();
+    return Math.round(first.top-header.bottom);
+   });
+   assert.ok(firstGap>=8&&firstGap<=35,viewport.name+": book cards should follow the header without empty hero space, actual gap="+firstGap);
    assert.equal(await page.locator("select").count(),0,"No native select exists");
    const pos=await page.evaluate(()=>({x:document.documentElement.scrollWidth,w:document.documentElement.clientWidth,grid:getComputedStyle(document.querySelector(".books")).gridTemplateColumns,glass:getComputedStyle(document.querySelector(".book")).backdropFilter}));
    assert.ok(pos.x<=pos.w+2,viewport.name+": unwanted horizontal scrolling "+JSON.stringify(pos));
