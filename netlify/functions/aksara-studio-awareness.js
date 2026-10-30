@@ -9,7 +9,8 @@ function imageRequest(question){
  // instruction to create an image.
  if(/\b(?:jangan|tak perlu|tidak mahu|bukan|without|don't|do not)\b.{0,45}\b(?:jana|gambar|imej|generate|image|lukis)/i.test(q))return false;
  if(/^(?:apa|kenapa|mengapa|macam mana|bagaimana|terangkan|jelaskan|explain|how|why|what|tulis|karang|ringkaskan|translate|terjemah|bincang|semak|audit)\b/i.test(q))return false;
- const action=/(?:\b(?:jana(?:kan)?|hasilkan|ciptakan?|generate|generste|generete|genarate|render|lukiskan?|create|draw|buat(?:kan)?|make)\b)/i;
+ if(/\b(?:aku ada mesej|mesej haritu|mesej tadi|screenshot|contoh ayat)\b/i.test(q))return false;
+ const action=/(?:\b(?:jana(?:kan)?|hasilkan|ciptakan?|generate|generste|generete|genarate|render|lukis(?:kan)?|create|draw|buat(?:kan)?|make)\b)/i;
  const visual=/\b(?:imej|gambar|image|picture|foto|photo|ilustrasi|illustration|visual|poster)\b/i;
  return action.test(q)&&visual.test(q);
 }
@@ -20,7 +21,7 @@ function localReply(question,{hasAttachment=false}={}){
  // Direct image creation requests get a reliable link, never a fabricated image.
  if(hasAttachment||!imageRequest(question))return null;
  return {
-  reply:"Untuk jana gambar, Aksara ada **Studio Antara**. Kau boleh gunakan penerangan gambar tadi sebagai prompt di sana. Aku masih boleh bantu susun atau perkemas prompt dalam chat ni. 🎨🖼️",
+  reply:"Untuk jana gambar, Aksara ada **Studio Antara**. Idea atau penerangan gambar kau boleh dijadikan prompt di sana. Aku masih boleh bantu susun atau perkemas prompt dalam chat ni. 🎨🖼️",
   studioHint:true
  };
 }
