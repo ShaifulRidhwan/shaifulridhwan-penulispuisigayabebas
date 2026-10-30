@@ -421,3 +421,21 @@ test("Core requests actually integrate the new services and keep private notes o
  }
  assert.equal(backend.includes("payload.toolCall"),false,"never execute arbitrary client-supplied tool requests");
 });
+
+test("Knowledge Engine is discoverable in Ciri & Fungsi without exposing admin controls",()=>{
+ assert.ok(html.includes('id="featureKnowledge" aria-haspopup="dialog"'));
+ assert.ok(html.includes('id="knowledgeDialog" aria-labelledby="knowledgeTitle"'));
+ assert.ok(html.includes("Pengetahuan &amp; Rujukan"));
+ assert.ok(html.includes('data-knowledge-question="Kira (12+8)*3"'));
+ assert.ok(html.includes('knowledgeDialog.showModal()'));
+ assert.ok(!html.includes('id="featureSecurityKillSwitch"'));
+});
+test("Aksara offline evaluation lab stays separate from live model performance claims",()=>{
+ const lab=require("../scripts/aksara-evaluation-lab.cjs").run();
+ assert.equal(lab.mode,"deterministic-offline");
+ assert.equal(lab.total,lab.cases.length);
+ assert.ok(lab.passRate>=70,"baseline should catch major regressions without demanding perfect scores");
+ const center=require("../scripts/aksara-control-center.cjs").report();
+ assert.equal(center.scope,"local diagnostic; not live site telemetry");
+ assert.ok(center.evaluation.total>=lab.total);
+});
