@@ -89,7 +89,7 @@ test("Locked Malay casual + English technical language applies to Gemini, all fa
  const css=fs.readFileSync("bilik-antara.css","utf8");
  const who=Identity.answerIdentity("Siapa Aku");
  const coder=Identity.answerIdentity("The Coder Poet");
- for(const term of ["AI routing","backend","fallback","rate limit","quota"]){
+ for(const term of ["AI routing","backend","fallback","rate limit","kuota"]){
   assert.match(who,new RegExp(term,"i"),"Siapa Aku missing "+term);
  }
  for(const term of ["XDA Developers","Twister Kernel","modify kernel","optimize performance","debugging","overclocking","bootloop","Dulu aku debug code"]){
