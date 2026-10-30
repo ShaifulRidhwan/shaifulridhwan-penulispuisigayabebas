@@ -339,3 +339,12 @@ test("Both modes use the same intelligence protocol; GELAP remains independently
  const router=require("fs").readFileSync("netlify/functions/aksara-provider-router.js","utf8");
  assert.ok(router.includes('reasoningLevel==="low"'));
 });
+
+test("High-reasoning provider routing prefers an explicit reasoning model over a random free pool",()=>{
+ const router=require("../netlify/functions/aksara-provider-router");
+ const list=[{id:"openrouter"},{id:"requesty"},{id:"groq"}];
+ assert.equal(router.rankProviders(list,"general","openrouter",false)[0].id,"openrouter");
+ assert.equal(router.rankProviders(list,"general","openrouter",true)[0].id,"groq");
+ assert.equal(router.rankProviders([{id:"openrouter"},{id:"requesty"}],"general","openrouter",true)[0].id,"openrouter");
+ assert.equal(list[0].id,"openrouter","Provider ranking does not mutate caller list");
+});
