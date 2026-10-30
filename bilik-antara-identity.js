@@ -145,13 +145,13 @@ const FOUR_PROVIDER_GELAP=[
 ].join("\n\n");
 function isProviderQuestion(value){
  const q=clean(value);
- if(!q||q.length>220||/\\b(?:puisi|sajak|novel|watak|cerita rekaan|lakonan|roleplay|terjemah|translate|skrip)\\b/i.test(q))return false;
- const own=/(?:\\b(?:aksara|bilik antara|kau|ko|awak|kamu)\\b|multi\\s*a\\.?i\\.?|empat otak|4 otak)/i.test(q);
+ if(!q||q.length>220||/\b(?:puisi|sajak|novel|watak|cerita rekaan|lakonan|roleplay|terjemah|translate|skrip)\b/i.test(q))return false;
+ const own=/(?:\b(?:aksara|bilik antara|kau|ko|awak|kamu)\b|multi\s*a\.?i\.?|empat otak|4 otak)/i.test(q);
  if(!own)return false;
- const count=/\\b(?:berapa|4|empat|5|lima)\\s+(?:(?:banyak|jumlah|pilihan|jenis)\\s+)?(?:otak|model|penyedia|provider)\\b|\\b(?:otak|model|penyedia|provider)\\s+(?:kau|ko|awak|aksara)\\b/i.test(q);
- const listing=/\\b(?:senarai(?:kan)?|sebut(?:kan)?|nama(?:kan)?|apa|yang mana|kenalkan|terangkan|jelaskan)\\b.{0,70}\\b(?:otak|model|penyedia|provider|enjin|multi\\s*a\\.?i\\.?)\\b|\\b(?:otak|model|penyedia|provider|enjin)\\b.{0,65}\\b(?:guna|pakai|ada|tersedia)\\b/i.test(q);
- const explicit=/\\b(?:gemini|groq)\\b.{0,80}\\b(?:openrouter|orcarouter)\\b/i.test(q)&&/(?:\\b(?:guna|pakai|ada|betul|ke|kan)\\b|\\?)/i.test(q);
- return count||listing||explicit||/^(?:empat|4)\\s+otak\\s+aksara$/i.test(q);
+ const count=/\b(?:berapa|4|empat|5|lima)\s+(?:(?:banyak|jumlah|pilihan|jenis)\s+)?(?:otak|model|penyedia|provider)\b|\b(?:otak|model|penyedia|provider)\s+(?:kau|ko|awak|aksara)\b/i.test(q);
+ const listing=/\b(?:senarai(?:kan)?|sebut(?:kan)?|nama(?:kan)?|apa|yang mana|kenalkan|terangkan|jelaskan)\b.{0,70}\b(?:otak|model|penyedia|provider|enjin|multi\s*a\.?i\.?)\b|\b(?:otak|model|penyedia|provider|enjin)\b.{0,65}\b(?:guna|pakai|ada|tersedia)\b/i.test(q);
+ const explicit=/\b(?:gemini|groq)\b.{0,80}\b(?:openrouter|orcarouter)\b/i.test(q)&&/(?:\b(?:guna|pakai|ada|betul|ke|kan)\b|\?)/i.test(q);
+ return count||listing||explicit||/^(?:empat|4)\s+otak\s+aksara$/i.test(q);
 }
 
 function answerIdentity(question){
