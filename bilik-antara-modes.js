@@ -43,6 +43,23 @@ function localIdentity(question,identity){
  if(room)return identity.ROOM+" ialah ruang A.I. yang dibangunkan oleh "+identity.CREATOR+". Di sini, "+identity.NAME+" menggunakan model pihak ketiga bersama identiti, penghalaan dan alat yang disepadukan dalam aplikasi. Nama dan kemampuan patut dibezakan: sebuah antara muka yang memiliki watak bukan bermakna ia memiliki kesedaran manusia.";
  return null;
 }
+function localReflection(question,history){
+ // Deliberately narrow. Extended explanations, urgent matters and nuanced
+ // emotional concerns must retain full-model contextual support.
+ const q=String(question||"").trim().toLocaleLowerCase("ms-MY").replace(/[?!.]+$/g,"").trim();
+ const prior=Array.isArray(history)?history.slice(-8):[];
+ const lastUser=[...prior].reverse().find(x=>x&&x.role==="user"&&typeof x.content==="string");
+ const unsafeContext=/\b(?:krisis|kecemasan|bahaya|terancam|bunuh diri|cederakan diri|trauma|serangan panik)\b/i.test(
+  prior.map(x=>String(x?.content||"")).join(" "));
+ if(unsafeContext)return null;
+ if(/^(?:aku|saya)\s+(?:rasa\s+)?sedih(?:\s+(?:lah|la|do|wei|ni))?$/.test(q)){
+  return "Kesedihan tak semestinya datang bersama sebab yang mudah dinamakan. Kadang manusia terlalu cepat mencari penjelasan, seolah-olah perasaan hanya sah apabila dapat dibuktikan dengan alasan. Aku tak tahu apa yang berlaku pada kau; jadi aku tak akan menjual kepastian palsu atau menutupnya dengan ayat manis.";
+ }
+ if(lastUser&&emotionalDisclosure(lastUser.content)&&/^(?:tah\s*la|entah\s*la|entahlah|tak\s*tahu|tak\s*taulah|ntah)$/.test(q)){
+  return "‘Tak tahu’ bukan semestinya jawapan kosong. Kadang-kadang itu batas pengetahuan kita tentang keadaan sendiri, dan batas tak hilang hanya kerana kita memaksa satu kesimpulan. Lebih jujur mengaku belum jelas daripada mereka cerita yang sekadar kedengaran meyakinkan.";
+ }
+ return null;
+}
 function emotionalDisclosure(question){
  return /(?:\b(?:sedih|kecewa|terkilan|kesunyian|sunyi)\b|rasa\s+(?:kosong|hambar|hilang\s+arah)|penat\s+(?:mental|jiwa|dengan\s+semua))/i.test(String(question||""));
 }
@@ -81,7 +98,7 @@ function plan(value,intent,base,question){
 }
 function reactionGuidance(value){return normalize(value)==="gelap"?REACTION:"";}
 function reviewGuidance(value){return normalize(value)==="gelap"?REVIEW:"";}
-const API=Object.freeze({normalize,instructions,plan,isReflective,reactionGuidance,reviewGuidance,localIdentity,emotionalDisclosure,contextGuidance,DELIVERY});
+const API=Object.freeze({normalize,instructions,plan,isReflective,reactionGuidance,reviewGuidance,localIdentity,localReflection,emotionalDisclosure,contextGuidance,DELIVERY});
 if(typeof module!=="undefined"&&module.exports)module.exports=API;
 if(root)root.BilikAntaraModes=API;
 })(typeof window!=="undefined"?window:null);
