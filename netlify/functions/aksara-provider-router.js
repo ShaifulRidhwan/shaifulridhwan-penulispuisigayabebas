@@ -11,6 +11,7 @@ const Registry=require("./aksara-model-registry");
 const cooldown=new Map();
 let preferredProvider=""; // Best recent successful fallback within the current warm function instance.
 let recentOpenRouter={model:"",at:0}; // Real replies only, never synthetic status.
+let recentOrcaRouter={model:"",at:0}; // Only a real answer can establish Connected.
 let recentRequesty={model:"",at:0};
 // Task categories are routing preferences, not unverified claims about model quality.
 const TASK_PRIORITY={
@@ -125,7 +126,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   const remaining=Math.min(deadline,firstResponseDeadline)-Date.now();if(remaining<500)break;
   // All selected models are reviewed chat models. Stream their visible text
   // through the same classifier-prefix guard; JSON clients get a full-answer budget.
-  const attemptBudget=provider.id==="openrouter"?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,reasoningLevel==="high"?12000:8500):
+  const attemptBudget=(provider.id==="openrouter"||provider.id==="orcarouter")?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,reasoningLevel==="high"?12000:8500):
    provider.id==="requesty"?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,9000):(!onDelta?bufferedTimeoutMs:timeoutMs);
   const attemptStarted=Date.now();
   const control=requestControl(Math.min(attemptBudget,remaining),signal);
@@ -149,7 +150,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    // Per-turn guidance has its own system message, allowing whole-message
    // prefix caching without rewriting or shortening that personality.
    const prefix=safeMessage(systemPrefix);
-   const providerMessages=provider.id==="requesty"?[
+   let providerMessages=provider.id==="requesty"?[
     messages[0],
     ...boundedHistory(history,14000),
     {role:"user",content:boundedText(requestyQuestion||question,30000)}
@@ -158,6 +159,13 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     {role:"system",content:String(system).slice(prefix.length)+"\nSANDARAN TEKS: Tiada alat carian, URL atau pelaksanaan kod aktif. Jangan reka sumber atau mengaku alat yang tiada digunakan. Identiti kekal Aksara. Shaiful bukan pencipta genre puisi gaya bebas."},
     ...messages.slice(1)
    ]:messages;
+   if(provider.id==="orcarouter"){
+    // Preserve full shared Aksara instructions and context, with a short
+    // mode/language reminder for the heterogeneous free-model router.
+    providerMessages=[{...providerMessages[0],content:providerMessages[0].content+
+     "\nLAPISAN ORCA FREE: Kekalkan watak Aksara A.I. dan mod CAHAYA/GELAP yang sudah ditetapkan. Bahasa Melayu Malaysia santai, kata ganti aku. Sambung sejarah perbualan yang diberikan tanpa mencipta memori. Jangan mengaku ada akses carian web atau alat yang tidak dibekalkan; jangan tampilkan penaakulan dalaman atau metadata penyedia."},
+     ...providerMessages.slice(1)];
+   }
    const body={model:selectedRequestyModel||provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
    // Keep OrcaRouter payload on the widely compatible OpenAI core fields.
    if(provider.id==="orcarouter"){body.model="orcarouter/free";delete body.temperature;}
@@ -220,6 +228,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    cooldown.delete(provider.id);preferredProvider=provider.id;
    Registry.observe(provider.id,{ok:true,latencyMs:Date.now()-attemptStarted});
    if(provider.id==="openrouter")recentOpenRouter={model:data.model||provider.model,at:Date.now()};
+   if(provider.id==="orcarouter")recentOrcaRouter={model:data.model||provider.model,at:Date.now()};
    if(provider.id==="requesty")recentRequesty={model:selectedRequestyModel,at:Date.now()};
    // A real answer is stronger evidence than a cached synthetic health probe.
    if(healthCache.value){
@@ -330,7 +339,8 @@ async function checkStatus(){
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
     if(provider.id==="orcarouter"){
-     // No inference or token spend for a health check; this is configuration-only.
+     // No inference probe. Connected requires a genuine recent chat reply.
+     if(Date.now()-recentOrcaRouter.at<90000)return {id:provider.id,status:"online",model:recentOrcaRouter.model,reason:"recent_reply"};
      return {id:provider.id,status:"ready",reason:"configured_not_probed"};
     }
     if(provider.id==="requesty"){
