@@ -3140,3 +3140,21 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 @media(prefers-reduced-motion:reduce){
  .attachment-dialog .attachment-option{transition:none}
 }
+
+
+/* Kekalkan cahaya butang hantar walaupun input kosong. */
+.conversation .composer #sendBtn,
+.conversation .composer #sendBtn:disabled,
+.conversation .composer #sendBtn:not(:disabled){
+ opacity:1!important;
+ color:#ffe6ac!important;
+ background:linear-gradient(145deg,rgba(255,208,116,.32),rgba(166,111,39,.23))!important;
+ border:1px solid rgba(255,220,146,.78)!important;
+ box-shadow:inset 0 1px 0 rgba(255,248,219,.28),0 0 17px rgba(255,187,75,.36),0 0 30px rgba(246,169,57,.16)!important;
+ filter:none!important;
+}
+.conversation .composer #sendBtn svg{
+ stroke:#ffe6ac!important;
+ opacity:1!important;
+ filter:drop-shadow(0 0 5px rgba(255,210,117,.75))!important;
+}
