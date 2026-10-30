@@ -958,7 +958,7 @@ async function submit(event){
  }
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
  busy=true;stoppedByUser=false;update();status("connecting","Sekejap, aku jawab…","");ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
- const pendingUser=addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""));
+ const pendingUser=addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""),{timestamp:sentAt,locationLabel:sentLocation});
  let typing=showTyping();
  ui.input.value="";resize();update();
  const startedAt=performance.now();
