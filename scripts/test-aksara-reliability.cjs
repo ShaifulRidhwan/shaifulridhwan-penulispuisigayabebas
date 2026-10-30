@@ -649,3 +649,35 @@ test("Mistral direct provider remains disabled even when its keys are still conf
  await router.checkStatus();await router.complete({system:"persona",history:[],question:"Hai"});
  assert.ok(calls.every(url=>!url.includes("api.mistral.ai")));
 });
+
+test("cognitive router sends genuine high and medium effort to Groq while greetings stay low",async t=>{
+ const handler=setup(t);const requests=[];
+ global.fetch=async(_url,opts)=>{requests.push(JSON.parse(opts.body));return reply("Aku teliti dahulu premis dan bukti yang benar-benar tersedia.");};
+ const cases=[
+  ["Benarkah semua hujah tentang teknologi sah apabila hanya disokong pendapat peribadi? Kritikan secara mendalam.", "high","UJI HUJAH"],
+  ["Kenapa manusia mencari makna hidup?", "medium","PEMIKIRAN FALSAFAH"],
+  ["Woi", "low","KECERDASAN PRAKTIKAL"]
+ ];
+ for(const [question,effort,protocol] of cases){
+  const r=await handler(event({question,preferredProvider:"groq"}));
+  assert.equal(r.statusCode,200,question);
+  const body=requests.at(-1);
+  assert.equal(body.reasoning_effort,effort,question);
+  const prompts=body.messages.filter(x=>x.role==="system").map(x=>x.content).join("\n");
+  assert.match(prompts,new RegExp(protocol),question);
+  assert.match(prompts,/KALIBRASI BUKTI/);
+  assert.equal(body.include_reasoning,false,"No hidden reasoning should be shown to users");
+ }
+});
+test("fallback cognitive guidance remains scoped and does not claim nonexistent tools",async t=>{
+ const handler=setup(t);const reqs=[];
+ global.fetch=async(_url,opts)=>{reqs.push(JSON.parse(opts.body));return reply("Tiada sumber live disahkan, jadi dakwaan itu belum boleh dipastikan.");};
+ const r=await handler(event({question:"Bandingkan pilihan A dan B serta risiko privasi dan kos dalam jangka panjang secara mendalam.",preferredProvider:"groq",thoughtMode:"gelap"}));
+ assert.equal(r.statusCode,200);
+ const system=reqs.at(-1).messages.filter(m=>m.role==="system").map(m=>m.content).join("\n");
+ assert.match(system,/PERTIMBANGAN PILIHAN/);
+ assert.match(system,/GELAP/);
+ assert.match(system,/Jangan mereka sumber/);
+ assert.match(system,/Tiada alat carian/);
+ assert.ok(system.length<26000,"avoid runaway system context");
+});
