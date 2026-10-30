@@ -12,11 +12,6 @@
     "test:studio": "node --test scripts/test-studio-antara.cjs scripts/test-studio-history.cjs",
     "eval:aksara": "node scripts/aksara-evaluation-lab.cjs",
     "control:aksara": "node scripts/aksara-control-center.cjs",
-    "test:aksara-platform": "node --test tests/aksara-modes.test.cjs tests/aksara-vector-global.test.cjs",
-    "rag:count": "node scripts/aksara-vector-index.cjs count",
-    "rag:init": "node scripts/aksara-vector-index.cjs init",
-    "rag:index": "node scripts/aksara-vector-index.cjs index",
-    "quality:init": "node scripts/aksara-rating-cli.cjs init",
-    "quality:status": "node scripts/aksara-rating-cli.cjs status"
+    "test:aksara-platform": "node --test tests/aksara-modes.test.cjs"
   }
 }

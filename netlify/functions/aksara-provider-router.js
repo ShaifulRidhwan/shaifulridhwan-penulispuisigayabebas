@@ -100,9 +100,6 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
  ];
  const attempts=[];
  const available=configured();
- // A shared rating aggregate, when configured, applies across all Netlify
- // instances. Failure or timeout cannot stop the local fallback router.
- if(available.length>1)await Registry.refreshGlobal({timeout:650});
  // Prefer the provider that recently completed a real answer. Preserve default order otherwise.
  const ordered=rankProviders(available,task,prefer,reasoningLevel==="high").filter(p=>
   (!images.length||p.id==="openrouter")&&
@@ -205,7 +202,6 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    if(onDelta&&!emitted){emitted=true;onDelta(text);}
    cooldown.delete(provider.id);preferredProvider=provider.id;
    Registry.observe(provider.id,{ok:true,latencyMs:Date.now()-attemptStarted});
-   await Registry.recordGlobal(provider.id,task,{ok:true,latencyMs:Date.now()-attemptStarted});
    if(provider.id==="openrouter")recentOpenRouter={model:data.model||provider.model,at:Date.now()};
    if(provider.id==="requesty")recentRequesty={model:selectedRequestyModel,at:Date.now()};
    // A real answer is stronger evidence than a cached synthetic health probe.
@@ -223,7 +219,6 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     throw err; // Never splice a second provider into a partial answer.
    }
    Registry.observe(provider.id,{ok:false,latencyMs:Date.now()-attemptStarted});
-   await Registry.recordGlobal(provider.id,task,{ok:false,latencyMs:Date.now()-attemptStarted});
    const status=Number(err.status||0);
    const wait=err.retryAfterSeconds?err.retryAfterSeconds*1000:errorToCooldown(status);
    cooldown.set(provider.id,Date.now()+wait);

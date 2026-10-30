@@ -133,8 +133,7 @@
  <div class="multi-ai-actions"><button type="button" id="multiAiRefresh">Semak semula</button></div>
 </dialog>
    <dialog class="multi-ai-dialog" id="knowledgeDialog" aria-labelledby="knowledgeTitle" aria-describedby="knowledgeDescription">
- <div class="multi-ai-head"><div><strong id="knowledgeTitle">Pengetahuan &amp; Rujukan</strong><p id="knowledgeDescription">Aksara menggunakan rujukan yang tersedia, nota sesi yang kau benarkan, dan alat pengiraan terhad. Carian vektor Cloudflare tersedia apabila diaktifkan oleh pemilik laman dan kau memberi kebenaran untuk pertanyaan tersebut.</p></div><button type="button" id="knowledgeClose" aria-label="Tutup Pengetahuan dan Rujukan">×</button></div>
- <label class="knowledge-consent"><input id="vectorSearchConsent" type="checkbox"><span>Aktifkan carian vektor bagi soalan karya awam. Teks soalan yang berkaitan akan dihantar ke Cloudflare untuk embedding. Tidak termasuk fail atau nota peribadi; pilihan ini tidak disimpan selepas tab ditutup.</span></label>
+ <div class="multi-ai-head"><div><strong id="knowledgeTitle">Pengetahuan &amp; Rujukan</strong><p id="knowledgeDescription">Aksara menggunakan rujukan yang tersedia, nota sesi yang kau benarkan, dan alat pengiraan terhad. Carian semantik masih versi setempat, bukan pangkalan vektor.</p></div><button type="button" id="knowledgeClose" aria-label="Tutup Pengetahuan dan Rujukan">×</button></div>
  <div class="multi-ai-actions">
   <button type="button" class="outline-btn" data-knowledge-question="Cari karya Aksara tentang aporia dan pengetahuan.">Jelajah karya</button>
   <button type="button" class="outline-btn" data-knowledge-question="Cari rujukan Wikipedia tentang falsafah dan terangkan dengan sumber yang diperoleh.">Cari rujukan</button>
@@ -338,8 +337,6 @@ function setThoughtMode(mode,notify=false){
  if(notify&&changed)window.dispatchEvent(new CustomEvent("ba:thought-mode-changed",{detail:{mode:thoughtMode}}));
 }
 const knowledgeDialog=el("knowledgeDialog"),knowledgeTrigger=el("featureKnowledge");
-let vectorConsent=false;
-el("vectorSearchConsent").addEventListener("change",event=>{vectorConsent=event.target.checked===true;});
 knowledgeTrigger.addEventListener("click",()=>{
  ui.settings.open=false;
  knowledgeDialog.showModal();knowledgeTrigger.setAttribute("aria-expanded","true");
@@ -1019,7 +1016,7 @@ async function submit(event){
  }
  try{
   const payload={question,thoughtMode:requestMode,preferredProvider:Date.now()-lastProviderAt<90000?lastProvider:"",history:contextHistory(),contextFallback:ui.contextFallback.checked,
-   summary,thoughtLedger:ideas.slice(-8),mediaFallback:ui.mediaFallback.checked,requestyConsent:ui.requestyConsent.checked,vectorSearchConsent:vectorConsent,
+   summary,thoughtLedger:ideas.slice(-8),mediaFallback:ui.mediaFallback.checked,requestyConsent:ui.requestyConsent.checked,
    documentText:selectedFile&&selectedFile.text||"",
    documentName:selectedFile&&selectedFile.name||"",
    media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt()||""};
