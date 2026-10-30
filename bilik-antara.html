@@ -208,13 +208,14 @@ function pair(text){
 }
 function reply(value,options={}){
  const text=String(value||"");if(!text.trim())return text;
+ const dark=options.mode==="gelap";
  let seen=0;
  // Count whole graphemes: flags, skin tones and joined families are one emoji.
  // Literal code is content, not conversational decoration: never rewrite it.
  const clean=text.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`)/g).map((part,index)=>
-  index%2?part:glyphs(part).map(g=>emoji.test(g)?(++seen<=2?g:""):g).join("")
+  index%2?part:glyphs(part).map(g=>emoji.test(g)?(++seen<=(dark?0:2)?g:""):g).join("")
  ).join("").replace(/[ \t]+\n/g,"\n").trimEnd();
- if(options.complete===false||seen>=2)return clean;
+ if(dark||options.complete===false||seen>=2)return clean;
  const needed=pair(text).filter(x=>!clean.includes(x)).slice(0,2-seen);
  return clean+" "+needed.join(" ");
 }
@@ -311,6 +312,7 @@ modeButton.addEventListener("click",()=>{
 });
 modeChoices.forEach(choice=>choice.addEventListener("click",()=>{
  setThoughtMode(choice.dataset.modeOption,true);
+ save();
  modeDialog.close();
 }));
 modeClose.addEventListener("click",()=>modeDialog.close());
@@ -515,7 +517,7 @@ function addMessage(role,text,data){
  msg.appendChild(elem("div","byline",role==="user"?"Kau":"Aksara A.I."));
  const bubble=elem("div","bubble");
  // A Live Voice transcript is not a text-chat answer; keep its content undecorated.
- format(bubble,role==="user"||data?.mode==="voice"?text:window.BilikAntaraChatStyle.reply(text));
+ format(bubble,role==="user"||data?.mode==="voice"?text:window.BilikAntaraChatStyle.reply(text,{mode:data?.thoughtMode||"cahaya"}));
  if(role!=="user"&&data)renderExtras(bubble,data);
  msg.appendChild(bubble);ui.chat.appendChild(msg);scrollDown();return msg;
 }
@@ -612,7 +614,7 @@ function renderHistory(){
 function save(){
  if(!ui.remember.checked)return;
  try{localStorage.setItem(STORAGE,JSON.stringify({at:Date.now(),history,
-  summary:summary,summarizedThrough,thoughtLedger:ideas.slice(-12)}));window.dispatchEvent(new Event("ba:saved"));}
+  summary:summary,summarizedThrough,thoughtMode,thoughtLedger:ideas.slice(-12)}));window.dispatchEvent(new Event("ba:saved"));}
  catch(e){ui.docStatus.textContent="Sesi tak dapat disimpan pada device ni.";}
 }
 function restore(){
@@ -624,6 +626,7 @@ function restore(){
   history=stored.history.filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string")
    ;
   summary=typeof stored.summary==="string"?stored.summary.slice(0,4000):"";
+  setThoughtMode(stored.thoughtMode);
   ideas=Array.isArray(stored.thoughtLedger)?stored.thoughtLedger.slice(-12).filter(x=>x&&typeof x.idea==="string"):[];
   summarizedThrough=Number.isInteger(stored.summarizedThrough)?Math.max(0,Math.min(history.length,stored.summarizedThrough)):0;ui.remember.checked=true;
  }catch(e){}
@@ -887,6 +890,7 @@ async function submit(event){
  if(!typed&&!fileState)return;
  const question=typed||"Analisis lampiran ini dan bezakan fakta daripada perkara yang belum disahkan.";
  const selectedFile=fileState;
+ const requestMode=thoughtMode; // Keep each response tied to the mode used at Send.
  if(Date.now()<quotaCooldownUntil){
   const seconds=Math.max(1,Math.ceil((quotaCooldownUntil-Date.now())/1000));
   status("limited","Tunggu jap ya…","Tunggu lebih kurang "+seconds+" saat ya. Mesej kau masih ada dalam chatbox.");return;
@@ -907,7 +911,7 @@ async function submit(event){
   partialFrame=0;
   if(!partialBubble)return;
   const nearBottom=ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight<100;
-  partialBubble.textContent=window.BilikAntaraChatStyle.reply(partial,{complete:false});
+  partialBubble.textContent=window.BilikAntaraChatStyle.reply(partial,{complete:false,mode:requestMode});
   if(nearBottom)scrollDown();
  }
  function receive(delta){
@@ -921,7 +925,7 @@ async function submit(event){
   if(!partialFrame)partialFrame=requestAnimationFrame(drawPartial);
  }
  try{
-  const payload={question,thoughtMode,preferredProvider:Date.now()-lastProviderAt<90000?lastProvider:"",history:contextHistory(),contextFallback:ui.contextFallback.checked,
+  const payload={question,thoughtMode:requestMode,preferredProvider:Date.now()-lastProviderAt<90000?lastProvider:"",history:contextHistory(),contextFallback:ui.contextFallback.checked,
    summary,thoughtLedger:ideas.slice(-8),mediaFallback:ui.mediaFallback.checked,requestyConsent:ui.requestyConsent.checked,
    documentText:selectedFile&&selectedFile.text||"",
    documentName:selectedFile&&selectedFile.name||"",
@@ -939,11 +943,11 @@ async function submit(event){
   // The wait shares the stop signal; ordinary generated replies are never delayed.
   if(data.model==="project-identity")await reconnectPause(Math.max(0,3000-(performance.now()-startedAt)),ctrl.signal);
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
-  data.reply=window.BilikAntaraChatStyle.reply(data.reply);
+  data.reply=window.BilikAntaraChatStyle.reply(data.reply,{mode:data.thoughtMode||requestMode});
   cancelPartialFrame();
   typing.remove();partialNode?.remove();addMessage("assistant",data.reply,data);
   history.push({role:"user",content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
-  history.push({role:"assistant",content:data.reply,sources:data.sources||[],
+  history.push({role:"assistant",content:data.reply,thoughtMode:requestMode,sources:data.sources||[],
    argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
    publicAccount:data.publicAccount||null});
   
@@ -993,13 +997,14 @@ async function submit(event){
 }
 ui.form.addEventListener("submit",submit);
 window.BilikAntaraBridge={
- snapshot:()=>({history:history.map(m=>({...m})),summary,summarizedThrough,thoughtLedger:ideas.slice(-12)}),
+ snapshot:()=>({history:history.map(m=>({...m})),summary,summarizedThrough,thoughtMode,thoughtLedger:ideas.slice(-12)}),
  remember:()=>ui.remember.checked,
  load:entry=>{
   if(busy)return false;
   conversationEpoch++;discardFile();
   history=Array.isArray(entry&&entry.history)?entry.history.filter(m=>m&&(m.role==="user"||m.role==="assistant")&&typeof m.content==="string"):[];
   summary=typeof entry?.summary==="string"?entry.summary.slice(0,4000):"";
+   if(entry?.thoughtMode)setThoughtMode(entry.thoughtMode);
   ideas=Array.isArray(entry?.thoughtLedger)?entry.thoughtLedger.slice(-12):[];
   summarizedThrough=Number.isInteger(entry?.summarizedThrough)?Math.max(0,Math.min(history.length,entry.summarizedThrough)):0;renderIdeas();renderHistory();save();return true;
  },
@@ -1025,10 +1030,10 @@ restore();renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-identity.js?v=27" defer></script>
 <script src="bilik-antara-suite.js?v=11" defer></script>
 <script src="bilik-antara-brain.js?v=12" defer></script>
-<script src="bilik-antara-modes.js?v=1" defer></script>
+<script src="bilik-antara-modes.js?v=2" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-dialek.js?v=2" defer></script>
-<script src="bilik-antara-voice.js?v=41" defer></script>
+<script src="bilik-antara-voice.js?v=42" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
 <script>
 /* Retain the exact live 3D face, but initialize its renderer only in Voice Chat. */
