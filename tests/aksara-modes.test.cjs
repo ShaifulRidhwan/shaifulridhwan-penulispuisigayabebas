@@ -39,7 +39,7 @@ test("the visible control is before Send and provides labels",()=>{
 });
 test("browser modules load before voice and retain cache-busted versions",()=>{
  assert.ok(html.indexOf("bilik-antara-modes.js?v=1")<html.indexOf("bilik-antara-voice.js?v=41"));
- assert.ok(html.includes("bilik-antara.css?v=84"));
+ assert.ok(html.includes("bilik-antara.css?v=85"));
  assert.ok(html.includes('window.BilikAntaraThought=Object.freeze'));
 });
 test("both network paths share mode policy and voice restarts on change",()=>{

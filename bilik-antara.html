@@ -52,7 +52,7 @@
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="bilik-antara-bg-desktop.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="bilik-antara-bg-mobile.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=84">
+<link rel="stylesheet" href="bilik-antara.css?v=85">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
@@ -232,9 +232,13 @@ function syncViewport(){
   viewportWidth=window.innerWidth;
   stableAppHeight=Math.round(view?.height||window.innerHeight);
  }
- const currentHeight=Math.round(view?.height||window.innerHeight);
- const keyboardVisible=document.activeElement===ui.input&&stableAppHeight-currentHeight>120;
- const height=window.innerWidth<=760?(keyboardVisible?currentHeight:stableAppHeight)+"px":"";
+ const currentHeight=Math.max(1,Math.round(view?.height||window.innerHeight));
+ // Browser chrome can reduce the visible viewport even without keyboard focus.
+ // Never let the fixed-height chat extend below the currently visible screen.
+ // Preserve the original stable upper bound to avoid enlarging the glass pane
+ // whenever the browser's address bar collapses.
+ const visibleAppHeight=Math.min(stableAppHeight,currentHeight);
+ const height=window.innerWidth<=760?visibleAppHeight+"px":"";
  if(height===appliedAppHeight)return;
  // Keep the newest message visible when the keyboard changes the chat height,
  // but never pull a reader away from older messages they intentionally viewed.

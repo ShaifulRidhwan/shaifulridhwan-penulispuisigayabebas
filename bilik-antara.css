@@ -923,8 +923,8 @@ html, body{
 height:100%;overflow:hidden
 }
 .shell{
-height:var(--app-height,100dvh);min-height:0;
-  max-height:var(--app-height,100dvh)
+height:min(var(--app-height,100dvh),100dvh);min-height:0;
+  max-height:min(var(--app-height,100dvh),100dvh)
 }
 .world-art{
 inset:-3%;background-position:center 50%;background-size:cover
