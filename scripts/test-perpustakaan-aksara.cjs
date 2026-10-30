@@ -77,7 +77,7 @@ test("Katalog ringkas tanpa teks dan kawalan bertanda",()=>{
  assert.doesNotMatch(page,/PILIHAN EDITOR/);
  assert.match(page,/new URL\\(u,window\\.location\\.href\\)/);
  assert.match(page,/new URL\\(images\\[i\\+\\+\\],window\\.location\\.href\\)\\.href/);
- assert.match(css,/\\.book:first-child \\.art\\{aspect-ratio:9\\/16/);
+ assert.ok(css.includes(".book:first-child .art{aspect-ratio:9/16"));
 });
 test("Glass, mobile single-column dan imej kulit buku",()=>{
  assert.match(css,/backdrop-filter:blur\(23px\)/);
