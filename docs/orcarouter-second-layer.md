@@ -1,6 +1,6 @@
 # OrcaRouter: free-only second-layer fallback
 
-Gemini remains the main model. Groq, OpenRouter, and Requesty retain the existing first fallback routing. OrcaRouter is last for **text only**, using the fixed model ID `orcarouter/free`.
+Gemini remains the main model. Groq and OpenRouter retain the existing first fallback routing. OrcaRouter is last for **text only**, using the fixed model ID `orcarouter/free`.
 
 The official OrcaRouter Free documentation describes this endpoint as zero-cost with **rate limits** rather than a fixed call allowance. HTTP 429 uses Retry-After. It cannot select paid models through this fixed model ID.
 
