@@ -612,6 +612,19 @@ function addMessage(role,text,data){
  msg.appendChild(bubble);renderMessageMeta(msg,role,data);ui.chat.appendChild(msg);scrollDown();return msg;
 }
 function renderExtras(bubble,data){
+ if(data?.coderPoetFollowUp===true){
+  // Only a successfully answered Siapa Aku starter gets this optional
+  // suggestion. Never redirect or inject it into unrelated model replies.
+  const area=elem("div","msg-followup");
+  const suggestion=elem("button","msg-followup-btn",'Nak tahu tentang "The Coder Poet" pulak ke?');
+  suggestion.type="button";
+  suggestion.addEventListener("click",()=>{
+   if(busy)return;
+   ui.input.value="The Coder Poet";
+   resize();update();ui.form.requestSubmit();
+  });
+  area.appendChild(suggestion);bubble.appendChild(area);
+ }
  if(data?.studioHint===true){
   const area=elem("div","msg-sources");
   area.appendChild(elem("span","section-label","Jana gambar di Studio Antara"));
@@ -880,9 +893,12 @@ ui.input.addEventListener("keydown",e=>{
   e.preventDefault();if(!ui.send.disabled)ui.form.requestSubmit();
  }
 });
+let starterFollowUpTarget="";
 ui.starters.querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
  if(busy)return;
- ui.input.value=btn.textContent.trim();resize();update();if(document.activeElement===ui.input)ui.input.blur();ui.form.requestSubmit();
+ const starterText=btn.textContent.trim();
+ starterFollowUpTarget=starterText==="Siapa Aku"?"The Coder Poet":"";
+ ui.input.value=starterText;resize();update();if(document.activeElement===ui.input)ui.input.blur();ui.form.requestSubmit();
 }));
 function showTyping(){
  const msg=elem("article","message ai");
@@ -986,6 +1002,8 @@ async function submit(event){
  const typed=ui.input.value.trim();
  if(!typed&&!fileState)return;
  const question=typed||"Analisis lampiran ini dan bezakan fakta daripada perkara yang belum disahkan.";
+ const followUpTarget=starterFollowUpTarget;
+ starterFollowUpTarget=""; // One-shot intent from a clicked starter, never inferred from chat text.
  const selectedFile=fileState;
  const requestMode=thoughtMode; // Keep each response tied to the mode used at Send.
  const sentAt=Date.now(),sentLocation=messageLocation;
@@ -1045,7 +1063,7 @@ async function submit(event){
   cancelPartialFrame();
   typing.remove();partialNode?.remove();
   const receivedAt=Date.now();
-  addMessage("assistant",data.reply,{...data,timestamp:receivedAt,locationLabel:sentLocation});
+  addMessage("assistant",data.reply,{...data,coderPoetFollowUp:followUpTarget==="The Coder Poet"&&data.model==="project-identity"&&!selectedFile,timestamp:receivedAt,locationLabel:sentLocation});
   history.push({role:"user",timestamp:sentAt,locationLabel:sentLocation,content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
   history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,thoughtMode:requestMode,sources:data.sources||[],
    studioHint:data.studioHint===true,argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
