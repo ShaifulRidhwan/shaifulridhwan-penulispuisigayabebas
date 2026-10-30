@@ -955,8 +955,8 @@ async function submit(event){
   
   addIdeas(data.thoughtLedger);save();
   if(selectedFile&&selectedFile===fileState)ui.docStatus.textContent="Fail ni masih ada kalau kau nak tanya lagi · "+selectedFile.name;
-  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
-  const localAnswer=data.model==="project-identity"||data.model==="local-reflection";
+  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
+  const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge";
   status(localAnswer?"configured":"online",localAnswer?"Jawapan tersedia Aksara":"Multi A.I Connected","");
   if(!localAnswer){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
   if(data.provider==="openrouter"&&typeof data.model==="string"){lastOpenRouterModel=data.model;lastOpenRouterAt=Date.now();}
@@ -1035,7 +1035,7 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-identity.js?v=27" defer></script>
 <script src="bilik-antara-suite.js?v=11" defer></script>
 <script src="bilik-antara-brain.js?v=12" defer></script>
-<script src="bilik-antara-modes.js?v=3" defer></script>
+<script src="bilik-antara-modes.js?v=4" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-dialek.js?v=2" defer></script>
 <script src="bilik-antara-voice.js?v=42" defer></script>

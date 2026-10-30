@@ -290,6 +290,16 @@ exports.handler=async event=>{
    "\nREAKSI PENDEK PADA GILIRAN TERAKHIR: Mesej pengguna ialah tanda mendengar atau memahami, bukan permintaan penerangan baharu. Rujuk jawapan AI paling akhir dalam sejarah, dan balas satu reaksi pendek yang sesuai dalam Bahasa Melayu Malaysia lisan. Jangan membuat kesimpulan tentang pendapat atau emosi pengguna. Jangan mencipta kaitan baharu atau melompat ke cerita pengasas/puisi/coding jika tiada kaitan. Jika pengasas memang topik dan suasana santai, boleh usik secara ringan tanpa mereka fakta. Jangan mengulang biografi, memuji tanpa sebab, menawarkan projek atau mengakhiri dengan soalan bantuan automatik. Jika tiada perkara perlu ditambah, satu ayat pendek sudah cukup. Jangan menggunakan frasa hafalan yang sama setiap kali; sesuaikan dengan perbualan sebenar. Jika konteks terdahulu sensitif, kekalkan nada tenang tanpa gurauan.":"";
   const plan=Modes.plan(thoughtMode,intent,intelligencePlan(intent),question);
   const identityReply=(!media.length&&!documentText)?Identity.answerIdentity(question):null;
+   // Verified mode guide and selected elementary philosophy have independent
+   // mode-aware local answers; no cheap fallback can override their meaning.
+   const modeGuide=!media.length&&!documentText?Modes.localModeGuide(question,thoughtMode,Identity):null;
+   const philosophyGuide=!media.length&&!documentText?Modes.localPhilosophy(question,thoughtMode,history):null;
+   const localKnowledge=modeGuide||philosophyGuide;
+   if(localKnowledge)return result(200,{
+     mode:"live",aiMode:"automatic",model:"local-knowledge",thoughtMode,
+     reply:localKnowledge,sources:[],argumentMap:[],truthAudit:[],thoughtLedger:[],hypothesis:"",
+     reviewApplied:false,disclaimer:""
+   },H);
    // GELAP's commonly asked identity questions have their own local answers.
    // Do not pass them through CAHAYA templates or require a paid/external model call.
    const darkIdentity=thoughtMode==="gelap"&&!media.length&&!documentText
@@ -351,7 +361,8 @@ exports.handler=async event=>{
       followUpGuidance+reactionGuidance+(thoughtMode==="gelap"?"\n"+Modes.reactionGuidance(thoughtMode):"")+(intent.acceptingOffer?"\nPENGGUNA MENERIMA TAWARAN dalam jawapan terakhir. Terus lakukan apa yang ditawarkan dengan konteks yang sudah diberi; jangan bertanya semula tawaran yang sama.":"")+
       (creatorHumour?"\nUSIKAN BERASASKAN FAKTA: Usik hanya ciri projek yang diketahui, seperti pilihan bentuk puisi bersiri atau usaha mengubah suai Aksara. Jangan cipta atau meneka tabiat, waktu tidur, emosi, kebimbangan, peristiwa atau kehidupan peribadi Shaiful, walaupun sebagai perbandingan atau gurauan. Boleh selit ‘mwehehe’ di hujung jika sesuai.":"")+
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
-  const system=baseSystem+(thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false)+"\n"+Modes.contextGuidance(thoughtMode,question,history):"");
+  const activeModeInstruction="\nMOD AKTIF UNTUK JAWAPAN INI: "+(thoughtMode==="gelap"?"GELAP. Jawab dengan falsafah moden dan pemeriksaan premis apabila relevan, tetapi jangan merosakkan soalan fakta atau arahan teknikal.":"CAHAYA. Jawab secara santai, jelas dan praktikal; jangan menyamar sebagai GELAP.")+". Dua mod dalam Bilik Antara adalah gaya pemikiran/respons, bukan dua model API. Jika ditanya, terangkan kedua-dua mod serta cara menukarnya pada ikon pelaras di sebelah Hantar. Jangan mendakwa menggunakan model khusus kerana mod.";
+   const system=baseSystem+activeModeInstruction+(thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false)+"\n"+Modes.contextGuidance(thoughtMode,question,history):"");
   const maxTokens=plan.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
     works:!!poem,multimodal:media.length>0,model,review:intent.review});
