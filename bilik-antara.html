@@ -84,7 +84,7 @@
      <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Jom Voice Chat</button>
     </div>
     <div class="chat-controls">
-     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model yang tersedia"><span class="dot" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
+     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status lima penyedia AI dan model yang tersedia"><span class="dot" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
      <details class="settings" id="settingsPanel">
       <summary aria-label="Buka Ciri dan Fungsi Aksara" title="Ciri &amp; Fungsi">
        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
@@ -441,7 +441,7 @@ ui.retry.addEventListener("click",()=>{
 });
 const providers=[["gemini","Google Gemini"],["groq","Groq"],["openrouter","OpenRouter"],["orcarouter","OrcaRouter"],["requesty","Requesty"]];
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
-let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0;
+let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0,lastOrcaModel="",lastOrcaAt=0;
 function shortOpenRouterName(model){
  const full=String(model.name||model.id||"Model").replace(/^[^:]{1,24}:\s*/,"").trim().replace(/^[\w.-]+\//,"");
  const name=full||String(model.id||"Model").split("/").pop().replace(/:free$/,"");
@@ -484,7 +484,8 @@ function renderProviderRows(rows,catalog=null){
     child.setAttribute("aria-label",fullName+", status berdasarkan penggunaan sebenar jika sudah diuji");
     const shortName=elem("span","multi-ai-model-name",shortOpenRouterName(model));
     const liveModel=(item?.status==="online"&&item.model===model.id)||
-      (id==="openrouter"&&model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000);
+      (id==="openrouter"&&model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000)||
+      (id==="orcarouter"&&model.id===lastOrcaModel&&Date.now()-lastOrcaAt<90000);
     const statusLabel=elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Connected":"Listed");
     child.append(shortName,statusLabel);modelList.appendChild(child);
    }
@@ -1056,6 +1057,7 @@ async function submit(event){
   status(localAnswer?"configured":"online",localAnswer?"Jawapan tersedia Aksara":"Multi A.I Connected","");
   if(!localAnswer){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
   if(data.provider==="openrouter"&&typeof data.model==="string"){lastOpenRouterModel=data.model;lastOpenRouterAt=Date.now();}
+  if(data.provider==="orcarouter"&&typeof data.model==="string"){lastOrcaModel=data.model;lastOrcaAt=Date.now();}
   compact();
  }catch(error){
   cancelPartialFrame();
