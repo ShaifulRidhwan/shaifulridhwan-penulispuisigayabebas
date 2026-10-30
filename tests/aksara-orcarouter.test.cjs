@@ -104,6 +104,30 @@ test("OrcaRouter remains after Groq when a first-layer reply succeeds",async()=>
  }
 });
 
+test("OrcaRouter serves only after a failed first-layer provider",async()=>{
+ const oldFetch=global.fetch,oldKey=process.env.GROQ_API_KEY,oldFlag=process.env.GROQ_FREE_CONFIRMED;
+ process.env.GROQ_API_KEY="test-not-a-real-key";process.env.GROQ_FREE_CONFIRMED="true";
+ const calls=[];
+ global.fetch=async(url)=>{
+  calls.push(url);
+  if(url.includes("api.groq.com"))return {ok:false,status:503,headers:{get:()=>null},
+   json:async()=>({error:{message:"temporarily unavailable"}})};
+  return {ok:true,status:200,headers:{get:()=>"application/json"},
+   json:async()=>({model:"deepseek/deepseek-v4-flash-free",
+    choices:[{message:{content:"Aku sambung melalui sandaran kedua."},finish_reason:"stop"}]})};
+ };
+ try{
+  const response=await Router.complete({system:"Aksara",history:[],question:"Tolong sambung",deadline:Date.now()+12000});
+  assert.equal(response.provider,"orcarouter");
+  assert.deepEqual(calls.map(u=>u.includes("api.groq.com")?"groq":"orcarouter"),["groq","orcarouter"]);
+  assert.equal(response.attempts[0].provider,"groq");
+ }finally{
+  global.fetch=oldFetch;
+  if(oldKey===undefined)delete process.env.GROQ_API_KEY;else process.env.GROQ_API_KEY=oldKey;
+  if(oldFlag===undefined)delete process.env.GROQ_FREE_CONFIRMED;else process.env.GROQ_FREE_CONFIRMED=oldFlag;
+ }
+});
+
 test("Existing image consent cannot send attachments to OrcaRouter",async()=>{
  const old=global.fetch;let calls=0;
  global.fetch=async()=>{calls++;throw Error("Orca must not see image bytes");};
