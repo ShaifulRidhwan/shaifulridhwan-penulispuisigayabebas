@@ -172,9 +172,19 @@ function renderSessions(){
   if(!data.length){results.appendChild(make("p","Tiada perbualan yang sepadan.","ba-hint"));return;}
   for(const item of data){
    const row=make("div",undefined,"ba-session");
-   const summary=button((item.pinned?"★ ":"")+item.title,()=>beginSession(item),"ba-session-title");
-   const date=make("small",new Date(item.at||Date.now()).toLocaleString("ms-MY"),"ba-hint");
-   const controls=make("div",undefined,"ba-row");
+   const head=make("div",undefined,"ba-session-head");
+   const info=make("div",undefined,"ba-session-info");
+   const kicker=make("span","TOPIK SESI","ba-session-kicker");
+   const summary=button(item.title,()=>beginSession(item),"ba-session-title");
+   summary.title="Buka sesi: "+item.title;
+   summary.setAttribute("aria-label","Buka sesi: "+item.title);
+   const savedAt=new Date(Number.isFinite(item.at)&&item.at>0?item.at:Date.now());
+   const date=make("time",savedAt.toLocaleString("ms-MY",{day:"numeric",month:"short",year:"numeric",hour:"numeric",minute:"2-digit"}),"ba-session-date");
+   date.dateTime=savedAt.toISOString();
+   info.append(kicker,summary,date);
+   head.appendChild(info);
+   if(item.pinned)head.appendChild(make("span","★ Dipin","ba-session-pinned"));
+   const controls=make("div",undefined,"ba-row ba-session-actions");
    controls.append(
     button(item.pinned?"Nyahpin":"Pin",()=>{
      item.pinned=!item.pinned;
@@ -207,7 +217,7 @@ function renderSessions(){
      if(removeArchiveEntry(item))render();
     },"ba-tiny")
    );
-   row.append(summary,date,controls);results.appendChild(row);
+   row.append(head,controls);results.appendChild(row);
   }
  }
  search.addEventListener("input",()=>{sessionSearchTerm=search.value;draw();});draw();
@@ -247,10 +257,25 @@ function renderMemory(){
  const label=make("label"," Aktifkan memori");label.prepend(toggle);content.appendChild(label);
  const field=make("textarea");field.className="ba-editor";field.rows=8;field.maxLength=8000;
  field.value=typeof memory.text==="string"?memory.text:"";
- field.placeholder="Contoh: Aku suka Bahasa Melayu santai, jawapan ringkas, dan sedang membina laman web…";
+ field.placeholder="Catat projek aktif, keputusan penting, atau gaya jawapan yang kau mahu Aksara ingat…";
  content.appendChild(field);
+ const templateRow=make("div",undefined,"ba-memory-template-row");
+ const templateHint=make("span","Tak pasti nak tulis apa?","ba-memory-template-hint");
+ const templateButton=button("Isi templat cadangan",()=>{
+  if(field.value.trim()){notice("Nota dalam editor tak diubah. Kosongkan editor dahulu jika nak gunakan templat.");return;}
+  field.value=[
+   "Pilihan jawapan: Aku suka penjelasan yang jelas, dengan contoh praktikal apabila relevan.",
+   "Projek atau topik aktif: [tulis sendiri]",
+   "Keputusan penting yang perlu dikekalkan: [tulis sendiri]",
+   "Perkara yang aku mahu elakkan: [tulis sendiri]"
+  ].join("\n");
+  field.focus();
+  notice("Templat belum disimpan. Ganti atau buang [tulis sendiri], kemudian tekan Simpan memori.");
+ },"ba-tiny ba-memory-template");
+ templateRow.append(templateHint,templateButton);content.appendChild(templateRow);
  controlRow(button("Simpan memori",()=>{
   const updated={enabled:toggle.checked,text:field.value.trim().slice(0,8000)};
+  if(updated.text.includes("[tulis sendiri]")){notice("Lengkapkan atau padam penanda [tulis sendiri] sebelum simpan.");return;}
   if(!write(KEYS.memory,updated))return;
   memory=updated;notice("Pilihan memori disimpan pada peranti.");render();
  }),button("Padam memori",()=>{
