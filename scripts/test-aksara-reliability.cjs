@@ -691,7 +691,7 @@ test("Pipeline 2.0 keeps the latest question after all reference notes",()=>{
  const turn=Context.composeTurn("bahasa indonesia ke tu",["[NOTA] Studio Antara lama","[MEMORI] cerita lain"]);
  assert.ok(turn.includes("Studio Antara lama"));
  assert.ok(turn.indexOf("Studio Antara lama")<turn.indexOf("[SOALAN PENGGUNA TERKINI"));
- assert.match(turn,/bahasa indonesia ke tu\\n\\[TAMAT SOALAN TERKINI\\]$/);
+ assert.ok(turn.endsWith("bahasa indonesia ke tu"+String.fromCharCode(10)+"[TAMAT SOALAN TERKINI]"));
  assert.equal(Context.isReplyFeedback("bahasa indonesia ke tu"),true);
  assert.equal(Context.isReplyFeedback("siapa aku"),false);
 });
@@ -711,7 +711,7 @@ test("Pipeline 2.0 fallback protects unconsented summaries and follows language 
  }));
  assert.equal(res.statusCode,200);assert.equal(JSON.parse(res.body).provider,"groq");
  const last=sent.messages.at(-1).content;
- assert.ok(last.endsWith("bahasa indonesia ke tu\\n[TAMAT SOALAN TERKINI]"));
+ assert.ok(last.endsWith("bahasa indonesia ke tu"+String.fromCharCode(10)+"[TAMAT SOALAN TERKINI]"));
  assert.ok(!last.includes("RAHSIA RINGKASAN"));
  assert.ok(!last.includes("NOTA PERIBADI"));
  assert.ok(sent.messages.some(m=>m.role==="assistant"&&m.content.includes("Kamu kelihatan")));
@@ -730,5 +730,5 @@ test("Pipeline 2.0 fallback retains explicitly consented notes before the newest
  const text=sent.messages.at(-1).content;
  assert.ok(text.includes("Sesi lama mengenai buku"));
  assert.ok(text.includes("Guna Bahasa Melayu santai"));
- assert.ok(text.endsWith("bahasa indonesia ke tu\\n[TAMAT SOALAN TERKINI]"));
+ assert.ok(text.endsWith("bahasa indonesia ke tu"+String.fromCharCode(10)+"[TAMAT SOALAN TERKINI]"));
 });
