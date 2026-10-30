@@ -299,7 +299,14 @@ exports.handler=async event=>{
      reply:darkIdentity,sources:[],argumentMap:[],truthAudit:[],thoughtLedger:[],hypothesis:"",
      reviewApplied:false,disclaimer:"Maklumat identiti berdasarkan rekod projek Aksara."
    },H);
-  if(identityReply&&thoughtMode!=="gelap")return result(200,{
+  const darkReflection=thoughtMode==="gelap"&&!media.length&&!documentText
+     ?Modes.localReflection(question,history):null;
+   if(darkReflection)return result(200,{
+     mode:"live",aiMode:"automatic",model:"local-reflection",thoughtMode,
+     reply:darkReflection,sources:[],argumentMap:[],truthAudit:[],thoughtLedger:[],hypothesis:"",
+     reviewApplied:false,disclaimer:""
+   },H);
+   if(identityReply&&thoughtMode!=="gelap")return result(200,{
     mode:"live",aiMode:"automatic",model:"project-identity",thoughtMode,reply:identityReply,
     sources:[],argumentMap:[],truthAudit:[],thoughtLedger:[],hypothesis:"",
     reviewApplied:false,disclaimer:intent.reaction?"":"Info ni berdasarkan rekod projek Aksara."
