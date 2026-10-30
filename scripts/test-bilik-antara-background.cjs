@@ -8,9 +8,9 @@ const out='browser-audit-artifacts';fs.mkdirSync(out,{recursive:true});
 const original=Object.fromEntries(['bilik-antara.html','bilik-antara.css'].map(f=>[f,execFileSync('git',['show',base+':'+f],{encoding:'utf8'})]));
 const sizes=[[1920,1080],[1366,768],[390,844],[360,800]];
 async function state(page){return page.evaluate(()=>{
- const css=s=>getComputedStyle(document.querySelector(s));
+ const css=s=>{const element=document.querySelector(s);return element?getComputedStyle(element):null;};
  const geometry=Object.fromEntries(['.topbar','.app-shell','.conversation','.composer','#input','#voiceLive','#connection'].map(s=>{const r=document.querySelector(s).getBoundingClientRect();return [s,[r.x,r.y,r.width,r.height].map(n=>Math.round(n*10)/10)];}));
- const effects=Object.fromEntries(['.world-art','.world-haze','.world-embers i','.frame-glow--light','.frame-glow--shadow','.voice-live-label'].map(s=>{const a=css(s);return [s,[a.animationName,a.animationDuration,a.animationPlayState]];}));
+ const effects=Object.fromEntries(['.world-art','.world-haze','.world-embers i','.frame-glow--light','.frame-glow--shadow','.voice-live-label'].map(s=>{const a=css(s);return [s,a?[a.animationName,a.animationDuration,a.animationPlayState]:["none","0s","paused"]];}));
  const glass=Object.fromEntries(['.conversation','.composer','.settings-card','.voice-live-label'].map(s=>{const a=css(s);return [s,[a.backgroundColor,a.backdropFilter||a.webkitBackdropFilter,a.borderRadius,a.color,a.fontFamily]];}));
  return {geometry,effects,glass,width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,background:css('.world-art').backgroundImage,position:css('.world-art').backgroundPosition,particles:document.querySelectorAll('.world-hand-sparks i').length};
 });}
@@ -33,14 +33,15 @@ async function inspect(browser,width,height,mode){
  assert.equal(result.overflow,false,mode+' '+width+' horizontal overflow');
  if(mode!=='before')assert.equal(result.particles,0,'Obsolete hand sparks must remain absent in current and fallback versions');
  assert.match(result.effects['.world-art'][0],/worldBreath/);
- assert.match(result.effects['.world-haze'][0],/hazeDrift/);
+ assert.equal(result.effects['.world-haze'][0],"none","Removed haze must remain absent");
  assert.match(result.effects['.world-embers i'][0],/embersTravel/);
  assert.equal(result.effects['.frame-glow--light'][0],'frameLightBreathe');
  assert.equal(result.effects['.frame-glow--shadow'][0],'frameShadowBreathe');
  if(mode!=='before'){
   const selected='bilik-antara-bg-'+(width<=760?'mobile':'desktop')+'.webp';
   assert.ok(result.background.includes(selected));
-  assert.ok(result.background.includes('bilik-antara-cover-art.jpg'));
+  if(width>760)assert.ok(result.background.includes('bilik-antara-cover-art.jpg'));
+  else assert.ok(!result.background.includes('bilik-antara-cover-art.jpg'),"Mobile avoids hidden fallback download");
   const dimensions=await page.evaluate(async source=>{const img=new Image();img.src=source;await img.decode();return [img.naturalWidth,img.naturalHeight];},mode==='fallback'?'bilik-antara-cover-art.jpg?v=2':selected);
   assert.ok(dimensions[0]>0&&dimensions[1]>0);
   if(mode==='after'){
@@ -48,7 +49,7 @@ async function inspect(browser,width,height,mode){
    assert.equal(assets.filter(a=>a.url.includes('bg-')&&!a.url.includes(selected)).length,0,'Do not download the opposite wallpaper');
   }
  }
- assert.ok(assets.some(a=>a.url.includes('cover-art.jpg')&&a.status===200),'Original fallback must remain available');
+ if(width>760)assert.ok(assets.some(a=>a.url.includes('cover-art.jpg')&&a.status===200),'Original desktop fallback must remain available');
  // Animations advance before the screenshot freezes them for comparison.
  const running=await page.evaluate(()=>document.querySelector('.world-art').getAnimations().some(animation=>animation.playState==='running'));
  assert.equal(running,true,'Existing ambient animation is enabled and running');
@@ -63,7 +64,11 @@ async function inspect(browser,width,height,mode){
 }
 async function main(){const browser=await chromium.launch({headless:true,args:['--no-sandbox']});try{
  for(const [w,h] of sizes){const before=await inspect(browser,w,h,'before'),after=await inspect(browser,w,h,'after'),fallback=await inspect(browser,w,h,'fallback');
-  for(const key of ['geometry','effects','glass']){assert.deepEqual(after[key],before[key],key+' changed at '+w);assert.deepEqual(fallback[key],before[key],key+' fallback changed at '+w);}
+  // A new mode pill intentionally reduces textarea width; protect the outer chat geometry and glass instead.
+  const geometryWithoutInput=result=>Object.fromEntries(Object.entries(result.geometry).filter(([key])=>key!=='#input'));
+  assert.deepEqual(geometryWithoutInput(after),geometryWithoutInput(before),'Outer geometry changed at '+w);
+  assert.deepEqual(geometryWithoutInput(fallback),geometryWithoutInput(before),'Fallback geometry changed at '+w);
+  for(const key of ['effects','glass']){assert.deepEqual(after[key],before[key],key+' changed at '+w);assert.deepEqual(fallback[key],before[key],key+' fallback changed at '+w);}
   console.log(JSON.stringify({viewport:[w,h],layoutUnchanged:true,glassUnchanged:true,animationsUnchanged:true,wallpaperDecoded:true,originalFallbackDecoded:true,overflow:false,controls:true}));
  }
 }finally{await browser.close();}}
