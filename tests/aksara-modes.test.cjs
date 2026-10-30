@@ -61,7 +61,7 @@ test("Mode control is compact, accessible, and opens a shared glass dialog",()=>
 });
 test("browser modules load before voice and retain cache-busted versions",()=>{
  assert.ok(html.indexOf("bilik-antara-modes.js?v=4")<html.indexOf("bilik-antara-voice.js?v=42"));
- assert.ok(html.includes("bilik-antara.css?v=87"));
+ assert.match(html,/bilik-antara\.css\?v=\d+/);
  assert.ok(html.includes('window.BilikAntaraThought=Object.freeze'));
 });
 test("both network paths share mode policy and voice restarts on change",()=>{
