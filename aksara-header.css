@@ -1,0 +1,179 @@
+/* Aksara identity header shared by Bilik Antara, Studio and Novel.
+   Design tokens follow the current Bilik Antara topbar; no global layout overrides. */
+.aksara-header{
+  box-sizing:border-box;
+  position:relative;
+  z-index:10;
+  flex:none;
+  width:100%;
+  height:62px;
+  min-height:62px;
+  margin-block:0;
+  padding:0 clamp(18px,4.25vw,76px);
+  display:flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border:0;
+  border-bottom:1px solid rgba(237,196,131,.28);
+  background:linear-gradient(115deg,rgba(8,14,24,.4),rgba(17,26,40,.2));
+  -webkit-backdrop-filter:blur(12px) saturate(1.15);
+  backdrop-filter:blur(12px) saturate(1.15);
+  box-shadow:inset 0 -1px 0 rgba(241,211,163,.18),0 6px 24px rgba(0,0,0,.14);
+  font-family:'DM Sans',system-ui,sans-serif;
+  letter-spacing:normal;
+}
+/* The Studio and Novel page wrappers are intentionally narrower than the chat.
+   Let their topbars reach the viewport edges while content stays unchanged. */
+.studio-shell > .aksara-header,
+.novel-shell > .aksara-header{
+  width:100vw;
+  max-width:none;
+  margin-left:calc(50% - 50vw);
+  margin-right:calc(50% - 50vw);
+}
+.aksara-header::after{
+  content:"";
+  position:absolute;
+  bottom:-1px;
+  left:clamp(18px,4.25vw,76px);
+  height:1px;
+  width:min(160px,21vw);
+  background:linear-gradient(90deg,#ecd4af,transparent);
+  pointer-events:none;
+}
+.aksara-header .aksara-brand,
+.aksara-header .aksara-nav-link{
+  box-sizing:border-box;
+  flex:none;
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
+  height:36px;
+  min-height:36px;
+  text-decoration:none;
+  white-space:nowrap;
+  border:1px solid rgba(220,196,154,.26);
+  border-radius:999px;
+  background:linear-gradient(115deg,rgba(255,234,198,.065),rgba(110,153,196,.055));
+  -webkit-backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);
+  box-shadow:inset 0 1px 0 rgba(255,241,214,.1);
+  color:#f6e9d6;
+  transition:background-color .2s,border-color .2s,color .2s;
+}
+.aksara-header .aksara-brand{
+  flex-shrink:0;
+  gap:0;
+  min-width:0;
+  padding:7px 11px;
+  border-radius:13px;
+}
+.aksara-header .aksara-brand-name{
+  display:inline-flex;
+  align-items:baseline;
+  gap:clamp(5px,.7vw,10px);
+  white-space:nowrap;
+  min-width:0;
+  margin:0;
+  line-height:1.2;
+  letter-spacing:normal;
+  text-transform:none;
+}
+.aksara-header .aksara-brand-name .aksara-name{
+  display:inline-block;
+  margin:0;
+  font:650 13px/1.2 'DM Sans',sans-serif;
+  letter-spacing:.07em;
+  text-transform:none;
+  color:#fff3df;
+  white-space:nowrap;
+}
+.aksara-header .aksara-brand-name .aksara-credit{
+  display:inline-block;
+  margin:0;
+  font:450 9px/1.2 'DM Sans',sans-serif;
+  letter-spacing:.045em;
+  color:#e9c68d;
+  text-transform:none;
+  white-space:nowrap;
+  opacity:.83;
+}
+.aksara-header .aksara-nav{
+  flex:0 0 auto;
+  min-width:0;
+  display:flex;
+  flex-wrap:nowrap;
+  justify-content:flex-end;
+  align-items:center;
+  gap:clamp(3px,.7vw,8px);
+}
+.aksara-header .aksara-nav-link{
+  position:relative;
+  font:500 12px/1.2 'DM Sans',sans-serif;
+  letter-spacing:0;
+  padding:7px 11px;
+}
+.aksara-header .aksara-nav-link::after{display:none;content:none}
+.aksara-header .aksara-brand:hover,
+.aksara-header .aksara-nav-link:hover{
+  color:#fff9ee;
+  background:rgba(217,185,136,.13);
+  border-color:rgba(236,208,164,.48);
+}
+.aksara-header :is(.aksara-brand,.aksara-nav-link):focus-visible{
+  outline:2px solid #e8c68e;
+  outline-offset:3px;
+}
+@media(max-width:760px){
+  .aksara-header{
+    height:50px;
+    min-height:50px;
+    padding-inline:9px;
+    gap:6px;
+  }
+  .aksara-header::after{left:9px}
+  .aksara-header .aksara-brand,
+  .aksara-header .aksara-nav-link{
+    height:31px;
+    min-height:31px;
+  }
+  .aksara-header .aksara-brand{
+    padding:5px 8px;
+  }
+  .aksara-header .aksara-brand-name{
+    gap:5px;
+  }
+  .aksara-header .aksara-brand-name .aksara-name{
+    font-size:11px;
+    letter-spacing:.025em;
+  }
+  .aksara-header .aksara-brand-name .aksara-credit{
+    font-size:8px;
+    letter-spacing:0;
+  }
+  .aksara-header .aksara-nav{gap:4px}
+  .aksara-header .aksara-nav-link{
+    font-size:10px;
+    padding:6px 8px;
+  }
+}
+@media(max-width:430px){
+  .aksara-header .aksara-brand-name{gap:3px}
+  .aksara-header .aksara-brand-name .aksara-name{font-size:9.5px;letter-spacing:0}
+  .aksara-header .aksara-brand-name .aksara-credit{font-size:7px;letter-spacing:0}
+  .aksara-header .aksara-nav{gap:3px}
+  .aksara-header .aksara-nav-link{font-size:9px;padding:6px}
+  .aksara-header .aksara-brand{padding-inline:6px}
+}
+@media(max-width:355px){
+  .aksara-header{gap:3px;padding-inline:6px}
+  .aksara-header .aksara-brand-name .aksara-name{font-size:8.7px}
+  .aksara-header .aksara-brand-name .aksara-credit{font-size:6px}
+  .aksara-header .aksara-nav-link{font-size:8px;padding-inline:5px}
+  .aksara-header .aksara-nav{gap:2px}
+}
+@media(prefers-reduced-motion:reduce){
+  .aksara-header .aksara-brand,.aksara-header .aksara-nav-link{transition:none}
+}

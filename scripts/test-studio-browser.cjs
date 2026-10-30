@@ -96,12 +96,13 @@ async function main(){
   assert.match(visual.navBlur,/blur/,'Studio navigation needs Bilik-style glass');
   assert.match(visual.navFill,/gradient/);
   assert.equal(await page.locator('.hero').count(),0,'Standalone hero should be removed');
-  assert.equal(await page.locator('.topbar').locator('a').count(),2,'Header should retain only Bilik Antara and Gaya Bebas');
+  assert.equal(await page.locator('.topbar .aksara-nav-link').count(),3,'Studio should link to Main, Bilik Antara and Novel');
+  assert.equal(await page.locator('.topbar .aksara-brand').count(),1,'Studio should have its own Aksara identity');
   assert.equal(await page.locator('.topbar .brand-mark').count(),0,'Top AKSARA mark should be absent');
   assert.equal(await page.locator('#studioTitle').textContent(),'STUDIO ANTARA');
   assert.equal(await page.locator('#resultTitle').textContent(),'RUANG VISUAL');
   assert.equal(await page.locator('#resultTitle span').textContent(),'VISUAL');
-  assert.equal(await page.locator('.topbar .home-link').textContent(),'LAMAN UTAMA');
+  assert.equal(await page.locator('.topbar .aksara-nav-link[href="index.html"]').textContent(),'Laman utama');
   const headlineGold=await page.locator('#resultTitle span').evaluate(el=>getComputedStyle(el).color);
   const studioGold=await page.locator('#studioTitle span').evaluate(el=>getComputedStyle(el).color);
   assert.equal(headlineGold,studioGold,'VISUAL must use exactly the same gold as ANTARA');
@@ -130,7 +131,7 @@ async function main(){
   assert.equal(await page.locator('#generateImage').textContent(),'Jana imej');
   const navLayout=await page.locator('.topbar').evaluate(el=>{
    const bar=el.getBoundingClientRect(),items=[...el.children].map(child=>child.getBoundingClientRect());
-   return {within:items.every(r=>r.left>=bar.left-1&&r.right<=bar.right+1),allPills:[...el.children].every(child=>getComputedStyle(child).borderRadius!=='0px')};
+   return {within:items.every(r=>r.left>=bar.left-1&&r.right<=bar.right+1),allPills:[...el.querySelectorAll("a")].every(link=>getComputedStyle(link).borderRadius!=="0px")};
   });
   assert.equal(navLayout.within,true,'Header glass buttons must fit mobile');
   assert.equal(navLayout.allPills,true,'Header links and brand need consistent glass pills');
