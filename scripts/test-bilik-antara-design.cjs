@@ -188,7 +188,7 @@ test("Header chips stay optically aligned and feature interactions have gentle g
 
 test("Rounded Aksara controls share Liquid Glass, preserve contrast and cap mobile blur",()=>{
  const suite=fs.readFileSync("bilik-antara-suite.css","utf8");
- assert.match(html,/href="bilik-antara-suite\.css\?v=6"/);
+ assert.match(html,/href="bilik-antara-suite\.css\?v=7"/);
  assert.match(css,/\/\* Liquid Glass · clearer optical glass/);
  for(const selector of [".topbar .brand",".topbar .nav-link",
   ".conversation-head #voiceLive",".conversation-head #connection",
