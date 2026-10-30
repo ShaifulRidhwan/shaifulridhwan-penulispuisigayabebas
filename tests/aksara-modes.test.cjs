@@ -182,3 +182,10 @@ test("GELAP short emotional messages have context-safe, philosophical local refl
  assert.ok(backend.includes('model:"local-reflection"'));
  assert.ok(html.includes('data.model==="local-reflection"'));
 });
+
+test("mode preference survives reload independently from opt-in conversation history",()=>{
+ assert.ok(html.includes('const MODE_STORAGE="bilik-antara-mode-v1"'));
+ assert.ok(html.includes('localStorage.setItem(MODE_STORAGE,thoughtMode)'));
+ assert.ok(html.includes('const lastMode=localStorage.getItem(MODE_STORAGE)'));
+ assert.ok(html.includes('if(lastMode==="gelap"||lastMode==="cahaya")setThoughtMode(lastMode)'));
+});
