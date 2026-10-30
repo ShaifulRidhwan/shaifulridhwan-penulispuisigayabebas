@@ -72,6 +72,9 @@ function persistArchive(){
  if(!api.remember())return false;
  archive=archive.filter(x=>x&&typeof x.id==="string"&&Array.isArray(x.history))
    .sort((a,b)=>(Number(b.pinned)-Number(a.pinned))||(b.at-a.at));
+ if(!archive.length){
+  try{localStorage.removeItem(KEYS.archive);return true;}catch(_){notice("Arkib tak dapat dikosongkan dalam pelayar.");return false;}
+ }
  return write(KEYS.archive,archive);
 }
 function snapshotCurrent(){
@@ -81,7 +84,9 @@ function snapshotCurrent(){
  const idx=archive.findIndex(x=>x.id===activeId);
  const old=archive[idx]||{};
  const first=snapshot.history.find(x=>x.role==="user");
- const entry={id:activeId,title:(first&&first.content||"Perbualan baharu").slice(0,75),at:Date.now(),
+ const titleEdited=old.titleEdited===true;
+ const title=titleEdited&&typeof old.title==="string"?old.title:(first&&first.content||"Perbualan baharu").slice(0,75);
+ const entry={id:activeId,title,at:Date.now(),titleEdited,
   pinned:!!old.pinned,history:snapshot.history,summary:snapshot.summary,summarizedThrough:snapshot.summarizedThrough,thoughtLedger:snapshot.thoughtLedger};
  if(idx>=0)archive.splice(idx,1);archive.unshift(entry);persistArchive();
 }
@@ -119,20 +124,49 @@ function download(name,contents,mime){
 function sessionText(history){
  return history.map(m=>(m.role==="user"?"PENGGUNA":"AI")+"\n"+String(m.content||"")).join("\n\n---\n\n");
 }
+function rotateActiveSession(){
+ if(api.active()){notice("Hentikan jawapan A.I. sebelum padam sesi.");return false;}
+ const previous=activeId;
+ activeId=freshId();
+ if(!api.fresh()){activeId=previous;return false;}
+ try{sessionStorage.setItem(PREFIX+"-active",activeId);}catch(_){}
+ return true;
+}
+function removeArchiveEntry(item){
+ if(item.id===activeId&&!rotateActiveSession())return false;
+ const previous=archive.slice();
+ archive=archive.filter(x=>x.id!==item.id);
+ if(!persistArchive()){archive=previous;return false;}
+ notice("Sesi dipadam daripada peranti ini.");
+ return true;
+}
+function clearAllArchive(){
+ if(!rotateActiveSession())return false;
+ const previous=archive.slice();
+ archive=[];
+ if(!persistArchive()){archive=previous;return false;}
+ notice("Semua sejarah sesi pada peranti ini dipadam.");
+ return true;
+}
 function renderSessions(){
  section("Sejarah perbualan");
- paragraph("Sesi disimpan pada peranti ini sahaja apabila 'Simpan sesi pada peranti ini' diaktifkan. Arkib tetap tertakluk pada ruang storan pelayar; eksport JSON untuk sandaran sendiri.");
+ paragraph("Sesi disimpan pada peranti ini, bukan akaun awan. Cari, namakan semula, pin atau pulihkan sesi. Eksport JSON untuk sandaran, kemudian import semula pada peranti yang kau pilih.");
  controlRow(button("+ Sesi baharu",()=>beginSession(null)),button("Eksport sesi ini",()=>{
   download("bilik-antara-sesi.md",sessionText(api.snapshot().history),"text/markdown;charset=utf-8");
  }));
- if(!api.remember()){paragraph("Penyimpanan perbualan belum diaktifkan. Hidupkannya melalui Privasi & sesi. Memori pilihan masih boleh diurus di bawah.");return;}
+ if(!api.remember()){
+  paragraph("Penyimpanan perbualan dimatikan. Hidupkannya melalui Privasi & sesi. Memori pilihan masih boleh diurus di bawah.");
+  return;
+ }
  const search=make("input");search.type="search";search.placeholder="Cari sejarah perbualan…";search.className="ba-input";
  content.appendChild(search);
  const results=make("div",undefined,"ba-list");content.appendChild(results);
+ // Precompute searchable text once per render to avoid rejoining whole archives on each keystroke.
+ const indexed=archive.map(item=>({item,search:(item.title+" "+sessionText(item.history)).toLocaleLowerCase("ms-MY")}));
  function draw(){
   results.replaceChildren();
-  const term=search.value.toLocaleLowerCase("ms-MY");
-  const data=archive.filter(item=>(item.title+" "+sessionText(item.history)).toLocaleLowerCase("ms-MY").includes(term));
+  const term=search.value.toLocaleLowerCase("ms-MY").trim();
+  const data=indexed.filter(({search:haystack})=>haystack.includes(term)).map(x=>x.item);
   if(!data.length){results.appendChild(make("p","Tiada perbualan yang sepadan.","ba-hint"));return;}
   for(const item of data){
    const row=make("div",undefined,"ba-session");
@@ -140,16 +174,68 @@ function renderSessions(){
    const date=make("small",new Date(item.at||Date.now()).toLocaleString("ms-MY"),"ba-hint");
    const controls=make("div",undefined,"ba-row");
    controls.append(
-    button(item.pinned?"Nyahpin":"Pin",()=>{item.pinned=!item.pinned;persistArchive();draw();},"ba-tiny"),
+    button(item.pinned?"Nyahpin":"Pin",()=>{
+     item.pinned=!item.pinned;
+     if(!persistArchive())item.pinned=!item.pinned;
+     render();
+    },"ba-tiny"),
+    button("Nama",()=>{
+     const editor=make("input");editor.className="ba-input";editor.maxLength=75;editor.value=item.title;
+     summary.replaceWith(editor);editor.focus();editor.select();
+     let cancelled=false,committed=false;
+     const finish=()=>{
+      if(committed)return;committed=true;
+      const value=editor.value.trim().slice(0,75);
+      if(!cancelled&&value){
+       const oldTitle=item.title,oldEdited=item.titleEdited;
+       item.title=value;item.titleEdited=true;
+       if(!persistArchive()){item.title=oldTitle;item.titleEdited=oldEdited;}
+      }
+      render();
+     };
+     editor.addEventListener("keydown",event=>{
+      if(event.key==="Escape"){cancelled=true;editor.blur();}
+      if(event.key==="Enter"){event.preventDefault();editor.blur();}
+     });
+     editor.addEventListener("blur",finish,{once:true});
+    },"ba-tiny"),
     button("Eksport",()=>download("bilik-antara-"+item.id+".md",sessionText(item.history),"text/markdown;charset=utf-8"),"ba-tiny"),
-    button("Padam",()=>{if(!confirm("Padam sesi tersimpan ini?"))return;archive=archive.filter(x=>x.id!==item.id);persistArchive();draw();},"ba-tiny")
+    button("Padam",()=>{
+     if(!confirm("Padam sesi tersimpan ini? Jika sedang dibuka, perbualan aktif juga akan dikosongkan."))return;
+     if(removeArchiveEntry(item))render();
+    },"ba-tiny")
    );
    row.append(summary,date,controls);results.appendChild(row);
   }
  }
  search.addEventListener("input",draw);draw();
- controlRow(button("Eksport semua sesi (JSON)",()=>download("bilik-antara-arkib.json",JSON.stringify(archive,null,2),"application/json")),
-  button("Padam semua sejarah",()=>{if(!confirm("Padam SEMUA sesi yang disimpan pada peranti ini?"))return;archive=[];persistArchive();render();}));
+ const input=make("input");input.type="file";input.accept=".json,application/json";input.hidden=true;
+ input.addEventListener("change",async()=>{
+  const file=input.files&&input.files[0];if(!file)return;
+  try{
+   if(file.size>3000000)throw Error("Arkib melebihi had import 3 MB.");
+   const utils=window.AksaraSessionUtils;
+   if(!utils)throw Error("Modul arkib tidak dapat dimuat.");
+   const restored=utils.importArchive(JSON.parse(await file.text()));
+   if(!restored.length)throw Error("Tiada sesi untuk diimport.");
+   if(!confirm("Import "+restored.length+" sesi ke peranti ini? Sesi sedia ada tidak akan dipadam."))return;
+   const previous=archive.slice();
+   archive=[...archive,...restored.map(item=>({...item,id:freshId()}))];
+   if(!persistArchive()){archive=previous;return;}
+   notice(restored.length+" sesi berjaya diimport.");
+   render();
+  }catch(err){notice(String(err?.message||"Arkib JSON tidak sah.").slice(0,180));}
+  finally{input.value="";}
+ });
+ content.appendChild(input);
+ controlRow(
+  button("Eksport semua sesi (JSON)",()=>download("bilik-antara-arkib.json",JSON.stringify(archive,null,2),"application/json")),
+  button("Import arkib JSON",()=>input.click()),
+  button("Padam semua sejarah",()=>{
+   if(!confirm("Padam SEMUA sejarah termasuk sesi yang sedang dibuka pada peranti ini?"))return;
+   if(clearAllArchive())render();
+  })
+ );
 }
 function renderMemory(){
  paragraph("Memori pilihan pengguna ialah nota berasingan daripada sejarah sesi.");
