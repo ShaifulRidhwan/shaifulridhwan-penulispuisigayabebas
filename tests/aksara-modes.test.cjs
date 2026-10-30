@@ -52,7 +52,7 @@ test("Mode control is compact, accessible, and opens a shared glass dialog",()=>
  assert.ok(css.includes('.thought-mode-dialog .thought-choice-copy small'));
 });
 test("browser modules load before voice and retain cache-busted versions",()=>{
- assert.ok(html.indexOf("bilik-antara-modes.js?v=3")<html.indexOf("bilik-antara-voice.js?v=42"));
+ assert.ok(html.indexOf("bilik-antara-modes.js?v=4")<html.indexOf("bilik-antara-voice.js?v=42"));
  assert.ok(html.includes("bilik-antara.css?v=86"));
  assert.ok(html.includes('window.BilikAntaraThought=Object.freeze'));
 });
@@ -188,4 +188,38 @@ test("mode preference survives reload independently from opt-in conversation his
  assert.ok(html.includes('localStorage.setItem(MODE_STORAGE,thoughtMode)'));
  assert.ok(html.includes('const lastMode=localStorage.getItem(MODE_STORAGE)'));
  assert.ok(html.includes('if(lastMode==="gelap"||lastMode==="cahaya")setThoughtMode(lastMode)'));
+});
+
+test("Aksara understands both modes even when served by local responses",()=>{
+ for(const mode of ["cahaya","gelap"]){
+  const direct=Modes.localModeGuide("apa beza cahaya dan gelap",mode,Identity);
+  const generic=Modes.localModeGuide("mode apa yang aktif",mode,Identity);
+  assert.ok(direct.includes("CAHAYA")&&direct.includes("GELAP"),mode);
+  assert.ok(direct.includes("ikon pelaras"),mode);
+  assert.ok(generic.includes(mode.toUpperCase()),mode);
+ }
+ assert.ok(Identity.MODE_FACTS.includes("DUA MOD"));
+ assert.ok(Identity.CORE_PROMPT.includes("DUA MOD"));
+ assert.ok(Identity.RUNTIME_PROMPT.includes("DUA MOD"));
+ assert.ok(Identity.answerIdentity("ko siapa").includes("GELAP"));
+ assert.ok(Identity.WHO_AM_I.includes("GELAP"));
+ assert.ok(backend.includes("MOD AKTIF UNTUK JAWAPAN INI"));
+ assert.ok(backend.includes("Modes.localModeGuide(question,thoughtMode,Identity)"));
+});
+test("GELAP and CAHAYA each have contextual, accurate local philosophy answers",()=>{
+ const tests=["apa tu falsafah","mengapa kau dan aku wujud","bagi 1 falsafah"];
+ for(const question of tests){
+  const light=Modes.localPhilosophy(question,"cahaya",[]);
+  const dark=Modes.localPhilosophy(question,"gelap",[]);
+  assert.ok(typeof light==="string"&&light.length>90,question);
+  assert.ok(typeof dark==="string"&&dark.length>130,question);
+  assert.notEqual(light,dark,"Mode differentiation for "+question);
+  assert.ok(!/model API|Shaiful Ridhwan/.test(dark),"Do not hijack an unrelated philosophy question");
+ }
+ assert.ok(Modes.localIdentity("ko siapa",Identity).includes("GELAP aktif"));
+ assert.ok(Modes.localPhilosophy("bagi 1 falsafah","gelap",[{role:"assistant",content:Modes.localPhilosophy("bagi 1 falsafah","gelap",[])}]).startsWith("Skeptisisme"));
+ assert.equal(Modes.localPhilosophy("cara nak baiki CSS","gelap",[]),null);
+ assert.ok(backend.includes("model:\"local-knowledge\""));
+ assert.ok(html.includes("bilik-antara-modes.js?v=4"));
+ assert.ok(html.includes('data.model==="local-knowledge"'));
 });
