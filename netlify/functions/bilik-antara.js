@@ -427,7 +427,7 @@ exports.handler=async event=>{
         lastTextProvider=alternative.provider;lastTextSuccessAt=Date.now();
         log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
         // Off by default, only eligible ordinary text. Never treat another LLM as a verified fact-checker.
-        const check=!imageOnly&&remaining()>1000?await Router.crossReview({question,reply:alternative.reply,originalProvider:alternative.provider,task:intent.task,timeoutMs:Math.min(3000,remaining())}):null;
+        const check=flags.reviewEnabled&&!imageOnly&&remaining()>1000?await Router.crossReview({question,reply:alternative.reply,originalProvider:alternative.provider,task:intent.task,timeoutMs:Math.min(3000,remaining())}):null;
         return result(200,{
           mode:"fallback",aiMode:"automatic",thoughtMode,model:alternative.model,provider:alternative.provider,
           reply:alternative.reply,sources:publicSources.map(({title,url})=>({title,url})),argumentMap:[],truthAudit:[],
@@ -472,7 +472,7 @@ exports.handler=async event=>{
     const sources=[...publicSources.map(({title,url})=>({title,url})),...directSources.filter(x=>!publicSources.some(y=>y.url===x.url))].slice(0,8);
     const evidence=groundingEvidence(candidate,sources);
     let review=null;
-    if(plan.doReview&&!tiktokHandle&&process.env.ENABLE_DUAL_REVIEW!=="false"){
+    if(flags.reviewEnabled&&plan.doReview&&!tiktokHandle&&process.env.ENABLE_DUAL_REVIEW!=="false"){
       const reviewBudget=remaining();
       if(reviewBudget>=3600){
         try{review=await reviewAnswer({apiKey,model:baseModel,question,reply,sources,evidence,intent,thoughtMode,timeBudgetMs:reviewBudget,signal:event.signal});}
