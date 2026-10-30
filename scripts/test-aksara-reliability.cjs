@@ -230,10 +230,11 @@ test("provider preference cannot bypass consent for private context, and a faile
  const privateReply=await handler(event({question:"Ringkaskan fail",documentText:"teks peribadi",preferredProvider:"openrouter"}));assert.equal(privateReply.statusCode,200);assert.equal(backups,0);
  const fallback=await handler(event({question:"Apa itu graviti?",preferredProvider:"openrouter"}));assert.equal(fallback.statusCode,200);assert.equal(backups,1);assert.equal(google,1);assert.equal(JSON.parse(fallback.body).provider,"groq");
 });
-test("short conversational follow-ups use bounded output and low reasoning, while complex work keeps its larger budget",async t=>{
+test("explicit medium reasoning stays medium, while acknowledgements and trivial turns remain fast",async t=>{
  setup(t);const router=require("../netlify/functions/aksara-provider-router");let payload;
  global.fetch=async(_url,opts)=>{payload=JSON.parse(opts.body);return reply("Contoh mudah.");};
- await router.complete({system:"persona",history:[],question:"Bagi contoh",task:"explain",reasoningLevel:"medium",maxTokens:5600});assert.equal(payload.max_tokens,1500);assert.equal(payload.reasoning_effort,"low");
+ await router.complete({system:"persona",history:[],question:"Bagi contoh",task:"explain",reasoningLevel:"medium",maxTokens:5600});assert.equal(payload.max_tokens,5600);assert.equal(payload.reasoning_effort,"medium");
+ await router.complete({system:"persona",history:[],question:"Menarik",task:"conversation",reaction:true,reasoningLevel:"medium",maxTokens:5600});assert.equal(payload.max_tokens,500);assert.equal(payload.reasoning_effort,"low");
  await router.complete({system:"persona",history:[],question:"Analisis kod",task:"technical",reasoningLevel:"high",maxTokens:6000});assert.equal(payload.max_tokens,6000);assert.equal(payload.reasoning_effort,"high");
 });
 test("loaded project facts answer immediately in the browser without a network call, while attachments still reach the server",async()=>{
@@ -656,7 +657,7 @@ test("cognitive router sends genuine high and medium effort to Groq while greeti
  const cases=[
   ["Benarkah semua hujah tentang teknologi sah apabila hanya disokong pendapat peribadi? Kritikan secara mendalam.", "high","UJI HUJAH"],
   ["Kenapa manusia mencari makna hidup?", "medium","PEMIKIRAN FALSAFAH"],
-  ["Woi", "low","KECERDASAN PRAKTIKAL"]
+  ["Woi", "low","KECERDASAN RINGKAS"]
  ];
  for(const [question,effort,protocol] of cases){
   const r=await handler(event({question,preferredProvider:"groq"}));
@@ -665,7 +666,7 @@ test("cognitive router sends genuine high and medium effort to Groq while greeti
   assert.equal(body.reasoning_effort,effort,question);
   const prompts=body.messages.filter(x=>x.role==="system").map(x=>x.content).join("\n");
   assert.match(prompts,new RegExp(protocol),question);
-  assert.match(prompts,/KALIBRASI BUKTI/);
+  if(effort!=="low")assert.match(prompts,/KALIBRASI BUKTI/);
   assert.equal(body.include_reasoning,false,"No hidden reasoning should be shown to users");
  }
 });
