@@ -107,6 +107,11 @@ async function audit(browser,label,options){
   await options.nth(1).click();
   assert.equal(await dialog.isVisible(),false,"Selecting Gelap must close dialog");
   assert.equal(await thought.getAttribute("data-mode"),"gelap");
+  const darkOutput=await page.evaluate(()=>({
+   current:window.BilikAntaraThought.getMode(),
+   text:window.BilikAntaraChatStyle.reply("Satu hujah. 🙂✨",{mode:window.BilikAntaraThought.getMode()})
+  }));
+  assert.deepEqual(darkOutput,{current:"gelap",text:"Satu hujah."},"GELAP output must never append CAHAYA emojis");
   await thought.click();
   assert.equal(await options.nth(1).getAttribute("aria-pressed"),"true");
   await page.keyboard.press("Escape");
@@ -115,6 +120,8 @@ async function audit(browser,label,options){
   await thought.click();
   await options.first().click();
   assert.equal(await thought.getAttribute("data-mode"),"cahaya");
+  const lightOutput=await page.evaluate(()=>window.BilikAntaraChatStyle.reply("Aku Aksara.",{mode:window.BilikAntaraThought.getMode()}));
+  assert.equal((lightOutput.match(/[🙂✨]/gu)||[]).length,2,"CAHAYA retains the original two emojis");
   if(label!=="desktop"){
    const composer=await page.locator(".composer").boundingBox();
    const viewport=page.viewportSize();
