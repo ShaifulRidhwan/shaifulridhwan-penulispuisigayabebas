@@ -239,7 +239,7 @@ function renderSessions(){
 }
 function renderMemory(){
  paragraph("Memori pilihan pengguna ialah nota berasingan daripada sejarah sesi.");
- paragraph("Memori ini berbeza daripada sejarah sesi. Nota yang kau tulis dan aktifkan dihantar sebagai konteks kepada Gemini. Nota pilihan hanya dihantar ke penyedia sandaran apabila kau benarkan melalui Privasi & sesi. Nota kekal di peranti sehingga kau padam.");
+ paragraph("Memori pilihan bukan sejarah sesi automatik. Nota ringkas dihantar penuh; nota panjang ditapis secara setempat mengikut topik soalan (maksimum 2,800 aksara setiap permintaan). Petikan itu dihantar kepada Gemini, atau sandaran hanya jika kau benarkan dalam Privasi & sesi.");
  const toggle=make("input");toggle.type="checkbox";toggle.checked=!!memory.enabled;
  const label=make("label"," Aktifkan memori");label.prepend(toggle);content.appendChild(label);
  const field=make("textarea");field.className="ba-editor";field.rows=8;field.maxLength=8000;
@@ -247,12 +247,24 @@ function renderMemory(){
  field.placeholder="Contoh: Aku suka Bahasa Melayu santai, jawapan ringkas, dan sedang membina laman web…";
  content.appendChild(field);
  controlRow(button("Simpan memori",()=>{
-  memory={enabled:toggle.checked,text:field.value.trim().slice(0,8000)};
-  write(KEYS.memory,memory);notice("Pilihan memori disimpan pada peranti.");render();
+  const updated={enabled:toggle.checked,text:field.value.trim().slice(0,8000)};
+  if(!write(KEYS.memory,updated))return;
+  memory=updated;notice("Pilihan memori disimpan pada peranti.");render();
  }),button("Padam memori",()=>{
   if(!confirm("Padam semua memori pilihan di peranti ini?"))return;
-  memory={enabled:false,text:""};write(KEYS.memory,memory); // Preserve deliberate opt-out without keeping deleted note text.
-  notice("Memori pilihan dipadam.");render();
+  const disabled={enabled:false,text:""};
+  if(!write(KEYS.memory,disabled)){notice("Tak dapat padam memori tersimpan. Semak storan pelayar.");return;}
+  memory=disabled;notice("Memori pilihan dipadam.");render();
+ }));
+ controlRow(button("Pratonton memori aktif",()=>{
+  const question=$("input")?.value||"";
+  const selected=memory.enabled&&typeof memory.text==="string"?
+   window.AksaraSessionUtils?.selectMemory(memory.text,question)||"":"";
+  const old=content.querySelector("#ba-memory-preview");if(old)old.remove();
+  const preview=make("textarea");preview.id="ba-memory-preview";preview.className="ba-editor";
+  preview.readOnly=true;preview.rows=5;preview.value=selected||"Tiada nota relevan atau memori belum diaktifkan.";
+  preview.setAttribute("aria-label","Petikan memori yang akan dihantar untuk soalan dalam chatbox");
+  content.appendChild(preview);
  }));
  paragraph("Elakkan memasukkan kata laluan, maklumat kesihatan atau butiran sulit. Tetapan ini khusus untuk pelayar/peranti yang sedang digunakan.");
 }
@@ -397,7 +409,7 @@ window.addEventListener("ba:request-failed",event=>{
  persistMetrics();if(currentPanel==="metrics")render();
 });
 window.BilikAntaraSuite={
- memoryForPrompt:()=>memory.enabled&&typeof memory.text==="string"?memory.text.slice(0,8000):"",
+ memoryForPrompt:question=>memory.enabled&&typeof memory.text==="string"?window.AksaraSessionUtils?.selectMemory(memory.text,question)||"":"",
  open,
  getLocalStats:()=>({...metrics})
 };
