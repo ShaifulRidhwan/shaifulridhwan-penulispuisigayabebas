@@ -1,0 +1,43 @@
+name: Aksara Platform Tests
+
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/**'
+      - 'bilik-antara*.js'
+      - 'bilik-antara.html'
+      - 'tests/aksara-*.test.cjs'
+      - 'package*.json'
+      - '.github/workflows/aksara-platform-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'netlify/functions/**'
+      - 'bilik-antara*.js'
+      - 'bilik-antara.html'
+      - 'tests/aksara-*.test.cjs'
+      - 'package*.json'
+      - '.github/workflows/aksara-platform-check.yml'
+
+jobs:
+  aksara:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Test Aksara platform and free router fallbacks
+        run: npm run test:aksara-platform
+      - name: Verify Requesty is gone from application code
+        run: |
+          if git grep -ni requesty -- netlify/functions bilik-antara.html bilik-antara-identity.js bilik-antara-brain.js bilik-antara-voice.js; then
+            echo "Retired provider code still exists."
+            exit 1
+          fi

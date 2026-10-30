@@ -121,7 +121,6 @@
          <label class="settings-row"><input type="checkbox" id="rememberChat"><span>Simpan sesi pada peranti ini</span></label>
          <label class="settings-row"><input type="checkbox" id="contextFallback"><span>Benarkan penyedia sandaran memproses memori pilihan dan fail teks yang aku lampirkan.</span></label>
          <label class="settings-row"><input type="checkbox" id="allowOpenRouterImages"><span>Benarkan OpenRouter memproses imej jika Gemini tidak tersedia (pilihan).</span></label>
-         <label class="settings-row"><input type="checkbox" id="allowRequesty" disabled><span>Benarkan Requesty memproses mesej dan sejarah sembang teks sebagai sandaran jika tersedia. Model terpilih mungkin menyimpan data untuk latihan. Jangan gunakan untuk maklumat peribadi atau sulit. Nota memori, lampiran, topik sensitif dan carian tidak dihantar ke Requesty.</span></label>
          <div class="settings-actions"><button class="outline-btn" id="clearChat" type="button">Padam perbualan</button></div>
          <div class="settings-actions voice-text-access"><button type="button" id="voiceDictate" class="voice-action" aria-pressed="false" title="Tukar suara kepada teks">Cakap jadi teks</button></div>
          <details id="ideaLedger"><summary>Nota idea</summary><ul id="thoughtItems"></ul><button class="outline-btn" id="forgetIdeas" type="button">Kosongkan nota idea</button></details>
@@ -269,7 +268,7 @@ const ui={
  input:el("input"),send:el("sendBtn"),stop:el("stopBtn"),contextFallback:el("contextFallback"),upload:el("documentUpload"),
  docStatus:el("docStatus"),remove:el("removeAttachment"),settings:el("settingsPanel"),
  remember:el("rememberChat"),clear:el("clearChat"),notes:el("thoughtItems"),forget:el("forgetIdeas"),
- mediaFallback:el("allowOpenRouterImages"),requestyConsent:el("allowRequesty")
+ mediaFallback:el("allowOpenRouterImages")
 };
 // Stable mobile viewport: browser toolbar changes must not relayout a glass-heavy chat
 // on every animation frame. Only keyboard focus or orientation changes can resize it.
@@ -439,7 +438,7 @@ ui.retry.addEventListener("click",()=>{
  if(busy)return;
  if(ui.input.value.trim()||fileState)submit({preventDefault(){}});else probe();
 });
-const providers=[["gemini","Google Gemini"],["groq","Groq"],["openrouter","OpenRouter"],["orcarouter","OrcaRouter"],["requesty","Requesty"]];
+const providers=[["gemini","Google Gemini"],["groq","Groq"],["openrouter","OpenRouter"],["orcarouter","OrcaRouter"]];
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
 let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0,lastOrcaModel="",lastOrcaAt=0;
 function shortOpenRouterName(model){
@@ -455,7 +454,7 @@ function renderProviderRows(rows,catalog=null){
  for(const [id,name] of providers){
   const item=(rows||[]).find(x=>x.id===id);
   const state=item?.status||"checking";
-  const expandable=id==="openrouter"||id==="orcarouter"||id==="requesty";
+  const expandable=id==="openrouter"||id==="orcarouter";
   const line=elem(expandable?"summary":"div","multi-ai-row"+(expandable?" multi-ai-expand-trigger":""));
   const nameText=elem("span","multi-ai-provider",name);
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
@@ -472,8 +471,8 @@ function renderProviderRows(rows,catalog=null){
   const modelList=elem("div","multi-ai-model-list");
   // Public free-tier listing from OrcaRouter (2026-10-30); not an authenticated workspace probe.
   const orcaFreeModels=[{id:"deepseek/deepseek-v4-flash-free",name:"DeepSeek V4 Flash Free"}];
-  const models=id==="orcarouter"?(state==="off"?[]:orcaFreeModels):id==="requesty"?(Array.isArray(item?.models)?item.models.map(x=>({id:x,name:String(x).split("/").pop()})):[]):catalog?.models;
-  const shownModels=id==="orcarouter"?{models,status:"public_listing"}:id==="requesty"?{models,status:item?.status}:catalog;
+  const models=id==="orcarouter"?(state==="off"?[]:orcaFreeModels):catalog?.models;
+  const shownModels=id==="orcarouter"?{models,status:"public_listing"}:catalog;
   // Catalog membership does not prove individual models are online.
   if(Array.isArray(models)&&models.length){
    for(const model of models){
@@ -492,7 +491,7 @@ function renderProviderRows(rows,catalog=null){
    
    if(shownModels?.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Showing a saved list; the latest list is unavailable."));
   }else{
-   const message=id==="orcarouter"?(state==="off"?"Not active":"Free model list unavailable."):id==="requesty"?(state==="off"?"Not active":state==="checking"?"Checking models…":"No confirmed models yet."):
+   const message=id==="orcarouter"?(state==="off"?"Not active":"Free model list unavailable."):
     !catalog?"Loading models…":catalog.status==="unavailable"?"Model list unavailable.":"No models listed yet.";
    modelList.appendChild(elem("p","multi-ai-model-note",message));
   }
@@ -512,10 +511,6 @@ async function checkProviders(force=false){
   if(!res.ok)throw Error("Semakan penyedia tidak tersedia");
   const data=await res.json();if(!Array.isArray(data.providers))throw Error("Status tidak lengkap");
   multiCatalog=data.freeModels||null;
-  const requesty=data.providers.find(p=>p.id==="requesty");
-  const requestyReady=["ready","online"].includes(requesty?.status);
-  ui.requestyConsent.disabled=!requestyReady;
-  if(!requestyReady)ui.requestyConsent.checked=false;
   renderProviderRows(data.providers,multiCatalog);multiLastCheck=Date.now();
   const preferred=data.providers.find(p=>p.id===data.preferredProvider&&["online","ready"].includes(p.status))||data.providers.find(p=>p.status==="online");
   // Preserve a recent real answer; the fastest tiny probe is not a speed benchmark.
@@ -527,7 +522,7 @@ async function checkProviders(force=false){
    else if(data.someReady)status("configured","Multi A.I Connected","");
    else status("error","Multi A.I tengah offline","");
   }
- }catch(_){ui.requestyConsent.disabled=true;ui.requestyConsent.checked=false;
+ }catch(_){
   renderProviderRows([],multiCatalog?{...multiCatalog,status:"stale"}:null);
   if(!busy&&connectionRevision===revision)status("error","Connection belum confirm","");
  }
@@ -617,6 +612,12 @@ function addMessage(role,text,data){
  msg.appendChild(bubble);renderMessageMeta(msg,role,data);ui.chat.appendChild(msg);scrollDown();return msg;
 }
 function renderExtras(bubble,data){
+ if(data?.studioHint===true){
+  const area=elem("div","msg-sources");
+  area.appendChild(elem("span","section-label","Jana gambar di Studio Antara"));
+  link(area,"Buka Studio Antara","https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html");
+  bubble.appendChild(area);
+ }
  const sources=Array.isArray(data.sources)?data.sources.slice(0,8):[];
  if(sources.length){
   const area=elem("div","msg-sources");area.appendChild(elem("span","section-label","Sumber semakan"));
@@ -842,7 +843,7 @@ ui.forget.addEventListener("click",()=>{ideas=[];renderIdeas();save();});
 ui.clear.addEventListener("click",()=>{
  if(busy)return;
  if(history.length&&!window.confirm("Padam perbualan dan nota idea sesi ini?"))return;
- conversationEpoch++;history=[];summary="";ideas=[];summarizedThrough=0;ui.remember.checked=false;ui.mediaFallback.checked=false;ui.requestyConsent.checked=false;
+ conversationEpoch++;history=[];summary="";ideas=[];summarizedThrough=0;ui.remember.checked=false;ui.mediaFallback.checked=false;
  try{localStorage.removeItem(STORAGE);}catch(e){}
  discardFile();renderIdeas();renderHistory();ui.settings.open=false;
  window.dispatchEvent(new Event("ba:cleared"));
@@ -1023,7 +1024,7 @@ async function submit(event){
  }
  try{
   const payload={question,thoughtMode:requestMode,preferredProvider:Date.now()-lastProviderAt<90000?lastProvider:"",history:contextHistory(),contextFallback:ui.contextFallback.checked,
-   summary,thoughtLedger:ideas.slice(-8),mediaFallback:ui.mediaFallback.checked,requestyConsent:ui.requestyConsent.checked,
+   summary,thoughtLedger:ideas.slice(-8),mediaFallback:ui.mediaFallback.checked,
    documentText:selectedFile&&selectedFile.text||"",
    documentName:selectedFile&&selectedFile.name||"",
    media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt()||""};
@@ -1047,13 +1048,13 @@ async function submit(event){
   addMessage("assistant",data.reply,{...data,timestamp:receivedAt,locationLabel:sentLocation});
   history.push({role:"user",timestamp:sentAt,locationLabel:sentLocation,content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
   history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,thoughtMode:requestMode,sources:data.sources||[],
-   argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
+   studioHint:data.studioHint===true,argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
    publicAccount:data.publicAccount||null});
   
   addIdeas(data.thoughtLedger);save();
   if(selectedFile&&selectedFile===fileState)ui.docStatus.textContent="Fail ni masih ada kalau kau nak tanya lagi · "+selectedFile.name;
-  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
-  const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge";
+  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
+  const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio";
   status(localAnswer?"configured":"online",localAnswer?"Jawapan tersedia Aksara":"Multi A.I Connected","");
   if(!localAnswer){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
   if(data.provider==="openrouter"&&typeof data.model==="string"){lastOpenRouterModel=data.model;lastOpenRouterAt=Date.now();}

@@ -6,23 +6,26 @@
  * Groq requires explicit confirmation of an account's free tier.
  */
 const {boundedHistory,boundedText,requestControl,readSSE}=require("./lib/aksara-transport");
-const Requesty=require("./aksara-requesty");
 const Registry=require("./aksara-model-registry");
 const cooldown=new Map();
 let preferredProvider=""; // Best recent successful fallback within the current warm function instance.
 let recentOpenRouter={model:"",at:0}; // Real replies only, never synthetic status.
 let recentOrcaRouter={model:"",at:0}; // Only a real answer can establish Connected.
-let recentRequesty={model:"",at:0};
-// Task categories are routing preferences, not unverified claims about model quality.
-const TASK_PRIORITY={
- technical:["groq","openrouter","requesty"],
- critique:["groq","openrouter","requesty"],
- hypothetical:["groq","openrouter","requesty"],
- creative:["groq","openrouter","requesty"],
- conversation:["groq","openrouter","requesty"],
- explain:["groq","openrouter","requesty"],
- general:["groq","openrouter","requesty"]
-};
+// Task-specific, bounded instructions for free routers. This cannot unlock
+// unavailable upstream models, bypass quotas or guarantee answer quality.
+const FREE_QUALITY=Object.freeze({
+ technical:"Bezakan simptom daripada punca; berikan langkah atau kod yang boleh diuji tanpa mereka hasil ujian.",
+ critique:"Uji premis, bukti dan bantahan kukuh; jangan bersetuju automatik.",
+ hypothetical:"Terangkan andaian dan had kesimpulan; jangan bentang spekulasi sebagai fakta.",
+ creative:"Utamakan bentuk, gaya dan tujuan karya diminta; elakkan klise.",
+ explain:"Terangkan tepat dengan contoh relevan, tanpa meleret.",
+ conversation:"Kekal santai dan sambung konteks pengguna secara semula jadi."
+});
+function freeQuality(task,level){
+ const taskNote=FREE_QUALITY[task]||"Jawab tepat, akui ketidakpastian dan jangan reka sumber.";
+ const high=level==="high"?" Semak konsistensi dan alasan penting sebelum memberi jawapan. Jangan dedahkan penaakulan dalaman.":"";
+ return "\nKUALITI PENGHALA PERCUMA: "+taskNote+high;
+}
 function rankProviders(available,task,prefer="",qualityFirst=false){
  return Registry.select(available,{task,thinking:qualityFirst?"high":"low",prefer,last:preferredProvider});
 }
@@ -32,8 +35,6 @@ const PROVIDERS=[
   url:"https://api.groq.com/openai/v1/chat/completions",model:"openai/gpt-oss-120b"},
  {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
   url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"},
- {id:"requesty",key:"REQUESTY_API_KEY",allow:null,
-  url:Requesty.API+"/chat/completions",model:null},
  // Second-layer only: fixed zero-cost free router, never the paid auto router.
  {id:"orcarouter",key:"ORCAROUTER_API_KEY",allow:null,
   url:"https://api.orcarouter.ai/v1/chat/completions",model:"orcarouter/free"}
@@ -65,7 +66,7 @@ function orcaConfig(){
 }
 function configured(){
  if(!envEnabled("AKSARA_FREE_FALLBACKS"))return [];
- return PROVIDERS.filter(p=>p.id==="requesty"?Requesty.configured():p.id==="orcarouter"?orcaConfig().active:process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
+ return PROVIDERS.filter(p=>p.id==="orcarouter"?orcaConfig().active:process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
 }
 function enabled(){return configured().length>0;}
 function quotaKind(message){
@@ -96,7 +97,7 @@ function blockedClassifierPrefix(text){
 function errorToCooldown(status){
  return status===429?60000:status>=500||status===408?20000:status===401||status===403||status===404?300000:15000;
 }
-async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix="",mediaImages=[],allowRequesty=false,requestyQuestion=""}){
+async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix="",mediaImages=[]}){
  const images=Array.isArray(mediaImages)?mediaImages.slice(0,3).filter(x=>
    x&&["image/jpeg","image/png","image/webp"].includes(x.mimeType)&&
    typeof x.data==="string"&&x.data.length<=4800000&&/^[A-Za-z0-9+/]+={0,2}$/.test(x.data)):[];
@@ -114,7 +115,6 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
  // Prefer the provider that recently completed a real answer. Preserve default order otherwise.
  const ordered=rankProviders(available.filter(p=>p.id!=="orcarouter"),task,prefer,reasoningLevel==="high").filter(p=>
   (!images.length||p.id==="openrouter")&&
-  (p.id!=="requesty"||allowRequesty===true)&&
   (!Array.isArray(only)||only.includes(p.id)));
  // OrcaRouter is deliberately the LAST attempt, never the primary model.
  // The existing image consent only authorizes OpenRouter, not OrcaRouter.
@@ -127,7 +127,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   // All selected models are reviewed chat models. Stream their visible text
   // through the same classifier-prefix guard; JSON clients get a full-answer budget.
   const attemptBudget=(provider.id==="openrouter"||provider.id==="orcarouter")?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,reasoningLevel==="high"?12000:8500):
-   provider.id==="requesty"?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,9000):(!onDelta?bufferedTimeoutMs:timeoutMs);
+   (!onDelta?bufferedTimeoutMs:timeoutMs);
   // When earlier providers time out, reserve a small first-response window for
   // layer two. Otherwise Groq+OpenRouter could consume all 14s and Orca would
   // never get a chance, despite being correctly configured.
@@ -138,33 +138,25 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   const control=requestControl(Math.min(attemptBudget,Math.max(500,remaining-orcaReserve)),signal);
   let emitted=false;
   try{
-   // Verify free-tier pricing every five minutes before any Requesty inference.
-   // Never choose a paid or unknown-price model from a gateway fallback policy.
-   const selectedRequestyModel=provider.id==="requesty"?await Requesty.modelFor(task,control.signal):null;
-   if(provider.id==="requesty"&&!selectedRequestyModel){
-     throw Object.assign(new Error("No verified free Requesty model"),{status:503,reason:"free_model_unavailable"});
-   }
    const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
-   if(provider.id==="requesty"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    if(provider.id==="orcarouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    // Preserve medium reasoning for concept and follow-up questions. Only genuine
    // low-effort turns should be reduced to the fastest GPT-OSS setting.
    const simple=!!reaction||(["conversation","general","explain"].includes(task)&&reasoningLevel==="low");
-   const outputLimit=Math.min(reaction?500:simple?1500:6000,Math.max(400,maxTokens));
+   const outputLimit=Math.min(reaction?500:simple?1500:6000,Math.max(400,maxTokens,reasoningLevel==="high"&&["technical","critique","hypothetical"].includes(task)?2200:0));
    // Keep the complete intentional personality in an identical first message.
    // Per-turn guidance has its own system message, allowing whole-message
    // prefix caching without rewriting or shortening that personality.
    const prefix=safeMessage(systemPrefix);
-   let providerMessages=provider.id==="requesty"?[
-    messages[0],
-    ...boundedHistory(history,14000),
-    {role:"user",content:boundedText(requestyQuestion||question,30000)}
-   ]:provider.id==="groq"&&prefix&&String(system).startsWith(prefix)?[
+   let providerMessages=provider.id==="groq"&&prefix&&String(system).startsWith(prefix)?[
     {role:"system",content:prefix},
     {role:"system",content:String(system).slice(prefix.length)+"\nSANDARAN TEKS: Tiada alat carian, URL atau pelaksanaan kod aktif. Jangan reka sumber atau mengaku alat yang tiada digunakan. Identiti kekal Aksara. Shaiful bukan pencipta genre puisi gaya bebas."},
     ...messages.slice(1)
    ]:messages;
+   if(provider.id==="openrouter"||provider.id==="orcarouter"){
+    providerMessages=[{...providerMessages[0],content:providerMessages[0].content+freeQuality(task,reasoningLevel)},...providerMessages.slice(1)];
+   }
    if(provider.id==="orcarouter"){
     // Preserve full shared Aksara instructions and context, with a short
     // mode/language reminder for the heterogeneous free-model router.
@@ -172,10 +164,9 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
      "\nLAPISAN ORCA FREE: Kekalkan watak Aksara A.I. dan mod CAHAYA/GELAP yang sudah ditetapkan. Bahasa Melayu Malaysia santai, kata ganti aku. Sambung sejarah perbualan yang diberikan tanpa mencipta memori. Jangan mengaku ada akses carian web atau alat yang tidak dibekalkan; jangan tampilkan penaakulan dalaman atau metadata penyedia."},
      ...providerMessages.slice(1)];
    }
-   const body={model:selectedRequestyModel||provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
+   const body={model:provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
    // Keep OrcaRouter payload on the widely compatible OpenAI core fields.
    if(provider.id==="orcarouter"){body.model="orcarouter/free";delete body.temperature;}
-   if(provider.id==="requesty")delete body.temperature; // Heterogeneous free models need only shared OpenAI-compatible core fields.
    if(provider.id==="openrouter")openRouterBody(body,["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"low");
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.
    if(provider.id==="groq"){
@@ -199,7 +190,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    }
    let data;
    if(onDelta&&res.body&&/text\/event-stream/i.test(res.headers?.get("content-type")||"")){
-    let full="",finish="",model=selectedRequestyModel||provider.model,usage=null,started=false,sent=0;
+    let full="",finish="",model=provider.model,usage=null,started=false,sent=0;
     await readSSE(res.body,chunk=>{
      if(chunk.model)model=chunk.model;
      if(classifierModel(model))throw Object.assign(new Error("Classifier is not a chat model"),{status:502});
@@ -229,20 +220,19 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    const reply=data?.choices?.[0]?.message?.content;
    const text=typeof reply==="string"?reply:Array.isArray(reply)?reply.filter(p=>p.type==="text").map(p=>p.text).join(""):"";
    if(!text.trim())throw Object.assign(new Error("Empty response"),{reason:"empty_output",finishReason:data?.choices?.[0]?.finish_reason||"",outputTokens:data?.usage?.completion_tokens});
-   validateChatReply(text,data.model||selectedRequestyModel||provider.model);
+   validateChatReply(text,data.model||provider.model);
    if(onDelta&&!emitted){emitted=true;onDelta(text);}
    cooldown.delete(provider.id);preferredProvider=provider.id;
    Registry.observe(provider.id,{ok:true,latencyMs:Date.now()-attemptStarted});
    if(provider.id==="openrouter")recentOpenRouter={model:data.model||provider.model,at:Date.now()};
    if(provider.id==="orcarouter")recentOrcaRouter={model:data.model||provider.model,at:Date.now()};
-   if(provider.id==="requesty")recentRequesty={model:selectedRequestyModel,at:Date.now()};
    // A real answer is stronger evidence than a cached synthetic health probe.
    if(healthCache.value){
-    healthCache.value=healthCache.value.map(x=>x.id===provider.id?{...x,status:"online",model:data.model||selectedRequestyModel||provider.model,latencyMs:Date.now()-attemptStarted,retryAfterSeconds:0}:x);
+    healthCache.value=healthCache.value.map(x=>x.id===provider.id?{...x,status:"online",model:data.model||provider.model,latencyMs:Date.now()-attemptStarted,retryAfterSeconds:0}:x);
     healthCache.time=Date.now();
    }
    const finishReason=String(data?.choices?.[0]?.finish_reason||"");
-   return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||selectedRequestyModel||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task,attempts,elapsedMs:Date.now()-attemptStarted};
+   return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task,attempts,elapsedMs:Date.now()-attemptStarted};
   }catch(err){
    if(signal?.aborted)throw err;
    if(emitted){
@@ -265,7 +255,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
 async function crossReview({question,reply,originalProvider,task="general",timeoutMs=3500}){
  if(process.env.AKSARA_CROSS_REVIEW!=="true"||!["technical","explain","critique"].includes(task))return null;
  if(!question||!reply||question.length>2500||reply.length>5000)return null;
- const reviewer=configured().find(p=>p.id!==originalProvider&&p.id!=="requesty"&&p.id!=="orcarouter"&&Date.now()>=(cooldown.get(p.id)||0));
+ const reviewer=configured().find(p=>p.id!==originalProvider&&p.id!=="orcarouter"&&Date.now()>=(cooldown.get(p.id)||0));
  if(!reviewer)return null;
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),timeoutMs);
  try{
@@ -348,14 +338,6 @@ async function checkStatus(){
      // No inference probe. Connected requires a genuine recent chat reply.
      if(Date.now()-recentOrcaRouter.at<90000)return {id:provider.id,status:"online",model:recentOrcaRouter.model,reason:"recent_reply"};
      return {id:provider.id,status:"ready",reason:"configured_not_probed"};
-    }
-    if(provider.id==="requesty"){
-     if(Date.now()-recentRequesty.at<90000){
-      const models=await Requesty.freeModels({signal:ctrl.signal});
-      return {id:provider.id,status:"online",model:recentRequesty.model,models,reason:"recent_reply"};
-     }
-     const models=await Requesty.freeModels({signal:ctrl.signal});
-     return {id:provider.id,status:models.length?"ready":"offline",reason:models.length?"catalog_verified":"free_model_unavailable",modelCount:models.length,models};
     }
     if(provider.id==="openrouter"){
      if(Date.now()-recentOpenRouter.at<90000)return {id:provider.id,status:"online",model:recentOpenRouter.model,reason:"recent_reply"};
