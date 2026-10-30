@@ -35,7 +35,7 @@ metrics={...blankMetrics(),...metrics,byProvider:metrics.byProvider&&typeof metr
  durations:Array.isArray(metrics.durations)?metrics.durations.slice(-50):[],
  elapsed:Array.isArray(metrics.elapsed)?metrics.elapsed.slice(-120):[]};
 const persistMetrics=()=>{if(api.remember())write(KEYS.metrics,metrics);};
-let currentPanel="";
+let currentPanel="",sessionSearchTerm="";
 const convo=document.querySelector(".conversation");
 if(!convo)return;
 const drawer=make("aside",undefined,"ba-drawer");
@@ -93,6 +93,8 @@ function snapshotCurrent(){
 window.addEventListener("ba:saved",snapshotCurrent);
 window.addEventListener("ba:cleared",()=>{
  archive=archive.filter(x=>x.id!==activeId);
+ activeId=freshId(); // Deleted conversation never reuses the deleted archive identity.
+ try{sessionStorage.setItem(PREFIX+"-active",activeId);}catch(_){}
  // Clear explicitly deleted this entry even though the native UI has unchecked persistence.
  if(archive.length)write(KEYS.archive,archive);
  else try{localStorage.removeItem(KEYS.archive);}catch(_){}
@@ -158,7 +160,7 @@ function renderSessions(){
   paragraph("Penyimpanan perbualan dimatikan. Hidupkannya melalui Privasi & sesi. Memori pilihan masih boleh diurus di bawah.");
   return;
  }
- const search=make("input");search.type="search";search.placeholder="Cari sejarah perbualan…";search.className="ba-input";
+ const search=make("input");search.type="search";search.placeholder="Cari sejarah perbualan…";search.className="ba-input";search.value=sessionSearchTerm;
  content.appendChild(search);
  const results=make("div",undefined,"ba-list");content.appendChild(results);
  // Precompute searchable text once per render to avoid rejoining whole archives on each keystroke.
@@ -208,7 +210,7 @@ function renderSessions(){
    row.append(summary,date,controls);results.appendChild(row);
   }
  }
- search.addEventListener("input",draw);draw();
+ search.addEventListener("input",()=>{sessionSearchTerm=search.value;draw();});draw();
  const input=make("input");input.type="file";input.accept=".json,application/json";input.hidden=true;
  input.addEventListener("change",async()=>{
   const file=input.files&&input.files[0];if(!file)return;
@@ -233,7 +235,7 @@ function renderSessions(){
   button("Import arkib JSON",()=>input.click()),
   button("Padam semua sejarah",()=>{
    if(!confirm("Padam SEMUA sejarah termasuk sesi yang sedang dibuka pada peranti ini?"))return;
-   if(clearAllArchive())render();
+   if(clearAllArchive()){sessionSearchTerm="";render();}
   })
  );
 }
