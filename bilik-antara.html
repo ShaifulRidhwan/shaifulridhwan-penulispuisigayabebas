@@ -52,38 +52,7 @@
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="bilik-antara-bg-desktop.webp" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="bilik-antara-bg-mobile.webp" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
-<style>
-/* Mobile-only critical first paint. Full stylesheet follows before interaction. */
-@media(max-width:760px){
-html,body{margin:0;width:100%;min-height:100%;background:#080b13;color:#fff5e6}
-*,*::before,*::after{box-sizing:border-box}
-body{font:400 14px/1.6 'DM Sans',system-ui,sans-serif;overflow-x:hidden}
-[hidden]{display:none!important}
-.shell{position:relative;min-height:100dvh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
-.world-scene{position:absolute;z-index:0;inset:0;overflow:hidden;background:#080b13;pointer-events:none}
-.world-art{position:absolute;inset:-2.5%;background:url("./bilik-antara-bg-mobile.webp") center 48%/cover no-repeat;transform:scale(1.035)}
-.world-scene::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,6,12,.16),rgba(5,7,13,.43) 55%,rgba(3,5,11,.61))}
-.topbar{position:relative;z-index:10;display:flex;align-items:center;justify-content:space-between;flex:none;height:55px;padding:0 10px;background:rgba(8,14,24,.4)}
-.topbar a{color:inherit;text-decoration:none}
-.nav-actions{display:flex;gap:3px;align-items:center}
-.app-shell{position:relative;z-index:1;display:flex;flex:1 1 auto;min-height:0;padding:0 8px calc(8px + env(safe-area-inset-bottom,0px))}
-.conversation{position:relative;display:flex;flex:1;min-width:0;min-height:0;flex-direction:column;overflow:hidden;border-radius:18px;border:1px solid rgba(236,202,147,.24);background:rgba(10,14,25,.2);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
-.conversation-head{position:relative;z-index:2;flex:none}
-.messages{position:relative;z-index:2;display:flex;flex:1;min-height:0;flex-direction:column;overflow:auto;padding:13px 12px}
-.starters{position:relative;z-index:2;display:flex;flex-wrap:wrap;gap:6px;padding:4px 9px 8px}
-.composer-area{position:relative;z-index:2;flex:none;padding:8px 9px 10px}
-}
-</style>
-<link rel="stylesheet" href="bilik-antara.css?v=80" id="bilikFullStyles" media="(min-width:761px)">
-<script>
-/* Mobile: fetch full stylesheet without blocking the first paint.
-   Desktop keeps its normal parser-discovered blocking stylesheet. */
-if(matchMedia('(max-width:760px)').matches){
- const full=document.getElementById('bilikFullStyles');
- full.media='print';
- full.onload=()=>{full.media='all'};
-}
-</script>
+<link rel="stylesheet" href="bilik-antara.css?v=79">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
