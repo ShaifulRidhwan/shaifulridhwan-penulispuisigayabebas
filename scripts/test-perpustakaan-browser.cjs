@@ -24,9 +24,7 @@ async function run(){
    assert.equal(await page.locator("#books .book").count(),1,"Melayu filter");
    assert.equal(await page.locator('[data-language="ms"]').getAttribute("aria-pressed"),"true");
    await page.locator('[data-language="all"]').click();
-   await page.locator('#search').fill("Kafka");
-   assert.equal(await page.locator("#books .book").count(),3,"Kafka search");
-   await page.locator('#search').fill("");
+   assert.equal(await page.locator("#search").count(),0,"No search field for small catalog");
    await page.screenshot({path:path.join(screenshots,"karya-"+viewport.name+".png"),fullPage:viewport.name==="desktop"});
    assert.deepEqual(errors,[],viewport.name+": JavaScript exceptions");
    await page.close();
