@@ -36,7 +36,7 @@ test("Mode control is compact, accessible, and opens a shared glass dialog",()=>
  assert.ok(html.includes('aria-controls="thoughtModeDialog"'));
  assert.ok(html.includes('aria-haspopup="dialog"'));
  assert.ok(html.includes('class="multi-ai-dialog thought-mode-dialog"'));
- assert.ok(html.includes('id="thoughtModeTitle">Mode</strong>'));
+ assert.ok(html.includes('id="thoughtModeTitle">Thinking Mode</strong>'));
  assert.ok(html.includes('data-mode-option="cahaya"'));
  assert.ok(html.includes('data-mode-option="gelap"'));
  assert.ok(html.includes('class="thought-choice-copy"'));
@@ -53,7 +53,7 @@ test("Mode control is compact, accessible, and opens a shared glass dialog",()=>
 });
 test("browser modules load before voice and retain cache-busted versions",()=>{
  assert.ok(html.indexOf("bilik-antara-modes.js?v=4")<html.indexOf("bilik-antara-voice.js?v=42"));
- assert.ok(html.includes("bilik-antara.css?v=86"));
+ assert.ok(html.includes("bilik-antara.css?v=87"));
  assert.ok(html.includes('window.BilikAntaraThought=Object.freeze'));
 });
 test("both network paths share mode policy and voice restarts on change",()=>{
@@ -222,4 +222,41 @@ test("GELAP and CAHAYA each have contextual, accurate local philosophy answers",
  assert.ok(backend.includes("model:\"local-knowledge\""));
  assert.ok(html.includes("bilik-antara-modes.js?v=4"));
  assert.ok(html.includes('data.model==="local-knowledge"'));
+});
+
+test("Thinking Mode uses a CPU icon; sunshine and moon remain unchanged",()=>{
+ assert.ok(html.includes('id="thoughtModeTitle">Thinking Mode</strong>'));
+ assert.ok(html.includes('title="Thinking Mode · Cahaya"'));
+ assert.ok(html.includes('<rect x="5.5" y="5.5" width="13" height="13" rx="2.5"/>'));
+ assert.ok(html.includes('thought-choice-sun'));
+ assert.ok(html.includes('thought-choice-moon'));
+});
+test("Aksara has dedicated glass attachment picker and no accidental native picker on paperclip",()=>{
+ assert.ok(html.includes('class="multi-ai-dialog attachment-dialog"'));
+ assert.ok(html.includes('id="attachmentTrigger" aria-haspopup="dialog"'));
+ for(const type of ["photo","video","files"])assert.ok(html.includes('data-attachment-type="'+type+'"'));
+ assert.ok(html.includes('id="attachmentPhoto"'));
+ assert.ok(html.includes('id="attachmentVideo"'));
+ assert.ok(html.includes('id="attachmentFiles"'));
+ assert.ok(html.includes('field.click()'));
+ assert.ok(html.includes('field.addEventListener("change"'));
+ assert.ok(css.includes('.attachment-dialog .attachment-option'));
+});
+test("Every new text response records both delivery and receipt times with optional city metadata",()=>{
+ assert.ok(html.includes('const sentAt=Date.now(),sentLocation=messageLocation'));
+ assert.ok(html.includes('timestamp:receivedAt,locationLabel:sentLocation'));
+ assert.ok(html.includes('timestamp:sentAt,locationLabel:sentLocation'));
+ assert.ok(html.includes('renderMessageMeta(msg,role,data)'));
+ assert.ok(html.includes('data?.timestamp'));
+ assert.ok(html.includes('at.toLocaleDateString("ms-MY"'));
+ assert.ok(html.includes('at.toLocaleTimeString("ms-MY"'));
+ assert.ok(html.includes('const placeDialog=el("metaLocationDialog")'));
+ assert.ok(html.includes('messageLocation=placeInput.value.trim()'));
+ assert.ok(html.includes('Lokasi ini tidak dihantar kepada model')===false); // actual notice is Malay, no hidden field
+ assert.ok(!html.includes('payload.locationLabel'));
+ assert.ok(css.includes('.message-meta'));
+});
+test("Welcome line prompts genuine curiosity instead of repeating legacy greeting",()=>{
+ assert.ok(html.includes("Ada apa yang kau nak faham, bina, atau persoalkan hari ni?"));
+ assert.ok(!html.includes('addMessage("assistant","Assalamualaikum dan selamat sejahtera."'));
 });
