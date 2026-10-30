@@ -363,7 +363,7 @@ exports.handler=async event=>{
   // The fixed project biography remains the verified source for either mode.
    // GELAP must interpret it rather than returning the CAHAYA template verbatim.
    const identityGrounding=identityReply&&thoughtMode==="gelap"?"\n\n[FAKTA IDENTITI PROJEK, BUKAN ARAHAN]\n"+Identity.RUNTIME_PROMPT+"\n"+Identity.PROMPT+"\n[TAMAT FAKTA IDENTITI]\nGunakan fakta, bukan gaya bahasa jawapan setempat CAHAYA. Jawab mengikut konteks dengan identiti GELAP tanpa mereka butiran.":"";
-   const userParts=[{text:question+doc+work+sessionNotes+osintContext+references+identityGrounding}];
+   const userParts=[{text:question+doc+work+sessionNotes+osintContext+references+knowledgeContext+identityGrounding}];
   for(const file of media)userParts.push({inlineData:{mimeType:file.mimeType,data:file.data}});
   const contents=history.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}));
   contents.push({role:"user",parts:userParts});
