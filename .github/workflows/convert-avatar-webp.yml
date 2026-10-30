@@ -1,0 +1,55 @@
+name: Convert Bilik Antara avatar to WebP
+on:
+  push:
+    branches:
+      - perf/avatar-webp-conversion-20261030
+permissions:
+  contents: write
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install Pillow==11.3.0
+      - name: Convert and update avatar refs
+        run: |
+          python - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          import re
+          source=Path("bilik-antara-chat-portrait.png")
+          out=Path("bilik-antara-chat-portrait.webp")
+          with Image.open(source) as image:
+              image.save(out, "WEBP", quality=82, method=6)
+          if out.stat().st_size >= source.stat().st_size:
+              raise SystemExit("WebP is not smaller than PNG")
+          for path in Path(".").rglob("*"):
+              if not path.is_file() or path.suffix not in {".html",".css",".js"} or ".git" in path.parts or "node_modules" in path.parts:
+                  continue
+              try:
+                  original=path.read_text(encoding="utf-8")
+              except UnicodeError:
+                  continue
+              changed=original.replace("bilik-antara-chat-portrait.png?v=1","bilik-antara-chat-portrait.webp?v=1").replace("bilik-antara-chat-portrait.png","bilik-antara-chat-portrait.webp")
+              if path.name=="bilik-antara.html" and changed!=original:
+                  changed=changed.replace("bilik-antara.css?v=80","bilik-antara.css?v=81")
+              if changed != original:
+                  path.write_text(changed,encoding="utf-8")
+          config=Path("netlify.toml")
+          t=config.read_text()
+          t=t.replace('for = "/bilik-antara-chat-portrait.png"', 'for = "/bilik-antara-chat-portrait.webp"')
+          config.write_text(t)
+          print("PNG:",source.stat().st_size,"WebP:",out.stat().st_size)
+          PY
+      - name: Commit converted asset
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "perf: compress chat portrait as WebP and update references" || exit 0
+          git push
