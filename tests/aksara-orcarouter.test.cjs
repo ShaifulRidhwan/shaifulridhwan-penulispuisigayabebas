@@ -83,7 +83,7 @@ test("OrcaRouter streaming uses standard SSE without exposing reasoning",async()
  }finally{global.fetch=old;}
 });
 
-test("OrcaRouter remains after Groq when a first-layer reply succeeds",async()=>{
+test("Groq preference wins while both text primaries remain eligible",async()=>{
  const oldFetch=global.fetch,oldKey=process.env.GROQ_API_KEY,oldFlag=process.env.GROQ_FREE_CONFIRMED;
  const calls=[];process.env.GROQ_API_KEY="test-not-a-real-key";process.env.GROQ_FREE_CONFIRMED="true";
  global.fetch=async(url)=>{
@@ -92,7 +92,7 @@ test("OrcaRouter remains after Groq when a first-layer reply succeeds",async()=>
    json:async()=>({model:"openai/gpt-oss-120b",choices:[{message:{content:"Jawapan Groq berjaya."},finish_reason:"stop"}]})};
  };
  try{
-  const response=await Router.complete({system:"Aksara",history:[],question:"Tanya sesuatu",deadline:Date.now()+12000});
+  const response=await Router.complete({system:"Aksara",history:[],question:"Tanya sesuatu",prefer:"groq",deadline:Date.now()+12000});
   assert.equal(response.provider,"groq");
   assert.equal(calls.length,1);
   assert.match(calls[0],/api.groq.com/);
@@ -103,7 +103,7 @@ test("OrcaRouter remains after Groq when a first-layer reply succeeds",async()=>
  }
 });
 
-test("OrcaRouter serves only after a failed first-layer provider",async()=>{
+test("OrcaRouter serves after a failed preferred Groq provider",async()=>{
  const oldFetch=global.fetch,oldKey=process.env.GROQ_API_KEY,oldFlag=process.env.GROQ_FREE_CONFIRMED;
  process.env.GROQ_API_KEY="test-not-a-real-key";process.env.GROQ_FREE_CONFIRMED="true";
  const calls=[];
@@ -116,7 +116,7 @@ test("OrcaRouter serves only after a failed first-layer provider",async()=>{
     choices:[{message:{content:"Aku sambung melalui sandaran kedua."},finish_reason:"stop"}]})};
  };
  try{
-  const response=await Router.complete({system:"Aksara",history:[],question:"Tolong sambung",deadline:Date.now()+12000});
+  const response=await Router.complete({system:"Aksara",history:[],question:"Tolong sambung",prefer:"groq",deadline:Date.now()+12000});
   assert.equal(response.provider,"orcarouter");
   assert.deepEqual(calls.map(u=>u.includes("api.groq.com")?"groq":"orcarouter"),["groq","orcarouter"]);
   assert.equal(response.attempts[0].provider,"groq");
