@@ -84,17 +84,43 @@ async function audit(browser,label,options){
   assert.equal(await page.locator("#voiceFallback, #voiceFallbackStart, #voiceFallbackStop").count(),0);
   assert.equal(await page.locator("#voiceDictate").count(),1);
   assert.equal(await page.locator("#sendBtn").count(),1);
-   const thought=page.locator("#thoughtMode");
-   assert.equal(await thought.count(),1,"Thought selector must exist beside Send");
-   assert.equal(await thought.isVisible(),true,label+" thought selector is hidden");
-   assert.equal(await thought.getAttribute("data-mode"),"cahaya");
-   const thoughtBounds=await thought.boundingBox(),sendBounds=await page.locator("#sendBtn").boundingBox();
-   assert.ok(thoughtBounds&&sendBounds&&thoughtBounds.x+thoughtBounds.width<=sendBounds.x+15,label+" thought mode not beside Send");
-   await thought.click();
-   assert.equal(await thought.getAttribute("data-mode"),"gelap");
-   assert.equal(await thought.getAttribute("aria-pressed"),"true");
-   await thought.click();
-   assert.equal(await thought.getAttribute("data-mode"),"cahaya");
+  const thought=page.locator("#thoughtMode");
+  const dialog=page.locator("#thoughtModeDialog");
+  assert.equal(await thought.count(),1,"Mode trigger must exist beside Send");
+  assert.equal(await thought.isVisible(),true,label+" Mode trigger is hidden");
+  assert.equal(await thought.getAttribute("data-mode"),"cahaya");
+  assert.equal(await dialog.isVisible(),false,"Mode dialog must start closed");
+  const thoughtBounds=await thought.boundingBox(),sendBounds=await page.locator("#sendBtn").boundingBox();
+  assert.ok(thoughtBounds&&sendBounds&&thoughtBounds.x+thoughtBounds.width<=sendBounds.x+15,label+" Mode trigger not beside Send");
+  await thought.click();
+  assert.equal(await dialog.isVisible(),true,"Mode dialog must open");
+  assert.equal(await thought.getAttribute("aria-expanded"),"true");
+  const options=dialog.locator("[data-mode-option]");
+  assert.equal(await options.count(),2);
+  assert.equal(await options.first().getAttribute("aria-pressed"),"true");
+  assert.equal(await dialog.locator(".thought-choice-copy small").count(),2);
+  const sizes=await dialog.locator(".thought-mode-choice").first().evaluate(el=>{
+   const title=el.querySelector("strong"),description=el.querySelector("small");
+   return {title:parseFloat(getComputedStyle(title).fontSize),description:parseFloat(getComputedStyle(description).fontSize)};
+  });
+  assert.ok(sizes.description<sizes.title,"Mode explanation must be smaller than title");
+  await options.nth(1).click();
+  assert.equal(await dialog.isVisible(),false,"Selecting Gelap must close dialog");
+  assert.equal(await thought.getAttribute("data-mode"),"gelap");
+  await thought.click();
+  assert.equal(await options.nth(1).getAttribute("aria-pressed"),"true");
+  await page.keyboard.press("Escape");
+  assert.equal(await dialog.isVisible(),false,"Escape must close Mode dialog");
+  assert.equal(await thought.getAttribute("data-mode"),"gelap","Escape must preserve mode");
+  await thought.click();
+  await options.first().click();
+  assert.equal(await thought.getAttribute("data-mode"),"cahaya");
+  if(label!=="desktop"){
+   const composer=await page.locator(".composer").boundingBox();
+   const viewport=page.viewportSize();
+   assert.ok(composer&&viewport&&composer.y+composer.height<=viewport.height+6,label+" composer clipped after Mode dialog");
+  }
+
   assert.equal(await page.locator(".composer #sendBtn").evaluate(el=>getComputedStyle(el).minWidth)!=="0px",true);
   assert.equal(state.heavyAssets.some(x=>x.includes("bilik-antara-voice-fallback")),false);
   await page.screenshot({path:path.join(OUT,label+"-chat.png"),animations:"disabled"});
