@@ -52,27 +52,10 @@
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="bilik-antara-bg-desktop.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="bilik-antara-bg-mobile.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=89">
+<link rel="stylesheet" href="bilik-antara.css?v=90">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=6" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=6"></noscript>
 
-<style>
-/* Aksara: butang hantar lebih bercahaya, tanpa mengubah fungsi disabled */
-.send-btn{
- color:#ffe7a4;
- border-color:rgba(255,212,120,.72);
- background:linear-gradient(145deg,rgba(255,205,106,.30),rgba(164,111,36,.18));
- box-shadow:0 0 0 1px rgba(255,214,137,.20) inset,0 0 18px rgba(255,186,69,.28),0 0 32px rgba(255,190,80,.12);
- text-shadow:0 0 12px rgba(255,220,150,.75);
- transition:background .2s,border-color .2s,box-shadow .2s,transform .2s;
-}
-.send-btn svg{stroke:#ffe4a1;filter:drop-shadow(0 0 5px rgba(255,206,110,.65));}
-.send-btn:not(:disabled):hover,.send-btn:not(:disabled):focus-visible{
- border-color:rgba(255,230,165,.95);
- box-shadow:0 0 0 1px rgba(255,222,153,.35) inset,0 0 24px rgba(255,187,65,.43);
-}
-@media(prefers-reduced-motion:reduce){.send-btn{transition:none!important}}
-</style>
 </head>
 <body>
 <div class="shell">
@@ -234,7 +217,7 @@
       <button type="button" id="thoughtMode" class="thought-mode" data-mode="cahaya" aria-label="Thinking Mode. Aktif: Cahaya" aria-haspopup="dialog" aria-controls="thoughtModeDialog" aria-expanded="false" title="Thinking Mode · Cahaya">
        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="5.5" width="13" height="13" rx="2.5"/><path d="M9.3 9.3h5.4v5.4H9.3zM9 2v3.5M15 2v3.5M9 18.5V22M15 18.5V22M2 9h3.5M2 15h3.5M18.5 9H22M18.5 15H22"/></svg>
       </button>
-      <button type="submit" id="sendBtn" class="send-btn" aria-label="Hantar soalan" disabled style="opacity:1!important;background:linear-gradient(145deg,#ffe9b1,#dcaa57)!important;color:#251708!important;-webkit-text-fill-color:#251708!important;border:1px solid #ffe1a2!important;box-shadow:inset 0 1px 0 rgba(255,255,240,.65),0 0 13px rgba(245,179,65,.38)!important;filter:none!important"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-9-3.6 18L11 13l-6-1Z"/><path d="m11 13 8-10"/></svg></button>
+      <button type="submit" id="sendBtn" class="send-btn" aria-label="Hantar soalan" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-9-3.6 18L11 13l-6-1Z"/><path d="m11 13 8-10"/></svg></button>
     </form>
    </div>
   </section>
