@@ -224,6 +224,7 @@ function renderSessions(){
    const previous=archive.slice();
    archive=[...archive,...restored.map(item=>({...item,id:freshId()}))];
    if(!persistArchive()){archive=previous;return;}
+   sessionSearchTerm="";
    notice(restored.length+" sesi berjaya diimport.");
    render();
   }catch(err){notice(String(err?.message||"Arkib JSON tidak sah.").slice(0,180));}
@@ -241,7 +242,7 @@ function renderSessions(){
 }
 function renderMemory(){
  paragraph("Memori pilihan pengguna ialah nota berasingan daripada sejarah sesi.");
- paragraph("Memori pilihan bukan sejarah sesi automatik. Nota ringkas dihantar penuh; nota panjang ditapis secara setempat mengikut topik soalan (maksimum 2,800 aksara setiap permintaan). Petikan itu dihantar kepada Gemini, atau sandaran hanya jika kau benarkan dalam Privasi & sesi.");
+ paragraph("Memori pilihan bukan sejarah sesi automatik. Nota ringkas dihantar penuh; nota panjang dipilih secara setempat mengikut padanan kata soalan (maksimum 2,800 aksara setiap permintaan). Petikan itu dihantar kepada Gemini, atau sandaran hanya jika kau benarkan dalam Privasi & sesi.");
  const toggle=make("input");toggle.type="checkbox";toggle.checked=!!memory.enabled;
  const label=make("label"," Aktifkan memori");label.prepend(toggle);content.appendChild(label);
  const field=make("textarea");field.className="ba-editor";field.rows=8;field.maxLength=8000;
@@ -258,7 +259,17 @@ function renderMemory(){
   if(!write(KEYS.memory,disabled)){notice("Tak dapat padam memori tersimpan. Semak storan pelayar.");return;}
   memory=disabled;notice("Memori pilihan dipadam.");render();
  }));
- controlRow(button("Pratonton memori aktif",()=>{
+ controlRow(button("Bawa konteks sesi ini",()=>{
+  const snapshot=api.snapshot();
+  const context=String(snapshot.summary||"").trim()||
+   snapshot.history.filter(m=>m.role==="user").slice(-6).map(m=>String(m.content||"")).join("\n");
+  if(!context.trim()){notice("Sesi ini belum ada kandungan untuk dijadikan nota.");return;}
+  const piece="Konteks sesi: "+context.trim().slice(0,1200);
+  const combined=[field.value.trim(),piece].filter(Boolean).join("\n\n");
+  if(combined.length>8000){notice("Memori penuh. Ringkaskan nota sebelum tambah konteks.");return;}
+  field.value=combined;toggle.checked=true;field.focus();
+  notice("Draf konteks ditambah. Semak dahulu, kemudian tekan Simpan memori.");
+ }),button("Pratonton memori tersimpan",()=>{
   const question=$("input")?.value||"";
   const selected=memory.enabled&&typeof memory.text==="string"?
    window.AksaraSessionUtils?.selectMemory(memory.text,question)||"":"";
