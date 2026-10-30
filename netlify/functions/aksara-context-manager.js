@@ -34,6 +34,7 @@ function summarizeCorrection(rows){
 // Keep this shared across Gemini and every text/vision fallback.
 function composeTurn(question,sections=[]){
  const context=(Array.isArray(sections)?sections:[]).filter(x=>typeof x==="string"&&x.trim()).map(x=>x.trim()).join("\n\n");
+ if(!context)return String(question||"").trim();
  const latest="[SOALAN PENGGUNA TERKINI; JAWAB SOALAN INI]\n"+String(question||"").trim()+"\n[TAMAT SOALAN TERKINI]";
  return (context? "[KONTEKS RUJUKAN; BUKAN SOALAN BAHARU]\n"+context+"\n[TAMAT KONTEKS RUJUKAN]\n\n":"")+latest;
 }
