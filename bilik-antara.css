@@ -2132,6 +2132,35 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  .messages .message .bubble .code-block{font-size:13px}
 }
 
+/* Lightweight contextual next-step, shown only after Siapa Aku starter. */
+.messages .message.ai .msg-followup{
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px solid rgba(235,206,167,.16);
+}
+.messages .message.ai .msg-followup-btn{
+  width:auto;
+  max-width:100%;
+  min-height:38px;
+  border:1px solid rgba(234,207,164,.35);
+  border-radius:999px;
+  padding:9px 13px;
+  font:500 12.5px/1.45 'DM Sans',system-ui,sans-serif;
+  letter-spacing:0;
+  color:#f2e4d1;
+  text-align:left;
+  cursor:pointer;
+  background:rgba(16,21,33,.2);
+}
+.messages .message.ai .msg-followup-btn:hover{
+  border-color:rgba(241,204,144,.7);
+  background:rgba(220,186,137,.12);
+}
+.messages .message.ai .msg-followup-btn:focus-visible{
+  outline:2px solid #f2c984;
+  outline-offset:2px;
+}
+
 /* Chat reading scale and consistent modern starter typography. */
 .messages .message.ai .bubble,
 .messages .message.user .bubble,
