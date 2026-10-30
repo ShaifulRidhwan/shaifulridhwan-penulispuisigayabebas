@@ -440,7 +440,7 @@ ui.retry.addEventListener("click",()=>{
  if(busy)return;
  if(ui.input.value.trim()||fileState)submit({preventDefault(){}});else probe();
 });
-const providers=[["gemini","Google Gemini"],["groq","Groq"],["openrouter","OpenRouter"],["orcarouter","OrcaRouter"]]; // Canonical four text providers; synchronize with BilikAntaraIdentity.TEXT_PROVIDERS.
+const providers=[["gemini","Google Gemini"],["groq","Groq"],["orcarouter","OrcaRouter"],["openrouter","OpenRouter"]]; // Canonical four text providers; synchronize with BilikAntaraIdentity.TEXT_PROVIDERS.
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
 let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0,lastOrcaModel="",lastOrcaAt=0;
 function shortOpenRouterName(model){
