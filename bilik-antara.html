@@ -286,6 +286,7 @@ if(window.visualViewport)window.visualViewport.addEventListener("resize",queueVi
 const ENDPOINT="/.netlify/functions/bilik-antara";
 const STREAM_ENDPOINT="/.netlify/functions/bilik-antara-stream";
 const STORAGE="bilik-antara-session-v2";
+const MODE_STORAGE="bilik-antara-mode-v1"; // Preference only; never store chat text here.
 // CAHAYA keeps the original Aksara brain; GELAP changes its response identity.
 let thoughtMode="cahaya";
 const modeButton=document.getElementById("thoughtMode");
@@ -312,6 +313,7 @@ modeButton.addEventListener("click",()=>{
 });
 modeChoices.forEach(choice=>choice.addEventListener("click",()=>{
  setThoughtMode(choice.dataset.modeOption,true);
+ try{localStorage.setItem(MODE_STORAGE,thoughtMode);}catch(_){/* Private browsing can disable storage. */}
  save();
  modeDialog.close();
 }));
@@ -1025,7 +1027,9 @@ window.BilikAntaraBridge={
   renderHistory();save();compact();return true;
  }
 };
-restore();renderIdeas();renderHistory();update();probe();
+restore();
+try{const lastMode=localStorage.getItem(MODE_STORAGE);if(lastMode==="gelap"||lastMode==="cahaya")setThoughtMode(lastMode);}catch(_){}
+renderIdeas();renderHistory();update();probe();
 })();
 </script>
 <script src="bilik-antara-identity.js?v=27" defer></script>
