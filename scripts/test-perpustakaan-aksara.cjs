@@ -15,7 +15,9 @@ test("Katalog mempunyai metadata dan pautan karya utama",()=>{
  assert.match(page,/<html lang="ms">/);
  assert.match(page,/name="viewport"/);
  assert.match(page,/assets\/novel\/cover-01\.jpg/);
- assert.match(page,/href="perpustakaan-aksara\.html" aria-current="page">Novel<\/a>/);
+ assert.match(page,/<span class="aksara-name">AKSARA Novel<\/span>/);
+ assert.match(page,/class="aksara-nav-link" href="bilik-antara\.html">Bilik Antara<\/a>/);
+ assert.match(page,/aksara-header\.css\?v=1/);
  assert.match(page,/id="books"/);
  assert.match(page,/id="archiveBooks"/);
 });
