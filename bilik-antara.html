@@ -345,6 +345,32 @@ const MEDIA=new Set(["application/pdf","image/jpeg","image/png","image/webp","im
  "audio/mpeg","audio/wav","audio/mp4","audio/ogg","audio/webm","video/mp4","video/webm"]);
 let activeRequest=null,stoppedByUser=false,failedPreview=null,lastProvider="",lastProviderAt=0;
 let history=[],summary="",ideas=[],summarizedThrough=0,compacting=false,conversationEpoch=0,fileState=null,busy=false,quotaCooldownUntil=0;
+let messageLocation=""; // Tab-only, manually set; NEVER included in requests to models.
+const attachmentTrigger=el("attachmentTrigger"),attachmentDialog=el("attachmentDialog"),attachmentClose=el("attachmentClose");
+const attachmentInputs={photo:el("attachmentPhoto"),video:el("attachmentVideo"),files:el("attachmentFiles")};
+const placeDialog=el("metaLocationDialog"),placeInput=el("messageLocationInput");
+function showPlaceDialog(){placeInput.value=messageLocation;placeDialog.showModal();placeInput.focus();}
+el("metaLocationClose").addEventListener("click",()=>placeDialog.close());
+el("metaLocationSave").addEventListener("click",()=>{
+ messageLocation=placeInput.value.trim().replace(/\s+/g," ").slice(0,80);
+ placeDialog.close();
+});
+el("metaLocationClear").addEventListener("click",()=>{messageLocation="";placeInput.value="";placeDialog.close();});
+placeDialog.addEventListener("click",event=>{if(event.target===placeDialog)placeDialog.close();});
+placeInput.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();el("metaLocationSave").click();}});
+attachmentTrigger.addEventListener("click",()=>{if(!busy){attachmentDialog.showModal();attachmentTrigger.setAttribute("aria-expanded","true");}});
+attachmentClose.addEventListener("click",()=>attachmentDialog.close());
+attachmentDialog.addEventListener("click",event=>{if(event.target===attachmentDialog)attachmentDialog.close();});
+attachmentDialog.addEventListener("close",()=>{attachmentTrigger.setAttribute("aria-expanded","false");attachmentTrigger.focus({preventScroll:true});});
+for(const option of attachmentDialog.querySelectorAll("[data-attachment-type]")){
+ option.addEventListener("click",()=>{if(busy)return;
+  const field=attachmentInputs[option.dataset.attachmentType];
+  if(!field)return;attachmentDialog.close();field.click();
+ });
+}
+for(const field of Object.values(attachmentInputs)){
+ field.addEventListener("change",()=>{const files=Array.from(field.files||[]);field.value="";if(files.length)readFiles(files);});
+}
 function elem(tag,cls,text){
  const e=document.createElement(tag);if(cls)e.className=cls;
  if(text!==undefined)e.textContent=String(text);return e;
@@ -531,6 +557,20 @@ function format(target,text){
   }
  }
 }
+function renderMessageMeta(msg,role,data){
+ const ms=Number(data?.timestamp);
+ if(!Number.isFinite(ms)||ms<946684800000||ms>Date.now()+3600000)return;
+ const at=new Date(ms),line=elem("div","message-meta");
+ const stamp=elem("time","message-clock",(role==="user"?"Dihantar":"Diterima")+" · "+
+  at.toLocaleDateString("ms-MY",{day:"numeric",month:"short"})+" "+
+  at.toLocaleTimeString("ms-MY",{hour:"2-digit",minute:"2-digit",hour12:false}));
+ stamp.dateTime=at.toISOString();stamp.title=at.toLocaleString("ms-MY");line.appendChild(stamp);
+ const place=String(data?.locationLabel||"").trim().slice(0,80);
+ if(place){const tag=elem("span","message-place","Lokasi umum · "+place);tag.title="Diisi oleh pengguna, bukan lokasi GPS.";line.appendChild(tag);}
+ else if(role==="user"){const select=elem("button","message-place-action","Tetapkan lokasi");select.type="button";
+  select.setAttribute("aria-label","Tetapkan lokasi umum bagi mesej baharu");select.addEventListener("click",showPlaceDialog);line.appendChild(select);}
+ msg.appendChild(line);
+}
 function addMessage(role,text,data){
  const msg=elem("article","message "+(role==="user"?"user":"ai")+(restoringHistory?" is-restored":""));
  msg.appendChild(elem("div","byline",role==="user"?"Kau":"Aksara A.I."));
@@ -538,7 +578,7 @@ function addMessage(role,text,data){
  // A Live Voice transcript is not a text-chat answer; keep its content undecorated.
  format(bubble,role==="user"||data?.mode==="voice"?text:window.BilikAntaraChatStyle.reply(text,{mode:data?.thoughtMode||"cahaya"}));
  if(role!=="user"&&data)renderExtras(bubble,data);
- msg.appendChild(bubble);ui.chat.appendChild(msg);scrollDown();return msg;
+ msg.appendChild(bubble);renderMessageMeta(msg,role,data);ui.chat.appendChild(msg);scrollDown();return msg;
 }
 function renderExtras(bubble,data){
  const sources=Array.isArray(data.sources)?data.sources.slice(0,8):[];
@@ -624,7 +664,7 @@ function renderHistory(){
  try{
   ui.chat.textContent="";
   ui.chat.classList.toggle("is-welcome",history.length===0);
-  for(const m of history)addMessage(m.role,m.content,m.role==="assistant"?m:null);
+  for(const m of history)addMessage(m.role,m.content,m);
   ui.starters.hidden=history.length>0;
   if(!history.length)welcome();
  }finally{restoringHistory=false;}
@@ -707,13 +747,14 @@ function resize(){
 function update(){
  ui.shell.classList.toggle("is-busy",busy);
  ui.send.disabled=busy||(!ui.input.value.trim()&&!fileState);
+ attachmentTrigger.disabled=busy;
  ui.clear.disabled=busy;ui.upload.disabled=busy;ui.remove.disabled=busy;
  ui.retry.disabled=busy;
  ui.stop.hidden=!busy;ui.chat.setAttribute("aria-busy",String(busy));
 }
 ui.stop.addEventListener("click",()=>{stoppedByUser=true;activeRequest?.abort();});
 function discardFile(){
- fileState=null;ui.upload.value="";ui.docStatus.textContent="";ui.remove.hidden=true;update();
+ fileState=null;ui.upload.value="";for(const field of Object.values(attachmentInputs))field.value="";ui.docStatus.textContent="";ui.remove.hidden=true;update();
 }
 async function readFiles(files){
  discardFile();if(!files||!files.length)return;
