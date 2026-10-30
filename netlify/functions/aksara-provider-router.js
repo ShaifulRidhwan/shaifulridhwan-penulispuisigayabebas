@@ -11,16 +11,21 @@ const cooldown=new Map();
 let preferredProvider=""; // Best recent successful fallback within the current warm function instance.
 let recentOpenRouter={model:"",at:0}; // Real replies only, never synthetic status.
 let recentOrcaRouter={model:"",at:0}; // Only a real answer can establish Connected.
-// Task categories are routing preferences, not unverified claims about model quality.
-const TASK_PRIORITY={
- technical:["groq","openrouter"],
- critique:["groq","openrouter"],
- hypothetical:["groq","openrouter"],
- creative:["groq","openrouter"],
- conversation:["groq","openrouter"],
- explain:["groq","openrouter"],
- general:["groq","openrouter"]
-};
+// Task-specific, bounded instructions for free routers. This cannot unlock
+// unavailable upstream models, bypass quotas or guarantee answer quality.
+const FREE_QUALITY=Object.freeze({
+ technical:"Bezakan simptom daripada punca; berikan langkah atau kod yang boleh diuji tanpa mereka hasil ujian.",
+ critique:"Uji premis, bukti dan bantahan kukuh; jangan bersetuju automatik.",
+ hypothetical:"Terangkan andaian dan had kesimpulan; jangan bentang spekulasi sebagai fakta.",
+ creative:"Utamakan bentuk, gaya dan tujuan karya diminta; elakkan klise.",
+ explain:"Terangkan tepat dengan contoh relevan, tanpa meleret.",
+ conversation:"Kekal santai dan sambung konteks pengguna secara semula jadi."
+});
+function freeQuality(task,level){
+ const taskNote=FREE_QUALITY[task]||"Jawab tepat, akui ketidakpastian dan jangan reka sumber.";
+ const high=level==="high"?" Semak konsistensi dan alasan penting sebelum memberi jawapan. Jangan dedahkan penaakulan dalaman.":"";
+ return "\nKUALITI PENGHALA PERCUMA: "+taskNote+high;
+}
 function rankProviders(available,task,prefer="",qualityFirst=false){
  return Registry.select(available,{task,thinking:qualityFirst?"high":"low",prefer,last:preferredProvider});
 }
@@ -139,7 +144,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    // Preserve medium reasoning for concept and follow-up questions. Only genuine
    // low-effort turns should be reduced to the fastest GPT-OSS setting.
    const simple=!!reaction||(["conversation","general","explain"].includes(task)&&reasoningLevel==="low");
-   const outputLimit=Math.min(reaction?500:simple?1500:6000,Math.max(400,maxTokens));
+   const outputLimit=Math.min(reaction?500:simple?1500:6000,Math.max(400,maxTokens,reasoningLevel==="high"&&["technical","critique","hypothetical"].includes(task)?2200:0));
    // Keep the complete intentional personality in an identical first message.
    // Per-turn guidance has its own system message, allowing whole-message
    // prefix caching without rewriting or shortening that personality.
@@ -326,6 +331,9 @@ async function checkStatus(){
    if(Date.now()<(cooldown.get(provider.id)||0))return {id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
+    if(provider.id==="openrouter"||provider.id==="orcarouter"){
+     providerMessages=[{...providerMessages[0],content:providerMessages[0].content+freeQuality(task,reasoningLevel)},...providerMessages.slice(1)];
+    }
     if(provider.id==="orcarouter"){
      // No inference probe. Connected requires a genuine recent chat reply.
      if(Date.now()-recentOrcaRouter.at<90000)return {id:provider.id,status:"online",model:recentOrcaRouter.model,reason:"recent_reply"};
