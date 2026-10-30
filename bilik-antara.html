@@ -84,7 +84,7 @@
      <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Jom Voice Chat</button>
     </div>
     <div class="chat-controls">
-     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status lima penyedia AI dan model yang tersedia"><span class="dot" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
+     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model yang tersedia"><span class="dot" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
      <details class="settings" id="settingsPanel">
       <summary aria-label="Buka Ciri dan Fungsi Aksara" title="Ciri &amp; Fungsi">
        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
@@ -131,7 +131,7 @@
     </div>
    </header>
    <dialog class="multi-ai-dialog" id="multiAiDialog" aria-labelledby="multiAiTitle">
- <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I. · Sambungan</strong><p>Status menunjukkan penyedia yang tersedia. Model disenaraikan sehingga benar-benar berjaya menjawab.</p></div><button type="button" id="multiAiClose" aria-label="Tutup status penyedia">×</button></div>
+ <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I. · Sambungan</strong><p>Empat penyedia teks Aksara. Status setiap sambungan disemak secara berasingan; Ready bukan Connected.</p></div><button type="button" id="multiAiClose" aria-label="Tutup status penyedia">×</button></div>
  <div class="multi-ai-list" id="multiAiList" aria-live="polite"></div>
  <div class="multi-ai-actions"><button type="button" id="multiAiRefresh">Semak semula</button></div>
 </dialog>
@@ -182,6 +182,7 @@
     <button class="starter" type="button">Siapa Aku</button>
     <button class="starter" type="button">The Coder Poet</button>
     <button class="starter" type="button">Apa itu Puisi Gaya Bebas</button>
+    <button class="starter" type="button">Empat Otak Aksara</button>
    </div>
    <div class="voice-focus-veil" id="voiceFocusVeil" aria-hidden="true"></div>
    <div class="voice-panel" id="voicePanel" hidden aria-label="Perbualan Voice Live">
@@ -424,7 +425,7 @@ function status(kind,label,explain){
  connectionRevision++;
  ui.conn.className="connection multi-ai-trigger"+(["ready","online"].includes(kind)?" ready":["error","limited"].includes(kind)?" error":"");
  ui.connText.textContent=label==="Connected"?"Multi A.I Connected":label;
- ui.conn.title=kind==="configured"&&label==="Multi A.I Connected"?"Pelayan Multi AI bersambung. Tekan untuk menyemak setiap model.":"Semak sambungan model AI";
+ ui.conn.title=kind==="configured"?"Empat penyedia AI didaftarkan; status semasa perlu disemak satu persatu.":"Semak status empat penyedia AI";
  ui.connInfo.className="connection-info"+(explain?" active"+(["error","limited"].includes(kind)?" error":""):"");
  ui.connInfoText.textContent=explain||"";
  ui.retry.hidden=kind==="ready"||kind==="online"||kind==="limited";
@@ -438,7 +439,7 @@ ui.retry.addEventListener("click",()=>{
  if(busy)return;
  if(ui.input.value.trim()||fileState)submit({preventDefault(){}});else probe();
 });
-const providers=[["gemini","Google Gemini"],["groq","Groq"],["openrouter","OpenRouter"],["orcarouter","OrcaRouter"]];
+const providers=[["gemini","Google Gemini"],["groq","Groq"],["openrouter","OpenRouter"],["orcarouter","OrcaRouter"]]; // Canonical four text providers; synchronize with BilikAntaraIdentity.TEXT_PROVIDERS.
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
 let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0,lastOrcaModel="",lastOrcaAt=0;
 function shortOpenRouterName(model){
@@ -519,7 +520,7 @@ async function checkProviders(force=false){
   }
   if(!busy&&connectionRevision===revision){
    if(data.someOnline)status("ready","Multi A.I Connected","");
-   else if(data.someReady)status("configured","Multi A.I Connected","");
+   else if(data.someReady)status("configured","Multi A.I Ready","");
    else status("error","Multi A.I tengah offline","");
   }
  }catch(_){
