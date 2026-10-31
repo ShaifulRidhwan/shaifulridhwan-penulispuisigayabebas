@@ -2,7 +2,7 @@
 // Offline architecture regression: all API requests are mocked. No provider quota used.
 const {test,after}=require("node:test");
 const assert=require("node:assert/strict");
-const keys=["AKSARA_FREE_FALLBACKS","AKSARA_ORCAROUTER_LAYER2","ORCAROUTER_API_KEY","GROQ_API_KEY","GROQ_FREE_CONFIRMED","OPENROUTER_API_KEY","GEMINI_API_KEY","AKSARA_CROSS_REVIEW"];
+const keys=["AKSARA_FREE_FALLBACKS","AKSARA_NVIDIA_ENABLED","NVIDIA_API_KEY","GROQ_API_KEY","GROQ_FREE_CONFIRMED","OPENROUTER_API_KEY","GEMINI_API_KEY","AKSARA_CROSS_REVIEW"];
 const saved=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
 const originalFetch=global.fetch;
 after(()=>{
@@ -11,8 +11,8 @@ after(()=>{
 });
 function setup(){
  Object.assign(process.env,{
-  AKSARA_FREE_FALLBACKS:"true",AKSARA_ORCAROUTER_LAYER2:"true",
-  ORCAROUTER_API_KEY:"mock",GROQ_API_KEY:"mock",GROQ_FREE_CONFIRMED:"true",
+  AKSARA_FREE_FALLBACKS:"true",AKSARA_NVIDIA_ENABLED:"true",
+  NVIDIA_API_KEY:"mock",GROQ_API_KEY:"mock",GROQ_FREE_CONFIRMED:"true",
   OPENROUTER_API_KEY:"mock",GEMINI_API_KEY:"mock",AKSARA_CROSS_REVIEW:"false"
  });
  for(const path of ["../netlify/functions/aksara-provider-router","../netlify/functions/aksara-model-registry","../netlify/functions/bilik-antara"]){
@@ -22,23 +22,23 @@ function setup(){
 }
 const ok=(provider="demo")=>Response.json({model:provider,choices:[{message:{content:"Aku Aksara. Ini respons ujian."},finish_reason:"stop"}]});
 const fail=()=>new Response(JSON.stringify({error:{message:"upstream unavailable"}}),{status:503,headers:{"content-type":"application/json"}});
-const provider=url=>url.includes("api.groq.com")?"groq":url.includes("api.orcarouter.ai")?"orcarouter":url.includes("openrouter.ai")?"openrouter":url.includes("googleapis")?"gemini":"unknown";
-test("A preference or recent OpenRouter success cannot outrank Groq/OrcaRouter",()=>{
+const provider=url=>url.includes("api.groq.com")?"groq":url.includes("api.nvidia.ai")?"nvidia":url.includes("openrouter.ai")?"openrouter":url.includes("googleapis")?"gemini":"unknown";
+test("A preference or recent OpenRouter success cannot outrank Groq/NVIDIA",()=>{
  const Router=setup();
  const available=Router.configured();
- assert.deepEqual(available.map(p=>p.id),["groq","orcarouter","openrouter"]);
+ assert.deepEqual(available.map(p=>p.id),["groq","nvidia","openrouter"]);
  for(const hard of [false,true]){
   const ranked=Router.rankProviders(available,"technical","openrouter",hard);
   assert.equal(ranked.at(-1).id,"openrouter");
-  assert.deepEqual(new Set(ranked.slice(0,-1).map(p=>p.id)),new Set(["groq","orcarouter"]));
+  assert.deepEqual(new Set(ranked.slice(0,-1).map(p=>p.id)),new Set(["groq","nvidia"]));
  }
 });
-test("OrcaRouter answers after Groq failure; OpenRouter backup is never called",async()=>{
+test("NVIDIA answers after Groq failure; OpenRouter backup is never called",async()=>{
  const Router=setup(),calls=[];
  global.fetch=async(url)=>{const id=provider(url);calls.push(id);return id==="groq"?fail():ok(id);};
  const result=await Router.complete({system:"Aksara",history:[],question:"Terangkan relativiti",deadline:Date.now()+10000});
- assert.equal(result.provider,"orcarouter");
- assert.deepEqual(calls,["groq","orcarouter"]);
+ assert.equal(result.provider,"nvidia");
+ assert.deepEqual(calls,["groq","nvidia"]);
  assert.equal(result.attempts[0].provider,"groq");
 });
 test("OpenRouter only answers after all configured text primaries are unavailable",async()=>{
@@ -46,11 +46,11 @@ test("OpenRouter only answers after all configured text primaries are unavailabl
  global.fetch=async(url)=>{const id=provider(url);calls.push(id);return id==="openrouter"?ok(id):fail();};
  const result=await Router.complete({system:"Aksara",history:[],question:"Terangkan relativiti",deadline:Date.now()+10000,prefer:"openrouter"});
  assert.equal(result.provider,"openrouter");
- assert.deepEqual(new Set(calls.slice(0,2)),new Set(["groq","orcarouter"]));
+ assert.deepEqual(new Set(calls.slice(0,2)),new Set(["groq","nvidia"]));
  assert.equal(calls.at(-1),"openrouter");
  assert.equal(result.attempts.length,2);
 });
-test("Image route retains explicit OpenRouter-only capability, never leaking to OrcaRouter",async()=>{
+test("Image route retains explicit OpenRouter-only capability, never leaking to NVIDIA",async()=>{
  const Router=setup(),calls=[];
  global.fetch=async(url,opts)=>{calls.push(provider(url));const body=JSON.parse(opts.body);
   assert.equal(body.messages.at(-1).content[1].type,"image_url");return ok("vision");};
@@ -68,7 +68,7 @@ test("Bilik Antara tests Groq/Orca and Gemini before universal OpenRouter backup
  const response=await handler(event),data=JSON.parse(response.body);
  assert.equal(response.statusCode,200,JSON.stringify(data));
  assert.equal(data.provider,"openrouter");
- assert.ok(calls.includes("groq")&&calls.includes("orcarouter")&&calls.includes("gemini"),calls.join(","));
+ assert.ok(calls.includes("groq")&&calls.includes("nvidia")&&calls.includes("gemini"),calls.join(","));
  assert.equal(calls.at(-1),"openrouter",calls.join(","));
 });
 
@@ -78,7 +78,7 @@ test("Streaming chat reaches OpenRouter even after the 14s primary response wind
  t.mock.method(Date,"now",()=>clock);
  global.fetch=async url=>{
   const id=provider(url);calls.push(id);
-  if(id==="groq"||id==="orcarouter"){clock+=6000;return fail();}
+  if(id==="groq"||id==="nvidia"){clock+=6000;return fail();}
   if(id==="gemini"){clock+=3000;return fail();}
   return ok(id);
  };
