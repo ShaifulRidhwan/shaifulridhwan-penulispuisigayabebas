@@ -39,7 +39,7 @@
     "GROQ_FREE_CONFIRMED": "true",
     "GEMINI_MODEL_FAST": "gemini-3.6-flash",
     "GEMINI_MODEL": "gemini-3.6-flash",
-    "GEMINI_MODEL_COMPLEX": "gemini-3.8-flash"
+    "GEMINI_MODEL_COMPLEX": "gemini-3.6-flash"
   },
   "observability": {
     "enabled": true
