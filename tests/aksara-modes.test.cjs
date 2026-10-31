@@ -349,10 +349,10 @@ test("Both modes use the same intelligence protocol; GELAP remains independently
 
 test("Hybrid 3+1 reserves OpenRouter for last, while rollback restores legacy preference",()=>{
  const router=require("../netlify/functions/aksara-provider-router");
- const list=[{id:"openrouter"},{id:"orcarouter"},{id:"groq"}];
+ const list=[{id:"openrouter"},{id:"nvidia"},{id:"groq"}];
  assert.equal(router.rankProviders(list,"general","openrouter",false).at(-1).id,"openrouter");
  assert.equal(router.rankProviders(list,"general","openrouter",true)[0].id,"groq");
- assert.equal(router.rankProviders([{id:"openrouter"},{id:"orcarouter"}],"general","openrouter",true)[0].id,"orcarouter");
+ assert.equal(router.rankProviders([{id:"openrouter"},{id:"nvidia"}],"general","openrouter",true)[0].id,"nvidia");
  assert.equal(list[0].id,"openrouter","Provider ranking does not mutate caller list");
  const prev=process.env.AKSARA_HYBRID_ROUTER;
  try{
@@ -405,7 +405,7 @@ test("Structured tool gateway never executes arbitrary code and rejects unknown 
  assert.equal(SafeTools.calculatorIntent("kenapa manusia mencari makna?"),null);
 });
 test("Intelligence Router 2.0 weighs capability and observations without mutating preferences",()=>{
- const providers=[{id:"openrouter"},{id:"groq"},{id:"orcarouter"}];
+ const providers=[{id:"openrouter"},{id:"groq"},{id:"nvidia"}];
  assert.equal(Registry.select(providers,{thinking:"high",prefer:"openrouter"})[0].id,"groq");
  assert.equal(Registry.select(providers,{thinking:"low",prefer:"openrouter"})[0].id,"openrouter");
  Registry.observe("groq",{ok:true,latencyMs:250});
