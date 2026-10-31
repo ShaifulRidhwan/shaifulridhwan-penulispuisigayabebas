@@ -40,8 +40,9 @@ export class AksaraControl{
      data.kind==="chat"?{count:12,window:60000}:
      {count:8,window:600000};
     const entry=db.exec("SELECT started,count,enhance_at FROM users WHERE scope=?",key).toArray()[0];
-    const started=!entry||now-entry.started>=limits.window?now:entry.started;
-    const count=started===now?0:entry.count;
+    const fresh=!entry||now-entry.started>=limits.window;
+    const started=fresh?now:entry.started;
+    const count=fresh?0:entry.count;
     const enhanceAt=entry?.enhance_at||0;
     if(data.kind==="studio"){
      const budget=integer(this.env.STUDIO_DAILY_NEURONS,6000,8000),cost=integer(data.cost,0,8000);
