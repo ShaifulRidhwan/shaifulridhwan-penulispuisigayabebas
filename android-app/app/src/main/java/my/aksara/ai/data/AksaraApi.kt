@@ -21,10 +21,39 @@ data class ChatTurn(
     val content: String,
     val provider: String? = null,
     val complete: Boolean = true,
-    val id: String = UUID.randomUUID().toString()
+    val id: String = UUID.randomUUID().toString(),
+    val timestamp: Long = System.currentTimeMillis()
 )
 
 data class ChatResponse(val reply: String, val provider: String?, val model: String?)
+
+data class ChatMedia(val mimeType: String, val data: String, val name: String)
+data class ChatRequestOptions(
+    val summary: String = "",
+    val memoryNotes: String = "",
+    val contextFallback: Boolean = false,
+    val mediaFallback: Boolean = false,
+    val preferredProvider: String = "",
+    val documentText: String = "",
+    val documentName: String = "",
+    val media: List<ChatMedia> = emptyList(),
+    val thoughtLedger: List<String> = emptyList()
+)
+data class ProviderHealth(
+    val id: String,
+    val status: String,
+    val model: String?,
+    val latencyMs: Long?,
+    val reason: String?,
+    val retryAfterSeconds: Int?
+)
+data class ProviderSnapshot(
+    val providers: List<ProviderHealth>,
+    val preferred: String,
+    val configuredCount: Int,
+    val checkedAt: Long,
+    val someOnline: Boolean
+)
 
 sealed interface StreamEvent {
     data object Started : StreamEvent
@@ -70,10 +99,50 @@ class AksaraApi {
         data.optBoolean("ok", false)
     }.getOrDefault(false)
 
+    suspend fun providerStatus(): ProviderSnapshot {
+        val data = post(JSONObject().put("providerStatus", true))
+        val list = data.optJSONArray("providers") ?: JSONArray()
+        val providers = buildList {
+            for (i in 0 until list.length()) {
+                val item = list.optJSONObject(i) ?: continue
+                val id = item.optString("id")
+                if (id.isBlank()) continue
+                add(ProviderHealth(
+                    id = id,
+                    status = item.optString("status", "unknown"),
+                    model = item.optString("model").takeIf { it.isNotBlank() },
+                    latencyMs = item.optLong("latencyMs", -1).takeIf { it >= 0 },
+                    reason = item.optString("reason").takeIf { it.isNotBlank() },
+                    retryAfterSeconds = item.optInt("retryAfterSeconds", -1).takeIf { it >= 0 }
+                ))
+            }
+        }
+        return ProviderSnapshot(
+            providers = providers,
+            preferred = data.optString("preferredProvider"),
+            configuredCount = data.optInt("configuredCount", providers.size),
+            checkedAt = data.optLong("checkedAt", 0),
+            someOnline = data.optBoolean("someOnline", false)
+        )
+    }
+
+    suspend fun summarize(history: List<ChatTurn>, previousSummary: String): String {
+        val turns = JSONArray()
+        history.filter { it.complete }.takeLast(24).forEach { turn ->
+            turns.put(JSONObject().put("role", turn.role).put("content", turn.content.take(24000)))
+        }
+        val json = post(JSONObject().put("summarize", true)
+            .put("summary", previousSummary.take(4000)).put("history", turns))
+        return json.optString("summary").take(4000)
+            .takeIf { it.isNotBlank() }
+            ?: throw IOException("Ringkasan belum tersedia. Sejarah asal tidak dipadam.")
+    }
+
     suspend fun chatStream(
         question: String,
         mode: String,
         history: List<ChatTurn>,
+        options: ChatRequestOptions = ChatRequestOptions(),
         onDelta: suspend (String) -> Unit
     ): ChatResponse = withContext(Dispatchers.IO) {
         val prior = JSONArray()
@@ -91,7 +160,20 @@ class AksaraApi {
             .put("question", question)
             .put("thoughtMode", mode)
             .put("history", prior)
-            // Future backend versions can honor the native-Android UI contract.
+            .put("summary", options.summary.take(4000))
+            .put("memoryNotes", options.memoryNotes.take(8000))
+            .put("contextFallback", options.contextFallback)
+            .put("mediaFallback", options.mediaFallback)
+            .put("preferredProvider", options.preferredProvider.take(30))
+            .put("documentText", options.documentText.take(100000))
+            .put("documentName", options.documentName.take(100))
+            .put("thoughtLedger", JSONArray(options.thoughtLedger.takeLast(8)))
+            .put("media", JSONArray().apply {
+                options.media.take(3).forEach { file ->
+                    put(JSONObject().put("mimeType", file.mimeType).put("data", file.data))
+                }
+            })
+            // Platform hint needs to be consumed by backend for exact Android wording.
             .put("clientPlatform", "android")
         val conn = newConnection(STREAM_URL, "application/x-ndjson")
         activeStream = conn

@@ -14,6 +14,8 @@ data class ChatSession(
     val title: String = "Sesi Baharu",
     val mode: String = "cahaya",
     val messages: List<ChatTurn> = emptyList(),
+    val summary: String = "",
+    val pinned: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
 )
@@ -32,7 +34,8 @@ object SessionCodec {
 
     fun serialize(sessions: List<ChatSession>, activeId: String): String {
         val array = JSONArray()
-        sessions.sortedByDescending { it.updatedAt }.take(MAX_SESSIONS).forEach { session ->
+        sessions.sortedWith(compareByDescending<ChatSession> { it.pinned }
+            .thenByDescending { it.updatedAt }).take(MAX_SESSIONS).forEach { session ->
             val turns = JSONArray()
             session.messages.takeLast(MAX_TURNS).forEach { turn ->
                 turns.put(
@@ -42,6 +45,7 @@ object SessionCodec {
                         .put("content", turn.content.take(MAX_CONTENT))
                         .put("provider", turn.provider ?: "")
                         .put("complete", turn.complete)
+                        .put("timestamp", turn.timestamp)
                 )
             }
             array.put(
@@ -49,6 +53,8 @@ object SessionCodec {
                     .put("id", session.id)
                     .put("title", session.title.take(64))
                     .put("mode", session.mode)
+                    .put("summary", session.summary.take(4000))
+                    .put("pinned", session.pinned)
                     .put("createdAt", session.createdAt)
                     .put("updatedAt", session.updatedAt)
                     .put("turns", turns)
@@ -86,7 +92,8 @@ object SessionCodec {
                         provider = entry.optString("provider").takeIf { it.isNotBlank() },
                         complete = entry.optBoolean("complete", true),
                         id = entry.optString("id").takeIf { it.isNotBlank() }
-                            ?: UUID.randomUUID().toString()
+                            ?: UUID.randomUUID().toString(),
+                        timestamp = entry.optLong("timestamp", System.currentTimeMillis())
                     )
                 )
             }
@@ -96,6 +103,8 @@ object SessionCodec {
                     title = obj.optString("title").take(64).ifBlank { "Sesi Baharu" },
                     mode = mode,
                     messages = parsed,
+                    summary = obj.optString("summary").take(4000),
+                    pinned = obj.optBoolean("pinned", false),
                     createdAt = obj.optLong("createdAt", 0).coerceAtLeast(0),
                     updatedAt = obj.optLong("updatedAt", 0).coerceAtLeast(0)
                 )
