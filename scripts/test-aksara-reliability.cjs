@@ -5,10 +5,11 @@ const {boundedHistory,boundedText,readSSE}=require("../netlify/functions/lib/aks
 const I=require("../netlify/functions/antara-intelligence"),Brain=require("../bilik-antara-brain");
 const ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
 const savedFetch=global.fetch;
-const envKeys=["GEMINI_API_KEY","AKSARA_FREE_FALLBACKS","GROQ_API_KEY","GROQ_FREE_CONFIRMED","MISTRAL_API_KEY","MISTRAL_FREE_CONFIRMED","OPENROUTER_API_KEY","GEMINI_MODEL_FAST","GEMINI_MODEL_COMPLEX"];
+// Regression tests below preserve the legacy fallback contract under rollback flag.
+const envKeys=["AKSARA_HYBRID_ROUTER","GEMINI_API_KEY","AKSARA_FREE_FALLBACKS","GROQ_API_KEY","GROQ_FREE_CONFIRMED","MISTRAL_API_KEY","MISTRAL_FREE_CONFIRMED","OPENROUTER_API_KEY","GEMINI_MODEL_FAST","GEMINI_MODEL_COMPLEX"];
 function setup(t){
  const old=Object.fromEntries(envKeys.map(k=>[k,process.env[k]]));
- Object.assign(process.env,{GEMINI_API_KEY:"mock",AKSARA_FREE_FALLBACKS:"true",GROQ_API_KEY:"mock",GROQ_FREE_CONFIRMED:"true"});
+ Object.assign(process.env,{AKSARA_HYBRID_ROUTER:"false",GEMINI_API_KEY:"mock",AKSARA_FREE_FALLBACKS:"true",GROQ_API_KEY:"mock",GROQ_FREE_CONFIRMED:"true"});
  for(const k of ["MISTRAL_API_KEY","OPENROUTER_API_KEY"])delete process.env[k];
  for(const p of ["../netlify/functions/bilik-antara","../netlify/functions/aksara-provider-router"])delete require.cache[require.resolve(p)];
  t.after(()=>{global.fetch=savedFetch;for(const k of envKeys){if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];}});
