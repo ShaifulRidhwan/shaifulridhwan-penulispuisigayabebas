@@ -75,9 +75,10 @@ test("catalog safely verifies key access without spending an inference slot",asy
 test("unavailable NVIDIA and exhausted quota are reported without provider error body",async()=>{
  const upstream=await nvidiaDiagnostic(post(token),env,async()=>({ok:true}),
   async(url)=>url.endsWith("/models")?Response.json({data:[{id:"deepseek-ai/deepseek-v4.1-flash"}]}):new Response("VERY_PRIVATE_UPSTREAM_ERROR",{status:402}));
- assert.equal(upstream.status,502);
+ assert.equal(upstream.status,200);
  const body=await upstream.text();
  assert.match(body,/"upstreamHttp":402/);
+ assert.match(body,/"no_model_answered"/);
  assert.doesNotMatch(body,/VERY_PRIVATE_UPSTREAM_ERROR/);
  const quota=await nvidiaDiagnostic(post(token),env,async()=>({
   error:Response.json({error:"Had dua ujian NVIDIA sehari tercapai."},{status:429})
