@@ -45,7 +45,7 @@ function normalizedHeaders(request,origin,legacyOrigin){
 function internalOrigin(){return process.env.ALLOWED_ORIGIN||OLD_ORIGIN;}
 // Only readiness booleans are exposed: never reveal tokens, providers' secret
 // names, quota hashes or user data. The path is intentionally read-only.
-function health(env){
+function serviceHealth(env){
  const gemini=Boolean(env.GEMINI_API_KEY);
  const groq=Boolean(env.GROQ_API_KEY&&env.GROQ_FREE_CONFIRMED==="true");
  const orca=Boolean(env.ORCAROUTER_API_KEY&&env.AKSARA_ORCAROUTER_LAYER2==="true"&&env.AKSARA_FREE_FALLBACKS==="true");
@@ -95,7 +95,7 @@ async function release(stub,id){
 async function handle(request,env,ctx){
  const url=new URL(request.url),path=url.pathname,origin=url.origin;
  if(path==="/")return Response.redirect(OLD_ORIGIN+"/",302);
- if(path==="/api/aksara-health")return request.method==="GET"?health(env):json(405,"Gunakan GET.");
+ if(path==="/api/aksara-health")return request.method==="GET"?serviceHealth(env):json(405,"Gunakan GET.");
  if(!Object.values(apis).includes(path))return env.ASSETS.fetch(request);
  if(request.method==="OPTIONS"){
   if(request.headers.get("origin")!==origin)return json(403,"Origin tidak dibenarkan.");
