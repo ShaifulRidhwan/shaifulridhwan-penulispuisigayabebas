@@ -170,8 +170,9 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
      ...providerMessages.slice(1)];
    }
    const body={model:provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
-   // DeepSeek V4.1 Flash supports OpenAI Chat Completion and reasoning_effort.
-   if(provider.id==="nvidia"){body.model=provider.model;delete body.temperature;body.reasoning_effort=reasoningLevel==="high"?"high":"none";}
+   // NVIDIA NIM DeepSeek V4.1 Flash: use documented common Chat Completion fields only.
+   // Do not send speculative reasoning_effort=none (may cause HTTP 422).
+   if(provider.id==="nvidia"){body.model=provider.model;body.temperature=1;body.top_p=0.95;}
    if(provider.id==="openrouter")openRouterBody(body,["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"low");
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.
    if(provider.id==="groq"){
