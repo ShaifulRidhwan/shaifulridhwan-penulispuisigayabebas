@@ -3,13 +3,16 @@ const test=require("node:test");
 const assert=require("node:assert/strict");
 
 // Isolated mocked transport: no visitor data and no real NVIDIA inference.
-// NVIDIA trial adapter remains behind a strict activation gate.
-const keys=["AKSARA_HYBRID_ROUTER","AKSARA_FREE_FALLBACKS","AKSARA_NVIDIA_ENABLED","NVIDIA_API_KEY","OPENROUTER_API_KEY","GROQ_API_KEY"];
+// Licensed NVIDIA production adapter remains behind a strict entitlement gate.
+const keys=["AKSARA_HYBRID_ROUTER","AKSARA_FREE_FALLBACKS","AKSARA_NVIDIA_ENABLED","AKSARA_NVIDIA_PRODUCTION_AUTHORIZED","NVIDIA_PRODUCTION_API_KEY","NVIDIA_PRODUCTION_CHAT_URL","NVIDIA_API_KEY","OPENROUTER_API_KEY","GROQ_API_KEY"];
 const original=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
 process.env.AKSARA_FREE_FALLBACKS="true";
 process.env.AKSARA_HYBRID_ROUTER="false";
 process.env.AKSARA_NVIDIA_ENABLED="true";
-process.env.NVIDIA_API_KEY="test-not-a-real-key";
+process.env.NVIDIA_API_KEY="trial-test-key-must-not-reach-public";
+process.env.AKSARA_NVIDIA_PRODUCTION_AUTHORIZED="true";
+process.env.NVIDIA_PRODUCTION_API_KEY="test-only-production-key";
+process.env.NVIDIA_PRODUCTION_CHAT_URL="https://nim-enterprise.example.org/v1/chat/completions";
 delete process.env.OPENROUTER_API_KEY;
 delete process.env.GROQ_API_KEY;
 
@@ -21,9 +24,9 @@ test.after(()=>{
 
 test("NVIDIA is configured, text-only and entitlement-gated, with no paid-model override",()=>{
  assert.ok(Router.configured().some(p=>p.id==="nvidia"));
- assert.equal(Router.configured().find(p=>p.id==="nvidia").model,"deepseek-ai/deepseek-v4.1-flash");
+ assert.equal(Router.configured().find(p=>p.id==="nvidia").model,"nvidia/nemotron-3.5-bolt-e4b");
  assert.equal(Registry.CAPS.nvidia.vision,false);
- assert.equal(Registry.CAPS.nvidia.cost,"trial-prototyping");
+ assert.equal(Registry.CAPS.nvidia.cost,"licensed-production-only");
 });
 
 test("NVIDIA inherits Aksara identity, modes and multi-turn context",async()=>{
@@ -31,7 +34,7 @@ test("NVIDIA inherits Aksara identity, modes and multi-turn context",async()=>{
  global.fetch=async(url,request)=>{
   captured={url,request,body:JSON.parse(request.body)};
   return {ok:true,status:200,headers:{get:()=> "application/json"},json:async()=>({
-   model:"deepseek-ai/deepseek-v4.1-flash",
+   model:"nvidia/nemotron-3.5-bolt-e4b",
    choices:[{message:{content:"Aku Aksara. Kita sambung hujah tentang aporia."},finish_reason:"stop"}],
    usage:{completion_tokens:18}
   })};
@@ -42,8 +45,8 @@ test("NVIDIA inherits Aksara identity, modes and multi-turn context",async()=>{
    history:[{role:"user",content:"Kita bincang aporia."},{role:"assistant",content:"Aporia membuka persoalan."}],
    question:"Sambung perbincangan tadi.",maxTokens:1000,deadline:Date.now()+12000
   });
-  assert.equal(captured.url,"https://integrate.api.nvidia.com/v1/chat/completions");
-  assert.equal(captured.body.model,"deepseek-ai/deepseek-v4.1-flash");
+  assert.equal(captured.url,"https://nim-enterprise.example.org/v1/chat/completions");
+  assert.equal(captured.body.model,"nvidia/nemotron-3.5-bolt-e4b");
   assert.equal(captured.body.messages[0].role,"system");
   assert.match(captured.body.messages[0].content,/MOD GELAP/);
   assert.match(captured.body.messages[0].content,/CAHAYA\/GELAP/);
@@ -55,12 +58,12 @@ test("NVIDIA inherits Aksara identity, modes and multi-turn context",async()=>{
   assert.equal(captured.body.top_p,0.95);
   assert.equal(captured.body.reasoning_effort,undefined);
   assert.equal(answer.provider,"nvidia");
-  assert.equal(answer.model,"deepseek-ai/deepseek-v4.1-flash");
+  assert.equal(answer.model,"nvidia/nemotron-3.5-bolt-e4b");
   assert.match(answer.reply,/Aku Aksara/);
   const states=await Router.checkStatus();
   const orca=states.find(p=>p.id==="nvidia");
   assert.equal(orca.status,"online","Connected is earned by a real mocked reply");
-  assert.equal(orca.model,"deepseek-ai/deepseek-v4.1-flash");
+  assert.equal(orca.model,"nvidia/nemotron-3.5-bolt-e4b");
   assert.ok(Registry.diagnostics().some(r=>r.provider==="nvidia"&&r.success>=1));
  }finally{global.fetch=old;}
 });
@@ -70,7 +73,7 @@ test("NVIDIA streaming uses standard SSE without exposing reasoning",async()=>{
  const event=(data)=>"data: "+JSON.stringify(data)+"\n\n";
  global.fetch=async(_,opts)=>{
   request=JSON.parse(opts.body);
-  const payload=event({model:"deepseek-ai/deepseek-v4.1-flash",choices:[{delta:{reasoning_content:"internal only",content:"Aku "}}]})+
+  const payload=event({model:"nvidia/nemotron-3.5-bolt-e4b",choices:[{delta:{reasoning_content:"internal only",content:"Aku "}}]})+
    event({choices:[{delta:{content:"faham."}}]})+
    event({choices:[{delta:{},finish_reason:"stop"}]})+"data: [DONE]\n\n";
   return {ok:true,status:200,headers:{get:()=> "text/event-stream"},
@@ -79,7 +82,7 @@ test("NVIDIA streaming uses standard SSE without exposing reasoning",async()=>{
  try{
   const reply=await Router.complete({system:"Kau Aksara A.I.",history:[],question:"Salam",
    onDelta:t=>seen.push(t),deadline:Date.now()+12000});
-  assert.equal(request.model,"deepseek-ai/deepseek-v4.1-flash");
+  assert.equal(request.model,"nvidia/nemotron-3.5-bolt-e4b");
   assert.equal(request.stream,true);
   assert.equal(seen.join(""),"Aku faham.");
   assert.equal(reply.reply,"Aku faham.");
@@ -116,7 +119,7 @@ test("NVIDIA serves only after a failed first-layer provider",async()=>{
   if(url.includes("api.groq.com"))return {ok:false,status:503,headers:{get:()=>null},
    json:async()=>({error:{message:"temporarily unavailable"}})};
   return {ok:true,status:200,headers:{get:()=>"application/json"},
-   json:async()=>({model:"deepseek-ai/deepseek-v4.1-flash",
+   json:async()=>({model:"nvidia/nemotron-3.5-bolt-e4b",
     choices:[{message:{content:"Aku sambung melalui sandaran kedua."},finish_reason:"stop"}]})};
  };
  try{
