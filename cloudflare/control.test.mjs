@@ -74,6 +74,17 @@ test("studio AI prompt enhancements are limited per user",async t=>{
  assert.equal((await request("studio",{action:"enhance"})).status,429);
  assert.equal(db.prepare("SELECT enhancements FROM daily").get().enhancements,1);
 });
+test("NVIDIA owner-only tests are globally capped at two per day in SQLite",async t=>{
+ const {db,request}=fixture();t.after(()=>db.close());
+ const first=await request("nvidia-test",{hash:"a".repeat(32)});
+ const second=await request("nvidia-test",{hash:"b".repeat(32)});
+ const third=await request("nvidia-test",{hash:"c".repeat(32)});
+ assert.equal(first.status,200);
+ assert.equal(second.status,200);
+ assert.equal(third.status,429);
+ assert.equal(db.prepare("SELECT count FROM nvidia_test_daily").get().count,2);
+ assert.equal(db.prepare("SELECT chat FROM daily").get().chat,0);
+});
 test("control rejects malformed digests and release IDs",async t=>{
  const {db,request}=fixture();t.after(()=>db.close());
  assert.equal((await request("chat",{hash:"192.0.2.1"})).status,400);
