@@ -52,6 +52,24 @@ test("owner-only smoke calls NVIDIA once with safe fixed prompt; no key or reply
  assert.equal(request.top_p,0.95);
  assert.ok(request.messages.every(x=>typeof x.content==="string"&&x.content.length<160));
 });
+test("catalog safely verifies key access without spending an inference slot",async()=>{
+ const calls=[];
+ const quota=async(_env,kind)=>{calls.push("quota:"+kind);return {ok:true}};
+ const fetcher=async(url,options)=>{
+  calls.push(url);
+  assert.equal(options.method,"GET");
+  return Response.json({data:[{id:"deepseek-ai/deepseek-v4.1-flash"}]});
+ };
+ const req=new Request(origin+path,{method:"POST",headers:{"Origin":origin},
+  body:JSON.stringify({token,mode:"catalog"})});
+ const res=await nvidiaDiagnostic(req,env,quota,fetcher);
+ const body=await res.text();
+ assert.equal(res.status,200);
+ assert.match(body,/"credentialAccepted":true/);
+ assert.match(body,/"modelListed":true/);
+ assert.doesNotMatch(body,/unit-test-private-nvidia-token|token-only-for/);
+ assert.deepEqual(calls,["quota:health","https://integrate.api.nvidia.com/v1/models"]);
+});
 test("unavailable NVIDIA and exhausted quota are reported without provider error body",async()=>{
  const upstream=await nvidiaDiagnostic(post(token),env,async()=>({ok:true}),
   async()=>new Response("VERY_PRIVATE_UPSTREAM_ERROR",{status:402}));
