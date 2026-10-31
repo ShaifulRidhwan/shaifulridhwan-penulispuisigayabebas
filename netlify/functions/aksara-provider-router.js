@@ -44,8 +44,8 @@ const PROVIDERS=[
  {id:"groq",key:"GROQ_API_KEY",allow:"GROQ_FREE_CONFIRMED",
   url:"https://api.groq.com/openai/v1/chat/completions",model:"openai/gpt-oss-120b"},
  // Third primary: NVIDIA hosted NIM; requires permission for the intended use.
- {id:"nvidia",key:"NVIDIA_API_KEY",allow:null,
-  url:"https://integrate.api.nvidia.com/v1/chat/completions",model:"deepseek-ai/deepseek-v4.1-flash"},
+ {id:"nvidia",key:"NVIDIA_PRODUCTION_API_KEY",allow:null,
+  url:null,model:"nvidia/nemotron-3.5-bolt-e4b"},
  // Universal free-only last fallback for ordinary text.
  {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
   url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"}
@@ -70,9 +70,30 @@ function openRouterBody(body,effort="low"){
 const safeMessage=text=>boundedText(text,60000);
 function envEnabled(name){return String(process.env[name]||"").trim().toLowerCase()==="true";}
 function nvidiaConfig(){
- if(!envEnabled("AKSARA_NVIDIA_ENABLED"))return {active:false,reason:"license_not_confirmed"};
- if(!String(process.env.NVIDIA_API_KEY||"").trim())return {active:false,reason:"missing_key"};
- return {active:true,reason:"configured_not_probed"};
+ if(!envEnabled("AKSARA_NVIDIA_ENABLED"))return {active:false,reason:"public_disabled"};
+ // A Developer/Trial key CANNOT be used to serve end-users.
+ // This is a deployment configuration gate, not proof of a license.
+ if(!envEnabled("AKSARA_NVIDIA_PRODUCTION_AUTHORIZED"))
+  return {active:false,reason:"license_not_confirmed"};
+ if(!String(process.env.NVIDIA_PRODUCTION_API_KEY||"").trim())
+  return {active:false,reason:"missing_production_key"};
+ const input=String(process.env.NVIDIA_PRODUCTION_CHAT_URL||"").trim();
+ try{
+  const url=new URL(input);
+  const host=url.hostname.toLowerCase();
+  // Never send public visitor content to NVIDIA's trial API or arbitrary local host.
+  if(url.protocol!=="https:"||url.port||url.username||url.password||url.search||url.hash||
+    !/\/(?:v1\/)?chat\/completions$/.test(url.pathname)||
+    !/^[a-z0-9.-]+$/.test(host)||!host.includes(".")||
+    host==="localhost"||host.endsWith(".localhost")||host.endsWith(".local")||
+    /^\d+\.\d+\.\d+\.\d+$/.test(host)||host.startsWith("[")||
+    host==="integrate.api.nvidia.com"||host==="api.nvidia.com")
+   return {active:false,reason:"invalid_production_endpoint"};
+  return {active:true,reason:"configured_not_probed",endpoint:url.toString()};
+ }catch(_){return {active:false,reason:"missing_production_endpoint"};}
+}
+function providerUrl(provider){
+ return provider.id==="nvidia"?nvidiaConfig().endpoint:provider.url;
 }
 function configured(){
  if(!envEnabled("AKSARA_FREE_FALLBACKS"))return [];
@@ -170,7 +191,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
      ...providerMessages.slice(1)];
    }
    const body={model:provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
-   // NVIDIA NIM DeepSeek V4.1 Flash: use documented common Chat Completion fields only.
+   // Licensed NVIDIA Nemotron 3.5 Bolt production adapter: common Chat Completion fields only.
    // Do not send speculative reasoning_effort=none (may cause HTTP 422).
    if(provider.id==="nvidia"){body.model=provider.model;body.temperature=1;body.top_p=0.95;}
    if(provider.id==="openrouter")openRouterBody(body,["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"low");
@@ -179,7 +200,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
      body.reasoning_effort=simple?"low":["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"medium";
      body.include_reasoning=false;
    }
-   const res=await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(body),signal:control.signal});
+   const res=await fetch(providerUrl(provider),{method:"POST",headers,body:JSON.stringify(body),signal:control.signal});
    if(!res.ok){
     const e=new Error("Provider HTTP "+res.status);e.status=res.status;
     const details=await res.json().catch(()=>({}));
@@ -372,7 +393,7 @@ async function checkStatus(){
     const probeBody={model:provider.model,messages:[{role:"user",content:"Jawab OK sahaja."}],max_tokens:512};
     if(provider.id==="openrouter")openRouterBody(probeBody);
     if(provider.id==="groq"){probeBody.reasoning_effort="low";probeBody.include_reasoning=false;}
-    const response=await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(probeBody),signal:ctrl.signal});
+    const response=await fetch(providerUrl(provider),{method:"POST",headers,body:JSON.stringify(probeBody),signal:ctrl.signal});
     if(!response.ok){
      // A daily quota is not a transient five-second outage. Respect its reset.
      const details=response.status===429?await response.json().catch(()=>({})):null;
