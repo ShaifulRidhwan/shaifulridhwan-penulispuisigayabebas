@@ -27,7 +27,7 @@ test("Wrangler only routes API paths through Worker and keeps no deploy-on-merge
  const c=JSON.parse(text("wrangler.jsonc"));
  assert.equal(c.name,"aksara-apps");
  assert.equal(c.assets.binding,"ASSETS");
- assert.deepEqual(c.assets.run_worker_first,["/","/.netlify/functions/*","/api/aksara-health"]);
+ assert.deepEqual(c.assets.run_worker_first,["/","/.netlify/functions/*","/api/aksara-health","/api/aksara-nvidia-test"]);
  assert.ok(c.migrations.some(x=>x.new_sqlite_classes.includes("AksaraControl")));
  assert.equal(c.vars.AKSARA_SHARED_CHAT_BUDGET,"false");
  assert.equal(c.keep_vars,true,"Wrangler must preserve Dashboard-set account ID and other text vars");
