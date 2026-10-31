@@ -17,7 +17,7 @@ test("NVIDIA HTTP 402 free_quota_exhausted stays offline and free OpenRouter tak
   delete require.cache[path];
   const Router=require(path);
   global.fetch=async(url)=>{
-   if(url.includes("api.nvidia.ai")){
+   if(url.includes("integrate.api.nvidia.com")){
     orcaCalls++;
     return {ok:false,status:402,headers:{get:()=>null},
       json:async()=>({error:{code:"free_quota_exhausted",message:"Free quota exhausted"}})};
