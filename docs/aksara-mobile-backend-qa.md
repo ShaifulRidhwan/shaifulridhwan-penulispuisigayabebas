@@ -8,7 +8,7 @@ public Bilik Antara behavior until deliberately merged/released.
 - Dedicated Android owner-QA Gemini Live ephemeral-token route.
 - Shared high-entropy bearer-token validator that checks server-stored SHA-256
   using a timing-safe comparison; tokens are never embedded into Android.
-- Netlify Blobs daily and short-window token issuance quotas for mobile Live.
+- Netlify Blobs conditional onlyIfNew slot claims for mobile Live: 80/day global, 30/day per trusted client IP, 6 per fixed 10-minute bucket. These are conservative one-time slots, not transactional read/modify/write counters.
 - `studio-http.js` accepts an internally verified Android request **only when
   a trusted server-side adapter sets `__verifiedAndroid===true`**. This marker
   cannot be transmitted directly in a public browser body to the handler.
