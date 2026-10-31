@@ -1,7 +1,16 @@
-# AKSARA Android Native · v0.7.0
+# AKSARA Android Native · v0.8.0
 
 Native Kotlin + Jetpack Compose app, not a webview or Capacitor wrapper.
 Repository: ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas, branch `aksara-android`.
+
+## Native glass redesign (v0.8.0)
+
+- Rebuilt the web's dark charcoal, warm-gold and ivory visual tokens instead of the earlier opaque blue/purple cards.
+- **Real native GPU blur of the ORIGINAL static background image under glass panels** (Android 12/API 31+). The clipped sampled wallpaper mirrors panel position, with a translucent gradient and amber hairline, not just a solid transparent rectangle.
+- Frosted panels installed in the header, bottom navigation, entire chat area, Voice answer panel, and Studio panels. Background wallpaper is significantly more visible; current controls still work.
+- Background chat scene is additionally blurred when sessions, providers or feature overlays appear.
+- **Technical limit:** Compose RenderEffect blurs the wallpaper layer, not arbitrary live dynamic content behind each panel. On Android API 26–30 the surface-blur API is unavailable, so a translucent fallback is used. Perfect DOM/CSS pixel parity is not claimed until screenshot tests on the same density and device.
+- Gemini Live, the 3D character and mobile Studio production access are separate backend, graphics, licensing and authentication work, not bypassed by this visual update.
 
 ## Native message and attachment parity (v0.7.0)
 

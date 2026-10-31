@@ -53,10 +53,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 
-private val VoiceIce = Color(0xFFB9CEFF)
-private val VoiceViolet = Color(0xFFCCB7FF)
+private val VoiceIce = Color(0xFFEAC17C)
+private val VoiceViolet = Color(0xFFFFDCA0)
 private val VoiceWhite = Color(0xFFF1F4FF)
-private val VoiceMuted = Color(0xFFB7C4DF)
+private val VoiceMuted = Color(0xFFDDD0B8)
 
 @Composable
 fun AksaraVoiceScreen(vm: AksaraViewModel, modifier: Modifier = Modifier, openChat: () -> Unit) {
@@ -228,13 +228,15 @@ fun AksaraVoiceScreen(vm: AksaraViewModel, modifier: Modifier = Modifier, openCh
         if (vm.busy) Text(
             vm.status, color = VoiceMuted, fontSize = 12.sp, textAlign = TextAlign.Center
         )
+        AksaraGlassPanel(
+            modifier = Modifier.fillMaxWidth().weight(1f),
+            shape = RoundedCornerShape(20.dp),
+            blurRadius = 14.dp,
+            tint = Color(0x54111620),
+            border = Color(0x7CEAC17C)
+        ) {
         Column(
-            modifier = Modifier.fillMaxWidth()
-                .weight(1f)
-                .clip(RoundedCornerShape(20.dp))
-                .background(Color(0xC11C2640))
-                .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(20.dp))
-                .padding(15.dp),
+            modifier = Modifier.fillMaxWidth().padding(15.dp),
             verticalArrangement = Arrangement.spacedBy(13.dp)
         ) {
             Text("SOALAN KAU", color = VoiceIce, fontSize = 11.sp, fontWeight = FontWeight.Bold)
@@ -253,6 +255,7 @@ fun AksaraVoiceScreen(vm: AksaraViewModel, modifier: Modifier = Modifier, openCh
                 color = VoiceWhite, style = MaterialTheme.typography.bodyMedium,
                 maxLines = 9
             )
+        }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),

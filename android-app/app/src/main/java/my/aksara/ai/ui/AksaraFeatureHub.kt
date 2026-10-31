@@ -47,9 +47,9 @@ import java.util.Date
 import java.util.Locale
 
 private val HubWhite = Color(0xFFF1F3FF)
-private val HubIce = Color(0xFFAFC8FF)
-private val HubMuted = Color(0xFFB6C2DE)
-private val HubGlass = Color(0xAA202B48)
+private val HubIce = Color(0xFFEAC17C)
+private val HubMuted = Color(0xFFDDD0B8)
+private val HubGlass = Color(0x4F141924)
 
 @Composable
 fun AksaraProviderDialog(vm: AksaraViewModel, onDismiss: () -> Unit) {
@@ -107,7 +107,7 @@ fun AksaraProviderDialog(vm: AksaraViewModel, onDismiss: () -> Unit) {
             }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Tutup") } },
-        containerColor = Color(0xFF172037)
+        containerColor = Color(0xAA121621)
     )
 }
 
@@ -166,7 +166,7 @@ fun AksaraFeatureHub(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = Color(0xFF121A2D)
+        containerColor = Color(0x9A121621)
     ) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
             Text("CIRI & FUNGSI", color = HubWhite, fontSize = 21.sp,
@@ -433,7 +433,7 @@ private fun HubSection(title: String, detail: String, children: @Composable () -
     Column(
         modifier = Modifier.fillMaxWidth()
             .background(HubGlass, RoundedCornerShape(18.dp))
-            .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(18.dp))
+            .border(1.dp, Color(0x67EAC17C), RoundedCornerShape(18.dp))
             .padding(15.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {

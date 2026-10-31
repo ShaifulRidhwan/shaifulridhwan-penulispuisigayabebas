@@ -54,9 +54,9 @@ import java.io.IOException
 import java.security.SecureRandom
 
 private val StudioWhite = Color(0xFFF3F2FF)
-private val StudioMuted = Color(0xFFB8C2DE)
-private val StudioIce = Color(0xFFC4D6FF)
-private val StudioGlass = Color(0xA9202944)
+private val StudioMuted = Color(0xFFDDD0B8)
+private val StudioIce = Color(0xFFEAC17C)
+private val StudioGlass = Color(0x6610141D)
 
 @Composable
 fun AksaraStudioScreen(modifier: Modifier = Modifier) {
@@ -366,13 +366,18 @@ fun AksaraStudioScreen(modifier: Modifier = Modifier) {
 
 @Composable
 private fun StudioPanel(content: @Composable () -> Unit) {
-    Column(
-        modifier = Modifier.fillMaxWidth()
-            .background(StudioGlass, RoundedCornerShape(20.dp))
-            .border(1.dp, Color(0x38FFFFFF), RoundedCornerShape(20.dp))
-            .padding(14.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) { content() }
+    AksaraGlassPanel(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        blurRadius = 12.dp,
+        tint = Color(0x6410141D),
+        border = Color(0x88EAC17C)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) { content() }
+    }
 }
 
 @Composable

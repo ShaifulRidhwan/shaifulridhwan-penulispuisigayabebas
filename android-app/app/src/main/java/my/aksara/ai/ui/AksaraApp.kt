@@ -57,6 +57,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,8 +69,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -77,6 +80,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
@@ -87,11 +91,11 @@ import my.aksara.ai.data.AndroidAttachmentReader
 import my.aksara.ai.data.ChatTurn
 
 private val Night = Color(0xFF080D1A)
-private val Glass = Color(0xC21A243C)
-private val Ice = Color(0xFFA8BFFF)
-private val Orchid = Color(0xFFC3A7FF)
-private val Border = Color(0x36FFFFFF)
-private val Soft = Color(0xFFB7C4DF)
+private val Glass = Color(0x66101923)
+private val Ice = Color(0xFFEAC17C)
+private val Orchid = Color(0xFFFFDBA4)
+private val Border = Color(0x77EAC78F)
+private val Soft = Color(0xFFE0D4C0)
 
 @Composable
 fun AksaraApp(vm: AksaraViewModel = viewModel()) {
@@ -99,33 +103,44 @@ fun AksaraApp(vm: AksaraViewModel = viewModel()) {
     var sessionsOpen by remember { mutableStateOf(false) }
     var featuresOpen by remember { mutableStateOf(false) }
     var providersOpen by remember { mutableStateOf(false) }
-    val tint = if (vm.mode == "gelap") Color(0xFF322047) else Color(0xFF13264B)
+    val tint = if (vm.mode == "gelap") Color(0xFF171524) else Color(0xFF131926)
+    var glassViewport by remember { mutableStateOf(IntSize.Zero) }
+    val isModalShowing = sessionsOpen || featuresOpen || providersOpen
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize().onSizeChanged { glassViewport = it }
             .background(
                 Brush.verticalGradient(
                     listOf(tint, Night, Color(0xFF0A0D18))
                 )
             )
     ) {
+        CompositionLocalProvider(AksaraGlassViewport provides glassViewport) {
         Image(
             painter = painterResource(R.drawable.aksara_bilik_background),
             contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize().graphicsLayer {
-                alpha = if (vm.mode == "gelap") 0.22f else 0.32f
+                alpha = if (vm.mode == "gelap") 0.76f else 0.88f
             }
         )
         Box(
             Modifier.fillMaxSize().background(
                 Brush.verticalGradient(
-                    listOf(Color(0x88141A35), Color(0x77080D1A), Color(0xD9080D1A))
+                    listOf(Color(0x28060912), Color(0x390B0D18), Color(0x87060810))
                 )
             )
         )
         Scaffold(
+            modifier = Modifier.graphicsLayer {
+                renderEffect = if (isModalShowing) BlurEffect(7f, 7f) else null
+            },
             containerColor = Color.Transparent,
             topBar = {
+                AksaraGlassPanel(
+                    modifier = Modifier.fillMaxWidth().statusBarsPadding(),
+                    shape = RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp),
+                    blurRadius = 12.dp, tint = Color(0x5910131C)
+                ) {
                 AksaraHeader(
                     vm,
                     onSessions = { tab = "Chat"; sessionsOpen = true },
@@ -133,13 +148,16 @@ fun AksaraApp(vm: AksaraViewModel = viewModel()) {
                     onProviders = { providersOpen = true },
                     onVoice = { tab = "Voice" }
                 )
+                }
             },
             bottomBar = {
+                AksaraGlassPanel(
+                    modifier = Modifier.fillMaxWidth().navigationBarsPadding(),
+                    shape = RoundedCornerShape(topStart = 19.dp, topEnd = 19.dp),
+                    blurRadius = 16.dp, tint = Color(0x5710131C)
+                ) {
                 Row(
                     modifier = Modifier.fillMaxWidth()
-                        .background(Glass)
-                        .border(1.dp, Border)
-                        .navigationBarsPadding()
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
@@ -159,6 +177,7 @@ fun AksaraApp(vm: AksaraViewModel = viewModel()) {
                             )
                         }
                     }
+                }
                 }
             }
         ) { insets ->
@@ -184,6 +203,7 @@ fun AksaraApp(vm: AksaraViewModel = viewModel()) {
         if (providersOpen) {
             AksaraProviderDialog(vm, onDismiss = { providersOpen = false })
         }
+        }
     }
 }
 
@@ -197,8 +217,8 @@ private fun AksaraHeader(
 ) {
     val activeTitle = vm.sessions.firstOrNull { it.id == vm.activeId }?.title ?: "Sesi Baharu"
     Column(
-        modifier = Modifier.fillMaxWidth().statusBarsPadding()
-            .padding(horizontal = 14.dp, vertical = 5.dp),
+        modifier = Modifier.fillMaxWidth()
+            .padding(horizontal = 14.dp, vertical = 7.dp),
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Row(
@@ -492,8 +512,15 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
         }
     }
 
+    AksaraGlassPanel(
+        modifier = modifier.fillMaxSize().imePadding().padding(horizontal = 10.dp),
+        shape = RoundedCornerShape(20.dp),
+        blurRadius = 3.dp,
+        tint = Color(0x35080B13),
+        border = Color(0x44EAC17C)
+    ) {
     Column(
-        modifier = modifier.fillMaxSize().imePadding().padding(horizontal = 13.dp),
+        modifier = Modifier.fillMaxSize().padding(horizontal = 7.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Row(
@@ -672,6 +699,7 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
                 modifier = Modifier.padding(start = 6.dp, bottom = 2.dp))
         }
     }
+    }
     if (modeOpen) {
         AlertDialog(
             onDismissRequest = { modeOpen = false },
@@ -717,11 +745,11 @@ private fun MessageBubble(
                 .clip(RoundedCornerShape(19.dp))
                 .background(
                     Brush.verticalGradient(
-                        if (mine) listOf(Color(0xC43E547D), Color(0xA126385A))
-                        else listOf(Color(0xD1212A45), Color(0xAF172039))
+                        if (mine) listOf(Color(0x77111420), Color(0x77131822))
+                        else listOf(Color(0x66101720), Color(0x6B080D17))
                     )
                 )
-                .border(1.dp, if (mine) Color(0x668FA8FF) else Border,
+                .border(1.dp, if (mine) Color(0x99EEE2CB) else Border,
                     RoundedCornerShape(19.dp))
                 .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(7.dp)

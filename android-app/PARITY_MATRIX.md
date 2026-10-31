@@ -60,3 +60,10 @@ For the remaining high-impact gaps, prioritize:
 3. Studio mobile backend production activation only after protected identity, durable quotas and owner approval.
 4. Rich server result cards/diagrams and visual snapshot comparisons at multiple phone sizes.
 5. Durable release signing, accessibility and robust cross-device storage policy.
+
+## v0.8 native visual audit
+
+- Glass CSS baseline: conversation blur 3px, bubbles 2–3px, composer 8px, drawers 14–18px, translucent charcoal and gold hairlines.
+- Native GPU backdrop-image frosted layer: header 12dp, navigation 16dp, central chat 3dp, Studio 12dp, Voice 14dp; replaces opaque blue cards. These are density-independent Android blur radii, not literal CSS pixels.
+- Real-time moving-content blur and cross-window blur are not identical to CSS; device screenshot/regression QA required. Older Android renders a readable translucent fallback.
+- Warm amber palette brings text and controls closer to the original web CSS.
