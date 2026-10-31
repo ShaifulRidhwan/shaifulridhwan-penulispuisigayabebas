@@ -22,7 +22,7 @@ function setup(){
 }
 const ok=(provider="demo")=>Response.json({model:provider,choices:[{message:{content:"Aku Aksara. Ini respons ujian."},finish_reason:"stop"}]});
 const fail=()=>new Response(JSON.stringify({error:{message:"upstream unavailable"}}),{status:503,headers:{"content-type":"application/json"}});
-const provider=url=>url.includes("api.groq.com")?"groq":url.includes("api.nvidia.ai")?"nvidia":url.includes("openrouter.ai")?"openrouter":url.includes("googleapis")?"gemini":"unknown";
+const provider=url=>url.includes("api.groq.com")?"groq":url.includes("integrate.api.nvidia.com")?"nvidia":url.includes("openrouter.ai")?"openrouter":url.includes("googleapis")?"gemini":"unknown";
 test("A preference or recent OpenRouter success cannot outrank Groq/NVIDIA",()=>{
  const Router=setup();
  const available=Router.configured();
@@ -59,7 +59,7 @@ test("Image route retains explicit OpenRouter-only capability, never leaking to 
  assert.equal(result.provider,"openrouter");
  assert.deepEqual(calls,["openrouter"]);
 });
-test("Bilik Antara tests Groq/Orca and Gemini before universal OpenRouter backup",async()=>{
+test("Bilik Antara tests Groq/NVIDIA and Gemini before universal OpenRouter backup",async()=>{
  setup();const handler=require("../netlify/functions/bilik-antara").handler,calls=[];
  global.fetch=async url=>{const id=provider(url);calls.push(id);return id==="openrouter"?ok(id):fail();};
  const event={httpMethod:"POST",
