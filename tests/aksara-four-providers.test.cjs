@@ -28,7 +28,7 @@ test("Canonical identity contains four providers and clear capability/status sem
  }
  assert.match(Identity.PROVIDER_FACTS,/Ready.*Connected/);
  assert.match(Identity.PROVIDER_FACTS,/Voice Live/);
- assert.match(Identity.PROVIDER_FACTS,/bukan model asas kelima/);
+ assert.match(Identity.PROVIDER_FACTS,/bukan penyedia kelima/);
 });
 
 test("Default starter lists four brains; user interface and provider registry agree",()=>{
@@ -130,7 +130,7 @@ test("Ready is not falsely labelled Connected, and live status is provider-speci
  assert.match(backend,/const providers=\[google,\.\.\.alternatives\]/);
  const src=fs.readFileSync("netlify/functions/aksara-provider-router.js","utf8");
  assert.match(src,/model:"openrouter\/free"/);
- assert.match(src,/model:"nvidia\/free"/);
+ assert.match(src,/model:"deepseek-ai\/deepseek-v4\.1-flash"/);
 });
 
 test("Four-brain server responses require no external model call",async()=>{
