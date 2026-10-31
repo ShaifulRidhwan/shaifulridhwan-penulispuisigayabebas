@@ -1,4 +1,4 @@
-name: One-time AKSARA Gemini 3.6 and 3.8 live smoke
+name: Verify AKSARA Gemini 3.6 and 3.8 post-health fix
 on:
   push:
     branches:
