@@ -3,7 +3,7 @@ const test=require("node:test");
 const assert=require("node:assert/strict");
 
 // Isolated mocked transport: no visitor data and no real NVIDIA inference.
-// Legacy layer-2 contract stays tested behind the emergency rollback flag.
+// NVIDIA trial adapter remains behind a strict activation gate.
 const keys=["AKSARA_HYBRID_ROUTER","AKSARA_FREE_FALLBACKS","AKSARA_NVIDIA_ENABLED","NVIDIA_API_KEY","OPENROUTER_API_KEY","GROQ_API_KEY"];
 const original=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
 process.env.AKSARA_FREE_FALLBACKS="true";
@@ -58,7 +58,7 @@ test("NVIDIA inherits Aksara identity, modes and multi-turn context",async()=>{
   const states=await Router.checkStatus();
   const orca=states.find(p=>p.id==="nvidia");
   assert.equal(orca.status,"online","Connected is earned by a real mocked reply");
-  assert.equal(orca.model,"deepseek/deepseek-v4-flash-free");
+  assert.equal(orca.model,"deepseek-ai/deepseek-v4.1-flash");
   assert.ok(Registry.diagnostics().some(r=>r.provider==="nvidia"&&r.success>=1));
  }finally{global.fetch=old;}
 });
@@ -68,7 +68,7 @@ test("NVIDIA streaming uses standard SSE without exposing reasoning",async()=>{
  const event=(data)=>"data: "+JSON.stringify(data)+"\n\n";
  global.fetch=async(_,opts)=>{
   request=JSON.parse(opts.body);
-  const payload=event({model:"deepseek/deepseek-v4-flash-free",choices:[{delta:{reasoning_content:"internal only",content:"Aku "}}]})+
+  const payload=event({model:"deepseek-ai/deepseek-v4.1-flash",choices:[{delta:{reasoning_content:"internal only",content:"Aku "}}]})+
    event({choices:[{delta:{content:"faham."}}]})+
    event({choices:[{delta:{},finish_reason:"stop"}]})+"data: [DONE]\n\n";
   return {ok:true,status:200,headers:{get:()=> "text/event-stream"},
@@ -114,7 +114,7 @@ test("NVIDIA serves only after a failed first-layer provider",async()=>{
   if(url.includes("api.groq.com"))return {ok:false,status:503,headers:{get:()=>null},
    json:async()=>({error:{message:"temporarily unavailable"}})};
   return {ok:true,status:200,headers:{get:()=>"application/json"},
-   json:async()=>({model:"deepseek/deepseek-v4-flash-free",
+   json:async()=>({model:"deepseek-ai/deepseek-v4.1-flash",
     choices:[{message:{content:"Aku sambung melalui sandaran kedua."},finish_reason:"stop"}]})};
  };
  try{
