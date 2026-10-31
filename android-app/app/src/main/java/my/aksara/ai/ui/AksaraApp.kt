@@ -616,6 +616,7 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
         }
         if (speechNote.isNotBlank()) Text(speechNote, color = Ice,
             fontSize = 11.sp)
+        attachment?.let { selected -> AksaraAttachmentPreview(selected) }
         if (attachment != null) {
             Row(
                 modifier = Modifier.fillMaxWidth()

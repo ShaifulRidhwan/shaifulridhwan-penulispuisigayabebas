@@ -1,7 +1,16 @@
-# AKSARA Android Native · v0.6.0
+# AKSARA Android Native · v0.7.0
 
 Native Kotlin + Jetpack Compose app, not a webview or Capacitor wrapper.
 Repository: ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas, branch `aksara-android`.
+
+## Native message and attachment parity (v0.7.0)
+
+- Real, clickable **HTTPS links** in model Markdown. Non-HTTPS, malformed and user-info-bearing links are never clickable. No embedded HTML or WebView.
+- Native **Markdown tables** (horizontal scroll), **code blocks** (language label, horizontal scroll, copy code), headings, bullets, quotations and dividers. Bounds protect against pathological model responses.
+- Native **image attachment thumbnails before sending**, decoded at reduced resolution off the UI thread for smooth scrolling. User can remove pending attachment. Raw media is not stored in conversation history.
+- JUnit regression tests for Markdown code/table parsing, untrusted link handling, and image thumbnail downsampling.
+- All Android Compose components retain the app's original artwork, session handling and model/Studio/Voice wiring from v0.6.
+- This is functional progress toward parity, **NOT proof of identical CSS pixels or all web features**. Production backend Studio and full Gemini Live remain separately gated; see parity matrix.
 
 ## Native parity: Studio and source references (v0.6.0)
 
