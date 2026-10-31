@@ -8,7 +8,7 @@ const src=fs.readFileSync("netlify/functions/aksara-provider-router.js","utf8");
 function makeRouter({review=false,failGroq=false}={}){
  const requests=[];
  const env={
-  AKSARA_FREE_FALLBACKS:"true",GROQ_FREE_CONFIRMED:"true",
+  AKSARA_HYBRID_ROUTER:"false",AKSARA_FREE_FALLBACKS:"true",GROQ_FREE_CONFIRMED:"true",
   GROQ_API_KEY:"test",OPENROUTER_API_KEY:"test",
   ...(review?{AKSARA_CROSS_REVIEW:"true"}:{})
  };
