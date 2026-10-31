@@ -5,7 +5,7 @@ function input(event){
  if(event.httpMethod!=='POST')throw Object.assign(Error('Gunakan POST.'),{status:405});
  const h=event.headers||{},origin=h.origin||h.Origin,host=String(h.host||h.Host||'').toLowerCase();
  let good=false;try{const u=new URL(origin);good=u.protocol==='https:'&&u.host.toLowerCase()===host&&(!h['sec-fetch-site']||h['sec-fetch-site']==='same-origin');}catch(_){}
- if(!good)throw Object.assign(Error('Buka Studio untuk buat permintaan ini.'),{status:403});
+ if(!good&&event.__verifiedAndroid!==true)throw Object.assign(Error('Buka Studio untuk buat permintaan ini.'),{status:403});
  if(!/^application\/json(?:\s*;|$)/i.test(h['content-type']||h['Content-Type']||''))throw Object.assign(Error('Format permintaan mesti JSON.'),{status:415});
  if(event.isBase64Encoded||typeof event.body!=='string'||Buffer.byteLength(event.body)>7000)throw Object.assign(Error('Permintaan terlalu besar.'),{status:413});
  let data;try{data=JSON.parse(event.body);}catch(_){throw Object.assign(Error('Data tak sah.'),{status:400});}
