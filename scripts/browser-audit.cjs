@@ -92,7 +92,7 @@ async function chat(page,device){
  await verifyLocalLinks(page);
  // Async CSS must become fully effective, and every original effect must remain.
  await page.waitForFunction(()=>{
-  const sheet=document.querySelector('link[href="bilik-antara-suite.css?v=6"]');
+  const sheet=document.querySelector('link[href^="bilik-antara-suite.css?v="]');
   return sheet?.media==="all"&&!!sheet.sheet;
  },null,{timeout:10000});
  const surface=await page.evaluate(()=>{
@@ -106,7 +106,7 @@ async function chat(page,device){
    chatTop:rect.top,chatHeight:rect.height,appTop:app.top,
    redundantHero:!!document.querySelector(".identity,.eyebrow,.chapter-ornament"),
    bodyFont:body.fontFamily,
-   suite:!!document.querySelector('link[href="bilik-antara-suite.css?v=6"]')?.sheet};
+   suite:!!document.querySelector('link[href^="bilik-antara-suite.css?v="]')?.sheet};
  });
  assert.match(surface.glass,/blur\(/,"Liquid Glass must retain its original blur");
  assert.equal(surface.haze,"none","Retired fog layer must stay absent");
