@@ -35,6 +35,8 @@ jobs:
         run: node --test tests/aksara-deepseek-identity.test.cjs
       - name: Verify owner-only NVIDIA trial diagnostic safety and response redaction
         run: node --test cloudflare/nvidia-diagnostic.test.mjs
+      - name: Verify Cloudflare Gemini-specific time budget and truthful status
+        run: node --test tests/aksara-cloudflare-gemini-latency.test.cjs
       - name: Validate Cloudflare Worker bundle without uploading or secrets
         run: npx --yes wrangler@4.135.0 deploy --config cloudflare/wrangler.jsonc --dry-run --outdir ./cloudflare/.verify-output
       - name: Smoke test actual local Cloudflare Workers runtime
