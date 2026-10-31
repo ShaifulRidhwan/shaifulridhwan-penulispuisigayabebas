@@ -206,7 +206,7 @@ exports.handler=async event=>{
           const time=Date.now();
           try{
             if(googleWait(fastModel)>0)return {id:"gemini",model:fastModel,status:"offline",retryAfterSeconds:googleWait(fastModel)};
-            const test=await callGemini({apiKey,model:fastModel,system:"Pemeriksaan sambungan, jawab ringkas.",contents:[{role:"user",parts:[{text:"Balas OK."}]}],maxTokens:96,thinkingLevel:fastModel.includes("flash-lite")?"minimal":"low",timeoutMs:11000,signal:event.signal});
+            const test=await callGemini({apiKey,model:fastModel,system:"Pemeriksaan sambungan, jawab ringkas.",contents:[{role:"user",parts:[{text:"Balas OK."}]}],maxTokens:640,thinkingLevel:fastModel.includes("flash-lite")?"minimal":"low",timeoutMs:12000,signal:event.signal});
             return {id:"gemini",model:fastModel,status:modelText(test?.candidates?.[0])?"online":"offline",latencyMs:Date.now()-time};
           }catch(e){
             googleCooldown(fastModel,e);
