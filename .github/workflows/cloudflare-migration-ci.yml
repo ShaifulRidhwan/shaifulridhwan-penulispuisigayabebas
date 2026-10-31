@@ -31,7 +31,7 @@ jobs:
         run: npx --yes wrangler@4.135.0 deploy --config cloudflare/wrangler.jsonc --dry-run --outdir ./cloudflare/.verify-output
       - name: Smoke test actual local Cloudflare Workers runtime
         run: |
-          npx --yes wrangler@4.135.0 dev --config cloudflare/wrangler.jsonc --local --port 8787 > /tmp/aksara-cloudflare-local.log 2>&1 &
+          npx --yes wrangler@4.135.0 dev --config cloudflare/wrangler.jsonc --local --port 8787 --var AKSARA_RATE_SALT:CI-local-ephemeral-salt-only-not-a-real-secret > /tmp/aksara-cloudflare-local.log 2>&1 &
           PID=$!
           trap 'kill $PID 2>/dev/null || true' EXIT
           ready=0
@@ -51,3 +51,15 @@ jobs:
           test "$STATUS" = 403
           # Valid HTTPS-origin Studio validation is covered by the Node adapter test.
           # Local dev serves HTTP; production Studio intentionally requires HTTPS.
+          # SQLite Durable Object quota smoke: No Gemini key is supplied.
+          for i in 1 2 3 4 5; do
+            CODE=$(curl --max-time 5 -s -o /tmp/aksara-voice-$i.json -w '%{http_code}' -X POST \
+              -H 'Origin: http://127.0.0.1:8787' -H 'Content-Type: application/json' \
+              --data '{}' http://127.0.0.1:8787/.netlify/functions/bilik-antara-live-token)
+            test "$CODE" = 503 || { cat /tmp/aksara-voice-$i.json; exit 1; }
+          done
+          CODE=$(curl --max-time 5 -s -o /tmp/aksara-voice-blocked.json -w '%{http_code}' -X POST \
+            -H 'Origin: http://127.0.0.1:8787' -H 'Content-Type: application/json' \
+            --data '{}' http://127.0.0.1:8787/.netlify/functions/bilik-antara-live-token)
+          test "$CODE" = 429 || { cat /tmp/aksara-voice-blocked.json; exit 1; }
+          echo 'Cloudflare local runtime + Durable Object quota smoke passed'
