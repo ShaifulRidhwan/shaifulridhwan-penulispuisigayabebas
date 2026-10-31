@@ -33,9 +33,10 @@ test("unauthenticated and foreign-origin requests never call NVIDIA or quota",as
 });
 test("owner-only smoke calls NVIDIA once with safe fixed prompt; no key or reply leaked",async()=>{
  const calls=[];
- const quota=async(_env,kind)=>{assert.equal(kind,"nvidia-test");return {ok:true}};
+ const quota=async(_env,kind)=>{assert.ok(["health","nvidia-test"].includes(kind));return {ok:true}};
  const fetcher=async(url,opts)=>{
   calls.push({url,opts});
+  if(url.endsWith("/models"))return Response.json({data:[{id:"deepseek-ai/deepseek-v4.1-flash"}]});
   return Response.json({choices:[{message:{content:"Metafora ialah perbandingan secara kiasan."}}]});
  };
  const res=await nvidiaDiagnostic(post(token),env,quota,fetcher);
@@ -43,10 +44,11 @@ test("owner-only smoke calls NVIDIA once with safe fixed prompt; no key or reply
  assert.equal(res.status,200);
  assert.match(body,/"hasAnswer":true/);
  assert.doesNotMatch(body,/Metafora|unit-test-private-nvidia-token|token-only-for/);
- assert.equal(calls.length,1);
- assert.equal(calls[0].url,"https://integrate.api.nvidia.com/v1/chat/completions");
- assert.equal(calls[0].opts.headers.Authorization,"Bearer "+env.NVIDIA_API_KEY);
- const request=JSON.parse(calls[0].opts.body);
+ assert.equal(calls.length,2);
+ assert.equal(calls[0].url,"https://integrate.api.nvidia.com/v1/models");
+ assert.equal(calls[1].url,"https://integrate.api.nvidia.com/v1/chat/completions");
+ assert.equal(calls[1].opts.headers.Authorization,"Bearer "+env.NVIDIA_API_KEY);
+ const request=JSON.parse(calls[1].opts.body);
  assert.equal(request.model,"deepseek-ai/deepseek-v4.1-flash");
  assert.equal(request.temperature,1);
  assert.equal(request.top_p,0.95);
@@ -58,7 +60,7 @@ test("catalog safely verifies key access without spending an inference slot",asy
  const fetcher=async(url,options)=>{
   calls.push(url);
   assert.equal(options.method,"GET");
-  return Response.json({data:[{id:"deepseek-ai/deepseek-v4.1-flash"}]});
+  return Response.json({data:[{id:"deepseek-ai/deepseek-v4.1-flash"},{id:"nvidia/nemotron-3.5-lightning-30b-a3b"},{id:"nvidia/nemotron-3.5-embed-1b"}]});
  };
  const req=new Request(origin+path,{method:"POST",headers:{"Origin":origin},
   body:JSON.stringify({token,mode:"catalog"})});
@@ -72,7 +74,7 @@ test("catalog safely verifies key access without spending an inference slot",asy
 });
 test("unavailable NVIDIA and exhausted quota are reported without provider error body",async()=>{
  const upstream=await nvidiaDiagnostic(post(token),env,async()=>({ok:true}),
-  async()=>new Response("VERY_PRIVATE_UPSTREAM_ERROR",{status:402}));
+  async(url)=>url.endsWith("/models")?Response.json({data:[{id:"deepseek-ai/deepseek-v4.1-flash"}]}):new Response("VERY_PRIVATE_UPSTREAM_ERROR",{status:402}));
  assert.equal(upstream.status,502);
  const body=await upstream.text();
  assert.match(body,/"upstreamHttp":402/);
