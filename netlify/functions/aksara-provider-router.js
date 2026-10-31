@@ -8,6 +8,8 @@
 const {boundedHistory,boundedText,requestControl,readSSE}=require("./lib/aksara-transport");
 const Registry=require("./aksara-model-registry");
 const cooldown=new Map();
+const freeQuotaFailures=new Map(); // 402: real upstream free-quota exhaustion, not a 15-second outage.
+const FREE_QUOTA_RECHECK_MS=15*60*1000;
 let preferredProvider=""; // Best recent successful fallback within the current warm function instance.
 let recentOpenRouter={model:"",at:0}; // Real replies only, never synthetic status.
 let recentOrcaRouter={model:"",at:0}; // Only a real answer can establish Connected.
@@ -184,6 +186,10 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     const message=String(details?.error?.message||details?.message||"");
     e.fieldIssue=(message.match(/reasoning|stream|models|max_tokens|model|content|messages|system|billing|credits|quota/i)||[])[0]?.toLowerCase();
     e.errorType=String(details?.error?.code||details?.type||"").replace(/[^a-z0-9_-]/gi,"").slice(0,45);
+    if(res.status===402&&e.errorType==="free_quota_exhausted"){
+      e.reason="free_quota_exhausted";e.quotaKind="free_exhausted";
+      // No upstream reset promise: back off instead of hammering OrcaRouter.
+    }
     if(res.status===429){
       e.quotaKind=quotaKind(message);
       e.retryAfterSeconds=retrySeconds(res,e.quotaKind==="daily"?3600:30);
@@ -235,6 +241,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     healthCache.value=healthCache.value.map(x=>x.id===provider.id?{...x,status:"online",model:data.model||provider.model,latencyMs:Date.now()-attemptStarted,retryAfterSeconds:0}:x);
     healthCache.time=Date.now();
    }
+   freeQuotaFailures.delete(provider.id);
    const finishReason=String(data?.choices?.[0]?.finish_reason||"");
    return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task,attempts,elapsedMs:Date.now()-attemptStarted};
   }catch(err){
@@ -246,8 +253,10 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    }
    Registry.observe(provider.id,{ok:false,latencyMs:Date.now()-attemptStarted});
    const status=Number(err.status||0);
-   const wait=err.retryAfterSeconds?err.retryAfterSeconds*1000:errorToCooldown(status);
+   const quotaExhausted=status===402&&err.errorType==="free_quota_exhausted";
+   const wait=quotaExhausted?FREE_QUOTA_RECHECK_MS:(err.retryAfterSeconds?err.retryAfterSeconds*1000:errorToCooldown(status));
    cooldown.set(provider.id,Date.now()+wait);
+   if(quotaExhausted)freeQuotaFailures.set(provider.id,Date.now()+wait);
    if(preferredProvider===provider.id)preferredProvider="";
    attempts.push({provider:provider.id,status:status||"unavailable",reason:err.reason||(err.name==="AbortError"?"timeout":status===429?"rate_limit":status>=500?"upstream":"request_failed"),...(err.quota?{quota:err.quota}:{}),...(err.quotaKind?{quotaKind:err.quotaKind}:{}),...(err.fieldIssue?{fieldIssue:err.fieldIssue}:{}),...(err.errorType?{errorType:err.errorType}:{}),...(err.reason==="empty_output"?{finishReason:err.finishReason,outputTokens:err.outputTokens}:{}),elapsedMs:Date.now()-attemptStarted,retryAfterSeconds:Math.ceil(wait/1000)});
   }finally{control.close();}
@@ -325,7 +334,8 @@ const healthCache={time:0,value:null,pending:null};
 function reflectCooldown(checks){
  return checks.map(item=>{
   const seconds=Math.max(0,Math.ceil(((cooldown.get(item.id)||0)-Date.now())/1000));
-  return seconds?{...item,status:"offline",reason:"cooldown",retryAfterSeconds:seconds}:item;
+  const quota=seconds>0&&(freeQuotaFailures.get(item.id)||0)>Date.now();
+  return quota?{...item,status:"offline",reason:"free_quota_exhausted",http:402}:seconds?{...item,status:"offline",reason:"cooldown",retryAfterSeconds:seconds}:item;
  });
 }
 async function checkStatus(){
@@ -336,7 +346,7 @@ async function checkStatus(){
   const checks=await Promise.all(PROVIDERS.map(async provider=>{
    const active=configured().some(p=>p.id===provider.id);
    if(!active)return {id:provider.id,status:"off",...(provider.id==="orcarouter"?{reason:orcaConfig().reason}:{})};
-   if(Date.now()<(cooldown.get(provider.id)||0))return {id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
+   if(Date.now()<(cooldown.get(provider.id)||0))return (freeQuotaFailures.get(provider.id)||0)>Date.now()?{id:provider.id,status:"offline",reason:"free_quota_exhausted",http:402}:{id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
     if(provider.id==="orcarouter"){
