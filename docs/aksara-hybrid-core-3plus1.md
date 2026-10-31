@@ -11,7 +11,7 @@
 
 ## Traffic and budget
 
-- Netlify native function rateLimit: Chat 60 requests per IP+domain/60s; Voice Live token 30 requests per IP+domain/60s. Existing per-instance Chat 12/min and Voice session controls stay in place.
+- Netlify native function rateLimit: Chat streaming 60 requests per IP+domain/60s; Voice Live token 30 requests per IP+domain/60s. Chat JSON fallback retains local 12/min and optional shared budget. Existing per-instance Chat 12/min and Voice session controls stay in place.
 - Native platform enforcement is not instantaneous; Netlify's documented enforcement delay may reach ten seconds. Confirm the rules in the post-processing deploy log. These two rules use the Free plan's two code-rule allocation.
 - Studio already has its own distributed daily budget and is unchanged.
 - **Optional** global shared Chat budget using Netlify Blobs strong reads and ETag conditional writes: set AKSARA_SHARED_CHAT_BUDGET=true to activate. Set AKSARA_CHAT_DAILY_REQUESTS to a suitable cap, default 800 (UTC daily reset = 08:00 MYT). Disabled by default pending live storage verification. Storage failure fails closed to preserve API credits. Avoid enabling on Deploy Preview without isolating the site-wide store.
