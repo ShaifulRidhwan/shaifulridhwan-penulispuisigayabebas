@@ -29,3 +29,29 @@ jobs:
         run: node --test cloudflare/migration.test.mjs
       - name: Validate Cloudflare Worker bundle without uploading or secrets
         run: npx --yes wrangler@4.135.0 deploy --config cloudflare/wrangler.jsonc --dry-run --outdir ./cloudflare/.verify-output
+      - name: Smoke test actual local Cloudflare Workers runtime
+        run: |
+          npx --yes wrangler@4.135.0 dev --config cloudflare/wrangler.jsonc --local --port 8787 > /tmp/aksara-cloudflare-local.log 2>&1 &
+          PID=$!
+          trap 'kill $PID 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 45); do
+            if curl --max-time 2 -fsS http://127.0.0.1:8787/bilik-antara.html -o /tmp/aksara-bilik-preview.html; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" != 1 ]; then cat /tmp/aksara-cloudflare-local.log; exit 1; fi
+          grep -q 'data-cloudflare-preview="1"' /tmp/aksara-bilik-preview.html
+          curl --max-time 5 -fsS http://127.0.0.1:8787/studio-antara.html -o /tmp/aksara-studio-preview.html
+          curl --max-time 5 -fsS http://127.0.0.1:8787/antara-cahaya-dan-gelap.html -o /tmp/aksara-novel-preview.html
+          curl --max-time 5 -fsS http://127.0.0.1:8787/assets/novel/pembaca.html -o /tmp/aksara-reader-preview.html
+          STATUS=$(curl --max-time 5 -s -o /tmp/aksara-denied.json -w '%{http_code}' -X POST \
+            -H 'Origin: https://outside.example' -H 'Content-Type: application/json' \
+            --data '{"prompt":"hi"}' \
+            http://127.0.0.1:8787/.netlify/functions/studio-enhance)
+          test "$STATUS" = 403
+          STATUS=$(curl --max-time 5 -s -o /tmp/aksara-validation.json -w '%{http_code}' -X POST \
+            -H 'Origin: http://127.0.0.1:8787' -H 'Content-Type: application/json' \
+            --data '{"prompt":"a"}' \
+            http://127.0.0.1:8787/.netlify/functions/studio-enhance)
+          test "$STATUS" = 400
+          echo 'Cloudflare local Worker static + Studio origin smoke passed'
