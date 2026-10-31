@@ -30,6 +30,12 @@ test("Wrangler only routes API paths through Worker and keeps no deploy-on-merge
  assert.deepEqual(c.assets.run_worker_first,["/","/.netlify/functions/*","/api/aksara-health"]);
  assert.ok(c.migrations.some(x=>x.new_sqlite_classes.includes("AksaraControl")));
  assert.equal(c.vars.AKSARA_SHARED_CHAT_BUDGET,"false");
+ assert.equal(c.keep_vars,true,"Wrangler must preserve Dashboard-set account ID and other text vars");
+ assert.equal(c.vars.GROQ_FREE_CONFIRMED,"true","Groq gate must survive automatic deploy");
+ assert.equal(c.vars.AKSARA_ORCAROUTER_LAYER2,"true","OrcaRouter gate must survive automatic deploy");
+ assert.equal(c.vars.AKSARA_FREE_FALLBACKS,"true");
+ assert.ok(!("GROQ_API_KEY" in c.vars),"No secrets allowed in Wrangler vars");
+ assert.ok(!("ORCAROUTER_API_KEY" in c.vars),"No secrets allowed in Wrangler vars");
  assert.ok(!existsSync(path.join(root,".github","workflows","cloudflare-auto-deploy.yml")));
 });
 test("Migration Worker defends same-origin API and has no public passthrough proxy",async()=>{
