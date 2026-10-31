@@ -36,6 +36,16 @@ Set privately on Cloudflare Worker, never GitHub or chat:
 
 The Gemini Live ephemeral-token broker runs inside Cloudflare Worker, never exposing `GEMINI_API_KEY`. `AKSARA_SHARED_CHAT_BUDGET` stays false because it references Netlify Blobs. Instead, the Workers ingress uses `AKSARA_CONTROL` with an atomic Durable Object daily budget, per-IP limits and Studio leases.
 
+## Gemini Flash-Lite and NVIDIA multi-model prototype
+
+The Cloudflare-only text experiment currently uses `gemini-3.5-flash-lite` in `GEMINI_MODEL`, `GEMINI_MODEL_FAST` and `GEMINI_MODEL_COMPLEX`. **There is no official text model named `gemini-3.6-flash-lite`**. Keep Netlify and Gemini Live settings unchanged; run real text responses before declaring stable uptime.
+
+NVIDIA catalog health has already confirmed the owner's API key and DeepSeek listing, **not successful inference**. The owner diagnostic at `/api/aksara-nvidia-test` now retrieves the current `GET /v1/models` list, filters candidate chat LLMs (excluding embeddings, rerankers, moderation, transcription, vision generation and utilities), and offers a dropdown for a selected model. Each inference validates the selected model against NVIDIA's live catalog. This supports more than DeepSeek, including compatible Nemotron, GLM and Mistral models if returned for this account.
+
+A catalog entry means **Listed, not Connected**; a catalogue's Free Endpoint label means trial/prototyping access, **not unlimited free production inference**. The selection remains owner-only until the applicable production entitlement is confirmed. `AKSARA_NVIDIA_ENABLED` stays off on public Chat.
+
+Catalog checks are rate-limited but don't consume inference quota. The Durable Object grants at most **two NVIDIA owner inference tests per UTC day**. `RATE_LIMIT` with `Had dua ujian NVIDIA sehari tercapai` comes from *AKSARA's own control*, not NVIDIA billing; counters reset at 00:00 UTC (08:00 Malaysia). Do not lift this ceiling just to bypass a timeout. On model timeouts, use a different candidate on the next day's approved trial budget instead of retrying the same stalled model.
+
 ## Preview and cutover rules
 
 Preview HTML includes `noindex,follow`, retains original Netlify canonical URLs, and links home to Netlify. Do not change the Netlify site's main navigation or redirects until functional live-provider, Studio quotas, Voice and browser tests are complete, and Cloudflare preview has been deployed.
