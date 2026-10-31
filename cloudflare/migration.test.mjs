@@ -48,3 +48,30 @@ test("Durable quota is isolated from public path and no prompt is stored",()=>{
  assert.match(s,/INSERT OR IGNORE INTO daily/);
  assert.doesNotMatch(s,/INSERT INTO (?:prompts|transcripts|history|raw_ip)/i);
 });
+
+test("Worker separates health from inference budget and reuses existing Chat handler",async()=>{
+ const mod=await import("./src/index.mjs"),calls=[];
+ const stub={fetch:async(_u,opts)=>{
+  const payload=JSON.parse(opts.body);calls.push(payload);
+  return Response.json({ok:true});
+ }};
+ const env={AKSARA_RATE_SALT:"this-is-a-private-placeholder-long-enough-for-tests",
+  AKSARA_CONTROL:{idFromName:()=>({}),get:()=>stub},
+  ASSETS:{fetch:()=>Response.json({})}};
+ const addr="https://apps.example.com/.netlify/functions/bilik-antara";
+ const make=payload=>new Request(addr,{method:"POST",
+  headers:{origin:"https://apps.example.com","content-type":"application/json",
+   "cf-connecting-ip":"192.0.2.8"},
+  body:JSON.stringify(payload)});
+ const health=await mod.default.fetch(make({probe:true}),env,{});
+ assert.equal(health.status,503,"Without model API keys, backend should report unavailable");
+ assert.equal(calls.at(-1).kind,"health","Health must not spend AI budget");
+ const actual=await mod.default.fetch(make({question:"Apakah graviti?"}),env,{});
+ assert.equal(calls.at(-1).kind,"chat","A real request must pass through daily budget");
+ assert.ok([200,502,503].includes(actual.status));
+ assert.ok(!JSON.stringify(calls).includes("graviti"),"DO must never receive the prompt");
+});
+test("Cloudflare previews have working relative Studio hints without taking readers to Netlify Studio",()=>{
+ assert.match(text("dist/bilik-antara.html"),/link\(area,"Buka Studio Antara","\/studio-antara.html"\)/);
+ assert.match(text("dist/assets/novel/pembaca.html"),/shaifulridhwan-penulispuisigayabebas\.netlify\.app\/"/);
+});
