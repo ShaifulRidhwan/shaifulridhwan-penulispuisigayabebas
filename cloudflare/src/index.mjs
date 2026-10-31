@@ -87,7 +87,18 @@ async function handle(request,env,ctx){
  if(request.headers.get("origin")!==origin)return json(403,"Origin tidak dibenarkan.");
  const isStudio=path===apis.studio||path===apis.enhance;
  const limit=isStudio?7000:path===apis.voice?100:5400000;
- const controls=path===apis.chat||path===apis.stream?"chat":path===apis.voice?"voice":null;
+ // Status probes are inexpensive, but must still be rate-limited. They do
+ // not spend the global daily inference budget or count as AI answers.
+ let body=null,health=false;
+ if(path===apis.chat){
+  try{
+   body=await readBody(request,limit);
+   const data=JSON.parse(body);
+   health=data&&typeof data==="object"&&(data.probe===true||data.providerStatus===true);
+  }catch(e){return json(e.status||400,e.status?e.message:"JSON tidak sah.");}
+ }
+ const controls=path===apis.chat?(health?"health":"chat"):
+  path===apis.stream?"chat":path===apis.voice?"voice":null;
  let pass=null;
  if(controls){pass=await quota(env,controls,request);if(pass.error)return pass.error;}
  if(path===apis.stream){
@@ -101,7 +112,7 @@ async function handle(request,env,ctx){
   out.set("Cache-Control","no-store");
   return new Response(result.body,{status:result.status,headers:out});
  }
- let body;try{body=await readBody(request,limit);}catch(e){return json(e.status||400,e.message);}
+ if(body===null)try{body=await readBody(request,limit);}catch(e){return json(e.status||400,e.message);}
  const headers=normalizedHeaders(request,origin,true);
  const event={httpMethod:"POST",headers,body,signal:request.signal,isBase64Encoded:false};
  if(path===apis.chat)return asResponse(await Chat.handler(event),origin);
