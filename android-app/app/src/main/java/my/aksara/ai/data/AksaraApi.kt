@@ -10,6 +10,7 @@ import org.json.JSONObject
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.UUID
 
 private const val BASE_URL = "https://shaifulridhwan-penulispuisigayabebas.netlify.app"
 private const val CHAT_URL = "$BASE_URL/.netlify/functions/bilik-antara"
@@ -19,7 +20,8 @@ data class ChatTurn(
     val role: String,
     val content: String,
     val provider: String? = null,
-    val complete: Boolean = true
+    val complete: Boolean = true,
+    val id: String = UUID.randomUUID().toString()
 )
 
 data class ChatResponse(val reply: String, val provider: String?, val model: String?)

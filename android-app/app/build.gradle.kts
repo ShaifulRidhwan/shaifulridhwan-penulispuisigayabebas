@@ -4,6 +4,13 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val signingFile = System.getenv("AKSARA_SIGNING_STORE_FILE")
+val signingStorePassword = System.getenv("AKSARA_SIGNING_STORE_PASSWORD")
+val signingKeyAlias = System.getenv("AKSARA_SIGNING_KEY_ALIAS")
+val signingKeyPassword = System.getenv("AKSARA_SIGNING_KEY_PASSWORD")
+val signingReady = listOf(signingFile, signingStorePassword, signingKeyAlias, signingKeyPassword)
+    .all { !it.isNullOrBlank() }
+
 android {
     namespace = "my.aksara.ai"
     compileSdk = 36
@@ -12,12 +19,24 @@ android {
         applicationId = "my.aksara.ai"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
+    }
+
+    signingConfigs {
+        if (signingReady) {
+            create("aksaraQaRelease") {
+                storeFile = file(signingFile!!)
+                storePassword = signingStorePassword!!
+                keyAlias = signingKeyAlias!!
+                keyPassword = signingKeyPassword!!
+            }
+        }
     }
 
     buildTypes {
         release {
+            if (signingReady) signingConfig = signingConfigs.getByName("aksaraQaRelease")
             isMinifyEnabled = false
         }
     }

@@ -36,6 +36,27 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
+      - name: Configure optional persistent release signing
+        env:
+          KEY_B64: ${{ secrets.AKSARA_ANDROID_KEYSTORE_B64 }}
+          KEY_STORE_PASS: ${{ secrets.AKSARA_ANDROID_STORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.AKSARA_ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.AKSARA_ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEY_B64" ] && [ -z "$KEY_STORE_PASS" ] && [ -z "$KEY_ALIAS" ] && [ -z "$KEY_PASS" ]; then
+            echo "No signing secrets; publishing debug APK only."
+          elif [ -n "$KEY_B64" ] && [ -n "$KEY_STORE_PASS" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASS" ]; then
+            printf '%s' "$KEY_B64" | base64 --decode > "$RUNNER_TEMP/aksara-signing.jks"
+            chmod 600 "$RUNNER_TEMP/aksara-signing.jks"
+            echo "AKSARA_SIGNING_STORE_FILE=$RUNNER_TEMP/aksara-signing.jks" >> "$GITHUB_ENV"
+            echo "AKSARA_SIGNING_STORE_PASSWORD=$KEY_STORE_PASS" >> "$GITHUB_ENV"
+            echo "AKSARA_SIGNING_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+            echo "AKSARA_SIGNING_KEY_PASSWORD=$KEY_PASS" >> "$GITHUB_ENV"
+            echo "AKSARA_SIGNED_RELEASE=true" >> "$GITHUB_ENV"
+          else
+            echo "::error::Signing secrets are incomplete. Configure all four or none."
+            exit 1
+          fi
       - name: Build debug APK
         working-directory: android-app
         run: gradle :app:testDebugUnitTest :app:assembleDebug --no-daemon --stacktrace
@@ -44,5 +65,18 @@ jobs:
         with:
           name: AKSARA-Android-debug
           path: android-app/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Build signed QA release when signing configured
+        if: env.AKSARA_SIGNED_RELEASE == 'true'
+        working-directory: android-app
+        run: gradle :app:assembleRelease --no-daemon --stacktrace
+      - name: Upload signed QA release
+        if: env.AKSARA_SIGNED_RELEASE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: AKSARA-Android-signed-QA
+          path: android-app/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 14
