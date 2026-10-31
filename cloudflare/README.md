@@ -18,9 +18,9 @@ Use Cloudflare Dashboard → Workers & Pages → Create Worker → Import GitHub
 
 ## Dashboard variables versus Wrangler deployments
 
-Cloudflare Workers Builds deploys `cloudflare/wrangler.jsonc` on every commit to the Cloudflare production branch. **By default, Wrangler removes Dashboard-only Text Variables not in config.** That can make the popup show Groq `Not active` and OrcaRouter `Enable AKSARA_ORCAROUTER_LAYER2` after an otherwise successful redeploy.
+Cloudflare Workers Builds deploys `cloudflare/wrangler.jsonc` on every commit to the Cloudflare production branch. **By default, Wrangler removes Dashboard-only Text Variables not in config.** That can make the popup show Groq `Not active` and NVIDIA `Enable AKSARA_NVIDIA_ENABLED` after an otherwise successful redeploy.
 
-The config now sets `keep_vars: true`, pins nonsecret gates `GROQ_FREE_CONFIRMED=true`, `AKSARA_ORCAROUTER_LAYER2=true` and `AKSARA_FREE_FALLBACKS=true`, and adds regression checks. Dashboard-managed `CLOUDFLARE_ACCOUNT_ID` and optional budgets are preserved. Do **not** commit API keys, tokens or salt in `vars`. Cloudflare secrets remain encrypted and persist across deployments.
+The config now sets `keep_vars: true`, pins `GROQ_FREE_CONFIRMED=true`, keeps `AKSARA_NVIDIA_ENABLED=false` until licence approval, and retains `AKSARA_FREE_FALLBACKS=true`, and adds regression checks. Dashboard-managed `CLOUDFLARE_ACCOUNT_ID` and optional budgets are preserved. Do **not** commit API keys, tokens or salt in `vars`. Cloudflare secrets remain encrypted and persist across deployments.
 
 If Gemini Text shows `503`, that is an **upstream inference failure or transient availability signal**, not proof the API key is wrong; Gemini Live can still work independently. Check current provider status after redeploy and examine redacted provider logs before changing models.
 
@@ -29,8 +29,8 @@ If Gemini Text shows `503`, that is an **upstream inference failure or transient
 Set privately on Cloudflare Worker, never GitHub or chat:
 
 - `AKSARA_RATE_SALT`: random 32-byte+ secret used for one-day IP pseudonyms.
-- `GEMINI_API_KEY`, `GROQ_API_KEY`, `ORCAROUTER_API_KEY`, `OPENROUTER_API_KEY`: enable only those you actually use.
-- `GROQ_FREE_CONFIRMED=true`, `AKSARA_ORCAROUTER_LAYER2=true` for the respective primaries.
+- `GEMINI_API_KEY`, `GROQ_API_KEY`, `NVIDIA_API_KEY`, `OPENROUTER_API_KEY`: enable only those you actually use.
+- `GROQ_FREE_CONFIRMED=true`, `AKSARA_NVIDIA_ENABLED=true` for the respective primaries.
 - `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` for existing Workers AI REST image generation. OVH Beta remains optional.
 - Optional `STUDIO_DAILY_NEURONS`, `AKSARA_CHAT_DAILY_REQUESTS`.
 
