@@ -29,7 +29,7 @@ Di alamat Worker yang Cloudflare beri, semak:
 
 ## Secrets dan keselamatan
 
-Jangan masukkan `GEMINI_API_KEY`, `GROQ_API_KEY`, `ORCAROUTER_API_KEY`, `OPENROUTER_API_KEY`, `CLOUDFLARE_API_TOKEN`, atau `AKSARA_RATE_SALT` ke repository, binaan awam, screenshot atau chat.
+Jangan masukkan `GEMINI_API_KEY`, `GROQ_API_KEY`, `NVIDIA_API_KEY`, `OPENROUTER_API_KEY`, `CLOUDFLARE_API_TOKEN`, atau `AKSARA_RATE_SALT` ke repository, binaan awam, screenshot atau chat.
 
 Set secrets menggunakan tetapan runtime Worker (bukan sahaja variable untuk build). Jangan buka laluan Studio AI sebelum kawalan Durable Object dan quota disahkan. Token API Cloudflare yang digunakan oleh GitHub Builds bukan token model imej dan tidak menggantikan runtime secrets.
 
