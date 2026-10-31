@@ -25,7 +25,12 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: android-actions/setup-android@v3
+      # GitHub's Ubuntu runner already provides Android SDK cmdline-tools.
+      # Avoid setup-android@v3: its legacy 'tools' package request fails in newer SDK repos.
+      - name: Prepare Android SDK 36
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          sdkmanager --install "platforms;android-36" "build-tools;35.0.0"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
