@@ -1,0 +1,19 @@
+name: AKSARA Gemini 3.6 and 3.8 one-time verification
+on:
+  push:
+    branches:
+      - feature/cloudflare-aksara-apps-migration-20261031
+    paths:
+      - .github/workflows/aksara-gemini-36-38-once.yml
+jobs:
+  two-live-gemini-requests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node cloudflare/gemini-36-38-live-once.mjs
