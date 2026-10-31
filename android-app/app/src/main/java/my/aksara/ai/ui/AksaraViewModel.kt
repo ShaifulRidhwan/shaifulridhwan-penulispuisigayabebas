@@ -217,7 +217,7 @@ class AksaraViewModel(application: Application) : AndroidViewModel(application) 
                     if (now - lastPaintMs < 80L) return@chatStream
                     lastPaintMs = now
                     withContext(Dispatchers.Main.immediate) {
-                    if (activeId != sessionId || myRequest != activeRequestId) return@chatStream
+                    if (activeId != sessionId || myRequest != activeRequestId) return@withContext
                     if (assistantId == null) {
                         val turn = ChatTurn(
                             role = "assistant", content = partial, complete = false
