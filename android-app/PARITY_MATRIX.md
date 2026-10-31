@@ -2,7 +2,7 @@
 
 Source baseline: main branch, 2026-10-31.
 Native baseline: aksara-android v0.4.0.
-Target milestone: v0.5.0 parity foundation.
+Target milestone: v0.6.0 parity foundation + Studio QA integration.
 
 ## Implemented in native
 
@@ -16,7 +16,8 @@ Target milestone: v0.5.0 parity foundation.
 - Native Android file picker: images/jpeg/png/webp/gif, PDF, audio/mpeg/wav/mp4/ogg/webm, video/mp4/webm, txt/md/csv, up to 3 attachments / 3.4MB combined; all sent as approved fields to existing backend. Media bytes exist only for a pending request and are not stored in chat history.
 - Turn-based native voice recognition and Android TTS, on-demand permission, stops on background.
 - Native offline original 8-part Antara Cahaya dan Gelap reader with saved progress and settings; original cover art restored.
-- Studio prompt composer and ratio/style presets (image generation deliberately disabled until proper Android authorization).
+- Studio: exact web presets/models/ratios and quality chooser, native prompt refinement, request/preview/save image implementation; **only authorized on a private QA backend after separate Netlify deployment**.
+- Native answer sources and brief server disclaimer from final NDJSON response, HTTPS links displayed in chat and persisted per session.
 
 ## Shared server-side features inherited automatically
 
@@ -25,9 +26,9 @@ AKSARA Brain / identity, Provider Router, Context Manager 2.0, semantic-lite Kno
 ## NOT equivalent yet (must NOT claim 100%)
 
 - **Gemini Live** full duplex audio and **3D avatar**: the web uses temporary tokens, Google Live WebSocket, audio worklet and Three.js. Android currently has OS STT/TTS turn-taking only. Requires a protected mobile broker, model authorization, native audio pipeline and 3D engine.
-- **Studio actual image generation**: website-only Origin checks are intentional. Android must gain a separate authenticated quota-limited mobile contract. No forged Origin or permanent API key in APK.
+- **Studio generation production activation**: website-only Origin checks stay enforced; Android-specific owner QA adapter and token validation are implemented **only in this development branch**. Model authorization, shared quotas, per-session secret entry and preview are built, but the backend is not deployed or configured. Public release requires real per-user authentication and abuse controls.
 - **Exact pixel/motion parity**: CSS, DOM, gradients, Three.js and viewport layout cannot be directly transplanted into Compose. The imported images and recreated layouts approximate original identity; typography, avatar, glass and animations require visual QA at multiple densities.
-- **Full JS chat rendering**: diagrams / source-citation cards / complex media viewers / linked local identity cards not fully implemented. Native Markdown currently supports a safe subset. No arbitrary HTML.
+- **Full JS chat rendering**: basic citations and source links are implemented, but complex review maps, diagrams, source audit groupings and rich media viewers are not yet pixel-equivalent. Native Markdown supports a safe subset. No arbitrary HTML.
 - **Full offline catalog**: only the owner's original is packaged; other copyrighted/rights-specific novels link to publishers/approved sources.
 - **Cross-device storage**: local-only notes/sessions/metrics. No sync or permanent server-side personal memory.
 - **Public release security**: no durable signer secrets configured, no secure mobile identity/auth/rate limits for privileged tools, device accessibility/battery profiling pending.

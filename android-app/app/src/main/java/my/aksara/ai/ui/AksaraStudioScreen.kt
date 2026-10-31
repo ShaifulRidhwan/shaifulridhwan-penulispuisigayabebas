@@ -3,7 +3,12 @@ package my.aksara.ai.ui
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,132 +18,381 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import my.aksara.ai.data.StudioAndroidApi
+import my.aksara.ai.data.StudioContract
+import my.aksara.ai.data.StudioEnhancement
+import my.aksara.ai.data.StudioImageResult
+import my.aksara.ai.data.StudioSettings
+import java.io.IOException
+import java.security.SecureRandom
 
-private val visualPresets = linkedMapOf(
-    "Antara" to "cinematic chiaroscuro, warm golden light, deep blue shadows",
-    "Sastera" to "contemporary literary editorial aesthetic, tactile detail",
-    "Falsafah" to "philosophical visual mood, subtle symbolism, directional lighting",
-    "Fotorealistik" to "photorealistic, natural textures, believable lighting",
-    "Futuristik" to "futuristic visual design, blue and amber illumination",
-    "Minimalis" to "minimal composition, generous negative space, clean forms"
-)
+private val StudioWhite = Color(0xFFF3F2FF)
+private val StudioMuted = Color(0xFFB8C2DE)
+private val StudioIce = Color(0xFFC4D6FF)
+private val StudioGlass = Color(0xA9202944)
 
 @Composable
 fun AksaraStudioScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val client = remember { StudioAndroidApi() }
     var prompt by rememberSaveable { mutableStateOf("") }
-    var preset by rememberSaveable { mutableStateOf("Antara") }
+    var preset by rememberSaveable { mutableStateOf("antara") }
+    var model by rememberSaveable { mutableStateOf("schnell") }
     var ratio by rememberSaveable { mutableStateOf("1:1") }
-    var note by remember { mutableStateOf("") }
-    val result = (prompt.trim() + if (prompt.isBlank()) "" else
-        ", " + (visualPresets[preset] ?: "")).take(1350)
+    var quality by rememberSaveable { mutableStateOf("balanced") }
+    var seedValue by rememberSaveable { mutableStateOf("") }
+    var token by remember { mutableStateOf("") } // NEVER persist or log owner QA token.
+    var busy by remember { mutableStateOf(false) }
+    var action by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf("") }
+    var image by remember { mutableStateOf<StudioImageResult?>(null) }
+    var proposed by remember { mutableStateOf<StudioEnhancement?>(null) }
+    var work by remember { mutableStateOf<Job?>(null) }
+
+    val savePng = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("image/png")
+    ) { uri ->
+        val current = image
+        if (uri != null && current != null) {
+            runCatching {
+                context.contentResolver.openOutputStream(uri)?.use {
+                    it.write(current.bytes)
+                } ?: throw IOException("Tak dapat membuka fail output.")
+            }.onSuccess { status = "Imej disimpan pada lokasi pilihan kau." }
+                .onFailure { status = "Gagal menyimpan imej." }
+        }
+    }
+    val saveJpeg = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("image/jpeg")
+    ) { uri ->
+        val current = image
+        if (uri != null && current != null) {
+            runCatching {
+                context.contentResolver.openOutputStream(uri)?.use {
+                    it.write(current.bytes)
+                } ?: throw IOException("Tak dapat membuka fail output.")
+            }.onSuccess { status = "Imej disimpan pada lokasi pilihan kau." }
+                .onFailure { status = "Gagal menyimpan imej." }
+        }
+    }
+
+    fun generate() {
+        if (busy) return
+        busy = true
+        action = "generate"
+        status = "Studio sedang menjana imej…"
+        proposed = null
+        work = scope.launch {
+            try {
+                val seed = if (model == "klein" && seedValue.isNotBlank()) {
+                    seedValue.toIntOrNull()
+                        ?: throw IllegalArgumentException("Seed bukan nombor sah.")
+                } else null
+                val settings = StudioSettings(
+                    prompt = prompt, style = preset, model = model,
+                    ratio = ratio, quality = quality, seed = seed
+                ).validated()
+                val response = client.generate(token.trim(), settings)
+                image = response
+                status = "Imej berjaya dijana · " + response.modelName +
+                    " · " + response.width + " × " + response.height
+            } catch (_: CancellationException) {
+                status = "Permintaan dihentikan. Kuota mungkin sudah digunakan."
+            } catch (error: Exception) {
+                status = (error.message ?: "Penjanaan gagal.").take(240)
+            } finally {
+                busy = false
+                work = null
+                action = ""
+            }
+        }
+    }
+
+    fun enhance() {
+        if (busy) return
+        busy = true
+        action = "enhance"
+        status = "Aksara sedang memperkemas draf prompt…"
+        work = scope.launch {
+            try {
+                proposed = client.enhance(token.trim(), prompt)
+                status = "Cadangan disediakan. Semak sebelum mengguna."
+            } catch (_: CancellationException) {
+                status = "Perkemas dihentikan."
+            } catch (error: Exception) {
+                status = (error.message ?: "Tak dapat perkemas prompt.").take(240)
+            } finally {
+                busy = false
+                work = null
+                action = ""
+            }
+        }
+    }
 
     LazyColumn(
-        modifier = modifier.fillMaxSize().padding(horizontal = 18.dp),
-        verticalArrangement = Arrangement.spacedBy(15.dp)
+        modifier = modifier.fillMaxSize().padding(horizontal = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(13.dp)
     ) {
         item {
-            Column(modifier = Modifier.padding(top = 20.dp)) {
-                Text("STUDIO ANTARA", color = Color(0xFFF0EDFF),
-                    fontSize = 23.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                Text("Ruang reka prompt native · Cahaya mencipta bentuk, gelap memberi dimensi.",
-                    color = Color(0xFFB7C3DC), fontSize = 13.sp)
+            Column(modifier = Modifier.padding(top = 12.dp)) {
+                Text("STUDIO ANTARA", color = StudioWhite,
+                    fontSize = 22.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
+                Text("CAHAYA MENCIPTA BENTUK · GELAP MEMBERI DIMENSI",
+                    color = StudioMuted, fontSize = 10.sp, letterSpacing = 1.sp)
             }
         }
         item {
-            OutlinedTextField(
-                value = prompt,
-                onValueChange = { if (it.length <= 1200) prompt = it },
-                modifier = Modifier.fillMaxWidth(),
-                minLines = 5,
-                maxLines = 9,
-                label = { Text("Apa yang kau nak lihat?") },
-                shape = RoundedCornerShape(18.dp)
+            StudioPanel {
+                Text("PROMPT VISUAL", color = StudioIce,
+                    fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
+                OutlinedTextField(
+                    value = prompt,
+                    onValueChange = { if (!busy) prompt = it.take(1200) },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 4, maxLines = 8,
+                    label = { Text("Apa yang kau nak lihat?") },
+                    supportingText = {
+                        Text(prompt.length.toString() + " / 1200", color = StudioMuted)
+                    }
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = {
+                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE)
+                                as ClipboardManager
+                            clipboard.setPrimaryClip(ClipData.newPlainText("AKSARA Studio", prompt))
+                            status = "Prompt disalin."
+                        },
+                        enabled = prompt.isNotBlank()
+                    ) { Text("Salin prompt") }
+                    OutlinedButton(
+                        onClick = { enhance() },
+                        enabled = prompt.trim().length in 4..850 && !busy
+                    ) { Text("Perkemas A.I.") }
+                }
+            }
+        }
+        if (proposed != null) {
+            item {
+                StudioPanel {
+                    Text("CADANGAN A.I. · SEMAK DULU", color = StudioIce,
+                        fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(proposed!!.prompt, color = StudioWhite, fontSize = 13.sp)
+                    Text(proposed!!.note, color = StudioMuted, fontSize = 11.sp)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(onClick = {
+                            prompt = proposed!!.prompt.take(1200)
+                            proposed = null
+                            status = "Cadangan digunakan. Kau masih boleh edit."
+                        }) { Text("Guna cadangan") }
+                        TextButton(onClick = { proposed = null }) { Text("Abaikan") }
+                    }
+                }
+            }
+        }
+        item {
+            StudioPanel {
+                Text("GAYA VISUAL", color = StudioIce, fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp)
+                StudioChoices(StudioContract.presets.toList(), preset, !busy) {
+                    preset = it
+                }
+                Text("MODEL PENJANAAN", color = StudioIce, fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp)
+                StudioChoices(StudioContract.models.toList(), model, !busy) {
+                    model = it
+                    if (model != "klein") {
+                        ratio = "1:1"
+                        seedValue = ""
+                    }
+                }
+                Text("NISBAH IMEJ", color = StudioIce, fontSize = 12.sp)
+                StudioChoices(
+                    StudioContract.ratios.filter {
+                        model == "klein" || it == "1:1"
+                    }.map { it to it },
+                    ratio, !busy
+                ) { ratio = it }
+                if (model != "ovh") {
+                    Text("KUALITI", color = StudioIce, fontSize = 12.sp)
+                    StudioChoices(
+                        StudioContract.qualities.map {
+                            it to when(it) {
+                                "fast" -> "Pantas"
+                                "balanced" -> "Seimbang"
+                                else -> "Terperinci"
+                            }
+                        },
+                        quality, !busy
+                    ) { quality = it }
+                }
+                if (model == "klein") {
+                    OutlinedTextField(
+                        value = seedValue,
+                        onValueChange = {
+                            if (!busy && it.length <= 10 && it.all(Char::isDigit)) seedValue = it
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Seed · kosong = rawak") },
+                        singleLine = true
+                    )
+                    TextButton(
+                        onClick = {
+                            seedValue = SecureRandom().nextInt(Int.MAX_VALUE).toString()
+                        },
+                        enabled = !busy
+                    ) { Text("Seed rawak", color = StudioIce) }
+                }
+            }
+        }
+        item {
+            StudioPanel {
+                Text("SAMBUNGAN STUDIO ANDROID · QA PEMILIK", color = StudioIce,
+                    fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                Text(
+                    "Penjanaan menggunakan endpoint mudah alih yang dilindungi. " +
+                        "Masukkan token QA peribadi selepas backend dan kebenaran Netlify disediakan.",
+                    color = StudioMuted, fontSize = 12.sp
+                )
+                OutlinedTextField(
+                    value = token,
+                    onValueChange = { token = it.take(128) },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text("Token QA sementara") },
+                    visualTransformation = PasswordVisualTransformation(),
+                    singleLine = true,
+                    enabled = !busy
+                )
+                Text(
+                    "Token tidak disimpan dalam APK, sesi peranti, clipboard atau log. " +
+                        "Jangan masukkan API key Gemini/Cloudflare di sini.",
+                    color = StudioMuted, fontSize = 11.sp
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                    Button(
+                        onClick = { generate() },
+                        enabled = !busy && prompt.trim().length in 4..1200 &&
+                            token.length in 32..128
+                    ) { Text("Jana Imej") }
+                    if (busy) OutlinedButton(
+                        onClick = {
+                            work?.cancel()
+                            status = "Permintaan dihentikan. Kuota mungkin digunakan."
+                        }
+                    ) { Text("Henti") }
+                }
+                if (busy) Text(
+                    if (action == "enhance") "Memperkemas prompt…" else "Menjana visual…",
+                    color = StudioIce, fontSize = 12.sp
+                )
+                Text(status.ifBlank { "Menunggu arahan." },
+                    color = StudioMuted, fontSize = 12.sp)
+            }
+        }
+        if (image != null) {
+            item {
+                StudioPanel {
+                    val current = image!!
+                    Text("HASIL IMEJ", color = StudioIce, fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp)
+                    Image(
+                        bitmap = current.bitmap.asImageBitmap(),
+                        contentDescription = "Imej hasil jana Studio Antara",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxWidth().height(325.dp)
+                    )
+                    Text(
+                        current.modelName + " · " + current.width + " × " +
+                            current.height + " · " + current.durationMs + " ms",
+                        color = StudioMuted, fontSize = 12.sp
+                    )
+                    Text("Prompt sebenar: " + current.usedPrompt,
+                        color = StudioMuted, fontSize = 11.sp)
+                    Button(onClick = {
+                        if (current.mime == "image/png") {
+                            savePng.launch("aksara-studio.png")
+                        } else {
+                            saveJpeg.launch("aksara-studio.jpg")
+                        }
+                    }) { Text("Simpan imej") }
+                    if (model == "klein" && current.seed != null) {
+                        TextButton(onClick = {
+                            seedValue = current.seed.toString()
+                            status = "Seed hasil dimasukkan ke tetapan. Jana imej baru jika mahu variasi."
+                        }) { Text("Guna seed hasil", color = StudioIce) }
+                    }
+                }
+            }
+        }
+        item {
+            Text(
+                "Nota: Backend web sedia ada tidak dipintas. Studio QA ini " +
+                    "tidak berfungsi sehingga token dan endpoint Android dideploy. " +
+                    "Hasil imej hanya disimpan selepas kau memilih lokasi.",
+                color = StudioMuted, fontSize = 11.sp
             )
         }
-        item {
-            Text("GAYA VISUAL", color = Color(0xFFC5CEF1), fontSize = 12.sp)
-            Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                visualPresets.keys.chunked(3).forEach { group ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                        group.forEach { name ->
-                            FilterChip(selected = preset == name, onClick = { preset = name },
-                                label = { Text(name, fontSize = 11.sp) })
-                        }
-                    }
-                }
-            }
+        item { Spacer(Modifier.height(28.dp)) }
+    }
+}
+
+@Composable
+private fun StudioPanel(content: @Composable () -> Unit) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+            .background(StudioGlass, RoundedCornerShape(20.dp))
+            .border(1.dp, Color(0x38FFFFFF), RoundedCornerShape(20.dp))
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) { content() }
+}
+
+@Composable
+private fun StudioChoices(
+    values: List<Pair<String, String>>,
+    selected: String,
+    enabled: Boolean,
+    choose: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(7.dp)
+    ) {
+        values.forEach { (value, display) ->
+            FilterChip(
+                selected = value == selected,
+                onClick = { choose(value) },
+                enabled = enabled,
+                label = { Text(display, fontSize = 11.sp) }
+            )
         }
-        item {
-            Text("NISBAH CADANGAN", color = Color(0xFFC5CEF1), fontSize = 12.sp)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("1:1", "4:5", "9:16").forEach { value ->
-                    FilterChip(selected = ratio == value, onClick = { ratio = value },
-                        label = { Text(value) })
-                }
-            }
-        }
-        item {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-                    .background(Color(0x99212B42), RoundedCornerShape(18.dp))
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text("PROMPT TERHASIL", color = Color(0xFFD8C6FF),
-                    fontWeight = FontWeight.SemiBold, fontSize = 12.sp)
-                Text(if (prompt.isBlank()) "Tulis idea untuk bina prompt…" else result,
-                    color = Color(0xFFE6EBFF), fontSize = 13.sp)
-                Text("Cadangan nisbah: " + ratio, color = Color(0xFFBAC5E1), fontSize = 11.sp)
-                Button(
-                    enabled = prompt.trim().length >= 4,
-                    onClick = {
-                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE)
-                            as ClipboardManager
-                        clipboard.setPrimaryClip(ClipData.newPlainText("AKSARA Studio", result))
-                        note = "Prompt disalin. Tetapan nisbah: " + ratio
-                    }
-                ) { Text("Salin prompt") }
-            }
-        }
-        item {
-            Column(
-                modifier = Modifier.fillMaxWidth()
-                    .background(Color(0x99292636), RoundedCornerShape(15.dp))
-                    .padding(14.dp)
-            ) {
-                Text("Jana Imej · belum aktif dalam APK",
-                    color = Color(0xFFE5CDA3), fontWeight = FontWeight.Bold)
-                Spacer(Modifier.height(7.dp))
-                Text(
-                    "Backend Studio sekarang hanya menerima permintaan daripada laman web. " +
-                    "Kami tidak akan memintas perlindungan Origin; fungsi jana imej native " +
-                    "akan disambung selepas endpoint Android mempunyai kebenaran yang sah.",
-                    color = Color(0xFFC7C0B9), fontSize = 12.sp
-                )
-            }
-        }
-        if (note.isNotEmpty()) item {
-            Text(note, color = Color(0xFFBDE9CD), fontSize = 12.sp)
-        }
-        item { Spacer(Modifier.height(24.dp)) }
     }
 }

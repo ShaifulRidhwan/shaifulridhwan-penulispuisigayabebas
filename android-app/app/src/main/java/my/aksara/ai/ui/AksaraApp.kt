@@ -6,6 +6,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.speech.RecognizerIntent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -754,6 +755,31 @@ private fun MessageBubble(
                         style = MaterialTheme.typography.bodyLarge)
                 } else {
                     MarkdownMessage(message.content)
+                }
+            }
+            if (!mine && message.disclaimer.isNotBlank()) {
+                Text(
+                    message.disclaimer,
+                    color = Color(0xFFD8C79F),
+                    fontSize = 11.sp
+                )
+            }
+            if (!mine && message.sources.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text("SUMBER SEMAKAN", color = Ice, fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold)
+                    message.sources.forEach { source ->
+                        TextButton(onClick = {
+                            runCatching {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, Uri.parse(source.url))
+                                )
+                            }
+                        }) {
+                            Text(source.title + " ↗", color = Ice, fontSize = 12.sp,
+                                maxLines = 2)
+                        }
+                    }
                 }
             }
             if (!mine && !message.complete) {

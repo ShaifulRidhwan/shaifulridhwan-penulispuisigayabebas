@@ -1,7 +1,18 @@
-# AKSARA Android Native · v0.5.0
+# AKSARA Android Native · v0.6.0
 
 Native Kotlin + Jetpack Compose app, not a webview or Capacitor wrapper.
 Repository: ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas, branch `aksara-android`.
+
+## Native parity: Studio and source references (v0.6.0)
+
+- Native Studio image generation client and safe preview: all 11 original web presets, 3 models, 5 ratios where supported, 3 quality choices, Klein seed, image decoding and save to a user-selected document.
+- Native prompt refinement via the same Studio backend, with an explicit review/edit before replacing the original prompt.
+- Dedicated server-side **owner-only QA** API adapters for Studio generation and prompt refinement, protected by a high-entropy bearer token validated by a SHA-256 hash held in Netlify environment. These route through the existing Studio quotas and provider implementation.
+- **Not yet active in production:** mobile Studio endpoints are staged on `aksara-android`, not deployed to `main`. A private token hash must be set and backend deployment approved. No token is bundled or persisted in the app. This is private owner QA only, not public app authentication.
+- Real server-returned answer citations/HTTPS sources and disclaimer are displayed as native reference buttons and stored with chat history.
+- Tests include Studio model contract, source URL safety, mobile bearer authorization and website-only Origin protection.
+
+See `MOBILE_STUDIO_SETUP.md` for secure activation. Gemini Live duplex + 3D avatar remain in `ANDROID_LIVE_SECURITY.md`, not falsely labeled complete.
 
 ## Bilik Antara native parity foundation (v0.5.0)
 
@@ -57,7 +68,7 @@ The workflow supports optional signed QA release APKs after four encrypted repos
 ## Known limits and follow-up
 
 - **Gemini Voice Live** (full duplex) requires a secure mobile token broker and native realtime audio client; not yet integrated. See `ANDROID_LIVE_SECURITY.md`.
-- **Studio generation** requires an authenticated, rate-limited Android-compatible API. Existing site-only Origin checks must be preserved. The client UI currently composes/copies prompts only.
+- **Studio generation** has native client and staged owner-only mobile backend, but remains unavailable in production until the owner safely configures the server hash and approves deployment. This owner QA flow is not suitable for public distribution.
 - Native reader is available offline for the owner's original book. External catalog titles are links, not offline copied books.
 - Local session storage is bounded to 12 sessions × 70 turns; do not rely on it as cloud backup. Current storage uses Android app-private SharedPreferences, **not additional encryption**. No Web sync or server-side memory.
 - Existing public chat endpoint needs server-side abuse controls and an explicit mobile-client authentication policy before public distribution.
@@ -73,5 +84,5 @@ The workflow supports optional signed QA release APKs after four encrypted repos
 4. Test CAHAYA/GELAP per session and Markdown formatting.
 5. Test the dictation button using a speech recognizer installed on the device.
 6. Open the Novel tab, read the offline original and resume after app restart.
-7. Confirm Studio shows a prompt editor and does **not** falsely claim to generate images.
+7. Studio presets/image preview can be tested only with authorized owner QA endpoint deployed; absent backend should report a clear error.
 8. Confirm the saved-session opt-out purges conversation data.

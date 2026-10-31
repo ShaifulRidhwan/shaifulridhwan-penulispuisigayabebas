@@ -59,6 +59,13 @@ jobs:
           fi
       - name: Check staged backend platform syntax
         run: node --check netlify/functions/bilik-antara.js
+      - name: Test Android mobile Studio authorization and Origin isolation
+        run: |
+          node --check netlify/functions/lib/aksara-mobile-owner-auth.js
+          node --check netlify/functions/lib/aksara-mobile-studio-adapter.js
+          node --check netlify/functions/studio-android.mjs
+          node --check netlify/functions/studio-enhance-android.mjs
+          node --test android-app/test/mobile-studio-auth.test.cjs
       - name: Build debug APK
         working-directory: android-app
         run: gradle :app:testDebugUnitTest :app:assembleDebug --no-daemon --stacktrace

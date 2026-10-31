@@ -420,6 +420,7 @@ class AksaraViewModel(application: Application) : AndroidViewModel(application) 
                     val turn = ChatTurn(
                         role = "assistant", content = result.reply,
                         provider = result.provider, complete = true,
+                        sources = result.sources, disclaimer = result.disclaimer,
                         id = assistantId ?: java.util.UUID.randomUUID().toString()
                     )
                     val index = messages.indexOfFirst { it.id == assistantId }

@@ -16,16 +16,44 @@ private const val BASE_URL = "https://shaifulridhwan-penulispuisigayabebas.netli
 private const val CHAT_URL = "$BASE_URL/.netlify/functions/bilik-antara"
 private const val STREAM_URL = "$BASE_URL/.netlify/functions/bilik-antara-stream"
 
+data class AnswerSource(
+    val title: String,
+    val url: String
+)
+
+object AnswerSourceParser {
+    fun read(items: JSONArray?): List<AnswerSource> {
+        if (items == null) return emptyList()
+        return buildList {
+            for (i in 0 until minOf(items.length(), 8)) {
+                val o = items.optJSONObject(i) ?: continue
+                val url = o.optString("url")
+                if (!url.startsWith("https://") || url.length > 1024) continue
+                val title = o.optString("title").take(150).ifBlank { "Sumber " + (i + 1) }
+                add(AnswerSource(title, url))
+            }
+        }
+    }
+}
+
 data class ChatTurn(
     val role: String,
     val content: String,
     val provider: String? = null,
     val complete: Boolean = true,
     val id: String = UUID.randomUUID().toString(),
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val sources: List<AnswerSource> = emptyList(),
+    val disclaimer: String = ""
 )
 
-data class ChatResponse(val reply: String, val provider: String?, val model: String?)
+data class ChatResponse(
+    val reply: String,
+    val provider: String?,
+    val model: String?,
+    val sources: List<AnswerSource> = emptyList(),
+    val disclaimer: String = ""
+)
 
 data class ChatMedia(val mimeType: String, val data: String, val name: String)
 data class ChatRequestOptions(
@@ -75,7 +103,9 @@ object AksaraStreamProtocol {
                 ChatResponse(
                     reply = frame.optString("reply", ""),
                     provider = frame.optString("provider").takeIf { it.isNotBlank() },
-                    model = frame.optString("model").takeIf { it.isNotBlank() }
+                    model = frame.optString("model").takeIf { it.isNotBlank() },
+                    sources = AnswerSourceParser.read(frame.optJSONArray("sources")),
+                    disclaimer = frame.optString("disclaimer").take(300)
                 )
             )
             "error" -> StreamEvent.Failed(

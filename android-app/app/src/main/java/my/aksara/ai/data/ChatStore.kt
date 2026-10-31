@@ -46,6 +46,13 @@ object SessionCodec {
                         .put("provider", turn.provider ?: "")
                         .put("complete", turn.complete)
                         .put("timestamp", turn.timestamp)
+                        .put("disclaimer", turn.disclaimer.take(300))
+                        .put("sources", JSONArray().apply {
+                            turn.sources.take(8).forEach { source ->
+                                put(JSONObject().put("title", source.title)
+                                    .put("url", source.url))
+                            }
+                        })
                 )
             }
             array.put(
@@ -93,7 +100,9 @@ object SessionCodec {
                         complete = entry.optBoolean("complete", true),
                         id = entry.optString("id").takeIf { it.isNotBlank() }
                             ?: UUID.randomUUID().toString(),
-                        timestamp = entry.optLong("timestamp", System.currentTimeMillis())
+                        timestamp = entry.optLong("timestamp", System.currentTimeMillis()),
+                        sources = AnswerSourceParser.read(entry.optJSONArray("sources")),
+                        disclaimer = entry.optString("disclaimer").take(300)
                     )
                 )
             }
