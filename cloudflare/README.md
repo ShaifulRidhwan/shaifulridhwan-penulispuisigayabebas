@@ -38,7 +38,7 @@ The Gemini Live ephemeral-token broker runs inside Cloudflare Worker, never expo
 
 ## Gemini Flash-Lite and NVIDIA multi-model prototype
 
-The Cloudflare-only text experiment currently uses `gemini-3.5-flash-lite` in `GEMINI_MODEL`, `GEMINI_MODEL_FAST` and `GEMINI_MODEL_COMPLEX`. **There is no official text model named `gemini-3.6-flash-lite`**. Keep Netlify and Gemini Live settings unchanged; run real text responses before declaring stable uptime.
+**LOCKED: Gemini 3.5 Flash-Lite for Cloudflare text.** Keep `gemini-3.5-flash-lite` in all three config keys: `GEMINI_MODEL`, `GEMINI_MODEL_FAST`, `GEMINI_MODEL_COMPLEX`. This lock is checked by `cloudflare/migration.test.mjs` and should not be changed without a documented A/B test and rollback path. Two real Cloudflare requests (ordinary and complex) were both answered by Gemini on 2026-10-31 (HTTP 200; no fallback), but that is not a long-term uptime guarantee. **There is no official text model named `gemini-3.6-flash-lite`.** Keep Netlify and Gemini Live settings unchanged.
 
 NVIDIA catalog health has already confirmed the owner's API key and DeepSeek listing, **not successful inference**. The owner diagnostic at `/api/aksara-nvidia-test` now retrieves the current `GET /v1/models` list, filters candidate chat LLMs (excluding embeddings, rerankers, moderation, transcription, vision generation and utilities), and offers a dropdown for a selected model. Each inference validates the selected model against NVIDIA's live catalog. This supports more than DeepSeek, including compatible Nemotron, GLM and Mistral models if returned for this account.
 
