@@ -438,7 +438,7 @@ test("OpenRouter health checks key validity without consuming inference quota",a
  assert.match(body.url,/openrouter\.ai\/api\/v1\/key$/);assert.equal(body.method,"GET");
 });
 test("the stream watchdog sends a terminal error and cancels a hung upstream",async()=>{
- const source=fs.readFileSync(path.join(__dirname,"../netlify/functions/bilik-antara-stream.mjs"),"utf8").replace(/^import main[^\n]*\n/,"").replace("export default async function", "return async function");
+ const source=fs.readFileSync(path.join(__dirname,"../netlify/functions/bilik-antara-stream.mjs"),"utf8").replace(/^import main[^\n]*\n/,"").replace("export default async function", "return async function").replace(/export const config=\{[\s\S]*?\};\s*$/,"");
  let trigger,upstreamSignal;
  const stream=new Function("main","setTimeout","clearTimeout",source)(
   {handler:async event=>{upstreamSignal=event.signal;return new Promise(()=>{});}},
