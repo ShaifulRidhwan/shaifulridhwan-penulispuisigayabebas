@@ -538,7 +538,7 @@ exports.handler=async event=>{
     providerFailures.push({provider:"gemini",status:error.status||"unavailable",reason:error.cooldownKnown?"quota_cooldown":error.name==="AbortError"?"timeout":"upstream",...(error.quotaKind?{quotaKind:error.quotaKind,quotaScope:error.quotaScope}:{})});
     googleCooldown(model,error);
     const transient=[400,401,403,404,429,500,502,503,504].includes(error.status)||error.name==="AbortError"||error.name==="TypeError"||(!error.status&&error.name==="Error");
-    if(transient&&(textOnly||imageOnly)&&Router.enabled()&&!alternativeTried){
+    if(transient&&(textOnly||imageOnly)&&Router.enabled()){
       const fallback=await useAlternative(hybrid.enabled&&alternativeTried?
         {only:backupTextProviders,firstResponseDeadline:deadline}:
         {firstResponseDeadline:deadline});if(fallback)return fallback;
