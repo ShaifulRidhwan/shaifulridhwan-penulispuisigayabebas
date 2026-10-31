@@ -43,6 +43,25 @@ function normalizedHeaders(request,origin,legacyOrigin){
  return headers;
 }
 function internalOrigin(){return process.env.ALLOWED_ORIGIN||OLD_ORIGIN;}
+// Only readiness booleans are exposed: never reveal tokens, providers' secret
+// names, quota hashes or user data. The path is intentionally read-only.
+function health(env){
+ const gemini=Boolean(env.GEMINI_API_KEY);
+ const groq=Boolean(env.GROQ_API_KEY&&env.GROQ_FREE_CONFIRMED==="true");
+ const orca=Boolean(env.ORCAROUTER_API_KEY&&env.AKSARA_ORCAROUTER_LAYER2==="true"&&env.AKSARA_FREE_FALLBACKS==="true");
+ const openrouter=Boolean(env.OPENROUTER_API_KEY&&env.AKSARA_FREE_FALLBACKS==="true");
+ const control=Boolean(env.AKSARA_CONTROL&&String(env.AKSARA_RATE_SALT||"").length>=32);
+ const image=Boolean(env.CLOUDFLARE_ACCOUNT_ID&&env.CLOUDFLARE_API_TOKEN);
+ const ready={chat:control&&(gemini||groq||orca||openrouter),
+  voice:control&&gemini,studio:control&&image};
+ return new Response(JSON.stringify({
+  ok:true,platform:"cloudflare-workers",phase:"migration",
+  services:ready,
+  configuredProviders:[gemini,groq,orca,openrouter].filter(Boolean).length,
+  controlConfigured:control
+ }),{status:200,headers:{"content-type":"application/json; charset=utf-8",
+ "cache-control":"no-store","x-content-type-options":"nosniff","x-robots-tag":"noindex"}});
+}
 async function readBody(request,max){
  const len=Number(request.headers.get("content-length")||0);
  if(len>max)throw Object.assign(Error("Permintaan terlalu besar."),{status:413});
@@ -76,10 +95,14 @@ async function release(stub,id){
 async function handle(request,env,ctx){
  const url=new URL(request.url),path=url.pathname,origin=url.origin;
  if(path==="/")return Response.redirect(OLD_ORIGIN+"/",302);
+ if(path==="/api/aksara-health")return request.method==="GET"?health(env):json(405,"Gunakan GET.");
  if(!Object.values(apis).includes(path))return env.ASSETS.fetch(request);
- if(request.method==="OPTIONS")return new Response(null,{status:204,headers:{
+ if(request.method==="OPTIONS"){
+  if(request.headers.get("origin")!==origin)return json(403,"Origin tidak dibenarkan.");
+  return new Response(null,{status:204,headers:{
   "access-control-allow-origin":origin,"access-control-allow-methods":"POST, OPTIONS",
   "access-control-allow-headers":"Content-Type","vary":"Origin"}});
+ }
  if(request.method!=="POST")return json(405,"Gunakan POST.");
  // Require a same-origin caller on public POST APIs, including preflight-less
  // direct browser requests; Netlify continues to serve on its own origin.
