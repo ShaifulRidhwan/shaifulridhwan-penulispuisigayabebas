@@ -497,8 +497,22 @@ exports.handler=async event=>{
   try{
     if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
     if(googleWait(model)>0)throw Object.assign(new Error("Gemini quota cooling down"),{status:429,cooldownKnown:true,retryAfterSeconds:googleWait(model)});
-    const data=await callGemini({apiKey,model,system,contents,tools,thinkingLevel:plan.thinkingLevel==="high"?"high":intent.depth==="low"&&model.includes("flash-lite")?"minimal":plan.thinkingLevel,
-      maxTokens,timeoutMs:Math.min(cloudflare?(plan.thinkingLevel==="high"?28000:19000):(textOnly&&Router.enabled()?(plan.thinkingLevel==="high"?15000:6500):18000),remaining()),signal:event.signal,deadline,onDelta:emit&&!plan.doReview&&!tools.length?emit:null});
+    const googleThinking=plan.thinkingLevel==="high"?"high":intent.depth==="low"&&model.includes("flash-lite")?"minimal":plan.thinkingLevel;
+    const googleOptions={apiKey,model,system,contents,tools,thinkingLevel:googleThinking,maxTokens,
+      timeoutMs:Math.min(cloudflare?(plan.thinkingLevel==="high"?28000:19000):(textOnly&&Router.enabled()?(plan.thinkingLevel==="high"?15000:6500):18000),remaining()),
+      signal:event.signal,deadline,onDelta:emit&&!plan.doReview&&!tools.length?emit:null};
+    let data;
+    try{data=await callGemini(googleOptions);}
+    catch(firstError){
+      // Cloudflare only: a Google HTTP 503 can be transient under high reasoning.
+      // Retry ONCE with medium thinking if there is time, then use normal failover.
+      // Never retry auth failures, quota 429, timeouts or already-emitted streaming.
+      if(!(cloudflare&&firstError.status===503&&googleThinking==="high"&&!streamed&&remaining()>10500))throw firstError;
+      log("gemini_503_retry",{model,remainingMs:remaining()});
+      await waitFor(250,event.signal);
+      data=await callGemini({...googleOptions,thinkingLevel:"medium",
+        timeoutMs:Math.min(10000,remaining()),maxTokens:Math.min(maxTokens,5600)});
+    }
     const candidate=data&&data.candidates&&data.candidates[0];
     const reply=reactionReply(parseReply(modelText(candidate)),intent,history);
     if(!reply)throw Object.assign(new Error("Empty candidate"),{status:502});
