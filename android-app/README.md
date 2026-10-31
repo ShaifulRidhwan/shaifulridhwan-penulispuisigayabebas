@@ -1,7 +1,15 @@
-# AKSARA Android Native · v0.3.0
+# AKSARA Android Native · v0.4.0
 
 Native Kotlin + Jetpack Compose app, not a webview or Capacitor wrapper.
 Repository: ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas, branch `aksara-android`.
+
+## Delivered in v0.4.0
+
+- **Native Voice tab:** Tap-to-speak Malay speech recognition using Android SpeechRecognizer, text sent to the same multi-AI backend chat, completed answers played through Android TextToSpeech. User explicitly starts each listening turn, and can stop either microphone or audio output.
+- Visible listening/processing/speaking states, live transcript preview, automatic turn-based speech reply, replay and mute. Respects the currently selected CAHAYA/GELAP mode and active chat session.
+- Microphone permission requested only when the user taps the mic. Recognition and playback stop on navigation away or when app backgrounds. No raw mic recording stored by AKSARA. The OS speech recognition service may process audio through third-party infrastructure.
+- Android SpeechRecognizer checks and TTS locale fallback; test coverage for plain-text speech formatting.
+- **Important: this is TURN-BASED Android speech + Aksara Core, not Google Gemini Live real-time duplex audio.** Gemini Live still needs a server-side, authenticated mobile ephemeral-token broker and native realtime audio client.
 
 ## Delivered in v0.3.0
 
@@ -38,7 +46,7 @@ The workflow supports optional signed QA release APKs after four encrypted repos
 
 ## Known limits and follow-up
 
-- **Voice Live** requires a secure mobile token broker and native realtime audio client; not yet integrated.
+- **Gemini Voice Live** (full duplex) requires a secure mobile token broker and native realtime audio client; not yet integrated. See `ANDROID_LIVE_SECURITY.md`.
 - **Studio generation** requires an authenticated, rate-limited Android-compatible API. Existing site-only Origin checks must be preserved. The client UI currently composes/copies prompts only.
 - Native reader is available offline for the owner's original book. External catalog titles are links, not offline copied books.
 - Local session storage is bounded to 12 sessions × 70 turns; do not rely on it as cloud backup. Current storage uses Android app-private SharedPreferences, **not additional encryption**. No Web sync or server-side memory.

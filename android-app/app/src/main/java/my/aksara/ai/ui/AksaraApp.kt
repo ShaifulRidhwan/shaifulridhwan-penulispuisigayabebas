@@ -114,9 +114,9 @@ fun AksaraApp(vm: AksaraViewModel = viewModel()) {
                         .border(1.dp, Border)
                         .navigationBarsPadding()
                         .padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(7.dp)
+                    horizontalArrangement = Arrangement.spacedBy(3.dp)
                 ) {
-                    listOf("Chat", "Studio", "Novel").forEach { target ->
+                    listOf("Chat", "Voice", "Studio", "Novel").forEach { target ->
                         val selected = tab == target
                         TextButton(
                             modifier = Modifier.weight(1f),
@@ -127,6 +127,7 @@ fun AksaraApp(vm: AksaraViewModel = viewModel()) {
                         ) {
                             Text(
                                 target,
+                                fontSize = 13.sp,
                                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                             )
                         }
@@ -136,6 +137,7 @@ fun AksaraApp(vm: AksaraViewModel = viewModel()) {
         ) { insets ->
             when (tab) {
                 "Chat" -> ChatPage(vm, Modifier.padding(insets))
+                "Voice" -> AksaraVoiceScreen(vm, Modifier.padding(insets), openChat = { tab = "Chat" })
                 "Studio" -> AksaraStudioScreen(Modifier.padding(insets))
                 else -> AksaraNovelScreen(Modifier.padding(insets))
             }
