@@ -176,3 +176,6 @@ exports.handler=async(event)=>{
     return reply(502,{error:"Sambungan token Voice gagal. Cuba semula.",reason:"TOKEN_NETWORK"});
   }finally{clearTimeout(timeout);}
 };
+
+// Cross-instance front-door limit complements in-memory voice session caps.
+exports.config={path:"/.netlify/functions/bilik-antara-live-token",rateLimit:{windowLimit:30,windowSize:60,aggregateBy:["ip","domain"]}};
