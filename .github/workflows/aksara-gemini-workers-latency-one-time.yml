@@ -1,0 +1,22 @@
+name: AKSARA Gemini Cloudflare latency repair one-time live check
+on:
+  push:
+    branches:
+      - feature/cloudflare-aksara-apps-migration-20261031
+    paths:
+      - .github/workflows/aksara-gemini-workers-latency-one-time.yml
+jobs:
+  verify-real-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Allow latest Git-connected Worker version to propagate
+        run: sleep 25
+      - name: Real Gemini 3.6 Chat and complex calls (no secrets in logs)
+        run: node cloudflare/gemini-36-both-live.mjs
