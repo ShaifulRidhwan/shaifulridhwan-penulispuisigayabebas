@@ -1,0 +1,31 @@
+name: Cloudflare AKSARA migration preview checks
+on:
+  pull_request:
+    paths:
+      - "cloudflare/**"
+      - ".github/workflows/cloudflare-migration-ci.yml"
+      - "netlify/functions/**"
+      - "bilik-antara*"
+      - "studio-antara*"
+      - "antara-cahaya-dan-gelap*"
+      - "perpustakaan-aksara*"
+      - "assets/novel/**"
+  workflow_dispatch:
+jobs:
+  cloudflare-preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - name: Prepare only 3 apps
+        run: node cloudflare/build.mjs
+      - name: Validate assets, routing and preview containment
+        run: node --test cloudflare/migration.test.mjs
+      - name: Validate Cloudflare Worker bundle without uploading or secrets
+        run: npx --yes wrangler@4.135.0 deploy --config cloudflare/wrangler.jsonc --dry-run --outdir ./cloudflare/.verify-output
