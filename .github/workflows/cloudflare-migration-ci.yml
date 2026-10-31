@@ -31,6 +31,8 @@ jobs:
         run: node --test cloudflare/control.test.mjs
       - name: Verify Orca free quota exhaustion and safe fallback (HTTP 402)
         run: node --test tests/aksara-orcarouter-quota402.test.cjs
+      - name: Verify DeepSeek identity says indirect OrcaRouter integration
+        run: node --test tests/aksara-deepseek-identity.test.cjs
       - name: Validate Cloudflare Worker bundle without uploading or secrets
         run: npx --yes wrangler@4.135.0 deploy --config cloudflare/wrangler.jsonc --dry-run --outdir ./cloudflare/.verify-output
       - name: Smoke test actual local Cloudflare Workers runtime
