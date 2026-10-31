@@ -6,7 +6,7 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/", "/.netlify/functions/*"],
+    "run_worker_first": ["/", "/.netlify/functions/*", "/api/aksara-health"],
     "html_handling": "none",
     "not_found_handling": "404-page"
   },
