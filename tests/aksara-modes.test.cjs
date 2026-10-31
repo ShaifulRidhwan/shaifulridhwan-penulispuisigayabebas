@@ -347,13 +347,21 @@ test("Both modes use the same intelligence protocol; GELAP remains independently
  assert.ok(router.includes('reasoningLevel==="low"'));
 });
 
-test("High-reasoning provider routing prefers an explicit reasoning model over a random free pool",()=>{
+test("Hybrid 3+1 reserves OpenRouter for last, while rollback restores legacy preference",()=>{
  const router=require("../netlify/functions/aksara-provider-router");
  const list=[{id:"openrouter"},{id:"orcarouter"},{id:"groq"}];
- assert.equal(router.rankProviders(list,"general","openrouter",false)[0].id,"openrouter");
+ assert.equal(router.rankProviders(list,"general","openrouter",false).at(-1).id,"openrouter");
  assert.equal(router.rankProviders(list,"general","openrouter",true)[0].id,"groq");
- assert.equal(router.rankProviders([{id:"openrouter"},{id:"orcarouter"}],"general","openrouter",true)[0].id,"openrouter");
+ assert.equal(router.rankProviders([{id:"openrouter"},{id:"orcarouter"}],"general","openrouter",true)[0].id,"orcarouter");
  assert.equal(list[0].id,"openrouter","Provider ranking does not mutate caller list");
+ const prev=process.env.AKSARA_HYBRID_ROUTER;
+ try{
+  process.env.AKSARA_HYBRID_ROUTER="false";
+  assert.equal(router.rankProviders(list,"general","openrouter",false)[0].id,"openrouter");
+ }finally{
+  if(prev===undefined)delete process.env.AKSARA_HYBRID_ROUTER;
+  else process.env.AKSARA_HYBRID_ROUTER=prev;
+ }
 });
 
 test("Security Shield flags are server-owned and external instructions remain data",()=>{

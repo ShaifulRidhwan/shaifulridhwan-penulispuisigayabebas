@@ -47,3 +47,9 @@ export default async function(request){
  });
  return new Response(stream,{headers});
 }
+
+// Platform-wide ingress rate limit for the primary NDJSON Chat endpoint.
+// JSON fallback retains the existing in-process 12/min throttle and the
+// optional shared budget; Netlify Free code-limit rules are finite.
+export const config={path:"/.netlify/functions/bilik-antara-stream",
+ rateLimit:{windowLimit:60,windowSize:60,aggregateBy:["ip","domain"]}};
