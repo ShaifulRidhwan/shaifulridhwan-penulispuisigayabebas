@@ -463,7 +463,7 @@ function renderProviderRows(rows,catalog=null){
   const waitLabel=waitSeconds>0?"Retry in "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" sec"):"";
   const orcaReason=id==="orcarouter"&&state==="off"?({fallback_disabled:"Enable AKSARA_FREE_FALLBACKS",layer_disabled:"Enable AKSARA_ORCAROUTER_LAYER2",missing_key:"Add ORCAROUTER_API_KEY"}[item?.reason]||"Not active"):null;
   const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":state==="ready"?"is-ready":"is-muted"),
-   state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?(waitLabel||"Offline"):state==="off"?(orcaReason||"Not active"):"Checking…");
+   state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?(item?.reason==="free_quota_exhausted"?"Kuota percuma habis":waitLabel||(item?.http===503?"Servis sibuk (503)":"Offline")):state==="off"?(orcaReason||"Not active"):"Checking…");
   line.append(nameText,statusText);
   if(!expandable){multiList.appendChild(line);continue;}
   const group=elem("details","multi-ai-provider-details");
