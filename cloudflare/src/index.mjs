@@ -6,6 +6,7 @@ import netlifyStream from "../../netlify/functions/bilik-antara-stream.mjs";
 import Live from "../../netlify/functions/bilik-antara-live-token.js";
 import StudioImage from "../../netlify/functions/lib/studio-image-handler.js";
 import StudioEnhance from "../../netlify/functions/lib/studio-enhance-handler.js";
+import {nvidiaDiagnostic} from "./nvidia-diagnostic.mjs";
 export {AksaraControl} from "./control.mjs";
 
 const OLD_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
@@ -96,6 +97,7 @@ async function handle(request,env,ctx){
  const url=new URL(request.url),path=url.pathname,origin=url.origin;
  if(path==="/")return Response.redirect(OLD_ORIGIN+"/",302);
  if(path==="/api/aksara-health")return request.method==="GET"?serviceHealth(env):json(405,"Gunakan GET.");
+ if(path==="/api/aksara-nvidia-test")return nvidiaDiagnostic(request,env,quota);
  if(!Object.values(apis).includes(path))return env.ASSETS.fetch(request);
  if(request.method==="OPTIONS"){
   if(request.headers.get("origin")!==origin)return json(403,"Origin tidak dibenarkan.");
