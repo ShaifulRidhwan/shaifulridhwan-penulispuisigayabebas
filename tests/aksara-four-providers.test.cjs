@@ -130,7 +130,7 @@ test("Ready is not falsely labelled Connected, and live status is provider-speci
  assert.match(backend,/const providers=\[google,\.\.\.alternatives\]/);
  const src=fs.readFileSync("netlify/functions/aksara-provider-router.js","utf8");
  assert.match(src,/model:"openrouter\/free"/);
- assert.match(src,/model:"deepseek-ai\/deepseek-v4\.1-flash"/);
+ assert.match(src,/model:"nvidia\/nemotron-3\.5-bolt-e4b"/);
 });
 
 test("Four-brain server responses require no external model call",async()=>{
