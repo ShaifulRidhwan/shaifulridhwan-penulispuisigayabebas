@@ -36,7 +36,7 @@ test("Shared identity informs CAHAYA, GELAP and voice about Studio",()=>{
  assert.match(ui,/data\.model==="local-studio"/);
 });
 
-test("Only Groq, OpenRouter and OrcaRouter are retained as text fallback providers",()=>{
+test("Only Groq, OpenRouter and NVIDIA are retained as text fallback providers",()=>{
  const router=require("../netlify/functions/aksara-provider-router");
  const registry=require("../netlify/functions/aksara-model-registry");
  assert.ok(!fs.existsSync("netlify/functions/aksara-requesty.js"));
@@ -46,8 +46,8 @@ test("Only Groq, OpenRouter and OrcaRouter are retained as text fallback provide
  for(const [name,code] of [["router",src],["identity",identity],["UI",ui]]){
   assert.doesNotMatch(code,/requesty/i,name+" must not include old provider");
  }
- assert.deepEqual(Object.keys(registry.CAPS),["groq","openrouter","orcarouter"]);
+ assert.deepEqual(Object.keys(registry.CAPS),["groq","openrouter","nvidia"]);
  assert.match(src,/model:"openrouter\/free"/);
- assert.match(src,/model:"orcarouter\/free"/);
+ assert.match(src,/model:"nvidia\/free"/);
  assert.ok(typeof router.complete==="function");
 });
