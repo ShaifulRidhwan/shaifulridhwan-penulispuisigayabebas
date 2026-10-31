@@ -34,7 +34,8 @@ test("Wrangler only routes API paths through Worker and keeps no deploy-on-merge
  assert.equal(c.vars.GROQ_FREE_CONFIRMED,"true","Groq gate must survive automatic deploy");
  assert.ok(!Object.hasOwn(c.vars,"AKSARA_NVIDIA_ENABLED"),"NVIDIA remains off until explicit Dashboard opt-in; never overwrite approval on redeploy");
  assert.equal(c.vars.GEMINI_MODEL_FAST,"gemini-3.6-flash");
- assert.equal(c.vars.GEMINI_MODEL_COMPLEX,"gemini-3.8-flash");
+ assert.equal(c.vars.GEMINI_MODEL_COMPLEX,"gemini-3.6-flash");
+ assert.equal(c.vars.GEMINI_MODEL,"gemini-3.6-flash","Base model must not differ from both regular/deep routes");
  assert.equal(c.vars.AKSARA_FREE_FALLBACKS,"true");
  assert.ok(!("GROQ_API_KEY" in c.vars),"No secrets allowed in Wrangler vars");
  assert.ok(!("NVIDIA_API_KEY" in c.vars),"No secrets allowed in Wrangler vars");
