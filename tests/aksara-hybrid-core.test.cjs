@@ -36,8 +36,10 @@ test("shared budget fails closed on missing storage",async()=>{
  await assert.rejects(()=>Budget.reserve({}),e=>e.status===503);
 });
 test("chat and voice advertise native Netlify limits",()=>{
- const chat=require("../netlify/functions/bilik-antara");
+ const fs=require("node:fs");
+ const stream=fs.readFileSync(require.resolve("../netlify/functions/bilik-antara-stream.mjs"),"utf8");
  const voice=require("../netlify/functions/bilik-antara-live-token");
- assert.equal(chat.config.rateLimit.windowLimit,60);
+ assert.match(stream,/export const config=\\{path:"\\/\\.netlify\\/functions\\/bilik-antara-stream"/);
+ assert.match(stream,/windowLimit:60/);
  assert.equal(voice.config.rateLimit.windowLimit,30);
 });
