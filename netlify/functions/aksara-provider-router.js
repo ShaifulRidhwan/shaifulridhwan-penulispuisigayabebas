@@ -45,7 +45,7 @@ const PROVIDERS=[
   url:"https://api.groq.com/openai/v1/chat/completions",model:"openai/gpt-oss-120b"},
  // Third primary: NVIDIA hosted NIM; requires permission for the intended use.
  {id:"nvidia",key:"NVIDIA_API_KEY",allow:null,
-  url:"https://integrate.api.nvidia.com/v1/chat/completions",model:"nvidia/free"},
+  url:"https://integrate.api.nvidia.com/v1/chat/completions",model:"deepseek-ai/deepseek-v4.1-flash"},
  // Universal free-only last fallback for ordinary text.
  {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
   url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"}
