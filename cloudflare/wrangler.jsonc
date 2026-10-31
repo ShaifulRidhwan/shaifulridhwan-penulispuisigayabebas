@@ -2,7 +2,7 @@
   "$schema": "../node_modules/wrangler/config-schema.json",
   "name": "aksara-apps",
   "main": "./src/index.mjs",
-  "compatibility_date": "2026-10-31",
+  "compatibility_date": "2026-09-25",
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
