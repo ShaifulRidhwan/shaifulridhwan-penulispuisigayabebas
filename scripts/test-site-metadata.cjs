@@ -94,6 +94,19 @@ for(const config of configs){
   }
  });
 }
+test("public novel catalog has canonical and social identity",()=>{
+ const {head,tags:items}=headOf("perpustakaan-aksara.html");
+ const url=base+"/perpustakaan-aksara.html";
+ assert.equal(single(items,"rel","canonical","perpustakaan-aksara.html").href,url);
+ assert.equal(single(items,"property","og:url","perpustakaan-aksara.html").content,url);
+ assert.ok(single(items,"property","og:title","perpustakaan-aksara.html").content);
+ assert.ok(single(items,"name","twitter:card","perpustakaan-aksara.html").content);
+ assert.doesNotMatch(single(items,"name","robots","perpustakaan-aksara.html").content,/noindex/);
+ const image=new URL(single(items,"property","og:image","perpustakaan-aksara.html").content);
+ assert.equal(image.origin,new URL(base).origin);
+ assert.ok(exists(image.pathname.slice(1)),"catalog social image exists");
+ assert.ok(schemaOf(head).some(schema=>schema["@type"]==="CollectionPage"));
+});
 test("novel internal reader remains noindex and uses novel identity",()=>{
  const {tags:items}=headOf("assets/novel/pembaca.html");
  assert.match(single(items,"name","robots","assets/novel/pembaca.html").content,/noindex/);
@@ -103,8 +116,8 @@ test("novel internal reader remains noindex and uses novel identity",()=>{
 test("sitemap includes canonical public pages only",()=>{
  const xml=read("sitemap.xml");
  const locs=[...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map(m=>m[1]);
- assert.equal(locs.length,configs.length);
- assert.deepEqual(new Set(locs),new Set(configs.map(p=>base+p.url)));
+ assert.equal(locs.length,configs.length+1);
+ assert.deepEqual(new Set(locs),new Set([...configs.map(p=>base+p.url),base+"/perpustakaan-aksara.html"]));
  assert.ok(!xml.includes("studio-imej-beta.html"));
  assert.ok(!xml.includes("assets/novel/pembaca.html"));
 });
