@@ -48,6 +48,6 @@ test("Only Groq, OpenRouter and NVIDIA are retained as text fallback providers",
  }
  assert.deepEqual(Object.keys(registry.CAPS),["groq","openrouter","nvidia"]);
  assert.match(src,/model:"openrouter\/free"/);
- assert.match(src,/model:"deepseek-ai\/deepseek-v4\.1-flash"/);
+ assert.match(src,/model:"nvidia\/nemotron-3\.5-bolt-e4b"/);
  assert.ok(typeof router.complete==="function");
 });
