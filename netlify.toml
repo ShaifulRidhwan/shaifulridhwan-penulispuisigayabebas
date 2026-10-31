@@ -74,14 +74,6 @@
 [functions."studio-enhance"]
   external_node_modules = ["@netlify/blobs"]
 
-# Android owner-QA handlers also require the Blobs SDK during Netlify bundling.
-[functions."studio-android"]
-  external_node_modules = ["@netlify/blobs"]
-[functions."studio-enhance-android"]
-  external_node_modules = ["@netlify/blobs"]
-[functions."bilik-antara-live-android"]
-  external_node_modules = ["@netlify/blobs"]
-
 # Cache large static artwork and versioned Studio assets across repeat visits.
 # Bump ?v= references when changing any cached asset; do not use immutable for frequently edited files.
 # Keep HTML documents uncached so future deployments appear promptly.
