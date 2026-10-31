@@ -3,9 +3,11 @@ const test=require("node:test");
 const assert=require("node:assert/strict");
 
 // Isolated mocked transport: no visitor data and no real OrcaRouter inference.
-const keys=["AKSARA_FREE_FALLBACKS","AKSARA_ORCAROUTER_LAYER2","ORCAROUTER_API_KEY","OPENROUTER_API_KEY","GROQ_API_KEY"];
+// Legacy layer-2 contract stays tested behind the emergency rollback flag.
+const keys=["AKSARA_HYBRID_ROUTER","AKSARA_FREE_FALLBACKS","AKSARA_ORCAROUTER_LAYER2","ORCAROUTER_API_KEY","OPENROUTER_API_KEY","GROQ_API_KEY"];
 const original=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
 process.env.AKSARA_FREE_FALLBACKS="true";
+process.env.AKSARA_HYBRID_ROUTER="false";
 process.env.AKSARA_ORCAROUTER_LAYER2="true";
 process.env.ORCAROUTER_API_KEY="test-not-a-real-key";
 delete process.env.OPENROUTER_API_KEY;
