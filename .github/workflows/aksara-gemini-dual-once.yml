@@ -1,0 +1,19 @@
+name: One-time AKSARA Gemini 3.6 and 3.8 live smoke
+on:
+  push:
+    branches:
+      - feature/cloudflare-aksara-apps-migration-20261031
+    paths:
+      - .github/workflows/aksara-gemini-dual-once.yml
+jobs:
+  check-gemini:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node cloudflare/gemini-dual-live-once.mjs
