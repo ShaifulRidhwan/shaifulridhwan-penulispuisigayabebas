@@ -440,9 +440,9 @@ ui.retry.addEventListener("click",()=>{
  if(busy)return;
  if(ui.input.value.trim()||fileState)submit({preventDefault(){}});else probe();
 });
-const providers=[["gemini","Google Gemini"],["groq","Groq"],["orcarouter","OrcaRouter"],["openrouter","OpenRouter"]]; // Canonical four text providers; synchronize with BilikAntaraIdentity.TEXT_PROVIDERS.
+const providers=[["gemini","Google Gemini"],["groq","Groq"],["nvidia","NVIDIA"],["openrouter","OpenRouter"]]; // Canonical four text providers; synchronize with BilikAntaraIdentity.TEXT_PROVIDERS.
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
-let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0,lastOrcaModel="",lastOrcaAt=0;
+let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0,lastNvidiaModel="",lastNvidiaAt=0;
 function shortOpenRouterName(model){
  const full=String(model.name||model.id||"Model").replace(/^[^:]{1,24}:\s*/,"").trim().replace(/^[\w.-]+\//,"");
  const name=full||String(model.id||"Model").split("/").pop().replace(/:free$/,"");
@@ -456,12 +456,12 @@ function renderProviderRows(rows,catalog=null){
  for(const [id,name] of providers){
   const item=(rows||[]).find(x=>x.id===id);
   const state=item?.status||"checking";
-  const expandable=id==="openrouter"||id==="orcarouter";
+  const expandable=id==="openrouter"||id==="nvidia";
   const line=elem(expandable?"summary":"div","multi-ai-row"+(expandable?" multi-ai-expand-trigger":""));
   const nameText=elem("span","multi-ai-provider",name);
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
   const waitLabel=waitSeconds>0?"Retry in "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" sec"):"";
-  const orcaReason=id==="orcarouter"&&state==="off"?({fallback_disabled:"Enable AKSARA_FREE_FALLBACKS",layer_disabled:"Enable AKSARA_ORCAROUTER_LAYER2",missing_key:"Add ORCAROUTER_API_KEY"}[item?.reason]||"Not active"):null;
+  const orcaReason=id==="nvidia"&&state==="off"?({fallback_disabled:"Enable AKSARA_FREE_FALLBACKS",license_not_confirmed:"NVIDIA belum diaktifkan",missing_key:"Add NVIDIA_API_KEY"}[item?.reason]||"Not active"):null;
   const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":state==="ready"?"is-ready":"is-muted"),
    state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?(item?.reason==="free_quota_exhausted"?"Kuota percuma habis":waitLabel||(item?.http===503?"Servis sibuk (503)":"Offline")):state==="off"?(orcaReason||"Not active"):"Checking…");
   line.append(nameText,statusText);
@@ -471,10 +471,10 @@ function renderProviderRows(rows,catalog=null){
   group.open=hasPreviousGroups&&openGroups.has(id);
   group.appendChild(line);
   const modelList=elem("div","multi-ai-model-list");
-  // Public free-tier listing from OrcaRouter (2026-10-30); not an authenticated workspace probe.
+  // Configured NVIDIA NIM model; listing alone does not prove availability.
   const orcaFreeModels=[{id:"deepseek/deepseek-v4-flash-free",name:"DeepSeek V4 Flash Free"}];
-  const models=id==="orcarouter"?(state==="off"?[]:orcaFreeModels):catalog?.models;
-  const shownModels=id==="orcarouter"?{models,status:"public_listing"}:catalog;
+  const models=id==="nvidia"?(state==="off"?[]:orcaFreeModels):catalog?.models;
+  const shownModels=id==="nvidia"?{models,status:"public_listing"}:catalog;
   // Catalog membership does not prove individual models are online.
   if(Array.isArray(models)&&models.length){
    for(const model of models){
@@ -486,14 +486,14 @@ function renderProviderRows(rows,catalog=null){
     const shortName=elem("span","multi-ai-model-name",shortOpenRouterName(model));
     const liveModel=(item?.status==="online"&&item.model===model.id)||
       (id==="openrouter"&&model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000)||
-      (id==="orcarouter"&&model.id===lastOrcaModel&&Date.now()-lastOrcaAt<90000);
+      (id==="nvidia"&&model.id===lastNvidiaModel&&Date.now()-lastNvidiaAt<90000);
     const statusLabel=elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Connected":"Listed");
     child.append(shortName,statusLabel);modelList.appendChild(child);
    }
    
    if(shownModels?.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Showing a saved list; the latest list is unavailable."));
   }else{
-   const message=id==="orcarouter"?(state==="off"?"Not active":"Free model list unavailable."):
+   const message=id==="nvidia"?(state==="off"?"Not active":"Model list unavailable."):
     !catalog?"Loading models…":catalog.status==="unavailable"?"Model list unavailable.":"No models listed yet.";
    modelList.appendChild(elem("p","multi-ai-model-note",message));
   }
@@ -1083,7 +1083,7 @@ async function submit(event){
   status(localAnswer?"configured":"online",localAnswer?"Jawapan tersedia Aksara":"Multi A.I Connected","");
   if(!localAnswer){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
   if(data.provider==="openrouter"&&typeof data.model==="string"){lastOpenRouterModel=data.model;lastOpenRouterAt=Date.now();}
-  if(data.provider==="orcarouter"&&typeof data.model==="string"){lastOrcaModel=data.model;lastOrcaAt=Date.now();}
+  if(data.provider==="nvidia"&&typeof data.model==="string"){lastNvidiaModel=data.model;lastNvidiaAt=Date.now();}
   compact();
  }catch(error){
   cancelPartialFrame();
