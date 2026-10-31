@@ -1,48 +1,39 @@
-# AKSARA A.I. · Android Native (0.1.0)
+# AKSARA A.I. · Android Native (v0.2.0)
 
-Native Android client for the existing AKSARA Core. **Not a WebView / Capacitor wrapper.**
+Kotlin + Jetpack Compose Android client for AKSARA Core. This is **not** a WebView or PWA wrapper.
 
-## Current scope
+## Implemented
 
-- Kotlin + Jetpack Compose native UI, Cahaya/Gelap chat modes and native navigation.
-- Text chat via the existing Netlify `/.netlify/functions/bilik-antara` API.
-- Backend probe distinguishes configured availability from a real successful reply.
-- Studio and Novel are **explicit placeholders**, not claimed to be implemented.
-- Session is held in memory only for this first milestone; clearing/restarting the app resets it.
-- No Gemini/Groq/OpenRouter API keys are packaged in the APK.
+- Native Bilik Antara chat UI, CAHAYA/GELAP selection, dark glass styling.
+- **NDJSON streaming** via existing `bilik-antara-stream.mjs` endpoint, with final `done.reply` treated as authoritative (prevents duplicated streamed text).
+- Stop button cancels active client request; incomplete partial response is labeled and excluded from future AI context.
+- Native Markdown subset: bold, italic, headings, inline code, fenced code blocks, quotes, lists and visibly displayed link URLs. No HTML interpretation.
+- Private local chat history in Android SharedPreferences, bounded to recent 80 messages. Optional saving in top-right menu; disabling clears saved conversation immediately. Backups disabled in manifest.
+- Smart scroll-to-latest, hides welcome banner during chats, smaller bubbles, realistic status after reply.
+- Native Studio and Novel tabs are **not implemented yet**; current screens explicitly say so.
+- Model API keys remain on the backend.
 
 ## Build
 
-GitHub Actions: branch `aksara-android` -> **AKSARA Android Debug APK** -> download the `AKSARA-Android-debug` artifact. The APK is a **debug build**, not a Play Store release.
+GitHub Actions workflow `AKSARA Android Debug APK` runs unit tests and Gradle `:app:assembleDebug` on branch `aksara-android`, then publishes artifact `AKSARA-Android-debug`. This is a **debug APK** intended for testing only.
 
-Local (Android SDK + JDK 17 + Gradle 8.13):
-```bash
-cd android-app
-gradle :app:assembleDebug
-```
+Local requirements: JDK 17, Android SDK 36, Gradle 8.13.
 
-APK output: `android-app/app/build/outputs/apk/debug/app-debug.apk`.
+## API protocol
 
-## Backend contract (verified from repository source)
+POST `/.netlify/functions/bilik-antara-stream` with JSON body containing `question`, `thoughtMode`, `history` and forward-compatible `clientPlatform: android`. Server emits newline-delimited JSON frames of `start`, `delta`, `done` and `error`. On completion, `done.reply` is the canonical complete answer. A separate JSON endpoint receives `{"probe":true}` to indicate backend configuration, not proof of live model availability.
 
-POST `https://shaifulridhwan-penulispuisigayabebas.netlify.app/.netlify/functions/bilik-antara`
+Existing backend may still give website-specific instructions; `clientPlatform` is not yet consumed by its deployed handler. Client UI separately documents where Android controls are. Avoid changing Netlify Functions until their mobile-client contract, rate limiting, authentication, and deployments are reviewed.
 
-Request:
-```json
-{"question":"Apa khabar?","thoughtMode":"cahaya","history":[]}
-```
+Android app uses native HTTPS and does not send browser Origin. CORS and absence of Origin are **not authentication**. Server-side protection is mandatory before public release.
 
-Response: `reply`, `provider`, `model` or `error`. Probe uses `{"probe":true}`. The existing server rejects foreign **browser Origin** headers; Android uses a native HTTP client, not browser CORS. **A missing Origin is not authentication.** Before public distribution, introduce appropriate server-side authentication/abuse controls and a deliberate mobile-client policy.
+## Pending / limitations
 
-## Pending
+- Sessions are local-only, not synchronized with the website; raw text is stored locally (not additionally encrypted) in the Android app sandbox when saving is enabled.
+- Streaming needs device verification for network interruptions, long replies, and Android background behavior.
+- Native Gemini Live Voice (token endpoint currently checks the browser Origin), Studio image generation, Novel reader, image attachments, and richer Markdown link handling are future work.
+- Full identity/platform-aware server prompts, accessibility audit, secure app signing and Play Store review are not yet complete.
 
-- Full text streaming and cancellable requests.
-- Persistent sessions, consent controls, cross-device memory.
-- Native studio/image gallery and book reader.
-- Native dictation and Gemini Live session flow; token endpoint currently requires the website Origin, so it must NOT be bypassed using a forged header.
-- Production app signing / release / Play Store readiness.
-- Emulator/device testing and accessibility review.
+## Branch isolation
 
-## Isolation
-
-All Android implementation remains under `android-app/` and its dedicated GitHub Actions workflow. Do not merge the Android work into `main` or alter Netlify configs until reviewed.
+Everything Android-specific lives under `android-app/` and `.github/workflows/aksara-android.yml`. No web production modification or Netlify deployment is required for this APK build.

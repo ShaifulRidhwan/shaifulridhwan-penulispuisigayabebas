@@ -38,7 +38,7 @@ jobs:
           gradle-version: '8.13'
       - name: Build debug APK
         working-directory: android-app
-        run: gradle :app:assembleDebug --no-daemon --stacktrace
+        run: gradle :app:testDebugUnitTest :app:assembleDebug --no-daemon --stacktrace
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:

@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -41,6 +44,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,6 +60,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
 import my.aksara.ai.data.ChatTurn
 
 private val Night = Color(0xFF080D1A)
@@ -75,7 +81,7 @@ fun AksaraApp(vm: AksaraViewModel = viewModel()) {
     ) {
         Scaffold(
             containerColor = Color.Transparent,
-            topBar = { AksaraHeader(vm.backendStatus) },
+            topBar = { AksaraHeader(vm.status, vm.statusReady) },
             bottomBar = {
                 Row(
                     modifier = Modifier.fillMaxWidth()
@@ -121,11 +127,11 @@ fun AksaraApp(vm: AksaraViewModel = viewModel()) {
 }
 
 @Composable
-private fun AksaraHeader(status: String) {
+private fun AksaraHeader(status: String, ready: Boolean) {
     Column(
         modifier = Modifier.fillMaxWidth()
             .statusBarsPadding()
-            .padding(horizontal = 20.dp, vertical = 14.dp),
+            .padding(horizontal = 20.dp, vertical = 9.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Text(
@@ -138,7 +144,7 @@ private fun AksaraHeader(status: String) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier.size(7.dp).clip(CircleShape)
-                    .background(if (status == "Backend tersedia" || status == "Aksara membalas")
+                    .background(if (ready)
                         Color(0xFF8CDBBA) else Color(0xFF9EA9CA))
             )
             Spacer(Modifier.size(7.dp))
@@ -150,25 +156,42 @@ private fun AksaraHeader(status: String) {
 @Composable
 private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
     var draft by rememberSaveable { mutableStateOf("") }
+    var menuExpanded by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
-    LaunchedEffect(vm.messages.size) {
-        if (vm.messages.isNotEmpty()) listState.animateScrollToItem(vm.messages.size)
-    }
-    fun submit() {
-        val question = draft.trim()
-        if (question.isNotBlank() && !vm.busy) {
-            vm.send(question)
-            draft = ""
+    val scope = rememberCoroutineScope()
+    val totalItems = listState.layoutInfo.totalItemsCount
+    val lastVisible = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
+    val nearBottom = lastVisible >= totalItems - 3
+    LaunchedEffect(vm.messages.size, vm.streamingTick) {
+        if (vm.messages.isNotEmpty() && (nearBottom || vm.messages.size <= 2)) {
+            val last = listState.layoutInfo.totalItemsCount - 1
+            if (last >= 0) listState.scrollToItem(last)
         }
     }
+    LaunchedEffect(Unit) {
+        if (vm.messages.isNotEmpty()) {
+            val last = listState.layoutInfo.totalItemsCount - 1
+            if (last >= 0) listState.scrollToItem(last)
+        }
+    }
+    fun submit() {
+        if (vm.send(draft)) {
+            draft = ""
+            scope.launch {
+                val last = listState.layoutInfo.totalItemsCount - 1
+                if (last >= 0) listState.scrollToItem(last)
+            }
+        }
+    }
+
     Column(
         modifier = modifier.fillMaxSize().imePadding()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
+            .padding(horizontal = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             FilterChip(
@@ -182,88 +205,131 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
                 label = { Text("GELAP") }
             )
             Spacer(Modifier.weight(1f))
-            TextButton(onClick = vm::clear, enabled = !vm.busy && vm.messages.isNotEmpty()) {
-                Text("Kosongkan", fontSize = 12.sp)
+            if (vm.messages.isNotEmpty() && !nearBottom) {
+                TextButton(onClick = {
+                    scope.launch {
+                        val last = listState.layoutInfo.totalItemsCount - 1
+                        if (last >= 0) listState.animateScrollToItem(last)
+                    }
+                }) { Text("↓", fontSize = 20.sp) }
+            }
+            Box {
+                TextButton(onClick = { menuExpanded = true }) {
+                    Text("⋮", fontSize = 23.sp, color = Ice)
+                }
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                if (vm.saveSession) "Simpan sesi: ON" else "Simpan sesi: OFF"
+                            )
+                        },
+                        onClick = {
+                            vm.setSaveSession(!vm.saveSession)
+                            menuExpanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Kosongkan perbualan") },
+                        enabled = vm.messages.isNotEmpty() && !vm.busy,
+                        onClick = {
+                            vm.clear()
+                            menuExpanded = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Mod tersedia di bahagian atas chat") },
+                        enabled = false,
+                        onClick = {}
+                    )
+                }
             }
         }
 
         LazyColumn(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             state = listState,
-            verticalArrangement = Arrangement.spacedBy(13.dp)
+            verticalArrangement = Arrangement.spacedBy(11.dp),
+            contentPadding = PaddingValues(top = 2.dp, bottom = 10.dp)
         ) {
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(top = 18.dp, bottom = 26.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    AksaraOrb()
-                    Text(
-                        text = "Antara Aksara dan Code.",
-                        color = Color(0xFFF0F2FF),
-                        fontSize = 19.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        textAlign = TextAlign.Center
-                    )
-                    Text(
-                        text = "Kau bawa soalan, aku bawa logik.\nKalau tak cukup, kita persoalkan jawapan.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color(0xFFB7C2DF),
-                        textAlign = TextAlign.Center
-                    )
+            if (vm.messages.isEmpty()) {
+                item(key = "welcome") {
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(top = 34.dp, bottom = 22.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        AksaraOrb()
+                        Text(
+                            "Antara Aksara dan Code.",
+                            color = Color(0xFFF0F2FF),
+                            fontSize = 19.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(
+                            "Kau bawa soalan, aku bawa logik.\nKalau tak cukup, kita persoalkan jawapan.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFFB7C2DF),
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
             items(vm.messages) { message ->
                 MessageBubble(message)
             }
             if (vm.busy) {
-                item {
+                item(key = "busy") {
                     Text(
-                        text = "Aksara sedang berfikir…",
-                        modifier = Modifier.padding(14.dp),
+                        if (vm.messages.lastOrNull()?.role == "assistant") "Menerima jawapan…" else "Aksara sedang berfikir…",
+                        modifier = Modifier.padding(12.dp),
                         color = Orchid,
                         style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
+            item(key = "end") { Spacer(Modifier.height(4.dp)) }
         }
 
         vm.error?.let { issue ->
-            Column(
+            Text(
+                issue,
                 modifier = Modifier.fillMaxWidth()
-                    .clip(RoundedCornerShape(14.dp))
+                    .clip(RoundedCornerShape(12.dp))
                     .background(Color(0x554A2738))
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                Text(issue, color = Color(0xFFFFC7D1), style = MaterialTheme.typography.bodySmall)
-                Text("Soalan kau masih disimpan dalam perbualan.", color = Color(0xFFD1C3CC), fontSize = 11.sp)
-            }
+                    .padding(10.dp),
+                color = Color(0xFFFFC7D1),
+                style = MaterialTheme.typography.bodySmall
+            )
         }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+            modifier = Modifier.fillMaxWidth().padding(bottom = 6.dp),
             verticalAlignment = Alignment.Bottom,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedTextField(
                 value = draft,
                 onValueChange = { if (it.length <= 12_000) draft = it },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Tulis sesuatu kepada Aksara…") },
+                placeholder = { Text("Tulis kepada Aksara…") },
                 enabled = !vm.busy,
                 minLines = 1,
                 maxLines = 5,
-                shape = RoundedCornerShape(22.dp),
+                shape = RoundedCornerShape(20.dp),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Send),
                 keyboardActions = KeyboardActions(onSend = { submit() })
             )
             Button(
-                onClick = { submit() },
-                enabled = draft.isNotBlank() && !vm.busy,
+                onClick = { if (vm.busy) vm.stop() else submit() },
+                enabled = vm.busy || draft.isNotBlank(),
                 modifier = Modifier.height(56.dp),
-                shape = RoundedCornerShape(18.dp)
-            ) { Text("Hantar") }
+                shape = RoundedCornerShape(16.dp)
+            ) { Text(if (vm.busy) "Henti" else "Hantar") }
         }
     }
 }
@@ -276,24 +342,35 @@ private fun MessageBubble(message: ChatTurn) {
         horizontalArrangement = if (mine) Arrangement.End else Arrangement.Start
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth(0.91f)
-                .clip(RoundedCornerShape(20.dp))
+            modifier = Modifier.fillMaxWidth(if (mine) 0.94f else 0.97f)
+                .clip(RoundedCornerShape(19.dp))
                 .background(if (mine) Color(0xB940527A) else Glass)
-                .border(1.dp, if (mine) Color(0x668FA8FF) else Border, RoundedCornerShape(20.dp))
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+                .border(1.dp, if (mine) Color(0x668FA8FF) else Border, RoundedCornerShape(19.dp))
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(7.dp)
         ) {
             Text(
-                text = if (mine) "KAU" else "AKSARA",
+                if (mine) "KAU" else "AKSARA",
                 color = if (mine) Ice else Orchid,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = FontWeight.Bold
             )
             SelectionContainer {
+                if (mine) {
+                    Text(
+                        message.content,
+                        color = Color(0xFFF0F3FF),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                } else {
+                    MarkdownMessage(message.content)
+                }
+            }
+            if (!mine && !message.complete) {
                 Text(
-                    message.content,
-                    color = Color(0xFFF0F3FF),
-                    style = MaterialTheme.typography.bodyLarge
+                    "Jawapan belum lengkap",
+                    color = Color(0xFFD9B9E6),
+                    style = MaterialTheme.typography.labelSmall
                 )
             }
             if (!mine && !message.provider.isNullOrBlank()) {
