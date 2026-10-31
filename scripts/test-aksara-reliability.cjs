@@ -221,16 +221,16 @@ test("direct founder biography needs no external model call but follow-up discus
  const r=await handler(event({question:"siapa shaiful ridhwan"}));assert.equal(r.statusCode,200);const d=JSON.parse(r.body);assert.equal(d.model,"project-identity");assert.match(d.reply,/The Coder Poet/);
  assert.equal(require("../bilik-antara-identity").answerIdentity("Kenapa Shaiful gabungkan puisi dengan kod?"),null);
 });
-test("a session's last successful provider is tried directly, without waiting for Gemini to fail first",async t=>{
+test("a preferred OpenRouter backup never bypasses a healthy text primary",async t=>{
  const handler=setup(t);process.env.OPENROUTER_API_KEY="mock";const requests=[];
- global.fetch=async url=>{requests.push(url);assert.ok(url.includes("openrouter.ai"));return reply("Atom ialah unit asas jirim.");};
- const r=await handler(event({question:"Apa itu atom?",preferredProvider:"openrouter"}));assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).provider,"openrouter");assert.equal(requests.length,1);
+ global.fetch=async url=>{requests.push(url);assert.ok(url.includes("groq.com"));return reply("Atom ialah unit asas jirim.");};
+ const r=await handler(event({question:"Apa itu atom?",preferredProvider:"openrouter"}));assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).provider,"groq");assert.equal(requests.length,1);
 });
 test("provider preference cannot bypass consent for private context, and a failed preferred provider still falls back",async t=>{
  const handler=setup(t);process.env.OPENROUTER_API_KEY="mock";let backups=0,google=0;
  global.fetch=async url=>{if(url.includes("openrouter")){backups++;return new Response("",{status:503});}if(url.includes("groq.com"))return reply("Jawapan daripada Groq.");google++;return Response.json({candidates:[{content:{parts:[{text:"Jawapan daripada Gemini."}]},finishReason:"STOP"}]});};
  const privateReply=await handler(event({question:"Ringkaskan fail",documentText:"teks peribadi",preferredProvider:"openrouter"}));assert.equal(privateReply.statusCode,200);assert.equal(backups,0);
- const fallback=await handler(event({question:"Apa itu graviti?",preferredProvider:"openrouter"}));assert.equal(fallback.statusCode,200);assert.equal(backups,1);assert.equal(google,1);assert.equal(JSON.parse(fallback.body).provider,"groq");
+ const fallback=await handler(event({question:"Apa itu graviti?",preferredProvider:"openrouter"}));assert.equal(fallback.statusCode,200);assert.equal(backups,0,"A healthy Groq response should not spend OpenRouter quota");assert.equal(google,1);assert.equal(JSON.parse(fallback.body).provider,"groq");
 });
 test("explicit medium reasoning stays medium, while acknowledgements and trivial turns remain fast",async t=>{
  setup(t);const router=require("../netlify/functions/aksara-provider-router");let payload;
@@ -496,12 +496,14 @@ test("the unchanged personality is a stable first system message across tasks",a
  assert.equal(systems[0].length,2);assert.equal(systems[0][0].content,systems[1][0].content);
  assert.ok(systems[0][0].content.includes(Brain.CORE));assert.notEqual(systems[0][1].content,systems[1][1].content);
 });
-test("daily free-provider exhaustion is distinguished from a short token window",async t=>{
+test("a daily OpenRouter quota failure is recorded only after primaries and Gemini fail",async t=>{
  const handler=setup(t);process.env.OPENROUTER_API_KEY="mock";
- global.fetch=async url=>url.includes("openrouter")?Response.json({error:{code:429,message:"Rate limit exceeded: free-models-per-day"}},{status:429}):url.includes("googleapis")?new Response("",{status:429}):reply("Aku boleh jawab.");
- const response=JSON.parse((await handler(event({question:"Aku datang nak borak.",preferredProvider:"openrouter"}))).body);
- assert.equal(response.provider,"groq");assert.equal(response.routing.failedAttempts[0].quotaKind,"daily");
- assert.equal(response.routing.failedAttempts[0].retryAfterSeconds,3600);
+ global.fetch=async url=>url.includes("openrouter")?Response.json({error:{code:429,message:"Rate limit exceeded: free-models-per-day"}},{status:429}):new Response("",{status:503});
+ const res=await handler(event({question:"Aku datang nak borak.",preferredProvider:"openrouter"}));
+ const response=JSON.parse(res.body);
+ const hit=response.providerFailures?.find(x=>x.provider==="openrouter");
+ assert.ok(hit,"Universal backup must eventually be attempted");assert.equal(hit.quotaKind,"daily");
+ assert.equal(hit.retryAfterSeconds,3600);
 });
 
 test("cached health cannot claim a quota-blocked provider is still online",async t=>{
@@ -533,7 +535,7 @@ test("a brief health probe never displaces a model that completed a real convers
  assert.equal(health.find(x=>x.id==="groq").status,"online");
  assert.equal(health.find(x=>x.id==="openrouter").status,"online");
  const next=await router.complete({system:"persona",history:[],question:"Sambung cerita",task:"technical",deadline:Date.now()+1500});
- assert.equal(next.provider,"openrouter","Routing follows a real successful response rather than a shorter OK probe");
+ assert.equal(next.provider,"groq","A past OpenRouter backup success cannot displace a healthy primary");
 });
 test("health check treats a daily free-tier quota as unavailable without immediately probing again",async t=>{
  setup(t);const router=require("../netlify/functions/aksara-provider-router");

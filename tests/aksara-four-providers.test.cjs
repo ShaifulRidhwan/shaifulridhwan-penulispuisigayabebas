@@ -8,7 +8,7 @@ const html=fs.readFileSync("bilik-antara.html","utf8");
 const backend=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
 const brain=fs.readFileSync("bilik-antara-brain.js","utf8");
 
-const canonical=["Google Gemini","Groq","OpenRouter","OrcaRouter"];
+const canonical=["Google Gemini","Groq","OrcaRouter","OpenRouter"];
 const questions=[
  "Empat Otak Aksara","berapa otak kau?","kau ada 4 otak?",
  "sebut nama semua 4 penyedia A.I","senaraikan 4 model AI dalam Aksara",
@@ -39,7 +39,7 @@ test("Default starter lists four brains; user interface and provider registry ag
  assert.ok(found,"Multi A.I. list missing");
  const listed=JSON.parse(found[1]);
  assert.deepEqual(listed.map(x=>x[1]),canonical);
- assert.deepEqual(listed.map(x=>x[0]),["gemini","groq","openrouter","orcarouter"]);
+ assert.deepEqual(listed.map(x=>x[0]),["gemini","groq","orcarouter","openrouter"]);
  const router=fs.readFileSync("netlify/functions/aksara-provider-router.js","utf8");
  assert.match(router,/id:"groq"/);
  assert.match(router,/id:"openrouter"/);
@@ -108,8 +108,8 @@ test("Locked Malay casual + English technical language applies to Gemini, all fa
  assert.match(html,/if\(data\?\.coderPoetFollowUp===true\)/);
  assert.match(html,/Nak tahu tentang "The Coder Poet" pulak ke/);
  assert.match(css,/\.msg-followup-btn/);
- assert.match(html,/bilik-antara-identity\.js\?v=28/);
- assert.match(html,/bilik-antara-brain\.js\?v=13/);
+ assert.match(html,/bilik-antara-identity\.js\?v=29/);
+ assert.match(html,/bilik-antara-brain\.js\?v=14/);
 });
 
 test("Unrelated creative requests and recommendations must not hijack the four-brain answer",()=>{

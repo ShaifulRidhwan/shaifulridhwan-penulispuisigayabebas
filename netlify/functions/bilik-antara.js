@@ -448,14 +448,16 @@ exports.handler=async event=>{
   }
   const hint=(typeof payload.preferredProvider==="string"&&payload.preferredProvider)||
     (Date.now()-lastTextSuccessAt<90000?lastTextProvider:"");
-  // An ordinary text turn need not wait for an unavailable Google model.
-  // One provider chain per request; a failed preference is never tried twice.
-  if(textOnly&&!tools.length&&hint!=="gemini"&&Router.enabled()){
-    const fast=await useAlternative({prefer:hint});
+  // Gemini, Groq and OrcaRouter form the primary text tier.
+  // OpenRouter is held back until the primary text tier AND Gemini fail.
+  const primaryTextProviders=["groq","orcarouter"],backupTextProviders=["openrouter"];
+  if(textOnly&&!tools.length&&hint!=="gemini"&&
+    Router.configured().some(p=>primaryTextProviders.includes(p.id))){
+    const fast=await useAlternative({prefer:hint,only:primaryTextProviders});
     if(fast&&(fast.statusCode===200||fast.statusCode===499||streamed))return fast;
     // A genuine one-second token reset is quicker than waiting for another
     // model's full first-token timeout. Honour it once, inside this request.
-    const imminent=Router.availability().filter(p=>p.retryAfterSeconds<=1&&
+    const imminent=Router.availability().filter(p=>primaryTextProviders.includes(p.provider)&&p.retryAfterSeconds<=1&&
       providerFailures.some(f=>f.provider===p.provider&&f.status===429&&f.quotaKind!=="daily"));
     if(imminent.length&&remaining()>5000){
       const wait=Math.min(...imminent.map(p=>p.retryAfterSeconds))*1000;
@@ -515,8 +517,16 @@ exports.handler=async event=>{
     providerFailures.push({provider:"gemini",status:error.status||"unavailable",reason:error.cooldownKnown?"quota_cooldown":error.name==="AbortError"?"timeout":"upstream",...(error.quotaKind?{quotaKind:error.quotaKind,quotaScope:error.quotaScope}:{})});
     googleCooldown(model,error);
     const transient=[400,401,403,404,429,500,502,503,504].includes(error.status)||error.name==="AbortError"||error.name==="TypeError"||(!error.status&&error.name==="Error");
-    if(transient&&(textOnly||imageOnly)&&Router.enabled()&&!alternativeTried){
-      const fallback=await useAlternative();if(fallback)return fallback;
+    if(transient&&(textOnly||imageOnly)&&Router.enabled()){
+      // If Groq/Orca already failed, try only the universal OpenRouter backup.
+      // Otherwise use the full ranked chain, including primary text providers.
+      // Once Gemini fails, the earlier first-token window has already been
+      // spent on primaries. Grant the remaining request deadline to the final
+      // fallback instead of suppressing it on streaming conversations.
+      const fallback=await useAlternative(alternativeTried?
+        {only:backupTextProviders,firstResponseDeadline:deadline}:
+        {firstResponseDeadline:deadline});
+      if(fallback)return fallback;
     }
     log("error",{http:error.status||null,name:error.name||"unknown",ms:Date.now()-started});
     if(!textOnly&&!imageOnly&&Router.enabled())return result(error.status===429?429:503,{code:"CAPABILITY_UNAVAILABLE",error:privateContext&&payload.contextFallback!==true?"Model utama belum available. Kalau kau benarkan dalam Privasi & Tetapan, model sandaran boleh baca memori dan fail teks kau.":"Model untuk function ni belum available. Sandaran teks tak boleh handle semua benda macam audio, imej dan carian.",retryAfterSeconds:30},H);

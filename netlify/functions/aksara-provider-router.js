@@ -27,17 +27,24 @@ function freeQuality(task,level){
  return "\nKUALITI PENGHALA PERCUMA: "+taskNote+high;
 }
 function rankProviders(available,task,prefer="",qualityFirst=false){
- return Registry.select(available,{task,thinking:qualityFirst?"high":"low",prefer,last:preferredProvider});
+ const options={task,thinking:qualityFirst?"high":"low",prefer,last:preferredProvider};
+ // Three-main / one-backup policy: OpenRouter must never leapfrog a text primary,
+ // even after a recent successful backup answer or an explicit preference.
+ const primary=available.filter(p=>p.id!=="openrouter");
+ const backup=available.filter(p=>p.id==="openrouter");
+ return [...Registry.select(primary,options),...Registry.select(backup,options)];
 }
 
 const PROVIDERS=[
  {id:"groq",key:"GROQ_API_KEY",allow:"GROQ_FREE_CONFIRMED",
   url:"https://api.groq.com/openai/v1/chat/completions",model:"openai/gpt-oss-120b"},
- {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
-  url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"},
- // Second-layer only: fixed zero-cost free router, never the paid auto router.
+ // OrcaRouter stays free-only, but now competes in the primary text tier.
+ // Keep the old layer-2 environment flag for backwards-compatible enablement.
  {id:"orcarouter",key:"ORCAROUTER_API_KEY",allow:null,
-  url:"https://api.orcarouter.ai/v1/chat/completions",model:"orcarouter/free"}
+  url:"https://api.orcarouter.ai/v1/chat/completions",model:"orcarouter/free"},
+ // Universal last resort: broad free-model pool and consented image fallback.
+ {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
+  url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"}
 ];
 // OpenRouter chooses from its current free chat-model pool; no stale hardcoded model list.
 const classifierModel=model=>/(?:guard|moderation|classifier|safety)/i.test(String(model||""));
@@ -112,14 +119,12 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
  ];
  const attempts=[];
  const available=configured();
- // Prefer the provider that recently completed a real answer. Preserve default order otherwise.
- const ordered=rankProviders(available.filter(p=>p.id!=="orcarouter"),task,prefer,reasoningLevel==="high").filter(p=>
+ // Text primaries are ranked by task, model capability and recent response health.
+ // OpenRouter is always last unless an explicitly consented image needs vision.
+ const ordered=rankProviders(available,task,prefer,reasoningLevel==="high").filter(p=>
   (!images.length||p.id==="openrouter")&&
   (!Array.isArray(only)||only.includes(p.id)));
- // OrcaRouter is deliberately the LAST attempt, never the primary model.
- // The existing image consent only authorizes OpenRouter, not OrcaRouter.
- const secondLayer=available.find(p=>p.id==="orcarouter");
- if(secondLayer&&!images.length&&(!Array.isArray(only)||only.includes("orcarouter")))ordered.push(secondLayer);
+ const backup=ordered.find(p=>p.id==="openrouter");
  for(const provider of ordered){
   if(skip.includes(provider.id)||Date.now()<(cooldown.get(provider.id)||0))continue;
   if(signal?.aborted)throw new DOMException("Dihentikan","AbortError");
@@ -128,14 +133,13 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   // through the same classifier-prefix guard; JSON clients get a full-answer budget.
   const attemptBudget=(provider.id==="openrouter"||provider.id==="orcarouter")?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,reasoningLevel==="high"?12000:8500):
    (!onDelta?bufferedTimeoutMs:timeoutMs);
-  // When earlier providers time out, reserve a small first-response window for
-  // layer two. Otherwise Groq+OpenRouter could consume all 14s and Orca would
-  // never get a chance, despite being correctly configured.
-  const orcaPending=provider.id!=="orcarouter"&&ordered.includes(secondLayer)&&
-    !skip.includes("orcarouter")&&Date.now()>=(cooldown.get("orcarouter")||0);
-  const orcaReserve=orcaPending?Math.min(3500,Math.max(0,remaining-1000)):0;
+  // Keep a bounded window for the universal backup so primaries cannot
+  // consume the entire first-response budget before OpenRouter is tried.
+  const backupPending=!!backup&&provider.id!=="openrouter"&&
+    !skip.includes("openrouter")&&Date.now()>=(cooldown.get("openrouter")||0);
+  const backupReserve=backupPending?Math.min(3500,Math.max(0,remaining-1000)):0;
   const attemptStarted=Date.now();
-  const control=requestControl(Math.min(attemptBudget,Math.max(500,remaining-orcaReserve)),signal);
+  const control=requestControl(Math.min(attemptBudget,Math.max(500,remaining-backupReserve)),signal);
   let emitted=false;
   try{
    const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
@@ -255,7 +259,8 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
 async function crossReview({question,reply,originalProvider,task="general",timeoutMs=3500}){
  if(process.env.AKSARA_CROSS_REVIEW!=="true"||!["technical","explain","critique"].includes(task))return null;
  if(!question||!reply||question.length>2500||reply.length>5000)return null;
- const reviewer=configured().find(p=>p.id!==originalProvider&&p.id!=="orcarouter"&&Date.now()>=(cooldown.get(p.id)||0));
+ // Do not burn universal OpenRouter backup quota on optional cross-reviews.
+ const reviewer=configured().find(p=>p.id==="groq"&&p.id!==originalProvider&&Date.now()>=(cooldown.get(p.id)||0));
  if(!reviewer)return null;
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),timeoutMs);
  try{

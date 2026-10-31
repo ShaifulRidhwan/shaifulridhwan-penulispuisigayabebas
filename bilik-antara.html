@@ -440,7 +440,7 @@ ui.retry.addEventListener("click",()=>{
  if(busy)return;
  if(ui.input.value.trim()||fileState)submit({preventDefault(){}});else probe();
 });
-const providers=[["gemini","Google Gemini"],["groq","Groq"],["openrouter","OpenRouter"],["orcarouter","OrcaRouter"]]; // Canonical four text providers; synchronize with BilikAntaraIdentity.TEXT_PROVIDERS.
+const providers=[["gemini","Google Gemini"],["groq","Groq"],["orcarouter","OrcaRouter"],["openrouter","OpenRouter"]]; // Canonical four text providers; synchronize with BilikAntaraIdentity.TEXT_PROVIDERS.
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
 let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0,lastOrcaModel="",lastOrcaAt=0;
 function shortOpenRouterName(model){
@@ -1157,10 +1157,10 @@ try{const lastMode=localStorage.getItem(MODE_STORAGE);if(lastMode==="gelap"||las
 renderIdeas();renderHistory();update();probe();
 })();
 </script>
-<script src="bilik-antara-identity.js?v=28" defer></script>
+<script src="bilik-antara-identity.js?v=29" defer></script>
 <script src="bilik-antara-session-utils.js?v=1" defer></script>
 <script src="bilik-antara-suite.js?v=14" defer></script>
-<script src="bilik-antara-brain.js?v=13" defer></script>
+<script src="bilik-antara-brain.js?v=14" defer></script>
 <script src="bilik-antara-modes.js?v=4" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-dialek.js?v=2" defer></script>
