@@ -2,6 +2,7 @@
 // Requires a separate random, >=32-character AKSARA_NVIDIA_TEST_TOKEN Cloudflare Secret.
 // The test prompt is fixed; no visitor messages, keys or model outputs are logged/stored.
 import {fetchChatCatalog} from "./nvidia-catalog.mjs";
+import {probeNvidia,chooseProbeModels} from "./nvidia-inference.mjs";
 const MODEL="deepseek-ai/deepseek-v4.1-flash";
 const hdr={"content-type":"application/json; charset=utf-8","cache-control":"no-store",
  "x-robots-tag":"noindex, nofollow","x-content-type-options":"nosniff",
@@ -27,21 +28,21 @@ const ui='<!doctype html><html lang="ms"><head><meta charset="utf-8">'+
  '</style></head><body><main><h1>Ujian NVIDIA AKSARA</h1>'+
  '<p>Hanya untuk pemilik dan pengujian prototaip. Chat awam tidak mengakses NVIDIA. '+
  'Masukkan token ujian berasingan, <strong>bukan API key NVIDIA</strong>. '+
- 'Maksimum dua ujian sehari, dengan mesej ujian tetap.</p>'+
+ 'Maksimum lapan inferens pemilik sehari, empat setiap sepuluh minit. Mesej ujian tetap.</p>'+
  '<form><label for="token">AKSARA_NVIDIA_TEST_TOKEN</label>'+
  '<input id="token" type="password" minlength="32" required autocomplete="off" spellcheck="false">'+
  '<label for="model">Model Chat NVIDIA (senarai dinamik)</label>'+ 
  '<select id="model" aria-label="Model Chat NVIDIA"><option value="deepseek-ai/deepseek-v4.1-flash">DeepSeek V4.1 Flash (default)</option></select>'+ 
  '<button type="submit" data-test="inference">Uji model dipilih melalui NVIDIA</button>'+  
- '<button type="button" data-test="catalog" style="margin-top:10px;background:#788697">Semak akses API NVIDIA (tanpa inferens)</button></form><output aria-live="polite"></output>'+ 
+ '<button type="button" data-test="catalog" style="margin-top:10px;background:#788697">Semak akses API NVIDIA (tanpa inferens)</button><button type="button" data-test="auto" style="margin-top:10px;background:#8fa5a5">Uji sehingga 3 model alternatif secara automatik</button></form><output aria-live="polite"></output>'+ 
  '</main><script>const f=document.querySelector("form"),o=document.querySelector("output"),'+
- 'i=document.querySelector("input"),m=document.querySelector("select"),b=document.querySelector("button[data-test=inference]"),c=document.querySelector("button[data-test=catalog]");'+  
- 'let checking=false;async function run(mode){if(checking)return;checking=true;b.disabled=true;c.disabled=true;'+ 
+ 'i=document.querySelector("input"),m=document.querySelector("select"),b=document.querySelector("button[data-test=inference]"),c=document.querySelector("button[data-test=catalog]"),a=document.querySelector("button[data-test=auto]");'+  
+ 'let checking=false;async function run(mode){if(checking)return;checking=true;b.disabled=true;c.disabled=true;a.disabled=true;'+ 
  'o.textContent="Menguji API...";try{const r=await fetch(location.pathname,{method:"POST",'+
  'headers:{"Content-Type":"application/json"},body:JSON.stringify({token:i.value,mode,model:m.value})});'+  
  'i.value="";const j=await r.json();if(mode==="catalog"&&Array.isArray(j.models)){m.replaceChildren();for(const x of j.models){const opt=document.createElement("option");opt.value=x.id;opt.textContent=x.id+(x.trialEndpointLabel?" · Trial endpoint":" · Listed");m.append(opt)}o.textContent=JSON.stringify({ok:j.ok,credentialAccepted:j.credentialAccepted,chatModelCount:j.models.length,modelListed:j.modelListed,note:j.note},null,2);}else o.textContent=JSON.stringify(j,null,2);}'+ 
- 'catch(_){o.textContent="Ralat rangkaian semasa ujian."}finally{b.disabled=false;c.disabled=false;checking=false}}'+
- 'f.addEventListener("submit",e=>{e.preventDefault();run("inference")});c.addEventListener("click",()=>run("catalog"));'+ 
+ 'catch(_){o.textContent="Ralat rangkaian semasa ujian."}finally{b.disabled=false;c.disabled=false;a.disabled=false;checking=false}}'+
+ 'f.addEventListener("submit",e=>{e.preventDefault();run("inference")});c.addEventListener("click",()=>run("catalog"));a.addEventListener("click",()=>run("auto"));'+ 
  '</script></body></html>';
 export async function nvidiaDiagnostic(request,env,quotaFn,fetchImpl=fetch){
  if(request.method==="GET")return new Response(ui,{headers:{"content-type":"text/html; charset=utf-8",
@@ -66,7 +67,7 @@ export async function nvidiaDiagnostic(request,env,quotaFn,fetchImpl=fetch){
  if(!String(env.NVIDIA_API_KEY||"").trim())
   return send(503,{ok:false,error:"NVIDIA_API_KEY tiada pada Worker."});
  const catalog=data?.mode==="catalog";
- if(data?.mode!==undefined&&!["inference","catalog"].includes(data.mode))return send(400,{ok:false,error:"Jenis ujian tidak sah."});
+ if(data?.mode!==undefined&&!["inference","catalog","auto"].includes(data.mode))return send(400,{ok:false,error:"Jenis ujian tidak sah."});
  // The catalog is authenticated and rate-limited but never spends inference budget.
  // Each selected chat id is revalidated against the provider's *current* list.
  const checked=await quotaFn(env,"health",request);
@@ -79,24 +80,26 @@ export async function nvidiaDiagnostic(request,env,quotaFn,fetchImpl=fetch){
    models:list.models,note:"Model yang tersenarai bukan semestinya akses production atau inferens berfungsi. 'Trial endpoint' merujuk kepada penyenaraian percubaan NVIDIA."});
   const selected=typeof data?.model==="string"?data.model:MODEL;
   if(!list.models.some(x=>x.id===selected))return send(400,{ok:false,error:"Model itu tidak tersedia sebagai model Chat dalam katalog NVIDIA semasa."});
-  const allowed=await quotaFn(env,"nvidia-test",request);
-  if(allowed.error)return allowed.error;
-  const res=await fetchImpl("https://integrate.api.nvidia.com/v1/chat/completions",{
-   method:"POST",headers:{"Authorization":"Bearer "+env.NVIDIA_API_KEY,
-    "Content-Type":"application/json","Accept":"application/json"},
-   body:JSON.stringify({model:selected,stream:false,max_tokens:256,temperature:1,top_p:0.95,
-    messages:[{role:"system",content:"Jawab secara ringkas dalam Bahasa Melayu Malaysia."},
-    {role:"user",content:"Beri satu ayat tentang apa itu metafora."}]}),
-   signal:AbortSignal.timeout(30000)
-  });
-  if(!res.ok)return send(502,{ok:false,provider:"NVIDIA",model:selected,upstreamHttp:res.status,
-   reason:res.status===402?"trial_quota_or_billing":res.status===401?"invalid_token":
-    res.status===403?"access_restricted":res.status===429?"rate_limited":"upstream_unavailable"});
-  let result={};try{result=await res.json()}catch(_){}
-  const answer=String(result?.choices?.[0]?.message?.content||"").trim();
-  return send(answer.length>5?200:502,{ok:answer.length>5,provider:"NVIDIA",model:selected,
-   upstreamHttp:res.status,hasAnswer:answer.length>5,
-   note:"Kandungan jawapan, prompt dan API key tidak dipaparkan. Model belum diaktifkan untuk Chat awam."});
+  const candidates=data?.mode==="auto"?chooseProbeModels(list.models,selected,3):[selected];
+  const attempts=[];
+  for(const model of candidates){
+   const allowed=await quotaFn(env,"nvidia-test",request);
+   if(allowed.error){
+    if(attempts.length)return send(200,{ok:false,provider:"NVIDIA",phase:"inference",
+      attempts,reason:"AKSARA_OWNER_QUOTA_REACHED",note:"Cuba selepas kuota ujian dipulihkan."});
+    return allowed.error;
+   }
+   const result=await probeNvidia(model,env.NVIDIA_API_KEY,fetchImpl,28000);
+   attempts.push({model,ok:result.ok,upstreamHttp:result.http||null,reason:result.reason,
+     elapsedMs:result.elapsedMs, ...(result.streamEvents!==undefined?{streamEvents:result.streamEvents}: {})});
+   if(result.ok)return send(200,{ok:true,provider:"NVIDIA",phase:"inference",model,
+     hasAnswer:true,proof:"real_streamed_response",attempts,
+     note:"Respons model sebenar diterima. Kandungan jawapan dan API key tidak dipaparkan."});
+   // No retry after account-level credit, auth or rate-limit failures.
+   if(["invalid_token","trial_quota_or_billing","access_restricted","rate_limited"].includes(result.reason))break;
+  }
+  return send(200,{ok:false,provider:"NVIDIA",phase:"inference",hasAnswer:false,attempts,
+   reason:"no_model_answered",note:"Model lain belum berjaya. Senarai model bukan jaminan inferens."});
  }catch(e){
   return send(504,{ok:false,provider:"NVIDIA",
    reason:e?.name==="TimeoutError"||e?.name==="AbortError"?"timeout":"network_unavailable"});
