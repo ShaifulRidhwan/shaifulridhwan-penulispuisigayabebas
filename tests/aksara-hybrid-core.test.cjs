@@ -39,7 +39,7 @@ test("chat and voice advertise native Netlify limits",()=>{
  const fs=require("node:fs");
  const stream=fs.readFileSync(require.resolve("../netlify/functions/bilik-antara-stream.mjs"),"utf8");
  const voice=require("../netlify/functions/bilik-antara-live-token");
- assert.match(stream,/export const config=\\{path:"\\/\\.netlify\\/functions\\/bilik-antara-stream"/);
+ assert.ok(stream.includes('export const config={path:"/.netlify/functions/bilik-antara-stream"'));
  assert.match(stream,/windowLimit:60/);
  assert.equal(voice.config.rateLimit.windowLimit,30);
 });
