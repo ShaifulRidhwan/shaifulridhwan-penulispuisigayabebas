@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -33,12 +34,15 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import my.aksara.ai.R
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.json.JSONObject
@@ -175,6 +179,12 @@ fun AksaraNovelScreen(modifier: Modifier = Modifier) {
                         .padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
+                    Image(
+                        painter = painterResource(R.drawable.aksara_novel_cover),
+                        contentDescription = "Kulit novel Antara Cahaya dan Gelap",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxWidth().height(210.dp)
+                    )
                     Text("KARYA ASLI · OFFLINE", color = Color(0xFFD8B878), fontSize = 11.sp)
                     Text("ANTARA CAHAYA\nDAN GELAP", color = Color(0xFFF0E8D4),
                         fontFamily = FontFamily.Serif, fontSize = 24.sp)

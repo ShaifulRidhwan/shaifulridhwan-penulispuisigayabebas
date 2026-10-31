@@ -16,6 +16,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -67,6 +68,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -76,7 +79,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
+import my.aksara.ai.R
 import my.aksara.ai.data.ChatSession
+import my.aksara.ai.data.AttachmentDraft
+import my.aksara.ai.data.AndroidAttachmentReader
 import my.aksara.ai.data.ChatTurn
 
 private val Night = Color(0xFF080D1A)
@@ -90,6 +96,8 @@ private val Soft = Color(0xFFB7C4DF)
 fun AksaraApp(vm: AksaraViewModel = viewModel()) {
     var tab by rememberSaveable { mutableStateOf("Chat") }
     var sessionsOpen by remember { mutableStateOf(false) }
+    var featuresOpen by remember { mutableStateOf(false) }
+    var providersOpen by remember { mutableStateOf(false) }
     val tint = if (vm.mode == "gelap") Color(0xFF322047) else Color(0xFF13264B)
     Box(
         modifier = Modifier.fillMaxSize()
@@ -99,13 +107,31 @@ fun AksaraApp(vm: AksaraViewModel = viewModel()) {
                 )
             )
     ) {
+        Image(
+            painter = painterResource(R.drawable.aksara_bilik_background),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize().graphicsLayer {
+                alpha = if (vm.mode == "gelap") 0.22f else 0.32f
+            }
+        )
+        Box(
+            Modifier.fillMaxSize().background(
+                Brush.verticalGradient(
+                    listOf(Color(0x88141A35), Color(0x77080D1A), Color(0xD9080D1A))
+                )
+            )
+        )
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                AksaraHeader(vm, onSessions = {
-                    tab = "Chat"
-                    sessionsOpen = true
-                })
+                AksaraHeader(
+                    vm,
+                    onSessions = { tab = "Chat"; sessionsOpen = true },
+                    onFeatures = { featuresOpen = true },
+                    onProviders = { providersOpen = true },
+                    onVoice = { tab = "Voice" }
+                )
             },
             bottomBar = {
                 Row(
@@ -145,40 +171,95 @@ fun AksaraApp(vm: AksaraViewModel = viewModel()) {
         if (sessionsOpen) {
             SessionManager(vm, onClose = { sessionsOpen = false })
         }
+        if (featuresOpen) {
+            AksaraFeatureHub(
+                vm,
+                onDismiss = { featuresOpen = false },
+                onNavigate = { tab = it; featuresOpen = false },
+                onSessions = { featuresOpen = false; tab = "Chat"; sessionsOpen = true },
+                onProviders = { featuresOpen = false; providersOpen = true }
+            )
+        }
+        if (providersOpen) {
+            AksaraProviderDialog(vm, onDismiss = { providersOpen = false })
+        }
     }
 }
 
 @Composable
-private fun AksaraHeader(vm: AksaraViewModel, onSessions: () -> Unit) {
+private fun AksaraHeader(
+    vm: AksaraViewModel,
+    onSessions: () -> Unit,
+    onFeatures: () -> Unit,
+    onProviders: () -> Unit,
+    onVoice: () -> Unit
+) {
     val activeTitle = vm.sessions.firstOrNull { it.id == vm.activeId }?.title ?: "Sesi Baharu"
-    Row(
+    Column(
         modifier = Modifier.fillMaxWidth().statusBarsPadding()
-            .padding(start = 17.dp, end = 8.dp, top = 6.dp, bottom = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(horizontal = 14.dp, vertical = 5.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                "AKSARA A.I.", color = Color(0xFFF3F4FF), fontSize = 20.sp,
-                letterSpacing = 1.9.sp, fontWeight = FontWeight.Bold
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = painterResource(R.drawable.aksara_site_icon),
+                contentDescription = null,
+                modifier = Modifier.size(31.dp).clip(CircleShape)
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier.size(6.dp).clip(CircleShape)
-                        .background(if (vm.statusReady) Color(0xFF8BDBBF)
-                            else Color(0xFFB3B9D2))
+            Spacer(Modifier.size(8.dp))
+            Column(Modifier.weight(1f)) {
+                Text("AKSARA A.I.", color = Color(0xFFF3F4FF), fontSize = 19.sp,
+                    letterSpacing = 1.7.sp, fontWeight = FontWeight.Bold)
+                Text("Antara cahaya dan gelap", color = Soft, fontSize = 10.sp)
+            }
+            TextButton(
+                onClick = onSessions,
+                modifier = Modifier.background(Color(0x551A2B48), RoundedCornerShape(14.dp))
+            ) {
+                Text(
+                    if (activeTitle.length > 13) activeTitle.take(12) + "…" else activeTitle,
+                    color = Ice, fontSize = 11.sp
                 )
-                Spacer(Modifier.size(6.dp))
-                Text(vm.status, color = Soft, fontSize = 11.sp, maxLines = 1)
+            }
+            TextButton(onClick = onFeatures) {
+                Text("☷", color = Ice, fontSize = 24.sp)
             }
         }
-        TextButton(
-            onClick = onSessions,
-            modifier = Modifier.background(Color(0x441A2B48), RoundedCornerShape(15.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(7.dp)
         ) {
-            Text(if (activeTitle.length > 15) activeTitle.take(14) + "…" else activeTitle,
-                color = Ice, fontSize = 11.sp)
+            TextButton(
+                onClick = onProviders,
+                modifier = Modifier.weight(1f)
+                    .background(Glass, RoundedCornerShape(16.dp))
+                    .border(1.dp, Border, RoundedCornerShape(16.dp))
+            ) {
+                Box(
+                    Modifier.size(7.dp).clip(CircleShape)
+                        .background(if (vm.statusReady) Color(0xFF92DDC2)
+                            else Color(0xFFB7C2DE))
+                )
+                Spacer(Modifier.size(7.dp))
+                Text("Multi A.I. Connected", color = Ice, fontSize = 11.sp,
+                    maxLines = 1)
+            }
+            TextButton(
+                onClick = onVoice,
+                modifier = Modifier.weight(1f)
+                    .background(Glass, RoundedCornerShape(16.dp))
+                    .border(1.dp, Border, RoundedCornerShape(16.dp))
+            ) {
+                Text("◉  Jom Voice Chat", color = Ice, fontSize = 11.sp,
+                    maxLines = 1)
+            }
         }
+        Text(vm.status, color = Soft, fontSize = 10.sp, maxLines = 1,
+            modifier = Modifier.padding(start = 4.dp))
     }
 }
 
@@ -194,7 +275,7 @@ private fun SessionManager(vm: AksaraViewModel, onClose: () -> Unit) {
         query.isBlank() ||
             session.title.contains(query, ignoreCase = true) ||
             session.messages.any { it.content.contains(query, ignoreCase = true) }
-    }.sortedByDescending { it.updatedAt }
+    }.sortedWith(compareByDescending<ChatSession> { it.pinned }.thenByDescending { it.updatedAt })
 
     ModalBottomSheet(
         onDismissRequest = onClose,
@@ -264,13 +345,17 @@ private fun SessionManager(vm: AksaraViewModel, onClose: () -> Unit) {
                             .padding(13.dp),
                         verticalArrangement = Arrangement.spacedBy(5.dp)
                     ) {
-                        Text(session.title, color = Color.White,
+                        Text((if (session.pinned) "★  " else "") + session.title, color = Color.White,
                             fontWeight = FontWeight.SemiBold, maxLines = 2)
                         Text(
                             session.messages.lastOrNull()?.content?.take(85) ?: "Belum ada mesej",
                             color = Soft, fontSize = 12.sp, maxLines = 2
                         )
                         Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                            TextButton(
+                                onClick = { vm.togglePinSession(session.id) },
+                                enabled = !vm.busy
+                            ) { Text(if (session.pinned) "Nyahpin" else "Pin", fontSize = 12.sp) }
                             TextButton(onClick = {
                                 rename = session
                                 renameDraft = session.title
@@ -326,6 +411,29 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var draft by rememberSaveable { mutableStateOf("") }
     var speechNote by remember { mutableStateOf("") }
+    var attachment by remember { mutableStateOf<AttachmentDraft?>(null) }
+    var modeOpen by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val attachmentReader = remember(context) {
+        AndroidAttachmentReader(context.contentResolver)
+    }
+    val picker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { files ->
+        if (files.isNotEmpty()) {
+            scope.launch {
+                runCatching { attachmentReader.load(files) }
+                    .onSuccess {
+                        attachment = it
+                        speechNote = "Lampiran: " + it.displayName
+                    }
+                    .onFailure { error ->
+                        attachment = null
+                        speechNote = error.message ?: "Fail ini tidak dapat dibaca."
+                    }
+            }
+        }
+    }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { outcome ->
@@ -354,7 +462,6 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
         }
     }
     val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
     var pinnedBottom by remember { mutableStateOf(true) }
     LaunchedEffect(listState.isScrollInProgress) {
         if (listState.isScrollInProgress) {
@@ -364,6 +471,7 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
     }
     LaunchedEffect(vm.activeId) {
         pinnedBottom = true
+        attachment = null
     }
     LaunchedEffect(vm.activeId, vm.messages.size, vm.streamingTick) {
         if (pinnedBottom) {
@@ -372,8 +480,13 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
         }
     }
     fun submit() {
-        if (vm.send(draft)) {
+        val question = draft.trim().ifBlank {
+            if (attachment != null) "Terangkan kandungan lampiran yang disertakan." else ""
+        }
+        if (vm.send(question, attachment)) {
             draft = ""
+            attachment = null
+            speechNote = ""
             pinnedBottom = true
         }
     }
@@ -387,12 +500,10 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            FilterChip(selected = vm.mode == "cahaya",
-                onClick = { vm.selectMode("cahaya") }, enabled = !vm.busy,
-                label = { Text("CAHAYA") })
-            FilterChip(selected = vm.mode == "gelap",
-                onClick = { vm.selectMode("gelap") }, enabled = !vm.busy,
-                label = { Text("GELAP") })
+            TextButton(onClick = { modeOpen = true }) {
+                Text("Thinking Mode · " + vm.mode.uppercase(), color = Ice,
+                    fontSize = 12.sp)
+            }
             Spacer(Modifier.weight(1f))
             if (!pinnedBottom) {
                 TextButton(onClick = {
@@ -423,13 +534,36 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         AksaraOrb(vm.mode)
-                        Text("Antara Aksara dan Code.", color = Color.White,
-                            fontSize = 19.sp, fontWeight = FontWeight.SemiBold,
+                        Text("Antara aksara dan code,", color = Color.White,
+                            fontSize = 18.sp, fontWeight = FontWeight.SemiBold,
                             textAlign = TextAlign.Center)
                         Text(
-                            "Kau bawa soalan, aku bawa logik.\nKalau tak cukup, kita persoalkan jawapan.",
+                            "GAYA yang bebas,\nBEBAS dalam bentuk,\nLUAS dalam pemikiran.",
                             color = Soft, fontSize = 14.sp, textAlign = TextAlign.Center
                         )
+                    }
+                }
+            }
+            if (vm.messages.isEmpty()) {
+                item(key = "starters") {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        listOf(
+                            "Siapa Aku",
+                            "The Coder Poet",
+                            "Apa itu Puisi Gaya Bebas"
+                        ).forEach { prompt ->
+                            OutlinedButton(
+                                onClick = { vm.send(prompt); pinnedBottom = true },
+                                enabled = !vm.busy,
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp)
+                            ) {
+                                Text(prompt, color = Ice, fontSize = 12.sp)
+                            }
+                        }
                     }
                 }
             }
@@ -437,6 +571,20 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
                 val latest = vm.messages.lastOrNull()?.id == turn.id
                 MessageBubble(turn, latest && !vm.busy,
                     onRegenerate = vm::regenerateLast)
+            }
+            if (!vm.busy && vm.messages.size >= 2 &&
+                vm.messages.lastOrNull()?.role == "assistant" &&
+                vm.messages.dropLast(1).lastOrNull()?.role == "user" &&
+                vm.messages.dropLast(1).last().content.trim().lowercase()
+                    .matches(Regex("siapa aku[?!., ]*"))
+            ) {
+                item(key = "coder-poet-followup") {
+                    OutlinedButton(
+                        onClick = { vm.send("The Coder Poet"); pinnedBottom = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !vm.busy
+                    ) { Text("Nak tahu tentang The Coder Poet pulak ke?", color = Ice) }
+                }
             }
             if (vm.busy) {
                 item(key = "busy") {
@@ -465,17 +613,38 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
                 }
             }
         }
-        if (speechNote.isNotBlank()) Text(speechNote, color = Color(0xFFFFC6CE),
+        if (speechNote.isNotBlank()) Text(speechNote, color = Ice,
             fontSize = 11.sp)
+        if (attachment != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .background(Glass, RoundedCornerShape(13.dp))
+                    .padding(horizontal = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text("＋ " + attachment!!.displayName, color = Soft, fontSize = 11.sp,
+                    modifier = Modifier.weight(1f), maxLines = 1)
+                TextButton(onClick = { attachment = null; speechNote = "" }) {
+                    Text("Buang", color = Color(0xFFFFC6CE), fontSize = 11.sp)
+                }
+            }
+        }
         Row(
             modifier = Modifier.fillMaxWidth().padding(bottom = 5.dp),
             horizontalArrangement = Arrangement.spacedBy(7.dp),
             verticalAlignment = Alignment.Bottom
         ) {
             TextButton(
+                onClick = {
+                    picker.launch(arrayOf("image/*", "video/mp4", "video/webm",
+                        "application/pdf", "text/*", "audio/*"))
+                },
+                enabled = !vm.busy
+            ) { Text("＋", fontSize = 22.sp, color = Ice) }
+            TextButton(
                 onClick = ::speak,
                 enabled = !vm.busy
-            ) { Text("🎙", fontSize = 19.sp, color = Ice) }
+            ) { Text("🎙", fontSize = 17.sp, color = Ice) }
             OutlinedTextField(
                 value = draft,
                 onValueChange = { if (it.length <= 12_000) draft = it },
@@ -489,10 +658,10 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
             )
             Button(
                 onClick = { if (vm.busy) vm.stop() else submit() },
-                enabled = vm.busy || draft.isNotBlank(),
+                enabled = vm.busy || draft.isNotBlank() || attachment != null,
                 modifier = Modifier.height(56.dp),
                 shape = RoundedCornerShape(16.dp)
-            ) { Text(if (vm.busy) "Henti" else "Hantar") }
+            ) { Text(if (vm.busy) "Henti" else "➤") }
         }
         if (vm.lastLatencyMs != null && !vm.busy) {
             Text("Respons " + (vm.lastLatencyMs!! / 1000.0).toString().take(4) +
@@ -500,6 +669,32 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
                 color = Soft, fontSize = 10.sp,
                 modifier = Modifier.padding(start = 6.dp, bottom = 2.dp))
         }
+    }
+    if (modeOpen) {
+        AlertDialog(
+            onDismissRequest = { modeOpen = false },
+            title = { Text("Thinking Mode · AKSARA") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("CAHAYA: santai, jelas dan praktikal. GELAP: kritis, falsafah dan memeriksa premis.")
+                    FilterChip(
+                        selected = vm.mode == "cahaya",
+                        onClick = { vm.selectMode("cahaya"); modeOpen = false },
+                        enabled = !vm.busy,
+                        label = { Text("☼  CAHAYA") }
+                    )
+                    FilterChip(
+                        selected = vm.mode == "gelap",
+                        onClick = { vm.selectMode("gelap"); modeOpen = false },
+                        enabled = !vm.busy,
+                        label = { Text("☾  GELAP") }
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { modeOpen = false }) { Text("Tutup") }
+            }
+        )
     }
 }
 
@@ -529,12 +724,30 @@ private fun MessageBubble(
                 .padding(horizontal = 14.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(7.dp)
         ) {
-            Text(
-                if (mine) "KAU" else "AKSARA",
-                color = if (mine) Ice else Orchid,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (!mine) {
+                    Image(
+                        painter = painterResource(R.drawable.aksara_chat_portrait),
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp).clip(CircleShape)
+                    )
+                    Spacer(Modifier.size(7.dp))
+                }
+                Text(
+                    if (mine) "KAU" else "AKSARA",
+                    color = if (mine) Ice else Orchid,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    java.text.DateFormat.getTimeInstance(
+                        java.text.DateFormat.SHORT,
+                        java.util.Locale.forLanguageTag("ms-MY")
+                    ).format(java.util.Date(message.timestamp)),
+                    color = Soft, fontSize = 10.sp
+                )
+            }
             SelectionContainer {
                 if (mine) {
                     Text(message.content, color = Color(0xFFF0F3FF),

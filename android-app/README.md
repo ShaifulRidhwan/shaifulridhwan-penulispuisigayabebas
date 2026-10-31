@@ -1,7 +1,17 @@
-# AKSARA Android Native · v0.4.0
+# AKSARA Android Native · v0.5.0
 
 Native Kotlin + Jetpack Compose app, not a webview or Capacitor wrapper.
 Repository: ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas, branch `aksara-android`.
+
+## Bilik Antara native parity foundation (v0.5.0)
+
+- Original Bilik Antara background, avatar art, brand and novel cover packaged as native resources; no WebView.
+- Native Ciri & Fungsi hub, live 4-provider status, web-aligned default starters and Thinking Mode selector.
+- Attachment picker supporting allowed images, PDFs, short audio/video and text (size-capped per shared server contract).
+- Opt-in memory notes, explicit fallback permissions, server-backed manual context summary, session pin/JSON backup import/export, native draft workspace, performance metrics.
+- Per-message local time display. Original web identity and model-router behavior inherited from the backend.
+
+**Full 100% equivalence is NOT yet claimed.** See `PARITY_MATRIX.md` for precise implemented/pending scope, especially Gemini Live and Studio authorization.
 
 ## Delivered in v0.4.0
 
