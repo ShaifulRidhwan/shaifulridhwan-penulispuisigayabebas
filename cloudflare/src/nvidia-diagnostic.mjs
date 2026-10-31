@@ -29,14 +29,16 @@ const ui='<!doctype html><html lang="ms"><head><meta charset="utf-8">'+
  'Maksimum dua ujian sehari, dengan mesej ujian tetap.</p>'+
  '<form><label for="token">AKSARA_NVIDIA_TEST_TOKEN</label>'+
  '<input id="token" type="password" minlength="32" required autocomplete="off" spellcheck="false">'+
- '<button type="submit">Uji DeepSeek melalui NVIDIA</button></form><output aria-live="polite"></output>'+
+ '<button type="submit" data-test="inference">Uji DeepSeek melalui NVIDIA</button>'+ 
+ '<button type="button" data-test="catalog" style="margin-top:10px;background:#788697">Semak akses API NVIDIA (tanpa inferens)</button></form><output aria-live="polite"></output>'+ 
  '</main><script>const f=document.querySelector("form"),o=document.querySelector("output"),'+
- 'i=document.querySelector("input"),b=document.querySelector("button");'+
- 'f.addEventListener("submit",async e=>{e.preventDefault();b.disabled=true;'+
+ 'i=document.querySelector("input"),b=document.querySelector("button[data-test=inference]"),c=document.querySelector("button[data-test=catalog]");'+ 
+ 'let checking=false;async function run(mode){if(checking)return;checking=true;b.disabled=true;c.disabled=true;'+ 
  'o.textContent="Menguji API...";try{const r=await fetch(location.pathname,{method:"POST",'+
- 'headers:{"Content-Type":"application/json"},body:JSON.stringify({token:i.value})});'+
+ 'headers:{"Content-Type":"application/json"},body:JSON.stringify({token:i.value,mode})});'+ 
  'i.value="";const j=await r.json();o.textContent=JSON.stringify(j,null,2);}'+
- 'catch(_){o.textContent="Ralat rangkaian semasa ujian."}finally{b.disabled=false}});'+
+ 'catch(_){o.textContent="Ralat rangkaian semasa ujian."}finally{b.disabled=false;c.disabled=false;checking=false}}'+
+ 'f.addEventListener("submit",e=>{e.preventDefault();run("inference")});c.addEventListener("click",()=>run("catalog"));'+ 
  '</script></body></html>';
 export async function nvidiaDiagnostic(request,env,quotaFn,fetchImpl=fetch){
  if(request.method==="GET")return new Response(ui,{headers:{"content-type":"text/html; charset=utf-8",
@@ -60,10 +62,21 @@ export async function nvidiaDiagnostic(request,env,quotaFn,fetchImpl=fetch){
   return send(403,{ok:false,error:"Token ujian tidak sah."});
  if(!String(env.NVIDIA_API_KEY||"").trim())
   return send(503,{ok:false,error:"NVIDIA_API_KEY tiada pada Worker."});
- const allowed=await quotaFn(env,"nvidia-test",request);
+ const catalog=data?.mode==="catalog";
+ if(data?.mode!==undefined&&!["inference","catalog"].includes(data.mode))return send(400,{ok:false,error:"Jenis ujian tidak sah."});
+ const allowed=await quotaFn(env,catalog?"health":"nvidia-test",request);
  if(allowed.error)return allowed.error;
- const timeout=AbortSignal.timeout(30000);
+ const timeout=AbortSignal.timeout(catalog?8000:30000);
  try{
+  if(catalog){
+   const res=await fetchImpl("https://integrate.api.nvidia.com/v1/models",{
+    method:"GET",headers:{"Authorization":"Bearer "+env.NVIDIA_API_KEY,"Accept":"application/json"},signal:timeout});
+   if(!res.ok)return send(502,{ok:false,provider:"NVIDIA",phase:"catalog",http:res.status});
+   const models=await res.json().catch(()=>({}));
+   const listed=Array.isArray(models?.data)&&models.data.some(x=>x?.id===MODEL);
+   return send(200,{ok:true,provider:"NVIDIA",phase:"catalog",credentialAccepted:true,modelListed:listed,
+    note:"Model disenaraikan, tetapi inferens belum disahkan berfungsi."});
+  }
   const res=await fetchImpl("https://integrate.api.nvidia.com/v1/chat/completions",{
    method:"POST",headers:{"Authorization":"Bearer "+env.NVIDIA_API_KEY,
     "Content-Type":"application/json","Accept":"application/json"},
