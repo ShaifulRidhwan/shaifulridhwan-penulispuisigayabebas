@@ -2,7 +2,7 @@
 const {test}=require("node:test");
 const assert=require("node:assert/strict");
 test("NVIDIA HTTP 402 free_quota_exhausted stays offline and free OpenRouter takes over",async()=>{
- const keys=["AKSARA_HYBRID_ROUTER","AKSARA_FREE_FALLBACKS","AKSARA_NVIDIA_ENABLED","NVIDIA_API_KEY","OPENROUTER_API_KEY","GROQ_API_KEY"];
+ const keys=["AKSARA_HYBRID_ROUTER","AKSARA_FREE_FALLBACKS","AKSARA_NVIDIA_ENABLED","AKSARA_NVIDIA_PRODUCTION_AUTHORIZED","NVIDIA_PRODUCTION_API_KEY","NVIDIA_PRODUCTION_CHAT_URL","OPENROUTER_API_KEY","GROQ_API_KEY"];
  const old=Object.fromEntries(keys.map(x=>[x,process.env[x]]));
  const originalFetch=global.fetch;
  let orcaCalls=0,backupCalls=0;
@@ -10,14 +10,16 @@ test("NVIDIA HTTP 402 free_quota_exhausted stays offline and free OpenRouter tak
   process.env.AKSARA_HYBRID_ROUTER="true";
   process.env.AKSARA_FREE_FALLBACKS="true";
   process.env.AKSARA_NVIDIA_ENABLED="true";
-  process.env.NVIDIA_API_KEY="test-only";
+  process.env.AKSARA_NVIDIA_PRODUCTION_AUTHORIZED="true";
+  process.env.NVIDIA_PRODUCTION_API_KEY="test-only-production";
+  process.env.NVIDIA_PRODUCTION_CHAT_URL="https://nim-enterprise.example.org/v1/chat/completions";
   process.env.OPENROUTER_API_KEY="test-only";
   delete process.env.GROQ_API_KEY;
   const path=require.resolve("../netlify/functions/aksara-provider-router");
   delete require.cache[path];
   const Router=require(path);
   global.fetch=async(url)=>{
-   if(url.includes("integrate.api.nvidia.com")){
+   if(url.includes("nim-enterprise.example.org")){
     orcaCalls++;
     return {ok:false,status:402,headers:{get:()=>null},
       json:async()=>({error:{code:"free_quota_exhausted",message:"Free quota exhausted"}})};
