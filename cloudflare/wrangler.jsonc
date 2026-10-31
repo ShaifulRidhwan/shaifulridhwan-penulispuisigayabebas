@@ -6,24 +6,41 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "run_worker_first": ["/", "/.netlify/functions/*", "/api/aksara-health"],
+    "run_worker_first": [
+      "/",
+      "/.netlify/functions/*",
+      "/api/aksara-health"
+    ],
     "html_handling": "none",
     "not_found_handling": "404-page"
   },
   "durable_objects": {
     "bindings": [
-      { "name": "AKSARA_CONTROL", "class_name": "AksaraControl" }
+      {
+        "name": "AKSARA_CONTROL",
+        "class_name": "AksaraControl"
+      }
     ]
   },
   "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["AksaraControl"] }
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "AksaraControl"
+      ]
+    }
   ],
   "vars": {
     "AKSARA_HYBRID_ROUTER": "true",
     "AKSARA_SHARED_CHAT_BUDGET": "false",
     "AKSARA_FREE_FALLBACKS": "true",
     "STUDIO_DISABLED": "false",
-    "AKSARA_CLOUD_MIGRATION": "preview"
+    "AKSARA_CLOUD_MIGRATION": "preview",
+    "GROQ_FREE_CONFIRMED": "true",
+    "AKSARA_ORCAROUTER_LAYER2": "true"
   },
-  "observability": {"enabled": true}
+  "observability": {
+    "enabled": true
+  },
+  "keep_vars": true
 }
