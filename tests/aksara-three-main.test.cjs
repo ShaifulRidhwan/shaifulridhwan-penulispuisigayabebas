@@ -2,7 +2,7 @@
 // Offline architecture regression: all API requests are mocked. No provider quota used.
 const {test,after}=require("node:test");
 const assert=require("node:assert/strict");
-const keys=["AKSARA_FREE_FALLBACKS","AKSARA_NVIDIA_ENABLED","NVIDIA_API_KEY","GROQ_API_KEY","GROQ_FREE_CONFIRMED","OPENROUTER_API_KEY","GEMINI_API_KEY","AKSARA_CROSS_REVIEW"];
+const keys=["AKSARA_FREE_FALLBACKS","AKSARA_NVIDIA_ENABLED","AKSARA_NVIDIA_PRODUCTION_AUTHORIZED","NVIDIA_PRODUCTION_API_KEY","NVIDIA_PRODUCTION_CHAT_URL","GROQ_API_KEY","GROQ_FREE_CONFIRMED","OPENROUTER_API_KEY","GEMINI_API_KEY","AKSARA_CROSS_REVIEW"];
 const saved=Object.fromEntries(keys.map(k=>[k,process.env[k]]));
 const originalFetch=global.fetch;
 after(()=>{
@@ -12,7 +12,9 @@ after(()=>{
 function setup(){
  Object.assign(process.env,{
   AKSARA_FREE_FALLBACKS:"true",AKSARA_NVIDIA_ENABLED:"true",
-  NVIDIA_API_KEY:"mock",GROQ_API_KEY:"mock",GROQ_FREE_CONFIRMED:"true",
+  AKSARA_NVIDIA_PRODUCTION_AUTHORIZED:"true",
+  NVIDIA_PRODUCTION_API_KEY:"mock",NVIDIA_PRODUCTION_CHAT_URL:"https://nim-enterprise.example.org/v1/chat/completions",
+  GROQ_API_KEY:"mock",GROQ_FREE_CONFIRMED:"true",
   OPENROUTER_API_KEY:"mock",GEMINI_API_KEY:"mock",AKSARA_CROSS_REVIEW:"false"
  });
  for(const path of ["../netlify/functions/aksara-provider-router","../netlify/functions/aksara-model-registry","../netlify/functions/bilik-antara"]){
@@ -22,7 +24,7 @@ function setup(){
 }
 const ok=(provider="demo")=>Response.json({model:provider,choices:[{message:{content:"Aku Aksara. Ini respons ujian."},finish_reason:"stop"}]});
 const fail=()=>new Response(JSON.stringify({error:{message:"upstream unavailable"}}),{status:503,headers:{"content-type":"application/json"}});
-const provider=url=>url.includes("api.groq.com")?"groq":url.includes("integrate.api.nvidia.com")?"nvidia":url.includes("openrouter.ai")?"openrouter":url.includes("googleapis")?"gemini":"unknown";
+const provider=url=>url.includes("api.groq.com")?"groq":url.includes("nim-enterprise.example.org")?"nvidia":url.includes("openrouter.ai")?"openrouter":url.includes("googleapis")?"gemini":"unknown";
 test("A preference or recent OpenRouter success cannot outrank Groq/NVIDIA",()=>{
  const Router=setup();
  const available=Router.configured();
