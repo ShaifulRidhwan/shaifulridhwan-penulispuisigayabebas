@@ -77,10 +77,10 @@ test("studio AI prompt enhancements are limited per user",async t=>{
 test("NVIDIA owner trials: eight per UTC day globally, four per 10-minute client",async t=>{
  const {db,request}=fixture();t.after(()=>db.close());
  for(let n=0;n<8;n++){
-  const hash=String.fromCharCode(97+n).repeat(32);
+  const hash="abcdef01"[n].repeat(32);
   assert.equal((await request("nvidia-test",{hash})).status,200);
  }
- assert.equal((await request("nvidia-test",{hash:"z".repeat(32)})).status,429);
+ assert.equal((await request("nvidia-test",{hash:"9".repeat(32)})).status,429);
  assert.equal(db.prepare("SELECT count FROM nvidia_test_daily").get().count,8);
  assert.equal(db.prepare("SELECT chat FROM daily").get().chat,0);
 });
