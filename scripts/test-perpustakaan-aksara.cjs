@@ -10,7 +10,10 @@ const bilik=fs.readFileSync(path.join(root,"bilik-antara.html"),"utf8");
 const novel=fs.readFileSync(path.join(root,"antara-cahaya-dan-gelap.html"),"utf8");
 const index=fs.readFileSync(path.join(root,"index.html"),"utf8");
 const css=fs.readFileSync(path.join(root,"perpustakaan-aksara.css"),"utf8");
-const scripts=[...page.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(m=>m[1]);
+// Metadata JSON-LD is data, not executable JavaScript.
+const scripts=[...page.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)]
+ .filter(m=>!/type\s*=\s*["']application\/ld\+json["']/i.test(m[1]))
+ .map(m=>m[2]);
 test("Katalog mempunyai metadata dan pautan karya utama",()=>{
  assert.match(page,/<html lang="ms">/);
  assert.match(page,/name="viewport"/);
