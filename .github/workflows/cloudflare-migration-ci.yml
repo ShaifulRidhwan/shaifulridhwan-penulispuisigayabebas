@@ -39,6 +39,8 @@ jobs:
         run: node --test tests/aksara-cloudflare-gemini-latency.test.cjs
       - name: Validate dynamic NVIDIA Chat model catalog safety
         run: node --test cloudflare/nvidia-catalog.test.mjs
+      - name: Verify streamed NVIDIA inference and owner auto fallback
+        run: node --test cloudflare/nvidia-inference.test.mjs
       - name: Validate Cloudflare Worker bundle without uploading or secrets
         run: npx --yes wrangler@4.135.0 deploy --config cloudflare/wrangler.jsonc --dry-run --outdir ./cloudflare/.verify-output
       - name: Smoke test actual local Cloudflare Workers runtime
