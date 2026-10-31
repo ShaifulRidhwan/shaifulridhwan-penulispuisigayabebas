@@ -48,16 +48,16 @@ function internalOrigin(){return process.env.ALLOWED_ORIGIN||OLD_ORIGIN;}
 function serviceHealth(env){
  const gemini=Boolean(env.GEMINI_API_KEY);
  const groq=Boolean(env.GROQ_API_KEY&&env.GROQ_FREE_CONFIRMED==="true");
- const orca=Boolean(env.ORCAROUTER_API_KEY&&env.AKSARA_ORCAROUTER_LAYER2==="true"&&env.AKSARA_FREE_FALLBACKS==="true");
+ const nvidia=Boolean(env.NVIDIA_API_KEY&&env.AKSARA_NVIDIA_ENABLED==="true");
  const openrouter=Boolean(env.OPENROUTER_API_KEY&&env.AKSARA_FREE_FALLBACKS==="true");
  const control=Boolean(env.AKSARA_CONTROL&&String(env.AKSARA_RATE_SALT||"").length>=32);
  const image=Boolean(env.CLOUDFLARE_ACCOUNT_ID&&env.CLOUDFLARE_API_TOKEN);
- const ready={chat:control&&(gemini||groq||orca||openrouter),
+ const ready={chat:control&&(gemini||groq||nvidia||openrouter),
   voice:control&&gemini,studio:control&&image};
  return new Response(JSON.stringify({
   ok:true,platform:"cloudflare-workers",phase:"migration",
   services:ready,
-  configuredProviders:[gemini,groq,orca,openrouter].filter(Boolean).length,
+  configuredProviders:[gemini,groq,nvidia,openrouter].filter(Boolean).length,
   controlConfigured:control
  }),{status:200,headers:{"content-type":"application/json; charset=utf-8",
  "cache-control":"no-store","x-content-type-options":"nosniff","x-robots-tag":"noindex"}});
