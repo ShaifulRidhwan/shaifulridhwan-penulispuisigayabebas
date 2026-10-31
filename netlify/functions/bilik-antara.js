@@ -563,5 +563,3 @@ exports.handler=async event=>{
   }
 };
 
-// Cross-instance per-IP Netlify protection complements 12/min local throttle.
-exports.config={path:"/.netlify/functions/bilik-antara",rateLimit:{windowLimit:60,windowSize:60,aggregateBy:["ip","domain"]}};
