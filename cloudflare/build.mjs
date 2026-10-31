@@ -22,7 +22,7 @@ for(const file of listed){
   html=html.replace(/href=(["'])\/?index\.html\1/g,(_,q)=>"href="+q+home+"/"+q);
   // Keep app-to-app navigation on Cloudflare, but canonical/OG URLs remain
   // on Netlify until the controlled SEO cutover.
-  html=html.replace(/(<a\\b[^>]*\\bhref=["'])https:\\/\\/shaifulridhwan-penulispuisigayabebas\\.netlify\\.app\\/(bilik-antara|studio-antara|perpustakaan-aksara|antara-cahaya-dan-gelap)\\.html/gi,(_,prefix,name)=>prefix+"/"+name+".html");
+  html=html.replace(/(<a\b[^>]*\bhref=["'])https:\/\/shaifulridhwan-penulispuisigayabebas\.netlify\.app\/(bilik-antara|studio-antara|perpustakaan-aksara|antara-cahaya-dan-gelap)\.html/gi,(_,prefix,name)=>prefix+"/"+name+".html");
   html=html.replace('link(area,"Buka Studio Antara","'+home+'/studio-antara.html")','link(area,"Buka Studio Antara","/studio-antara.html")');
   // Before coordinated SEO cutover, all preview HTML must remain non-indexable
   // and preserve the existing canonical ownership on Netlify.
@@ -33,7 +33,7 @@ for(const file of listed){
 await cp(path.join(root,"assets","novel"),path.join(out,"assets","novel"),{recursive:true});
 const reader=path.join(out,"assets","novel","pembaca.html");
 let readerHtml=await readFile(reader,"utf8");
-readerHtml=readerHtml.replace(/href=(["'])\\/?index\\.html\\1/g,(_,q)=>"href="+q+home+"/"+q);
+readerHtml=readerHtml.replace(/href=(["'])\/?index\.html\1/g,(_,q)=>"href="+q+home+"/"+q);
 await writeFile(reader,readerHtml);
 
 for(const target of ["bilik-antara.html","studio-antara.html","perpustakaan-aksara.html","antara-cahaya-dan-gelap.html","assets/novel/pembaca.html"]){
