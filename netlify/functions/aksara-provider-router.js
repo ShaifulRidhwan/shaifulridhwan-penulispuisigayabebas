@@ -12,7 +12,7 @@ const freeQuotaFailures=new Map(); // 402: real upstream free-quota exhaustion, 
 const FREE_QUOTA_RECHECK_MS=15*60*1000;
 let preferredProvider=""; // Best recent successful fallback within the current warm function instance.
 let recentOpenRouter={model:"",at:0}; // Real replies only, never synthetic status.
-let recentOrcaRouter={model:"",at:0}; // Only a real answer can establish Connected.
+let recentNvidia={model:"",at:0}; // Only a real answer can establish Connected.
 // Task-specific, bounded instructions for free routers. This cannot unlock
 // unavailable upstream models, bypass quotas or guarantee answer quality.
 const FREE_QUALITY=Object.freeze({
@@ -31,8 +31,8 @@ function freeQuality(task,level){
 function rankProviders(available,task,prefer="",qualityFirst=false){
  const policy={task,thinking:qualityFirst?"high":"low",prefer,last:preferredProvider};
  if(process.env.AKSARA_HYBRID_ROUTER==="false"){
-  const ordinary=Registry.select(available.filter(p=>p.id!=="orcarouter"),policy);
-  return [...ordinary,...available.filter(p=>p.id==="orcarouter")];
+  const ordinary=Registry.select(available.filter(p=>p.id!=="nvidia"),policy);
+  return [...ordinary,...available.filter(p=>p.id==="nvidia")];
  }
  // Hybrid 3+1: provider health and task determine the primary order.
  // Backup preference or an earlier success cannot outrank primaries.
@@ -43,9 +43,9 @@ function rankProviders(available,task,prefer="",qualityFirst=false){
 const PROVIDERS=[
  {id:"groq",key:"GROQ_API_KEY",allow:"GROQ_FREE_CONFIRMED",
   url:"https://api.groq.com/openai/v1/chat/completions",model:"openai/gpt-oss-120b"},
- // Primary free text provider in the hybrid 3+1 architecture.
- {id:"orcarouter",key:"ORCAROUTER_API_KEY",allow:null,
-  url:"https://api.orcarouter.ai/v1/chat/completions",model:"orcarouter/free"},
+ // Third primary: NVIDIA hosted NIM; requires permission for the intended use.
+ {id:"nvidia",key:"NVIDIA_API_KEY",allow:null,
+  url:"https://integrate.api.nvidia.com/v1/chat/completions",model:"nvidia/free"},
  // Universal free-only last fallback for ordinary text.
  {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
   url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"}
@@ -69,15 +69,14 @@ function openRouterBody(body,effort="low"){
 }
 const safeMessage=text=>boundedText(text,60000);
 function envEnabled(name){return String(process.env[name]||"").trim().toLowerCase()==="true";}
-function orcaConfig(){
- if(!envEnabled("AKSARA_FREE_FALLBACKS"))return {active:false,reason:"fallback_disabled"};
- if(!envEnabled("AKSARA_ORCAROUTER_LAYER2"))return {active:false,reason:"layer_disabled"};
- if(!String(process.env.ORCAROUTER_API_KEY||"").trim())return {active:false,reason:"missing_key"};
+function nvidiaConfig(){
+ if(!envEnabled("AKSARA_NVIDIA_ENABLED"))return {active:false,reason:"license_not_confirmed"};
+ if(!String(process.env.NVIDIA_API_KEY||"").trim())return {active:false,reason:"missing_key"};
  return {active:true,reason:"configured_not_probed"};
 }
 function configured(){
  if(!envEnabled("AKSARA_FREE_FALLBACKS"))return [];
- return PROVIDERS.filter(p=>p.id==="orcarouter"?orcaConfig().active:process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
+ return PROVIDERS.filter(p=>p.id==="nvidia"?nvidiaConfig().active:process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
 }
 function enabled(){return configured().length>0;}
 function quotaKind(message){
@@ -127,14 +126,14 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
  const ordered=rankProviders(available,task,prefer,reasoningLevel==="high").filter(p=>
   (!images.length||p.id==="openrouter")&&
   (!Array.isArray(only)||only.includes(p.id)));
- // Explicit image consent is OpenRouter-only; never pass images to OrcaRouter.
+ // Explicit image consent is OpenRouter-only; never pass images to NVIDIA Build.
  for(const provider of ordered){
   if(skip.includes(provider.id)||Date.now()<(cooldown.get(provider.id)||0))continue;
   if(signal?.aborted)throw new DOMException("Dihentikan","AbortError");
   const remaining=Math.min(deadline,firstResponseDeadline)-Date.now();if(remaining<500)break;
   // All selected models are reviewed chat models. Stream their visible text
   // through the same classifier-prefix guard; JSON clients get a full-answer budget.
-  const attemptBudget=(provider.id==="openrouter"||provider.id==="orcarouter")?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,reasoningLevel==="high"?12000:8500):
+  const attemptBudget=(provider.id==="openrouter"||provider.id==="nvidia")?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,reasoningLevel==="high"?12000:8500):
    (!onDelta?bufferedTimeoutMs:timeoutMs);
   // Reserve a short final window for the free universal backup.
   const pendingBackup=provider.id!=="openrouter"&&ordered.some(p=>p.id==="openrouter")&&
@@ -145,7 +144,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   let emitted=false;
   try{
    const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
-   if(provider.id==="orcarouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
+   
    if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    // Preserve medium reasoning for concept and follow-up questions. Only genuine
    // low-effort turns should be reduced to the fastest GPT-OSS setting.
@@ -160,19 +159,19 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     {role:"system",content:String(system).slice(prefix.length)+"\nSANDARAN TEKS: Tiada alat carian, URL atau pelaksanaan kod aktif. Jangan reka sumber atau mengaku alat yang tiada digunakan. Identiti kekal Aksara. Shaiful bukan pencipta genre puisi gaya bebas."},
     ...messages.slice(1)
    ]:messages;
-   if(provider.id==="openrouter"||provider.id==="orcarouter"){
+   if(provider.id==="openrouter"||provider.id==="nvidia"){
     providerMessages=[{...providerMessages[0],content:providerMessages[0].content+freeQuality(task,reasoningLevel)},...providerMessages.slice(1)];
    }
-   if(provider.id==="orcarouter"){
+   if(provider.id==="nvidia"){
     // Preserve full shared Aksara instructions and context, with a short
     // mode/language reminder for the heterogeneous free-model router.
     providerMessages=[{...providerMessages[0],content:providerMessages[0].content+
-     "\nLAPISAN ORCA FREE: Kekalkan watak Aksara A.I. dan mod CAHAYA/GELAP yang sudah ditetapkan. Bahasa Melayu Malaysia santai, kata ganti aku. Sambung sejarah perbualan yang diberikan tanpa mencipta memori. Jangan mengaku ada akses carian web atau alat yang tidak dibekalkan; jangan tampilkan penaakulan dalaman atau metadata penyedia."},
+     "\nLAPISAN NVIDIA NIM: Kekalkan watak Aksara A.I. dan mod CAHAYA/GELAP yang sudah ditetapkan. Bahasa Melayu Malaysia santai, kata ganti aku. Sambung sejarah perbualan yang diberikan tanpa mencipta memori. Jangan mengaku ada akses carian web atau alat yang tidak dibekalkan; jangan tampilkan penaakulan dalaman atau metadata penyedia."},
      ...providerMessages.slice(1)];
    }
    const body={model:provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
-   // Keep OrcaRouter payload on the widely compatible OpenAI core fields.
-   if(provider.id==="orcarouter"){body.model="orcarouter/free";delete body.temperature;}
+   // DeepSeek V4.1 Flash supports OpenAI Chat Completion and reasoning_effort.
+   if(provider.id==="nvidia"){body.model=provider.model;delete body.temperature;body.reasoning_effort=reasoningLevel==="high"?"high":"none";}
    if(provider.id==="openrouter")openRouterBody(body,["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"low");
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.
    if(provider.id==="groq"){
@@ -188,7 +187,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     e.errorType=String(details?.error?.code||details?.type||"").replace(/[^a-z0-9_-]/gi,"").slice(0,45);
     if(res.status===402&&e.errorType==="free_quota_exhausted"){
       e.reason="free_quota_exhausted";e.quotaKind="free_exhausted";
-      // No upstream reset promise: back off instead of hammering OrcaRouter.
+      // No upstream reset promise: back off instead of hammering NVIDIA Build.
     }
     if(res.status===429){
       e.quotaKind=quotaKind(message);
@@ -235,7 +234,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    cooldown.delete(provider.id);preferredProvider=provider.id;
    Registry.observe(provider.id,{ok:true,latencyMs:Date.now()-attemptStarted});
    if(provider.id==="openrouter")recentOpenRouter={model:data.model||provider.model,at:Date.now()};
-   if(provider.id==="orcarouter")recentOrcaRouter={model:data.model||provider.model,at:Date.now()};
+   if(provider.id==="nvidia")recentNvidia={model:data.model||provider.model,at:Date.now()};
    // A real answer is stronger evidence than a cached synthetic health probe.
    if(healthCache.value){
     healthCache.value=healthCache.value.map(x=>x.id===provider.id?{...x,status:"online",model:data.model||provider.model,latencyMs:Date.now()-attemptStarted,retryAfterSeconds:0}:x);
@@ -268,7 +267,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
 async function crossReview({question,reply,originalProvider,task="general",timeoutMs=3500}){
  if(process.env.AKSARA_CROSS_REVIEW!=="true"||!["technical","explain","critique"].includes(task))return null;
  if(!question||!reply||question.length>2500||reply.length>5000)return null;
- const reviewer=configured().find(p=>p.id!==originalProvider&&p.id!=="orcarouter"&&
+ const reviewer=configured().find(p=>p.id!==originalProvider&&p.id!=="nvidia"&&
   (process.env.AKSARA_HYBRID_ROUTER==="false"||p.id!=="openrouter")&&Date.now()>=(cooldown.get(p.id)||0));
  if(!reviewer)return null;
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),timeoutMs);
@@ -345,13 +344,13 @@ async function checkStatus(){
  healthCache.pending=(async()=>{
   const checks=await Promise.all(PROVIDERS.map(async provider=>{
    const active=configured().some(p=>p.id===provider.id);
-   if(!active)return {id:provider.id,status:"off",...(provider.id==="orcarouter"?{reason:orcaConfig().reason}:{})};
+   if(!active)return {id:provider.id,status:"off",...(provider.id==="nvidia"?{reason:nvidiaConfig().reason}:{})};
    if(Date.now()<(cooldown.get(provider.id)||0))return (freeQuotaFailures.get(provider.id)||0)>Date.now()?{id:provider.id,status:"offline",reason:"free_quota_exhausted",http:402}:{id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
-    if(provider.id==="orcarouter"){
+    if(provider.id==="nvidia"){
      // No inference probe. Connected requires a genuine recent chat reply.
-     if(Date.now()-recentOrcaRouter.at<90000)return {id:provider.id,status:"online",model:recentOrcaRouter.model,reason:"recent_reply"};
+     if(Date.now()-recentNvidia.at<90000)return {id:provider.id,status:"online",model:recentNvidia.model,reason:"recent_reply"};
      return {id:provider.id,status:"ready",reason:"configured_not_probed"};
     }
     if(provider.id==="openrouter"){
