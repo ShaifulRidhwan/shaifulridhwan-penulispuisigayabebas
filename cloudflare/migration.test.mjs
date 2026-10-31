@@ -75,3 +75,22 @@ test("Cloudflare previews have working relative Studio hints without taking read
  assert.match(text("dist/bilik-antara.html"),/link\(area,"Buka Studio Antara","\/studio-antara.html"\)/);
  assert.match(text("dist/assets/novel/pembaca.html"),/shaifulridhwan-penulispuisigayabebas\.netlify\.app\/"/);
 });
+
+test("Studio and Perkemas A.I validate the actual Cloudflare origin",async()=>{
+ const worker=(await import("./src/index.mjs")).default;
+ const base="https://apps.example.com";
+ const env={ASSETS:{fetch:()=>Response.json({})}};
+ for(const endpoint of ["studio-image","studio-enhance"]){
+  const request=new Request(base+"/.netlify/functions/"+endpoint,{
+   method:"POST",headers:{"origin":base,"content-type":"application/json"},
+   body:JSON.stringify({prompt:"a"})
+  });
+  const response=await worker.fetch(request,env,{});
+  assert.equal(response.status,400,"Valid origin must pass handler input check: "+endpoint);
+  const invalid=new Request(base+"/.netlify/functions/"+endpoint,{
+   method:"POST",headers:{"origin":"https://wrong.example","content-type":"application/json"},
+   body:JSON.stringify({prompt:"a"})
+  });
+  assert.equal((await worker.fetch(invalid,env,{})).status,403);
+ }
+});
