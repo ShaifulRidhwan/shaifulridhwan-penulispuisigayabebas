@@ -1,7 +1,16 @@
-# AKSARA Android Native · v0.8.0
+# AKSARA Android Native · v0.9.0
 
 Native Kotlin + Jetpack Compose app, not a webview or Capacitor wrapper.
 Repository: ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas, branch `aksara-android`.
+
+## Voice Live + real 3D preview staging (v0.9.0)
+
+- **True native Gemini Live WebSocket client** (OkHttp) with Android AudioRecord microphone PCM16 16kHz, AudioTrack playback PCM16 24kHz, streamed text transcription, mute controls, stop/background cleanup, packet backpressure, strict input bounds. Both client and server live code exist in the Android development branch.
+- New server-only `bilik-antara-live-android.mjs` owner QA broker issues **short-lived, one-use Google Gemini Live tokens** after validating a strong owner bearer token against the server-stored SHA-256, with durable Netlify Blobs request quotas and provider error isolation.
+- **NO LIVE PRODUCTION CLAIM**: mobile broker stays staged on `aksara-android`, not on Netlify production `main`. Requires an authorized production deployment and owner QA token hash. No permanent vendor API key or bearer token is shipped in APK.
+- Native SceneView/Filament 3D preview of the EXACT pinned web example GLB URL in the Voice screen. The remote model is only fetched in DEBUG/owner non-commercial QA, not bundled into a public release. Explicit attribution to TalkingHead / Ready Player Me, CC BY-NC 4.0.
+- 3D model load and generic animation are implemented; web-specific morph-target lip sync and expression choreography are **NOT yet functionally equivalent**. Release version must use correctly licensed model/assets.
+- See `MOBILE_LIVE_SETUP.md` and `ANDROID_LIVE_SECURITY.md` before testing privileged features.
 
 ## Native glass redesign (v0.8.0)
 

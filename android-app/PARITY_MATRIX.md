@@ -27,7 +27,8 @@ AKSARA Brain / identity, Provider Router, Context Manager 2.0, semantic-lite Kno
 
 ## NOT equivalent yet (must NOT claim 100%)
 
-- **Gemini Live** full duplex audio and **3D avatar**: the web uses temporary tokens, Google Live WebSocket, audio worklet and Three.js. Android currently has OS STT/TTS turn-taking only. Requires a protected mobile broker, model authorization, native audio pipeline and 3D engine.
+- **Gemini Live**: Android now contains a native WebSocket/PCM microphone and playback implementation and a separate server-authenticated owner QA token broker with durable quotas. These are only staged in the development branch and **not activated in production**. Web's live renewals, deep-thinking prompt parity, barge-in UX and complete device QA still need testing.
+- **3D avatar**: Android now contains an optional DEBUG-only SceneView/Filament renderer loading the pinned same original example GLB from the web. It is non-commercial QA, licensed CC BY-NC 4.0 with attribution. The web's viseme/lip sync, facial emotion cues, camera choreography and release-appropriate licensing are not complete.
 - **Studio generation production activation**: website-only Origin checks stay enforced; Android-specific owner QA adapter and token validation are implemented **only in this development branch**. Model authorization, shared quotas, per-session secret entry and preview are built, but the backend is not deployed or configured. Public release requires real per-user authentication and abuse controls.
 - **Exact pixel/motion parity**: CSS, DOM, gradients, Three.js and viewport layout cannot be directly transplanted into Compose. The imported images and recreated layouts approximate original identity; typography, avatar, glass and animations require visual QA at multiple densities.
 - **Full JS chat rendering**: citations, HTTPS links, Markdown tables and code blocks are now native, but complex research diagrams, inline remote-media players, generated review cards and rich visualizations still need dedicated Compose renderers. No arbitrary HTML.
@@ -67,3 +68,10 @@ For the remaining high-impact gaps, prioritize:
 - Native GPU backdrop-image frosted layer: header 12dp, navigation 16dp, central chat 3dp, Studio 12dp, Voice 14dp; replaces opaque blue cards. These are density-independent Android blur radii, not literal CSS pixels.
 - Real-time moving-content blur and cross-window blur are not identical to CSS; device screenshot/regression QA required. Older Android renders a readable translucent fallback.
 - Warm amber palette brings text and controls closer to the original web CSS.
+
+## v0.9 experimental native parity
+
+- Audited web transport protocol: short-lived one-use token and Constrained Live WebSocket endpoint; native microphone uses PCM16 16kHz and playback PCM16 24kHz. No permanent Google key shipped to APK.
+- Android mobile Live endpoint is owner-only, high-entropy bearer, durable daily Netlify Blobs quota, no Origin spoofing; `main` remains untouched. Cannot be tested live until deployed/configured.
+- SceneView3.3 native Filament scene uses the web's original pinned remote GLB model only in debug for non-commercial owner QA, no license claims for wider commercial distribution.
+- Still NOT fully equivalent: facial morph blendshapes, exact camera/lighting, cross-window blur, live Google failover and renewals, exact text rendering, 100% feature testing on actual hardware.

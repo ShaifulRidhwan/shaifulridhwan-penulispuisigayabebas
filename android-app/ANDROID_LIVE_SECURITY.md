@@ -1,8 +1,8 @@
 # AKSARA Android · Gemini Live integration security gate
 
-Version: v0.4.0. Status: **NOT enabled in the Android APK**.
+Version: v0.9.0. Status: **Native client and owner QA broker staged; not deployed to production.**
 
-The v0.4.0 Voice tab uses native Android speech recognition and Android TextToSpeech, sending recognized text to the existing AKSARA Core streaming chat API. This enables turn-based Voice Chat while respecting the deployed production controls. It is **not** the Google Gemini Live duplex audio service.
+The Voice tab retains turn-based Android speech recognition and TextToSpeech. v0.9 additionally stages a real native Gemini Live full-duplex PCM/WebSocket client and an independently authenticated, one-use-token owner QA broker. Neither feature should be claimed production-ready until authorized deployment, provider access and a device smoke test. The web's existing Origin-constrained handler remains untouched.
 
 ## Why Live is not exposed yet
 
