@@ -16,6 +16,14 @@ npx wrangler@4.135.0 deploy --config cloudflare/wrangler.jsonc --dry-run
 
 Use Cloudflare Dashboard → Workers & Pages → Create Worker → Import GitHub. Set config path to `cloudflare/wrangler.jsonc`, build command `node cloudflare/build.mjs`, deploy command `npx wrangler@4.135.0 deploy --config cloudflare/wrangler.jsonc`. For preview branches use `wrangler preview --config cloudflare/wrangler.jsonc` with a supported Wrangler version. This repository contains **no automatic production Cloudflare deployment workflow**.
 
+## Dashboard variables versus Wrangler deployments
+
+Cloudflare Workers Builds deploys `cloudflare/wrangler.jsonc` on every commit to the Cloudflare production branch. **By default, Wrangler removes Dashboard-only Text Variables not in config.** That can make the popup show Groq `Not active` and OrcaRouter `Enable AKSARA_ORCAROUTER_LAYER2` after an otherwise successful redeploy.
+
+The config now sets `keep_vars: true`, pins nonsecret gates `GROQ_FREE_CONFIRMED=true`, `AKSARA_ORCAROUTER_LAYER2=true` and `AKSARA_FREE_FALLBACKS=true`, and adds regression checks. Dashboard-managed `CLOUDFLARE_ACCOUNT_ID` and optional budgets are preserved. Do **not** commit API keys, tokens or salt in `vars`. Cloudflare secrets remain encrypted and persist across deployments.
+
+If Gemini Text shows `503`, that is an **upstream inference failure or transient availability signal**, not proof the API key is wrong; Gemini Live can still work independently. Check current provider status after redeploy and examine redacted provider logs before changing models.
+
 ## Required secrets
 
 Set privately on Cloudflare Worker, never GitHub or chat:
