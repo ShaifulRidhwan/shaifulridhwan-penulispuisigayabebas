@@ -51,7 +51,9 @@ test("NVIDIA inherits Aksara identity, modes and multi-turn context",async()=>{
   assert.equal(captured.body.messages[1].content,"Kita bincang aporia.");
   assert.equal(captured.body.messages.at(-1).content,"Sambung perbincangan tadi.");
   assert.equal(captured.body.stream,undefined);
-  assert.equal(captured.body.temperature,undefined);
+  assert.equal(captured.body.temperature,1);
+  assert.equal(captured.body.top_p,0.95);
+  assert.equal(captured.body.reasoning_effort,undefined);
   assert.equal(answer.provider,"nvidia");
   assert.equal(answer.model,"deepseek-ai/deepseek-v4.1-flash");
   assert.match(answer.reply,/Aku Aksara/);
