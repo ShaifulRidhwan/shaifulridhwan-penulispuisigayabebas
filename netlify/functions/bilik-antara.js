@@ -96,8 +96,8 @@ function throttle(ip,store=rateMap,limit=12){
 }
 function errorMessage(status){
   if(status===429)return "Kuota API Google sedang penuh. Cuba sebentar lagi.";
-  if(status===404)return "Model Gemini tidak tersedia untuk kekunci ini. Semak GEMINI_MODEL di Netlify.";
-  if(status===403||status===401)return "Akses API ditolak. Periksa tetapan GEMINI_API_KEY di Netlify.";
+  if(status===404)return "Model Gemini tidak tersedia untuk kunci ini. Semak GEMINI_MODEL dalam tetapan pelayan.";
+  if(status===403||status===401)return "Akses API ditolak. Semak GEMINI_API_KEY pada pelayan.";
   if(status===400)return "Format permintaan Gemini tidak diterima. Semak jenis fail dan alat yang disokong.";
   return "Gemini tidak dapat membalas (HTTP "+status+").";
 }
