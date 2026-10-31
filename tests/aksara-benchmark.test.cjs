@@ -17,15 +17,15 @@ test("Both router requests use fixed free aliases and exactly equivalent prompts
   assert.match(options.headers.Authorization,/^Bearer mock-key$/);
   const body=JSON.parse(options.body);
   observed.push({url,body});
-  return {ok:true,json:async()=>({model:url.includes("orcarouter")?"deepseek/free":"dynamic/open",
+  return {ok:true,json:async()=>({model:url.includes("nvidia")?"deepseek/free":"dynamic/open",
    choices:[{message:{content:"Aporia ialah kebuntuan dalam persoalan pengetahuan."}}]})};
  };
  const c=Lab.CASES[1];
- const a=await Lab.callProvider("orcarouter",c,{key:"mock-key",fetchImpl});
+ const a=await Lab.callProvider("nvidia",c,{key:"mock-key",fetchImpl});
  const b=await Lab.callProvider("openrouter",c,{key:"mock-key",fetchImpl});
  assert.equal(a.model,"deepseek/free");
  assert.equal(b.model,"dynamic/open");
- assert.equal(observed[0].body.model,"orcarouter/free");
+ assert.equal(observed[0].body.model,"deepseek-ai/deepseek-v4.1-flash");
  assert.equal(observed[1].body.model,"openrouter/free");
  assert.equal(observed[0].body.stream,false);
  assert.equal(observed[1].body.stream,false);
@@ -41,7 +41,7 @@ test("Multi-turn comparison retains identical prior messages for both routers",a
   return {ok:true,json:async()=>({model:"mock",choices:[{message:{content:"Pilihan kedua ialah IndexedDB di browser. Ini jaga privasi."}}]})};
  };
  const c=Lab.CASES.find(x=>x.id==="context");
- const a=await Lab.callProvider("orcarouter",c,{key:"mock-key",fetchImpl});
+ const a=await Lab.callProvider("nvidia",c,{key:"mock-key",fetchImpl});
  const b=await Lab.callProvider("openrouter",c,{key:"mock-key",fetchImpl});
  assert.deepEqual(messages[0],messages[1]);
  assert.equal(messages[0][1].role,"user");
@@ -57,11 +57,11 @@ test("Dialect indicator is only a hint and does not conflate clean Malay with In
 
 test("Unsuccessful provider results do not become invented quality scores",()=>{
  const report=Lab.summarize([
-  {provider:"orcarouter",caseId:"sains",model:"deepseek/free",latencyMs:500,response:"entropi",indonesianMarkers:[],anchorCoverage:0.5},
+  {provider:"nvidia",caseId:"sains",model:"deepseek/free",latencyMs:500,response:"entropi",indonesianMarkers:[],anchorCoverage:0.5},
   {provider:"openrouter",caseId:"sains",error:"HTTP_429"}
  ]);
- assert.equal(report.providers.orcarouter.requests,1);
- assert.equal(report.providers.orcarouter.keywordCoverage,0.5);
+ assert.equal(report.providers.nvidia.requests,1);
+ assert.equal(report.providers.nvidia.keywordCoverage,0.5);
  assert.equal(report.providers.openrouter.successes,0);
  assert.equal(report.providers.openrouter.keywordCoverage,null);
  assert.equal(report.providers.openrouter.medianLatencyMs,null);
