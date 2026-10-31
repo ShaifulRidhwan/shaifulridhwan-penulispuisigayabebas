@@ -169,7 +169,10 @@ async function reviewAnswer({apiKey,model,question,reply,sources,evidence,intent
   return review;
 }
 exports.handler=async event=>{
-  const started=Date.now(),deadline=started+24000,H=headers(),flags=Security.flags();
+  const cloudflare=process.env.AKSARA_CLOUD_MIGRATION==="preview";
+  // Netlify timing remains unchanged. Cloudflare can keep outbound subrequests
+  // alive while the client stays connected, so allow time for actual Gemini output.
+  const started=Date.now(),deadline=started+(cloudflare?46000:24000),H=headers(),flags=Security.flags();
   Ops.record("request");
   const remaining=()=>Math.max(1,deadline-Date.now());
   let streamed=false,firstTextMs=null;
@@ -206,11 +209,11 @@ exports.handler=async event=>{
           const time=Date.now();
           try{
             if(googleWait(fastModel)>0)return {id:"gemini",model:fastModel,status:"offline",retryAfterSeconds:googleWait(fastModel)};
-            const test=await callGemini({apiKey,model:fastModel,system:"Pemeriksaan sambungan, jawab ringkas.",contents:[{role:"user",parts:[{text:"Balas OK."}]}],maxTokens:640,thinkingLevel:fastModel.includes("flash-lite")?"minimal":"low",timeoutMs:12000,signal:event.signal});
+            const test=await callGemini({apiKey,model:fastModel,system:"Pemeriksaan sambungan, jawab ringkas.",contents:[{role:"user",parts:[{text:"Balas OK."}]}],maxTokens:cloudflare?1024:640,thinkingLevel:fastModel.includes("flash-lite")?"minimal":"low",timeoutMs:cloudflare?18500:12000,signal:event.signal});
             return {id:"gemini",model:fastModel,status:modelText(test?.candidates?.[0])?"online":"offline",latencyMs:Date.now()-time};
           }catch(e){
             googleCooldown(fastModel,e);
-            return {id:"gemini",model:fastModel,status:"offline",reason:e.name==="AbortError"?"timeout":e.status?"upstream_http":"transport_error",...(e.status?{http:e.status}:{}),...(e.quotaKind?{quotaKind:e.quotaKind}:{})};
+            return {id:"gemini",model:fastModel,status:e.name==="AbortError"?"ready":"offline",reason:e.name==="AbortError"?"health_timeout":e.status?"upstream_http":"transport_error",...(e.status?{http:e.status}:{}),...(e.quotaKind?{quotaKind:e.quotaKind}:{})};
           }
         })();
         try{google=await googleHealth.pending;googleHealth.value=google;googleHealth.time=Date.now();}finally{googleHealth.pending=null;}
@@ -495,7 +498,7 @@ exports.handler=async event=>{
     if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
     if(googleWait(model)>0)throw Object.assign(new Error("Gemini quota cooling down"),{status:429,cooldownKnown:true,retryAfterSeconds:googleWait(model)});
     const data=await callGemini({apiKey,model,system,contents,tools,thinkingLevel:plan.thinkingLevel==="high"?"high":intent.depth==="low"&&model.includes("flash-lite")?"minimal":plan.thinkingLevel,
-      maxTokens,timeoutMs:Math.min(textOnly&&Router.enabled()?(plan.thinkingLevel==="high"?15000:6500):18000,remaining()),signal:event.signal,deadline,onDelta:emit&&!plan.doReview&&!tools.length?emit:null});
+      maxTokens,timeoutMs:Math.min(cloudflare?(plan.thinkingLevel==="high"?28000:19000):(textOnly&&Router.enabled()?(plan.thinkingLevel==="high"?15000:6500):18000),remaining()),signal:event.signal,deadline,onDelta:emit&&!plan.doReview&&!tools.length?emit:null});
     const candidate=data&&data.candidates&&data.candidates[0];
     const reply=reactionReply(parseReply(modelText(candidate)),intent,history);
     if(!reply)throw Object.assign(new Error("Empty candidate"),{status:502});
