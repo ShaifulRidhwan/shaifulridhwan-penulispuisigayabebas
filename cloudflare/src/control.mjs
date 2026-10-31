@@ -17,7 +17,7 @@ export class AksaraControl{
  async fetch(request){
   if(request.method!=="POST")return json(405,{error:"Method not allowed"});
   let data;try{data=await request.json();}catch(_){return json(400,{error:"Invalid request"});}
-  if(!data||!["chat","voice","studio","release"].includes(data.kind)||typeof data!=="object")
+  if(!data||!["chat","health","voice","studio","release"].includes(data.kind)||typeof data!=="object")
    return json(400,{error:"Invalid scope"});
   const now=Date.now(),day=new Date(now).toISOString().slice(0,10);
   const hash=String(data.hash||"");
@@ -38,6 +38,7 @@ export class AksaraControl{
     const key=data.kind+":"+day+":"+hash;
     const limits=data.kind==="voice"?{count:5,window:600000}:
      data.kind==="chat"?{count:12,window:60000}:
+     data.kind==="health"?{count:30,window:60000}:
      {count:8,window:600000};
     const entry=db.exec("SELECT started,count,enhance_at FROM users WHERE scope=?",key).toArray()[0];
     const fresh=!entry||now-entry.started>=limits.window;
