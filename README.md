@@ -29,14 +29,14 @@ Antara kandungannya:
 
 Di belakang Aksara terdapat empat AI providers:
 
-**Google Gemini · Groq · OrcaRouter · OpenRouter**
+**Google Gemini · Groq · NVIDIA · OpenRouter**
 
 Sistem teks ini menggunakan **AI routing**, **fallback management**, **context handling** dan dua mode perbualan:
 
 - **CAHAYA:** Santai, praktikal dan jelas.
 - **GELAP:** Lebih kritis, analitikal dan berfalsafah.
 
-**Gemini, Groq dan OrcaRouter** membentuk tiga laluan utama teks mengikut tugas dan availability. **OpenRouter** ialah universal fallback terakhir, termasuk untuk imej hanya selepas pengguna membenarkan. Aksara juga menyokong **Voice Live melalui Gemini Live**. Ini eksperimen routing; kestabilan live masih perlu diuji.
+**Gemini, Groq dan NVIDIA** membentuk tiga laluan utama teks mengikut tugas dan availability. **OpenRouter** ialah universal fallback terakhir, termasuk untuk imej hanya selepas pengguna membenarkan. Aksara juga menyokong **Voice Live melalui Gemini Live**. Ini eksperimen routing; kestabilan live masih perlu diuji.
 
 Keempat-empat AI providers tidak semestinya aktif serentak. Status sambungan sebenar bergantung pada konfigurasi API, availability dan quota. `Ready` bukan bermaksud `Connected`.
 
@@ -64,7 +64,7 @@ Platform ini dibangunkan menggunakan:
 
 - HTML5, CSS3 & JavaScript
 - Netlify & Serverless Functions
-- Google Gemini, Groq, OpenRouter & OrcaRouter APIs
+- Google Gemini, Groq, OpenRouter & NVIDIA APIs
 - Cloudflare Workers AI untuk fungsi image generation
 - GitHub & GitHub Actions
 - AI routing, context management & fallback systems
