@@ -113,29 +113,45 @@ async function createLiveToken(request,context,{
   }
 }
 
-/** Netlify Blobs, durable and atomic across instances. No audio/transcript stored. */
+/**
+ * Durable rate reservation using conditional claim-a-key slots.
+ * Netlify Blobs is NOT a transactional counter database. We never perform a
+ * read-modify-write counter: onlyIfNew claims an independent immutable key,
+ * so a successful allocation cannot exceed the configured per-scope slots.
+ *
+ * Reservations are conservative: if a later scope is full, earlier claims
+ * remain spent. This can block additional requests sooner, never later.
+ * Fixed 10-minute buckets may be stricter than a rolling window.
+ */
 async function reserveDurableVoice(context,store){
-  if(!store)throw Error("Missing persistent counter");
-  const now=Date.now(), day=new Date(now).toISOString().slice(0,10);
-  const key="voice/"+day;
-  const id=String(context?.ip||"unknown").slice(0,80);
-  const {createHash}=require("node:crypto");
-  const user=createHash("sha256").update(day+"|"+id+"|"+
-    String(process.env.AKSARA_MOBILE_STUDIO_TOKEN_SHA256||"")).digest("hex").slice(0,24);
-  for(let retry=0;retry<8;retry++){
-    const current=await store.getWithMetadata(key,{type:"json",consistency:"strong"});
-    const state=current?.data||{global:0,byIp:{}};
-    const client=state.byIp[user]||{recent:[],total:0};
-    client.recent=client.recent.filter(t=>now-t<600000);
-    if(state.global>=80||client.total>=30||client.recent.length>=6)return false;
-    client.recent.push(now);
-    client.total++;
-    state.global++;
-    state.byIp[user]=client;
-    const result=await store.setJSON(key,state,
-      current?{onlyIfMatch:current.etag}:{onlyIfNew:true});
-    if(result.modified)return true;
+  if(!store || typeof store.setJSON!=="function")throw Error("Missing durable store");
+  const {createHash,randomInt}=require("node:crypto");
+  const now=Date.now();
+  const utcDay=new Date(now).toISOString().slice(0,10);
+  const tenMinuteBucket=Math.floor(now/600000);
+  // Hash the trusted Netlify request IP with the owner secret digest and day.
+  // Neither IP nor the bearer token appears in object key names.
+  const ip=String(context?.ip||"unknown").slice(0,80);
+  const ownerDigest=String(process.env.AKSARA_MOBILE_STUDIO_TOKEN_SHA256||"");
+  const client=createHash("sha256").update(utcDay+"|"+ip+"|"+ownerDigest)
+    .digest("hex").slice(0,24);
+  async function claim(prefix,capacity){
+    const start=randomInt(capacity);
+    for(let offset=0;offset<capacity;offset++){
+      const index=(start+offset)%capacity;
+      const result=await store.setJSON(
+        prefix+"/"+String(index).padStart(3,"0"),
+        {createdAt:now},
+        {onlyIfNew:true}
+      );
+      if(result?.modified===true)return true;
+    }
+    return false;
   }
-  throw Error("Counter contention");
+  // Reserve in descending scope to reject most traffic early.
+  if(!await claim("voice/global/"+utcDay,80))return false;
+  if(!await claim("voice/client/day/"+utcDay+"/"+client,30))return false;
+  if(!await claim("voice/client/ten-minute/"+tenMinuteBucket+"/"+client,6))return false;
+  return true;
 }
 module.exports={createLiveToken,reserveDurableVoice,modelCandidates,parseRequest};

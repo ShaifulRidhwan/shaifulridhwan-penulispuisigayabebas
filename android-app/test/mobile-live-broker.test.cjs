@@ -2,7 +2,7 @@
 const test=require("node:test");
 const assert=require("node:assert/strict");
 const {createHash}=require("node:crypto");
-const {createLiveToken}=require("../../netlify/functions/lib/aksara-mobile-live-broker");
+const {createLiveToken,reserveDurableVoice}=require("../../netlify/functions/lib/aksara-mobile-live-broker");
 const {handler:siteHandler}=require("../../netlify/functions/bilik-antara-live-token");
 const secret="A".repeat(48);
 const hash=createHash("sha256").update(secret).digest("hex");
@@ -58,4 +58,25 @@ test("valid QA request returns ephemeral token, never API key",async()=>{
 test("web endpoint still requires real browser origin",async()=>{
  const response=await siteHandler({httpMethod:"POST",headers:{},body:"{}"});
  assert.equal(response.statusCode,403);
+});
+
+test("durable onlyIfNew slots limit concurrent Live issuance",async()=>{
+ const keys=new Set();
+ const store={
+  async setJSON(key,_value,options){
+   assert.equal(options.onlyIfNew,true);
+   if(keys.has(key))return {modified:false};
+   keys.add(key);
+   return {modified:true,etag:"new"};
+  }
+ };
+ const requests=Array.from({length:18},()=>reserveDurableVoice({ip:"192.0.2.1"},store));
+ const grants=await Promise.all(requests);
+ assert.equal(grants.filter(Boolean).length,6);
+ // The other attempts consume some conservative day slots, never extra access.
+ assert.ok([...keys].filter(k=>k.startsWith("voice/client/ten-minute/")).length<=6);
+ assert.ok([...keys].filter(k=>k.startsWith("voice/global/")).length<=80);
+});
+test("missing durable store fails closed",async()=>{
+ await assert.rejects(()=>reserveDurableVoice({},null),/Missing durable store/);
 });
