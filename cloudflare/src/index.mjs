@@ -31,16 +31,15 @@ function asResponse(result,origin){
  h.set("X-Content-Type-Options","nosniff");
  return new Response(result.body||null,{status:result.statusCode||500,headers:h});
 }
-function normalizedHeaders(request,origin,externalOrigin){
+function normalizedHeaders(request,origin,legacyOrigin){
  const headers=Object.fromEntries(request.headers);
  // Ignore spoofed Netlify client IP headers from the caller.
  headers["x-nf-client-connection-ip"]=request.headers.get("cf-connecting-ip")||"unknown";
  // The old Chat and Voice handlers validate a Netlify-origin constant.
  // The Worker has already validated same-origin: give them their expected
  // trusted internal string and rewrite only the outgoing CORS header.
- headers.origin=internalOrigin();
+ headers.origin=legacyOrigin?internalOrigin():origin;
  headers.host=new URL(request.url).host;
- if(externalOrigin)headers["x-original-origin"]=origin;
  return headers;
 }
 function internalOrigin(){return process.env.ALLOWED_ORIGIN||OLD_ORIGIN;}
@@ -113,7 +112,9 @@ async function handle(request,env,ctx){
   return new Response(result.body,{status:result.status,headers:out});
  }
  if(body===null)try{body=await readBody(request,limit);}catch(e){return json(e.status||400,e.message);}
- const headers=normalizedHeaders(request,origin,true);
+ // Studio validates Origin against the actual request Host; the legacy
+ // Netlify origin is only needed by Chat/Voice compatibility handlers.
+ const headers=normalizedHeaders(request,origin,!isStudio);
  const event={httpMethod:"POST",headers,body,signal:request.signal,isBase64Encoded:false};
  if(path===apis.chat)return asResponse(await Chat.handler(event),origin);
  if(path===apis.voice)return asResponse(await Live.handler(event),origin);
