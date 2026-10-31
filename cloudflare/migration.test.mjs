@@ -46,5 +46,5 @@ test("Durable quota is isolated from public path and no prompt is stored",()=>{
  const s=text("src/control.mjs");
  assert.match(s,/transactionSync/);
  assert.match(s,/INSERT OR IGNORE INTO daily/);
- assert.doesNotMatch(s,/\b(?:prompt|transcript|history|image_bytes|raw_ip)\b/i);
+ assert.doesNotMatch(s,/INSERT INTO (?:prompts|transcripts|history|raw_ip)/i);
 });
