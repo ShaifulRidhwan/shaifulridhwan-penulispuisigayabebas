@@ -37,8 +37,10 @@
     "STUDIO_DISABLED": "false",
     "AKSARA_CLOUD_MIGRATION": "preview",
     "GROQ_FREE_CONFIRMED": "true",
-    "AKSARA_ORCAROUTER_LAYER2": "true",
-    "GEMINI_MODEL_FAST": "gemini-3.5-flash-lite"
+    "GEMINI_MODEL_FAST": "gemini-3.6-flash",
+    "AKSARA_NVIDIA_ENABLED": "false",
+    "GEMINI_MODEL": "gemini-3.6-flash",
+    "GEMINI_MODEL_COMPLEX": "gemini-3.8-flash"
   },
   "observability": {
     "enabled": true
