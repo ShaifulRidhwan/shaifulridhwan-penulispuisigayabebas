@@ -8,13 +8,13 @@ const html=fs.readFileSync("bilik-antara.html","utf8");
 const backend=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
 const brain=fs.readFileSync("bilik-antara-brain.js","utf8");
 
-const canonical=["Google Gemini","Groq","OrcaRouter","OpenRouter"];
+const canonical=["Google Gemini","Groq","NVIDIA","OpenRouter"];
 const questions=[
  "Empat Otak Aksara","berapa otak kau?","kau ada 4 otak?",
  "sebut nama semua 4 penyedia A.I","senaraikan 4 model AI dalam Aksara",
  "apa model yang Aksara pakai?","berapa penyedia AI yang ada dalam Bilik Antara?",
  "senaraikan semua penyedia yang kau ada",
- "kau guna Gemini Groq OpenRouter OrcaRouter?"
+ "kau guna Gemini Groq OpenRouter NVIDIA?"
 ];
 
 test("Canonical identity contains four providers and clear capability/status semantics",()=>{
@@ -39,11 +39,11 @@ test("Default starter lists four brains; user interface and provider registry ag
  assert.ok(found,"Multi A.I. list missing");
  const listed=JSON.parse(found[1]);
  assert.deepEqual(listed.map(x=>x[1]),canonical);
- assert.deepEqual(listed.map(x=>x[0]),["gemini","groq","orcarouter","openrouter"]);
+ assert.deepEqual(listed.map(x=>x[0]),["gemini","groq","nvidia","openrouter"]);
  const router=fs.readFileSync("netlify/functions/aksara-provider-router.js","utf8");
  assert.match(router,/id:"groq"/);
  assert.match(router,/id:"openrouter"/);
- assert.match(router,/id:"orcarouter"/);
+ assert.match(router,/id:"nvidia"/);
  assert.match(backend,/id:"gemini"/);
  assert.doesNotMatch(html,/Requesty|requesty/i);
  assert.doesNotMatch(router,/Requesty|requesty/i);
@@ -79,7 +79,7 @@ test("Prepared CAHAYA and GELAP replies answer every four-brain question",()=>{
  for(const name of canonical)assert.ok(Identity.answerIdentity("Siapa Aku").includes(name),"Siapa Aku missing "+name);
  for(const label of ["utama","fallback","backup terakhir","CAHAYA","GELAP","AI routing","rate limit"])
   assert.ok(Identity.WHO_AM_I.includes(label),"Siapa Aku missing "+label);
- assert.ok(Identity.answerIdentity("Empat Otak Aksara")?.includes("OrcaRouter"),"Manual four-brain query remains available");
+ assert.ok(Identity.answerIdentity("Empat Otak Aksara")?.includes("NVIDIA"),"Manual four-brain query remains available");
  assert.ok(Identity.WHO_AM_I.length<900);
 });
 
@@ -115,7 +115,7 @@ test("Locked Malay casual + English technical language applies to Gemini, all fa
 test("Unrelated creative requests and recommendations must not hijack the four-brain answer",()=>{
  for(const q of [
   "apa model ai terbaik menurut kau?","tulis puisi tentang empat otak",
-  "apa fungsi OrcaRouter?","macam mana otak manusia belajar?",
+  "apa fungsi NVIDIA?","macam mana otak manusia belajar?",
   "kenapa model AI lain mahal?","terangkan model AI untuk projek saya"
  ]){
   assert.equal(Identity.isProviderQuestion(q),false,q);
@@ -130,7 +130,7 @@ test("Ready is not falsely labelled Connected, and live status is provider-speci
  assert.match(backend,/const providers=\[google,\.\.\.alternatives\]/);
  const src=fs.readFileSync("netlify/functions/aksara-provider-router.js","utf8");
  assert.match(src,/model:"openrouter\/free"/);
- assert.match(src,/model:"orcarouter\/free"/);
+ assert.match(src,/model:"nvidia\/free"/);
 });
 
 test("Four-brain server responses require no external model call",async()=>{
