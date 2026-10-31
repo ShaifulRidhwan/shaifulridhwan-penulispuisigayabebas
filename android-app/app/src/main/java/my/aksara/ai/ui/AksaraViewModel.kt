@@ -60,7 +60,7 @@ class AksaraViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun setSaveSession(enabled: Boolean) {
+    fun updateSessionSaving(enabled: Boolean) {
         saveSession = enabled
         persist() // Immediately purges stored turns when disabled.
     }

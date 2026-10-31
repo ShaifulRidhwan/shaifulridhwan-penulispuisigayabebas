@@ -228,7 +228,7 @@ private fun ChatPage(vm: AksaraViewModel, modifier: Modifier = Modifier) {
                             )
                         },
                         onClick = {
-                            vm.setSaveSession(!vm.saveSession)
+                            vm.updateSessionSaving(!vm.saveSession)
                             menuExpanded = false
                         }
                     )
