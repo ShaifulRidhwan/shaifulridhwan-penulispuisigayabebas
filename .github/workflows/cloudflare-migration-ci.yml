@@ -49,9 +49,5 @@ jobs:
             --data '{"prompt":"hi"}' \
             http://127.0.0.1:8787/.netlify/functions/studio-enhance)
           test "$STATUS" = 403
-          STATUS=$(curl --max-time 5 -s -o /tmp/aksara-validation.json -w '%{http_code}' -X POST \
-            -H 'Origin: http://127.0.0.1:8787' -H 'Content-Type: application/json' \
-            --data '{"prompt":"a"}' \
-            http://127.0.0.1:8787/.netlify/functions/studio-enhance)
-          test "$STATUS" = 400
-          echo 'Cloudflare local Worker static + Studio origin smoke passed'
+          # Valid HTTPS-origin Studio validation is covered by the Node adapter test.
+          # Local dev serves HTTP; production Studio intentionally requires HTTPS.
