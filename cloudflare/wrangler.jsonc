@@ -9,7 +9,8 @@
     "run_worker_first": [
       "/",
       "/.netlify/functions/*",
-      "/api/aksara-health"
+      "/api/aksara-health",
+      "/api/aksara-nvidia-test"
     ],
     "html_handling": "none",
     "not_found_handling": "404-page"
