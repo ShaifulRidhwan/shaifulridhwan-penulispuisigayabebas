@@ -4,6 +4,7 @@ on:
   pull_request:
     branches: [main]
     paths:
+      - 'netlify.toml'
       - 'netlify/functions/lib/aksara-mobile-*'
       - 'netlify/functions/lib/studio-http.js'
       - 'netlify/functions/studio-android.mjs'
@@ -34,4 +35,4 @@ jobs:
           node --check netlify/functions/studio-android.mjs
           node --check netlify/functions/studio-enhance-android.mjs
       - name: Assert mobile security and web Origin isolation
-        run: node --test android-app/test/mobile-studio-auth.test.cjs android-app/test/mobile-live-broker.test.cjs
+        run: node --test android-app/test/mobile-*.test.cjs
