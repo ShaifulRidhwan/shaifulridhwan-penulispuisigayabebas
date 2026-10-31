@@ -74,16 +74,21 @@ test("studio AI prompt enhancements are limited per user",async t=>{
  assert.equal((await request("studio",{action:"enhance"})).status,429);
  assert.equal(db.prepare("SELECT enhancements FROM daily").get().enhancements,1);
 });
-test("NVIDIA owner-only tests are globally capped at two per day in SQLite",async t=>{
+test("NVIDIA owner trials: eight per UTC day globally, four per 10-minute client",async t=>{
  const {db,request}=fixture();t.after(()=>db.close());
- const first=await request("nvidia-test",{hash:"a".repeat(32)});
- const second=await request("nvidia-test",{hash:"b".repeat(32)});
- const third=await request("nvidia-test",{hash:"c".repeat(32)});
- assert.equal(first.status,200);
- assert.equal(second.status,200);
- assert.equal(third.status,429);
- assert.equal(db.prepare("SELECT count FROM nvidia_test_daily").get().count,2);
+ for(let n=0;n<8;n++){
+  const hash=String.fromCharCode(97+n).repeat(32);
+  assert.equal((await request("nvidia-test",{hash})).status,200);
+ }
+ assert.equal((await request("nvidia-test",{hash:"z".repeat(32)})).status,429);
+ assert.equal(db.prepare("SELECT count FROM nvidia_test_daily").get().count,8);
  assert.equal(db.prepare("SELECT chat FROM daily").get().chat,0);
+});
+test("NVIDIA one-owner cooldown protects trial bursts",async t=>{
+ const {db,request}=fixture();t.after(()=>db.close());
+ for(let i=0;i<4;i++)assert.equal((await request("nvidia-test")).status,200);
+ assert.equal((await request("nvidia-test")).status,429);
+ assert.equal(db.prepare("SELECT count FROM nvidia_test_daily").get().count,4);
 });
 test("control rejects malformed digests and release IDs",async t=>{
  const {db,request}=fixture();t.after(()=>db.close());
