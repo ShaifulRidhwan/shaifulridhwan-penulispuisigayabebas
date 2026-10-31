@@ -32,11 +32,12 @@ test("Wrangler only routes API paths through Worker and keeps no deploy-on-merge
  assert.equal(c.vars.AKSARA_SHARED_CHAT_BUDGET,"false");
  assert.equal(c.keep_vars,true,"Wrangler must preserve Dashboard-set account ID and other text vars");
  assert.equal(c.vars.GROQ_FREE_CONFIRMED,"true","Groq gate must survive automatic deploy");
- assert.equal(c.vars.AKSARA_ORCAROUTER_LAYER2,"true","OrcaRouter gate must survive automatic deploy");
- assert.equal(c.vars.GEMINI_MODEL_FAST,"gemini-3.5-flash-lite","Cloudflare Gemini should target the currently supported stable Flash-Lite model");
+ assert.equal(c.vars.AKSARA_NVIDIA_ENABLED,"false","NVIDIA trial access must not turn on for the public without approval");
+ assert.equal(c.vars.GEMINI_MODEL_FAST,"gemini-3.6-flash");
+ assert.equal(c.vars.GEMINI_MODEL_COMPLEX,"gemini-3.8-flash");
  assert.equal(c.vars.AKSARA_FREE_FALLBACKS,"true");
  assert.ok(!("GROQ_API_KEY" in c.vars),"No secrets allowed in Wrangler vars");
- assert.ok(!("ORCAROUTER_API_KEY" in c.vars),"No secrets allowed in Wrangler vars");
+ assert.ok(!("NVIDIA_API_KEY" in c.vars),"No secrets allowed in Wrangler vars");
  assert.ok(!existsSync(path.join(root,".github","workflows","cloudflare-auto-deploy.yml")));
 });
 test("Migration Worker defends same-origin API and has no public passthrough proxy",async()=>{
