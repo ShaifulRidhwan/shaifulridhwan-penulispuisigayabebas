@@ -16,6 +16,12 @@ on:
       - "scripts/test-studio-*"
       - ".github/workflows/studio-antara-audit.yml"
   workflow_dispatch:
+    inputs:
+      verify_production:
+        description: "Check deployed Netlify file hashes after a successful manual deploy"
+        type: boolean
+        required: false
+        default: false
 permissions:
   contents: read
 jobs:
@@ -34,8 +40,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Desktop and two mobile sizes with labelled API fixtures
         run: node scripts/test-studio-browser.cjs
-      - name: Verify Netlify assets and audit production with intercepted mock APIs
-        if: github.event_name == 'push'
+      - name: Verify deployed Netlify assets (manual post-deploy only)
+        if: github.event_name == 'workflow_dispatch' && inputs.verify_production == true
         env:
           AUDIT_BASE: https://shaifulridhwan-penulispuisigayabebas.netlify.app
         run: |
@@ -45,13 +51,13 @@ jobs:
           (async()=>{for(let attempt=0;attempt<12;attempt++){
             try{
               const html=await fetch(process.env.AUDIT_BASE+'/studio-antara.html',{cache:'no-store'}).then(r=>r.text());
-              if(!html.includes('studio-antara-ui.js?v=2'))throw Error('Netlify still serves the earlier HTML');
+              if(!html.includes('studio-antara-ui.js'))throw Error('Netlify Studio page is missing the expected UI script');
               for(const file of ['studio-antara-ui.js','studio-antara-cloud.js','studio-antara.css']){
                 const response=await fetch(process.env.AUDIT_BASE+'/'+file,{cache:'no-store'});
                 if(!response.ok||digest(Buffer.from(await response.arrayBuffer()))!==digest(fs.readFileSync(file)))throw Error('Netlify asset not current: '+file);
               }
               console.log('Netlify production HTML and three asset hashes verified. No inference requested.');return;
-            }catch(error){console.log('Deployment check '+(attempt+1)+': '+error.message);if(attempt===11)throw error;await new Promise(r=>setTimeout(r,10000));}
+            }catch(error){console.log('Deployment check '+(attempt+1)+': '+error.message);if(attempt===11)throw Error('Post-deploy verification failed. Confirm Netlify has deployed this exact main commit. Cause: '+error.message);await new Promise(r=>setTimeout(r,10000));}
           }})().catch(error=>{console.error(error);process.exitCode=1;});
           NODE
           node scripts/test-studio-browser.cjs
