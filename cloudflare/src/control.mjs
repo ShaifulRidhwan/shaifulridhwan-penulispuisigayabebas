@@ -37,7 +37,7 @@ export class AksaraControl{
      return {released:true};
     }
     const key=data.kind+":"+day+":"+hash;
-    const limits=data.kind==="nvidia-test"?{count:2,window:600000}:
+    const limits=data.kind==="nvidia-test"?{count:4,window:600000}:
      data.kind==="voice"?{count:5,window:600000}:
      data.kind==="chat"?{count:12,window:60000}:
      data.kind==="health"?{count:30,window:60000}:
@@ -74,7 +74,7 @@ export class AksaraControl{
     if(data.kind==="nvidia-test"){
      db.exec("INSERT OR IGNORE INTO nvidia_test_daily(day) VALUES(?)",day);
      const used=db.exec("SELECT count FROM nvidia_test_daily WHERE day=?",day).toArray()[0].count;
-     if(used>=2)blocked("Had dua ujian NVIDIA sehari tercapai.",resetTime(now));
+     if(used>=8)blocked("Had 8 ujian NVIDIA sehari tercapai.",resetTime(now));
      db.exec("UPDATE nvidia_test_daily SET count=count+1 WHERE day=?",day);
     }
     if(data.kind==="chat"){
