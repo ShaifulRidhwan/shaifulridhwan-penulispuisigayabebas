@@ -85,14 +85,29 @@ run.addEventListener("click",async()=>{
  if(!found||executing||bridge.active())return;
  const source=input.value.trim(),started=performance.now();
  controller=new AbortController();executing=true;refresh();
- let answer;
+ const session=window.AksaraRuntimeOverlay?.open(found.language,()=>controller?.abort())||null;
+ session?.update("Menjalankan kod dalam sandbox…");
+ let answer,executeTime=0;
  try{
-  const result=await engine.run(found.language,found.code,{signal:controller.signal,onProgress:detail=>{desc.textContent=String(detail||"Memuatkan runtime…").slice(0,90);}});
+  const result=await engine.run(found.language,found.code,{signal:controller.signal,onProgress:detail=>{
+   desc.textContent=String(detail||"Memuatkan runtime…").slice(0,90);
+   session?.update(String(detail||"Memuatkan runtime…"));
+  }});
+  executeTime=Math.round(performance.now()-started);
+  session?.update(result.ok?"Menyusun output…":"Memeriksa ralat runtime…");
+  // A cinematic minimum of 3 s never delays genuine execution or a user abort.
+  const remain=Math.max(0,3000-(performance.now()-started));
+  if(remain)await new Promise((resolve,reject)=>{
+   if(controller.signal.aborted){reject(Error("Pelaksanaan dihentikan."));return;}
+   const abort=()=>{clearTimeout(timer);reject(Error("Pelaksanaan dihentikan."));};
+   const timer=setTimeout(()=>{controller.signal.removeEventListener("abort",abort);resolve();},remain);
+   controller.signal.addEventListener("abort",abort,{once:true});
+  });
   const header=langName(found.language)+" · "+(result.ok?"BERJAYA":"RALAT");
-  answer=header+"\nOUTPUT:\n"+(result.output||"(Tiada output)")+(result.error?"\nERROR: "+result.error:"")+"\nTempoh: "+Math.round(performance.now()-started)+" ms\nDilaksanakan secara setempat tanpa API AI.";
+  answer=header+"\nOUTPUT:\n"+(result.output||"(Tiada output)")+(result.error?"\nERROR: "+result.error:"")+"\nTempoh eksekusi: "+executeTime+" ms\nDilaksanakan secara setempat tanpa API AI.";
  }catch(error){
   answer=langName(found.language)+" · RUNTIME DIHENTIKAN / GAGAL\n"+String(error?.message||error).slice(0,500)+"\nTiada API AI digunakan.";
- }
+ }finally{session?.close();}
  // Chat history stores local results but omits them from any future AI context/summary.
  if(bridge.addLocalCode([{role:"user",content:source},{role:"assistant",content:answer}])){
   if(input.value.trim()===source){input.value="";input.dispatchEvent(new Event("input",{bubbles:true}));}
