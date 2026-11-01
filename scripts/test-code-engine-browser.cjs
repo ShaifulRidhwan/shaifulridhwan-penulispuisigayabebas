@@ -144,7 +144,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.locator('[data-code-language="sql"]').click();
   await page.locator("#input").fill('CREATE TABLE numbers (n INTEGER); INSERT INTO numbers VALUES (6), (7); SELECT SUM(n) AS total FROM numbers;');
   await page.locator("#codeRunAction").click();
-  await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("total\\n13")),{timeout:45000});
+  await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>(/total\s+13/).test(x.textContent)),{timeout:45000});
   assert.match(await page.locator("#chat .code-engine-message.ai").last().innerText(),/SQL · BERJAYA/);
   assert.equal(aiChatRequests.length,0);
 
