@@ -302,3 +302,12 @@ test("Consistent DM Sans chat typography and independent animated voice icon",()
  assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.match(css,/\.conversation-head button\.multi-ai-trigger \.dot/);
 });
+
+test("Bilik message autoscroll and initial viewport avoid unnecessary forced geometry reads",()=>{
+ const source=fs.readFileSync("bilik-antara.html","utf8");
+ assert.match(source,/function scrollDown\(\)\{[\s\S]*?requestAnimationFrame\(\(\)=>\{[\s\S]*?ui\.chat\.scrollTop=1e9;/);
+ assert.doesNotMatch(source,/ui\.chat\.scrollTop\s*=\s*ui\.chat\.scrollHeight/);
+ assert.match(source,/const currentGap=appliedAppHeight===null\?Infinity:ui\.chat\.scrollHeight-ui\.chat\.scrollTop-ui\.chat\.clientHeight/);
+ assert.match(source,/const followBottom=appliedAppHeight!==null&&/);
+ assert.match(source,/if\(followBottom\)scrollDown\(\)/);
+});

@@ -300,7 +300,9 @@ function syncViewport(){
  if(height===appliedAppHeight)return;
  // Keep the newest message visible when the keyboard changes the chat height,
  // but never pull a reader away from older messages they intentionally viewed.
- const currentGap=ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight;
+ // On first paint there is no previous viewport position to preserve.
+ // Skip the geometry read until a later keyboard/orientation resize.
+ const currentGap=appliedAppHeight===null?Infinity:ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight;
  const focusedKeyboardShrink=document.activeElement===ui.input&&currentHeight<stableAppHeight-80;
  const followBottom=appliedAppHeight!==null&&(currentGap<48||(focusedKeyboardShrink&&followOnInputResize));
  appliedAppHeight=height;
@@ -534,10 +536,11 @@ let restoringHistory=false;
 let scrollFrame=0;
 function scrollDown(){
  if(restoringHistory||scrollFrame)return;
- // Defer scrollHeight measurement until paint so appended messages share one layout pass.
+ // Assign a large target; the browser clamps to the actual bottom without
+ // a synchronous scrollHeight read after messages change the layout.
  scrollFrame=requestAnimationFrame(()=>{
   scrollFrame=0;
-  if(ui.chat.isConnected)ui.chat.scrollTop=ui.chat.scrollHeight;
+  if(ui.chat.isConnected)ui.chat.scrollTop=1e9;
  });
 }
 function contextHistory(){
