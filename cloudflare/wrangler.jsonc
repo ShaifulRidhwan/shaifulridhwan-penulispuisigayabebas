@@ -36,6 +36,7 @@
   ],
   "vars": {
     "AKSARA_HYBRID_ROUTER": "true",
+    "AKSARA_BALANCED_TEXT_ROUTING": "true",
     "AKSARA_SHARED_CHAT_BUDGET": "false",
     "AKSARA_FREE_FALLBACKS": "true",
     "AKSARA_WORKERS_AI_DAILY_REQUESTS": "36",
