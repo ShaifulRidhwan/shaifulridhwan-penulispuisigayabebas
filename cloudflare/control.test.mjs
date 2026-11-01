@@ -45,6 +45,30 @@ test("chat has atomic shared daily cap; health probes don't consume inference",a
  assert.ok(Number(blocked.retry)>0);
  assert.equal(db.prepare("SELECT chat FROM daily").get().chat,2);
 });
+test("Workers AI has independent global and per-visitor quotas, without touching Studio or Chat",async t=>{
+ const {db,request}=fixture({AKSARA_WORKERS_AI_DAILY_REQUESTS:"3"});t.after(()=>db.close());
+ assert.equal((await request("workers_ai")).status,200);
+ assert.equal((await request("workers_ai")).status,200);
+ assert.equal((await request("workers_ai")).status,200);
+ const rejected=await request("workers_ai");
+ assert.equal(rejected.status,429);
+ assert.match(rejected.data.error,/Workers AI/);
+ assert.equal(db.prepare("SELECT calls FROM workers_ai_daily").get().calls,3);
+ assert.equal(db.prepare("SELECT chat FROM daily").get().chat,0);
+ assert.equal(db.prepare("SELECT studio FROM daily").get().studio,0);
+ assert.equal((await request("chat")).status,200);
+});
+test("Workers AI allows four calls per client in ten minutes before cooldown",async t=>{
+ const {db,request}=fixture({AKSARA_WORKERS_AI_DAILY_REQUESTS:"20"});t.after(()=>db.close());
+ for(let i=0;i<4;i++)assert.equal((await request("workers_ai")).status,200);
+ assert.equal((await request("workers_ai")).status,429);
+ assert.equal(db.prepare("SELECT calls FROM workers_ai_daily").get().calls,4);
+});
+test("Workers AI can be disabled by a zero cap without disabling other providers",async t=>{
+ const {db,request}=fixture({AKSARA_WORKERS_AI_DAILY_REQUESTS:"0"});t.after(()=>db.close());
+ assert.equal((await request("workers_ai")).status,429);
+ assert.equal((await request("chat")).status,200);
+});
 test("voice has a separate throttle",async t=>{
  const {db,request}=fixture();t.after(()=>db.close());
  for(let n=0;n<5;n++)assert.equal((await request("voice")).status,200);
@@ -104,4 +128,43 @@ test("safe health endpoint never leaks configured provider keys",async()=>{
    method:"OPTIONS",headers:{"origin":"https://untrusted.example"}}),env,{});
   assert.equal(result.status,403);
  }
+});
+
+test("Inference path reserves dedicated Workers AI budget and never forwards private messages to quota store",async()=>{
+ const worker=(await import("./src/index.mjs")).default;
+ const calls=[],origin="https://apps.example.com";
+ const store={fetch:async(_url,req)=>{
+  const obj=JSON.parse(req.body);calls.push(obj);
+  return Response.json({ok:true});
+ }};
+ const env={
+  AKSARA_RATE_SALT:"safe-only-deterministic-salt-for-test-case",
+  AKSARA_FREE_FALLBACKS:"true",
+  AI:{run:async(_model,prompt)=>({choices:[{message:{content:"Aku Aksara. Ini jawapan ringkas."},finish_reason:"stop"}]})},
+  AKSARA_CONTROL:{idFromName:()=>({}),get:()=>store},
+  ASSETS:{fetch:async()=>Response.json({})}
+ };
+ const chat=await worker.fetch(new Request(origin+"/.netlify/functions/bilik-antara",{
+  method:"POST",headers:{origin,"content-type":"application/json","cf-connecting-ip":"192.0.2.77"},
+  body:JSON.stringify({question:"Apa maksud aporia?"})}),env,{});
+ assert.equal(chat.status,200);
+ assert.deepEqual(calls.map(x=>x.kind),["chat","workers_ai"]);
+ assert.ok(calls.every(x=>!JSON.stringify(x).includes("aporia")));
+});
+test("Workers AI Gateway is opt-in, private, and never caches a user conversation",async()=>{
+ const worker=(await import("./src/index.mjs")).default;
+ const calls=[],origin="https://apps.example.com";
+ const quota={fetch:async()=>Response.json({ok:true})};
+ const env={
+  AKSARA_RATE_SALT:"safe-only-deterministic-salt-for-test-case",
+  AKSARA_FREE_FALLBACKS:"true",AKSARA_AI_GATEWAY_ID:"aksara-private",
+  AI:{run:async(...args)=>{calls.push(args);return {choices:[{message:{content:"Aku Aksara."},finish_reason:"stop"}]};}},
+  AKSARA_CONTROL:{idFromName:()=>({}),get:()=>quota},ASSETS:{fetch:async()=>Response.json({})}
+ };
+ const res=await worker.fetch(new Request(origin+"/.netlify/functions/bilik-antara",{
+  method:"POST",headers:{origin,"content-type":"application/json"},
+  body:JSON.stringify({question:"Terangkan teori relativiti secara ringkas"})}),env,{});
+ assert.equal(res.status,200);
+ assert.equal(calls.length,1);
+ assert.deepEqual(calls[0][2],{gateway:{id:"aksara-private",skipCache:true,collectLog:false}});
 });

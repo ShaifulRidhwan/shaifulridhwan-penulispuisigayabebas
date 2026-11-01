@@ -88,6 +88,26 @@ async function quota(env,kind,request,extra={}){
   return {stub,...body};
  }catch(_){return {error:json(503,"Kawalan global Aksara belum tersedia. API ditangguh untuk melindungi kuota.")};}
 }
+// Real inference pays a second, independent global budget. Chat alone is
+// not enough: several models can answer one request and Studio also uses neurons.
+// Do not retain prompts, model outputs, raw IP addresses, or secret keys.
+function guardedWorkersAI(env,request){
+ if(!env.AI||typeof env.AI.run!=="function")return null;
+ return {run:async(model,input)=>{
+  const allowance=await quota(env,"workers_ai",request);
+  if(allowance.error){
+   const status=allowance.error.status;
+   let details={};try{details=await allowance.error.json();}catch(_){}
+   throw Object.assign(Error(details.error||"Workers AI unavailable"),{
+    status,retryAfterSeconds:details.retryAfterSeconds||0,reason:"provider_budget"});
+  }
+  const id=String(env.AKSARA_AI_GATEWAY_ID||"").trim();
+  // Optional gateway: never cache private dialogue or log request/response
+  // payloads. Gateway configuration is exclusively server-controlled.
+  return id?env.AI.run(model,input,{gateway:{id,skipCache:true,collectLog:false}})
+   :env.AI.run(model,input);
+ }};
+}
 async function release(stub,id){
  if(!stub||!id)return;
  try{await stub.fetch("https://aksara-control.internal/",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({kind:"release",id})});}catch(_){}
@@ -128,7 +148,7 @@ async function handle(request,env,ctx){
   h.set("origin",internalOrigin());
   h.set("x-nf-client-connection-ip",request.headers.get("cf-connecting-ip")||"unknown");
   const adapted=new Request(request,{headers:h});
-  const result=await netlifyStream(adapted,env.AI||null);
+  const result=await netlifyStream(adapted,guardedWorkersAI(env,request));
   const out=new Headers(result.headers);
   out.set("Access-Control-Allow-Origin",origin);
   out.set("Cache-Control","no-store");
@@ -138,7 +158,7 @@ async function handle(request,env,ctx){
  // Studio validates Origin against the actual request Host; the legacy
  // Netlify origin is only needed by Chat/Voice compatibility handlers.
  const headers=normalizedHeaders(request,origin,!isStudio);
- const event={httpMethod:"POST",headers,body,signal:request.signal,isBase64Encoded:false,aiBinding:env.AI||null};
+ const event={httpMethod:"POST",headers,body,signal:request.signal,isBase64Encoded:false,aiBinding:guardedWorkersAI(env,request)};
  if(path===apis.chat)return asResponse(await Chat.handler(event),origin);
  if(path===apis.voice)return asResponse(await Live.handler(event),origin);
  // Preserve old Studio image-generation payloads, estimate and media parsing.

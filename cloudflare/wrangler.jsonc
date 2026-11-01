@@ -35,6 +35,7 @@
     "AKSARA_HYBRID_ROUTER": "true",
     "AKSARA_SHARED_CHAT_BUDGET": "false",
     "AKSARA_FREE_FALLBACKS": "true",
+    "AKSARA_WORKERS_AI_DAILY_REQUESTS": "24",
     "STUDIO_DISABLED": "false",
     "AKSARA_CLOUD_MIGRATION": "preview",
     "GROQ_FREE_CONFIRMED": "true",

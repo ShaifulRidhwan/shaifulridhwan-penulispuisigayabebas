@@ -13,11 +13,13 @@ export class AksaraControl{
   sql.exec("CREATE TABLE IF NOT EXISTS daily (day TEXT PRIMARY KEY, chat INTEGER NOT NULL DEFAULT 0, studio INTEGER NOT NULL DEFAULT 0, enhancements INTEGER NOT NULL DEFAULT 0)");
   sql.exec("CREATE TABLE IF NOT EXISTS users (scope TEXT PRIMARY KEY, started INTEGER NOT NULL, count INTEGER NOT NULL DEFAULT 0, enhance_at INTEGER NOT NULL DEFAULT 0)");
   sql.exec("CREATE TABLE IF NOT EXISTS leases (id TEXT PRIMARY KEY, expires INTEGER NOT NULL)");
+  // A separate table avoids an unsafe migration of an existing daily quota row.
+  sql.exec("CREATE TABLE IF NOT EXISTS workers_ai_daily (day TEXT PRIMARY KEY, calls INTEGER NOT NULL DEFAULT 0)");
  }
  async fetch(request){
   if(request.method!=="POST")return json(405,{error:"Method not allowed"});
   let data;try{data=await request.json();}catch(_){return json(400,{error:"Invalid request"});}
-  if(!data||!["chat","health","voice","studio","release"].includes(data.kind)||typeof data!=="object")
+  if(!data||!["chat","health","voice","studio","workers_ai","release"].includes(data.kind)||typeof data!=="object")
    return json(400,{error:"Invalid scope"});
   const now=Date.now(),day=new Date(now).toISOString().slice(0,10);
   const hash=String(data.hash||"");
@@ -36,7 +38,8 @@ export class AksaraControl{
      return {released:true};
     }
     const key=data.kind+":"+day+":"+hash;
-    const limits=data.kind==="voice"?{count:5,window:600000}:
+    const limits=data.kind==="workers_ai"?{count:4,window:600000}:
+     data.kind==="voice"?{count:5,window:600000}:
      data.kind==="chat"?{count:12,window:60000}:
      data.kind==="health"?{count:30,window:60000}:
      {count:8,window:600000};
@@ -69,6 +72,13 @@ export class AksaraControl{
      return {ok:true,id};
     }
     if(count>=limits.count)blocked("Terlalu banyak permintaan. Cuba sebentar lagi.",Math.ceil((started+limits.window-now)/1000));
+    if(data.kind==="workers_ai"){
+     const cap=integer(this.env.AKSARA_WORKERS_AI_DAILY_REQUESTS,24,100);
+     db.exec("INSERT OR IGNORE INTO workers_ai_daily(day) VALUES(?)",day);
+     const used=db.exec("SELECT calls FROM workers_ai_daily WHERE day=?",day).toArray()[0].calls;
+     if(used>=cap)blocked("Kuota panggilan Workers AI hari ini sudah habis.",resetTime(now));
+     db.exec("UPDATE workers_ai_daily SET calls=calls+1 WHERE day=?",day);
+    }
     if(data.kind==="chat"){
      const cap=integer(this.env.AKSARA_CHAT_DAILY_REQUESTS,800,100000);
      const row=db.exec("SELECT chat FROM daily WHERE day=?",day).toArray()[0];
