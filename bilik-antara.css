@@ -3263,60 +3263,91 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-ve
 }
 
 
-/* AKSARA Set C: multilayer network rings. Never reuse Code Engine processor glyph.
-   Fully CSS-based, isolated to the existing Multi A.I. status chip. */
-.conversation-head button.multi-ai-trigger .dot.multi-ai-rings{
- position:relative;display:block;flex:0 0 17px!important;
- width:17px!important;height:17px!important;margin:0!important;
- background:transparent!important;border:1.4px solid currentColor!important;
- color:#76d6c1!important;border-radius:50%!important;
- box-sizing:border-box;opacity:.96;
- transform:rotate(-19deg);animation:multiRingOrbit 8s ease-in-out infinite!important;
- box-shadow:0 0 5px rgba(87,212,184,.16);
+/* AKSARA Sparkle Network: connected AI providers, four linked nodes + a living spark.
+   The glass geometry and independent status logic are intentionally unchanged. */
+.conversation-head #connection .dot.multi-ai-network{
+ display:grid!important;place-items:center;position:relative;top:-1px;
+ flex:0 0 17px!important;width:17px!important;height:17px!important;
+ margin:0!important;align-self:center;border:0!important;
+ color:#83dfcf;background:none!important;border-radius:0!important;
+ box-shadow:none!important;
 }
-.conversation-head button.multi-ai-trigger .dot.multi-ai-rings::before{
- content:"";position:absolute;inset:2px!important;border:1.4px solid currentColor!important;
- border-radius:50%!important;background:none!important;
- opacity:.84!important;box-sizing:border-box;transform:rotate(36deg);
- animation:multiRingInner 3.8s ease-in-out infinite!important;
+.conversation-head #connection .dot.multi-ai-network::before,
+.conversation-head #connection .dot.multi-ai-network::after{
+ content:none!important;display:none!important;animation:none!important;
 }
-.conversation-head button.multi-ai-trigger .dot.multi-ai-rings::after{
- content:"";position:absolute;inset:5px!important;
- border:0!important;border-radius:50%!important;background:currentColor!important;
- box-shadow:0 0 5px rgba(104,218,192,.65);
- opacity:.9!important;box-sizing:border-box;
- animation:multiRingSignal 2.6s ease-in-out infinite!important;
+.conversation-head #connection .multi-ai-network svg{
+ width:17px;height:17px;display:block;overflow:visible;
+ fill:none;stroke:currentColor;stroke-width:1.4;
+ stroke-linecap:round;stroke-linejoin:round;
+ animation:networkSparkBreath 4.1s ease-in-out infinite;
+ filter:drop-shadow(0 0 2px rgba(91,219,196,.25));
 }
-.conversation-head button.multi-ai-trigger:not(.ready) .dot.multi-ai-rings{
- color:#c3b18d!important;box-shadow:none;
+.conversation-head #connection .multi-ai-network .network-links{opacity:.63}
+.conversation-head #connection .multi-ai-network .network-node{
+ fill:currentColor;fill-opacity:.45;stroke-width:1;
+ animation:networkNodeSignal 3s ease-in-out infinite;
 }
-.conversation-head button.multi-ai-trigger.error .dot.multi-ai-rings{color:#e7a08e!important}
-@keyframes multiRingOrbit{
- 0%,100%{transform:rotate(-19deg) scale(1);opacity:.79}
- 50%{transform:rotate(19deg) scale(1.03);opacity:1}
+.conversation-head #connection .multi-ai-network .network-node:nth-of-type(2){animation-delay:.6s}
+.conversation-head #connection .multi-ai-network .network-node:nth-of-type(3){animation-delay:1.2s}
+.conversation-head #connection .multi-ai-network .network-node:nth-of-type(4){animation-delay:1.8s}
+.conversation-head #connection .multi-ai-network .network-spark{
+ fill:currentColor;fill-opacity:.17;stroke-width:1.05;
+ transform-origin:12px 12px;animation:networkSparkTwinkle 3.2s ease-in-out infinite;
 }
-@keyframes multiRingInner{
- 0%,100%{transform:rotate(0deg);opacity:.6}
- 50%{transform:rotate(90deg);opacity:1}
+.conversation-head #connection:not(.ready) .multi-ai-network{color:#c1b393}
+.conversation-head #connection.error .multi-ai-network{color:#e7a08e}
+@keyframes networkSparkBreath{
+ 0%,100%{opacity:.65;filter:drop-shadow(0 0 1px rgba(91,219,196,.12))}
+ 50%{opacity:1;filter:drop-shadow(0 0 5px rgba(91,219,196,.56))}
 }
-@keyframes multiRingSignal{
- 0%,100%{transform:scale(.7);opacity:.45}
- 50%{transform:scale(1.12);opacity:.98}
+@keyframes networkNodeSignal{
+ 0%,100%{fill-opacity:.3;opacity:.65}50%{fill-opacity:1;opacity:1}
+}
+@keyframes networkSparkTwinkle{
+ 0%,100%{transform:scale(.82);fill-opacity:.16}
+ 52%{transform:scale(1.12);fill-opacity:.67}
+}
+@media(min-width:761px){
+ /* Match the original 7px status dot's pill width without stretching glass. */
+ .conversation-head #connection.multi-ai-trigger:has(.multi-ai-network){padding-inline:7px!important}
 }
 @media(max-width:760px){
- .conversation-head button.multi-ai-trigger .dot.multi-ai-rings{
-  flex-basis:15px!important;width:15px!important;height:15px!important;
+ .conversation-head #connection .dot.multi-ai-network{
+  flex-basis:15px!important;width:15px!important;height:15px!important
  }
- .conversation-head button.multi-ai-trigger .dot.multi-ai-rings::after{inset:4px!important}
-}
-@media(prefers-reduced-motion:reduce){
- .conversation-head button.multi-ai-trigger .dot.multi-ai-rings,
- .conversation-head button.multi-ai-trigger .dot.multi-ai-rings::before,
- .conversation-head button.multi-ai-trigger .dot.multi-ai-rings::after{animation:none!important}
+ .conversation-head #connection .multi-ai-network svg{width:15px;height:15px}
 }
 
-/* The larger three-ring symbol replaces the 7px dot without increasing desktop pill width.
-   12px → 7px per side compensates for the 10px symbol delta, keeping glass geometry intact. */
-@media(min-width:761px){
- .conversation-head #connection.multi-ai-trigger:has(.multi-ai-rings){padding-inline:7px!important}
+/* Futuristic neural brain: distinct breathing glow in CAHAYA/GELAP, box stays static. */
+.conversation .composer #thoughtMode svg.thinking-brain{
+ width:23px;height:23px;overflow:visible;
+ animation:thinkingBrainBreath 3.8s ease-in-out infinite;
+ filter:drop-shadow(0 0 2px rgba(241,192,115,.3));
+}
+.conversation .composer #thoughtMode .thinking-brain .brain-outline{stroke-width:1.65}
+.conversation .composer #thoughtMode .thinking-brain .brain-circuits{
+ stroke-width:1.35;opacity:.78;animation:thinkingNeurons 2.7s ease-in-out infinite;
+}
+.conversation .composer #thoughtMode .thinking-brain .brain-signal{
+ fill:currentColor;stroke:none;opacity:.74;
+ animation:thinkingNeurons 2.7s ease-in-out infinite;
+}
+.conversation .composer #thoughtMode .thinking-brain .brain-signal:last-child{animation-delay:1.3s}
+.conversation .composer #thoughtMode[data-mode="gelap"] svg.thinking-brain{
+ filter:drop-shadow(0 0 3px rgba(158,194,246,.35));
+ animation-duration:4.4s;
+}
+@keyframes thinkingBrainBreath{
+ 0%,100%{opacity:.73;filter:drop-shadow(0 0 1px currentColor)}
+ 50%{opacity:1;filter:drop-shadow(0 0 6px currentColor)}
+}
+@keyframes thinkingNeurons{0%,100%{opacity:.42}50%{opacity:1}}
+@media(prefers-reduced-motion:reduce){
+ .conversation-head #connection .multi-ai-network svg,
+ .conversation-head #connection .multi-ai-network .network-node,
+ .conversation-head #connection .multi-ai-network .network-spark,
+ .conversation .composer #thoughtMode svg.thinking-brain,
+ .conversation .composer #thoughtMode .thinking-brain .brain-circuits,
+ .conversation .composer #thoughtMode .thinking-brain .brain-signal{animation:none!important}
 }

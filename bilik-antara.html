@@ -52,7 +52,7 @@
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="bilik-antara-bg-desktop.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="bilik-antara-bg-mobile.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=97">
+<link rel="stylesheet" href="bilik-antara.css?v=98">
 <link rel="stylesheet" href="aksara-header.css?v=2">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=8" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=8"></noscript>
@@ -126,7 +126,7 @@
      <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Voice Chat</button>
     </div>
     <div class="chat-controls">
-     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model yang tersedia"><span class="dot multi-ai-rings" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
+     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model yang tersedia"><span class="dot multi-ai-network" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path class="network-links" d="M5 5.5 12 12l7-7M12 12l7.3 7M12 12 4.8 18.5"/><circle class="network-node" cx="5" cy="5.5" r="1.55"/><circle class="network-node" cx="19" cy="5" r="1.55"/><circle class="network-node" cx="19.3" cy="19" r="1.55"/><circle class="network-node" cx="4.8" cy="18.5" r="1.55"/><path class="network-spark" d="m12 7.2 1.25 3.55L16.8 12l-3.55 1.25L12 16.8l-1.25-3.55L7.2 12l3.55-1.25Z"/></svg></span><span id="connectionText">Checking Multi A.I.…</span></button>
     </div>
    </header>
    <dialog class="multi-ai-dialog" id="multiAiDialog" aria-labelledby="multiAiTitle">
@@ -213,7 +213,7 @@
      <textarea rows="1" id="input" placeholder="" aria-label="Tulis mesej untuk Aksara A.I."></textarea>
       <button type="button" id="stopBtn" class="outline-btn" aria-label="Hentikan respons" hidden>Henti</button>
       <button type="button" id="thoughtMode" class="thought-mode" data-mode="cahaya" aria-label="Thinking Mode. Aktif: Cahaya" aria-haspopup="dialog" aria-controls="thoughtModeDialog" aria-expanded="false" title="Thinking Mode · Cahaya">
-       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5.5" y="5.5" width="13" height="13" rx="2.5"/><path d="M9.3 9.3h5.4v5.4H9.3zM9 2v3.5M15 2v3.5M9 18.5V22M15 18.5V22M2 9h3.5M2 15h3.5M18.5 9H22M18.5 15H22"/></svg>
+       <svg class="thinking-brain" viewBox="0 0 24 24" aria-hidden="true"><path class="brain-outline" d="M12 20V5a3 3 0 0 0-5.8-.9A3.7 3.7 0 0 0 3.5 9a3.4 3.4 0 0 0 .1 5.4A3.6 3.6 0 0 0 6.8 19 3 3 0 0 0 12 20Zm0 0V5a3 3 0 0 1 5.8-.9A3.7 3.7 0 0 1 20.5 9a3.4 3.4 0 0 1-.1 5.4A3.6 3.6 0 0 1 17.2 19 3 3 0 0 1 12 20Z"/><path class="brain-circuits" d="M5.5 9h3l2 2.1v3.2M18.5 9h-3l-2 2.1v3.2M6.2 15.5h2.6m6.4 0h2.6"/><circle class="brain-signal" cx="10.5" cy="14.3" r=".75"/><circle class="brain-signal" cx="13.5" cy="14.3" r=".75"/></svg>
       </button>
       <button type="submit" id="sendBtn" class="send-btn" aria-label="Hantar soalan" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-9-3.6 18L11 13l-6-1Z"/><path d="m11 13 8-10"/></svg></button>
     </form>
@@ -1169,7 +1169,7 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-session-utils.js?v=2" defer></script>
 <script src="bilik-antara-suite.js?v=15" defer></script>
 <script src="bilik-antara-code-runtime.js?v=4" defer></script>
-<script src="bilik-antara-code-status.js?v=12" defer></script>
+<script src="bilik-antara-code-status.js?v=13" defer></script>
 <script src="bilik-antara-code-execution.js?v=1" defer></script>
 <script src="bilik-antara-code-chat.js?v=5" defer></script>
 <script src="bilik-antara-code-bridge.js?v=1" defer></script>

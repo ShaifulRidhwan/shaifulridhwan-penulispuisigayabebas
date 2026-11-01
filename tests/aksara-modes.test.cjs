@@ -234,10 +234,12 @@ test("GELAP and CAHAYA each have contextual, accurate local philosophy answers",
  assert.ok(html.includes('data.model==="local-knowledge"'));
 });
 
-test("Thinking Mode uses a CPU icon; sunshine and moon remain unchanged",()=>{
+test("Thinking Mode uses a futuristic brain; sunshine and moon remain unchanged",()=>{
  assert.ok(html.includes('id="thoughtModeTitle">Thinking Mode</strong>'));
  assert.ok(html.includes('title="Thinking Mode · Cahaya"'));
- assert.ok(html.includes('<rect x="5.5" y="5.5" width="13" height="13" rx="2.5"/>'));
+ assert.ok(html.includes('class="thinking-brain"'));
+ assert.ok(html.includes('class="brain-circuits"'));
+ assert.ok(css.includes("@keyframes thinkingBrainBreath"));
  assert.ok(html.includes('thought-choice-sun'));
  assert.ok(html.includes('thought-choice-moon'));
 });
