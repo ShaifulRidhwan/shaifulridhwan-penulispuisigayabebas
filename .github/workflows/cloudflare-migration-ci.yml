@@ -54,6 +54,12 @@ jobs:
           curl --max-time 5 -fsS http://127.0.0.1:8787/studio-antara.html -o /tmp/aksara-studio-preview.html
           curl --max-time 5 -fsS http://127.0.0.1:8787/antara-cahaya-dan-gelap.html -o /tmp/aksara-novel-preview.html
           curl --max-time 5 -fsS http://127.0.0.1:8787/assets/novel/pembaca.html -o /tmp/aksara-reader-preview.html
+          # A local Wrangler test must actually SERVE the selected WebP; CSS-only checks miss broken deployments.
+          curl --max-time 5 -fsS -D /tmp/aksara-wallpaper-headers \
+            http://127.0.0.1:8787/aksara-background-cahaya-gelap.webp \
+            -o /tmp/aksara-wallpaper.webp
+          grep -qi '^content-type: image/webp' /tmp/aksara-wallpaper-headers
+          node -e 'const fs=require("fs");const x=fs.readFileSync("/tmp/aksara-wallpaper.webp");if(x.toString("ascii",0,4)!=="RIFF"||x.toString("ascii",8,12)!=="WEBP")process.exit(1)'
           STATUS=$(curl --max-time 5 -s -o /tmp/aksara-denied.json -w '%{http_code}' -X POST \
             -H 'Origin: https://outside.example' -H 'Content-Type: application/json' \
             --data '{"prompt":"hi"}' \
