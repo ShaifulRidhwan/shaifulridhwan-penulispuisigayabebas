@@ -610,17 +610,24 @@ test("All three Aksara pages share one measured glass topbar with distinct conte
  const novel=fs.readFileSync("perpustakaan-aksara.html","utf8");
  const shared=fs.readFileSync("aksara-header.css","utf8");
  const pages=[
-  {html,role:"AKSARA A.I",other:["Laman utama","Studio","Novel"]},
+  {html,role:"AKSARA A.I",other:["Laman utama"],portal:true},
   {html:studio,role:"AKSARA Studio",other:["Laman utama","Bilik Antara","Novel"]},
   {html:novel,role:"AKSARA Novel",other:["Laman utama","Bilik Antara","Studio"]}
  ];
- for(const {html:markup,role,other} of pages){
+ for(const {html:markup,role,other,portal} of pages){
   assert.match(markup,/aksara-header\.css\?v=2/);
   assert.match(markup,/aksara-brand-name/);
   assert.ok(markup.includes('class="aksara-name">'+role+"</span>"),role);
   assert.ok(markup.includes('class="aksara-credit">oleh Shaiful Ridhwan</span>'),role);
   assert.match(markup,/class="(?:nav-actions )?aksara-nav"/);
   for(const label of other)assert.ok(markup.includes(">"+label+"</a>"),label+" missing: "+role);
+  if(portal){
+   assert.match(markup,/<summary class="portal-trigger"[^>]*><span>PORTAL<\/span><svg/,"Portal icon must follow its text");
+   assert.equal((markup.match(/id="settingsPanel"/g)||[]).length,1);
+   assert.match(markup,/<a class="feature-hub-item" id="featureStudio" href="studio-antara\.html">/);
+   assert.match(markup,/<a class="feature-hub-item" id="featureLibrary" href="perpustakaan-aksara\.html">/);
+   assert.doesNotMatch(markup,/class="nav-link aksara-nav-link" href="(?:studio-antara|perpustakaan-aksara)\.html"/);
+  }
  }
  assert.doesNotMatch(novel,/<span class="brand-icon">/);
  assert.doesNotMatch(studio,/class="back-link"/);
