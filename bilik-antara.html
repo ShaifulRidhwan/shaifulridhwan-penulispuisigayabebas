@@ -454,7 +454,7 @@ function renderProviderRows(rows,catalog=null){
  multiList.replaceChildren();
  for(const [id,name] of providers){
   const item=(rows||[]).find(x=>x.id===id),state=item?.status||"checking";
-  const expandable=id==="openrouter";
+  const expandable=id==="openrouter"||id==="workers_ai";
   const line=elem(expandable?"summary":"div","multi-ai-row"+(expandable?" multi-ai-expand-trigger":""));
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
   const waitLabel=waitSeconds>0?"Retry in "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" sec"):"";
@@ -466,9 +466,21 @@ function renderProviderRows(rows,catalog=null){
   line.append(elem("span","multi-ai-provider",name),statusText);
   if(!expandable){multiList.appendChild(line);continue;}
   const group=elem("details","multi-ai-provider-details");group.dataset.provider=id;
+  group.setAttribute("aria-label",name+" · butiran model");
   group.open=hasPreviousGroups&&openGroups.has(id);group.appendChild(line);
   const modelList=elem("div","multi-ai-model-list");
-  if(Array.isArray(catalog?.models)&&catalog.models.length){
+  if(id==="workers_ai"){
+   // Native Cloudflare binding exposes one configured GLM model. Use actual
+   // provider status, never imply live inference from a "Ready" binding.
+   const live=state==="online";
+   const modelState=live?"Connected":state==="ready"?"Ready":state==="off"?"Not active":
+    state==="offline"?"Offline":"Checking…";
+   const child=elem("div","multi-ai-model-row");
+   child.title="Cloudflare Workers AI · @cf/zai-org/glm-4.7-flash";
+   child.append(elem("span","multi-ai-model-name","GLM-4.7-Flash"),
+    elem("span","multi-ai-model-state"+(live?" is-online":""),modelState));
+   modelList.appendChild(child);
+  }else if(Array.isArray(catalog?.models)&&catalog.models.length){
    for(const model of catalog.models){
     if(!model||typeof model.id!=="string")continue;
     const child=elem("div","multi-ai-model-row"),fullName=String(model.name||model.id).slice(0,140);

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<title>Eksport Arkib Bilik Antara | Netlify</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#090d15;color:#f2ebdf}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;
+background:radial-gradient(ellipse at 17% 15%,#49321e50,transparent 52%),radial-gradient(ellipse at 88% 88%,#17345469,transparent 55%),#090d15}
+main{width:min(100%,530px);padding:clamp(22px,5vw,38px);border:1px solid #dec59b52;border-radius:23px;background:#141b28dd;box-shadow:0 18px 70px #0008}
+small{letter-spacing:.12em;text-transform:uppercase;color:#d3b98b}h1{font-size:clamp(1.45rem,5vw,2rem);line-height:1.15}p{line-height:1.65;color:#d6d9df}button,a{border:1px solid #d8c49c66;border-radius:12px;padding:13px 16px;font:inherit}
+button{background:#d8c49c;color:#18202d;font-weight:700;cursor:pointer;width:100%}button:disabled{opacity:.5;cursor:not-allowed}
+a{display:inline-block;color:#f2ebdf;text-decoration:none;margin-top:14px}a:hover{background:#fff1}
+#status{min-height:3em}footer{margin-top:22px;font-size:.83rem;line-height:1.6;color:#bac2cf}
+</style>
+</head>
+<body>
+<main>
+<small>AKSARA A.I. · Arkib Netlify</small>
+<h1>Eksport sejarah Bilik Antara</h1>
+<p>Chat kini berada di Cloudflare. Halaman ini <strong>hanya</strong> membaca sejarah yang disimpan dalam pelayar lama pada domain Netlify dan menyediakan fail JSON. Tiada mesej dihantar ke pelayan.</p>
+<p id="status" role="status">Menyemak sejarah pada peranti ini…</p>
+<button type="button" id="export" disabled>Eksport arkib JSON</button>
+<a href="https://aksara-apps.mshaifulridhwan.workers.dev/bilik-antara.html">Buka Bilik Antara Cloudflare</a>
+<a href="/">Kembali ke laman utama</a>
+<footer>Selepas mengeksport, buka Bilik Antara Cloudflare → Sesi &amp; Memori → Import arkib JSON. Data tidak dipindahkan secara automatik antara dua alamat.</footer>
+</main>
+<script>
+(function(){
+"use strict";
+const archiveKey="bilik-antara-suite-v1-archive";
+const activeKey="bilik-antara-session-v2";
+const status=document.getElementById("status"),button=document.getElementById("export");
+let sessions=[];
+try{
+ const archive=JSON.parse(localStorage.getItem(archiveKey)||"[]");
+ if(!Array.isArray(archive))throw Error("Format arkib tersimpan tidak sah.");
+ sessions=archive.filter(x=>x&&Array.isArray(x.history)&&x.history.length);
+ const active=JSON.parse(localStorage.getItem(activeKey)||"null");
+ if(active&&Array.isArray(active.history)&&active.history.length){
+  const history=active.history.filter(m=>m&&["user","assistant"].includes(m.role)&&typeof m.content==="string"&&m.content.trim());
+  const first=history.find(m=>m.role==="user");
+  if(history.length&&first){
+   const match=sessions.findIndex(item=>{
+    const old=item.history.find(m=>m.role==="user");
+    return old&&Number.isFinite(first.timestamp)&&Number.isFinite(old.timestamp)&&
+      first.timestamp===old.timestamp&&first.content===old.content;
+   });
+   if(match>=0){
+    if(history.length>sessions[match].history.length)
+     sessions[match]={...sessions[match],history,summary:active.summary||"",summarizedThrough:active.summarizedThrough||0,thoughtLedger:active.thoughtLedger||[]};
+   }else{
+    sessions.push({title:first.content.trim().slice(0,75),at:Date.now(),pinned:false,history,
+      summary:active.summary||"",summarizedThrough:active.summarizedThrough||0,thoughtLedger:active.thoughtLedger||[]});
+   }
+  }
+ }
+ button.disabled=sessions.length===0;
+ status.textContent=sessions.length?String(sessions.length)+" sesi ditemui. Sedia untuk dieksport.":"Tiada sejarah sesi tersimpan pada pelayar dan domain Netlify ini.";
+}catch(error){
+ status.textContent="Arkib tidak dapat dibaca: "+String(error&&error.message||"Storan tidak tersedia.").slice(0,160);
+}
+button.addEventListener("click",()=>{
+ if(!sessions.length)return;
+ const blob=new Blob([JSON.stringify(sessions,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);
+ const link=document.createElement("a");link.href=url;link.download="bilik-antara-arkib-netlify.json";
+ document.body.appendChild(link);link.click();link.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),5000);
+ status.textContent="Arkib dieksport. Buka Bilik Antara Cloudflare dan import fail JSON ini.";
+});
+})();
+</script>
+</body>
+</html>
