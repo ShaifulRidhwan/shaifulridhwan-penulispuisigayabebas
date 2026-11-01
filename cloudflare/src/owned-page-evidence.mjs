@@ -27,11 +27,15 @@ export async function ownedPageEvidence(request,env,question){
  const path=target.pathname==="/"?"/index.html":target.pathname;
  try{
   // The only GET is internal to our bundled public static assets, not the visitor's URL.
-  const response=await env.ASSETS.fetch(new Request(current.origin+path,{method:"GET"}));
+  const source=target.hostname===LEGACY_HOST?new URL(path,"https://"+LEGACY_HOST):new URL(path,current.origin);
+  const response=target.hostname===LEGACY_HOST?
+   await fetch(source,{method:"GET",redirect:"error",signal:AbortSignal.timeout(4500),headers:{Accept:"text/html"}}):
+   await env.ASSETS.fetch(new Request(source,{method:"GET"}));
   if(!response.ok||!String(response.headers.get("content-type")||"").includes("text/html")
      ||Number(response.headers.get("content-length")||0)>MAX_HTML)return null;
   const html=await response.text();
   if(html.length>MAX_HTML)return null;
+  if(target.hostname===LEGACY_HOST&&!response.url.startsWith("https://"+LEGACY_HOST+"/"))return null;
   const page=textOnly(html);
   if(!page.body&&!page.description)return null;
   return {url:target.origin+target.pathname,title:page.title,
