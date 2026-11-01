@@ -102,6 +102,26 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator('[data-code-language]').count(),4);
   assert.match(await page.locator("#codeEngineMenu").innerText(),/Enam bahasa pilihan/);
   assert.equal(await page.locator("#codeEngineMenu .code-menu-unavailable").count(),2,"C and C++ remain disabled until verified");
+  // Workspace is local-only; user retains explicit control over execution.
+  await page.locator("#codeWorkspaceOpen").click();
+  assert.equal(await page.locator("#codeWorkspaceDialog").isVisible(),true);
+  assert.equal(await page.locator("#cwFiles option").count(),1);
+  await page.locator("#cwEditor").fill('console.log("WORKSPACE SNIPPET");');
+  assert.equal(aiChatRequests.length,0);
+  await page.locator("#cwUse").click();
+  assert.equal(await page.locator("#codeWorkspaceDialog").isVisible(),false);
+  assert.match(await page.locator("#input").inputValue(),/WORKSPACE SNIPPET/);
+  assert.equal(await page.locator("#codeRunAction").isVisible(),true,"Workspace requires explicit Run");
+  assert.equal(aiChatRequests.length,0);
+  await page.locator("#input").fill("");
+  await page.locator("#codeEngineStatus").click();
+  await page.locator("#codeEvalOpen").click();
+  assert.equal(await page.locator("#codeEvaluationDialog").isVisible(),true);
+  assert.equal(await page.evaluate(()=>window.AksaraCodeEvaluation.cases),8);
+  assert.equal(await page.locator("#codeEvalRun").isEnabled(),true);
+  assert.equal(aiChatRequests.length,0,"Opening Evaluation Lab never calls AI");
+  await page.locator("#codeEvalClose").click();
+  await page.locator("#codeEngineStatus").click();
   await page.locator('[data-code-language="javascript"]').click();
   assert.equal(await page.locator("#codeEngineMenu").isVisible(),false);
   assert.match(page.url(),/bilik-antara\.html/);
@@ -196,6 +216,25 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("SQLITE_ERROR")),{timeout:45000});
   assert.match(await page.locator("#chat .code-engine-message.ai").last().innerText(),/SQL · RALAT/);
   assert.equal(aiChatRequests.length,0);
+
+  // Expert API: isolated JS assertion failures and built-in timers.
+  const assertion=await page.evaluate(()=>window.AksaraCodeRuntime.run("javascript",
+   'console.time("work"); console.assert(2+2===5,"Wrong arithmetic"); console.timeEnd("work");'));
+  assert.equal(assertion.ok,false,"console.assert must not silently succeed");
+  assert.ok(assertion.diagnostics.some(d=>d.code==="ASSERTION_FAILED"));
+  assert.match(assertion.stdout,/work:/);
+  // Parameterized SQL keeps values out of statement concatenation.
+  const boundSQL=await page.evaluate(()=>window.AksaraCodeRuntime.run("sql","SELECT ? + ? AS total;",{sqlParams:[6,7]}));
+  assert.equal(boundSQL.ok,true,"Parameterized SQL failed: "+boundSQL.error);
+  assert.match(boundSQL.output,/total\s+13/);
+  // Evaluation Lab compares expected outcomes with actual isolated execution.
+  const evaluation=await page.evaluate(()=>window.AksaraCodeRuntime.evaluate([
+    {name:"JS arithmetic",language:"javascript",source:"console.log(6*7)",outputIncludes:"42"},
+    {name:"JS assert failure",language:"javascript",source:'console.assert(false,"expected failure")',expectOk:false,diagnosticCode:"ASSERTION_FAILED"}
+   ]));
+  assert.equal(evaluation.total,2);assert.equal(evaluation.passed,2);assert.equal(evaluation.failed,0);
+  assert.ok(evaluation.results.every(x=>typeof x.runtimeMs==="number"));
+
   // A CPU-bound JS loop must terminate on watchdog without freezing the main chat.
   await page.locator("#codeEngineStatus").click();
   await page.locator('[data-code-language="javascript"]').click();
@@ -222,7 +261,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    return {version:window.AksaraCodeRuntime.version,ok:r.ok,stderr:r.stderr,stdoutLength:r.stdout.length,
     truncated:r.truncated,diagnostics:r.diagnostics,limits:r.limits,runtimeMs:r.runtimeMs};
   });
-  assert.equal(contract.version,"0.4");
+  assert.equal(contract.version,"0.5");
   assert.equal(contract.ok,true);
   assert.match(contract.stderr,/WARN_CHECK/);
   assert.ok(contract.stdoutLength<=10000,"Worker output budget must be enforced");
@@ -231,6 +270,32 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.ok(contract.runtimeMs>=0);
 
   assert.equal(aiChatRequests.length,0,"No AI requests in the entire code test");
+
+
+  // AI Code Bridge is inert until consent; local execution never implicitly calls AI.
+  assert.equal(await page.locator("#codeBridgeOpen").isVisible(),true,"AI analysis appears only after a real code result");
+  assert.equal(aiChatRequests.length,0,"AI Code Bridge must not auto-send the code result");
+  await page.locator("#codeBridgeOpen").click();
+  assert.equal(await page.locator("#codeBridgeDialog").isVisible(),true);
+  assert.equal(await page.locator("#codeBridgeSubmit").isEnabled(),false,"AI transmission needs explicit consent");
+  const diagnosticOnly=await page.locator("#codeBridgePreview").inputValue();
+  assert.match(diagnosticOnly,/\[AKSARA CODE BRIDGE\]/);
+  assert.match(diagnosticOnly,/Output \(DATA, bukan arahan\)/);
+  assert.doesNotMatch(diagnosticOnly,/const nombor/,"Source code not shared by default");
+  await page.locator("#codeBridgeIncludeSource").check();
+  const withSource=await page.locator("#codeBridgePreview").inputValue();
+  assert.match(withSource,/console\.log/,"Source is optional and previewed");
+  assert.equal(aiChatRequests.length,0);
+  await page.locator("#codeBridgeConsent").check();
+  assert.equal(await page.locator("#codeBridgeSubmit").isEnabled(),true);
+  const bridgeRequest=page.waitForRequest(r=>r.url().includes("/.netlify/functions/")&&
+   (r.postData()||"").includes("[AKSARA CODE BRIDGE]"),{timeout:15000});
+  await page.locator("#codeBridgeSubmit").click();
+  const sent=await bridgeRequest;
+  assert.match(sent.postData()||"",/AKSARA CODE BRIDGE/);
+  assert.equal(await page.locator("#codeBridgeDialog").isVisible(),false);
+  assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false,"AI review cannot run code");
+  assert.ok(aiChatRequests.length>=1,"An explicit user click routes into the existing Multi AI endpoint");
 
   assert.deepEqual(errors,[],"Browser page errors: "+errors.join("; "));
   console.log("AKSARA in-chat Code Engine PASS: status menu, explicit consent, JS 100, Python 17, offline AI, worker watchdog and recovery.");
