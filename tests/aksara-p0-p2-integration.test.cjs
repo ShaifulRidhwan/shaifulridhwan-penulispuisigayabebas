@@ -80,9 +80,8 @@ test("P1–P2 integration: CSV aggregates and JSON output remain exact, without 
  assert.equal(out.status,200,JSON.stringify(out.data).slice(0,400));
  assert.equal(out.data.model,"aksara-data-engine");
  assert.equal(out.data.outputFormat,"json");
- assert.match(out.data.reply,/^```json
-/);
- const parsed=JSON.parse(out.data.reply.replace(/^```jsons*/, "").replace(/s*```$/,""));
+ assert.ok(out.data.reply.startsWith(String.fromCharCode(96).repeat(3)+"json"));
+ const parsed=JSON.parse(out.data.reply.split(String.fromCharCode(10)).slice(1,-1).join(String.fromCharCode(10)));
  assert.equal(parsed.analysis.numeric.jumlah.sum,20);
  assert.equal(parsed.analysis.numeric.jumlah.mean,10);
  assert.equal(parsed.source,"user_uploaded_data");
@@ -97,9 +96,7 @@ test("P2 integration: requested structured JSON from model contains valid JSON w
  const out=await ask("Jawab dalam format JSON: susun rekod asas ini",{thoughtMode:"gelap"});
  assert.equal(out.status,200);
  assert.equal(out.data.outputFormat,"json");
- const raw=out.data.reply.split("
-").slice(1,-1).join("
-");
+ const raw=out.data.reply.split(String.fromCharCode(10)).slice(1,-1).join(String.fromCharCode(10));
  assert.equal(JSON.parse(raw).identity,"Aksara A.I.");
  assert.equal(out.data.thoughtMode,"gelap");
  assert.doesNotMatch(raw,/🙂|✨/);
