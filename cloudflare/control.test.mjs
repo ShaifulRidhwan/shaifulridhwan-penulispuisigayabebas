@@ -130,7 +130,10 @@ test("safe health endpoint never leaks configured provider keys",async()=>{
  }
 });
 
-test("Inference path reserves dedicated Workers AI budget and never forwards private messages to quota store",async()=>{
+test("Inference path reserves dedicated Workers AI budget and never forwards private messages to quota store",async t=>{
+ const prev=process.env.AKSARA_FREE_FALLBACKS;
+ process.env.AKSARA_FREE_FALLBACKS="true";
+ t.after(()=>{if(prev===undefined)delete process.env.AKSARA_FREE_FALLBACKS;else process.env.AKSARA_FREE_FALLBACKS=prev;});
  const worker=(await import("./src/index.mjs")).default;
  const calls=[],origin="https://apps.example.com";
  const store={fetch:async(_url,req)=>{
@@ -151,7 +154,10 @@ test("Inference path reserves dedicated Workers AI budget and never forwards pri
  assert.deepEqual(calls.map(x=>x.kind),["chat","workers_ai"]);
  assert.ok(calls.every(x=>!JSON.stringify(x).includes("aporia")));
 });
-test("Workers AI Gateway is opt-in, private, and never caches a user conversation",async()=>{
+test("Workers AI Gateway is opt-in, private, and never caches a user conversation",async t=>{
+ const prev=process.env.AKSARA_FREE_FALLBACKS;
+ process.env.AKSARA_FREE_FALLBACKS="true";
+ t.after(()=>{if(prev===undefined)delete process.env.AKSARA_FREE_FALLBACKS;else process.env.AKSARA_FREE_FALLBACKS=prev;});
  const worker=(await import("./src/index.mjs")).default;
  const calls=[],origin="https://apps.example.com";
  const quota={fetch:async()=>Response.json({ok:true})};
