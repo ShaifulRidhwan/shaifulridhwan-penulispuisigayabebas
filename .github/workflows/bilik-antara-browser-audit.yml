@@ -56,6 +56,20 @@ jobs:
           node scripts/test-bilik-antara-browser.cjs
           node scripts/test-code-engine-browser.cjs
           node scripts/test-bilik-antara-background.cjs
+      - name: Create and test standalone Code Engine HTML
+        if: always()
+        run: |
+          node --check bilik-antara-code-runtime.js
+          node --check scripts/build-code-engine-standalone.cjs
+          node scripts/build-code-engine-standalone.cjs
+          node scripts/test-code-engine-standalone.cjs
+      - name: Upload manual Code Engine demo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aksara-code-engine-standalone
+          path: code-engine-demo/AKSARA-Code-Engine-v0.1.html
+          if-no-files-found: error
       - name: Upload browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
