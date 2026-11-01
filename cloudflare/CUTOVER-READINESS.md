@@ -1,16 +1,27 @@
 # AKSARA Cloudflare: pemeriksaan deployment pertama
 
-Status: **pratonton migrasi**. Jangan ubah URL laman utama Netlify atau merge PR #127 berdasarkan build berjaya sahaja.
+Status: **migrasi bertahap**. Kod PR #127 dan pembetulan sesi PR #128 sudah di-merge ke `main`; laman utama Netlify kekal dan pautan Bilik Antara pada laman utama kini menuju Worker Cloudflare. Deployment dan ujian live Cloudflare mesti disahkan secara berasingan.
 
 ## Sambungan Git
 
 - Worker: `aksara-apps`.
 - Repository: `ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas`.
-- Production branch Cloudflare sementara: `feature/cloudflare-aksara-apps-migration-20261031`.
+- Production branch Cloudflare yang ditetapkan melalui Dashboard: `main` (1 November 2026).
+- Jika branch baru ditukar, Cloudflare tidak semestinya membina semula commit lama. Push baharu ke `main` boleh mencetuskan Workers Builds automatik apabila integrasi Git dan build diaktifkan.
 - Build command: `npm ci && node cloudflare/build.mjs`.
 - Deploy command: `npx wrangler deploy --config cloudflare/wrangler.jsonc`.
 - Preview command: `npx wrangler preview --config cloudflare/wrangler.jsonc`.
 - Root: `/`. Auto-builds enabled.
+
+## Pengesahan cutover selepas push ke main
+
+1. Buka `Workers & Pages → aksara-apps → Deployments` dan pastikan ada build baharu daripada `main` selepas push/merge terkini.
+2. Buka `https://aksara-apps.mshaifulridhwan.workers.dev/bilik-antara.html` dan sahkan HTML memuatkan `bilik-antara-session-utils.js?v=2` serta `bilik-antara-suite.js?v=15`.
+3. Semak `https://aksara-apps.mshaifulridhwan.workers.dev/bilik-antara-session-utils.js?v=2` mengandungi helper `matchArchivedSession` dan `conversationTitle`.
+4. Uji `GET /api/aksara-health`, Chat, NDJSON streaming, Studio dan Voice secara terkawal. Jangan menganggap HTTP 200 bagi HTML membuktikan backend berjaya.
+5. Arkib Netlify dan Cloudflare berbeza origin: eksport JSON di URL Netlify lama, kemudian import di Cloudflare. Jangan padam storage pengguna atau hidupkan teknologi tambahan yang belum disediakan.
+
+Ujian live sebelumnya (1 November, 10:55 MYT) menemui frontend Cloudflare masih menggunakan versi lama `v1` dan `v14`, walaupun Netlify sudah menghala ke Cloudflare. Jadi pengesahan versi selepas deployment wajib dilakukan.
 
 ## Ujian deployment pertama
 
@@ -35,4 +46,4 @@ Set secrets menggunakan tetapan runtime Worker (bukan sahaja variable untuk buil
 
 ## Peraturan cutover
 
-Sahkan production Cloudflare dengan ujian browser sebenar sebelum mengubah pautan dari laman utama Netlify. Kekalkan fungsi dan URL Netlify yang sedia ada sebagai rollback. Jangan anggap localStorage atau IndexedDB sesi lama berpindah antara origin secara automatik.
+Pautan Bilik Antara pada Netlify sudah dihalakan ke Cloudflare melalui PR #128; jangan ubah laluan itu lagi tanpa QA. Kekalkan URL Bilik Antara Netlify lama untuk pemulihan/eksport arkib. Canonical dan `noindex` Cloudflare sengaja belum ditukar. Jangan anggap localStorage atau IndexedDB sesi lama berpindah antara origin secara automatik.
