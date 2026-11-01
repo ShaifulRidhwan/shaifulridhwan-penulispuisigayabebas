@@ -1054,19 +1054,18 @@ async function submit(event){
   if(!partialFrame)partialFrame=requestAnimationFrame(drawPartial);
  }
  try{
-  // Resolve explicit URL follow-ups from user messages in this session only.
-  // This never fetches third-party URLs from the browser.
   const urlFollowUp=/^(?:(?:tapi|jadi|pastu|dan)\s+)*(?:review|analisis|audit|semak|periksa|buka|baca|url|link|laman|website|web|yang tadi|yang tu|yang itu|sambung|teruskan)\b/i.test(question)&&
     /\b(?:tadi|tu|itu|link|url|laman|website|web|sama|tersebut)\b/i.test(question);
   const priorLink=urlFollowUp?history.slice(-18).reverse().filter(m=>m.role==="user").map(m=>String(m.content||"").match(/https:\/\/[^\s<>"']+/i)?.[0]||"").find(Boolean):"";
   const contextQuestion=priorLink&&!/https?:\/\//i.test(question)
     ?question+"\n[URL DIRUJUK DARIPADA SEJARAH PENGGUNA]: "+priorLink.slice(0,1200)
     :question;
-  const payload={question:contextQuestion,thoughtMode:requestMode,preferredProvider:Date.now()-lastProviderAt<90000?lastProvider:"",history:contextHistory(),contextFallback:ui.contextFallback.checked,
+  const payload={question,thoughtMode:requestMode,preferredProvider:Date.now()-lastProviderAt<90000?lastProvider:"",history:contextHistory(),contextFallback:ui.contextFallback.checked,
    summary,thoughtLedger:ideas.slice(-8),mediaFallback:ui.mediaFallback.checked,
    documentText:selectedFile&&selectedFile.text||"",
    documentName:selectedFile&&selectedFile.name||"",
    media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt(question)||""};
+  payload.question=contextQuestion;
   const data=await askWithReconnect(payload,ctrl.signal,receive,
    ({attempt,seconds,offline,reason})=>status("connecting",offline?"Internet hilang. Aku tunggu jap…":reason==="capacity"?"Model tengah busy. Tunggu jap…":"Aku try sambung balik…",
     offline?"Internet putus. Aku tunggu dia kembali, lepas tu try lagi. Tekan Henti kalau nak cancel.":
