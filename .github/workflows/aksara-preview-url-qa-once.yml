@@ -18,3 +18,42 @@ jobs:
           node-version: "24"
       - name: Real isolated Cloudflare Preview checks (no secrets, no model inference)
         run: node cloudflare/intelligence-3-preview-url-smoke.mjs
+      - name: Validate preview-only salt and synthetic live Workers AI inference
+        shell: bash
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          const base='https://feat-aksara-intelligence-3-p1-p4-aksara-apps.mshaifulridhwan.workers.dev';
+          const hres=await fetch(base+'/api/aksara-health',{signal:AbortSignal.timeout(12000)});
+          assert.equal(hres.status,200,'Preview health HTTP 200');
+          const health=await hres.json();
+          console.log('PREVIEW HEALTH',{configuredProviders:health.configuredProviders,
+            controlConfigured:health.controlConfigured,chatReady:health.services?.chat});
+          assert.equal(health.controlConfigured,true,'Preview-only AKSARA_RATE_SALT not active');
+          assert.equal(health.services?.chat,true,'Preview chat unavailable even with salt');
+          async function chat(label,payload,expected){
+            const start=Date.now();
+            const response=await fetch(base+'/.netlify/functions/bilik-antara',{
+              method:'POST',headers:{'Origin':base,'Content-Type':'application/json','Accept':'application/json'},
+              body:JSON.stringify(payload),signal:AbortSignal.timeout(55000)
+            });
+            const raw=await response.text();
+            let data={};try{data=JSON.parse(raw);}catch{}
+            const reply=typeof data.reply==='string'?data.reply:'';
+            const summary={label,http:response.status,provider:data.provider||null,model:data.model||null,
+              durationMs:Date.now()-start,replyChars:reply.length,relevant:expected.test(reply)};
+            console.log('PREVIEW AI',JSON.stringify(summary));
+            assert.equal(response.status,200,'Inference HTTP not 200: '+label);
+            assert.equal(data.provider,'workers_ai','Staging inference did not use native Workers AI: '+label);
+            assert.ok(reply.length>=12&&expected.test(reply),'Response is missing or unrelated: '+label);
+            assert.ok(!/\b(?:nggak|gimana|makasih|banget|gue)\b/i.test(reply),'Indonesian colloquialisms detected: '+label);
+          }
+          await chat('cahaya-synthetic',{question:'Apa maksud aporia? Jawab dalam satu ayat Bahasa Melayu Malaysia.',
+            thoughtMode:'cahaya',preferredProvider:'workers_ai'},/aporia|kebuntuan|persoalan|tahu|pengetahuan/i);
+          await chat('gelap-context-synthetic',{question:'Dalam pilihan tadi, yang kedua itu apa? Jawab ringkas.',
+            thoughtMode:'gelap',preferredProvider:'workers_ai',history:[
+              {role:'user',content:'Pilihan pertama: pelayan. Pilihan kedua: IndexedDB tempatan.'},
+              {role:'assistant',content:'Dua pilihan ini boleh dibandingkan.'}
+            ]},/IndexedDB|tempatan|peranti/i);
+          console.log('PR PREVIEW LIVE INFERENCE: 2/2 PASS (synthetic only)');
+          NODE
