@@ -196,6 +196,25 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("SQLITE_ERROR")),{timeout:45000});
   assert.match(await page.locator("#chat .code-engine-message.ai").last().innerText(),/SQL · RALAT/);
   assert.equal(aiChatRequests.length,0);
+
+  // Expert API: isolated JS assertion failures and built-in timers.
+  const assertion=await page.evaluate(()=>window.AksaraCodeRuntime.run("javascript",
+   'console.time("work"); console.assert(2+2===5,"Wrong arithmetic"); console.timeEnd("work");'));
+  assert.equal(assertion.ok,false,"console.assert must not silently succeed");
+  assert.ok(assertion.diagnostics.some(d=>d.code==="ASSERTION_FAILED"));
+  assert.match(assertion.stdout,/work:/);
+  // Parameterized SQL keeps values out of statement concatenation.
+  const boundSQL=await page.evaluate(()=>window.AksaraCodeRuntime.run("sql","SELECT ? + ? AS total;",{sqlParams:[6,7]}));
+  assert.equal(boundSQL.ok,true,"Parameterized SQL failed: "+boundSQL.error);
+  assert.match(boundSQL.output,/total\s+13/);
+  // Evaluation Lab compares expected outcomes with actual isolated execution.
+  const evaluation=await page.evaluate(()=>window.AksaraCodeRuntime.evaluate([
+    {name:"JS arithmetic",language:"javascript",source:"console.log(6*7)",outputIncludes:"42"},
+    {name:"JS assert failure",language:"javascript",source:'console.assert(false,"expected failure")',expectOk:false,diagnosticCode:"ASSERTION_FAILED"}
+   ]));
+  assert.equal(evaluation.total,2);assert.equal(evaluation.passed,2);assert.equal(evaluation.failed,0);
+  assert.ok(evaluation.results.every(x=>typeof x.runtimeMs==="number"));
+
   // A CPU-bound JS loop must terminate on watchdog without freezing the main chat.
   await page.locator("#codeEngineStatus").click();
   await page.locator('[data-code-language="javascript"]').click();
@@ -222,7 +241,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    return {version:window.AksaraCodeRuntime.version,ok:r.ok,stderr:r.stderr,stdoutLength:r.stdout.length,
     truncated:r.truncated,diagnostics:r.diagnostics,limits:r.limits,runtimeMs:r.runtimeMs};
   });
-  assert.equal(contract.version,"0.4");
+  assert.equal(contract.version,"0.5");
   assert.equal(contract.ok,true);
   assert.match(contract.stderr,/WARN_CHECK/);
   assert.ok(contract.stdoutLength<=10000,"Worker output budget must be enforced");
