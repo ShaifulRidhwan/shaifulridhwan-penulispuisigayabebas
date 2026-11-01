@@ -24,6 +24,24 @@ for(const file of listed){
   // on Netlify until the controlled SEO cutover.
   html=html.replace(/(<a\b[^>]*\bhref=["'])https:\/\/shaifulridhwan-penulispuisigayabebas\.netlify\.app\/(bilik-antara|studio-antara|perpustakaan-aksara|antara-cahaya-dan-gelap)\.html/gi,(_,prefix,name)=>prefix+"/"+name+".html");
   html=html.replace('link(area,"Buka Studio Antara","'+home+'/studio-antara.html")','link(area,"Buka Studio Antara","/studio-antara.html")');
+  // Cloudflare-only paint optimization: preserve stylesheet order and exact rules.
+  // The Netlify originals, Studio and Novel are not changed.
+  if(file==="bilik-antara.html"){
+   for(const sheet of ["aksara-header.css","bilik-antara-video.css"]){
+    const marker=sheet==="aksara-header.css"
+     ? '<link rel="stylesheet" href="aksara-header.css?v=3">'
+     : '<link rel="stylesheet" href="bilik-antara-video.css?v=1">';
+    if(html.split(marker).length!==2)throw Error("Bilik stylesheet marker changed: "+sheet);
+    const css=await readFile(path.join(root,sheet),"utf8");
+    if(/<\\/style/i.test(css))throw Error("Unsafe inline style end tag in "+sheet);
+    html=html.replace(marker,'<style data-aksara-inline="'+sheet+'">\\n'+css+'\\n</style>');
+   }
+   const deferred='<link rel="stylesheet" href="bilik-antara-code-execution.css?v=1">';
+   if(html.split(deferred).length!==2)throw Error("Runtime CSS link changed");
+   html=html.replace(deferred,
+    '<link rel="stylesheet" href="bilik-antara-code-execution.css?v=1" media="print" onload="this.media=\\'all\\'">\\n'+
+    '<noscript><link rel="stylesheet" href="bilik-antara-code-execution.css?v=1"></noscript>');
+  }
   // Private bot verification is loaded only on the separate Cloudflare apps.
   // No extra UI, network requests or third-party script when not enabled.
   if(file==="bilik-antara.html"||file==="studio-antara.html")
@@ -40,6 +58,14 @@ const reader=path.join(out,"assets","novel","pembaca.html");
 let readerHtml=await readFile(reader,"utf8");
 readerHtml=readerHtml.replace(/href=(["'])\/?index\.html\1/g,(_,q)=>"href="+q+home+"/"+q);
 await writeFile(reader,readerHtml);
+
+// Workers Static Assets supports _headers from the deployed asset directory.
+// Cache only the versioned Bilik video; no AI, sessions, HTML or other page assets.
+await writeFile(path.join(out,"_headers"),
+ "# Bilik Antara 30 FPS video. HTML uses ?v=3 (bump on next replacement).\\n"+
+ "/bilik-antara-background.mp4\\n"+
+ "  Cache-Control: public, max-age=2592000\\n"+
+ "  X-Content-Type-Options: nosniff\\n");
 
 for(const target of ["bilik-antara.html","studio-antara.html","perpustakaan-aksara.html","antara-cahaya-dan-gelap.html","assets/novel/pembaca.html"]){
  const p=path.join(out,target);

@@ -48,6 +48,30 @@ test("Bilik Antara ships a real playable MP4 without changing Studio or Novel",(
   assert.ok(!text("dist/"+page).includes("aksaraAmbientVideo"),page+" must remain static");
  }
 });
+test("Bilik-only Cloudflare build inlines small critical styles and defers the hidden runtime",()=>{
+ const html=text("dist/bilik-antara.html");
+ const raw=readFileSync(path.join(root,"bilik-antara.html"),"utf8");
+ for(const file of ["aksara-header.css","bilik-antara-video.css"]){
+  const css=readFileSync(path.join(root,file),"utf8");
+  assert.ok(html.includes('<style data-aksara-inline="'+file+'">\\n'+css+'\\n</style>'),file+" must retain all declarations");
+  assert.ok(!html.includes('href="'+file+'?v='),file+" should not block initial rendering");
+  assert.ok(raw.includes('href="'+file+'?v='),"Original Netlify source must stay intact");
+ }
+ assert.match(html,/bilik-antara-code-execution\\.css\\?v=1" media="print" onload="this\\.media='all'"/);
+ assert.ok(html.includes('<noscript><link rel="stylesheet" href="bilik-antara-code-execution.css?v=1"></noscript>'));
+ assert.ok(html.includes('<link rel="stylesheet" href="bilik-antara.css?v=102">'),"Core layout CSS stays render-critical");
+ for(const page of ["studio-antara.html","perpustakaan-aksara.html"]){
+  const deployed=text("dist/"+page);
+  assert.ok(!deployed.includes('data-aksara-inline='),page+" must not be modified");
+ }
+});
+test("Cloudflare video cache policy applies only to public Bilik MP4",()=>{
+ const rules=text("dist/_headers");
+ assert.match(rules,/^\\/bilik-antara-background\\.mp4$/m);
+ assert.match(rules,/Cache-Control: public, max-age=2592000/);
+ assert.doesNotMatch(rules,/\\/\\*|\\/api\\/|\\.html|\\.css/i);
+ assert.ok(!existsSync(path.join(root,"cloudflare","_headers")),"Do not mutate the Worker source tree");
+});
 test("Browser API paths remain intact for non-invasive migration",()=>{
  const browser=text("dist/studio-antara-cloud.js");
  assert.match(browser,/\.netlify\/functions\/studio-image/);
