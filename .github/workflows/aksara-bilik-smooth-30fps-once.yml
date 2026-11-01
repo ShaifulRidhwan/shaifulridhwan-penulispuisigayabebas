@@ -12,6 +12,8 @@ jobs:
     timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Interpolate 16 to 30 FPS without touching other pages or audio
         shell: bash
         run: |
