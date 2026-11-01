@@ -21,7 +21,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#voiceLive").innerText(),"Voice Chat");
   async function oneLine(){
    return page.evaluate(()=>{
-    const qs=["#voiceLive","#connection","#codeEngineStatus","#settingsPanel>summary"].map(q=>document.querySelector(q).getBoundingClientRect());
+    const qs=["#voiceLive","#connection","#codeEngineStatus"].map(q=>document.querySelector(q).getBoundingClientRect());
     return {ys:qs.map(r=>Math.round(r.y)),overflow:document.documentElement.scrollWidth>innerWidth,headHeight:document.querySelector(".conversation-head").getBoundingClientRect().height};
    });
   }
@@ -33,6 +33,24 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(one.overflow,false,"320px viewport overflow");
   assert.ok(Math.max(...one.ys)-Math.min(...one.ys)<12,"Status must be one line at 320px: "+JSON.stringify(one));
   await page.setViewportSize({width:390,height:844});
+
+  // PORTAL keeps the feature panel, but its trigger now occupies the far-right topbar.
+  const portal=await page.evaluate(()=>{
+   const trigger=document.querySelector("#settingsPanel > summary");
+   const text=trigger.querySelector("span").getBoundingClientRect();
+   const icon=trigger.querySelector("svg").getBoundingClientRect();
+   return {topbar:!!trigger.closest(".topbar"),iconAfter:icon.left>=text.right,
+    navLinks:[...document.querySelectorAll(".topbar .nav-link")].map(a=>a.textContent.trim())};
+  });
+  assert.equal(portal.topbar,true,"PORTAL trigger must be in topbar");
+  assert.equal(portal.iconAfter,true,"Grid icon must be to the RIGHT of PORTAL label");
+  assert.deepEqual(portal.navLinks,["Laman utama"],"Studio and Novel belong only inside PORTAL");
+  await page.locator("#settingsPanel > summary").click();
+  assert.equal(await page.locator("#settingsPanel .settings-card").isVisible(),true);
+  assert.equal(await page.locator("#featureStudio").getAttribute("href"),"studio-antara.html");
+  assert.equal(await page.locator("#featureLibrary").getAttribute("href"),"perpustakaan-aksara.html");
+  await page.keyboard.press("Escape");
+  assert.equal(await page.locator("#settingsPanel .settings-card").isVisible(),false);
 
   // Use the exact Multi A.I. glass modal primitives, not a visually separate popup.
   await page.locator("#connection").click();
@@ -52,7 +70,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   const codeGlass=await visualSignature("#codeEngineMenu");
   assert.deepEqual(codeGlass,multiGlass,"Code Engine modal must reuse Multi AI glass layout and backdrop");
   assert.equal(await page.locator("#codeEngineMenu .multi-ai-head").count(),1);
-  assert.equal(await page.locator("#codeEngineMenu .multi-ai-row").count(),3);
+  assert.equal(await page.locator("#codeEngineMenu .multi-ai-row").count(),6);
   const codeFooter=await page.locator("#codeEngineRefresh").evaluate(el=>{
    const s=getComputedStyle(el);
    return {borderRadius:s.borderRadius,minHeight:s.minHeight,padding:s.padding,font:s.font,backgroundImage:s.backgroundImage};
@@ -64,8 +82,9 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#codeEngineStatus").getAttribute("aria-expanded"),"true");
   assert.equal(await page.locator("#codeJavaScriptState").innerText(),"Ready");
   assert.equal(await page.locator("#codeEngineMenu").isVisible(),true,"Status must open a menu, not navigate to another page");
-  assert.equal(await page.locator('[data-code-language]').count(),2);
-  assert.match(await page.locator("#codeEngineMenu").innerText(),/10 compiler sasaran/);
+  assert.equal(await page.locator('[data-code-language]').count(),4);
+  assert.match(await page.locator("#codeEngineMenu").innerText(),/Enam bahasa pilihan/);
+  assert.equal(await page.locator("#codeEngineMenu .code-menu-unavailable").count(),2,"C and C++ remain disabled until verified");
   await page.locator('[data-code-language="javascript"]').click();
   assert.equal(await page.locator("#codeEngineMenu").isVisible(),false);
   assert.match(page.url(),/bilik-antara\.html/);
@@ -109,6 +128,24 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.match(pyText,/17/);
   assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false);
   assert.equal(aiChatRequests.length,0,"Python may load Pyodide CDN but must not call AI");
+
+  // TypeScript: real transpilation and execution, not merely an extra menu label.
+  await page.locator("#codeEngineStatus").click();
+  await page.locator('[data-code-language="typescript"]').click();
+  await page.locator("#input").fill('const value: number = 6 * 7;\\nconsole.log("TS CHECK:", value);'.replace('\\n','\n'));
+  await page.locator("#codeRunAction").click();
+  await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("TS CHECK: 42")),{timeout:42000});
+  assert.match(await page.locator("#chat .code-engine-message.ai").last().innerText(),/TypeScript · BERJAYA/);
+  assert.equal(aiChatRequests.length,0);
+
+  // SQL: WebAssembly SQLite executes a fresh in-memory database per request.
+  await page.locator("#codeEngineStatus").click();
+  await page.locator('[data-code-language="sql"]').click();
+  await page.locator("#input").fill('CREATE TABLE numbers (n INTEGER); INSERT INTO numbers VALUES (6), (7); SELECT SUM(n) AS total FROM numbers;');
+  await page.locator("#codeRunAction").click();
+  await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("total\\n13")),{timeout:45000});
+  assert.match(await page.locator("#chat .code-engine-message.ai").last().innerText(),/SQL · BERJAYA/);
+  assert.equal(aiChatRequests.length,0);
 
   // A CPU-bound JS loop must terminate on watchdog without freezing the main chat.
   await page.locator("#codeEngineStatus").click();
