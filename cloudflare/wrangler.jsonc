@@ -15,7 +15,9 @@
     "html_handling": "none",
     "not_found_handling": "404-page"
   },
-  "ai": {"binding": "AI"},
+  "ai": {
+    "binding": "AI"
+  },
   "durable_objects": {
     "bindings": [
       {
@@ -47,5 +49,30 @@
   "observability": {
     "enabled": true
   },
-  "keep_vars": true
+  "keep_vars": true,
+  "previews": {
+    "vars": {
+      "AKSARA_HYBRID_ROUTER": "true",
+      "AKSARA_SHARED_CHAT_BUDGET": "false",
+      "AKSARA_FREE_FALLBACKS": "true",
+      "AKSARA_WORKERS_AI_DAILY_REQUESTS": "8",
+      "STUDIO_DISABLED": "true",
+      "AKSARA_CLOUD_MIGRATION": "preview",
+      "GROQ_FREE_CONFIRMED": "false",
+      "GEMINI_MODEL_FAST": "gemini-3.5-flash-lite",
+      "GEMINI_MODEL": "gemini-3.5-flash-lite",
+      "GEMINI_MODEL_COMPLEX": "gemini-3.5-flash-lite"
+    },
+    "ai": {
+      "binding": "AI"
+    },
+    "durable_objects": {
+      "bindings": [
+        {
+          "name": "AKSARA_CONTROL",
+          "class_name": "AksaraControl"
+        }
+      ]
+    }
+  }
 }

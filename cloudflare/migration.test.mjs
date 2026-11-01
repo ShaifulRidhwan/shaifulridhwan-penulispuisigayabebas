@@ -119,3 +119,17 @@ test("Public capability metadata discloses only sitekey, not private Turnstile s
  assert.match(body,/PUBLIC_SITE_KEY/);
  assert.doesNotMatch(body,/PRIVATE_SECRET/);
 });
+
+test("Preview deploy defines isolated bindings, reduced limits and no production secrets",()=>{
+ const c=JSON.parse(text("wrangler.jsonc"));
+ assert.ok(c.previews,"Wrangler preview requires its own block");
+ assert.equal(c.previews.ai?.binding,"AI","Native Workers AI must be explicitly bound for previews");
+ assert.ok(c.previews.durable_objects?.bindings?.some(x=>x.name==="AKSARA_CONTROL"&&x.class_name==="AksaraControl"),
+  "Cloudflare preview needs its own Durable Object binding; migrations stay top-level");
+ assert.equal(c.previews.vars.AKSARA_WORKERS_AI_DAILY_REQUESTS,"8","Preview AI usage must be lower than production");
+ assert.equal(c.previews.vars.STUDIO_DISABLED,"true","Preview Studio generation stays disabled by default");
+ assert.equal(c.previews.vars.AKSARA_CLOUD_MIGRATION,"preview");
+ assert.equal(c.vars.STUDIO_DISABLED,"false","Production Studio must remain unchanged");
+ for(const key of ["GEMINI_API_KEY","GROQ_API_KEY","OPENROUTER_API_KEY","AKSARA_RATE_SALT","CLOUDFLARE_API_TOKEN"])
+  assert.ok(!(key in c.previews.vars),"Preview secrets cannot be checked into Git");
+});
