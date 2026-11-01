@@ -10,7 +10,7 @@ pill.setAttribute("aria-expanded","false");pill.setAttribute("aria-label","Statu
 pill.title="Code Engine diuji secara setempat, bebas daripada Multi A.I.";
 const dot=document.createElement("span");dot.className="code-engine-core";dot.setAttribute("aria-hidden","true");
 dot.innerHTML='<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/><rect class="code-core-center" x="9" y="9" width="6" height="6" rx="1"/><path d="M9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4"/></svg>';
-const label=document.createElement("span");label.id="codeEngineStatusText";label.textContent="Code Engine Checking";
+const label=document.createElement("span");label.id="codeEngineStatusText";label.textContent="Code Engine";
 pill.append(dot,label);
 // Keep Voice Chat left, Code Engine centre, and Multi A.I. on the outer right.
 existing.insertAdjacentElement("beforebegin",pill);
@@ -34,6 +34,9 @@ const css=document.createElement("style");
 css.textContent=[
 '.chat-controls{gap:7px!important}',
 '.conversation-head .code-engine-status{display:inline-flex;align-items:center;gap:7px;box-sizing:border-box;height:38px;min-height:38px;padding:0 12px;border:1px solid rgba(242,201,143,.27);border-radius:999px;color:#eaddc4;white-space:nowrap;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(5,8,16,.16));box-shadow:inset 0 1px 0 rgba(255,237,198,.11),0 4px 15px rgba(0,0,0,.07);backdrop-filter:blur(10px) saturate(1.1);-webkit-backdrop-filter:blur(10px) saturate(1.1);font:500 12px/1.4 "DM Sans",system-ui,sans-serif;transition:border-color .2s,background .2s,box-shadow .2s;cursor:pointer}',
+'.conversation-head .code-engine-status{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}',
+'.conversation-head .code-engine-status:focus:not(:focus-visible){outline:none!important}',
+'.conversation-head .code-engine-status:focus-visible{outline:2px solid rgba(242,201,143,.85)!important;outline-offset:2px!important}',
 '.conversation-head .code-engine-status:hover{border-color:rgba(242,201,143,.42);background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(5,8,16,.2));box-shadow:inset 0 1px 0 rgba(255,237,198,.13),0 4px 15px rgba(0,0,0,.09)}',
 '.conversation-head .code-engine-core{position:relative;display:grid;place-items:center;flex:0 0 17px;width:17px;height:17px;color:#ceb68b}',
 '.conversation-head .code-engine-core svg{width:17px;height:17px;display:block;fill:none;stroke:currentColor;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 3px rgba(207,183,136,.25));animation:codeCoreBreathe 3.6s ease-in-out infinite}',
@@ -105,9 +108,10 @@ menu.querySelectorAll("[data-code-language]").forEach(btn=>btn.addEventListener(
 }));
 let permissionEnabled=false,executionRunning=false,runtimeReady=false;
 function updateLabel(){
- label.textContent=runtimeReady?(executionRunning?"Code Engine Running":permissionEnabled?"Code Engine Armed":"Code Engine Ready"):"Code Engine Offline";
+ label.textContent="Code Engine";
  pill.dataset.aiExecution=executionRunning?"running":permissionEnabled?"armed":"off";
- pill.setAttribute("aria-label","Code Engine. "+label.textContent+". Tekan untuk lihat runtime dan kebenaran A.I.");
+ const state=runtimeReady?(executionRunning?"Running":permissionEnabled?"Armed":"Ready"):"Offline";
+ pill.setAttribute("aria-label","Code Engine. Status: "+state+". Tekan untuk lihat runtime dan kebenaran A.I.");
 }
 window.addEventListener("aksara:ai-code-permission",event=>{
  permissionEnabled=event.detail?.enabled===true;
