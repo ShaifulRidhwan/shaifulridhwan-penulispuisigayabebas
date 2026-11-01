@@ -71,3 +71,13 @@ test("Knowledge excerpts select a matching source section rather than inventing 
 
 // Include dedicated RM0 capability contract checks in the existing platform CI suite.
 require('./aksara-three-free-capabilities.test.cjs');
+
+const diagnosticTest=require('node:test');
+const diagnosticAssert=require('node:assert/strict');
+diagnosticTest('Gemini routing diagnosis remains available in backend source',()=>{
+ const fs=require('node:fs');
+ const code=fs.readFileSync(require.resolve('../netlify/functions/bilik-antara.js'),'utf8');
+ diagnosticAssert.match(code,/geminiDiagnosis:routingDiagnosis\(\)/);
+ diagnosticAssert.match(code,/quota_exceeded/);
+ diagnosticAssert.match(code,/not_selected/);
+});
