@@ -52,3 +52,5 @@ console.log("RESULT",failures===0?"LIVE MODEL TEST PASSED":failures+" checks fai
 process.exitCode=failures?1:0;
 
 // Diagnosed 2026-11-01: do not conflate a Gateway configuration with a healthy Workers AI model.
+
+// Safe diagnostic taxonomy is reported without printing raw upstream errors.

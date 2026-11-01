@@ -66,12 +66,21 @@ async function runWorkersAI(ai,model,body){
  // richer budgets for deep tasks, but don't fund long hidden reasoning on greetings.
  const effort=body.reasoning_effort==="high"?"high":body.reasoning_effort==="medium"?"medium":"low";
  const ceiling=effort==="high"?1700:effort==="medium"?1100:650;
- const output=await ai.run(model,{messages:body.messages,temperature:body.temperature,
+ let output;
+ try{output=await ai.run(model,{messages:body.messages,temperature:body.temperature,
   max_completion_tokens:Math.min(ceiling,Math.max(320,body.max_tokens||650)),stream:!!body.stream,
   // Cloudflare GLM model schema: enable_thinking, not reasoning_effort,
   // is the authoritative switch. Avoid hidden reasoning on lightweight turns.
   chat_template_kwargs:{enable_thinking:effort==="high",clear_thinking:true},
-  store:false});
+  store:false});}
+ catch(err){
+  // Only a bounded classification, never provider raw errors, prompts or API keys.
+  const message=String(err?.message||"").toLowerCase();
+  const fields=["gateway","billing","quota","rate limit","credit","neurons","thinking","template","max_completion_tokens","store","model","invalid","timeout","capacity"];
+  err.fieldIssue=fields.find(x=>message.includes(x))||"other";
+  err.errorType=String(err?.name||"Error").replace(/[^a-z0-9_-]/gi,"").slice(0,35);
+  throw err;
+ }
  if(body.stream){
   if(!output||typeof output.getReader!=="function")throw Object.assign(Error("Workers AI stream unavailable"),{status:502});
   return new Response(output,{headers:{"content-type":"text/event-stream"}});
