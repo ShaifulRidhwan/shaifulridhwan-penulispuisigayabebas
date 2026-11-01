@@ -6,7 +6,7 @@ const root=process.cwd();
 const cf=p=>path.join(root,"cloudflare",p);
 const text=p=>readFileSync(cf(p),"utf8");
 test("Cloudflare build includes all three apps and preserves Netlify home separately",()=>{
- for(const p of ["bilik-antara.html","studio-antara.html","perpustakaan-aksara.html","antara-cahaya-dan-gelap.html","assets/novel/pembaca.html","assets/novel/cover-01.jpg","bilik-antara.css","studio-antara.css","perpustakaan-aksara.css"]){
+ for(const p of ["bilik-antara.html","studio-antara.html","perpustakaan-aksara.html","antara-cahaya-dan-gelap.html","assets/novel/pembaca.html","assets/novel/cover-01.jpg","bilik-antara.css","studio-antara.css","perpustakaan-aksara.css","aksara-senja-bulan-desktop.webp","aksara-senja-bulan-mobile.webp"]){
   assert.ok(existsSync(cf("dist/"+p)),p);
  }
  assert.ok(!existsSync(cf("dist/index.html")),"Netlify main home MUST NOT be migrated");
