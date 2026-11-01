@@ -8,6 +8,7 @@ import StudioImage from "../../netlify/functions/lib/studio-image-handler.js";
 import StudioEnhance from "../../netlify/functions/lib/studio-enhance-handler.js";
 export {AksaraControl} from "./control.mjs";
 import {publicEvidence,verifyTurnstile,ownerTool,consumeArchiveQueue} from "./capabilities.mjs";
+import {ownedPageEvidence} from "./owned-page-evidence.mjs";
 
 const OLD_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
 const apis=Object.freeze({
@@ -173,15 +174,17 @@ async function handle(request,env,ctx){
   h.set("origin",internalOrigin());
   h.set("x-nf-client-connection-ip",request.headers.get("cf-connecting-ip")||"unknown");
   const adapted=new Request(request,{headers:h});
-  let evidence="";
-  if(env.AKSARA_AI_SEARCH_ENABLED==="true"||env.AKSARA_VECTORIZE_ENABLED==="true"){
-   try{
-    const payload=await request.clone().json();
-    if(typeof payload?.question==="string"&&(!payload?.documentText&&!payload?.memoryNotes))
+  let evidence="",ownedPage=null;
+  try{
+   const payload=await request.clone().json();
+   if(typeof payload?.question==="string"){
+    if((env.AKSARA_AI_SEARCH_ENABLED==="true"||env.AKSARA_VECTORIZE_ENABLED==="true")&&
+       !payload.documentText&&!payload.memoryNotes)
      evidence=await publicEvidence(env,payload.question,guardedWorkersAI(env,request));
-   }catch(_){}
-  }
-  const result=await netlifyStream(adapted,guardedWorkersAI(env,request),evidence);
+    ownedPage=await ownedPageEvidence(request,env,payload.question);
+   }
+  }catch(_){}
+  const result=await netlifyStream(adapted,guardedWorkersAI(env,request),evidence,ownedPage);
   const out=new Headers(result.headers);
   out.set("Access-Control-Allow-Origin",origin);
   out.set("Cache-Control","no-store");
@@ -191,16 +194,20 @@ async function handle(request,env,ctx){
  // Studio validates Origin against the actual request Host; the legacy
  // Netlify origin is only needed by Chat/Voice compatibility handlers.
  const headers=normalizedHeaders(request,origin,!isStudio);
- let evidence="";
- if(path===apis.chat&&(env.AKSARA_AI_SEARCH_ENABLED==="true"||env.AKSARA_VECTORIZE_ENABLED==="true")){
+ let evidence="",ownedPage=null;
+ if(path===apis.chat){
   try{
    const payload=JSON.parse(body);
-   if(typeof payload.question==="string"&&!payload.documentText&&!payload.memoryNotes)
-    evidence=await publicEvidence(env,payload.question,guardedWorkersAI(env,request));
+   if(typeof payload.question==="string"){
+    if((env.AKSARA_AI_SEARCH_ENABLED==="true"||env.AKSARA_VECTORIZE_ENABLED==="true")&&
+       !payload.documentText&&!payload.memoryNotes)
+     evidence=await publicEvidence(env,payload.question,guardedWorkersAI(env,request));
+    ownedPage=await ownedPageEvidence(request,env,payload.question);
+   }
   }catch(_){}
  }
  const event={httpMethod:"POST",headers,body,signal:request.signal,isBase64Encoded:false,
-  aiBinding:guardedWorkersAI(env,request),publicEvidence:evidence};
+  aiBinding:guardedWorkersAI(env,request),publicEvidence:evidence,ownedPage};
  if(path===apis.chat)return asResponse(await Chat.handler(event),origin);
  if(path===apis.voice)return asResponse(await Live.handler(event),origin);
  // Preserve old Studio image-generation payloads, estimate and media parsing.

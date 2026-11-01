@@ -38,7 +38,7 @@ export class AksaraControl{
      return {released:true};
     }
     const key=data.kind+":"+day+":"+hash;
-    const limits=data.kind==="workers_ai"?{count:4,window:600000}:
+    const limits=data.kind==="workers_ai"?{count:6,window:600000}:
      data.kind==="voice"?{count:5,window:600000}:
      data.kind==="chat"?{count:12,window:60000}:
      data.kind==="health"?{count:30,window:60000}:
@@ -73,7 +73,7 @@ export class AksaraControl{
     }
     if(count>=limits.count)blocked("Terlalu banyak permintaan. Cuba sebentar lagi.",Math.ceil((started+limits.window-now)/1000));
     if(data.kind==="workers_ai"){
-     const cap=integer(this.env.AKSARA_WORKERS_AI_DAILY_REQUESTS,24,100);
+     const cap=integer(this.env.AKSARA_WORKERS_AI_DAILY_REQUESTS,36,100);
      db.exec("INSERT OR IGNORE INTO workers_ai_daily(day) VALUES(?)",day);
      const used=db.exec("SELECT calls FROM workers_ai_daily WHERE day=?",day).toArray()[0].calls;
      if(used>=cap)blocked("Kuota panggilan Workers AI hari ini sudah habis.",resetTime(now));
