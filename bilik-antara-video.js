@@ -25,6 +25,7 @@
  video.addEventListener("pause",still);
  video.addEventListener("waiting",still);
  video.addEventListener("error",()=>{failed=true;video.pause();still()});
+ trigger.addEventListener("click",()=>{video.pause();still();},{capture:true});
  const observer=new MutationObserver(sync);
  observer.observe(voice,{attributes:true,attributeFilter:["hidden","class"]});
  observer.observe(trigger,{attributes:true,attributeFilter:["aria-pressed"]});
@@ -32,7 +33,8 @@
  if(typeof reduced.addEventListener==="function")reduced.addEventListener("change",sync);
  else if(typeof reduced.addListener==="function")reduced.addListener(sync);
  connection?.addEventListener?.("change",sync);
- window.addEventListener("pagehide",()=>{video.pause();observer.disconnect();},{once:true});
+ window.addEventListener("pagehide",()=>{video.pause();still();});
+ window.addEventListener("pageshow",sync);
  if(document.readyState==="complete")sync();
  else window.addEventListener("load",sync,{once:true});
 })();
