@@ -42,7 +42,7 @@ test("Bilik Antara ships a real playable MP4 without changing Studio or Novel",(
  const html=text("dist/bilik-antara.html");
  assert.match(html,/id="aksaraAmbientVideo"/);
  assert.ok(html.includes("bilik-antara-video.js?v=2"));
- assert.ok(html.includes("bilik-antara-video.css?v=1"));
+ assert.ok(html.includes('<style data-aksara-inline="bilik-antara-video.css">'),"Video stylesheet must be inlined");
  assert.match(text("dist/bilik-antara-video.js"),/voiceActive/);
  for(const page of ["studio-antara.html","perpustakaan-aksara.html"]){
   assert.ok(!text("dist/"+page).includes("aksaraAmbientVideo"),page+" must remain static");
