@@ -34,7 +34,35 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.ok(Math.max(...one.ys)-Math.min(...one.ys)<12,"Status must be one line at 320px: "+JSON.stringify(one));
   await page.setViewportSize({width:390,height:844});
 
+  // Use the exact Multi A.I. glass modal primitives, not a visually separate popup.
+  await page.locator("#connection").click();
+  const visualSignature=selector=>page.locator(selector).evaluate(el=>{
+   const s=getComputedStyle(el);
+   return {width:Math.round(el.getBoundingClientRect().width),borderRadius:s.borderRadius,
+    borderColor:s.borderColor,background:s.backgroundImage,backgroundColor:s.backgroundColor,
+    padding:s.padding,backdropFilter:s.backdropFilter,boxShadow:s.boxShadow};
+  });
+  const multiGlass=await visualSignature("#multiAiDialog");
+  const multiFooter=await page.locator("#multiAiRefresh").evaluate(el=>{
+   const s=getComputedStyle(el);
+   return {borderRadius:s.borderRadius,minHeight:s.minHeight,padding:s.padding,font:s.font,backgroundImage:s.backgroundImage};
+  });
+  await page.locator("#multiAiClose").click();
   await page.locator("#codeEngineStatus").click();
+  const codeGlass=await visualSignature("#codeEngineMenu");
+  assert.deepEqual(codeGlass,multiGlass,"Code Engine modal must reuse Multi AI glass layout and backdrop");
+  assert.equal(await page.locator("#codeEngineMenu .multi-ai-head").count(),1);
+  assert.equal(await page.locator("#codeEngineMenu .multi-ai-row").count(),3);
+  const codeFooter=await page.locator("#codeEngineRefresh").evaluate(el=>{
+   const s=getComputedStyle(el);
+   return {borderRadius:s.borderRadius,minHeight:s.minHeight,padding:s.padding,font:s.font,backgroundImage:s.backgroundImage};
+  });
+  assert.deepEqual(codeFooter,multiFooter,"Code Engine footer must match Multi AI refresh styling");
+  await page.locator("#codeEngineRefresh").click();
+  await page.waitForFunction(()=>document.querySelector("#codeJavaScriptState")?.textContent==="Ready",{timeout:12000});
+  assert.equal(await page.locator("#codeEngineMenu").isVisible(),true,"Refresh cannot close the dialog");
+  assert.equal(await page.locator("#codeEngineStatus").getAttribute("aria-expanded"),"true");
+  assert.equal(await page.locator("#codeJavaScriptState").innerText(),"Ready");
   assert.equal(await page.locator("#codeEngineMenu").isVisible(),true,"Status must open a menu, not navigate to another page");
   assert.equal(await page.locator('[data-code-language]').count(),2);
   assert.match(await page.locator("#codeEngineMenu").innerText(),/10 compiler sasaran/);
