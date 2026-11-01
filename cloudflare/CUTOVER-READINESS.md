@@ -24,12 +24,12 @@ Di alamat Worker yang Cloudflare beri, semak:
 4. `/` menghantar ke laman utama Netlify.
 5. HTML migrasi mengandungi `noindex`; canonical URL asal Netlify belum diubah.
 6. Tanpa Cloudflare runtime secrets, Chat/Voice/Studio gagal secara terkawal, tidak membocorkan keys dan tidak memanggil provider berbayar.
-7. Selepas secrets dipasang secara peribadi, jalankan smoke test Chat probe, mesej, streaming, semua 3+1 providers, token Voice Live, Perkemas AI dan penjanaan imej.
+7. Pastikan Workers AI mempunyai binding `AI` serta model `@cf/zai-org/glm-4.7-flash` menjawab secara sebenar, bukan sekadar `Ready`. Kemudian jalankan smoke test Chat, streaming, token Voice Live, Perkemas AI dan penjanaan imej.
 8. Semak CPU Worker Free, Durable Object quota/leases dan had model sebenar sebelum berpindah penuh.
 
 ## Secrets dan keselamatan
 
-Jangan masukkan `GEMINI_API_KEY`, `GROQ_API_KEY`, `NVIDIA_API_KEY`, `OPENROUTER_API_KEY`, `CLOUDFLARE_API_TOKEN`, atau `AKSARA_RATE_SALT` ke repository, binaan awam, screenshot atau chat.
+Jangan masukkan `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`, `CLOUDFLARE_API_TOKEN`, atau `AKSARA_RATE_SALT` ke repository, binaan awam, screenshot atau chat.
 
 Set secrets menggunakan tetapan runtime Worker (bukan sahaja variable untuk build). Jangan buka laluan Studio AI sebelum kawalan Durable Object dan quota disahkan. Token API Cloudflare yang digunakan oleh GitHub Builds bukan token model imej dan tidak menggantikan runtime secrets.
 

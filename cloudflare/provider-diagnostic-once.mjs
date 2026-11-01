@@ -9,7 +9,7 @@ async function call(body){
 const initial=await call({providerStatus:true});
 console.log("INITIAL",JSON.stringify({http:initial.http,providers:initial.body.providers?.map(p=>({id:p.id,state:p.status,model:p.model,reason:p.reason,http:p.http,retryAfterSeconds:p.retryAfterSeconds}))}));
 const answer=await call({
- preferredProvider:"orcarouter",
+ preferredProvider:"workers_ai",
  thoughtMode:"cahaya",
  question:"Satu soalan mudah: apa perbezaan metafora dengan simile? Jawab dalam satu ayat sahaja.",
  history:[]

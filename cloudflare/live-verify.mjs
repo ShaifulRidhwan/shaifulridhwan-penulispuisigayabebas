@@ -23,9 +23,7 @@ try{
  console.log("Provider status: HTTP",http,JSON.stringify(statuses));
  assert(http===200&&statuses&&statuses.length===4,"all 4 providers included in live status");
  for(const provider of statuses||[]){
-  if(provider.id==="orcarouter"){
-   console.log("OrcaRouter status interpretation: ready means key configured but NO live inference was sent");
-  }
+
   if(provider.id==="openrouter"){
    console.log("OpenRouter status interpretation: ready means key validated but NOT free text inference");
   }
