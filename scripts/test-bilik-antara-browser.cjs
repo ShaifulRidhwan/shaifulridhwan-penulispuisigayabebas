@@ -131,6 +131,7 @@ async function audit(browser,label,options){
   // Regression: opening Ciri & Fungsi must blur the entire chat surface,
   // especially the left strip previously left sharp beside the menu.
   await page.locator("#settingsPanel > summary").click();
+  await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector(".feature-focus-veil")).opacity)>.95,{timeout:3000});
   const featureGlass=await page.evaluate(()=>{
    const root=document.querySelector(".conversation").getBoundingClientRect();
    const veil=document.querySelector(".feature-focus-veil");
@@ -153,6 +154,7 @@ async function audit(browser,label,options){
   await page.screenshot({path:path.join(OUT,label+"-feature-glass.png"),animations:"disabled"});
   await page.keyboard.press("Escape");
   await page.waitForFunction(()=>!document.querySelector("#settingsPanel").open,{timeout:3000});
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector(".feature-focus-veil")).visibility==="hidden",{timeout:3000});
   assert.equal(await page.locator(".feature-focus-veil").evaluate(el=>getComputedStyle(el).visibility),"hidden",
    "Feature veil must close without blocking normal chat controls");
 
