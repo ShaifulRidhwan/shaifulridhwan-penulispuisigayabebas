@@ -68,3 +68,6 @@ test("Knowledge excerpts select a matching source section rather than inventing 
  assert.ok(text.includes(excerpt));
  assert.doesNotMatch(Knowledge.format([]),/rujukan palsu/);
 });
+
+// Include dedicated RM0 capability contract checks in the existing platform CI suite.
+require('./aksara-three-free-capabilities.test.cjs');
