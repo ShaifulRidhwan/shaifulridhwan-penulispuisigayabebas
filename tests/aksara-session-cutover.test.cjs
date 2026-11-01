@@ -16,10 +16,24 @@ test("unrelated chats with same greeting remain separate",()=>{
  assert.equal(u.matchArchivedSession(archive,[user("anyyeong",201),bot("Hai",202)]),null);
  assert.equal(u.matchArchivedSession(archive,[user("anyyeong",101),bot("Lain",102)]),null);
 });
-test("homepage entry points go Cloudflare and old Netlify supports export",()=>{
+test("Netlify homepage links directly to Cloudflare and legacy chat URL redirects",()=>{
  const home=fs.readFileSync("index.html","utf8");
  assert.equal((home.match(/href="https:\/\/aksara-apps\.mshaifulridhwan\.workers\.dev\/bilik-antara\.html"/g)||[]).length,2);
  const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
  assert.match(suite,/Eksport semua sesi \(JSON\) dahulu/);
  assert.match(suite,/ba-session-group/);
+});
+
+test("legacy Netlify chatbot redirects, with a separate export-only archive page",()=>{
+ const redirects=fs.readFileSync("_redirects","utf8");
+ const destination="https://aksara-apps.mshaifulridhwan.workers.dev/bilik-antara.html";
+ assert.match(redirects,new RegExp("^/bilik-antara\\.html\\s+"+destination.replace(/[.*+?^${}()|[\\]\\]/g,"\\$&")+"\\s+302!$","m"));
+ assert.match(redirects,/^\/bilik-antara\s+https:\/\/aksara-apps\.mshaifulridhwan\.workers\.dev\/bilik-antara\.html\s+302!$/m);
+ const exportPage=fs.readFileSync("arkib-sesi-netlify.html","utf8");
+ assert.match(exportPage,/bilik-antara-suite-v1-archive/);
+ assert.match(exportPage,/bilik-antara-session-v2/);
+ assert.match(exportPage,/Eksport arkib JSON/);
+ assert.doesNotMatch(exportPage,/<iframe|window\.location\.replace/);
+ const build=fs.readFileSync("cloudflare/build.mjs","utf8");
+ assert.doesNotMatch(build,/arkib-sesi-netlify\.html/);
 });

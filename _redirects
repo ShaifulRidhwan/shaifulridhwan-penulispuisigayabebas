@@ -1,2 +1,7 @@
+# Netlify is the public homepage; Cloudflare is the only Bilik Antara UI.
+# Force redirect because the legacy bilik-antara.html file still exists in repo.
+# Keep old Netlify origin storage accessible through /arkib-sesi-netlify.html.
+/bilik-antara.html  https://aksara-apps.mshaifulridhwan.workers.dev/bilik-antara.html  302!
+/bilik-antara       https://aksara-apps.mshaifulridhwan.workers.dev/bilik-antara.html  302!
 /antara-cahaya-dan-gelap-baca.html /antara-cahaya-dan-gelap.html 301!
 /karya-khas  /index.html  200
