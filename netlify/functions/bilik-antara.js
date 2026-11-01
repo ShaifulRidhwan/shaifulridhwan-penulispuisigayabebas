@@ -502,7 +502,7 @@ exports.handler=async event=>{
   // Rotate eligible ordinary text requests per warm Worker instance. This does
   // not bypass model quota; Gemini tools and private context remain Gemini-first.
   const balancedGeminiTurn=textOnly&&!tools.length&&!!apiKey&&primaryTextProviders.length>0&&
-    googleWait(model)===0&&process.env.AKSARA_BALANCED_TEXT_ROUTING!=="false"&&
+    googleWait(model)===0&&process.env.AKSARA_BALANCED_TEXT_ROUTING==="true"&&
     (balancedTextOrdinal++%2===0);
   // Keep Gemini tools/multimodal independent; choose among three text
   // primaries by task, capability and warm-instance response health.
