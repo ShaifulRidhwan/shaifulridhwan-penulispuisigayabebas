@@ -175,7 +175,10 @@ test("Workers AI Gateway is opt-in, private, and never caches a user conversatio
  assert.deepEqual(calls[0][2],{gateway:{id:"aksara-private",skipCache:true,collectLog:false}});
 });
 
-test("AI Gateway configuration alone never replaces the native Workers AI inference path",async()=>{
+test("AI Gateway configuration alone never replaces the native Workers AI inference path",async t=>{
+ const original=process.env.AKSARA_FREE_FALLBACKS;
+ process.env.AKSARA_FREE_FALLBACKS="true";
+ t.after(()=>{if(original===undefined)delete process.env.AKSARA_FREE_FALLBACKS;else process.env.AKSARA_FREE_FALLBACKS=original;});
  const worker=(await import("./src/index.mjs")).default;
  const used=[],origin="https://apps.example.com",quota={fetch:async()=>Response.json({ok:true})};
  const env={
