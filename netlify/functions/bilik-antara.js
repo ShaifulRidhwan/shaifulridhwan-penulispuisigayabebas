@@ -87,7 +87,7 @@ function speechPlain(value){
 function result(code,data,H){
   if(code===200&&typeof data?.reply==="string")Ops.record("success");
   else if(code>=400)Ops.record("error");
-  if(code===200&&typeof data.reply==="string"&&data.mode!=="recorded-voice")data={...data,reply:ChatStyle.reply(data.reply,{mode:data.thoughtMode})};
+  if(code===200&&typeof data.reply==="string"&&data.mode!=="recorded-voice"&&data.outputFormat!=="json")data={...data,reply:ChatStyle.reply(data.reply,{mode:data.thoughtMode})};
   return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-9"})};
 }
 function throttle(ip,store=rateMap,limit=12){
@@ -276,7 +276,7 @@ exports.handler=async event=>{
   // A deterministic schema is available for explicit JSON requests on CSV/JSON data.
   if(dataReport?.ok&&/\b(?:balas|output|format|hasil|laporan)\s+(?:dalam\s+)?json\b/i.test(question))
     return result(200,{mode:"local-data",provider:"local",model:"aksara-data-engine",thoughtMode,
-     reply:"```json\n"+Data.jsonReply(dataReport)+"\n```",sources:[],toolsUsed:["data_analyze"],reviewApplied:false,disclaimer:"Statistik dihitung daripada lampiran pengguna, bukan carian Internet."},H);
+     reply:"```json\n"+Data.jsonReply(dataReport)+"\n```",outputFormat:"json",sources:[],toolsUsed:["data_analyze"],reviewApplied:false,disclaimer:"Statistik dihitung daripada lampiran pengguna, bukan carian Internet."},H);
   // Inform users about Studio; never open it for them automatically.
   const studioInfo=Studio.localReply(question,{hasAttachment:!!(media.length||documentText)});
   if(studioInfo)return result(200,{
@@ -500,7 +500,7 @@ exports.handler=async event=>{
         const check=flags.reviewEnabled&&!imageOnly&&remaining()>1000?await Router.crossReview({cloudflareAI,question,reply:alternative.reply,originalProvider:alternative.provider,task:intent.task,timeoutMs:Math.min(3000,remaining())}):null;
         return result(200,{
           mode:"fallback",aiMode:"automatic",thoughtMode,model:alternative.model,provider:alternative.provider,
-          reply:alternative.reply,sources:[...(ownedPage?[{title:ownedPage.title||"Halaman awam AKSARA",url:ownedPage.url}]:[]),...publicSources.map(({title,url})=>({title,url}))].slice(0,8),argumentMap:[],truthAudit:[],
+          reply:alternative.reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources:[...(ownedPage?[{title:ownedPage.title||"Halaman awam AKSARA",url:ownedPage.url}]:[]),...publicSources.map(({title,url})=>({title,url}))].slice(0,8),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:ownedPage?["owned_page_html"]:[],toolsOffered:[],
           disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",workers_ai:"Cloudflare Workers AI",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.hasLink?(ownedPage?" · HTML awam laman AKSARA telah dibaca; visual, JavaScript dan prestasi sebenar tidak diuji.":" · Kandungan URL tidak berjaya dibaca atau disahkan. Ini bukan review laman sebenar."):(intent.search?(researchResult.status==="search-snippets"?" · Hasil carian awam ialah snippet sahaja; kandungan penuh belum dibaca.":" · Model sandaran ni tak dapat check web secara live. Info terkini belum disahkan."):"")),
           usage:alternative.usage,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures}
@@ -590,7 +590,7 @@ exports.handler=async event=>{
     const reliableReply=unverifiedReview
       ?"Aku cuba membaca pautan itu, tetapi kandungan laman belum berjaya disahkan. Aku tak boleh buat review sebenar tanpa kandungannya. Berikan teks atau screenshot laman untuk analisis berasaskan bukti."
       :revised;
-    const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,sources:unverifiedReview?[]:sources,
+    const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources:unverifiedReview?[]:sources,
       ...(publicAccount?{publicAccount}:{}),
       argumentMap:review?review.argumentMap:[],truthAudit:review?review.truthAudit:[],
       thoughtLedger:review?review.thoughtLedger:[],hypothesis:review?review.hypothesis:"",

@@ -611,9 +611,8 @@ function addMessage(role,text,data){
  if(data?.mode==="code")msg.classList.add("code-engine-message");
  msg.appendChild(elem("div","byline",role==="user"?"Kau":data?.mode==="code"?"AKSARA CODE ENGINE":"Aksara A.I."));
  const bubble=elem("div","bubble");
- // A Live Voice transcript is not a text-chat answer; keep its content undecorated.
  if(data?.mode==="code")bubble.textContent=String(text||"");
- else format(bubble,role==="user"||data?.mode==="voice"||data?.intro===true?text:window.BilikAntaraChatStyle.reply(text,{mode:data?.thoughtMode||"cahaya"}));
+ else format(bubble,role==="user"||data?.mode==="voice"||data?.intro===true||data?.outputFormat==="json"?text:window.BilikAntaraChatStyle.reply(text,{mode:data?.thoughtMode||"cahaya"}));
  if(role!=="user"&&data)renderExtras(bubble,data);
  msg.appendChild(bubble);renderMessageMeta(msg,role,data);ui.chat.appendChild(msg);scrollDown();return msg;
 }
@@ -1032,7 +1031,6 @@ async function submit(event){
  const startedAt=performance.now();
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),165000);activeRequest=ctrl;
  let partial="",partialNode=null,partialBubble=null,firstTokenMs=null,partialFrame=0;
- // Coalesce streaming text into one update per painted frame, not one layout per token.
  function cancelPartialFrame(){
   if(partialFrame){cancelAnimationFrame(partialFrame);partialFrame=0;}
  }
@@ -1075,18 +1073,16 @@ async function submit(event){
     typing.remove();partialNode?.remove();partial="";partialNode=null;partialBubble=null;firstTokenMs=null;
     typing=showTyping();status("connecting","Connecting balik · "+attempt+"/2","");
    });
-  // Locally prepared answers still show the typing state for at least three seconds.
-  // The wait shares the stop signal; ordinary generated replies are never delayed.
-  if(data.model==="project-identity")await reconnectPause(Math.max(0,3000-(performance.now()-startedAt)),ctrl.signal);
+    if(data.model==="project-identity")await reconnectPause(Math.max(0,3000-(performance.now()-startedAt)),ctrl.signal);
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
-  data.reply=window.BilikAntaraChatStyle.reply(data.reply,{mode:data.thoughtMode||requestMode});
+  if(data.outputFormat!=="json")data.reply=window.BilikAntaraChatStyle.reply(data.reply,{mode:data.thoughtMode||requestMode});
   cancelPartialFrame();
   typing.remove();partialNode?.remove();
   const receivedAt=Date.now();
   addMessage("assistant",data.reply,{...data,coderPoetFollowUp:followUpTarget==="The Coder Poet"&&data.model==="project-identity"&&!selectedFile,timestamp:receivedAt,locationLabel:sentLocation});
   history.push({role:"user",timestamp:sentAt,locationLabel:sentLocation,content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
   history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,thoughtMode:requestMode,sources:data.sources||[],
-   studioHint:data.studioHint===true,argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
+   studioHint:data.studioHint===true,outputFormat:data.outputFormat||"",argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
    publicAccount:data.publicAccount||null});
   
   addIdeas(data.thoughtLedger);save();
