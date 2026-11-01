@@ -61,6 +61,7 @@ $("cwUse").addEventListener("click",()=>{
  save();const f=files[index];if(!f.code.trim()){info.textContent="Masukkan kod dahulu.";return;}
  const fence=String.fromCharCode(96).repeat(3);
  bridge.fill(fence+f.language+"\n"+f.code.trim()+"\n"+fence);
+ document.getElementById("input")?.dispatchEvent(new Event("input",{bubbles:true}));
  dialog.close(); // Must press Jalankan Kod separately.
 });
 $("cwExport").addEventListener("click",()=>{
