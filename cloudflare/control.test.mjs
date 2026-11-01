@@ -74,9 +74,9 @@ test("studio AI prompt enhancements are limited per user",async t=>{
  assert.equal((await request("studio",{action:"enhance"})).status,429);
  assert.equal(db.prepare("SELECT enhancements FROM daily").get().enhancements,1);
 });
-test("retired owner-only provider test route is unavailable",async t=>{
+test("unknown provider test scopes are rejected",async t=>{
  const {db,request}=fixture();t.after(()=>db.close());
- assert.equal((await request("nvidia-test")).status,400);
+ assert.equal((await request("retired-test")).status,400);
  assert.equal((await request("chat")).status,200);
 });
 test("control rejects malformed digests and release IDs",async t=>{

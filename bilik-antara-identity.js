@@ -160,7 +160,7 @@ function isProviderQuestion(value){
  if(!own||/\b(?:terbaik|paling bagus|lebih bagus|recommended|recommend|banding(?:kan)?|perbandingan|versus|vs\.?|cadangkan)\b/i.test(q))return false;
  const count=/\b(?:berapa|4|empat|5|lima)\s+(?:(?:banyak|jumlah|pilihan|jenis)\s+)?(?:otak|model|penyedia|provider)\b|\b(?:otak|model|penyedia|provider)\s+(?:kau|ko|awak|aksara)\b/i.test(q);
  const listing=/\b(?:senarai(?:kan)?|sebut(?:kan)?|nama(?:kan)?|apa|yang mana|kenalkan|terangkan|jelaskan)\b.{0,70}\b(?:otak|model|penyedia|provider|enjin|multi\s*a\.?i\.?)\b|\b(?:otak|model|penyedia|provider|enjin)\b.{0,65}\b(?:guna|pakai|ada|tersedia)\b/i.test(q);
- const explicit=/\b(?:gemini|groq)\b.{0,80}\b(?:openrouter|nvidia)\b/i.test(q)&&/(?:\b(?:guna|pakai|ada|betul|ke|kan)\b|\?)/i.test(q);
+ const explicit=/\b(?:gemini|groq)\b.{0,80}\b(?:openrouter|cloudflare(?:\s+workers\s+ai)?|workers\s*ai)\b/i.test(q)&&/(?:\b(?:guna|pakai|ada|betul|ke|kan)\b|\?)/i.test(q);
  return count||listing||explicit||/^(?:empat|4)\s+otak\s+aksara$/i.test(q);
 }
 
