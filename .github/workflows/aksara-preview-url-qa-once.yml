@@ -1,0 +1,20 @@
+name: AKSARA Intelligence PR live Preview URL smoke
+on:
+  push:
+    branches:
+      - feat/aksara-intelligence-3-p1-p4
+    paths:
+      - .github/workflows/aksara-preview-url-qa-once.yml
+permissions:
+  contents: read
+jobs:
+  preview-url:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Real isolated Cloudflare Preview checks (no secrets, no model inference)
+        run: node cloudflare/intelligence-3-preview-url-smoke.mjs
