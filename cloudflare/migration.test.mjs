@@ -42,12 +42,35 @@ test("Bilik Antara ships a real playable MP4 without changing Studio or Novel",(
  const html=text("dist/bilik-antara.html");
  assert.match(html,/id="aksaraAmbientVideo"/);
  assert.ok(html.includes("bilik-antara-video.js?v=2"));
- assert.ok(html.includes("bilik-antara-video.css?v=1"));
+ assert.ok(html.includes('<style data-aksara-inline="bilik-antara-video.css">'),"Video stylesheet must be inlined");
  assert.match(text("dist/bilik-antara-video.js"),/voiceActive/);
  for(const page of ["studio-antara.html","perpustakaan-aksara.html"]){
   assert.ok(!text("dist/"+page).includes("aksaraAmbientVideo"),page+" must remain static");
  }
 });
+test("Bilik-only Cloudflare render removes tiny blocking CSS requests without altering style",()=>{
+ const html=text("dist/bilik-antara.html");
+ const raw=readFileSync(path.join(root,"bilik-antara.html"),"utf8");
+ for(const file of ["aksara-header.css","bilik-antara-video.css"]){
+  const css=readFileSync(path.join(root,file),"utf8");
+  assert.ok(html.includes('<style data-aksara-inline="'+file+'">'+String.fromCharCode(10)+css+String.fromCharCode(10)+'</style>'),file+" inline rules must match source exactly");
+  assert.ok(!html.includes('href="'+file+'?v='),file+" should not block the first render");
+  assert.ok(raw.includes('href="'+file+'?v='),"Original page is unchanged");
+ }
+ assert.ok(html.includes(`bilik-antara-code-execution.css?v=1" media="print" onload="this.media='all'"`));
+ assert.ok(html.includes('<noscript><link rel="stylesheet" href="bilik-antara-code-execution.css?v=1"></noscript>'));
+ assert.ok(html.includes('<link rel="stylesheet" href="bilik-antara.css?v=102">'));
+ for(const file of ["studio-antara.html","perpustakaan-aksara.html"]){
+  assert.ok(!text("dist/"+file).includes("data-aksara-inline"),"Other room must not be modified: "+file);
+ }
+});
+test("Static asset caching is scoped to the Bilik public video only",()=>{
+ const lines=text("dist/_headers").trim().split(/\r?\n/);
+ assert.ok(lines.includes("/bilik-antara-background.mp4"));
+ assert.ok(lines.includes("  Cache-Control: public, max-age=2592000"));
+ assert.ok(!lines.some(line=>/^\/(?:api\/|\*|.*\.html|.*\.css)/.test(line)));
+});
+
 test("Browser API paths remain intact for non-invasive migration",()=>{
  const browser=text("dist/studio-antara-cloud.js");
  assert.match(browser,/\.netlify\/functions\/studio-image/);

@@ -60,6 +60,15 @@ jobs:
             http://127.0.0.1:8787/bilik-antara-background.mp4 \
             -o /tmp/aksara-video.mp4
           grep -qi '^content-type: video/mp4' /tmp/aksara-video-headers
+          # Worker's static _headers must apply an actual browser cache lifetime to MP4.
+          grep -Eqi '^cache-control: public, max-age=2592000' /tmp/aksara-video-headers
+          curl --max-time 5 -fsS -D /tmp/aksara-video-versioned-headers \
+            'http://127.0.0.1:8787/bilik-antara-background.mp4?v=3' -o /dev/null
+          grep -Eqi '^cache-control: public, max-age=2592000' /tmp/aksara-video-versioned-headers
+          # HTML and dynamic API responses must not inherit the MP4 cache policy.
+          curl --max-time 5 -fsS -D /tmp/aksara-html-headers \
+            http://127.0.0.1:8787/bilik-antara.html -o /dev/null
+          if grep -Eqi '^cache-control: public, max-age=2592000' /tmp/aksara-html-headers; then exit 1; fi
           node -e 'const fs=require("fs");const x=fs.readFileSync("/tmp/aksara-video.mp4");if(x.length<10000||x.toString("ascii",4,8)!=="ftyp")process.exit(1)'
           curl --max-time 5 -fsS -D /tmp/aksara-wallpaper-headers \
             http://127.0.0.1:8787/aksara-background-cahaya-gelap.webp \
