@@ -64,10 +64,13 @@ async function inspect(browser,width,height,mode){
 }
 async function main(){const browser=await chromium.launch({headless:true,args:['--no-sandbox']});try{
  for(const [w,h] of sizes){const before=await inspect(browser,w,h,'before'),after=await inspect(browser,w,h,'after'),fallback=await inspect(browser,w,h,'fallback');
-  // A new mode pill intentionally reduces textarea width; protect the outer chat geometry and glass instead.
-  const geometryWithoutInput=result=>Object.fromEntries(Object.entries(result.geometry).filter(([key])=>key!=='#input'));
-  assert.deepEqual(geometryWithoutInput(after),geometryWithoutInput(before),'Outer geometry changed at '+w);
-  assert.deepEqual(geometryWithoutInput(fallback),geometryWithoutInput(before),'Fallback geometry changed at '+w);
+  // Code Engine status intentionally sits beside Multi AI and shifts #connection horizontally.
+  // Preserve existing control dimensions and the rest of the outer geometry.
+  const geometryStable=result=>Object.fromEntries(Object.entries(result.geometry).filter(([key])=>!['#input','#connection'].includes(key)));
+  assert.deepEqual(geometryStable(after),geometryStable(before),'Outer geometry changed at '+w);
+  assert.deepEqual(geometryStable(fallback),geometryStable(before),'Fallback geometry changed at '+w);
+  assert.deepEqual(after.geometry['#connection'].slice(2),before.geometry['#connection'].slice(2),'Multi AI button size changed at '+w);
+  assert.deepEqual(fallback.geometry['#connection'].slice(2),before.geometry['#connection'].slice(2),'Multi AI fallback size changed at '+w);
   for(const key of ['effects','glass']){assert.deepEqual(after[key],before[key],key+' changed at '+w);assert.deepEqual(fallback[key],before[key],key+' fallback changed at '+w);}
   console.log(JSON.stringify({viewport:[w,h],layoutUnchanged:true,glassUnchanged:true,animationsUnchanged:true,wallpaperDecoded:true,originalFallbackDecoded:true,overflow:false,controls:true}));
  }
