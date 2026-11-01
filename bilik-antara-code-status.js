@@ -18,11 +18,14 @@ menu.className="multi-ai-dialog code-engine-dialog";
 menu.setAttribute("aria-labelledby","codeEngineMenuTitle");
 menu.setAttribute("aria-describedby","codeEngineMenuDescription");
 menu.innerHTML=[
- '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Sambungan</strong><p id="codeEngineMenuDescription">Dua runtime Code Engine Aksara. Status disemak secara berasingan; Ready bukan bermaksud kod sudah dijalankan.</p></div><button type="button" id="codeMenuClose" aria-label="Tutup Code Engine">×</button></div>',
- '<div class="multi-ai-list" id="codeRuntimeList" aria-label="Runtime yang tersedia">',
+ '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Sambungan</strong><p id="codeEngineMenuDescription">Enam bahasa pilihan untuk dibangunkan secara serius. Runtime yang belum disahkan tidak boleh dijalankan.</p></div><button type="button" id="codeMenuClose" aria-label="Tutup Code Engine">×</button></div>',
+ '<div class="multi-ai-list" id="codeRuntimeList" aria-label="Runtime tersedia dan sasaran">',
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="javascript"><span class="multi-ai-provider">JavaScript</span><span class="multi-ai-state is-muted" id="codeJavaScriptState">Checking…</span></button>',
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="python"><span class="multi-ai-provider">Python · Pyodide</span><span class="multi-ai-state is-muted">Load on run</span></button>',
-  '<details class="multi-ai-provider-details code-menu-planned"><summary class="multi-ai-row multi-ai-expand-trigger"><span class="multi-ai-provider">10 compiler sasaran</span><span class="multi-ai-state is-muted">Belum tersedia</span></summary><div class="multi-ai-model-list"><p class="multi-ai-model-note">C · C++ · Java · Rust · Go · C# · Kotlin · Swift · TypeScript · Dart. Belum diaktifkan atau disahkan.</p></div></details>',
+  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="typescript"><span class="multi-ai-provider">TypeScript</span><span class="multi-ai-state is-muted">Load on run</span></button>',
+  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="sql"><span class="multi-ai-provider">SQL · SQLite WASM</span><span class="multi-ai-state is-muted">Load on run</span></button>',
+  '<div class="multi-ai-row code-menu-unavailable" aria-disabled="true"><span class="multi-ai-provider">C</span><span class="multi-ai-state is-muted">Belum tersedia</span></div>',
+  '<div class="multi-ai-row code-menu-unavailable" aria-disabled="true"><span class="multi-ai-provider">C++</span><span class="multi-ai-state is-muted">Belum tersedia</span></div>',
  '</div>',
  '<div class="multi-ai-actions"><button type="button" id="codeEngineRefresh">Semak semula</button></div>'
 ].join("");
@@ -60,6 +63,7 @@ menu.addEventListener("click",event=>{if(event.target===menu)closeMenu();});
 menu.querySelector("#codeEngineRefresh").addEventListener("click",()=>{checkRuntime();});
 menu.querySelectorAll("[data-code-language]").forEach(btn=>btn.addEventListener("click",()=>{
  const language=btn.dataset.codeLanguage;
+ if(!engine.available.includes(language))return;
  if(language==="javascript"&&!pill.classList.contains("ready"))return;
  closeMenu();
  window.dispatchEvent(new CustomEvent("aksara:code-language",{detail:{language}}));
