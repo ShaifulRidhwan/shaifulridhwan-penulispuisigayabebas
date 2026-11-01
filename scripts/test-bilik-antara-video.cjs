@@ -9,13 +9,13 @@ const css=fs.readFileSync("bilik-antara-video.css","utf8");
 
 test("Only Bilik Antara uses ambient MP4; original static artwork remains",()=>{
  assert.match(html,/id="aksaraAmbientVideo"/);
- assert.match(html,/bilik-antara-background\.mp4/);
+ assert.match(html,/aksara-bilik-antara-ambient\.mp4/);
  assert.match(html,/muted loop playsinline preload="none"/);
  assert.match(html,/poster="aksara-background-cahaya-gelap\.webp"/);
  assert.match(css,/\.world-scene\.has-ambient-video \.world-art\{animation-play-state:paused\}/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
  for(const page of ["studio-antara.html","perpustakaan-aksara.html"]){
-  assert.doesNotMatch(fs.readFileSync(page,"utf8"),/aksaraAmbientVideo|bilik-antara-background\.mp4/);
+  assert.doesNotMatch(fs.readFileSync(page,"utf8"),/aksaraAmbientVideo|aksara-bilik-antara-ambient\.mp4/);
  }
  assert.doesNotThrow(()=>new vm.Script(script));
 });
@@ -88,6 +88,6 @@ test("Short buffering never flashes the static wallpaper; real pause and failure
  assert.equal(h.classes.has("has-ambient-video"),false);
 });
 test("Updated video and controller URLs bypass prior browser cache",()=>{
- assert.ok(html.includes('bilik-antara-background.mp4?v=3'));
+ assert.ok(html.includes('aksara-bilik-antara-ambient.mp4?v=1'));
  assert.ok(html.includes('bilik-antara-video.js?v=2'));
 });
