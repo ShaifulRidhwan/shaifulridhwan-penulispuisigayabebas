@@ -91,7 +91,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.ok(await page.locator("#sendBtn").count(),"Chat must remain responsive after timeout");
   assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false,"Timeout must close theatre");
   // Stop inside the overlay must abort immediately, without a forced 3-second delay.
-  await page.locator("#input").fill("while (true) {}");
+  await page.locator("#input").fill('console.log("STOP TEST"); while (true) {}');
   const beforeStop=Date.now();
   await page.locator("#codeRunAction").click();
   await page.locator("#runtimeAntaraStop").click();
