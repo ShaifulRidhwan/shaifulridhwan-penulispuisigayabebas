@@ -72,7 +72,8 @@ function analyzeIntent(question,attachment){
   const explicitNews=/\b(?:terkini|terbaru|baru-baru|berita|harga|pasaran|kajian terkini|statistik terkini|sumber terbaru|siapa (?:presiden|perdana menteri|menteri|ceo)|is it true|latest|current|today(?:'s)? news|news|recent studies|verify|semak fakta|sahkan dakwaan)\b/i.test(q);
   const temporal=/(?:sekarang|hari ini|semalam|minggu ini|bulan ini|tahun ini|202[5-9])/i.test(q);
   const asksCurrentFact=/\b(?:apa|siapa|berapa|bila|di mana|cuaca|suhu|status|jadual|cari|semak|laporan|statistik|keputusan|saham|nilai|terkini|current|how much|who is|when is|update)\b/i.test(q);
-  const latest=explicitNews||(temporal&&asksCurrentFact);
+  const explicitWeb=/(?:\b(?:cari|search|semak|research)\b.{0,40}\b(?:internet|web|online|sumber terkini)|\b(?:web search|search web|browse|melayari internet)\b)/i.test(q);
+  const latest=explicitNews||explicitWeb||(temporal&&asksCurrentFact);
   let calculate=/(?:\d+\s*(?:[+\-*/^×÷]|darab|kali|bahagi|campur|tolak|peratus|percent)\s*\d+|\b(?:hitung|kirakan|calculate|integral|derivative|terbitan|regresi|matriks|persamaan|equation|jalankan kod|graf data|formula|statistical)\b)/i.test(q);
   const simpleCalculation=/^(?:(?:berapa|kira|kirakan|hitung|calculate)\s+)?-?\d+(?:[.,]\d+)?\s*(?:[+*/%×÷-]|darab|kali|bahagi|campur|tolak)\s*-?\d+(?:[.,]\d+)?\s*[?=!.]*$/i.test(q);
   const technical=/(?:\b(?:kod|coding|javascript|python|html|css|sql|api|debug|ralat|bug|error|fungsi|program|algoritma|skrip|terminal|database)\b|baiki (?:kod|laman|aplikasi)|selesaikan (?:masalah|persamaan))/i.test(q);
