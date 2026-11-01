@@ -86,7 +86,7 @@ async function main(){
     modalFill:modal.backgroundImage,modalBlur:modal.backdropFilter,
     heroFont:hero.fontFamily,headingFont:heading.fontFamily,navBlur:nav.backdropFilter,navFill:nav.backgroundImage,
     promptWeight:css('#enhancePrompt').fontWeight,
-    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.includes('studio-antara.css?v=20'))
+    stylesheet:[...document.styleSheets].some(sheet=>sheet.href?.match(/studio-antara\.css\?v=\d+/))
    };
   });
   assert.equal(visual.stylesheet,true,'Audited Studio CSS must load');

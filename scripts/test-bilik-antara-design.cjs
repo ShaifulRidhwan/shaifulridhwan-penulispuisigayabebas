@@ -13,7 +13,7 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
  assert.doesNotMatch(html,/<style\b/);
  assert.equal((html.match(/rel="stylesheet" href="bilik-antara\.css/g)||[]).length,1);
  assert.match(css,/\.world-art/);
- assert.match(css,/bilik-antara-cover-art\.jpg/);
+ assert.match(css,/aksara-background-cahaya-gelap\.webp/);
  assert.match(css,/\.message\.ai::before/);
  assert.match(css,/bilik-antara-woman-emblem\.svg/);
  assert.equal(cover[0],0xff);assert.equal(cover[1],0xd8);
@@ -25,16 +25,18 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
 test("Bilik, Studio and Novel share optimized WebP wallpapers without changing their glass UI",()=>{
  const studio=fs.readFileSync("studio-antara.css","utf8");
  const novel=fs.readFileSync("perpustakaan-aksara.css","utf8");
+ const asset="aksara-background-cahaya-gelap.webp";
  for(const [sheet,page] of [[css,"Bilik"],[studio,"Studio"],[novel,"Novel"]]){
-  for(const size of ["desktop","mobile"]){
-   assert.ok(sheet.includes("bilik-antara-bg-"+size+".webp?v=2"),page+" missing "+size+" wallpaper");
-  }
+  assert.ok(sheet.includes(asset+"?v=1"),page+" must use the same selected portrait wallpaper");
+  assert.ok(!sheet.includes("bilik-antara-bg-desktop.webp"),page+" must not stretch the old landscape variant");
  }
- for(const size of ["desktop","mobile"]){
-  assert.ok(html.includes("bilik-antara-bg-"+size+".webp?v=2"),"Missing "+size+" preload");
-  const bytes=fs.statSync("bilik-antara-bg-"+size+".webp").size;
-  assert.ok(bytes>1000&&bytes<100000,"Background should stay lightweight WebP");
- }
+ assert.equal(html.split(asset+"?v=1").length-1,2,"Desktop/mobile preloads must share one cached asset");
+ const bytes=fs.statSync(asset).size;
+ assert.ok(bytes>1000&&bytes<100000,"Shared portrait wallpaper must remain a lightweight WebP");
+ assert.match(css,/background-size:auto 100%,cover/, "Desktop must preserve the portrait aspect ratio");
+ assert.match(css,/background-size:cover,cover/, "Mobile must fill its portrait viewport");
+ assert.match(studio,/background-size:cover,auto 100%,cover/);
+ assert.match(novel,/background-size:cover,auto 100%,cover/);
  assert.match(studio,/pointer-events:none/);
  assert.match(novel,/\.novel-shell\{position:relative;z-index:1\}/);
 });
