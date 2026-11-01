@@ -14,7 +14,12 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    return route.fulfill({status:503,contentType:"application/json",body:'{"error":"AI offline"}'});
   });
   await page.goto(BASE+"/bilik-antara.html",{waitUntil:"domcontentloaded"});
-  await page.waitForFunction(()=>document.querySelector("#codeEngineStatusText")?.textContent==="Code Engine Ready",{timeout:15000});
+  await page.waitForFunction(()=>{
+   const button=document.querySelector("#codeEngineStatus");
+   return button?.classList.contains("ready") &&
+    document.querySelector("#codeEngineStatusText")?.textContent==="Code Engine" &&
+    /Status: Ready/.test(button.getAttribute("aria-label")||"");
+  },null,{timeout:15000});
   const geom=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth,pills:document.querySelectorAll("#connection,#codeEngineStatus").length}));
   assert.ok(geom.scroll<=geom.width+6,"Mobile horizontal overflow: "+JSON.stringify(geom));
   assert.equal(geom.pills,2,"Multi AI and Code Engine must show independent statuses");
@@ -50,6 +55,13 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(portal.topbar,true,"PORTAL trigger must be in topbar");
   assert.equal(portal.iconAfter,true,"Grid icon must be to the RIGHT of PORTAL label");
   assert.deepEqual(portal.navLinks,["Laman utama"],"Studio and Novel belong only inside PORTAL");
+  const portalTiles=await page.locator("#settingsPanel > summary.portal-trigger svg rect").evaluateAll(tiles=>
+   tiles.map(tile=>({animation:getComputedStyle(tile).animationName,stroke:getComputedStyle(tile).stroke})));
+  assert.equal(portalTiles.length,4,"PORTAL must retain its four existing tiles");
+  assert.ok(portalTiles.every(tile=>tile.animation==="aksaraPortalGather"),"PORTAL tiles animate without changing the glass button");
+  assert.notEqual(portalTiles[0].stroke,portalTiles[1].stroke,"PORTAL gold and blue tiles stay distinguishable");
+  const tapColor=await page.locator("#codeEngineStatus").evaluate(el=>getComputedStyle(el).webkitTapHighlightColor);
+  assert.ok(["transparent","rgba(0, 0, 0, 0)"].includes(tapColor),"Code Engine must not flash the Android tap highlight");
   // PORTAL and Laman utama share an identical glass footprint at 320px and 390px.
   for(const w of [320,390,768,1366]){
    await page.setViewportSize({width:w,height:844});
@@ -308,10 +320,14 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   },aiReply);
   await page.waitForTimeout(180);
   assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.runs()),0,"AI execution defaults to disabled");
+  const unarmedCoreColor=await page.locator("#codeEngineStatus .code-engine-core").evaluate(el=>getComputedStyle(el).color);
   await page.locator("#codeEngineStatus").click();
   await page.locator("#codeAiExecutionAllowed").check();
   assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.enabled()),true);
-  assert.match(await page.locator("#codeEngineStatusText").innerText(),/Armed/,"ON must visibly differ from OFF");
+  assert.equal(await page.locator("#codeEngineStatusText").innerText(),"Code Engine","Keep the short fixed pill label");
+  assert.match(await page.locator("#codeEngineStatus").getAttribute("aria-label"),/Status: Armed/);
+  const armedCoreColor=await page.locator("#codeEngineStatus .code-engine-core").evaluate(el=>getComputedStyle(el).color);
+  assert.notEqual(armedCoreColor,unarmedCoreColor,"Armed state must remain visually distinguishable on the icon");
   assert.equal(await page.locator("#codeEngineStatus").getAttribute("data-ai-execution"),"armed");
   await page.locator("#codeMenuClose").click();
   // No implicit code execution for explanations or multiple code blocks.
@@ -351,7 +367,8 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.locator("#codeAiExecutionAllowed").uncheck();
   assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.enabled()),false);
   assert.equal(await page.locator("#codeEngineStatus").getAttribute("data-ai-execution"),"off");
-  assert.match(await page.locator("#codeEngineStatusText").innerText(),/Ready/);
+  assert.equal(await page.locator("#codeEngineStatusText").innerText(),"Code Engine");
+  assert.match(await page.locator("#codeEngineStatus").getAttribute("aria-label"),/Status: Ready/);
   await page.locator("#codeMenuClose").click();
   await page.evaluate(reply=>{
    window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question:"Jalankan kod SQL ini",answer:reply}}));
