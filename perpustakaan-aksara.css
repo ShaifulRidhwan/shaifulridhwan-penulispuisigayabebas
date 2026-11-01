@@ -111,7 +111,7 @@ img{max-width:100%;height:auto}
 
 
 /* AKSARA shared wallpaper behind Novel catalog, preserving all book cards. */
-body::before{z-index:0;background-image:linear-gradient(180deg,rgba(3,7,15,.38),rgba(3,8,16,.60)),url("./bilik-antara-bg-desktop.webp?v=2");background-position:center,center center;background-size:cover;background-repeat:no-repeat}
+body::before{z-index:0;background-image:linear-gradient(180deg,rgba(3,7,15,.38),rgba(3,8,16,.60)),url("./aksara-cahaya-gelap-bg.webp?v=1");background-position:center,center center;background-size:cover;background-repeat:no-repeat}
 body::after{z-index:0}
 .novel-shell{position:relative;z-index:1}
-@media(max-width:760px){body::before{background-image:linear-gradient(180deg,rgba(3,7,15,.38),rgba(3,8,16,.60)),url("./bilik-antara-bg-mobile.webp?v=2")}}
+@media(max-width:760px){body::before{background-image:linear-gradient(180deg,rgba(3,7,15,.38),rgba(3,8,16,.60)),url("./aksara-cahaya-gelap-bg.webp?v=1")}}
