@@ -906,7 +906,7 @@ main>.workspace{margin-top:18px}
 
 /* AKSARA shared wallpaper behind Studio glass, never on interactive elements. */
 body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
-background-image:linear-gradient(180deg,rgba(3,7,15,.38),rgba(3,8,16,.60)),url("./bilik-antara-bg-desktop.webp?v=2");
+background-image:linear-gradient(180deg,rgba(3,7,15,.38),rgba(3,8,16,.60)),url("./aksara-cahaya-gelap-bg.webp?v=1");
 background-position:center,center center;background-size:cover;background-repeat:no-repeat}
 .studio-shell{position:relative;z-index:1}
-@media(max-width:760px){body::before{background-image:linear-gradient(180deg,rgba(3,7,15,.38),rgba(3,8,16,.60)),url("./bilik-antara-bg-mobile.webp?v=2")}}
+@media(max-width:760px){body::before{background-image:linear-gradient(180deg,rgba(3,7,15,.38),rgba(3,8,16,.60)),url("./aksara-cahaya-gelap-bg.webp?v=1")}}
