@@ -297,6 +297,47 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false,"AI review cannot run code");
   assert.ok(aiChatRequests.length>=1,"An explicit user click routes into the existing Multi AI endpoint");
 
+  // Session-only authority: model text is inert until the user enables the AI code permission.
+  assert.equal(await page.locator("#codeAiExecutionAllowed").isChecked(),false);
+  assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.runs()),0);
+  // Build the test reply with actual Markdown fences without duplicating data.
+  const aiReply=String.fromCharCode(96).repeat(3)+'javascript\nconsole.log("AI AGENT 42");\n'+String.fromCharCode(96).repeat(3);
+  await page.evaluate(reply=>{
+   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question:"Jalankan kod JavaScript ini",answer:reply}}));
+   window.dispatchEvent(new Event("ba:ready-for-tools"));
+  },aiReply);
+  await page.waitForTimeout(180);
+  assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.runs()),0,"AI execution defaults to disabled");
+  await page.locator("#codeEngineStatus").click();
+  await page.locator("#codeAiExecutionAllowed").check();
+  assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.enabled()),true);
+  await page.locator("#codeMenuClose").click();
+  // No implicit code execution for explanations or multiple code blocks.
+  await page.evaluate(reply=>{
+   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question:"Terangkan JavaScript kepada saya",answer:reply}}));
+   window.dispatchEvent(new Event("ba:ready-for-tools"));
+  },aiReply);
+  await page.evaluate(reply=>{
+   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question:"Jalankan kod JavaScript ini",answer:reply+"\n"+reply}}));
+   window.dispatchEvent(new Event("ba:ready-for-tools"));
+  },aiReply);
+  await page.waitForTimeout(180);
+  assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.runs()),0,"Explanations or ambiguous multi-block answers cannot auto-execute");
+  const networkBefore=aiChatRequests.length;
+  await page.evaluate(reply=>{
+   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question:"Jalankan kod JavaScript ini",answer:reply}}));
+   window.dispatchEvent(new Event("ba:ready-for-tools"));
+  },aiReply);
+  await page.waitForFunction(()=>window.AksaraAICodeAgent.runs()===1,{timeout:15000});
+  const aiResult=await page.locator("#chat .code-engine-message.ai").last().innerText();
+  assert.match(aiResult,/AI AGENT 42/);
+  assert.match(aiResult,/A\.I\. EXECUTION BERJAYA/);
+  assert.equal(aiChatRequests.length,networkBefore,"Running AI-proposed code never sends results to AI without separate consent");
+  await page.locator("#codeEngineStatus").click();
+  await page.locator("#codeAiExecutionAllowed").uncheck();
+  assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.enabled()),false);
+  await page.locator("#codeMenuClose").click();
+
   assert.deepEqual(errors,[],"Browser page errors: "+errors.join("; "));
   console.log("AKSARA in-chat Code Engine PASS: status menu, explicit consent, JS 100, Python 17, offline AI, worker watchdog and recovery.");
  }finally{await browser.close();}
