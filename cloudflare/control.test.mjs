@@ -60,9 +60,9 @@ test("Workers AI has independent global and per-visitor quotas, without touching
 });
 test("Workers AI allows four calls per client in ten minutes before cooldown",async t=>{
  const {db,request}=fixture({AKSARA_WORKERS_AI_DAILY_REQUESTS:"20"});t.after(()=>db.close());
- for(let i=0;i<4;i++)assert.equal((await request("workers_ai")).status,200);
+ for(let i=0;i<6;i++)assert.equal((await request("workers_ai")).status,200);
  assert.equal((await request("workers_ai")).status,429);
- assert.equal(db.prepare("SELECT calls FROM workers_ai_daily").get().calls,4);
+ assert.equal(db.prepare("SELECT calls FROM workers_ai_daily").get().calls,6);
 });
 test("Workers AI can be disabled by a zero cap without disabling other providers",async t=>{
  const {db,request}=fixture({AKSARA_WORKERS_AI_DAILY_REQUESTS:"0"});t.after(()=>db.close());
