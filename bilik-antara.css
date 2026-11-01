@@ -3235,44 +3235,6 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation-head #connection{
 .topbar #settingsPanel>summary.portal-trigger svg{order:2;display:block;flex:none;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7}
 .topbar #settingsPanel>summary.portal-trigger span{order:1}
 
-/* Four portal tiles breathe apart and reunite; only the glyph animates. */
-.topbar #settingsPanel>summary.portal-trigger svg{overflow:visible}
-.topbar #settingsPanel>summary.portal-trigger svg rect{
-  transform-box:fill-box;
-  transform-origin:center;
-  stroke-width:1.65;
-  animation:aksaraPortalGather 3.6s ease-in-out infinite;
-  will-change:transform,opacity;
-}
-.topbar #settingsPanel>summary.portal-trigger svg rect:nth-of-type(1){
-  --portal-shift-x:-1.6px;--portal-shift-y:-1.6px;
-  stroke:#e8be82;
-}
-.topbar #settingsPanel>summary.portal-trigger svg rect:nth-of-type(2){
-  --portal-shift-x:1.6px;--portal-shift-y:-1.6px;
-  stroke:#98c3dc;
-}
-.topbar #settingsPanel>summary.portal-trigger svg rect:nth-of-type(3){
-  --portal-shift-x:-1.6px;--portal-shift-y:1.6px;
-  stroke:#e8be82;
-}
-.topbar #settingsPanel>summary.portal-trigger svg rect:nth-of-type(4){
-  --portal-shift-x:1.6px;--portal-shift-y:1.6px;
-  stroke:#98c3dc;
-}
-@keyframes aksaraPortalGather{
-  0%,12%,78%,100%{transform:translate(0,0) scale(1);opacity:.76}
-  38%,52%{transform:translate(var(--portal-shift-x),var(--portal-shift-y)) scale(1.07);opacity:1}
-  67%{transform:translate(0,0) scale(1);opacity:.96}
-}
-@media(prefers-reduced-motion:reduce){
-  .topbar #settingsPanel>summary.portal-trigger svg rect{
-    animation:none!important;
-    will-change:auto;
-    opacity:1;
-  }
-}
-
 .topbar #settingsPanel>summary.portal-trigger:hover,.topbar #settingsPanel[open]>summary.portal-trigger{
  color:#f3d6a0;background:rgba(211,181,134,.14)!important;border-color:rgba(237,207,158,.6)!important;
 }
