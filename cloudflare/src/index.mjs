@@ -7,6 +7,7 @@ import Live from "../../netlify/functions/bilik-antara-live-token.js";
 import StudioImage from "../../netlify/functions/lib/studio-image-handler.js";
 import StudioEnhance from "../../netlify/functions/lib/studio-enhance-handler.js";
 export {AksaraControl} from "./control.mjs";
+import {publicEvidence,verifyTurnstile,ownerTool,consumeArchiveQueue} from "./capabilities.mjs";
 
 const OLD_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
 const apis=Object.freeze({
@@ -14,7 +15,8 @@ const apis=Object.freeze({
  stream:"/.netlify/functions/bilik-antara-stream",
  voice:"/.netlify/functions/bilik-antara-live-token",
  studio:"/.netlify/functions/studio-image",
- enhance:"/.netlify/functions/studio-enhance"
+ enhance:"/.netlify/functions/studio-enhance",
+ owner:"/api/aksara-owner-tools"
 });
 function json(status,message,retry=0){
  return new Response(JSON.stringify({code:status===429?"RATE_LIMIT":"UNAVAILABLE",error:message,retryAfterSeconds:retry||undefined}),
@@ -121,12 +123,25 @@ async function handle(request,env,ctx){
   if(request.headers.get("origin")!==origin)return json(403,"Origin tidak dibenarkan.");
   return new Response(null,{status:204,headers:{
   "access-control-allow-origin":origin,"access-control-allow-methods":"POST, OPTIONS",
-  "access-control-allow-headers":"Content-Type","vary":"Origin"}});
+  "access-control-allow-headers":"Content-Type, X-Aksara-Turnstile-Token, X-Aksara-Owner-Token","vary":"Origin"}});
  }
  if(request.method!=="POST")return json(405,"Gunakan POST.");
  // Require a same-origin caller on public POST APIs, including preflight-less
  // direct browser requests; Netlify continues to serve on its own origin.
  if(request.headers.get("origin")!==origin)return json(403,"Origin tidak dibenarkan.");
+ if(path!==apis.owner){
+  const turnstile=await verifyTurnstile(request,env);
+  if(!turnstile.ok)return json(turnstile.status||403,"Pengesahan keselamatan pelawat diperlukan.");
+ }
+ if(path===apis.owner){
+  try{
+   const raw=await readBody(request,600000);
+   const verified=new Request(request.url,{method:"POST",headers:request.headers,body:raw});
+   const pass=await quota(env,"health",request);
+   if(pass.error)return pass.error;
+   return ownerTool(verified,env,guardedWorkersAI(env,request));
+  }catch(e){return json(e.status||400,e.message||"Permintaan tidak sah.");}
+ }
  const isStudio=path===apis.studio||path===apis.enhance;
  const limit=isStudio?7000:path===apis.voice?100:5400000;
  // Status probes are inexpensive, but must still be rate-limited. They do
@@ -148,7 +163,15 @@ async function handle(request,env,ctx){
   h.set("origin",internalOrigin());
   h.set("x-nf-client-connection-ip",request.headers.get("cf-connecting-ip")||"unknown");
   const adapted=new Request(request,{headers:h});
-  const result=await netlifyStream(adapted,guardedWorkersAI(env,request));
+  let evidence="";
+  if(env.AKSARA_AI_SEARCH_ENABLED==="true"||env.AKSARA_VECTORIZE_ENABLED==="true"){
+   try{
+    const payload=await request.clone().json();
+    if(typeof payload?.question==="string"&&(!payload?.documentText&&!payload?.memoryNotes))
+     evidence=await publicEvidence(env,payload.question,guardedWorkersAI(env,request));
+   }catch(_){}
+  }
+  const result=await netlifyStream(adapted,guardedWorkersAI(env,request),evidence);
   const out=new Headers(result.headers);
   out.set("Access-Control-Allow-Origin",origin);
   out.set("Cache-Control","no-store");
@@ -158,7 +181,16 @@ async function handle(request,env,ctx){
  // Studio validates Origin against the actual request Host; the legacy
  // Netlify origin is only needed by Chat/Voice compatibility handlers.
  const headers=normalizedHeaders(request,origin,!isStudio);
- const event={httpMethod:"POST",headers,body,signal:request.signal,isBase64Encoded:false,aiBinding:guardedWorkersAI(env,request)};
+ let evidence="";
+ if(path===apis.chat&&(env.AKSARA_AI_SEARCH_ENABLED==="true"||env.AKSARA_VECTORIZE_ENABLED==="true")){
+  try{
+   const payload=JSON.parse(body);
+   if(typeof payload.question==="string"&&!payload.documentText&&!payload.memoryNotes)
+    evidence=await publicEvidence(env,payload.question,guardedWorkersAI(env,request));
+  }catch(_){}
+ }
+ const event={httpMethod:"POST",headers,body,signal:request.signal,isBase64Encoded:false,
+  aiBinding:guardedWorkersAI(env,request),publicEvidence:evidence};
  if(path===apis.chat)return asResponse(await Chat.handler(event),origin);
  if(path===apis.voice)return asResponse(await Live.handler(event),origin);
  // Preserve old Studio image-generation payloads, estimate and media parsing.
@@ -179,4 +211,4 @@ async function handle(request,env,ctx){
  });
  return asResponse(await handler(event),origin);
 }
-export default {fetch:handle};
+export default {fetch:handle,queue:consumeArchiveQueue};

@@ -29,8 +29,12 @@ jobs:
         run: node --test cloudflare/migration.test.mjs
       - name: Test transactional Cloudflare quota, Voice/Chat limits and health security
         run: node --test cloudflare/control.test.mjs
+      - name: Verify all seven capability adapters stay private and fail closed
+        run: node --test cloudflare/capabilities.test.mjs
       - name: Verify Cloudflare Gemini-specific time budget and truthful status
         run: node --test tests/aksara-cloudflare-gemini-latency.test.cjs
+      - name: Test public poem examples and interpretations
+        run: node --test tests/aksara-public-poetry.test.cjs
       - name: Test native Workers AI identity, routing and streaming mocks
         run: node --test tests/aksara-workers-ai.test.cjs
       - name: Validate Cloudflare Worker bundle without uploading or secrets
