@@ -60,8 +60,8 @@ test("Mode control is compact, accessible, and opens a shared glass dialog",()=>
  assert.ok(css.includes('.thought-mode-dialog .thought-choice-copy small'));
 });
 test("browser modules load before voice and retain cache-busted versions",()=>{
- const modesIndex=html.search(/bilik-antara-modes\\.js\\?v=\\d+/);
- const voiceIndex=html.search(/bilik-antara-voice\\.js\\?v=\\d+/);
+ const modesIndex=html.indexOf("bilik-antara-modes.js?v=");
+ const voiceIndex=html.indexOf("bilik-antara-voice.js?v=");
  assert.ok(modesIndex>=0&&voiceIndex>modesIndex,"Thinking Mode must load before the cache-busted voice module");
  assert.match(html,/bilik-antara\.css\?v=\d+/);
  assert.ok(html.includes('window.BilikAntaraThought=Object.freeze'));
