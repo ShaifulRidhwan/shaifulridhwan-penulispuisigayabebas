@@ -13,7 +13,7 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
  assert.doesNotMatch(html,/<style\b/);
  assert.equal((html.match(/rel="stylesheet" href="bilik-antara\.css/g)||[]).length,1);
  assert.match(css,/\.world-art/);
- assert.match(css,/bilik-antara-cover-art\.jpg/);
+ assert.match(html,/bilik-antara-cover-art\.jpg/);
  assert.match(css,/\.message\.ai::before/);
  assert.match(css,/bilik-antara-woman-emblem\.svg/);
  assert.equal(cover[0],0xff);assert.equal(cover[1],0xd8);
@@ -288,8 +288,8 @@ test("Shared WebP celestial theme stays linked across Bilik, Studio and Novel",(
  const studio=fs.readFileSync("studio-antara.css","utf8");
  const novel=fs.readFileSync("perpustakaan-aksara.css","utf8");
  for(const [name,styles] of [["Bilik",css],["Studio",studio],["Novel",novel]]){
-  assert.match(styles,/aksara-senja-bulan-desktop\\.webp\\?v=1/,name+" desktop background missing");
-  assert.match(styles,/aksara-senja-bulan-mobile\\.webp\\?v=1/,name+" mobile background missing");
+  assert.match(styles,/aksara-senja-bulan-desktop\.webp\?v=1/,name+" desktop background missing");
+  assert.match(styles,/aksara-senja-bulan-mobile\.webp\?v=1/,name+" mobile background missing");
  }
  for(const type of ["desktop","mobile"]){
   const data=fs.readFileSync("aksara-senja-bulan-"+type+".webp");
