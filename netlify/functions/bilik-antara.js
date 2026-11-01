@@ -18,7 +18,10 @@ const Context=require("./aksara-context-manager");
 const Knowledge=require("./aksara-knowledge-engine");
 const PublicPoetry=require("./aksara-public-poetry");
 const SafeTools=require("./aksara-safe-tools");
-const GeminiDiagnosis=require("./aksara-gemini-diagnostics");
+const GeminiDiagnosis={
+ classify(e){return e.cooldownKnown?"quota_cooldown":e.status===429?"quota_exceeded":e.name==="AbortError"?"timeout":[400,404].includes(e.status)?"invalid_model_or_request":[401,403].includes(e.status)?"authentication_or_access":e.status>=500?"api_error":"upstream_error";},
+ summarize({decision,failures,model}){const failure=[...failures].reverse().find(x=>x.provider==="gemini");return {status:failure?"failed":decision==="gemini_attempted"?"attempted":"not_selected",reason:failure?.reason||decision,httpStatus:Number(failure?.status)||null,model:String(model).slice(0,64)};}
+};
 const Research=require("./aksara-research-workflow");
 const Data=require("./aksara-data-analysis");
 const Structured=require("./aksara-structured-output");
