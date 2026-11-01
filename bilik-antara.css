@@ -3261,3 +3261,62 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-ve
  .topbar #settingsPanel>summary.portal-trigger{height:31px!important;min-height:31px!important;max-height:31px!important;padding-inline:5px!important;font-size:8px!important}
  .topbar #settingsPanel>summary.portal-trigger svg{width:12px;height:12px}
 }
+
+
+/* AKSARA Set C: multilayer network rings. Never reuse Code Engine processor glyph.
+   Fully CSS-based, isolated to the existing Multi A.I. status chip. */
+.conversation-head button.multi-ai-trigger .dot.multi-ai-rings{
+ position:relative;display:block;flex:0 0 17px!important;
+ width:17px!important;height:17px!important;margin:0!important;
+ background:transparent!important;border:1.4px solid currentColor!important;
+ color:#76d6c1!important;border-radius:50%!important;
+ box-sizing:border-box;opacity:.96;
+ transform:rotate(-19deg);animation:multiRingOrbit 8s ease-in-out infinite!important;
+ box-shadow:0 0 5px rgba(87,212,184,.16);
+}
+.conversation-head button.multi-ai-trigger .dot.multi-ai-rings::before{
+ content:"";position:absolute;inset:2px!important;border:1.4px solid currentColor!important;
+ border-radius:50%!important;background:none!important;
+ opacity:.84!important;box-sizing:border-box;transform:rotate(36deg);
+ animation:multiRingInner 3.8s ease-in-out infinite!important;
+}
+.conversation-head button.multi-ai-trigger .dot.multi-ai-rings::after{
+ content:"";position:absolute;inset:5px!important;
+ border:0!important;border-radius:50%!important;background:currentColor!important;
+ box-shadow:0 0 5px rgba(104,218,192,.65);
+ opacity:.9!important;box-sizing:border-box;
+ animation:multiRingSignal 2.6s ease-in-out infinite!important;
+}
+.conversation-head button.multi-ai-trigger:not(.ready) .dot.multi-ai-rings{
+ color:#c3b18d!important;box-shadow:none;
+}
+.conversation-head button.multi-ai-trigger.error .dot.multi-ai-rings{color:#e7a08e!important}
+@keyframes multiRingOrbit{
+ 0%,100%{transform:rotate(-19deg) scale(1);opacity:.79}
+ 50%{transform:rotate(19deg) scale(1.03);opacity:1}
+}
+@keyframes multiRingInner{
+ 0%,100%{transform:rotate(0deg);opacity:.6}
+ 50%{transform:rotate(90deg);opacity:1}
+}
+@keyframes multiRingSignal{
+ 0%,100%{transform:scale(.7);opacity:.45}
+ 50%{transform:scale(1.12);opacity:.98}
+}
+@media(max-width:760px){
+ .conversation-head button.multi-ai-trigger .dot.multi-ai-rings{
+  flex-basis:15px!important;width:15px!important;height:15px!important;
+ }
+ .conversation-head button.multi-ai-trigger .dot.multi-ai-rings::after{inset:4px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .conversation-head button.multi-ai-trigger .dot.multi-ai-rings,
+ .conversation-head button.multi-ai-trigger .dot.multi-ai-rings::before,
+ .conversation-head button.multi-ai-trigger .dot.multi-ai-rings::after{animation:none!important}
+}
+
+/* The larger three-ring symbol replaces the 7px dot without increasing desktop pill width.
+   12px → 7px per side compensates for the 10px symbol delta, keeping glass geometry intact. */
+@media(min-width:761px){
+ .conversation-head #connection.multi-ai-trigger:has(.multi-ai-rings){padding-inline:7px!important}
+}

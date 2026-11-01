@@ -69,6 +69,22 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.waitForFunction(()=>!document.querySelector("#settingsPanel").open,{timeout:3000});
   assert.equal(await page.locator("#settingsPanel .settings-card").isVisible(),false);
 
+  // Set C icons must be genuinely distinct and animated without moving any glass surfaces.
+  const icons=await page.evaluate(()=>{
+   const ring=document.querySelector("#connection .multi-ai-rings");
+   const core=document.querySelector("#codeEngineStatus .code-engine-core");
+   return {rings:!!ring,processor:!!core?.querySelector("svg rect.code-core-center"),
+    ringAnimation:getComputedStyle(ring).animationName,
+    coreAnimation:getComputedStyle(core.querySelector("svg")).animationName,
+    ringSize:ring.getBoundingClientRect().width,coreSize:core.getBoundingClientRect().width};
+  });
+  assert.equal(icons.rings,true);
+  assert.equal(icons.processor,true);
+  assert.notEqual(icons.ringAnimation,"none");
+  assert.notEqual(icons.coreAnimation,"none");
+  assert.notEqual(icons.ringAnimation,icons.coreAnimation);
+  assert.ok(icons.ringSize>=14&&icons.coreSize>=14);
+
   // Use the exact Multi A.I. glass modal primitives, not a visually separate popup.
   await page.locator("#connection").click();
   const visualSignature=selector=>page.locator(selector).evaluate(el=>{
@@ -87,7 +103,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   const codeGlass=await visualSignature("#codeEngineMenu");
   assert.deepEqual(codeGlass,multiGlass,"Code Engine modal must reuse Multi AI glass layout and backdrop");
   assert.equal(await page.locator("#codeEngineMenu .multi-ai-head").count(),1);
-  assert.equal(await page.locator("#codeEngineMenu .multi-ai-row").count(),6);
+  assert.equal(await page.locator("#codeEngineMenu .multi-ai-row").count(),4,"Only four active languages should appear");
   const codeFooter=await page.locator("#codeEngineRefresh").evaluate(el=>{
    const s=getComputedStyle(el);
    return {borderRadius:s.borderRadius,minHeight:s.minHeight,padding:s.padding,font:s.font,backgroundImage:s.backgroundImage};
@@ -100,8 +116,8 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#codeJavaScriptState").innerText(),"Ready");
   assert.equal(await page.locator("#codeEngineMenu").isVisible(),true,"Status must open a menu, not navigate to another page");
   assert.equal(await page.locator('[data-code-language]').count(),4);
-  assert.match(await page.locator("#codeEngineMenu").innerText(),/Enam bahasa pilihan/);
-  assert.equal(await page.locator("#codeEngineMenu .code-menu-unavailable").count(),2,"C and C++ remain disabled until verified");
+  assert.match(await page.locator("#codeEngineMenu").innerText(),/Empat bahasa aktif/);
+  assert.equal(await page.locator("#codeEngineMenu .code-menu-unavailable").count(),0,"Do not display C/C++ until their return");
   // Workspace is local-only; user retains explicit control over execution.
   await page.locator("#codeWorkspaceOpen").click();
   assert.equal(await page.locator("#codeWorkspaceDialog").isVisible(),true);
@@ -273,7 +289,8 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#codeAiExecutionAllowed").isChecked(),false);
   assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.runs()),0);
   // Build the test reply with actual Markdown fences without duplicating data.
-  const aiReply=String.fromCharCode(96).repeat(3)+'javascript\nconsole.log("AI AGENT 42");\n'+String.fromCharCode(96).repeat(3);
+  const aiReply=String.fromCharCode(96).repeat(3)+'javascript\nconsole.log("AI AGENT 42");\n'+String.fromCharCode(96).repeat(3)+" 🙂 ✨";
+  assert.equal(await page.evaluate(reply=>window.AksaraAICodeAgent.extract(reply)?.language,aiReply),"javascript","Trailing assistant emojis must not block extraction");
   await page.evaluate(reply=>{
    window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question:"Jalankan kod JavaScript ini",answer:reply}}));
    window.dispatchEvent(new Event("ba:ready-for-tools"));
@@ -283,6 +300,8 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.locator("#codeEngineStatus").click();
   await page.locator("#codeAiExecutionAllowed").check();
   assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.enabled()),true);
+  assert.match(await page.locator("#codeEngineStatusText").innerText(),/Armed/,"ON must visibly differ from OFF");
+  assert.equal(await page.locator("#codeEngineStatus").getAttribute("data-ai-execution"),"armed");
   await page.locator("#codeMenuClose").click();
   // No implicit code execution for explanations or multiple code blocks.
   await page.evaluate(reply=>{
@@ -305,10 +324,31 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.match(aiResult,/AI AGENT 42/);
   assert.match(aiResult,/A\.I\. EXECUTION BERJAYA/);
   assert.equal(aiChatRequests.length,networkBefore,"Running AI-proposed code never sends results to AI without separate consent");
+  // Screenshot regression: SQL code followed by emoji now triggers the authorised sandbox.
+  const aiSqlReply=String.fromCharCode(96).repeat(3)+'sql\nSELECT 25 + 17;\n'+String.fromCharCode(96).repeat(3)+" 🙂 ✨";
+  await page.evaluate(reply=>{
+   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question:"Tulis satu query SQL SQLite, kemudian jalankan kod tersebut",answer:reply}}));
+   window.dispatchEvent(new Event("ba:ready-for-tools"));
+  },aiSqlReply);
+  await page.waitForFunction(()=>window.AksaraAICodeAgent.runs()===2,{timeout:45000});
+  const sqlAgentResult=await page.locator("#chat .code-engine-message.ai").last().innerText();
+  assert.match(sqlAgentResult,/SQL · A\.I\. EXECUTION BERJAYA/);
+  assert.match(sqlAgentResult,/42/);
+  assert.equal(aiChatRequests.length,networkBefore);
+
   await page.locator("#codeEngineStatus").click();
   await page.locator("#codeAiExecutionAllowed").uncheck();
   assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.enabled()),false);
+  assert.equal(await page.locator("#codeEngineStatus").getAttribute("data-ai-execution"),"off");
+  assert.match(await page.locator("#codeEngineStatusText").innerText(),/Ready/);
   await page.locator("#codeMenuClose").click();
+  await page.evaluate(reply=>{
+   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question:"Jalankan kod SQL ini",answer:reply}}));
+   window.dispatchEvent(new Event("ba:ready-for-tools"));
+  },aiSqlReply);
+  await page.waitForTimeout(180);
+  assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.runs()),2,"OFF must never execute code");
+
 
   assert.equal(aiChatRequests.length,0,"No AI requests in the entire code test");
 
@@ -325,7 +365,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.doesNotMatch(diagnosticOnly,/const nombor/,"Source code not shared by default");
   await page.locator("#codeBridgeIncludeSource").check();
   const withSource=await page.locator("#codeBridgePreview").inputValue();
-  assert.match(withSource,/console\.log/,"Source is optional and previewed");
+  assert.match(withSource,/SELECT 25 \+ 17;/,"Latest executed SQL source is optional and previewed");
   assert.equal(aiChatRequests.length,0);
   await page.locator("#codeBridgeConsent").check();
   assert.equal(await page.locator("#codeBridgeSubmit").isEnabled(),true);

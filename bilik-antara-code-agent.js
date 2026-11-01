@@ -25,7 +25,8 @@ css.textContent=[
 ].join("\n");document.head.appendChild(css);
 const named={javascript:"JavaScript",python:"Python",typescript:"TypeScript",sql:"SQL"};
 function extract(reply){
- const blocks=[...String(reply||"").matchAll(/(?:^|\n)\x60\x60\x60(javascript|js|typescript|ts|python|py|sql)[ \t]*\r?\n([\s\S]*?)\r?\n\x60\x60\x60[ \t]*(?=\n|$)/gi)];
+ // Chat style may append emoji after the closing fence. Keep exactly one valid executable block.
+ const blocks=[...String(reply||"").matchAll(/(?:^|\n)[ \t]*\x60\x60\x60(javascript|js|typescript|ts|python|py|sql)[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*\x60\x60\x60(?=\s|$)/gi)];
  if(blocks.length!==1)return null;
  const code=blocks[0][2].trim(),map={js:"javascript",ts:"typescript",py:"python"};
  const language=map[blocks[0][1].toLowerCase()]||blocks[0][1].toLowerCase();
@@ -42,19 +43,22 @@ function setPermission(value){
  allowed=Boolean(value);input.checked=allowed;
  if(!allowed){pending=null;controller?.abort();}
  status.textContent=allowed?"A.I. Code Execution · ARMED":"A.I. Code Execution · OFF";
+ window.dispatchEvent(new CustomEvent("aksara:ai-code-permission",{detail:{enabled:allowed,running:false}}));
 }
 input.addEventListener("change",()=>setPermission(input.checked));
 stop.addEventListener("click",()=>{pending=null;controller?.abort();});
 window.addEventListener("ba:answered",e=>{
  const d=e.detail||{};pending=null;
  if(!allowed||running||!requested(d.question))return;
- const job=extract(d.answer);if(!job)return;
+ const job=extract(d.answer);
+ if(!job){status.textContent="A.I. Execution · Tiada satu blok kod sah ditemui";return;}
  pending=job;status.textContent="A.I. mencadangkan "+named[job.language]+" · sedia jalankan";
 });
 async function execute(){
  if(!allowed||running||!pending||chat.active())return;
  const job=pending;pending=null;running=true;controller=new AbortController();stop.hidden=false;
  status.textContent="A.I. EXECUTING · "+named[job.language];
+ window.dispatchEvent(new CustomEvent("aksara:ai-code-permission",{detail:{enabled:true,running:true,language:job.language}}));
  const overlay=window.AksaraRuntimeOverlay?.open(job.language,()=>controller?.abort())||null;
  let report=null,output="";
  try{
@@ -74,6 +78,7 @@ async function execute(){
  }finally{
   overlay?.close();controller=null;running=false;stop.hidden=true;
   status.textContent=allowed?"A.I. Code Execution · ARMED":"A.I. Code Execution · OFF";
+  window.dispatchEvent(new CustomEvent("aksara:ai-code-permission",{detail:{enabled:allowed,running:false}}));
  }
  runs++;
  if(!chat.addLocalCode([{role:"user",content:"[Cadangan A.I. · "+named[job.language]+"]\n"+job.code},
