@@ -41,7 +41,7 @@ test("Bilik Antara ships a real playable MP4 without changing Studio or Novel",(
  assert.equal(built.toString("ascii",4,8),"ftyp","MP4 signature");
  const html=text("dist/bilik-antara.html");
  assert.match(html,/id="aksaraAmbientVideo"/);
- assert.ok(html.includes("bilik-antara-video.js?v=1"));
+ assert.ok(html.includes("bilik-antara-video.js?v=2"));
  assert.ok(html.includes("bilik-antara-video.css?v=1"));
  assert.match(text("dist/bilik-antara-video.js"),/voiceActive/);
  for(const page of ["studio-antara.html","perpustakaan-aksara.html"]){
