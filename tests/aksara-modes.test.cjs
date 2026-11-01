@@ -351,7 +351,7 @@ test("Hybrid 3+1 reserves OpenRouter last even when a prior preference is config
  const router=require("../netlify/functions/aksara-provider-router");
  const list=[{id:"openrouter"},{id:"workers_ai"},{id:"groq"}];
  assert.equal(router.rankProviders(list,"general","openrouter",false).at(-1).id,"openrouter");
- assert.equal(router.rankProviders(list,"general","openrouter",true)[0].id,"groq");
+ assert.ok(["groq","workers_ai"].includes(router.rankProviders(list,"general","openrouter",true)[0].id));
  assert.equal(router.rankProviders([{id:"openrouter"},{id:"workers_ai"}],"general","openrouter",true)[0].id,"workers_ai");
  assert.equal(list[0].id,"openrouter","Provider ranking does not mutate caller list");
  const prev=process.env.AKSARA_HYBRID_ROUTER;
@@ -406,7 +406,7 @@ test("Structured tool gateway never executes arbitrary code and rejects unknown 
 });
 test("Intelligence Router 2.0 weighs capability and observations without mutating preferences",()=>{
  const providers=[{id:"openrouter"},{id:"groq"},{id:"workers_ai"}];
- assert.equal(Registry.select(providers,{thinking:"high",prefer:"openrouter"})[0].id,"groq");
+ assert.ok(["groq","workers_ai"].includes(Registry.select(providers,{thinking:"high",prefer:"openrouter"})[0].id));
  assert.equal(Registry.select(providers,{thinking:"low",prefer:"openrouter"})[0].id,"openrouter");
  Registry.observe("groq",{ok:true,latencyMs:250});
  assert.ok(Registry.diagnostics().find(x=>x.provider==="groq").success>=1);

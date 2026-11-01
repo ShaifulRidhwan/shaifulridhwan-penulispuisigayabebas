@@ -21,4 +21,4 @@ jobs:
       - name: Offline hybrid 3+1 fallback regression
         run: |
           npm ci
-          node --test tests/aksara-hybrid-core.test.cjs tests/aksara-router.test.js tests/aksara-orcarouter.test.cjs
+          node --test tests/aksara-hybrid-core.test.cjs tests/aksara-router.test.js tests/aksara-workers-ai.test.cjs

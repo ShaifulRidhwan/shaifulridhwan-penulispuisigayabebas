@@ -48,6 +48,6 @@ test("Only Groq, OpenRouter and Cloudflare Workers AI are retained as text fallb
  }
  assert.deepEqual(Object.keys(registry.CAPS),["groq","openrouter","workers_ai"]);
  assert.match(src,/model:"openrouter\/free"/);
- assert.match(src,/model:"nvidia\/nemotron-3\.5-bolt-e4b"/);
+ assert.ok(src.includes('model:"@cf/zai-org/glm-4.7-flash"'));
  assert.ok(typeof router.complete==="function");
 });
