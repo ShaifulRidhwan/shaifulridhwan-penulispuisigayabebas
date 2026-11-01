@@ -440,7 +440,7 @@ exports.handler=async event=>{
   for(const file of media)userParts.push({inlineData:{mimeType:file.mimeType,data:file.data}});
   const contents=history.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}));
   contents.push({role:"user",parts:userParts});
-  const tools=flags.toolExecutionEnabled?getTools({...intent,search:intent.search||!!tiktokHandle}).filter(t=>flags.researchEnabled||!t.url_context):[];
+  const tools=flags.toolExecutionEnabled?getTools({...intent,search:intent.search||!!tiktokHandle}).filter(t=>!t.url_context||flags.researchEnabled||intent.hasLink):[];
   const model=chooseModel(baseModel,{...intent,depth:plan.thinkingLevel});
   const detailedIdentity=Identity.needsDetail(question)||intent.works||/\b(?:puisi|sajak|pantun|gurindam|penulisan|coder poet)\b/i.test(question);
   const creatorHumour=detailedIdentity&&/\b(?:usik|usikan|sindir|sindiran|gurau|bergurau|lawak|jenaka)\b/i.test(question);
@@ -467,7 +467,7 @@ exports.handler=async event=>{
     media.every(x=>["image/jpeg","image/png","image/webp"].includes(x.mimeType))&&
     Router.configured(cloudflareAI).some(p=>p.id==="openrouter")&&!tiktokHandle&&
     !(intent.sensitive||intent.hasLink);
-  // Text research can use the existing public references when Gemini is down.
+  // URL requests must reach Gemini URL Context before any text-only fallback.\n  // Other providers have no URL tool; they may only use separately fetched evidence.\n  // Text research can use the existing public references when Gemini is down.
   // Never claim a live web/URL tool ran on the fallback route.
   const textOnly=media.length===0&&!tiktokHandle&&(!privateContext||payload.contextFallback===true)&&!intent.sensitive;
   // A link never becomes proof by itself. Fallbacks may discuss verified owned-page
@@ -530,7 +530,7 @@ exports.handler=async event=>{
     (balancedTextOrdinal++%2===0);
   // Keep Gemini tools/multimodal independent; choose among three text
   // primaries by task, capability and warm-instance response health.
-  if(textOnly&&!tools.length&&!hybrid.geminiFirst&&!balancedGeminiTurn&&Router.enabled(cloudflareAI)&&
+  if(textOnly&&!intent.hasLink&&!tools.length&&!hybrid.geminiFirst&&!balancedGeminiTurn&&Router.enabled(cloudflareAI)&&
     (!hybrid.enabled||primaryTextProviders.length)){
     const fast=await useAlternative(hybrid.enabled?{prefer:hint,only:primaryTextProviders}:{prefer:hint});
     if(fast&&(fast.statusCode===200||fast.statusCode===499||streamed))return fast;
