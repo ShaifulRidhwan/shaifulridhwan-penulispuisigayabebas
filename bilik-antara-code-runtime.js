@@ -63,7 +63,7 @@ function sandboxBootstrap(){
     "interface String {length:number;}","interface Number {}","interface Boolean {}","interface RegExp {}",
     "interface Array<T> {length:number; [index:number]:T; map<U>(fn:(value:T,index:number)=>U):U[]; reduce(fn:(previous:T,current:T)=>T):T; reduce<U>(fn:(previous:U,current:T)=>U,initial:U):U; push(...items:T[]):number;}",
     "interface ReadonlyArray<T> {readonly length:number; readonly [index:number]:T;}",
-    "declare const console:{log(...values:any[]):void;info(...values:any[]):void;warn(...values:any[]):void;error(...values:any[]):void;table(value:any):void;};",
+    "declare const console:{log(...values:any[]):void;info(...values:any[]):void;warn(...values:any[]):void;error(...values:any[]):void;table(value:any):void;assert(condition:any,...values:any[]):void;time(label?:string):void;timeEnd(label?:string):void;};",
     "declare const Math:{[name:string]:any};","declare const JSON:{stringify(value:any):string;parse(value:string):any;};"
    ].join("\n");
    const options={noLib:true,strict:true,target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.None,noEmit:true,skipLibCheck:true};
@@ -104,10 +104,23 @@ function sandboxBootstrap(){
    if(!job||typeof job.source!=="string")return;
    const lang=job.language,started=Date.now();
    try{
-    let result;
+    let result,assertionFailures=0;
     if(lang==="javascript"||lang==="typescript"){
      const code=lang==="typescript"?compileTypeScript(job.source):job.source;
+     const clocks=new Map();
      const logger={
+      assert:(condition,...args)=>{
+       if(condition)return;
+       const message=args.length?args.map(printable).join(" "):"Assertion failed";
+       emit("stderr",message);assertionFailures++;
+       if(diagnostics.length<8)diagnostics.push({severity:"error",code:"ASSERTION_FAILED",message:message.slice(0,450)});
+      },
+      time:(label="default")=>{clocks.set(String(label).slice(0,80),performance.now());},
+      timeEnd:(label="default")=>{
+       const name=String(label).slice(0,80),start=clocks.get(name);
+       if(start===undefined){emit("stderr","Timer tidak dijumpai: "+name);return;}
+       add(name+": "+(performance.now()-start).toFixed(2)+" ms");clocks.delete(name);
+      },
       log:(...args)=>add(args.map(printable).join(" ")),
       info:(...args)=>add(args.map(printable).join(" ")),
       warn:(...args)=>emit("stderr",args.map(printable).join(" ")),
@@ -131,6 +144,10 @@ function sandboxBootstrap(){
       // Prepare statements incrementally; never materialize unbounded result tables.
       for(const statement of db.iterateStatements(job.source)){
        if(++statementCount>MAX_STMTS)throw Error("Maksimum "+MAX_STMTS+" pernyataan SQL bagi satu pelaksanaan.");
+       if(job.sqlParams!==undefined){
+        if(statementCount!==1)throw Error("Parameter SQL hanya disokong bagi satu pernyataan.");
+        statement.bind(job.sqlParams);
+       }
        const columns=statement.getColumnNames();
        if(columns.length){
         results++;add(columns.join(" | "));
@@ -157,6 +174,7 @@ function sandboxBootstrap(){
      result=await py.runPythonAsync(job.source);
     }else throw Error("Bahasa belum disokong.");
     if(result!==undefined&&result!==null)add(printable(result));
+    if(assertionFailures){finish(false,assertionFailures+" ujian assert gagal.");return;}
     finish(true,"");
    }catch(error){
     const message=diagnostics.length?String(error?.message||error).slice(0,1400):report(error,lang);
@@ -189,7 +207,7 @@ function sandboxBootstrap(){
     });
    };
    worker.onerror=e=>{e.preventDefault();done({ok:false,output:"",error:"Worker runtime gagal. Semak polisi browser atau sambungan CDN.",diagnostics:[]});};
-   worker.postMessage({language:job.language,source:job.source});
+   worker.postMessage({language:job.language,source:job.source,sqlParams:job.sqlParams});
   }catch(error){done({ok:false,output:"",error:String(error?.message||error).slice(0,1800),diagnostics:[]});}
  },{once:true});
  say("","boot",{});
@@ -207,6 +225,16 @@ function run(language,source,options={}){
   if(!LANGUAGES.includes(language)){reject(Error("Runtime belum tersedia."));return;}
   if(typeof source!=="string"||!source.trim()){reject(Error("Masukkan kod dahulu."));return;}
   if(source.length>MAX_SOURCE){reject(Error("Kod maksimum "+MAX_SOURCE+" aksara."));return;}
+  let sqlParams;
+  if(options.sqlParams!==undefined){
+   const params=options.sqlParams;
+   if(language!=="sql"||!Array.isArray(params)||params.length>16||
+      params.some(x=>x!==null&&typeof x!=="string"&&!(typeof x==="number"&&Number.isFinite(x)))||
+      JSON.stringify(params).length>4000){
+     reject(Error("Parameter SQL mesti array maksimum 16 nilai ringkas."));return;
+   }
+   sqlParams=params;
+  }
   const id="code-"+(root.crypto?.randomUUID?.()||Math.random().toString(36).slice(2));
   const frame=document.createElement("iframe");
   frame.setAttribute("sandbox","allow-scripts");
@@ -226,7 +254,7 @@ function run(language,source,options={}){
    if(event.source!==frame.contentWindow||event.data?.aksaraCodeV1!==true)return;
    const data=event.data;
    if(data.type==="boot"&&data.id===""){
-    frame.contentWindow.postMessage({type:"execute",id,language,source},"*");
+    frame.contentWindow.postMessage({type:"execute",id,language,source,sqlParams},"*");
    }else if(data.id===id&&data.type==="loading"){
     options.onProgress?.(String(data.detail||"Memuatkan runtime…"));
    }else if(data.id===id&&data.type==="done"&&clean()){
