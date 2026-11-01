@@ -85,3 +85,20 @@ test("Owner-only audio and visual model adapters accept bounded inputs when expl
  assert.equal(used.length,2);
  assert.ok(used[0].includes("whisper")&&used[1].includes("llava"));
 });
+
+test("Netlify owned-page evidence fetches allowlisted public origin and blocks other hosts",async()=>{
+ const {ownedPageEvidence}=await import("./src/owned-page-evidence.mjs");
+ const original=globalThis.fetch;let calls=[];
+ globalThis.fetch=async url=>{calls.push(String(url));return new Response("<html><title>AKSARA</title><body>Puisi dan karya</body></html>",{status:200,headers:{"content-type":"text/html"}});};
+ try{
+  const req=new Request("https://aksara-apps.example.workers.dev/.netlify/functions/bilik-antara");
+  const env={ASSETS:{fetch:async()=>{throw Error("wrong asset origin");}}};
+  const page=await ownedPageEvidence(req,env,"Review https://shaifulridhwan-penulispuisigayabebas.netlify.app/");
+  assert.ok(page?.text.includes("Puisi dan karya"));
+  assert.equal(calls.length,1);
+  assert.equal(calls[0],"https://shaifulridhwan-penulispuisigayabebas.netlify.app/index.html");
+  assert.equal(await ownedPageEvidence(req,env,"https://untrusted.example.com/"),null);
+  assert.equal(await ownedPageEvidence(req,env,"https://shaifulridhwan-penulispuisigayabebas.netlify.app/private"),null);
+  assert.equal(calls.length,1);
+ }finally{globalThis.fetch=original;}
+});
