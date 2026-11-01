@@ -15,3 +15,11 @@ test("named examples and new writing stay distinguished",()=>{
  assert.equal(P.sample("Beri contoh puisi WANITA YANG DIAM dan maksud").title,"WANITA YANG DIAM");
  assert.equal(P.sample("Tulis puisi baru"),null);
 });
+
+test("Each archive entry has a specific meaning rather than a generic placeholder",()=>{
+ for(const poem of P.index){
+  const sample=P.sample("Apa maksud puisi "+poem.title);
+  assert.equal(sample.title,poem.title);
+  assert.doesNotMatch(sample.meaning,/Tafsiran awal: baca pertentangan/);
+ }
+});

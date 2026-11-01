@@ -46,3 +46,42 @@ test("Queue indexes only curated public poems and never writes private text",asy
  await consumeArchiveQueue({messages:[message]},env);
  assert.equal(events.at(-1),"ack");assert.equal(events[0].metadata.visibility,"public");
 });
+
+test("Owner-only Browser Run and public R2/Queues archive are executable after binding",async()=>{
+ const {createHash}=await import("node:crypto");
+ const token="synthetic-fixture-long-owner-token-not-a-secret";
+ const digest=createHash("sha256").update(token).digest("hex");
+ const calls=[],url="https://apps.example.com/api/aksara-owner-tools";
+ const env={
+  AKSARA_OWNER_TOOL_TOKEN_SHA256:digest,
+  AKSARA_BROWSER_RUN_ENABLED:"true",AKSARA_ARCHIVE_ENABLED:"true",
+  BROWSER:{quickAction:async(_type,input)=>{calls.push(input.url);return new Response("# Home");}},
+  AKSARA_R2:{put:async(key,data)=>{calls.push(key);assert.ok(data.includes("TRAGEDI SESEORANG MENCINTAIMU"));}},
+  AKSARA_QUEUE:{send:async msg=>calls.push(msg.kind)}
+ };
+ const make=(body,authorized=true)=>new Request(url,{method:"POST",headers:{
+  "x-aksara-owner-token":authorized?token:"wrong-token","content-type":"application/json"},body:JSON.stringify(body)});
+ assert.equal((await ownerTool(make({action:"browser-homepage"},false),env)).status,403);
+ const browser=await ownerTool(make({action:"browser-homepage",url:"http://127.0.0.1/private"}),env);
+ assert.equal(browser.status,200);assert.deepEqual(calls[0],"https://shaifulridhwan-penulispuisigayabebas.netlify.app/");
+ const archive=await ownerTool(make({action:"archive-public-poem",title:"TRAGEDI SESEORANG MENCINTAIMU"}),env);
+ assert.equal(archive.status,200);assert.ok(calls.includes("index-public-poem"));
+ assert.equal((await ownerTool(make({action:"archive-public-poem",title:"private-not-allowed"}),env)).status,404);
+});
+test("Owner-only audio and visual model adapters accept bounded inputs when explicitly enabled",async()=>{
+ const {createHash}=await import("node:crypto");
+ const token="synthetic-fixture-long-owner-token-not-a-secret";
+ const digest=createHash("sha256").update(token).digest("hex");
+ const used=[];
+ const ai={run:async(model,input)=>{used.push(model);return model.includes("whisper")?{text:"Ujian suara"}:{description:"Imej ujian"};}};
+ const base="https://apps.example.com/api/aksara-owner-tools";
+ const env={AKSARA_OWNER_TOOL_TOKEN_SHA256:digest,AKSARA_MEDIA_AI_ENABLED:"true"};
+ const request=body=>new Request(base,{method:"POST",headers:{"x-aksara-owner-token":token},
+  body:JSON.stringify(body)});
+ const media=Buffer.from("safe-synthetic-payload".repeat(8)).toString("base64");
+ const voice=await ownerTool(request({action:"transcribe-audio",audioBase64:media}),env,ai);
+ const image=await ownerTool(request({action:"inspect-image",imageBase64:media}),env,ai);
+ assert.equal(voice.status,200);assert.equal(image.status,200);
+ assert.equal(used.length,2);
+ assert.ok(used[0].includes("whisper")&&used[1].includes("llava"));
+});
