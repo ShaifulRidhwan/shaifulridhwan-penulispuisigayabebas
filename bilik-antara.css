@@ -702,8 +702,8 @@ position:absolute;z-index:0;inset:0;overflow:hidden;
 .world-art{
 position:absolute;inset:-2.5%;
   will-change:transform;
- background-image:url("./bilik-antara-bg-desktop.webp?v=2"),url("./bilik-antara-cover-art.jpg?v=2");
- background-size:cover;background-position:center 48%;background-repeat:no-repeat;
+ background-image:url("./aksara-background-cahaya-gelap.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e);
+ background-size:auto 100%,cover;background-position:center center,center;background-repeat:no-repeat;
  transform:scale(1.035);transform-origin:center;
  animation:worldBreath 22s ease-in-out infinite alternate;
 }
@@ -3034,8 +3034,9 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 /* Mobile LCP: avoid downloading a second, hidden JPEG wallpaper behind the responsive WebP. Desktop remains unchanged. */
 @media(max-width:760px){
   .world-art{
-    background-image:url("./bilik-antara-bg-mobile.webp?v=2");
-    background-position:center 48%;
+    background-image:url("./aksara-background-cahaya-gelap.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e);
+    background-size:cover,cover;
+    background-position:center 48%,center;
   }
 }
 
