@@ -903,3 +903,19 @@ main>.workspace{margin-top:18px}
 
 /* No duplicate signature footer: reserve only a quiet end gap below the final gallery. */
 .studio-shell main{padding-bottom:clamp(22px,3.5vw,40px)}
+
+/* Shared AKSARA celestial backdrop: keep Studio forms and glass above the art. */
+body{background:#080b13}
+body::before{
+ content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+ background-image:linear-gradient(180deg,rgba(3,7,15,.38),rgba(3,7,15,.66)),
+   url("./aksara-senja-bulan-desktop.webp?v=1");
+ background-position:center;background-size:cover;background-repeat:no-repeat;
+}
+.studio-shell{position:relative;z-index:1}
+@media(max-width:760px){
+ body::before{
+  background-image:linear-gradient(180deg,rgba(3,7,15,.32),rgba(3,7,15,.64)),
+    url("./aksara-senja-bulan-mobile.webp?v=1");
+ }
+}
