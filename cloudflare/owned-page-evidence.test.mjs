@@ -21,11 +21,17 @@ test("reads only public bundled page HTML for owned Worker URL",async()=>{
  assert.match(page.text,/HTML statik/);
  assert.doesNotMatch(page.text,/private fake token/);
 });
-test("legacy Netlify homepage points to bundled safe asset, not remote fetch",async()=>{
+test("legacy Netlify homepage uses allowlisted origin and not bundled Worker asset",async()=>{
  const {env,calls}=assets();
- const page=await ownedPageEvidence(request,env,"https://shaifulridhwan-penulispuisigayabebas.netlify.app/");
- assert.ok(page);
- assert.deepEqual(calls,["/index.html"]);
+ const original=globalThis.fetch;
+ let remote=[];
+ globalThis.fetch=async url=>{remote.push(String(url));return new Response("<html><title>AKSARA</title><body>Laman puisi</body></html>",{headers:{"content-type":"text/html"}});};
+ try{
+  const page=await ownedPageEvidence(request,env,"https://shaifulridhwan-penulispuisigayabebas.netlify.app/");
+  assert.ok(page);
+  assert.deepEqual(calls,[]);
+  assert.deepEqual(remote,["https://shaifulridhwan-penulispuisigayabebas.netlify.app/index.html"]);
+ }finally{globalThis.fetch=original;}
 });
 test("external URLs, private hosts, query credentials and other paths never trigger fetch",async()=>{
  const {env,calls}=assets();
