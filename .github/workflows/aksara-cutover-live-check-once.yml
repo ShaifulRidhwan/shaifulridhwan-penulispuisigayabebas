@@ -1,0 +1,21 @@
+name: AKSARA one-time live cutover validation
+on:
+  push:
+    branches:
+      - verify/aksara-cloudflare-cutover-live-20261101
+    paths:
+      - cloudflare/verify-cutover-live.mjs
+      - .github/workflows/aksara-cutover-live-check-once.yml
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify Cloudflare and Netlify served versions without AI inference
+        run: node cloudflare/verify-cutover-live.mjs
