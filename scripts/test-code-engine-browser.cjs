@@ -28,6 +28,11 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   let one=await oneLine();
   assert.equal(one.overflow,false,"Mobile header overflow");
   assert.ok(Math.max(...one.ys)-Math.min(...one.ys)<12,"Status must be one line at 390px: "+JSON.stringify(one));
+  const placement=await page.evaluate(()=>{
+   const names=["#voiceLive","#codeEngineStatus","#connection"];
+   return names.map(q=>document.querySelector(q).getBoundingClientRect().left);
+  });
+  assert.ok(placement[0]<placement[1]&&placement[1]<placement[2],"Voice Chat | Code Engine | Multi A.I. order must be preserved");
   await page.setViewportSize({width:320,height:760});
   one=await oneLine();
   assert.equal(one.overflow,false,"320px viewport overflow");
@@ -71,19 +76,25 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
 
   // Set C icons must be genuinely distinct and animated without moving any glass surfaces.
   const icons=await page.evaluate(()=>{
-   const ring=document.querySelector("#connection .multi-ai-rings");
+   const net=document.querySelector("#connection .multi-ai-network");
    const core=document.querySelector("#codeEngineStatus .code-engine-core");
-   return {rings:!!ring,processor:!!core?.querySelector("svg rect.code-core-center"),
-    ringAnimation:getComputedStyle(ring).animationName,
+   const brain=document.querySelector("#thoughtMode .thinking-brain");
+   return {sparkle:!!net?.querySelector(".network-spark"),
+    processor:!!core?.querySelector("svg rect.code-core-center"),
+    brain:!!brain?.querySelector(".brain-circuits"),
+    networkAnimation:getComputedStyle(net.querySelector("svg")).animationName,
     coreAnimation:getComputedStyle(core.querySelector("svg")).animationName,
-    ringSize:ring.getBoundingClientRect().width,coreSize:core.getBoundingClientRect().width};
+    brainAnimation:getComputedStyle(brain).animationName,
+    netSize:net.getBoundingClientRect().width,coreSize:core.getBoundingClientRect().width};
   });
-  assert.equal(icons.rings,true);
+  assert.equal(icons.sparkle,true,"Multi A.I. must have sparkle network");
   assert.equal(icons.processor,true);
-  assert.notEqual(icons.ringAnimation,"none");
+  assert.equal(icons.brain,true,"Thinking Mode must show futuristic neural brain");
+  assert.notEqual(icons.networkAnimation,"none");
   assert.notEqual(icons.coreAnimation,"none");
-  assert.notEqual(icons.ringAnimation,icons.coreAnimation);
-  assert.ok(icons.ringSize>=14&&icons.coreSize>=14);
+  assert.notEqual(icons.brainAnimation,"none");
+  assert.notEqual(icons.networkAnimation,icons.coreAnimation);
+  assert.ok(icons.netSize>=14&&icons.coreSize>=14);
 
   // Use the exact Multi A.I. glass modal primitives, not a visually separate popup.
   await page.locator("#connection").click();
