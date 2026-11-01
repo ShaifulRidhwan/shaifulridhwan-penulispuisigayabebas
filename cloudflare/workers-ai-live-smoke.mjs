@@ -50,3 +50,5 @@ try{
 }catch(e){console.log("STREAM_INFERENCE_ERROR",e.name);failures++;}
 console.log("RESULT",failures===0?"LIVE MODEL TEST PASSED":failures+" checks failed or unverified");
 process.exitCode=failures?1:0;
+
+// Diagnosed 2026-11-01: do not conflate a Gateway configuration with a healthy Workers AI model.

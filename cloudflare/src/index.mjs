@@ -103,7 +103,10 @@ function guardedWorkersAI(env,request){
    throw Object.assign(Error(details.error||"Workers AI unavailable"),{
     status,retryAfterSeconds:details.retryAfterSeconds||0,reason:"provider_budget"});
   }
-  const id=String(env.AKSARA_AI_GATEWAY_ID||"").trim();
+  // Isolate Gateway setup errors from the native model path.
+  // Merely creating a gateway must not silently disable the third brain.
+  const id=env.AKSARA_AI_GATEWAY_ENABLED==="true"
+   ?String(env.AKSARA_AI_GATEWAY_ID||"").trim():"";
   // Optional gateway: never cache private dialogue or log request/response
   // payloads. Gateway configuration is exclusively server-controlled.
   return id?env.AI.run(model,input,{gateway:{id,skipCache:true,collectLog:false}})

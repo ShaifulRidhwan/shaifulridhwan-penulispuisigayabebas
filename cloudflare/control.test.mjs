@@ -163,7 +163,7 @@ test("Workers AI Gateway is opt-in, private, and never caches a user conversatio
  const quota={fetch:async()=>Response.json({ok:true})};
  const env={
   AKSARA_RATE_SALT:"safe-only-deterministic-salt-for-test-case",
-  AKSARA_FREE_FALLBACKS:"true",AKSARA_AI_GATEWAY_ID:"aksara-private",
+  AKSARA_FREE_FALLBACKS:"true",AKSARA_AI_GATEWAY_ID:"aksara-private",AKSARA_AI_GATEWAY_ENABLED:"true",
   AI:{run:async(...args)=>{calls.push(args);return {choices:[{message:{content:"Aku Aksara."},finish_reason:"stop"}]};}},
   AKSARA_CONTROL:{idFromName:()=>({}),get:()=>quota},ASSETS:{fetch:async()=>Response.json({})}
  };
@@ -173,4 +173,21 @@ test("Workers AI Gateway is opt-in, private, and never caches a user conversatio
  assert.equal(res.status,200);
  assert.equal(calls.length,1);
  assert.deepEqual(calls[0][2],{gateway:{id:"aksara-private",skipCache:true,collectLog:false}});
+});
+
+test("AI Gateway configuration alone never replaces the native Workers AI inference path",async()=>{
+ const worker=(await import("./src/index.mjs")).default;
+ const used=[],origin="https://apps.example.com",quota={fetch:async()=>Response.json({ok:true})};
+ const env={
+  AKSARA_RATE_SALT:"safe-only-deterministic-salt-for-test-case",
+  AKSARA_FREE_FALLBACKS:"true",AKSARA_AI_GATEWAY_ID:"unverified-gateway",
+  AI:{run:async(...args)=>{used.push(args);return {choices:[{message:{content:"Aku Aksara."},finish_reason:"stop"}]};}},
+  AKSARA_CONTROL:{idFromName:()=>({}),get:()=>quota},ASSETS:{fetch:async()=>Response.json({})}
+ };
+ const res=await worker.fetch(new Request(origin+"/.netlify/functions/bilik-antara",{
+  method:"POST",headers:{origin,"content-type":"application/json"},
+  body:JSON.stringify({question:"Maksud epistemologi?"})}),env,{});
+ assert.equal(res.status,200);
+ assert.equal(used.length,1);
+ assert.equal(used[0].length,2,"Unverified Gateway must not be passed to AI binding");
 });
