@@ -31,6 +31,8 @@ jobs:
         run: node --test cloudflare/control.test.mjs
       - name: Verify all seven capability adapters stay private and fail closed
         run: node --test cloudflare/capabilities.test.mjs
+      - name: Test safe public owned-page URL review fallback
+        run: node --test cloudflare/owned-page-evidence.test.mjs
       - name: Verify Cloudflare Gemini-specific time budget and truthful status
         run: node --test tests/aksara-cloudflare-gemini-latency.test.cjs
       - name: Test public poem examples and interpretations
