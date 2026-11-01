@@ -1,45 +1,77 @@
-/* AKSARA Code Engine v0.1. Runs code in a sandboxed opaque-origin iframe. No AI API. */
+/* AKSARA Code Engine v0.2. Sandboxed opaque-origin iframe + disposable Web Worker.
+ * No AI API; worker prevents tight loops from blocking the chat UI. */
 (function(root){
 "use strict";
-const MAX_SOURCE=12000;
+const MAX_SOURCE=12000,MAX_OUTPUT=12000;
 function sandboxBootstrap(){
  "use strict";
- const lines=[];
+ function workerEntrypoint(){
+  "use strict";
+  const lines=[];
+  function add(value){
+   const total=lines.reduce((n,x)=>n+x.length+1,0);
+   if(total<10000)lines.push(String(value).slice(0,Math.min(4000,10000-total)));
+  }
+  const printable=x=>{try{return typeof x==="string"?x:JSON.stringify(x)??String(x);}catch(_){return String(x);}};
+  self.onmessage=async event=>{
+   const job=event.data;
+   if(!job||typeof job.source!=="string")return;
+   try{
+    let result;
+    if(job.language==="javascript"){
+     const logger={
+      log:(...args)=>add(args.map(printable).join(" ")),
+      info:(...args)=>add(args.map(printable).join(" ")),
+      warn:(...args)=>add(args.map(printable).join(" ")),
+      error:(...args)=>add(args.map(printable).join(" "))
+     };
+     const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+     result=await new AsyncFunction("console",'"use strict";\n'+job.source)(logger);
+    }else if(job.language==="python"){
+     self.postMessage({type:"loading",detail:"Memuatkan Python WebAssembly…"});
+     importScripts("https://cdn.jsdelivr.net/pyodide/v0.27.8/full/pyodide.js");
+     const py=await loadPyodide({indexURL:"https://cdn.jsdelivr.net/pyodide/v0.27.8/full/"});
+     py.setStdout({batched:add});py.setStderr({batched:add});
+     result=await py.runPythonAsync(job.source);
+    }else throw Error("Bahasa belum disokong.");
+    if(result!==undefined&&result!==null)add(printable(result));
+    self.postMessage({type:"done",ok:true,output:lines.join("\n")||"(Tiada output)"});
+   }catch(error){
+    self.postMessage({type:"done",ok:false,output:lines.join("\n"),error:String(error?.message||error).slice(0,1800)});
+   }
+  };
+ }
  const say=(id,type,payload)=>parent.postMessage(Object.assign({aksaraCodeV1:true,id,type},payload),"*");
- const add=value=>{if(lines.join("\n").length<10000)lines.push(String(value).slice(0,4000));};
- const repr=x=>{try{return typeof x==="string"?x:JSON.stringify(x)??String(x);}catch(_){return String(x);}};
- window.addEventListener("message",async event=>{
+ window.addEventListener("message",event=>{
   const job=event.data;
   if(!job||job.type!=="execute"||typeof job.id!=="string")return;
+  let worker=null,url=null,settled=false;
+  function done(payload){
+   if(settled)return;
+   settled=true;
+   say(job.id,"done",payload);
+   if(worker)worker.terminate();
+   if(url)URL.revokeObjectURL(url);
+  }
   try{
-   let result;
-   if(job.language==="javascript"){
-    const logger={log:(...a)=>add(a.map(repr).join(" ")),info:(...a)=>add(a.map(repr).join(" ")),warn:(...a)=>add(a.map(repr).join(" ")),error:(...a)=>add(a.map(repr).join(" "))};
-    const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
-    result=await new AsyncFunction("console",'"use strict";\n'+job.source)(logger);
-   }else if(job.language==="python"){
-    say(job.id,"loading",{detail:"Memuatkan Python WebAssembly…"});
-    await new Promise((resolve,reject)=>{
-     const script=document.createElement("script");
-     script.src="https://cdn.jsdelivr.net/pyodide/v0.27.8/full/pyodide.js";
-     script.onload=resolve;script.onerror=()=>reject(Error("Pyodide CDN tidak dapat dimuatkan."));
-     document.head.appendChild(script);
-    });
-    const py=await loadPyodide({indexURL:"https://cdn.jsdelivr.net/pyodide/v0.27.8/full/"});
-    py.setStdout({batched:add});py.setStderr({batched:add});
-    result=await py.runPythonAsync(job.source);
-   }else throw Error("Bahasa ini belum disokong.");
-   if(result!==undefined&&result!==null)add(repr(result));
-   say(job.id,"done",{ok:true,output:lines.join("\n")||"(Tiada output)"});
-  }catch(error){say(job.id,"done",{ok:false,output:lines.join("\n"),error:String(error?.message||error).slice(0,1800)});}
+   url=URL.createObjectURL(new Blob(["("+workerEntrypoint.toString()+")();"],{type:"text/javascript"}));
+   worker=new Worker(url);
+   worker.onmessage=e=>{
+    if(e.data?.type==="loading")say(job.id,"loading",{detail:String(e.data.detail||"Memuatkan runtime…").slice(0,90)});
+    else if(e.data?.type==="done")done({ok:e.data.ok===true,output:String(e.data.output||"").slice(0,12000),error:String(e.data.error||"").slice(0,1800)});
+   };
+   worker.onerror=e=>{e.preventDefault();done({ok:false,output:"",error:"Worker runtime gagal. Semak polisi browser atau sambungan CDN."});};
+   worker.postMessage({language:job.language,source:job.source});
+  }catch(error){done({ok:false,output:"",error:String(error?.message||error).slice(0,1800)});}
  },{once:true});
  say("","boot",{});
 }
-function doc(language){
- const p=language==="python";
- const csp=p?
-  "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' https://cdn.jsdelivr.net; connect-src https://cdn.jsdelivr.net; worker-src blob:; img-src 'none'; style-src 'none'; base-uri 'none'; form-action 'none'":
-  "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; worker-src 'none'; img-src 'none'; style-src 'none'; base-uri 'none'; form-action 'none'";
+function documentFor(language){
+ const python=language==="python";
+ // JavaScript: no network; Python: outbound CDN only to load pinned Pyodide assets.
+ const csp=python?
+  "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net; connect-src https://cdn.jsdelivr.net; worker-src blob:; img-src 'none'; style-src 'none'; base-uri 'none'; form-action 'none'":
+  "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; worker-src blob:; img-src 'none'; style-src 'none'; base-uri 'none'; form-action 'none'";
  return '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="'+csp+'"></head><body><script>('+sandboxBootstrap.toString()+')();<\/script></body></html>';
 }
 function run(language,source,options={}){
@@ -58,7 +90,8 @@ function run(language,source,options={}){
    if(finished)return false;
    finished=true;clearTimeout(timer);
    window.removeEventListener("message",message);
-   options.signal?.removeEventListener("abort",abort);frame.remove();return true;
+   options.signal?.removeEventListener("abort",abort);
+   frame.remove();return true;
   };
   const abort=()=>{if(clean())reject(Error("Pelaksanaan dihentikan."));};
   const message=event=>{
@@ -69,19 +102,19 @@ function run(language,source,options={}){
    }else if(data.id===id&&data.type==="loading"){
     options.onProgress?.(String(data.detail||"Memuatkan runtime…"));
    }else if(data.id===id&&data.type==="done"&&clean()){
-    resolve({ok:data.ok===true,output:String(data.output||"").slice(0,12000),error:String(data.error||"").slice(0,1800),language});
+    resolve({ok:data.ok===true,output:String(data.output||"").slice(0,MAX_OUTPUT),error:String(data.error||"").slice(0,1800),language});
    }
   };
   if(options.signal?.aborted){reject(Error("Pelaksanaan dihentikan."));return;}
   window.addEventListener("message",message);
   options.signal?.addEventListener("abort",abort,{once:true});
   timer=setTimeout(()=>{if(clean())reject(Error("Had masa dicapai. Pelaksanaan dihentikan."));},language==="python"?45000:7000);
-  frame.srcdoc=doc(language);document.body.appendChild(frame);
+  frame.srcdoc=documentFor(language);document.body.appendChild(frame);
  });
 }
 async function probe(){
  try{const r=await run("javascript","console.log(6 * 7)");return r.ok&&r.output.trim()==="42";}
  catch(_){return false;}
 }
-root.AksaraCodeRuntime=Object.freeze({run,probe,available:["javascript","python"],version:"0.1"});
+root.AksaraCodeRuntime=Object.freeze({run,probe,available:["javascript","python"],version:"0.2"});
 })(window);
