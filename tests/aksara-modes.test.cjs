@@ -457,8 +457,8 @@ test("Pipeline phase 2 defaults to local session saving and optional memory, wit
  assert.match(html, /const SESSION_PREF_STORAGE="bilik-antara-session-save-pref-v1"/);
  assert.match(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,ui\.remember\.checked\?"on":"off"\)/);
  assert.doesNotMatch(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,"off"\)/);
- assert.match(html, /bilik-antara-session-utils\.js\?v=1/);
- assert.match(html, /bilik-antara-suite\.js\?v=14/);
+ assert.match(html, /bilik-antara-session-utils\.js\?v=2/);
+ assert.match(html, /bilik-antara-suite\.js\?v=15/);
  assert.match(suite, /let memory=read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
  assert.match(suite, /const disabled=\{enabled:false,text:""\}/);
  assert.match(suite, /write\(KEYS\.memory,disabled\)/);
@@ -588,8 +588,8 @@ test("Session archive titles render as compact headings and preserve functional 
  assert.match(css,/\.ba-drawer \.ba-session button\.ba-session-title\{/);
  assert.match(css,/-webkit-backdrop-filter:none;backdrop-filter:none;/);
  assert.match(css,/background:transparent;box-shadow:none;/);
- assert.match(html,/bilik-antara-suite\.css\?v=7/);
- assert.match(html,/bilik-antara-suite\.js\?v=14/);
+ assert.match(html,/bilik-antara-suite\.css\?v=8/);
+ assert.match(html,/bilik-antara-suite\.js\?v=15/);
 });
 
 test("Optional memory starter stays editable and is never automatically saved",()=>{
