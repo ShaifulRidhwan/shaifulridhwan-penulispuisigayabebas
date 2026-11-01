@@ -80,7 +80,7 @@ function configured(cloudflareAI=null){
   ? !!(cloudflareAI&&typeof cloudflareAI.run==="function")
   : !!(process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true")));
 }
-function enabled(){return configured().length>0;}
+function enabled(cloudflareAI=null){return configured(cloudflareAI).length>0;}
 function quotaKind(message){
  const text=String(message||"");
  if(/per[-_ ]day|daily|tokensperday|requestsperday|free-models-per-day/i.test(text))return "daily";
