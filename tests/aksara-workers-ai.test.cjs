@@ -57,6 +57,8 @@ test("GLM inference uses adaptive completion caps, without truncating the suppli
   await Router.complete({cloudflareAI:ai,system:"Identiti Aksara",history:[],question:"Jelaskan ringkas",reasoningLevel:"medium",task:"explain",deadline:Date.now()+20000});
   await Router.complete({cloudflareAI:ai,system:"Identiti Aksara",history:[],question:"Analisis seni bina",reasoningLevel:"high",task:"technical",deadline:Date.now()+20000});
   assert.deepEqual(seen.map(v=>v.max_completion_tokens),[650,1100,1700]);
+  assert.deepEqual(seen.map(v=>v.chat_template_kwargs.enable_thinking),[false,false,true]);
+  assert.ok(seen.every(v=>v.chat_template_kwargs.clear_thinking===true));
   assert.ok(seen.every(v=>v.store===false));
  }finally{
   if(env===undefined)delete process.env.AKSARA_FREE_FALLBACKS;else process.env.AKSARA_FREE_FALLBACKS=env;

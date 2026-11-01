@@ -68,7 +68,10 @@ async function runWorkersAI(ai,model,body){
  const ceiling=effort==="high"?1700:effort==="medium"?1100:650;
  const output=await ai.run(model,{messages:body.messages,temperature:body.temperature,
   max_completion_tokens:Math.min(ceiling,Math.max(320,body.max_tokens||650)),stream:!!body.stream,
-  reasoning_effort:effort,store:false});
+  // Cloudflare GLM model schema: enable_thinking, not reasoning_effort,
+  // is the authoritative switch. Avoid hidden reasoning on lightweight turns.
+  chat_template_kwargs:{enable_thinking:effort==="high",clear_thinking:true},
+  store:false});
  if(body.stream){
   if(!output||typeof output.getReader!=="function")throw Object.assign(Error("Workers AI stream unavailable"),{status:502});
   return new Response(output,{headers:{"content-type":"text/event-stream"}});
