@@ -31,6 +31,7 @@ const langName=l=>({javascript:"JavaScript",python:"Python",typescript:"TypeScri
 function detect(source){
  const full=String(source||"").trim();
  if(!full||full.length>12000)return null;
+ if(full.startsWith("[AKSARA CODE BRIDGE]"))return null; // Explicitly consented AI report is not executable code.
  // Only an entire fenced block is treated as executable; explanatory prose is ordinary chat.
  const fenced=/^```(javascript|js|python|py|typescript|ts|sql)\s*\n([\s\S]*?)\n```$/i.exec(full);
  if(fenced){
