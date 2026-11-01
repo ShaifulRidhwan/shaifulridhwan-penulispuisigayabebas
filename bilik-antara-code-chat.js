@@ -110,7 +110,16 @@ run.addEventListener("click",async()=>{
    controller.signal.addEventListener("abort",abort,{once:true});
   });
   const header=langName(found.language)+" · "+(result.ok?"BERJAYA":"RALAT");
-  answer=header+"\nOUTPUT:\n"+(result.output||"(Tiada output)")+(result.error?"\nERROR: "+result.error:"")+"\nTempoh eksekusi: "+executeTime+" ms\nDilaksanakan secara setempat tanpa API AI.";
+  const messages=(result.diagnostics||[]).map(d=>
+   (d.line?"Baris "+d.line+(d.column?", kolum "+d.column:"")+" · ":"")+
+   String(d.code||"RUNTIME_ERROR")+": "+String(d.message||"Ralat tidak dikenali").slice(0,450));
+  answer=header+"\nOUTPUT:\n"+(result.output||"(Tiada output)")+
+   (messages.length?"\nDIAGNOSTIK:\n"+messages.join("\n"):"")+
+   (result.error&&!messages.length?"\nERROR: "+result.error:"")+
+   (result.truncated?"\nNota: output telah dihadkan untuk kestabilan.":"")+
+   "\nTempoh runtime: "+result.runtimeMs+" ms"+
+   "\nHad: "+result.limits.maxSource+" aksara kod · "+(result.limits.timeoutMs/1000)+"s maksimum"+
+   "\nDilaksanakan dalam sandbox setempat tanpa API AI.";
  }catch(error){
   answer=langName(found.language)+" · RUNTIME DIHENTIKAN / GAGAL\n"+String(error?.message||error).slice(0,500)+"\nTiada API AI digunakan.";
  }finally{session?.close();}
