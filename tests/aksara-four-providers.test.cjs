@@ -157,3 +157,14 @@ test("Four-brain server responses require no external model call",async()=>{
   if(key===undefined)delete process.env.GEMINI_API_KEY;else process.env.GEMINI_API_KEY=key;
  }
 });
+
+
+test("Cloudflare Workers AI displays an expandable model row with truthful binding status",()=>{
+ const css=fs.readFileSync("bilik-antara.css","utf8");
+ assert.match(html,/const expandable=id==="openrouter"\|\|id==="workers_ai"/);
+ assert.match(html,/if\(id==="workers_ai"\)\{/);
+ assert.match(html,/GLM-4\.7-Flash/);
+ assert.match(html,/live\?"Connected":state==="ready"\?"Ready"/);
+ assert.match(html,/group\.open=hasPreviousGroups&&openGroups\.has\(id\)/);
+ assert.match(css,/\.multi-ai-provider-details > \.multi-ai-expand-trigger::after/);
+});
