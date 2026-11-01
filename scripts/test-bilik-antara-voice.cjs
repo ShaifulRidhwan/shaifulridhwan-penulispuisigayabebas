@@ -35,8 +35,8 @@ test("Regional voice selector is removed, leaving only colloquial Malaysian Mala
  assert.doesNotMatch(html,/id="voiceDialect"|voice-dialect-bar|bilik-antara-voice-locale/);
  assert.doesNotMatch(css,/\.voice-dialect-bar/);
  assert.doesNotMatch(js,/dialectChoice|dialectSelect|voiceLocale|voiceDialect/);
-  assert.match(html,/>Jom Voice Chat<\/button>/);
-  assert.match(js,/liveButton\.textContent=liveActive\?"Sedang berbual":"Jom Voice Chat"/);
+  assert.match(html,/>Voice Chat<\/button>/);
+  assert.match(js,/liveButton\.textContent=liveActive\?"Sedang berbual":"Voice Chat"/);
   assert.match(css,/\.conversation-head #voiceLive::before/);
  assert.match(css,/@keyframes aksaraVoiceWave/);
  assert.match(css,/\.conversation \.conversation-head\{display:flex/);

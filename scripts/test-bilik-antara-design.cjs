@@ -151,8 +151,10 @@ test("CSS braces and quoted strings remain balanced",()=>{
 test("Feature icon consolidates sessions, performance, studio and keeps privacy actions",()=>{
  const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
  const suiteCSS=fs.readFileSync("bilik-antara-suite.css","utf8");
- assert.match(html,/<summary aria-label="Buka Ciri dan Fungsi Aksara"/);
+ assert.match(html,/<summary class="portal-trigger" aria-label="Buka Portal Aksara"/);
  assert.match(html,/<div class="settings-title">Ciri &amp; Fungsi<\/div>/);
+  assert.match(html,/<span>PORTAL<\/span><svg/,"Grid icon must sit to the RIGHT of PORTAL");
+  assert.doesNotMatch(html,/class="nav-link aksara-nav-link" href="studio-antara\.html"/,"Studio must remain in Portal");
  for(const id of ["featureSessions","featureMetrics","featureStudio","privacySettings","rememberChat","contextFallback","clearChat","voiceDictate","ideaLedger","forgetIdeas"]){
   assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,"Feature or privacy control missing/duplicated: "+id);
  }
@@ -164,8 +166,8 @@ test("Feature icon consolidates sessions, performance, studio and keeps privacy 
  assert.match(suite,/head\.after\(status\)/);
  assert.doesNotMatch(suite,/head\.after\(toolbar\)|ba-toolbar|ba-tab/);
  assert.doesNotMatch(suiteCSS,/ba-toolbar|ba-tab/);
- assert.match(css,/\.conversation-head:has\(#settingsPanel\[open\]\)/);
- assert.match(css,/\.conversation #settingsPanel \.feature-hub-item/);
+ assert.match(css,/\.topbar:has\(#settingsPanel\[open\]\)/);
+ assert.match(css,/\.topbar #settingsPanel \.feature-hub-item/);
  assert.match(css,/\.conversation>\.messages\.is-welcome/);
 });
 
@@ -175,21 +177,21 @@ test("Feature glass veil blurs entire chat including the uncovered left gutter",
  const overlay=css.slice(css.lastIndexOf("/* Feature hub focus:"));
  assert.ok(overlay.includes("position:absolute;")&&overlay.includes("inset:0;"),"Veil must cover full conversation surface");
  assert.ok(overlay.includes("z-index:14;")&&overlay.includes("backdrop-filter:blur(8px)"),"Veil must blur the underlying background");
- assert.match(overlay,/\.conversation:has\(#settingsPanel\[open\]\)>\.feature-focus-veil/);
- assert.match(overlay,/\.conversation-head:has\(#settingsPanel\[open\]\)/,"Open settings must remain above veil");
+ assert.match(overlay,/body:not\(\.voice-focus\):has\(#settingsPanel\[open\]\) \.conversation>\.feature-focus-veil/);
+ assert.match(overlay,/\.topbar:has\(#settingsPanel\[open\]\)/,"Portal must remain above veil");
  assert.match(css,/\.multi-ai-dialog::backdrop/,"Other native modal backdrops must remain intact");
  assert.doesNotMatch(css,/\.app-shell>\.conversation>\.messages\s*\{\s*filter:blur\(4px\)/,"Avoid double-blurring messages only");
 });
 
 test("Header chips stay optically aligned and feature interactions have gentle golden motion",()=>{
  assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
- assert.match(css,/\.conversation-head #voiceLive,\s*\.conversation-head #connection,\s*\.conversation-head #settingsPanel > summary\s*\{/);
+ assert.match(css,/\.conversation-head #voiceLive,\s*\.conversation-head #connection,\s*\.topbar #settingsPanel > summary\s*\{/);
  assert.match(css,/height:42px;\s*min-height:42px!important;\s*max-height:42px/);
  assert.match(css,/@media\(max-width:760px\)\{[\s\S]*?\.conversation-head #voiceLive,\.conversation-head #connection/);
  assert.match(css,/@keyframes aksaraFeaturesEnter/);
  assert.match(css,/@keyframes aksaraFeaturesExit/);
- assert.match(css,/\.conversation #settingsPanel\.is-closing \.settings-card/);
- assert.match(css,/\.conversation-head #settingsPanel > summary:focus-visible/);
+ assert.match(css,/\.topbar #settingsPanel\.is-closing \.settings-card/);
+ assert.match(css,/\.topbar #settingsPanel > summary:focus-visible/);
  assert.match(css,/-webkit-tap-highlight-color:transparent/);
  assert.match(css,/@keyframes aksaraPrivacyReveal/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
@@ -204,15 +206,15 @@ test("Rounded Aksara controls share Liquid Glass, preserve contrast and cap mobi
  assert.match(css,/\/\* Liquid Glass · clearer optical glass/);
  for(const selector of [".topbar .brand",".topbar .nav-link",
   ".conversation-head #voiceLive",".conversation-head #connection",
-  ".conversation-head #settingsPanel>summary",".conversation .starter",
-  ".conversation #settingsPanel .feature-hub-item"]){
+  ".topbar #settingsPanel>summary",".conversation .starter",
+  ".topbar #settingsPanel .feature-hub-item"]){
   assert.ok(css.includes(selector),"Missing common glass surface: "+selector);
  }
  assert.match(css,/--lg-reflection:/);
  assert.match(css,/linear-gradient\(145deg,rgba\(255,247,224,\.035\),rgba\(125,167,205,\.018\)\)/);
  assert.match(css,/inset 0 1px 0 var\(--lg-reflection\)/);
  assert.match(css,/\.conversation-head #connection\.ready/);
- assert.match(css,/\.conversation #settingsPanel \[?\.settings-card|\.conversation #settingsPanel \.settings-card/);
+ assert.match(css,/\.topbar #settingsPanel \[?\.settings-card|\.topbar #settingsPanel \.settings-card/);
  assert.match(css,/\.conversation \.composer:focus-within/);
  assert.match(css,/\.messages \.message\.user \.bubble/);
  assert.match(css,/backdrop-filter:blur\(2px\)/);
@@ -271,12 +273,12 @@ test("Consistent DM Sans chat typography and independent animated voice icon",()
  assert.match(css,/letter-spacing:-\.008em/);
  assert.match(css,/\.messages \.message\.ai \.bubble/);
  assert.match(css,/\.messages \.message\.user \.bubble/);
- assert.match(html,/>Jom Voice Chat<\/button>/);
+ assert.match(html,/>Voice Chat<\/button>/);
  assert.match(css,/\.conversation-head #voiceLive::before/);
  assert.match(css,/@keyframes aksaraVoiceWave/);
  assert.match(css,/#voiceLive\[aria-pressed="true"\]::before/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
- assert.match(voice,/liveButton\.textContent=liveActive\?"Sedang berbual":"Jom Voice Chat"/);
+ assert.match(voice,/liveButton\.textContent=liveActive\?"Sedang berbual":"Voice Chat"/);
  assert.match(html,/src="bilik-antara-voice\.js\?v=\d+"/);
  assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.match(css,/\.conversation-head button\.multi-ai-trigger \.dot/);

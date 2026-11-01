@@ -82,8 +82,10 @@ test("Katalog curated masih guna pautan buku selamat dan simpanan setempat",()=>
  assert.doesNotMatch(page,/fetchArchive|gutendex\.com|copyright=false|archiveBooks/);
 });
 
-test("Navigasi Novel masuk terus pembaca, Karya ke katalog",()=>{
- assert.match(bilik,/href="perpustakaan-aksara\.html">Novel<\/a>/);
+test("Navigasi Novel melalui Portal masuk ke katalog, Karya ke pembaca",()=>{
+ assert.match(bilik,/<a class="feature-hub-item" id="featureLibrary" href="perpustakaan-aksara\.html">/);
+ assert.match(bilik,/<span>PORTAL<\/span><svg/);
+ assert.doesNotMatch(bilik,/class="nav-link aksara-nav-link" href="perpustakaan-aksara\.html"/);
  assert.match(bilik,/<strong>Novel · Perpustakaan AKSARA<\/strong>/);
  assert.match(index,/href="antara-cahaya-dan-gelap\.html\?baca=1">Baca Novel<\/a>/);
  assert.match(novel,/URLSearchParams\(window\.location\.search\)\.get\("baca"\)==="1"/);

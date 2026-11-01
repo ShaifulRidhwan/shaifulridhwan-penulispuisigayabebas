@@ -99,7 +99,7 @@ const setWave=(value)=>{waveform.style.setProperty("--voice-intensity",String(Ma
 const setButtonState=()=>{
   liveButton.setAttribute("aria-pressed",liveActive?"true":"false");
   liveButton.disabled=liveActive;
-  liveButton.textContent=liveActive?"Sedang berbual":"Jom Voice Chat";
+  liveButton.textContent=liveActive?"Sedang berbual":"Voice Chat";
   panel.hidden=!liveActive;
   dictate.disabled=liveActive||!speechAPI;
   micButton.textContent=micEnabled?"Tutup mikrofon":"Buka mikrofon";
@@ -494,7 +494,7 @@ async function startLive(){
         return;
       }
       if(connectionAttempts>=MAX_RECONNECT_ATTEMPTS){
-        showNotice("Aku dah try tiga kali, tapi connection masih tak stabil. Tekan Jom Voice Chat untuk mula sesi baru.");
+        showNotice("Aku dah try tiga kali, tapi connection masih tak stabil. Tekan Voice Chat untuk mula sesi baru.");
         await closeLive("Aku tak dapat connect balik sendiri.");return;
       }
       connectionAttempts++;

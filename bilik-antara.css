@@ -1754,7 +1754,7 @@ padding:6px 10px
   .conversation-head .voice-action{min-height:27px;padding:4px 7px;font-size:9px}
   .conversation-head .chat-controls{gap:3px}
   .conversation-head .connection{padding:4px 6px;font-size:9px}
-  .conversation-head .settings>summary{width:28px;height:28px}
+  .topbar .settings>summary{width:28px;height:28px}
   .voice-panel{
     top:42px;bottom:auto;
     height:min(310px,calc(100% - 130px));
@@ -1767,7 +1767,7 @@ padding:6px 10px
   .conversation-head .voice-toolbar{gap:3px}
   .conversation-head .voice-action{font-size:9px;padding:4px 5px}
   .conversation-head .connection{padding:4px 4px;font-size:8px}
-  .conversation-head .settings>summary{width:26px;height:26px}
+  .topbar .settings>summary{width:26px;height:26px}
   .voice-panel{top:38px;height:min(300px,calc(100% - 120px))}
 }
 
@@ -1951,7 +1951,7 @@ html.chat-portrait-ready .message.ai::before{
 /* Aksara Glass Focus: shared translucent controls and scoped backdrop. */
 .conversation button:not(.ba-backdrop),
 .topbar button,
-.conversation .settings>summary,
+.topbar .settings>summary,
 .conversation .starter{
   background-color:rgba(15,21,33,.12);
   border-color:rgba(233,205,158,.34);
@@ -1962,12 +1962,12 @@ html.chat-portrait-ready .message.ai::before{
 }
 .conversation button:hover:not(:disabled),
 .topbar button:hover:not(:disabled),
-.conversation .settings>summary:hover{
+.topbar .settings>summary:hover{
   background-color:rgba(221,195,152,.13);
   border-color:rgba(246,213,163,.59);
 }
 .conversation button:focus-visible,.topbar button:focus-visible,
-.conversation .settings>summary:focus-visible{
+.topbar .settings>summary:focus-visible{
   outline:2px solid #f2c984;outline-offset:2px;
 }
 
@@ -1987,7 +1987,7 @@ body.voice-focus .footer-note{
 }
 body.voice-focus .world-scene{filter:blur(3px) brightness(.82)}
 /* Focus settings card only. */
-body:not(.voice-focus):has(#settingsPanel[open]) .topbar{
+body:not(.voice-focus):has(#settingsPanel[open]) .conversation-head{
   filter:blur(4px) brightness(.75);
   transition:filter .22s ease;
 }
@@ -2334,21 +2334,21 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 }
 
 /* Focused glass settings: a tidy panel rather than an oversized rounded card. */
-.conversation #settingsPanel .settings-card{
+.topbar #settingsPanel .settings-card{
  border-radius:12px!important;
  width:min(345px,calc(100vw - 36px));
  padding:16px!important;
  max-height:min(65dvh,490px);
  scrollbar-width:thin;
 }
-.conversation #settingsPanel .settings-card .settings-actions{
+.topbar #settingsPanel .settings-card .settings-actions{
  gap:8px;align-items:center;
 }
-.conversation #settingsPanel .settings-card .voice-text-access{
+.topbar #settingsPanel .settings-card .voice-text-access{
  margin-top:8px;
 }
-.conversation #settingsPanel .settings-card .outline-btn,
-.conversation #settingsPanel .settings-card .voice-action{
+.topbar #settingsPanel .settings-card .outline-btn,
+.topbar #settingsPanel .settings-card .voice-action{
  border-radius:999px!important;
 }
 /* Voice output loudness controls actual Web Audio gain, not just visual UI. */
@@ -2367,12 +2367,12 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .voice-panel .voice-volume output{min-width:33px;text-align:right;font-variant-numeric:tabular-nums}
 .voice-panel.is-minimized .voice-volume{display:none}
 @media(max-width:390px){
- .conversation #settingsPanel .settings-card{padding:13px!important}
+ .topbar #settingsPanel .settings-card{padding:13px!important}
  .voice-panel .voice-volume{gap:6px;font-size:10px;padding:4px 2px}
 }
 
 /* Compact dictate pill in privacy settings, matching neighboring action. */
-.conversation #settingsPanel .settings-card #voiceDictate{
+.topbar #settingsPanel .settings-card #voiceDictate{
  box-sizing:border-box!important;
  width:auto!important;max-width:max-content!important;
  min-height:38px!important;height:38px!important;
@@ -2476,14 +2476,14 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 
 
 /* Unified feature hub: privacy controls remain in the original icon. */
-.conversation-head:has(#settingsPanel[open]){z-index:16;isolation:isolate}
-.conversation #settingsPanel>summary{width:38px;height:38px;cursor:pointer;touch-action:manipulation}
-.conversation #settingsPanel>summary svg{width:19px;height:19px;stroke-width:1.7;stroke-linejoin:round}
-.conversation #settingsPanel[open]>summary{color:#f3d6a0;border-color:rgba(245,209,153,.76);background:rgba(204,171,117,.12)}
-.conversation #settingsPanel .settings-card{width:min(365px,calc(100vw - 28px));max-height:min(68dvh,545px);padding:14px!important;overflow-y:auto;overscroll-behavior:contain}
-.conversation #settingsPanel .settings-title{margin:1px 2px 12px;font-size:14px;letter-spacing:.035em}
+.topbar:has(#settingsPanel[open]){z-index:16;isolation:isolate}
+.topbar #settingsPanel>summary{width:38px;height:38px;cursor:pointer;touch-action:manipulation}
+.topbar #settingsPanel>summary svg{width:19px;height:19px;stroke-width:1.7;stroke-linejoin:round}
+.topbar #settingsPanel[open]>summary{color:#f3d6a0;border-color:rgba(245,209,153,.76);background:rgba(204,171,117,.12)}
+.topbar #settingsPanel .settings-card{width:min(365px,calc(100vw - 28px));max-height:min(68dvh,545px);padding:14px!important;overflow-y:auto;overscroll-behavior:contain}
+.topbar #settingsPanel .settings-title{margin:1px 2px 12px;font-size:14px;letter-spacing:.035em}
 .feature-hub{display:grid;gap:8px}
-.conversation #settingsPanel .feature-hub-item{
+.topbar #settingsPanel .feature-hub-item{
  display:grid;grid-template-columns:27px minmax(0,1fr) 12px;align-items:center;gap:10px;
  width:100%;min-height:59px;padding:10px 11px;text-align:left;text-decoration:none;
  border:1px solid rgba(223,195,155,.28);border-radius:13px;
@@ -2492,10 +2492,10 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
  cursor:pointer;transition:border-color .2s ease,background-color .2s ease;
 }
-.conversation #settingsPanel .feature-hub-item:hover,.conversation #settingsPanel .feature-hub-item:focus-visible{
+.topbar #settingsPanel .feature-hub-item:hover,.topbar #settingsPanel .feature-hub-item:focus-visible{
  background-color:rgba(233,193,134,.12);border-color:rgba(240,209,165,.66)
 }
-.conversation #settingsPanel .feature-hub-item svg{width:22px;height:22px;stroke:#e9c78e;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;fill:none}
+.topbar #settingsPanel .feature-hub-item svg{width:22px;height:22px;stroke:#e9c78e;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;fill:none}
 .feature-hub-item>span:nth-child(2){display:grid;gap:3px;min-width:0}
 .feature-hub-item strong{font:600 12px/1.3 'DM Sans',sans-serif;letter-spacing:.025em}
 .feature-hub-item small{display:block;color:rgba(219,223,230,.7);font:400 10px/1.35 'DM Sans',sans-serif}
@@ -2506,27 +2506,27 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .feature-privacy>summary::after{content:"+";font-size:19px;font-weight:400;color:#d7be96}
 .feature-privacy[open]>summary::after{content:"−"}
 .feature-privacy-content{padding:8px 5px 9px}
-.conversation .feature-privacy .settings-row{margin:13px 0;align-items:flex-start}
-.conversation .feature-privacy .settings-row input{flex:0 0 16px;margin-top:3px}
-.conversation .feature-privacy .settings-row span{font-weight:500}
-.conversation .feature-privacy .settings-actions{margin-top:9px}
+.topbar .feature-privacy .settings-row{margin:13px 0;align-items:flex-start}
+.topbar .feature-privacy .settings-row input{flex:0 0 16px;margin-top:3px}
+.topbar .feature-privacy .settings-row span{font-weight:500}
+.topbar .feature-privacy .settings-actions{margin-top:9px}
 .conversation>.messages.is-welcome{padding-top:clamp(14px,2.5vw,22px)}
 .conversation>.ba-notification{position:relative;z-index:2}
 @media(max-width:760px){
- .conversation #settingsPanel>summary{width:36px!important;height:36px!important}
- .conversation #settingsPanel .settings-card{right:0;top:42px;max-height:min(67dvh,510px)}
- .conversation #settingsPanel .feature-hub-item{min-height:61px}
+ .topbar #settingsPanel>summary{width:36px!important;height:36px!important}
+ .topbar #settingsPanel .settings-card{right:0;top:42px;max-height:min(67dvh,510px)}
+ .topbar #settingsPanel .feature-hub-item{min-height:61px}
 }
 @media(max-width:390px){
- .conversation #settingsPanel>summary{width:34px!important;height:34px!important}
- .conversation #settingsPanel .settings-card{width:min(350px,calc(100vw - 18px));right:-2px}
+ .topbar #settingsPanel>summary{width:34px!important;height:34px!important}
+ .topbar #settingsPanel .settings-card{width:min(350px,calc(100vw - 18px));right:-2px}
 }
 
 
 /* 2026-10-28 · Balanced header controls and quieter feature-menu motion. */
 .conversation-head #voiceLive,
 .conversation-head #connection,
-.conversation-head #settingsPanel > summary{
+.topbar #settingsPanel > summary{
  box-sizing:border-box;
  height:42px;
  min-height:42px!important;
@@ -2551,31 +2551,31 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .conversation-head #connection #connectionText{
  font:600 12px/1.25 'DM Sans',system-ui,sans-serif!important;
 }
-.conversation-head #settingsPanel > summary{
+.topbar #settingsPanel > summary{
  display:grid;place-items:center;width:42px!important;
  padding:0!important;
  outline-offset:3px;
 }
-.conversation-head #settingsPanel > summary:focus:not(:focus-visible){
+.topbar #settingsPanel > summary:focus:not(:focus-visible){
  outline:none!important;
 }
-.conversation-head #settingsPanel > summary:focus-visible{
+.topbar #settingsPanel > summary:focus-visible{
  outline:2px solid #f2c984!important;outline-offset:3px;
 }
-.conversation-head #settingsPanel > summary:active,
+.topbar #settingsPanel > summary:active,
 .conversation-head #voiceLive:active,
 .conversation-head #connection:active{transform:scale(.97)}
-.conversation-head #settingsPanel[open] > summary{
+.topbar #settingsPanel[open] > summary{
  color:#f1d6a7;
  box-shadow:0 0 0 1px rgba(240,198,131,.19),0 0 20px rgba(217,174,102,.1),
             inset 0 1px 0 rgba(255,244,217,.11);
 }
-.conversation #settingsPanel .settings-card{
+.topbar #settingsPanel .settings-card{
  transform-origin:calc(100% - 21px) top;
  animation:aksaraFeaturesEnter .34s cubic-bezier(.18,.8,.25,1) both;
  will-change:opacity,transform;
 }
-.conversation #settingsPanel.is-closing .settings-card{
+.topbar #settingsPanel.is-closing .settings-card{
  animation:aksaraFeaturesExit .2s cubic-bezier(.4,0,.9,.7) both;
  pointer-events:none;
 }
@@ -2587,34 +2587,34 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  from{opacity:1;transform:translate3d(0,0,0) scale(1)}
  to{opacity:0;transform:translate3d(0,-6px,0) scale(.985)}
 }
-.conversation #settingsPanel .feature-hub-item{
+.topbar #settingsPanel .feature-hub-item{
  -webkit-tap-highlight-color:transparent;
  transition:background-color .25s ease,border-color .25s ease,
             transform .3s cubic-bezier(.18,.8,.25,1),box-shadow .3s ease!important;
 }
-.conversation #settingsPanel .feature-hub-item:hover{
+.topbar #settingsPanel .feature-hub-item:hover{
  transform:translate3d(2px,0,0);
  box-shadow:inset 0 1px 0 rgba(255,246,219,.1),0 8px 23px rgba(0,0,0,.11);
 }
-.conversation #settingsPanel .feature-hub-item:active{transform:scale(.988)}
-.conversation #settingsPanel .feature-hub-item:focus:not(:focus-visible){
+.topbar #settingsPanel .feature-hub-item:active{transform:scale(.988)}
+.topbar #settingsPanel .feature-hub-item:focus:not(:focus-visible){
  outline:none;
 }
-.conversation #settingsPanel .feature-hub-item:focus-visible{
+.topbar #settingsPanel .feature-hub-item:focus-visible{
  outline:2px solid #f2c984;outline-offset:2px;
 }
-.conversation #settingsPanel .feature-privacy>summary{
+.topbar #settingsPanel .feature-privacy>summary{
  -webkit-tap-highlight-color:transparent;
  transition:color .25s ease,background-color .25s ease;
 }
-.conversation #settingsPanel .feature-privacy>summary:hover{color:#fff0d2}
-.conversation #settingsPanel .feature-privacy>summary::after{
+.topbar #settingsPanel .feature-privacy>summary:hover{color:#fff0d2}
+.topbar #settingsPanel .feature-privacy>summary::after{
  content:"+";display:inline-block;transition:transform .3s cubic-bezier(.2,.8,.2,1);
 }
-.conversation #settingsPanel .feature-privacy[open]>summary::after{
+.topbar #settingsPanel .feature-privacy[open]>summary::after{
  content:"+";transform:rotate(45deg)
 }
-.conversation #settingsPanel .feature-privacy[open] .feature-privacy-content{
+.topbar #settingsPanel .feature-privacy[open] .feature-privacy-content{
  animation:aksaraPrivacyReveal .3s cubic-bezier(.2,.8,.2,1) both;
  transform-origin:top center;
 }
@@ -2624,28 +2624,28 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 }
 @media(max-width:760px){
  .conversation-head #voiceLive,.conversation-head #connection,
- .conversation-head #settingsPanel>summary{height:40px;min-height:40px!important;max-height:40px}
+ .topbar #settingsPanel>summary{height:40px;min-height:40px!important;max-height:40px}
  .conversation-head #voiceLive{font-size:11px!important;padding:0 10px!important}
  .conversation-head #connection{padding:0 10px!important;font-size:11px!important}
  .conversation-head #connection #connectionText{font-size:11px!important}
- .conversation-head #settingsPanel>summary{width:40px!important}
+ .topbar #settingsPanel>summary{width:40px!important}
 }
 @media(max-width:390px){
  .conversation-head #voiceLive,.conversation-head #connection,
- .conversation-head #settingsPanel>summary{height:38px;min-height:38px!important;max-height:38px}
+ .topbar #settingsPanel>summary{height:38px;min-height:38px!important;max-height:38px}
  .conversation-head #voiceLive{font-size:10px!important;padding:0 8px!important}
  .conversation-head #connection{padding:0 8px!important}
  .conversation-head #connection #connectionText{font-size:10px!important}
- .conversation-head #settingsPanel>summary{width:38px!important}
+ .topbar #settingsPanel>summary{width:38px!important}
 }
 @media(prefers-reduced-motion:reduce){
- .conversation #settingsPanel .settings-card,
- .conversation #settingsPanel.is-closing .settings-card,
- .conversation #settingsPanel .feature-privacy[open] .feature-privacy-content{animation:none!important}
- .conversation-head #voiceLive,.conversation-head #connection,.conversation-head #settingsPanel>summary,
- .conversation #settingsPanel .feature-hub-item,
- .conversation #settingsPanel .feature-privacy>summary::after{transition:none!important}
- .conversation #settingsPanel .feature-hub-item:hover{transform:none}
+ .topbar #settingsPanel .settings-card,
+ .topbar #settingsPanel.is-closing .settings-card,
+ .topbar #settingsPanel .feature-privacy[open] .feature-privacy-content{animation:none!important}
+ .conversation-head #voiceLive,.conversation-head #connection,.topbar #settingsPanel>summary,
+ .topbar #settingsPanel .feature-hub-item,
+ .topbar #settingsPanel .feature-privacy>summary::after{transition:none!important}
+ .topbar #settingsPanel .feature-hub-item:hover{transform:none}
 }
 
 
@@ -2660,9 +2660,9 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 /* Same single glass recipe for every pill: practically clear, not tinted grey. */
 :is(.topbar .brand,.topbar .nav-link,
  .conversation-head #voiceLive,.conversation-head #connection,
- .conversation-head #settingsPanel>summary,
- .conversation .starter,.conversation #settingsPanel .feature-hub-item,
- .conversation #settingsPanel .outline-btn,.conversation #settingsPanel #voiceDictate,
+ .topbar #settingsPanel>summary,
+ .conversation .starter,.topbar #settingsPanel .feature-hub-item,
+ .topbar #settingsPanel .outline-btn,.topbar #settingsPanel #voiceDictate,
  .voice-panel .voice-stop,.voice-panel .voice-session-controls button,
  .multi-ai-dialog button:not(:disabled)){
  background:linear-gradient(145deg,rgba(255,247,224,.035),rgba(125,167,205,.018))!important;
@@ -2675,16 +2675,16 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 }
 :is(.topbar .brand,.topbar .nav-link,
  .conversation-head #voiceLive,.conversation-head #connection,
- .conversation-head #settingsPanel>summary,.conversation .starter,
- .conversation #settingsPanel .feature-hub-item,
- .conversation #settingsPanel .outline-btn,.conversation #settingsPanel #voiceDictate):hover{
+ .topbar #settingsPanel>summary,.conversation .starter,
+ .topbar #settingsPanel .feature-hub-item,
+ .topbar #settingsPanel .outline-btn,.topbar #settingsPanel #voiceDictate):hover{
  background:linear-gradient(145deg,rgba(255,247,224,.075),rgba(125,167,205,.035))!important;
  border-color:rgba(255,230,192,.57)!important;
  box-shadow:inset 0 1px 0 rgba(255,251,237,.19),0 3px 12px rgba(0,4,13,.095)!important;
 }
 .conversation-head #connection.ready{border-color:rgba(173,231,202,.35)!important}
 .conversation-head #voiceLive{color:#f6e4c8!important}
-.conversation-head #settingsPanel[open]>summary{
+.topbar #settingsPanel[open]>summary{
  border-color:rgba(249,219,171,.65)!important;
  box-shadow:inset 0 1px 0 rgba(255,250,226,.17),0 0 14px rgba(230,183,110,.09)!important;
 }
@@ -2701,7 +2701,7 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  font:500 12px/1.4 'DM Sans',system-ui,sans-serif!important;
  letter-spacing:0!important;
 }
-.conversation-head #settingsPanel>summary{
+.topbar #settingsPanel>summary{
  box-sizing:border-box;
  width:38px!important;height:38px!important;
  min-height:38px!important;max-height:38px!important;
@@ -2712,15 +2712,15 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  transition:color .24s ease,border-color .24s ease,transform .28s ease,box-shadow .24s ease;
 }
 /* Readable menus, significantly clearer than the former dark sheet. */
-.conversation #settingsPanel .settings-card,.multi-ai-dialog{
+.topbar #settingsPanel .settings-card,.multi-ai-dialog{
  background:linear-gradient(150deg,rgba(23,31,45,.36),rgba(9,14,24,.43))!important;
  border-color:rgba(244,217,176,.37)!important;
  box-shadow:inset 0 1px 0 rgba(255,244,224,.12),0 14px 35px rgba(0,4,13,.21)!important;
  -webkit-backdrop-filter:blur(6px) saturate(1.08)!important;
  backdrop-filter:blur(6px) saturate(1.08)!important;
 }
-.conversation #settingsPanel .feature-hub-item{border-radius:15px}
-.conversation #settingsPanel .feature-hub-item:hover{transform:translate3d(2px,-1px,0)}
+.topbar #settingsPanel .feature-hub-item{border-radius:15px}
+.topbar #settingsPanel .feature-hub-item:hover{transform:translate3d(2px,-1px,0)}
 /* The composer and Send keep the artwork visible, even while active. */
 .conversation .composer{
  background:linear-gradient(135deg,rgba(25,35,49,.065),rgba(8,15,28,.045))!important;
@@ -2770,10 +2770,10 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
   font-size:11.5px!important;
  }
  .conversation-head #connection #connectionText{font-size:11.5px!important}
- .conversation-head #settingsPanel>summary{
+ .topbar #settingsPanel>summary{
   width:37px!important;height:37px!important;min-height:37px!important;max-height:37px!important;
  }
- .conversation #settingsPanel .settings-card,.multi-ai-dialog{
+ .topbar #settingsPanel .settings-card,.multi-ai-dialog{
   -webkit-backdrop-filter:blur(4px) saturate(1.06)!important;
   backdrop-filter:blur(4px) saturate(1.06)!important;
  }
@@ -2785,7 +2785,7 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  .conversation-head #connection #connectionText{font-size:10px!important}
 }
 @media(prefers-reduced-motion:reduce){
- .conversation #settingsPanel .feature-hub-item:hover{transform:none!important}
+ .topbar #settingsPanel .feature-hub-item:hover{transform:none!important}
 }
 
 /* AI and human bubbles now share one near-clear glass language. */
@@ -3175,7 +3175,7 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 body:not(.voice-focus):has(#settingsPanel[open]) .world-scene{
   filter:blur(10px) brightness(.82);
 }
-body:not(.voice-focus) .conversation:has(#settingsPanel[open]){
+body:not(.voice-focus):has(#settingsPanel[open]) .conversation{
   -webkit-backdrop-filter:blur(14px) saturate(1.10)!important;
   backdrop-filter:blur(14px) saturate(1.10)!important;
 }
@@ -3198,20 +3198,66 @@ body:not(.voice-focus) .conversation:has(#settingsPanel[open]){
   backdrop-filter:blur(8px);
   transition:opacity .2s ease,visibility .2s ease;
 }
-body:not(.voice-focus) .conversation:has(#settingsPanel[open])>.feature-focus-veil{
+body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-veil{
   visibility:visible;
   opacity:1;
   pointer-events:auto;
 }
-body:not(.voice-focus) .conversation-head:has(#settingsPanel[open]){
+body:not(.voice-focus) .topbar:has(#settingsPanel[open]){
   position:relative;
   z-index:16;
 }
-body:not(.voice-focus) .conversation-head:has(#settingsPanel[open]) .voice-toolbar,
-body:not(.voice-focus) .conversation-head:has(#settingsPanel[open]) #connection{
+body:not(.voice-focus):has(#settingsPanel[open]) .conversation-head .voice-toolbar,
+body:not(.voice-focus):has(#settingsPanel[open]) .conversation-head #connection{
   filter:blur(3px) brightness(.78);
   pointer-events:none;
 }
 @media(prefers-reduced-motion:reduce){
   .conversation>.feature-focus-veil{transition:none}
+}
+
+
+/* PORTAL NAVIGATION: retain the exact feature hub & settings controls, relocate to top-right. */
+.topbar .nav-actions{margin-left:auto;justify-content:flex-end;overflow:visible}
+.topbar #settingsPanel{z-index:22;position:relative;flex:0 0 auto}
+.topbar #settingsPanel>summary.portal-trigger{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ gap:6px!important;box-sizing:border-box;min-width:0;width:auto!important;height:36px!important;
+ min-height:36px!important;max-height:36px!important;padding:7px 11px!important;
+ border-radius:999px!important;
+ border:1px solid rgba(220,196,154,.26)!important;
+ background:linear-gradient(145deg,rgba(255,247,224,.035),rgba(125,167,205,.018))!important;
+ -webkit-backdrop-filter:blur(5px) saturate(1.12)!important;backdrop-filter:blur(5px) saturate(1.12)!important;
+ box-shadow:inset 0 1px 0 rgba(255,241,214,.1)!important;
+ color:#f6e9d6;font:500 12px/1.2 'DM Sans',system-ui,sans-serif!important;
+ letter-spacing:0;white-space:nowrap;cursor:pointer;list-style:none;
+}
+.topbar #settingsPanel>summary.portal-trigger svg{order:2;display:block;flex:none;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7}
+.topbar #settingsPanel>summary.portal-trigger span{order:1}
+.topbar #settingsPanel>summary.portal-trigger:hover,.topbar #settingsPanel[open]>summary.portal-trigger{
+ color:#f3d6a0;background:rgba(211,181,134,.14)!important;border-color:rgba(237,207,158,.6)!important;
+}
+.topbar #settingsPanel>summary.portal-trigger:focus-visible{outline:2px solid #f2c984;outline-offset:3px}
+.topbar #settingsPanel .settings-card{
+ position:absolute;top:calc(100% + 10px);right:0;left:auto;
+ width:min(365px,calc(100vw - 22px));max-height:min(74dvh,560px);
+ box-sizing:border-box;z-index:25;
+}
+body:not(.voice-focus):has(#settingsPanel[open]) .topbar{filter:none!important;pointer-events:auto!important;z-index:25}
+body:not(.voice-focus):has(#settingsPanel[open]) .conversation-head{filter:blur(3px) brightness(.78);pointer-events:none}
+body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-veil{visibility:visible;opacity:1;pointer-events:auto}
+@media(max-width:760px){
+ .topbar #settingsPanel>summary.portal-trigger{height:31px!important;min-height:31px!important;max-height:31px!important;padding:6px 8px!important;gap:5px!important;font-size:10px!important}
+ .topbar #settingsPanel>summary.portal-trigger svg{width:14px;height:14px}
+ .topbar #settingsPanel .settings-card{top:calc(100% + 8px);right:0;max-height:min(76dvh,560px)}
+}
+@media(max-width:390px){
+ .topbar #settingsPanel>summary.portal-trigger{padding:6px!important;gap:4px!important;font-size:9px!important}
+ .topbar #settingsPanel>summary.portal-trigger svg{width:13px;height:13px}
+}
+
+/* Align PORTAL footprint with the adjacent 'Laman utama' glass link, including narrow phones. */
+@media(max-width:355px){
+ .topbar #settingsPanel>summary.portal-trigger{height:31px!important;min-height:31px!important;max-height:31px!important;padding-inline:5px!important;font-size:8px!important}
+ .topbar #settingsPanel>summary.portal-trigger svg{width:12px;height:12px}
 }
