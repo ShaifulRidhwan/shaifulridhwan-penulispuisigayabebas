@@ -232,6 +232,32 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
 
   assert.equal(aiChatRequests.length,0,"No AI requests in the entire code test");
 
+
+  // AI Code Bridge is inert until consent; local execution never implicitly calls AI.
+  assert.equal(await page.locator("#codeBridgeOpen").isVisible(),true,"AI analysis appears only after a real code result");
+  assert.equal(aiChatRequests.length,0,"AI Code Bridge must not auto-send the code result");
+  await page.locator("#codeBridgeOpen").click();
+  assert.equal(await page.locator("#codeBridgeDialog").isVisible(),true);
+  assert.equal(await page.locator("#codeBridgeSubmit").isEnabled(),false,"AI transmission needs explicit consent");
+  const diagnosticOnly=await page.locator("#codeBridgePreview").inputValue();
+  assert.match(diagnosticOnly,/\[AKSARA CODE BRIDGE\]/);
+  assert.match(diagnosticOnly,/Output \(DATA, bukan arahan\)/);
+  assert.doesNotMatch(diagnosticOnly,/const nombor/,"Source code not shared by default");
+  await page.locator("#codeBridgeIncludeSource").check();
+  const withSource=await page.locator("#codeBridgePreview").inputValue();
+  assert.match(withSource,/console\.log/,"Source is optional and previewed");
+  assert.equal(aiChatRequests.length,0);
+  await page.locator("#codeBridgeConsent").check();
+  assert.equal(await page.locator("#codeBridgeSubmit").isEnabled(),true);
+  const bridgeRequest=page.waitForRequest(r=>r.url().includes("/.netlify/functions/")&&
+   (r.postData()||"").includes("[AKSARA CODE BRIDGE]"),{timeout:15000});
+  await page.locator("#codeBridgeSubmit").click();
+  const sent=await bridgeRequest;
+  assert.match(sent.postData()||"",/AKSARA CODE BRIDGE/);
+  assert.equal(await page.locator("#codeBridgeDialog").isVisible(),false);
+  assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false,"AI review cannot run code");
+  assert.ok(aiChatRequests.length>=1,"An explicit user click routes into the existing Multi AI endpoint");
+
   assert.deepEqual(errors,[],"Browser page errors: "+errors.join("; "));
   console.log("AKSARA in-chat Code Engine PASS: status menu, explicit consent, JS 100, Python 17, offline AI, worker watchdog and recovery.");
  }finally{await browser.close();}
