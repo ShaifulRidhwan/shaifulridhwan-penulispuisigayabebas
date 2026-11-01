@@ -27,7 +27,7 @@ menu.innerHTML=[
   '<div class="multi-ai-row code-menu-unavailable" aria-disabled="true"><span class="multi-ai-provider">C</span><span class="multi-ai-state is-muted">Belum tersedia</span></div>',
   '<div class="multi-ai-row code-menu-unavailable" aria-disabled="true"><span class="multi-ai-provider">C++</span><span class="multi-ai-state is-muted">Belum tersedia</span></div>',
  '</div>',
- ' <div class="multi-ai-actions"><button type="button" id="codeEngineRefresh">Semak semula</button><button type="button" id="codeEngineProbeAll">Uji 4 runtime</button><button type="button" id="codeWorkspaceOpen">Code Workspace</button></div>'
+ ' <div class="multi-ai-actions"><button type="button" id="codeEngineRefresh">Semak semula</button><button type="button" id="codeEngineProbeAll">Uji 4 runtime</button><button type="button" id="codeWorkspaceOpen">Code Workspace</button><button type="button" id="codeEvalOpen">Evaluation Lab</button></div>'
 ].join("");
 document.body.appendChild(menu);
 const css=document.createElement("style");
@@ -45,7 +45,7 @@ css.textContent=[
 '.code-engine-dialog .code-menu-planned .multi-ai-model-note{margin:0 0 0 14px}',
 '.code-engine-dialog .multi-ai-actions #codeEngineRefresh{display:flex;align-items:center;justify-content:center;width:100%;min-height:49px;margin:0;padding:12px 16px;border-radius:13px;border:1px solid rgba(231,203,157,.3);background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.015));-webkit-backdrop-filter:blur(16px) saturate(1.15);backdrop-filter:blur(16px) saturate(1.15);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 5px 18px rgba(0,0,0,.15);font:600 12px/1.35 "DM Sans",sans-serif}',
 '#codeEngineMenu.code-engine-dialog .multi-ai-actions #codeEngineRefresh{background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.015))!important}',
-'.code-engine-dialog .multi-ai-actions #codeEngineProbeAll,.code-engine-dialog .multi-ai-actions #codeWorkspaceOpen{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;margin-top:8px;padding:11px 14px;border-radius:13px;border:1px solid rgba(231,203,157,.3);color:#eadcc5;background:linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.015));font:600 12px "DM Sans",sans-serif;cursor:pointer}',
+'.code-engine-dialog .multi-ai-actions #codeEngineProbeAll,.code-engine-dialog .multi-ai-actions #codeWorkspaceOpen,.code-engine-dialog .multi-ai-actions #codeEvalOpen{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;margin-top:8px;padding:11px 14px;border-radius:13px;border:1px solid rgba(231,203,157,.3);color:#eadcc5;background:linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.015));font:600 12px "DM Sans",sans-serif;cursor:pointer}',
 '.code-engine-dialog .multi-ai-actions #codeEngineProbeAll:disabled{opacity:.6;cursor:wait}',
 '.code-engine-dialog .multi-ai-actions #codeEngineRefresh:hover{background:rgba(255,255,255,.095)}',
 '@media(max-width:760px){.conversation-head .code-engine-status{height:37px;min-height:37px;padding:0 9px;font-size:11px}}',
@@ -86,6 +86,7 @@ menu.querySelector("#codeMenuClose").addEventListener("click",()=>{closeMenu();p
 menu.addEventListener("click",event=>{if(event.target===menu)closeMenu();});
 menu.querySelector("#codeEngineRefresh").addEventListener("click",()=>{checkRuntime();});
 menu.querySelector("#codeWorkspaceOpen").addEventListener("click",()=>{closeMenu();window.dispatchEvent(new Event("aksara:code-workspace-open"));});
+menu.querySelector("#codeEvalOpen").addEventListener("click",()=>{closeMenu();window.dispatchEvent(new Event("aksara:code-evaluation-open"));});
 menu.querySelectorAll("[data-code-language]").forEach(btn=>btn.addEventListener("click",()=>{
  const language=btn.dataset.codeLanguage;
  if(!engine.available.includes(language))return;
