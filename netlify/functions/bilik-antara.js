@@ -440,7 +440,7 @@ exports.handler=async event=>{
   for(const file of media)userParts.push({inlineData:{mimeType:file.mimeType,data:file.data}});
   const contents=history.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}));
   contents.push({role:"user",parts:userParts});
-  const tools=flags.toolExecutionEnabled?getTools({...intent,search:intent.search||!!tiktokHandle}).filter(t=>flags.researchEnabled||!t.url_context):[];
+  const tools=flags.toolExecutionEnabled?getTools({...intent,search:intent.search||!!tiktokHandle}).filter(t=>!t.url_context||flags.researchEnabled||intent.hasLink):[];
   const model=chooseModel(baseModel,{...intent,depth:plan.thinkingLevel});
   const detailedIdentity=Identity.needsDetail(question)||intent.works||/\b(?:puisi|sajak|pantun|gurindam|penulisan|coder poet)\b/i.test(question);
   const creatorHumour=detailedIdentity&&/\b(?:usik|usikan|sindir|sindiran|gurau|bergurau|lawak|jenaka)\b/i.test(question);
