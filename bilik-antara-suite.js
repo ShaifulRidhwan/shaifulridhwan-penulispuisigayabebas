@@ -20,9 +20,25 @@ const write=(key,obj)=>{
  try{localStorage.setItem(key,JSON.stringify(obj));return true;}catch(_){notice("Ruang simpanan pelayar penuh atau disekat.");return false;}
 };
 function freshId(){return "s"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
-let activeId="";
-try{activeId=sessionStorage.getItem(PREFIX+"-active")||freshId();sessionStorage.setItem(PREFIX+"-active",activeId);}catch(_){activeId=freshId();}
 let archive=Array.isArray(read(KEYS.archive,[]))?read(KEYS.archive,[]):[];
+const sessionHelpers=window.AksaraSessionUtils;
+const restoredHistory=api.snapshot().history;
+let activeId="";
+try{
+ const previous=sessionStorage.getItem(PREFIX+"-active")||"";
+ const match=api.remember()?sessionHelpers?.matchArchivedSession(archive,restoredHistory):null;
+ activeId=match||(previous&&!archive.some(item=>item.id===previous)?previous:freshId());
+ sessionStorage.setItem(PREFIX+"-active",activeId);
+}catch(_){activeId=sessionHelpers?.matchArchivedSession(archive,restoredHistory)||freshId();}
+let titleChanges=false;
+for(const item of archive){
+ if(item&&!item.titleEdited&&Array.isArray(item.history)){
+  const title=sessionHelpers?.conversationTitle(item.history);
+  if(title&&title!==item.title){item.title=title;titleChanges=true;}
+ }
+}
+if(titleChanges&&api.remember()){try{localStorage.setItem(KEYS.archive,JSON.stringify(archive));}catch(_){}}
+
 let memory=read(KEYS.memory,{enabled:true,text:""});
 if(!memory||typeof memory!=="object"||typeof memory.enabled!=="boolean")memory={enabled:true,text:""};
 let workspace=read(KEYS.workspace,{title:"",content:"",at:0});
@@ -85,7 +101,7 @@ function snapshotCurrent(){
  const old=archive[idx]||{};
  const first=snapshot.history.find(x=>x.role==="user");
  const titleEdited=old.titleEdited===true;
- const title=titleEdited&&typeof old.title==="string"?old.title:(first&&first.content||"Perbualan baharu").slice(0,75);
+ const title=titleEdited&&typeof old.title==="string"?old.title:(sessionHelpers?.conversationTitle(snapshot.history)||String(first?.content||"Perbualan baharu").slice(0,75));
  const entry={id:activeId,title,at:Date.now(),titleEdited,
   pinned:!!old.pinned,history:snapshot.history,summary:snapshot.summary,summarizedThrough:snapshot.summarizedThrough,thoughtLedger:snapshot.thoughtLedger};
  if(idx>=0)archive.splice(idx,1);archive.unshift(entry);persistArchive();
@@ -153,6 +169,11 @@ function clearAllArchive(){
 function renderSessions(){
  section("Sejarah perbualan");
  paragraph("Sesi disimpan pada peranti ini, bukan akaun awan. Cari, namakan semula, pin atau pulihkan sesi. Eksport JSON untuk sandaran, kemudian import semula pada peranti yang kau pilih.");
+ if(location.hostname==="shaifulridhwan-penulispuisigayabebas.netlify.app"){
+  paragraph("Sejarah Netlify tidak berpindah secara automatik. Eksport semua sesi (JSON) dahulu, kemudian import pada Cloudflare.");
+  const link=make("a","Buka Bilik Antara Cloudflare","ba-button");
+  link.href="https://aksara-apps.mshaifulridhwan.workers.dev/bilik-antara.html";link.rel="noopener noreferrer";controlRow(link);
+ }
  controlRow(button("+ Sesi baharu",()=>beginSession(null)),button("Eksport sesi ini",()=>{
   download("bilik-antara-sesi.md",sessionText(api.snapshot().history),"text/markdown;charset=utf-8");
  }));
@@ -170,7 +191,22 @@ function renderSessions(){
   const term=search.value.toLocaleLowerCase("ms-MY").trim();
   const data=indexed.filter(({search:haystack})=>haystack.includes(term)).map(x=>x.item);
   if(!data.length){results.appendChild(make("p","Tiada perbualan yang sepadan.","ba-hint"));return;}
+  // Group matching titles without deleting or merging different conversations.
+  const groups=new Map();
   for(const item of data){
+   const key=String(item.title||"").trim().toLocaleLowerCase("ms-MY");
+   if(!groups.has(key))groups.set(key,[]);
+   groups.get(key).push(item);
+  }
+  for(const group of groups.values()){
+   let target=results;
+   if(group.length>1){
+    const wrapper=make("details",undefined,"ba-session-group");
+    wrapper.appendChild(make("summary",group[0].title+" · "+group.length+" sesi","ba-session-group-title"));
+    target=make("div",undefined,"ba-session-group-list");
+    wrapper.appendChild(target);results.appendChild(wrapper);
+   }
+   for(const item of group){
    const row=make("div",undefined,"ba-session");
    const head=make("div",undefined,"ba-session-head");
    const info=make("div",undefined,"ba-session-info");
@@ -217,7 +253,8 @@ function renderSessions(){
      if(removeArchiveEntry(item))render();
     },"ba-tiny")
    );
-   row.append(head,controls);results.appendChild(row);
+   row.append(head,controls);target.appendChild(row);
+   }
   }
  }
  search.addEventListener("input",()=>{sessionSearchTerm=search.value;draw();});draw();

@@ -65,4 +65,5 @@ jobs:
           node --check bilik-antara-pcm-worklet.js
           node --check netlify/functions/antara-intelligence.js
           node --check netlify/functions/tiktok-public-research.js
+          node --test tests/aksara-session-cutover.test.cjs
           node --test scripts/test-bilik-antara.cjs scripts/test-tiktok-public-research.cjs scripts/test-bilik-antara-design.cjs scripts/test-bilik-antara-voice.cjs scripts/test-novel-unification.cjs scripts/test-bilik-antara-identity.cjs scripts/test-aksara-reliability.cjs tests/aksara-router.test.js
