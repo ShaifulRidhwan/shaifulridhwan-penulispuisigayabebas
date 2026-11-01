@@ -13,7 +13,7 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
  assert.doesNotMatch(html,/<style\b/);
  assert.equal((html.match(/rel="stylesheet" href="bilik-antara\.css/g)||[]).length,1);
  assert.match(css,/\.world-art/);
- assert.match(css,/bilik-antara-cover-art\.jpg/);
+ assert.match(css,/aksara-background-cahaya-gelap\.webp/);
  assert.match(css,/\.message\.ai::before/);
  assert.match(css,/bilik-antara-woman-emblem\.svg/);
  assert.equal(cover[0],0xff);assert.equal(cover[1],0xd8);
