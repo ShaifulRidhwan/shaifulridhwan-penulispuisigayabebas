@@ -28,7 +28,7 @@
   await loader();
   if(!window.turnstile)throw Error("Turnstile tidak tersedia.");
   if(!document.body)throw Error("Dokumen belum sedia.");
-  if(!widgetId){
+  if(widgetId===null){
    const mount=document.createElement("div");
    mount.id="aksara-turnstile-private";
    mount.style.cssText="position:fixed;bottom:1rem;right:1rem;z-index:20000;";
