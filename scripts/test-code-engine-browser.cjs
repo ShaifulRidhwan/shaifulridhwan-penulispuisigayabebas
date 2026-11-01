@@ -50,6 +50,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#featureStudio").getAttribute("href"),"studio-antara.html");
   assert.equal(await page.locator("#featureLibrary").getAttribute("href"),"perpustakaan-aksara.html");
   await page.keyboard.press("Escape");
+  await page.waitForFunction(()=>!document.querySelector("#settingsPanel").open,{timeout:3000});
   assert.equal(await page.locator("#settingsPanel .settings-card").isVisible(),false);
 
   // Use the exact Multi A.I. glass modal primitives, not a visually separate popup.
