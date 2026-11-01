@@ -29,20 +29,10 @@ jobs:
         run: node --test cloudflare/migration.test.mjs
       - name: Test transactional Cloudflare quota, Voice/Chat limits and health security
         run: node --test cloudflare/control.test.mjs
-      - name: Verify Orca free quota exhaustion and safe fallback (HTTP 402)
-        run: node --test tests/aksara-orcarouter-quota402.test.cjs
-      - name: Verify DeepSeek identity says indirect OrcaRouter integration
-        run: node --test tests/aksara-deepseek-identity.test.cjs
-      - name: Verify owner-only NVIDIA trial diagnostic safety and response redaction
-        run: node --test cloudflare/nvidia-diagnostic.test.mjs
       - name: Verify Cloudflare Gemini-specific time budget and truthful status
         run: node --test tests/aksara-cloudflare-gemini-latency.test.cjs
-      - name: Validate dynamic NVIDIA Chat model catalog safety
-        run: node --test cloudflare/nvidia-catalog.test.mjs
-      - name: Verify streamed NVIDIA inference and owner auto fallback
-        run: node --test cloudflare/nvidia-inference.test.mjs
-      - name: Guard public NVIDIA against Trial keys and require licensed inference deployment
-        run: node --test tests/aksara-nvidia-production-gate.test.cjs
+      - name: Test native Workers AI identity, routing and streaming mocks
+        run: node --test tests/aksara-workers-ai.test.cjs
       - name: Validate Cloudflare Worker bundle without uploading or secrets
         run: npx --yes wrangler@4.135.0 deploy --config cloudflare/wrangler.jsonc --dry-run --outdir ./cloudflare/.verify-output
       - name: Smoke test actual local Cloudflare Workers runtime

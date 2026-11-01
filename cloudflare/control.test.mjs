@@ -74,21 +74,10 @@ test("studio AI prompt enhancements are limited per user",async t=>{
  assert.equal((await request("studio",{action:"enhance"})).status,429);
  assert.equal(db.prepare("SELECT enhancements FROM daily").get().enhancements,1);
 });
-test("NVIDIA owner trials: eight per UTC day globally, four per 10-minute client",async t=>{
+test("retired owner-only provider test route is unavailable",async t=>{
  const {db,request}=fixture();t.after(()=>db.close());
- for(let n=0;n<8;n++){
-  const hash="abcdef01"[n].repeat(32);
-  assert.equal((await request("nvidia-test",{hash})).status,200);
- }
- assert.equal((await request("nvidia-test",{hash:"9".repeat(32)})).status,429);
- assert.equal(db.prepare("SELECT count FROM nvidia_test_daily").get().count,8);
- assert.equal(db.prepare("SELECT chat FROM daily").get().chat,0);
-});
-test("NVIDIA one-owner cooldown protects trial bursts",async t=>{
- const {db,request}=fixture();t.after(()=>db.close());
- for(let i=0;i<4;i++)assert.equal((await request("nvidia-test")).status,200);
- assert.equal((await request("nvidia-test")).status,429);
- assert.equal(db.prepare("SELECT count FROM nvidia_test_daily").get().count,4);
+ assert.equal((await request("nvidia-test")).status,400);
+ assert.equal((await request("chat")).status,200);
 });
 test("control rejects malformed digests and release IDs",async t=>{
  const {db,request}=fixture();t.after(()=>db.close());
@@ -100,7 +89,7 @@ test("safe health endpoint never leaks configured provider keys",async()=>{
  const worker=(await import("./src/index.mjs")).default;
  const env={AKSARA_RATE_SALT:"0123456789abcdef0123456789abcdef",
   GEMINI_API_KEY:"TEST_PRIVATE_GEMINI",GROQ_API_KEY:"TEST_PRIVATE_GROQ",
-  GROQ_FREE_CONFIRMED:"true",CLOUDFLARE_ACCOUNT_ID:"test-account-id",
+  GROQ_FREE_CONFIRMED:"true",AI:{run:async()=>({response:"OK"})},CLOUDFLARE_ACCOUNT_ID:"test-account-id",
   CLOUDFLARE_API_TOKEN:"TEST_PRIVATE_CF",AKSARA_CONTROL:{},
   ASSETS:{fetch:()=>Response.json({ok:true})}};
  const result=await worker.fetch(new Request("https://apps.example.com/api/aksara-health"),env,{});
