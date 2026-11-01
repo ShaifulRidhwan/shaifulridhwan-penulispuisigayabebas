@@ -66,9 +66,10 @@ async function main(){const browser=await chromium.launch({headless:true,args:['
  for(const [w,h] of sizes){const before=await inspect(browser,w,h,'before'),after=await inspect(browser,w,h,'after'),fallback=await inspect(browser,w,h,'fallback');
   // Code Engine status intentionally sits beside Multi AI and shifts #connection horizontally.
   // Preserve existing control dimensions and the rest of the outer geometry.
-  const geometryStable=result=>Object.fromEntries(Object.entries(result.geometry).filter(([key])=>!['#input','#connection'].includes(key)));
+  const geometryStable=result=>Object.fromEntries(Object.entries(result.geometry).filter(([key])=>!['#input','#connection','#voiceLive'].includes(key)));
   assert.deepEqual(geometryStable(after),geometryStable(before),'Outer geometry changed at '+w);
   assert.deepEqual(geometryStable(fallback),geometryStable(before),'Fallback geometry changed at '+w);
+  assert.deepEqual(after.geometry['#voiceLive'].filter((_,i)=>i!==1),before.geometry['#voiceLive'].filter((_,i)=>i!==1),'Voice button x/size changed at '+w);
   assert.deepEqual(after.geometry['#connection'].slice(2),before.geometry['#connection'].slice(2),'Multi AI button size changed at '+w);
   assert.deepEqual(fallback.geometry['#connection'].slice(2),before.geometry['#connection'].slice(2),'Multi AI fallback size changed at '+w);
   for(const key of ['effects','glass']){assert.deepEqual(after[key],before[key],key+' changed at '+w);assert.deepEqual(fallback[key],before[key],key+' fallback changed at '+w);}
