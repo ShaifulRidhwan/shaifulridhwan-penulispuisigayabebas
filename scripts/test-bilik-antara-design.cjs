@@ -283,3 +283,20 @@ test("Consistent DM Sans chat typography and independent animated voice icon",()
  assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.match(css,/\.conversation-head button\.multi-ai-trigger \.dot/);
 });
+
+test("Shared WebP celestial theme stays linked across Bilik, Studio and Novel",()=>{
+ const studio=fs.readFileSync("studio-antara.css","utf8");
+ const novel=fs.readFileSync("perpustakaan-aksara.css","utf8");
+ for(const [name,styles] of [["Bilik",css],["Studio",studio],["Novel",novel]]){
+  assert.match(styles,/aksara-senja-bulan-desktop\\.webp\\?v=1/,name+" desktop background missing");
+  assert.match(styles,/aksara-senja-bulan-mobile\\.webp\\?v=1/,name+" mobile background missing");
+ }
+ for(const type of ["desktop","mobile"]){
+  const data=fs.readFileSync("aksara-senja-bulan-"+type+".webp");
+  assert.equal(data.toString("ascii",0,4),"RIFF");
+  assert.equal(data.toString("ascii",8,12),"WEBP");
+  assert.ok(data.length<70000,"Optimized "+type+" wallpaper exceeded budget");
+ }
+ assert.match(html,/preload" href="aksara-senja-bulan-desktop\\.webp\\?v=1"/);
+ assert.match(html,/preload" href="aksara-senja-bulan-mobile\\.webp\\?v=1"/);
+});
