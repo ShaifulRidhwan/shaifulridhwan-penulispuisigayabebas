@@ -18,14 +18,14 @@ async function inspect(browser,width,height,mode){
  const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1}),page=await context.newPage();
  const errors=[],assets=[];
  page.on('pageerror',e=>errors.push(e.message));
- page.on('response',r=>{if(/bilik-antara-(bg-.*webp|cover-art.jpg)/.test(r.url()))assets.push({url:r.url(),status:r.status()});});
+ page.on('response',r=>{if(/aksara-background-cahaya-gelap\.webp|bilik-antara-(bg-.*webp|cover-art.jpg)/.test(r.url()))assets.push({url:r.url(),status:r.status()});});
  // Health checks are deliberately unavailable in this offline UI test; no AI call is made.
  await page.route('**/.netlify/functions/**',r=>r.fulfill({status:503,json:{error:'Offline browser audit'}}));
  if(mode==='before'){
   await page.route('**/bilik-antara.html',r=>r.fulfill({contentType:'text/html',body:original['bilik-antara.html']}));
   await page.route('**/bilik-antara.css?*',r=>r.fulfill({contentType:'text/css',body:original['bilik-antara.css']}));
  }
- if(mode==='fallback')await page.route('**/bilik-antara-bg-*.webp',r=>r.abort('failed'));
+ if(mode==='fallback')await page.route('**/aksara-background-cahaya-gelap.webp*',r=>r.abort('failed'));
  await page.goto(url+'/bilik-antara.html',{waitUntil:'networkidle'});
  await page.locator('#chat .message.ai').first().waitFor();
  await page.evaluate(()=>document.fonts.ready);
@@ -38,18 +38,17 @@ async function inspect(browser,width,height,mode){
  assert.equal(result.effects['.frame-glow--light'][0],'frameLightBreathe');
  assert.equal(result.effects['.frame-glow--shadow'][0],'frameShadowBreathe');
  if(mode!=='before'){
-  const selected='bilik-antara-bg-'+(width<=760?'mobile':'desktop')+'.webp';
-  assert.ok(result.background.includes(selected));
-  if(width>760)assert.ok(result.background.includes('bilik-antara-cover-art.jpg'));
-  else assert.ok(!result.background.includes('bilik-antara-cover-art.jpg'),"Mobile avoids hidden fallback download");
-  const dimensions=await page.evaluate(async source=>{const img=new Image();img.src=source;await img.decode();return [img.naturalWidth,img.naturalHeight];},mode==='fallback'?'bilik-antara-cover-art.jpg?v=2':selected);
-  assert.ok(dimensions[0]>0&&dimensions[1]>0);
+  const selected='aksara-background-cahaya-gelap.webp';
+  assert.ok(result.background.includes(selected),'Selected portrait must be visible at '+width);
+  assert.ok(!result.background.includes('bilik-antara-cover-art.jpg'),'Obsolete JPEG must not overlay selected photo');
+  assert.ok(result.background.includes('linear-gradient'),'Color fallback must survive an image download failure');
   if(mode==='after'){
-   assert.deepEqual(dimensions,width<=760?[600,1066]:[1280,720]);
-   assert.equal(assets.filter(a=>a.url.includes('bg-')&&!a.url.includes(selected)).length,0,'Do not download the opposite wallpaper');
+   const dimensions=await page.evaluate(async source=>{const img=new Image();img.src=source;await img.decode();return [img.naturalWidth,img.naturalHeight];},selected);
+   assert.deepEqual(dimensions,[600,1066],'Portrait pixels must keep correct orientation');
+   assert.ok(assets.some(a=>a.url.includes(selected)&&a.status===200),'Selected wallpaper must load');
+   assert.equal(assets.filter(a=>a.url.includes('bilik-antara-bg-')).length,0,'Old wallpaper must not be downloaded');
   }
  }
- if(width>760)assert.ok(assets.some(a=>a.url.includes('cover-art.jpg')&&a.status===200),'Original desktop fallback must remain available');
  // Animations advance before the screenshot freezes them for comparison.
  const running=await page.evaluate(()=>document.querySelector('.world-art').getAnimations().some(animation=>animation.playState==='running'));
  assert.equal(running,true,'Existing ambient animation is enabled and running');
@@ -79,7 +78,7 @@ async function main(){const browser=await chromium.launch({headless:true,args:['
    if(w>760)assert.equal(next.geometry['#connection'][2],before.geometry['#connection'][2],'Desktop AI pill width changed at '+w);
   }
   for(const key of ['effects','glass']){assert.deepEqual(after[key],before[key],key+' changed at '+w);assert.deepEqual(fallback[key],before[key],key+' fallback changed at '+w);}
-  console.log(JSON.stringify({viewport:[w,h],layoutUnchanged:true,glassUnchanged:true,animationsUnchanged:true,wallpaperDecoded:true,originalFallbackDecoded:true,overflow:false,controls:true}));
+  console.log(JSON.stringify({viewport:[w,h],layoutUnchanged:true,glassUnchanged:true,animationsUnchanged:true,wallpaperDecoded:true,gradientFallback:true,overflow:false,controls:true}));
  }
 }finally{await browser.close();}}
 main().catch(e=>{console.error(e);process.exitCode=1;});
