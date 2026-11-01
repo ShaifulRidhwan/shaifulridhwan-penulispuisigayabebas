@@ -246,9 +246,44 @@ function run(language,source,options={}){
   frame.srcdoc=documentFor(language);document.body.appendChild(frame);
  });
 }
-async function probe(){
- try{const r=await run("javascript","console.log(6 * 7)");return r.ok&&r.output.trim()==="42";}
- catch(_){return false;}
+const SMOKES=Object.freeze({
+ javascript:{source:"console.log(6 * 7)",expected:"42"},
+ python:{source:"print(sum([2,3,5,7]))",expected:"17"},
+ typescript:{source:"const n: number=6*7; console.log(n)",expected:"42"},
+ sql:{source:"SELECT 6+7 AS total;",expected:"total\\n13"}
+});
+async function probeLanguage(language,{signal}={}){
+ const spec=SMOKES[language];
+ if(!spec)return {language,ready:false,error:"Runtime belum disokong."};
+ try{
+  const r=await run(language,spec.source,{signal});
+  return {language,ready:r.ok===true&&r.output.trim()===spec.expected,
+    runtimeMs:r.runtimeMs,diagnostics:r.diagnostics};
+ }catch(e){return {language,ready:false,error:String(e?.message||e).slice(0,200)};}
 }
-root.AksaraCodeRuntime=Object.freeze({run,probe,available:LANGUAGES,version:"0.4",limits:Object.freeze({maxSource:MAX_SOURCE,maxOutput:MAX_OUTPUT,timeouts:TIMEOUTS})});
+async function probe(){return (await probeLanguage("javascript")).ready;}
+async function evaluate(cases,{signal,onResult}={}){
+ if(!Array.isArray(cases)||cases.length<1||cases.length>24)throw Error("Gunakan 1 hingga 24 kes ujian.");
+ const started=performance.now(),items=[];
+ for(const item of cases){
+  if(signal?.aborted)throw Error("Penilaian dihentikan.");
+  if(!item||!LANGUAGES.includes(item.language)||typeof item.source!=="string")throw Error("Kes ujian tidak sah.");
+  let result;
+  try{result=await run(item.language,item.source,{signal});}
+  catch(e){if(signal?.aborted)throw e;result={ok:false,output:"",error:String(e?.message||e),diagnostics:[],runtimeMs:0};}
+  const expectedOk=item.expectOk!==false;
+  const expectedOutput=typeof item.outputIncludes==="string"?item.outputIncludes:null;
+  const expectedCode=typeof item.diagnosticCode==="string"?item.diagnosticCode:null;
+  const passed=result.ok===expectedOk&&(!expectedOutput||(result.output||"").includes(expectedOutput))&&
+   (!expectedCode||(result.diagnostics||[]).some(d=>d.code===expectedCode));
+  const record=Object.freeze({name:String(item.name||"Ujian "+(items.length+1)).slice(0,90),language:item.language,
+   passed,ok:result.ok,output:String(result.output||"").slice(0,1000),
+   error:String(result.error||"").slice(0,300),runtimeMs:result.runtimeMs||0,
+   diagnostics:(result.diagnostics||[]).slice(0,3)});
+  items.push(record);onResult?.(record,items.length,cases.length);
+ }
+ return Object.freeze({version:"1.0",total:items.length,passed:items.filter(x=>x.passed).length,
+  failed:items.filter(x=>!x.passed).length,elapsedMs:Math.round(performance.now()-started),results:Object.freeze(items)});
+}
+root.AksaraCodeRuntime=Object.freeze({run,probe,probeLanguage,evaluate,available:LANGUAGES,version:"0.5",limits:Object.freeze({maxSource:MAX_SOURCE,maxOutput:MAX_OUTPUT,timeouts:TIMEOUTS})});
 })(window);
