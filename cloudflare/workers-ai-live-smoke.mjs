@@ -26,7 +26,7 @@ try{
  let json={};try{json=JSON.parse(result.text);}catch(_){}
  const output=typeof json.reply==="string"?json.reply:"";
  console.log("Text inference",{http:result.status,provider:json.provider||"none",model:json.model||"none",
-  milliseconds:result.elapsedMs,replyChars:output.length,attempts:json.routing?.failedAttempts?.map(x=>({provider:x.provider,status:x.status}))||[]});
+  milliseconds:result.elapsedMs,replyChars:output.length,attempts:json.routing?.failedAttempts?.map(x=>({provider:x.provider,status:x.status,reason:x.reason||null,quotaKind:x.quotaKind||null,retryAfterSeconds:x.retryAfterSeconds||0,elapsedMs:x.elapsedMs||0,fieldIssue:x.fieldIssue||null,errorType:x.errorType||null}))||[]});
  check(result.status===200&&json.provider==="workers_ai"&&json.model===model,"GLM actually answered, not simply Ready");
  check(output.length>=12&&/aporia|kebuntuan|persoalan|pengetahuan|tahu/i.test(output),"GLM returned relevant Malay text");
  if(output)check(!/\b(?:nggak|gimana|makasih|banget|gue)\b/i.test(output),"No obvious Indonesian colloquial substitutions");
