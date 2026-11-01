@@ -66,11 +66,12 @@ test("P0–P2 extend task handling without replacing existing provider personali
  assert.ok(source.includes('outputFormat:Structured.wantsJson(question)?"json":undefined'));
 });
 test("identity answers remain local in CAHAYA and GELAP, including when web search is configured",async()=>{
- const oldFetch=global.fetch,old=process.env.AKSARA_WEB_SEARCH_ENABLED,key=process.env.BRAVE_SEARCH_API_KEY;
+ const oldFetch=global.fetch,old=process.env.AKSARA_WEB_SEARCH_ENABLED,key=process.env.BRAVE_SEARCH_API_KEY,gemini=process.env.GEMINI_API_KEY;
  let calls=0;
  global.fetch=async()=>{calls++;throw Error("Local identity must not call an external API");};
  process.env.AKSARA_WEB_SEARCH_ENABLED="true";
  process.env.BRAVE_SEARCH_API_KEY="test-not-a-real-secret";
+ process.env.GEMINI_API_KEY="mock-identity-test";
  try{
   for(const [i,mode] of ["cahaya","gelap"].entries()){
    const body={question:"kau siapa?",thoughtMode:mode,history:[]};
@@ -94,6 +95,7 @@ test("identity answers remain local in CAHAYA and GELAP, including when web sear
   global.fetch=oldFetch;
   if(old===undefined)delete process.env.AKSARA_WEB_SEARCH_ENABLED;else process.env.AKSARA_WEB_SEARCH_ENABLED=old;
   if(key===undefined)delete process.env.BRAVE_SEARCH_API_KEY;else process.env.BRAVE_SEARCH_API_KEY=key;
+  if(gemini===undefined)delete process.env.GEMINI_API_KEY;else process.env.GEMINI_API_KEY=gemini;
  }
 });
 test("JSON formatting is a formatting exception, not a redefinition of ordinary Aksara voice",()=>{
