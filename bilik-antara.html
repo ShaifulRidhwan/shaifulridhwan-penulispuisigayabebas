@@ -612,7 +612,7 @@ function addMessage(role,text,data){
  msg.appendChild(elem("div","byline",role==="user"?"Kau":data?.mode==="code"?"AKSARA CODE ENGINE":"Aksara A.I."));
  const bubble=elem("div","bubble");
  if(data?.mode==="code")bubble.textContent=String(text||"");
- else format(bubble,role==="user"||data?.mode==="voice"||data?.intro===true||data?.outputFormat==="json"?text:window.BilikAntaraChatStyle.reply(text,{mode:data?.thoughtMode||"cahaya"}));
+ else format(bubble,role==="user"||data?.mode==="voice"||data?.outputFormat==="json"?text:data?.intro===true?text:window.BilikAntaraChatStyle.reply(text,{mode:data?.thoughtMode||"cahaya"}));
  if(role!=="user"&&data)renderExtras(bubble,data);
  msg.appendChild(bubble);renderMessageMeta(msg,role,data);ui.chat.appendChild(msg);scrollDown();return msg;
 }
