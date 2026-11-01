@@ -1120,7 +1120,7 @@ async function submit(event){
   if(!stoppedByUser)window.dispatchEvent(new CustomEvent("ba:request-failed",{detail:{elapsedMs:Math.round(performance.now()-startedAt),code:error?.code||"",status:Number(error?.status)||0}}));
   if(!ui.input.value.trim())ui.input.value=typed;
   resize();
- }finally{clearTimeout(timer);activeRequest=null;busy=false;update();}
+ }finally{clearTimeout(timer);activeRequest=null;busy=false;update();window.dispatchEvent(new Event("ba:ready-for-tools"));}
 }
 ui.form.addEventListener("submit",submit);
 window.BilikAntaraBridge={
@@ -1173,6 +1173,7 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-code-execution.js?v=1" defer></script>
 <script src="bilik-antara-code-chat.js?v=5" defer></script>
 <script src="bilik-antara-code-bridge.js?v=1" defer></script>
+<script src="bilik-antara-code-agent.js?v=1" defer></script>
 <script src="bilik-antara-code-workspace.js?v=1" defer></script>
 <script src="bilik-antara-code-evaluation.js?v=1" defer></script>
 <script src="bilik-antara-brain.js?v=15" defer></script>
