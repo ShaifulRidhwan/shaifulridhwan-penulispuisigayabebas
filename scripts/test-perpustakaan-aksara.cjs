@@ -20,10 +20,29 @@ test("Katalog mempunyai metadata dan pautan karya utama",()=>{
  assert.match(page,/assets\/novel\/cover-01\.jpg/);
  assert.match(page,/<span class="aksara-name">AKSARA Novel<\/span>/);
  assert.match(page,/class="aksara-nav-link" href="bilik-antara\.html">Bilik Antara<\/a>/);
- assert.match(page,/aksara-header\.css\?v=1/);
+ assert.match(page,/aksara-header\.css\?v=2/);
  assert.match(page,/id="books"/);
  assert.doesNotMatch(page,/id="archiveBooks"/);
 });
+test("Studio curved glass is shared by header only, without the gold rule",()=>{
+ const shared=fs.readFileSync(path.join(root,"aksara-header.css"),"utf8");
+ const studio=fs.readFileSync(path.join(root,"studio-antara.html"),"utf8");
+ for(const [name,html] of [["Studio",studio],["Bilik",bilik],["Novel",page]]){
+  assert.match(html,/aksara-header\\.css\\?v=2/,name+" must load refreshed shared header CSS");
+  assert.match(html,/<header class="(?:topbar )?aksara-header">/,name+" must retain the existing header");
+ }
+ assert.match(shared,/\\.aksara-header\\{[\\s\\S]*?border-radius:19px;/,
+  "All three topbars must share Studio's rounded glass edge");
+ assert.match(shared,/@media\\(max-width:760px\\)\\{[\\s\\S]*?border-radius:17px;/,
+  "Mobile topbars must match Studio's curved corners");
+ assert.match(shared,/\\.aksara-header::after\\{content:none;display:none\\}/,
+  "Gold underline must not reappear on any of the three headers");
+ assert.match(shared,/\\.shell > \\.aksara-header\\{margin-block-start:10px\\}/,
+  "Chat and Novel should float above content like Studio");
+ assert.doesNotMatch(shared,/border-bottom:1px solid rgba\\(237,196,131/,
+  "Do not preserve the old golden bottom border");
+});
+
 test("Kod JavaScript katalog boleh dihuraikan",()=>{
  assert.ok(scripts.length>0);
  scripts.forEach((script,i)=>assert.doesNotThrow(()=>new vm.Script(script,{filename:"catalog-inline-"+i+".js"})));
