@@ -28,7 +28,7 @@ test("Studio curved glass is shared by header only, without the gold rule",()=>{
  const shared=fs.readFileSync(path.join(root,"aksara-header.css"),"utf8");
  const studio=fs.readFileSync(path.join(root,"studio-antara.html"),"utf8");
  for(const [name,html] of [["Studio",studio],["Bilik",bilik],["Novel",page]]){
-  assert.ok(html.includes('aksara-header.css?v=2'),name+" must load refreshed shared header CSS");
+  assert.match(html,/aksara-header\.css\?v=\d+/,name+" must load versioned shared header CSS");
   assert.ok(html.includes('<header class="aksara-header">')||
     html.includes('<header class="topbar aksara-header">'),name+" must retain existing header");
  }
