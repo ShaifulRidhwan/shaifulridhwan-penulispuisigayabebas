@@ -1,0 +1,28 @@
+name: AKSARA Intelligence 3.0 isolated staging
+on:
+  push:
+    branches:
+      - feat/aksara-intelligence-3-p1-p4
+    paths:
+      - cloudflare/intelligence-3-staging.test.mjs
+      - .github/workflows/aksara-intelligence-3-staging.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  staging-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build PR branch Cloudflare assets without publishing
+        run: node cloudflare/build.mjs
+      - name: Run isolated Worker adapter staging tests with synthetic prompts
+        run: node --test cloudflare/intelligence-3-staging.test.mjs
+      - name: Recheck platform and Intelligence 3.0 regressions
+        run: npm run test:aksara-platform
