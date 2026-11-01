@@ -45,7 +45,7 @@ async function inspect(browser,width,height,mode){
   const dimensions=await page.evaluate(async source=>{const img=new Image();img.src=source;await img.decode();return [img.naturalWidth,img.naturalHeight];},mode==='fallback'?'bilik-antara-cover-art.jpg?v=2':selected);
   assert.ok(dimensions[0]>0&&dimensions[1]>0);
   if(mode==='after'){
-   assert.deepEqual(dimensions,width<=760?[864,1536]:[1536,864]);
+   assert.deepEqual(dimensions,width<=760?[600,1066]:[1280,720]);
    assert.equal(assets.filter(a=>a.url.includes('bg-')&&!a.url.includes(selected)).length,0,'Do not download the opposite wallpaper');
   }
  }
