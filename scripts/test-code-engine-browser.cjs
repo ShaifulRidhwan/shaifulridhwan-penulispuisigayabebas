@@ -365,7 +365,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.doesNotMatch(diagnosticOnly,/const nombor/,"Source code not shared by default");
   await page.locator("#codeBridgeIncludeSource").check();
   const withSource=await page.locator("#codeBridgePreview").inputValue();
-  assert.match(withSource,/console\.log/,"Source is optional and previewed");
+  assert.match(withSource,/SELECT 25 \+ 17;/,"Latest executed SQL source is optional and previewed");
   assert.equal(aiChatRequests.length,0);
   await page.locator("#codeBridgeConsent").check();
   assert.equal(await page.locator("#codeBridgeSubmit").isEnabled(),true);
