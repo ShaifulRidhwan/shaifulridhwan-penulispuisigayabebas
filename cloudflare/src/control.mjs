@@ -13,12 +13,11 @@ export class AksaraControl{
   sql.exec("CREATE TABLE IF NOT EXISTS daily (day TEXT PRIMARY KEY, chat INTEGER NOT NULL DEFAULT 0, studio INTEGER NOT NULL DEFAULT 0, enhancements INTEGER NOT NULL DEFAULT 0)");
   sql.exec("CREATE TABLE IF NOT EXISTS users (scope TEXT PRIMARY KEY, started INTEGER NOT NULL, count INTEGER NOT NULL DEFAULT 0, enhance_at INTEGER NOT NULL DEFAULT 0)");
   sql.exec("CREATE TABLE IF NOT EXISTS leases (id TEXT PRIMARY KEY, expires INTEGER NOT NULL)");
-  sql.exec("CREATE TABLE IF NOT EXISTS nvidia_test_daily (day TEXT PRIMARY KEY, count INTEGER NOT NULL DEFAULT 0)");
  }
  async fetch(request){
   if(request.method!=="POST")return json(405,{error:"Method not allowed"});
   let data;try{data=await request.json();}catch(_){return json(400,{error:"Invalid request"});}
-  if(!data||!["chat","health","voice","studio","nvidia-test","release"].includes(data.kind)||typeof data!=="object")
+  if(!data||!["chat","health","voice","studio","release"].includes(data.kind)||typeof data!=="object")
    return json(400,{error:"Invalid scope"});
   const now=Date.now(),day=new Date(now).toISOString().slice(0,10);
   const hash=String(data.hash||"");
@@ -37,8 +36,7 @@ export class AksaraControl{
      return {released:true};
     }
     const key=data.kind+":"+day+":"+hash;
-    const limits=data.kind==="nvidia-test"?{count:4,window:600000}:
-     data.kind==="voice"?{count:5,window:600000}:
+    const limits=data.kind==="voice"?{count:5,window:600000}:
      data.kind==="chat"?{count:12,window:60000}:
      data.kind==="health"?{count:30,window:60000}:
      {count:8,window:600000};
@@ -71,12 +69,6 @@ export class AksaraControl{
      return {ok:true,id};
     }
     if(count>=limits.count)blocked("Terlalu banyak permintaan. Cuba sebentar lagi.",Math.ceil((started+limits.window-now)/1000));
-    if(data.kind==="nvidia-test"){
-     db.exec("INSERT OR IGNORE INTO nvidia_test_daily(day) VALUES(?)",day);
-     const used=db.exec("SELECT count FROM nvidia_test_daily WHERE day=?",day).toArray()[0].count;
-     if(used>=8)blocked("Had 8 ujian NVIDIA sehari tercapai.",resetTime(now));
-     db.exec("UPDATE nvidia_test_daily SET count=count+1 WHERE day=?",day);
-    }
     if(data.kind==="chat"){
      const cap=integer(this.env.AKSARA_CHAT_DAILY_REQUESTS,800,100000);
      const row=db.exec("SELECT chat FROM daily WHERE day=?",day).toArray()[0];

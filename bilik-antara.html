@@ -440,64 +440,48 @@ ui.retry.addEventListener("click",()=>{
  if(busy)return;
  if(ui.input.value.trim()||fileState)submit({preventDefault(){}});else probe();
 });
-const providers=[["gemini","Google Gemini"],["groq","Groq"],["nvidia","NVIDIA"],["openrouter","OpenRouter"]]; // Canonical four text providers; synchronize with BilikAntaraIdentity.TEXT_PROVIDERS.
+const providers=[["gemini","Google Gemini"],["groq","Groq"],["workers_ai","Cloudflare Workers AI"],["openrouter","OpenRouter"]]; // Canonical four text providers; synchronize with BilikAntaraIdentity.TEXT_PROVIDERS.
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
-let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0,lastNvidiaModel="",lastNvidiaAt=0;
+let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0;
 function shortOpenRouterName(model){
  const full=String(model.name||model.id||"Model").replace(/^[^:]{1,24}:\s*/,"").trim().replace(/^[\w.-]+\//,"");
  const name=full||String(model.id||"Model").split("/").pop().replace(/:free$/,"");
  return name.length>26?name.slice(0,25).trimEnd()+"…":name;
 }
 function renderProviderRows(rows,catalog=null){
- // Keep the user's open/closed choices when a status refresh redraws the list.
  const openGroups=new Set([...multiList.querySelectorAll("details[data-provider]")].filter(x=>x.open).map(x=>x.dataset.provider));
  const hasPreviousGroups=multiList.querySelector("details[data-provider]")!==null;
  multiList.replaceChildren();
  for(const [id,name] of providers){
-  const item=(rows||[]).find(x=>x.id===id);
-  const state=item?.status||"checking";
-  const expandable=id==="openrouter"||id==="nvidia";
+  const item=(rows||[]).find(x=>x.id===id),state=item?.status||"checking";
+  const expandable=id==="openrouter";
   const line=elem(expandable?"summary":"div","multi-ai-row"+(expandable?" multi-ai-expand-trigger":""));
-  const nameText=elem("span","multi-ai-provider",name);
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
   const waitLabel=waitSeconds>0?"Retry in "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" sec"):"";
-  const orcaReason=id==="nvidia"&&state==="off"?({fallback_disabled:"Sandaran dinyahaktif",public_disabled:"NVIDIA untuk awam belum aktif",license_not_confirmed:"Perlu lesen production",missing_production_key:"Perlu production API key",missing_production_endpoint:"Perlu endpoint production",invalid_production_endpoint:"Endpoint production tidak sah"}[item?.reason]||"Not active"):null;
-  const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":state==="ready"?"is-ready":"is-muted"),
-   state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?(item?.reason==="free_quota_exhausted"?"Kuota percuma habis":waitLabel||(item?.http===503?"Servis sibuk (503)":"Offline")):state==="off"?(orcaReason||"Not active"):"Checking…");
+  const stateLabel=state==="online"?"Connected":state==="ready"?"Ready":
+   state==="offline"?(item?.reason==="free_quota_exhausted"?"Kuota percuma habis":waitLabel||(item?.http===503?"Servis sibuk (503)":"Offline")):
+   state==="off"?"Not active":"Checking…";
+  const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":state==="ready"?"is-ready":"is-muted"),stateLabel);
   if(id==="gemini"&&item?.reason==="health_timeout")statusText.textContent="Semakan lambat";
-  line.append(nameText,statusText);
+  line.append(elem("span","multi-ai-provider",name),statusText);
   if(!expandable){multiList.appendChild(line);continue;}
-  const group=elem("details","multi-ai-provider-details");
-  group.dataset.provider=id;
-  group.open=hasPreviousGroups&&openGroups.has(id);
-  group.appendChild(line);
+  const group=elem("details","multi-ai-provider-details");group.dataset.provider=id;
+  group.open=hasPreviousGroups&&openGroups.has(id);group.appendChild(line);
   const modelList=elem("div","multi-ai-model-list");
-  // Configured NVIDIA NIM model; listing alone does not prove availability.
-  const orcaFreeModels=[{id:"nvidia/nemotron-3.5-bolt-e4b",name:"Nemotron 3.5 Bolt · Lesen production"}];
-  const models=id==="nvidia"?(state==="off"?[]:orcaFreeModels):catalog?.models;
-  const shownModels=id==="nvidia"?{models,status:"public_listing"}:catalog;
-  // Catalog membership does not prove individual models are online.
-  if(Array.isArray(models)&&models.length){
-   for(const model of models){
+  if(Array.isArray(catalog?.models)&&catalog.models.length){
+   for(const model of catalog.models){
     if(!model||typeof model.id!=="string")continue;
-    const child=elem("div","multi-ai-model-row");
-    const fullName=String(model.name||model.id).slice(0,140);
+    const child=elem("div","multi-ai-model-row"),fullName=String(model.name||model.id).slice(0,140);
     child.title=fullName+" · "+model.id.slice(0,140);
     child.setAttribute("aria-label",fullName+", status berdasarkan penggunaan sebenar jika sudah diuji");
-    const shortName=elem("span","multi-ai-model-name",shortOpenRouterName(model));
     const liveModel=(item?.status==="online"&&item.model===model.id)||
-      (id==="openrouter"&&model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000)||
-      (id==="nvidia"&&model.id===lastNvidiaModel&&Date.now()-lastNvidiaAt<90000);
-    const statusLabel=elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Connected":"Listed");
-    child.append(shortName,statusLabel);modelList.appendChild(child);
+     (model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000);
+    child.append(elem("span","multi-ai-model-name",shortOpenRouterName(model)),
+     elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Connected":"Listed"));
+    modelList.appendChild(child);
    }
-   
-   if(shownModels?.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Showing a saved list; the latest list is unavailable."));
-  }else{
-   const message=id==="nvidia"?(state==="off"?"Not active":"Model list unavailable."):
-    !catalog?"Loading models…":catalog.status==="unavailable"?"Model list unavailable.":"No models listed yet.";
-   modelList.appendChild(elem("p","multi-ai-model-note",message));
-  }
+   if(catalog.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Showing a saved list; the latest list is unavailable."));
+  }else modelList.appendChild(elem("p","multi-ai-model-note",!catalog?"Loading models…":catalog.status==="unavailable"?"Model list unavailable.":"No models listed yet."));
   group.appendChild(modelList);multiList.appendChild(group);
  }
 }
@@ -1084,7 +1068,6 @@ async function submit(event){
   status(localAnswer?"configured":"online",localAnswer?"Jawapan tersedia Aksara":"Multi A.I Connected","");
   if(!localAnswer){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
   if(data.provider==="openrouter"&&typeof data.model==="string"){lastOpenRouterModel=data.model;lastOpenRouterAt=Date.now();}
-  if(data.provider==="nvidia"&&typeof data.model==="string"){lastNvidiaModel=data.model;lastNvidiaAt=Date.now();}
   compact();
  }catch(error){
   cancelPartialFrame();
@@ -1158,10 +1141,10 @@ try{const lastMode=localStorage.getItem(MODE_STORAGE);if(lastMode==="gelap"||las
 renderIdeas();renderHistory();update();probe();
 })();
 </script>
-<script src="bilik-antara-identity.js?v=29" defer></script>
+<script src="bilik-antara-identity.js?v=30" defer></script>
 <script src="bilik-antara-session-utils.js?v=1" defer></script>
 <script src="bilik-antara-suite.js?v=14" defer></script>
-<script src="bilik-antara-brain.js?v=14" defer></script>
+<script src="bilik-antara-brain.js?v=15" defer></script>
 <script src="bilik-antara-modes.js?v=4" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-dialek.js?v=2" defer></script>

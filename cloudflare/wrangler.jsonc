@@ -9,12 +9,12 @@
     "run_worker_first": [
       "/",
       "/.netlify/functions/*",
-      "/api/aksara-health",
-      "/api/aksara-nvidia-test"
+      "/api/aksara-health"
     ],
     "html_handling": "none",
     "not_found_handling": "404-page"
   },
+  "ai": {"binding": "AI"},
   "durable_objects": {
     "bindings": [
       {
@@ -40,9 +40,7 @@
     "GROQ_FREE_CONFIRMED": "true",
     "GEMINI_MODEL_FAST": "gemini-3.5-flash-lite",
     "GEMINI_MODEL": "gemini-3.5-flash-lite",
-    "GEMINI_MODEL_COMPLEX": "gemini-3.5-flash-lite",
-    "AKSARA_NVIDIA_ENABLED": "false",
-    "AKSARA_NVIDIA_PRODUCTION_AUTHORIZED": "false"
+    "GEMINI_MODEL_COMPLEX": "gemini-3.5-flash-lite"
   },
   "observability": {
     "enabled": true

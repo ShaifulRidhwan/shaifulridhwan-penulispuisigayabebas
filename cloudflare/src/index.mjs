@@ -6,7 +6,6 @@ import netlifyStream from "../../netlify/functions/bilik-antara-stream.mjs";
 import Live from "../../netlify/functions/bilik-antara-live-token.js";
 import StudioImage from "../../netlify/functions/lib/studio-image-handler.js";
 import StudioEnhance from "../../netlify/functions/lib/studio-enhance-handler.js";
-import {nvidiaDiagnostic} from "./nvidia-diagnostic.mjs";
 export {AksaraControl} from "./control.mjs";
 
 const OLD_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
@@ -53,12 +52,12 @@ function serviceHealth(env){
  const openrouter=Boolean(env.OPENROUTER_API_KEY&&env.AKSARA_FREE_FALLBACKS==="true");
  const control=Boolean(env.AKSARA_CONTROL&&String(env.AKSARA_RATE_SALT||"").length>=32);
  const image=Boolean(env.CLOUDFLARE_ACCOUNT_ID&&env.CLOUDFLARE_API_TOKEN);
- const ready={chat:control&&(gemini||groq||nvidia||openrouter),
+ const ready={chat:control&&(gemini||groq||workersAI||openrouter),
   voice:control&&gemini,studio:control&&image};
  return new Response(JSON.stringify({
   ok:true,platform:"cloudflare-workers",phase:"migration",
   services:ready,
-  configuredProviders:[gemini,groq,nvidia,openrouter].filter(Boolean).length,
+  configuredProviders:[gemini,groq,workersAI,openrouter].filter(Boolean).length,
   controlConfigured:control
  }),{status:200,headers:{"content-type":"application/json; charset=utf-8",
  "cache-control":"no-store","x-content-type-options":"nosniff","x-robots-tag":"noindex"}});
@@ -130,7 +129,7 @@ async function handle(request,env,ctx){
   h.set("origin",internalOrigin());
   h.set("x-nf-client-connection-ip",request.headers.get("cf-connecting-ip")||"unknown");
   const adapted=new Request(request,{headers:h});
-  const result=await netlifyStream(adapted);
+  const result=await netlifyStream(adapted,env.AI||null);
   const out=new Headers(result.headers);
   out.set("Access-Control-Allow-Origin",origin);
   out.set("Cache-Control","no-store");
@@ -140,7 +139,7 @@ async function handle(request,env,ctx){
  // Studio validates Origin against the actual request Host; the legacy
  // Netlify origin is only needed by Chat/Voice compatibility handlers.
  const headers=normalizedHeaders(request,origin,!isStudio);
- const event={httpMethod:"POST",headers,body,signal:request.signal,isBase64Encoded:false};
+ const event={httpMethod:"POST",headers,body,signal:request.signal,isBase64Encoded:false,aiBinding:env.AI||null};
  if(path===apis.chat)return asResponse(await Chat.handler(event),origin);
  if(path===apis.voice)return asResponse(await Live.handler(event),origin);
  // Preserve old Studio image-generation payloads, estimate and media parsing.
