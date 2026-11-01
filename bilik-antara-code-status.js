@@ -26,8 +26,8 @@ document.body.appendChild(menu);
 const css=document.createElement("style");
 css.textContent=[
 '.chat-controls{gap:7px!important}',
-'.conversation-head .code-engine-status{display:inline-flex;align-items:center;gap:7px;box-sizing:border-box;height:38px;min-height:38px;padding:0 12px;border:1px solid rgba(220,203,175,.29);border-radius:999px;color:#e6dac9;white-space:nowrap;background:rgba(27,35,48,.14);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font:500 12px/1.4 "DM Sans",system-ui,sans-serif;transition:border-color .2s,background .2s;cursor:pointer}',
-'.conversation-head .code-engine-status:hover{border-color:rgba(241,211,158,.55);background:rgba(190,161,113,.1)}',
+'.conversation-head .code-engine-status{display:inline-flex;align-items:center;gap:7px;box-sizing:border-box;height:38px;min-height:38px;padding:0 12px;border:1px solid rgba(242,201,143,.27);border-radius:999px;color:#eaddc4;white-space:nowrap;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(5,8,16,.16));box-shadow:inset 0 1px 0 rgba(255,237,198,.11),0 4px 15px rgba(0,0,0,.07);backdrop-filter:blur(10px) saturate(1.1);-webkit-backdrop-filter:blur(10px) saturate(1.1);font:500 12px/1.4 "DM Sans",system-ui,sans-serif;transition:border-color .2s,background .2s,box-shadow .2s;cursor:pointer}',
+'.conversation-head .code-engine-status:hover{border-color:rgba(242,201,143,.42);background:linear-gradient(180deg,rgba(255,255,255,.065),rgba(5,8,16,.2));box-shadow:inset 0 1px 0 rgba(255,237,198,.13),0 4px 15px rgba(0,0,0,.09)}',
 '.code-engine-dot{width:6px;height:6px;border-radius:50%;flex:none;background:#b99c6c}',
 '.code-engine-status.ready .code-engine-dot{background:#6fcdaa}',
 '.code-engine-status.offline .code-engine-dot{background:#e7a08e}',
