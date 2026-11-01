@@ -73,3 +73,21 @@ test("No background video on hidden tab, reduced motion, Data Saver or playback 
  assert.equal(h.video.paused,true);
  assert.equal(h.classes.has("has-ambient-video"),false);
 });
+
+test("Short buffering never flashes the static wallpaper; real pause and failure still do",()=>{
+ const h=harness();
+ assert.equal(h.classes.has("has-ambient-video"),true);
+ h.emit("video","waiting");
+ h.emit("video","stalled");
+ assert.equal(h.classes.has("has-ambient-video"),true,"Frame must stay visible during brief buffering");
+ h.video.pause();
+ assert.equal(h.classes.has("has-ambient-video"),false);
+ h.video.play();
+ assert.equal(h.classes.has("has-ambient-video"),true);
+ h.emit("video","error");
+ assert.equal(h.classes.has("has-ambient-video"),false);
+});
+test("Updated video and controller URLs bypass prior browser cache",()=>{
+ assert.match(html,/bilik-antara-background\\.mp4\\?v=2/);
+ assert.match(html,/bilik-antara-video\\.js\\?v=2/);
+});

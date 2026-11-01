@@ -23,7 +23,8 @@
   scene.classList.add("has-ambient-video");
  });
  video.addEventListener("pause",still);
- video.addEventListener("waiting",still);
+ // A temporary buffer stall must keep the current frame visible; switching to WebP creates flashes.
+ // Only explicit pause, denied autoplay or a real error returns to the static wallpaper.
  video.addEventListener("error",()=>{failed=true;video.pause();still()});
  trigger.addEventListener("click",()=>{video.pause();still();},{capture:true});
  const observer=new MutationObserver(sync);
