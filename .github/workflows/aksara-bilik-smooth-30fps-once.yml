@@ -21,12 +21,14 @@ jobs:
             sudo apt-get install -y -qq ffmpeg
           fi
           # Verify source remains the previously approved 16-FPS seamless loop.
-          test "$(git hash-object bilik-antara-background.mp4)" = 9bace519fd3782e557882cf49ffa2ba9cd1ee456
+          # Rerender from the protected 16 FPS baseline, not from the previous output.
+          git show 9a0a33b8377fbfc30ba7f8ee977cb613c8a3eeed:bilik-antara-background.mp4 > /tmp/aksara-source-16.mp4
+          test "$(git hash-object /tmp/aksara-source-16.mp4)" = 9bace519fd3782e557882cf49ffa2ba9cd1ee456
           # Append four source frames across the wrap boundary, interpolate, then trim.
           # Avoids the 0.1 s lost by minterpolate at the end of a finite input.
-          ffmpeg -hide_banner -loglevel error -y -i bilik-antara-background.mp4 \
+          ffmpeg -hide_banner -loglevel error -y -i /tmp/aksara-source-16.mp4 \
             -filter_complex '[0:v]fps=16,split=2[body][start];[body]setpts=PTS-STARTPTS[main];[start]trim=start_frame=0:end_frame=4,setpts=PTS-STARTPTS[tail];[main][tail]concat=n=2:v=1:a=0,minterpolate=fps=30:mi_mode=mci:mc_mode=obmc:me_mode=bidir:vsbmc=1,trim=duration=9.133333,setpts=PTS-STARTPTS,format=yuv420p[out]' \
-            -map '[out]' -an -c:v libx264 -preset veryfast -crf 24 -pix_fmt yuv420p -movflags +faststart /tmp/aksara-smooth-30fps.mp4
+            -map '[out]' -an -c:v libx264 -preset medium -crf 18 -pix_fmt yuv420p -movflags +faststart /tmp/aksara-smooth-30fps.mp4
           node -e 'const cp=require("node:child_process"),fs=require("node:fs");const file="/tmp/aksara-smooth-30fps.mp4";const data=JSON.parse(cp.execFileSync("ffprobe",["-v","error","-show_entries","stream=codec_name,width,height,r_frame_rate,nb_frames","-show_entries","format=duration,size","-of","json",file]));const s=data.streams[0],d=Number(data.format.duration),size=fs.statSync(file).size;if(s.codec_name!=="h264"||s.width!==480||s.height!==832||s.r_frame_rate!=="30/1"||Math.abs(d-9.13)>.08||size<200000||size>1500000)throw Error("30 FPS output validation failed: "+JSON.stringify(data));console.log("Validated smooth MP4:",s.r_frame_rate,d,size);'
           mv /tmp/aksara-smooth-30fps.mp4 bilik-antara-background.mp4
       - name: Commit only the generated MP4
