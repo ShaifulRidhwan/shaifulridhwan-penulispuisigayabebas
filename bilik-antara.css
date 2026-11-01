@@ -3222,15 +3222,15 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation-head #connection{
 .topbar #settingsPanel{z-index:22;position:relative;flex:0 0 auto}
 .topbar #settingsPanel>summary.portal-trigger{
  display:inline-flex!important;align-items:center!important;justify-content:center!important;
- gap:8px!important;box-sizing:border-box;min-width:0;width:auto!important;height:38px!important;
- min-height:38px!important;max-height:38px!important;padding:0 13px!important;
+ gap:6px!important;box-sizing:border-box;min-width:0;width:auto!important;height:36px!important;
+ min-height:36px!important;max-height:36px!important;padding:7px 11px!important;
  border-radius:999px!important;
  border:1px solid rgba(220,196,154,.26)!important;
- background:linear-gradient(115deg,rgba(255,234,198,.065),rgba(110,153,196,.055))!important;
- -webkit-backdrop-filter:blur(8px) saturate(1.1)!important;backdrop-filter:blur(8px) saturate(1.1)!important;
+ background:linear-gradient(145deg,rgba(255,247,224,.035),rgba(125,167,205,.018))!important;
+ -webkit-backdrop-filter:blur(5px) saturate(1.12)!important;backdrop-filter:blur(5px) saturate(1.12)!important;
  box-shadow:inset 0 1px 0 rgba(255,241,214,.1)!important;
- color:var(--muted);font:600 11px/1.25 'DM Sans',system-ui,sans-serif!important;
- letter-spacing:.055em;white-space:nowrap;cursor:pointer;list-style:none;
+ color:#f6e9d6;font:500 12px/1.2 'DM Sans',system-ui,sans-serif!important;
+ letter-spacing:0;white-space:nowrap;cursor:pointer;list-style:none;
 }
 .topbar #settingsPanel>summary.portal-trigger svg{order:2;display:block;flex:none;width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7}
 .topbar #settingsPanel>summary.portal-trigger span{order:1}
@@ -3247,11 +3247,17 @@ body:not(.voice-focus):has(#settingsPanel[open]) .topbar{filter:none!important;p
 body:not(.voice-focus):has(#settingsPanel[open]) .conversation-head{filter:blur(3px) brightness(.78);pointer-events:none}
 body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-veil{visibility:visible;opacity:1;pointer-events:auto}
 @media(max-width:760px){
- .topbar #settingsPanel>summary.portal-trigger{height:34px!important;min-height:34px!important;max-height:34px!important;padding:0 10px!important;gap:6px!important;font-size:10px!important}
+ .topbar #settingsPanel>summary.portal-trigger{height:31px!important;min-height:31px!important;max-height:31px!important;padding:6px 8px!important;gap:5px!important;font-size:10px!important}
  .topbar #settingsPanel>summary.portal-trigger svg{width:14px;height:14px}
  .topbar #settingsPanel .settings-card{top:calc(100% + 8px);right:0;max-height:min(76dvh,560px)}
 }
 @media(max-width:390px){
- .topbar #settingsPanel>summary.portal-trigger{padding-inline:8px!important;gap:5px!important;font-size:9px!important}
+ .topbar #settingsPanel>summary.portal-trigger{padding:6px!important;gap:4px!important;font-size:9px!important}
  .topbar #settingsPanel>summary.portal-trigger svg{width:13px;height:13px}
+}
+
+/* Align PORTAL footprint with the adjacent 'Laman utama' glass link, including narrow phones. */
+@media(max-width:355px){
+ .topbar #settingsPanel>summary.portal-trigger{height:31px!important;min-height:31px!important;max-height:31px!important;padding-inline:5px!important;font-size:8px!important}
+ .topbar #settingsPanel>summary.portal-trigger svg{width:12px;height:12px}
 }
