@@ -190,7 +190,14 @@ exports.handler=async event=>{
   const apiKey=process.env.GEMINI_API_KEY,baseModel=freeModel(process.env.GEMINI_MODEL,DEFAULT_MODEL);
   const fastModel=chooseModel(baseModel,{depth:"low"});
   if(payload.probe===true){const alternatives=Router.configured(cloudflareAI).map(p=>p.id);return result(apiKey||alternatives.length?200:503,{ok:!!(apiKey||alternatives.length),backend:apiKey?"ready":"fallback_ready",model:apiKey?baseModel:null,fastModel:apiKey?fastModel:null,geminiVerified:false,connectionState:"configured",alternativeProviders:alternatives},H);}
-  if(!apiKey&&!Router.enabled(cloudflareAI))return result(503,{error:"Tiada kunci AI aktif di pelayan."},H);
+  if(!apiKey&&!Router.enabled(cloudflareAI)){
+   const offlineExample=PublicPoetry.sample(String(payload.question||"").slice(0,400),{mode:payload.thoughtMode==="gelap"?"gelap":"cahaya"});
+   if(offlineExample&&!payload.media&&!payload.documentText)return result(200,{
+    mode:"grounded-poetry",model:"public-poetry-index",provider:"local_knowledge",
+    reply:offlineExample.answer,sources:[{title:offlineExample.title,url:offlineExample.source}]
+   },H);
+   return result(503,{error:"Tiada kunci AI aktif di pelayan."},H);
+  }
   if(payload.providerStatus===true){
     const ip=(event.headers&&(event.headers["x-nf-client-connection-ip"]||"").split(",")[0])||"unknown";
     if(throttle(ip,healthRateMap,6))return result(429,{code:"STATUS_RATE_LIMIT",error:"Terlalu banyak semakan. Cuba lagi sebentar.",retryAfterSeconds:Math.max(1,Math.ceil((healthRateMap.get(ip).start+60000-Date.now())/1000))},H);

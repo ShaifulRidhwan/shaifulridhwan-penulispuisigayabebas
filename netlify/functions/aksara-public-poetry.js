@@ -25,6 +25,10 @@ function poetryIntent(query){
 }
 function select(query){
  const q=normalize(query);
+ // Generic requests should produce the selected representative poem, not
+ // a random lexical hit from words like "contoh" or "maksud".
+ const generic=q.replace(/\b(?:bagi|berikan|beri|nak|boleh|aku|kau|satu|beberapa|contoh|petikan|puisi|sajak|beserta|dengan|dan|maksud|makna|tafsiran|shaiful|ridhwan|kat|laman|utama|tolong|tunjuk|kan)\b/g,"").trim();
+ if(!generic)return index.find(x=>x.title==="ANTARA TAHU DAN APORIA");
  const exact=index.find(x=>q.includes(normalize(x.title)));
  if(exact)return exact;
  if(/wanita|perempuan/.test(q))return index.find(x=>x.title==="WANITA YANG DIAM");
