@@ -17,6 +17,21 @@ test("Cloudflare build includes all three apps and preserves Netlify home separa
  }
  assert.match(text("dist/studio-antara.html"),/https:\/\/shaifulridhwan-penulispuisigayabebas\.netlify\.app\//);
 });
+test("Shared AKSARA wallpaper is packaged as a real WebP asset for Cloudflare",()=>{
+ const filename="aksara-background-cahaya-gelap.webp";
+ const source=readFileSync(path.join(root,filename));
+ const built=readFileSync(cf("dist/"+filename));
+ assert.ok(source.equals(built),"Deploy must preserve the exact chosen portrait picture");
+ assert.equal(built.subarray(0,4).toString(),"RIFF");
+ assert.equal(built.subarray(8,12).toString(),"WEBP");
+ assert.ok(built.length>1000&&built.length<100000,"Shared portrait stays lightweight");
+ for(const page of ["bilik-antara","studio-antara","perpustakaan-aksara"]){
+  const stylesheet=text("dist/"+page+".css");
+  assert.ok(stylesheet.includes(filename+"?v=1"),page+" must load deployed portrait asset");
+ }
+ assert.equal(text("dist/bilik-antara.html").split(filename+"?v=1").length-1,2,
+  "Both Bilik preload links must use the same shipped asset");
+});
 test("Browser API paths remain intact for non-invasive migration",()=>{
  const browser=text("dist/studio-antara-cloud.js");
  assert.match(browser,/\.netlify\/functions\/studio-image/);
