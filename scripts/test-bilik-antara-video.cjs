@@ -88,6 +88,6 @@ test("Short buffering never flashes the static wallpaper; real pause and failure
  assert.equal(h.classes.has("has-ambient-video"),false);
 });
 test("Updated video and controller URLs bypass prior browser cache",()=>{
- assert.ok(html.includes('bilik-antara-background.mp4?v=2'));
+ assert.ok(html.includes('bilik-antara-background.mp4?v=3'));
  assert.ok(html.includes('bilik-antara-video.js?v=2'));
 });
