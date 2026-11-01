@@ -55,6 +55,7 @@ jobs:
           done
           node scripts/test-bilik-antara-browser.cjs
           node scripts/test-bilik-antara-background.cjs
+          node scripts/test-code-engine-browser.cjs
       - name: Upload browser screenshots
         if: always()
         uses: actions/upload-artifact@v4
