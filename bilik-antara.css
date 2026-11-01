@@ -3314,3 +3314,9 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-ve
  .conversation-head button.multi-ai-trigger .dot.multi-ai-rings::before,
  .conversation-head button.multi-ai-trigger .dot.multi-ai-rings::after{animation:none!important}
 }
+
+/* The larger three-ring symbol replaces the 7px dot without increasing desktop pill width.
+   12px → 7px per side compensates for the 10px symbol delta, keeping glass geometry intact. */
+@media(min-width:761px){
+ .conversation-head #connection.multi-ai-trigger:has(.multi-ai-rings){padding-inline:7px!important}
+}
