@@ -117,7 +117,7 @@ test("Glass, mobile single-column dan imej kulit buku",()=>{
  assert.doesNotMatch(page,/PILIHAN EDITOR/);
  assert.doesNotMatch(page,/class="feature"/);
  assert.match(page,/assets\/novel\/cover-01\.jpg/);
- assert.ok(page.includes("perpustakaan-aksara.css?v=5"));
+ assert.ok( /perpustakaan-aksara\.css\?v=\d+/.test(page));
 });
 
 

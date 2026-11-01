@@ -22,6 +22,23 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
  assert.ok(require("node:zlib").gzipSync(css).length<28000,"Compressed CSS network budget unexpectedly big");
 });
 
+test("Bilik, Studio and Novel share optimized WebP wallpapers without changing their glass UI",()=>{
+ const studio=fs.readFileSync("studio-antara.css","utf8");
+ const novel=fs.readFileSync("perpustakaan-aksara.css","utf8");
+ for(const [sheet,page] of [[css,"Bilik"],[studio,"Studio"],[novel,"Novel"]]){
+  for(const size of ["desktop","mobile"]){
+   assert.ok(sheet.includes("bilik-antara-bg-"+size+".webp?v=2"),page+" missing "+size+" wallpaper");
+  }
+ }
+ for(const size of ["desktop","mobile"]){
+  assert.ok(html.includes("bilik-antara-bg-"+size+".webp?v=2"),"Missing "+size+" preload");
+  const bytes=fs.statSync("bilik-antara-bg-"+size+".webp").size;
+  assert.ok(bytes>1000&&bytes<100000,"Background should stay lightweight WebP");
+ }
+ assert.match(studio,/pointer-events:none/);
+ assert.match(novel,/\.novel-shell\{position:relative;z-index:1\}/);
+});
+
 test("Final text, controls and simplified channel header",()=>{
  assert.match(html,/<h1 class="sr-only">Bilik Antara, Aksara A\.I\.<\/h1>/);
  assert.doesNotMatch(html,/class="identity"|class="eyebrow-convergence"|class="chapter-ornament"/);
