@@ -118,6 +118,13 @@ async function handle(request,env,ctx){
  const url=new URL(request.url),path=url.pathname,origin=url.origin;
  if(path==="/")return Response.redirect(OLD_ORIGIN+"/",302);
  if(path==="/api/aksara-health")return request.method==="GET"?serviceHealth(env):json(405,"Gunakan GET.");
+ if(path==="/api/aksara-capabilities"){
+  if(request.method!=="GET")return json(405,"Gunakan GET.");
+  const required=env.AKSARA_TURNSTILE_REQUIRED==="true";
+  const sitekey=String(env.AKSARA_TURNSTILE_SITEKEY||"");
+  return Response.json({turnstile:{required,sitekey:required?sitekey:""}},{
+   headers:{"cache-control":"no-store","x-content-type-options":"nosniff"}});
+ }
  if(!Object.values(apis).includes(path))return env.ASSETS.fetch(request);
  if(request.method==="OPTIONS"){
   if(request.headers.get("origin")!==origin)return json(403,"Origin tidak dibenarkan.");
@@ -129,10 +136,6 @@ async function handle(request,env,ctx){
  // Require a same-origin caller on public POST APIs, including preflight-less
  // direct browser requests; Netlify continues to serve on its own origin.
  if(request.headers.get("origin")!==origin)return json(403,"Origin tidak dibenarkan.");
- if(path!==apis.owner){
-  const turnstile=await verifyTurnstile(request,env);
-  if(!turnstile.ok)return json(turnstile.status||403,"Pengesahan keselamatan pelawat diperlukan.");
- }
  if(path===apis.owner){
   try{
    const raw=await readBody(request,600000);
@@ -156,6 +159,10 @@ async function handle(request,env,ctx){
  }
  const controls=path===apis.chat?(health?"health":"chat"):
   path===apis.stream?"chat":path===apis.voice?"voice":null;
+ if(!health){
+  const turnstile=await verifyTurnstile(request,env);
+  if(!turnstile.ok)return json(turnstile.status||403,"Pengesahan keselamatan pelawat diperlukan.");
+ }
  let pass=null;
  if(controls){pass=await quota(env,controls,request);if(pass.error)return pass.error;}
  if(path===apis.stream){

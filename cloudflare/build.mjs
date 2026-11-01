@@ -24,6 +24,10 @@ for(const file of listed){
   // on Netlify until the controlled SEO cutover.
   html=html.replace(/(<a\b[^>]*\bhref=["'])https:\/\/shaifulridhwan-penulispuisigayabebas\.netlify\.app\/(bilik-antara|studio-antara|perpustakaan-aksara|antara-cahaya-dan-gelap)\.html/gi,(_,prefix,name)=>prefix+"/"+name+".html");
   html=html.replace('link(area,"Buka Studio Antara","'+home+'/studio-antara.html")','link(area,"Buka Studio Antara","/studio-antara.html")');
+  // Private bot verification is loaded only on the separate Cloudflare apps.
+  // No extra UI, network requests or third-party script when not enabled.
+  if(file==="bilik-antara.html"||file==="studio-antara.html")
+   html=html.replace(/<\/head>/i,'<script defer src="/aksara-turnstile-client.js"></script>\n</head>');
   // Before coordinated SEO cutover, all preview HTML must remain non-indexable
   // and preserve the existing canonical ownership on Netlify.
   html=html.replace(/<\/head>/i,'<meta name="robots" content="noindex,follow" data-cloudflare-preview="1">\n</head>');
@@ -31,6 +35,7 @@ for(const file of listed){
  }else await cp(source,dest);
 }
 await cp(path.join(root,"assets","novel"),path.join(out,"assets","novel"),{recursive:true});
+await cp(path.join(here,"turnstile-client.js"),path.join(out,"aksara-turnstile-client.js"));
 const reader=path.join(out,"assets","novel","pembaca.html");
 let readerHtml=await readFile(reader,"utf8");
 readerHtml=readerHtml.replace(/href=(["'])\/?index\.html\1/g,(_,q)=>"href="+q+home+"/"+q);

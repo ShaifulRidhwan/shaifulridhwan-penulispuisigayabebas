@@ -27,7 +27,7 @@ test("Wrangler only routes API paths through Worker and keeps no deploy-on-merge
  const c=JSON.parse(text("wrangler.jsonc"));
  assert.equal(c.name,"aksara-apps");
  assert.equal(c.assets.binding,"ASSETS");
- assert.deepEqual(c.assets.run_worker_first,["/","/.netlify/functions/*","/api/aksara-health"]);
+ assert.deepEqual(c.assets.run_worker_first,["/","/.netlify/functions/*","/api/aksara-health","/api/aksara-capabilities"]);
  assert.ok(c.migrations.some(x=>x.new_sqlite_classes.includes("AksaraControl")));
  assert.equal(c.vars.AKSARA_SHARED_CHAT_BUDGET,"false");
  assert.equal(c.keep_vars,true,"Wrangler must preserve Dashboard-set account ID and other text vars");
@@ -101,4 +101,21 @@ test("Studio and Perkemas A.I validate the actual Cloudflare origin",async()=>{
   });
   assert.equal((await worker.fetch(invalid,env,{})).status,403);
  }
+});
+
+test("Turnstile client is included only in Cloudflare static assets, not Netlify original",()=>{
+ const browser=text("dist/bilik-antara.html"),studio=text("dist/studio-antara.html");
+ assert.match(browser,/aksara-turnstile-client\.js/);
+ assert.match(studio,/aksara-turnstile-client\.js/);
+ assert.ok(existsSync(cf("dist/aksara-turnstile-client.js")));
+});
+test("Public capability metadata discloses only sitekey, not private Turnstile secret",async()=>{
+ const worker=(await import("./src/index.mjs")).default;
+ const r=await worker.fetch(new Request("https://apps.example.com/api/aksara-capabilities"),{
+  AKSARA_TURNSTILE_REQUIRED:"true",AKSARA_TURNSTILE_SITEKEY:"PUBLIC_SITE_KEY",
+  AKSARA_TURNSTILE_SECRET_KEY:"PRIVATE_SECRET"}, {});
+ const body=await r.text();
+ assert.equal(r.status,200);
+ assert.match(body,/PUBLIC_SITE_KEY/);
+ assert.doesNotMatch(body,/PRIVATE_SECRET/);
 });
