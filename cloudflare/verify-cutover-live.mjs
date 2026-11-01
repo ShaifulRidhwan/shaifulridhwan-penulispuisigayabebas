@@ -36,5 +36,23 @@ try{
  const updated=result.body.includes("matchArchivedSession")&&result.body.includes("conversationTitle");
  record("Cloudflare serves updated session repair functions",result.status===200&&updated,{http:result.status,updated});
 }catch(e){record("Cloudflare session-utils asset reachable",false,{error:e.name});}
+try{
+ const response=await fetch(netlify+"/bilik-antara.html",{redirect:"manual",signal:AbortSignal.timeout(14000)});
+ const location=response.headers.get("location")||"";
+ record("Old Netlify Bilik Antara forces Cloudflare redirect",
+  response.status===302&&location===worker+"/bilik-antara.html",{http:response.status,redirectedToCloudflare:location===worker+"/bilik-antara.html"});
+}catch(e){record("Netlify legacy redirect reachable",false,{error:e.name});}
+try{
+ const result=await get(netlify+"/arkib-sesi-netlify.html");
+ record("Netlify export-only legacy session page, not a second chatbot",
+  result.status===200&&result.body.includes("bilik-antara-suite-v1-archive")&&result.body.includes("Eksport arkib JSON")&&!result.body.includes('id="multiAiDialog"'),
+  {http:result.status,archivePage:result.body.includes("Eksport arkib JSON")});
+}catch(e){record("Netlify session export reachable",false,{error:e.name});}
+try{
+ const result=await get(worker+"/bilik-antara.html");
+ record("Cloudflare Workers AI has an expandable model list like OpenRouter",
+  result.status===200&&result.body.includes('const expandable=id==="openrouter"||id==="workers_ai"')&&result.body.includes("GLM-4.7-Flash"),
+  {http:result.status,expandable:result.body.includes('id==="openrouter"||id==="workers_ai"'),modelShown:result.body.includes("GLM-4.7-Flash")});
+}catch(e){record("Cloudflare Workers AI dropdown reachable",false,{error:e.name});}
 console.log("RESULT",checks.every(c=>c.ok)?"CUTOVER IN SYNC":"CUTOVER NEEDS SYNC");
 process.exitCode=checks.every(c=>c.ok)?0:1;
