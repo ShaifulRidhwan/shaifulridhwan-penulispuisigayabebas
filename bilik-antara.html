@@ -52,7 +52,7 @@
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="bilik-antara-bg-desktop.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="bilik-antara-bg-mobile.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=93">
+<link rel="stylesheet" href="bilik-antara.css?v=94">
 <link rel="stylesheet" href="aksara-header.css?v=2">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=8" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=8"></noscript>
@@ -68,30 +68,8 @@
   </a>
   <nav class="nav-actions aksara-nav" aria-label="Navigasi laman">
    <a class="nav-link aksara-nav-link" href="index.html">Laman utama</a>
-   <a class="nav-link aksara-nav-link" href="studio-antara.html">Studio</a>
-   <a class="nav-link aksara-nav-link" href="perpustakaan-aksara.html">Novel</a>
-  </nav>
- </header>
- <main class="app-shell">
-  <section class="conversation" aria-label="Ruang perbualan">
-   <h1 class="sr-only">Bilik Antara, Aksara A.I.</h1>
-   <div class="glass-frame-orbit" aria-hidden="true">
-    <span class="frame-glow frame-glow--light"></span>
-    <span class="frame-glow frame-glow--shadow"></span>
-   </div>
-   <div class="glass-shadow-mist" aria-hidden="true"></div>
-   <div class="feature-focus-veil" aria-hidden="true"></div>
-   <header class="conversation-head">
-    <div class="voice-toolbar" role="group" aria-label="Kawalan suara">
-     
-     <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Voice Chat</button>
-    </div>
-    <div class="chat-controls">
-     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model yang tersedia"><span class="dot" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
      <details class="settings" id="settingsPanel">
-      <summary aria-label="Buka Ciri dan Fungsi Aksara" title="Ciri &amp; Fungsi">
-       <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
-      </summary>
+      <summary class="portal-trigger" aria-label="Buka Portal Aksara" title="PORTAL"><span>PORTAL</span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></summary>
       <div class="settings-card">
        <div class="settings-title">Ciri &amp; Fungsi</div>
        <div class="feature-hub" role="group" aria-label="Ciri dan fungsi Aksara">
@@ -131,6 +109,24 @@
        </details>
       </div>
      </details>
+  </nav>
+ </header>
+ <main class="app-shell">
+  <section class="conversation" aria-label="Ruang perbualan">
+   <h1 class="sr-only">Bilik Antara, Aksara A.I.</h1>
+   <div class="glass-frame-orbit" aria-hidden="true">
+    <span class="frame-glow frame-glow--light"></span>
+    <span class="frame-glow frame-glow--shadow"></span>
+   </div>
+   <div class="glass-shadow-mist" aria-hidden="true"></div>
+   <div class="feature-focus-veil" aria-hidden="true"></div>
+   <header class="conversation-head">
+    <div class="voice-toolbar" role="group" aria-label="Kawalan suara">
+     
+     <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Voice Chat</button>
+    </div>
+    <div class="chat-controls">
+     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model yang tersedia"><span class="dot" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
     </div>
    </header>
    <dialog class="multi-ai-dialog" id="multiAiDialog" aria-labelledby="multiAiTitle">
