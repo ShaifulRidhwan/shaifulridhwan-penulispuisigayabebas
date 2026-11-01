@@ -130,6 +130,18 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false);
   assert.equal(aiChatRequests.length,0,"Python may load Pyodide CDN but must not call AI");
 
+
+  // Python exception: stdout is retained; traceback and diagnostic never invoke AI.
+  await page.locator("#codeEngineStatus").click();
+  await page.locator('[data-code-language="python"]').click();
+  await page.locator("#input").fill('print("PY BEFORE")\nraise ValueError("PY_DIAGNOSTIC")');
+  await page.locator("#codeRunAction").click();
+  await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("PY_DIAGNOSTIC")),{timeout:65000});
+  const pyError=await page.locator("#chat .code-engine-message.ai").last().innerText();
+  assert.match(pyError,/Python · RALAT/);
+  assert.match(pyError,/PYTHON_ERROR|ValueError/);
+  assert.match(pyError,/PY BEFORE/);
+  assert.equal(aiChatRequests.length,0);
   // TypeScript: real transpilation and execution, not merely an extra menu label.
   await page.locator("#codeEngineStatus").click();
   await page.locator('[data-code-language="typescript"]').click();
@@ -139,6 +151,17 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.match(await page.locator("#chat .code-engine-message.ai").last().innerText(),/TypeScript · BERJAYA/);
   assert.equal(aiChatRequests.length,0);
 
+
+  // Advanced TS semantic check: native compiler diagnostics must reject mismatched types.
+  await page.locator("#codeEngineStatus").click();
+  await page.locator('[data-code-language="typescript"]').click();
+  await page.locator("#input").fill('const score: number = "not a number";\nconsole.log(score);');
+  await page.locator("#codeRunAction").click();
+  await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("TS2322")),{timeout:42000});
+  const tsError=await page.locator("#chat .code-engine-message.ai").last().innerText();
+  assert.match(tsError,/TypeScript · RALAT/);
+  assert.match(tsError,/Baris 1/);
+  assert.equal(aiChatRequests.length,0);
   // SQL: WebAssembly SQLite executes a fresh in-memory database per request.
   await page.locator("#codeEngineStatus").click();
   await page.locator('[data-code-language="sql"]').click();
@@ -148,6 +171,15 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.match(await page.locator("#chat .code-engine-message.ai").last().innerText(),/SQL · BERJAYA/);
   assert.equal(aiChatRequests.length,0);
 
+
+  // SQL failures show actual SQLite errors; each execution starts an empty database.
+  await page.locator("#codeEngineStatus").click();
+  await page.locator('[data-code-language="sql"]').click();
+  await page.locator("#input").fill('SELECT * FROM table_that_does_not_exist;');
+  await page.locator("#codeRunAction").click();
+  await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("SQLITE_ERROR")),{timeout:45000});
+  assert.match(await page.locator("#chat .code-engine-message.ai").last().innerText(),/SQL · RALAT/);
+  assert.equal(aiChatRequests.length,0);
   // A CPU-bound JS loop must terminate on watchdog without freezing the main chat.
   await page.locator("#codeEngineStatus").click();
   await page.locator('[data-code-language="javascript"]').click();
@@ -167,6 +199,21 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.locator("#input").fill('console.log("AFTER TIMEOUT OK");');
   await page.locator("#codeRunAction").click();
   await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("AFTER TIMEOUT OK")),{timeout:12000});
+
+  // Structured worker contract and truncation guard for future explicit AI integration.
+  const contract=await page.evaluate(async()=>{
+   const r=await window.AksaraCodeRuntime.run("javascript",'console.warn("WARN_CHECK"); console.log("x".repeat(15000));');
+   return {version:window.AksaraCodeRuntime.version,ok:r.ok,stderr:r.stderr,stdoutLength:r.stdout.length,
+    truncated:r.truncated,diagnostics:r.diagnostics,limits:r.limits,runtimeMs:r.runtimeMs};
+  });
+  assert.equal(contract.version,"0.4");
+  assert.equal(contract.ok,true);
+  assert.match(contract.stderr,/WARN_CHECK/);
+  assert.ok(contract.stdoutLength<=10000,"Worker output budget must be enforced");
+  assert.equal(contract.truncated,true);
+  assert.equal(contract.limits.maxSource,12000);
+  assert.ok(contract.runtimeMs>=0);
+
   assert.equal(aiChatRequests.length,0,"No AI requests in the entire code test");
 
   assert.deepEqual(errors,[],"Browser page errors: "+errors.join("; "));
