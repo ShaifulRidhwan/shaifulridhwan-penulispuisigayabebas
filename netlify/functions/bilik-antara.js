@@ -460,11 +460,14 @@ exports.handler=async event=>{
   let providerFailures=[],alternativeTried=false,quotaRecoveryTried=false,providerRetrySeconds=3;
   const preparationMs=Date.now()-started;
   const timings=()=>({preparationMs,firstTextMs,systemChars:system.length,historyChars:history.reduce((n,m)=>n+m.content.length,0)});
+  const fallbackLinkNote=intent.hasLink?(ownedPage?
+    "[PENGESAHAN BACKEND] Kandungan HTML awam laman ini memang telah dibaca sebagai teks. Nilai apa yang dapat dibuktikan; jangan dakwa menguji CSS, screenshot, fungsi interaktif atau runtime.":
+    "[PENGESAHAN BACKEND] Pengguna SUDAH memberi URL tetapi kandungan halaman tidak berjaya dibaca. Jangan minta URL itu sekali lagi atau mendakwa telah membuat review. Terangkan batas akses dan minta teks/screenshot hanya jika diperlukan."):"";
   async function useAlternative(options={}){
       alternativeTried=true;
       let alternative;
       try{
-        alternative=await Router.complete({cloudflareAI,system,history,question:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[feedbackContext,work,references]):Context.composeTurn(question,[feedbackContext,doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
+        alternative=await Router.complete({cloudflareAI,system,history,question:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[feedbackContext,fallbackLinkNote,work,references]):Context.composeTurn(question,[feedbackContext,fallbackLinkNote,doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
