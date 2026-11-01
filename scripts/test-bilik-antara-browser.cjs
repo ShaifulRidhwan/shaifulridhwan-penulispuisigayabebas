@@ -128,6 +128,51 @@ async function audit(browser,label,options){
    assert.ok(composer&&viewport&&composer.y+composer.height<=viewport.height+6,label+" composer clipped after Mode dialog");
   }
 
+  // Regression: opening Ciri & Fungsi must blur the entire chat surface,
+  // especially the left strip previously left sharp beside the menu.
+  await page.locator("#settingsPanel > summary").click();
+  await page.waitForFunction(()=>Number(getComputedStyle(document.querySelector(".feature-focus-veil")).opacity)>.95,{timeout:3000});
+  const featureGlass=await page.evaluate(()=>{
+   const root=document.querySelector(".conversation").getBoundingClientRect();
+   const veil=document.querySelector(".feature-focus-veil");
+   const sceneFilter=getComputedStyle(document.querySelector(".world-scene")).filter;
+   const chatBackdrop=getComputedStyle(document.querySelector(".conversation")).backdropFilter;
+   const bounds=veil.getBoundingClientRect(),style=getComputedStyle(veil);
+   return {open:document.querySelector("#settingsPanel").open,
+    visible:style.visibility,opacity:Number(style.opacity),
+    sceneFilter,chatBackdrop,
+    blur:style.backdropFilter||style.webkitBackdropFilter,
+    chat:{left:root.left,top:root.top,right:root.right,bottom:root.bottom},
+    veil:{left:bounds.left,top:bounds.top,right:bounds.right,bottom:bounds.bottom}};
+  });
+  assert.equal(featureGlass.open,true,label+" feature dialog must open");
+  assert.equal(featureGlass.visible,"visible",label+" entire-glass veil must be visible");
+  assert.ok(featureGlass.opacity>.9,label+" feature veil must be opaque enough to blur");
+  assert.match(featureGlass.blur,/blur\(8px\)/,label+" feature veil needs uniform backdrop blur");
+  assert.match(featureGlass.sceneFilter,/blur\(10px\)/,
+    label+" background scene itself must blur, not just interior chat elements");
+  assert.match(featureGlass.chatBackdrop,/blur\(14px\)/,
+    label+" underlying artwork must blur through the chat backdrop root");
+  assert.ok(Math.abs(featureGlass.veil.left-featureGlass.chat.left)<=1 &&
+    Math.abs(featureGlass.veil.right-featureGlass.chat.right)<=1 &&
+    Math.abs(featureGlass.veil.top-featureGlass.chat.top)<=1 &&
+    Math.abs(featureGlass.veil.bottom-featureGlass.chat.bottom)<=1,
+    label+" feature veil does not cover the full chat border: "+JSON.stringify(featureGlass));
+  await page.screenshot({path:path.join(OUT,label+"-feature-glass.png"),animations:"disabled"});
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(()=>!document.querySelector("#settingsPanel").open,{timeout:3000});
+  await page.waitForFunction(()=>getComputedStyle(document.querySelector(".feature-focus-veil")).visibility==="hidden",{timeout:3000});
+  assert.equal(await page.locator(".feature-focus-veil").evaluate(el=>getComputedStyle(el).visibility),"hidden",
+   "Feature veil must close without blocking normal chat controls");
+  const recoveredGlass=await page.evaluate(()=>({
+   scene:getComputedStyle(document.querySelector(".world-scene")).filter,
+   chat:getComputedStyle(document.querySelector(".conversation")).backdropFilter
+  }));
+  assert.doesNotMatch(recoveredGlass.scene,/blur\(10px\)/,
+    label+" closing Ciri & Fungsi must restore the original background");
+  assert.doesNotMatch(recoveredGlass.chat,/blur\(14px\)/,
+    label+" closing Ciri & Fungsi must restore normal glass performance");
+
   const attachmentTrigger=page.locator("#attachmentTrigger"),attachmentDialog=page.locator("#attachmentDialog");
   await attachmentTrigger.click();
   assert.equal(await attachmentDialog.isVisible(),true,"Glass attachment dialog opens");

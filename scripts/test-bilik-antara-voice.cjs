@@ -219,7 +219,8 @@ test("Live streaming uses ephemeral token with PCM input/output and transcriptio
  assert.match(js,/BidiGenerateContentConstrained\?access_token=/);
  assert.match(js,/inputAudioTranscription:advancedVoiceConfig\?\{languageCodes:\["ms-MY"\]/);
  assert.match(js,/outputAudioTranscription:\{\}/);
- assert.match(js,/voiceName:"Aoede"/);
+ assert.match(js,/const LIVE_LOCKED_VOICE="Aoede"/);
+ assert.match(js,/voiceName:LIVE_LOCKED_VOICE/);
  assert.match(js,/audio\/pcm;rate=16000/);
  assert.match(js,/decodePcm/);
  assert.match(js,/c\.interrupted/);
@@ -543,6 +544,8 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  const first=Socket.instances[0];
  assert.ok(first?.sent[0]?.setup);
  assert.deepEqual(first.sent[0].setup.sessionResumption,{});
+ assert.equal(first.sent[0].setup.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName,"Aoede");
+ assert.equal(h.page.BilikAntaraVoiceDiagnostics.snapshot().lockedVoice,"Aoede");
  const spoken=first.sent[0].setup.systemInstruction.parts[0].text;
  assert.match(spoken,/Bahasa asas ialah Bahasa Melayu Malaysia santai/);
  assert.match(spoken,/Jangan tiba-tiba tukar bahasa asing/);
@@ -561,6 +564,7 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  const second=Socket.instances[1];
  assert.ok(second?.sent[0]?.setup);
  assert.equal(second.sent[0].setup.sessionResumption.handle,"HANDLE_ONLY_IN_MEMORY");
+ assert.equal(second.sent[0].setup.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName,"Aoede","Reconnect must not change Aoede voice");
  assert.match(second.sent[0].setup.systemInstruction.parts[0].text,/Bahasa Melayu Malaysia/);
  assert.equal(h.called(),2);
  assert.equal(second.sent[0].setup.generationConfig.thinkingConfig.thinkingLevel,"MEDIUM");
@@ -569,6 +573,7 @@ test("Voice resumption reuses microphone and keeps Google handle in memory only"
  const third=Socket.instances[2];
  assert.ok(third?.sent[0]?.setup,"Failed extended setup should use standard Live");
  assert.equal(third.sent[0].setup.model,"models/gemini-3.8-live");
+ assert.equal(third.sent[0].setup.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName,"Aoede","Standard fallback must preserve Aoede");
  assert.equal(third.sent[0].setup.generationConfig.thinkingConfig,undefined);
  assert.equal(modeRequests[2],"standard");
  assert.equal(h.called(),3);

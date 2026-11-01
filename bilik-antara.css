@@ -1987,9 +1987,7 @@ body.voice-focus .footer-note{
 }
 body.voice-focus .world-scene{filter:blur(3px) brightness(.82)}
 /* Focus settings card only. */
-body:not(.voice-focus):has(#settingsPanel[open]) .topbar,
-body:not(.voice-focus):has(#settingsPanel[open]) .app-shell>.conversation>.messages{
-
+body:not(.voice-focus):has(#settingsPanel[open]) .topbar{
   filter:blur(4px) brightness(.75);
   transition:filter .22s ease;
 }
@@ -3168,4 +3166,52 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 }
 @media(prefers-reduced-motion:reduce){
  .attachment-dialog .attachment-option{transition:none}
+}
+
+/* The chat is itself a backdrop root (it already uses backdrop-filter and
+   isolation:isolate). A blur *inside* it cannot blur the scene behind that root.
+   Native dialogs blur that scene via ::backdrop. Match their result explicitly
+   while this non-native details menu is open, then restore the original glass. */
+body:not(.voice-focus):has(#settingsPanel[open]) .world-scene{
+  filter:blur(10px) brightness(.82);
+}
+body:not(.voice-focus) .conversation:has(#settingsPanel[open]){
+  -webkit-backdrop-filter:blur(14px) saturate(1.10)!important;
+  backdrop-filter:blur(14px) saturate(1.10)!important;
+}
+
+/* Feature hub focus: blur the entire chat surface, including its LEFT gutter.
+   The original focus rule only blurred .messages, leaving part of the artwork
+   and shell visibly sharp. Keep native settings/summary above this one veil.
+   Other dialogs continue to use their own native ::backdrop. */
+.conversation>.feature-focus-veil{
+  position:absolute;
+  inset:0;
+  z-index:14;
+  display:block;
+  visibility:hidden;
+  opacity:0;
+  pointer-events:none;
+  /* Match the native dialog backdrop, not an extra opaque sheet. */
+  background:rgba(3,7,15,.45);
+  -webkit-backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);
+  transition:opacity .2s ease,visibility .2s ease;
+}
+body:not(.voice-focus) .conversation:has(#settingsPanel[open])>.feature-focus-veil{
+  visibility:visible;
+  opacity:1;
+  pointer-events:auto;
+}
+body:not(.voice-focus) .conversation-head:has(#settingsPanel[open]){
+  position:relative;
+  z-index:16;
+}
+body:not(.voice-focus) .conversation-head:has(#settingsPanel[open]) .voice-toolbar,
+body:not(.voice-focus) .conversation-head:has(#settingsPanel[open]) #connection{
+  filter:blur(3px) brightness(.78);
+  pointer-events:none;
+}
+@media(prefers-reduced-motion:reduce){
+  .conversation>.feature-focus-veil{transition:none}
 }

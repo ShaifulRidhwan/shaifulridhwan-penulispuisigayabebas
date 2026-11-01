@@ -169,6 +169,18 @@ test("Feature icon consolidates sessions, performance, studio and keeps privacy 
  assert.match(css,/\.conversation>\.messages\.is-welcome/);
 });
 
+test("Feature glass veil blurs entire chat including the uncovered left gutter",()=>{
+ assert.equal((html.match(/class="feature-focus-veil"/g)||[]).length,1,"Use one consistent focus veil");
+ assert.match(html,/<div class="feature-focus-veil" aria-hidden="true"><\/div>[\s\S]*?<header class="conversation-head">/);
+ const overlay=css.slice(css.lastIndexOf("/* Feature hub focus:"));
+ assert.ok(overlay.includes("position:absolute;")&&overlay.includes("inset:0;"),"Veil must cover full conversation surface");
+ assert.ok(overlay.includes("z-index:14;")&&overlay.includes("backdrop-filter:blur(8px)"),"Veil must blur the underlying background");
+ assert.match(overlay,/\.conversation:has\(#settingsPanel\[open\]\)>\.feature-focus-veil/);
+ assert.match(overlay,/\.conversation-head:has\(#settingsPanel\[open\]\)/,"Open settings must remain above veil");
+ assert.match(css,/\.multi-ai-dialog::backdrop/,"Other native modal backdrops must remain intact");
+ assert.doesNotMatch(css,/\.app-shell>\.conversation>\.messages\s*\{\s*filter:blur\(4px\)/,"Avoid double-blurring messages only");
+});
+
 test("Header chips stay optically aligned and feature interactions have gentle golden motion",()=>{
  assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.match(css,/\.conversation-head #voiceLive,\s*\.conversation-head #connection,\s*\.conversation-head #settingsPanel > summary\s*\{/);
