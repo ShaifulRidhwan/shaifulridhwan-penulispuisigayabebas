@@ -47,3 +47,20 @@ test("Workers AI SSE sends complete user-visible text and never leaks internal r
   if(old.router===undefined)delete process.env.OPENROUTER_API_KEY;else process.env.OPENROUTER_API_KEY=old.router;
  }
 });
+
+test("GLM inference uses adaptive completion caps, without truncating the supplied context",async()=>{
+ const env=process.env.AKSARA_FREE_FALLBACKS,oldGroq=process.env.GROQ_API_KEY,oldRouter=process.env.OPENROUTER_API_KEY;
+ process.env.AKSARA_FREE_FALLBACKS="true";delete process.env.GROQ_API_KEY;delete process.env.OPENROUTER_API_KEY;
+ const seen=[],ai={run:async(_m,input)=>{seen.push(input);return {response:"Aku Aksara, jawapan boleh disemak."};}};
+ try{
+  await Router.complete({cloudflareAI:ai,system:"Identiti Aksara",history:[],question:"Hai",reasoningLevel:"low",task:"conversation",deadline:Date.now()+20000});
+  await Router.complete({cloudflareAI:ai,system:"Identiti Aksara",history:[],question:"Jelaskan ringkas",reasoningLevel:"medium",task:"explain",deadline:Date.now()+20000});
+  await Router.complete({cloudflareAI:ai,system:"Identiti Aksara",history:[],question:"Analisis seni bina",reasoningLevel:"high",task:"technical",deadline:Date.now()+20000});
+  assert.deepEqual(seen.map(v=>v.max_completion_tokens),[650,1100,1700]);
+  assert.ok(seen.every(v=>v.store===false));
+ }finally{
+  if(env===undefined)delete process.env.AKSARA_FREE_FALLBACKS;else process.env.AKSARA_FREE_FALLBACKS=env;
+  if(oldGroq===undefined)delete process.env.GROQ_API_KEY;else process.env.GROQ_API_KEY=oldGroq;
+  if(oldRouter===undefined)delete process.env.OPENROUTER_API_KEY;else process.env.OPENROUTER_API_KEY=oldRouter;
+ }
+});

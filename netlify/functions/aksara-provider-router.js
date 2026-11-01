@@ -62,9 +62,13 @@ const safeMessage=text=>boundedText(text,60000);
 // Cloudflare native binding: share the complete Aksara identity and bounded history.
 async function runWorkersAI(ai,model,body){
  if(!ai||typeof ai.run!=="function")throw Object.assign(Error("Workers AI binding unavailable"),{status:503});
+ // The original fixed 2200-token ceiling slowed short answers: preserve
+ // richer budgets for deep tasks, but don't fund long hidden reasoning on greetings.
+ const effort=body.reasoning_effort==="high"?"high":body.reasoning_effort==="medium"?"medium":"low";
+ const ceiling=effort==="high"?1700:effort==="medium"?1100:650;
  const output=await ai.run(model,{messages:body.messages,temperature:body.temperature,
-  max_completion_tokens:Math.min(2200,body.max_tokens),stream:!!body.stream,
-  reasoning_effort:body.reasoning_effort||"low"});
+  max_completion_tokens:Math.min(ceiling,Math.max(320,body.max_tokens||650)),stream:!!body.stream,
+  reasoning_effort:effort,store:false});
  if(body.stream){
   if(!output||typeof output.getReader!=="function")throw Object.assign(Error("Workers AI stream unavailable"),{status:502});
   return new Response(output,{headers:{"content-type":"text/event-stream"}});
@@ -171,7 +175,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
      body.reasoning_effort=simple?"low":["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"medium";
      body.include_reasoning=false;
    }
-   const res=provider.id==="workers_ai"?await runWorkersAI(cloudflareAI,provider.model,{...body,reasoning_effort:reasoningLevel}):await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(body),signal:control.signal});
+   const res=provider.id==="workers_ai"?await runWorkersAI(cloudflareAI,provider.model,{...body,reasoning_effort:simple?"low":reasoningLevel}):await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(body),signal:control.signal});
    if(!res.ok){
     const e=new Error("Provider HTTP "+res.status);e.status=res.status;
     const details=await res.json().catch(()=>({}));
