@@ -271,12 +271,12 @@ test("Consistent DM Sans chat typography and independent animated voice icon",()
  assert.match(css,/letter-spacing:-\.008em/);
  assert.match(css,/\.messages \.message\.ai \.bubble/);
  assert.match(css,/\.messages \.message\.user \.bubble/);
- assert.match(html,/>Jom Voice Chat<\/button>/);
+ assert.match(html,/>Voice Chat<\/button>/);
  assert.match(css,/\.conversation-head #voiceLive::before/);
  assert.match(css,/@keyframes aksaraVoiceWave/);
  assert.match(css,/#voiceLive\[aria-pressed="true"\]::before/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
- assert.match(voice,/liveButton\.textContent=liveActive\?"Sedang berbual":"Jom Voice Chat"/);
+ assert.match(voice,/liveButton\.textContent=liveActive\?"Sedang berbual":"Voice Chat"/);
  assert.match(html,/src="bilik-antara-voice\.js\?v=\d+"/);
  assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.match(css,/\.conversation-head button\.multi-ai-trigger \.dot/);
