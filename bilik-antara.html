@@ -52,7 +52,7 @@
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="bilik-antara-bg-desktop.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="bilik-antara-bg-mobile.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=95">
+<link rel="stylesheet" href="bilik-antara.css?v=96">
 <link rel="stylesheet" href="aksara-header.css?v=2">
 <link rel="stylesheet" href="bilik-antara-suite.css?v=8" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=8"></noscript>
@@ -126,7 +126,7 @@
      <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Voice Chat</button>
     </div>
     <div class="chat-controls">
-     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model yang tersedia"><span class="dot" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
+     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model yang tersedia"><span class="dot multi-ai-rings" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
     </div>
    </header>
    <dialog class="multi-ai-dialog" id="multiAiDialog" aria-labelledby="multiAiTitle">
@@ -1169,11 +1169,11 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-session-utils.js?v=2" defer></script>
 <script src="bilik-antara-suite.js?v=15" defer></script>
 <script src="bilik-antara-code-runtime.js?v=4" defer></script>
-<script src="bilik-antara-code-status.js?v=11" defer></script>
+<script src="bilik-antara-code-status.js?v=12" defer></script>
 <script src="bilik-antara-code-execution.js?v=1" defer></script>
 <script src="bilik-antara-code-chat.js?v=5" defer></script>
 <script src="bilik-antara-code-bridge.js?v=1" defer></script>
-<script src="bilik-antara-code-agent.js?v=1" defer></script>
+<script src="bilik-antara-code-agent.js?v=2" defer></script>
 <script src="bilik-antara-code-workspace.js?v=1" defer></script>
 <script src="bilik-antara-code-evaluation.js?v=1" defer></script>
 <script src="bilik-antara-brain.js?v=15" defer></script>
