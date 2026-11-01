@@ -155,13 +155,14 @@ function cognitiveProfile(question,history,intent,mode="cahaya"){
  if(intent?.sensitive||intent?.task==="support")return {...safe,focus:"support",reasoningLevel:safe.depth};
  if(intent?.simpleCalculation)return {...safe,focus:"quantitative",reasoningLevel:"low"};
  if(intent?.reaction)return {...safe,focus:"contextual",reasoningLevel:"low"};
- const contextual=!!(h.length&&(intent?.contextFollowUp||/^(?:kenapa|mengapa|macam mana|bagaimana|contoh lain|lagi|jelaskan lagi|maksudnya|jadi|habis|betul ke|apa buktinya|sambung|teruskan|yang tadi|bukan tu)[!?.\s]*$/i.test(raw)));
+ const contextual=!!(h.length&&(intent?.contextFollowUp||/^(?:kenapa|mengapa|macam mana|bagaimana|contoh lain|lagi|jelaskan lagi|maksudnya|jadi|habis|betul ke|apa buktinya|sambung|teruskan|yang tadi|yang tu|yang kedua|yang ketiga|yang satu lagi|bukan tu|bukan yang tu|aku maksudkan|maksud aku|pastu|lepas tu)(?:\b|[!?.\s]|$)/i.test(raw)));
  const argument=!!intent?.debate||/(?:\b(?:benarkah|betulkah|sahih|valid|kontradiksi|percanggahan|bias|fallacy|hipokrasi|munafik)\b|bukti (?:apa|untuk|bahawa)|(?:dakwaan|tuduhan|hujah).{0,100}(?:bukti|benar|sah|lemah)|uji (?:andaian|dakwaan)|kritik (?:pendapat|idea)|apa kelemahan)/i.test(q);
  const deliberation=/(?:\b(?:patutkah|wajarkah|perlukah|pilihan terbaik|mana lebih|trade.?off|pro dan kontra|pros and cons|risiko|keputusan|strategi|bandingkan)\b|lebih baik.*(?:atau|berbanding)|pilih.*(?:antara|atau)|antara .{3,60} dan .{3,60} mana)/i.test(q);
  const quantitative=!!intent?.calculate||/(?:kebarangkalian|probabiliti|regresi|statistik|varians|purata|simpangan piawai|persamaan|integral|derivatif|korelasi|algoritma (?:kira|hitung))/i.test(q)&&!/(?:apa itu|maksud|definisi|terangkan|jelaskan)/i.test(q);
  const debugging=intent?.task==="technical"&&/(?:ralat|error|bug|debug|tak (?:jalan|berfungsi)|gagal|rosak|punca|baiki|fix|uji|unit test|profiler|optimi[sz])/i.test(q);
  const philosophy=/(?:\b(?:falsafah|filosofi|eksistensial|absurd|nihilis|epistemologi|metafizik|ontologi|etika|paradoks|kesedaran|determinisme)\b|makna (?:hidup|kewujudan)|\bkewujudan\b|tujuan (?:hidup|kita|manusia)|manusia.*(?:bebas|wujud|percaya)|mengapa.*(?:wujud|bermakna|pilihan|kebenaran)|apa ertinya (?:hidup|bebas))/i.test(q);
  const claim=/(?:adakah|benarkah|betul ke|apakah benar|sahkan|semak fakta|bukti|kajian)/i.test(q);
+ const evidenceRequired=/(?:sahkan|semak fakta|rujukan|sumber (?:asal|sahih|primer)|bukti (?:kukuh|sebenar|rasmi)|terkini|uji dakwaan|audit kesahihan)/i.test(q);
  const complex=(raw.length>130&&/(?:\bdan\b|\batau\b|,\s|;)/i.test(q))||/^(?:terangkan|jelaskan|analisis|bandingkan|kritikkan|kaji|buktikan).*?(?:secara mendalam|terperinci|langkah demi langkah|dari pelbagai sudut)/i.test(q);
  let focus="general";
  if(intent?.search&&!intent?.calculate)focus="research";
@@ -170,7 +171,7 @@ function cognitiveProfile(question,history,intent,mode="cahaya"){
  else if(argument&&intent?.task!=="creative")focus="argument";
  else if(deliberation&&intent?.task!=="creative")focus="decision";
  else if(philosophy&&intent?.task!=="creative")focus="philosophy";
- else if(intent?.search||intent?.task==="research")focus="research";
+ else if(intent?.search||intent?.task==="research"||(evidenceRequired&&intent?.task!=="creative"))focus="research";
  else if(intent?.task==="creative")focus="creative";
  else if(contextual)focus="contextual";
  const high=!!(intent?.depth==="high"||
@@ -179,11 +180,11 @@ function cognitiveProfile(question,history,intent,mode="cahaya"){
    (focus==="quantitative"&&(complex||raw.length>90))||
    (focus==="debugging"&&complex)||
    (focus==="philosophy"&&(complex||raw.length>85||argument)));
- const moderate=high||(["argument","decision","quantitative","debugging","philosophy","research"].includes(focus)||contextual);
+ const moderate=high||(["argument","decision","quantitative","debugging","philosophy","research"].includes(focus)||contextual||evidenceRequired);
  const depth=high?"high":moderate?"medium":safe.depth;
- return {focus,depth,reasoningLevel:depth,followUp:contextual,reason:[
+ return {focus,depth,reasoningLevel:depth,followUp:contextual,evidenceRequired,reason:[
   ...(complex?["multiple-constraints"]:[]),...(contextual?["follow-up"]:[]),
-  ...(claim?["claim-evaluation"]:[])
+  ...(claim?["claim-evaluation"]:[]),...(evidenceRequired?["evidence-required"]:[])
  ]};
 }
 function cognitivePlan(intent,base,profile){
@@ -198,7 +199,8 @@ function cognitiveGuidance(profile){
  if(profile.focus==="general"&&profile.depth==="low")return "KECERDASAN RINGKAS: Jawab niat sebenar pengguna dalam Bahasa Melayu natural, berasaskan fakta tanpa mereka sumber, dan jangan panjangkan soalan mudah.";
  const specific=COGNITIVE_PROTOCOL[profile.focus]||COGNITIVE_PROTOCOL.general;
  return COGNITIVE_FOUNDATION+"\n"+specific+
-  (profile.followUp&&profile.focus!=="contextual"?"\n"+COGNITIVE_PROTOCOL.contextual:"");
+  (profile.followUp&&profile.focus!=="contextual"?"\n"+COGNITIVE_PROTOCOL.contextual:"")+
+  (profile.evidenceRequired?"\nGERBANG BUKTI: Asingkan sumber yang benar-benar dibaca daripada inferens. Jika alat atau sumber tidak tersedia, sebut belum disahkan. Jangan mereka hasil ujian, URL atau rujukan.":"");
 }
 
 function intelligencePlan(intent){
