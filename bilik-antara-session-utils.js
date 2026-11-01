@@ -69,7 +69,34 @@ function importArchive(raw){
    pinned:entry.pinned===true,titleEdited:entry.titleEdited===true};
  });
 }
-const api={tokens,selectMemory,importArchive};
+
+function conversationTitle(history){
+ const users=Array.isArray(history)?history.filter(m=>m?.role==="user"&&typeof m.content==="string"&&m.content.trim()):[];
+ if(!users.length)return "Perbualan baharu";
+ const greeting=s=>/^(?:anyyeong|annyeong|hai|hi|hello|hey|helo|assalamualaikum|salam)[.!?\s]*$/i.test(s.trim());
+ const meaningful=users.find(m=>!greeting(m.content)&&m.content.trim().length>=12);
+ return (meaningful||users[0]).content.trim().split("\n")[0].slice(0,75);
+}
+function matchArchivedSession(archive,history){
+ if(!Array.isArray(archive)||!Array.isArray(history)||!history.length)return null;
+ const same=(a,b)=>{
+  if(!a||!b||a.role!==b.role||a.content!==b.content)return false;
+  const x=Number.isFinite(a.timestamp),y=Number.isFinite(b.timestamp);
+  return x===y&&(!x||a.timestamp===b.timestamp);
+ };
+ const first=history.find(m=>m?.role==="user");
+ const matches=archive.filter(item=>{
+  if(!item||typeof item.id!=="string"||!Array.isArray(item.history)||!item.history.length)return false;
+  if(!same(first,item.history.find(m=>m?.role==="user")))return false;
+  if(!Number.isFinite(first?.timestamp)&&history.length!==item.history.length)return false;
+  for(let i=0;i<Math.min(history.length,item.history.length);i++)
+   if(!same(history[i],item.history[i]))return false;
+  return true;
+ });
+ matches.sort((a,b)=>b.history.length-a.history.length||Number(b.at||0)-Number(a.at||0));
+ return matches[0]?.id||null;
+}
+const api={tokens,selectMemory,importArchive,conversationTitle,matchArchivedSession};
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 if(root)root.AksaraSessionUtils=api;
 })(typeof globalThis!=="undefined"?globalThis:this);
