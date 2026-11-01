@@ -76,13 +76,13 @@ test("P1: supported attachments include local DOCX, CSV and JSON, but not unsafe
  assert.match(html,/const extracted=ext==="docx"\?await window\.AksaraDocx\.read\(file\):await file\.text\(\)/);
  assert.match(html,/\.json,\.docx,\.pdf/);
 });
-function fakeDocx(xml){
- const filename=Buffer.from("word/document.xml"),body=Buffer.from(xml),local=Buffer.alloc(30),central=Buffer.alloc(46),end=Buffer.alloc(22);
- local.writeUInt32LE(0x04034b50,0);local.writeUInt16LE(0,8);local.writeUInt32LE(body.length,18);local.writeUInt32LE(body.length,22);local.writeUInt16LE(filename.length,26);
- central.writeUInt32LE(0x02014b50,0);central.writeUInt16LE(0,10);central.writeUInt32LE(body.length,20);central.writeUInt32LE(body.length,24);central.writeUInt16LE(filename.length,28);
- const offset=local.length+filename.length+body.length;
+function fakeDocx(xml,deflate=false){
+ const filename=Buffer.from("word/document.xml"),body=Buffer.from(xml),compressed=deflate?require("node:zlib").deflateRawSync(body):body,local=Buffer.alloc(30),central=Buffer.alloc(46),end=Buffer.alloc(22);
+ local.writeUInt32LE(0x04034b50,0);local.writeUInt16LE(deflate?8:0,8);local.writeUInt32LE(compressed.length,18);local.writeUInt32LE(body.length,22);local.writeUInt16LE(filename.length,26);
+ central.writeUInt32LE(0x02014b50,0);central.writeUInt16LE(deflate?8:0,10);central.writeUInt32LE(compressed.length,20);central.writeUInt32LE(body.length,24);central.writeUInt16LE(filename.length,28);
+ const offset=local.length+filename.length+compressed.length;
  end.writeUInt32LE(0x06054b50,0);end.writeUInt16LE(1,8);end.writeUInt16LE(1,10);end.writeUInt32LE(central.length+filename.length,12);end.writeUInt32LE(offset,16);
- const zip=Buffer.concat([local,filename,body,central,filename,end]);
+ const zip=Buffer.concat([local,filename,compressed,central,filename,end]);
  return {size:zip.length,arrayBuffer:async()=>zip.buffer.slice(zip.byteOffset,zip.byteOffset+zip.byteLength)};
 }
 test("P1: DOCX extracts document XML only, without fetching dependencies",async()=>{
@@ -92,6 +92,14 @@ test("P1: DOCX extracts document XML only, without fetching dependencies",async(
  const file=fakeDocx('<?xml version="1.0"?><w:document xmlns:w="urn:word"><w:body><w:p><w:r><w:t>Satu &amp; dua</w:t></w:r></w:p></w:body></w:document>');
  const text=await window.AksaraDocx.read(file);
  assert.equal(text,"Satu & dua");
+});
+test("P1: actual DEFLATE-compressed DOCX is extracted without CDN",async()=>{
+ const window={};
+ const env={window,DataView,Uint8Array,TextDecoder,Blob,DecompressionStream,Response,Error,Math,String,Number,ArrayBuffer,module:{exports:{}}};
+ vm.runInNewContext(fs.readFileSync("bilik-antara-docx.js","utf8"),env);
+ const file=fakeDocx('<w:document xmlns:w="urn:word"><w:body><w:p><w:r><w:t>Fail DOCX mampat</w:t></w:r></w:p></w:body></w:document>',true);
+ const out=await window.AksaraDocx.read(file);
+ assert.equal(out,"Fail DOCX mampat");
 });
 test("P1: no implicit AI code execution after capability routing",()=>{
  const policy=H.decide({task:"technical",hasTools:true,available:["gemini","groq","workers_ai"]});
