@@ -57,6 +57,7 @@
 <link rel="stylesheet" href="bilik-antara-suite.css?v=8" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=8"></noscript>
 
+<link rel="stylesheet" href="bilik-antara-code-execution.css?v=1">
 </head>
 <body>
 <div class="shell">
@@ -83,7 +84,7 @@
    <header class="conversation-head">
     <div class="voice-toolbar" role="group" aria-label="Kawalan suara">
      
-     <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Jom Voice Chat</button>
+     <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Voice Chat</button>
     </div>
     <div class="chat-controls">
      <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model yang tersedia"><span class="dot" aria-hidden="true"></span><span id="connectionText">Checking Multi A.I.…</span></button>
@@ -1173,7 +1174,8 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-suite.js?v=15" defer></script>
 <script src="bilik-antara-code-runtime.js?v=1" defer></script>
 <script src="bilik-antara-code-status.js?v=2" defer></script>
-<script src="bilik-antara-code-chat.js?v=1" defer></script>
+<script src="bilik-antara-code-execution.js?v=1" defer></script>
+<script src="bilik-antara-code-chat.js?v=2" defer></script>
 <script src="bilik-antara-brain.js?v=15" defer></script>
 <script src="bilik-antara-modes.js?v=4" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
