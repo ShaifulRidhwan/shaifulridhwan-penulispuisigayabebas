@@ -250,7 +250,7 @@ const SMOKES=Object.freeze({
  javascript:{source:"console.log(6 * 7)",expected:"42"},
  python:{source:"print(sum([2,3,5,7]))",expected:"17"},
  typescript:{source:"const n: number=6*7; console.log(n)",expected:"42"},
- sql:{source:"SELECT 6+7 AS total;",expected:"total\\n13"}
+ sql:{source:"SELECT 6+7 AS total;",expected:"total\n13"}
 });
 async function probeLanguage(language,{signal}={}){
  const spec=SMOKES[language];
