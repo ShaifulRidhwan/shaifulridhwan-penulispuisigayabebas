@@ -68,7 +68,8 @@ window.addEventListener("aksara:code-language",event=>{
 });
 form.addEventListener("submit",event=>{
  if(allowAISendOnce){allowAISendOnce=false;return;}
- if(executing||bridge.active())return;
+ if(executing){event.preventDefault();event.stopImmediatePropagation();return;}
+ if(bridge.active())return;
  // Detect executable syntax, but never interpret ordinary chat text as a command.
  if(detect(input.value)&&document.getElementById("removeAttachment")?.hidden!==false){
   event.preventDefault();event.stopImmediatePropagation();confirmSend=true;refresh();
