@@ -532,7 +532,9 @@ exports.handler=async event=>{
     const imminent=Router.availability(cloudflareAI).filter(p=>(!hybrid.enabled||primaryTextProviders.includes(p.provider))&&p.retryAfterSeconds<=1&&
       providerFailures.some(f=>f.provider===p.provider&&f.status===429&&f.quotaKind!=="daily"));
     if(imminent.length&&remaining()>5000){
-      const wait=Math.min(...imminent.map(p=>p.retryAfterSeconds))*1000;
+      // Retry-After is a minimum. A tiny clock/timer margin prevents a 1s
+      // boundary race from needlessly skipping the recovered provider.
+      const wait=Math.min(...imminent.map(p=>p.retryAfterSeconds))*1000+75;
       try{if(wait)await waitFor(wait,event.signal);}catch(_){return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);}
       const recovered=Router.availability(cloudflareAI).filter(p=>p.retryAfterSeconds===0&&imminent.some(x=>x.provider===p.provider)).map(p=>p.provider);
       if(recovered.length){
