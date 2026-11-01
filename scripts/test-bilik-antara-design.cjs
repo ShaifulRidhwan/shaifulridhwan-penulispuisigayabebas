@@ -297,6 +297,6 @@ test("Shared WebP celestial theme stays linked across Bilik, Studio and Novel",(
   assert.equal(data.toString("ascii",8,12),"WEBP");
   assert.ok(data.length<70000,"Optimized "+type+" wallpaper exceeded budget");
  }
- assert.match(html,/preload" href="aksara-senja-bulan-desktop\\.webp\\?v=1"/);
- assert.match(html,/preload" href="aksara-senja-bulan-mobile\\.webp\\?v=1"/);
+ assert.match(html,/preload" href="aksara-senja-bulan-desktop\.webp\?v=1"/);
+ assert.match(html,/preload" href="aksara-senja-bulan-mobile\.webp\?v=1"/);
 });
