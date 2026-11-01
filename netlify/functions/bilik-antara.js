@@ -379,7 +379,9 @@ exports.handler=async event=>{
   const tiktokHandle=extractTikTokHandle(question);
   const publicAccount=tiktokHandle?await researchPublicAccount(tiktokHandle):null;
   const researchResult=await Research.research(question,intent,{enabled:flags.researchEnabled,attachment:!!(media.length||documentText),account:!!tiktokHandle,
-    privateContext:!!(payload.memoryNotes||payload.summary),signal:event.signal});
+    // Only this explicit user query is sent to search. No summary, history,
+    // memory notes or attachment bytes are sent to the external search adapter.
+    privateContext:false,signal:event.signal});
   const publicSources=researchResult.sources;
   // Optional site-wide daily request cap; unavailable storage fails closed
   // rather than silently exhausting provider quotas.
@@ -500,7 +502,7 @@ exports.handler=async event=>{
           mode:"fallback",aiMode:"automatic",thoughtMode,model:alternative.model,provider:alternative.provider,
           reply:alternative.reply,sources:[...(ownedPage?[{title:ownedPage.title||"Halaman awam AKSARA",url:ownedPage.url}]:[]),...publicSources.map(({title,url})=>({title,url}))].slice(0,8),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:ownedPage?["owned_page_html"]:[],toolsOffered:[],
-          disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",workers_ai:"Cloudflare Workers AI",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.hasLink?(ownedPage?" · HTML awam laman AKSARA telah dibaca; visual, JavaScript dan prestasi sebenar tidak diuji.":" · Kandungan URL tidak berjaya dibaca atau disahkan. Ini bukan review laman sebenar."):(intent.search?" · Model sandaran ni tak dapat check web secara live. Info terkini belum disahkan.":"")),
+          disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",workers_ai:"Cloudflare Workers AI",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.hasLink?(ownedPage?" · HTML awam laman AKSARA telah dibaca; visual, JavaScript dan prestasi sebenar tidak diuji.":" · Kandungan URL tidak berjaya dibaca atau disahkan. Ini bukan review laman sebenar."):(intent.search?(researchResult.status==="search-snippets"?" · Hasil carian awam ialah snippet sahaja; kandungan penuh belum dibaca.":" · Model sandaran ni tak dapat check web secara live. Info terkini belum disahkan."):"")),
           usage:alternative.usage,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures}
         },H);
       }
@@ -580,7 +582,7 @@ exports.handler=async event=>{
     if(candidate&&candidate.urlContextMetadata&&Array.isArray(candidate.urlContextMetadata.urlMetadata)&&candidate.urlContextMetadata.urlMetadata.some(x=>x&&x.urlRetrievalStatus==="URL_RETRIEVAL_STATUS_SUCCESS"))actualTools.push("url_context");
     const warnings=[];
     if(candidate&&candidate.finishReason&&candidate.finishReason!=="STOP")warnings.push("Jawapan ni mungkin belum lengkap · "+candidate.finishReason+".");
-    if(intent.search&&!tools.some(t=>t.google_search))warnings.push("Live web search belum aktif, jadi info terkini belum disahkan.");
+    if(intent.search&&!tools.some(t=>t.google_search)&&researchResult.status!=="search-snippets")warnings.push("Live web search belum aktif atau belum berjaya, jadi info terkini belum disahkan.");
     else if(intent.search&&!sources.length)warnings.push("Aku belum jumpa sumber yang dapat disahkan untuk jawapan ni.");
     if(intent.hasLink&&!actualTools.includes("url_context")&&!sources.length)warnings.push("Aku belum dapat pastikan link ni berjaya dibaca.");
     const unverifiedReview=intent.hasLink&&!ownedPage&&!actualTools.includes("url_context")&&!directSources.length&&
