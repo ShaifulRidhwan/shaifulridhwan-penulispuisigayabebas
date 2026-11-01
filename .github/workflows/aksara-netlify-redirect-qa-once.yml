@@ -1,0 +1,21 @@
+name: AKSARA one-time Netlify redirect live QA
+on:
+  push:
+    branches:
+      - verify/aksara-netlify-redirect-20261101
+    paths:
+      - cloudflare/verify-netlify-redirect-once.mjs
+      - .github/workflows/aksara-netlify-redirect-qa-once.yml
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify homepage, legacy redirects, archive export and Cloudflare UI
+        run: node cloudflare/verify-netlify-redirect-once.mjs
