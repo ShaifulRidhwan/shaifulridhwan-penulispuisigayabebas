@@ -71,6 +71,10 @@ Platform ini dibangunkan menggunakan:
 
 **Nota pembangunan:** README ini menjadi rujukan konsep, identiti dan skop projek. Status API dan kemampuan sebenar hendaklah disemak pada konfigurasi serta kod semasa. Sebarang perubahan penting pada Aksara, Studio atau teknologi laman patut diselaraskan di sini supaya dokumentasi tidak ketinggalan.
 
+## 📜 SEJARAH PEMBANGUNAN AKSARA
+
+Catatan keputusan dan pengajaran pembangunan, termasuk [kisah garis kuning 1px yang terlepas daripada dua pemerhati](docs/sejarah-pembangunan-aksara.md). Sejarah ini disimpan sebagai dokumentasi projek, bukan ciri pada UI pengguna.
+
 ## 🌐 EXPLORE
 
 - [Gaya Bebas | Laman Utama](https://shaifulridhwan-penulispuisigayabebas.netlify.app/)
