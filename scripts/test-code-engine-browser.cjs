@@ -31,6 +31,18 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.locator("#run").click();
   await page.waitForFunction(()=>document.getElementById("progress")?.textContent.startsWith("Berjaya"),{timeout:12000});
   assert.match(await page.locator("#output").innerText(),/NETWORK BLOCKED/,"Sandbox must block network");
+
+  // Real Python execution: must use the pinned Pyodide WebAssembly runtime, not an AI service.
+  await page.locator("#language").selectOption("python");
+  await page.locator("#editor").fill('print("AKSARA PYTHON OK")\\nprint(sum([2,3,5,7]))'.replace('\\n','\n'));
+  await page.locator("#run").click();
+  await page.waitForFunction(()=>/^(Berjaya|Kod mengembalikan ralat|Runtime dihentikan)/.test(document.getElementById("progress")?.textContent||""),{timeout:60000});
+  const pythonProgress=await page.locator("#progress").innerText();
+  const pythonOutput=await page.locator("#output").innerText();
+  assert.match(pythonProgress,/Berjaya/,"Python failed: "+pythonProgress+" / "+pythonOutput);
+  assert.match(pythonOutput,/AKSARA PYTHON OK/);
+  assert.match(pythonOutput,/17/,"Python arithmetic returned unexpected result.");
+  console.log("AKSARA Python Pyodide execution passed: Python print and arithmetic, no AI backend.");
   assert.equal(errors.length,0,"Uncaught parent page errors: "+errors.join("; "));
   console.log("AKSARA Code Engine browser smoke passed: independent status, mobile width, JS result/error, CSP network block.");
   await page.close();
