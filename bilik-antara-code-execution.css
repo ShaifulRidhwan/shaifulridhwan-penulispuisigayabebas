@@ -1,0 +1,31 @@
+/* RUNTIME ANTARA — execution theatre; purely visual, never runs user code. */
+.runtime-antara[hidden]{display:none!important}
+.runtime-antara{box-sizing:border-box;position:fixed;inset:0;margin:auto;padding:0;border:0;max-width:none;max-height:none;width:100vw;height:100dvh;color:#f3e9d7;background:transparent;overflow:hidden}
+.runtime-antara::backdrop{background:rgba(1,4,13,.68);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.runtime-antara__wrap{box-sizing:border-box;position:relative;width:min(520px,calc(100vw - 28px));max-height:min(690px,calc(100dvh - 28px));margin:auto;top:50%;transform:translateY(-50%);overflow:hidden;border:1px solid rgba(221,194,150,.36);border-radius:14px 32px 14px 32px;isolation:isolate;background:linear-gradient(118deg,rgba(38,27,20,.94),rgba(10,17,29,.97) 48%,rgba(12,27,47,.94));box-shadow:0 35px 110px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,248,222,.12);-webkit-backdrop-filter:blur(22px) saturate(1.15);backdrop-filter:blur(22px) saturate(1.15)}
+.runtime-antara__wrap::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 0% 20%,rgba(238,165,73,.17),transparent 49%),radial-gradient(ellipse at 100% 80%,rgba(57,116,204,.18),transparent 55%)}
+.runtime-antara__head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 24px 10px}
+.runtime-antara__eyebrow{font:600 10px/1.3 'DM Sans',system-ui,sans-serif;letter-spacing:.18em;color:#cdb78f}
+.runtime-antara__title{margin:5px 0 0;font:650 clamp(19px,4vw,25px)/1.2 'DM Sans',system-ui,sans-serif;letter-spacing:.12em;color:#f3e9d7}
+.runtime-antara__language{border:1px solid rgba(204,196,178,.26);border-radius:999px;padding:7px 11px;flex-shrink:0;font:500 11px/1.2 'DM Sans',system-ui,sans-serif;color:#dfdfda;background:rgba(213,208,203,.06)}
+.runtime-antara__scene{position:relative;height:clamp(194px,32vh,252px);margin:12px 18px 16px;overflow:hidden;border:1px solid rgba(216,202,170,.17);border-radius:12px 22px 12px 22px;background:linear-gradient(90deg,rgba(165,102,39,.13),rgba(3,7,14,.45) 49.9%,rgba(47,102,170,.15))}
+.runtime-antara__scene canvas{display:block;position:absolute;inset:0;width:100%;height:100%;opacity:.82}
+.runtime-antara__scene::before{content:"";position:absolute;z-index:2;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(217,152,63,.16),transparent 35%,transparent 65%,rgba(52,103,173,.17)),linear-gradient(0deg,rgba(7,11,20,.6),transparent 40%,rgba(7,11,20,.35))}
+.runtime-antara__core{position:absolute;z-index:3;left:50%;top:50%;width:76px;height:76px;transform:translate(-50%,-50%);display:grid;place-items:center;border-radius:50%;border:1px solid rgba(223,199,157,.56);background:rgba(6,12,24,.62);box-shadow:0 0 0 12px rgba(166,175,204,.04),0 0 45px rgba(214,164,91,.16),inset 0 0 17px rgba(62,105,160,.24);animation:runtimeBreath 2.8s ease-in-out infinite}
+.runtime-antara__core svg{width:36px;height:36px;fill:none;stroke:#e8ce9f;stroke-width:1.45;stroke-linejoin:round}
+.runtime-antara__axis{position:absolute;z-index:2;top:0;bottom:0;left:50%;width:1px;background:linear-gradient(0deg,transparent,rgba(220,197,170,.45),transparent)}
+.runtime-antara__legend{position:absolute;z-index:3;bottom:15px;left:16px;right:16px;display:flex;justify-content:space-between;font:600 9px/1.2 'DM Sans',system-ui,sans-serif;letter-spacing:.22em;color:rgba(229,214,195,.7)}
+.runtime-antara__details{padding:0 24px 23px}
+.runtime-antara__stage{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:28px}
+.runtime-antara__status{font:600 13px/1.5 'DM Sans',system-ui,sans-serif;color:#e6e4dd}
+.runtime-antara__secure{font:500 10px/1.3 'DM Sans',system-ui,sans-serif;color:#a4c0bc;white-space:nowrap}
+.runtime-antara__track{height:3px;overflow:hidden;border-radius:999px;background:rgba(218,210,193,.13);margin:16px 0}
+.runtime-antara__fill{width:8%;height:100%;background:linear-gradient(90deg,#b67e40,#efcb8d,#649bd1);border-radius:inherit;animation:runtimeProgress 3s ease-out forwards}
+.runtime-antara__foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.runtime-antara__note{font:500 11px/1.5 'DM Sans',system-ui,sans-serif;color:#a9b7bd}
+.runtime-antara__stop{padding:10px 22px;min-width:88px;border:1px solid rgba(235,204,150,.48);border-radius:999px;background:rgba(194,147,90,.12);color:#f5dfb7;font:600 12px/1.2 'DM Sans',system-ui,sans-serif;cursor:pointer}
+.runtime-antara__stop:hover,.runtime-antara__stop:focus-visible{background:rgba(203,166,110,.23);outline:2px solid rgba(244,209,149,.55);outline-offset:2px}
+@keyframes runtimeBreath{50%{box-shadow:0 0 0 18px rgba(166,175,204,.035),0 0 60px rgba(214,164,91,.27),inset 0 0 28px rgba(62,105,160,.28)}}
+@keyframes runtimeProgress{0%{width:8%}80%{width:76%}100%{width:87%}}
+@media(max-width:480px){.runtime-antara__head{padding:19px 17px 8px}.runtime-antara__scene{margin:10px 11px 15px;height:clamp(185px,31vh,238px)}.runtime-antara__details{padding:0 17px 20px}.runtime-antara__title{font-size:20px}.runtime-antara__status{font-size:12px}.runtime-antara__secure{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.runtime-antara__core,.runtime-antara__fill{animation:none!important}.runtime-antara__fill{width:75%}}
