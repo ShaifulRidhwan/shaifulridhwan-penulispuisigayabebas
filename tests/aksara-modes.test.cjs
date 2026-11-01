@@ -615,7 +615,7 @@ test("All three Aksara pages share one measured glass topbar with distinct conte
   {html:novel,role:"AKSARA Novel",other:["Laman utama","Bilik Antara","Studio"]}
  ];
  for(const {html:markup,role,other} of pages){
-  assert.match(markup,/aksara-header\.css\?v=1/);
+  assert.match(markup,/aksara-header\.css\?v=2/);
   assert.match(markup,/aksara-brand-name/);
   assert.ok(markup.includes('class="aksara-name">'+role+"</span>"),role);
   assert.ok(markup.includes('class="aksara-credit">oleh Shaiful Ridhwan</span>'),role);
