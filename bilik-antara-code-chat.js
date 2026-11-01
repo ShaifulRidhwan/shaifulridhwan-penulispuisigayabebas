@@ -93,13 +93,22 @@ run.addEventListener("click",async()=>{
  controller=new AbortController();executing=true;refresh();
  const session=window.AksaraRuntimeOverlay?.open(found.language,()=>controller?.abort())||null;
  session?.update("Menjalankan kod dalam sandbox…");
- let answer,executeTime=0;
+ let answer,executeTime=0,structuredReport=null;
  try{
   const result=await engine.run(found.language,found.code,{signal:controller.signal,onProgress:detail=>{
    desc.textContent=String(detail||"Memuatkan runtime…").slice(0,90);
    session?.update(String(detail||"Memuatkan runtime…"));
   }});
   executeTime=Math.round(performance.now()-started);
+  structuredReport={ok:result.ok===true,stdout:String(result.stdout||"").slice(0,8000),
+   stderr:String(result.stderr||"").slice(0,4000),error:String(result.error||"").slice(0,1800),
+   diagnostics:(result.diagnostics||[]).slice(0,8).map(d=>({
+    severity:String(d.severity||"error").slice(0,16),code:String(d.code||"").slice(0,35),
+    message:String(d.message||"").slice(0,450),
+    ...(Number.isInteger(d.line)&&d.line>0?{line:d.line}:{}),
+    ...(Number.isInteger(d.column)&&d.column>0?{column:d.column}:{})
+   })),
+   truncated:result.truncated===true,limits:result.limits||{},runtimeMs:result.runtimeMs||0};
   session?.update(result.ok?"Menyusun output…":"Memeriksa ralat runtime…");
   // A cinematic minimum of 3 s never delays genuine execution or a user abort.
   const remain=Math.max(0,3000-(performance.now()-started));
@@ -125,6 +134,11 @@ run.addEventListener("click",async()=>{
  }finally{session?.close();}
  // Chat history stores local results but omits them from any future AI context/summary.
  if(bridge.addLocalCode([{role:"user",content:source},{role:"assistant",content:answer}])){
+  // Runtime results stay local unless the user explicitly approves AI sharing later.
+  window.dispatchEvent(new CustomEvent("aksara:code-result",{detail:{
+   language:found.language,code:found.code,
+   report:structuredReport||{ok:false,error:answer.slice(0,550),diagnostics:[],stdout:"",stderr:"",runtimeMs:executeTime}
+  }}));
   if(input.value.trim()===source){input.value="";input.dispatchEvent(new Event("input",{bubbles:true}));}
  }
  controller=null;executing=false;selected=null;confirmSend=false;refresh();
