@@ -18,6 +18,7 @@ const Context=require("./aksara-context-manager");
 const Knowledge=require("./aksara-knowledge-engine");
 const PublicPoetry=require("./aksara-public-poetry");
 const SafeTools=require("./aksara-safe-tools");
+const GeminiDiagnosis=require("./aksara-gemini-diagnostics");
 const Research=require("./aksara-research-workflow");
 const Data=require("./aksara-data-analysis");
 const Structured=require("./aksara-structured-output");
@@ -469,6 +470,8 @@ exports.handler=async event=>{
   // A link never becomes proof by itself. Fallbacks may discuss verified owned-page
   // HTML or state clearly that an external URL was NOT read, instead of hard-failing.
   let providerFailures=[],alternativeTried=false,quotaRecoveryTried=false,providerRetrySeconds=3;
+  let geminiRouteDecision="not_selected";
+  const routingDiagnosis=()=>GeminiDiagnosis.summarize({decision:geminiRouteDecision,failures:providerFailures,model});
   const preparationMs=Date.now()-started;
   const timings=()=>({preparationMs,firstTextMs,systemChars:system.length,historyChars:history.reduce((n,m)=>n+m.content.length,0)});
   const fallbackLinkNote=intent.hasLink?(ownedPage?
@@ -503,7 +506,7 @@ exports.handler=async event=>{
           reply:alternative.reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources:[...(ownedPage?[{title:ownedPage.title||"Halaman awam AKSARA",url:ownedPage.url}]:[]),...publicSources.map(({title,url})=>({title,url}))].slice(0,8),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:ownedPage?["owned_page_html"]:[],toolsOffered:[],
           disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",workers_ai:"Cloudflare Workers AI",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.hasLink?(ownedPage?" · HTML awam laman AKSARA telah dibaca; visual, JavaScript dan prestasi sebenar tidak diuji.":" · Kandungan URL tidak berjaya dibaca atau disahkan. Ini bukan review laman sebenar."):(intent.search?(researchResult.status==="search-snippets"?" · Hasil carian awam ialah snippet sahaja; kandungan penuh belum dibaca.":" · Model sandaran ni tak dapat check web secara live. Info terkini belum disahkan."):"")),
-          usage:alternative.usage,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures}
+          usage:alternative.usage,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()}
         },H);
       }
     return null;
@@ -518,6 +521,7 @@ exports.handler=async event=>{
   const backupTextProviders=["openrouter"];
   // Rotate eligible ordinary text requests per warm Worker instance. This does
   // not bypass model quota; Gemini tools and private context remain Gemini-first.
+  geminiRouteDecision=hybrid.geminiFirst?"gemini_first":"adaptive_primary_pool";
   const balancedGeminiTurn=textOnly&&!tools.length&&!!apiKey&&primaryTextProviders.length>0&&
     googleWait(model)===0&&process.env.AKSARA_BALANCED_TEXT_ROUTING==="true"&&
     (balancedTextOrdinal++%2===0);
@@ -544,6 +548,7 @@ exports.handler=async event=>{
       }
     }
   }
+  geminiRouteDecision="gemini_attempted";
   try{
     if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
     if(googleWait(model)>0)throw Object.assign(new Error("Gemini quota cooling down"),{status:429,cooldownKnown:true,retryAfterSeconds:googleWait(model)});
@@ -599,7 +604,7 @@ exports.handler=async event=>{
       reviewApplied:!!review,
       toolsUsed:actualTools,toolsOffered:tools.map(t=>Object.keys(t)[0]),
       disclaimer:warnings.join(" "),
-      usage:data.usageMetadata||null,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures}};
+      usage:data.usageMetadata||null,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()}};
     lastTextProvider="gemini";lastTextSuccessAt=Date.now();
     const successfulHealth=googleHealthFor(model);successfulHealth.value={id:"gemini",model,status:"online",latencyMs:Date.now()-started};successfulHealth.time=Date.now();
     log("success",{depth:intent.depth,review:!!review,sources:sources.length,ms:output.durMs});
@@ -607,7 +612,7 @@ exports.handler=async event=>{
   }catch(error){
     if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
     if(streamed)return result(502,{code:"STREAM_INTERRUPTED",error:"Jawapan terputus sebelum habis."},H);
-    providerFailures.push({provider:"gemini",status:error.status||"unavailable",reason:error.cooldownKnown?"quota_cooldown":error.name==="AbortError"?"timeout":"upstream",...(error.quotaKind?{quotaKind:error.quotaKind,quotaScope:error.quotaScope}:{})});
+    providerFailures.push({provider:"gemini",status:error.status||"unavailable",reason:GeminiDiagnosis.classify(error),...(error.quotaKind?{quotaKind:error.quotaKind,quotaScope:error.quotaScope}:{})});
     googleCooldown(model,error);
     const transient=[400,401,403,404,429,500,502,503,504].includes(error.status)||error.name==="AbortError"||error.name==="TypeError"||(!error.status&&error.name==="Error");
     if(transient&&(textOnly||imageOnly)&&Router.enabled(cloudflareAI)&&(hybrid.enabled||!alternativeTried)){
