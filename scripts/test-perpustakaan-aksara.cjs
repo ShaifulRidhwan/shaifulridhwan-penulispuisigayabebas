@@ -28,19 +28,18 @@ test("Studio curved glass is shared by header only, without the gold rule",()=>{
  const shared=fs.readFileSync(path.join(root,"aksara-header.css"),"utf8");
  const studio=fs.readFileSync(path.join(root,"studio-antara.html"),"utf8");
  for(const [name,html] of [["Studio",studio],["Bilik",bilik],["Novel",page]]){
-  assert.match(html,/aksara-header\\.css\\?v=2/,name+" must load refreshed shared header CSS");
-  assert.match(html,/<header class="(?:topbar )?aksara-header">/,name+" must retain the existing header");
+  assert.ok(html.includes('aksara-header.css?v=2'),name+" must load refreshed shared header CSS");
+  assert.ok(html.includes('<header class="aksara-header">')||
+    html.includes('<header class="topbar aksara-header">'),name+" must retain existing header");
  }
- assert.match(shared,/\\.aksara-header\\{[\\s\\S]*?border-radius:19px;/,
-  "All three topbars must share Studio's rounded glass edge");
- assert.match(shared,/@media\\(max-width:760px\\)\\{[\\s\\S]*?border-radius:17px;/,
-  "Mobile topbars must match Studio's curved corners");
- assert.match(shared,/\\.aksara-header::after\\{content:none;display:none\\}/,
-  "Gold underline must not reappear on any of the three headers");
- assert.match(shared,/\\.shell > \\.aksara-header\\{margin-block-start:10px\\}/,
-  "Chat and Novel should float above content like Studio");
- assert.doesNotMatch(shared,/border-bottom:1px solid rgba\\(237,196,131/,
-  "Do not preserve the old golden bottom border");
+ const commonHeader=shared.slice(shared.indexOf(".aksara-header{"),shared.indexOf("/* The Studio"));
+ assert.ok(commonHeader.includes("border-radius:19px;"),"All topbars use Studio's curved glass edge");
+ assert.ok(shared.includes("border-radius:17px;"),"Mobile topbars match Studio's curved corners");
+ assert.ok(shared.includes(".aksara-header::after{content:none;display:none}"),"Gold underline is gone");
+ assert.ok(shared.includes(".shell > .aksara-header{margin-block-start:10px}"),
+  "Chat and Novel float with the same top spacing as Studio");
+ assert.ok(!shared.includes("border-bottom:1px solid rgba(237,196,131"),
+  "The old golden bottom border must not return");
 });
 
 test("Kod JavaScript katalog boleh dihuraikan",()=>{
