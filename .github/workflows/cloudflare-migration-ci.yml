@@ -55,6 +55,12 @@ jobs:
           curl --max-time 5 -fsS http://127.0.0.1:8787/antara-cahaya-dan-gelap.html -o /tmp/aksara-novel-preview.html
           curl --max-time 5 -fsS http://127.0.0.1:8787/assets/novel/pembaca.html -o /tmp/aksara-reader-preview.html
           # A local Wrangler test must actually SERVE the selected WebP; CSS-only checks miss broken deployments.
+          # Verify real video delivery, not only a reference in HTML.
+          curl --max-time 5 -fsS -D /tmp/aksara-video-headers \
+            http://127.0.0.1:8787/bilik-antara-background.mp4 \
+            -o /tmp/aksara-video.mp4
+          grep -qi '^content-type: video/mp4' /tmp/aksara-video-headers
+          node -e 'const fs=require("fs");const x=fs.readFileSync("/tmp/aksara-video.mp4");if(x.length<10000||x.toString("ascii",4,8)!=="ftyp")process.exit(1)'
           curl --max-time 5 -fsS -D /tmp/aksara-wallpaper-headers \
             http://127.0.0.1:8787/aksara-background-cahaya-gelap.webp \
             -o /tmp/aksara-wallpaper.webp

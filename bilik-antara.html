@@ -58,10 +58,11 @@
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=8"></noscript>
 
 <link rel="stylesheet" href="bilik-antara-code-execution.css?v=1">
+<link rel="stylesheet" href="bilik-antara-video.css?v=1">
 </head>
 <body>
 <div class="shell">
- <div class="world-scene" aria-hidden="true"><div class="world-art"></div><div class="world-embers"><i></i><i></i><i></i></div></div>
+ <div class="world-scene" aria-hidden="true"><div class="world-art"></div><video id="aksaraAmbientVideo" class="world-video" muted loop playsinline preload="none" poster="aksara-background-cahaya-gelap.webp" tabindex="-1"><source src="bilik-antara-background.mp4" type="video/mp4"></video><div class="world-embers"><i></i><i></i><i></i></div></div>
  <header class="topbar aksara-header">
   <a class="brand aksara-brand" href="index.html" title="Kembali ke laman utama Gaya Bebas">
    <span class="brand-name aksara-brand-name"><span class="aksara-name">AKSARA A.I</span><span class="aksara-credit">oleh Shaiful Ridhwan</span></span>
@@ -1182,6 +1183,7 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-dialek.js?v=2" defer></script>
 <script src="bilik-antara-voice.js?v=44" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
+<script src="bilik-antara-video.js?v=1" defer></script>
 <script>
 /* Retain the exact live 3D face, but initialize its renderer only in Voice Chat. */
 (()=>{

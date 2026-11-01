@@ -1,0 +1,75 @@
+"use strict";
+const test=require("node:test");
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const vm=require("node:vm");
+const script=fs.readFileSync("bilik-antara-video.js","utf8");
+const html=fs.readFileSync("bilik-antara.html","utf8");
+const css=fs.readFileSync("bilik-antara-video.css","utf8");
+
+test("Only Bilik Antara uses ambient MP4; original static artwork remains",()=>{
+ assert.match(html,/id="aksaraAmbientVideo"/);
+ assert.match(html,/bilik-antara-background\.mp4/);
+ assert.match(html,/muted loop playsinline preload="none"/);
+ assert.match(html,/poster="aksara-background-cahaya-gelap\.webp"/);
+ assert.match(css,/\.world-scene\.has-ambient-video \.world-art\{animation-play-state:paused\}/);
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+ for(const page of ["studio-antara.html","perpustakaan-aksara.html"]){
+  assert.doesNotMatch(fs.readFileSync(page,"utf8"),/aksaraAmbientVideo|bilik-antara-background\.mp4/);
+ }
+ assert.doesNotThrow(()=>new vm.Script(script));
+});
+
+function harness({saveData=false,reduced=false,hidden=false}={}){
+ const handlers=new Map(),observed=[];
+ const on=(target,type,fn)=>{handlers.set(target+":"+type,(handlers.get(target+":"+type)||[]).concat(fn))};
+ const emit=(target,type)=>{for(const fn of handlers.get(target+":"+type)||[])fn()};
+ const classes=new Set();
+ const scene={classList:{add:n=>classes.add(n),remove:n=>classes.delete(n),contains:n=>classes.has(n)}};
+ const voice={hidden:true};
+ const trigger={getAttribute:name=>name==="aria-pressed"?(trigger.pressed?"true":"false"):null,
+  pressed:false,addEventListener:(type,fn)=>on("trigger",type,fn)};
+ const video={paused:true,plays:0,pauses:0,
+  addEventListener:(type,fn)=>on("video",type,fn),
+  play(){this.plays++;this.paused=false;emit("video","playing");return Promise.resolve()},
+  pause(){this.pauses++;this.paused=true;emit("video","pause")}
+ };
+ const motion={matches:reduced,addEventListener:(type,fn)=>on("motion",type,fn)};
+ const conn={saveData,addEventListener:(type,fn)=>on("connection",type,fn)};
+ const doc={hidden,readyState:"complete",
+  getElementById:id=>id==="aksaraAmbientVideo"?video:id==="voicePanel"?voice:id==="voiceLive"?trigger:null,
+  querySelector:q=>q===".world-scene"?scene:null,
+  addEventListener:(type,fn)=>on("document",type,fn)};
+ class MockObserver{constructor(fn){this.fn=fn;observed.push(this)}observe(){}disconnect(){}}
+ vm.runInNewContext(script,{document:doc,navigator:{connection:conn},
+  window:{matchMedia:()=>motion,addEventListener:(type,fn)=>on("window",type,fn)},
+  MutationObserver:MockObserver});
+ return {video,voice,trigger,motion,conn,doc,classes,mutate:()=>observed.forEach(o=>o.fn()),emit};
+}
+test("Video plays only in ordinary chat, pauses throughout active Voice Chat and resumes after it",()=>{
+ const h=harness();
+ assert.equal(h.classes.has("has-ambient-video"),true);
+ h.trigger.pressed=true;h.voice.hidden=false;h.mutate();
+ assert.equal(h.video.paused,true);
+ assert.equal(h.classes.has("has-ambient-video"),false);
+ // Minimized Voice Chat still has an active session.
+ h.voice.minimized=true;h.mutate();
+ assert.equal(h.video.paused,true);
+ h.voice.hidden=true;h.trigger.pressed=false;h.mutate();
+ assert.equal(h.video.paused,false);
+ assert.equal(h.classes.has("has-ambient-video"),true);
+});
+test("No background video on hidden tab, reduced motion, Data Saver or playback error",()=>{
+ for(const initial of [{hidden:true},{reduced:true},{saveData:true}]){
+  const h=harness(initial);
+  assert.equal(h.video.plays,0);
+  assert.equal(h.classes.has("has-ambient-video"),false);
+ }
+ const h=harness();h.doc.hidden=true;h.emit("document","visibilitychange");
+ assert.equal(h.video.paused,true);
+ h.doc.hidden=false;h.emit("document","visibilitychange");
+ assert.equal(h.video.paused,false);
+ h.emit("video","error");h.mutate();
+ assert.equal(h.video.paused,true);
+ assert.equal(h.classes.has("has-ambient-video"),false);
+});

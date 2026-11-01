@@ -32,6 +32,22 @@ test("Shared AKSARA wallpaper is packaged as a real WebP asset for Cloudflare",(
  assert.equal(text("dist/bilik-antara.html").split(filename+"?v=1").length-1,2,
   "Both Bilik preload links must use the same shipped asset");
 });
+test("Bilik Antara ships a real playable MP4 without changing Studio or Novel",()=>{
+ const asset="bilik-antara-background.mp4";
+ const original=readFileSync(path.join(root,asset));
+ const built=readFileSync(cf("dist/"+asset));
+ assert.ok(original.equals(built),"Cloudflare must serve the actual supplied video");
+ assert.ok(built.length>10000&&built.length<2000000,"10-second video asset size");
+ assert.equal(built.toString("ascii",4,8),"ftyp","MP4 signature");
+ const html=text("dist/bilik-antara.html");
+ assert.match(html,/id="aksaraAmbientVideo"/);
+ assert.ok(html.includes("bilik-antara-video.js?v=1"));
+ assert.ok(html.includes("bilik-antara-video.css?v=1"));
+ assert.match(text("dist/bilik-antara-video.js"),/voiceActive/);
+ for(const page of ["studio-antara.html","perpustakaan-aksara.html"]){
+  assert.ok(!text("dist/"+page).includes("aksaraAmbientVideo"),page+" must remain static");
+ }
+});
 test("Browser API paths remain intact for non-invasive migration",()=>{
  const browser=text("dist/studio-antara-cloud.js");
  assert.match(browser,/\.netlify\/functions\/studio-image/);
