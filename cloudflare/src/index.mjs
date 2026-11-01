@@ -1,0 +1,224 @@
+// The public API preserves the old .netlify/functions URLs so the existing
+// Bilik Antara and Studio browser scripts can be deployed UNMODIFIED.
+// The UI, CSS, animations, persona, Hybrid 3+1 and media rules stay shared.
+import Chat from "../../netlify/functions/bilik-antara.js";
+import netlifyStream from "../../netlify/functions/bilik-antara-stream.mjs";
+import Live from "../../netlify/functions/bilik-antara-live-token.js";
+import StudioImage from "../../netlify/functions/lib/studio-image-handler.js";
+import StudioEnhance from "../../netlify/functions/lib/studio-enhance-handler.js";
+export {AksaraControl} from "./control.mjs";
+import {publicEvidence,verifyTurnstile,ownerTool,consumeArchiveQueue} from "./capabilities.mjs";
+
+const OLD_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
+const apis=Object.freeze({
+ chat:"/.netlify/functions/bilik-antara",
+ stream:"/.netlify/functions/bilik-antara-stream",
+ voice:"/.netlify/functions/bilik-antara-live-token",
+ studio:"/.netlify/functions/studio-image",
+ enhance:"/.netlify/functions/studio-enhance",
+ owner:"/api/aksara-owner-tools"
+});
+function json(status,message,retry=0){
+ return new Response(JSON.stringify({code:status===429?"RATE_LIMIT":"UNAVAILABLE",error:message,retryAfterSeconds:retry||undefined}),
+ {status,headers:{"content-type":"application/json; charset=utf-8","cache-control":"no-store",
+ ...(retry?{"retry-after":String(retry)}:{})}});
+}
+function asResponse(result,origin){
+ const h=new Headers(result.headers||{});
+ h.set("Access-Control-Allow-Origin",origin);
+ h.set("Access-Control-Allow-Methods","POST, OPTIONS");
+ h.set("Access-Control-Allow-Headers","Content-Type");
+ h.set("Vary","Origin");
+ h.set("Cache-Control","no-store");
+ h.set("X-Content-Type-Options","nosniff");
+ return new Response(result.body||null,{status:result.statusCode||500,headers:h});
+}
+function normalizedHeaders(request,origin,legacyOrigin){
+ const headers=Object.fromEntries(request.headers);
+ // Ignore spoofed Netlify client IP headers from the caller.
+ headers["x-nf-client-connection-ip"]=request.headers.get("cf-connecting-ip")||"unknown";
+ // The old Chat and Voice handlers validate a Netlify-origin constant.
+ // The Worker has already validated same-origin: give them their expected
+ // trusted internal string and rewrite only the outgoing CORS header.
+ headers.origin=legacyOrigin?internalOrigin():origin;
+ headers.host=new URL(request.url).host;
+ return headers;
+}
+function internalOrigin(){return process.env.ALLOWED_ORIGIN||OLD_ORIGIN;}
+// Only readiness booleans are exposed: never reveal tokens, providers' secret
+// names, quota hashes or user data. The path is intentionally read-only.
+function serviceHealth(env){
+ const gemini=Boolean(env.GEMINI_API_KEY);
+ const groq=Boolean(env.GROQ_API_KEY&&env.GROQ_FREE_CONFIRMED==="true");
+ const workersAI=Boolean(env.AI&&typeof env.AI.run==="function");
+ const openrouter=Boolean(env.OPENROUTER_API_KEY&&env.AKSARA_FREE_FALLBACKS==="true");
+ const control=Boolean(env.AKSARA_CONTROL&&String(env.AKSARA_RATE_SALT||"").length>=32);
+ const image=Boolean(env.CLOUDFLARE_ACCOUNT_ID&&env.CLOUDFLARE_API_TOKEN);
+ const ready={chat:control&&(gemini||groq||workersAI||openrouter),
+  voice:control&&gemini,studio:control&&image};
+ return new Response(JSON.stringify({
+  ok:true,platform:"cloudflare-workers",phase:"migration",
+  services:ready,
+  configuredProviders:[gemini,groq,workersAI,openrouter].filter(Boolean).length,
+  controlConfigured:control
+ }),{status:200,headers:{"content-type":"application/json; charset=utf-8",
+ "cache-control":"no-store","x-content-type-options":"nosniff","x-robots-tag":"noindex"}});
+}
+async function readBody(request,max){
+ const len=Number(request.headers.get("content-length")||0);
+ if(len>max)throw Object.assign(Error("Permintaan terlalu besar."),{status:413});
+ const bytes=await request.arrayBuffer();
+ if(bytes.byteLength>max)throw Object.assign(Error("Permintaan terlalu besar."),{status:413});
+ return new TextDecoder().decode(bytes);
+}
+async function ipHash(request,env){
+ const salt=String(env.AKSARA_RATE_SALT||"");
+ if(salt.length<32)throw Object.assign(Error("Set AKSARA_RATE_SALT pada Worker dahulu."),{status:503});
+ const ip=request.headers.get("cf-connecting-ip")||"unknown",day=new Date().toISOString().slice(0,10);
+ const bytes=new TextEncoder().encode(day+"|"+ip+"|"+salt);
+ const hash=await crypto.subtle.digest("SHA-256",bytes);
+ return Array.from(new Uint8Array(hash)).map(x=>x.toString(16).padStart(2,"0")).join("").slice(0,32);
+}
+async function quota(env,kind,request,extra={}){
+ if(!env.AKSARA_CONTROL)return {error:json(503,"Durable Object belum disambungkan.")};
+ let hash;try{hash=await ipHash(request,env);}catch(e){return {error:json(e.status||503,e.message)};}
+ try{
+  const stub=env.AKSARA_CONTROL.get(env.AKSARA_CONTROL.idFromName("aksara-control-v1"));
+  const response=await stub.fetch("https://aksara-control.internal/",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({kind,hash,...extra})});
+  const body=await response.json();
+  if(!response.ok)return {error:json(response.status,body.error||"Had Aksara.",body.retryAfterSeconds||60)};
+  return {stub,...body};
+ }catch(_){return {error:json(503,"Kawalan global Aksara belum tersedia. API ditangguh untuk melindungi kuota.")};}
+}
+// Real inference pays a second, independent global budget. Chat alone is
+// not enough: several models can answer one request and Studio also uses neurons.
+// Do not retain prompts, model outputs, raw IP addresses, or secret keys.
+function guardedWorkersAI(env,request){
+ if(!env.AI||typeof env.AI.run!=="function")return null;
+ return {run:async(model,input)=>{
+  const allowance=await quota(env,"workers_ai",request);
+  if(allowance.error){
+   const status=allowance.error.status;
+   let details={};try{details=await allowance.error.json();}catch(_){}
+   throw Object.assign(Error(details.error||"Workers AI unavailable"),{
+    status,retryAfterSeconds:details.retryAfterSeconds||0,reason:"provider_budget"});
+  }
+  // Isolate Gateway setup errors from the native model path.
+  // Merely creating a gateway must not silently disable the third brain.
+  const id=env.AKSARA_AI_GATEWAY_ENABLED==="true"
+   ?String(env.AKSARA_AI_GATEWAY_ID||"").trim():"";
+  // Optional gateway: never cache private dialogue or log request/response
+  // payloads. Gateway configuration is exclusively server-controlled.
+  return id?env.AI.run(model,input,{gateway:{id,skipCache:true,collectLog:false}})
+   :env.AI.run(model,input);
+ }};
+}
+async function release(stub,id){
+ if(!stub||!id)return;
+ try{await stub.fetch("https://aksara-control.internal/",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({kind:"release",id})});}catch(_){}
+}
+async function handle(request,env,ctx){
+ const url=new URL(request.url),path=url.pathname,origin=url.origin;
+ if(path==="/")return Response.redirect(OLD_ORIGIN+"/",302);
+ if(path==="/api/aksara-health")return request.method==="GET"?serviceHealth(env):json(405,"Gunakan GET.");
+ if(path==="/api/aksara-capabilities"){
+  if(request.method!=="GET")return json(405,"Gunakan GET.");
+  const required=env.AKSARA_TURNSTILE_REQUIRED==="true";
+  const sitekey=String(env.AKSARA_TURNSTILE_SITEKEY||"");
+  return Response.json({turnstile:{required,sitekey:required?sitekey:""}},{
+   headers:{"cache-control":"no-store","x-content-type-options":"nosniff"}});
+ }
+ if(!Object.values(apis).includes(path))return env.ASSETS.fetch(request);
+ if(request.method==="OPTIONS"){
+  if(request.headers.get("origin")!==origin)return json(403,"Origin tidak dibenarkan.");
+  return new Response(null,{status:204,headers:{
+  "access-control-allow-origin":origin,"access-control-allow-methods":"POST, OPTIONS",
+  "access-control-allow-headers":"Content-Type, X-Aksara-Turnstile-Token, X-Aksara-Owner-Token","vary":"Origin"}});
+ }
+ if(request.method!=="POST")return json(405,"Gunakan POST.");
+ // Require a same-origin caller on public POST APIs, including preflight-less
+ // direct browser requests; Netlify continues to serve on its own origin.
+ if(request.headers.get("origin")!==origin)return json(403,"Origin tidak dibenarkan.");
+ if(path===apis.owner){
+  try{
+   const raw=await readBody(request,600000);
+   const verified=new Request(request.url,{method:"POST",headers:request.headers,body:raw});
+   const pass=await quota(env,"health",request);
+   if(pass.error)return pass.error;
+   return ownerTool(verified,env,guardedWorkersAI(env,request));
+  }catch(e){return json(e.status||400,e.message||"Permintaan tidak sah.");}
+ }
+ const isStudio=path===apis.studio||path===apis.enhance;
+ const limit=isStudio?7000:path===apis.voice?100:5400000;
+ // Status probes are inexpensive, but must still be rate-limited. They do
+ // not spend the global daily inference budget or count as AI answers.
+ let body=null,health=false;
+ if(path===apis.chat){
+  try{
+   body=await readBody(request,limit);
+   const data=JSON.parse(body);
+   health=data&&typeof data==="object"&&(data.probe===true||data.providerStatus===true);
+  }catch(e){return json(e.status||400,e.status?e.message:"JSON tidak sah.");}
+ }
+ const controls=path===apis.chat?(health?"health":"chat"):
+  path===apis.stream?"chat":path===apis.voice?"voice":null;
+ if(!health){
+  const turnstile=await verifyTurnstile(request,env);
+  if(!turnstile.ok)return json(turnstile.status||403,"Pengesahan keselamatan pelawat diperlukan.");
+ }
+ let pass=null;
+ if(controls){pass=await quota(env,controls,request);if(pass.error)return pass.error;}
+ if(path===apis.stream){
+  const h=new Headers(request.headers);
+  h.set("origin",internalOrigin());
+  h.set("x-nf-client-connection-ip",request.headers.get("cf-connecting-ip")||"unknown");
+  const adapted=new Request(request,{headers:h});
+  let evidence="";
+  if(env.AKSARA_AI_SEARCH_ENABLED==="true"||env.AKSARA_VECTORIZE_ENABLED==="true"){
+   try{
+    const payload=await request.clone().json();
+    if(typeof payload?.question==="string"&&(!payload?.documentText&&!payload?.memoryNotes))
+     evidence=await publicEvidence(env,payload.question,guardedWorkersAI(env,request));
+   }catch(_){}
+  }
+  const result=await netlifyStream(adapted,guardedWorkersAI(env,request),evidence);
+  const out=new Headers(result.headers);
+  out.set("Access-Control-Allow-Origin",origin);
+  out.set("Cache-Control","no-store");
+  return new Response(result.body,{status:result.status,headers:out});
+ }
+ if(body===null)try{body=await readBody(request,limit);}catch(e){return json(e.status||400,e.message);}
+ // Studio validates Origin against the actual request Host; the legacy
+ // Netlify origin is only needed by Chat/Voice compatibility handlers.
+ const headers=normalizedHeaders(request,origin,!isStudio);
+ let evidence="";
+ if(path===apis.chat&&(env.AKSARA_AI_SEARCH_ENABLED==="true"||env.AKSARA_VECTORIZE_ENABLED==="true")){
+  try{
+   const payload=JSON.parse(body);
+   if(typeof payload.question==="string"&&!payload.documentText&&!payload.memoryNotes)
+    evidence=await publicEvidence(env,payload.question,guardedWorkersAI(env,request));
+  }catch(_){}
+ }
+ const event={httpMethod:"POST",headers,body,signal:request.signal,isBase64Encoded:false,
+  aiBinding:guardedWorkersAI(env,request),publicEvidence:evidence};
+ if(path===apis.chat)return asResponse(await Chat.handler(event),origin);
+ if(path===apis.voice)return asResponse(await Live.handler(event),origin);
+ // Preserve old Studio image-generation payloads, estimate and media parsing.
+ // Replace Netlify Blobs ledger with a shared, transactional Cloudflare DO.
+ const reserve=async(e,cost,kind="image")=>{
+  const selected=await quota(env,"studio",request,{cost,action:kind});
+  if(selected.error){
+   let msg="Kawalan bajet Studio tidak tersedia.",wait=60;
+   try{const data=await selected.error.json();msg=data.error||msg;wait=data.retryAfterSeconds||wait;}catch(_){}
+   throw Object.assign(Error(msg),{status:selected.error.status,retryAfter:wait});
+  }
+  return ()=>release(selected.stub,selected.id);
+ };
+ // The Worker still uses existing Cloudflare Workers AI REST credentials
+ // initially to preserve exact image model request/response behavior.
+ const handler=(path===apis.studio?StudioImage:StudioEnhance).createHandler({
+  env:{...env},fetchImpl:fetch,reserve
+ });
+ return asResponse(await handler(event),origin);
+}
+export default {fetch:handle,queue:consumeArchiveQueue};

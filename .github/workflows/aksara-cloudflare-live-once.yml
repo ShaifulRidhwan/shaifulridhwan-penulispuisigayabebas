@@ -1,0 +1,24 @@
+name: AKSARA one-time Cloudflare live smoke
+on:
+  push:
+    branches:
+      - feature/cloudflare-aksara-apps-migration-20261031
+    paths:
+      - .github/workflows/aksara-cloudflare-live-once.yml
+jobs:
+  one-shot-api-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Real Cloudflare API smoke without secrets or personal data
+        run: node cloudflare/live-verify.mjs
+      - name: Offline hybrid 3+1 fallback regression
+        run: |
+          npm ci
+          node --test tests/aksara-hybrid-core.test.cjs tests/aksara-router.test.js tests/aksara-workers-ai.test.cjs

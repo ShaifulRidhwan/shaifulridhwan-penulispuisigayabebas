@@ -1,7 +1,7 @@
 "use strict";
-// Three text primaries (Gemini/Groq/OrcaRouter), one universal free text fallback.
+// Three text primaries (Gemini/Groq/Cloudflare Workers AI), one universal free text fallback.
 // Capability-first: do not invent quality measurements without live benchmarks.
-const PRIMARY=Object.freeze(["gemini","groq","orcarouter"]);
+const PRIMARY=Object.freeze(["gemini","groq","workers_ai"]);
 function decide({task="general",thinking="low",prefer="",hasTools=false,hasMedia=false,available=[],enabled=true}={}){
  const active=new Set(Array.isArray(available)?available:[]);
  const primaries=PRIMARY.filter(id=>active.has(id));

@@ -4,18 +4,18 @@ const assert=require("node:assert/strict");
 const Policy=require("../netlify/functions/aksara-hybrid-policy");
 const Budget=require("../netlify/functions/lib/aksara-shared-budget");
 test("3+1 has three primaries and OpenRouter only as fallback",()=>{
- const p=Policy.decide({task:"conversation",thinking:"low",available:["openrouter","orcarouter","groq","gemini"]});
- assert.deepEqual(p.primaries,["gemini","groq","orcarouter"]);
+ const p=Policy.decide({task:"conversation",thinking:"low",available:["openrouter","workers_ai","groq","gemini"]});
+ assert.deepEqual(p.primaries,["gemini","groq","workers_ai"]);
  assert.equal(p.backup,"openrouter");
  assert.equal(p.geminiFirst,false);
 });
 test("complex analysis and tool requirements prefer Gemini",()=>{
  for(const opts of [{task:"technical",thinking:"high"},{task:"research",hasTools:true},{task:"general",hasMedia:true}]){
-  assert.equal(Policy.decide({...opts,available:["gemini","groq","orcarouter","openrouter"]}).geminiFirst,true);
+  assert.equal(Policy.decide({...opts,available:["gemini","groq","workers_ai","openrouter"]}).geminiFirst,true);
  }
 });
 test("failed or unavailable Gemini not falsely required for simple text",()=>{
- assert.equal(Policy.decide({available:["groq","orcarouter","openrouter"]}).geminiFirst,false);
+ assert.equal(Policy.decide({available:["groq","workers_ai","openrouter"]}).geminiFirst,false);
 });
 function memoryStore(){
  const data=new Map();

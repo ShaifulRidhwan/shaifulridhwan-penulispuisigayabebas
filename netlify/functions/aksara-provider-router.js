@@ -8,9 +8,11 @@
 const {boundedHistory,boundedText,requestControl,readSSE}=require("./lib/aksara-transport");
 const Registry=require("./aksara-model-registry");
 const cooldown=new Map();
+const freeQuotaFailures=new Map(); // 402: real upstream free-quota exhaustion, not a 15-second outage.
+const FREE_QUOTA_RECHECK_MS=15*60*1000;
 let preferredProvider=""; // Best recent successful fallback within the current warm function instance.
 let recentOpenRouter={model:"",at:0}; // Real replies only, never synthetic status.
-let recentOrcaRouter={model:"",at:0}; // Only a real answer can establish Connected.
+let recentWorkersAI={model:"",at:0}; // Genuine chat answer only.
 // Task-specific, bounded instructions for free routers. This cannot unlock
 // unavailable upstream models, bypass quotas or guarantee answer quality.
 const FREE_QUALITY=Object.freeze({
@@ -28,10 +30,6 @@ function freeQuality(task,level){
 }
 function rankProviders(available,task,prefer="",qualityFirst=false){
  const policy={task,thinking:qualityFirst?"high":"low",prefer,last:preferredProvider};
- if(process.env.AKSARA_HYBRID_ROUTER==="false"){
-  const ordinary=Registry.select(available.filter(p=>p.id!=="orcarouter"),policy);
-  return [...ordinary,...available.filter(p=>p.id==="orcarouter")];
- }
  // Hybrid 3+1: provider health and task determine the primary order.
  // Backup preference or an earlier success cannot outrank primaries.
  return [...Registry.select(available.filter(p=>p.id!=="openrouter"),policy),
@@ -39,14 +37,9 @@ function rankProviders(available,task,prefer="",qualityFirst=false){
 }
 
 const PROVIDERS=[
- {id:"groq",key:"GROQ_API_KEY",allow:"GROQ_FREE_CONFIRMED",
-  url:"https://api.groq.com/openai/v1/chat/completions",model:"openai/gpt-oss-120b"},
- // Primary free text provider in the hybrid 3+1 architecture.
- {id:"orcarouter",key:"ORCAROUTER_API_KEY",allow:null,
-  url:"https://api.orcarouter.ai/v1/chat/completions",model:"orcarouter/free"},
- // Universal free-only last fallback for ordinary text.
- {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,
-  url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"}
+ {id:"groq",key:"GROQ_API_KEY",allow:"GROQ_FREE_CONFIRMED",url:"https://api.groq.com/openai/v1/chat/completions",model:"openai/gpt-oss-120b"},
+ {id:"workers_ai",key:null,allow:null,url:null,model:"@cf/zai-org/glm-4.7-flash"},
+ {id:"openrouter",key:"OPENROUTER_API_KEY",allow:null,url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free"}
 ];
 // OpenRouter chooses from its current free chat-model pool; no stale hardcoded model list.
 const classifierModel=model=>/(?:guard|moderation|classifier|safety)/i.test(String(model||""));
@@ -66,18 +59,44 @@ function openRouterBody(body,effort="low"){
  return body;
 }
 const safeMessage=text=>boundedText(text,60000);
+// Cloudflare native binding: share the complete Aksara identity and bounded history.
+async function runWorkersAI(ai,model,body){
+ if(!ai||typeof ai.run!=="function")throw Object.assign(Error("Workers AI binding unavailable"),{status:503});
+ // The original fixed 2200-token ceiling slowed short answers: preserve
+ // richer budgets for deep tasks, but don't fund long hidden reasoning on greetings.
+ const effort=body.reasoning_effort==="high"?"high":body.reasoning_effort==="medium"?"medium":"low";
+ const ceiling=effort==="high"?1700:effort==="medium"?1100:650;
+ let output;
+ try{output=await ai.run(model,{messages:body.messages,temperature:body.temperature,
+  max_completion_tokens:Math.min(ceiling,Math.max(320,body.max_tokens||650)),stream:!!body.stream,
+  // Cloudflare GLM model schema: enable_thinking, not reasoning_effort,
+  // is the authoritative switch. Avoid hidden reasoning on lightweight turns.
+  chat_template_kwargs:{enable_thinking:effort==="high",clear_thinking:true},
+  store:false});}
+ catch(err){
+  // Only a bounded classification, never provider raw errors, prompts or API keys.
+  const message=String(err?.message||"").toLowerCase();
+  const fields=["gateway","billing","quota","rate limit","credit","neurons","thinking","template","max_completion_tokens","store","model","invalid","timeout","capacity"];
+  err.fieldIssue=fields.find(x=>message.includes(x))||"other";
+  err.errorType=String(err?.name||"Error").replace(/[^a-z0-9_-]/gi,"").slice(0,35);
+  throw err;
+ }
+ if(body.stream){
+  if(!output||typeof output.getReader!=="function")throw Object.assign(Error("Workers AI stream unavailable"),{status:502});
+  return new Response(output,{headers:{"content-type":"text/event-stream"}});
+ }
+ return Response.json(output?.choices?.length?output:{
+  model,usage:output?.usage||null,choices:[{message:{content:output?.response||""},finish_reason:"stop"}]});
+}
+
 function envEnabled(name){return String(process.env[name]||"").trim().toLowerCase()==="true";}
-function orcaConfig(){
- if(!envEnabled("AKSARA_FREE_FALLBACKS"))return {active:false,reason:"fallback_disabled"};
- if(!envEnabled("AKSARA_ORCAROUTER_LAYER2"))return {active:false,reason:"layer_disabled"};
- if(!String(process.env.ORCAROUTER_API_KEY||"").trim())return {active:false,reason:"missing_key"};
- return {active:true,reason:"configured_not_probed"};
-}
-function configured(){
+function configured(cloudflareAI=null){
  if(!envEnabled("AKSARA_FREE_FALLBACKS"))return [];
- return PROVIDERS.filter(p=>p.id==="orcarouter"?orcaConfig().active:process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true"));
+ return PROVIDERS.filter(p=>p.id==="workers_ai"
+  ? !!(cloudflareAI&&typeof cloudflareAI.run==="function")
+  : !!(process.env[p.key]&&(p.allow===null||process.env[p.allow]==="true")));
 }
-function enabled(){return configured().length>0;}
+function enabled(cloudflareAI=null){return configured(cloudflareAI).length>0;}
 function quotaKind(message){
  const text=String(message||"");
  if(/per[-_ ]day|daily|tokensperday|requestsperday|free-models-per-day/i.test(text))return "daily";
@@ -90,11 +109,11 @@ function retrySeconds(response,fallback=30){
  const seconds=Number(value);
  return Number.isFinite(seconds)?Math.max(1,Math.ceil(seconds)):Math.max(1,Math.ceil((Date.parse(value)-Date.now())/1000))||fallback;
 }
-function availability(){
- return configured().map(p=>({provider:p.id,retryAfterSeconds:Math.max(0,Math.ceil(((cooldown.get(p.id)||0)-Date.now())/1000))}));
+function availability(cloudflareAI=null){
+ return configured(cloudflareAI).map(p=>({provider:p.id,retryAfterSeconds:Math.max(0,Math.ceil(((cooldown.get(p.id)||0)-Date.now())/1000))}));
 }
-function retryAfterSeconds(fallback=3){
- const providers=availability();
+function retryAfterSeconds(fallback=3,cloudflareAI=null){
+ const providers=availability(cloudflareAI);
  // Zero means ready now. Filtering it out would wait for a slower, failed
  // provider even though another one has already recovered.
  return providers.length?Math.max(1,Math.min(...providers.map(p=>p.retryAfterSeconds))):fallback;
@@ -106,7 +125,7 @@ function blockedClassifierPrefix(text){
 function errorToCooldown(status){
  return status===429?60000:status>=500||status===408?20000:status===401||status===403||status===404?300000:15000;
 }
-async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix="",mediaImages=[]}){
+async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix="",mediaImages=[],cloudflareAI=null}){
  const images=Array.isArray(mediaImages)?mediaImages.slice(0,3).filter(x=>
    x&&["image/jpeg","image/png","image/webp"].includes(x.mimeType)&&
    typeof x.data==="string"&&x.data.length<=4800000&&/^[A-Za-z0-9+/]+={0,2}$/.test(x.data)):[];
@@ -120,19 +139,19 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   {role:"user",content:imageContent||boundedText(question,30000)}
  ];
  const attempts=[];
- const available=configured();
+ const available=configured(cloudflareAI);
  // Prefer the provider that recently completed a real answer. Preserve default order otherwise.
  const ordered=rankProviders(available,task,prefer,reasoningLevel==="high").filter(p=>
   (!images.length||p.id==="openrouter")&&
   (!Array.isArray(only)||only.includes(p.id)));
- // Explicit image consent is OpenRouter-only; never pass images to OrcaRouter.
+ // Explicit image consent is OpenRouter-only; never pass images to provider.
  for(const provider of ordered){
   if(skip.includes(provider.id)||Date.now()<(cooldown.get(provider.id)||0))continue;
   if(signal?.aborted)throw new DOMException("Dihentikan","AbortError");
   const remaining=Math.min(deadline,firstResponseDeadline)-Date.now();if(remaining<500)break;
   // All selected models are reviewed chat models. Stream their visible text
   // through the same classifier-prefix guard; JSON clients get a full-answer budget.
-  const attemptBudget=(provider.id==="openrouter"||provider.id==="orcarouter")?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,reasoningLevel==="high"?12000:8500):
+  const attemptBudget=provider.id==="openrouter"?Math.max(!onDelta?bufferedTimeoutMs:timeoutMs,reasoningLevel==="high"?12000:8500):
    (!onDelta?bufferedTimeoutMs:timeoutMs);
   // Reserve a short final window for the free universal backup.
   const pendingBackup=provider.id!=="openrouter"&&ordered.some(p=>p.id==="openrouter")&&
@@ -142,8 +161,8 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   const control=requestControl(Math.min(attemptBudget,Math.max(500,remaining-backupReserve)),signal);
   let emitted=false;
   try{
-   const headers={"Content-Type":"application/json","Authorization":"Bearer "+process.env[provider.key]};
-   if(provider.id==="orcarouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
+   const headers={"Content-Type":"application/json",...(provider.key?{"Authorization":"Bearer "+process.env[provider.key]}:{})};
+   
    if(provider.id==="openrouter"){headers["HTTP-Referer"]="https://shaifulridhwan-penulispuisigayabebas.netlify.app";headers["X-Title"]="Aksara A.I.";}
    // Preserve medium reasoning for concept and follow-up questions. Only genuine
    // low-effort turns should be reduced to the fastest GPT-OSS setting.
@@ -158,32 +177,27 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
     {role:"system",content:String(system).slice(prefix.length)+"\nSANDARAN TEKS: Tiada alat carian, URL atau pelaksanaan kod aktif. Jangan reka sumber atau mengaku alat yang tiada digunakan. Identiti kekal Aksara. Shaiful bukan pencipta genre puisi gaya bebas."},
     ...messages.slice(1)
    ]:messages;
-   if(provider.id==="openrouter"||provider.id==="orcarouter"){
+   if(provider.id==="openrouter"||provider.id==="workers_ai"){
     providerMessages=[{...providerMessages[0],content:providerMessages[0].content+freeQuality(task,reasoningLevel)},...providerMessages.slice(1)];
    }
-   if(provider.id==="orcarouter"){
-    // Preserve full shared Aksara instructions and context, with a short
-    // mode/language reminder for the heterogeneous free-model router.
-    providerMessages=[{...providerMessages[0],content:providerMessages[0].content+
-     "\nLAPISAN ORCA FREE: Kekalkan watak Aksara A.I. dan mod CAHAYA/GELAP yang sudah ditetapkan. Bahasa Melayu Malaysia santai, kata ganti aku. Sambung sejarah perbualan yang diberikan tanpa mencipta memori. Jangan mengaku ada akses carian web atau alat yang tidak dibekalkan; jangan tampilkan penaakulan dalaman atau metadata penyedia."},
-     ...providerMessages.slice(1)];
-   }
    const body={model:provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
-   // Keep OrcaRouter payload on the widely compatible OpenAI core fields.
-   if(provider.id==="orcarouter"){body.model="orcarouter/free";delete body.temperature;}
    if(provider.id==="openrouter")openRouterBody(body,["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"low");
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.
    if(provider.id==="groq"){
      body.reasoning_effort=simple?"low":["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"medium";
      body.include_reasoning=false;
    }
-   const res=await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(body),signal:control.signal});
+   const res=provider.id==="workers_ai"?await runWorkersAI(cloudflareAI,provider.model,{...body,reasoning_effort:simple?"low":reasoningLevel}):await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(body),signal:control.signal});
    if(!res.ok){
     const e=new Error("Provider HTTP "+res.status);e.status=res.status;
     const details=await res.json().catch(()=>({}));
     const message=String(details?.error?.message||details?.message||"");
     e.fieldIssue=(message.match(/reasoning|stream|models|max_tokens|model|content|messages|system|billing|credits|quota/i)||[])[0]?.toLowerCase();
     e.errorType=String(details?.error?.code||details?.type||"").replace(/[^a-z0-9_-]/gi,"").slice(0,45);
+    if(res.status===402&&e.errorType==="free_quota_exhausted"){
+      e.reason="free_quota_exhausted";e.quotaKind="free_exhausted";
+      // No upstream reset promise: back off instead of hammering provider.
+    }
     if(res.status===429){
       e.quotaKind=quotaKind(message);
       e.retryAfterSeconds=retrySeconds(res,e.quotaKind==="daily"?3600:30);
@@ -229,12 +243,13 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    cooldown.delete(provider.id);preferredProvider=provider.id;
    Registry.observe(provider.id,{ok:true,latencyMs:Date.now()-attemptStarted});
    if(provider.id==="openrouter")recentOpenRouter={model:data.model||provider.model,at:Date.now()};
-   if(provider.id==="orcarouter")recentOrcaRouter={model:data.model||provider.model,at:Date.now()};
+   if(provider.id==="workers_ai")recentWorkersAI={model:data.model||provider.model,at:Date.now()};
    // A real answer is stronger evidence than a cached synthetic health probe.
    if(healthCache.value){
     healthCache.value=healthCache.value.map(x=>x.id===provider.id?{...x,status:"online",model:data.model||provider.model,latencyMs:Date.now()-attemptStarted,retryAfterSeconds:0}:x);
     healthCache.time=Date.now();
    }
+   freeQuotaFailures.delete(provider.id);
    const finishReason=String(data?.choices?.[0]?.finish_reason||"");
    return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task,attempts,elapsedMs:Date.now()-attemptStarted};
   }catch(err){
@@ -246,8 +261,10 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    }
    Registry.observe(provider.id,{ok:false,latencyMs:Date.now()-attemptStarted});
    const status=Number(err.status||0);
-   const wait=err.retryAfterSeconds?err.retryAfterSeconds*1000:errorToCooldown(status);
+   const quotaExhausted=status===402&&err.errorType==="free_quota_exhausted";
+   const wait=quotaExhausted?FREE_QUOTA_RECHECK_MS:(err.retryAfterSeconds?err.retryAfterSeconds*1000:errorToCooldown(status));
    cooldown.set(provider.id,Date.now()+wait);
+   if(quotaExhausted)freeQuotaFailures.set(provider.id,Date.now()+wait);
    if(preferredProvider===provider.id)preferredProvider="";
    attempts.push({provider:provider.id,status:status||"unavailable",reason:err.reason||(err.name==="AbortError"?"timeout":status===429?"rate_limit":status>=500?"upstream":"request_failed"),...(err.quota?{quota:err.quota}:{}),...(err.quotaKind?{quotaKind:err.quotaKind}:{}),...(err.fieldIssue?{fieldIssue:err.fieldIssue}:{}),...(err.errorType?{errorType:err.errorType}:{}),...(err.reason==="empty_output"?{finishReason:err.finishReason,outputTokens:err.outputTokens}:{}),elapsedMs:Date.now()-attemptStarted,retryAfterSeconds:Math.ceil(wait/1000)});
   }finally{control.close();}
@@ -259,7 +276,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
 async function crossReview({question,reply,originalProvider,task="general",timeoutMs=3500}){
  if(process.env.AKSARA_CROSS_REVIEW!=="true"||!["technical","explain","critique"].includes(task))return null;
  if(!question||!reply||question.length>2500||reply.length>5000)return null;
- const reviewer=configured().find(p=>p.id!==originalProvider&&p.id!=="orcarouter"&&
+ const reviewer=configured().find(p=>p.id!==originalProvider&&p.id!=="workers_ai"&&
   (process.env.AKSARA_HYBRID_ROUTER==="false"||p.id!=="openrouter")&&Date.now()>=(cooldown.get(p.id)||0));
  if(!reviewer)return null;
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),timeoutMs);
@@ -325,24 +342,24 @@ const healthCache={time:0,value:null,pending:null};
 function reflectCooldown(checks){
  return checks.map(item=>{
   const seconds=Math.max(0,Math.ceil(((cooldown.get(item.id)||0)-Date.now())/1000));
-  return seconds?{...item,status:"offline",reason:"cooldown",retryAfterSeconds:seconds}:item;
+  const quota=seconds>0&&(freeQuotaFailures.get(item.id)||0)>Date.now();
+  return quota?{...item,status:"offline",reason:"free_quota_exhausted",http:402}:seconds?{...item,status:"offline",reason:"cooldown",retryAfterSeconds:seconds}:item;
  });
 }
-async function checkStatus(){
+async function checkStatus(cloudflareAI=null){
  // A recent success probe can turn stale immediately if a real chat hits quota.
  if(healthCache.value&&Date.now()-healthCache.time<90000)return reflectCooldown(healthCache.value);
  if(healthCache.pending)return healthCache.pending;
  healthCache.pending=(async()=>{
   const checks=await Promise.all(PROVIDERS.map(async provider=>{
-   const active=configured().some(p=>p.id===provider.id);
-   if(!active)return {id:provider.id,status:"off",...(provider.id==="orcarouter"?{reason:orcaConfig().reason}:{})};
-   if(Date.now()<(cooldown.get(provider.id)||0))return {id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
+   const active=configured(cloudflareAI).some(p=>p.id===provider.id);
+   if(!active)return {id:provider.id,status:"off"};
+   if(Date.now()<(cooldown.get(provider.id)||0))return (freeQuotaFailures.get(provider.id)||0)>Date.now()?{id:provider.id,status:"offline",reason:"free_quota_exhausted",http:402}:{id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
-    if(provider.id==="orcarouter"){
-     // No inference probe. Connected requires a genuine recent chat reply.
-     if(Date.now()-recentOrcaRouter.at<90000)return {id:provider.id,status:"online",model:recentOrcaRouter.model,reason:"recent_reply"};
-     return {id:provider.id,status:"ready",reason:"configured_not_probed"};
+    if(provider.id==="workers_ai"){
+     if(Date.now()-recentWorkersAI.at<90000)return {id:provider.id,status:"online",model:recentWorkersAI.model,reason:"recent_reply"};
+     return {id:provider.id,status:"ready",model:provider.model,reason:"binding_configured"};
     }
     if(provider.id==="openrouter"){
      if(Date.now()-recentOpenRouter.at<90000)return {id:provider.id,status:"online",model:recentOpenRouter.model,reason:"recent_reply"};

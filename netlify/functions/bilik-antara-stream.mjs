@@ -2,7 +2,7 @@ import main from "./bilik-antara.js";
 // Same validation, personality, tools and routing as the JSON endpoint.
 // NDJSON separates partial text from a committed final answer.
 const ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
-export default async function(request){
+export default async function(request,cloudflareAI=null,publicEvidence=""){
  const origin=process.env.ALLOWED_ORIGIN||ORIGIN;
  const headers={"Access-Control-Allow-Origin":origin,"Access-Control-Allow-Methods":"POST, OPTIONS",
   "Access-Control-Allow-Headers":"Content-Type","Content-Type":"application/x-ndjson; charset=utf-8",
@@ -22,15 +22,15 @@ export default async function(request){
    const emit=value=>{if(!cancelled&&!abort.signal.aborted)controller.enqueue(encoder.encode(JSON.stringify(value)+"\n"));};
    emit({type:"start",version:1});
    try{
-    // Always send a terminal event before the platform's 30-second limit,
-    // including when an upstream reader ignores cancellation.
+    // Cloudflare streaming remains open while the visitor is connected;
+    // keep Netlify's existing 26-second platform buffer unchanged.
     let timeout;
     const budget=new Promise(resolve=>{timeout=setTimeout(()=>{
       emit({type:"error",status:504,code:"STREAM_INTERRUPTED",error:"Model ambil masa lama sangat. Mesej kau masih ada.",retryAfterSeconds:3});
       stop();resolve(null);
-    },26000);});
+    },process.env.AKSARA_CLOUD_MIGRATION==="preview"?44000:26000);});
     let response;
-    try{response=await Promise.race([main.handler({httpMethod:"POST",headers:Object.fromEntries(request.headers),body,
+    try{response=await Promise.race([main.handler({aiBinding:cloudflareAI,publicEvidence,httpMethod:"POST",headers:Object.fromEntries(request.headers),body,
       signal:abort.signal,onDelta:text=>emit({type:"delta",text})}),budget]);}
     finally{clearTimeout(timeout);}
     if(!response)return;

@@ -1,0 +1,20 @@
+name: AKSARA Gemini 3.6 fast and complex live verification
+on:
+  push:
+    branches:
+      - feature/cloudflare-aksara-apps-migration-20261031
+    paths:
+      - .github/workflows/aksara-gemini-36-both-once.yml
+jobs:
+  two-live-gemini-36-requests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Test 3.6 on ordinary and complex text with redacted outputs
+        run: node cloudflare/gemini-36-both-live.mjs

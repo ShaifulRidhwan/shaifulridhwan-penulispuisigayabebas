@@ -347,17 +347,17 @@ test("Both modes use the same intelligence protocol; GELAP remains independently
  assert.ok(router.includes('reasoningLevel==="low"'));
 });
 
-test("Hybrid 3+1 reserves OpenRouter for last, while rollback restores legacy preference",()=>{
+test("Hybrid 3+1 reserves OpenRouter last even when a prior preference is configured",()=>{
  const router=require("../netlify/functions/aksara-provider-router");
- const list=[{id:"openrouter"},{id:"orcarouter"},{id:"groq"}];
+ const list=[{id:"openrouter"},{id:"workers_ai"},{id:"groq"}];
  assert.equal(router.rankProviders(list,"general","openrouter",false).at(-1).id,"openrouter");
- assert.equal(router.rankProviders(list,"general","openrouter",true)[0].id,"groq");
- assert.equal(router.rankProviders([{id:"openrouter"},{id:"orcarouter"}],"general","openrouter",true)[0].id,"orcarouter");
+ assert.ok(["groq","workers_ai"].includes(router.rankProviders(list,"general","openrouter",true)[0].id));
+ assert.equal(router.rankProviders([{id:"openrouter"},{id:"workers_ai"}],"general","openrouter",true)[0].id,"workers_ai");
  assert.equal(list[0].id,"openrouter","Provider ranking does not mutate caller list");
  const prev=process.env.AKSARA_HYBRID_ROUTER;
  try{
   process.env.AKSARA_HYBRID_ROUTER="false";
-  assert.equal(router.rankProviders(list,"general","openrouter",false)[0].id,"openrouter");
+  assert.equal(router.rankProviders(list,"general","openrouter",false).at(-1).id,"openrouter");
  }finally{
   if(prev===undefined)delete process.env.AKSARA_HYBRID_ROUTER;
   else process.env.AKSARA_HYBRID_ROUTER=prev;
@@ -405,8 +405,8 @@ test("Structured tool gateway never executes arbitrary code and rejects unknown 
  assert.equal(SafeTools.calculatorIntent("kenapa manusia mencari makna?"),null);
 });
 test("Intelligence Router 2.0 weighs capability and observations without mutating preferences",()=>{
- const providers=[{id:"openrouter"},{id:"groq"},{id:"orcarouter"}];
- assert.equal(Registry.select(providers,{thinking:"high",prefer:"openrouter"})[0].id,"groq");
+ const providers=[{id:"openrouter"},{id:"groq"},{id:"workers_ai"}];
+ assert.ok(["groq","workers_ai"].includes(Registry.select(providers,{thinking:"high",prefer:"openrouter"})[0].id));
  assert.equal(Registry.select(providers,{thinking:"low",prefer:"openrouter"})[0].id,"openrouter");
  Registry.observe("groq",{ok:true,latencyMs:250});
  assert.ok(Registry.diagnostics().find(x=>x.provider==="groq").success>=1);

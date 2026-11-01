@@ -1,0 +1,22 @@
+name: AKSARA Gemini Cloudflare bounded 503 retry one-time
+on:
+  push:
+    branches:
+      - feature/cloudflare-aksara-apps-migration-20261031
+    paths:
+      - .github/workflows/aksara-gemini-503-retry-once.yml
+jobs:
+  live-gemini-complex:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Permit Cloudflare Git build to publish new code
+        run: sleep 25
+      - name: Real Gemini complex without revealing model output
+        run: node cloudflare/gemini-503-retry-live-once.mjs

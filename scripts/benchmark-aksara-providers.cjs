@@ -2,7 +2,7 @@
 /*
  * AKSARA Provider A/B Lab
  * Same synthetic Malaysian-Malay questions, system guidance and conversation history.
- * Defaults to OFFLINE self-test. --live requires both API keys in environment.
+ * Defaults to OFFLINE self-test. --live requires both external API keys in environment.
  * No visitor histories, PII, or secrets enter benchmark prompts or reports.
  */
 const assert=require("node:assert/strict");
@@ -10,7 +10,7 @@ const fs=require("node:fs");
 const path=require("node:path");
 
 const PROVIDERS=Object.freeze({
-  orcarouter:{url:"https://api.orcarouter.ai/v1/chat/completions",model:"orcarouter/free",env:"ORCAROUTER_API_KEY"},
+  groq:{url:"https://integrate.api.groq.com/v1/chat/completions",model:"openai/gpt-oss-120b",env:"Groq_API_KEY"},
   openrouter:{url:"https://openrouter.ai/api/v1/chat/completions",model:"openrouter/free",env:"OPENROUTER_API_KEY"}
 });
 const SYSTEM=[
@@ -86,7 +86,7 @@ async function callProvider(provider,caseItem,{key,fetchImpl=fetch,timeoutMs=150
  }finally{clearTimeout(watchdog);}
 }
 function summarize(rows){
- const report={date:new Date().toISOString(),mode:"live",modelSelection:"free dynamic routers",
+ const report={date:new Date().toISOString(),mode:"live",modelSelection:"Groq NIM trial and OpenRouter free router",
   warning:"Keyword checks and Indonesian-marker hints are NOT a full assessment of answer quality or native-language naturalness.",
   results:rows,providers:{}};
  for(const provider of Object.keys(PROVIDERS)){
@@ -108,22 +108,22 @@ function selfTest(){
  assert.equal(assess("TypeError. Guna x?.name.",CASES[3]).anchorCoverage,1);
  assert.equal(assess("Pilihan kedua ialah IndexedDB dalam browser.",CASES[4]).anchorCoverage,1);
  assert.equal(parseAnswer({model:"demo",choices:[{message:{content:"Jawapan ujian"}}]}).model,"demo");
- const r=summarize([{provider:"orcarouter",model:"mock",latencyMs:100,response:"Aku Aksara.",indonesianMarkers:[],anchorCoverage:null},
+ const r=summarize([{provider:"groq",model:"mock",latencyMs:100,response:"Aku Aksara.",indonesianMarkers:[],anchorCoverage:null},
   {provider:"openrouter",error:"HTTP_429"}]);
- assert.equal(r.providers.orcarouter.successes,1);
+ assert.equal(r.providers.groq.successes,1);
  assert.equal(r.providers.openrouter.errors,1);
  assert.equal(CASES.length,6);
  console.log("AKSARA A/B self-test PASS (offline, simulated assertions only; NO live provider winner)");
 }
 async function live(){
  const keys=Object.fromEntries(Object.entries(PROVIDERS).map(([id,s])=>[id,process.env[s.env]]));
- if(!keys.orcarouter||!keys.openrouter){
-  console.error("LIVE BENCHMARK NOT RUN: both ORCAROUTER_API_KEY and OPENROUTER_API_KEY must be configured securely.");
+ if(!keys.groq||!keys.openrouter){
+  console.error("LIVE BENCHMARK NOT RUN: both Groq_API_KEY and OPENROUTER_API_KEY must be configured securely.");
   process.exitCode=2;return;
  }
  const rows=[];
  for(let i=0;i<CASES.length;i++){
-  const order=i%2?["openrouter","orcarouter"]:["orcarouter","openrouter"];
+  const order=i%2?["openrouter","groq"]:["groq","openrouter"];
   for(const provider of order){
    try{
     const x=await callProvider(provider,CASES[i],{key:keys[provider]});

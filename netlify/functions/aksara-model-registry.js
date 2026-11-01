@@ -4,7 +4,7 @@
 const CAPS=Object.freeze({
  groq:Object.freeze({reasoning:"high",text:true,vision:false,cost:"verified-free-only"}),
  openrouter:Object.freeze({reasoning:"variable",text:true,vision:true,cost:"free-pool"}),
- orcarouter:Object.freeze({reasoning:"variable",text:true,vision:false,cost:"free-pool"})
+ workers_ai:Object.freeze({reasoning:"high",text:true,vision:false,cost:"shared-neurons-allocation"})
 });
 const samples=new Map();
 function observe(id,{ok,latencyMs}={}){

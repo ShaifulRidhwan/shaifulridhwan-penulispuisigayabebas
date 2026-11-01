@@ -1,0 +1,21 @@
+name: AKSARA GLM one-time live inference QA
+on:
+  push:
+    branches:
+      - feature/cloudflare-aksara-apps-migration-20261031
+    paths:
+      - .github/workflows/aksara-glm-live-qa-once.yml
+      - cloudflare/workers-ai-live-smoke.mjs
+jobs:
+  verify-live-inference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Verify model, dialect, context and live streaming with two synthetic prompts
+        run: node cloudflare/workers-ai-live-smoke.mjs
