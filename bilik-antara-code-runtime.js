@@ -18,7 +18,16 @@ function sandboxBootstrap(){
    if(!job||typeof job.source!=="string")return;
    try{
     let result;
-    if(job.language==="javascript"){
+    if(job.language==="javascript"||job.language==="typescript"){
+     let source=job.source;
+     if(job.language==="typescript"){
+      self.postMessage({type:"loading",detail:"Memuatkan compiler TypeScript…"});
+      importScripts("https://cdn.jsdelivr.net/npm/typescript@5.9.3/lib/typescript.js");
+      const compiled=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2020,module:ts.ModuleKind.None,strict:true},reportDiagnostics:true});
+      const errors=(compiled.diagnostics||[]).filter(x=>x.category===ts.DiagnosticCategory.Error);
+      if(errors.length)throw Error(ts.flattenDiagnosticMessageText(errors[0].messageText," "));
+      source=compiled.outputText;
+     }
      const logger={
       log:(...args)=>add(args.map(printable).join(" ")),
       info:(...args)=>add(args.map(printable).join(" ")),
@@ -26,7 +35,21 @@ function sandboxBootstrap(){
       error:(...args)=>add(args.map(printable).join(" "))
      };
      const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
-     result=await new AsyncFunction("console",'"use strict";\n'+job.source)(logger);
+     result=await new AsyncFunction("console",'"use strict";\n'+source)(logger);
+    }else if(job.language==="sql"){
+     self.postMessage({type:"loading",detail:"Memuatkan SQLite WebAssembly…"});
+     importScripts("https://cdn.jsdelivr.net/npm/sql.js@1.14.2/dist/sql-wasm.js");
+     const SQLite=await initSqlJs({locateFile:file=>"https://cdn.jsdelivr.net/npm/sql.js@1.14.2/dist/"+file});
+     const db=new SQLite.Database();
+     try{
+      const results=db.exec(job.source);
+      if(!results.length)add("(SQL berjaya. Tiada baris keputusan.)");
+      for(const table of results){
+       add(table.columns.join(" | "));
+       for(const row of table.values.slice(0,100))add(row.map(printable).join(" | "));
+       if(table.values.length>100)add("… "+(table.values.length-100)+" baris lagi (terhad).");
+      }
+     }finally{db.close();}
     }else if(job.language==="python"){
      self.postMessage({type:"loading",detail:"Memuatkan Python WebAssembly…"});
      importScripts("https://cdn.jsdelivr.net/pyodide/v0.27.8/full/pyodide.js");
@@ -67,16 +90,16 @@ function sandboxBootstrap(){
  say("","boot",{});
 }
 function documentFor(language){
- const python=language==="python";
+ const external=["python","typescript","sql"].includes(language);
  // JavaScript: no network; Python: outbound CDN only to load pinned Pyodide assets.
- const csp=python?
+ const csp=external?
   "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: https://cdn.jsdelivr.net; connect-src https://cdn.jsdelivr.net; worker-src blob:; img-src 'none'; style-src 'none'; base-uri 'none'; form-action 'none'":
   "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; worker-src blob:; img-src 'none'; style-src 'none'; base-uri 'none'; form-action 'none'";
  return '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="'+csp+'"></head><body><script>('+sandboxBootstrap.toString()+')();<\/script></body></html>';
 }
 function run(language,source,options={}){
  return new Promise((resolve,reject)=>{
-  if(!["javascript","python"].includes(language)){reject(Error("Runtime belum tersedia."));return;}
+  if(!["javascript","python","typescript","sql"].includes(language)){reject(Error("Runtime belum tersedia."));return;}
   if(typeof source!=="string"||!source.trim()){reject(Error("Masukkan kod dahulu."));return;}
   if(source.length>MAX_SOURCE){reject(Error("Kod maksimum 12,000 aksara."));return;}
   const id="code-"+(root.crypto?.randomUUID?.()||Math.random().toString(36).slice(2));
@@ -108,7 +131,7 @@ function run(language,source,options={}){
   if(options.signal?.aborted){reject(Error("Pelaksanaan dihentikan."));return;}
   window.addEventListener("message",message);
   options.signal?.addEventListener("abort",abort,{once:true});
-  timer=setTimeout(()=>{if(clean())reject(Error("Had masa dicapai. Pelaksanaan dihentikan."));},language==="python"?45000:7000);
+  timer=setTimeout(()=>{if(clean())reject(Error("Had masa dicapai. Pelaksanaan dihentikan."));},language==="python"?45000:language==="sql"?30000:language==="typescript"?25000:7000);
   frame.srcdoc=documentFor(language);document.body.appendChild(frame);
  });
 }
@@ -116,5 +139,5 @@ async function probe(){
  try{const r=await run("javascript","console.log(6 * 7)");return r.ok&&r.output.trim()==="42";}
  catch(_){return false;}
 }
-root.AksaraCodeRuntime=Object.freeze({run,probe,available:["javascript","python"],version:"0.2"});
+root.AksaraCodeRuntime=Object.freeze({run,probe,available:["javascript","python","typescript","sql"],version:"0.3"});
 })(window);
