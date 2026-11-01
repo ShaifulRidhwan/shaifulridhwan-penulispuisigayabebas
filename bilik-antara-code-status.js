@@ -21,13 +21,13 @@ menu.innerHTML=[
  '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Sambungan</strong><p id="codeEngineMenuDescription">Enam bahasa pilihan untuk dibangunkan secara serius. Runtime yang belum disahkan tidak boleh dijalankan.</p></div><button type="button" id="codeMenuClose" aria-label="Tutup Code Engine">×</button></div>',
  '<div class="multi-ai-list" id="codeRuntimeList" aria-label="Runtime tersedia dan sasaran">',
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="javascript"><span class="multi-ai-provider">JavaScript</span><span class="multi-ai-state is-muted" id="codeJavaScriptState">Checking…</span></button>',
-  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="python"><span class="multi-ai-provider">Python · Pyodide</span><span class="multi-ai-state is-muted">Load on run</span></button>',
-  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="typescript"><span class="multi-ai-provider">TypeScript</span><span class="multi-ai-state is-muted">Load on run</span></button>',
-  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="sql"><span class="multi-ai-provider">SQL · SQLite WASM</span><span class="multi-ai-state is-muted">Load on run</span></button>',
+  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="python"><span class="multi-ai-provider">Python · Pyodide</span><span class="multi-ai-state is-muted" id="codePythonState">Load on run</span></button>',
+  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="typescript"><span class="multi-ai-provider">TypeScript</span><span class="multi-ai-state is-muted" id="codeTypeScriptState">Load on run</span></button>',
+  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="sql"><span class="multi-ai-provider">SQL · SQLite WASM</span><span class="multi-ai-state is-muted" id="codeSQLState">Load on run</span></button>',
   '<div class="multi-ai-row code-menu-unavailable" aria-disabled="true"><span class="multi-ai-provider">C</span><span class="multi-ai-state is-muted">Belum tersedia</span></div>',
   '<div class="multi-ai-row code-menu-unavailable" aria-disabled="true"><span class="multi-ai-provider">C++</span><span class="multi-ai-state is-muted">Belum tersedia</span></div>',
  '</div>',
- '<div class="multi-ai-actions"><button type="button" id="codeEngineRefresh">Semak semula</button></div>'
+ ' <div class="multi-ai-actions"><button type="button" id="codeEngineRefresh">Semak semula</button><button type="button" id="codeEngineProbeAll">Uji 4 runtime</button></div>'
 ].join("");
 document.body.appendChild(menu);
 const css=document.createElement("style");
@@ -45,6 +45,8 @@ css.textContent=[
 '.code-engine-dialog .code-menu-planned .multi-ai-model-note{margin:0 0 0 14px}',
 '.code-engine-dialog .multi-ai-actions #codeEngineRefresh{display:flex;align-items:center;justify-content:center;width:100%;min-height:49px;margin:0;padding:12px 16px;border-radius:13px;border:1px solid rgba(231,203,157,.3);background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.015));-webkit-backdrop-filter:blur(16px) saturate(1.15);backdrop-filter:blur(16px) saturate(1.15);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 5px 18px rgba(0,0,0,.15);font:600 12px/1.35 "DM Sans",sans-serif}',
 '#codeEngineMenu.code-engine-dialog .multi-ai-actions #codeEngineRefresh{background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.015))!important}',
+'.code-engine-dialog .multi-ai-actions #codeEngineProbeAll{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;margin-top:8px;padding:11px 14px;border-radius:13px;border:1px solid rgba(231,203,157,.3);color:#eadcc5;background:linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.015));font:600 12px "DM Sans",sans-serif;cursor:pointer}',
+'.code-engine-dialog .multi-ai-actions #codeEngineProbeAll:disabled{opacity:.6;cursor:wait}',
 '.code-engine-dialog .multi-ai-actions #codeEngineRefresh:hover{background:rgba(255,255,255,.095)}',
 '@media(max-width:760px){.conversation-head .code-engine-status{height:37px;min-height:37px;padding:0 9px;font-size:11px}}',
 '@media(max-width:760px){.conversation .conversation-head{flex-wrap:nowrap!important;gap:5px!important;padding:8px 8px!important}.conversation-head .voice-toolbar{flex:0 0 auto!important;width:auto!important;min-width:0!important;justify-content:flex-start!important}.conversation-head #voiceLive{padding-inline:9px!important;font-size:10px!important;white-space:nowrap!important}.conversation-head .chat-controls{display:flex!important;flex:1 1 0!important;width:auto!important;min-width:0!important;margin-left:0!important;justify-content:flex-end!important;gap:4px!important;flex-wrap:nowrap!important}.conversation-head #connection{flex:1 1 0!important;min-width:0!important;max-width:none!important;overflow:hidden!important;padding-inline:7px!important;gap:5px!important}.conversation-head #connectionText{display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:10px!important}.conversation-head .code-engine-status{flex:0 0 auto!important;max-width:125px!important;min-width:0!important;padding:0 8px!important;font-size:10px!important;gap:5px!important}.conversation-head .code-engine-status #codeEngineStatusText{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.conversation-head #settingsPanel{flex:0 0 auto!important;margin-left:0!important}}',
@@ -58,7 +60,28 @@ pill.addEventListener("click",()=>{
  menu.showModal();
  pill.setAttribute("aria-expanded","true");
 });
-menu.addEventListener("close",()=>{pill.setAttribute("aria-expanded","false");});
+let probeCtrl=null;
+menu.addEventListener("close",()=>{pill.setAttribute("aria-expanded","false");probeCtrl?.abort();});
+menu.querySelector("#codeEngineProbeAll").addEventListener("click",async()=>{
+ if(probeCtrl||!engine.probeLanguage)return;
+ const button=menu.querySelector("#codeEngineProbeAll");
+ probeCtrl=new AbortController();button.disabled=true;button.textContent="Mengujikan runtime…";
+ const rows={javascript:"codeJavaScriptState",python:"codePythonState",typescript:"codeTypeScriptState",sql:"codeSQLState"};
+ let passed=0;
+ try{
+  for(const language of ["javascript","python","typescript","sql"]){
+   if(probeCtrl.signal.aborted)break;
+   const target=menu.querySelector("#"+rows[language]);target.textContent="Checking…";target.className="multi-ai-state is-muted";
+   const result=await engine.probeLanguage(language,{signal:probeCtrl.signal});
+   if(probeCtrl.signal.aborted)break;
+   target.textContent=result.ready?"Ready":"Offline";
+   target.className="multi-ai-state "+(result.ready?"is-ready":"is-offline");
+   target.title=result.error||("Ujian "+language+": "+result.runtimeMs+" ms");
+   if(result.ready)passed++;
+  }
+  button.textContent="Uji 4 runtime · "+passed+"/4";
+ }finally{probeCtrl=null;button.disabled=false;}
+});
 menu.querySelector("#codeMenuClose").addEventListener("click",()=>{closeMenu();pill.focus();});
 menu.addEventListener("click",event=>{if(event.target===menu)closeMenu();});
 menu.querySelector("#codeEngineRefresh").addEventListener("click",()=>{checkRuntime();});
