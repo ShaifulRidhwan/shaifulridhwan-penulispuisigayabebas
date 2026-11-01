@@ -1,5 +1,5 @@
 "use strict";
-/* Code Engine browser regression: no API key, never relies on AI provider uptime. */
+/* Real Chromium regression: in-chat code routing, AI offline, sandbox + worker watchdog. */
 const assert=require("node:assert/strict");
 const {chromium}=require("playwright");
 const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
@@ -7,44 +7,70 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
  const browser=await chromium.launch({headless:true});
  try{
   const page=await browser.newPage({viewport:{width:390,height:844}});
-  const errors=[];
+  const errors=[];let aiPostCount=0;
   page.on("pageerror",e=>errors.push(e.message));
-  await page.route("**/.netlify/functions/**",route=>route.fulfill({status:503,contentType:"application/json",body:'{"error":"AI offline"}'}));
+  await page.route("**/.netlify/functions/**",route=>{
+   if(route.request().method()==="POST")aiPostCount++;
+   return route.fulfill({status:503,contentType:"application/json",body:'{"error":"AI offline"}'});
+  });
   await page.goto(BASE+"/bilik-antara.html",{waitUntil:"domcontentloaded"});
-  await page.locator("#codeEngineStatusText").waitFor({timeout:12000});
   await page.waitForFunction(()=>document.querySelector("#codeEngineStatusText")?.textContent==="Code Engine Ready",{timeout:15000});
-  const header=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth,pills:document.querySelectorAll("#connection,#codeEngineStatus").length}));
-  assert.ok(header.scroll<=header.width+6,"Mobile horizontal overflow: "+JSON.stringify(header));
-  assert.equal(header.pills,2,"Exactly two independent statuses");
-  await page.locator("#codeEngineStatus").click();
-  await page.waitForURL("**/bilik-antara-code-engine.html");
-  assert.equal(await page.locator("#language option").count(),2,"Only confirmed runtime candidates should be selectable");
-  await page.locator("#editor").fill('console.log(6 * 7);');
-  await page.locator("#run").click();
-  await page.waitForFunction(()=>document.getElementById("progress")?.textContent.startsWith("Berjaya"),{timeout:12000});
-  assert.equal((await page.locator("#output").innerText()).trim(),"42");
-  await page.locator("#editor").fill('throw new Error("ujian-ralat");');
-  await page.locator("#run").click();
-  await page.waitForFunction(()=>document.getElementById("progress")?.textContent.includes("ralat"),{timeout:12000});
-  assert.match(await page.locator("#output").innerText(),/ujian-ralat/);
-  await page.locator("#editor").fill('try { await fetch("/api/aksara-health"); } catch (e) { console.log("NETWORK BLOCKED"); }');
-  await page.locator("#run").click();
-  await page.waitForFunction(()=>document.getElementById("progress")?.textContent.startsWith("Berjaya"),{timeout:12000});
-  assert.match(await page.locator("#output").innerText(),/NETWORK BLOCKED/,"Sandbox must block network");
+  const geom=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth,pills:document.querySelectorAll("#connection,#codeEngineStatus").length}));
+  assert.ok(geom.scroll<=geom.width+6,"Mobile horizontal overflow: "+JSON.stringify(geom));
+  assert.equal(geom.pills,2,"Multi AI and Code Engine must show independent statuses");
 
-  // Real Python execution: must use the pinned Pyodide WebAssembly runtime, not an AI service.
-  await page.locator("#language").selectOption("python");
-  await page.locator("#editor").fill('print("AKSARA PYTHON OK")\\nprint(sum([2,3,5,7]))'.replace('\\n','\n'));
-  await page.locator("#run").click();
-  await page.waitForFunction(()=>/^(Berjaya|Kod mengembalikan ralat|Runtime dihentikan)/.test(document.getElementById("progress")?.textContent||""),{timeout:60000});
-  const pythonProgress=await page.locator("#progress").innerText();
-  const pythonOutput=await page.locator("#output").innerText();
-  assert.match(pythonProgress,/Berjaya/,"Python failed: "+pythonProgress+" / "+pythonOutput);
-  assert.match(pythonOutput,/AKSARA PYTHON OK/);
-  assert.match(pythonOutput,/17/,"Python arithmetic returned unexpected result.");
-  console.log("AKSARA Python Pyodide execution passed: Python print and arithmetic, no AI backend.");
-  assert.equal(errors.length,0,"Uncaught parent page errors: "+errors.join("; "));
-  console.log("AKSARA Code Engine browser smoke passed: independent status, mobile width, JS result/error, CSP network block.");
-  await page.close();
+  await page.locator("#codeEngineStatus").click();
+  assert.equal(await page.locator("#codeEngineMenu").isVisible(),true,"Status must open a menu, not navigate to another page");
+  assert.equal(await page.locator('[data-code-language]').count(),2);
+  assert.match(await page.locator("#codeEngineMenu").innerText(),/10 compiler sasaran/);
+  await page.locator('[data-code-language="javascript"]').click();
+  assert.equal(await page.locator("#codeEngineMenu").isVisible(),false);
+  assert.match(page.url(),/bilik-antara\.html/);
+
+  const snippet='const nombor = [10,20,30,40]; console.log(nombor.reduce((a,b)=>a+b,0));';
+  await page.locator("#input").fill(snippet);
+  assert.equal(await page.locator("#codeRunAction").isVisible(),true);
+  await page.locator("#sendBtn").click();
+  assert.equal(await page.locator("#codeSendAI").isVisible(),true,"Send code must ask confirmation");
+  assert.equal(aiPostCount,0,"Code confirmation may not use any AI endpoint");
+  await page.locator("#codeRunAction").click();
+  await page.waitForFunction(()=>document.querySelector("#chat .code-engine-message.ai .bubble")?.textContent.includes("100"),{timeout:12000});
+  assert.match(await page.locator("#chat .code-engine-message.ai").last().innerText(),/BERJAYA/);
+  assert.equal(await page.locator("#input").inputValue(),"","Executed script should clear composer");
+  assert.equal(aiPostCount,0,"Code execution must not call any AI endpoint");
+
+  // The local chat result must be in history marked as code, not an AI reply.
+  const local=await page.evaluate(()=>window.BilikAntaraBridge.snapshot().history.slice(-2));
+  assert.deepEqual(local.map(x=>x.mode),["code","code"]);
+
+  // Ordinary prose must remain an AI-chat intent rather than a code action.
+  await page.locator("#input").fill("Kenapa langit berwarna biru?");
+  assert.equal(await page.locator("#codeActionBar").isVisible(),false);
+
+  // Python runs inside the disposable Web Worker using CDN Pyodide, without AI keys.
+  await page.locator("#codeEngineStatus").click();
+  await page.locator('[data-code-language="python"]').click();
+  await page.locator("#input").fill('print("PYTHON DALAM CHAT")\nprint(sum([2,3,5,7]))');
+  await page.locator("#codeRunAction").click();
+  await page.waitForFunction(()=>document.querySelector("#chat .code-engine-message.ai .bubble")?.textContent.includes("PYTHON DALAM CHAT"),{timeout:65000});
+  const pyText=await page.locator("#chat .code-engine-message.ai").last().innerText();
+  assert.match(pyText,/BERJAYA/,"Python Pyodide failed: "+pyText);
+  assert.match(pyText,/17/);
+  assert.equal(aiPostCount,0,"Python may load Pyodide CDN but must not call AI");
+
+  // A CPU-bound JS loop must terminate on watchdog without freezing the main chat.
+  await page.locator("#codeEngineStatus").click();
+  await page.locator('[data-code-language="javascript"]').click();
+  await page.locator("#input").fill('while (true) {}');
+  await page.locator("#codeRunAction").click();
+  await page.waitForFunction(()=>document.querySelector("#chat .code-engine-message.ai .bubble")?.textContent.includes("Had masa dicapai"),{timeout:16000});
+  assert.ok(await page.locator("#sendBtn").count(),"Chat must remain responsive after timeout");
+  await page.locator("#input").fill('console.log("AFTER TIMEOUT OK");');
+  await page.locator("#codeRunAction").click();
+  await page.waitForFunction(()=>document.querySelector("#chat .code-engine-message.ai .bubble")?.textContent.includes("AFTER TIMEOUT OK"),{timeout:12000});
+  assert.equal(aiPostCount,0,"No AI requests in the entire code test");
+
+  assert.deepEqual(errors,[],"Browser page errors: "+errors.join("; "));
+  console.log("AKSARA in-chat Code Engine PASS: status menu, explicit consent, JS 100, Python 17, offline AI, worker watchdog and recovery.");
  }finally{await browser.close();}
-})().catch(e=>{console.error(e);process.exitCode=1;});
+})().catch(error=>{console.error(error);process.exitCode=1;});
