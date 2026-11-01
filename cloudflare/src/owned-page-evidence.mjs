@@ -35,7 +35,7 @@ export async function ownedPageEvidence(request,env,question){
      ||Number(response.headers.get("content-length")||0)>MAX_HTML)return null;
   const html=await response.text();
   if(html.length>MAX_HTML)return null;
-  if(target.hostname===LEGACY_HOST&&!response.url.startsWith("https://"+LEGACY_HOST+"/"))return null;
+  if(target.hostname===LEGACY_HOST&&response.url&&!response.url.startsWith("https://"+LEGACY_HOST+"/"))return null;
   const page=textOnly(html);
   if(!page.body&&!page.description)return null;
   return {url:target.origin+target.pathname,title:page.title,
