@@ -18,6 +18,21 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   const geom=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth,pills:document.querySelectorAll("#connection,#codeEngineStatus").length}));
   assert.ok(geom.scroll<=geom.width+6,"Mobile horizontal overflow: "+JSON.stringify(geom));
   assert.equal(geom.pills,2,"Multi AI and Code Engine must show independent statuses");
+  assert.equal(await page.locator("#voiceLive").innerText(),"Voice Chat");
+  async function oneLine(){
+   return page.evaluate(()=>{
+    const qs=["#voiceLive","#connection","#codeEngineStatus","#settingsPanel>summary"].map(q=>document.querySelector(q).getBoundingClientRect());
+    return {ys:qs.map(r=>Math.round(r.y)),overflow:document.documentElement.scrollWidth>innerWidth,headHeight:document.querySelector(".conversation-head").getBoundingClientRect().height};
+   });
+  }
+  let one=await oneLine();
+  assert.equal(one.overflow,false,"Mobile header overflow");
+  assert.ok(Math.max(...one.ys)-Math.min(...one.ys)<12,"Status must be one line at 390px: "+JSON.stringify(one));
+  await page.setViewportSize({width:320,height:760});
+  one=await oneLine();
+  assert.equal(one.overflow,false,"320px viewport overflow");
+  assert.ok(Math.max(...one.ys)-Math.min(...one.ys)<12,"Status must be one line at 320px: "+JSON.stringify(one));
+  await page.setViewportSize({width:390,height:844});
 
   await page.locator("#codeEngineStatus").click();
   assert.equal(await page.locator("#codeEngineMenu").isVisible(),true,"Status must open a menu, not navigate to another page");
@@ -33,8 +48,14 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.locator("#sendBtn").click();
   assert.equal(await page.locator("#codeSendAI").isVisible(),true,"Send code must ask confirmation");
   assert.equal(aiChatRequests.length,0,"Code confirmation may not use any AI endpoint");
+  const started=Date.now();
   await page.locator("#codeRunAction").click();
+  assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),true,"Runtime theatre should open during execution");
+  assert.match(await page.locator("#runtimeAntaraTitle").innerText(),/RUNTIME ANTARA/);
+  assert.equal(await page.locator("#runtimeAntaraLanguage").innerText(),"JavaScript");
   await page.waitForFunction(()=>document.querySelector("#chat .code-engine-message.ai .bubble")?.textContent.includes("100"),{timeout:12000});
+  assert.ok(Date.now()-started>=2600,"Cinematic runtime view should display at least 3 seconds");
+  assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false,"Overlay should close after output");
   assert.match(await page.locator("#chat .code-engine-message.ai").last().innerText(),/BERJAYA/);
   assert.equal(await page.locator("#input").inputValue(),"","Executed script should clear composer");
   assert.equal(aiChatRequests.length,0,"Code execution must not call any AI endpoint");
@@ -52,10 +73,13 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.locator('[data-code-language="python"]').click();
   await page.locator("#input").fill('print("PYTHON DALAM CHAT")\nprint(sum([2,3,5,7]))');
   await page.locator("#codeRunAction").click();
+  assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),true);
+  assert.equal(await page.locator("#runtimeAntaraLanguage").innerText(),"Python");
   await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("PYTHON DALAM CHAT")),{timeout:65000});
   const pyText=await page.locator("#chat .code-engine-message.ai").last().innerText();
   assert.match(pyText,/BERJAYA/,"Python Pyodide failed: "+pyText);
   assert.match(pyText,/17/);
+  assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false);
   assert.equal(aiChatRequests.length,0,"Python may load Pyodide CDN but must not call AI");
 
   // A CPU-bound JS loop must terminate on watchdog without freezing the main chat.
@@ -65,6 +89,15 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.locator("#codeRunAction").click();
   await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("Had masa dicapai")),{timeout:16000});
   assert.ok(await page.locator("#sendBtn").count(),"Chat must remain responsive after timeout");
+  assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false,"Timeout must close theatre");
+  // Stop inside the overlay must abort immediately, without a forced 3-second delay.
+  await page.locator("#input").fill("while (true) {}");
+  const beforeStop=Date.now();
+  await page.locator("#codeRunAction").click();
+  await page.locator("#runtimeAntaraStop").click();
+  await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("Pelaksanaan dihentikan.")),{timeout:6500});
+  assert.ok(Date.now()-beforeStop<3000,"Stop must bypass cinematic minimum delay");
+  assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false);
   await page.locator("#input").fill('console.log("AFTER TIMEOUT OK");');
   await page.locator("#codeRunAction").click();
   await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("AFTER TIMEOUT OK")),{timeout:12000});
