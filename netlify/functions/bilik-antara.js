@@ -20,6 +20,7 @@ const PublicPoetry=require("./aksara-public-poetry");
 const SafeTools=require("./aksara-safe-tools");
 const Research=require("./aksara-research-workflow");
 const Data=require("./aksara-data-analysis");
+const Structured=require("./aksara-structured-output");
 const Studio=require("./aksara-studio-awareness");
 const {requestControl,readSSE,waitFor}=require("./lib/aksara-transport");
 const DEFAULT_MODEL="gemini-3.6-flash";
@@ -490,7 +491,7 @@ exports.handler=async event=>{
       if(alternative.attempts)providerFailures.push(...alternative.attempts);
       if(alternative.retryAfterSeconds)providerRetrySeconds=alternative.retryAfterSeconds;
       if(alternative.reply){
-        alternative.reply=reactionReply(alternative.reply,intent,history);
+        alternative.reply=Structured.render(reactionReply(alternative.reply,intent,history),Structured.wantsJson(question)).reply;
         lastTextProvider=alternative.provider;lastTextSuccessAt=Date.now();
         log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
         // Off by default, only eligible ordinary text. Never treat another LLM as a verified fact-checker.
@@ -587,7 +588,7 @@ exports.handler=async event=>{
     const reliableReply=unverifiedReview
       ?"Aku cuba membaca pautan itu, tetapi kandungan laman belum berjaya disahkan. Aku tak boleh buat review sebenar tanpa kandungannya. Berikan teks atau screenshot laman untuk analisis berasaskan bukti."
       :revised;
-    const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,reply:reliableReply,sources:unverifiedReview?[]:sources,
+    const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,sources:unverifiedReview?[]:sources,
       ...(publicAccount?{publicAccount}:{}),
       argumentMap:review?review.argumentMap:[],truthAudit:review?review.truthAudit:[],
       thoughtLedger:review?review.thoughtLedger:[],hypothesis:review?review.hypothesis:"",
