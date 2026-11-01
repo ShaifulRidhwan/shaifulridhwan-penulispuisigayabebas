@@ -45,6 +45,22 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(portal.topbar,true,"PORTAL trigger must be in topbar");
   assert.equal(portal.iconAfter,true,"Grid icon must be to the RIGHT of PORTAL label");
   assert.deepEqual(portal.navLinks,["Laman utama"],"Studio and Novel belong only inside PORTAL");
+  // PORTAL and Laman utama share an identical glass footprint at 320px and 390px.
+  for(const w of [320,390,768,1366]){
+   await page.setViewportSize({width:w,height:844});
+   const nav=await page.evaluate(()=>{
+    const link=document.querySelector(".topbar .aksara-nav-link");
+    const portal=document.querySelector("#settingsPanel > summary");
+    const l=link.getBoundingClientRect(),p=portal.getBoundingClientRect();
+    const a=getComputedStyle(link),b=getComputedStyle(portal);
+    return {linkHeight:l.height,portalHeight:p.height,linkRadius:a.borderRadius,portalRadius:b.borderRadius,
+      rightAligned:p.left>=l.right-1,iconAfter:portal.querySelector("svg").getBoundingClientRect().left>=portal.querySelector("span").getBoundingClientRect().right};
+   });
+   assert.ok(Math.abs(nav.linkHeight-nav.portalHeight)<=1,"PORTAL glass height mismatch at "+w+"px: "+JSON.stringify(nav));
+   assert.equal(nav.linkRadius,nav.portalRadius,"PORTAL should share nav glass curvature");
+   assert.ok(nav.iconAfter&&nav.rightAligned,"PORTAL remains top-right with icon after label");
+  }
+  await page.setViewportSize({width:390,height:844});
   await page.locator("#settingsPanel > summary").click();
   assert.equal(await page.locator("#settingsPanel .settings-card").isVisible(),true);
   assert.equal(await page.locator("#featureStudio").getAttribute("href"),"studio-antara.html");
