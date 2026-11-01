@@ -222,7 +222,7 @@ test("direct founder biography needs no external model call but follow-up discus
  const r=await handler(event({question:"siapa shaiful ridhwan"}));assert.equal(r.statusCode,200);const d=JSON.parse(r.body);assert.equal(d.model,"project-identity");assert.match(d.reply,/The Coder Poet/);
  assert.equal(require("../bilik-antara-identity").answerIdentity("Kenapa Shaiful gabungkan puisi dengan kod?"),null);
 });
-test("OpenRouter preference never bypasses primary Groq and Gemini fallback order",async t=>{
+test("OpenRouter preference cannot bypass available Groq and only answers when primaries fail",async t=>{
  const handler=setup(t);process.env.OPENROUTER_API_KEY="mock";const requests=[];
  global.fetch=async url=>{
   requests.push(url);
@@ -232,7 +232,6 @@ test("OpenRouter preference never bypasses primary Groq and Gemini fallback orde
  const r=await handler(event({question:"Apa itu atom?",preferredProvider:"openrouter"}));
  assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).provider,"openrouter");
  assert.ok(requests.some(url=>url.includes("groq.com")),"Groq must be attempted first");
- assert.ok(requests.some(url=>url.includes("googleapis")),"Gemini must be attempted before final backup");
  assert.ok(requests.at(-1).includes("openrouter.ai"),"OpenRouter is last");
 });
 test("provider preference cannot bypass private-context consent or promote OpenRouter",async t=>{

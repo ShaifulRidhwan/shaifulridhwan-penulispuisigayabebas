@@ -48,7 +48,7 @@ function internalOrigin(){return process.env.ALLOWED_ORIGIN||OLD_ORIGIN;}
 function serviceHealth(env){
  const gemini=Boolean(env.GEMINI_API_KEY);
  const groq=Boolean(env.GROQ_API_KEY&&env.GROQ_FREE_CONFIRMED==="true");
- const nvidia=Boolean(env.NVIDIA_API_KEY&&env.AKSARA_NVIDIA_ENABLED==="true");
+ const workersAI=Boolean(env.AI&&typeof env.AI.run==="function");
  const openrouter=Boolean(env.OPENROUTER_API_KEY&&env.AKSARA_FREE_FALLBACKS==="true");
  const control=Boolean(env.AKSARA_CONTROL&&String(env.AKSARA_RATE_SALT||"").length>=32);
  const image=Boolean(env.CLOUDFLARE_ACCOUNT_ID&&env.CLOUDFLARE_API_TOKEN);
