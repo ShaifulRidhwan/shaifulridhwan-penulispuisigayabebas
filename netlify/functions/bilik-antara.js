@@ -318,7 +318,7 @@ exports.handler=async event=>{
     const ready=providers.find(p=>p.status==="ready");
     const realSuccess=Date.now()-lastTextSuccessAt<90000?providers.find(p=>p.id===lastTextProvider&&p.status==="online"):null;
     // A successful conversation outranks an artificial one-word speed test.
-    return result(200,{ok:true,providers,freeModels,preferredProvider:(realSuccess||fastest||ready)?.id||"",checkedAt:Date.now(),someOnline:!!fastest,someReady:!!ready,configuredCount:configured.length+(apiKey?1:0)},H);
+    return result(200,{ok:true,providers,freeModels,capabilities:Capabilities.manifest(),preferredProvider:(realSuccess||fastest||ready)?.id||"",checkedAt:Date.now(),someOnline:!!fastest,someReady:!!ready,configuredCount:configured.length+(apiKey?1:0)},H);
   }
 
   const ip=(event.headers&&(event.headers["x-nf-client-connection-ip"]||"").split(",")[0])||"unknown";
