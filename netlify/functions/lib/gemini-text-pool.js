@@ -52,7 +52,7 @@ function createPool(){
     // Never reattempt a quota 429 with a different key in the same request.
     const http=safeNumber(error.status,599);
     health.set(slot,{status:permanent?"offline":"degraded",
-      blockedUntil:auth?Date.now()+300000:0,checkedAt:Date.now(),
+      blockedUntil:auth?Date.now()+300000:http===429?Date.now()+Math.min(300000,Math.max(1000,Number(error.retryAfterSeconds||60)*1000)):0,checkedAt:Date.now(),
       model:typeof details.model==="string"?details.model.slice(0,80):"",
       latencyMs:safeNumber(details.latencyMs,120000),http,upstreamCode,upstreamReason,category,
       reason:safeReason(details.reason||(
