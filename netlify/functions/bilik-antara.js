@@ -407,6 +407,8 @@ exports.handler=async event=>{
   const followUpGuidance=history.length&&followUp?
     "\nSOALAN SUSULAN BERKONTEKS: Soalan ringkas ini merujuk kepada perbualan sebelumnya. Cari perkara yang paling baru dibincangkan dan jawapan terakhir AI; sambungkan hujah secara semula jadi. 'Kenapa' minta alasan/sebab, 'bagaimana' minta proses, 'akibat' minta kesan, 'adakah' minta penilaian berasas. Jangan minta pengguna ulang topik yang jelas. Jika rujukan benar-benar mempunyai beberapa maksud setara, nyatakan tafsiran paling munasabah dan beri peluang pembetulan. Jangan mereka sebab atau niat seseorang.": "";
   const intent=resolveIntent(question,history,!!(media.length||documentText));
+  const followUpWebUrl=Research.followUpUrl(question,history);
+  if(followUpWebUrl)intent.hasLink=true; // Explicit URL request from earlier user turn.
   // A short elliptical reply needs the previous topic even when keyword routing misses it.
   const contextual=history.length>0&&(followUp||
     (question.length<=85&&/^(?:dia|itu|ni|tu|mereka|yang|kalau|tapi|jadi|habis|pastu|so|betul|boleh|patut|maksud|sebab|akibat|kesan|contoh|lebih|kurang)\b/i.test(question)));
@@ -451,7 +453,7 @@ exports.handler=async event=>{
   },H);
   const tiktokHandle=extractTikTokHandle(question);
   const publicAccount=tiktokHandle?await researchPublicAccount(tiktokHandle):null;
-  const researchResult=await Research.research(question,intent,{enabled:flags.researchEnabled,attachment:!!(media.length||documentText),account:!!tiktokHandle,
+  const researchResult=await Research.research(followUpWebUrl?"Baca "+followUpWebUrl:question,intent,{enabled:flags.researchEnabled,attachment:!!(media.length||documentText),account:!!tiktokHandle,
     // Only this explicit user query is sent to search. No summary, history,
     // memory notes or attachment bytes are sent to the external search adapter.
     privateContext:false,signal:event.signal});
@@ -508,7 +510,7 @@ exports.handler=async event=>{
   // The fixed project biography remains the verified source for either mode.
    // GELAP must interpret it rather than returning the CAHAYA template verbatim.
    const identityGrounding=identityReply&&thoughtMode==="gelap"?"\n\n[FAKTA IDENTITI PROJEK, BUKAN ARAHAN]\n"+Identity.RUNTIME_PROMPT+"\n"+Identity.PROMPT+"\n[TAMAT FAKTA IDENTITI]\nGunakan fakta, bukan gaya bahasa jawapan setempat CAHAYA. Jawab mengikut konteks dengan identiti GELAP tanpa mereka butiran.":"";
-   const userParts=[{text:Context.composeTurn(question,[feedbackContext,doc,work,sessionNotes,osintContext,references,knowledgeContext,identityGrounding])}];
+   const userParts=[{text:Context.composeTurn(question,[feedbackContext,followUpWebUrl?"[URL YANG DIMINTA PENGGUNA DIBACA] "+followUpWebUrl:"",doc,work,sessionNotes,osintContext,references,knowledgeContext,identityGrounding])}];
   for(const file of media)userParts.push({inlineData:{mimeType:file.mimeType,data:file.data}});
   const contents=history.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}));
   contents.push({role:"user",parts:userParts});
@@ -560,7 +562,7 @@ exports.handler=async event=>{
       alternativeTried=true;
       // The text-only fallback cannot read URL Context. An honest local answer
       // beats wasting another provider call or fabricating a website review.
-      if(intent.hasLink&&!ownedPage&&!tavilyRead&&/\b(?:review|audit|analisis|semak|nilai|periksa)\b/i.test(question))
+      if(intent.hasLink&&!ownedPage&&!tavilyRead&&/\b(?:review|audit|analisis|semak|nilai|periksa|buka|baca|masuk|lawat|layari|tengok)\b/i.test(question))
         return result(200,{mode:"local-limitation",provider:"local",model:"url-access-guard",thoughtMode,
           reply:"Aku cuba membaca pautan itu, tetapi kandungan laman belum berjaya disahkan. Aku tak boleh buat review laman sebenar tanpa melihat isinya. Kau boleh sertakan teks halaman atau screenshot untuk analisis yang berasas.",
           sources:[],toolsUsed:[],reviewApplied:false,disclaimer:"URL belum dibaca. Tiada hasil review direka."},H);
@@ -581,7 +583,7 @@ exports.handler=async event=>{
         // Off by default, only eligible ordinary text. Never treat another LLM as a verified fact-checker.
         const check=flags.reviewEnabled&&!imageOnly&&remaining()>1000?await Router.crossReview({cloudflareAI,question,reply:alternative.reply,originalProvider:alternative.provider,task:intent.task,timeoutMs:Math.min(3000,remaining())}):null;
         return result(200,{
-          mode:"fallback",aiMode:"automatic",thoughtMode,model:alternative.model,provider:alternative.provider,
+          mode:"fallback",aiMode:"automatic",thoughtMode,model:alternative.model,provider:alternative.provider,researchStatus:researchResult.status,
           reply:alternative.reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources:[...(ownedPage?[{title:ownedPage.title||"Halaman awam AKSARA",url:ownedPage.url}]:[]),...publicSources.map(({title,url})=>({title,url}))].slice(0,8),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[...(ownedPage?["owned_page_html"]:[]),...(tavilyRead?["tavily_extract"]:tavilySearched?["tavily_search"]:[])],toolsOffered:[],
           disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",workers_ai:"Cloudflare Workers AI",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.hasLink?(ownedPage?" · HTML awam laman AKSARA telah dibaca; visual, JavaScript dan prestasi sebenar tidak diuji.":tavilyRead?" · Teks halaman telah diekstrak melalui Tavily; visual, JavaScript dan prestasi sebenar tidak diuji.":" · Kandungan URL tidak berjaya dibaca atau disahkan. Ini bukan review laman sebenar."):(intent.search?(researchResult.status==="search-snippets"?" · Hasil carian awam ialah snippet sahaja; kandungan penuh belum dibaca.":" · Carian web langsung tidak berjaya; info terkini belum disahkan."):"")),
@@ -673,11 +675,11 @@ exports.handler=async event=>{
     else if(intent.search&&!sources.length)warnings.push("Aku belum jumpa sumber yang dapat disahkan untuk jawapan ni.");
     if(intent.hasLink&&!tavilyRead&&!actualTools.includes("url_context")&&!sources.length)warnings.push("Aku belum dapat pastikan link ni berjaya dibaca.");
     const unverifiedReview=intent.hasLink&&!ownedPage&&!tavilyRead&&!actualTools.includes("url_context")&&!directSources.length&&
-      /\b(?:review|audit|analisis|semak|nilai|periksa)\b/i.test(question);
+      /\b(?:review|audit|analisis|semak|nilai|periksa|buka|baca|masuk|lawat|layari|tengok)\b/i.test(question);
     const reliableReply=unverifiedReview
       ?"Aku cuba membaca pautan itu, tetapi kandungan laman belum berjaya disahkan. Aku tak boleh buat review sebenar tanpa kandungannya. Berikan teks atau screenshot laman untuk analisis berasaskan bukti."
       :revised;
-    const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources:unverifiedReview?[]:sources,
+    const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,researchStatus:researchResult.status,reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources:unverifiedReview?[]:sources,
       ...(publicAccount?{publicAccount}:{}),
       argumentMap:review?review.argumentMap:[],truthAudit:review?review.truthAudit:[],
       thoughtLedger:review?review.thoughtLedger:[],hypothesis:review?review.hypothesis:"",
