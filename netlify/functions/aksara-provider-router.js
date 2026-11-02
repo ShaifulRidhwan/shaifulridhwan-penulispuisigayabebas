@@ -190,7 +190,11 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
        :m);
    }
    const body={model:provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
-   if(builtTools.length)body.tools=builtTools;
+   if(builtTools.length){
+     body.tools=builtTools;
+     // Buffered result carries executed_tools metadata; SSE deltas do not.
+     delete body.stream;
+   }
    if(provider.id==="groq"&&builtTools.some(t=>t.type==="browser_search"))body.tool_choice="required";
    if(provider.id==="openrouter")openRouterBody(body,["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"low");
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.
