@@ -73,6 +73,9 @@ jobs:
           node --check netlify/functions/antara-intelligence.js
           node --check netlify/functions/aksara-web-search.js
           node --check netlify/functions/aksara-tavily.js
+          node --check netlify/functions/aksara-capabilities.js
+          node --check netlify/functions/aksara-owned-page.js
+          node --test tests/aksara-capabilities.test.cjs
           node --test tests/aksara-tavily.test.js
           node --check netlify/functions/aksara-data-analysis.js
           node --check netlify/functions/aksara-structured-output.js
