@@ -69,7 +69,7 @@
      source:row.source,latencyMs:row.latencyMs};
    });
    const js=mapped.find(r=>r.language==="javascript");
-   const verified=mapped.filter(r=>r.status==="verified").length;
+   const verified=mapped.filter(r=>r.language!=="html"&&r.status==="verified").length;
    const overall=checking?"checking":js.status==="verified"?"ready":
     js.status==="unavailable"?"unavailable":"unverified";
    return {overall,verified,rows:mapped,permission,activity:request,checking,lastCheckedAt,
