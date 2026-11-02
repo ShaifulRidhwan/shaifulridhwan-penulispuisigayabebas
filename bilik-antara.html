@@ -54,8 +54,8 @@
 <link rel="preload" href="aksara-background-cahaya-gelap.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
 <link rel="stylesheet" href="bilik-antara.css?v=102">
 <link rel="stylesheet" href="aksara-header.css?v=3">
-<link rel="stylesheet" href="bilik-antara-suite.css?v=8" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=8"></noscript>
+<link rel="stylesheet" href="bilik-antara-suite.css?v=9" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=9"></noscript>
 
 <link rel="stylesheet" href="bilik-antara-code-execution.css?v=1">
 <link rel="stylesheet" href="bilik-antara-video.css?v=1">
@@ -268,11 +268,7 @@ const ui={
  remember:el("rememberChat"),clear:el("clearChat"),notes:el("thoughtItems"),forget:el("forgetIdeas"),
  mediaFallback:el("allowOpenRouterImages")
 };
-// Stable mobile viewport: browser toolbar changes must not relayout a glass-heavy chat
-// on every animation frame. Only keyboard focus or orientation changes can resize it.
 let appliedAppHeight=null,viewportFrame=0;
-// Record whether the reader was at the newest message BEFORE CSS 100dvh shrinks.
-// Measuring only after a keyboard resize gives a false "scrolled up" result.
 let followOnInputResize=false;
 ui.input.addEventListener("focus",()=>{
  followOnInputResize=ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight<48;
@@ -289,17 +285,9 @@ function syncViewport(){
   stableAppHeight=Math.round(view?.height||window.innerHeight);
  }
  const currentHeight=Math.max(1,Math.round(view?.height||window.innerHeight));
- // Browser chrome can reduce the visible viewport even without keyboard focus.
- // Never let the fixed-height chat extend below the currently visible screen.
- // Preserve the original stable upper bound to avoid enlarging the glass pane
- // whenever the browser's address bar collapses.
  const visibleAppHeight=Math.min(stableAppHeight,currentHeight);
  const height=window.innerWidth<=760?visibleAppHeight+"px":"";
  if(height===appliedAppHeight)return;
- // Keep the newest message visible when the keyboard changes the chat height,
- // but never pull a reader away from older messages they intentionally viewed.
- // On first paint there is no previous viewport position to preserve.
- // Skip the geometry read until a later keyboard/orientation resize.
  const currentGap=appliedAppHeight===null?Infinity:ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight;
  const focusedKeyboardShrink=document.activeElement===ui.input&&currentHeight<stableAppHeight-80;
  const followBottom=appliedAppHeight!==null&&(currentGap<48||(focusedKeyboardShrink&&followOnInputResize));
@@ -320,7 +308,6 @@ const STREAM_ENDPOINT="/.netlify/functions/bilik-antara-stream";
 const STORAGE="bilik-antara-session-v2";
 const SESSION_PREF_STORAGE="bilik-antara-session-save-pref-v1"; // Explicit opt-out survives reload; no chat content here.
 const MODE_STORAGE="bilik-antara-mode-v1"; // Preference only; never store chat text here.
-// CAHAYA keeps the original Aksara brain; GELAP changes its response identity.
 let thoughtMode="cahaya";
 const modeButton=document.getElementById("thoughtMode");
 const modeDialog=document.getElementById("thoughtModeDialog");
@@ -417,7 +404,6 @@ function link(parent,label,url){
  const a=elem("a","",String(label||"Lihat sumber").slice(0,120));
  a.href=safe;a.rel="noopener noreferrer";a.target="_blank";parent.appendChild(a);return true;
 }
-// Bilik Antara uses one permanent dark palette, including returning browsers.
 ui.html.setAttribute("data-theme","dark");
 try{localStorage.removeItem("bilik-antara-theme");}catch(_){}
 let connectionRevision=0;
@@ -433,7 +419,6 @@ function status(kind,label,explain){
 window.addEventListener("ba:voice-connected",()=>status("online","Multi A.I Connected",""));
 async function probe(){
  if(Date.now()<quotaCooldownUntil){status("limited","Kuota API tengah penuh","Kuota AI tengah penuh. Kita try lagi nanti.");return;}
- // Startup/automatic retry probes one slot only; manual refresh checks all four.
  return checkProviders();
 }
 ui.retry.addEventListener("click",()=>{
@@ -537,8 +522,6 @@ let restoringHistory=false;
 let scrollFrame=0;
 function scrollDown(){
  if(restoringHistory||scrollFrame)return;
- // Assign a large target; the browser clamps to the actual bottom without
- // a synchronous scrollHeight read after messages change the layout.
  scrollFrame=requestAnimationFrame(()=>{
   scrollFrame=0;
   if(ui.chat.isConnected)ui.chat.scrollTop=1e9;
@@ -548,7 +531,6 @@ function contextHistory(){
  let budget=120000;const rows=[];
  for(let i=history.length-1;i>=0&&rows.length<24&&budget>0;i--){
   const m=history[i];
-  // Local code and its output must not leak into a later AI request.
   if(m.mode==="code")continue;
   const text=String(m.content||""),limit=Math.min(32000,budget);
   const marker="\n[... bahagian tengah dipendekkan kerana had konteks ...]\n";
@@ -595,6 +577,11 @@ function format(target,text){
   }
  }
 }
+const providerMarks=Object.freeze({
+ gemini:["✦","Gemini"],groq:["ϟ","Groq"],
+ workers_ai:["☁","Workers AI"],openrouter:["◇","OpenRouter"],
+ local_knowledge:["⌁","Tempatan"],local:["⌁","Tempatan"]
+});
 function renderMessageMeta(msg,role,data){
  const ms=Number(data?.timestamp);
  if(!Number.isFinite(ms)||ms<946684800000||ms>Date.now()+3600000)return;
@@ -603,8 +590,14 @@ function renderMessageMeta(msg,role,data){
   at.toLocaleDateString("ms-MY",{day:"numeric",month:"short"})+" "+
   at.toLocaleTimeString("ms-MY",{hour:"2-digit",minute:"2-digit",hour12:false}));
  stamp.dateTime=at.toISOString();stamp.title=at.toLocaleString("ms-MY");line.appendChild(stamp);
+ const mark=role==="assistant"&&data?.mode!=="code"?providerMarks[data?.provider]:null;
+ if(mark){
+  const tag=elem("span","message-provider");
+  tag.append(elem("span","message-provider-icon",mark[0]),document.createTextNode(mark[1]));
+  tag.title=String(data?.model||mark[1]).slice(0,90);
+  line.appendChild(tag);
+ }
  const place=String(data?.locationLabel||"").trim().slice(0,80);
- // Metadata mesej hanya memaparkan masa; tetapan lokasi kekal di tempat lain.
  msg.appendChild(line);
 }
 function addMessage(role,text,data){
@@ -619,8 +612,6 @@ function addMessage(role,text,data){
 }
 function renderExtras(bubble,data){
  if(data?.coderPoetFollowUp===true){
-  // Only a successfully answered Siapa Aku starter gets this optional
-  // suggestion. Never redirect or inject it into unrelated model replies.
   const area=elem("div","msg-followup");
   const suggestion=elem("button","msg-followup-btn",'Nak tahu tentang "The Coder Poet" pulak ke?');
   suggestion.type="button";
@@ -734,7 +725,6 @@ function save(){
 }
 function restore(){
  try{
-  // New visitors save locally by default, but an explicit opt-out always wins.
   if(localStorage.getItem(SESSION_PREF_STORAGE)==="off"){ui.remember.checked=false;return;}
   ui.remember.checked=true;
   const stored=JSON.parse(localStorage.getItem(STORAGE)||"null");
@@ -784,7 +774,6 @@ function addIdeas(items){
 async function compact(){
  if(compacting||history.length<20||history.length-summarizedThrough<12)return;
  const until=history.length-12;
- // Summarize contiguous turns only; never mark skipped turns as remembered.
  const end=Math.min(until,summarizedThrough+18);
  const segment=history.slice(summarizedThrough,end).filter(m=>m.mode!=="code");
  if(segment.length<4)return;
@@ -869,12 +858,10 @@ ui.clear.addEventListener("click",()=>{
  if(busy)return;
  if(history.length&&!window.confirm("Padam perbualan dan nota idea sesi ini?"))return;
  conversationEpoch++;history=[];summary="";ideas=[];summarizedThrough=0;ui.mediaFallback.checked=false;
- // Deleting a conversation must not silently change the visitor\'s storage preference.
  try{localStorage.removeItem(STORAGE);}catch(e){}
  discardFile();renderIdeas();renderHistory();ui.settings.open=false;
  window.dispatchEvent(new Event("ba:cleared"));
 });
-// Keep the native details/summary accessibility, with a short glass-panel exit.
 let featureCloseTimer=null;
 const featureSummary=ui.settings.querySelector(":scope > summary");
 function closeFeatureMenu(){
@@ -920,11 +907,8 @@ function showTyping(){
  for(let i=0;i<3;i++)dots.appendChild(elem("i"));
  b.appendChild(dots);msg.appendChild(b);ui.chat.appendChild(msg);scrollDown();return msg;
 }
-// Stream when deployed; older deployments can still use the JSON endpoint.
 let streamAvailable=true;
 async function ask(payload,signal,onDelta){
- // Known project facts can be answered immediately by the already-loaded identity module.
- // Attachments always go through the server, even when their question mentions identity.
  if(typeof window!=="undefined"&&!payload.documentText&&(!payload.media||Array.isArray(payload.media)&&!payload.media.length)){
   const local=window.BilikAntaraIdentity?.answerIdentity(payload.question);
   if(local)return {reply:local,model:"project-identity",provider:"local",mode:"local",sources:[],durMs:0};
@@ -992,7 +976,6 @@ async function askWithReconnect(payload,signal,onDelta,onWait,onRetry){
    if(signal.aborted||attempt===2||!reconnectable(error))throw error;
    failure=error;
   }
-  // Retry-After is a minimum wait, never shorten a server's cooldown.
   const serverWait=Number(failure.retryAfterSeconds);
   const delay=Number.isFinite(serverWait)&&serverWait>0?Math.ceil(serverWait*1000):
    Number(failure.status)===429?30000:3000*(attempt+1);
@@ -1006,7 +989,6 @@ async function askWithReconnect(payload,signal,onDelta,onWait,onRetry){
    onWait({attempt:attempt+1,seconds:Math.max(0,Math.ceil((retryAt-now)/1000)),offline,reason:failure.code==="ALL_PROVIDERS_BUSY"||Number(failure.status)===429?"capacity":"network"});
    await reconnectPause(Math.min(1000,deadline-now,offline?1000:Math.max(1,retryAt-now)),signal);
   }
-  // A new attempt replaces any incomplete text; it never appends another answer to it.
   onRetry(attempt+1);
  }
 }
@@ -1082,7 +1064,7 @@ async function submit(event){
   const receivedAt=Date.now();
   addMessage("assistant",data.reply,{...data,coderPoetFollowUp:followUpTarget==="The Coder Poet"&&data.model==="project-identity"&&!selectedFile,timestamp:receivedAt,locationLabel:sentLocation});
   history.push({role:"user",timestamp:sentAt,locationLabel:sentLocation,content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
-  history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,thoughtMode:requestMode,sources:data.sources||[],
+  history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,provider:data.provider||null,model:data.model||null,thoughtMode:requestMode,sources:data.sources||[],
    studioHint:data.studioHint===true,outputFormat:data.outputFormat||"",argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
    publicAccount:data.publicAccount||null});
   
@@ -1158,7 +1140,6 @@ window.BilikAntaraBridge={
  fill:text=>{ui.input.value=String(text||"");resize();update();ui.input.focus();},
  active:()=>busy,
  latest:()=>history.length?history[history.length-1]:null,
- // Local Code Engine results share this chat UI but never call AI, metrics or compaction.
  addLocalCode:items=>{
   if(busy||!Array.isArray(items)||items.length!==2)return false;
   if(items[0]?.role!=="user"||items[1]?.role!=="assistant")return false;
