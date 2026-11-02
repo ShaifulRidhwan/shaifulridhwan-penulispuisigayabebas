@@ -428,7 +428,7 @@ test("health checks are coalesced and do not consume the conversation request li
  assert.equal((await handler(chat)).statusCode,200,"Health traffic cannot consume chat capacity");
 });
 test("a failed Google network path can still use the healthy chat provider",async t=>{
- const handler=setup(t),calls=[];
+ const handler=setup(t),calls=[];process.env.AKSARA_HYBRID_ROUTER="true";
  global.fetch=async url=>{calls.push(url);if(url.includes("googleapis"))throw new TypeError("network");return reply("Aku boleh jawab.");};
  const r=await handler(event({question:"Apa itu atom?",preferredProvider:"gemini"}));
  assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).provider,"groq");assert.equal(calls.length,2);
@@ -614,7 +614,7 @@ test("light turns use the configured Flash-Lite model while deep tasks honor an 
 test("model-specific quota blocks that model, and project-wide quota blocks every Gemini variant",async t=>{
  for(const scope of ["model","project","mixed"]){
   const modelScoped=scope==="model";
-  const handler=setup(t);let google=0;
+  const handler=setup(t);let google=0;process.env.AKSARA_HYBRID_ROUTER="true";
   // Explicitly exercise separate model quotas; production defaults remain 3.5 Flash-Lite.
   process.env.GEMINI_MODEL_FAST="gemini-3.1-flash-lite";
   process.env.GEMINI_MODEL_COMPLEX="gemini-3.6-flash";
@@ -752,4 +752,44 @@ test("Pipeline 2.0 fallback retains explicitly consented notes before the newest
  assert.ok(text.includes("Sesi lama mengenai buku"));
  assert.ok(text.includes("Guna Bahasa Melayu santai"));
  assert.ok(text.endsWith("bahasa indonesia ke tu"+String.fromCharCode(10)+"[TAMAT SOALAN TERKINI]"));
+});
+
+
+test("1+3 ordinary text uses Gemini first even when Groq is preferred",async t=>{
+ const handler=setup(t);process.env.AKSARA_HYBRID_ROUTER="true";
+ const calls=[];
+ global.fetch=async url=>{
+  calls.push(String(url));
+  if(String(url).includes("googleapis"))
+   return Response.json({candidates:[{content:{parts:[{text:"Atom ialah unit asas sesuatu unsur."}]},finishReason:"STOP"}]});
+  return reply("Groq tidak patut dipanggil apabila Gemini berjaya.");
+ };
+ const r=await handler(event({question:"Apa itu atom?",preferredProvider:"groq"})),data=JSON.parse(r.body);
+ assert.equal(r.statusCode,200);assert.equal(data.provider,"gemini");
+ assert.equal(calls.length,1);assert.match(calls[0],/googleapis/);
+ assert.equal(data.routing.geminiDiagnosis.status,"attempted");
+});
+test("1+3 attempts Gemini then uses Groq on a genuine Gemini failure",async t=>{
+ const handler=setup(t);process.env.AKSARA_HYBRID_ROUTER="true";
+ const calls=[];
+ global.fetch=async url=>{
+  calls.push(String(url));
+  if(String(url).includes("googleapis"))
+   return Response.json({error:{message:"Gemini temporarily unavailable"}},{status:503});
+  return reply("Sandaran Groq berfungsi.");
+ };
+ const r=await handler(event({question:"Apa itu atom?"})),data=JSON.parse(r.body);
+ assert.equal(r.statusCode,200);assert.equal(data.provider,"groq");
+ assert.match(calls[0],/googleapis/);assert.ok(calls.some(url=>url.includes("groq.com")));
+ assert.ok(data.routing.failedAttempts.some(x=>x.provider==="gemini"&&x.status===503));
+});
+test("an empty Gemini health answer is Ready, never falsely Offline",async t=>{
+ const handler=setup(t);
+ global.fetch=async url=>String(url).includes("googleapis")
+  ?Response.json({candidates:[{content:{parts:[]},finishReason:"MAX_TOKENS"}]})
+  :reply("OK");
+ const r=await handler(event({providerStatus:true})),data=JSON.parse(r.body);
+ assert.equal(r.statusCode,200);
+ const gemini=data.providers.find(x=>x.id==="gemini");
+ assert.equal(gemini.status,"ready");assert.equal(gemini.reason,"health_empty_reply");assert.equal(gemini.http,200);
 });
