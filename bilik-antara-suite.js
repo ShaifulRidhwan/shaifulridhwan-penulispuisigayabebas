@@ -141,7 +141,7 @@ function beginSession(entry){
  if(!ok){activeId=previous;return;}
  try{sessionStorage.setItem(PREFIX+"-active",activeId);}catch(_){}
  if(entry&&api.remember())snapshotCurrent();
- close();notice(entry?"Sesi dipulihkan.":"Sesi baharu bermula.");
+ close();window.dispatchEvent(new Event("ba:session-changed"));notice(entry?"Sesi dipulihkan.":"Sesi baharu bermula.");
 }
 function download(name,contents,mime){
  const blob=new Blob([contents],{type:mime||"text/plain;charset=utf-8"});
