@@ -45,12 +45,16 @@ function createPool(){
   function failure(slot,error={},details={}){
     if(!Number.isInteger(slot))return;
     const auth=[401,403].includes(error.status)||error.googleCategory==="credential_or_access";
+    const permanent=[400,401,403,404].includes(error.status);
+    const upstreamCode=/^[A-Z][A-Z0-9_]{2,63}$/.test(String(error.googleStatus||""))?error.googleStatus:null;
+    const upstreamReason=/^[A-Z][A-Z0-9_]{2,63}$/.test(String(error.googleReason||""))?error.googleReason:null;
+    const category=error.googleCategory?safeReason(error.googleCategory):null;
     // Never reattempt a quota 429 with a different key in the same request.
     const http=safeNumber(error.status,599);
-    health.set(slot,{status:auth?"offline":"degraded",
+    health.set(slot,{status:permanent?"offline":"degraded",
       blockedUntil:auth?Date.now()+300000:0,checkedAt:Date.now(),
       model:typeof details.model==="string"?details.model.slice(0,80):"",
-      latencyMs:safeNumber(details.latencyMs,120000),http,
+      latencyMs:safeNumber(details.latencyMs,120000),http,upstreamCode,upstreamReason,category,
       reason:safeReason(details.reason||(
         auth?"authentication_or_access":http===429?"health_probe_quota":http===503?"health_upstream_busy":
         error.name==="AbortError"?"health_timeout":"upstream_error"))});
@@ -60,12 +64,16 @@ function createPool(){
     return configured(env).map(({slot})=>{
       const data=health.get(slot),blocked=!!data&&data.blockedUntil>now;
       const state=blocked?"offline":data?.status==="online"&&now-data.checkedAt<90000?"online":
-        data?.status==="offline"?"ready":data?.status==="degraded"?"degraded":"ready";
+        data?.status==="offline"?(data?.blockedUntil&&now>=data.blockedUntil?"ready":"offline"):
+        data?.status==="degraded"?"degraded":"ready";
       return {slot,status:state,model:data?.model||model||null,
         ...(data?.checkedAt?{checkedAt:data.checkedAt}:{}),
         ...(data?.latencyMs!==null&&data?.latencyMs!==undefined?{latencyMs:data.latencyMs}:{}),
         ...(data?.http?{http:data.http}:{}),
-        ...(data?.reason?{reason:data.reason}:{})};
+        ...(data?.reason?{reason:data.reason}:{}),
+        ...(data?.upstreamCode?{upstreamCode:data.upstreamCode}:{}),
+        ...(data?.upstreamReason?{upstreamReason:data.upstreamReason}:{}),
+        ...(data?.category?{category:data.category}:{})};
     });
   }
   return {configured,pick,success,ready,failure,snapshot};
