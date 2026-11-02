@@ -46,7 +46,7 @@
     "GROQ_FREE_CONFIRMED": "true",
     "GEMINI_MODEL_FAST": "gemini-3.5-flash-lite",
     "GEMINI_MODEL": "gemini-3.5-flash-lite",
-    "GEMINI_MODEL_COMPLEX": "gemini-3.5-flash-lite"
+    "GEMINI_MODEL_COMPLEX": "gemini-3.6-flash"
   },
   "observability": {
     "enabled": true
@@ -63,7 +63,7 @@
       "GROQ_FREE_CONFIRMED": "false",
       "GEMINI_MODEL_FAST": "gemini-3.5-flash-lite",
       "GEMINI_MODEL": "gemini-3.5-flash-lite",
-      "GEMINI_MODEL_COMPLEX": "gemini-3.5-flash-lite"
+      "GEMINI_MODEL_COMPLEX": "gemini-3.6-flash"
     },
     "ai": {
       "binding": "AI"
