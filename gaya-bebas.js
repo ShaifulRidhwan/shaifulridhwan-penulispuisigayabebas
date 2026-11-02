@@ -118,7 +118,19 @@
     var note=document.getElementById('archiveNote');
     if(note)note.textContent=q?'Carian merentasi semua 33 puisi.':mode==='pilihan'?'Enam puisi pilihan. Semua karya lain masih boleh dicari.':mode==='all'?'Semua 33 puisi dipaparkan.':'Kategori: '+mode+'.';
   }
+  // Pautan daripada Pusat Rujukan hanya mengisi carian arkib awam.
+  // Tiada carian dihantar ke AI dan tiada data disimpan di sini.
+  var directWork = '';
+  try{ directWork = new URLSearchParams(location.search).get('cari') || ''; }catch(e){}
+  if(directWork && directWork.length <= 90){
+    searchInput.value = directWork;
+    activeCat = 'all';
+  }
   applyFilter();
+  if(directWork && searchInput.value === directWork && worksEl.querySelectorAll('.work').length === 1){
+    var exactWork = worksEl.querySelector('.work-head');
+    if(exactWork)exactWork.click(); // Open only a unique matching poem.
+  }
   function fallbackCopy(t){ var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta); }
   worksEl.addEventListener('click', function(e){
     var btn = e.target.closest('.s-close, .s-copy');
