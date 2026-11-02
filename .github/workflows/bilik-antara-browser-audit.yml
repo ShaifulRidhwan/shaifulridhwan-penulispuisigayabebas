@@ -58,6 +58,7 @@ jobs:
           node scripts/test-bilik-antara-browser.cjs
           node scripts/test-thinking-mode-status-browser.cjs
           node scripts/test-six-observability-browser.cjs
+          node scripts/test-reference-hub-browser.cjs
           node scripts/test-code-engine-browser.cjs
           node scripts/test-attachments-browser.cjs
           node scripts/test-multi-ai-status-browser.cjs
