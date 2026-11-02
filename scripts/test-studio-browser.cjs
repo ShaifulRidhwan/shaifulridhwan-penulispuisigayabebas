@@ -222,7 +222,9 @@ async function main(){
   await page.locator('#resultTitle').scrollIntoViewIfNeeded();await page.screenshot({path:'studio-audit-artifacts/'+label+'.png',fullPage:true});
   page.once('dialog',d=>d.accept());await page.locator('#clearHistory').click();await page.waitForFunction(()=>document.querySelector('#historyCount').textContent==='0 hasil');
   for(const model of ['schnell','ovh']){await pick(page,'imageModel',model);
-   assert.match(await page.locator("#studioStatusV2Body").textContent(),/Status model: Belum diuji/,"Selected model must not inherit another model's success");await page.locator('#imagePrompt').fill('Ujian mock '+model);await page.locator('#generateImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);assert.equal(calls.at(-1).model,model);assert.match(await page.locator('#imageMetadata').textContent(),/1024 × 1024/);}
+   const status=await page.locator("#studioStatusV2Body").textContent();
+   assert.doesNotMatch(status,/Status model: Berjaya dijana/,"Other models must not inherit Klein's successful generation");
+   if(model==='ovh')assert.match(status,/Status model: Belum diuji/,"OVH must remain untested until its own request");await page.locator('#imagePrompt').fill('Ujian mock '+model);await page.locator('#generateImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);assert.equal(calls.at(-1).model,model);assert.match(await page.locator('#imageMetadata').textContent(),/1024 × 1024/);}
   await page.locator('#imagePrompt').fill('limit429 countdown');
   await page.locator('#generateImage').click();
   await page.locator('#cooldownStatus').waitFor({state:'visible'});
