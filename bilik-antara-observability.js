@@ -37,7 +37,8 @@
    research=classifyResearch(event);
    return research;
   }
-  return Object.freeze({file,web,snapshot:()=>({attachment:{...attachment},research:{...research}})});
+  function resetWeb(){research={state:"tiada",label:"Belum ada respons disemak",count:0};return research;}
+  return Object.freeze({file,web,resetWeb,snapshot:()=>({attachment:{...attachment},research:{...research}})});
  }
  function mount(win){
   const doc=win.document,state=create();
@@ -105,6 +106,7 @@
   win.addEventListener("ba:attachment-stage",e=>{state.file(e.detail);refreshFile();});
   win.addEventListener("ba:answered",e=>{state.web(e.detail);refreshWeb();});
   win.addEventListener("ba:request-failed",()=>{state.web({requestFailed:true});refreshWeb();});
+  for(const event of ["ba:session-changed","ba:cleared"])win.addEventListener(event,()=>{state.resetWeb();refreshWeb();});
   for(const event of ["ba:voice-connected","ba:voice-renew"])win.addEventListener(event,refreshVoice);
   voice?.d.addEventListener("toggle",refreshVoice);
   // Sampling only while expanded and visible; no background health probes or extra network traffic.
