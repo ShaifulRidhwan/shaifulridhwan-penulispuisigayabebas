@@ -122,6 +122,9 @@ function updatePreview(){
  }
 }
 function schedulePreview(){clearTimeout(previewTimer);previewTimer=setTimeout(updatePreview,350);}
+previewFrame.addEventListener("load",()=>{
+ if(previewFrame.hasAttribute("srcdoc"))window.dispatchEvent(new Event("aksara:code-preview-ready"));
+});
 $("cwPreviewRefresh").addEventListener("click",()=>{clearTimeout(previewTimer);updatePreview();});
 $("cwMobile").addEventListener("click",()=>{previewBox.classList.add("is-mobile");$("cwMobile").setAttribute("aria-pressed","true");$("cwDesktop").setAttribute("aria-pressed","false");});
 $("cwDesktop").addEventListener("click",()=>{previewBox.classList.remove("is-mobile");$("cwMobile").setAttribute("aria-pressed","false");$("cwDesktop").setAttribute("aria-pressed","true");});
