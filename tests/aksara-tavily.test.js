@@ -50,7 +50,7 @@ test("fail closed when credit budget is exhausted without calling external API",
  const out=await Tavily.lookup("unique query example for credit limit",{
   env:{TAVILY_API_KEY:"sample-key"},reserveImpl:async()=>{throw Error("limit");},
   fetchImpl:async()=>{calls++;throw Error("Unexpected");}});
- assert.equal(out.status,"budget-unavailable-or-exhausted");assert.equal(calls,0);
+ assert.equal(out.status,"local-budget-store-unavailable");assert.equal(calls,0);
 });
 test("durable credit counter stops at configured monthly ceiling",async()=>{
  const {reserve}=require("../netlify/functions/lib/aksara-tavily-budget");
@@ -79,7 +79,7 @@ test("live page guidance never claims browsing is absent after successful Extrac
  const message=Research.guidance({status:"page-read"});
  assert.match(message,/TAVILY EXTRACT SUDAH BERJAYA/);
  assert.match(message,/jangan kata tiada browsing tool/);
- assert.match(Research.guidance({status:"budget-unavailable-or-exhausted"}),/kawalan bajet/);
+ assert.match(Research.guidance({status:"local-budget-store-unavailable"}),/BUKAN bukti kredit Tavily habis/);
 });
 test("render path uses one blocking core stylesheet and defers secondary assets",()=>{
  const fs=require("node:fs");
@@ -94,4 +94,29 @@ test("render path uses one blocking core stylesheet and defers secondary assets"
   const rule=toml.split("[[headers]]").find(s=>s.includes('for = "/'+image+'"'));
   assert.ok(rule?.includes("max-age=2592000"),image+" must have 30-day cache");
  }
+});
+
+test("new free Tavily API key reaches provider without requiring Netlify Blobs",async()=>{
+ let count=0;
+ const out=await Tavily.lookup("new no-cap search query",{env:{TAVILY_API_KEY:"sample-key"},fetchImpl:async()=>{
+  count++;return {ok:true,json:async()=>({results:[{title:"Live source",url:"https://example.org/free",content:"Verified through mocked API."}]})};
+ }});
+ assert.equal(count,1);assert.equal(out.status,"search-snippets");
+});
+test("upstream auth, exhausted credits, rate limit and timeout remain distinguishable",async()=>{
+ const cases=[[401,"upstream-auth-failed"],[403,"upstream-auth-failed"],[432,"upstream-credits-exhausted"],[429,"upstream-rate-limited"],[503,"upstream-unavailable"]];
+ for(const [code,status] of cases){
+  const r=await Tavily.lookup("https://example.org/provider-status-"+code,{env:{TAVILY_API_KEY:"sample-key"},hasLink:true,
+   fetchImpl:async()=>({ok:false,status:code})});
+  assert.equal(r.status,status,code);
+ }
+ const timed=await Tavily.lookup("https://example.org/provider-status-timeout",{env:{TAVILY_API_KEY:"sample-key"},hasLink:true,
+  fetchImpl:async()=>{const error=new Error("timeout");error.name="AbortError";throw error;}});
+ assert.equal(timed.status,"upstream-timeout");
+});
+test("explicit owner cap remains opt-in and fails closed without claiming provider credits exhausted",async()=>{
+ const result=await Tavily.lookup("https://example.org/owner-cap",{env:{TAVILY_API_KEY:"sample-key",AKSARA_TAVILY_MONTHLY_CREDITS:"700"},
+  hasLink:true,reserveImpl:async()=>{throw Error("Tavily monthly budget exhausted");},
+  fetchImpl:async()=>{throw Error("Should never query provider");}});
+ assert.equal(result.status,"local-cap-reached");
 });
