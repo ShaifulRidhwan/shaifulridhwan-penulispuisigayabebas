@@ -139,7 +139,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#codeJavaScriptState").innerText(),"Ready");
   assert.equal(await page.locator("#codeEngineMenu").isVisible(),true,"Status must open a menu, not navigate to another page");
   assert.equal(await page.locator('[data-code-language]').count(),5);
-  assert.match(await page.locator("#codeEngineMenu").innerText(),/Lima runtime termasuk C\\+\\+20/);
+  assert.ok((await page.locator("#codeEngineMenu").innerText()).includes("Lima runtime termasuk C++20"));
   assert.equal(await page.locator("#codeEngineProbeAll").count(),0,"Remove the old four-runtime probe button");
   assert.equal(await page.locator("#codeEngineMenu .code-menu-unavailable").count(),0,"Do not show unsupported compilers as ready");
   assert.match(await page.locator("#codeCPPState").innerText(),/Load on run/);
