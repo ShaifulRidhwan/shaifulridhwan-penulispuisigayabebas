@@ -184,7 +184,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    const builtTools=Capabilities.offered(provider.id,webIntent||{});
    if(builtTools.length){
      // Older fallback prompt claimed web tools were absent. Correct it for this request.
-     providerMessages=providerMessages.map((m,i)=>i===0&&m.role==="system"
+     providerMessages=providerMessages.map((m,i)=>m.role==="system"
        ?{...m,content:m.content.replace("Tiada alat carian web, pelaksanaan kod atau URL Context aktif pada laluan ini;", "Gunakan hanya alat yang benar-benar diberikan dalam permintaan ini;")
          .replace("Tiada alat carian, URL atau pelaksanaan kod aktif.", "Alat yang dibekalkan oleh pelayan tersedia.")}
        :m);
