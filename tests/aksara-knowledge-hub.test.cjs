@@ -29,6 +29,9 @@ test("Pautan selamat: tidak memaparkan URL peribadi atau protokol berbahaya",()=
 test("Wikipedia/URL ialah draf soalan, bukan dakwaan laman sudah dibaca",()=>{
  assert.match(Hub.wikipediaQuestion("aporia"),/Cari rujukan Wikipedia tentang aporia/);
  assert.equal(Hub.wikipediaQuestion(""),"");
+ assert.ok(Hub.wikipediaQuestion("a".repeat(250)).length<=120,"Wikipedia query fits existing backend eligibility");
+ assert.equal(Hub.calculationQuestion("(12+8)*3"),"Kira (12+8)*3");
+ assert.equal(Hub.calculationQuestion("process.exit()"),"");
  assert.equal(Hub.urlQuestion("http://127.0.0.1/"),"");
  assert.match(Hub.urlQuestion("https://example.com/artikel"),/Nyatakan sama ada bacaan URL berjaya/);
  const source=read("bilik-antara-knowledge-hub.js");
