@@ -322,7 +322,7 @@ const ENDPOINT="/.netlify/functions/bilik-antara";
 const STREAM_ENDPOINT="/.netlify/functions/bilik-antara-stream";
 const STORAGE="bilik-antara-session-v2";
 const SESSION_PREF_STORAGE="bilik-antara-session-save-pref-v1"; // Explicit opt-out survives reload; no chat content here.
-const MODE_STORAGE="bilik-antara-mode-v1"; // Preference only; never store chat text here.
+const MODE_STORAGE="bilik-antara-mode-v1";
 let thoughtMode="cahaya";
 const modeButton=document.getElementById("thoughtMode");
 const modeDialog=document.getElementById("thoughtModeDialog");
@@ -991,14 +991,14 @@ async function submit(event){
  const followUpTarget=starterFollowUpTarget;
  starterFollowUpTarget=""; // One-shot intent from a clicked starter, never inferred from chat text.
  const selectedFile=fileState;
- const requestMode=thoughtMode; // Keep each response tied to the mode used at Send.
+ const requestMode=thoughtMode;
  const sentAt=Date.now(),sentLocation=messageLocation;
  if(Date.now()<quotaCooldownUntil){
   const seconds=Math.max(1,Math.ceil((quotaCooldownUntil-Date.now())/1000));
   status("limited","Rate Limited","Retry available in approximately "+seconds+"s. Your message is preserved.");return;
  }
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
- busy=true;stoppedByUser=false;update();status("connecting","Generating Response","");ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
+ busy=true;stoppedByUser=false;window.dispatchEvent(new CustomEvent("ba:thinking-request-start",{detail:{mode:requestMode}}));update();status("connecting","Generating Response","");ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
  const pendingUser=addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""),{timestamp:sentAt,locationLabel:sentLocation});
  let typing=showTyping();
  ui.input.value="";resize();update();
@@ -1176,6 +1176,7 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-code-evaluation.js?v=1" defer></script>
 <script src="bilik-antara-brain.js?v=15" defer></script>
 <script src="bilik-antara-modes.js?v=4" defer></script>
+<script src="bilik-antara-thinking-status.js?v=1" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-dialek.js?v=2" defer></script>
 <script src="bilik-antara-voice.js?v=44" defer></script>
