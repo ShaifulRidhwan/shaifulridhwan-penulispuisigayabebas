@@ -353,7 +353,7 @@ async function checkStatus(cloudflareAI=null){
  healthCache.pending=(async()=>{
   const checks=await Promise.all(PROVIDERS.map(async provider=>{
    const active=configured(cloudflareAI).some(p=>p.id===provider.id);
-   if(!active)return {id:provider.id,status:"off",model:provider.model};
+   if(!active)return {id:provider.id,status:"off"};
    if(Date.now()<(cooldown.get(provider.id)||0))return (freeQuotaFailures.get(provider.id)||0)>Date.now()?{id:provider.id,status:"offline",reason:"free_quota_exhausted",http:402}:{id:provider.id,status:"offline",reason:"cooldown",retryAfterSeconds:Math.ceil((cooldown.get(provider.id)-Date.now())/1000)};
    const started=Date.now(),ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5000);
    try{
@@ -392,7 +392,7 @@ async function checkStatus(cloudflareAI=null){
     const valid=typeof content==="string"?content.trim().length>0:Array.isArray(content)&&content.some(x=>x?.type==="text"&&String(x.text||"").trim());
     const online=valid&&!classifierModel(data.model)&&!classifierReply(content);
     if(online)cooldown.delete(provider.id);
-    return {id:provider.id,status:online?"online":"offline",model:typeof data?.model==="string"?data.model:provider.model,latencyMs:Date.now()-started,...(!online?{finishReason:data?.choices?.[0]?.finish_reason||"",outputTokens:data?.usage?.completion_tokens,reasoningTokens:data?.usage?.completion_tokens_details?.reasoning_tokens}:{})};
+    return {id:provider.id,status:online?"online":"offline",latencyMs:Date.now()-started,...(!online?{finishReason:data?.choices?.[0]?.finish_reason||"",outputTokens:data?.usage?.completion_tokens,reasoningTokens:data?.usage?.completion_tokens_details?.reasoning_tokens}:{})};
    }catch(_){
     return {id:provider.id,status:"offline"};
    }finally{clearTimeout(timer);}
