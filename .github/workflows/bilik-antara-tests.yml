@@ -76,6 +76,7 @@ jobs:
           node --check netlify/functions/aksara-capabilities.js
           node --check netlify/functions/aksara-owned-page.js
           node --test tests/aksara-code-preview.test.cjs
+          node --test tests/aksara-smart-attachments.test.cjs
           node --test tests/aksara-capabilities.test.cjs
           node --test tests/aksara-live-capability-qa.test.cjs
           node --test tests/aksara-privacy-defaults.test.cjs
