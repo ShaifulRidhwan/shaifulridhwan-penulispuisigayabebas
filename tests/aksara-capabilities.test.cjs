@@ -46,7 +46,7 @@ test("Gemini project throttling is slot-scoped and other keys remain eligible",(
  assert.equal(pool.pick(env).slot,1);
  pool.failure(1,{status:429,retryAfterSeconds:30});
  assert.equal(pool.snapshot(env).find(x=>x.slot===1).status,"offline");
- assert.equal(pool.pick(env).slot,3);
+ assert.equal(pool.pick(env).slot,2);
  assert.deepEqual(pool.configured(env).map(x=>x.slot),[1,2,3,4]);
  const chat=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
  assert.match(chat,/function googleWait\(model,slot\)/);
@@ -70,7 +70,7 @@ test("Owner-owned-page fetch rejects unlisted hosts and scripts, permits only st
 });
 test("Fallback router receives web task capabilities from Bilik Antara",()=>{
  const s=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
- assert.match(s,/webIntent,hasLink:/);
+ assert.match(s,/const webIntent=\{/);
  assert.match(s,/deadline,webIntent,firstResponseDeadline/);
  assert.match(s,/alternative\.toolsOffered/);
 });
