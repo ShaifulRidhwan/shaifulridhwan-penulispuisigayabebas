@@ -268,8 +268,9 @@ exports.handler=async event=>{
         }catch(e){
           const elapsed=Date.now()-time;
           GeminiTextPool.failure(entry.slot,e,{model:fastModel,latencyMs:elapsed,
-            reason:e.name==="AbortError"?"health_timeout":e.status===429?"health_probe_quota":
-            e.status>=500?"health_upstream_busy":e.status?"upstream_http":"transport_error"});
+            reason:GeminiDiagnosis.classify(e)==="authentication_or_access"?"authentication_or_access":
+            e.name==="AbortError"?"health_timeout":e.status===429?"health_probe_quota":
+            e.status>=500?"health_upstream_busy":e.googleCategory|| (e.status?"upstream_http":"transport_error")});
           // A health probe NEVER triggers project-wide quota cooldown or
           // automatically changes to another key to defeat provider limits.
           return {status:[401,403,404,400].includes(e.status)?"offline":"ready",
