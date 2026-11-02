@@ -65,7 +65,8 @@ function normalizedUrl(value){
  try{
   const u=new URL(String(value||""));
   if(u.protocol!=="https:"||u.username||u.password)return "";
-  return u.origin+u.pathname.replace(/\\/+$/,"")+(u.search||"");
+  const path=u.pathname.endsWith("/")?u.pathname.slice(0,-1):u.pathname;
+  return u.origin+path+(u.search||"");
  }catch(_){return "";}
 }
 function urlTrace(data,offeredTools=[],targetUrl=null){
