@@ -6,6 +6,13 @@ if(!api)return;
 const PREFIX="bilik-antara-suite-v1";
 const KEYS={archive:PREFIX+"-archive",memory:PREFIX+"-memory",workspace:PREFIX+"-workspace",metrics:PREFIX+"-metrics"};
 const $=id=>document.getElementById(id);
+const storageHealth={read:"belum_diuji",write:"belum_diuji",lastSavedAt:0,restored:"belum_diuji",lastErrorAt:0};
+const markStorage=(area,ok)=>{
+ storageHealth[area]=ok?"berjaya":"gagal";
+ if(!ok)storageHealth.lastErrorAt=Date.now();
+ if(area==="write"&&ok)storageHealth.lastSavedAt=Date.now();
+ window.dispatchEvent(new CustomEvent("ba:storage-health",{detail:{area,state:storageHealth[area]}}));
+};
 const make=(tag,text,cls)=>{
  const e=document.createElement(tag);if(text!==undefined)e.textContent=String(text);
  if(cls)e.className=cls;return e;
@@ -14,10 +21,12 @@ const button=(label,action,cls)=>{
  const b=make("button",label,cls||"ba-button");b.type="button";b.addEventListener("click",action);return b;
 };
 const read=(key,fallback)=>{
- try{const v=JSON.parse(localStorage.getItem(key)||"null");return v===null?fallback:v;}catch(_){return fallback;}
+ try{const v=JSON.parse(localStorage.getItem(key)||"null");markStorage("read",true);return v===null?fallback:v;}
+ catch(_){markStorage("read",false);return fallback;}
 };
 const write=(key,obj)=>{
- try{localStorage.setItem(key,JSON.stringify(obj));return true;}catch(_){notice("Ruang simpanan pelayar penuh atau disekat.");return false;}
+ try{localStorage.setItem(key,JSON.stringify(obj));markStorage("write",true);return true;}
+ catch(_){markStorage("write",false);notice("Ruang simpanan pelayar penuh atau disekat.");return false;}
 };
 function freshId(){return "s"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
 let archive=Array.isArray(read(KEYS.archive,[]))?read(KEYS.archive,[]):[];
@@ -37,7 +46,7 @@ for(const item of archive){
   if(title&&title!==item.title){item.title=title;titleChanges=true;}
  }
 }
-if(titleChanges&&api.remember()){try{localStorage.setItem(KEYS.archive,JSON.stringify(archive));}catch(_){}}
+if(titleChanges&&api.remember()){try{localStorage.setItem(KEYS.archive,JSON.stringify(archive));markStorage("write",true);}catch(_){markStorage("write",false);}}
 
 let memory=read(KEYS.memory,{enabled:false,text:""});
 if(!memory||typeof memory!=="object"||typeof memory.enabled!=="boolean")memory={enabled:false,text:""};
@@ -89,7 +98,7 @@ function persistArchive(){
  archive=archive.filter(x=>x&&typeof x.id==="string"&&Array.isArray(x.history))
    .sort((a,b)=>(Number(b.pinned)-Number(a.pinned))||(b.at-a.at));
  if(!archive.length){
-  try{localStorage.removeItem(KEYS.archive);return true;}catch(_){notice("Arkib tak dapat dikosongkan dalam pelayar.");return false;}
+  try{localStorage.removeItem(KEYS.archive);markStorage("write",true);return true;}catch(_){markStorage("write",false);notice("Arkib tak dapat dikosongkan dalam pelayar.");return false;}
  }
  return write(KEYS.archive,archive);
 }
@@ -128,6 +137,7 @@ function beginSession(entry){
  const previous=activeId,next=entry&&entry.id||freshId();
  activeId=next;
  const ok=entry?api.load(entry):api.fresh();
+ storageHealth.restored=ok?(entry?"dipulihkan":"sesi_baharu"):"gagal";
  if(!ok){activeId=previous;return;}
  try{sessionStorage.setItem(PREFIX+"-active",activeId);}catch(_){}
  if(entry&&api.remember())snapshotCurrent();
@@ -166,7 +176,33 @@ function clearAllArchive(){
  notice("Semua sejarah sesi pada peranti ini dipadam.");
  return true;
 }
+function storageSnapshot(){
+ return {read:storageHealth.read,write:storageHealth.write,lastSavedAt:storageHealth.lastSavedAt,
+  restored:storageHealth.restored,lastErrorAt:storageHealth.lastErrorAt,
+  active:!!api.remember(),archiveCount:archive.length,
+  memoryEnabled:memory.enabled===true,memorySaved:!!memory.text?.trim()};
+}
+function renderStorageStatus(){
+ const status=storageSnapshot();section("Kesihatan simpanan");
+ const fmt=t=>t?new Date(t).toLocaleTimeString("ms-MY",{hour:"2-digit",minute:"2-digit"}):"Belum disahkan";
+ const rows=[
+  ["Simpan sejarah sesi",status.active?"Diaktifkan":"Dimatikan"],
+  ["Memori pilihan",status.memoryEnabled?"Diaktifkan":"Dimatikan"],
+  ["Bacaan storan",status.read==="berjaya"?"Berjaya":status.read==="gagal"?"Gagal":"Belum diuji"],
+  ["Tulisan storan",status.write==="berjaya"?"Berjaya":status.write==="gagal"?"Gagal":"Belum diuji"],
+  ["Sesi disimpan",String(status.archiveCount)],
+  ["Pemulihan terakhir",({dipulihkan:"Berjaya",sesi_baharu:"Sesi baharu",gagal:"Gagal"})[status.restored]||"Belum diuji"],
+  ["Simpan terakhir",fmt(status.lastSavedAt)]
+ ];
+ for(const [label,value] of rows){
+  const row=make("div",undefined,"ba-metric ba-storage-health");
+  row.append(make("span",label),make("strong",value));
+  content.append(row);
+ }
+ paragraph("Status berdasarkan operasi storan pelayar ini, bukan salinan awan. Berjaya menulis tidak menjamin storan kekal jika data pelayar dipadam.");
+}
 function renderSessions(){
+ renderStorageStatus();
  section("Sejarah perbualan");
  paragraph("Sesi disimpan pada peranti ini, bukan akaun awan. Cari, namakan semula, pin atau pulihkan sesi. Eksport JSON untuk sandaran, kemudian import semula pada peranti yang kau pilih.");
  if(location.hostname==="shaifulridhwan-penulispuisigayabebas.netlify.app"){
@@ -289,11 +325,15 @@ function renderSessions(){
 }
 function renderMemory(){
  paragraph("Memori pilihan pengguna ialah nota berasingan daripada sejarah sesi.");
+ const draftStatus=make("p",memory.enabled?"Nota memori: aktif":"Nota memori: dimatikan","ba-hint");
+ draftStatus.id="ba-memory-save-status";content.append(draftStatus);
  paragraph("Memori pilihan bukan sejarah sesi automatik. Nota ringkas dihantar penuh; nota panjang dipilih secara setempat mengikut padanan kata soalan (maksimum 2,800 aksara setiap permintaan). Petikan itu dihantar kepada Gemini, atau sandaran hanya jika kau benarkan dalam Privasi & sesi.");
  const toggle=make("input");toggle.type="checkbox";toggle.checked=!!memory.enabled;
  const label=make("label"," Aktifkan memori");label.prepend(toggle);content.appendChild(label);
  const field=make("textarea");field.className="ba-editor";field.rows=8;field.maxLength=8000;
  field.value=typeof memory.text==="string"?memory.text:"";
+ field.addEventListener("input",()=>{draftStatus.textContent="Draf berubah · belum disimpan";});
+ toggle.addEventListener("change",()=>{draftStatus.textContent="Pilihan berubah · belum disimpan";});
  field.placeholder="Catat projek aktif, keputusan penting, atau gaya jawapan yang kau mahu Aksara ingat…";
  content.appendChild(field);
  const templateRow=make("div",undefined,"ba-memory-template-row");
@@ -314,7 +354,7 @@ function renderMemory(){
   const updated={enabled:toggle.checked,text:field.value.trim().slice(0,8000)};
   if(updated.text.includes("[tulis sendiri]")){notice("Lengkapkan atau padam penanda [tulis sendiri] sebelum simpan.");return;}
   if(!write(KEYS.memory,updated))return;
-  memory=updated;notice("Pilihan memori disimpan pada peranti.");render();
+  memory=updated;draftStatus.textContent="Nota disimpan pada peranti";notice("Pilihan memori disimpan pada peranti.");render();
  }),button("Padam memori",()=>{
   if(!confirm("Padam semua memori pilihan di peranti ini?"))return;
   const disabled={enabled:false,text:""};
@@ -374,6 +414,11 @@ async function copyText(text){
 }
 function renderMetrics(){
  section("Prestasi Aksara · Peranti ini");
+ const last=(metrics.events||[]).at(-1);
+ const lastAt=last?.at&&Number.isFinite(last.at)?new Date(last.at).toLocaleTimeString("ms-MY",{hour:"2-digit",minute:"2-digit"}):"Belum ada";
+ paragraph("Status pengukuran: "+(last?"Data tempatan tersedia":"Belum ada sampel")+
+  " · Peristiwa terakhir: "+lastAt+
+  ". Statistik cuma diambil daripada respons dan kegagalan yang dilaporkan, bukan semakan kesihatan model.");
  paragraph("Statistik sembang teks pada pelayar ini sahaja, bukan semua pengguna atau Voice Live. Kejayaan teknikal tidak menjamin jawapan tepat. Rekod lama mungkin tidak lengkap.");
  const successes=Math.max(0,Number(metrics.calls)||0),failures=Math.max(0,Number(metrics.failures)||0),total=successes+failures;
  const valid=values=>(Array.isArray(values)?values:[]).filter(v=>Number.isFinite(v)&&v>=0);
@@ -484,6 +529,7 @@ window.addEventListener("ba:request-failed",event=>{
  persistMetrics();if(currentPanel==="metrics")render();
 });
 window.BilikAntaraSuite={
+ getStorageStatus:storageSnapshot,
  memoryForPrompt:question=>memory.enabled&&typeof memory.text==="string"?window.AksaraSessionUtils?.selectMemory(memory.text,question)||"":"",
  open,
  getLocalStats:()=>({...metrics})
