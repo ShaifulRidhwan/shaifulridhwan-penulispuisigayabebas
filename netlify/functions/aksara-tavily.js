@@ -10,7 +10,7 @@ const cache=new Map();
 const pending=new Map();
 let windowStart=Date.now(),calls=0;
 function key(env=process.env){
- const value=env.TAVILY_API_KEY||env.TAVILY_KEY||"";
+ const value=env.TAVILY_API_KEY||env.TAVILY_KEY||env.TAVILY||"";
  return env.AKSARA_TAVILY_ENABLED==="false"?"":String(value||"").trim();
 }
 function privateQuery(value){
@@ -27,6 +27,8 @@ function safeUrl(value){
      /\.(?:local|internal|localhost|lan|test|invalid|example|onion|home|arpa)$/i.test(host)||
      /^(?:metadata\.google\.internal|169\.254\.|127\.|10\.|192\.168\.|172\.)/i.test(host))
     return null;
+  // Avoid relaying signed or credential-bearing URLs to a third party.
+  if([...u.searchParams.keys()].some(p=>/^(?:token|api_?key|access_?key|auth|authorization|signature|sig|secret|password|code|session|jwt)$/i.test(p)))return null;
   u.hash="";
   return u.href;
  }catch(_){return null;}
