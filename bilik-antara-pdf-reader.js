@@ -50,8 +50,9 @@
    if(!text)return {text:"",pages:pdf.numPages,textPages:0,truncated:false};
    return {text:text+(truncated?"\n\n[PERHATIAN: kandungan selebihnya dipotong kerana had bacaan 950,000 aksara.]":""),pages:pdf.numPages,textPages,truncated};
   }finally{
-   if(pdf)await pdf.destroy().catch(()=>{});
-   else await task.destroy().catch(()=>{});
+   // PDF.js 6.4 exposes destruction on the loading task. Using pdf.destroy()
+   // can throw after a successful extraction and lose the extracted text.
+   await task.destroy().catch(()=>{});
   }
  }
  root.AksaraPdfReader=Object.freeze({read,maxBytes:MAX_PDF_BYTES,maxPages:MAX_PAGES});
