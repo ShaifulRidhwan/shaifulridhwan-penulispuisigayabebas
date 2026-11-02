@@ -16,7 +16,7 @@ test("remove 4 runtime test button but preserve all runtime engines",()=>{
  const status=read("bilik-antara-code-status.js");
  const runtime=read("bilik-antara-code-runtime.js");
  assert.doesNotMatch(status,/id="codeEngineProbeAll"|Uji 4 runtime/);
- assert.match(status,/id=\\"codeHtmlPreview\\"/);
+ assert.match(status,/id="codeHtmlPreview"/);
  for(const language of ["javascript","python","typescript","sql"])assert.match(runtime,new RegExp('"'+language+'"'));
  assert.match(runtime,/const LANGUAGES=Object\.freeze\(\["javascript","python","typescript","sql"\]\)/);
 });
@@ -25,8 +25,8 @@ test("HTML preview requires explicit workspace event and iframe sandbox",()=>{
  const workspace=read("bilik-antara-code-workspace.js");
  assert.match(status,/aksara:code-workspace-open/);
  assert.match(workspace,/event\.detail\?\.language==="html"/);
- assert.match(workspace,/sandbox=\\"\\"/);
- assert.match(workspace,/referrerpolicy=\\"no-referrer\\"/);
+ assert.match(workspace,/sandbox=""/);
+ assert.match(workspace,/referrerpolicy="no-referrer"/);
  assert.match(workspace,/new DOMParser\(\)/);
  assert.match(workspace,/script-src 'none'/);
  assert.match(workspace,/connect-src 'none'/);
