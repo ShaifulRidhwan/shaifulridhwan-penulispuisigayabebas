@@ -19,7 +19,7 @@ test("Katalog mempunyai metadata dan pautan karya utama",()=>{
  assert.match(page,/name="viewport"/);
  assert.match(page,/assets\/novel\/cover-01\.jpg/);
  assert.match(page,/<span class="aksara-name">AKSARA Novel<\/span>/);
- assert.match(page,/class="aksara-nav-link" href="bilik-antara\.html">Bilik Antara<\/a>/);
+ assert.match(page,/class="aksara-nav-link" href="https:\/\/shaifulridhwan-penulispuisigayabebas\.netlify\.app\/bilik-antara\.html">Bilik Antara<\/a>/);
  assert.match(page,/aksara-header\.css\?v=2/);
  assert.match(page,/id="books"/);
  assert.doesNotMatch(page,/id="archiveBooks"/);
