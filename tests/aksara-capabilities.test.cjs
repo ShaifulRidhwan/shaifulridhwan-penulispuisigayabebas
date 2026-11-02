@@ -74,3 +74,41 @@ test("Fallback router receives web task capabilities from Bilik Antara",()=>{
  assert.match(s,/deadline,webIntent,firstResponseDeadline/);
  assert.match(s,/alternative\.toolsOffered/);
 });
+
+test("fresh-news requests without Gemini web evidence hand off to real Groq browser search",async t=>{
+ const keys=["GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","AKSARA_FREE_FALLBACKS",
+  "GROQ_API_KEY","GROQ_FREE_CONFIRMED","AKSARA_HYBRID_ROUTER","AKSARA_DISABLE_RESEARCH","AKSARA_WEB_SEARCH_ENABLED"];
+ const previous=Object.fromEntries(keys.map(k=>[k,process.env[k]])),oldFetch=global.fetch;
+ t.after(()=>{
+  global.fetch=oldFetch;
+  for(const k of keys){if(previous[k]===undefined)delete process.env[k];else process.env[k]=previous[k];}
+ });
+ Object.assign(process.env,{GEMINI_API_KEY:"mock-primary",AKSARA_FREE_FALLBACKS:"true",
+  GROQ_API_KEY:"mock-fallback",GROQ_FREE_CONFIRMED:"true",AKSARA_HYBRID_ROUTER:"true",
+  AKSARA_DISABLE_RESEARCH:"false",AKSARA_WEB_SEARCH_ENABLED:"false"});
+ for(const k of ["GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4"])delete process.env[k];
+ const {handler}=require("../netlify/functions/bilik-antara");
+ let groq;
+ global.fetch=async(url,options)=>{
+  if(String(url).includes("generativelanguage.googleapis.com")){
+   return Response.json({candidates:[{content:{parts:[{text:"Unverified old model knowledge."}]},finishReason:"STOP"}]});
+  }
+  if(String(url).includes("api.groq.com")){
+   groq=JSON.parse(options.body);
+   return Response.json({model:"openai/gpt-oss-120b",choices:[{message:{
+    content:"Bukti carian langsung kini ditemui.",
+    executed_tools:[{name:"browser_search"}]},finish_reason:"stop"}]});
+  }
+  throw Error("Unexpected external provider in research handoff");
+ };
+ const response=await handler({httpMethod:"POST",headers:{
+  origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+  "x-nf-client-connection-ip":"capability-live-research-proof"
+ },body:JSON.stringify({question:"Cari berita AI terkini hari ini"})});
+ const result=JSON.parse(response.body);
+ assert.equal(response.statusCode,200);
+ assert.equal(result.provider,"groq");
+ assert.ok(result.toolsUsed.includes("browser_search"));
+ assert.deepEqual(groq.tools,[{type:"browser_search"}]);
+ assert.equal(groq.tool_choice,"required");
+});
