@@ -346,7 +346,8 @@ test("Both modes use the same intelligence protocol; GELAP remains independently
  assert.ok(backend.includes("cognitiveProfile(question,history,intent,thoughtMode)"));
  assert.ok(backend.includes("cognitiveGuidance(cognition)"));
  assert.ok(backend.includes("cognitivePlan(intent,Modes.plan("));
- assert.ok(backend.includes('depth:plan.thinkingLevel'));
+ assert.ok(backend.includes('depth:adaptiveThinking'));
+ assert.ok(backend.includes('cognitivePlan(intent,Modes.plan('));
  const router=require("fs").readFileSync("netlify/functions/aksara-provider-router.js","utf8");
  assert.ok(router.includes('reasoningLevel==="low"'));
 });
