@@ -20,7 +20,7 @@ test("all four text keys have the same selectable role",()=>{
 test("legacy single Gemini secret remains usable without configuration changes",()=>{
   const pool=createPool();
   assert.equal(pool.pick({GEMINI_API_KEY:"existing-key"}).apiKey,"existing-key");
-  assert.equal(pool.pick({}).apiKey,undefined);
+  assert.equal(pool.pick({}),null);
 });
 
 test("duplicate or empty secrets do not create duplicate slots",()=>{
@@ -33,7 +33,7 @@ test("a rejected credential is quarantined without disabling the other configure
   assert.equal(pool.pick(env).slot,1);
   pool.failure(1,{status:403,googleCategory:"credential_or_access"});
   assert.equal(pool.snapshot(env).find(x=>x.slot===1).status,"access_error");
-  assert.deepEqual(Array.from({length:4},()=>pool.pick(env).slot),[3,4,2,3]);
+  assert.deepEqual(Array.from({length:4},()=>pool.pick(env).slot),[2,3,4,2]);
   pool.success(1);
   assert.equal(pool.snapshot(env).find(x=>x.slot===1).status,"online");
 });
