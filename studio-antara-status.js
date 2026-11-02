@@ -19,7 +19,7 @@
    const stage=String(item.stage||"");
    if(stage==="pilih"){selected=normalize(item.model);return snapshot();}
    const model=normalize(item.model||selected);
-   if(stage==="mula"){current={model,started:clock(),stage:"menjana"};savedByModel.set(model,"belum_diuji");}
+   if(stage==="mula"){selected=model;current={model,started:clock(),stage:"menjana"};savedByModel.set(model,"belum_diuji");}
    else if(stage==="siap"){
     const entry={model,stage:"siap",at:clock(),
      durationMs:Number.isFinite(item.durationMs)?Math.max(0,Math.round(item.durationMs)):null};
@@ -67,7 +67,10 @@
     "\nStatus berdasarkan percubaan sebenar, bukan semakan sambungan langsung. Model lain tidak diuji secara automatik.";
    panel.dataset.status=s.status;
   }
-  select.addEventListener("change",()=>{state.event({stage:"pilih",model:select.value});render();});
+  function syncSelection(){state.event({stage:"pilih",model:select.value});render();}
+  select.addEventListener("change",syncSelection);
+  // Nisbah Studio boleh menukar model secara programatik tanpa event 'change' model.
+  for(const id of ["imageRatio","imageQuality"]){doc.getElementById(id)?.addEventListener("change",syncSelection);}
   win.addEventListener("studio:status",e=>{state.event(e.detail);render();});
   state.event({stage:"pilih",model:select.value});render();
   win.StudioStatusV2UI=Object.freeze({snapshot:state.snapshot});
