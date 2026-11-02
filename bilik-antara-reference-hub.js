@@ -142,7 +142,7 @@
     trigger.tabIndex=on?0:-1;panel.hidden=!on;
    }
    notice("");
-   if(active==="karya")ensureWorks();
+   if(active==="karya"&&dialog.open)ensureWorks();
   }
   const tabs=Array.from(root.querySelectorAll('[role="tab"]'));
   tabs.forEach((tab,i)=>{
