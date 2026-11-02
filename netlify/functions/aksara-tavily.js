@@ -74,8 +74,8 @@ async function lookup(question,options={}){
  // require an unrelated Netlify Blobs write for every newly created free key.
  // Owners can opt in to an additional durable cap via this explicit variable.
  const limitRaw=env.AKSARA_TAVILY_MONTHLY_CREDITS;
- const ownerCapEnabled=limitRaw!==undefined&&limitRaw!==null&&String(limitRaw).trim()!=="";
- if(ownerCapEnabled&&!/^\\d+$/.test(String(limitRaw).trim()))
+ const ownerCapEnabled=String(env.AKSARA_TAVILY_LOCAL_BUDGET_ENABLED||"").toLowerCase()==="true";
+ if(ownerCapEnabled&&!/^[0-9]+$/.test(String(limitRaw||"").trim()))
   return {status:"local-cap-invalid",sources:[]};
  if(typeof options.reserveImpl==="function"||ownerCapEnabled){
   try{
