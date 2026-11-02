@@ -167,6 +167,7 @@ test("explicit code execution uses actual Groq tool and requires proof",async t=
  assert.equal(geminiCalls,0);
  assert.deepEqual(groqRequest.tools,[{type:"code_interpreter"}]);
  assert.equal(groqRequest.tool_choice,"required");
+ assert.match(data.disclaimer,/Code Interpreter/);
  const another=await handler({httpMethod:"POST",headers:{
   origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
   "x-nf-client-connection-ip":"capability-run-python-smoke"
@@ -197,4 +198,82 @@ test("BM and English direct code requests activate calculation but tutorials do 
   "Laksanakan kod: print('hai')"
  ])assert.equal(I.resolveIntent(q,[],false).calculate,true,q);
  assert.equal(I.resolveIntent("How do I run Python?",[],false).calculate,false);
+});
+
+function setupEvidenceEnvironment(t){
+ const names=["GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4",
+  "GROQ_API_KEY","GROQ_FREE_CONFIRMED","OPENROUTER_API_KEY","AKSARA_FREE_FALLBACKS",
+  "AKSARA_HYBRID_ROUTER","AKSARA_WEB_SEARCH_ENABLED","AKSARA_DISABLE_RESEARCH",
+  "AKSARA_GROQ_BROWSER_ENABLED","ENABLE_PUBLIC_WORKS","TAVILY_API_KEY"];
+ const saved=Object.fromEntries(names.map(k=>[k,process.env[k]])),oldFetch=global.fetch;
+ Object.assign(process.env,{GEMINI_API_KEY:"mock-evidence-gemini",
+  GROQ_API_KEY:"mock-evidence-groq",GROQ_FREE_CONFIRMED:"true",
+  OPENROUTER_API_KEY:"mock-evidence-openrouter",AKSARA_FREE_FALLBACKS:"true",
+  AKSARA_HYBRID_ROUTER:"true",AKSARA_WEB_SEARCH_ENABLED:"false",
+  AKSARA_DISABLE_RESEARCH:"true",AKSARA_GROQ_BROWSER_ENABLED:"true",
+  ENABLE_PUBLIC_WORKS:"false"});
+ for(const k of ["GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4","TAVILY_API_KEY"])delete process.env[k];
+ t.after(()=>{
+  global.fetch=oldFetch;
+  for(const [k,v] of Object.entries(saved))if(v===undefined)delete process.env[k];else process.env[k]=v;
+ });
+}
+test("a browser-search call cannot prove direct reading of an explicitly requested URL",async t=>{
+ setupEvidenceEnvironment(t);
+ const {handler}=require("../netlify/functions/bilik-antara");
+ let groqUsed=false;
+ global.fetch=async(url)=>{
+  if(String(url).includes("googleapis"))return Response.json({candidates:[{
+   content:{parts:[{text:"I know what that homepage looks like."}]},finishReason:"STOP"}]});
+  if(String(url).includes("api.groq.com")){
+   groqUsed=true;
+   return Response.json({model:"openai/gpt-oss-120b",choices:[{message:{
+    content:"I read the page and its exact layout.",executed_tools:[{name:"browser_search"}]
+   },finish_reason:"stop"}]});
+  }
+  throw Error("Unexpected provider in exact-page evidence test");
+ };
+ const result=await handler({httpMethod:"POST",headers:{
+  origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+  "x-nf-client-connection-ip":"qa-exact-url-proof"
+ },body:JSON.stringify({question:"Buka https://www.wikipedia.org/ dan terangkan apa yang benar-benar dibaca."})});
+ const data=JSON.parse(result.body);
+ assert.equal(result.statusCode,200);
+ assert.equal(groqUsed,true);
+ assert.equal(data.provider,"local");
+ assert.ok(data.toolsUsed.includes("browser_search"));
+ assert.deepEqual(data.sources,[]);
+ assert.match(data.reply,/tidak membuktikan/);
+ assert.doesNotMatch(data.reply,/exact layout/);
+});
+test("failed Groq browser plus ungrounded OpenRouter must return truthful live-news status",async t=>{
+ setupEvidenceEnvironment(t);
+ const {handler}=require("../netlify/functions/bilik-antara");
+ let routerCalled=false;
+ global.fetch=async(url)=>{
+  const u=String(url);
+  if(u.includes("api.groq.com"))return Response.json({
+   error:{message:"Requests per minute limit reached",code:"rate_limit_exceeded"}
+  },{status:429,headers:{"retry-after":"1"}});
+  if(u.includes("googleapis"))return Response.json({error:{code:503,message:"Service unavailable"}},{status:503});
+  if(u.includes("openrouter.ai")&&u.includes("/chat/completions")){
+   routerCalled=true;
+   return Response.json({model:"mock-free",choices:[{message:{
+    content:"Here are three totally invented AI headlines.",executed_tools:[]
+   },finish_reason:"stop"}]});
+  }
+  throw Error("Unexpected provider in failed-news test: "+u);
+ };
+ const result=await handler({httpMethod:"POST",headers:{
+  origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+  "x-nf-client-connection-ip":"qa-failed-news-proof"
+ },body:JSON.stringify({question:"Cari tiga berita AI terkini pada 2 November 2026 dan sertakan sumber."})});
+ const data=JSON.parse(result.body);
+ assert.equal(result.statusCode,200);
+ assert.equal(routerCalled,true);
+ assert.equal(data.provider,"local");
+ assert.deepEqual(data.sources,[]);
+ assert.match(data.reply,/tiada hasil Browser Search/);
+ assert.doesNotMatch(data.reply,/invented AI headlines/);
+ assert.ok(data.routing.failedAttempts.some(x=>x.provider==="groq"&&x.status===429));
 });
