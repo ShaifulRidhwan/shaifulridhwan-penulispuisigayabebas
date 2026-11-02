@@ -15,6 +15,9 @@ test("Penyelidikan: sumber berbeza daripada halaman yang benar-benar dibaca",()=
  assert.equal(classify({sourceCount:1}).label,"Pautan diberi, bacaan belum disahkan");
  assert.equal(classify({requestFailed:true,sourceCount:3}).state,"gagal");
  assert.equal(classify({}).label,"Tiada bukti carian web untuk respons ini");
+ const obs=Obs.create();obs.web({toolsUsed:["tavily_extract"],sourceCount:1});
+ assert.equal(obs.snapshot().research.state,"dibaca");obs.resetWeb();
+ assert.equal(obs.snapshot().research.label,"Belum ada respons disemak");
 });
 test("Smart Attachments: log adalah metadata, tanpa nama, teks atau muatan fail",()=>{
  const state=Obs.create();
