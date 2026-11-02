@@ -280,6 +280,7 @@ function run(language,source,options={}){
    }
    sqlParams=params;
   }
+  if(options.signal?.aborted){reject(Error("Pelaksanaan dihentikan."));return;}
   emit("started");
   const id="code-"+(root.crypto?.randomUUID?.()||Math.random().toString(36).slice(2));
   const frame=document.createElement("iframe");
@@ -314,7 +315,6 @@ function run(language,source,options={}){
     });
    }
   };
-  if(options.signal?.aborted){reject(Error("Pelaksanaan dihentikan."));return;}
   window.addEventListener("message",message);
   options.signal?.addEventListener("abort",abort,{once:true});
   timer=setTimeout(()=>{if(clean()){emit("timeout");reject(Error("Had masa dicapai. Pelaksanaan dihentikan."));}},TIMEOUTS[language]);
