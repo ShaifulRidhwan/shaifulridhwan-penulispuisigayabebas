@@ -5,7 +5,7 @@ const bridge=window.BilikAntaraBridge,engine=window.AksaraCodeRuntime;
 const form=document.getElementById("composer"),input=document.getElementById("input");
 if(!bridge||!engine||!form||!input)return;
 let last=null;
-const langLabels={javascript:"JavaScript",python:"Python",typescript:"TypeScript",sql:"SQL"};
+const langLabels={javascript:"JavaScript",python:"Python",typescript:"TypeScript",sql:"SQL",cpp:"C++"};
 const trim=(x,max)=>String(x||"").slice(0,max);
 function redact(text){
  return String(text||"")
