@@ -34,7 +34,7 @@
   if(!enabled)return {state:"disabled",label:"Multi A.I Disabled",verified,checkedAt,age};
   return {state:"offline",label:"Multi A.I Offline",verified,checkedAt,age};
  }
- function create({pill,label,activity,activityText,retry,stamp}){
+ function create({pill,label,activity,activityText,retry,stamp,requestNote}){
   let snapshot=[],checkedAt=0,checking=true,failed=false;
   const replies=new Map();
   function effective(now=Date.now()){
@@ -97,6 +97,7 @@
    activity.className="connection-info"+(show?" active"+(["error","limited"].includes(kind)?" error":""):"");
    activityText.textContent=show?[heading,description].filter(Boolean).join(" · "):"";
    activity.dataset.requestState=done?"idle":kind;
+   if(requestNote){requestNote.hidden=!show;requestNote.textContent=show?"Request Activity · "+[heading,description].filter(Boolean).join(" · "):"";}
    retry.hidden=kind!=="error";
    // Provider health is deliberately not written by request activity.
   }
