@@ -21,7 +21,7 @@ menu.className="multi-ai-dialog code-engine-dialog";
 menu.setAttribute("aria-labelledby","codeEngineMenuTitle");
 menu.setAttribute("aria-describedby","codeEngineMenuDescription");
 menu.innerHTML=[
- '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Runtime Health</strong><p id="codeEngineMenuDescription">Five executable runtimes including C++20. HTML/CSS Live Preview is sandboxed. Lazy runtimes are verified only after execution.</p><p id="codeHealthCheckedAt" class="code-health-freshness" role="status">Not checked yet</p></div><button type="button" id="codeMenuClose" aria-label="Close Code Engine">×</button></div>',
+ '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Runtime Health</strong><p id="codeEngineMenuDescription">Lima runtime boleh melaksanakan kod, termasuk C++20. Pratonton HTML/CSS berjalan dalam sandbox. Runtime tambahan disahkan hanya selepas berjaya dijalankan.</p><p id="codeHealthCheckedAt" class="code-health-freshness" role="status">Not checked yet</p></div><button type="button" id="codeMenuClose" aria-label="Close Code Engine">×</button></div>',
  '<div id="codeEngineActivity" class="code-health-activity" role="status" aria-live="polite" hidden></div>',
  '<div class="multi-ai-list" id="codeRuntimeList" aria-label="Runtime availability and verified execution status">',
   '<button type="button" class="multi-ai-row code-menu-language" id="codeHtmlPreview"><span class="multi-ai-provider">HTML · CSS</span><span class="multi-ai-state is-ready" id="codeHtmlState">Available</span></button>',
