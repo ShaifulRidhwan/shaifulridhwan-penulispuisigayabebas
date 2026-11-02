@@ -70,6 +70,7 @@ css.textContent=[
 '.code-health-activity{font:500 11px/1.5 "DM Sans",sans-serif;color:#ead9bf;padding:9px 11px;margin:0 0 11px;border:1px solid rgba(222,193,151,.24);border-radius:11px;background:rgba(255,255,255,.032);overflow-wrap:anywhere}',
 '.conversation-head .code-engine-status[data-runtime-health="unverified"] .code-engine-core{color:#c8c2b5}',
 '.conversation-head .code-engine-status[data-runtime-health="checking"] .code-engine-core{color:#ddc18f}',
+'.conversation-head .code-engine-status[data-runtime-health="degraded"] .code-engine-core{color:#d9b77a}',
 '.conversation-head .code-engine-status[data-runtime-health="unavailable"] .code-engine-core{color:#e7a08e}',
 '@media(max-width:340px){.conversation-head .code-engine-status{max-width:107px!important}.conversation-head #voiceLive{padding-inline:5px!important}.conversation-head #connection{padding-inline:4px!important;gap:3px!important}.conversation-head #connectionText{font-size:8px!important}}'
 ].join("\n");
@@ -122,7 +123,7 @@ function renderHealth(){
    row.reason||"Not verified yet";
  }
  const healthLabel=state.overall==="ready"?"Ready":state.overall==="checking"?"Checking":
-  state.overall==="unavailable"?"Unavailable":"Unverified";
+  state.overall==="degraded"?"Degraded":state.overall==="unavailable"?"Unavailable":"Unverified";
  const execLabel=executionRunning?"Running":permissionEnabled?"Armed":"Off";
  pill.title="Runtime Health: "+healthLabel+" · "+state.verified+"/5 Verified · AI Execution: "+execLabel;
  pill.setAttribute("aria-label","Code Engine. Runtime: "+healthLabel+". AI Execution: "+
