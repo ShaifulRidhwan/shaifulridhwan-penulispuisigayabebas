@@ -27,3 +27,28 @@
  .attachment-quick-actions button{flex-basis:125px}
  .attachment-chip{max-width:235px}
 }
+
+
+/* Attachment composer v2: one compact row. No duplicated filename/status lines. */
+.attachment-preview-row{display:flex;align-items:center;gap:7px;min-width:0;max-width:100%}
+.attachment-preview-row .attachment-tray{flex:1 1 auto;min-width:0;margin:0;padding:3px 0 6px;gap:7px}
+.attachment-preview-row .attachment-chip{min-width:0;max-width:min(255px,77vw);padding:5px 6px;border-radius:11px}
+.attachment-preview-row .attachment-chip-preview{width:34px;height:34px;flex-basis:34px;border-radius:7px}
+.attachment-preview-row .attachment-chip-name{max-width:155px}
+.attachment-preview-row .attachment-chip-remove{min-width:26px;min-height:27px;line-height:1}
+.attachment-preview-row #removeAttachment:not([hidden]){
+ margin:0 0 5px 0;padding:6px 9px;flex:0 0 auto;align-self:center;
+ border:1px solid rgba(232,205,161,.28);border-radius:9px;
+ font:600 10px/1.35 'DM Sans',sans-serif;color:#cfc0ab;
+}
+#docStatus[data-state="ready"]{
+ position:absolute!important;width:1px!important;height:1px!important;
+ padding:0!important;margin:-1px!important;overflow:hidden!important;
+ clip-path:inset(50%)!important;white-space:nowrap!important;border:0!important;
+}
+#docStatus[data-state="warning"]{display:block;max-height:52px;overflow-y:auto;overflow-wrap:anywhere;padding:5px 3px 8px;color:#e7bd90;line-height:1.4}
+@media(max-width:420px){
+ .attachment-preview-row .attachment-chip{max-width:min(230px,77vw)}
+ .attachment-preview-row .attachment-chip-name{max-width:127px}
+ .attachment-preview-row #removeAttachment:not([hidden]){padding:6px 7px}
+}

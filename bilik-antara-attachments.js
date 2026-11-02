@@ -84,8 +84,9 @@ for(const [kind,field] of Object.entries(attachmentInputs)){
     const workspace=window.AksaraCodeWorkspace;
     if(!workspace?.importFiles)throw Error("Code Workspace belum tersedia. Cuba segarkan halaman.");
     await workspace.importFiles(files);
+    ui.docStatus.dataset.state="warning";
     ui.docStatus.textContent="Fail kod dibuka dalam Code Workspace; tidak dihantar kepada A.I.";
-   }catch(e){ui.docStatus.textContent="Import kod gagal: "+String(e.message||e).slice(0,160);}
+   }catch(e){ui.docStatus.dataset.state="warning";ui.docStatus.textContent="Import kod gagal: "+String(e.message||e).slice(0,160);}
   }else queueAttachmentFiles(files);
  });
 }
@@ -126,7 +127,8 @@ function renderAttachmentTray(){
   const name=elem("span","attachment-chip-name",item.name);
   name.title=item.name;
   details.append(name,elem("span","attachment-chip-size",bytesLabel(item.size)+
-   (item.uploadSize&&item.uploadSize<item.size?" → "+bytesLabel(item.uploadSize):"")));
+   (item.uploadSize&&item.uploadSize<item.size?" → "+bytesLabel(item.uploadSize):"")+
+   (item.pdfPages?" · "+item.pdfPages+" hlm · teks":"")));
   const remove=document.createElement("button");remove.type="button";
   remove.className="attachment-chip-remove";remove.textContent="×";
   remove.setAttribute("aria-label","Buang "+item.name);remove.disabled=getBusy();
@@ -145,10 +147,11 @@ function rebuildFileState(note=""){
   fileState={name:stagedFiles.map(f=>f.name).join(", ").slice(0,240),
    text:texts.join("\n\n"),media:stagedFiles.filter(f=>f.kind==="media").map(f=>f.media)};
  }
+ // The chip already displays the file name and size; screen readers still get the status.
+ ui.docStatus.dataset.state=note?"warning":"ready";
  ui.docStatus.textContent=note||(stagedFiles.length?
-   stagedFiles.length+" fail tersedia · "+bytesLabel(stagedFiles.reduce((sum,f)=>sum+(f.uploadSize||f.size),0))+
-   " · "+stagedFiles.map(f=>f.name).join(", ").slice(0,110)+" · Disimpan dalam tab sehingga dihantar.":"");
- ui.remove.hidden=!stagedFiles.length;
+   stagedFiles.length+" fail sedia: "+stagedFiles.map(f=>f.name).join(", ").slice(0,160):"");
+ ui.remove.hidden=stagedFiles.length<2;
  setFileState(fileState);
  renderAttachmentTray();update();
 }
@@ -157,7 +160,7 @@ function discardFile(){
  cleanupStaged(stagedFiles);stagedFiles=[];fileState=null;setFileState(null);
  ui.upload.value="";
  for(const field of Object.values(attachmentInputs))field.value="";
- ui.docStatus.textContent="";ui.remove.hidden=true;
+ ui.docStatus.textContent="";ui.docStatus.dataset.state="ready";ui.remove.hidden=true;
  renderAttachmentTray();update();
 }
 async function compressImageForChat(file,targetBytes){
@@ -204,14 +207,36 @@ async function readFiles(files,epoch=attachmentEpoch){
  let mediaBytes=stagedFiles.filter(x=>x.kind==="media").reduce((sum,x)=>sum+x.uploadSize,0);
  let textChars=stagedFiles.filter(x=>x.kind==="text").reduce((sum,x)=>sum+("[FAIL: "+x.name+"]\n"+x.text).length+2,0);
  for(const file of files){
-  let item=null;
+  let item=null,pdfWarning="";
   try{
    const name=String(file.name||"fail").slice(0,100);
    const ext=(name.split(".").pop()||"").toLowerCase();
    if(knownNames.has(name.toLowerCase()))throw Error("Fail dengan nama sama sudah dipilih.");
    if(stagedFiles.length+added.length>=MAX_ATTACHMENT_FILES)throw Error("Maksimum 12 lampiran bagi satu mesej.");
    if(!file.size)throw Error("Fail kosong tidak diterima.");
-   if(["txt","md","csv","json","docx"].includes(ext)){
+   if(ext==="pdf"){
+    if(!window.AksaraPdfReader?.read)throw Error("Pembaca PDF belum tersedia. Segarkan halaman.");
+    try{
+     const parsed=await window.AksaraPdfReader.read(file);
+     if(parsed.text){
+      const newChars=("[FAIL: "+name+"]\n"+parsed.text).length;
+      if(textChars+newChars>MAX_TEXT_CHARS)throw Error("Teks PDF melebihi 1 juta aksara bagi satu mesej. Bahagikan dokumen.");
+      item={name,size:file.size,uploadSize:0,kind:"text",
+       text:parsed.text,mimeType:"application/pdf",pdfPages:parsed.pages};
+      textChars+=newChars+2;
+      if(parsed.truncated)pdfWarning=name+": hanya sebahagian teks PDF dibaca. Fail asal tidak dihantar.";
+     }else pdfWarning=name+": PDF ini tiada teks boleh dibaca (mungkin imbasan). Model multimodal diperlukan.";
+    }catch(error){
+     if(/melebihi|lebih 250|Bahagikan|kata laluan|password/i.test(String(error.message||"")))
+      throw error;
+     pdfWarning=name+": teks PDF tak dapat diekstrak. Fail asal memerlukan model multimodal.";
+    }
+    if(!item&&file.size>MAX_MEDIA_BYTES)
+     throw Error("PDF tanpa teks yang boleh diekstrak melebihi had media 3.85 MB.");
+   }
+   if(item){
+    // PDF text travels in documentText, never as a binary multimodal upload.
+   }else if(["txt","md","csv","json","docx"].includes(ext)){
     if(file.size>MAX_TEXT_BYTES)throw Error("Had setiap fail dokumen ialah 2 MB. Pecahkan teks besar kepada beberapa fail.");
     if(ext==="docx"&&!window.AksaraDocx)throw Error("Pembaca DOCX belum tersedia.");
     const content=ext==="docx"?await window.AksaraDocx.read(file):await file.text();
@@ -241,18 +266,20 @@ async function readFiles(files,epoch=attachmentEpoch){
     if(mediaBytes+blob.size>MAX_MEDIA_BYTES)throw Error("Jumlah media melebihi 3.85 MB selepas pemampatan; ini had Netlify untuk request terus.");
     const data=await blobToBase64(blob);
     if(!data)throw Error("Gagal mengekod media.");
-    item={name,size:file.size,uploadSize:blob.size,kind:"media",mimeType:mime,
+    item={name,size:file.size,uploadSize:blob.size,kind:"media",mimeType:mime,pdfWarning,
      media:{name,mimeType:mime,data},
      previewURL:(mime.startsWith("image/")||mime.startsWith("video/"))?URL.createObjectURL(blob):null};
     mediaBytes+=blob.size;
    }
+   if(pdfWarning&&!item.pdfWarning)item.pdfWarning=pdfWarning;
    added.push(item);knownNames.add(name.toLowerCase());
   }catch(error){if(item?.previewURL)URL.revokeObjectURL(item.previewURL);
    errors.push(String(file.name||"Fail")+": "+String(error.message||error).slice(0,150));}
  }
  if(epoch!==attachmentEpoch){cleanupStaged(added);return;}
  if(added.length)stagedFiles.push(...added);
- const report=errors.length?"Tidak dimuat: "+errors.slice(0,2).join(" · ")+(errors.length>2?" ("+errors.length+" ralat)":""):"";
+ const warning=added.find(f=>f.pdfWarning)?.pdfWarning||"";
+ const report=errors.length?"Tidak dimuat: "+errors.slice(0,2).join(" · ")+(errors.length>2?" ("+errors.length+" ralat)":""):warning;
  rebuildFileState(report||"");
 }
 ui.upload.addEventListener("change",()=>{
