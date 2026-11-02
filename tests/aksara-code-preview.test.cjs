@@ -3,39 +3,53 @@ const test=require("node:test");
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
 const vm=require("node:vm");
-const {join}=require("node:path");
-const root=join(__dirname,"..");
-const read=name=>fs.readFileSync(join(root,name),"utf8");
+const path=require("node:path");
+const read=name=>fs.readFileSync(path.join(__dirname,"..",name),"utf8");
 
-test("v0.2 JavaScript modules parse",()=>{
- for(const name of ["bilik-antara-code-status.js","bilik-antara-code-workspace.js","bilik-antara-code-runtime.js"]){
+test("Code Engine v0.3 modules parse",()=>{
+ for(const name of ["bilik-antara-code-runtime.js","bilik-antara-code-status.js",
+   "bilik-antara-code-workspace.js","bilik-antara-code-chat.js",
+   "bilik-antara-code-agent.js","bilik-antara-code-bridge.js",
+   "bilik-antara-code-execution.js"]){
   assert.doesNotThrow(()=>new vm.Script(read(name),{filename:name}));
  }
 });
-test("remove 4 runtime test button but preserve all runtime engines",()=>{
- const status=read("bilik-antara-code-status.js");
- const runtime=read("bilik-antara-code-runtime.js");
- assert.doesNotMatch(status,/id="codeEngineProbeAll"|Uji 4 runtime/);
- assert.match(status,/id="codeHtmlPreview"/);
- for(const language of ["javascript","python","typescript","sql"])assert.match(runtime,new RegExp('"'+language+'"'));
- assert.match(runtime,/const LANGUAGES=Object\.freeze\(\["javascript","python","typescript","sql"\]\)/);
-});
-test("HTML preview requires explicit workspace event and iframe sandbox",()=>{
- const status=read("bilik-antara-code-status.js");
+test("five executable runtimes preserve v0.2 menu and HTML preview",()=>{
+ const status=read("bilik-antara-code-status.js"),runtime=read("bilik-antara-code-runtime.js");
  const workspace=read("bilik-antara-code-workspace.js");
- assert.match(status,/aksara:code-workspace-open/);
- assert.match(workspace,/event\.detail\?\.language==="html"/);
- assert.match(workspace,/sandbox=""/);
- assert.match(workspace,/referrerpolicy="no-referrer"/);
- assert.match(workspace,/new DOMParser\(\)/);
- assert.match(workspace,/script-src 'none'/);
- assert.match(workspace,/connect-src 'none'/);
- assert.match(workspace,/form-action 'none'/);
- assert.match(workspace,/\.html,\.css/);
- assert.match(workspace,/schedulePreview\(\)/);
+ assert.ok(!status.includes("codeEngineProbeAll"),"Old manual probe button must remain removed");
+ assert.ok(status.includes('id="codeHtmlPreview"'));
+ assert.ok(status.includes('data-code-language="cpp"'));
+ assert.ok(runtime.includes('const LANGUAGES=Object.freeze(["javascript","python","typescript","sql","cpp"]);'));
+ assert.ok(workspace.includes('sandbox=""')&&workspace.includes("script-src 'none'"));
+ assert.ok(workspace.includes("ensureWebStarter()"));
 });
-test("v0.2 assets are cache busted in the live page",()=>{
+test("real C++20 Clang WASM on-demand execution stays sandboxed",()=>{
+ const runtime=read("bilik-antara-code-runtime.js");
+ assert.ok(runtime.includes("@live-codes/clang-wasm@0.3.0"));
+ assert.ok(runtime.includes('createCompiler("cpp"'));
+ assert.ok(runtime.includes("compiler.run(job.source"));
+ assert.ok(runtime.includes("compiler.dispose()"));
+ assert.ok(runtime.includes("cpp:180000"));
+ assert.ok(runtime.includes("stdin.length>4000"));
+ assert.ok(runtime.includes('frame.setAttribute("sandbox","allow-scripts")'));
+ assert.ok(runtime.includes("worker.terminate()"));
+ assert.ok(runtime.includes("options.signal"));
+});
+test("C++ project workflow exposes code, stdin, stop and output",()=>{
+ const status=read("bilik-antara-code-status.js"),workspace=read("bilik-antara-code-workspace.js");
+ const chat=read("bilik-antara-code-chat.js");
+ assert.ok(status.includes("codeCPPState"));
+ assert.ok(status.includes('language:"cpp"'));
+ for(const symbol of ["ensureCppStarter","cwCppRun","cwCppStop","cwCppStdin","cwCppOutput",".cpp"]){
+  assert.ok(workspace.includes(symbol),"Missing C++ workspace "+symbol);
+ }
+ assert.ok(chat.includes("const isCpp="));
+ assert.ok(chat.includes('language:"cpp"'));
+});
+test("v0.3 page loads fresh Code Engine JS",()=>{
  const html=read("bilik-antara.html");
- assert.match(html,/bilik-antara-code-status\.js\?v=15/);
- assert.match(html,/bilik-antara-code-workspace\.js\?v=2/);
+ for(const asset of ["runtime.js?v=5","status.js?v=16","workspace.js?v=3","chat.js?v=6"]){
+  assert.ok(html.includes("bilik-antara-code-"+asset),"Missing "+asset);
+ }
 });
