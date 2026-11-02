@@ -118,7 +118,26 @@
     var note=document.getElementById('archiveNote');
     if(note)note.textContent=q?'Carian merentasi semua 33 puisi.':mode==='pilihan'?'Enam puisi pilihan. Semua karya lain masih boleh dicari.':mode==='all'?'Semua 33 puisi dipaparkan.':'Kategori: '+mode+'.';
   }
+  // Deep link dari Pusat Rujukan Bilik Antara ke karya asal yang sepadan.
+  // Hanya tajuk daripada arkib awam yang dibenarkan, tiada HTML daripada query.
+  var linkedTitle = '';
+  try{
+    var requestedTitle = new URLSearchParams(location.search).get('karya') || '';
+    linkedTitle = POEMS.find(function(p){ return p[0] === requestedTitle; })?.[0] || '';
+  }catch(e){}
+  if(linkedTitle){ activeCat = 'all'; searchInput.value = linkedTitle; }
   applyFilter();
+  if(linkedTitle && location.hash === '#karya'){
+    requestAnimationFrame(function(){
+      var work = Array.from(worksEl.querySelectorAll('.work')).find(function(w){
+        return w.querySelector('h3')?.textContent === linkedTitle;
+      });
+      if(work){
+        work.querySelector('.work-head')?.click();
+        work.scrollIntoView({behavior:'auto',block:'center'});
+      }
+    });
+  }
   function fallbackCopy(t){ var ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); try{document.execCommand('copy');}catch(e){} document.body.removeChild(ta); }
   worksEl.addEventListener('click', function(e){
     var btn = e.target.closest('.s-close, .s-copy');
