@@ -433,7 +433,8 @@ function status(kind,label,explain){
 window.addEventListener("ba:voice-connected",()=>status("online","Multi A.I Connected",""));
 async function probe(){
  if(Date.now()<quotaCooldownUntil){status("limited","Kuota API tengah penuh","Kuota AI tengah penuh. Kita try lagi nanti.");return;}
- return checkProviders(true);
+ // Startup/automatic retry probes one slot only; manual refresh checks all four.
+ return checkProviders();
 }
 ui.retry.addEventListener("click",()=>{
  if(busy)return;
