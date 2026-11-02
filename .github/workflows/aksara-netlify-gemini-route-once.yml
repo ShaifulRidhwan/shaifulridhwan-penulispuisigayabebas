@@ -1,0 +1,46 @@
+name: AKSARA one-time Netlify vs Cloudflare Gemini Text check
+on:
+  push:
+    branches: [diagnostic/netlify-gemini-route-20261102]
+    paths: ['.github/workflows/aksara-netlify-gemini-route-once.yml']
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Compare ordinary Gemini chat without exposing responses
+        run: |
+          node --input-type=module <<'NODE'
+          const targets=[
+            ["NETLIFY","https://shaifulridhwan-penulispuisigayabebas.netlify.app"],
+            ["CLOUDFLARE","https://aksara-apps.mshaifulridhwan.workers.dev"]
+          ];
+          for(const [name,origin] of targets){
+            const started=Date.now();
+            try{
+              const resp=await fetch(origin+"/.netlify/functions/bilik-antara",{
+                method:"POST",
+                headers:{"origin":origin,"content-type":"application/json"},
+                body:JSON.stringify({question:"Terangkan maksud struktur data stack dalam satu ayat.",history:[]}),
+                signal:AbortSignal.timeout(45000)
+              });
+              const data=await resp.json().catch(()=>({}));
+              const failures=data.routing?.failedAttempts||data.providerFailures||[];
+              const diagnosis=data.routing?.geminiDiagnosis||data.geminiDiagnosis||null;
+              console.log(name,JSON.stringify({
+                http:resp.status,
+                provider:data.provider||null,
+                model:data.model||null,
+                hasReply:typeof data.reply==="string"&&!!data.reply.trim(),
+                diagnosis:diagnosis?{status:diagnosis.status,reason:diagnosis.reason,httpStatus:diagnosis.httpStatus,category:diagnosis.category,upstreamCode:diagnosis.upstreamCode}:null,
+                geminiFailures:failures.filter(x=>x.provider==="gemini").map(x=>({status:x.status,reason:x.reason,category:x.category,upstreamCode:x.upstreamCode})),
+                apiErrorCode:data.code||null,
+                elapsedMs:Date.now()-started
+              }));
+            }catch(error){console.log(name,JSON.stringify({transportError:error.name,elapsedMs:Date.now()-started}));}
+          }
+          NODE
