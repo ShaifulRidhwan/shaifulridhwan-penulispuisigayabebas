@@ -594,7 +594,7 @@ test("RSS AI precision: reject unrelated Founder Summit even when category feed 
  assert.equal(R.relevantHeadline("2 days till TechCrunch Founder Summit: Boston founders don't need Silicon Valley"),false);
  assert.equal(R.relevantHeadline("OpenAI is finally merging ChatGPT's chat and Work tabs"),true);
  assert.equal(R.relevantHeadline("AI agents power latest scientific research"),true);
- assert.equal(R.relevantHeadline("Investment in non-AI startup accelerates"),true);
+ assert.equal(R.relevantHeadline("Investment in non-AI startup accelerates"),false);
  assert.equal(R.relevantHeadline("Startup funding raises record cash"),false);
  const xml="<rss><channel>"+
   "<item><title>2 days till TechCrunch Founder Summit: Boston founders don't need a Silicon Valley address</title>"+
