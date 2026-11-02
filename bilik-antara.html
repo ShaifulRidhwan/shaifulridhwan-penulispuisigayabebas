@@ -53,6 +53,8 @@
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
 <link rel="stylesheet" href="bilik-antara.css?v=103">
+<link rel="stylesheet" href="bilik-antara-attachments.css?v=1" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="bilik-antara-attachments.css?v=1"></noscript>
 <!-- Noncritical shared header refinements load without blocking first paint. -->
 <link rel="stylesheet" href="aksara-header.css?v=3" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="aksara-header.css?v=3"></noscript>
@@ -166,12 +168,16 @@
     </div>
    </dialog>
    <dialog class="multi-ai-dialog attachment-dialog" id="attachmentDialog" aria-labelledby="attachmentTitle" aria-describedby="attachmentHelp">
- <div class="multi-ai-head"><div><strong id="attachmentTitle">Tambah lampiran</strong><p id="attachmentHelp">Pilih jenis fail. Had saiz dan privasi sedia ada kekal.</p></div><button type="button" id="attachmentClose" aria-label="Tutup pilihan lampiran">×</button></div>
+ <div class="multi-ai-head"><div><strong id="attachmentTitle">Tambah lampiran</strong><p id="attachmentHelp">Pilih bahan untuk analisis atau buka kod dalam Workspace. Fail kekal dalam tab ini sehingga dihantar.</p></div><button type="button" id="attachmentClose" aria-label="Tutup pilihan lampiran">×</button></div>
  <div class="attachment-options">
- <button type="button" class="attachment-option" data-attachment-type="photo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="2"/><path d="m4 17 5-5 4 4 3-3 5 4"/></svg><span><strong>Photo</strong><small>JPG, PNG, WebP, GIF</small></span><span aria-hidden="true">›</span></button>
- <button type="button" class="attachment-option" data-attachment-type="video"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 6 3-6 3z"/></svg><span><strong>Video</strong><small>MP4 atau WebM pendek</small></span><span aria-hidden="true">›</span></button>
- <button type="button" class="attachment-option" data-attachment-type="files"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></svg><span><strong>Files</strong><small>PDF, teks, dokumen dan audio</small></span><span aria-hidden="true">›</span></button>
+ <button type="button" class="attachment-option" data-attachment-type="photo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="2"/><path d="m4 17 5-5 4 4 3-3 5 4"/></svg><span><strong>Foto &amp; Kamera</strong><small>JPG, PNG, WebP, GIF · Galeri</small></span><span aria-hidden="true">›</span></button>
+ <button type="button" class="attachment-option" data-attachment-type="video"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 6 3-6 3z"/></svg><span><strong>Video</strong><small>MP4, WebM · Media pendek</small></span><span aria-hidden="true">›</span></button>
+ <button type="button" class="attachment-option" data-attachment-type="document"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></svg><span><strong>Dokumen</strong><small>PDF, DOCX, TXT, MD, CSV, JSON</small></span><span aria-hidden="true">›</span></button>
+ <button type="button" class="attachment-option" data-attachment-type="audio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="10" y="3" width="4" height="11" rx="2"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8 21h8"/></svg><span><strong>Audio</strong><small>MP3, M4A, WAV, OGG, WebM</small></span><span aria-hidden="true">›</span></button>
+ <button type="button" class="attachment-option" data-attachment-type="code"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-16-4 24"/></svg><span><strong>Kod</strong><small>HTML, CSS, JS, TS, Python, SQL, C++</small></span><span aria-hidden="true">›</span></button>
  </div>
+ <div class="attachment-quick-actions"><button type="button" id="attachmentCameraAction">Ambil gambar dengan kamera</button><button type="button" id="attachmentRecordAction">Rakam suara</button><button type="button" id="attachmentRecordStop" hidden>Henti rakaman</button></div>
+ <p id="attachmentRecordStatus" class="attachment-helper" role="status" aria-live="polite">Teks sehingga 1 juta aksara · gambar besar dimampatkan setempat · media gabungan 3.85 MB selepas mampatan. Kamera dan mikrofon hanya selepas izin kau.</p>
 </dialog>
 <dialog class="multi-ai-dialog meta-location-dialog" id="metaLocationDialog" aria-labelledby="metaLocationTitle" aria-describedby="metaLocationHelp">
  <div class="multi-ai-head"><div><strong id="metaLocationTitle">Lokasi mesej</strong><p id="metaLocationHelp">Pilihan. Isi bandar atau negeri sahaja. Tiada GPS automatik, dan lokasi ini tidak dihantar kepada model A.I.</p></div><button type="button" id="metaLocationClose" aria-label="Tutup lokasi">×</button></div>
@@ -206,15 +212,18 @@
     </div>
    </div>
    <div class="composer-area">
-    <div id="docStatus" role="status" aria-live="polite"></div><button type="button" id="removeAttachment" hidden aria-label="Buang lampiran">× Buang lampiran</button>
+    <div id="attachmentTray" class="attachment-tray" role="group" aria-label="Lampiran yang dipilih" hidden></div><div id="docStatus" role="status" aria-live="polite"></div><button type="button" id="removeAttachment" hidden aria-label="Buang semua lampiran">× Buang semua</button>
     <form class="composer" id="composer">
-     <button type="button" class="attach-label" id="attachmentTrigger" aria-haspopup="dialog" aria-controls="attachmentDialog" aria-expanded="false" aria-label="Pilih Photo, Video atau Files" title="Tambah lampiran">
+     <button type="button" class="attach-label" id="attachmentTrigger" aria-haspopup="dialog" aria-controls="attachmentDialog" aria-expanded="false" aria-label="Pilih Foto, Video, Dokumen, Audio atau Kod" title="Tambah lampiran">
       <span class="sr-only">Lampir fail</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.4 11.6-8.9 9a6.4 6.4 0 0 1-9.1-9.1L13 1.9a4.3 4.3 0 0 1 6.1 6.1l-9.5 9.5a2.2 2.2 0 0 1-3.1-3.1l8.6-8.6"/></svg>
      </button>
      <input class="sr-only" type="file" id="documentUpload" multiple accept=".txt,.md,.csv,.json,.docx,.pdf,image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/webm,video/mp4,video/webm" aria-label="Pilih lampiran">
-     <input class="sr-only" type="file" id="attachmentPhoto" multiple accept="image/jpeg,image/png,image/webp,image/gif" aria-label="Pilih gambar">
+     <input class="sr-only" type="file" id="attachmentPhoto" multiple accept="image/jpeg,image/png,image/webp,image/gif" aria-label="Pilih foto">
+     <input class="sr-only" type="file" id="attachmentCamera" accept="image/*" capture="environment" aria-label="Ambil gambar melalui kamera">
      <input class="sr-only" type="file" id="attachmentVideo" multiple accept="video/mp4,video/webm" aria-label="Pilih video">
-     <input class="sr-only" type="file" id="attachmentFiles" multiple accept=".txt,.md,.csv,.json,.docx,.pdf,.mp3,.m4a,.wav,.ogg,.webm,audio/*,application/pdf,text/plain,text/markdown,text/csv" aria-label="Pilih fail atau audio">
+     <input class="sr-only" type="file" id="attachmentDocument" multiple accept=".txt,.md,.csv,.json,.docx,.pdf" aria-label="Pilih dokumen">
+     <input class="sr-only" type="file" id="attachmentAudio" multiple accept=".mp3,.m4a,.wav,.ogg,.webm,audio/*" aria-label="Pilih audio">
+     <input class="sr-only" type="file" id="attachmentCode" multiple accept=".html,.css,.js,.ts,.py,.sql,.cpp" aria-label="Pilih fail kod untuk Code Workspace">
      <textarea rows="1" id="input" placeholder="" aria-label="Tulis mesej untuk Aksara A.I."></textarea>
       <button type="button" id="stopBtn" class="outline-btn" aria-label="Hentikan respons" hidden>Henti</button>
       <button type="button" id="thoughtMode" class="thought-mode" data-mode="cahaya" aria-label="Thinking Mode. Aktif: Cahaya" aria-haspopup="dialog" aria-controls="thoughtModeDialog" aria-expanded="false" title="Thinking Mode · Cahaya">
@@ -371,7 +380,7 @@ let activeRequest=null,stoppedByUser=false,failedPreview=null,lastProvider="",la
 let history=[],summary="",ideas=[],summarizedThrough=0,compacting=false,conversationEpoch=0,fileState=null,busy=false,quotaCooldownUntil=0;
 let messageLocation=""; // Tab-only, manually set; NEVER included in requests to models.
 const attachmentTrigger=el("attachmentTrigger"),attachmentDialog=el("attachmentDialog"),attachmentClose=el("attachmentClose");
-const attachmentInputs={photo:el("attachmentPhoto"),video:el("attachmentVideo"),files:el("attachmentFiles")};
+const attachmentInputs={photo:el("attachmentPhoto"),camera:el("attachmentCamera"),video:el("attachmentVideo"),document:el("attachmentDocument"),audio:el("attachmentAudio"),code:el("attachmentCode")};
 const placeDialog=el("metaLocationDialog"),placeInput=el("messageLocationInput");
 function showPlaceDialog(){placeInput.value=messageLocation;placeDialog.showModal();placeInput.focus();}
 el("metaLocationClose").addEventListener("click",()=>placeDialog.close());
@@ -382,19 +391,8 @@ el("metaLocationSave").addEventListener("click",()=>{
 el("metaLocationClear").addEventListener("click",()=>{messageLocation="";placeInput.value="";placeDialog.close();});
 placeDialog.addEventListener("click",event=>{if(event.target===placeDialog)placeDialog.close();});
 placeInput.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();el("metaLocationSave").click();}});
-attachmentTrigger.addEventListener("click",()=>{if(!busy){attachmentDialog.showModal();attachmentTrigger.setAttribute("aria-expanded","true");}});
-attachmentClose.addEventListener("click",()=>attachmentDialog.close());
-attachmentDialog.addEventListener("click",event=>{if(event.target===attachmentDialog)attachmentDialog.close();});
-attachmentDialog.addEventListener("close",()=>{attachmentTrigger.setAttribute("aria-expanded","false");attachmentTrigger.focus({preventScroll:true});});
-for(const option of attachmentDialog.querySelectorAll("[data-attachment-type]")){
- option.addEventListener("click",()=>{if(busy)return;
-  const field=attachmentInputs[option.dataset.attachmentType];
-  if(!field)return;attachmentDialog.close();field.click();
- });
-}
-for(const field of Object.values(attachmentInputs)){
- field.addEventListener("change",()=>{const files=Array.from(field.files||[]);field.value="";if(files.length)readFiles(files);});
-}
+// Smart Attachments delegates menu actions to the deferred attachment module.
+
 function elem(tag,cls,text){
  const e=document.createElement(tag);if(cls)e.className=cls;
  if(text!==undefined)e.textContent=String(text);return e;
@@ -821,52 +819,21 @@ function update(){
  ui.stop.hidden=!busy;ui.chat.setAttribute("aria-busy",String(busy));
 }
 ui.stop.addEventListener("click",()=>{stoppedByUser=true;activeRequest?.abort();});
+let smartAttachmentController=null;
+function startSmartAttachments(){
+ if(smartAttachmentController||!window.AksaraSmartAttachments?.init)return;
+ smartAttachmentController=window.AksaraSmartAttachments.init({
+  ui,MEDIA,attachmentDialog,attachmentTrigger,attachmentClose,attachmentInputs,
+  getBusy:()=>busy,setFileState:next=>{fileState=next;},update
+ });
+}
+window.addEventListener("aksara:attachments-ready",startSmartAttachments,{once:true});
+startSmartAttachments();
 function discardFile(){
- fileState=null;ui.upload.value="";for(const field of Object.values(attachmentInputs))field.value="";ui.docStatus.textContent="";ui.remove.hidden=true;update();
+ if(smartAttachmentController){smartAttachmentController.clear();return;}
+ fileState=null;ui.upload.value="";ui.docStatus.textContent="";ui.remove.hidden=true;update();
 }
-async function readFiles(files){
- discardFile();if(!files||!files.length)return;
- 
- const attachments=[],texts=[],names=[];let totalBytes=0;
- const aliases={"audio/x-wav":"audio/wav","audio/wave":"audio/wav","audio/x-m4a":"audio/mp4"};
- try{
-  for(const file of files){
-   const name=String(file.name||"fail").slice(0,100);
-   const ext=(name.split(".").pop()||"").toLowerCase();
-   if(["txt","md","csv","json","docx"].includes(ext)){
-    if(ext==="docx"&&!window.AksaraDocx)throw Error("Pembaca DOCX belum tersedia dalam browser ini.");
-    if(file.size>100000)throw Error("Fail teks ni terlalu besar untuk sekali hantar. Cuba pecahkan dulu.");
-    const extracted=ext==="docx"?await window.AksaraDocx.read(file):await file.text();
-    texts.push("[FAIL: "+name+"]\n"+extracted);
-   }else{
-    let mime=aliases[file.type]||file.type;
-    if(ext==="pdf")mime="application/pdf";
-    if(ext==="m4a")mime="audio/mp4";
-    if(!MEDIA.has(mime)||!file.size)throw Error("Jenis fail ni aku belum boleh baca.");
-    totalBytes+=file.size;
-    if(totalBytes>3600000)throw Error("Jumlah media terlalu besar. Had gabungan lebih kurang 3.6 MB.");
-    const encoded=await new Promise((resolve,reject)=>{
-     const reader=new FileReader();
-     reader.onload=()=>resolve(String(reader.result||"").split(",")[1]||"");
-     reader.onerror=()=>reject(Error("Aku tak dapat baca fail ni."));reader.readAsDataURL(file);
-    });
-    if(!encoded)throw Error("Fail ni kosong.");
-    attachments.push({name,mimeType:mime,data:encoded});
-   }
-   names.push(name);
-  }
-  const combined=texts.join("\n\n");
-  if(combined.length>100000)throw Error("Jumlah teks terlalu banyak untuk sekali hantar. Cuba pecahkan dulu.");
-  fileState={name:names.join(", ").slice(0,240),text:combined,media:attachments};
-  ui.docStatus.textContent=names.length+" fail dah attach · "+names.join(", ").slice(0,180);
-  ui.remove.hidden=false;
- }catch(e){
-  discardFile();ui.docStatus.textContent=String(e.message||"Aku tak dapat baca attachment ni.");
- }
- update();
-}
-ui.upload.addEventListener("change",()=>readFiles(Array.from(ui.upload.files||[])));
-ui.remove.addEventListener("click",discardFile);
+
 ui.remember.addEventListener("change",()=>{
  try{localStorage.setItem(SESSION_PREF_STORAGE,ui.remember.checked?"on":"off");}catch(_){}
  if(ui.remember.checked)save();
@@ -1067,6 +1034,8 @@ async function submit(event){
    documentName:selectedFile&&selectedFile.name||"",
    media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt(question)||""};
   payload.question=contextQuestion;
+  const requestBytes=new TextEncoder().encode(JSON.stringify(payload)).byteLength;
+  if(requestBytes>5350000)throw Error("Jumlah mesej dan lampiran melebihi had Netlify 5.35 MB. Buang beberapa lampiran atau pendekkan dokumen sebelum menghantar.");
   const data=await askWithReconnect(payload,ctrl.signal,receive,
    ({attempt,seconds,offline,reason})=>status("connecting",offline?"Internet hilang. Aku tunggu jap…":reason==="capacity"?"Model tengah busy. Tunggu jap…":"Aku try sambung balik…",
     offline?"Internet putus. Aku tunggu dia kembali, lepas tu try lagi. Tekan Henti kalau nak cancel.":
@@ -1191,7 +1160,8 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-code-chat.js?v=6" defer></script>
 <script src="bilik-antara-code-bridge.js?v=2" defer></script>
 <script src="bilik-antara-code-agent.js?v=3" defer></script>
-<script src="bilik-antara-code-workspace.js?v=3" defer></script>
+<script src="bilik-antara-attachments.js?v=1" defer></script>
+<script src="bilik-antara-code-workspace.js?v=4" defer></script>
 <script src="bilik-antara-code-evaluation.js?v=1" defer></script>
 <script src="bilik-antara-brain.js?v=15" defer></script>
 <script src="bilik-antara-modes.js?v=4" defer></script>

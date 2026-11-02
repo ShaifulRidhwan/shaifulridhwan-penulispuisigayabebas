@@ -246,12 +246,12 @@ test("Thinking Mode uses a futuristic brain; sunshine and moon remain unchanged"
 test("Aksara has dedicated glass attachment picker and no accidental native picker on paperclip",()=>{
  assert.ok(html.includes('class="multi-ai-dialog attachment-dialog"'));
  assert.ok(html.includes('id="attachmentTrigger" aria-haspopup="dialog"'));
- for(const type of ["photo","video","files"])assert.ok(html.includes('data-attachment-type="'+type+'"'));
- assert.ok(html.includes('id="attachmentPhoto"'));
- assert.ok(html.includes('id="attachmentVideo"'));
- assert.ok(html.includes('id="attachmentFiles"'));
- assert.ok(html.includes('field.click()'));
- assert.ok(html.includes('field.addEventListener("change"'));
+ for(const type of ["photo","video","document","audio","code"])assert.ok(html.includes('data-attachment-type="'+type+'"'));
+ for(const id of ["attachmentPhoto","attachmentCamera","attachmentVideo","attachmentDocument","attachmentAudio","attachmentCode"])
+  assert.ok(html.includes('id="'+id+'"'));
+ const attachments=fs.readFileSync("bilik-antara-attachments.js","utf8");
+ assert.ok(attachments.includes("field.click()"));
+ assert.ok(attachments.includes('field.addEventListener("change"'));
  assert.ok(css.includes('.attachment-dialog .attachment-option'));
 });
 test("Every new text response records both delivery and receipt times with optional city metadata",()=>{

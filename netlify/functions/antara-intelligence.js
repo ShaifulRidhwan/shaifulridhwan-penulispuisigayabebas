@@ -273,8 +273,9 @@ function sanitizeMedia(data){
   if(!data||typeof data!=="object"||Array.isArray(data))return null;
   const mime=safeText(data.mimeType,50).toLowerCase();
   const encoded=data.data;
-  if(!ALLOWED_MIMES.has(mime)||typeof encoded!=="string"||encoded.length>4800000||encoded.length<4||!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded))return null;
-  if(Math.ceil(encoded.length*3/4)>3600000)return null;
+  if(!ALLOWED_MIMES.has(mime)||typeof encoded!=="string"||encoded.length>5200000||encoded.length<4||!/^[A-Za-z0-9+/]+={0,2}$/.test(encoded))return null;
+  const rawBytes=Math.floor(encoded.length*3/4)-(encoded.endsWith("==")?2:encoded.endsWith("=")?1:0);
+  if(rawBytes>3850000)return null;
   return {mimeType:mime,data:encoded,name:safeText(data.name,100)};
 }
 function parseReview(text){

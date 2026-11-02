@@ -195,5 +195,30 @@ window.addEventListener("aksara:code-workspace-open",event=>{
  render();if(!dialog.open)dialog.showModal();schedulePreview();
 });
 window.addEventListener("ba:cleared",()=>{cppController?.abort();files=[{name:"main.js",language:"javascript",code:""}];index=0;clearTimeout(previewTimer);previewFrame.removeAttribute("srcdoc");if(dialog.open)dialog.close();});
-window.AksaraCodeWorkspace=Object.freeze({version:"1.3",fileCount:()=>files.length,previewAvailable:true});
+
+async function importFiles(selected){
+ const chosen=Array.from(selected||[]);
+ if(!chosen.length)return 0;
+ if(chosen.length+files.length>12)throw Error("Code Workspace menyokong maksimum 12 fail dalam satu tab.");
+ const batch=[];
+ for(const file of chosen){
+  const name=String(file.name||"");
+  const language=languageOf(name);
+  if(!language||!/^[A-Za-z0-9_.-]{1,70}\.(js|ts|py|sql|html|css|cpp)$/i.test(name))
+   throw Error("Fail kod mesti .html, .css, .js, .ts, .py, .sql atau .cpp.");
+  if(file.size>48000)throw Error(name+" terlalu besar untuk satu fail Code Workspace (48 KB).");
+  if(files.concat(batch).some(f=>f.name.toLowerCase()===name.toLowerCase()))
+   throw Error("Nama fail sudah wujud: "+name);
+  const code=await file.text();
+  if(code.length>12000)throw Error(name+" melebihi 12,000 aksara yang disokong editor sandbox.");
+  batch.push({name,language,code});
+ }
+ save();files.push(...batch);index=files.length-batch.length;
+ render();
+ if(!dialog.open)dialog.showModal();
+ schedulePreview();
+ info.textContent=batch.length+" fail kod diimport secara setempat. Tiada kod dijalankan atau dihantar ke AI.";
+ return batch.length;
+}
+window.AksaraCodeWorkspace=Object.freeze({version:"1.4",fileCount:()=>files.length,previewAvailable:true,importFiles});
 })();

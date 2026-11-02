@@ -57,6 +57,7 @@ jobs:
           done
           node scripts/test-bilik-antara-browser.cjs
           node scripts/test-code-engine-browser.cjs
+          node scripts/test-attachments-browser.cjs
           node scripts/test-bilik-antara-background.cjs
       - name: Create and test standalone Code Engine HTML
         if: always()

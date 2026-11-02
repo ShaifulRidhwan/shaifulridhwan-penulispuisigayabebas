@@ -55,9 +55,9 @@ const Studio=require("./aksara-studio-awareness");
 const {requestControl,readSSE,waitFor}=require("./lib/aksara-transport");
 const DEFAULT_MODEL="gemini-3.5-flash-lite";
 const SITE_ORIGIN="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
-const MAX_BODY=5400000;
+const MAX_BODY=5500000; // Netlify buffered requests are capped at 6 MB.
 const MAX_QUESTION=32000;
-const MAX_MEDIA_ENCODED=4800000;
+const MAX_MEDIA_ENCODED=5200000; // 3.85 MB binary after Base64, with JSON headroom.
 const rateMap=new Map(),healthRateMap=new Map();
 const googleHealthByModel=new Map(),googleCooldowns=new Map();
 function googleHealthFor(model){
@@ -234,7 +234,7 @@ exports.handler=async event=>{
   if(origin&&origin!==(process.env.ALLOWED_ORIGIN||SITE_ORIGIN))return result(403,{error:"Origin tidak dibenarkan."},H);
   if(event.httpMethod==="OPTIONS")return {statusCode:204,headers:H,body:""};
   if(event.httpMethod!=="POST")return result(405,{error:"Kaedah tidak diterima."},H);
-  if(typeof event.body!=="string"||event.body.length>MAX_BODY)return result(413,{error:"Permintaan melebihi kapasiti 5.4 MB fungsi. Kurangkan lampiran atau pecahkan soalan."},H);
+  if(typeof event.body!=="string"||Buffer.byteLength(event.body,"utf8")>MAX_BODY)return result(413,{error:"Permintaan melebihi kapasiti 5.5 MB fungsi. Kurangkan saiz lampiran sebelum menghantar."},H);
   let payload;
   try{payload=JSON.parse(event.body||"{}");}catch(e){return result(400,{error:"JSON tidak sah."},H);}
   if(!payload||typeof payload!=="object"||Array.isArray(payload))return result(400,{error:"Format permintaan tidak sah."},H);
@@ -368,9 +368,9 @@ exports.handler=async event=>{
   const rawMedia=payload.media===undefined||payload.media===null?[]:(Array.isArray(payload.media)?payload.media:[payload.media]);
   const media=rawMedia.map(sanitizeMedia);
   if(media.some(x=>!x)||media.reduce((n,x)=>n+x.data.length,0)>MAX_MEDIA_ENCODED)
-    return result(400,{error:"Lampiran tidak sah atau jumlah media melebihi kapasiti kira-kira 3.6 MB."},H);
-  if(typeof payload.documentText==="string"&&payload.documentText.length>100000)return result(413,{error:"Kandungan fail teks terlalu besar untuk satu permintaan. Bahagikan dokumen."},H);
-  const documentText=safeText(payload.documentText,100000);
+    return result(400,{error:"Lampiran tidak sah atau jumlah media melebihi 3.85 MB sebelum pengekodan."},H);
+  if(typeof payload.documentText==="string"&&payload.documentText.length>1000000)return result(413,{error:"Jumlah teks melebihi 1 juta aksara untuk satu mesej. Pecahkan dokumen."},H);
+  const documentText=safeText(payload.documentText,1000000);
   const documentName=safeText(payload.documentName,100);
   const dataReport=Data.fromAttachment(documentName,documentText);
   // A deterministic schema is available for explicit JSON requests on CSV/JSON data.
