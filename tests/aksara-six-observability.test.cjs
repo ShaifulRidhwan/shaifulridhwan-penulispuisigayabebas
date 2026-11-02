@@ -11,6 +11,7 @@ test("Penyelidikan: sumber berbeza daripada halaman yang benar-benar dibaca",()=
  assert.equal(classify({toolsUsed:["google_search"],sourceCount:3}).state,"dirujuk");
  assert.equal(classify({toolsUsed:["google_search"],sourceCount:0}).state,"tiada");
  assert.equal(classify({toolsUsed:["publisher_rss"],sourceCount:2}).state,"ringkasan");
+ assert.equal(classify({toolsUsed:["wikipedia_summary"],sourceCount:2}).label,"Ringkasan Wikipedia diperoleh");
  assert.equal(classify({toolsUsed:["tavily_search"],sourceCount:1}).label,"Petikan carian sahaja");
  assert.equal(classify({sourceCount:1}).label,"Pautan diberi, bacaan belum disahkan");
  assert.equal(classify({requestFailed:true,sourceCount:3}).state,"gagal");
