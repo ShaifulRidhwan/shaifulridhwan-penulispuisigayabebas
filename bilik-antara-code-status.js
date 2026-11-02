@@ -95,35 +95,81 @@ menu.querySelectorAll("[data-code-language]").forEach(btn=>btn.addEventListener(
  if(language==="cpp"){window.dispatchEvent(new CustomEvent("aksara:code-workspace-open",{detail:{language:"cpp"}}));return;}
  document.getElementById("input")?.focus();
 }));
-let permissionEnabled=false,executionRunning=false,runtimeReady=false;
-function updateLabel(){
+let permissionEnabled=false,executionRunning=false,runtimeReady=false,runtimeChecking=false;
+const stateIds={html:"codeHtmlState",javascript:"codeJavaScriptState",python:"codePythonState",
+ typescript:"codeTypeScriptState",sql:"codeSQLState",cpp:"codeCPPState"};
+const stateNames={verified:"Verified",unverified:"Unverified",unavailable:"Unavailable",
+ "not-tested":"Not Tested · On Demand",available:"Available"};
+function renderHealth(){
+ const state=health.snapshot(),ok=state.overall==="ready";
+ runtimeReady=ok;
+ pill.classList.toggle("ready",ok);
+ pill.classList.toggle("offline",state.overall==="unavailable");
+ pill.dataset.runtimeHealth=state.overall;
  label.textContent="Code Engine";
  pill.dataset.aiExecution=executionRunning?"running":permissionEnabled?"armed":"off";
- const state=runtimeReady?(executionRunning?"Running":permissionEnabled?"Armed":"Ready"):"Offline";
- pill.setAttribute("aria-label","Code Engine. Status: "+state+". Tekan untuk lihat runtime dan kebenaran A.I.");
+ for(const row of state.rows){
+  const cell=menu.querySelector("#"+stateIds[row.language]);
+  if(!cell)continue;
+  let name=stateNames[row.status]||"Unverified";
+  if(row.language==="cpp"&&row.status==="not-tested")name="Not Tested · ~29 MB";
+  if(row.language==="javascript"&&state.checking)name="Checking…";
+  cell.textContent=name;
+  cell.className="multi-ai-state "+(row.status==="verified"?"is-online":row.status==="unavailable"?"is-offline":
+   row.status==="available"||row.status==="not-tested"?"is-ready":"is-muted");
+  cell.title=row.status==="verified"?"Verified by "+row.source+" · "+Math.round((row.age||0)/1000)+"s ago":
+   row.status==="not-tested"?"Load only when manually executed. No background download.":
+   row.reason||"Not verified yet";
+ }
+ const healthLabel=state.overall==="ready"?"Ready":state.overall==="checking"?"Checking":
+  state.overall==="unavailable"?"Unavailable":"Unverified";
+ const execLabel=executionRunning?"Running":permissionEnabled?"Armed":"Off";
+ pill.title="Runtime Health: "+healthLabel+" · "+state.verified+"/5 Verified · AI Execution: "+execLabel;
+ pill.setAttribute("aria-label","Code Engine. Runtime: "+healthLabel+". AI Execution: "+
+  execLabel+". "+state.verified+" of 5 runtimes verified. Open runtime details.");
+ const checked=menu.querySelector("#codeHealthCheckedAt");
+ checked.textContent=(state.lastCheckedAt?"Last checked: "+state.checkedAgo:"Not checked yet")+
+  " · "+state.verified+"/5 runtimes verified";
+ checked.dataset.healthState=state.overall;
+ const note=menu.querySelector("#codeEngineActivity");
+ note.hidden=state.activity.state==="idle";
+ note.textContent=note.hidden?"":"Execution Activity · "+state.activity.message+
+  (state.activity.language?" · "+(window.AksaraCodeHealth.LABELS[state.activity.language]||""):"");
+ note.dataset.activityState=state.activity.state;
+ return state;
+}
+function updateLabel(){
+ health.setPermission(permissionEnabled,executionRunning);
+ renderHealth();
 }
 window.addEventListener("aksara:ai-code-permission",event=>{
  permissionEnabled=event.detail?.enabled===true;
  executionRunning=event.detail?.running===true;
  updateLabel();
 });
+window.addEventListener("aksara:code-runtime-activity",event=>{
+ health.activity(event.detail);
+ renderHealth();
+});
+window.addEventListener("aksara:code-preview-ready",()=>{
+ health.previewVerified();renderHealth();
+});
 function checkRuntime(){
+ if(runtimeChecking)return Promise.resolve(false);
+ runtimeChecking=true;
  const button=menu.querySelector("#codeEngineRefresh");
- const st=menu.querySelector("#codeJavaScriptState");
- button.disabled=true;
- st.textContent="Checking…";st.className="multi-ai-state is-muted";
- return engine.probe().then(ok=>{
-  pill.classList.toggle("ready",ok);pill.classList.toggle("offline",!ok);
-  runtimeReady=ok;updateLabel();
-  st.textContent=ok?"Ready":"Offline";
-  st.className="multi-ai-state "+(ok?"is-ready":"is-offline");
-  return ok;
- }).catch(()=>{
-  pill.classList.remove("ready");pill.classList.add("offline");
-  runtimeReady=false;updateLabel();
-  st.textContent="Offline";st.className="multi-ai-state is-offline";
-  return false;
- }).finally(()=>{button.disabled=false;});
+ button.disabled=true;health.beginProbe();renderHealth();
+ const started=performance.now();
+ return engine.probeLanguage("javascript").then(report=>{
+  health.probe(report.ready===true,{latencyMs:report.runtimeMs||Math.round(performance.now()-started),
+   error:report.error||"JavaScript self-test returned an unexpected result"});
+  renderHealth();return report.ready===true;
+ }).catch(error=>{
+  health.probe(false,{error:String(error?.message||error).slice(0,140)});
+  renderHealth();return false;
+ }).finally(()=>{runtimeChecking=false;button.disabled=false;});
 }
+const freshnessTimer=setInterval(renderHealth,20000);
+window.addEventListener("pagehide",()=>clearInterval(freshnessTimer),{once:true});
 checkRuntime();
 })();
