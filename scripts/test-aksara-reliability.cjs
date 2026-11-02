@@ -753,3 +753,43 @@ test("Pipeline 2.0 fallback retains explicitly consented notes before the newest
  assert.ok(text.includes("Guna Bahasa Melayu santai"));
  assert.ok(text.endsWith("bahasa indonesia ke tu"+String.fromCharCode(10)+"[TAMAT SOALAN TERKINI]"));
 });
+
+
+test("1+3 ordinary text uses Gemini first even when Groq is preferred",async t=>{
+ const handler=setup(t);process.env.AKSARA_HYBRID_ROUTER="true";
+ const calls=[];
+ global.fetch=async url=>{
+  calls.push(String(url));
+  if(String(url).includes("googleapis"))
+   return Response.json({candidates:[{content:{parts:[{text:"Atom ialah unit asas sesuatu unsur."}]},finishReason:"STOP"}]});
+  return reply("Groq tidak patut dipanggil apabila Gemini berjaya.");
+ };
+ const r=await handler(event({question:"Apa itu atom?",preferredProvider:"groq"})),data=JSON.parse(r.body);
+ assert.equal(r.statusCode,200);assert.equal(data.provider,"gemini");
+ assert.equal(calls.length,1);assert.match(calls[0],/googleapis/);
+ assert.equal(data.routing.geminiDiagnosis.status,"attempted");
+});
+test("1+3 attempts Gemini then uses Groq on a genuine Gemini failure",async t=>{
+ const handler=setup(t);process.env.AKSARA_HYBRID_ROUTER="true";
+ const calls=[];
+ global.fetch=async url=>{
+  calls.push(String(url));
+  if(String(url).includes("googleapis"))
+   return Response.json({error:{message:"Gemini temporarily unavailable"}},{status:503});
+  return reply("Sandaran Groq berfungsi.");
+ };
+ const r=await handler(event({question:"Apa itu atom?"})),data=JSON.parse(r.body);
+ assert.equal(r.statusCode,200);assert.equal(data.provider,"groq");
+ assert.match(calls[0],/googleapis/);assert.ok(calls.some(url=>url.includes("groq.com")));
+ assert.ok(data.routing.failedAttempts.some(x=>x.provider==="gemini"&&x.status===503));
+});
+test("an empty Gemini health answer is Ready, never falsely Offline",async t=>{
+ const handler=setup(t);
+ global.fetch=async url=>String(url).includes("googleapis")
+  ?Response.json({candidates:[{content:{parts:[]},finishReason:"MAX_TOKENS"}]})
+  :reply("OK");
+ const r=await handler(event({providerStatus:true})),data=JSON.parse(r.body);
+ assert.equal(r.statusCode,200);
+ const gemini=data.providers.find(x=>x.id==="gemini");
+ assert.equal(gemini.status,"ready");assert.equal(gemini.reason,"health_empty_reply");assert.equal(gemini.http,200);
+});
