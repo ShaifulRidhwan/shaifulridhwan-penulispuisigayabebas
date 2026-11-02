@@ -19,8 +19,25 @@ const Knowledge=require("./aksara-knowledge-engine");
 const PublicPoetry=require("./aksara-public-poetry");
 const SafeTools=require("./aksara-safe-tools");
 const GeminiDiagnosis={
- classify(e){return e.cooldownKnown?"quota_cooldown":e.status===429?"quota_exceeded":e.name==="AbortError"?"timeout":[400,404].includes(e.status)?"invalid_model_or_request":[401,403].includes(e.status)?"authentication_or_access":e.status>=500?"api_error":"upstream_error";},
- summarize({decision,failures,model}){const failure=[...failures].reverse().find(x=>x.provider==="gemini");return {status:failure?"failed":decision==="gemini_attempted"?"attempted":"not_selected",reason:failure?.reason||decision,httpStatus:Number(failure?.status)||null,model:String(model).slice(0,64)};}
+ classify(e){return e.cooldownKnown?"quota_cooldown":e.googleCategory&&e.status===400?e.googleCategory:e.status===429?"quota_exceeded":e.name==="AbortError"?"timeout":[400,404].includes(e.status)?"invalid_model_or_request":[401,403].includes(e.status)?"authentication_or_access":e.status>=500?"api_error":"upstream_error";},
+ summarize({decision,failures,model}){const failure=[...failures].reverse().find(x=>x.provider==="gemini");return {status:failure?"failed":decision==="gemini_attempted"?"attempted":"not_selected",reason:failure?.reason||decision,httpStatus:Number(failure?.status)||null,model:String(model).slice(0,64),...(failure?.upstreamCode?{upstreamCode:failure.upstreamCode}:{}),...(failure?.category?{category:failure.category}:{})};},
+ // Never expose raw Google messages or request payloads. Categorize only.
+ fromGoogle(details){
+  const issue=details&&typeof details.error==="object"?details.error:{};
+  const message=typeof issue.message==="string"?issue.message.slice(0,1000):"";
+  const info=Array.isArray(issue.details)?issue.details.find(d=>String(d?.["@type"]||"").endsWith("ErrorInfo")):null;
+  const safeCode=value=>typeof value==="string"&&/^[A-Z][A-Z0-9_]{2,63}$/.test(value)?value:null;
+  const upstreamCode=safeCode(issue.status);
+  const upstreamReason=safeCode(info?.reason);
+  const category=/user location is not supported|location.*not supported|region.*not supported|unsupported.*region/i.test(message)?"location_restricted":
+   /thinking.level|thinking_level|thinkingconfig|thinking level|thinking budget/i.test(message)?"thinking_parameter":
+   /model.*(not found|not supported|does not exist|not available)/i.test(message)?"model_unavailable":
+   /api.key|credential|permission|unauthorized/i.test(message)?"credential_or_access":
+   /invalid (?:argument|request)|invalid json|unknown field|malformed/i.test(message)?"invalid_request":
+   upstreamCode==="FAILED_PRECONDITION"?"precondition_failed":
+   upstreamCode==="INVALID_ARGUMENT"?"invalid_request":"unclassified_google_error";
+  return {upstreamCode,upstreamReason,category};
+ }
 };
 const Research=require("./aksara-research-workflow");
 const Data=require("./aksara-data-analysis");
@@ -121,6 +138,10 @@ async function callGemini({apiKey,model,contents,system,tools=[],thinkingLevel="
     if(!res.ok){
       const error=new Error("Gemini HTTP "+res.status);error.status=res.status;
       const details=await res.json().catch(()=>({}));
+      const diagnosis=GeminiDiagnosis.fromGoogle(details);
+      error.googleStatus=diagnosis.upstreamCode;
+      error.googleReason=diagnosis.upstreamReason;
+      error.googleCategory=diagnosis.category;
       const retryInfo=details?.error?.details?.find?.(x=>String(x?.["@type"]||"").endsWith("RetryInfo"));
       const seconds=Number.parseFloat(res.headers?.get?.("retry-after")||retryInfo?.retryDelay||"");
       if(Number.isFinite(seconds))error.retryAfterSeconds=Math.max(1,Math.ceil(seconds));
@@ -236,7 +257,7 @@ exports.handler=async event=>{
             const temporary=e.name==="AbortError"||e.status===429||!e.status||e.status>=500;
             // A transient probe error should not disable the primary route.
             // Auth/model errors and genuine quota cooldown still remain offline.
-            return {id:"gemini",model:fastModel,status:temporary?"ready":"offline",reason:e.name==="AbortError"?"health_timeout":e.status===429?"health_probe_quota":e.status>=500?"health_upstream_busy":e.status?"upstream_http":"transport_error",...(e.status?{http:e.status}:{}),...(e.quotaKind?{quotaKind:e.quotaKind}:{})};
+            return {id:"gemini",model:fastModel,status:temporary?"ready":"offline",reason:e.name==="AbortError"?"health_timeout":e.status===429?"health_probe_quota":e.status>=500?"health_upstream_busy":e.status?"upstream_http":"transport_error",...(e.status?{http:e.status}:{}),...(e.googleStatus?{upstreamCode:e.googleStatus}:{}),...(e.googleReason?{upstreamReason:e.googleReason}:{}),...(e.googleCategory?{category:e.googleCategory}:{}),...(e.quotaKind?{quotaKind:e.quotaKind}:{})};
           }
         })();
         try{google=await googleHealth.pending;googleHealth.value=google;googleHealth.time=Date.now();}finally{googleHealth.pending=null;}
@@ -448,7 +469,10 @@ exports.handler=async event=>{
   const contents=history.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}));
   contents.push({role:"user",parts:userParts});
   const tools=flags.toolExecutionEnabled?getTools({...intent,search:intent.search||!!tiktokHandle}).filter(t=>!t.url_context||flags.researchEnabled||intent.hasLink):[];
-  const model=chooseModel(baseModel,{...intent,depth:plan.thinkingLevel});
+  // Light conversation = low, writing and explanations = medium, complex = high.
+  // Technical prompts use advanced Flash, but ordinary text stays on Flash-Lite.
+  const adaptiveThinking=plan.thinkingLevel==="low"&&["creative","explain","technical"].includes(intent.task)?"medium":plan.thinkingLevel;
+  const model=chooseModel(baseModel,{...intent,depth:adaptiveThinking,advanced:intent.task==="technical"});
   const detailedIdentity=Identity.needsDetail(question)||intent.works||/\b(?:puisi|sajak|pantun|gurindam|penulisan|coder poet)\b/i.test(question);
   const creatorHumour=detailedIdentity&&/\b(?:usik|usikan|sindir|sindiran|gurau|bergurau|lawak|jenaka)\b/i.test(question);
   const personality=thoughtMode==="gelap"?GELAP_PERSONALITY:PERSONALITY;
@@ -464,7 +488,7 @@ exports.handler=async event=>{
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
   const activeModeInstruction="\nMOD AKTIF UNTUK JAWAPAN INI: "+(thoughtMode==="gelap"?"GELAP. Jawab dengan falsafah moden dan pemeriksaan premis apabila relevan, tetapi jangan merosakkan soalan fakta atau arahan teknikal.":"CAHAYA. Jawab secara santai, jelas dan praktikal; jangan menyamar sebagai GELAP.")+". Dua mod dalam Bilik Antara adalah gaya pemikiran/respons, bukan dua model API. Jika ditanya, terangkan kedua-dua mod serta cara menukarnya pada ikon pelaras di sebelah Hantar. Jangan mendakwa menggunakan model khusus kerana mod.";
    const system=baseSystem+"\n"+cognitiveGuidance(cognition)+"\n"+Research.guidance(researchResult)+activeModeInstruction+(thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false)+"\n"+Modes.contextGuidance(thoughtMode,question,history):"");
-  const maxTokens=plan.maxTokens;
+  const maxTokens=adaptiveThinking==="medium"?Math.max(plan.maxTokens,4000):plan.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
     works:!!poem,multimodal:media.length>0,model,review:intent.review,cognitiveFocus:cognition.focus,reasoningLevel:plan.thinkingLevel});
   const privateContext=!!(documentText||userMemory);
@@ -563,7 +587,7 @@ exports.handler=async event=>{
   try{
     if(!apiKey)throw Object.assign(new Error("Gemini unavailable"),{status:503});
     if(googleWait(model)>0)throw Object.assign(new Error("Gemini quota cooling down"),{status:429,cooldownKnown:true,retryAfterSeconds:googleWait(model)});
-    const googleThinking=plan.thinkingLevel==="high"?"high":intent.depth==="low"&&model.includes("flash-lite")?"minimal":plan.thinkingLevel;
+    const googleThinking=adaptiveThinking;
     const googleOptions={apiKey,model,system,contents,tools,thinkingLevel:googleThinking,maxTokens,
       timeoutMs:Math.min(cloudflare?(plan.thinkingLevel==="high"?28000:19000):(textOnly&&Router.enabled(cloudflareAI)?(plan.thinkingLevel==="high"?15000:6500):18000),remaining()),
       signal:event.signal,deadline,onDelta:emit&&!plan.doReview&&!tools.length?emit:null};
@@ -623,7 +647,7 @@ exports.handler=async event=>{
   }catch(error){
     if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
     if(streamed)return result(502,{code:"STREAM_INTERRUPTED",error:"Jawapan terputus sebelum habis."},H);
-    providerFailures.push({provider:"gemini",status:error.status||"unavailable",reason:GeminiDiagnosis.classify(error),...(error.quotaKind?{quotaKind:error.quotaKind,quotaScope:error.quotaScope}:{})});
+    providerFailures.push({provider:"gemini",status:error.status||"unavailable",reason:GeminiDiagnosis.classify(error),...(error.googleStatus?{upstreamCode:error.googleStatus}:{}),...(error.googleReason?{upstreamReason:error.googleReason}:{}),...(error.googleCategory?{category:error.googleCategory}:{}),...(error.quotaKind?{quotaKind:error.quotaKind,quotaScope:error.quotaScope}:{})});
     googleCooldown(model,error);
     const transient=[400,401,403,404,429,500,502,503,504].includes(error.status)||error.name==="AbortError"||error.name==="TypeError"||(!error.status&&error.name==="Error");
     if(transient&&(textOnly||imageOnly)&&Router.enabled(cloudflareAI)&&(hybrid.enabled||!alternativeTried)){
@@ -631,7 +655,7 @@ exports.handler=async event=>{
         {only:backupTextProviders,firstResponseDeadline:deadline}:
         {firstResponseDeadline:deadline});if(fallback)return fallback;
     }
-    log("error",{http:error.status||null,name:error.name||"unknown",ms:Date.now()-started});
+    log("error",{http:error.status||null,googleCode:error.googleStatus||null,category:error.googleCategory||null,name:error.name||"unknown",ms:Date.now()-started});
     if(!textOnly&&!imageOnly&&Router.enabled(cloudflareAI))return result(error.status===429?429:503,{code:"CAPABILITY_UNAVAILABLE",error:privateContext&&payload.contextFallback!==true?"Model utama belum available. Kalau kau benarkan dalam Privasi & Tetapan, model sandaran boleh baca memori dan fail teks kau.":"Model untuk function ni belum available. Sandaran teks tak boleh handle semua benda macam audio, imej dan carian.",retryAfterSeconds:30},H);
     if((textOnly||imageOnly)&&Router.enabled(cloudflareAI)&&alternativeTried){
       const recovered=Router.availability(cloudflareAI).filter(p=>p.retryAfterSeconds===0&&
