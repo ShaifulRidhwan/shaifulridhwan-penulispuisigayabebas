@@ -837,3 +837,64 @@ test("Gemini real-chat quota failure still triggers cooldown after an earlier in
  assert.equal(gemini.status,"offline");assert.equal(gemini.reason,"cooldown");
  assert.ok(gemini.retryAfterSeconds>0);
 });
+
+
+test("adaptive Gemini effort stays low for chat, medium for explanations and uses 3.6 Flash for code",async t=>{
+ const handler=setup(t);process.env.AKSARA_HYBRID_ROUTER="true";
+ process.env.GEMINI_MODEL_FAST="gemini-3.5-flash-lite";
+ process.env.GEMINI_MODEL_COMPLEX="gemini-3.6-flash";
+ const requests=[];
+ global.fetch=async(url,options)=>{
+  if(String(url).includes("googleapis")){
+   requests.push({url:String(url),body:JSON.parse(options.body)});
+   return Response.json({candidates:[{content:{parts:[{text:"Jawapan model Gemini."}]},finishReason:"STOP"}]});
+  }
+  return reply("Sandaran.");
+ };
+ const cases=[
+  ["Aku cuma datang nak borak sekejap.","gemini-3.5-flash-lite","low"],
+  ["Terangkan kenapa konsep graviti penting dalam fizik.","gemini-3.5-flash-lite","medium"],
+  ["Baiki fungsi JavaScript supaya lebih cekap dan jelaskan kesilapan dalam kod berikut: function total(a){ return a.reduce((x,y)=>x+y,0); }","gemini-3.6-flash","medium"]
+ ];
+ for(const [question,model,effort] of cases){
+  const response=JSON.parse((await handler(event({question}))).body);
+  assert.equal(response.provider,"gemini",question);
+  assert.equal(response.model,model,question);
+  const last=requests.at(-1);
+  assert.ok(last.url.includes(model),question);
+  if(effort==="low")assert.equal(last.body.generationConfig.thinkingConfig.thinkingLevel,"low");
+  else assert.ok(["medium","high"].includes(last.body.generationConfig.thinkingConfig.thinkingLevel),question);
+ }
+});
+test("HTTP 400 diagnosis identifies restricted region without leaking upstream Google message",async t=>{
+ const handler=setup(t);process.env.AKSARA_HYBRID_ROUTER="true";
+ const upstream="User location is not supported for the API use. TRACE_PRIVATE_NEVER_EXPOSE";
+ global.fetch=async url=>String(url).includes("googleapis")
+  ?Response.json({error:{code:400,status:"FAILED_PRECONDITION",message:upstream,
+     details:[{"@type":"type.googleapis.com/google.rpc.ErrorInfo",reason:"LOCATION_NOT_SUPPORTED"}]}},{status:400})
+  :reply("Sandaran Groq.");
+ const health=JSON.parse((await handler(event({providerStatus:true}))).body);
+ const gemini=health.providers.find(x=>x.id==="gemini");
+ assert.equal(gemini.status,"offline");assert.equal(gemini.http,400);
+ assert.equal(gemini.upstreamCode,"FAILED_PRECONDITION");
+ assert.equal(gemini.category,"location_restricted");
+ assert.equal(gemini.upstreamReason,"LOCATION_NOT_SUPPORTED");
+ assert.ok(!JSON.stringify(health).includes(upstream));
+ const chat=JSON.parse((await handler(event({question:"Terangkan prinsip inertia secara ringkas."}))).body);
+ assert.equal(chat.provider,"groq");
+ const failure=chat.routing.failedAttempts.find(x=>x.provider==="gemini");
+ assert.equal(failure.status,400);assert.equal(failure.category,"location_restricted");
+ assert.equal(chat.routing.geminiDiagnosis.upstreamCode,"FAILED_PRECONDITION");
+ assert.ok(!JSON.stringify(chat).includes(upstream));
+});
+test("HTTP 400 diagnosis distinguishes Gemini thinking parameter errors safely",async t=>{
+ const handler=setup(t);
+ global.fetch=async url=>String(url).includes("googleapis")
+  ?Response.json({error:{code:400,status:"INVALID_ARGUMENT",message:"Thinking level is not supported for this model."}},{status:400})
+  :reply("OK");
+ const health=JSON.parse((await handler(event({providerStatus:true}))).body);
+ const gemini=health.providers.find(x=>x.id==="gemini");
+ assert.equal(gemini.http,400);
+ assert.equal(gemini.upstreamCode,"INVALID_ARGUMENT");
+ assert.equal(gemini.category,"thinking_parameter");
+});

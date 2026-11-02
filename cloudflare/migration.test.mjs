@@ -10,7 +10,7 @@ test("Cloudflare exposes secret bindings to legacy Node-compatible chat handlers
  assert.ok(config.compatibility_flags?.includes("nodejs_compat"),"Legacy handlers read process.env; without nodejs_compat Worker secrets are unavailable");
  assert.equal(config.vars.GEMINI_MODEL,"gemini-3.5-flash-lite");
  assert.equal(config.vars.GEMINI_MODEL_FAST,"gemini-3.5-flash-lite");
- assert.equal(config.vars.GEMINI_MODEL_COMPLEX,"gemini-3.5-flash-lite");
+ assert.equal(config.vars.GEMINI_MODEL_COMPLEX,"gemini-3.6-flash");
 });
 test("Cloudflare build includes all three apps and preserves Netlify home separately",()=>{
  for(const p of ["bilik-antara.html","studio-antara.html","perpustakaan-aksara.html","antara-cahaya-dan-gelap.html","assets/novel/pembaca.html","assets/novel/cover-01.jpg","bilik-antara.css","studio-antara.css","perpustakaan-aksara.css"]){
@@ -95,8 +95,8 @@ test("Wrangler only routes API paths through Worker and keeps no deploy-on-merge
  assert.equal(c.vars.GROQ_FREE_CONFIRMED,"true","Groq gate must survive automatic deploy");
  assert.equal(c.ai.binding,"AI","Native Workers AI binding must be available");
  assert.equal(c.vars.GEMINI_MODEL_FAST,"gemini-3.5-flash-lite");
- assert.equal(c.vars.GEMINI_MODEL_COMPLEX,"gemini-3.5-flash-lite");
- assert.equal(c.vars.GEMINI_MODEL,"gemini-3.5-flash-lite","Base model must not differ from both regular/deep routes");
+ assert.equal(c.vars.GEMINI_MODEL_COMPLEX,"gemini-3.6-flash");
+ assert.equal(c.vars.GEMINI_MODEL,"gemini-3.5-flash-lite","Base model must remain the low-latency primary");
  assert.equal(c.vars.AKSARA_FREE_FALLBACKS,"true");
  assert.ok(!("GROQ_API_KEY" in c.vars),"No secrets allowed in Wrangler vars");
  assert.ok(!existsSync(path.join(root,".github","workflows","cloudflare-auto-deploy.yml")));

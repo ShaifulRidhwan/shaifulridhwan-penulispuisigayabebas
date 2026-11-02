@@ -226,7 +226,7 @@ function chooseModel(defaultModel,intent){
   const base=freeModel(defaultModel);
   const advanced=freeModel(process.env.GEMINI_MODEL_COMPLEX,base);
   const fast=freeModel(process.env.GEMINI_MODEL_FAST,"gemini-3.5-flash-lite");
-  return intent.depth==="high"?advanced:fast;
+  return intent.depth==="high"||intent.advanced===true?advanced:fast;
 }
 function sourceList(candidate){
   const chunks=candidate&&candidate.groundingMetadata&&candidate.groundingMetadata.groundingChunks;
