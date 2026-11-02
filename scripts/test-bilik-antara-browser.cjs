@@ -181,9 +181,10 @@ async function audit(browser,label,options){
   await attachmentDialog.locator('[data-attachment-type="document"]').click();
   const chooser=await chooserPromise;
   await chooser.setFiles({name:"browser-check.txt",mimeType:"text/plain",buffer:Buffer.from("aksara attachment test")});
-  await page.locator("#removeAttachment").waitFor({state:"visible"});
+  await page.locator('.attachment-chip-remove[aria-label="Buang browser-check.txt"]').waitFor({state:"visible"});
   assert.match(await page.locator("#docStatus").innerText(),/browser-check.txt/);
-  await page.locator("#removeAttachment").click();
+  assert.equal(await page.locator("#removeAttachment").isVisible(),false,"One file has its own remove button");
+  await page.locator('.attachment-chip-remove[aria-label="Buang browser-check.txt"]').click();
   await attachmentTrigger.click();
   await page.keyboard.press("Escape");
   assert.equal(await attachmentDialog.isVisible(),false);
