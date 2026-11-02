@@ -793,3 +793,47 @@ test("an empty Gemini health answer is Ready, never falsely Offline",async t=>{
  const gemini=data.providers.find(x=>x.id==="gemini");
  assert.equal(gemini.status,"ready");assert.equal(gemini.reason,"health_empty_reply");assert.equal(gemini.http,200);
 });
+
+
+test("Gemini health 429 cannot put healthy ordinary chat into cooldown",async t=>{
+ const handler=setup(t);process.env.AKSARA_HYBRID_ROUTER="true";
+ let googleCalls=0,otherCalls=0;
+ global.fetch=async url=>{
+  if(String(url).includes("googleapis")){
+   googleCalls++;
+   if(googleCalls===1)return Response.json({error:{message:"Health probe quota window"}},{status:429,headers:{"retry-after":"120"}});
+   return Response.json({candidates:[{content:{parts:[{text:"Metafora ialah perbandingan tidak langsung."}]},finishReason:"STOP"}]});
+  }
+  otherCalls++;
+  return reply("Groq fallback.");
+ };
+ const health=JSON.parse((await handler(event({providerStatus:true}))).body);
+ const status=health.providers.find(p=>p.id==="gemini");
+ assert.equal(status.status,"ready","An inconclusive health probe must not claim Gemini is offline");
+ assert.equal(status.reason,"health_probe_quota");assert.equal(status.http,429);
+ const chat=JSON.parse((await handler(event({question:"Apakah maksud metafora?"}))).body);
+ assert.equal(chat.provider,"gemini","A synthetic 429 must never skip Gemini for chat");
+ assert.equal(googleCalls,2);assert.equal(otherCalls,1,"Only the normal Groq health probe is allowed");
+ assert.equal(chat.routing.failedAttempts.length,0);
+ const after=JSON.parse((await handler(event({providerStatus:true}))).body);
+ assert.equal(after.providers.find(p=>p.id==="gemini").status,"online","Real successful chat overrides an uncertain health result");
+});
+test("Gemini real-chat quota failure still triggers cooldown after an earlier inconclusive health check",async t=>{
+ const handler=setup(t);process.env.AKSARA_HYBRID_ROUTER="true";
+ let googleCalls=0;
+ global.fetch=async url=>{
+  if(String(url).includes("googleapis")){
+   googleCalls++;
+   return Response.json({error:{message:"Rate limit exceeded"}},{status:429,headers:{"retry-after":"15"}});
+  }
+  return reply("Fallback Groq berfungsi.");
+ };
+ const health=JSON.parse((await handler(event({providerStatus:true}))).body);
+ assert.equal(health.providers.find(p=>p.id==="gemini").status,"ready");
+ const chat=JSON.parse((await handler(event({question:"Apa itu graviti?"}))).body);
+ assert.equal(chat.provider,"groq");assert.equal(googleCalls,2);
+ const after=JSON.parse((await handler(event({providerStatus:true}))).body);
+ const gemini=after.providers.find(p=>p.id==="gemini");
+ assert.equal(gemini.status,"offline");assert.equal(gemini.reason,"cooldown");
+ assert.ok(gemini.retryAfterSeconds>0);
+});
