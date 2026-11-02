@@ -28,7 +28,7 @@ for(const file of listed){
   // Original Netlify page, Studio and Novel remain unchanged.
   if(file==="bilik-antara.html"){
    for(const sheet of ["aksara-header.css"]){
-    const marker='<link rel="stylesheet" href="aksara-header.css?v=3" media="print" onload="this.media='all'">\n<noscript><link rel="stylesheet" href="aksara-header.css?v=3"></noscript>'.replace(/\\n/g,String.fromCharCode(10));
+    const marker="<link rel=\"stylesheet\" href=\"aksara-header.css?v=3\" media=\"print\" onload=\"this.media='all'\">"+String.fromCharCode(10)+"<noscript><link rel=\"stylesheet\" href=\"aksara-header.css?v=3\"></noscript>";
     if(html.split(marker).length!==2)throw Error("Bilik stylesheet marker changed: "+sheet);
     const css=await readFile(path.join(root,sheet),"utf8");
     if(css.toLowerCase().includes("</style"))throw Error("Unexpected style closure in "+sheet);
