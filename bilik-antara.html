@@ -459,9 +459,10 @@ function renderProviderRows(rows,catalog=null){
   const line=elem(expandable?"summary":"div","multi-ai-row"+(expandable?" multi-ai-expand-trigger":""));
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
   const waitLabel=waitSeconds>0?"Retry in "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" sec"):"";
-  const stateLabel=state==="online"?"Connected":state==="ready"?"Ready":
+  let stateLabel=state==="online"?"Connected":state==="ready"?"Ready":
    state==="offline"?(item?.reason==="free_quota_exhausted"?"Kuota percuma habis":waitLabel||(item?.http===503?"Servis sibuk (503)":"Offline")):
    state==="off"?"Not active":"Checking…";
+  if(id==="gemini")stateLabel=item?.reason==="health_probe_quota"?"Ready · Probe 429":item?.reason==="cooldown"?(waitLabel||"Cooldown").replace("Retry in ","Cooldown "):state==="offline"&&item?.http?"Offline · HTTP "+item.http:stateLabel;
   const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":state==="ready"?"is-ready":"is-muted"),stateLabel);
   if(id==="gemini"&&item?.reason==="health_timeout")statusText.textContent="Semakan lambat";
   line.append(elem("span","multi-ai-provider",name),statusText);
