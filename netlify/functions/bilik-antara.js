@@ -251,7 +251,7 @@ exports.handler=async event=>{
       if(GeminiTextPool.snapshot().some(x=>x.slot===entry.slot&&x.status==="offline"&&x.reason==="authentication_or_access"))
         return {status:"offline",reason:"authentication_or_access"};
       const maxAge=cache.value?.status==="online"?90000:30000;
-      if(cache.value&&Date.now()-cache.time<maxAge)return cache.value;
+      if(!refreshAll&&cache.value&&Date.now()-cache.time<maxAge)return cache.value;
       if(!cache.pending)cache.pending=(async()=>{
         const time=Date.now();
         try{
