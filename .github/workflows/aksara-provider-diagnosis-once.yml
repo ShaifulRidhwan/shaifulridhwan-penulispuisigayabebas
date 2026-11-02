@@ -2,7 +2,7 @@ name: AKSARA provider diagnosis one time
 on:
   push:
     branches:
-      - feature/cloudflare-aksara-apps-migration-20261031
+      - diagnostic/gemini-live-check
     paths:
       - .github/workflows/aksara-provider-diagnosis-once.yml
 jobs:
@@ -16,4 +16,4 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: node cloudflare/provider-diagnostic-once.mjs
+      - run: node cloudflare/gemini-production-diagnostic-20261102.mjs
