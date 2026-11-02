@@ -246,10 +246,9 @@ test("Thinking Mode uses a futuristic brain; sunshine and moon remain unchanged"
 test("Aksara has dedicated glass attachment picker and no accidental native picker on paperclip",()=>{
  assert.ok(html.includes('class="multi-ai-dialog attachment-dialog"'));
  assert.ok(html.includes('id="attachmentTrigger" aria-haspopup="dialog"'));
- for(const type of ["photo","video","files"])assert.ok(html.includes('data-attachment-type="'+type+'"'));
- assert.ok(html.includes('id="attachmentPhoto"'));
- assert.ok(html.includes('id="attachmentVideo"'));
- assert.ok(html.includes('id="attachmentFiles"'));
+ for(const type of ["photo","video","document","audio","code"])assert.ok(html.includes('data-attachment-type="'+type+'"'));
+ for(const id of ["attachmentPhoto","attachmentCamera","attachmentVideo","attachmentDocument","attachmentAudio","attachmentCode"])
+  assert.ok(html.includes('id="'+id+'"'));
  assert.ok(html.includes('field.click()'));
  assert.ok(html.includes('field.addEventListener("change"'));
  assert.ok(css.includes('.attachment-dialog .attachment-option'));
