@@ -457,6 +457,8 @@ exports.handler=async event=>{
     // Only this explicit user query is sent to search. No summary, history,
     // memory notes or attachment bytes are sent to the external search adapter.
     privateContext:false,signal:event.signal});
+  // Safe operational status only: never log the prompt, URL or API key.
+  log("web_research",{status:researchResult.status,sourceCount:researchResult.sources.length,requestedUrl:!!intent.hasLink});
   const publicSources=researchResult.sources;
   const tavilyRead=researchResult.status==="page-read"&&publicSources.some(x=>x.kind==="page-extract");
   const tavilySearched=researchResult.status==="search-snippets"&&publicSources.some(x=>x.kind==="search-snippet");
@@ -564,7 +566,8 @@ exports.handler=async event=>{
       // beats wasting another provider call or fabricating a website review.
       if(intent.hasLink&&!ownedPage&&!tavilyRead&&/\b(?:review|audit|analisis|semak|nilai|periksa|buka|baca|masuk|lawat|layari|tengok)\b/i.test(question))
         return result(200,{mode:"local-limitation",provider:"local",model:"url-access-guard",thoughtMode,
-          reply:"Aku cuba membaca pautan itu, tetapi kandungan laman belum berjaya disahkan. Aku tak boleh buat review laman sebenar tanpa melihat isinya. Kau boleh sertakan teks halaman atau screenshot untuk analisis yang berasas.",
+          researchStatus:researchResult.status,
+          reply:researchResult.status==="budget-unavailable-or-exhausted"?"Aku cuba buka pautan itu, tapi carian Tavily tersekat pada kawalan bajet (storan tidak tersedia atau had bulanan penuh). Aku belum berjaya membaca laman; aku takkan reka review.":"Aku cuba membaca pautan itu, tetapi kandungan laman belum berjaya disahkan. Aku tak boleh buat review laman sebenar tanpa melihat isinya. Kau boleh sertakan teks halaman atau screenshot untuk analisis yang berasas.",
           sources:[],toolsUsed:[],reviewApplied:false,disclaimer:"URL belum dibaca. Tiada hasil review direka."},H);
       let alternative;
       try{
@@ -673,7 +676,7 @@ exports.handler=async event=>{
     if(candidate&&candidate.finishReason&&candidate.finishReason!=="STOP")warnings.push("Jawapan ni mungkin belum lengkap · "+candidate.finishReason+".");
     if(intent.search&&!tools.some(t=>t.google_search)&&researchResult.status!=="search-snippets")warnings.push("Live web search belum aktif atau belum berjaya, jadi info terkini belum disahkan.");
     else if(intent.search&&!sources.length)warnings.push("Aku belum jumpa sumber yang dapat disahkan untuk jawapan ni.");
-    if(intent.hasLink&&!tavilyRead&&!actualTools.includes("url_context")&&!sources.length)warnings.push("Aku belum dapat pastikan link ni berjaya dibaca.");
+    if(intent.hasLink&&!tavilyRead&&!actualTools.includes("url_context")&&!sources.length)warnings.push(researchResult.status==="budget-unavailable-or-exhausted"?"Carian Tavily terhalang oleh storan kawalan bajet atau had bulanan. Pautan belum berjaya dibaca.":"Aku belum dapat pastikan link ni berjaya dibaca.");
     const unverifiedReview=intent.hasLink&&!ownedPage&&!tavilyRead&&!actualTools.includes("url_context")&&!directSources.length&&
       /\b(?:review|audit|analisis|semak|nilai|periksa|buka|baca|masuk|lawat|layari|tengok)\b/i.test(question);
     const reliableReply=unverifiedReview
