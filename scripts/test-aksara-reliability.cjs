@@ -342,17 +342,21 @@ test("opening the page tests providers before showing Connected and never instal
   assert.match(html,/localStorage\.getItem\(MODE_STORAGE\)/,"Mode preference is restored without delaying provider check");
  assert.match(html,/async function probe\(\)\{[\s\S]*?return checkProviders\(\)/,"Startup checks one Gemini slot to preserve quota");
  assert.match(html,/multiAiRefresh"\)\.addEventListener\("click",\(\)=>\{multiLastCheck=0;checkProviders\(true\)/,"Manual refresh checks all Gemini slots");
- const source=html.slice(html.indexOf("async function checkProviders("),html.indexOf('ui.conn.addEventListener("click"'));
- let resolve,requests=[],states=[];
- const pending=new Promise(done=>resolve=done);
- const run=new Function("fetch","status","renderProviderRows","el","multiChecked","ENDPOINT",'let busy=false,multiChecking=false,multiLastCheck=0,multiCatalog=null,connectionRevision=0,lastProvider="",lastProviderAt=0;const providers=[["gemini"],["groq"],["openrouter"],["requesty"]];const ui={requestyConsent:{checked:false,disabled:true}};'+source+';return checkProviders;')(
-  async(_url,opts)=>{requests.push(JSON.parse(opts.body));return pending;},(...args)=>states.push(args),()=>{},()=>({}),{},"/mock"
- );
- const waiting=run(true);
- assert.equal(requests[0].providerStatus,true);
- assert.ok(!states.some(x=>x[1]==="Multi A.I Connected"));
- resolve({ok:true,json:async()=>({providers:[{id:"groq",status:"online"}],someOnline:true})});await waiting;
- assert.ok(states.some(x=>x[0]==="ready"&&x[1]==="Multi A.I Connected"));
+ const engine=require("../bilik-antara-multi-ai-status.js");
+ const node=()=>({className:"",textContent:"",title:"",dataset:{},hidden:false,
+  setAttribute(){}});
+ const pill=node(),label=node(),activity=node(),activityText=node(),retry=node(),stamp=node();
+ const health=engine.create({pill,label,activity,activityText,retry,stamp});
+ health.startCheck();
+ assert.equal(label.textContent,"Multi A.I Checking");
+ assert.match(html,/providerStatus:true,geminiPoolRefresh:force===true/);
+ assert.match(html,/multiHealth\.update\(data\)/);
+ assert.match(html,/multiHealth\.failure\(\)/);
+ assert.doesNotMatch(html,/status\("ready","Multi A\.I Connected"/);
+ health.update({checkedAt:Date.now(),providers:[{id:"groq",status:"online"}]});
+ assert.equal(label.textContent,"Multi A.I Connected");
+ health.request("connecting","Waiting for Capacity","");
+ assert.equal(label.textContent,"Multi A.I Connected");
  const suite=fs.readFileSync(path.join(__dirname,"../bilik-antara-suite.js"),"utf8");
  assert.doesNotMatch(suite,/function quickActions|bubble\.appendChild\(row\)/);
  assert.match(html,/if\(data\.disclaimer\)/,"Fallback provenance is retained");
