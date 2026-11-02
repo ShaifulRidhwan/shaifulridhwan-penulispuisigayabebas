@@ -74,6 +74,11 @@ async function main(){
   await page.goto(BASE+'/studio-antara.html',{waitUntil:'domcontentloaded'});
   await page.evaluate(()=>{const mark=document.createElement('div');mark.textContent='UJIAN MOCK · BUKAN HASIL CLOUDFLARE';mark.style='position:fixed;top:0;left:0;right:0;z-index:9999;background:#6b4725;color:white;text-align:center;font:12px sans-serif;padding:4px';document.body.append(mark);});
   assert.equal(calls.length,0,'No AI requests on page load');assert.equal(await page.locator('#imageStyle option').count(),11);
+  assert.equal(await page.locator("#studioStatusV2").count(),1);
+  await page.locator("#studioStatusV2 > summary").click();
+  assert.match(await page.locator("#studioStatusV2Body").innerText(),/Status model: Belum diuji/);
+  assert.equal(calls.length,0,"Checking the status cannot call a provider");
+  await page.locator("#studioStatusV2 > summary").click();
   // Studio 2.2: protect the shared glass material and typography across sizes.
   const visual=await page.evaluate(()=>{
    const css=selector=>getComputedStyle(document.querySelector(selector));
@@ -193,6 +198,11 @@ async function main(){
   await pick(page,'imageRatio','9:16');assert.equal(await page.locator('#imageModel').inputValue(),'klein');assert.equal(await page.locator('#imageModel + button span').textContent(),C.models.klein.name,'Automatic model switch updates the visible caption');await pick(page,'imageQuality','fast');await pick(page,'imageStyle','falsafah');
   await page.locator('#generateImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);await page.locator('#generatedImage').waitFor({state:'visible'});
   assert.equal(await page.locator('#resultIndicator').textContent(),'SIAP');
+  await page.locator("#studioStatusV2 > summary").click();
+  await page.waitForFunction(()=>document.querySelector("#studioStatusV2Body")?.textContent.includes("Status model: Berjaya dijana"));
+  assert.match(await page.locator("#studioStatusV2Body").innerText(),/Model dipilih: FLUX.2 Klein/);
+  assert.match(await page.locator("#studioStatusV2Body").innerText(),/Simpan hasil: Berjaya/);
+  await page.locator("#studioStatusV2 > summary").click();
   assert.equal(await page.locator('#resultIndicator').evaluate(el=>el.classList.contains('is-waiting')),false,'Breathing must stop after generation');
   const first=calls.at(-1);assert.equal(first.ratio,'9:16');assert.equal(first.style,'falsafah');assert.match(await page.locator('#imageMetadata').textContent(),/288 × 512/);
   await page.locator('#variationImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);const variation=calls.at(-1);assert.notEqual(variation.seed,42);assert.equal(variation.prompt,prompt);assert.equal(variation.style,'falsafah');
@@ -201,11 +211,18 @@ async function main(){
   await page.locator('#historyPanel > summary').click();await page.waitForFunction(()=>document.querySelectorAll('.history-card').length===3);await page.reload();await page.locator('#historyPanel > summary').click();await page.waitForFunction(()=>document.querySelectorAll('.history-card').length===3);const before=calls.length;await page.locator('.history-card .view-result').first().click();await page.locator('#generatedImage').waitFor({state:'visible'});assert.equal(calls.length,before,'Opening history never runs inference');
   await page.locator('.history-card [data-action="delete"]').first().click();await page.waitForFunction(()=>document.querySelectorAll('.history-card').length===2);
   await page.locator('#imagePrompt').fill('fail429 quota');await page.locator('#generateImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);assert.match(await page.locator('#generationStatus').textContent(),/Had ujian/);assert.equal(await page.locator('#imagePrompt').inputValue(),'fail429 quota');
+  await page.locator("#studioStatusV2 > summary").click();
+  assert.match(await page.locator("#studioStatusV2Body").innerText(),/Had penyedia dilaporkan/);
+  await page.locator("#studioStatusV2 > summary").click();
   await page.locator('#imagePrompt').fill('slow test cancellation');await page.locator('#generateImage').click();await page.locator('#stopImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);assert.match(await page.locator('#generationStatus').textContent(),/dihentikan/);
+  await page.locator("#studioStatusV2 > summary").click();
+  assert.match(await page.locator("#studioStatusV2Body").innerText(),/Status model: Dihentikan/);
+  await page.locator("#studioStatusV2 > summary").click();
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'No horizontal overflow');
   await page.locator('#resultTitle').scrollIntoViewIfNeeded();await page.screenshot({path:'studio-audit-artifacts/'+label+'.png',fullPage:true});
   page.once('dialog',d=>d.accept());await page.locator('#clearHistory').click();await page.waitForFunction(()=>document.querySelector('#historyCount').textContent==='0 hasil');
-  for(const model of ['schnell','ovh']){await pick(page,'imageModel',model);await page.locator('#imagePrompt').fill('Ujian mock '+model);await page.locator('#generateImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);assert.equal(calls.at(-1).model,model);assert.match(await page.locator('#imageMetadata').textContent(),/1024 × 1024/);}
+  for(const model of ['schnell','ovh']){await pick(page,'imageModel',model);
+   assert.match(await page.locator("#studioStatusV2Body").textContent(),/Status model: Belum diuji/,"Selected model must not inherit another model's success");await page.locator('#imagePrompt').fill('Ujian mock '+model);await page.locator('#generateImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);assert.equal(calls.at(-1).model,model);assert.match(await page.locator('#imageMetadata').textContent(),/1024 × 1024/);}
   await page.locator('#imagePrompt').fill('limit429 countdown');
   await page.locator('#generateImage').click();
   await page.locator('#cooldownStatus').waitFor({state:'visible'});
