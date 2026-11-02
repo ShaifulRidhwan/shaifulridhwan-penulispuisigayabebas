@@ -73,7 +73,8 @@ test("P0: old URL may be omitted by limited history but explicit followup anchor
 });
 test("P1: supported attachments include local DOCX, CSV and JSON, but not unsafe URL parsing",()=>{
  assert.match(html,/bilik-antara-docx\.js\?v=1/);
- assert.match(html,/const content=ext==="docx"\?await window\.AksaraDocx\.read\(file\):await file\.text\(\)/);
+ const attachmentModule=fs.readFileSync("bilik-antara-attachments.js","utf8");
+ assert.match(attachmentModule,/const content=ext==="docx"\?await window\.AksaraDocx\.read\(file\):await file\.text\(\)/);
  assert.match(html,/\.json,\.docx,\.pdf/);
 });
 function fakeDocx(xml,deflate=false){
