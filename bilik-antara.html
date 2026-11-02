@@ -53,11 +53,15 @@
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
 <link rel="stylesheet" href="bilik-antara.css?v=103">
-<link rel="stylesheet" href="aksara-header.css?v=3">
+<!-- Noncritical shared header refinements load without blocking first paint. -->
+<link rel="stylesheet" href="aksara-header.css?v=3" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="aksara-header.css?v=3"></noscript>
 <link rel="stylesheet" href="bilik-antara-suite.css?v=9" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-suite.css?v=9"></noscript>
 
-<link rel="stylesheet" href="bilik-antara-code-execution.css?v=1">
+<!-- Hidden Code Engine theatre: never block the initial chat paint. -->
+<link rel="stylesheet" href="bilik-antara-code-execution.css?v=1" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="bilik-antara-code-execution.css?v=1"></noscript>
 
 </head>
 <body>
@@ -254,7 +258,7 @@ if(root)root.BilikAntaraChatStyle=api;
 })(typeof globalThis!=="undefined"?globalThis:this);
 
 </script>
-<script src="bilik-antara-gemini-status.js?v=1"></script>
+<script src="bilik-antara-gemini-status.js?v=1" defer></script>
 <script>
 (function(){
 "use strict";
@@ -428,12 +432,14 @@ ui.retry.addEventListener("click",()=>{
 const providers=[["gemini","Google Gemini"],["groq","Groq"],["workers_ai","Cloudflare Workers AI"],["openrouter","OpenRouter"]];
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
 let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0;
+let latestProviderRows=null;
 function shortOpenRouterName(model){
  const full=String(model.name||model.id||"Model").replace(/^[^:]{1,24}:\s*/,"").trim().replace(/^[\w.-]+\//,"");
  const name=full||String(model.id||"Model").split("/").pop().replace(/:free$/,"");
  return name.length>26?name.slice(0,25).trimEnd()+"…":name;
 }
 function renderProviderRows(rows,catalog=null){
+ latestProviderRows=rows;
  const openGroups=new Set([...multiList.querySelectorAll("details[data-provider]")].filter(x=>x.open).map(x=>x.dataset.provider));
  const hasPreviousGroups=multiList.querySelector("details[data-provider]")!==null;
  multiList.replaceChildren();
@@ -458,7 +464,8 @@ function renderProviderRows(rows,catalog=null){
   group.open=hasPreviousGroups&&openGroups.has(id);group.appendChild(line);
   const modelList=elem("div","multi-ai-model-list");
   if(id==="gemini"){
-   window.AksaraGeminiStatus.appendSlots(modelList,item,elem);
+   if(typeof window.AksaraGeminiStatus?.appendSlots==="function")window.AksaraGeminiStatus.appendSlots(modelList,item,elem);
+   else modelList.appendChild(elem("p","multi-ai-model-note","Status Gemini sedang dimuat…"));
   }else if(id==="groq"){
     const model=typeof item?.model==="string"&&item.model?item.model:"openai/gpt-oss-120b";
     const label=state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?"Offline":state==="off"?"Not active":"Checking…";
@@ -495,6 +502,7 @@ function renderProviderRows(rows,catalog=null){
   group.appendChild(modelList);multiList.appendChild(group);
  }
 }
+window.addEventListener("aksara:gemini-status-ready",()=>renderProviderRows(latestProviderRows,multiCatalog));
 async function checkProviders(force=false){
  if(multiChecking)return;
  if(!force&&Date.now()-multiLastCheck<20000)return;
@@ -1045,7 +1053,7 @@ async function submit(event){
   if(!partialFrame)partialFrame=requestAnimationFrame(drawPartial);
  }
  try{
-  const urlFollowUp=/^(?:(?:tapi|jadi|pastu|dan)\s+)*(?:review|analisis|audit|semak|periksa|buka|baca|url|link|laman|website|web|yang tadi|yang tu|yang itu|sambung|teruskan)\b/i.test(question)&&
+  const urlFollowUp=(/^(?:(?:tapi|jadi|pastu|dan)\s+)*(?:review|analisis|audit|semak|periksa|buka|baca|url|link|laman|website|web|yang tadi|yang tu|yang itu|sambung|teruskan)\b/i.test(question)||/\b(?:masuk|teroka|layari|tengok|lihat)\s+(?:(?:ke|dalam|kat)\s+)?(?:web|website|laman)\b/i.test(question))&&
     /\b(?:tadi|tu|itu|link|url|laman|website|web|sama|tersebut)\b/i.test(question);
   const priorLink=urlFollowUp?history.slice(-18).reverse().filter(m=>m.role==="user").map(m=>String(m.content||"").match(/https:\/\/[^\s<>"']+/i)?.[0]||"").find(Boolean):"";
   const contextQuestion=priorLink&&!/https?:\/\//i.test(question)

@@ -62,3 +62,36 @@ test("durable credit counter stops at configured monthly ceiling",async()=>{
  await assert.rejects(()=>reserve({store,cap:2}),/exhausted/);
  assert.equal(value,2);
 });
+
+test("short follow-up opens the actual user-shared URL, not an assistant-invented one",()=>{
+ const history=[
+  {role:"user",content:"https://shaifulridhwan-penulispuisigayabebas.netlify.app/"},
+  {role:"assistant",content:"Aku boleh tengok link."}
+ ];
+ assert.equal(Research.followUpUrl("masuk dalam web",history),"https://shaifulridhwan-penulispuisigayabebas.netlify.app/");
+ assert.equal(Research.followUpUrl("review laman tadi",history),"https://shaifulridhwan-penulispuisigayabebas.netlify.app/");
+ assert.equal(Research.followUpUrl("apa pendapat kau tentang coding?",history),null);
+ assert.equal(Research.followUpUrl("jangan buka web tu",history),null);
+ assert.equal(Research.followUpUrl("buka laman itu",[{role:"assistant",content:"https://example.org/"}]),null);
+ assert.equal(Research.followUpUrl("masuk dalam web",[{role:"user",content:"http://localhost/internal"}]),null);
+});
+test("live page guidance never claims browsing is absent after successful Extract",()=>{
+ const message=Research.guidance({status:"page-read"});
+ assert.match(message,/TAVILY EXTRACT SUDAH BERJAYA/);
+ assert.match(message,/jangan kata tiada browsing tool/);
+ assert.match(Research.guidance({status:"budget-unavailable-or-exhausted"}),/kawalan bajet/);
+});
+test("render path uses one blocking core stylesheet and defers secondary assets",()=>{
+ const fs=require("node:fs");
+ const html=fs.readFileSync("bilik-antara.html","utf8");
+ const toml=fs.readFileSync("netlify.toml","utf8");
+ assert.match(html,/rel="stylesheet" href="bilik-antara\.css\?v=103">/);
+ assert.match(html,/href="aksara-header\.css\?v=3" media="print" onload="this\.media='all'"/);
+ assert.match(html,/href="bilik-antara-code-execution\.css\?v=1" media="print" onload="this\.media='all'"/);
+ assert.match(html,/src="bilik-antara-gemini-status\.js\?v=1" defer/);
+ assert.equal((html.match(/href="aksara-celestial-static\.webp\?v=1" as="image"/g)||[]).length,2);
+ for(const image of ["aksara-celestial-static.webp","aksara-background-cahaya-gelap.webp"]){
+  const rule=toml.split("[[headers]]").find(s=>s.includes('for = "/'+image+'"'));
+  assert.ok(rule?.includes("max-age=2592000"),image+" must have 30-day cache");
+ }
+});
