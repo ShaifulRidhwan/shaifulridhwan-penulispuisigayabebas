@@ -16,6 +16,7 @@ function curate(sources){
  return safe;
 }
 // Only carry a public URL from recent user messages when the user asks to visit it.
+function isWikipediaRequest(question){return /\b(?:wikipedia|ensiklopedia)\b/i.test(String(question||""));}
 function followUpUrl(question,history){
  const q=String(question||"").trim();
  if(q.length<3||q.length>180||Tavily.extractUrl(q)||
@@ -32,6 +33,12 @@ function followUpUrl(question,history){
 async function research(question,intent,{enabled=true,attachment=false,account=false,privateContext=false,signal}={}){
  if(!enabled)return {sources:[],status:"disabled"};
  if(intent?.sensitive||attachment||account||privateContext)return {sources:[],status:"not-eligible"};
+ // Explicit encyclopedia requests must not be diverted to generic snippet search.
+ if(!intent?.hasLink&&isWikipediaRequest(question)){
+  const refs=await publicReferences(question,intent,attachment,account);
+  const sources=curate(refs);
+  return {sources,status:sources.length?"encyclopedia":"unverified"};
+ }
  if(intent?.hasLink||intent?.search){
   const options={attachment,account,privateContext,sensitive:intent?.sensitive,hasLink:!!intent?.hasLink,signal};
   // Tavily is opt-in only. Keep the owner API key configured but never call
@@ -68,4 +75,4 @@ function guidance(out){
  if(out?.status==="page-extract-failed")return "Tavily menerima permintaan tetapi gagal mengambil kandungan URL. Jangan mendakwa telah membaca halaman.";
  return "Tiada sumber luaran yang disahkan. Carian web umum mungkin belum dikonfigurasi, tiada hasil atau gagal. Jangan mereka URL, fakta semasa, atau sumber; akui batas semakan live.";
 }
-module.exports={curate,followUpUrl,research,guidance};
+module.exports={curate,followUpUrl,isWikipediaRequest,research,guidance};
