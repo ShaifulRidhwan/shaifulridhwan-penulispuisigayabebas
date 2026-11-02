@@ -20,12 +20,13 @@ menu.className="multi-ai-dialog code-engine-dialog";
 menu.setAttribute("aria-labelledby","codeEngineMenuTitle");
 menu.setAttribute("aria-describedby","codeEngineMenuDescription");
 menu.innerHTML=[
- '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Sambungan</strong><p id="codeEngineMenuDescription">Empat runtime aktif dan HTML/CSS Live Preview dalam Code Workspace.</p></div><button type="button" id="codeMenuClose" aria-label="Tutup Code Engine">×</button></div>',
+ '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Sambungan</strong><p id="codeEngineMenuDescription">Lima runtime termasuk C++20; HTML/CSS Live Preview dalam Code Workspace.</p></div><button type="button" id="codeMenuClose" aria-label="Tutup Code Engine">×</button></div>',
  '<div class="multi-ai-list" id="codeRuntimeList" aria-label="Runtime tersedia dan sasaran">',
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="javascript"><span class="multi-ai-provider">JavaScript</span><span class="multi-ai-state is-muted" id="codeJavaScriptState">Checking…</span></button>',
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="python"><span class="multi-ai-provider">Python · Pyodide</span><span class="multi-ai-state is-muted" id="codePythonState">Load on run</span></button>',
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="typescript"><span class="multi-ai-provider">TypeScript</span><span class="multi-ai-state is-muted" id="codeTypeScriptState">Load on run</span></button>',
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="sql"><span class="multi-ai-provider">SQL · SQLite WASM</span><span class="multi-ai-state is-muted" id="codeSQLState">Load on run</span></button>',
+  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="cpp"><span class="multi-ai-provider">C++ · Clang WASM</span><span class="multi-ai-state is-muted" id="codeCPPState">Load on run · ~29 MB</span></button>',
   '<button type="button" class="multi-ai-row code-menu-language" id="codeHtmlPreview"><span class="multi-ai-provider">HTML · CSS</span><span class="multi-ai-state is-ready">Live Preview</span></button>',
  '</div>',
  ' <div class="multi-ai-actions"><button type="button" id="codeEngineRefresh">Semak semula</button><button type="button" id="codeWorkspaceOpen">Code Workspace</button><button type="button" id="codeEvalOpen">Evaluation Lab</button></div>'
