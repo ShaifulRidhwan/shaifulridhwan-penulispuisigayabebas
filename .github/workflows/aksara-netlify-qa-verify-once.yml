@@ -1,0 +1,26 @@
+name: Verify one-time Netlify QA Bilik alias
+on:
+  push:
+    branches: [diagnostic/netlify-qa-verify-20261102]
+    paths: ['.github/workflows/aksara-netlify-qa-verify-once.yml']
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Check HTTP rewrite and unchanged Cloudflare redirect
+        run: |
+          node --input-type=module <<'NODE'
+          const origin="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
+          for(const [label,path] of [["QA_ALIAS","/bilik-antara-netlify-qa.html"],["PRODUCTION_REDIRECT","/bilik-antara.html"]]){
+            try{
+              const response=await fetch(origin+path,{redirect:"manual",signal:AbortSignal.timeout(18000)});
+              const data=await response.text();
+              console.log(label,JSON.stringify({http:response.status,location:response.headers.get("location"),html:data.includes("Bilik Antara")||data.includes("multiAiDialog"),bodyLength:data.length,noindex:response.headers.get("x-robots-tag"),cache:response.headers.get("cache-control")}));
+            }catch(e){console.log(label,JSON.stringify({error:e.name,message:String(e.message).slice(0,120)}));}
+          }
+          NODE
