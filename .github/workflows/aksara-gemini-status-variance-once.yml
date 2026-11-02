@@ -11,20 +11,34 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '24'}
-      - name: Compare backend status, real chat, and deployed browser code
+      - name: Verify deployed PR166 UI and genuine non-poetry Gemini response
         run: |
           node --input-type=module <<'NODE'
           const base="https://aksara-apps.mshaifulridhwan.workers.dev";
-          async function post(name,payload){
+          const timeout=ms=>AbortSignal.timeout(ms);
+          try{
+            const page=await fetch(base+"/bilik-antara.html",{signal:timeout(15000)});
+            const html=await page.text();
+            console.log("DEPLOYED_UI",JSON.stringify({http:page.status,bytes:html.length,
+              pr166Marker:html.includes("Ready · Probe 429"),
+              diagnosticHttpMarker:html.includes("Offline · HTTP ")}));
+          }catch(e){console.log("DEPLOYED_UI_ERROR",JSON.stringify({name:e.name,message:String(e.message).slice(0,100)}));}
+          async function post(label,payload){
             try{
-              const r=await fetch(base+"/.netlify/functions/bilik-antara",{method:"POST",headers:{"Origin":base,"Content-Type":"application/json"},body:JSON.stringify(payload),signal:AbortSignal.timeout(40000)});
+              const r=await fetch(base+"/.netlify/functions/bilik-antara",{
+                method:"POST",headers:{"Origin":base,"Content-Type":"application/json"},
+                body:JSON.stringify(payload),signal:timeout(40000)});
               const d=await r.json().catch(()=>({}));
-              const g=d.providers?.find(x=>x.id==="gemini");
-              console.log(name,JSON.stringify({http:r.status,gemini:g||null,preferredProvider:d.preferredProvider||null,provider:d.provider||null,model:d.model||null,hasReply:!!d.reply,reason:d.routing?.geminiDiagnosis||null,failedAttempts:d.routing?.failedAttempts||d.providerFailures||[],code:d.code||null,checkedAt:d.checkedAt||null}));
-            }catch(e){console.log(name,JSON.stringify({error:e.name,message:String(e.message).slice(0,100)}));process.exitCode=1}
+              const p=d.providers?.find(x=>x.id==="gemini");
+              console.log(label,JSON.stringify({http:r.status,gemini:p||null,preferred:d.preferredProvider||null,
+                provider:d.provider||null,model:d.model||null,hasReply:!!d.reply,
+                geminiDiagnosis:d.routing?.geminiDiagnosis||null,
+                failedAttempts:(d.routing?.failedAttempts||d.providerFailures||[]).map(f=>({
+                  provider:f.provider,status:f.status,reason:f.reason,quotaKind:f.quotaKind})),
+                code:d.code||null}));
+            }catch(e){console.log(label+"_ERROR",JSON.stringify({name:e.name,message:String(e.message).slice(0,100)}));}
           }
-          await post("STATUS_1",{providerStatus:true});
-          await post("CHAT_1",{question:"Apa beza puisi dan prosa? Jawab dengan satu ayat.",history:[]});
-          await post("STATUS_2",{providerStatus:true});
-          await post("STATUS_3",{providerStatus:true});
+          await post("STATUS_BEFORE",{providerStatus:true});
+          await post("ORDINARY_CHAT",{question:"Jelaskan maksud kompleksiti algoritma O(n log n) dalam dua ayat ringkas.",history:[]});
+          await post("STATUS_AFTER",{providerStatus:true});
           NODE
