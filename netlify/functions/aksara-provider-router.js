@@ -392,7 +392,7 @@ async function checkStatus(cloudflareAI=null){
     const valid=typeof content==="string"?content.trim().length>0:Array.isArray(content)&&content.some(x=>x?.type==="text"&&String(x.text||"").trim());
     const online=valid&&!classifierModel(data.model)&&!classifierReply(content);
     if(online)cooldown.delete(provider.id);
-    return {id:provider.id,status:online?"online":"offline",model:online?(data.model||provider.model):provider.model,latencyMs:Date.now()-started,...(!online?{finishReason:data?.choices?.[0]?.finish_reason||"",outputTokens:data?.usage?.completion_tokens,reasoningTokens:data?.usage?.completion_tokens_details?.reasoning_tokens}:{})};
+    return {id:provider.id,status:online?"online":"offline",latencyMs:Date.now()-started,...(!online?{finishReason:data?.choices?.[0]?.finish_reason||"",outputTokens:data?.usage?.completion_tokens,reasoningTokens:data?.usage?.completion_tokens_details?.reasoning_tokens}:{})};
    }catch(_){
     return {id:provider.id,status:"offline"};
    }finally{clearTimeout(timer);}
