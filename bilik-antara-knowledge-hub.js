@@ -36,9 +36,9 @@
   }catch(_){return null;}
  }
  function wikipediaQuestion(topic){
-  const q=String(topic||"").trim().slice(0,110);
-  return q.length<2?"":"Cari rujukan Wikipedia tentang "+q+
-   ". Bezakan ringkasan ensiklopedia daripada sumber primer dan berikan pautan sebenar. Jika gagal, jelaskan.";
+  const q=String(topic||"").trim().slice(0,70);
+  // Had pembaca Wikipedia awam ialah 120 aksara bagi keseluruhan soalan.
+  return q.length<2?"":"Cari rujukan Wikipedia tentang "+q+".";
  }
  function urlQuestion(url){
   const u=safeLink(url);
