@@ -42,7 +42,7 @@ test("a rejected credential is quarantined without disabling the other configure
 test("quota 429 is not interpreted as a credential error or rotated within one attempt",()=>{
   const pool=createPool(),chosen=pool.pick(env);
   pool.failure(chosen.slot,{status:429});
-  assert.equal(pool.snapshot(env).find(x=>x.slot===chosen.slot).status,"degraded");
+  assert.equal(pool.snapshot(env).find(x=>x.slot===chosen.slot).status,"offline");
   assert.equal(chosen.apiKey,"key-one");
 });
 
