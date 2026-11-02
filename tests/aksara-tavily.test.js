@@ -107,7 +107,7 @@ test("render path uses one blocking core stylesheet and defers secondary assets"
  const fs=require("node:fs");
  const html=fs.readFileSync("bilik-antara.html","utf8");
  const toml=fs.readFileSync("netlify.toml","utf8");
- assert.match(html,/rel="stylesheet" href="bilik-antara\.css\?v=103">/);
+ assert.match(html,/rel="stylesheet" href="bilik-antara\.css\?v=104">/);
  assert.match(html,/href="aksara-header\.css\?v=3" media="print" onload="this\.media='all'"/);
  assert.match(html,/href="bilik-antara-code-execution\.css\?v=1" media="print" onload="this\.media='all'"/);
  assert.match(html,/src="bilik-antara-gemini-status\.js\?v=1" defer/);
