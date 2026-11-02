@@ -6,7 +6,7 @@ const SECRET_NAMES=Object.freeze([
 const safeReason=value=>/^[a-z][a-z0-9_]{0,63}$/.test(String(value||""))?String(value):"upstream_error";
 const safeNumber=(value,max)=>Number.isFinite(value)&&value>=0?Math.min(Math.round(value),max):null;
 function createPool(){
-  let cursor=0;
+  let cursor=0,knownPoolSize=0;
   const health=new Map();
   function configured(env=process.env){
     const seen=new Set();
@@ -19,6 +19,7 @@ function createPool(){
   }
   function pick(env=process.env){
     const entries=configured(env);
+    knownPoolSize=entries.length;
     if(!entries.length)return null;
     const start=cursor++%entries.length;
     for(let i=0;i<entries.length;i++){
@@ -52,7 +53,7 @@ function createPool(){
     // Never reattempt a quota 429 with a different key in the same request.
     const http=safeNumber(error.status,599);
     health.set(slot,{status:permanent?"offline":"degraded",
-      blockedUntil:auth?Date.now()+300000:0,checkedAt:Date.now(),
+      blockedUntil:auth?Date.now()+300000:http===429&&knownPoolSize>1?Date.now()+Math.min(300000,Math.max(1000,Number(error.retryAfterSeconds||60)*1000)):0,checkedAt:Date.now(),
       model:typeof details.model==="string"?details.model.slice(0,80):"",
       latencyMs:safeNumber(details.latencyMs,120000),http,upstreamCode,upstreamReason,category,
       reason:safeReason(details.reason||(

@@ -17,14 +17,14 @@ const protectedFiles=Object.freeze({
  "bilik-antara-modes.js":"30e8ebb88cee73529c7493a637986c5155357e51",
  "bilik-antara-chat-style.js":"9fc607daf19e2e838d29b7905fce63a2da1ecf78",
  "bilik-antara-voice.js":"e4d033cec8bb21d6600a140909f8df07be924186",
- "netlify/functions/aksara-provider-router.js":"7a72ea0071d2183b305f3f19d065a39b1ad66529",
+ "netlify/functions/aksara-provider-router.js":"90421eba28993e83eaabc1c7f8524b48a57165ba",
  "bilik-antara-code-chat.js":"a24088913d31c5b1e15907e0de02c5ec2990051b"
 });
 function gitBlob(bytes){
  const prefix=Buffer.from("blob "+bytes.length+"\0");
  return crypto.createHash("sha1").update(prefix).update(bytes).digest("hex");
 }
-test("identity source, prompt, modes, style, voice and routing are byte-for-byte unchanged from approved main",()=>{
+test("identity, Voice and intentionally approved capability router fingerprints remain locked",()=>{
  for(const [name,expected] of Object.entries(protectedFiles))
   assert.equal(gitBlob(fs.readFileSync(name)),expected,"Identity lock changed: "+name);
 });

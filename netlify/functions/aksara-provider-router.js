@@ -7,6 +7,7 @@
  */
 const {boundedHistory,boundedText,requestControl,readSSE}=require("./lib/aksara-transport");
 const Registry=require("./aksara-model-registry");
+const Capabilities=require("./aksara-capabilities");
 const cooldown=new Map();
 const freeQuotaFailures=new Map(); // 402: real upstream free-quota exhaustion, not a 15-second outage.
 const FREE_QUOTA_RECHECK_MS=15*60*1000;
@@ -125,7 +126,7 @@ function blockedClassifierPrefix(text){
 function errorToCooldown(status){
  return status===429?60000:status>=500||status===408?20000:status===401||status===403||status===404?300000:15000;
 }
-async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix="",mediaImages=[],cloudflareAI=null}){
+async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,bufferedTimeoutMs=timeoutMs,deadline=Date.now()+15000,signal,onDelta,skip=[],only=null,reasoningLevel="medium",task="general",prefer="",reaction=false,firstResponseDeadline=deadline,systemPrefix="",mediaImages=[],cloudflareAI=null,webIntent=null}){
  const images=Array.isArray(mediaImages)?mediaImages.slice(0,3).filter(x=>
    x&&["image/jpeg","image/png","image/webp"].includes(x.mimeType)&&
    typeof x.data==="string"&&x.data.length<=4800000&&/^[A-Za-z0-9+/]+={0,2}$/.test(x.data)):[];
@@ -180,7 +181,21 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    if(provider.id==="openrouter"||provider.id==="workers_ai"){
     providerMessages=[{...providerMessages[0],content:providerMessages[0].content+freeQuality(task,reasoningLevel)},...providerMessages.slice(1)];
    }
+   const builtTools=Capabilities.offered(provider.id,webIntent||{});
+   if(builtTools.length){
+     // Older fallback prompt claimed web tools were absent. Correct it for this request.
+     providerMessages=providerMessages.map((m,i)=>m.role==="system"
+       ?{...m,content:m.content.replace("Tiada alat carian web, pelaksanaan kod atau URL Context aktif pada laluan ini;", "Gunakan hanya alat yang benar-benar diberikan dalam permintaan ini;")
+         .replace("Tiada alat carian, URL atau pelaksanaan kod aktif.", "Alat yang dibekalkan oleh pelayan tersedia.")}
+       :m);
+   }
    const body={model:provider.model,messages:providerMessages,temperature:0.35,max_tokens:outputLimit,...(onDelta?{stream:true}:{} )};
+   if(builtTools.length){
+     body.tools=builtTools;
+     // Buffered result carries executed_tools metadata; SSE deltas do not.
+     delete body.stream;
+   }
+   if(provider.id==="groq"&&builtTools.some(t=>t.type==="browser_search"))body.tool_choice="required";
    if(provider.id==="openrouter")openRouterBody(body,["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"low");
    // Groq GPT-OSS 120B supports bounded effort. Never return hidden reasoning to visitors.
    if(provider.id==="groq"){
@@ -251,7 +266,8 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    }
    freeQuotaFailures.delete(provider.id);
    const finishReason=String(data?.choices?.[0]?.finish_reason||"");
-   return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task,attempts,elapsedMs:Date.now()-attemptStarted};
+   return {reply:text.trim().slice(0,40000),provider:provider.id,model:data.model||provider.model,usage:data.usage||null,partial:finishReason==="length"||text.length>40000,task,attempts,elapsedMs:Date.now()-attemptStarted,
+     toolsOffered:builtTools.map(t=>t.type),toolsUsed:Capabilities.executed(provider.id,data)};
   }catch(err){
    if(signal?.aborted)throw err;
    if(emitted){

@@ -1,0 +1,76 @@
+"use strict";
+const test=require("node:test");
+const assert=require("node:assert/strict");
+const fs=require("node:fs");
+const C=require("../netlify/functions/aksara-capabilities");
+const Own=require("../netlify/functions/aksara-owned-page");
+const {createPool}=require("../netlify/functions/lib/gemini-text-pool");
+const question="Baca https://en.wikipedia.org/wiki/Albert_Einstein dan review.";
+test("Groq provides browser search and code interpreter only when task is eligible",()=>{
+ const task={question,hasLink:true};
+ assert.deepEqual(C.offered("groq",task).map(x=>x.type),["browser_search"]);
+ assert.deepEqual(C.offered("groq",{question,hasLink:true,calculate:true}).map(x=>x.type),["browser_search","code_interpreter"]);
+ assert.deepEqual(C.offered("groq",{...task,sensitive:true}),[]);
+ assert.deepEqual(C.offered("groq",{...task,privateContext:true}),[]);
+ assert.deepEqual(C.offered("groq",task,{AKSARA_GROQ_BROWSER_ENABLED:"false"}),[]);
+});
+test("OpenRouter uses explicitly free HTTP web fetch; paid search is owner-gated",()=>{
+ assert.deepEqual(C.offered("openrouter",{question,hasLink:true}),[
+  {type:"openrouter:web_fetch",parameters:{engine:"openrouter",max_content_tokens:3500}}
+ ]);
+ assert.deepEqual(C.offered("openrouter",{question:"Semak berita teknologi terkini",search:true}),[]);
+ assert.deepEqual(C.offered("openrouter",{question:"Semak berita teknologi terkini",search:true},
+  {AKSARA_OPENROUTER_PAID_SEARCH_ENABLED:"true"}).map(x=>x.type),["openrouter:web_search"]);
+ assert.deepEqual(C.offered("openrouter",{question,hasLink:true,attachment:true}),[]);
+ assert.deepEqual(C.offered("openrouter",{question:"https://localhost/",hasLink:true}),[]);
+});
+test("URL and Groq execution must be evidenced, not inferred from offered tools",()=>{
+ assert.equal(C.urlTrace({candidates:[{urlContextMetadata:{urlMetadata:[
+  {urlRetrievalStatus:"URL_RETRIEVAL_STATUS_SUCCESS"}]}}]},[{url_context:{}}]).status,"success");
+ assert.equal(C.urlTrace({candidates:[{urlContextMetadata:{urlMetadata:[
+  {urlRetrievalStatus:"URL_RETRIEVAL_STATUS_ERROR"}]}}]},[{url_context:{}}]).status,"failed");
+ assert.equal(C.urlTrace({},[{url_context:{}}]).status,"not_reported");
+ assert.deepEqual(C.executed("groq",{choices:[{message:{executed_tools:[{name:"browser_search"},{name:"python"}]}}]}),
+  ["browser_search","code_interpreter"]);
+ assert.deepEqual(C.executed("openrouter",{choices:[{message:{content:"some text"}}]}),[]);
+});
+test("Gemini local function declaration is narrow and private-data free",()=>{
+ const t=C.geminiFunctions({question:"Cari petikan karya puisi tentang ragu",works:true});
+ assert.equal(t[0].functionDeclarations[0].name,"knowledge_search");
+ assert.deepEqual(C.geminiFunctions({question:"Cari puisi https://example.org",works:true,hasLink:true}),[]);
+ assert.deepEqual(C.geminiFunctions({question:"Cari petikan puisi",works:true,sensitive:true}),[]);
+ assert.deepEqual(C.geminiFunctions({question:"Cari petikan puisi",works:true},{AKSARA_GEMINI_FUNCTIONS_ENABLED:"false"}),[]);
+});
+test("Gemini project throttling is slot-scoped and other keys remain eligible",()=>{
+ const pool=createPool(),env={GEMINI_API_KEY:"a",GEMINI_API_KEY_2:"b",GEMINI_API_KEY_3:"c",GEMINI_API_KEY_4:"d"};
+ assert.equal(pool.pick(env).slot,1);
+ pool.failure(1,{status:429,retryAfterSeconds:30});
+ assert.equal(pool.snapshot(env).find(x=>x.slot===1).status,"offline");
+ assert.equal(pool.pick(env).slot,2);
+ assert.deepEqual(pool.configured(env).map(x=>x.slot),[1,2,3,4]);
+ const chat=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
+ assert.match(chat,/function googleWait\(model,slot\)/);
+ assert.match(chat,/googleCooldown\(model,error,poolKey\?\.slot\)/);
+});
+test("Owner-owned-page fetch rejects unlisted hosts and scripts, permits only static HTML",async()=>{
+ assert.equal(Own.pageUrl("Baca https://localhost/admin"),null);
+ assert.equal(Own.pageUrl("Baca https://shaifulridhwan-penulispuisigayabebas.netlify.app/.netlify/functions/bilik-antara"),null);
+ const url="https://shaifulridhwan-penulispuisigayabebas.netlify.app/";
+ let seen;
+ const page=await Own.read("Baca "+url,{fetchImpl:async(input,opts)=>{
+  seen={input,opts};
+  return {ok:true,url,headers:{get(name){return name==="content-type"?"text/html":null}},
+   text:async()=>'<html><head><title>AKSARA</title></head><body>Puisi <script>secret</script> cahaya</body></html>'};
+ }});
+ assert.equal(seen.input,url);
+ assert.equal(seen.opts.redirect,"error");
+ assert.match(page.text,/Puisi/);
+ assert.doesNotMatch(page.text,/secret/);
+ assert.match(page.text,/HTML statik/);
+});
+test("Fallback router receives web task capabilities from Bilik Antara",()=>{
+ const s=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
+ assert.match(s,/const webIntent=\{/);
+ assert.match(s,/deadline,webIntent,firstResponseDeadline/);
+ assert.match(s,/alternative\.toolsOffered/);
+});
