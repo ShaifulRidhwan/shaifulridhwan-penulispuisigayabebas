@@ -225,10 +225,16 @@ exports.handler=async event=>{
           try{
             if(googleWait(fastModel)>0)return {id:"gemini",model:fastModel,status:"offline",retryAfterSeconds:googleWait(fastModel)};
             const test=await callGemini({apiKey,model:fastModel,system:"Pemeriksaan sambungan, jawab ringkas.",contents:[{role:"user",parts:[{text:"Balas OK."}]}],maxTokens:cloudflare?1024:640,thinkingLevel:fastModel.includes("flash-lite")?"minimal":"low",timeoutMs:cloudflare?18500:12000,signal:event.signal});
-            return {id:"gemini",model:fastModel,status:modelText(test?.candidates?.[0])?"online":"offline",latencyMs:Date.now()-time};
+            const verified=!!modelText(test?.candidates?.[0]);
+            // A successful HTTP response without answer text is inconclusive,
+            // not proof that a working chat model is offline.
+            return {id:"gemini",model:fastModel,status:verified?"online":"ready",...(verified?{}:{reason:"health_empty_reply",http:200}),latencyMs:Date.now()-time};
           }catch(e){
             googleCooldown(fastModel,e);
-            return {id:"gemini",model:fastModel,status:e.name==="AbortError"?"ready":"offline",reason:e.name==="AbortError"?"health_timeout":e.status?"upstream_http":"transport_error",...(e.status?{http:e.status}:{}),...(e.quotaKind?{quotaKind:e.quotaKind}:{})};
+            const temporary=e.name==="AbortError"||!e.status||e.status>=500;
+            // A transient probe error should not disable the primary route.
+            // Auth/model errors and genuine quota cooldown still remain offline.
+            return {id:"gemini",model:fastModel,status:temporary?"ready":"offline",reason:e.name==="AbortError"?"health_timeout":e.status>=500?"health_upstream_busy":e.status?"upstream_http":"transport_error",...(e.status?{http:e.status}:{}),...(e.quotaKind?{quotaKind:e.quotaKind}:{})};
           }
         })();
         try{google=await googleHealth.pending;googleHealth.value=google;googleHealth.time=Date.now();}finally{googleHealth.pending=null;}
@@ -524,10 +530,13 @@ exports.handler=async event=>{
   // Gemini is the primary text engine whenever configured and outside cooldown.
   // Hybrid routing still selects fallback providers after an actual Gemini failure.
   // Do not alternate ordinary turns away from a healthy Gemini instance.
-  geminiRouteDecision=apiKey?"gemini_first":"no_gemini_key";
-  // If Gemini is not configured, route text to the available backup pool.
-  // Tool-enabled and multimodal requests retain their existing Gemini path.
-  if(textOnly&&!intent.hasLink&&!tools.length&&!apiKey&&Router.enabled(cloudflareAI)&&
+  // Explicit rollback mode remains available for QA and emergency recovery.
+  // Production (AKSARA_HYBRID_ROUTER=true) always tries configured Gemini first.
+  const legacyFallbackFirst=process.env.AKSARA_HYBRID_ROUTER==="false";
+  geminiRouteDecision=legacyFallbackFirst?"legacy_fallback_first":apiKey?"gemini_first":"no_gemini_key";
+  // Without Gemini, or under explicit rollback, route ordinary text to the
+  // fallback pool. Tools and multimodal retain the original Gemini path.
+  if(textOnly&&!intent.hasLink&&!tools.length&&(!apiKey||legacyFallbackFirst)&&Router.enabled(cloudflareAI)&&
     (!hybrid.enabled||primaryTextProviders.length)){
     const fast=await useAlternative(hybrid.enabled?{prefer:hint,only:primaryTextProviders}:{prefer:hint});
     if(fast&&(fast.statusCode===200||fast.statusCode===499||streamed))return fast;
