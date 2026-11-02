@@ -51,7 +51,7 @@ test('Studio 2.4 removes redundant copy and decorative icons without hiding func
  assert.doesNotMatch(html,/✦|↗|←|↓/);
  assert.doesNotMatch(script,/modelNote|✦|↗/);
  assert.match(html,/<header class="topbar aksara-header">/);
- assert.match(html,/<a class="aksara-nav-link" href="bilik-antara\.html">Bilik Antara<\/a>/);
+ assert.match(html,/<a class="aksara-nav-link" href="https:\/\/shaifulridhwan-penulispuisigayabebas\.netlify\.app\/bilik-antara\.html">Bilik Antara<\/a>/);
  assert.match(script,/ui\.status\.hidden=!message/);
  assert.match(script,/ui\.meta\.hidden=false/);
 });
