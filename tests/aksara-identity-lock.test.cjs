@@ -1,7 +1,9 @@
 "use strict";
 /* Explicit identity compatibility lock for P0–P2 integration. No external API
  * calls, uploads, network fetches or production mutation. To intentionally
- * revise identity later, review and update the fingerprint and contracts. */
+ * revise identity later, review and update the fingerprint and contracts.
+ * v0.3: code-chat fingerprint updated only for explicit C++ fenced/raw detection;
+ * creator identity, personality, Voice and provider locks are untouched. */
 const {test}=require("node:test");
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
@@ -18,7 +20,7 @@ const protectedFiles=Object.freeze({
  "bilik-antara-chat-style.js":"9fc607daf19e2e838d29b7905fce63a2da1ecf78",
  "bilik-antara-voice.js":"e4d033cec8bb21d6600a140909f8df07be924186",
  "netlify/functions/aksara-provider-router.js":"f364a7ac8c0d896a4c39987c24af036b3bbb3428",
- "bilik-antara-code-chat.js":"a24088913d31c5b1e15907e0de02c5ec2990051b"
+ "bilik-antara-code-chat.js":"5267dde2c1dcca0111c63aadb1f2717c1e7d457e"
 });
 function gitBlob(bytes){
  const prefix=Buffer.from("blob "+bytes.length+"\0");
