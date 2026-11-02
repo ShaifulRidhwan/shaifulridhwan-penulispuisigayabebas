@@ -61,7 +61,14 @@ function textPdf(){
   await page.waitForFunction(()=>document.querySelector(".attachment-chip-size")?.textContent?.includes("hlm · teks")||document.querySelector("#docStatus")?.dataset.state==="warning",{timeout:40000});
   const parsedLabel=await page.locator(".attachment-chip-size").innerText();
   const pdfNotice=await page.locator("#docStatus").innerText();
-  assert.match(parsedLabel,/1 hlm · teks/,"PDF.js must extract real text. "+pdfNotice);
+  if(!/1 hlm · teks/.test(parsedLabel)){
+   const diagnosis=await page.evaluate(async raw=>{
+    const file=new File([Uint8Array.from(raw)],"actual.pdf",{type:"application/pdf"});
+    try{const parsed=await window.AksaraPdfReader.read(file);return {text:parsed.text.slice(0,120),pages:parsed.pages};}
+    catch(error){return {message:String(error.message||error),stack:String(error.stack||"").slice(0,550)};}
+   },Array.from(textPdf()));
+   throw Error("PDF.js real extraction failed: "+JSON.stringify(diagnosis)+" / "+pdfNotice);
+  }
   await page.locator('.attachment-chip-remove[aria-label="Buang actual.pdf"]').click();
   // Stub the browser-only extractor to test the deterministic file-routing path.
   await page.evaluate(()=>{
