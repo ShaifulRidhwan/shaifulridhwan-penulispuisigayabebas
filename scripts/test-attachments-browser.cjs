@@ -20,8 +20,10 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   // Historical 100 KB restriction: 150 KB text must now be accepted.
   await page.locator("#attachmentDocument").setInputFiles({name:"long.txt",mimeType:"text/plain",buffer:Buffer.alloc(150000,65)});
   await page.waitForFunction(()=>document.querySelectorAll(".attachment-chip").length===1,{timeout:10000});
-  assert.match(await page.locator("#docStatus").innerText(),/1 fail tersedia/);
+  assert.match(await page.locator("#docStatus").innerText(),/1 fail sedia/);
   assert.equal(await page.locator("#attachmentTray").isVisible(),true);
+  assert.equal(await page.locator("#removeAttachment").isVisible(),false,"One file already has its own remove button");
+  assert.equal(await page.locator("#docStatus").evaluate(el=>getComputedStyle(el).clipPath),"inset(50%)","Ready status must not duplicate filename visually");
   await page.locator("#attachmentDocument").setInputFiles({name:"note.md",mimeType:"text/markdown",buffer:Buffer.from("# Nota ringkas")});
   await page.waitForFunction(()=>document.querySelectorAll(".attachment-chip").length===2,{timeout:10000});
   await page.locator('.attachment-chip-remove[aria-label="Buang long.txt"]').click();
@@ -35,6 +37,16 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator(".attachment-chip").count(),0);
   assert.equal(await page.locator("#attachmentTray").isVisible(),false);
   assert.equal(await page.locator("#removeAttachment").isVisible(),false);
+  // Stub the browser-only extractor to test the deterministic file-routing path.
+  await page.evaluate(()=>{
+   window.AksaraPdfReader={read:async file=>({text:"Isi PDF yang boleh dibaca secara setempat. Halaman puisi.",pages:12,textPages:12,truncated:false})};
+  });
+  await page.locator("#attachmentDocument").setInputFiles({name:"trilogi.pdf",mimeType:"application/pdf",buffer:Buffer.alloc(569000,65)});
+  await page.waitForFunction(()=>document.querySelector(".attachment-chip-name")?.textContent==="trilogi.pdf",{timeout:10000});
+  assert.match(await page.locator(".attachment-chip-size").innerText(),/12 hlm · teks/);
+  assert.equal(await page.locator("#docStatus").getAttribute("data-state"),"ready");
+  assert.equal(await page.locator("#removeAttachment").isVisible(),false);
+  await page.locator('.attachment-chip-remove[aria-label="Buang trilogi.pdf"]').click();
   // Code import is opt-in, no AI call and no automatic execution.
   await page.locator("#attachmentCode").setInputFiles({name:"hello.html",mimeType:"text/html",buffer:Buffer.from("<h1>AKSARA LOCAL IMPORT</h1>")});
   await page.locator("#codeWorkspaceDialog").waitFor({state:"visible",timeout:10000});
