@@ -13,13 +13,13 @@
  const NAMES=Object.freeze({schnell:"FLUX.1 Schnell",klein:"FLUX.2 Klein",ovh:"OVHcloud SDXL Beta"});
  const TTL=600000;
  function create(clock=()=>Date.now()){
-  const histories=new Map();let selected="schnell",current=null,saved="belum_diuji";
+  const histories=new Map(),savedByModel=new Map();let selected="schnell",current=null;
   const normalize=x=>MODELS.includes(x)?x:"schnell";
   function event(item={}){
    const stage=String(item.stage||"");
    if(stage==="pilih"){selected=normalize(item.model);return snapshot();}
    const model=normalize(item.model||selected);
-   if(stage==="mula"){current={model,started:clock(),stage:"menjana"};saved="belum_diuji";}
+   if(stage==="mula"){current={model,started:clock(),stage:"menjana"};savedByModel.set(model,"belum_diuji");}
    else if(stage==="siap"){
     const entry={model,stage:"siap",at:clock(),
      durationMs:Number.isFinite(item.durationMs)?Math.max(0,Math.round(item.durationMs)):null};
@@ -27,8 +27,8 @@
    }else if(["gagal","dihentikan","terhad"].includes(stage)){
     histories.set(model,{model,stage,at:clock(),durationMs:null});
     current=null;
-   }else if(stage==="disimpan")saved="berjaya";
-   else if(stage==="gagal_simpan")saved="gagal";
+   }else if(stage==="disimpan")savedByModel.set(model,"berjaya");
+   else if(stage==="gagal_simpan")savedByModel.set(model,"gagal");
    return snapshot();
   }
   function snapshot(){
@@ -36,7 +36,7 @@
    return {selected,modelName:NAMES[selected],active:current?{...current}:null,
     status:current?.model===selected?"menjana":!last?"belum_diuji":
      age>TTL?"bukti_lama":last.stage,
-    last:last?{...last}:null,age,saved};
+    last:last?{...last}:null,age,saved:savedByModel.get(selected)||"belum_diuji"};
   }
   return Object.freeze({event,snapshot});
  }
