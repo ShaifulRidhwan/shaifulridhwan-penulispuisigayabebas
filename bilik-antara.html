@@ -133,13 +133,14 @@
      <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Voice Chat</button>
     </div>
     <div class="chat-controls">
-     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model yang tersedia"><span class="dot multi-ai-network" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path class="network-links" d="M5 5.5 12 12l7-7M12 12l7.3 7M12 12 4.8 18.5"/><circle class="network-node" cx="5" cy="5.5" r="1.55"/><circle class="network-node" cx="19" cy="5" r="1.55"/><circle class="network-node" cx="19.3" cy="19" r="1.55"/><circle class="network-node" cx="4.8" cy="18.5" r="1.55"/><path class="network-spark" d="m12 7.2 1.25 3.55L16.8 12l-3.55 1.25L12 16.8l-1.25-3.55L7.2 12l3.55-1.25Z"/></svg></span><span id="connectionText">Checking Multi A.I.…</span></button>
+     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Open provider health details"><span class="dot multi-ai-network" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path class="network-links" d="M5 5.5 12 12l7-7M12 12l7.3 7M12 12 4.8 18.5"/><circle class="network-node" cx="5" cy="5.5" r="1.55"/><circle class="network-node" cx="19" cy="5" r="1.55"/><circle class="network-node" cx="19.3" cy="19" r="1.55"/><circle class="network-node" cx="4.8" cy="18.5" r="1.55"/><path class="network-spark" d="m12 7.2 1.25 3.55L16.8 12l-3.55 1.25L12 16.8l-1.25-3.55L7.2 12l3.55-1.25Z"/></svg></span><span id="connectionText">Multi A.I Checking</span></button>
     </div>
    </header>
    <dialog class="multi-ai-dialog" id="multiAiDialog" aria-labelledby="multiAiTitle">
- <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I. · Sambungan</strong><p>Empat penyedia teks Aksara. Status setiap sambungan disemak secara berasingan; Ready bukan Connected. Gemini mempunyai empat sambungan.</p></div><button type="button" id="multiAiClose" aria-label="Tutup status penyedia">×</button></div>
+ <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I · Provider Health</strong><p>Four text providers · Gemini pool 1–4. Ready does not mean Connected.</p><p id="multiAiCheckedAt" class="multi-ai-health-stamp">Not checked yet</p></div><button type="button" id="multiAiClose" aria-label="Close provider health">×</button></div>
+ <div id="multiAiRequestActivity" class="multi-ai-request-note" role="status" hidden></div>
  <div class="multi-ai-list" id="multiAiList" aria-live="polite"></div>
- <div class="multi-ai-actions"><button type="button" id="multiAiRefresh">Semak semula</button></div>
+ <div class="multi-ai-actions"><button type="button" id="multiAiRefresh">Refresh Status</button></div>
 </dialog>
    <dialog class="multi-ai-dialog" id="knowledgeDialog" aria-labelledby="knowledgeTitle" aria-describedby="knowledgeDescription">
  <div class="multi-ai-head"><div><strong id="knowledgeTitle">Pengetahuan &amp; Rujukan</strong><p id="knowledgeDescription">Aksara menggunakan rujukan yang tersedia, nota sesi yang kau benarkan, dan alat pengiraan terhad. Carian semantik masih versi setempat, bukan pangkalan vektor.</p></div><button type="button" id="knowledgeClose" aria-label="Tutup Pengetahuan dan Rujukan">×</button></div>
@@ -186,7 +187,7 @@
  <div class="meta-location-actions"><button id="metaLocationClear" type="button">Padam lokasi</button><button id="metaLocationSave" type="button">Simpan untuk mesej baharu</button></div>
 </dialog>
    <div id="voiceNotice" class="voice-notice" role="status" aria-live="polite" hidden></div>
-    <div id="connectionInfo" class="connection-info" role="status" aria-live="polite"><span id="connectionInfoText"></span><button type="button" id="retryBtn">Cuba semula</button></div>
+    <div id="connectionInfo" class="connection-info" role="status" aria-live="polite"><span id="connectionInfoText"></span><button type="button" id="retryBtn">Retry</button></div>
    <div class="messages" id="chat" role="log" aria-live="polite" aria-relevant="additions" aria-label="Mesej perbualan"></div>
    <div class="starters" id="starters" aria-label="Soalan permulaan">
     <button class="starter" type="button">Siapa Aku</button>
@@ -267,7 +268,8 @@ if(root)root.BilikAntaraChatStyle=api;
 })(typeof globalThis!=="undefined"?globalThis:this);
 
 </script>
-<script src="bilik-antara-gemini-status.js?v=1" defer></script>
+<script src="bilik-antara-gemini-status.js?v=2" defer></script>
+<script src="bilik-antara-multi-ai-status.js?v=1"></script>
 <script>
 (function(){
 "use strict";
@@ -408,21 +410,13 @@ function link(parent,label,url){
 }
 ui.html.setAttribute("data-theme","dark");
 try{localStorage.removeItem("bilik-antara-theme");}catch(_){}
-let connectionRevision=0;
-function status(kind,label,explain){
- connectionRevision++;
- ui.conn.className="connection multi-ai-trigger"+(["ready","online"].includes(kind)?" ready":["error","limited"].includes(kind)?" error":"");
- ui.connText.textContent=label==="Connected"?"Multi A.I Connected":label;
- ui.conn.title=kind==="configured"?"Empat penyedia AI didaftarkan; status semasa perlu disemak satu persatu.":"Semak status empat penyedia AI";
- ui.connInfo.className="connection-info"+(explain?" active"+(["error","limited"].includes(kind)?" error":""):"");
- ui.connInfoText.textContent=explain||"";
- ui.retry.hidden=kind==="ready"||kind==="online"||kind==="limited";
-}
-window.addEventListener("ba:voice-connected",()=>status("online","Multi A.I Connected",""));
-async function probe(){
- if(Date.now()<quotaCooldownUntil){status("limited","Kuota API tengah penuh","Kuota AI tengah penuh. Kita try lagi nanti.");return;}
- return checkProviders();
-}
+const multiHealth=window.AksaraMultiStatus.create({
+ pill:ui.conn,label:ui.connText,activity:ui.connInfo,activityText:ui.connInfoText,
+ retry:ui.retry,stamp:el("multiAiCheckedAt"),requestNote:el("multiAiRequestActivity")
+});
+function status(kind,label,explain){multiHealth.request(kind,label,explain);}
+// Voice connection is independent evidence: it must not color text-provider health green.
+async function probe(){return checkProviders();}
 ui.retry.addEventListener("click",()=>{
  if(busy)return;
  if(ui.input.value.trim()||fileState)submit({preventDefault(){}});else probe();
@@ -504,29 +498,27 @@ window.addEventListener("aksara:gemini-status-ready",()=>renderProviderRows(late
 async function checkProviders(force=false){
  if(multiChecking)return;
  if(!force&&Date.now()-multiLastCheck<20000)return;
- multiChecking=true;el("multiAiRefresh").disabled=true;renderProviderRows(null,multiCatalog);
- if(!busy)status("connecting","Sekejap, aku check connection…","");
- const revision=connectionRevision;
+ multiChecking=true;el("multiAiRefresh").disabled=true;
+ multiHealth.startCheck();
+ if(!latestProviderRows)renderProviderRows(multiHealth.getRows(),multiCatalog);
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),force?24000:12500);
  try{
   const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
    body:JSON.stringify({providerStatus:true,geminiPoolRefresh:force===true}),signal:controller.signal});
-  if(!res.ok)throw Error("Semakan penyedia tidak tersedia");
-  const data=await res.json();if(!Array.isArray(data.providers))throw Error("Status tidak lengkap");
+  if(!res.ok)throw Error("Health check unavailable (HTTP "+res.status+")");
+  const data=await res.json();if(!Array.isArray(data.providers))throw Error("Invalid provider status");
   multiCatalog=data.freeModels||null;
-  renderProviderRows(data.providers,multiCatalog);multiLastCheck=Date.now();
+  multiHealth.update(data);
+  renderProviderRows(multiHealth.getRows(),multiCatalog);
+  multiLastCheck=Date.now();
   const preferred=data.providers.find(p=>p.id===data.preferredProvider&&["online","ready"].includes(p.status))||data.providers.find(p=>p.status==="online");
   if(preferred&&providers.some(([id])=>id===preferred.id)&&(!lastProvider||Date.now()-lastProviderAt>=90000)){
    lastProvider=preferred.id;lastProviderAt=Date.now();
   }
-  if(!busy&&connectionRevision===revision){
-   if(data.someOnline)status("ready","Multi A.I Connected","");
-   else if(data.someReady)status("configured","Multi A.I Ready","");
-   else status("error","Multi A.I tengah offline","");
-  }
  }catch(_){
-  renderProviderRows([],multiCatalog?{...multiCatalog,status:"stale"}:null);
-  if(!busy&&connectionRevision===revision)status("error","Connection belum confirm","");
+  // Network/probe failure must never invent an offline verdict for all providers.
+  multiHealth.failure();
+  renderProviderRows(multiHealth.getRows(),multiCatalog?{...multiCatalog,status:"stale"}:null);
  }
  finally{clearTimeout(timer);multiChecking=false;el("multiAiRefresh").disabled=false;}
 }
