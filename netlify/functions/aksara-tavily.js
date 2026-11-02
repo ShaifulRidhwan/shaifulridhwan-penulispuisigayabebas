@@ -63,6 +63,17 @@ async function lookup(question,options={}){
  const cacheKey=(hasLink?"url:":"search:")+(url||String(question).trim().toLowerCase());
  const hit=cache.get(cacheKey);
  if(hit&&Date.now()-hit.at<CACHE_TTL)return hit.value;
+ // Fail closed if the durable monthly free-tier budget cannot reserve capacity.
+ // Test harnesses can inject reserveImpl; production uses Netlify Blobs.
+ try{
+  if(typeof options.reserveImpl==="function")await options.reserveImpl();
+  else {
+   const {getStore}=require("@netlify/blobs");
+   const {reserve}=require("./lib/aksara-tavily-budget");
+   await reserve({store:getStore({name:"aksara-tavily-monthly-v1",consistency:"strong"}),
+    cap:env.AKSARA_TAVILY_MONTHLY_CREDITS||700});
+  }
+ }catch(_){return {status:"budget-unavailable-or-exhausted",sources:[]};}
  const data=hasLink?await request("/extract",{urls:[url],extract_depth:"basic",format:"markdown",include_images:false},options):
   await request("/search",{query:String(question).trim().slice(0,MAX_QUERY),search_depth:"basic",
    topic:"general",max_results:4,include_answer:false,include_raw_content:false,include_images:false},options);
