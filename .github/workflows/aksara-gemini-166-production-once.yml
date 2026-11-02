@@ -1,0 +1,31 @@
+name: AKSARA Gemini PR166 production delivery diagnostic once
+on:
+  push:
+    branches: [diagnostic/gemini-status-variance-20261102]
+    paths: ['.github/workflows/aksara-gemini-166-production-once.yml']
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - name: Verify actual Worker UI release and ordinary Gemini inference
+        run: |
+          node --input-type=module <<'NODE'
+          const origin="https://aksara-apps.mshaifulridhwan.workers.dev";
+          const page=await fetch(origin+"/bilik-antara.html?verify=pr166",{
+            headers:{"cache-control":"no-cache"},signal:AbortSignal.timeout(15000)});
+          const html=await page.text();
+          console.log("RELEASE_UI",JSON.stringify({http:page.status,hasPr166Label:html.includes("Ready · Probe 429"),size:html.length}));
+          async function post(name,payload){
+            try{const r=await fetch(origin+"/.netlify/functions/bilik-antara",{method:"POST",headers:{"Origin":origin,"Content-Type":"application/json"},body:JSON.stringify(payload),signal:AbortSignal.timeout(32000)});
+            const d=await r.json().catch(()=>({}));
+            console.log(name,JSON.stringify({http:r.status,gemini:d.providers?.find(x=>x.id==="gemini"),preferred:d.preferredProvider,
+              provider:d.provider,model:d.model,hasReply:!!d.reply,
+              diagnosis:d.routing?.geminiDiagnosis,failedAttempts:d.routing?.failedAttempts,code:d.code}));
+            }catch(e){console.log(name,JSON.stringify({error:e.name}))}}
+          await post("HEALTH",{providerStatus:true});
+          await post("CHAT",{question:"Kenapa graviti boleh mempengaruhi perjalanan masa menurut Einstein?",history:[]});
+          NODE
