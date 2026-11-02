@@ -513,8 +513,9 @@ test("Publisher RSS extracts exact-dated source links and rejects untrusted arti
  assert.equal(sources[0].date,"2026-11-02");
  assert.equal(sources[0].title,"Model AI baharu & benchmark");
  const out=R.render({sources,targetDate:"2026-11-02"});
- assert.match(out,/metadata RSS penerbit/);
- assert.match(out,/https:\/\/techcrunch\.com\/2026\/11\/02\/model-ai\//);
+ assert.match(out,/RSS penerbit/);
+ assert.match(out,/Sumber Semakan/);
+ assert.doesNotMatch(out,/https?:\/\//);
 });
 test("RSS fallback fetches only its fixed publisher feed endpoints",async()=>{
  const R=require("../netlify/functions/aksara-public-news-rss");
@@ -586,4 +587,30 @@ test("Groq 429 + Google Grounding 404 can return dated publisher RSS links",asyn
  assert.equal(data.routing.googleGrounding.status,"model_unavailable");
  assert.match(data.reply,/metadata RSS penerbit/);
  assert.match(data.disclaimer,/belum diaudit/);
+});
+
+test("RSS AI precision: reject unrelated Founder Summit even when category feed says AI",()=>{
+ const R=require("../netlify/functions/aksara-public-news-rss");
+ assert.equal(R.relevantHeadline("2 days till TechCrunch Founder Summit: Boston founders don't need Silicon Valley"),false);
+ assert.equal(R.relevantHeadline("OpenAI is finally merging ChatGPT's chat and Work tabs"),true);
+ assert.equal(R.relevantHeadline("AI agents power latest scientific research"),true);
+ assert.equal(R.relevantHeadline("Investment in non-AI startup accelerates"),true);
+ assert.equal(R.relevantHeadline("Startup funding raises record cash"),false);
+ const xml="<rss><channel>"+
+  "<item><title>2 days till TechCrunch Founder Summit: Boston founders don't need a Silicon Valley address</title>"+
+  "<link>https://techcrunch.com/2026/11/02/founder-summit/</link>"+
+  "<pubDate>Mon, 02 Nov 2026 13:10:00 GMT</pubDate>"+
+  "<description>Startup leaders to discuss AI, fundraising and investments</description></item>"+
+  "<item><title>OpenAI is finally merging ChatGPT's chat and Work tabs</title>"+
+  "<link>https://techcrunch.com/2026/11/02/openai-tabs/</link>"+
+  "<pubDate>Mon, 02 Nov 2026 12:10:00 GMT</pubDate>"+
+  "<description>OpenAI product story</description></item></channel></rss>";
+ const found=R.parse(xml,R.FEEDS[0],Date.UTC(2026,10,2,14,35),"2026-11-02");
+ assert.deepEqual(found.map(x=>x.title),["OpenAI is finally merging ChatGPT's chat and Work tabs"]);
+ const rendered=R.render({sources:found,targetDate:"2026-11-02"});
+ assert.equal((rendered.match(/OpenAI is finally/g)||[]).length,1);
+ assert.doesNotMatch(rendered,/(?:founder summit|https:\/\/)/i);
+ assert.match(rendered,/Sumber Semakan/);
+ // Clickable source links remain in the structured source metadata.
+ assert.equal(found[0].url,"https://techcrunch.com/2026/11/02/openai-tabs/");
 });
