@@ -312,13 +312,25 @@ test("Bilik message autoscroll and initial viewport avoid unnecessary forced geo
  assert.match(source,/if\(followBottom\)scrollDown\(\)/);
 });
 
-test("Netlify QA Bilik alias bypasses only the legacy UI redirect",()=>{
+test("Bilik Antara now uses Netlify as its canonical UI without redirecting to Cloudflare",()=>{
  const redirects=fs.readFileSync("_redirects","utf8");
- const headers=fs.readFileSync("_headers","utf8");
+ const homepage=fs.readFileSync("index.html","utf8");
  const lines=redirects.split(/\r?\n/).filter(s=>s&&!s.trim().startsWith("#"));
- const qaIndex=lines.findIndex(s=>s.trim()==="/bilik-antara-netlify-qa.html /bilik-antara.html 200!");
- const normalIndex=lines.findIndex(s=>/^\/bilik-antara\.html\s+https:\/\/aksara-apps\.mshaifulridhwan\.workers\.dev\/bilik-antara\.html\s+302!\s*$/.test(s));
- assert.ok(qaIndex>=0&&normalIndex>qaIndex,"QA rewrite must precede the unchanged production redirect");
- assert.match(headers,/\/bilik-antara-netlify-qa\.html\s+X-Robots-Tag: noindex, nofollow\s+Cache-Control: no-store/);
- assert.match(html,/const ENDPOINT="\/\.netlify\/functions\/bilik-antara"/,"Netlify QA must call same-origin Netlify Functions");
+ assert.ok(!lines.some(s=>/^\/bilik-antara(?:\.html)?\s+https:\/\/aksara-apps\./.test(s)));
+ assert.ok(lines.some(s=>s.trim()==="/bilik-antara /bilik-antara.html 301"));
+ assert.equal((homepage.match(/href="bilik-antara\.html"/g)||[]).length,2);
+ assert.match(html,/const ENDPOINT="\/\.netlify\/functions\/bilik-antara"/);
+ assert.ok(!redirects.includes("bilik-antara-netlify-qa.html"),"QA alias is no longer required");
+});
+test("Each AI answer shows a verified provider icon label and persists provenance",()=>{
+ const suite=fs.readFileSync("bilik-antara-suite.css","utf8");
+ for(const id of ["gemini","groq","workers_ai","openrouter"]){
+  assert.match(html,new RegExp("(?<![a-z_])"+id+":\\["));
+ }
+ for(const label of ["Gemini","Groq","Workers AI","OpenRouter"])assert.ok(html.includes('"'+label+'"'));
+ assert.match(html,/providerMarks\[data\?\.provider\]/);
+ assert.match(html,/provider:data\.provider\|\|null,model:data\.model\|\|null/);
+ assert.match(html,/role==="assistant"&&data\?\.mode!=="code"/);
+ assert.match(html,/bilik-antara-suite\.css\?v=9/);
+ assert.match(suite,/\.message\.ai \.message-provider\{/);
 });
