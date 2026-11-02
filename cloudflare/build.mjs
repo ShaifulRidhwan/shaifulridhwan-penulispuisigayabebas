@@ -7,7 +7,7 @@ import {fileURLToPath} from "node:url";
 const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,".."),out=path.join(here,"dist");
 const home="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
-const prefix=/^(?:bilik-antara(?:[.-])|studio-antara(?:[.-])|antara-cahaya-dan-gelap(?:[.-])|perpustakaan-aksara(?:[.-])|favicon-aksara-ai(?:[.-])|favicon-antara-cahaya-dan-gelap(?:[.-])|aksara-header\.css$|aksara-background-cahaya-gelap\.webp$|aksara-bilik-antara-ambient\.mp4$)/;
+const prefix=/^(?:bilik-antara(?:[.-])|studio-antara(?:[.-])|antara-cahaya-dan-gelap(?:[.-])|perpustakaan-aksara(?:[.-])|favicon-aksara-ai(?:[.-])|favicon-antara-cahaya-dan-gelap(?:[.-])|aksara-header\.css$|aksara-background-cahaya-gelap\.webp$|aksara-celestial-(?:mobile|desktop)\.webp$|aksara-bilik-antara-ambient\.mp4$)/;
 function safe(pathname){return pathname&&!pathname.includes("..")&&!pathname.startsWith(".")&&!pathname.includes("\\");}
 await rm(out,{recursive:true,force:true});await mkdir(out,{recursive:true});
 const listed=(await readdir(root,{withFileTypes:true})).filter(x=>x.isFile()&&prefix.test(x.name)).map(x=>x.name);
@@ -60,10 +60,13 @@ readerHtml=readerHtml.replace(/href=(["'])\/?index\.html\1/g,(_,q)=>"href="+q+ho
 await writeFile(reader,readerHtml);
 
 // Workers Static Assets _headers rules apply to responses from asset binding.
-// Restrict caching to Bilik video; version the media URL when content changes.
+// New static art is versioned. Retain legacy assets for safe rollback.
 await writeFile(path.join(out,"_headers"),[
- "# Bilik Antara 30 FPS video; replace media with a bumped ?v= value.",
- "/bilik-antara-background.mp4",
+ "# AKSARA static celestial wallpapers; URL version bump required on replacement.",
+ "/aksara-celestial-mobile.webp",
+ "  Cache-Control: public, max-age=2592000",
+ "  X-Content-Type-Options: nosniff",
+ "/aksara-celestial-desktop.webp",
  "  Cache-Control: public, max-age=2592000",
  "  X-Content-Type-Options: nosniff",
 ].join(String.fromCharCode(10))+String.fromCharCode(10));
