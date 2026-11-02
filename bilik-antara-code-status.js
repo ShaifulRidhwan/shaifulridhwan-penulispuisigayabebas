@@ -89,7 +89,7 @@ menu.querySelector("#codeEvalOpen").addEventListener("click",()=>{closeMenu();wi
 menu.querySelectorAll("[data-code-language]").forEach(btn=>btn.addEventListener("click",()=>{
  const language=btn.dataset.codeLanguage;
  if(!engine.available.includes(language))return;
- if(language==="javascript"&&!pill.classList.contains("ready"))return;
+ if(language==="javascript"&&health.snapshot().rows.find(row=>row.language==="javascript")?.status!=="verified")return;
  closeMenu();
  window.dispatchEvent(new CustomEvent("aksara:code-language",{detail:{language}}));
  if(language==="cpp"){window.dispatchEvent(new CustomEvent("aksara:code-workspace-open",{detail:{language:"cpp"}}));return;}
@@ -116,7 +116,7 @@ function renderHealth(){
   if(row.language==="javascript"&&state.checking)name="Checking…";
   cell.textContent=name;
   cell.className="multi-ai-state "+(row.status==="verified"?"is-online":row.status==="unavailable"?"is-offline":
-   row.status==="available"||row.status==="not-tested"?"is-ready":"is-muted");
+   row.status==="available"?"is-ready":"is-muted");
   cell.title=row.status==="verified"?"Verified by "+row.source+" · "+Math.round((row.age||0)/1000)+"s ago":
    row.status==="not-tested"?"Load only when manually executed. No background download.":
    row.reason||"Not verified yet";
@@ -128,7 +128,7 @@ function renderHealth(){
  pill.setAttribute("aria-label","Code Engine. Runtime: "+healthLabel+". AI Execution: "+
   execLabel+". "+state.verified+" of 5 runtimes verified. Open runtime details.");
  const checked=menu.querySelector("#codeHealthCheckedAt");
- checked.textContent=(state.lastCheckedAt?"Last checked: "+state.checkedAgo:"Not checked yet")+
+ checked.textContent=(state.lastCheckedAt?"Last JavaScript self-test: "+state.checkedAgo:"JavaScript self-test: Not run")+
   " · "+state.verified+"/5 runtimes verified";
  checked.dataset.healthState=state.overall;
  const note=menu.querySelector("#codeEngineActivity");
