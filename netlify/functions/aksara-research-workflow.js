@@ -40,7 +40,8 @@ async function research(question,intent,{enabled=true,attachment=false,account=f
   const web=await PublicWeb.search(question,{attachment,privateContext,sensitive:intent?.sensitive,hasLink:false,signal});
   if(web.sources.length)return {sources:web.sources,status:"search-snippets"};
   // No fabricated current information when live search is unavailable.
-  return {sources:[],status:tavily.status==="unavailable"?tavily.status:web.status};
+  // Preserve a specific Tavily failure instead of masking it as Brave-not-configured.
+  return {sources:[],status:tavily.status==="not-configured-or-ineligible"?web.status:tavily.status};
  }
  const refs=await publicReferences(question,intent,attachment,account);
  const sources=curate(refs);
