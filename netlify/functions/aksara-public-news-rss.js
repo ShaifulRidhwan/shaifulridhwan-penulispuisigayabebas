@@ -47,7 +47,10 @@ function field(xml,name){
  // categories alone are too weak and caused Founder Summit to appear as AI news.
 const AI_HEADLINE=/(?:\b(?:ai|a\.i\.|artificial intelligence|kecerdasan buatan|openai|chatgpt|gpt-\d|gemini|deepseek|anthropic|claude|llm|llms|generative ai|machine learning|deep learning|neural network(?:s)?|language model(?:s)?|ai agent(?:s)?|copilot|chatbot(?:s)?|large language model(?:s)?)\b)/i;
 function relevantHeadline(title){
- return typeof title==="string"&&AI_HEADLINE.test(title);
+ if(typeof title!=="string")return false;
+ // A literal "non-AI" news headline is not positive evidence of AI coverage.
+ if(/\bnon[- ]AI\b/i.test(title))return false;
+ return AI_HEADLINE.test(title);
 }
 function parse(xml,feed,now=Date.now(),targetDate=null){
  if(typeof xml!=="string"||xml.length>400000)return [];
