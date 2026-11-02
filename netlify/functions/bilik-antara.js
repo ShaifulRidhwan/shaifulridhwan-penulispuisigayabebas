@@ -677,15 +677,19 @@ exports.handler=async event=>{
       firstResponseDeadline:Math.min(deadline,started+14500),timeoutMs:11500,bufferedTimeoutMs:11500});
     if(live?.statusCode===200)return live;
   }
+  let googleGroundingDiagnosis={model:GoogleGrounding.MODEL,status:"not_attempted"};
   // Dedicated public-search route: Gemini 2.5 Flash-Lite offers a free-tier
   // Google Search allowance, unlike Gemini 3.x's standard free API tier.
   // Never include private history/memory/attachments or switch the chat/voice model.
   // A response counts as grounded only with real webSearchQueries AND source URLs.
-  if(apiKey&&GoogleGrounding.eligible({...webIntent,question,search:intent.search})&&remaining()>1200){
+  const publicGroundingEligible=GoogleGrounding.eligible({...webIntent,question,search:intent.search});
+  if(apiKey&&publicGroundingEligible&&remaining()>1200){
     const grounding=await GoogleGrounding.search({question,apiKey,signal:event.signal,
       deadline:Math.min(deadline,started+20500)});
-    log("google_search_grounding",{status:grounding.status,model:GoogleGrounding.MODEL,
-      ...(grounding.http?{http:grounding.http}:{})});
+    googleGroundingDiagnosis={model:GoogleGrounding.MODEL,status:grounding.status,
+      ...(grounding.http?{http:grounding.http}:{}),
+      ...(grounding.finishReason?{finishReason:grounding.finishReason}:{})};
+    log("google_search_grounding",googleGroundingDiagnosis);
     if(grounding.status==="success"){
       lastTextProvider="gemini";lastTextSuccessAt=Date.now();
       return result(200,{
@@ -700,6 +704,9 @@ exports.handler=async event=>{
     }
     providerFailures.push({provider:"google_search_grounding",model:GoogleGrounding.MODEL,
       status:grounding.http||"unavailable",reason:grounding.status});
+  }else if(intent.search&&!intent.hasLink){
+    googleGroundingDiagnosis={model:GoogleGrounding.MODEL,
+      status:!apiKey?"no_gemini_key":!publicGroundingEligible?"not_eligible":"insufficient_time"};
   }
   // A request to RUN Python/code needs execution, not merely a correct answer.
   // Use the provider's verified sandbox, with the existing free-tier guard.
@@ -839,12 +846,24 @@ exports.handler=async event=>{
       const failure=[...providerFailures].reverse().find(x=>x.provider==="groq");
       const cooldown=Router.availability(cloudflareAI).find(x=>x.provider==="groq")?.retryAfterSeconds||0;
       const diagnostic=failure?(typeof failure.status==="number"?"HTTP "+failure.status:String(failure.reason||"unknown").slice(0,40)):cooldown?"Groq cooldown "+cooldown+"s":"alat browser_search tidak mengembalikan bukti";
+      const groundingReason=googleGroundingDiagnosis.status==="model_unavailable"?
+        "Model 2.5 mungkin tidak tersedia untuk projek API ini. Google kini mengehadkan akses kepada projek yang pernah menggunakannya.":
+        googleGroundingDiagnosis.status==="quota_exceeded"?"Kuota Grounding atau model Google telah dicapai.":
+        googleGroundingDiagnosis.status==="no_grounding_evidence"?"Google tidak mengembalikan metadata carian dan sumber yang cukup untuk pengesahan.":
+        googleGroundingDiagnosis.status==="not_eligible"?"Permintaan ini tidak memenuhi syarat privasi atau alat Grounding dimatikan.":
+        googleGroundingDiagnosis.status==="timeout"?"Carian Google tamat masa.":
+        "Carian Google belum berjaya disahkan.";
+      const googleStatus=googleGroundingDiagnosis.status+
+        (googleGroundingDiagnosis.http?" (HTTP "+googleGroundingDiagnosis.http+")":"");
       return result(200,{mode:"local-limitation",provider:"local",model:"gemini-news-evidence-guard",
         thoughtMode,researchStatus:researchResult.status,
-        reply:"Gemini berjaya menjawab, tetapi jawapan itu bukan hasil carian web yang disahkan. Groq Browser Search belum memberikan bukti carian ("+diagnostic+"). Aku tak akan reka berita terkini atau mendakwa tiada alat web langsung. Carian live belum berjaya untuk permintaan ini.",
+        reply:"Berita terkini belum boleh disahkan. Groq Browser Search: "+diagnostic+
+          ". Google Search Grounding ("+GoogleGrounding.MODEL+"): "+googleStatus+
+          ". "+groundingReason+" Jawapan Gemini biasa bukan hasil carian web yang disahkan, jadi aku tidak akan reka tajuk atau sumber.",
         sources:[],toolsUsed:[],toolsOffered:tools.map(t=>Object.keys(t)[0]),
         reviewApplied:false,disclaimer:"Tiada sumber berita live yang disahkan; jawapan Gemini tanpa grounding disekat.",
-        routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()}},H);
+        routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis(),
+          googleGrounding:googleGroundingDiagnosis}},H);
     }
     if(unverifiedReview){
       return result(200,{mode:"local-limitation",provider:"local",model:"gemini-url-evidence-guard",

@@ -22,6 +22,14 @@ function verified(data){
  return Array.isArray(queries)&&queries.some(x=>typeof x==="string"&&x.trim())&&sources.length&&reply
   ?{reply,sources,queries:queries.length,model:MODEL}:null;
 }
+function classifyHttp(status){
+ if(status===400||status===422)return "invalid_request";
+ if(status===401||status===403)return "access_denied";
+ if(status===402)return "billing_required";
+ if(status===404)return "model_unavailable";
+ if(status===429)return "quota_exceeded";
+ return status>=500?"upstream_unavailable":"upstream_http";
+}
 async function search({question,apiKey,signal,deadline=Date.now()+8000,fetchImpl=fetch}={}){
  if(!apiKey)return {status:"not_configured"};
  const budget=Math.min(9000,Math.max(1,deadline-Date.now()));
@@ -38,10 +46,16 @@ async function search({question,apiKey,signal,deadline=Date.now()+8000,fetchImpl
     generationConfig:{maxOutputTokens:1700,temperature:0.3}
    })
   });
-  if(!response.ok)return {status:"upstream_http",http:response.status};
+  if(!response.ok)return {status:classifyHttp(response.status),http:response.status};
   const data=await response.json();
   const evidence=verified(data);
-  if(!evidence)return {status:"no_grounding_evidence"};
+  if(!evidence){
+   const meta=data?.candidates?.[0]?.groundingMetadata||{};
+   const finish=String(data?.candidates?.[0]?.finishReason||"").slice(0,30);
+   return {status:"no_grounding_evidence",hasSearchQueries:Array.isArray(meta.webSearchQueries)&&meta.webSearchQueries.length>0,
+    hasSources:Array.isArray(meta.groundingChunks)&&meta.groundingChunks.length>0,
+    ...( /^(STOP|MAX_TOKENS|SAFETY|RECITATION|OTHER)$/.test(finish)?{finishReason:finish}:{})};
+  }
   return {status:"success",...evidence,usage:data.usageMetadata||null};
  }catch(e){
   return {status:e?.name==="AbortError"?"timeout":"upstream_error"};

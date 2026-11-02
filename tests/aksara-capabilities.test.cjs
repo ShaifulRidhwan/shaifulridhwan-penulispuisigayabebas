@@ -436,3 +436,58 @@ test("Groq browser 429 hands public news to verified Google Search Grounding wit
  assert.equal(searchCalled,1);
  assert.equal(ordinaryGemini,0);
 });
+
+test("Google grounding exposes model access, quota and empty evidence distinctly",async()=>{
+ const G=require("../netlify/functions/aksara-google-grounding");
+ for(const [http,status] of [[404,"model_unavailable"],[429,"quota_exceeded"],[403,"access_denied"],[400,"invalid_request"]]){
+  const out=await G.search({question:"Cari berita AI terkini",apiKey:"mock",
+   fetchImpl:async()=>Response.json({error:{message:"DO_NOT_LEAK_UPSTREAM_ERROR"}},{status:http})});
+  assert.equal(out.status,status);
+  assert.equal(out.http,http);
+  assert.ok(!JSON.stringify(out).includes("DO_NOT_LEAK_UPSTREAM_ERROR"));
+ }
+ const empty=await G.search({question:"Cari berita AI terkini",apiKey:"mock",
+  fetchImpl:async()=>Response.json({candidates:[{content:{parts:[{text:"Ungrounded guess"}]},
+   groundingMetadata:{webSearchQueries:["AI news 2026"]},finishReason:"STOP"}]})});
+ assert.equal(empty.status,"no_grounding_evidence");
+ assert.equal(empty.hasSearchQueries,true);
+ assert.equal(empty.hasSources,false);
+});
+test("Production news guard reports Google 2.5 HTTP 404 after Groq 429, without guessing news",async t=>{
+ setupEvidenceEnvironment(t);
+ const oldGround=process.env.AKSARA_GOOGLE_SEARCH_GROUNDING;
+ process.env.AKSARA_GOOGLE_SEARCH_GROUNDING="true";
+ t.after(()=>oldGround===undefined?delete process.env.AKSARA_GOOGLE_SEARCH_GROUNDING:
+  process.env.AKSARA_GOOGLE_SEARCH_GROUNDING=oldGround);
+ const {handler}=require("../netlify/functions/bilik-antara");
+ let googleSearchCalled=0,ordinaryGeminiCalled=0;
+ global.fetch=async(url,options)=>{
+  const u=String(url);
+  if(u.includes("api.groq.com"))return Response.json({error:{message:"Requests per minute limit reached"}},
+   {status:429,headers:{"retry-after":"1"}});
+  if(u.includes("googleapis")){
+   const body=JSON.parse(options.body);
+   if(u.includes("gemini-2.5-flash-lite")&&body.tools?.some(x=>x.google_search)){
+    googleSearchCalled++;
+    return Response.json({error:{message:"model unavailable private upstream text"}},{status:404});
+   }
+   ordinaryGeminiCalled++;
+   return Response.json({candidates:[{content:{parts:[{text:"Fabricated recent news"}]},finishReason:"STOP"}]});
+  }
+  throw Error("Unexpected route "+u);
+ };
+ const out=await handler({httpMethod:"POST",headers:{
+  origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+  "x-nf-client-connection-ip":"qa-grounding-diagnostic-404"
+ },body:JSON.stringify({question:"Cari tiga berita AI terkini pada 2 November 2026 dan sertakan sumber."})});
+ const data=JSON.parse(out.body);
+ assert.equal(out.statusCode,200);
+ assert.equal(googleSearchCalled,1);
+ assert.equal(ordinaryGeminiCalled,1);
+ assert.equal(data.provider,"local");
+ assert.equal(data.routing.googleGrounding.status,"model_unavailable");
+ assert.equal(data.routing.googleGrounding.http,404);
+ assert.match(data.reply,/Google Search Grounding/);
+ assert.match(data.reply,/HTTP 404/);
+ assert.doesNotMatch(data.reply,/Fabricated recent news|private upstream text/);
+});
