@@ -7,17 +7,15 @@ const script=fs.readFileSync("bilik-antara-video.js","utf8");
 const html=fs.readFileSync("bilik-antara.html","utf8");
 const css=fs.readFileSync("bilik-antara-video.css","utf8");
 
-test("Only Bilik Antara uses ambient MP4; original static artwork remains",()=>{
- assert.match(html,/id="aksaraAmbientVideo"/);
- assert.match(html,/aksara-bilik-antara-ambient\.mp4/);
- assert.match(html,/muted loop playsinline preload="none"/);
- assert.match(html,/poster="aksara-background-cahaya-gelap\.webp"/);
- assert.match(css,/\.world-scene\.has-ambient-video \.world-art\{animation-play-state:paused\}/);
- assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+test("Bilik Antara uses only static celestial wallpaper in the live page",()=>{
+ assert.doesNotMatch(html,/aksaraAmbientVideo|aksara-bilik-antara-ambient\.mp4|bilik-antara-video\.js\?v=2/);
+ assert.match(html,/aksara-celestial-desktop\.webp\?v=1/);
+ assert.match(html,/aksara-celestial-mobile\.webp\?v=1/);
+ assert.match(css,/\.world-scene\.has-ambient-video \.world-art/);
  for(const page of ["studio-antara.html","perpustakaan-aksara.html"]){
   assert.doesNotMatch(fs.readFileSync(page,"utf8"),/aksaraAmbientVideo|aksara-bilik-antara-ambient\.mp4/);
  }
- assert.doesNotThrow(()=>new vm.Script(script));
+ assert.doesNotThrow(()=>new vm.Script(script)); // Legacy module kept for rollback only.
 });
 
 function harness({saveData=false,reduced=false,hidden=false}={}){
@@ -87,7 +85,8 @@ test("Short buffering never flashes the static wallpaper; real pause and failure
  h.emit("video","error");
  assert.equal(h.classes.has("has-ambient-video"),false);
 });
-test("Updated video and controller URLs bypass prior browser cache",()=>{
- assert.ok(html.includes('aksara-bilik-antara-ambient.mp4?v=1'));
- assert.ok(html.includes('bilik-antara-video.js?v=2'));
+test("Versioned static wallpaper links bypass prior browser cache",()=>{
+ assert.ok(html.includes("aksara-celestial-mobile.webp?v=1"));
+ assert.ok(html.includes("aksara-celestial-desktop.webp?v=1"));
+ assert.ok(html.includes("bilik-antara.css?v=103"));
 });
