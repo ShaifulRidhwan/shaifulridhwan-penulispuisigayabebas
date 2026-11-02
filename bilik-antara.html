@@ -220,7 +220,152 @@
      </button>
      <input class="sr-only" type="file" id="documentUpload" multiple accept=".txt,.md,.csv,.json,.docx,.pdf,image/jpeg,image/png,image/webp,image/gif,audio/mpeg,audio/wav,audio/mp4,audio/ogg,audio/webm,video/mp4,video/webm" aria-label="Pilih lampiran">
      <input class="sr-only" type="file" id="attachmentPhoto" multiple accept="image/jpeg,image/png,image/webp,image/gif" aria-label="Pilih foto">
-     <input class="sr-only" type="file" id="attachmentCamera" accept="image}
+     <input class="sr-only" type="file" id="attachmentCamera" accept="image/*" capture="environment" aria-label="Ambil gambar melalui kamera">
+     <input class="sr-only" type="file" id="attachmentVideo" multiple accept="video/mp4,video/webm" aria-label="Pilih video">
+     <input class="sr-only" type="file" id="attachmentDocument" multiple accept=".txt,.md,.csv,.json,.docx,.pdf" aria-label="Pilih dokumen">
+     <input class="sr-only" type="file" id="attachmentAudio" multiple accept=".mp3,.m4a,.wav,.ogg,.webm,audio/*" aria-label="Pilih audio">
+     <input class="sr-only" type="file" id="attachmentCode" multiple accept=".html,.css,.js,.ts,.py,.sql,.cpp" aria-label="Pilih fail kod untuk Code Workspace">
+     <textarea rows="1" id="input" placeholder="" aria-label="Tulis mesej untuk Aksara A.I."></textarea>
+      <button type="button" id="stopBtn" class="outline-btn" aria-label="Hentikan respons" hidden>Henti</button>
+      <button type="button" id="thoughtMode" class="thought-mode" data-mode="cahaya" aria-label="Thinking Mode. Aktif: Cahaya" aria-haspopup="dialog" aria-controls="thoughtModeDialog" aria-expanded="false" title="Thinking Mode · Cahaya">
+       <svg class="thinking-brain" viewBox="0 0 24 24" aria-hidden="true"><path class="brain-outline" d="M12 20V5a3 3 0 0 0-5.8-.9A3.7 3.7 0 0 0 3.5 9a3.4 3.4 0 0 0 .1 5.4A3.6 3.6 0 0 0 6.8 19 3 3 0 0 0 12 20Zm0 0V5a3 3 0 0 1 5.8-.9A3.7 3.7 0 0 1 20.5 9a3.4 3.4 0 0 1-.1 5.4A3.6 3.6 0 0 1 17.2 19 3 3 0 0 1 12 20Z"/><path class="brain-circuits" d="M5.5 9h3l2 2.1v3.2M18.5 9h-3l-2 2.1v3.2M6.2 15.5h2.6m6.4 0h2.6"/><circle class="brain-signal" cx="10.5" cy="14.3" r=".75"/><circle class="brain-signal" cx="13.5" cy="14.3" r=".75"/></svg>
+      </button>
+      <button type="submit" id="sendBtn" class="send-btn" aria-label="Hantar soalan" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 14-9-3.6 18L11 13l-6-1Z"/><path d="m11 13 8-10"/></svg></button>
+    </form>
+   </div>
+  </section>
+ </main>
+ <footer class="footer-note">BILIK ANTARA · CAHAYA &amp; GELAP · Bukan semua jawapan itu kebenaran.</footer>
+</div>
+<script>
+(function(root){
+"use strict";
+const emoji=/\p{Extended_Pictographic}|\p{Regional_Indicator}|[0-9#*]\uFE0F?\u20E3/u;
+const segments=typeof Intl.Segmenter==="function"?new Intl.Segmenter("ms",{granularity:"grapheme"}):null;
+function glyphs(text){return segments?[...segments.segment(text)].map(x=>x.segment):Array.from(text);}
+function count(text){return glyphs(String(text||"")).filter(x=>emoji.test(x)).length;}
+function pair(text){
+ if(/sedih|kehilangan|meninggal|duka|krisis|kesakitan|bunuh diri/i.test(text))return ["🤍","🫂"];
+ if(/kod|coding|program|ralat|javascript|python|api/i.test(text))return ["💻","🔧"];
+ if(/puisi|sajak|pantun|menulis|karya|novel/i.test(text))return ["✍️","✨"];
+ if(/belajar|sains|konsep|pengetahuan|sejarah/i.test(text))return ["💡","📚"];
+ return ["🙂","✨"];
+}
+function reply(value,options={}){
+ const text=String(value||"");if(!text.trim())return text;
+ const dark=options.mode==="gelap";
+ let seen=0;
+ const clean=text.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`)/g).map((part,index)=>
+  index%2?part:glyphs(part).map(g=>emoji.test(g)?(++seen<=(dark?0:2)?g:""):g).join("")
+ ).join("").replace(/[ \t]+\n/g,"\n").trimEnd();
+ if(dark||options.complete===false||seen>=2)return clean;
+ const needed=pair(text).filter(x=>!clean.includes(x)).slice(0,2-seen);
+ return clean+" "+needed.join(" ");
+}
+const api={reply,count};
+if(typeof module!=="undefined"&&module.exports)module.exports=api;
+if(root)root.BilikAntaraChatStyle=api;
+})(typeof globalThis!=="undefined"?globalThis:this);
+
+</script>
+<script src="bilik-antara-gemini-status.js?v=2" defer></script>
+<script src="bilik-antara-multi-ai-status.js?v=1"></script>
+<script>
+(function(){
+"use strict";
+const el=id=>document.getElementById(id);
+const ui={
+ html:document.documentElement,shell:document.querySelector(".shell"),conn:el("connection"),
+ connText:el("connectionText"),connInfo:el("connectionInfo"),connInfoText:el("connectionInfoText"),
+ retry:el("retryBtn"),chat:el("chat"),starters:el("starters"),form:el("composer"),
+ input:el("input"),send:el("sendBtn"),stop:el("stopBtn"),contextFallback:el("contextFallback"),upload:el("documentUpload"),
+ docStatus:el("docStatus"),remove:el("removeAttachment"),settings:el("settingsPanel"),
+ remember:el("rememberChat"),clear:el("clearChat"),notes:el("thoughtItems"),forget:el("forgetIdeas"),
+ mediaFallback:el("allowOpenRouterImages")
+};
+let appliedAppHeight=null,viewportFrame=0;
+let followOnInputResize=false;
+ui.input.addEventListener("focus",()=>{
+ followOnInputResize=ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight<48;
+});
+ui.input.addEventListener("blur",()=>{followOnInputResize=false;});
+ui.chat.addEventListener("wheel",()=>{followOnInputResize=false;},{passive:true});
+ui.chat.addEventListener("touchmove",()=>{followOnInputResize=false;},{passive:true});
+let viewportWidth=window.innerWidth;
+let stableAppHeight=Math.round(window.visualViewport?.height||window.innerHeight);
+function syncViewport(){
+ const view=window.visualViewport;
+ if(Math.abs(window.innerWidth-viewportWidth)>20){
+  viewportWidth=window.innerWidth;
+  stableAppHeight=Math.round(view?.height||window.innerHeight);
+ }
+ const currentHeight=Math.max(1,Math.round(view?.height||window.innerHeight));
+ const visibleAppHeight=Math.min(stableAppHeight,currentHeight);
+ const height=window.innerWidth<=760?visibleAppHeight+"px":"";
+ if(height===appliedAppHeight)return;
+ const currentGap=appliedAppHeight===null?Infinity:ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight;
+ const focusedKeyboardShrink=document.activeElement===ui.input&&currentHeight<stableAppHeight-80;
+ const followBottom=appliedAppHeight!==null&&(currentGap<48||(focusedKeyboardShrink&&followOnInputResize));
+ appliedAppHeight=height;
+ if(height)document.documentElement.style.setProperty("--app-height",height);
+ else document.documentElement.style.removeProperty("--app-height");
+ if(followBottom)scrollDown();
+}
+function queueViewportSync(){
+ if(viewportFrame)return;
+ viewportFrame=requestAnimationFrame(()=>{viewportFrame=0;syncViewport();});
+}
+syncViewport();
+window.addEventListener("resize",queueViewportSync,{passive:true});
+if(window.visualViewport)window.visualViewport.addEventListener("resize",queueViewportSync,{passive:true});
+const ENDPOINT="/.netlify/functions/bilik-antara";
+const STREAM_ENDPOINT="/.netlify/functions/bilik-antara-stream";
+const STORAGE="bilik-antara-session-v2";
+const SESSION_PREF_STORAGE="bilik-antara-session-save-pref-v1"; // Explicit opt-out survives reload; no chat content here.
+const MODE_STORAGE="bilik-antara-mode-v1";
+let thoughtMode="cahaya";
+const modeButton=document.getElementById("thoughtMode");
+const modeDialog=document.getElementById("thoughtModeDialog");
+const modeClose=document.getElementById("thoughtModeClose");
+const modeChoices=[...modeDialog.querySelectorAll("[data-mode-option]")];
+function setThoughtMode(mode,notify=false){
+ const next=mode==="gelap"?"gelap":"cahaya";
+ const changed=thoughtMode!==next;
+ thoughtMode=next;
+ modeButton.dataset.mode=thoughtMode;
+ modeButton.setAttribute("aria-label","Thinking Mode. Aktif: "+(thoughtMode==="gelap"?"Gelap":"Cahaya"));
+ modeButton.title="Thinking Mode · "+(thoughtMode==="gelap"?"Gelap":"Cahaya");
+ for(const choice of modeChoices){
+  const active=choice.dataset.modeOption===thoughtMode;
+  choice.classList.toggle("is-selected",active);
+  choice.setAttribute("aria-pressed",String(active));
+ }
+ if(notify&&changed)window.dispatchEvent(new CustomEvent("ba:thought-mode-changed",{detail:{mode:thoughtMode}}));
+}
+const knowledgeDialog=el("knowledgeDialog"),knowledgeTrigger=el("featureKnowledge");
+knowledgeTrigger.addEventListener("click",()=>{
+ ui.settings.open=false;
+ knowledgeDialog.showModal();knowledgeTrigger.setAttribute("aria-expanded","true");
+});
+el("knowledgeClose").addEventListener("click",()=>knowledgeDialog.close());
+knowledgeDialog.addEventListener("click",event=>{if(event.target===knowledgeDialog)knowledgeDialog.close();});
+knowledgeDialog.addEventListener("close",()=>{
+ knowledgeTrigger.setAttribute("aria-expanded","false");
+ knowledgeTrigger.focus({preventScroll:true});
+});
+for(const action of knowledgeDialog.querySelectorAll("[data-knowledge-question]")){
+ action.addEventListener("click",()=>{
+  ui.input.value=action.dataset.knowledgeQuestion||"";
+  knowledgeDialog.close();ui.input.dispatchEvent(new Event("input",{bubbles:true}));ui.input.focus({preventScroll:true});
+ });
+}
+window.BilikAntaraThought=Object.freeze({getMode:()=>thoughtMode});
+modeButton.addEventListener("click",()=>{
+ if(!modeDialog.open){modeDialog.showModal();modeButton.setAttribute("aria-expanded","true");}
+});
+modeChoices.forEach(choice=>choice.addEventListener("click",()=>{
+ setThoughtMode(choice.dataset.modeOption,true);
+ try{localStorage.setItem(MODE_STORAGE,thoughtMode);}catch(_){/* Private browsing can disable storage. */}
  save();
  modeDialog.close();
 }));
@@ -235,7 +380,7 @@ const MEDIA=new Set(["application/pdf","image/jpeg","image/png","image/webp","im
  "audio/mpeg","audio/wav","audio/mp4","audio/ogg","audio/webm","video/mp4","video/webm"]);
 let activeRequest=null,stoppedByUser=false,failedPreview=null,lastProvider="",lastProviderAt=0;
 let history=[],summary="",ideas=[],summarizedThrough=0,compacting=false,conversationEpoch=0,fileState=null,busy=false,quotaCooldownUntil=0;
-let messageLocation=""; // Tab-only, manually set; NEVER included in requests to models.
+let messageLocation=""; 
 const attachmentTrigger=el("attachmentTrigger"),attachmentDialog=el("attachmentDialog"),attachmentClose=el("attachmentClose");
 const attachmentInputs={photo:el("attachmentPhoto"),camera:el("attachmentCamera"),video:el("attachmentVideo"),document:el("attachmentDocument"),audio:el("attachmentAudio"),code:el("attachmentCode")};
 const placeDialog=el("metaLocationDialog"),placeInput=el("messageLocationInput");
@@ -1039,7 +1184,7 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-focus.js?v=1" defer></script>
 
 <script>
-/* Retain the exact live 3D face, but initialize its renderer only in Voice Chat. */
+
 (()=>{
  let loading=false,loaded=false;
  document.getElementById("voiceLive")?.addEventListener("click",()=>{
@@ -1053,7 +1198,7 @@ renderIdeas();renderHistory();update();probe();
 </script>
 
 <script>
-/* Opt-in on-device diagnostics: never load the profiler in ordinary sessions. */
+
 if(new URLSearchParams(location.search).get("perf")==="1"){
  const profiler=document.createElement("script");profiler.src="bilik-antara-perf.js?v=1";
  document.body.appendChild(profiler);
