@@ -30,7 +30,7 @@ function normalize(results,kind){
  const seen=new Set(),output=[];
  for(const r of Array.isArray(results)?results:[]){
   const url=safeUrl(r?.url);if(!url||seen.has(url))continue;
-  const text=clean(kind==="page-extract"?r.raw_content:r.content);
+  const text=clean(kind==="page-extract"?(r.raw_content||r.content):r.content);
   if(!text)continue;
   seen.add(url);
   const title=clean(r.title)||new URL(url).hostname;
