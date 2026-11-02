@@ -167,6 +167,16 @@ test("explicit code execution uses actual Groq tool and requires proof",async t=
  assert.equal(geminiCalls,0);
  assert.deepEqual(groqRequest.tools,[{type:"code_interpreter"}]);
  assert.equal(groqRequest.tool_choice,"required");
+ const another=await handler({httpMethod:"POST",headers:{
+  origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+  "x-nf-client-connection-ip":"capability-run-python-smoke"
+ },body:JSON.stringify({question:"Run Python: print('hello')"})});
+ const executedAgain=JSON.parse(another.body);
+ assert.equal(another.statusCode,200);
+ assert.equal(executedAgain.provider,"groq");
+ assert.ok(executedAgain.toolsUsed.includes("code_interpreter"));
+ assert.equal(geminiCalls,0);
+ assert.deepEqual(groqRequest.tools,[{type:"code_interpreter"}]);
 });
 
 test("offered-but-unused code tool does not falsely claim execution",()=>{
@@ -176,4 +186,15 @@ test("offered-but-unused code tool does not falsely claim execution",()=>{
  assert.match(router,/t\.type==="browser_search"\|\|t\.type==="code_interpreter"/);
  const chat=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
  assert.match(chat,/options\.requireCodeEvidence&&!alternative\.toolsUsed\?\.includes\("code_interpreter"\)/);
+});
+
+test("BM and English direct code requests activate calculation but tutorials do not",()=>{
+ const I=require("../netlify/functions/antara-intelligence");
+ for(const q of [
+  "Run Python: print('hello')",
+  "Execute code: print('hello')",
+  "Jalankan Python: print('hai')",
+  "Laksanakan kod: print('hai')"
+ ])assert.equal(I.resolveIntent(q,[],false).calculate,true,q);
+ assert.equal(I.resolveIntent("How do I run Python?",[],false).calculate,false);
 });
