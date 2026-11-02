@@ -219,13 +219,13 @@ function getTools(intent){
   return tools;
 }
 const FREE_TEXT_MODELS=new Set(["gemini-3.6-flash","gemini-3.8-flash","gemini-3.5-flash-lite","gemini-3.1-flash-lite"]);
-function freeModel(name,fallback="gemini-3.6-flash"){
+function freeModel(name,fallback="gemini-3.5-flash-lite"){
   return typeof name==="string"&&FREE_TEXT_MODELS.has(name)?name:fallback;
 }
 function chooseModel(defaultModel,intent){
   const base=freeModel(defaultModel);
   const advanced=freeModel(process.env.GEMINI_MODEL_COMPLEX,base);
-  const fast=freeModel(process.env.GEMINI_MODEL_FAST,"gemini-3.1-flash-lite");
+  const fast=freeModel(process.env.GEMINI_MODEL_FAST,"gemini-3.5-flash-lite");
   return intent.depth==="high"?advanced:fast;
 }
 function sourceList(candidate){
