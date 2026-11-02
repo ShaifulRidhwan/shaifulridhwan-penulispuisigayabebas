@@ -126,3 +126,13 @@
   for = "/bilik-antara-modes.js"
   [headers.values]
     Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
+
+# Static wallpaper for the three AKSARA rooms.
+[[headers]]
+  for = "/aksara-celestial-mobile.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
+[[headers]]
+  for = "/aksara-celestial-desktop.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
