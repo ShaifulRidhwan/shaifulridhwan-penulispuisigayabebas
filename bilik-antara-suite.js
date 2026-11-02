@@ -172,7 +172,7 @@ function renderSessions(){
  if(location.hostname==="shaifulridhwan-penulispuisigayabebas.netlify.app"){
   paragraph("Sejarah Netlify tidak berpindah secara automatik. Eksport semua sesi (JSON) dahulu, kemudian import pada Cloudflare.");
   const link=make("a","Buka Bilik Antara Cloudflare","ba-button");
-  link.href="https://aksara-apps.mshaifulridhwan.workers.dev/bilik-antara.html";link.rel="noopener noreferrer";controlRow(link);
+  link.href="https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html";link.rel="noopener noreferrer";controlRow(link);
  }
  controlRow(button("+ Sesi baharu",()=>beginSession(null)),button("Eksport sesi ini",()=>{
   download("bilik-antara-sesi.md",sessionText(api.snapshot().history),"text/markdown;charset=utf-8");
