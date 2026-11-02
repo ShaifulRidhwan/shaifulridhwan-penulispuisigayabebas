@@ -2283,6 +2283,16 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  border-left:1px solid rgba(225,192,143,.26);
  font:11px/1.5 'DM Sans',sans-serif;color:#bdb4a7;
 }
+/* Gemini Quad-Pool: nested rows in the existing glass provider dialog. */
+.multi-ai-gemini-slot{display:block;min-width:0;padding-block:10px}
+.multi-ai-gemini-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.multi-ai-gemini-heading .multi-ai-model-name{font-weight:600}
+.multi-ai-gemini-heading .multi-ai-state{font-size:10px;flex:none}
+.multi-ai-gemini-detail{margin-top:4px;font:10px/1.55 'DM Sans',sans-serif;color:#bdb4a7;overflow-wrap:anywhere}
+@media(max-width:420px){
+ .multi-ai-gemini-heading{gap:6px}
+ .multi-ai-gemini-detail{font-size:9.5px}
+}
 @media(max-width:420px){
  .multi-ai-model-row{margin-left:10px;padding:7px 6px 7px 10px}
  .multi-ai-dialog{width:calc(100vw - 22px)}
