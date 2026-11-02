@@ -21,3 +21,13 @@ test("A timed-out Gemini health probe is not mislabeled as an actual offline ups
  assert.match(chat,/reason:e\.name==="AbortError"\?"health_timeout"/);
  assert.match(html,/id==="gemini"&&item\?\.reason==="health_timeout"/);
 });
+
+test("Gemini health probe quota does not poison real chat cooldown and surfaces diagnostic status",()=>{
+ const chat=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
+ const html=fs.readFileSync("bilik-antara.html","utf8");
+ assert.doesNotMatch(chat,/catch\(e\)\{\s*googleCooldown\(fastModel,e\)/);
+ assert.match(chat,/e\.status===429\?"health_probe_quota"/);
+ assert.match(html,/Ready · Probe 429/);
+ assert.match(html,/Offline · HTTP /);
+ assert.match(html,/Cooldown · /);
+});
