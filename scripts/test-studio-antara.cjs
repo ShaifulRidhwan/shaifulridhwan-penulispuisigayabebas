@@ -16,7 +16,7 @@ test('Studio is cloud-only, image-only and all client JS parses',()=>{
  assert.doesNotMatch(html,/id="tabVideo"|WebGPU|SD.Turbo|onnx/i);
  assert.match(html,/id="enhancePrompt"/);assert.doesNotMatch(html,/id="enhanceEnabled"/);
  assert.match(html,/studio-antara-ui\.js\?v=2/);
- for(const name of ['studio-antara-cloud.js','studio-antara-ui.js','studio-antara-config.js','studio-antara-history.js'])new vm.Script(fs.readFileSync(name,'utf8'));
+ for(const name of ['studio-antara-cloud.js','studio-antara-status.js','studio-antara-ui.js','studio-antara-config.js','studio-antara-history.js'])new vm.Script(fs.readFileSync(name,'utf8'));
  assert.match(fs.readFileSync('studio-antara-history.js','utf8'),/indexedDB\.open/);
  assert.doesNotMatch(fs.readFileSync('studio-antara-cloud.js','utf8'),/localStorage\.setItem/);
 });
@@ -40,7 +40,8 @@ test('Studio 2.4 removes redundant copy and decorative icons without hiding func
  assert.match(html,/<a class="aksara-nav-link" href="index\.html">Laman utama<\/a>/);
  assert.match(html,/<div class="result-stage-footer"><span id="resultIndicator" class="result-indicator is-waiting">MENUNGGU<\/span><\/div>/);
  assert.match(html,/studio-antara\.css\?v=\d+/);
- assert.match(html,/studio-antara-cloud\.js\?v=8/);
+ assert.match(html,/studio-antara-cloud\.js\?v=9/);
+ assert.match(html,/studio-antara-status\.js\?v=1/);
  assert.match(script,/ui\.indicator\.classList\.toggle\('is-waiting'/);
  assert.match(script,/ui\.indicator\.classList\.remove\('is-waiting'\)/);
  assert.doesNotMatch(html,/<span class="brand-mark">AKSARA<\/span>/);

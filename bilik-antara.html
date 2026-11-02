@@ -380,7 +380,7 @@ const MEDIA=new Set(["application/pdf","image/jpeg","image/png","image/webp","im
  "audio/mpeg","audio/wav","audio/mp4","audio/ogg","audio/webm","video/mp4","video/webm"]);
 let activeRequest=null,stoppedByUser=false,failedPreview=null,lastProvider="",lastProviderAt=0;
 let history=[],summary="",ideas=[],summarizedThrough=0,compacting=false,conversationEpoch=0,fileState=null,busy=false,quotaCooldownUntil=0;
-let messageLocation=""; // Tab-only, manually set; NEVER included in requests to models.
+let messageLocation=""; 
 const attachmentTrigger=el("attachmentTrigger"),attachmentDialog=el("attachmentDialog"),attachmentClose=el("attachmentClose");
 const attachmentInputs={photo:el("attachmentPhoto"),camera:el("attachmentCamera"),video:el("attachmentVideo"),document:el("attachmentDocument"),audio:el("attachmentAudio"),code:el("attachmentCode")};
 const placeDialog=el("metaLocationDialog"),placeInput=el("messageLocationInput");
@@ -1063,7 +1063,7 @@ async function submit(event){
   
   addIdeas(data.thoughtLedger);save();
   if(selectedFile&&selectedFile===fileState){ui.docStatus.dataset.state="ready";ui.docStatus.textContent="Lampiran kekal tersedia untuk soalan susulan · "+selectedFile.name;}
-  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
+  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[],researchStatus:data.researchStatus||"",toolsUsed:data.toolsUsed||[],urlTraceStatus:data.urlTrace?.status||"",sourceCount:data.sources?.length||0,mode:data.mode||""}}));
   const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio";
   status("online","Request Completed","");
   if(!localAnswer){multiHealth.reply(data.provider,data.model);renderProviderRows(multiHealth.getRows(),multiCatalog);}
@@ -1180,10 +1180,11 @@ renderIdeas();renderHistory();update();probe();
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-dialek.js?v=2" defer></script>
 <script src="bilik-antara-voice.js?v=44" defer></script>
+<script src="bilik-antara-observability.js?v=1" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
 
 <script>
-/* Retain the exact live 3D face, but initialize its renderer only in Voice Chat. */
+
 (()=>{
  let loading=false,loaded=false;
  document.getElementById("voiceLive")?.addEventListener("click",()=>{
@@ -1197,7 +1198,7 @@ renderIdeas();renderHistory();update();probe();
 </script>
 
 <script>
-/* Opt-in on-device diagnostics: never load the profiler in ordinary sessions. */
+
 if(new URLSearchParams(location.search).get("perf")==="1"){
  const profiler=document.createElement("script");profiler.src="bilik-antara-perf.js?v=1";
  document.body.appendChild(profiler);
