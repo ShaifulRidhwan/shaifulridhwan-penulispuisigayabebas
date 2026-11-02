@@ -491,3 +491,99 @@ test("Production news guard reports Google 2.5 HTTP 404 after Groq 429, without 
  assert.match(data.reply,/HTTP 404/);
  assert.doesNotMatch(data.reply,/Fabricated recent news|private upstream text/);
 });
+
+test("Publisher RSS extracts exact-dated source links and rejects untrusted article hosts",()=>{
+ const R=require("../netlify/functions/aksara-public-news-rss");
+ const q="Cari tiga berita AI terkini pada 2 November 2026 dan sertakan pautan sumber";
+ assert.equal(R.eligible({question:q,search:true},{}),true);
+ assert.equal(R.requestedDate(q),"2026-11-02");
+ assert.equal(R.eligible({question:q,search:true,privateContext:true},{}),false);
+ assert.equal(R.eligible({question:q,search:true,attachment:true},{}),false);
+ assert.equal(R.eligible({question:q,search:true},{AKSARA_PUBLIC_RSS_ENABLED:"false"}),false);
+ const xml="<rss><channel><item><title>Model AI baharu &amp; benchmark</title>"+
+  "<link>https://techcrunch.com/2026/11/02/model-ai/</link>"+
+  "<pubDate>Mon, 02 Nov 2026 12:01:00 GMT</pubDate>"+
+  "<description>AI story</description></item>"+
+  "<item><title>Fake host</title><link>https://untrusted.example/2026/story</link>"+
+  "<pubDate>Mon, 02 Nov 2026 11:59:00 GMT</pubDate></item>"+
+  "<item><title>Old story</title><link>https://techcrunch.com/2026/11/01/old/</link>"+
+  "<pubDate>Sun, 01 Nov 2026 12:01:00 GMT</pubDate></item></channel></rss>";
+ const sources=R.parse(xml,R.FEEDS[0],Date.UTC(2026,10,2,14,30),"2026-11-02");
+ assert.equal(sources.length,1);
+ assert.equal(sources[0].date,"2026-11-02");
+ assert.equal(sources[0].title,"Model AI baharu & benchmark");
+ const out=R.render({sources,targetDate:"2026-11-02"});
+ assert.match(out,/metadata RSS penerbit/);
+ assert.match(out,/https:\/\/techcrunch\.com\/2026\/11\/02\/model-ai\//);
+});
+test("RSS fallback fetches only its fixed publisher feed endpoints",async()=>{
+ const R=require("../netlify/functions/aksara-public-news-rss");
+ let seen=[];
+ const r=await R.search({question:"Berita AI terkini 2 November 2026",
+  now:Date.UTC(2026,10,2,15,0),fetchImpl:async url=>{
+   seen.push(url);
+   const isTech=String(url).includes("techcrunch.com");
+   const xml=isTech?"<rss><channel><item><title>AI original headline</title>"+
+    "<link>https://techcrunch.com/2026/11/02/news/</link>"+
+    "<pubDate>Mon, 02 Nov 2026 09:00:00 GMT</pubDate></item></channel></rss>":
+    "<rss><channel/></rss>";
+   return new Response(xml,{headers:{"content-type":"application/rss+xml"}});
+  }});
+ assert.equal(r.status,"success");
+ assert.equal(r.sources.length,1);
+ assert.equal(seen.length,R.FEEDS.length);
+ assert.ok(seen.every(x=>R.FEEDS.some(f=>f.url===x)));
+ assert.doesNotMatch(R.render(r),/2\. \*\*/);
+});
+test("Groq 429 + Google Grounding 404 can return dated publisher RSS links",async t=>{
+ setupEvidenceEnvironment(t);
+ const old=process.env.AKSARA_PUBLIC_RSS_ENABLED;
+ process.env.AKSARA_PUBLIC_RSS_ENABLED="true";
+ t.after(()=>old===undefined?delete process.env.AKSARA_PUBLIC_RSS_ENABLED:
+  process.env.AKSARA_PUBLIC_RSS_ENABLED=old);
+ const {handler}=require("../netlify/functions/bilik-antara");
+ let rssCalled=0,googleGroundingCalled=0,ordinaryGeminiCalled=0;
+ global.fetch=async(url,opts={})=>{
+  const u=String(url);
+  if(u.includes("api.groq.com"))return Response.json({error:{message:"rate limited"}},
+   {status:429,headers:{"retry-after":"1"}});
+  if(u.includes("googleapis")){
+   const body=JSON.parse(opts.body);
+   if(body.tools?.some(x=>x.google_search)){
+    googleGroundingCalled++;
+    return Response.json({error:{code:404,message:"Legacy model blocked"}},{status:404});
+   }
+   ordinaryGeminiCalled++;
+   return Response.json({candidates:[{content:{parts:[{text:"unverified answer"}]}}]});
+  }
+  if(u.includes("techcrunch.com")||u.includes("arstechnica.com")||
+     u.includes("news.mit.edu")||u.includes("feeds.bbci.co.uk")){
+   rssCalled++;
+   const outlet=u.includes("techcrunch.com")?"https://techcrunch.com/2026/11/02/ai-product/":
+     u.includes("arstechnica.com")?"https://arstechnica.com/ai/2026/11/02/ai-research/":
+     u.includes("news.mit.edu")?"https://news.mit.edu/2026/ai-science-1102":
+     "https://www.bbc.com/news/technology-123";
+   const xml="<rss><channel><item><title>AI published headline</title>"+
+     "<link>"+outlet+"</link><pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>"+
+     "<description>Artificial intelligence reporting</description></item></channel></rss>";
+   return new Response(xml,{headers:{"content-type":"application/rss+xml"}});
+  }
+  throw Error("Unexpected external URL "+u);
+ };
+ const out=await handler({httpMethod:"POST",headers:{
+  origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+  "x-nf-client-connection-ip":"qa-groq-google-rss-news"
+ },body:JSON.stringify({question:"Cari tiga berita AI terkini pada 2 November 2026 dan sertakan pautan sumber yang disahkan."})});
+ const data=JSON.parse(out.body);
+ assert.equal(out.statusCode,200);
+ assert.equal(googleGroundingCalled,1);
+ assert.equal(ordinaryGeminiCalled,0);
+ assert.equal(rssCalled,4);
+ assert.equal(data.mode,"public-rss");
+ assert.equal(data.researchStatus,"publisher-rss");
+ assert.deepEqual(data.toolsUsed,["publisher_rss"]);
+ assert.equal(data.sources.length,3);
+ assert.equal(data.routing.googleGrounding.status,"model_unavailable");
+ assert.match(data.reply,/metadata RSS penerbit/);
+ assert.match(data.disclaimer,/belum diaudit/);
+});
