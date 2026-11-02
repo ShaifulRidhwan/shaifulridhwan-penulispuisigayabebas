@@ -11,34 +11,32 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: {node-version: '24'}
-      - name: Verify deployed PR166 UI and genuine non-poetry Gemini response
+      - name: Verify deployed PR167 and real advanced Gemini
         run: |
           node --input-type=module <<'NODE'
           const base="https://aksara-apps.mshaifulridhwan.workers.dev";
-          const timeout=ms=>AbortSignal.timeout(ms);
-          try{
-            const page=await fetch(base+"/bilik-antara.html",{signal:timeout(15000)});
-            const html=await page.text();
-            console.log("DEPLOYED_UI",JSON.stringify({http:page.status,bytes:html.length,
-              pr166Marker:html.includes("Ready · Probe 429"),
-              diagnosticHttpMarker:html.includes("Offline · HTTP ")}));
-          }catch(e){console.log("DEPLOYED_UI_ERROR",JSON.stringify({name:e.name,message:String(e.message).slice(0,100)}));}
+          async function safeJson(response){return await response.json().catch(()=>({}))}
+          const page=await fetch(base+"/bilik-antara.html",{signal:AbortSignal.timeout(15000)});
+          const html=await page.text();
+          console.log("DEPLOYED_UI",JSON.stringify({http:page.status,categoryBadge:html.includes("HTTP 400 · Region")}));
           async function post(label,payload){
-            try{
-              const r=await fetch(base+"/.netlify/functions/bilik-antara",{
-                method:"POST",headers:{"Origin":base,"Content-Type":"application/json"},
-                body:JSON.stringify(payload),signal:timeout(40000)});
-              const d=await r.json().catch(()=>({}));
-              const p=d.providers?.find(x=>x.id==="gemini");
-              console.log(label,JSON.stringify({http:r.status,gemini:p||null,preferred:d.preferredProvider||null,
-                provider:d.provider||null,model:d.model||null,hasReply:!!d.reply,
-                geminiDiagnosis:d.routing?.geminiDiagnosis||null,
-                failedAttempts:(d.routing?.failedAttempts||d.providerFailures||[]).map(f=>({
-                  provider:f.provider,status:f.status,reason:f.reason,quotaKind:f.quotaKind})),
-                code:d.code||null}));
-            }catch(e){console.log(label+"_ERROR",JSON.stringify({name:e.name,message:String(e.message).slice(0,100)}));}
+            const r=await fetch(base+"/.netlify/functions/bilik-antara",{
+              method:"POST",headers:{"Origin":base,"Content-Type":"application/json"},
+              body:JSON.stringify(payload),signal:AbortSignal.timeout(40000)});
+            const d=await safeJson(r);
+            const g=d.providers?.find(x=>x.id==="gemini")||null;
+            console.log(label,JSON.stringify({http:r.status,gemini:g&&{model:g.model,status:g.status,http:g.http||null,
+              upstreamCode:g.upstreamCode||null,upstreamReason:g.upstreamReason||null,category:g.category||null},
+              provider:d.provider||null,model:d.model||null,hasReply:!!d.reply,
+              geminiDiagnosis:d.routing?.geminiDiagnosis||null,
+              failedAttempts:(d.routing?.failedAttempts||d.providerFailures||[]).map(x=>({
+                provider:x.provider,status:x.status,reason:x.reason,upstreamCode:x.upstreamCode,category:x.category})),
+              code:d.code||null}));
+            return {r,d};
           }
-          await post("STATUS_BEFORE",{providerStatus:true});
-          await post("ORDINARY_CHAT",{question:"Jelaskan maksud kompleksiti algoritma O(n log n) dalam dua ayat ringkas.",history:[]});
-          await post("STATUS_AFTER",{providerStatus:true});
+          await post("HEALTH",{providerStatus:true});
+          const technical=await post("TECHNICAL_CHAT",{
+            question:"Semak algoritma JavaScript ini, nyatakan kerumitan masa dan satu pembaikan: function sum(a){return a.reduce((x,y)=>x+y,0)}",
+            history:[],thoughtMode:"cahaya"});
+          if(page.status!==200||!html.includes("HTTP 400 · Region")||technical.r.status!==200||!technical.d.reply)process.exitCode=1;
           NODE
