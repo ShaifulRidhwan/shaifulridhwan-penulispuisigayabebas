@@ -254,6 +254,11 @@ function documentFor(language){
  return '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="'+csp+'"></head><body><script>('+sandboxBootstrap.toString()+')();<\/script></body></html>';
 }
 function run(language,source,options={}){
+ const emit=(phase,extra={})=>{
+  try{root.dispatchEvent(new CustomEvent("aksara:code-runtime-activity",{detail:{
+   language,phase,...extra
+  }}));}catch(_){/* UI telemetry is optional; execution must remain independent. */}
+ };
  return new Promise((resolve,reject)=>{
   if(!LANGUAGES.includes(language)){reject(Error("Runtime belum tersedia."));return;}
   if(typeof source!=="string"||!source.trim()){reject(Error("Masukkan kod dahulu."));return;}
@@ -275,6 +280,8 @@ function run(language,source,options={}){
    }
    sqlParams=params;
   }
+  if(options.signal?.aborted){reject(Error("Pelaksanaan dihentikan."));return;}
+  emit("started");
   const id="code-"+(root.crypto?.randomUUID?.()||Math.random().toString(36).slice(2));
   const frame=document.createElement("iframe");
   frame.setAttribute("sandbox","allow-scripts");
@@ -289,15 +296,16 @@ function run(language,source,options={}){
    options.signal?.removeEventListener("abort",abort);
    frame.remove();return true;
   };
-  const abort=()=>{if(clean())reject(Error("Pelaksanaan dihentikan."));};
+  const abort=()=>{if(clean()){emit("cancelled");reject(Error("Pelaksanaan dihentikan."));}};
   const message=event=>{
    if(event.source!==frame.contentWindow||event.data?.aksaraCodeV1!==true)return;
    const data=event.data;
    if(data.type==="boot"&&data.id===""){
     frame.contentWindow.postMessage({type:"execute",id,language,source,sqlParams,stdin},"*");
    }else if(data.id===id&&data.type==="loading"){
-    options.onProgress?.(String(data.detail||"Memuatkan runtime…"));
+    emit("loading");options.onProgress?.(String(data.detail||"Memuatkan runtime…"));
    }else if(data.id===id&&data.type==="done"&&clean()){
+    emit("completed",{ok:data.ok===true,runtimeMs:Math.round(performance.now()-started)});
     resolve({
      ok:data.ok===true,output:String(data.output||"").slice(0,MAX_OUTPUT),
      stdout:String(data.stdout||"").slice(0,MAX_OUTPUT),stderr:String(data.stderr||"").slice(0,MAX_OUTPUT),
@@ -307,10 +315,9 @@ function run(language,source,options={}){
     });
    }
   };
-  if(options.signal?.aborted){reject(Error("Pelaksanaan dihentikan."));return;}
   window.addEventListener("message",message);
   options.signal?.addEventListener("abort",abort,{once:true});
-  timer=setTimeout(()=>{if(clean())reject(Error("Had masa dicapai. Pelaksanaan dihentikan."));},TIMEOUTS[language]);
+  timer=setTimeout(()=>{if(clean()){emit("timeout");reject(Error("Had masa dicapai. Pelaksanaan dihentikan."));}},TIMEOUTS[language]);
   frame.srcdoc=documentFor(language);document.body.appendChild(frame);
  });
 }
