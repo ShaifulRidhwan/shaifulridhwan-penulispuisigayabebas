@@ -29,7 +29,7 @@
    if(u.protocol!=="https:"||u.username||u.password||u.hostname.length>190)return null;
    const host=u.hostname.toLowerCase();
    if(host==="localhost"||host.endsWith(".localhost")||host.endsWith(".local")||
-     host.endsWith(".internal")||host==="0.0.0.0"||host==="::1"||
+     host.endsWith(".internal")||host==="0.0.0.0"||host.startsWith("[")||
      /^((10|127|169\.254|192\.168)\.|172\.(1[6-9]|2\d|3[01])\.)/.test(host)||
      /^\d{1,3}(\.\d{1,3}){3}$/.test(host))return null;
    return u.href;
