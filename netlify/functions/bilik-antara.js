@@ -301,7 +301,12 @@ exports.handler=async event=>{
       ...(googleCooldownSeconds>0?{reason:"cooldown",retryAfterSeconds:googleCooldownSeconds}:{}),
       pool:poolStatuses};
     const [alternatives,freeModels]=await Promise.all([alternativeChecks,freeModelsCheck]);
-    const providers=[google,...alternatives];
+    // Display the exact configured model for Groq's status probe, without changing the locked router.
+     const providers=[google,...alternatives.map(item=>{
+       if(item.id!=="groq")return item;
+       const config=configured.find(p=>p.id==="groq");
+       return {...item,model:item.model||config?.model||null};
+     })];
     const fastest=providers.filter(p=>p.status==="online").sort((a,b)=>(a.latencyMs||0)-(b.latencyMs||0))[0];
     const ready=providers.find(p=>p.status==="ready");
     const realSuccess=Date.now()-lastTextSuccessAt<90000?providers.find(p=>p.id===lastTextProvider&&p.status==="online"):null;
