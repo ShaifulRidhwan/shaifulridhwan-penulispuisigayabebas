@@ -429,7 +429,7 @@ test("Research Workflow rejects unsafe source hosts and does not invent freshnes
  assert.equal(Ops.snapshot().scope,"one-warm-instance");
 });
 test("Core requests actually integrate the new services and keep private notes optional",()=>{
- for(const needle of ["Context.selectHistory(history,question)","SafeTools.calculatorIntent(question)","Research.research(question,intent","Knowledge.retrieve({question","flags.toolExecutionEnabled","Security.flags()"]){
+ for(const needle of ["Context.selectHistory(history,question)","SafeTools.calculatorIntent(question)","Research.research(followUpWebUrl?","Knowledge.retrieve({question","flags.toolExecutionEnabled","Security.flags()"]){
   assert.ok(backend.includes(needle),needle);
  }
  assert.equal(backend.includes("payload.toolCall"),false,"never execute arbitrary client-supplied tool requests");
