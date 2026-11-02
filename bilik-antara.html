@@ -442,13 +442,14 @@ function renderProviderRows(rows,catalog=null){
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
   const waitLabel=waitSeconds>0?"Retry in "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" sec"):"";
   let stateLabel=state==="online"?"Connected":state==="ready"?"Ready":
-   state==="offline"?(item?.reason==="free_quota_exhausted"?"Kuota percuma habis":waitLabel||(item?.http===503?"Servis sibuk (503)":"Offline")):
-   state==="off"?"Not active":"Checking…";
+   state==="degraded"?"Degraded":state==="unverified"?"Unverified":
+   state==="offline"?(item?.reason==="free_quota_exhausted"?"Quota Exceeded":waitLabel||(item?.http===503?"Service Unavailable (503)":item?.http===401||item?.http===403?"Access Denied":"Offline")):
+   state==="off"?"Disabled":"Checking…";
   if(id==="gemini")stateLabel=item?.reason==="health_probe_quota"?"Ready · Probe 429":item?.reason==="cooldown"?(waitLabel||"Cooldown").replace("Retry in ","Cooldown "):state==="offline"&&item?.http?"Offline · HTTP "+item.http:stateLabel;
   const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":state==="ready"?"is-ready":"is-muted"),stateLabel);
-  if(id==="gemini"&&item?.reason==="health_timeout")statusText.textContent="Semakan lambat";
-  if(id==="gemini"&&item?.http===400&&item?.category==="location_restricted")statusText.textContent="HTTP 400 · Region";
-  if(id==="gemini"&&item?.http===400&&item?.category==="thinking_parameter")statusText.textContent="HTTP 400 · Thinking";
+  if(id==="gemini"&&state!=="unverified"&&item?.reason==="health_timeout")statusText.textContent="Timeout";
+  if(id==="gemini"&&state!=="unverified"&&item?.http===400&&item?.category==="location_restricted")statusText.textContent="HTTP 400 · Region Restricted";
+  if(id==="gemini"&&state!=="unverified"&&item?.http===400&&item?.category==="thinking_parameter")statusText.textContent="HTTP 400 · Thinking Rejected";
   line.append(elem("span","multi-ai-provider",name),statusText);
   if(!expandable){multiList.appendChild(line);continue;}
   const group=elem("details","multi-ai-provider-details");group.dataset.provider=id;
@@ -460,18 +461,18 @@ function renderProviderRows(rows,catalog=null){
    else modelList.appendChild(elem("p","multi-ai-model-note","Status Gemini sedang dimuat…"));
   }else if(id==="groq"){
     const model=typeof item?.model==="string"&&item.model?item.model:"openai/gpt-oss-120b";
-    const label=state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?"Offline":state==="off"?"Not active":"Checking…";
+    const label=state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?"Offline":state==="unverified"?"Unverified":state==="off"?"Disabled":"Checking…";
     const child=elem("div","multi-ai-model-row");
     child.title="Groq · "+model;
     child.append(elem("span","multi-ai-model-name",model),
       elem("span","multi-ai-model-state"+(state==="online"?" is-online":""),label));
     modelList.appendChild(child);
-    const note=state==="online"?"Model disahkan melalui respons probe Groq.":"Model ini ialah konfigurasi backend; sambungan belum disahkan.";
+    const note=state==="online"?"Verified by a successful Groq response.":"Configured model · successful response not confirmed.";
     modelList.appendChild(elem("p","multi-ai-model-note",note));
    }else if(id==="workers_ai"){
     const live=state==="online";
-   const modelState=live?"Connected":state==="ready"?"Ready":state==="off"?"Not active":
-    state==="offline"?"Offline":"Checking…";
+   const modelState=live?"Connected":state==="ready"?"Ready":state==="off"?"Disabled":
+    state==="offline"?"Offline":state==="unverified"?"Unverified":"Checking…";
    const child=elem("div","multi-ai-model-row");
    child.title="Cloudflare Workers AI · @cf/zai-org/glm-4.7-flash";
    child.append(elem("span","multi-ai-model-name","GLM-4.7-Flash"),
@@ -482,15 +483,15 @@ function renderProviderRows(rows,catalog=null){
     if(!model||typeof model.id!=="string")continue;
     const child=elem("div","multi-ai-model-row"),fullName=String(model.name||model.id).slice(0,140);
     child.title=fullName+" · "+model.id.slice(0,140);
-    child.setAttribute("aria-label",fullName+", status berdasarkan penggunaan sebenar jika sudah diuji");
+    child.setAttribute("aria-label",fullName+", status based on a verified response if available");
     const liveModel=(item?.status==="online"&&item.model===model.id)||
      (model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000);
     child.append(elem("span","multi-ai-model-name",shortOpenRouterName(model)),
      elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Connected":"Listed"));
     modelList.appendChild(child);
    }
-   if(catalog.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Showing a saved list; the latest list is unavailable."));
-  }else modelList.appendChild(elem("p","multi-ai-model-note",!catalog?"Loading models…":catalog.status==="unavailable"?"Model list unavailable.":"No models listed yet."));
+   if(catalog.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Stale model list · latest catalog unavailable."));
+  }else modelList.appendChild(elem("p","multi-ai-model-note",!catalog?"Loading models…":catalog.status==="unavailable"?"Model catalog unavailable.":"No models listed yet."));
   group.appendChild(modelList);multiList.appendChild(group);
  }
 }
