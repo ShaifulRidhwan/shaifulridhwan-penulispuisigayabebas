@@ -603,7 +603,7 @@ exports.handler=async event=>{
         ?question+"\n"+followUpWebUrl:question;
       try{
         alternative=await Router.complete({cloudflareAI,
-          system:publicWebOnly?personality+"\nPUBLIC WEB RESEARCH: Gunakan hanya sumber sebenar. Jangan reka carian.":system,
+          system:publicWebOnly?personality+(options.requireCodeEvidence?"\nTOOL EXECUTION: Jalankan kod melalui code_interpreter sebelum menjawab; jangan mendakwa melaksanakan kod jika alat tidak digunakan.":"\nPUBLIC WEB RESEARCH: Gunakan hanya sumber sebenar. Jangan reka carian."):system,
           history:publicWebOnly?[]:history,
           question:publicWebOnly?browserQuestion:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[feedbackContext,fallbackLinkNote,work,references]):Context.composeTurn(question,[feedbackContext,fallbackLinkNote,doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,webIntent,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
       }catch(fallbackError){
