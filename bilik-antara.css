@@ -3363,3 +3363,12 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-ve
  .conversation .composer #thoughtMode .thinking-brain .brain-circuits,
  .conversation .composer #thoughtMode .thinking-brain .brain-signal{animation:none!important}
 }
+
+/* AKSARA static celestial artwork: no motion on the reading surface. */
+.world-art{inset:0;transform:none;will-change:auto;animation:none!important;filter:none;
+ background-image:url("./aksara-celestial-desktop.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e);
+ background-size:cover,cover;background-position:center;background-repeat:no-repeat}
+.world-haze,.world-embers{display:none!important}
+@media(max-width:760px){.world-art{inset:0;transform:none;animation:none!important;
+ background-image:url("./aksara-celestial-mobile.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e);
+ background-size:cover,cover;background-position:center}}
