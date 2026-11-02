@@ -176,9 +176,9 @@ async function audit(browser,label,options){
   const attachmentTrigger=page.locator("#attachmentTrigger"),attachmentDialog=page.locator("#attachmentDialog");
   await attachmentTrigger.click();
   assert.equal(await attachmentDialog.isVisible(),true,"Glass attachment dialog opens");
-  assert.equal(await attachmentDialog.locator("[data-attachment-type]").count(),3);
+  assert.equal(await attachmentDialog.locator("[data-attachment-type]").count(),5);
   const chooserPromise=page.waitForEvent("filechooser");
-  await attachmentDialog.locator('[data-attachment-type="files"]').click();
+  await attachmentDialog.locator('[data-attachment-type="document"]').click();
   const chooser=await chooserPromise;
   await chooser.setFiles({name:"browser-check.txt",mimeType:"text/plain",buffer:Buffer.from("aksara attachment test")});
   await page.locator("#removeAttachment").waitFor({state:"visible"});
