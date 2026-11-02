@@ -1,0 +1,49 @@
+/* Pusat Rujukan v2 · same dark translucent glass as Bilik Antara. */
+#knowledgeDialog{width:min(510px,calc(100vw - 24px));max-height:min(680px,88dvh);overscroll-behavior:contain}
+#knowledgeDialog .multi-ai-head p{margin-bottom:12px}
+#referenceHub{display:grid;gap:13px;color:#e8dcc9;font:400 12px/1.5 "DM Sans",sans-serif}
+#referenceHub .reference-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:5px;border:1px solid rgba(230,204,160,.19);background:rgba(5,9,19,.21);border-radius:13px}
+#referenceHub .reference-tabs button{min-width:0;min-height:39px;border:1px solid transparent;border-radius:9px;padding:8px 6px;color:#bfb6aa;background:transparent;font-size:11px;font-weight:600;white-space:nowrap}
+#referenceHub .reference-tabs button[aria-selected="true"]{border-color:rgba(246,213,171,.35);background:linear-gradient(130deg,rgba(238,206,164,.15),rgba(31,42,60,.27));color:#f4dfbd;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+#referenceHub .reference-tabs button:hover{color:#f2e4cb}
+#referenceHub .reference-pane{display:grid;gap:9px;min-width:0}
+#referenceHub .reference-pane[hidden]{display:none!important}
+#referenceHub .reference-pane label{font:600 12px/1.45 "DM Sans",sans-serif;color:#ecddc7}
+#referenceHub input{display:block;box-sizing:border-box;width:100%;max-width:100%;min-height:44px;padding:11px 13px;border:1px solid rgba(233,200,156,.34);border-radius:11px;background:rgba(7,13,25,.31);color:#f5e9d7;font:400 14px/1.45 "DM Sans",sans-serif}
+#referenceHub input::placeholder{color:#aea89f;opacity:.9}
+#referenceHub input:focus-visible{outline:2px solid rgba(238,200,140,.72);outline-offset:2px}
+#referenceHub .reference-suggestions{display:flex;gap:6px;flex-wrap:wrap}
+#referenceHub .reference-suggestions button{min-height:31px;padding:6px 10px;border-radius:999px;font-size:10.5px;background:rgba(255,255,255,.04)}
+#referenceHub .reference-note{font:400 11px/1.55 "DM Sans",sans-serif;color:#c3b9aa;margin:0}
+#referenceHub .reference-results{display:grid;gap:8px}
+#referenceHub .reference-work{border:1px solid rgba(225,194,153,.17);background:rgba(16,22,34,.22);padding:11px 12px;border-radius:12px;min-width:0}
+#referenceHub .reference-work>strong{font:650 12px/1.4 "DM Sans",sans-serif;color:#ead3ae}
+#referenceHub .reference-work>p{font:400 11px/1.5 "DM Sans",sans-serif;margin:5px 0 9px;color:#c5bbb1;overflow-wrap:anywhere}
+#referenceHub .reference-work-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+#referenceHub .reference-work-actions>a,#referenceHub .reference-archive{display:inline-flex;align-items:center;font:600 11px/1.4 "DM Sans",sans-serif;color:#edcf9c;text-underline-offset:3px}
+#referenceHub .reference-work-actions>button{min-height:32px;padding:6px 11px;border-radius:9px;background:rgba(235,200,150,.11);font-size:11px}
+#referenceHub .reference-archive{width:fit-content;margin:2px 0 3px}
+#referenceHub .reference-primary{width:100%;min-height:43px;margin-top:2px;border-color:rgba(240,207,160,.38);background:linear-gradient(130deg,rgba(243,209,158,.13),rgba(22,30,46,.23));font-weight:650}
+#referenceHub .reference-form-notice{min-height:0;margin:0;font:500 11px/1.45 "DM Sans",sans-serif;color:#d4b887}
+#referenceHub .reference-form-notice:empty{display:none}
+#referenceHub .reference-form-notice[data-error="true"]{color:#f4afa6}
+#referenceHub .reference-send-hint{margin:0;color:#c3b9ac;font:400 10.5px/1.6 "DM Sans",sans-serif}
+#referenceHub .reference-send-hint strong{color:#e7ce9e}
+#referenceHub .reference-extras{border-top:1px solid rgba(223,193,154,.21);padding-top:12px;display:grid;gap:8px}
+#referenceHub .reference-extras-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+#referenceHub .reference-extras-head strong{font:600 12px/1.4 "DM Sans",sans-serif}
+#referenceHub .reference-extras-head span{font:500 10px/1.4 "DM Sans",sans-serif;color:#c7b5a0}
+#referenceHub .reference-source-list ol{padding-left:19px;margin:8px 0 0;display:grid;gap:7px}
+#referenceHub .reference-source-list a{font:500 11px/1.45 "DM Sans",sans-serif;color:#ebc88d;overflow-wrap:anywhere;text-decoration:underline;text-underline-offset:3px}
+#referenceHub .reference-tool{border-top:1px solid rgba(223,193,154,.16);padding-top:12px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+#referenceHub .reference-tool>span{color:#bfb5a7;font:400 10.5px/1.45 "DM Sans",sans-serif}
+#referenceHub .reference-tool button{font-size:10.5px;min-height:32px;padding:7px 10px}
+#referenceSourcesSection>.aksara-observe-v2{margin:0}
+@media(max-width:420px){
+ #knowledgeDialog{padding:15px;max-height:88dvh}
+ #referenceHub input{font-size:16px}
+ #referenceHub .reference-tabs button{font-size:10.5px}
+ #referenceHub .reference-tool{align-items:stretch;flex-direction:column}
+ #referenceHub .reference-tool button{align-self:flex-start}
+}
+@media(prefers-reduced-motion:reduce){#referenceHub *{scroll-behavior:auto!important;transition:none!important}}
