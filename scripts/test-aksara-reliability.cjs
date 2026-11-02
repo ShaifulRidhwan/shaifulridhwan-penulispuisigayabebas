@@ -604,17 +604,20 @@ test("math concepts do not require a code-only model, while explicit computation
  assert.ok(I.getTools(I.resolveIntent("Kirakan integral x kuasa dua",[],false)).some(x=>x.code_execution));
 });
 
-test("light turns choose an allowlisted low-latency Gemini model while deep tasks keep the larger model",t=>{
+test("light turns use the configured Flash-Lite model while deep tasks honor an explicit model",t=>{
  setup(t);
- assert.equal(I.chooseModel("gemini-3.6-flash",{depth:"low"}),"gemini-3.1-flash-lite");
+ assert.equal(I.chooseModel("gemini-3.6-flash",{depth:"low"}),"gemini-3.5-flash-lite");
  assert.equal(I.chooseModel("gemini-3.6-flash",{depth:"high"}),"gemini-3.6-flash");
  process.env.GEMINI_MODEL_FAST="paid-or-unreviewed-model";
- assert.equal(I.chooseModel("gemini-3.6-flash",{depth:"low"}),"gemini-3.1-flash-lite");
+ assert.equal(I.chooseModel("gemini-3.6-flash",{depth:"low"}),"gemini-3.5-flash-lite");
 });
 test("model-specific quota blocks that model, and project-wide quota blocks every Gemini variant",async t=>{
  for(const scope of ["model","project","mixed"]){
   const modelScoped=scope==="model";
   const handler=setup(t);let google=0;
+  // Explicitly exercise separate model quotas; production defaults remain 3.5 Flash-Lite.
+  process.env.GEMINI_MODEL_FAST="gemini-3.1-flash-lite";
+  process.env.GEMINI_MODEL_COMPLEX="gemini-3.6-flash";
   global.fetch=async url=>{
    if(!url.includes("googleapis"))return reply("Sandaran tersedia.");
    google++;
