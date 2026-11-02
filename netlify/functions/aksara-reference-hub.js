@@ -19,6 +19,11 @@ function cleanQuery(input){
 function throttle(identity,now=Date.now()){
  // Had perlindungan terbaik sahaja: fungsi serverless tidak mempunyai storan bersama.
  const key=String(identity||"anon").slice(0,120);
+ // Fungsi serverless boleh hidup lama; buang rekod tamat supaya peta tidak berkembang tanpa batas.
+ if(attempts.size>500){
+  for(const [id,entry] of attempts)if(now-entry.start>=TIME_WINDOW_MS)attempts.delete(id);
+  while(attempts.size>500)attempts.delete(attempts.keys().next().value);
+ }
  const state=attempts.get(key);
  if(!state||now-state.start>=TIME_WINDOW_MS){attempts.set(key,{start:now,count:1});return 0;}
  if(state.count>=MAX_PER_MINUTE)return Math.max(1,Math.ceil((state.start+TIME_WINDOW_MS-now)/1000));
