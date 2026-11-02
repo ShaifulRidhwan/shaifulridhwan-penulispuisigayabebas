@@ -221,7 +221,7 @@ exports.handler=async event=>{
   const baseModel=freeModel(process.env.GEMINI_MODEL,DEFAULT_MODEL);
   const fastModel=chooseModel(baseModel,{depth:"low"});
   if(payload.probe===true){const alternatives=Router.configured(cloudflareAI).map(p=>p.id);return result(apiKey||alternatives.length?200:503,{ok:!!(apiKey||alternatives.length),backend:apiKey?"ready":"fallback_ready",model:apiKey?baseModel:null,fastModel:apiKey?fastModel:null,geminiVerified:false,connectionState:"configured",alternativeProviders:alternatives},H);}
-  if(!apiKey&&!Router.enabled(cloudflareAI)){
+  if(!apiKey&&!Router.enabled(cloudflareAI)&&payload.providerStatus!==true){
    const offlineExample=PublicPoetry.sample(String(payload.question||"").slice(0,400),{mode:payload.thoughtMode==="gelap"?"gelap":"cahaya"});
    if(offlineExample&&!payload.media&&!payload.documentText)return result(200,{
     mode:"grounded-poetry",model:"public-poetry-index",provider:"local_knowledge",
@@ -238,41 +238,59 @@ exports.handler=async event=>{
     // Health checks must remain cheap for free-tier traffic and initial page loads.
     const freeModelsCheck=configured.some(p=>p.id==="openrouter")
       ?Router.freeCatalog():Promise.resolve({status:"unavailable",models:[],total:0});
-    const googleHealth=googleHealthFor(fastModel+"@"+(poolKey?.slot||0));
-    let google={id:"gemini",status:"off"};
-    if(!apiKey&&GeminiTextPool.configured().length)google={id:"gemini",model:fastModel,status:"offline",reason:"no_healthy_key"};
-    if(apiKey){
-      // A cached green probe must not hide a later real-chat quota failure.
-      if(googleWait(fastModel)>0)google={id:"gemini",model:fastModel,status:"offline",reason:"cooldown",retryAfterSeconds:googleWait(fastModel)};
-      else if(googleHealth.value&&Date.now()-googleHealth.time<(googleHealth.value.status==="ready"?30000:90000))google=googleHealth.value;
-      else{
-        if(!googleHealth.pending)googleHealth.pending=(async()=>{
-          const time=Date.now();
-          try{
-            if(googleWait(fastModel)>0)return {id:"gemini",model:fastModel,status:"offline",retryAfterSeconds:googleWait(fastModel)};
-            const test=await callGemini({apiKey,model:fastModel,system:"Pemeriksaan sambungan, jawab ringkas.",contents:[{role:"user",parts:[{text:"Balas OK."}]}],maxTokens:cloudflare?1024:640,thinkingLevel:fastModel.includes("flash-lite")?"minimal":"low",timeoutMs:cloudflare?18500:12000,signal:event.signal});
-            const verified=!!modelText(test?.candidates?.[0]);
-            if(verified)GeminiTextPool.success(poolKey?.slot);
-            // A successful HTTP response without answer text is inconclusive,
-            // not proof that a working chat model is offline.
-            return {id:"gemini",model:fastModel,status:verified?"online":"ready",...(verified?{}:{reason:"health_empty_reply",http:200}),latencyMs:Date.now()-time};
-          }catch(e){
-            GeminiTextPool.failure(poolKey?.slot,e);
-            // IMPORTANT: a synthetic health request must never poison the
-            // real-chat quota cooldown. Only a failed real inference may do that.
-            // HTTP 429 here is inconclusive: chat may still succeed immediately.
-            const temporary=e.name==="AbortError"||e.status===429||!e.status||e.status>=500;
-            // A transient probe error should not disable the primary route.
-            // Auth/model errors and genuine quota cooldown still remain offline.
-            return {id:"gemini",model:fastModel,status:temporary?"ready":"offline",reason:e.name==="AbortError"?"health_timeout":e.status===429?"health_probe_quota":e.status>=500?"health_upstream_busy":e.status?"upstream_http":"transport_error",...(e.status?{http:e.status}:{}),...(e.googleStatus?{upstreamCode:e.googleStatus}:{}),...(e.googleReason?{upstreamReason:e.googleReason}:{}),...(e.googleCategory?{category:e.googleCategory}:{}),...(e.quotaKind?{quotaKind:e.quotaKind}:{})};
-          }
-        })();
-        try{google=await googleHealth.pending;googleHealth.value=google;googleHealth.time=Date.now();}finally{googleHealth.pending=null;}
-      }
+    // Gemini remains one top-level provider. Slots 1-4 have their own
+    // evidence-based connection details, never a synthetic green state.
+    const slotEntries=GeminiTextPool.configured();
+    const refreshAll=payload.geminiPoolRefresh===true;
+    const probeEntries=refreshAll?slotEntries:poolKey?[poolKey]:[];
+    async function checkGeminiSlot(entry){
+      const cache=googleHealthFor(fastModel+"@"+entry.slot);
+      const cooldown=googleWait(fastModel);
+      if(cooldown>0)return {status:"offline",reason:"cooldown"};
+      // Auth failure quarantine is respected even on manual refresh.
+      if(GeminiTextPool.snapshot().some(x=>x.slot===entry.slot&&x.status==="offline"))
+        return {status:"offline",reason:"authentication_or_access"};
+      const maxAge=cache.value?.status==="online"?90000:30000;
+      if(cache.value&&Date.now()-cache.time<maxAge)return cache.value;
+      if(!cache.pending)cache.pending=(async()=>{
+        const time=Date.now();
+        try{
+          const tested=await callGemini({apiKey:entry.apiKey,model:fastModel,
+            system:"Pemeriksaan sambungan, jawab ringkas.",
+            contents:[{role:"user",parts:[{text:"Balas OK."}]}],
+            maxTokens:cloudflare?1024:640,thinkingLevel:fastModel.includes("flash-lite")?"minimal":"low",
+            timeoutMs:cloudflare?18500:12000,signal:event.signal});
+          const elapsed=Date.now()-time;
+          const verified=!!modelText(tested?.candidates?.[0]);
+          if(verified)GeminiTextPool.success(entry.slot,{model:fastModel,latencyMs:elapsed});
+          else GeminiTextPool.ready(entry.slot,{model:fastModel,latencyMs:elapsed,http:200,reason:"health_empty_reply"});
+          return {status:verified?"online":"ready",latencyMs:elapsed};
+        }catch(e){
+          const elapsed=Date.now()-time;
+          GeminiTextPool.failure(entry.slot,e,{model:fastModel,latencyMs:elapsed,
+            reason:e.name==="AbortError"?"health_timeout":e.status===429?"health_probe_quota":
+            e.status>=500?"health_upstream_busy":e.status?"upstream_http":"transport_error"});
+          // A health probe NEVER triggers project-wide quota cooldown or
+          // automatically changes to another key to defeat provider limits.
+          return {status:[401,403,404,400].includes(e.status)?"offline":"ready",
+            http:e.status||null};
+        }
+      })();
+      try{
+        const checked=await cache.pending;cache.value=checked;cache.time=Date.now();
+        return checked;
+      }finally{cache.pending=null;}
     }
+    await Promise.all(probeEntries.map(checkGeminiSlot));
+    const poolStatuses=GeminiTextPool.snapshot(undefined,fastModel);
+    const googleCooldownSeconds=googleWait(fastModel);
+    const anyOnline=poolStatuses.some(x=>x.status==="online");
+    const anyReady=poolStatuses.some(x=>x.status==="ready"||x.status==="degraded");
+    const google={id:"gemini",model:fastModel,
+      status:googleCooldownSeconds>0?"offline":anyOnline?"online":anyReady?"ready":poolStatuses.length?"offline":"off",
+      ...(googleCooldownSeconds>0?{reason:"cooldown",retryAfterSeconds:googleCooldownSeconds}:{}),
+      pool:poolStatuses};
     const [alternatives,freeModels]=await Promise.all([alternativeChecks,freeModelsCheck]);
-    if(poolKey)google.slot=poolKey.slot;
-    google.pool=GeminiTextPool.snapshot();
     const providers=[google,...alternatives];
     const fastest=providers.filter(p=>p.status==="online").sort((a,b)=>(a.latencyMs||0)-(b.latencyMs||0))[0];
     const ready=providers.find(p=>p.status==="ready");
@@ -650,12 +668,12 @@ exports.handler=async event=>{
       disclaimer:warnings.join(" "),
       usage:data.usageMetadata||null,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()}};
     lastTextProvider="gemini";lastTextSuccessAt=Date.now();
-    GeminiTextPool.success(poolKey?.slot);
+    GeminiTextPool.success(poolKey?.slot,{model,latencyMs:Date.now()-started});
     const successfulHealth=googleHealthFor(model+"@"+(poolKey?.slot||0));successfulHealth.value={id:"gemini",model,status:"online",latencyMs:Date.now()-started};successfulHealth.time=Date.now();
     log("success",{depth:intent.depth,review:!!review,sources:sources.length,ms:output.durMs});
     return result(200,output,H);
   }catch(error){
-    GeminiTextPool.failure(poolKey?.slot,error);
+    GeminiTextPool.failure(poolKey?.slot,error,{model,latencyMs:Date.now()-started,reason:GeminiDiagnosis.classify(error)});
     if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
     if(streamed)return result(502,{code:"STREAM_INTERRUPTED",error:"Jawapan terputus sebelum habis."},H);
     providerFailures.push({provider:"gemini",...(poolKey?{slot:poolKey.slot}:{}),status:error.status||"unavailable",reason:GeminiDiagnosis.classify(error),...(error.googleStatus?{upstreamCode:error.googleStatus}:{}),...(error.googleReason?{upstreamReason:error.googleReason}:{}),...(error.googleCategory?{category:error.googleCategory}:{}),...(error.quotaKind?{quotaKind:error.quotaKind,quotaScope:error.quotaScope}:{})});
