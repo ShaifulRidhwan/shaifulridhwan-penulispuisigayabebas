@@ -1,11 +1,11 @@
-/* AKSARA Code Engine v0.4 · four runtimes, one guarded execution contract.
+/* AKSARA Code Engine v0.3 · five executable runtimes, one guarded execution contract.
  * Isolated opaque-origin iframe + disposable worker. No AI endpoint.
  * User execution remains explicit in bilik-antara-code-chat.js. */
 (function(root){
 "use strict";
 const MAX_SOURCE=12000,MAX_OUTPUT=12000;
-const LANGUAGES=Object.freeze(["javascript","python","typescript","sql"]);
-const TIMEOUTS=Object.freeze({javascript:7000,python:45000,typescript:25000,sql:30000});
+const LANGUAGES=Object.freeze(["javascript","python","typescript","sql","cpp"]);
+const TIMEOUTS=Object.freeze({javascript:7000,python:45000,typescript:25000,sql:30000,cpp:180000});
 function sandboxBootstrap(){
  "use strict";
  function workerEntrypoint(){
@@ -165,6 +165,39 @@ function sandboxBootstrap(){
       if(!statementCount)add("(Tiada pernyataan SQL ditemui.)");
       else if(!results&&!stdout.length)add("SQL berjaya · "+statementCount+" pernyataan.");
      }finally{db.close();}
+    }else if(lang==="cpp"){
+     // Clang 22 + WASI: real, browser-only C++20 compilation and execution.
+     // Isolated disposable worker. The compiler and its assets load only on request.
+     const base="https://cdn.jsdelivr.net/npm/@live-codes/clang-wasm@0.3.0/";
+     self.postMessage({type:"loading",detail:"Memuatkan Clang C++20 WebAssembly (~29 MB)…"});
+     importScripts(base+"dist/clang-wasm.global.js");
+     if(!self.clangWasm?.createCompiler)throw Error("Compiler Clang C++ tidak tersedia. Semak CDN.");
+     const compiler=await self.clangWasm.createCompiler("cpp",{
+      baseUrl:base+"assets/",std:"gnu++20",
+      onProgress:progress=>{
+       const pct=Math.max(0,Math.min(100,Math.round(Number(progress)*100)||0));
+       self.postMessage({type:"loading",detail:"Memuatkan compiler Clang… "+pct+"%"});
+      }
+     });
+     try{
+      self.postMessage({type:"loading",detail:"Mengkompil dan menjalankan C++20 dalam WASI…"});
+      const compilation=await compiler.run(job.source,String(job.stdin||""));
+      if(compilation.stdout)emit("stdout",compilation.stdout);
+      if(compilation.stderr)emit("stderr",compilation.stderr);
+      const failures=Array.isArray(compilation.errors)?compilation.errors:[];
+      for(const entry of failures.slice(0,8)){
+       const message=String(entry).slice(0,450);
+       const found=/main\.cpp:(\d+):(\d+):\s*(?:fatal\s+)?error:\s*(.+)/.exec(message);
+       diagnostics.push({severity:"error",code:"CPP_COMPILE_ERROR",message,
+        ...(found?{line:Number(found[1]),column:Number(found[2])}:{})});
+      }
+      if(compilation.exitCode===null||compilation.exitCode!==0){
+       const problem=failures.length?failures[0]:"Program keluar dengan kod "+compilation.exitCode+".";
+       if(!diagnostics.length)diagnostics.push({severity:"error",code:"CPP_RUNTIME_ERROR",message:String(problem).slice(0,450)});
+       finish(false,String(problem).slice(0,1400));
+       return;
+      }
+     }finally{compiler.dispose();}
     }else if(lang==="python"){
      self.postMessage({type:"loading",detail:"Memuatkan Python WebAssembly…"});
      importScripts("https://cdn.jsdelivr.net/pyodide/v0.27.8/full/pyodide.js");
@@ -207,7 +240,7 @@ function sandboxBootstrap(){
     });
    };
    worker.onerror=e=>{e.preventDefault();done({ok:false,output:"",error:"Worker runtime gagal. Semak polisi browser atau sambungan CDN.",diagnostics:[]});};
-   worker.postMessage({language:job.language,source:job.source,sqlParams:job.sqlParams});
+   worker.postMessage({language:job.language,source:job.source,sqlParams:job.sqlParams,stdin:job.stdin});
   }catch(error){done({ok:false,output:"",error:String(error?.message||error).slice(0,1800),diagnostics:[]});}
  },{once:true});
  say("","boot",{});
@@ -225,6 +258,13 @@ function run(language,source,options={}){
   if(!LANGUAGES.includes(language)){reject(Error("Runtime belum tersedia."));return;}
   if(typeof source!=="string"||!source.trim()){reject(Error("Masukkan kod dahulu."));return;}
   if(source.length>MAX_SOURCE){reject(Error("Kod maksimum "+MAX_SOURCE+" aksara."));return;}
+  let stdin="";
+  if(options.stdin!==undefined){
+   if(language!=="cpp"||typeof options.stdin!=="string"||options.stdin.length>4000){
+    reject(Error("Standard input hanya untuk C++ dan maksimum 4,000 aksara."));return;
+   }
+   stdin=options.stdin;
+  }
   let sqlParams;
   if(options.sqlParams!==undefined){
    const params=options.sqlParams;
@@ -254,7 +294,7 @@ function run(language,source,options={}){
    if(event.source!==frame.contentWindow||event.data?.aksaraCodeV1!==true)return;
    const data=event.data;
    if(data.type==="boot"&&data.id===""){
-    frame.contentWindow.postMessage({type:"execute",id,language,source,sqlParams},"*");
+    frame.contentWindow.postMessage({type:"execute",id,language,source,sqlParams,stdin},"*");
    }else if(data.id===id&&data.type==="loading"){
     options.onProgress?.(String(data.detail||"Memuatkan runtime…"));
    }else if(data.id===id&&data.type==="done"&&clean()){
@@ -278,7 +318,8 @@ const SMOKES=Object.freeze({
  javascript:{source:"console.log(6 * 7)",expected:"42"},
  python:{source:"print(sum([2,3,5,7]))",expected:"17"},
  typescript:{source:"const n: number=6*7; console.log(n)",expected:"42"},
- sql:{source:"SELECT 6+7 AS total;",expected:"total\n13"}
+ sql:{source:"SELECT 6+7 AS total;",expected:"total\n13"},
+ cpp:{source:'#include <iostream>\nint main(){ std::cout << 6*7 << std::endl; }',expected:"42"}
 });
 async function probeLanguage(language,{signal}={}){
  const spec=SMOKES[language];
@@ -313,5 +354,5 @@ async function evaluate(cases,{signal,onResult}={}){
  return Object.freeze({version:"1.0",total:items.length,passed:items.filter(x=>x.passed).length,
   failed:items.filter(x=>!x.passed).length,elapsedMs:Math.round(performance.now()-started),results:Object.freeze(items)});
 }
-root.AksaraCodeRuntime=Object.freeze({run,probe,probeLanguage,evaluate,available:LANGUAGES,version:"0.5",limits:Object.freeze({maxSource:MAX_SOURCE,maxOutput:MAX_OUTPUT,timeouts:TIMEOUTS})});
+root.AksaraCodeRuntime=Object.freeze({run,probe,probeLanguage,evaluate,available:LANGUAGES,version:"0.6",limits:Object.freeze({maxSource:MAX_SOURCE,maxOutput:MAX_OUTPUT,timeouts:TIMEOUTS})});
 })(window);

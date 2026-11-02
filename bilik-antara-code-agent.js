@@ -23,12 +23,12 @@ css.textContent=[
 '.code-engine-dialog #codeAiExecutionStop{border:1px solid rgba(243,170,158,.42);background:rgba(85,29,31,.3);border-radius:9px;color:#f1b4a6;padding:10px;font:600 11px "DM Sans",sans-serif;cursor:pointer}',
 '.code-engine-dialog #codeAiExecutionStop[hidden]{display:none!important}'
 ].join("\n");document.head.appendChild(css);
-const named={javascript:"JavaScript",python:"Python",typescript:"TypeScript",sql:"SQL"};
+const named={javascript:"JavaScript",python:"Python",typescript:"TypeScript",sql:"SQL",cpp:"C++"};
 function extract(reply){
  // Chat style may append emoji after the closing fence. Keep exactly one valid executable block.
- const blocks=[...String(reply||"").matchAll(/(?:^|\n)[ \t]*\x60\x60\x60(javascript|js|typescript|ts|python|py|sql)[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*\x60\x60\x60(?=\s|$)/gi)];
+ const blocks=[...String(reply||"").matchAll(/(?:^|\n)[ \t]*\x60\x60\x60(javascript|js|typescript|ts|python|py|sql|cpp|c\+\+|cxx|cc)[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*\x60\x60\x60(?=\s|$)/gi)];
  if(blocks.length!==1)return null;
- const code=blocks[0][2].trim(),map={js:"javascript",ts:"typescript",py:"python"};
+ const code=blocks[0][2].trim(),map={js:"javascript",ts:"typescript",py:"python","c++":"cpp",cxx:"cpp",cc:"cpp"};
  const language=map[blocks[0][1].toLowerCase()]||blocks[0][1].toLowerCase();
  if(!engine.available.includes(language)||!code||code.length>6000)return null;
  return {language,code};
@@ -36,7 +36,7 @@ function extract(reply){
 function requested(question){
  const q=String(question||"").toLowerCase().slice(0,500);
  return /\b(?:jalankan|laksanakan|run|execute|uji|test|cuba)\b/i.test(q)&&
-  /\b(?:kod|code|skrip|script|program|code engine|typescript|javascript|python|sql)\b/i.test(q)&&
+  /\b(?:kod|code|skrip|script|program|code engine|typescript|javascript|python|sql|cpp|c\+\+)\b/i.test(q)&&
   !q.includes("[aksara code bridge]");
 }
 function setPermission(value){

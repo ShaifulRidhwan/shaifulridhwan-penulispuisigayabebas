@@ -17,23 +17,23 @@ main{width:min(980px,calc(100% - 32px));margin:32px auto 60px}.top{display:flex;
  <h1>AKSARA CODE ENGINE</h1>
  <p>Eksperimen pelaksanaan kod bebas daripada AI. Runtime dijalankan dalam iframe sandbox terasing. Kod tidak dihantar kepada penyedia AI atau backend AKSARA.</p>
  <section class="glass" aria-label="Editor pelaksanaan kod">
-  <div class="row"><label for="language">Bahasa pengaturcaraan</label><select id="language"><option value="javascript">JavaScript · Browser Sandbox</option><option value="python">Python · Pyodide WebAssembly</option><option value="typescript">TypeScript · Browser Transpiler</option><option value="sql">SQL · SQLite WebAssembly</option></select></div>
-  <div class="field"><label for="editor">Kod</label><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Editor kod JavaScript, Python, TypeScript atau SQL">console.log("Salam dari AKSARA Code Engine!");
+  <div class="row"><label for="language">Bahasa pengaturcaraan</label><select id="language"><option value="javascript">JavaScript · Browser Sandbox</option><option value="python">Python · Pyodide WebAssembly</option><option value="typescript">TypeScript · Browser Transpiler</option><option value="sql">SQL · SQLite WebAssembly</option><option value="cpp">C++20 · Clang WebAssembly (muat turun ~29 MB)</option></select></div>
+  <div class="field"><label for="editor">Kod</label><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Editor kod JavaScript, Python, TypeScript, SQL atau C++">console.log("Salam dari AKSARA Code Engine!");
 console.log(6 * 7);</textarea></div>
   <div class="row"><button type="button" id="run">▶ Run Code</button><button type="button" id="stop" class="secondary" disabled>■ Henti</button><span id="progress" class="foot" aria-live="polite">Belum dijalankan.</span></div>
   <h2>OUTPUT CONSOLE</h2>
   <pre id="output" class="results" role="log" aria-live="polite">Output akan muncul di sini.</pre>
  </section>
- <h2>Empat bahasa aktif</h2>
- <p class="foot">JavaScript, Python, TypeScript dan SQL mempunyai runtime dalam sandbox browser. Bahasa tambahan hanya akan ditambah apabila compiler dan ujian sudah tersedia.</p>
- <p class="foot">Python memerlukan Internet untuk memuatkan Pyodide daripada CDN. Tiada panggilan kepada API AI, tetapi ini belum sistem offline sepenuhnya. Sandbox ini prototaip; belum diaudit sebagai persekitaran kod tidak dipercayai untuk pengguna awam.</p>
+ <h2>Lima runtime pelaksanaan</h2>
+ <p class="foot">JavaScript, Python, TypeScript, SQL dan C++20 disokong. Compiler C++ menggunakan Clang 22 melalui WebAssembly, dimuatkan hanya apabila digunakan; output teks dipaparkan di console.</p>
+ <p class="foot">Python dan C++ memerlukan Internet untuk memuatkan runtime daripada CDN. C++ memerlukan sekitar 29 MB muat turun pada kali pertama, tanpa API AI dan tanpa server compiler. Tiada preview grafik C++ dalam v0.3. Sandbox ini prototaip; belum diaudit sebagai persekitaran kod tidak dipercayai untuk pengguna awam.</p>
 </main>
-<script src="bilik-antara-code-runtime.js?v=2"></script>
+<script src="bilik-antara-code-runtime.js?v=5"></script>
 <script>
 (function(){
 "use strict";
 const $=id=>document.getElementById(id),engine=window.AksaraCodeRuntime;
-const samples={javascript:'console.log("Salam dari AKSARA Code Engine!");\nconsole.log(6 * 7);',python:'print("Salam dari Python!")\nprint(6 * 7)',typescript:'const value: number = 6 * 7;\nconsole.log(value);',sql:'CREATE TABLE numbers (n INTEGER);\nINSERT INTO numbers VALUES (6), (7);\nSELECT SUM(n) AS total FROM numbers;'};
+const samples={javascript:'console.log("Salam dari AKSARA Code Engine!");\nconsole.log(6 * 7);',python:'print("Salam dari Python!")\nprint(6 * 7)',typescript:'const value: number = 6 * 7;\nconsole.log(value);',sql:'CREATE TABLE numbers (n INTEGER);\nINSERT INTO numbers VALUES (6), (7);\nSELECT SUM(n) AS total FROM numbers;',cpp:'#include <iostream>\nint main(){\n  std::cout << (6 * 7) << std::endl;\n  return 0;\n}'};
 let controller=null;
 $("language").addEventListener("change",()=>{$("editor").value=samples[$("language").value];$("output").textContent="Output akan muncul di sini.";});
 function running(on){$("run").disabled=on;$("stop").disabled=!on;}

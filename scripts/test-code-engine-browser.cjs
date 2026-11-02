@@ -126,7 +126,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   const codeGlass=await visualSignature("#codeEngineMenu");
   assert.deepEqual(codeGlass,multiGlass,"Code Engine modal must reuse Multi AI glass layout and backdrop");
   assert.equal(await page.locator("#codeEngineMenu .multi-ai-head").count(),1);
-  assert.equal(await page.locator("#codeEngineMenu .multi-ai-row").count(),5,"Four runtime languages plus HTML/CSS preview should appear");
+  assert.equal(await page.locator("#codeEngineMenu .multi-ai-row").count(),6,"Five runtime languages plus HTML/CSS preview should appear");
   const codeFooter=await page.locator("#codeEngineRefresh").evaluate(el=>{
    const s=getComputedStyle(el);
    return {borderRadius:s.borderRadius,minHeight:s.minHeight,padding:s.padding,font:s.font,backgroundImage:s.backgroundImage};
@@ -138,10 +138,11 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#codeEngineStatus").getAttribute("aria-expanded"),"true");
   assert.equal(await page.locator("#codeJavaScriptState").innerText(),"Ready");
   assert.equal(await page.locator("#codeEngineMenu").isVisible(),true,"Status must open a menu, not navigate to another page");
-  assert.equal(await page.locator('[data-code-language]').count(),4);
-  assert.match(await page.locator("#codeEngineMenu").innerText(),/Empat runtime aktif/);
+  assert.equal(await page.locator('[data-code-language]').count(),5);
+  assert.ok((await page.locator("#codeEngineMenu").innerText()).includes("Lima runtime termasuk C++20"));
   assert.equal(await page.locator("#codeEngineProbeAll").count(),0,"Remove the old four-runtime probe button");
-  assert.equal(await page.locator("#codeEngineMenu .code-menu-unavailable").count(),0,"Do not display C/C++ until their return");
+  assert.equal(await page.locator("#codeEngineMenu .code-menu-unavailable").count(),0,"Do not show unsupported compilers as ready");
+  assert.match(await page.locator("#codeCPPState").innerText(),/Load on run/);
   // Workspace is local-only; user retains explicit control over execution.
   await page.locator("#codeWorkspaceOpen").click();
   assert.equal(await page.locator("#codeWorkspaceDialog").isVisible(),true);
@@ -170,6 +171,25 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.locator("#cwMobile").click();
   assert.equal(await page.locator(".cw-preview-frame").evaluate(el=>el.classList.contains("is-mobile")),true);
   assert.equal(aiChatRequests.length,0,"Preview cannot contact the AI");
+  await page.locator("#cwClose").click();
+  // v0.3: actual Clang 22 compiler runs inside browser sandbox, with stdin and console.
+  await page.locator("#codeEngineStatus").click();
+  await page.locator('[data-code-language="cpp"]').click();
+  assert.equal(await page.locator("#codeWorkspaceDialog").isVisible(),true);
+  assert.equal(await page.locator("#cwCppPanel").isVisible(),true,"C++ console runner must open");
+  assert.equal(await page.locator('#cwFiles option').count(),4);
+  await page.locator("#cwEditor").fill('#include <iostream>\nint main(){int n=0;std::cin >> n;std::cout << "AKSARA_CPP " << n+42 << std::endl;return 0;}');
+  await page.locator("#cwCppStdin").fill("8\n");
+  await page.locator("#cwCppRun").click();
+  await page.waitForFunction(()=>{
+   const text=document.querySelector("#cwCppStatus")?.textContent||"";
+   return text.includes("BERJAYA")||text.includes("RALAT")||text.includes("dihentikan");
+  },null,{timeout:192000});
+  const cppStatus=await page.locator("#cwCppStatus").innerText();
+  const cppOutput=await page.locator("#cwCppOutput").innerText();
+  assert.match(cppStatus,/BERJAYA/,"Clang compiler must compile and execute: "+cppStatus+" "+cppOutput.slice(0,350));
+  assert.match(cppOutput,/AKSARA_CPP 50/,"C++ standard input/output must work");
+  assert.equal(aiChatRequests.length,0,"C++ local compilation never posts to any AI endpoint");
   await page.locator("#cwClose").click();
   await page.locator("#codeEngineStatus").click();
   await page.locator("#codeEvalOpen").click();
@@ -318,7 +338,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    return {version:window.AksaraCodeRuntime.version,ok:r.ok,stderr:r.stderr,stdoutLength:r.stdout.length,
     truncated:r.truncated,diagnostics:r.diagnostics,limits:r.limits,runtimeMs:r.runtimeMs};
   });
-  assert.equal(contract.version,"0.5");
+  assert.equal(contract.version,"0.6");
   assert.equal(contract.ok,true);
   assert.match(contract.stderr,/WARN_CHECK/);
   assert.ok(contract.stdoutLength<=10000,"Worker output budget must be enforced");
