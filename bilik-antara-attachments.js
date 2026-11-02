@@ -97,6 +97,13 @@ for(const [kind,field] of Object.entries(attachmentInputs)){
 const MAX_MEDIA_BYTES=3850000,MAX_TEXT_BYTES=2000000,MAX_TEXT_CHARS=1000000;
 const MAX_ATTACHMENT_FILES=12;
 let stagedFiles=[],attachmentEpoch=0,attachmentQueue=Promise.resolve();
+function observeAttachment(phase,failed=0){
+ // No file names, content, media, transcripts or bytes in this event.
+ root.dispatchEvent(new CustomEvent("ba:attachment-stage",{detail:{
+  phase,count:stagedFiles.length,failed,
+  pdfPages:stagedFiles.reduce((sum,f)=>sum+(Number(f.pdfPages)||0),0)
+ }}));
+}
 const attachmentTray=el("attachmentTray");
 const bytesLabel=n=>n<1000000?Math.round(n/1000)+" KB":(n/1000000).toFixed(2)+" MB";
 const validMediaExtensions={
@@ -154,6 +161,7 @@ function rebuildFileState(note=""){
  ui.remove.hidden=stagedFiles.length<2;
  setFileState(fileState);
  renderAttachmentTray();update();
+ observeAttachment(note?"separa":stagedFiles.length?"sedia":"kosong");
 }
 function discardFile(){
  attachmentEpoch++;
@@ -161,7 +169,7 @@ function discardFile(){
  ui.upload.value="";
  for(const field of Object.values(attachmentInputs))field.value="";
  ui.docStatus.textContent="";ui.docStatus.dataset.state="ready";ui.remove.hidden=true;
- renderAttachmentTray();update();
+ renderAttachmentTray();update();observeAttachment("kosong");
 }
 async function compressImageForChat(file,targetBytes){
  if(file.size<=targetBytes&&file.size<=1100000)return file;
@@ -198,10 +206,12 @@ async function blobToBase64(blob){
 function queueAttachmentFiles(files){
  const captured=Array.from(files||[]),epoch=attachmentEpoch;
  if(!captured.length)return;
+ observeAttachment("dipilih");
  attachmentQueue=attachmentQueue.catch(()=>{}).then(()=>readFiles(captured,epoch));
 }
 async function readFiles(files,epoch=attachmentEpoch){
  if(getBusy()||epoch!==attachmentEpoch||!files?.length)return;
+ observeAttachment("membaca");
  const added=[],errors=[];
  const knownNames=new Set(stagedFiles.map(f=>f.name.toLowerCase()));
  let mediaBytes=stagedFiles.filter(x=>x.kind==="media").reduce((sum,x)=>sum+x.uploadSize,0);
@@ -281,6 +291,7 @@ async function readFiles(files,epoch=attachmentEpoch){
  const warning=added.find(f=>f.pdfWarning)?.pdfWarning||"";
  const report=errors.length?"Tidak dimuat: "+errors.slice(0,2).join(" · ")+(errors.length>2?" ("+errors.length+" ralat)":""):warning;
  rebuildFileState(report||"");
+ observeAttachment(errors.length?"separa":warning?"separa":stagedFiles.length?"sedia":"gagal",errors.length);
 }
 ui.upload.addEventListener("change",()=>{
  const files=Array.from(ui.upload.files||[]);ui.upload.value="";queueAttachmentFiles(files);
