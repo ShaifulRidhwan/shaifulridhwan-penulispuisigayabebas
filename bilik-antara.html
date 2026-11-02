@@ -486,8 +486,8 @@ function renderProviderRows(rows,catalog=null){
     const child=elem("div","multi-ai-model-row"),fullName=String(model.name||model.id).slice(0,140);
     child.title=fullName+" · "+model.id.slice(0,140);
     child.setAttribute("aria-label",fullName+", status based on a verified response if available");
-    const liveModel=(item?.status==="online"&&item.model===model.id)||
-     (model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000);
+    const liveModel=item?.status==="online"&&(item.model===model.id||
+     (model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000));
     child.append(elem("span","multi-ai-model-name",shortOpenRouterName(model)),
      elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Connected":"Listed"));
     modelList.appendChild(child);
