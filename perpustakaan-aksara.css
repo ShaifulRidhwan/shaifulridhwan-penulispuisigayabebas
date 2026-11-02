@@ -115,3 +115,7 @@ body::before{z-index:0;background-image:linear-gradient(180deg,rgba(3,7,15,.38),
 body::after{z-index:0}
 .novel-shell{position:relative;z-index:1}
 @media(max-width:760px){body::before{background-size:cover,cover,cover}}
+
+/* Novel catalogue shares the same static celestial artwork as Bilik and Studio. */
+body::before{background-image:linear-gradient(180deg,rgba(3,7,15,.38),rgba(3,8,16,.60)),url("./aksara-celestial-desktop.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e);background-size:cover,cover,cover;background-position:center,center,center}
+@media(max-width:760px){body::before{background-image:linear-gradient(180deg,rgba(3,7,15,.38),rgba(3,8,16,.60)),url("./aksara-celestial-mobile.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e)}}
