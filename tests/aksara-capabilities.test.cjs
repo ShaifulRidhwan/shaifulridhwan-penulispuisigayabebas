@@ -356,3 +356,83 @@ test("Gemini matching URL Context retrieval is surfaced as evidence of text acce
  assert.equal(data.urlTrace.status,"success");
  assert.match(data.disclaimer,/URL Context berjaya/);
 });
+
+test("Google Search Grounding is active only for eligible public current-news queries",()=>{
+ const G=require("../netlify/functions/aksara-google-grounding");
+ const intent={question:"Cari tiga berita AI terkini pada 2 November 2026 dan sertakan sumber.",search:true};
+ assert.equal(G.MODEL,"gemini-2.5-flash-lite");
+ assert.equal(G.eligible(intent,{}),true);
+ assert.equal(G.eligible(intent,{AKSARA_GOOGLE_SEARCH_GROUNDING:"false"}),false);
+ assert.equal(G.eligible({...intent,privateContext:true},{}),false);
+ assert.equal(G.eligible({...intent,attachment:true},{}),false);
+ assert.equal(G.eligible({...intent,sensitive:true},{}),false);
+ assert.equal(G.eligible({...intent,hasLink:true},{}),false);
+ assert.equal(G.eligible({...intent,question:"Kunci API aku ialah api_key=secret"},{}) ,false);
+ assert.equal(C.manifest({}).gemini.googleSearchGrounding,true);
+ assert.equal(C.manifest({AKSARA_GOOGLE_SEARCH_GROUNDING:"false"}).gemini.googleSearchGrounding,false);
+});
+test("Google grounding only trusts real search queries plus verifiable HTTPS citations",()=>{
+ const G=require("../netlify/functions/aksara-google-grounding");
+ const grounded={candidates:[{content:{parts:[{text:"Berita sebenar."}]},
+  groundingMetadata:{webSearchQueries:["AI news 2 November 2026"],
+   groundingChunks:[{web:{uri:"https://example.org/news",title:"Verified source"}}]}}]};
+ assert.equal(G.verified(grounded).sources[0].url,"https://example.org/news");
+ assert.equal(G.verified({candidates:[{content:{parts:[{text:"Memorized news"}]},
+  groundingMetadata:{groundingChunks:[{web:{uri:"https://example.org/news",title:"Source"}}]}}]}),null);
+ assert.equal(G.verified({candidates:[{content:{parts:[{text:"Missing source"}]},
+  groundingMetadata:{webSearchQueries:["AI news"]}}]}),null);
+});
+test("Gemini free-tier grounding POST has google_search tool and no private history",async()=>{
+ const G=require("../netlify/functions/aksara-google-grounding");
+ let body;
+ const resp=await G.search({question:"Cari berita AI terkini",apiKey:"mock-key",
+  fetchImpl:async(_url,options)=>{
+   body=JSON.parse(options.body);
+   return Response.json({candidates:[{content:{parts:[{text:"Satu berita telah ditemui."}]},
+    groundingMetadata:{webSearchQueries:["AI news"],
+     groundingChunks:[{web:{uri:"https://example.org/story",title:"News story"}}]}}]});
+  }});
+ assert.equal(resp.status,"success");
+ assert.equal(resp.model,"gemini-2.5-flash-lite");
+ assert.deepEqual(body.tools,[{google_search:{}}]);
+ assert.equal(body.contents.length,1);
+ assert.ok(!JSON.stringify(body).includes("history"));
+});
+test("Groq browser 429 hands public news to verified Google Search Grounding without touching main model",async t=>{
+ setupEvidenceEnvironment(t);
+ process.env.AKSARA_GOOGLE_SEARCH_GROUNDING="true";
+ t.after(()=>{delete process.env.AKSARA_GOOGLE_SEARCH_GROUNDING;});
+ const {handler}=require("../netlify/functions/bilik-antara");
+ let searchCalled=0,ordinaryGemini=0;
+ global.fetch=async(url,opts)=>{
+  const u=String(url);
+  if(u.includes("api.groq.com"))return Response.json({error:{message:"Too many requests"}},{status:429,headers:{"retry-after":"1"}});
+  if(u.includes("googleapis")){
+   const payload=JSON.parse(opts.body);
+   if(payload.tools?.some(x=>x.google_search)){
+    searchCalled++;
+    assert.ok(u.includes("gemini-2.5-flash-lite"));
+    assert.ok(!JSON.stringify(payload).includes("PRIVATE_SESSION_CONTENT"));
+    return Response.json({candidates:[{content:{parts:[{text:"Sumber berita yang benar-benar dijumpai."}]},
+     groundingMetadata:{webSearchQueries:["AI news 2026"],
+      groundingChunks:[{web:{uri:"https://example.org/news",title:"News article"}}]}}]});
+   }
+   ordinaryGemini++;return Response.json({candidates:[{content:{parts:[{text:"Outdated knowledge"}]}}]});
+  }
+  throw Error("unexpected external call: "+u);
+ };
+ const out=await handler({httpMethod:"POST",headers:{
+  origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+  "x-nf-client-connection-ip":"qa-grounding-after-groq-rate-limit"
+ },body:JSON.stringify({question:"Cari tiga berita AI terkini pada 2 November 2026 dan sertakan sumber.",
+  summary:"PRIVATE_SESSION_CONTENT"})});
+ const data=JSON.parse(out.body);
+ assert.equal(out.statusCode,200);
+ assert.equal(data.provider,"gemini");
+ assert.equal(data.model,"gemini-2.5-flash-lite");
+ assert.equal(data.researchStatus,"google-grounded");
+ assert.ok(data.toolsUsed.includes("google_search"));
+ assert.equal(data.sources[0].url,"https://example.org/news");
+ assert.equal(searchCalled,1);
+ assert.equal(ordinaryGemini,0);
+});

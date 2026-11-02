@@ -12,6 +12,7 @@ const Modes=require("../../bilik-antara-modes");
 const ChatStyle=require("../../bilik-antara-chat-style");
 const Router=require("./aksara-provider-router");
 const Capabilities=require("./aksara-capabilities");
+const GoogleGrounding=require("./aksara-google-grounding");
 const GeminiTextPool=require("./lib/gemini-text-pool");
 const Hybrid=require("./aksara-hybrid-policy");
 const Ops=require("./aksara-ops");
@@ -675,6 +676,30 @@ exports.handler=async event=>{
       requireWebEvidence:true,onDelta:null,
       firstResponseDeadline:Math.min(deadline,started+14500),timeoutMs:11500,bufferedTimeoutMs:11500});
     if(live?.statusCode===200)return live;
+  }
+  // Dedicated public-search route: Gemini 2.5 Flash-Lite offers a free-tier
+  // Google Search allowance, unlike Gemini 3.x's standard free API tier.
+  // Never include private history/memory/attachments or switch the chat/voice model.
+  // A response counts as grounded only with real webSearchQueries AND source URLs.
+  if(apiKey&&GoogleGrounding.eligible({...webIntent,question,search:intent.search})&&remaining()>1200){
+    const grounding=await GoogleGrounding.search({question,apiKey,signal:event.signal,
+      deadline:Math.min(deadline,started+20500)});
+    log("google_search_grounding",{status:grounding.status,model:GoogleGrounding.MODEL,
+      ...(grounding.http?{http:grounding.http}:{})});
+    if(grounding.status==="success"){
+      lastTextProvider="gemini";lastTextSuccessAt=Date.now();
+      return result(200,{
+        mode:"grounded-search",aiMode:"automatic",thoughtMode,provider:"gemini",
+        model:grounding.model,reply:grounding.reply,sources:grounding.sources,
+        researchStatus:"google-grounded",toolsUsed:["google_search"],
+        toolsOffered:["google_search"],usage:grounding.usage,
+        reviewApplied:false,disclaimer:"Google Search Grounding berjaya melalui Gemini 2.5 Flash-Lite; rujuk pautan sumber yang diberikan. Tiada semakan visual halaman.",
+        routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()},
+        durMs:Date.now()-started,timings:timings()
+      },H);
+    }
+    providerFailures.push({provider:"google_search_grounding",model:GoogleGrounding.MODEL,
+      status:grounding.http||"unavailable",reason:grounding.status});
   }
   // A request to RUN Python/code needs execution, not merely a correct answer.
   // Use the provider's verified sandbox, with the existing free-tier guard.

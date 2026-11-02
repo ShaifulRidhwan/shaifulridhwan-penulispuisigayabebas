@@ -54,7 +54,9 @@ function manifest(env=process.env){
   return {
     gemini:{urlContext:env.ENABLE_URL_CONTEXT!=="false"&&env.AKSARA_DISABLE_TOOLS!=="true",
       codeExecution:env.ENABLE_CODE_EXECUTION!=="false"&&env.AKSARA_DISABLE_TOOLS!=="true",
-      structuredOutput:true,functionCalling:yes(env,"AKSARA_GEMINI_FUNCTIONS_ENABLED",true)},
+      structuredOutput:true,functionCalling:yes(env,"AKSARA_GEMINI_FUNCTIONS_ENABLED",true),
+      googleSearchGrounding:yes(env,"AKSARA_GOOGLE_SEARCH_GROUNDING",true)&&env.AKSARA_DISABLE_TOOLS!=="true",
+      googleSearchModel:"gemini-2.5-flash-lite"},
     groq:{browserSearch:yes(env,"AKSARA_GROQ_BROWSER_ENABLED",true),codeInterpreter:yes(env,"AKSARA_GROQ_CODE_ENABLED",true)},
     openrouter:{webFetchFree:yes(env,"AKSARA_OPENROUTER_FETCH_ENABLED",true),
       webSearchPaid:yes(env,"AKSARA_OPENROUTER_PAID_SEARCH_ENABLED")},
