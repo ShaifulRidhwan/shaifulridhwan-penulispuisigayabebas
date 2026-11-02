@@ -2,6 +2,24 @@
 const assert=require("node:assert/strict");
 const {chromium}=require("playwright");
 const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
+function textPdf(){
+ const stream="BT /F1 14 Tf 36 170 Td (AKSARA PDF TEXT VERIFIED) Tj ET";
+ const objects=[
+  "<< /Type /Catalog /Pages 2 0 R >>",
+  "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+  "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 400 240] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+  "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+  "<< /Length "+Buffer.byteLength(stream)+" >>\nstream\n"+stream+"\nendstream"
+ ];
+ let doc="%PDF-1.4\n",offsets=[0];
+ objects.forEach((obj,i)=>{offsets.push(Buffer.byteLength(doc));doc+=(i+1)+" 0 obj\n"+obj+"\nendobj\n";});
+ const xref=Buffer.byteLength(doc);
+ doc+="xref\n0 "+(objects.length+1)+"\n0000000000 65535 f \n";
+ for(const n of offsets.slice(1))doc+=String(n).padStart(10,"0")+" 00000 n \n";
+ doc+="trailer\n<< /Size "+(objects.length+1)+" /Root 1 0 R >>\nstartxref\n"+xref+"\n%%EOF";
+ return Buffer.from(doc,"ascii");
+}
+
 (async()=>{
  const browser=await chromium.launch({headless:true});
  try{
@@ -37,6 +55,14 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator(".attachment-chip").count(),0);
   assert.equal(await page.locator("#attachmentTray").isVisible(),false);
   assert.equal(await page.locator("#removeAttachment").isVisible(),false);
+  // Real PDF.js smoke: verify actual on-demand extraction, not just a stub.
+  await page.locator("#attachmentDocument").setInputFiles({name:"actual.pdf",mimeType:"application/pdf",buffer:textPdf()});
+  await page.waitForFunction(()=>document.querySelector(".attachment-chip-name")?.textContent==="actual.pdf",{timeout:30000});
+  await page.waitForFunction(()=>document.querySelector(".attachment-chip-size")?.textContent?.includes("hlm · teks")||document.querySelector("#docStatus")?.dataset.state==="warning",{timeout:40000});
+  const parsedLabel=await page.locator(".attachment-chip-size").innerText();
+  const pdfNotice=await page.locator("#docStatus").innerText();
+  assert.match(parsedLabel,/1 hlm · teks/,"PDF.js must extract real text. "+pdfNotice);
+  await page.locator('.attachment-chip-remove[aria-label="Buang actual.pdf"]').click();
   // Stub the browser-only extractor to test the deterministic file-routing path.
   await page.evaluate(()=>{
    window.AksaraPdfReader={read:async file=>({text:"Isi PDF yang boleh dibaca secara setempat. Halaman puisi.",pages:12,textPages:12,truncated:false})};
