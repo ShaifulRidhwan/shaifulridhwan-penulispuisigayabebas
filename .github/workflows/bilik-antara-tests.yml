@@ -79,6 +79,7 @@ jobs:
           node --test tests/aksara-code-health.test.cjs
           node --test tests/aksara-thinking-status.test.cjs
           node --test tests/aksara-six-observability.test.cjs
+          node --test tests/aksara-reference-hub.test.cjs
           node --test tests/aksara-smart-attachments.test.cjs
           node --test tests/aksara-multi-ai-status.test.cjs
           node --test tests/aksara-capabilities.test.cjs
