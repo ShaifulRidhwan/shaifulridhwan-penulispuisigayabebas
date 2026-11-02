@@ -85,7 +85,7 @@ const TASK_GUIDANCE={
   conversation:"PERBUALAN: Balas secara semula jadi, dengar konteks dan sesuaikan humor. Jangan analisis logik pengguna tanpa diminta.",
   explain:"PENERANGAN: Terangkan konsep dengan jelas, guna contoh mudah dan tahap pengetahuan pengguna. Untuk soalan ringkas yang tidak meminta perincian, sekitar 2–4 ayat sudah cukup. Jangan tambah tutorial panjang, senarai alat atau contoh kod melainkan diminta. Jangan debat soalan ilmu biasa.",
   creative:"KREATIF: Hasilkan atau sunting bahan yang diminta. Patuhi format, nada dan tujuan; jangan ganti hasil dengan ulasan falsafah.",
-  technical:"PENYELESAIAN: Berikan penyelesaian, kod atau pengiraan yang praktikal. Semak andaian dan nyatakan langkah ujian bila sesuai.",
+  technical:"PENYELESAIAN: Berikan penyelesaian, kod atau pengiraan yang praktikal. Semak andaian dan nyatakan langkah ujian bila sesuai. Tulis formula dengan teks atau simbol Unicode yang boleh dibaca pada telefon, bukan LaTeX mentah, kecuali pengguna meminta format LaTeX.",
   research:"MAKLUMAT: Berikan jawapan langsung; bezakan pengetahuan sedia ada daripada penemuan carian. Jangan reka sumber.",
   critique:"KRITIK ATAS PERMINTAAN: Uji premis, kelemahan, bantahan dan bukti secara tegas tetapi adil. Akui jika hujah pengguna kukuh.",
   hypothetical:"ANDAIAN: Jelaskan implikasi andaian dan batasnya secara kreatif serta munasabah. Jangan kelirukan spekulasi dengan fakta.",
@@ -137,6 +137,9 @@ async function callGemini({apiKey,model,contents,system,tools=[],thinkingLevel="
   const control=requestControl(timeoutMs,signal);
   const body={systemInstruction:{parts:[{text:system}]},contents,
     ...(tools.length?{tools}:{}),
+    ...(tools.some(t=>Array.isArray(t.functionDeclarations))?{
+      toolConfig:{functionCallingConfig:{mode:"ANY",allowedFunctionNames:[Capabilities.FUNCTION_NAME]}}
+    }:{}),
     generationConfig:{maxOutputTokens:maxTokens,thinkingConfig:{thinkingLevel},...(json?{responseMimeType:"application/json",...(responseJsonSchema?{responseJsonSchema}:{})}:{})}};
   try{
     const res=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+(onDelta?":streamGenerateContent?alt=sse":":generateContent"),{
@@ -486,7 +489,10 @@ exports.handler=async event=>{
     }
   }
   // Grounded poem examples are available even when all model providers are down.
-  const localPoem=process.env.ENABLE_PUBLIC_WORKS==="false"?null:PublicPoetry.sample(question,{mode:thoughtMode});
+  const explicitPoetrySearch=Capabilities.geminiFunctions({question,hasLink:intent.hasLink,
+    sensitive:intent.sensitive,attachment:!!(media.length||documentText),works:intent.works}).length>0;
+  const localPoem=process.env.ENABLE_PUBLIC_WORKS==="false"||explicitPoetrySearch
+    ?null:PublicPoetry.sample(question,{mode:thoughtMode});
   if(localPoem&&!media.length&&!documentText)return result(200,{
    mode:"grounded-poetry",aiMode:"automatic",thoughtMode,model:"public-poetry-index",
    provider:"local_knowledge",reply:localPoem.answer,
@@ -563,7 +569,7 @@ exports.handler=async event=>{
   // Never claim a live web/URL tool ran on the fallback route.
   const textOnly=media.length===0&&!tiktokHandle&&(!privateContext||payload.contextFallback===true)&&!intent.sensitive;
   const webIntent={question:followUpWebUrl||question,hasLink:intent.hasLink,search:intent.search,
-    calculate:intent.calculate,sensitive:intent.sensitive,privateContext:!!(documentText||userMemory||memory),
+    calculate:intent.calculate,sensitive:intent.sensitive,privateContext:!!(documentText||userMemory),
     attachment:media.length>0,account:!!tiktokHandle};
   const freeWebConfigured=Capabilities.webEligible(webIntent)&&Router.configured(cloudflareAI).some(p=>
     p.id==="groq"&&Capabilities.manifest().groq.browserSearch||
@@ -589,8 +595,16 @@ exports.handler=async event=>{
           reply:researchResult.status==="local-budget-store-unavailable"?"Had tambahan pilihan pemilik tak dapat diperiksa kerana storan Netlify bermasalah. Ini bukan bukti kredit Tavily habis.":researchResult.status==="local-cap-reached"?"Had tambahan yang pemilik tetapkan dalam AKSARA sudah dicapai, bukan semestinya kredit Tavily habis.":researchResult.status==="upstream-auth-failed"?"Tavily menolak API key (401/403). Semak kunci dalam Netlify tanpa menghantarnya dalam chat.":researchResult.status==="upstream-credits-exhausted"?"Tavily sendiri melaporkan kredit tak mencukupi.":researchResult.status==="upstream-rate-limited"?"Tavily sedang hadkan kadar permintaan (429), bukan semestinya had bulanan.":researchResult.status==="upstream-timeout"?"Sambungan Tavily mengambil masa terlalu lama.":researchResult.status==="page-extract-failed"?"Tavily menerima permintaan tetapi tidak berjaya membaca teks halaman ini.":"Kandungan pautan belum berjaya diperoleh. Aku tak akan reka review; semak status carian untuk punca.",
           sources:[],toolsUsed:[],reviewApplied:false,disclaimer:"URL belum dibaca. Tiada hasil review direka."},H);
       let alternative;
+      const publicWebOnly=options.publicWebOnly===true;
+      // Never forward private history, session summaries or memory notes to
+      // a third-party browser tool just to inspect a public URL or current news.
+      const browserQuestion=followUpWebUrl&&!question.includes(followUpWebUrl)
+        ?question+"\n"+followUpWebUrl:question;
       try{
-        alternative=await Router.complete({cloudflareAI,system,history,question:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[feedbackContext,fallbackLinkNote,work,references]):Context.composeTurn(question,[feedbackContext,fallbackLinkNote,doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,webIntent,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
+        alternative=await Router.complete({cloudflareAI,
+          system:publicWebOnly?personality+"\nPUBLIC WEB RESEARCH: Gunakan hanya sumber sebenar. Jangan reka carian.":system,
+          history:publicWebOnly?[]:history,
+          question:publicWebOnly?browserQuestion:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[feedbackContext,fallbackLinkNote,work,references]):Context.composeTurn(question,[feedbackContext,fallbackLinkNote,doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,webIntent,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
@@ -625,6 +639,18 @@ exports.handler=async event=>{
     available:[...(apiKey?["gemini"]:[]),...Router.configured(cloudflareAI).map(p=>p.id)],
     enabled:process.env.AKSARA_HYBRID_ROUTER!=="false"});
   const primaryTextProviders=hybrid.primaries.filter(id=>id!=="gemini");
+  // Explicit current-news search needs a real browser. Google Search Grounding
+  // is intentionally OFF; don't burn Gemini's response time before the tool
+  // capable provider gets a chance to research.
+  if(intent.search&&!intent.hasLink&&textOnly&&!Structured.wantsJson(question)&&
+    Capabilities.webEligible(webIntent)&&
+    Router.configured(cloudflareAI).some(p=>p.id==="groq")&&
+    Capabilities.manifest().groq.browserSearch){
+    const live=await useAlternative({only:["groq"],prefer:"groq",publicWebOnly:true,
+      requireWebEvidence:true,onDelta:null,
+      firstResponseDeadline:Math.min(deadline,started+11500)});
+    if(live?.statusCode===200)return live;
+  }
   const backupTextProviders=["openrouter"];
   // Gemini is the primary text engine whenever configured and outside cooldown.
   // Hybrid routing still selects fallback providers after an actual Gemini failure.
@@ -728,7 +754,7 @@ exports.handler=async event=>{
       researchResult.status!=="search-snippets"&&
       !(candidate?.groundingMetadata?.webSearchQueries?.length)&&
       remaining()>8500){
-      const live=await useAlternative({only:["groq"],prefer:"groq",
+      const live=await useAlternative({only:["groq"],prefer:"groq",publicWebOnly:true,onDelta:null,
         firstResponseDeadline:deadline,webIntent,requireWebEvidence:true});
       if(live?.statusCode===200)return live;
     }
@@ -737,7 +763,7 @@ exports.handler=async event=>{
     // If Google's URL retrieval has no success metadata, attempt free web tools
     // from the already configured fallback providers without inventing evidence.
     if(unverifiedReview&&freeWebConfigured&&textOnly&&remaining()>7000){
-      const webFallback=await useAlternative({only:["groq","openrouter"],firstResponseDeadline:deadline,webIntent});
+      const webFallback=await useAlternative({only:["groq","openrouter"],firstResponseDeadline:deadline,webIntent,publicWebOnly:true,onDelta:null});
       if(webFallback?.statusCode===200)return webFallback;
     }
     const reliableReply=unverifiedReview
@@ -764,9 +790,10 @@ exports.handler=async event=>{
     googleCooldown(model,error,poolKey?.slot);
     const transient=[400,401,403,404,429,500,502,503,504].includes(error.status)||error.name==="AbortError"||error.name==="TypeError"||(!error.status&&error.name==="Error");
     if(transient&&(textOnly||imageOnly)&&Router.enabled(cloudflareAI)&&(hybrid.enabled||!alternativeTried)){
+      const safeWebFallback=intent.hasLink&&freeWebConfigured?{publicWebOnly:true,onDelta:null}:{};
       const fallback=await useAlternative(hybrid.enabled&&alternativeTried?
-        {only:backupTextProviders,firstResponseDeadline:deadline}:
-        {firstResponseDeadline:deadline});if(fallback)return fallback;
+        {only:backupTextProviders,firstResponseDeadline:deadline,...safeWebFallback}:
+        {firstResponseDeadline:deadline,...safeWebFallback});if(fallback)return fallback;
     }
     log("error",{http:error.status||null,googleCode:error.googleStatus||null,category:error.googleCategory||null,name:error.name||"unknown",ms:Date.now()-started});
     if(!textOnly&&!imageOnly&&Router.enabled(cloudflareAI))return result(error.status===429?429:503,{code:"CAPABILITY_UNAVAILABLE",error:privateContext&&payload.contextFallback!==true?"Model utama belum available. Kalau kau benarkan dalam Privasi & Tetapan, model sandaran boleh baca memori dan fail teks kau.":"Model untuk function ni belum available. Sandaran teks tak boleh handle semua benda macam audio, imej dan carian.",retryAfterSeconds:30},H);
