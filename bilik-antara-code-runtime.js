@@ -240,7 +240,7 @@ function sandboxBootstrap(){
     });
    };
    worker.onerror=e=>{e.preventDefault();done({ok:false,output:"",error:"Worker runtime gagal. Semak polisi browser atau sambungan CDN.",diagnostics:[]});};
-   worker.postMessage({language:job.language,source:job.source,sqlParams:job.sqlParams});
+   worker.postMessage({language:job.language,source:job.source,sqlParams:job.sqlParams,stdin:job.stdin});
   }catch(error){done({ok:false,output:"",error:String(error?.message||error).slice(0,1800),diagnostics:[]});}
  },{once:true});
  say("","boot",{});
@@ -258,6 +258,13 @@ function run(language,source,options={}){
   if(!LANGUAGES.includes(language)){reject(Error("Runtime belum tersedia."));return;}
   if(typeof source!=="string"||!source.trim()){reject(Error("Masukkan kod dahulu."));return;}
   if(source.length>MAX_SOURCE){reject(Error("Kod maksimum "+MAX_SOURCE+" aksara."));return;}
+  let stdin="";
+  if(options.stdin!==undefined){
+   if(language!=="cpp"||typeof options.stdin!=="string"||options.stdin.length>4000){
+    reject(Error("Standard input hanya untuk C++ dan maksimum 4,000 aksara."));return;
+   }
+   stdin=options.stdin;
+  }
   let sqlParams;
   if(options.sqlParams!==undefined){
    const params=options.sqlParams;
@@ -287,7 +294,7 @@ function run(language,source,options={}){
    if(event.source!==frame.contentWindow||event.data?.aksaraCodeV1!==true)return;
    const data=event.data;
    if(data.type==="boot"&&data.id===""){
-    frame.contentWindow.postMessage({type:"execute",id,language,source,sqlParams},"*");
+    frame.contentWindow.postMessage({type:"execute",id,language,source,sqlParams,stdin},"*");
    }else if(data.id===id&&data.type==="loading"){
     options.onProgress?.(String(data.detail||"Memuatkan runtime…"));
    }else if(data.id===id&&data.type==="done"&&clean()){
