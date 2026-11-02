@@ -19,6 +19,7 @@
   if(data.mode==="local-limitation")return {state:"belum_disahkan",label:"Sumber belum disahkan",count:0};
   if(trace==="success"&&used.includes("url_context"))return {state:"dibaca",label:"URL dibaca sebagai teks",count};
   if(used.includes("tavily_extract")||used.includes("owned_page_html"))return {state:"dibaca",label:"Teks halaman diperoleh",count};
+  if(data.researchStatus==="encyclopedia"&&count>0)return {state:"ringkasan",label:"Ringkasan Wikipedia diperoleh",count};
   if(used.includes("google_search")&&count>0)return {state:"dirujuk",label:"Carian Google bersumber",count};
   if(used.includes("publisher_rss")&&count>0)return {state:"ringkasan",label:"Tajuk dan pautan RSS",count};
   if(used.includes("tavily_search")||data.researchStatus==="search-snippets")return {state:"ringkasan",label:"Petikan carian sahaja",count};
@@ -55,8 +56,9 @@
    attachment=details("attachmentObserveV2","Status pemprosesan lampiran",attachmentDialog,
      attachmentDialog?.querySelector(".attachment-options")),
    knowledgeDialog=doc.getElementById("knowledgeDialog"),
-   knowledge=details("webObserveV2","Status carian & bukti terakhir",knowledgeDialog,
-     knowledgeDialog?.querySelector(".multi-ai-actions")),
+   referenceSources=doc.getElementById("referenceSourcesSection"),
+   knowledge=details("webObserveV2","Status bukti carian",referenceSources||knowledgeDialog,
+     referenceSources?.querySelector("#referenceSourceList")||knowledgeDialog?.querySelector(".multi-ai-actions")),
    voicePanel=doc.getElementById("voicePanel"),
    voice=details("voiceObserveV2","Diagnostik Voice",voicePanel,null);
   const style=doc.createElement("style");style.textContent=[
