@@ -141,7 +141,16 @@
    for(const part of ["Works","Wiki","Url","Calc"])get("knowledge"+part).hidden=part.toLowerCase()!==selected;
    warn("");if(selected==="works")load();
   }
-  for(const b of host.querySelectorAll("[data-tab]"))b.addEventListener("click",()=>tab(b.dataset.tab));
+  const tabs=[...host.querySelectorAll("[data-tab]")];
+  for(const b of tabs)b.addEventListener("click",()=>tab(b.dataset.tab));
+  host.querySelector(".knowledge-tabs").addEventListener("keydown",event=>{
+   const i=tabs.indexOf(d.activeElement);
+   if(i<0||!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
+   event.preventDefault();
+   const next=event.key==="Home"?0:event.key==="End"?tabs.length-1:
+    (i+(event.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length;
+   tab(tabs[next].dataset.tab);tabs[next].focus();
+  });
   search.addEventListener("input",filter);
   get("knowledgeWikiDraft").addEventListener("click",()=>{
    if(!draft(wikipediaQuestion(get("knowledgeWikiQuery").value)))warn("Masukkan topik sekurang-kurangnya dua aksara.");
