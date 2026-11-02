@@ -441,7 +441,7 @@ ui.retry.addEventListener("click",()=>{
  if(busy)return;
  if(ui.input.value.trim()||fileState)submit({preventDefault(){}});else probe();
 });
-const providers=[["gemini","Google Gemini"],["groq","Groq"],["workers_ai","Cloudflare Workers AI"],["openrouter","OpenRouter"]]; // Canonical four text providers; synchronize with BilikAntaraIdentity.TEXT_PROVIDERS.
+const providers=[["gemini","Google Gemini"],["groq","Groq"],["workers_ai","Cloudflare Workers AI"],["openrouter","OpenRouter"]];
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
 let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0;
 function shortOpenRouterName(model){
@@ -465,6 +465,8 @@ function renderProviderRows(rows,catalog=null){
   if(id==="gemini")stateLabel=item?.reason==="health_probe_quota"?"Ready · Probe 429":item?.reason==="cooldown"?(waitLabel||"Cooldown").replace("Retry in ","Cooldown "):state==="offline"&&item?.http?"Offline · HTTP "+item.http:stateLabel;
   const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":state==="ready"?"is-ready":"is-muted"),stateLabel);
   if(id==="gemini"&&item?.reason==="health_timeout")statusText.textContent="Semakan lambat";
+  if(id==="gemini"&&item?.http===400&&item?.category==="location_restricted")statusText.textContent="HTTP 400 · Region";
+  if(id==="gemini"&&item?.http===400&&item?.category==="thinking_parameter")statusText.textContent="HTTP 400 · Thinking";
   line.append(elem("span","multi-ai-provider",name),statusText);
   if(!expandable){multiList.appendChild(line);continue;}
   const group=elem("details","multi-ai-provider-details");group.dataset.provider=id;
@@ -472,9 +474,7 @@ function renderProviderRows(rows,catalog=null){
   group.open=hasPreviousGroups&&openGroups.has(id);group.appendChild(line);
   const modelList=elem("div","multi-ai-model-list");
   if(id==="workers_ai"){
-   // Native Cloudflare binding exposes one configured GLM model. Use actual
-   // provider status, never imply live inference from a "Ready" binding.
-   const live=state==="online";
+    const live=state==="online";
    const modelState=live?"Connected":state==="ready"?"Ready":state==="off"?"Not active":
     state==="offline"?"Offline":"Checking…";
    const child=elem("div","multi-ai-model-row");
@@ -514,7 +514,6 @@ async function checkProviders(force=false){
   multiCatalog=data.freeModels||null;
   renderProviderRows(data.providers,multiCatalog);multiLastCheck=Date.now();
   const preferred=data.providers.find(p=>p.id===data.preferredProvider&&["online","ready"].includes(p.status))||data.providers.find(p=>p.status==="online");
-  // Preserve a recent real answer; the fastest tiny probe is not a speed benchmark.
   if(preferred&&providers.some(([id])=>id===preferred.id)&&(!lastProvider||Date.now()-lastProviderAt>=90000)){
    lastProvider=preferred.id;lastProviderAt=Date.now();
   }
