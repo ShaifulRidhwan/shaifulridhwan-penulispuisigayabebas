@@ -249,8 +249,9 @@ test("Aksara has dedicated glass attachment picker and no accidental native pick
  for(const type of ["photo","video","document","audio","code"])assert.ok(html.includes('data-attachment-type="'+type+'"'));
  for(const id of ["attachmentPhoto","attachmentCamera","attachmentVideo","attachmentDocument","attachmentAudio","attachmentCode"])
   assert.ok(html.includes('id="'+id+'"'));
- assert.ok(html.includes('field.click()'));
- assert.ok(html.includes('field.addEventListener("change"'));
+ const attachments=fs.readFileSync("bilik-antara-attachments.js","utf8");
+ assert.ok(attachments.includes("field.click()"));
+ assert.ok(attachments.includes('field.addEventListener("change"'));
  assert.ok(css.includes('.attachment-dialog .attachment-option'));
 });
 test("Every new text response records both delivery and receipt times with optional city metadata",()=>{
