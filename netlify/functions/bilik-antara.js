@@ -301,7 +301,9 @@ exports.handler=async event=>{
       ...(googleCooldownSeconds>0?{reason:"cooldown",retryAfterSeconds:googleCooldownSeconds}:{}),
       pool:poolStatuses};
     const [alternatives,freeModels]=await Promise.all([alternativeChecks,freeModelsCheck]);
-    const providers=[google,...alternatives];
+    // Display-only Groq model metadata; protected provider routing stays unchanged.
+    const groqModel=configured.find(p=>p.id==="groq")?.model||"";
+    const providers=[google,...alternatives.map(p=>p.id==="groq"&&groqModel?{...p,model:groqModel}:p)];
     const fastest=providers.filter(p=>p.status==="online").sort((a,b)=>(a.latencyMs||0)-(b.latencyMs||0))[0];
     const ready=providers.find(p=>p.status==="ready");
     const realSuccess=Date.now()-lastTextSuccessAt<90000?providers.find(p=>p.id===lastTextProvider&&p.status==="online"):null;
