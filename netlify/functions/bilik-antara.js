@@ -522,15 +522,14 @@ exports.handler=async event=>{
     enabled:process.env.AKSARA_HYBRID_ROUTER!=="false"});
   const primaryTextProviders=hybrid.primaries.filter(id=>id!=="gemini");
   const backupTextProviders=["openrouter"];
-  // Rotate eligible ordinary text requests per warm Worker instance. This does
-  // not bypass model quota; Gemini tools and private context remain Gemini-first.
-  geminiRouteDecision=hybrid.geminiFirst?"gemini_first":"adaptive_primary_pool";
-  const balancedGeminiTurn=textOnly&&!tools.length&&!!apiKey&&primaryTextProviders.length>0&&
-    googleWait(model)===0&&process.env.AKSARA_BALANCED_TEXT_ROUTING==="true"&&
-    (balancedTextOrdinal++%2===0);
+  // Gemini is the primary text engine whenever configured and outside cooldown.
+  // Hybrid routing still selects fallback providers after an actual Gemini failure.
+  // Do not alternate ordinary turns away from a healthy Gemini instance.
+  geminiRouteDecision=apiKey?"gemini_first":"no_gemini_key";
+  const balancedGeminiTurn=false;
   // Keep Gemini tools/multimodal independent; choose among three text
   // primaries by task, capability and warm-instance response health.
-  if(textOnly&&!intent.hasLink&&!tools.length&&!hybrid.geminiFirst&&!balancedGeminiTurn&&Router.enabled(cloudflareAI)&&
+  if(textOnly&&!intent.hasLink&&!tools.length&&!apiKey&&Router.enabled(cloudflareAI)&&
     (!hybrid.enabled||primaryTextProviders.length)){
     const fast=await useAlternative(hybrid.enabled?{prefer:hint,only:primaryTextProviders}:{prefer:hint});
     if(fast&&(fast.statusCode===200||fast.statusCode===499||streamed))return fast;
