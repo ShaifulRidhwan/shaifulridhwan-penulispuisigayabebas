@@ -32,7 +32,8 @@ test("a rejected credential is quarantined without disabling the other configure
   const pool=createPool();
   assert.equal(pool.pick(env).slot,1);
   pool.failure(1,{status:403,googleCategory:"credential_or_access"});
-  assert.equal(pool.snapshot(env).find(x=>x.slot===1).status,"access_error");
+  assert.equal(pool.snapshot(env).find(x=>x.slot===1).status,"offline");
+  assert.equal(pool.snapshot(env).find(x=>x.slot===1).reason,"authentication_or_access");
   assert.deepEqual(Array.from({length:4},()=>pool.pick(env).slot),[2,3,4,2]);
   pool.success(1);
   assert.equal(pool.snapshot(env).find(x=>x.slot===1).status,"online");
