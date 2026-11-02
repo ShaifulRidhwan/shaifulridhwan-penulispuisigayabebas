@@ -861,7 +861,7 @@ exports.handler=async event=>{
       }
     }
     const revised=review&&review.revision&&review.revision.length>30&&review.critique.trim()?review.revision:reply;
-    const actualTools=[...(tavilyRead?["tavily_extract"]:tavilySearched?["tavily_search"]:[]),...(localFunctionUsed?["knowledge_search"]:[])];
+    const actualTools=[...(tavilyRead?["tavily_extract"]:tavilySearched?["tavily_search"]:[]),...(researchResult.status==="encyclopedia"&&publicSources.length?["wikipedia_summary"]:[]),...(localFunctionUsed?["knowledge_search"]:[])];
     if(candidate&&candidate.groundingMetadata&&Array.isArray(candidate.groundingMetadata.webSearchQueries)&&candidate.groundingMetadata.webSearchQueries.length)actualTools.push("google_search");
     if(candidate&&candidate.content&&Array.isArray(candidate.content.parts)&&candidate.content.parts.some(p=>p&&p.executableCode))actualTools.push("code_execution");
     const requestedPageUrl=intent.hasLink?(followUpWebUrl||Capabilities.safePublicUrl(question)):null;
