@@ -6,3 +6,8 @@
 # Ilustrasi novel disimpan sebagai aset JPEG berasingan.
 /assets/novel/*.jpg
   Cache-Control: public, max-age=86400
+
+# Temporary direct Netlify QA endpoint; prevent indexing and stale runs.
+/bilik-antara-netlify-qa.html
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: no-store
