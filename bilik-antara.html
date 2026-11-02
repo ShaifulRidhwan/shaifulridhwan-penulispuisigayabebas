@@ -479,7 +479,10 @@ function renderProviderRows(rows,catalog=null){
     health_upstream_busy:"Servis sibuk",health_empty_reply:"Jawapan kosong",
     authentication_or_access:"Akses ditolak",upstream_http:"Ralat API",
     cooldown:"Cooldown",transport_error:"Ralat rangkaian",upstream_error:"Ralat penyedia",
-    quota_exceeded:"Kuota penuh",quota_cooldown:"Kuota penuh"};
+    quota_exceeded:"Kuota penuh",quota_cooldown:"Kuota penuh",
+    thinking_parameter:"Tetapan thinking ditolak",location_restricted:"Region tidak disokong",
+    model_unavailable:"Model tiada",invalid_model_or_request:"Model atau permintaan tidak sah",
+    credential_or_access:"Akses ditolak",invalid_request:"Permintaan tidak sah"};
    for(let slot=1;slot<=4;slot++){
     const key=entries.find(x=>x&&x.slot===slot);
     const mode=!item?"checking":key?.status||"off";
