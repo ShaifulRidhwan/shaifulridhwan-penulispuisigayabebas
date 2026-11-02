@@ -56,11 +56,13 @@ function manifest(env=process.env){
       codeExecution:env.ENABLE_CODE_EXECUTION!=="false"&&env.AKSARA_DISABLE_TOOLS!=="true",
       structuredOutput:true,functionCalling:yes(env,"AKSARA_GEMINI_FUNCTIONS_ENABLED",true),
       googleSearchGrounding:yes(env,"AKSARA_GOOGLE_SEARCH_GROUNDING",true)&&env.AKSARA_DISABLE_TOOLS!=="true",
-      googleSearchModel:"gemini-2.5-flash-lite"},
+      googleSearchModel:"gemini-2.5-flash-lite",multiUrlContext:true,inlinePdf:true},
     groq:{browserSearch:yes(env,"AKSARA_GROQ_BROWSER_ENABLED",true),codeInterpreter:yes(env,"AKSARA_GROQ_CODE_ENABLED",true)},
     openrouter:{webFetchFree:yes(env,"AKSARA_OPENROUTER_FETCH_ENABLED",true),
       webSearchPaid:yes(env,"AKSARA_OPENROUTER_PAID_SEARCH_ENABLED")},
-    workers_ai:{ownedPageEvidence:true,arbitraryWebFetch:false,webSearch:false}
+    workers_ai:{ownedPageEvidence:true,arbitraryWebFetch:false,webSearch:false,
+      publicRerankReady:env.AKSARA_WORKERS_RERANK_ENABLED==="true",
+      gatewayOptIn:env.AKSARA_WORKERS_GATEWAY_ENABLED==="true"}
   };
 }
 function normalizedUrl(value){
