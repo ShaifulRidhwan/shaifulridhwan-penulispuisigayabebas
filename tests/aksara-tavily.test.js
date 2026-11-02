@@ -45,6 +45,28 @@ test("Research API remains callable when Tavily is not configured",async()=>{
  assert.equal(r.status,"not-eligible");
 });
 
+test("AKSARA disables Tavily by default without disabling Gemini URL Context",async t=>{
+ const previous=process.env.AKSARA_TAVILY_ENABLED;
+ const oldLookup=Tavily.lookup;
+ t.after(()=>{if(previous===undefined)delete process.env.AKSARA_TAVILY_ENABLED;else process.env.AKSARA_TAVILY_ENABLED=previous;Tavily.lookup=oldLookup;});
+ delete process.env.AKSARA_TAVILY_ENABLED;
+ Tavily.lookup=async()=>{throw Error("Disabled Tavily must not be called");};
+ const out=await Research.research("Baca https://example.org/article",{hasLink:true,search:false,sensitive:false});
+ assert.equal(out.status,"tavily-disabled");
+ assert.deepEqual(out.sources,[]);
+ assert.match(Research.guidance(out),/Gemini URL Context/);
+});
+test("Tavily only enters the research workflow after explicit opt-in",async t=>{
+ const previous=process.env.AKSARA_TAVILY_ENABLED;
+ const oldLookup=Tavily.lookup;
+ t.after(()=>{if(previous===undefined)delete process.env.AKSARA_TAVILY_ENABLED;else process.env.AKSARA_TAVILY_ENABLED=previous;Tavily.lookup=oldLookup;});
+ process.env.AKSARA_TAVILY_ENABLED="true";
+ let calls=0;
+ Tavily.lookup=async()=>{calls++;return {status:"page-read",sources:[{url:"https://example.org/article",extract:"Mock page text",kind:"page-extract"}]};};
+ const out=await Research.research("Baca https://example.org/article",{hasLink:true,search:false,sensitive:false});
+ assert.equal(calls,1);assert.equal(out.status,"page-read");
+});
+
 test("fail closed when credit budget is exhausted without calling external API",async()=>{
  let calls=0;
  const out=await Tavily.lookup("unique query example for credit limit",{
