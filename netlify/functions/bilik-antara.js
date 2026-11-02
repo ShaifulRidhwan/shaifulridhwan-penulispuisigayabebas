@@ -47,7 +47,6 @@ function googleCooldown(model,error){
 }
 // Warm Netlify instances remember quota exhaustion; no repeated Google calls while cooling down.
 let lastTextProvider="",lastTextSuccessAt=0;
-let balancedTextOrdinal=0; // Approximate 50/50 Gemini-first vs other primaries, per warm runtime.
 const GEMINI_COOLDOWN_MS=120000;
 
 const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+Identity.RUNTIME_PROMPT+"\n"+"OSINT PRIVASI: Jangan cuba mengenal pasti pemilik sebenar akaun pseudonim, menghubungkan akaun tersembunyi, keluarga, nombor peribadi, e-mel, IP, peranti atau lokasi fizikal pengguna. Jangan terbitkan latitud, longitud, koordinat GPS, rumah, sekolah, tempat kerja, lokasi masa nyata atau infer lokasi daripada gambar, geotag, catatan, video atau masa siaran. Negara hanya boleh disebut sebagai pernyataan sukarela dalam bio yang disahkan, bukan lokasi sebenar.";
@@ -514,23 +513,21 @@ exports.handler=async event=>{
       }
     return null;
   }
-  const hint=(typeof payload.preferredProvider==="string"&&payload.preferredProvider)||
-    (Date.now()-lastTextSuccessAt<90000?lastTextProvider:"");
+  // Explicit provider preference applies to fallback order only; Gemini stays primary.
+  const hint=(typeof payload.preferredProvider==="string"&&payload.preferredProvider)||"";
   const hybrid=Hybrid.decide({task:intent.task,thinking:plan.thinkingLevel,
     prefer:hint,hasTools:tools.length>0,hasMedia:media.length>0,
     available:[...(apiKey?["gemini"]:[]),...Router.configured(cloudflareAI).map(p=>p.id)],
     enabled:process.env.AKSARA_HYBRID_ROUTER!=="false"});
   const primaryTextProviders=hybrid.primaries.filter(id=>id!=="gemini");
   const backupTextProviders=["openrouter"];
-  // Rotate eligible ordinary text requests per warm Worker instance. This does
-  // not bypass model quota; Gemini tools and private context remain Gemini-first.
-  geminiRouteDecision=hybrid.geminiFirst?"gemini_first":"adaptive_primary_pool";
-  const balancedGeminiTurn=textOnly&&!tools.length&&!!apiKey&&primaryTextProviders.length>0&&
-    googleWait(model)===0&&process.env.AKSARA_BALANCED_TEXT_ROUTING==="true"&&
-    (balancedTextOrdinal++%2===0);
-  // Keep Gemini tools/multimodal independent; choose among three text
-  // primaries by task, capability and warm-instance response health.
-  if(textOnly&&!intent.hasLink&&!tools.length&&!hybrid.geminiFirst&&!balancedGeminiTurn&&Router.enabled(cloudflareAI)&&
+  // Gemini is the primary text engine whenever configured and outside cooldown.
+  // Hybrid routing still selects fallback providers after an actual Gemini failure.
+  // Do not alternate ordinary turns away from a healthy Gemini instance.
+  geminiRouteDecision=apiKey?"gemini_first":"no_gemini_key";
+  // If Gemini is not configured, route text to the available backup pool.
+  // Tool-enabled and multimodal requests retain their existing Gemini path.
+  if(textOnly&&!intent.hasLink&&!tools.length&&!apiKey&&Router.enabled(cloudflareAI)&&
     (!hybrid.enabled||primaryTextProviders.length)){
     const fast=await useAlternative(hybrid.enabled?{prefer:hint,only:primaryTextProviders}:{prefer:hint});
     if(fast&&(fast.statusCode===200||fast.statusCode===499||streamed))return fast;
