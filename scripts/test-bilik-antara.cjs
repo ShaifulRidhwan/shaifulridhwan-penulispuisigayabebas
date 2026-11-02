@@ -146,8 +146,8 @@ test("invalid origin, unsupported media, request size, and empty prompt rejected
   assert.equal(origin.statusCode,403);
   assert.equal((await handler(event({},"empty"))).statusCode,400);
   assert.equal((await handler(event({question:"Test",media:{mimeType:"application/x-msdownload",data:"QUJDRA=="}},"badfile"))).statusCode,400);
-  assert.equal((await handler(event({question:"Test",media:{mimeType:"image/png",data:"A".repeat(5000000)}},"bigfile"))).statusCode,400);
-  assert.equal((await handler(event({huge:"x".repeat(5450000)},"size"))).statusCode,413);
+  assert.equal((await handler(event({question:"Test",media:{mimeType:"image/png",data:"A".repeat(5200004)}},"bigfile"))).statusCode,400);
+  assert.equal((await handler(event({huge:"x".repeat(5510000)},"size"))).statusCode,413);
 });
 
 
