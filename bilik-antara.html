@@ -439,7 +439,7 @@ function renderProviderRows(rows,catalog=null){
  multiList.replaceChildren();
  for(const [id,name] of providers){
   const item=(rows||[]).find(x=>x.id===id),state=item?.status||"checking";
-  const expandable=id==="gemini"||id==="openrouter"||id==="workers_ai";
+  const expandable=id==="gemini"||id==="groq"||id==="openrouter"||id==="workers_ai";
   const line=elem(expandable?"summary":"div","multi-ai-row"+(expandable?" multi-ai-expand-trigger":""));
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
   const waitLabel=waitSeconds>0?"Retry in "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" sec"):"";
@@ -459,7 +459,16 @@ function renderProviderRows(rows,catalog=null){
   const modelList=elem("div","multi-ai-model-list");
   if(id==="gemini"){
    window.AksaraGeminiStatus.appendSlots(modelList,item,elem);
-  }else if(id==="workers_ai"){
+  }else if(id==="groq"){
+    // Details reflect the backend-selected / probed model, never a synthetic success.
+    const live=state==="online";
+    const modelName=typeof item?.model==="string"&&item.model?item.model:"Model tidak tersedia";
+    const child=elem("div","multi-ai-model-row");
+    child.title="Groq · "+modelName;
+    child.append(elem("span","multi-ai-model-name",modelName),
+     elem("span","multi-ai-model-state"+(live?" is-online":""),live?"Connected":state==="ready"?"Ready":state==="off"?"Not active":state==="offline"?"Offline":"Checking…"));
+    modelList.appendChild(child);
+   }else if(id==="workers_ai"){
     const live=state==="online";
    const modelState=live?"Connected":state==="ready"?"Ready":state==="off"?"Not active":
     state==="offline"?"Offline":"Checking…";
