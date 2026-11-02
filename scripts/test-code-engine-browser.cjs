@@ -18,7 +18,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    const button=document.querySelector("#codeEngineStatus");
    return button?.classList.contains("ready") &&
     document.querySelector("#codeEngineStatusText")?.textContent==="Code Engine" &&
-    /Status: Ready/.test(button.getAttribute("aria-label")||"");
+    /Runtime: Ready/.test(button.getAttribute("aria-label")||"");
   },null,{timeout:15000});
   const geom=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,width:innerWidth,pills:document.querySelectorAll("#connection,#codeEngineStatus").length}));
   assert.ok(geom.scroll<=geom.width+6,"Mobile horizontal overflow: "+JSON.stringify(geom));
@@ -134,16 +134,24 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   });
   assert.deepEqual(codeFooter,multiFooter,"Code Engine footer must match Multi AI refresh styling");
   await page.locator("#codeEngineRefresh").click();
-  await page.waitForFunction(()=>document.querySelector("#codeJavaScriptState")?.textContent==="Ready",{timeout:12000});
+  await page.waitForFunction(()=>document.querySelector("#codeJavaScriptState")?.textContent==="Verified",{timeout:12000});
   assert.equal(await page.locator("#codeEngineMenu").isVisible(),true,"Refresh cannot close the dialog");
   assert.equal(await page.locator("#codeEngineStatus").getAttribute("aria-expanded"),"true");
-  assert.equal(await page.locator("#codeJavaScriptState").innerText(),"Ready");
+  assert.equal(await page.locator("#codeJavaScriptState").innerText(),"Verified");
   assert.equal(await page.locator("#codeEngineMenu").isVisible(),true,"Status must open a menu, not navigate to another page");
   assert.equal(await page.locator('[data-code-language]').count(),5);
-  assert.ok((await page.locator("#codeEngineMenu").innerText()).includes("Lima runtime termasuk C++20"));
+  assert.ok((await page.locator("#codeEngineMenu").innerText()).includes("Five executable runtimes including C++20"));
   assert.equal(await page.locator("#codeEngineProbeAll").count(),0,"Remove the old four-runtime probe button");
   assert.equal(await page.locator("#codeEngineMenu .code-menu-unavailable").count(),0,"Do not show unsupported compilers as ready");
-  assert.match(await page.locator("#codeCPPState").innerText(),/Load on run/);
+  assert.match(await page.locator("#codeCPPState").innerText(),/Not Tested/);
+  assert.equal(await page.locator("#codeEngineStatusText").innerText(),"Code Engine");
+  assert.equal(await page.locator("#codeEngineStatus").getAttribute("data-runtime-health"),"ready");
+  assert.match(await page.locator("#codeHealthCheckedAt").innerText(),/1\/5 runtimes verified/);
+  for(const language of ["python","typescript","sql","cpp"]){
+   assert.match(await page.locator('[data-code-language="'+language+'"] .multi-ai-state').innerText(),/Not Tested/);
+  }
+  assert.equal(await page.locator("#codeEngineActivity").isVisible(),false,"No false execution activity while idle");
+
   // Workspace is local-only; user retains explicit control over execution.
   await page.locator("#codeWorkspaceOpen").click();
   assert.equal(await page.locator("#codeWorkspaceDialog").isVisible(),true);
@@ -190,6 +198,12 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   const cppOutput=await page.locator("#cwCppOutput").innerText();
   assert.match(cppStatus,/BERJAYA/,"Clang compiler must compile and execute: "+cppStatus+" "+cppOutput.slice(0,350));
   assert.match(cppOutput,/AKSARA_CPP 50/,"C++ standard input/output must work");
+  await page.locator("#codeEngineStatus").click();
+  assert.equal(await page.locator("#codeCPPState").innerText(),"Verified","Real C++ compilation verifies only C++");
+  assert.match(await page.locator("#codeHealthCheckedAt").innerText(),/2\/5 runtimes verified/);
+  assert.match(await page.locator("#codeEngineActivity").innerText(),/Execution Completed/);
+  await page.locator("#codeMenuClose").click();
+
   assert.equal(aiChatRequests.length,0,"C++ local compilation never posts to any AI endpoint");
   await page.locator("#cwClose").click();
   await page.locator("#codeEngineStatus").click();
@@ -241,6 +255,10 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   const pyText=await page.locator("#chat .code-engine-message.ai").last().innerText();
   assert.match(pyText,/BERJAYA/,"Python Pyodide failed: "+pyText);
   assert.match(pyText,/17/);
+  await page.locator("#codeEngineStatus").click();
+  assert.equal(await page.locator("#codePythonState").innerText(),"Verified","Pyodide must be verified after a successful run");
+  await page.locator("#codeMenuClose").click();
+
   assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false);
   assert.equal(aiChatRequests.length,0,"Python may load Pyodide CDN but must not call AI");
 
@@ -321,6 +339,11 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.waitForFunction(()=>[...document.querySelectorAll("#chat .code-engine-message.ai .bubble")].some(x=>x.textContent.includes("Had masa dicapai")),{timeout:16000});
   assert.ok(await page.locator("#sendBtn").count(),"Chat must remain responsive after timeout");
   assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false,"Timeout must close theatre");
+  await page.locator("#codeEngineStatus").click();
+  assert.match(await page.locator("#codeEngineActivity").innerText(),/Execution Timed Out/);
+  assert.equal(await page.locator("#codeJavaScriptState").innerText(),"Verified","User code timeout must not mark JS runtime unavailable");
+  await page.locator("#codeMenuClose").click();
+
   // Stop inside the overlay must abort immediately, without a forced 3-second delay.
   await page.locator("#input").fill('console.log("STOP TEST"); while (true) {}');
   const beforeStop=Date.now();
@@ -364,7 +387,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.locator("#codeAiExecutionAllowed").check();
   assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.enabled()),true);
   assert.equal(await page.locator("#codeEngineStatusText").innerText(),"Code Engine","Keep the short fixed pill label");
-  assert.match(await page.locator("#codeEngineStatus").getAttribute("aria-label"),/Status: Armed/);
+  assert.match(await page.locator("#codeEngineStatus").getAttribute("aria-label"),/AI Execution: Armed/);
   const armedCoreColor=await page.locator("#codeEngineStatus .code-engine-core").evaluate(el=>getComputedStyle(el).color);
   assert.notEqual(armedCoreColor,unarmedCoreColor,"Armed state must remain visually distinguishable on the icon");
   assert.equal(await page.locator("#codeEngineStatus").getAttribute("data-ai-execution"),"armed");
@@ -407,7 +430,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.enabled()),false);
   assert.equal(await page.locator("#codeEngineStatus").getAttribute("data-ai-execution"),"off");
   assert.equal(await page.locator("#codeEngineStatusText").innerText(),"Code Engine");
-  assert.match(await page.locator("#codeEngineStatus").getAttribute("aria-label"),/Status: Ready/);
+  assert.match(await page.locator("#codeEngineStatus").getAttribute("aria-label"),/Runtime: Ready/);
   await page.locator("#codeMenuClose").click();
   await page.evaluate(reply=>{
    window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question:"Jalankan kod SQL ini",answer:reply}}));
