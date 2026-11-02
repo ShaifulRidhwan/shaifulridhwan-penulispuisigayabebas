@@ -53,6 +53,8 @@
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
 <link rel="stylesheet" href="bilik-antara.css?v=103">
+<link rel="stylesheet" href="bilik-antara-multi-ai-status.css?v=1" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="bilik-antara-multi-ai-status.css?v=1"></noscript>
 <link rel="stylesheet" href="bilik-antara-attachments.css?v=2" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-attachments.css?v=1"></noscript>
 <!-- Noncritical shared header refinements load without blocking first paint. -->
@@ -523,7 +525,18 @@ async function checkProviders(force=false){
  }
  finally{clearTimeout(timer);multiChecking=false;el("multiAiRefresh").disabled=false;}
 }
-ui.conn.addEventListener("click",()=>{if(!multiDialog.open)multiDialog.showModal();checkProviders();});
+ui.conn.addEventListener("click",()=>{
+ multiHealth.render();
+ renderProviderRows(multiHealth.getRows(),multiCatalog);
+ if(!multiDialog.open)multiDialog.showModal();
+ checkProviders();
+});
+let lastHealthVisual="";
+setInterval(()=>{
+ const state=multiHealth.render(),signature=state.rows.map(p=>p.id+":"+p.status).join("|");
+ if(multiDialog.open&&signature!==lastHealthVisual)renderProviderRows(state.rows,multiCatalog);
+ lastHealthVisual=signature;
+},15000);
 el("multiAiClose").addEventListener("click",()=>multiDialog.close());
 el("multiAiRefresh").addEventListener("click",()=>{multiLastCheck=0;checkProviders(true);});
 multiDialog.addEventListener("click",e=>{if(e.target===multiDialog)multiDialog.close();});
