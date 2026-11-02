@@ -557,7 +557,7 @@ test("Deleting an open session also clears its active snapshot, so autosave cann
   write:(key,value)=>{persisted.set(key,JSON.parse(JSON.stringify(value)));return true;},
   localStorage:{removeItem:key=>persisted.delete(key)},
   sessionStorage:{setItem:(key,value)=>persisted.set(key,value)},
-  notice:()=>{},freshId:()=>"fresh-"+(++idIndex)
+  notice:()=>{},markStorage:()=>{},freshId:()=>"fresh-"+(++idIndex)
  };
  vm.runInNewContext(suite.slice(a,b)+"\n"+suite.slice(c,d)+"\nremoveArchiveEntry(archive[0]);snapshotCurrent();",scope);
  assert.equal(scope.archive.length,0,"deleted session must not reappear when saved");
