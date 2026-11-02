@@ -1,0 +1,26 @@
+name: AKSARA Tavily Guardrail Tests
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/aksara-tavily.js'
+      - 'netlify/functions/aksara-research-workflow.js'
+      - 'netlify/functions/bilik-antara.js'
+      - 'tests/aksara-tavily.test.cjs'
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify syntax
+        run: |
+          node --check netlify/functions/aksara-tavily.js
+          node --check netlify/functions/aksara-research-workflow.js
+          node --check netlify/functions/bilik-antara.js
+      - name: Run Tavily guardrail tests
+        run: node --test tests/aksara-tavily.test.cjs
