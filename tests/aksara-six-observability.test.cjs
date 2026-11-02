@@ -1,0 +1,109 @@
+"use strict";
+const {test}=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),vm=require("node:vm");
+const Obs=require("../bilik-antara-observability.js");
+const Studio=require("../studio-antara-status.js");
+const src=file=>fs.readFileSync(file,"utf8");
+test("Penyelidikan: sumber berbeza daripada halaman yang benar-benar dibaca",()=>{
+ const classify=Obs.classifyResearch;
+ assert.equal(classify({mode:"local-limitation",sourceCount:4}).state,"belum_disahkan");
+ assert.equal(classify({toolsUsed:["url_context"],urlTraceStatus:"success"}).label,"URL dibaca sebagai teks");
+ assert.equal(classify({toolsUsed:["tavily_extract"],sourceCount:1}).state,"dibaca");
+ assert.equal(classify({toolsUsed:["google_search"],sourceCount:3}).state,"dirujuk");
+ assert.equal(classify({toolsUsed:["google_search"],sourceCount:0}).state,"tiada");
+ assert.equal(classify({toolsUsed:["publisher_rss"],sourceCount:2}).state,"ringkasan");
+ assert.equal(classify({toolsUsed:["tavily_search"],sourceCount:1}).label,"Petikan carian sahaja");
+ assert.equal(classify({sourceCount:1}).label,"Pautan diberi, bacaan belum disahkan");
+ assert.equal(classify({requestFailed:true,sourceCount:3}).state,"gagal");
+ assert.equal(classify({}).label,"Tiada bukti carian web untuk respons ini");
+});
+test("Smart Attachments: log adalah metadata, tanpa nama, teks atau muatan fail",()=>{
+ const state=Obs.create();
+ state.file({phase:"dipilih",count:2});assert.equal(state.snapshot().attachment.count,2);
+ state.file({phase:"membaca",count:2});
+ state.file({phase:"separa",count:3,failed:1,pdfPages:31});
+ assert.deepEqual(state.snapshot().attachment,{phase:"separa",count:3,failed:1,pdfPages:31});
+ state.file({phase:"dianggap_siap",count:999});
+ assert.equal(state.snapshot().attachment.phase,"gagal");
+ assert.equal(state.snapshot().attachment.count,100);
+ assert.equal("name" in state.snapshot().attachment,false);
+});
+test("Studio: kejayaan hanya selepas output, setiap model mempunyai rekod tersendiri",()=>{
+ let now=1000000;const state=Studio.create(()=>now);
+ assert.equal(state.snapshot().status,"belum_diuji");
+ state.event({stage:"pilih",model:"klein"});
+ assert.equal(state.snapshot().status,"belum_diuji");
+ state.event({stage:"mula",model:"klein"});
+ assert.equal(state.snapshot().status,"menjana");
+ state.event({stage:"siap",model:"klein",durationMs:2000});
+ state.event({stage:"disimpan",model:"klein"});
+ assert.equal(state.snapshot().status,"siap");
+ assert.equal(state.snapshot().saved,"berjaya");
+ state.event({stage:"pilih",model:"ovh"});
+ assert.equal(state.snapshot().status,"belum_diuji");
+ assert.equal(state.snapshot().saved,"belum_diuji");
+ state.event({stage:"terhad",model:"ovh"});
+ assert.equal(state.snapshot().status,"terhad");
+ state.event({stage:"pilih",model:"klein"});
+ assert.equal(state.snapshot().status,"siap");
+ now+=Studio.TTL+1;
+ assert.equal(state.snapshot().status,"bukti_lama");
+ assert.equal("prompt" in state.snapshot(),false);
+});
+test("Studio: ralat atau henti bukan bukti model tersedia atau semua model rosak",()=>{
+ const state=Studio.create(()=>1000000);
+ state.event({stage:"mula",model:"schnell"});
+ state.event({stage:"dihentikan",model:"schnell"});
+ assert.equal(state.snapshot().status,"dihentikan");
+ state.event({stage:"pilih",model:"klein"});
+ assert.equal(state.snapshot().status,"belum_diuji");
+ state.event({stage:"mula",model:"klein"});
+ state.event({stage:"gagal",model:"klein"});
+ assert.equal(state.snapshot().status,"gagal");
+ assert.equal(state.snapshot().active,null);
+});
+test("Sesi dan memori: bukti operasi storan, draf belum simpan dan consent tidak diubah",()=>{
+ const suite=src("bilik-antara-suite.js"),html=src("bilik-antara.html");
+ assert.match(suite,/getStorageStatus:storageSnapshot/);
+ assert.match(suite,/markStorage\("read",true\)/);
+ assert.match(suite,/markStorage\("write",true\)/);
+ assert.match(suite,/draftStatus\.textContent="Draf berubah · belum disimpan"/);
+ assert.match(suite,/renderStorageStatus\(\)/);
+ assert.match(suite,/storageHealth\.restored=ok/);
+ assert.match(html,/const SESSION_PREF_STORAGE=/);
+ assert.match(suite,/memory=\{enabled:false,text:""\}/);
+ assert.match(suite,/if\(!api\.remember\(\)\)return false/);
+});
+test("Voice: diagnostik membezakan sambungan sebenar, mikrofon dan AudioContext",()=>{
+ const ui=src("bilik-antara-observability.js"),voice=src("bilik-antara-voice.js");
+ assert.match(voice,/window\.BilikAntaraVoiceDiagnostics=\{snapshot:voiceDiagnosticSnapshot\}/);
+ assert.match(ui,/snap\.connected\?"Tersambung"/);
+ assert.match(ui,/snap\.microphoneState==="running"/);
+ assert.match(ui,/snap\.playbackState==="running"/);
+ assert.match(ui,/Konteks audio aktif bukan bukti suara telah dimainkan/);
+ assert.doesNotMatch(ui,/transcript\.|media\.data|pendingAudio\b/);
+});
+test("Prestasi: hanya sampel sebenar, token tidak dilaporkan bukan sifar",()=>{
+ const suite=src("bilik-antara-suite.js");
+ assert.match(suite,/Status pengukuran/);
+ assert.match(suite,/Peristiwa terakhir:/);
+ assert.match(suite,/Token hanya dikira apabila penyedia melaporkan nilai sah/);
+ assert.match(suite,/Tiada laporan token bukan bermaksud penggunaan sifar/);
+ assert.match(suite,/window\.addEventListener\("ba:request-failed"/);
+ assert.match(suite,/window\.addEventListener\("ba:answered"/);
+});
+test("Enam status v2 tidak menghantar telemetry, mengaktifkan alat atau mendedahkan privasi",()=>{
+ const html=src("bilik-antara.html"),studio=src("studio-antara.html");
+ const files=["bilik-antara-observability.js","studio-antara-status.js"];
+ for(const file of files){
+  const code=src(file);assert.doesNotThrow(()=>new vm.Script(code));
+  assert.doesNotMatch(code,/fetch\s*\(|XMLHttpRequest|sendBeacon|localStorage\.setItem|sessionStorage\.setItem/);
+  assert.doesNotMatch(code,/\.prompt|\.question|\.answer|\.transcript|\.token|\.apiKey|\.messages/);
+ }
+ assert.match(html,/bilik-antara-observability\.js\?v=1/);
+ assert.match(studio,/studio-antara-status\.js\?v=1/);
+ assert.match(studio,/studio-antara-cloud\.js\?v=9/);
+ assert.ok(html.length<80000,"Bilik Antara initial HTML budget");
+ assert.match(src("studio-antara-cloud.js"),/statusEvent\('siap',settings\.model/);
+ assert.match(src("bilik-antara-attachments.js"),/observeAttachment\("membaca"\)/);
+ assert.match(src("bilik-antara.html"),/urlTraceStatus:data\.urlTrace\?\.status/);
+});
