@@ -380,6 +380,10 @@ body.continuous-mode .reader{display:block}
 .so-ill-wrap{top:calc(var(--pad)*-1)!important;bottom:-160px!important;left:calc(var(--pad)*-1)!important;right:calc(var(--pad)*-1)!important;margin:0!important}
 .page-folio{display:none!important}
 @media(max-width:640px){.so-ill-wrap{bottom:-200px!important}}
+
+/* Shared static AKSARA cover. Interior book pages retain their original contrast. */
+#cover .cv-art{background-image:url("aksara-celestial-desktop.webp?v=1")!important}
+@media(max-width:760px){#cover .cv-art{background-image:url("aksara-celestial-mobile.webp?v=1")!important}}
 </style>
 <style>
 /* Fasa kemasan — minimum, berimpak tinggi */
@@ -436,7 +440,8 @@ html,body{min-height:100%;margin:0}
 #novelError{position:absolute;left:50%;bottom:2rem;transform:translateX(-50%);width:min(92%,520px);padding:1rem;text-align:center;background:#241c1c;color:#f2d6bd;border:1px solid #c6957a}
 #novelError[hidden]{display:none!important}
 </style>
-<link rel="preload" href="assets/novel/cover-01.jpg" as="image" fetchpriority="high">
+<link rel="preload" href="aksara-celestial-desktop.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
+<link rel="preload" href="aksara-celestial-mobile.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
 </head>
 <body>
 
