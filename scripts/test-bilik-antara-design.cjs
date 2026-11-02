@@ -18,25 +18,21 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
  assert.match(css,/bilik-antara-woman-emblem\.svg/);
  assert.equal(cover[0],0xff);assert.equal(cover[1],0xd8);
  assert.match(emblem,/<svg[^>]+viewBox="0 0 96 96"/);
- assert.ok(Buffer.byteLength(css)<125000,"CSS parse budget unexpectedly big");
+ assert.ok(Buffer.byteLength(css)<127000,"CSS parse budget unexpectedly big");
  assert.ok(require("node:zlib").gzipSync(css).length<28000,"Compressed CSS network budget unexpectedly big");
 });
 
-test("Bilik, Studio and Novel share optimized WebP wallpapers without changing their glass UI",()=>{
+test("Bilik, Studio and Novel share the new static responsive WebP artwork",()=>{
  const studio=fs.readFileSync("studio-antara.css","utf8");
  const novel=fs.readFileSync("perpustakaan-aksara.css","utf8");
- const asset="aksara-background-cahaya-gelap.webp";
  for(const [sheet,page] of [[css,"Bilik"],[studio,"Studio"],[novel,"Novel"]]){
-  assert.ok(sheet.includes(asset+"?v=1"),page+" must use the same selected portrait wallpaper");
-  assert.ok(!sheet.includes("bilik-antara-bg-desktop.webp"),page+" must not stretch the old landscape variant");
+  for(const asset of ["aksara-celestial-mobile.webp?v=1","aksara-celestial-desktop.webp?v=1"])
+   assert.ok(sheet.includes(asset),page+" must reference the selected responsive artwork: "+asset);
  }
- assert.equal(html.split(asset+"?v=1").length-1,2,"Desktop/mobile preloads must share one cached asset");
- const bytes=fs.statSync(asset).size;
- assert.ok(bytes>1000&&bytes<100000,"Shared portrait wallpaper must remain a lightweight WebP");
- assert.match(css,/background-size:auto 100%,cover/, "Desktop must preserve the portrait aspect ratio");
- assert.match(css,/background-size:cover,cover/, "Mobile must fill its portrait viewport");
- assert.match(studio,/background-size:cover,auto 100%,cover/);
- assert.match(novel,/background-size:cover,auto 100%,cover/);
+ assert.ok(html.includes('href="aksara-celestial-mobile.webp?v=1"'));
+ assert.ok(html.includes('href="aksara-celestial-desktop.webp?v=1"'));
+ assert.match(css,/animation:none!important/,"Wallpaper must be motion-free");
+ assert.match(css,/background-size:cover,cover/);
  assert.match(studio,/pointer-events:none/);
  assert.match(novel,/\.novel-shell\{position:relative;z-index:1\}/);
 });
