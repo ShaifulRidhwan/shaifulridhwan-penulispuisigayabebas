@@ -43,4 +43,28 @@ test("browser source scripts parse",()=>{
  }
  assert.doesNotThrow(()=>new vm.Script(read("bilik-antara-code-workspace.js")));
  assert.doesNotThrow(()=>new vm.Script(read("bilik-antara-attachments.js")));
+ assert.doesNotThrow(()=>new vm.Script(read("bilik-antara-pdf-reader.js")));
+});
+
+test("PDF text reader and compact composer protect user consent",()=>{
+ const html=read("bilik-antara.html"),client=read("bilik-antara-attachments.js");
+ const reader=read("bilik-antara-pdf-reader.js"),css=read("bilik-antara-attachments.css");
+ const backend=read("netlify/functions/bilik-antara.js");
+ assert.ok(html.includes('bilik-antara-pdf-reader.js?v=1'));
+ assert.ok(html.includes('bilik-antara-attachments.js?v=2'));
+ assert.ok(html.includes('bilik-antara-attachments.css?v=2'));
+ assert.ok(html.includes('class="attachment-preview-row"'));
+ assert.ok(html.length<80000,"Bilik Antara HTML must remain below the performance budget");
+ assert.ok(client.includes('window.AksaraPdfReader.read(file)'));
+ assert.ok(client.includes('if(item){'));
+ assert.ok(client.includes('ui.remove.hidden=stagedFiles.length<2'));
+ assert.ok(client.includes('ui.docStatus.dataset.state=note?"warning":"ready"'));
+ assert.ok(client.includes('kind:"text"'));
+ assert.ok(reader.includes('pdfjs-dist@6.4.299/build/pdf.mjs'));
+ assert.ok(reader.includes('pdfjs-dist@6.4.299/build/pdf.worker.mjs'));
+ assert.ok(reader.includes('isEvalSupported:false'));
+ assert.ok(reader.includes('await page.getTextContent('));
+ assert.ok(css.includes('#docStatus[data-state="ready"]'));
+ assert.ok(backend.includes('const textOnly=media.length===0'));
+ assert.ok(backend.includes('payload.contextFallback===true'));
 });
