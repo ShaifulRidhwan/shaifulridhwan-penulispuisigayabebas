@@ -547,6 +547,7 @@ exports.handler=async event=>{
       (intent.depth==="high"||intent.task==="technical"?"\nPENDEKATAN CERDAS: Kenal pasti tugas sebenar, pecahkan masalah rumit kepada submasalah yang perlu, semak pengiraan dan andaian, pilih alat hanya apabila alat menambah bukti. Utamakan jawapan yang boleh diuji berbanding bunyi yakin. Jangan dedahkan nota penalaran dalaman. Jangan mengaku melakukan semakan yang tidak dibuat.":"")+
       (intent.thought?"\nEKSPERIMEN PEMIKIRAN: nyatakan andaian jelas dan kesan yang dijangka, jangan bentangkan andaian sebagai fakta.":"")+
       (intent.debate?"\nKRITIK HUJAH: cari premis lemah, bantahan paling kuat, dan nilai bukti dengan tegas.":"")+
+      (intent.calculate?"\nMATEMATIK: Untuk paparan chat biasa, tulis formula dalam teks biasa yang boleh dibaca. Jangan guna LaTeX seperti \\frac atau $ kecuali diminta secara khusus. Jika alat kod tidak dijalankan, jangan dakwa ia telah dijalankan.":"")+
       (intent.search?"\nFAKTA TERKINI: gunakan carian jika tersedia; bezakan sumber yang benar-benar dijumpai daripada pengetahuan sedia ada. Jika tiada sumber disahkan, nyatakan ketidakpastian.":"")+
       (intent.hasLink?"\nPAUTAN: Jika TEKS HALAMAN daripada Tavily ada, ia kandungan teks awam yang dibaca, bukan bukti visual/interaktiviti. Jika tiada, semak melalui URL Context jika tersedia. Jangan reka semakan.":"")+
       (/(?:nyanyi|lagu|korus|sing)/i.test(question)?"\nPERSEMBAHAN KREATIF: Jika diminta menyanyi, cipta lirik lagu ORIGINAL pendek dalam Bahasa Melayu santai, dengan rangkap dan korus ringkas. Jangan menolak permintaan nyanyian original secara automatik. Jangan hasilkan semula lirik penuh lagu komersial atau menyamar sebagai penyanyi asal. Dalam mod teks, nyatakan bahawa jawapan ialah lirik, bukan rakaman suara.":"")+
@@ -584,7 +585,7 @@ exports.handler=async event=>{
   const fallbackLinkNote=intent.hasLink?(ownedPage?
     "[PENGESAHAN BACKEND] Kandungan HTML awam laman ini memang telah dibaca sebagai teks. Nilai apa yang dapat dibuktikan; jangan dakwa menguji CSS, screenshot, fungsi interaktif atau runtime.":
     tavilyRead?"[PENGESAHAN BACKEND] Tavily Extract telah membaca teks awam dalam RUJUKAN WEB. Ini bukan pemeriksaan visual, JavaScript atau prestasi halaman. Gunakan teks sebagai bukti terhad.":
-     "[PENGESAHAN BACKEND] Pengguna SUDAH memberi URL tetapi kandungan halaman tidak berjaya dibaca. Jangan minta URL itu sekali lagi atau mendakwa telah membuat review. Terangkan batas akses dan minta teks/screenshot hanya jika diperlukan."):"";
+     "[PENGESAHAN BACKEND] URL belum berjaya disahkan melalui Gemini. Jika alat Browser Search atau Web Fetch tersedia, gunakan alat itu untuk cuba mendapatkan bukti. Jika ia gagal, jangan mereka review atau sumber dan jangan minta URL yang sudah diberikan."):"";
   async function useAlternative(options={}){
       alternativeTried=true;
       // The text-only fallback cannot read URL Context. An honest local answer
@@ -602,7 +603,7 @@ exports.handler=async event=>{
         ?question+"\n"+followUpWebUrl:question;
       try{
         alternative=await Router.complete({cloudflareAI,
-          system:publicWebOnly?personality+"\nPUBLIC WEB RESEARCH: Gunakan hanya sumber sebenar. Jangan reka carian.":system,
+          system:publicWebOnly?personality+(options.requireCodeEvidence?"\nTOOL EXECUTION: Jalankan kod melalui code_interpreter sebelum menjawab; jangan mendakwa melaksanakan kod jika alat tidak digunakan.":"\nPUBLIC WEB RESEARCH: Gunakan hanya sumber sebenar. Jangan reka carian."):system,
           history:publicWebOnly?[]:history,
           question:publicWebOnly?browserQuestion:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[feedbackContext,fallbackLinkNote,work,references]):Context.composeTurn(question,[feedbackContext,fallbackLinkNote,doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,webIntent,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
       }catch(fallbackError){
@@ -616,6 +617,7 @@ exports.handler=async event=>{
         // A requested live research handoff needs evidence that the provider
         // actually invoked its browser tool, not merely offered it.
         if(options.requireWebEvidence&&!alternative.toolsUsed?.includes("browser_search"))return null;
+        if(options.requireCodeEvidence&&!alternative.toolsUsed?.includes("code_interpreter"))return null;
         alternative.reply=Structured.render(reactionReply(alternative.reply,intent,history),Structured.wantsJson(question)).reply;
         lastTextProvider=alternative.provider;lastTextSuccessAt=Date.now();
         log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
@@ -650,6 +652,21 @@ exports.handler=async event=>{
       requireWebEvidence:true,onDelta:null,
       firstResponseDeadline:Math.min(deadline,started+11500)});
     if(live?.statusCode===200)return live;
+  }
+  // A request to RUN Python/code needs execution, not merely a correct answer.
+  // Use the provider's verified sandbox, with the existing free-tier guard.
+  const explicitCodeExecution=intent.calculate&&textOnly&&!intent.hasLink&&
+    /(gunakan alat pelaksanaan kod|code interpreter|jalankan (?:kod|python)|laksanakan (?:kod|python)|execute (?:code|python)|run python)/i.test(question)&&
+    Router.configured(cloudflareAI).some(p=>p.id==="groq")&&
+    Capabilities.manifest().groq.codeInterpreter;
+  if(explicitCodeExecution){
+    const executed=await useAlternative({only:["groq"],prefer:"groq",
+      publicWebOnly:true,requireCodeEvidence:true,onDelta:null,
+      webIntent:{...webIntent,search:false,calculate:true},
+      timeoutMs:9000,bufferedTimeoutMs:11000,
+      firstResponseDeadline:Math.min(deadline,started+11500)});
+    if(executed?.statusCode===200)return executed;
+    // If the tool failed, Gemini still gets its ordinary code_execution path.
   }
   const backupTextProviders=["openrouter"];
   // Gemini is the primary text engine whenever configured and outside cooldown.
@@ -747,7 +764,7 @@ exports.handler=async event=>{
     // Gemini's free URL Context is not general Google Search Grounding.
     // For explicitly current facts without live sources, prefer a verified
     // Groq browser-search result over an ungrounded memorized answer.
-    if(intent.search&&!intent.hasLink&&textOnly&&!Structured.wantsJson(question)&&
+    if(intent.search&&!intent.hasLink&&!alternativeTried&&textOnly&&!Structured.wantsJson(question)&&
       Capabilities.webEligible(webIntent)&&
       Router.configured(cloudflareAI).some(p=>p.id==="groq")&&
       Capabilities.manifest().groq.browserSearch&&
@@ -762,7 +779,7 @@ exports.handler=async event=>{
       /\b(?:review|audit|analisis|semak|nilai|periksa|buka|baca|masuk|lawat|layari|tengok)\b/i.test(question);
     // If Google's URL retrieval has no success metadata, attempt free web tools
     // from the already configured fallback providers without inventing evidence.
-    if(unverifiedReview&&freeWebConfigured&&textOnly&&remaining()>7000){
+    if(unverifiedReview&&freeWebConfigured&&textOnly&&remaining()>4500){
       const webFallback=await useAlternative({only:["groq","openrouter"],firstResponseDeadline:deadline,webIntent,publicWebOnly:true,onDelta:null});
       if(webFallback?.statusCode===200)return webFallback;
     }

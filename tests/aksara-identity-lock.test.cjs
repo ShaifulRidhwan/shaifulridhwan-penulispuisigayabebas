@@ -17,7 +17,7 @@ const protectedFiles=Object.freeze({
  "bilik-antara-modes.js":"30e8ebb88cee73529c7493a637986c5155357e51",
  "bilik-antara-chat-style.js":"9fc607daf19e2e838d29b7905fce63a2da1ecf78",
  "bilik-antara-voice.js":"e4d033cec8bb21d6600a140909f8df07be924186",
- "netlify/functions/aksara-provider-router.js":"90421eba28993e83eaabc1c7f8524b48a57165ba",
+ "netlify/functions/aksara-provider-router.js":"f364a7ac8c0d896a4c39987c24af036b3bbb3428",
  "bilik-antara-code-chat.js":"a24088913d31c5b1e15907e0de02c5ec2990051b"
 });
 function gitBlob(bytes){

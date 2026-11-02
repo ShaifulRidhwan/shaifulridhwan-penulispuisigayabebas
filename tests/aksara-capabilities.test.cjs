@@ -112,3 +112,68 @@ test("fresh-news requests without Gemini web evidence hand off to real Groq brow
  assert.deepEqual(groq.tools,[{type:"browser_search"}]);
  assert.equal(groq.tool_choice,"required");
 });
+
+test("natural language computation and specific AKSARA works expose correct intents",()=>{
+ const I=require("../netlify/functions/antara-intelligence");
+ const math=I.resolveIntent("Gunakan alat pelaksanaan kod untuk mengira jumlah kuasa dua integer 1 hingga 1000",[],false);
+ assert.equal(math.calculate,true);
+ const work=I.resolveIntent("Cari petikan karya puisi AKSARA yang membincangkan keraguan",[],false);
+ assert.equal(work.works,true);
+ assert.equal(C.geminiFunctions({question:"Cari petikan karya puisi AKSARA yang membincangkan keraguan",works:work.works}).length,1);
+ const chat=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
+ assert.match(chat,/const explicitPoetrySearch=Capabilities\.geminiFunctions/);
+ assert.match(chat,/explicitPoetrySearch\s*\?\s*null:PublicPoetry\.sample/);
+});
+
+test("explicit code execution uses actual Groq tool and requires proof",async t=>{
+ const keys=["GEMINI_API_KEY","GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4",
+  "AKSARA_FREE_FALLBACKS","GROQ_API_KEY","GROQ_FREE_CONFIRMED",
+  "AKSARA_HYBRID_ROUTER","AKSARA_DISABLE_RESEARCH","AKSARA_GROQ_CODE_ENABLED"];
+ const previous=Object.fromEntries(keys.map(k=>[k,process.env[k]])),oldFetch=global.fetch;
+ t.after(()=>{
+  global.fetch=oldFetch;
+  for(const k of keys){if(previous[k]===undefined)delete process.env[k];else process.env[k]=previous[k];}
+ });
+ Object.assign(process.env,{
+  GEMINI_API_KEY:"mock-primary",GROQ_API_KEY:"mock-groq",GROQ_FREE_CONFIRMED:"true",
+  AKSARA_HYBRID_ROUTER:"true",AKSARA_FREE_FALLBACKS:"true",AKSARA_DISABLE_RESEARCH:"false",
+  AKSARA_GROQ_CODE_ENABLED:"true"
+ });
+ for(const k of ["GEMINI_API_KEY_2","GEMINI_API_KEY_3","GEMINI_API_KEY_4"])delete process.env[k];
+ const {handler}=require("../netlify/functions/bilik-antara");
+ let groqRequest=null,geminiCalls=0;
+ global.fetch=async(url,options)=>{
+  if(String(url).includes("generativelanguage.googleapis.com")){
+   geminiCalls++;
+   return Response.json({candidates:[{content:{parts:[{text:"Gemini ordinary answer"}]},finishReason:"STOP"}]});
+  }
+  if(String(url).includes("api.groq.com")){
+   groqRequest=JSON.parse(options.body);
+   return Response.json({model:"openai/gpt-oss-120b",choices:[{message:{
+    content:"333833500",executed_tools:[{name:"code_interpreter"}]},finish_reason:"stop"}]});
+  }
+  throw Error("Unexpected provider");
+ };
+ const out=await handler({httpMethod:"POST",headers:{
+  origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+  "x-nf-client-connection-ip":"capability-explicit-code-test"
+ },body:JSON.stringify({
+  question:"Gunakan alat pelaksanaan kod untuk mengira jumlah kuasa dua integer 1 hingga 1000"
+ })});
+ const data=JSON.parse(out.body);
+ assert.equal(out.statusCode,200);
+ assert.equal(data.provider,"groq");
+ assert.ok(data.toolsUsed.includes("code_interpreter"));
+ assert.equal(geminiCalls,0);
+ assert.deepEqual(groqRequest.tools,[{type:"code_interpreter"}]);
+ assert.equal(groqRequest.tool_choice,"required");
+});
+
+test("offered-but-unused code tool does not falsely claim execution",()=>{
+ const x=C.executed("groq",{choices:[{message:{content:"I think the answer is 123"}}]});
+ assert.deepEqual(x,[]);
+ const router=fs.readFileSync("netlify/functions/aksara-provider-router.js","utf8");
+ assert.match(router,/t\.type==="browser_search"\|\|t\.type==="code_interpreter"/);
+ const chat=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
+ assert.match(chat,/options\.requireCodeEvidence&&!alternative\.toolsUsed\?\.includes\("code_interpreter"\)/);
+});
