@@ -20,7 +20,7 @@ test("large text and Netlify-safe media caps agree between client and server",()
  assert.ok(handler.includes("const MAX_MEDIA_ENCODED=5200000"));
  assert.ok(handler.includes('documentText.length>1000000'));
  assert.ok(sanitizer.includes("encoded.length>5200000"));
- assert.ok(sanitizer.includes("Math.ceil(encoded.length*3/4)>3850000"));
+ assert.ok(sanitizer.includes("rawBytes>3850000"));
 });
 test("attachment previews, removal, compression and code bridge are explicit and local",()=>{
  const html=read("bilik-antara.html"),workspace=read("bilik-antara-code-workspace.js");
