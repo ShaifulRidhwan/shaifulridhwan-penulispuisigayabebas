@@ -812,7 +812,8 @@ exports.handler=async event=>{
     // tools were unavailable, don't allow fluent model recall to pose as news.
     if(intent.search&&!intent.hasLink&&!verifiedLiveNews){
       const failure=[...providerFailures].reverse().find(x=>x.provider==="groq");
-      const diagnostic=failure?(typeof failure.status==="number"?"HTTP "+failure.status:String(failure.reason||"unknown").slice(0,40)):"alat browser_search tidak mengembalikan bukti";
+      const cooldown=Router.availability(cloudflareAI).find(x=>x.provider==="groq")?.retryAfterSeconds||0;
+      const diagnostic=failure?(typeof failure.status==="number"?"HTTP "+failure.status:String(failure.reason||"unknown").slice(0,40)):cooldown?"Groq cooldown "+cooldown+"s":"alat browser_search tidak mengembalikan bukti";
       return result(200,{mode:"local-limitation",provider:"local",model:"gemini-news-evidence-guard",
         thoughtMode,researchStatus:researchResult.status,
         reply:"Gemini berjaya menjawab, tetapi jawapan itu bukan hasil carian web yang disahkan. Groq Browser Search belum memberikan bukti carian ("+diagnostic+"). Aku tak akan reka berita terkini atau mendakwa tiada alat web langsung. Carian live belum berjaya untuk permintaan ini.",
