@@ -575,6 +575,7 @@ exports.handler=async event=>{
   const freeWebConfigured=Capabilities.webEligible(webIntent)&&Router.configured(cloudflareAI).some(p=>
     p.id==="groq"&&Capabilities.manifest().groq.browserSearch||
     p.id==="openrouter"&&Capabilities.manifest().openrouter.webFetchFree);
+  const strictPageRead=intent.hasLink&&/\b(?:buka|baca|review|audit|semak|periksa|lawat|layari|tengok|lihat|read|open|visit)\b|benar-benar|betul-betul/i.test(question);
   // A link never becomes proof by itself. Fallbacks may discuss verified owned-page
   // HTML or state clearly that an external URL was NOT read, instead of hard-failing.
   let providerFailures=[],alternativeTried=false,quotaRecoveryTried=false,providerRetrySeconds=3;
@@ -633,7 +634,7 @@ exports.handler=async event=>{
         }
         // A search result is not proof of fetching the exact linked page.
         // Only verified URL Context or actual extracted HTML can establish that.
-        if(intent.hasLink&&/(?:benar-benar|betul-betul)/i.test(question)&&!ownedPage&&!tavilyRead){
+        if(strictPageRead&&!ownedPage&&!tavilyRead){
           return result(200,{mode:"local-limitation",provider:"local",model:"verified-url-guard",thoughtMode,
             reply:browserUsed?"Groq berjaya menjalankan Browser Search, tetapi metadatanya tidak membuktikan halaman URL yang kau beri benar-benar dibuka atau dibaca. Aku belum boleh menyatakan kandungan tepat halaman itu sebagai hasil bacaan langsung.":"URL yang kau beri belum berjaya dibaca melalui URL Context atau alat ekstrak halaman. Aku tak akan mereka kandungan seolah-olah sudah membuka halaman itu.",
             sources:[],toolsUsed:browserUsed?["browser_search"]:[],toolsOffered:alternative.toolsOffered||[],reviewApplied:false,
@@ -776,13 +777,16 @@ exports.handler=async event=>{
     const actualTools=[...(tavilyRead?["tavily_extract"]:tavilySearched?["tavily_search"]:[]),...(localFunctionUsed?["knowledge_search"]:[])];
     if(candidate&&candidate.groundingMetadata&&Array.isArray(candidate.groundingMetadata.webSearchQueries)&&candidate.groundingMetadata.webSearchQueries.length)actualTools.push("google_search");
     if(candidate&&candidate.content&&Array.isArray(candidate.content.parts)&&candidate.content.parts.some(p=>p&&p.executableCode))actualTools.push("code_execution");
-    const urlTrace=Capabilities.urlTrace(data,tools);
+    const requestedPageUrl=intent.hasLink?(followUpWebUrl||Capabilities.safePublicUrl(question)):null;
+    const urlTrace=Capabilities.urlTrace(data,tools,requestedPageUrl);
     if(urlTrace.status==="success")actualTools.push("url_context");
+    const verifiedLiveNews=tavilySearched||actualTools.includes("google_search");
     const warnings=[];
     if(candidate&&candidate.finishReason&&candidate.finishReason!=="STOP")warnings.push("Jawapan ni mungkin belum lengkap · "+candidate.finishReason+".");
     if(intent.search&&!tools.some(t=>t.google_search)&&researchResult.status!=="search-snippets")warnings.push("Live web search belum aktif atau belum berjaya, jadi info terkini belum disahkan.");
     else if(intent.search&&!sources.length)warnings.push("Aku belum jumpa sumber yang dapat disahkan untuk jawapan ni.");
-    if(intent.hasLink&&!tavilyRead&&!actualTools.includes("url_context")&&!sources.length)warnings.push(researchResult.status==="local-budget-store-unavailable"?"Storan untuk had tambahan pilihan pemilik bermasalah; ini bukan bukti kredit Tavily habis.":researchResult.status==="upstream-auth-failed"?"Tavily menolak pengesahan API.":researchResult.status==="upstream-rate-limited"?"Tavily melaporkan rate limit, bukan had bulanan.":researchResult.status==="upstream-credits-exhausted"?"Tavily sendiri melaporkan had kredit.":"Aku belum dapat pastikan link ni berjaya dibaca.");
+    if(intent.hasLink&&urlTrace.status==="success")warnings.push("Gemini URL Context berjaya membaca URL yang diberikan sebagai teks; bukan pemeriksaan visual atau JavaScript.");
+    if(intent.hasLink&&!ownedPage&&!tavilyRead&&!actualTools.includes("url_context"))warnings.push(researchResult.status==="local-budget-store-unavailable"?"Storan untuk had tambahan pilihan pemilik bermasalah; ini bukan bukti kredit Tavily habis.":researchResult.status==="upstream-auth-failed"?"Tavily menolak pengesahan API.":researchResult.status==="upstream-rate-limited"?"Tavily melaporkan rate limit, bukan had bulanan.":researchResult.status==="upstream-credits-exhausted"?"Tavily sendiri melaporkan had kredit.":"Aku belum dapat pastikan link ni berjaya dibaca.");
     // Gemini's free URL Context is not general Google Search Grounding.
     // For explicitly current facts without live sources, prefer a verified
     // Groq browser-search result over an ungrounded memorized answer.
@@ -797,18 +801,37 @@ exports.handler=async event=>{
         firstResponseDeadline:deadline,webIntent,requireWebEvidence:true});
       if(live?.statusCode===200)return live;
     }
-    const unverifiedReview=intent.hasLink&&!ownedPage&&!tavilyRead&&!actualTools.includes("url_context")&&!directSources.length&&
-      /\b(?:review|audit|analisis|semak|nilai|periksa|buka|baca|masuk|lawat|layari|tengok)\b/i.test(question);
+    const unverifiedReview=strictPageRead&&!ownedPage&&!tavilyRead&&!actualTools.includes("url_context");
     // If Google's URL retrieval has no success metadata, attempt free web tools
     // from the already configured fallback providers without inventing evidence.
     if(unverifiedReview&&freeWebConfigured&&textOnly&&remaining()>4500){
       const webFallback=await useAlternative({only:["groq","openrouter"],firstResponseDeadline:deadline,webIntent,publicWebOnly:true,onDelta:null});
       if(webFallback?.statusCode===200)return webFallback;
     }
-    const reliableReply=unverifiedReview
-      ?"Aku cuba membaca pautan itu, tetapi kandungan laman belum berjaya disahkan. Aku tak boleh buat review sebenar tanpa kandungannya. Berikan teks atau screenshot laman untuk analisis berasaskan bukti."
-      :revised;
-    const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,researchStatus:researchResult.status,reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources:unverifiedReview?[]:sources,
+    // A successful Gemini chat is NOT evidence of web research. If live
+    // tools were unavailable, don't allow fluent model recall to pose as news.
+    if(intent.search&&!intent.hasLink&&!verifiedLiveNews){
+      const failure=[...providerFailures].reverse().find(x=>x.provider==="groq");
+      const cooldown=Router.availability(cloudflareAI).find(x=>x.provider==="groq")?.retryAfterSeconds||0;
+      const diagnostic=failure?(typeof failure.status==="number"?"HTTP "+failure.status:String(failure.reason||"unknown").slice(0,40)):cooldown?"Groq cooldown "+cooldown+"s":"alat browser_search tidak mengembalikan bukti";
+      return result(200,{mode:"local-limitation",provider:"local",model:"gemini-news-evidence-guard",
+        thoughtMode,researchStatus:researchResult.status,
+        reply:"Gemini berjaya menjawab, tetapi jawapan itu bukan hasil carian web yang disahkan. Groq Browser Search belum memberikan bukti carian ("+diagnostic+"). Aku tak akan reka berita terkini atau mendakwa tiada alat web langsung. Carian live belum berjaya untuk permintaan ini.",
+        sources:[],toolsUsed:[],toolsOffered:tools.map(t=>Object.keys(t)[0]),
+        reviewApplied:false,disclaimer:"Tiada sumber berita live yang disahkan; jawapan Gemini tanpa grounding disekat.",
+        routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()}},H);
+    }
+    if(unverifiedReview){
+      return result(200,{mode:"local-limitation",provider:"local",model:"gemini-url-evidence-guard",
+        thoughtMode,researchStatus:researchResult.status,
+        reply:"Gemini memberi jawapan tentang URL itu, tetapi URL belum berjaya disahkan sebagai halaman yang benar-benar dibaca. Status URL Context: "+urlTrace.status+". Aku tak akan mempersembahkan pengetahuan umum sebagai hasil bacaan halaman secara langsung.",
+        sources:[],toolsUsed:actualTools,toolsOffered:tools.map(t=>Object.keys(t)[0]),
+        urlTrace,reviewApplied:false,
+        disclaimer:"URL khusus belum berjaya disahkan melalui URL Context, Tavily Extract atau HTML milik sendiri.",
+        routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()}},H);
+    }
+    const reliableReply=revised;
+    const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,researchStatus:researchResult.status,reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources,
       ...(publicAccount?{publicAccount}:{}),
       argumentMap:review?review.argumentMap:[],truthAudit:review?review.truthAudit:[],
       thoughtLedger:review?review.thoughtLedger:[],hypothesis:review?review.hypothesis:"",
