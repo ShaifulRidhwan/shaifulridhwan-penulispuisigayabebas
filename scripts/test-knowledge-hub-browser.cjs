@@ -62,6 +62,14 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    assert.equal(await page.locator("#knowledgeSourcesList a").first().getAttribute("href"),"https://ms.wikipedia.org/wiki/Aporia");
    assert.equal(await page.locator("#knowledgeSourcesList a").first().getAttribute("rel"),"noopener noreferrer");
 
+   await page.locator("#knowledgeTabCalc").click();
+   assert.equal(await page.locator("#knowledgeCalc").isVisible(),true);
+   await page.locator("#knowledgeCalcInput").fill("(12+8)*3");
+   await page.locator("#knowledgeCalcDraft").click();
+   assert.equal(await page.locator("#knowledgeDialog").isVisible(),false);
+   assert.equal(await page.locator("#input").inputValue(),"Kira (12+8)*3");
+   assert.equal(sent.length,1,"Calculator only prepares a draft; it does not execute code");
+   await open();
    await page.locator("#knowledgeTabUrl").click();
    await page.locator("#knowledgeUrlInput").fill("http://127.0.0.1/secrets");
    await page.locator("#knowledgeUrlDraft").click();
