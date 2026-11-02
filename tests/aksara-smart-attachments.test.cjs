@@ -11,10 +11,10 @@ test("smart attachment UI has five explicit types and capture actions",()=>{
  assert.ok(html.includes('capture="environment"'));
 });
 test("large text and Netlify-safe media caps agree between client and server",()=>{
- const html=read("bilik-antara.html"),handler=read("netlify/functions/bilik-antara.js");
+ const html=read("bilik-antara.html"),client=read("bilik-antara-attachments.js"),handler=read("netlify/functions/bilik-antara.js");
  const sanitizer=read("netlify/functions/antara-intelligence.js");
- assert.ok(html.includes("MAX_MEDIA_BYTES=3850000"));
- assert.ok(html.includes("MAX_TEXT_BYTES=2000000,MAX_TEXT_CHARS=1000000"));
+ assert.ok(client.includes("MAX_MEDIA_BYTES=3850000"));
+ assert.ok(client.includes("MAX_TEXT_BYTES=2000000,MAX_TEXT_CHARS=1000000"));
  assert.ok(html.includes("requestBytes>5350000"));
  assert.ok(handler.includes("const MAX_BODY=5500000"));
  assert.ok(handler.includes("const MAX_MEDIA_ENCODED=5200000"));
@@ -23,13 +23,13 @@ test("large text and Netlify-safe media caps agree between client and server",()
  assert.ok(sanitizer.includes("rawBytes>3850000"));
 });
 test("attachment previews, removal, compression and code bridge are explicit and local",()=>{
- const html=read("bilik-antara.html"),workspace=read("bilik-antara-code-workspace.js");
- assert.ok(html.includes("URL.revokeObjectURL"));
- assert.ok(html.includes("renderAttachmentTray()"));
- assert.ok(html.includes("compressImageForChat"));
- assert.ok(html.includes("navigator.mediaDevices.getUserMedia"));
- assert.ok(html.includes("micStream?.getTracks().forEach(t=>t.stop())"));
- assert.ok(html.includes("workspace.importFiles(files)"));
+ const html=read("bilik-antara.html"),client=read("bilik-antara-attachments.js"),workspace=read("bilik-antara-code-workspace.js");
+ assert.ok(client.includes("URL.revokeObjectURL"));
+ assert.ok(client.includes("renderAttachmentTray()"));
+ assert.ok(client.includes("compressImageForChat"));
+ assert.ok(client.includes("navigator.mediaDevices.getUserMedia"));
+ assert.ok(client.includes("micStream?.getTracks().forEach(t=>t.stop())"));
+ assert.ok(client.includes("workspace.importFiles(files)"));
  assert.ok(workspace.includes("async function importFiles(selected)"));
  assert.ok(workspace.includes("importFiles});"));
  assert.ok(workspace.includes("if(!dialog.open)dialog.showModal()"));
@@ -42,4 +42,5 @@ test("browser source scripts parse",()=>{
   assert.doesNotThrow(()=>new vm.Script(match[2]));
  }
  assert.doesNotThrow(()=>new vm.Script(read("bilik-antara-code-workspace.js")));
+ assert.doesNotThrow(()=>new vm.Script(read("bilik-antara-attachments.js")));
 });
