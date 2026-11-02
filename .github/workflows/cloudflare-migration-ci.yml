@@ -39,6 +39,8 @@ jobs:
         run: node --test tests/aksara-public-poetry.test.cjs
       - name: Test native Workers AI identity, routing and streaming mocks
         run: node --test tests/aksara-workers-ai.test.cjs
+      - name: Test Gemini four-key text pool and Voice isolation
+        run: node --test tests/aksara-gemini-text-pool.test.cjs
       - name: Validate Cloudflare Worker bundle without uploading or secrets
         run: npx --yes wrangler@4.135.0 deploy --config cloudflare/wrangler.jsonc --dry-run --outdir ./cloudflare/.verify-output
       - name: Smoke test actual local Cloudflare Workers runtime
