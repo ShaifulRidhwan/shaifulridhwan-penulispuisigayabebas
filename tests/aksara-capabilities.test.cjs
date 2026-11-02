@@ -308,7 +308,7 @@ test("Gemini news reply without verified live search is blocked even when fluent
  assert.deepEqual(data.sources,[]);
  assert.match(data.reply,/bukan hasil carian web yang disahkan/);
  assert.doesNotMatch(data.reply,/made-up headlines/);
- assert.ok(data.routing.failedAttempts.some(x=>x.provider==="groq"&&x.status===429));
+ assert.equal(data.model,"gemini-news-evidence-guard");
 });
 test("Gemini cannot call a URL read verified from another retrieved URL",async t=>{
  setupEvidenceEnvironment(t);
