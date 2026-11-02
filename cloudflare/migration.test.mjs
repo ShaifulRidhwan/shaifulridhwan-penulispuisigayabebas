@@ -5,6 +5,13 @@ import path from "node:path";
 const root=process.cwd();
 const cf=p=>path.join(root,"cloudflare",p);
 const text=p=>readFileSync(cf(p),"utf8");
+test("Cloudflare exposes secret bindings to legacy Node-compatible chat handlers",()=>{
+ const config=JSON.parse(text("wrangler.jsonc"));
+ assert.ok(config.compatibility_flags?.includes("nodejs_compat"),"Legacy handlers read process.env; without nodejs_compat Worker secrets are unavailable");
+ assert.equal(config.vars.GEMINI_MODEL,"gemini-3.5-flash-lite");
+ assert.equal(config.vars.GEMINI_MODEL_FAST,"gemini-3.5-flash-lite");
+ assert.equal(config.vars.GEMINI_MODEL_COMPLEX,"gemini-3.5-flash-lite");
+});
 test("Cloudflare build includes all three apps and preserves Netlify home separately",()=>{
  for(const p of ["bilik-antara.html","studio-antara.html","perpustakaan-aksara.html","antara-cahaya-dan-gelap.html","assets/novel/pembaca.html","assets/novel/cover-01.jpg","bilik-antara.css","studio-antara.css","perpustakaan-aksara.css"]){
   assert.ok(existsSync(cf("dist/"+p)),p);
