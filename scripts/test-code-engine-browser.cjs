@@ -127,6 +127,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.deepEqual(codeGlass,multiGlass,"Code Engine modal must reuse Multi AI glass layout and backdrop");
   assert.equal(await page.locator("#codeEngineMenu .multi-ai-head").count(),1);
   assert.equal(await page.locator("#codeEngineMenu .multi-ai-row").count(),6,"Five runtime languages plus HTML/CSS preview should appear");
+  assert.equal(await page.locator("#codeRuntimeList > .multi-ai-row").first().getAttribute("id"),"codeHtmlPreview","HTML/CSS Live Preview must be first in Code Engine");
   const codeFooter=await page.locator("#codeEngineRefresh").evaluate(el=>{
    const s=getComputedStyle(el);
    return {borderRadius:s.borderRadius,minHeight:s.minHeight,padding:s.padding,font:s.font,backgroundImage:s.backgroundImage};
