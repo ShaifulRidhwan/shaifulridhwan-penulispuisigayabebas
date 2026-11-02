@@ -303,7 +303,9 @@ exports.handler=async event=>{
     const [alternatives,freeModels]=await Promise.all([alternativeChecks,freeModelsCheck]);
     // Display-only Groq model metadata; protected provider routing stays unchanged.
     const groqModel=configured.find(p=>p.id==="groq")?.model||"";
-    const providers=[google,...alternatives.map(p=>p.id==="groq"&&groqModel?{...p,model:groqModel}:p)];
+    const providers=[google,...alternatives];
+    const groqStatus=providers.find(p=>p.id==="groq");
+    if(groqStatus&&groqModel)groqStatus.model=groqModel;
     const fastest=providers.filter(p=>p.status==="online").sort((a,b)=>(a.latencyMs||0)-(b.latencyMs||0))[0];
     const ready=providers.find(p=>p.status==="ready");
     const realSuccess=Date.now()-lastTextSuccessAt<90000?providers.find(p=>p.id===lastTextProvider&&p.status==="online"):null;
