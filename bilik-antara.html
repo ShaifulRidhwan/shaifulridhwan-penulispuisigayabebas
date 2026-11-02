@@ -432,12 +432,14 @@ ui.retry.addEventListener("click",()=>{
 const providers=[["gemini","Google Gemini"],["groq","Groq"],["workers_ai","Cloudflare Workers AI"],["openrouter","OpenRouter"]];
 const multiDialog=el("multiAiDialog"),multiList=el("multiAiList");
 let multiLastCheck=0,multiChecking=false,multiCatalog=null,lastOpenRouterModel="",lastOpenRouterAt=0;
+let latestProviderRows=null;
 function shortOpenRouterName(model){
  const full=String(model.name||model.id||"Model").replace(/^[^:]{1,24}:\s*/,"").trim().replace(/^[\w.-]+\//,"");
  const name=full||String(model.id||"Model").split("/").pop().replace(/:free$/,"");
  return name.length>26?name.slice(0,25).trimEnd()+"…":name;
 }
 function renderProviderRows(rows,catalog=null){
+ latestProviderRows=rows;
  const openGroups=new Set([...multiList.querySelectorAll("details[data-provider]")].filter(x=>x.open).map(x=>x.dataset.provider));
  const hasPreviousGroups=multiList.querySelector("details[data-provider]")!==null;
  multiList.replaceChildren();
@@ -462,7 +464,8 @@ function renderProviderRows(rows,catalog=null){
   group.open=hasPreviousGroups&&openGroups.has(id);group.appendChild(line);
   const modelList=elem("div","multi-ai-model-list");
   if(id==="gemini"){
-   window.AksaraGeminiStatus.appendSlots(modelList,item,elem);
+   if(typeof window.AksaraGeminiStatus?.appendSlots==="function")window.AksaraGeminiStatus.appendSlots(modelList,item,elem);
+   else modelList.appendChild(elem("p","multi-ai-model-note","Status Gemini sedang dimuat…"));
   }else if(id==="groq"){
     const model=typeof item?.model==="string"&&item.model?item.model:"openai/gpt-oss-120b";
     const label=state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?"Offline":state==="off"?"Not active":"Checking…";
@@ -499,6 +502,7 @@ function renderProviderRows(rows,catalog=null){
   group.appendChild(modelList);multiList.appendChild(group);
  }
 }
+window.addEventListener("aksara:gemini-status-ready",()=>renderProviderRows(latestProviderRows,multiCatalog));
 async function checkProviders(force=false){
  if(multiChecking)return;
  if(!force&&Date.now()-multiLastCheck<20000)return;
