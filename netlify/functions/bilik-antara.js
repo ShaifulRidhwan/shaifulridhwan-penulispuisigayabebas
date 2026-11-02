@@ -790,9 +790,10 @@ exports.handler=async event=>{
     googleCooldown(model,error,poolKey?.slot);
     const transient=[400,401,403,404,429,500,502,503,504].includes(error.status)||error.name==="AbortError"||error.name==="TypeError"||(!error.status&&error.name==="Error");
     if(transient&&(textOnly||imageOnly)&&Router.enabled(cloudflareAI)&&(hybrid.enabled||!alternativeTried)){
+      const safeWebFallback=intent.hasLink&&freeWebConfigured?{publicWebOnly:true,onDelta:null}:{};
       const fallback=await useAlternative(hybrid.enabled&&alternativeTried?
-        {only:backupTextProviders,firstResponseDeadline:deadline}:
-        {firstResponseDeadline:deadline});if(fallback)return fallback;
+        {only:backupTextProviders,firstResponseDeadline:deadline,...safeWebFallback}:
+        {firstResponseDeadline:deadline,...safeWebFallback});if(fallback)return fallback;
     }
     log("error",{http:error.status||null,googleCode:error.googleStatus||null,category:error.googleCategory||null,name:error.name||"unknown",ms:Date.now()-started});
     if(!textOnly&&!imageOnly&&Router.enabled(cloudflareAI))return result(error.status===429?429:503,{code:"CAPABILITY_UNAVAILABLE",error:privateContext&&payload.contextFallback!==true?"Model utama belum available. Kalau kau benarkan dalam Privasi & Tetapan, model sandaran boleh baca memori dan fail teks kau.":"Model untuk function ni belum available. Sandaran teks tak boleh handle semua benda macam audio, imej dan carian.",retryAfterSeconds:30},H);
