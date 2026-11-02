@@ -39,4 +39,5 @@
   }
  }
  window.AksaraGeminiStatus={appendSlots};
+ window.dispatchEvent(new Event("aksara:gemini-status-ready"));
 })();
