@@ -120,3 +120,14 @@ test("explicit owner cap remains opt-in and fails closed without claiming provid
   fetchImpl:async()=>{throw Error("Should never query provider");}});
  assert.equal(result.status,"local-cap-reached");
 });
+
+test("optional custom monthly cap requires an independent explicit opt-in switch",async()=>{
+ let requests=0;
+ const base={TAVILY_API_KEY:"sample-key",AKSARA_TAVILY_MONTHLY_CREDITS:"700"};
+ const out=await Tavily.lookup("new extra disabled cap search",{env:base,
+  fetchImpl:async()=>{requests++;return {ok:true,json:async()=>({results:[{url:"https://example.org/optin",title:"Source",content:"Content"}]})};}});
+ assert.equal(requests,1);assert.equal(out.status,"search-snippets");
+ const invalid=await Tavily.lookup("another unique cap query",{env:{...base,AKSARA_TAVILY_LOCAL_BUDGET_ENABLED:"true",AKSARA_TAVILY_MONTHLY_CREDITS:"garbage"},
+  fetchImpl:async()=>{throw Error("Must not call provider");}});
+ assert.equal(invalid.status,"local-cap-invalid");
+});
