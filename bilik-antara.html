@@ -392,16 +392,88 @@ placeInput.addEventListener("keydown",event=>{if(event.key==="Enter"){event.prev
 attachmentTrigger.addEventListener("click",()=>{if(!busy){attachmentDialog.showModal();attachmentTrigger.setAttribute("aria-expanded","true");}});
 attachmentClose.addEventListener("click",()=>attachmentDialog.close());
 attachmentDialog.addEventListener("click",event=>{if(event.target===attachmentDialog)attachmentDialog.close();});
-attachmentDialog.addEventListener("close",()=>{attachmentTrigger.setAttribute("aria-expanded","false");attachmentTrigger.focus({preventScroll:true});});
+attachmentDialog.addEventListener("close",()=>{
+ if(micRecorder?.state==="recording")stopMicrophone(true);
+ attachmentTrigger.setAttribute("aria-expanded","false");
+ attachmentTrigger.focus({preventScroll:true});
+});
+const recordStatus=el("attachmentRecordStatus"),recordButton=el("attachmentRecordAction"),recordStop=el("attachmentRecordStop");
+let micRecorder=null,micStream=null,micTimer=0,micParts=[],micCancelled=false;
+function stopMicrophone(discard=false){
+ if(!micRecorder||micRecorder.state==="inactive")return;
+ if(discard)micCancelled=true;
+ clearTimeout(micTimer);micTimer=0;
+ micRecorder.stop();
+ recordStop.hidden=true;recordButton.disabled=false;
+ recordStatus.textContent=discard?"Rakaman dibatalkan.":"Memproses rakaman setempat…";
+}
+recordButton.addEventListener("click",async()=>{
+ if(busy||micRecorder?.state==="recording")return;
+ if(!navigator.mediaDevices?.getUserMedia||typeof MediaRecorder==="undefined"){
+  recordStatus.textContent="Rakaman tidak tersedia dalam browser ini. Pilih fail Audio sebagai alternatif.";return;
+ }
+ try{
+  const stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+  if(!attachmentDialog.open||busy){stream.getTracks().forEach(t=>t.stop());return;}
+  micStream=stream;micParts=[];micCancelled=false;
+  const formats=["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg"];
+  const format=formats.find(t=>MediaRecorder.isTypeSupported(t));
+  micRecorder=new MediaRecorder(stream,format?{mimeType:format}:{});
+  micRecorder.ondataavailable=e=>{if(e.data?.size)micParts.push(e.data);};
+  micRecorder.onerror=()=>{micCancelled=true;recordStatus.textContent="Rakaman gagal. Cuba muat naik fail Audio.";};
+  micRecorder.onstop=async()=>{
+   clearTimeout(micTimer);micTimer=0;
+   micStream?.getTracks().forEach(t=>t.stop());micStream=null;
+   recordStop.hidden=true;recordButton.disabled=false;
+   const parts=micParts,cancelled=micCancelled,format=micRecorder?.mimeType||"audio/webm";
+   micRecorder=null;micParts=[];
+   if(cancelled)return;
+   const type=format.split(";")[0];
+   if(!MEDIA.has(type)){recordStatus.textContent="Format rakaman tidak disokong: "+type;return;}
+   const blob=new Blob(parts,{type});
+   if(!blob.size){recordStatus.textContent="Rakaman kosong.";return;}
+   const ext=type==="audio/mp4"?"m4a":type==="audio/ogg"?"ogg":"webm";
+   const file=new File([blob],"aksara-rakaman-"+Date.now()+"."+ext,{type});
+   attachmentDialog.close();
+   queueAttachmentFiles([file]);
+  };
+  micRecorder.start(500);
+  recordButton.disabled=true;recordStop.hidden=false;
+  recordStatus.textContent="Mikrofon aktif. Tekan Henti rakaman untuk lampirkan (maksimum 60 saat).";
+  micTimer=setTimeout(()=>stopMicrophone(false),60000);
+ }catch(error){
+  micStream?.getTracks().forEach(t=>t.stop());micStream=null;
+  recordButton.disabled=false;recordStop.hidden=true;
+  recordStatus.textContent="Izin mikrofon ditolak atau browser tak menyokong rakaman.";
+ }
+});
+recordStop.addEventListener("click",()=>stopMicrophone(false));
+el("attachmentCameraAction").addEventListener("click",()=>{
+ if(busy)return;
+ attachmentDialog.close();attachmentInputs.camera.click();
+});
 for(const option of attachmentDialog.querySelectorAll("[data-attachment-type]")){
- option.addEventListener("click",()=>{if(busy)return;
-  const field=attachmentInputs[option.dataset.attachmentType];
+ option.addEventListener("click",()=>{
+  if(busy)return;
+  const kind=option.dataset.attachmentType,field=attachmentInputs[kind];
   if(!field)return;attachmentDialog.close();field.click();
  });
 }
-for(const field of Object.values(attachmentInputs)){
- field.addEventListener("change",()=>{const files=Array.from(field.files||[]);field.value="";if(files.length)readFiles(files);});
+for(const [kind,field] of Object.entries(attachmentInputs)){
+ field.addEventListener("change",async()=>{
+  const files=Array.from(field.files||[]);field.value="";
+  if(!files.length)return;
+  if(kind==="code"){
+   try{
+    const workspace=window.AksaraCodeWorkspace;
+    if(!workspace?.importFiles)throw Error("Code Workspace belum tersedia. Cuba segarkan halaman.");
+    await workspace.importFiles(files);
+    ui.docStatus.textContent="Fail kod dibuka dalam Code Workspace; tidak dihantar kepada A.I.";
+   }catch(e){ui.docStatus.textContent="Import kod gagal: "+String(e.message||e).slice(0,160);}
+  }else queueAttachmentFiles(files);
+ });
 }
+
 function elem(tag,cls,text){
  const e=document.createElement(tag);if(cls)e.className=cls;
  if(text!==undefined)e.textContent=String(text);return e;
