@@ -462,16 +462,8 @@ function renderProviderRows(rows,catalog=null){
   let stateLabel=state==="online"?"Connected":state==="ready"?"Ready":
    state==="offline"?(item?.reason==="free_quota_exhausted"?"Kuota percuma habis":waitLabel||(item?.http===503?"Servis sibuk (503)":"Offline")):
    state==="off"?"Not active":"Checking…";
-  // Expose the actual reason for Gemini health uncertainty on mobile.
-  // Do not turn an inconclusive health probe into a green Connected badge.
-  if(id==="gemini"){
-   if(item?.reason==="health_probe_quota")stateLabel="Ready · Probe 429";
-   else if(item?.reason==="cooldown")stateLabel=waitLabel?"Cooldown · "+waitLabel.replace("Retry in ",""):"Cooldown";
-   else if(state==="offline"&&item?.http)stateLabel="Offline · HTTP "+item.http;
-   else if(item?.reason==="health_empty_reply")stateLabel="Ready · Tiada teks";
-  }
+  if(id==="gemini")stateLabel=item?.reason==="health_probe_quota"?"Ready · Probe 429":item?.reason==="cooldown"?(waitLabel||"Cooldown").replace("Retry in ","Cooldown "):state==="offline"&&item?.http?"Offline · HTTP "+item.http:stateLabel;
   const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":state==="ready"?"is-ready":"is-muted"),stateLabel);
-  if(id==="gemini"&&item?.reason)statusText.title="Gemini: "+item.reason+(item.http?" (HTTP "+item.http+")":"");
   if(id==="gemini"&&item?.reason==="health_timeout")statusText.textContent="Semakan lambat";
   line.append(elem("span","multi-ai-provider",name),statusText);
   if(!expandable){multiList.appendChild(line);continue;}
