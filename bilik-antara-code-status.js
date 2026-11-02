@@ -84,6 +84,7 @@ menu.querySelectorAll("[data-code-language]").forEach(btn=>btn.addEventListener(
  if(language==="javascript"&&!pill.classList.contains("ready"))return;
  closeMenu();
  window.dispatchEvent(new CustomEvent("aksara:code-language",{detail:{language}}));
+ if(language==="cpp"){window.dispatchEvent(new CustomEvent("aksara:code-workspace-open",{detail:{language:"cpp"}}));return;}
  document.getElementById("input")?.focus();
 }));
 let permissionEnabled=false,executionRunning=false,runtimeReady=false;
