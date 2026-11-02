@@ -41,8 +41,15 @@ function normalize(results,kind){
  }
  return output;
 }
+function classifyHttpStatus(status){
+ if(status===401||status===403)return "upstream-auth-failed";
+ if(status===402||status===432)return "upstream-credits-exhausted";
+ if(status===429)return "upstream-rate-limited";
+ if(status===400||status===422)return "upstream-invalid-request";
+ return "upstream-unavailable";
+}
 async function request(path,body,{env=process.env,fetchImpl=fetch,signal}={}){
- const key=String(env.TAVILY_API_KEY||"");if(!key)return null;
+ const key=String(env.TAVILY_API_KEY||"").trim();if(!key)return {status:"not-configured"};
  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),5600);
  const onAbort=()=>ctrl.abort();
  signal?.addEventListener?.("abort",onAbort,{once:true});
@@ -51,9 +58,9 @@ async function request(path,body,{env=process.env,fetchImpl=fetch,signal}={}){
   const r=await fetchImpl(API+path,{method:"POST",redirect:"manual",
    headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
    body:JSON.stringify(body),signal:ctrl.signal});
-  if(!r.ok)return null;
-  return await r.json();
- }catch(_){return null;}
+  if(!r.ok)return {status:classifyHttpStatus(r.status)};
+  return {data:await r.json()};
+ }catch(e){return {status:e?.name==="AbortError"?"upstream-timeout":"upstream-network-error"};}
  finally{clearTimeout(timer);signal?.removeEventListener?.("abort",onAbort);}
 }
 async function lookup(question,options={}){
@@ -63,22 +70,34 @@ async function lookup(question,options={}){
  const cacheKey=(hasLink?"url:":"search:")+(url||String(question).trim().toLowerCase());
  const hit=cache.get(cacheKey);
  if(hit&&Date.now()-hit.at<CACHE_TTL)return hit.value;
- // Fail closed if the durable monthly free-tier budget cannot reserve capacity.
- // Test harnesses can inject reserveImpl; production uses Netlify Blobs.
- try{
-  if(typeof options.reserveImpl==="function")await options.reserveImpl();
-  else {
-   const {getStore}=require("@netlify/blobs");
-   const {reserve}=require("./lib/aksara-tavily-budget");
-   await reserve({store:getStore({name:"aksara-tavily-monthly-v1",consistency:"strong"}),
-    cap:env.AKSARA_TAVILY_MONTHLY_CREDITS||700});
+ // Tavily Free already has a provider-enforced credit limit. Do NOT
+ // require an unrelated Netlify Blobs write for every newly created free key.
+ // Owners can opt in to an additional durable cap via this explicit variable.
+ const limitRaw=env.AKSARA_TAVILY_MONTHLY_CREDITS;
+ const ownerCapEnabled=String(env.AKSARA_TAVILY_LOCAL_BUDGET_ENABLED||"").toLowerCase()==="true";
+ if(ownerCapEnabled&&!/^[0-9]+$/.test(String(limitRaw||"").trim()))
+  return {status:"local-cap-invalid",sources:[]};
+ if(typeof options.reserveImpl==="function"||ownerCapEnabled){
+  try{
+   if(typeof options.reserveImpl==="function")await options.reserveImpl();
+   else {
+    const {getStore}=require("@netlify/blobs");
+    const {reserve}=require("./lib/aksara-tavily-budget");
+    await reserve({store:getStore({name:"aksara-tavily-monthly-v1",consistency:"strong"}),
+     cap:Number(limitRaw)});
+   }
+  }catch(error){
+   return {status:/monthly budget exhausted/.test(String(error?.message||""))?"local-cap-reached":"local-budget-store-unavailable",sources:[]};
   }
- }catch(_){return {status:"budget-unavailable-or-exhausted",sources:[]};}
- const data=hasLink?await request("/extract",{urls:[url],extract_depth:"basic",format:"markdown",include_images:false},options):
+ }
+ const response=hasLink?await request("/extract",{urls:[url],extract_depth:"basic",format:"markdown",include_images:false},options):
   await request("/search",{query:String(question).trim().slice(0,MAX_QUERY),search_depth:"basic",
    topic:"general",max_results:4,include_answer:false,include_raw_content:false,include_images:false},options);
+ const data=response.data;
  const sources=normalize(data?.results,hasLink?"page-extract":"search-snippet");
- const value={status:sources.length?(hasLink?"page-read":"search-snippets"):(data?"no-results":"unavailable"),sources};
+ const status=sources.length?(hasLink?"page-read":"search-snippets"):
+  response.status||(hasLink&&Array.isArray(data?.failed_results)&&data.failed_results.length?"page-extract-failed":"no-results");
+ const value={status,sources};
  if(sources.length){cache.set(cacheKey,{at:Date.now(),value});if(cache.size>80)cache.delete(cache.keys().next().value);}
  return value;
 }

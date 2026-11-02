@@ -40,7 +40,8 @@ async function research(question,intent,{enabled=true,attachment=false,account=f
   const web=await PublicWeb.search(question,{attachment,privateContext,sensitive:intent?.sensitive,hasLink:false,signal});
   if(web.sources.length)return {sources:web.sources,status:"search-snippets"};
   // No fabricated current information when live search is unavailable.
-  return {sources:[],status:tavily.status==="unavailable"?tavily.status:web.status};
+  // Preserve a specific Tavily failure instead of masking it as Brave-not-configured.
+  return {sources:[],status:tavily.status==="not-configured-or-ineligible"?web.status:tavily.status};
  }
  const refs=await publicReferences(question,intent,attachment,account);
  const sources=curate(refs);
@@ -53,7 +54,13 @@ function guidance(out){
   return "Hasil carian masa nyata mengandungi tajuk, URL dan snippet. Ini BUKAN pembacaan halaman penuh atau pengesahan dakwaan. Nyatakan batas bukti dan pautkan sumber sebenar.";
  if(out?.status==="encyclopedia")
   return "Rujukan ensiklopedia bukan laporan berita langsung. Petik URL hanya jika sumber menyokong dakwaan. Nyatakan batas ketersediaan sumber.";
- if(out?.status==="budget-unavailable-or-exhausted")return "Tavily tidak dapat digunakan kerana storan kawalan bajet tidak tersedia atau kuota bulanan habis. Jangan kata URL telah dibaca; akui kegagalan alat dan jangan reka review.";
+ if(out?.status==="local-budget-store-unavailable")return "Had tambahan pilihan pemilik tidak dapat disemak kerana storan Netlify bermasalah; ini BUKAN bukti kredit Tavily habis. URL belum dibaca.";
+ if(out?.status==="local-cap-reached")return "Had tambahan pilihan pemilik sudah dicapai. Ini had AKSARA sendiri, bukan bukti kredit Tavily habis.";
+ if(out?.status==="upstream-credits-exhausted")return "Tavily sendiri melaporkan had kredit melalui HTTP. URL belum dibaca; jangan mereka review.";
+ if(out?.status==="upstream-auth-failed")return "Tavily menolak pengesahan API (401/403). URL belum dibaca; semak kunci pada pelayan tanpa mendedahkannya.";
+ if(out?.status==="upstream-rate-limited")return "Tavily melaporkan rate limit (429), bukan had bulanan. Cuba selepas tempoh yang sesuai.";
+ if(out?.status==="upstream-timeout")return "Permintaan Tavily tamat masa sebelum mendapat respons. URL belum dibaca.";
+ if(out?.status==="page-extract-failed")return "Tavily menerima permintaan tetapi gagal mengambil kandungan URL. Jangan mendakwa telah membaca halaman.";
  return "Tiada sumber luaran yang disahkan. Carian web umum mungkin belum dikonfigurasi, tiada hasil atau gagal. Jangan mereka URL, fakta semasa, atau sumber; akui batas semakan live.";
 }
 module.exports={curate,followUpUrl,research,guidance};
