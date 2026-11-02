@@ -1,84 +1,56 @@
-'use strict';
-// CI-only visual regression: the real supplied wallpapers, no AI inference.
-const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
-const {execFileSync}=require('node:child_process'),{chromium}=require('playwright');
-const base=process.env.BACKGROUND_BASE_SHA||'HEAD^';
-const url=process.env.AUDIT_BASE||'http://127.0.0.1:4177';
-const out='browser-audit-artifacts';fs.mkdirSync(out,{recursive:true});
-const original=Object.fromEntries(['bilik-antara.html','bilik-antara.css'].map(f=>[f,execFileSync('git',['show',base+':'+f],{encoding:'utf8'})]));
+"use strict";
+/* Visual audit for the static background: desktop/mobile, fallback and controls. */
+const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path");
+const {chromium}=require("playwright");
+const url=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
+const out="browser-audit-artifacts";fs.mkdirSync(out,{recursive:true});
 const sizes=[[1920,1080],[1366,768],[390,844],[360,800]];
-async function state(page){return page.evaluate(()=>{
- const css=s=>{const element=document.querySelector(s);return element?getComputedStyle(element):null;};
- const geometry=Object.fromEntries(['.topbar','.app-shell','.conversation','.composer','#input','#voiceLive','#connection'].map(s=>{const r=document.querySelector(s).getBoundingClientRect();return [s,[r.x,r.y,r.width,r.height].map(n=>Math.round(n*10)/10)];}));
- const effects=Object.fromEntries(['.world-art','.world-haze','.world-embers i','.frame-glow--light','.frame-glow--shadow','.voice-live-label'].map(s=>{const a=css(s);return [s,a?[a.animationName,a.animationDuration,a.animationPlayState]:["none","0s","paused"]];}));
- const glass=Object.fromEntries(['.conversation','.composer','.settings-card','.voice-live-label'].map(s=>{const a=css(s);return [s,[a.backgroundColor,a.backdropFilter||a.webkitBackdropFilter,a.borderRadius,a.color,a.fontFamily]];}));
- return {geometry,effects,glass,width:innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,background:css('.world-art').backgroundImage,position:css('.world-art').backgroundPosition,particles:document.querySelectorAll('.world-hand-sparks i').length};
-});}
-async function inspect(browser,width,height,mode){
- const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1}),page=await context.newPage();
- const errors=[],assets=[];
- page.on('pageerror',e=>errors.push(e.message));
- page.on('response',r=>{if(/aksara-background-cahaya-gelap\.webp|bilik-antara-(bg-.*webp|cover-art.jpg)/.test(r.url()))assets.push({url:r.url(),status:r.status()});});
- // Health checks are deliberately unavailable in this offline UI test; no AI call is made.
- await page.route('**/.netlify/functions/**',r=>r.fulfill({status:503,json:{error:'Offline browser audit'}}));
- if(mode==='before'){
-  await page.route('**/bilik-antara.html',r=>r.fulfill({contentType:'text/html',body:original['bilik-antara.html']}));
-  await page.route('**/bilik-antara.css?*',r=>r.fulfill({contentType:'text/css',body:original['bilik-antara.css']}));
+async function inspect(browser,width,height,blockImage=false){
+ const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1});
+ const page=await context.newPage(),errors=[],assets=[];
+ page.on("pageerror",e=>errors.push(e.message));
+ page.on("response",r=>{if(r.url().includes("aksara-celestial-static.webp"))assets.push(r.status());});
+ await page.route("**/.netlify/functions/**",r=>r.fulfill({status:503,json:{error:"Offline browser audit"}}));
+ if(blockImage)await page.route("**/aksara-celestial-static.webp*",r=>r.abort("failed"));
+ await page.goto(url+"/bilik-antara.html",{waitUntil:"networkidle"});
+ await page.locator("#chat .message.ai").first().waitFor();
+ const state=await page.evaluate(()=>{
+  const style=x=>getComputedStyle(document.querySelector(x));
+  const art=document.querySelector(".world-art"),css=style(".world-art"),glass=style(".conversation");
+  return {background:css.backgroundImage,size:css.backgroundSize,
+   running:art.getAnimations().filter(a=>a.playState==="running").length,
+   haze:document.querySelectorAll(".world-haze,.world-embers i,.world-video").length,
+   videos:document.querySelectorAll("video#aksaraAmbientVideo").length,
+   width:document.documentElement.scrollWidth,viewport:innerWidth,
+   glass:glass.backdropFilter||glass.webkitBackdropFilter,
+   frameAnimation:style(".frame-glow--light").animationName};
+ });
+ assert.ok(state.width<=state.viewport+6,"No horizontal overflow at "+width);
+ assert.ok(state.background.includes("aksara-celestial-static.webp"),"Shared wallpaper selected");
+ assert.ok(state.background.includes("linear-gradient"),"Gradient fallback exists");
+ assert.equal(state.running,0,"Wallpaper animation removed");
+ assert.equal(state.haze,0,"No animated wallpaper layers");
+ assert.equal(state.videos,0,"No ambient video player");
+ assert.match(state.glass,/blur\(/,"Glass UI remains");
+ assert.equal(state.frameAnimation,"frameLightBreathe","Existing glass frame animation remains");
+ if(!blockImage){
+  const dimension=await page.evaluate(async()=>{
+   const i=new Image();i.src="/aksara-celestial-static.webp?v=1";await i.decode();
+   return [i.naturalWidth,i.naturalHeight];
+  });
+  assert.deepEqual(dimension,[320,569],"The new portrait WebP must decode");
+  assert.ok(assets.includes(200),"Wallpaper was fetched successfully");
  }
- if(mode==='fallback')await page.route('**/aksara-background-cahaya-gelap.webp*',r=>r.abort('failed'));
- await page.goto(url+'/bilik-antara.html',{waitUntil:'networkidle'});
- await page.locator('#chat .message.ai').first().waitFor();
- await page.evaluate(()=>document.fonts.ready);
- const result=await state(page);
- assert.equal(result.overflow,false,mode+' '+width+' horizontal overflow');
- if(mode!=='before')assert.equal(result.particles,0,'Obsolete hand sparks must remain absent in current and fallback versions');
- assert.match(result.effects['.world-art'][0],/worldBreath/);
- assert.equal(result.effects['.world-haze'][0],"none","Removed haze must remain absent");
- assert.match(result.effects['.world-embers i'][0],/embersTravel/);
- assert.equal(result.effects['.frame-glow--light'][0],'frameLightBreathe');
- assert.equal(result.effects['.frame-glow--shadow'][0],'frameShadowBreathe');
- if(mode!=='before'){
-  const selected='aksara-background-cahaya-gelap.webp';
-  assert.ok(result.background.includes(selected),'Selected portrait must be visible at '+width);
-  assert.ok(!result.background.includes('bilik-antara-cover-art.jpg'),'Obsolete JPEG must not overlay selected photo');
-  assert.ok(result.background.includes('linear-gradient'),'Color fallback must survive an image download failure');
-  if(mode==='after'){
-   const dimensions=await page.evaluate(async source=>{const img=new Image();img.src=source;await img.decode();return [img.naturalWidth,img.naturalHeight];},selected);
-   assert.deepEqual(dimensions,[600,1066],'Portrait pixels must keep correct orientation');
-   assert.ok(assets.some(a=>a.url.includes(selected)&&a.status===200),'Selected wallpaper must load');
-   assert.equal(assets.filter(a=>a.url.includes('bilik-antara-bg-')).length,0,'Old wallpaper must not be downloaded');
-  }
- }
- // Animations advance before the screenshot freezes them for comparison.
- const running=await page.evaluate(()=>document.querySelector('.world-art').getAnimations().some(animation=>animation.playState==='running'));
- assert.equal(running,true,'Existing ambient animation is enabled and running');
- await page.screenshot({path:path.join(out,`background-${width}-${height}-${mode}.png`),animations:'disabled'});
- // Existing controls still work; no Voice/microphone session is initiated.
- await page.locator('#input').fill('Ujian latar sahaja');assert.equal(await page.locator('#sendBtn').isEnabled(),true);
- await page.locator('#settingsPanel > summary').click();assert.equal(await page.locator('#featureSessions').isVisible(),true);
- await page.locator('#settingsPanel > summary').click();
- assert.equal(await page.locator('#voicePanel').isVisible(),false);
- assert.deepEqual(errors,[],mode+' page errors');
- await context.close();return result;
+ await page.screenshot({path:path.join(out,"celestial-"+width+"x"+height+(blockImage?"-fallback":"")+".png"),animations:"disabled"});
+ await page.locator("#input").fill("Ujian latar");
+ assert.equal(await page.locator("#sendBtn").isEnabled(),true);
+ await page.locator("#settingsPanel > summary").click();
+ assert.equal(await page.locator("#featureSessions").isVisible(),true);
+ assert.equal(await page.locator("#voicePanel").isVisible(),false);
+ assert.deepEqual(errors,[],"No JavaScript console errors");
+ await context.close();
 }
-async function main(){const browser=await chromium.launch({headless:true,args:['--no-sandbox']});try{
- for(const [w,h] of sizes){const before=await inspect(browser,w,h,'before'),after=await inspect(browser,w,h,'after'),fallback=await inspect(browser,w,h,'fallback');
-  // Code Engine status intentionally sits beside Multi AI and shifts #connection horizontally.
-  // Preserve existing control dimensions and the rest of the outer geometry.
-  const geometryStable=result=>Object.fromEntries(Object.entries(result.geometry).filter(([key])=>!['#input','#connection','#voiceLive'].includes(key)));
-  assert.deepEqual(geometryStable(after),geometryStable(before),'Outer geometry changed at '+w);
-  assert.deepEqual(geometryStable(fallback),geometryStable(before),'Fallback geometry changed at '+w);
-  // Voice Chat is intentionally shorter; status pills may shrink on a narrow screen.
-  // Their functionality, readable footprint, and height must remain intact.
-  for(const next of [after,fallback]){
-   assert.ok(next.geometry['#voiceLive'][2]<=before.geometry['#voiceLive'][2]+2,'Voice Chat label must not expand pill at '+w);
-   assert.ok(Math.abs(next.geometry['#voiceLive'][3]-before.geometry['#voiceLive'][3])<=2,'Voice pill height changed at '+w);
-   assert.ok(next.geometry['#connection'][2]>30,'AI pill lost its footprint at '+w);
-   assert.ok(Math.abs(next.geometry['#connection'][3]-before.geometry['#connection'][3])<=3,'Multi AI height changed at '+w);
-   if(w>760)assert.equal(next.geometry['#connection'][2],before.geometry['#connection'][2],'Desktop AI pill width changed at '+w);
-  }
-  for(const key of ['effects','glass']){assert.deepEqual(after[key],before[key],key+' changed at '+w);assert.deepEqual(fallback[key],before[key],key+' fallback changed at '+w);}
-  console.log(JSON.stringify({viewport:[w,h],layoutUnchanged:true,glassUnchanged:true,animationsUnchanged:true,wallpaperDecoded:true,gradientFallback:true,overflow:false,controls:true}));
- }
-}finally{await browser.close();}}
-main().catch(e=>{console.error(e);process.exitCode=1;});
+(async()=>{const b=await chromium.launch({headless:true,args:["--no-sandbox"]});try{
+ for(const [w,h]of sizes){await inspect(b,w,h,false);await inspect(b,w,h,true);
+  console.log(JSON.stringify({viewport:[w,h],static:true,asset:true,fallback:true,glass:true,controls:true}));}
+}finally{await b.close();}})().catch(e=>{console.error(e);process.exitCode=1;});

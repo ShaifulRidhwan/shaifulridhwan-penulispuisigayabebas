@@ -51,7 +51,7 @@ async function audit(browser,label,options){
   assert.equal(state.handSparks,0,"Obsolete hand sparks must not render");
   assert.match(state.glass,/blur\(/);
   assert.match(state.bodyFont,/DM Sans/);
-  assert.equal(await page.locator(".world-embers i").count(),3,"Ambient particles remain");
+  assert.equal(await page.locator(".world-embers i").count(),0,"Static background must not render moving particles");
   assert.deepEqual(state.heavyAssets,[],"3D assets must stay lazy until Voice Chat");
   assert.equal(await page.locator("#voicePanel").isVisible(),false,"Voice must be opt-in");
   if(label!=="desktop"){

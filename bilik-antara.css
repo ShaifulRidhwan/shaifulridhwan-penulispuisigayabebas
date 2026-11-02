@@ -3363,3 +3363,13 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-ve
  .conversation .composer #thoughtMode .thinking-brain .brain-circuits,
  .conversation .composer #thoughtMode .thinking-brain .brain-signal{animation:none!important}
 }
+
+/* Celestial 2026: one static WebP, no compositor-heavy wallpaper loops. */
+.world-scene .world-art{
+ inset:0!important;transform:none!important;animation:none!important;will-change:auto!important;
+ filter:none!important;opacity:1!important;
+ background-image:url("./aksara-celestial-static.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e)!important;
+ background-position:center,center!important;background-size:auto 100%,cover!important;background-repeat:no-repeat!important;
+}
+.world-scene .world-haze,.world-scene .world-embers,.world-scene .world-video{display:none!important}
+@media(max-width:760px){.world-scene .world-art{background-size:cover,cover!important;background-position:center,center!important}}

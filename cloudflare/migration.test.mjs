@@ -25,7 +25,7 @@ test("Cloudflare build includes all three apps and preserves Netlify home separa
  assert.match(text("dist/studio-antara.html"),/https:\/\/shaifulridhwan-penulispuisigayabebas\.netlify\.app\//);
 });
 test("Shared AKSARA wallpaper is packaged as a real WebP asset for Cloudflare",()=>{
- const filename="aksara-background-cahaya-gelap.webp";
+ const filename="aksara-celestial-static.webp";
  const source=readFileSync(path.join(root,filename));
  const built=readFileSync(cf("dist/"+filename));
  assert.ok(source.equals(built),"Deploy must preserve the exact chosen portrait picture");
@@ -39,26 +39,18 @@ test("Shared AKSARA wallpaper is packaged as a real WebP asset for Cloudflare",(
  assert.equal(text("dist/bilik-antara.html").split(filename+"?v=1").length-1,2,
   "Both Bilik preload links must use the same shipped asset");
 });
-test("Bilik Antara ships a real playable MP4 without changing Studio or Novel",()=>{
- const asset="bilik-antara-background.mp4";
- const original=readFileSync(path.join(root,asset));
- const built=readFileSync(cf("dist/"+asset));
- assert.ok(original.equals(built),"Cloudflare must serve the actual supplied video");
- assert.ok(built.length>10000&&built.length<2000000,"10-second video asset size");
- assert.equal(built.toString("ascii",4,8),"ftyp","MP4 signature");
+test("Bilik and other AKSARA rooms ship a real static WebP, no ambient player",()=>{
  const html=text("dist/bilik-antara.html");
- assert.match(html,/id="aksaraAmbientVideo"/);
- assert.ok(html.includes("bilik-antara-video.js?v=2"));
- assert.ok(html.includes('<style data-aksara-inline="bilik-antara-video.css">'),"Video stylesheet must be inlined");
- assert.match(text("dist/bilik-antara-video.js"),/voiceActive/);
- for(const page of ["studio-antara.html","perpustakaan-aksara.html"]){
+ assert.doesNotMatch(html,/id="aksaraAmbientVideo"|bilik-antara-video\.js|aksara-bilik-antara-ambient\.mp4/);
+ for(const page of ["studio-antara.html","perpustakaan-aksara.html","antara-cahaya-dan-gelap.html"]){
   assert.ok(!text("dist/"+page).includes("aksaraAmbientVideo"),page+" must remain static");
  }
+ assert.ok(existsSync(cf("dist/aksara-celestial-static.webp")),"Selected static image must be shipped");
 });
 test("Bilik-only Cloudflare render removes tiny blocking CSS requests without altering style",()=>{
  const html=text("dist/bilik-antara.html");
  const raw=readFileSync(path.join(root,"bilik-antara.html"),"utf8");
- for(const file of ["aksara-header.css","bilik-antara-video.css"]){
+ for(const file of ["aksara-header.css"]){
   const css=readFileSync(path.join(root,file),"utf8");
   assert.ok(html.includes('<style data-aksara-inline="'+file+'">'+String.fromCharCode(10)+css+String.fromCharCode(10)+'</style>'),file+" inline rules must match source exactly");
   assert.ok(!html.includes('href="'+file+'?v='),file+" should not block the first render");
@@ -66,14 +58,14 @@ test("Bilik-only Cloudflare render removes tiny blocking CSS requests without al
  }
  assert.ok(html.includes(`bilik-antara-code-execution.css?v=1" media="print" onload="this.media='all'"`));
  assert.ok(html.includes('<noscript><link rel="stylesheet" href="bilik-antara-code-execution.css?v=1"></noscript>'));
- assert.ok(html.includes('<link rel="stylesheet" href="bilik-antara.css?v=102">'));
+ assert.ok(html.includes('<link rel="stylesheet" href="bilik-antara.css?v=103">'));
  for(const file of ["studio-antara.html","perpustakaan-aksara.html"]){
   assert.ok(!text("dist/"+file).includes("data-aksara-inline"),"Other room must not be modified: "+file);
  }
 });
-test("Static asset caching is scoped to the Bilik public video only",()=>{
+test("Static asset caching is scoped to the public shared WebP only",()=>{
  const lines=text("dist/_headers").trim().split(/\r?\n/);
- assert.ok(lines.includes("/bilik-antara-background.mp4"));
+ assert.ok(lines.includes("/aksara-celestial-static.webp"));
  assert.ok(lines.includes("  Cache-Control: public, max-age=2592000"));
  assert.ok(!lines.some(line=>/^\/(?:api\/|\*|.*\.html|.*\.css)/.test(line)));
 });

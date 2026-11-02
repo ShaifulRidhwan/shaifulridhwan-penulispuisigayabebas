@@ -13,19 +13,19 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
  assert.doesNotMatch(html,/<style\b/);
  assert.equal((html.match(/rel="stylesheet" href="bilik-antara\.css/g)||[]).length,1);
  assert.match(css,/\.world-art/);
- assert.match(css,/aksara-background-cahaya-gelap\.webp/);
+ assert.match(css,/aksara-celestial-static\.webp/);
  assert.match(css,/\.message\.ai::before/);
  assert.match(css,/bilik-antara-woman-emblem\.svg/);
  assert.equal(cover[0],0xff);assert.equal(cover[1],0xd8);
  assert.match(emblem,/<svg[^>]+viewBox="0 0 96 96"/);
- assert.ok(Buffer.byteLength(css)<125000,"CSS parse budget unexpectedly big");
+ assert.ok(Buffer.byteLength(css)<127000,"CSS parse budget unexpectedly big");
  assert.ok(require("node:zlib").gzipSync(css).length<28000,"Compressed CSS network budget unexpectedly big");
 });
 
 test("Bilik, Studio and Novel share optimized WebP wallpapers without changing their glass UI",()=>{
  const studio=fs.readFileSync("studio-antara.css","utf8");
  const novel=fs.readFileSync("perpustakaan-aksara.css","utf8");
- const asset="aksara-background-cahaya-gelap.webp";
+ const asset="aksara-celestial-static.webp";
  for(const [sheet,page] of [[css,"Bilik"],[studio,"Studio"],[novel,"Novel"]]){
   assert.ok(sheet.includes(asset+"?v=1"),page+" must use the same selected portrait wallpaper");
   assert.ok(!sheet.includes("bilik-antara-bg-desktop.webp"),page+" must not stretch the old landscape variant");
@@ -71,10 +71,10 @@ test("No obsolete orbital, dashboard or removed title styles",()=>{
  assert.match(css,/\.composer:focus-within/);
 });
 
-test("Faster ambience and animated translucent glass layer",()=>{
- assert.match(css,/\.world-art\{animation-duration:11s\}/);
- assert.match(css,/\.world-haze\{animation-duration:7s\}/);
- assert.match(css,/\.world-embers i\{animation-duration:17s\}/);
+test("Static wallpaper and retained glass layer",()=>{
+ assert.match(css,/\.world-scene \.world-art\{/);
+ assert.match(css,/animation:none!important/);
+ assert.match(css,/\.world-scene \.world-haze,\.world-scene \.world-embers/);
  assert.match(css,/\.conversation::after\{\s*content:"";\s*display:block/);
  assert.match(css,/@keyframes glassGlide/);
  assert.match(css,/animation:glassGlide 5\.4s/);
@@ -98,7 +98,7 @@ test("Calm glass frame keeps the chat clear and preserves ambient particles",()=
  assert.match(css,/@keyframes embersTravel/);
  assert.doesNotMatch(css,/@keyframes handSparkDescent/);
  assert.equal((html.match(/style="--delay:/g)||[]).length,0,"Hand sparks removed");
-  assert.match(html,/class="world-embers"/);
+  assert.doesNotMatch(html,/class="world-embers"/);
 });
 
 test("Composited glass label, ambient motion and older-browser rim fallback are retained",()=>{

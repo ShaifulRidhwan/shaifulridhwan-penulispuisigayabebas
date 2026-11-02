@@ -11,6 +11,7 @@ on:
       - "bilik-antara-*.js"
       - "bilik-antara-video.css"
       - "bilik-antara-background.mp4"
+      - "aksara-celestial-static.webp"
       - "tests/**"
       - "scripts/test-aksara-reliability.cjs"
       - "scripts/test-bilik-antara-identity.cjs"
@@ -36,6 +37,7 @@ on:
       - "bilik-antara-*.js"
       - "bilik-antara-video.css"
       - "bilik-antara-background.mp4"
+      - "aksara-celestial-static.webp"
       - "tests/**"
       - "scripts/test-aksara-reliability.cjs"
       - "scripts/test-bilik-antara-identity.cjs"
@@ -70,6 +72,8 @@ jobs:
           node --check bilik-antara-pcm-worklet.js
           node --check netlify/functions/antara-intelligence.js
           node --check netlify/functions/aksara-web-search.js
+          node --check netlify/functions/aksara-tavily.js
+          node --test tests/aksara-tavily.test.js
           node --check netlify/functions/aksara-data-analysis.js
           node --check netlify/functions/aksara-structured-output.js
           node --check bilik-antara-docx.js

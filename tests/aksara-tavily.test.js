@@ -1,0 +1,64 @@
+"use strict";
+const test=require("node:test"),assert=require("node:assert/strict");
+const Tavily=require("../netlify/functions/aksara-tavily");
+const Research=require("../netlify/functions/aksara-research-workflow");
+test("reject private hosts, numeric IPs, credentials and non-HTTPS URL",()=>{
+ for(const s of ["http://example.com","https://127.0.0.1/admin","https://localhost/","https://192.168.1.1/",
+  "https://test.internal/","https://user:pass@example.com/","https://example.com/?token=hidden",
+  "https://[::1]/"])assert.equal(Tavily.safeUrl(s),null,s);
+ assert.equal(Tavily.safeUrl("https://example.com/article#section"),"https://example.com/article");
+});
+test("extract only a user-supplied public HTTPS URL",()=>{
+ assert.equal(Tavily.extractUrl("Tolong semak https://example.com/article."),"https://example.com/article");
+ assert.equal(Tavily.extractUrl("Baca http://localhost/"),null);
+});
+test("do not send memory, private credentials, attachments or user identity to Tavily",()=>{
+ const base={env:{TAVILY_API_KEY:"test"}};
+ assert.equal(Tavily.eligible("Semak berita terkini",base),true);
+ assert.equal(Tavily.eligible("Semak berita", {...base,attachment:true}),false);
+ assert.equal(Tavily.eligible("Semak berita", {...base,privateContext:true}),false);
+ assert.equal(Tavily.eligible("Semak berita", {...base,sensitive:true}),false);
+ assert.equal(Tavily.eligible("Semak berita", {...base,account:true}),false);
+ assert.equal(Tavily.eligible("https://localhost/admin", {...base,hasLink:true}),false);
+});
+test("basic web search uses Tavily API with bounded output and never leaks key to model",async()=>{
+ let request;
+ const fetchImpl=async (url,init)=>{request={url,init};return {
+  ok:true,async json(){return {results:[{title:"New discoveries",url:"https://example.com/post",
+   content:"Something happened today."}]};}};};
+ const r=await Tavily.lookup("latest discoveries today",{env:{TAVILY_API_KEY:"sample-key"},fetchImpl,reserveImpl:async()=>{}});
+ assert.equal(r.status,"search-snippets");assert.equal(r.sources.length,1);
+ assert.equal(r.sources[0].verifiedLive,false);
+ assert.equal(request.url,"https://api.tavily.com/search");
+ assert.equal(JSON.parse(request.init.body).search_depth,"basic");
+ assert.equal(JSON.stringify(r).includes("sample-key"),false);
+});
+test("URL extract returns true page text evidence, not just search snippets",async()=>{
+ const fetchImpl=async()=>({ok:true,json:async()=>({results:[{url:"https://example.org/article",raw_content:"Read from the page."}]})});
+ const r=await Tavily.lookup("Semak https://example.org/article",{env:{TAVILY_API_KEY:"sample-key"},fetchImpl,hasLink:true,reserveImpl:async()=>{}});
+ assert.equal(r.status,"page-read");assert.equal(r.sources[0].kind,"page-extract");
+ assert.equal(r.sources[0].verifiedLive,true);
+});
+test("Research API remains callable when Tavily is not configured",async()=>{
+ const r=await Research.research("Berita terkini zaman sekarang",{search:true,hasLink:false,sensitive:false},
+  {attachment:true});
+ assert.equal(r.status,"not-eligible");
+});
+
+test("fail closed when credit budget is exhausted without calling external API",async()=>{
+ let calls=0;
+ const out=await Tavily.lookup("unique query example for credit limit",{
+  env:{TAVILY_API_KEY:"sample-key"},reserveImpl:async()=>{throw Error("limit");},
+  fetchImpl:async()=>{calls++;throw Error("Unexpected");}});
+ assert.equal(out.status,"budget-unavailable-or-exhausted");assert.equal(calls,0);
+});
+test("durable credit counter stops at configured monthly ceiling",async()=>{
+ const {reserve}=require("../netlify/functions/lib/aksara-tavily-budget");
+ let value=0;
+ const store={async getWithMetadata(){return value?{data:{used:value},etag:String(value)}:null;},
+  async setJSON(k,data,opt){if(value&&opt.onlyIfMatch!==String(value))return {modified:false};
+   value=data.used;return {modified:true};}};
+ await reserve({store,cap:2});await reserve({store,cap:2});
+ await assert.rejects(()=>reserve({store,cap:2}),/exhausted/);
+ assert.equal(value,2);
+});

@@ -102,7 +102,7 @@ async function chat(page,device){
   const rect=document.querySelector(".conversation").getBoundingClientRect();
   const app=document.querySelector(".app-shell").getBoundingClientRect();
   return {glass:glass.backdropFilter||glass.webkitBackdropFilter,
-   haze:haze?.animationName||"none",stars:star.animationName,
+   haze:haze?.animationName||"none",stars:star?.animationName||"none",
    chatTop:rect.top,chatHeight:rect.height,appTop:app.top,
    redundantHero:!!document.querySelector(".identity,.eyebrow,.chapter-ornament"),
    bodyFont:body.fontFamily,
@@ -110,7 +110,7 @@ async function chat(page,device){
  });
  assert.match(surface.glass,/blur\(/,"Liquid Glass must retain its original blur");
  assert.equal(surface.haze,"none","Retired fog layer must stay absent");
- assert.match(surface.stars,/embersTravel/,"Star particles must keep moving");
+ assert.equal(surface.stars,"none","Static background must not animate star particles");
  assert.equal(await page.locator(".world-hand-sparks").count(),0,"Obsolete hand sparks must be removed");
  assert.equal(surface.redundantHero,false,"Large title introduction and its animations must be removed");
  assert.ok(surface.chatTop-surface.appTop<30,"Chat starts at the top of the main area");
