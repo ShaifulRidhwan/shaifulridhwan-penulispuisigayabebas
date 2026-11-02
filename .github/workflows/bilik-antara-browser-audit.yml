@@ -27,7 +27,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: bilik-antara-browser-audit
+  group: bilik-antara-browser-audit-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   visual-audit:
