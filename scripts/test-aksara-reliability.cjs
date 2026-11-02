@@ -340,7 +340,8 @@ test("opening the page tests providers before showing Connected and never instal
  const html=fs.readFileSync(path.join(__dirname,"../bilik-antara.html"),"utf8");
  assert.match(html,/restore\(\);[\s\S]{0,240}renderIdeas\(\);renderHistory\(\);update\(\);probe\(\);/);
   assert.match(html,/localStorage\.getItem\(MODE_STORAGE\)/,"Mode preference is restored without delaying provider check");
- assert.match(html,/async function probe\(\)\{[\s\S]*?return checkProviders\(true\)/);
+ assert.match(html,/async function probe\(\)\{[\s\S]*?return checkProviders\(\)/,"Startup checks one Gemini slot to preserve quota");
+ assert.match(html,/multiAiRefresh"\)\.addEventListener\("click",\(\)=>\{multiLastCheck=0;checkProviders\(true\)/,"Manual refresh checks all Gemini slots");
  const source=html.slice(html.indexOf("async function checkProviders("),html.indexOf('ui.conn.addEventListener("click"'));
  let resolve,requests=[],states=[];
  const pending=new Promise(done=>resolve=done);

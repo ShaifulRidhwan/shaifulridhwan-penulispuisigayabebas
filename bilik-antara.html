@@ -131,7 +131,7 @@
     </div>
    </header>
    <dialog class="multi-ai-dialog" id="multiAiDialog" aria-labelledby="multiAiTitle">
- <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I. · Sambungan</strong><p>Empat penyedia teks Aksara. Status setiap sambungan disemak secara berasingan; Ready bukan Connected.</p></div><button type="button" id="multiAiClose" aria-label="Tutup status penyedia">×</button></div>
+ <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I. · Sambungan</strong><p>Empat penyedia teks Aksara. Status setiap sambungan disemak secara berasingan; Ready bukan Connected. Gemini mempunyai empat sambungan.</p></div><button type="button" id="multiAiClose" aria-label="Tutup status penyedia">×</button></div>
  <div class="multi-ai-list" id="multiAiList" aria-live="polite"></div>
  <div class="multi-ai-actions"><button type="button" id="multiAiRefresh">Semak semula</button></div>
 </dialog>
@@ -224,7 +224,6 @@
  <footer class="footer-note">BILIK ANTARA · CAHAYA &amp; GELAP · Bukan semua jawapan itu kebenaran.</footer>
 </div>
 <script>
-/* Small synchronous chat styling helper inlined to remove a blocking request. */
 (function(root){
 "use strict";
 const emoji=/\p{Extended_Pictographic}|\p{Regional_Indicator}|[0-9#*]\uFE0F?\u20E3/u;
@@ -242,8 +241,6 @@ function reply(value,options={}){
  const text=String(value||"");if(!text.trim())return text;
  const dark=options.mode==="gelap";
  let seen=0;
- // Count whole graphemes: flags, skin tones and joined families are one emoji.
- // Literal code is content, not conversational decoration: never rewrite it.
  const clean=text.split(/(```[\s\S]*?```|~~~[\s\S]*?~~~|`[^`\n]*`)/g).map((part,index)=>
   index%2?part:glyphs(part).map(g=>emoji.test(g)?(++seen<=(dark?0:2)?g:""):g).join("")
  ).join("").replace(/[ \t]+\n/g,"\n").trimEnd();
@@ -257,6 +254,7 @@ if(root)root.BilikAntaraChatStyle=api;
 })(typeof globalThis!=="undefined"?globalThis:this);
 
 </script>
+<script src="bilik-antara-gemini-status.js?v=1"></script>
 <script>
 (function(){
 "use strict";
@@ -435,7 +433,8 @@ function status(kind,label,explain){
 window.addEventListener("ba:voice-connected",()=>status("online","Multi A.I Connected",""));
 async function probe(){
  if(Date.now()<quotaCooldownUntil){status("limited","Kuota API tengah penuh","Kuota AI tengah penuh. Kita try lagi nanti.");return;}
- return checkProviders(true);
+ // Startup/automatic retry probes one slot only; manual refresh checks all four.
+ return checkProviders();
 }
 ui.retry.addEventListener("click",()=>{
  if(busy)return;
@@ -455,7 +454,7 @@ function renderProviderRows(rows,catalog=null){
  multiList.replaceChildren();
  for(const [id,name] of providers){
   const item=(rows||[]).find(x=>x.id===id),state=item?.status||"checking";
-  const expandable=id==="openrouter"||id==="workers_ai";
+  const expandable=id==="gemini"||id==="openrouter"||id==="workers_ai";
   const line=elem(expandable?"summary":"div","multi-ai-row"+(expandable?" multi-ai-expand-trigger":""));
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
   const waitLabel=waitSeconds>0?"Retry in "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" sec"):"";
@@ -473,7 +472,9 @@ function renderProviderRows(rows,catalog=null){
   group.setAttribute("aria-label",name+" · butiran model");
   group.open=hasPreviousGroups&&openGroups.has(id);group.appendChild(line);
   const modelList=elem("div","multi-ai-model-list");
-  if(id==="workers_ai"){
+  if(id==="gemini"){
+   window.AksaraGeminiStatus.appendSlots(modelList,item,elem);
+  }else if(id==="workers_ai"){
     const live=state==="online";
    const modelState=live?"Connected":state==="ready"?"Ready":state==="off"?"Not active":
     state==="offline"?"Offline":"Checking…";
@@ -505,10 +506,10 @@ async function checkProviders(force=false){
  multiChecking=true;el("multiAiRefresh").disabled=true;renderProviderRows(null,multiCatalog);
  if(!busy)status("connecting","Sekejap, aku check connection…","");
  const revision=connectionRevision;
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12500);
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),force?24000:12500);
  try{
   const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({providerStatus:true}),signal:controller.signal});
+   body:JSON.stringify({providerStatus:true,geminiPoolRefresh:force===true}),signal:controller.signal});
   if(!res.ok)throw Error("Semakan penyedia tidak tersedia");
   const data=await res.json();if(!Array.isArray(data.providers))throw Error("Status tidak lengkap");
   multiCatalog=data.freeModels||null;

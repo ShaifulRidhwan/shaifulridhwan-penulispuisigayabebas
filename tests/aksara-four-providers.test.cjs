@@ -161,7 +161,7 @@ test("Four-brain server responses require no external model call",async()=>{
 
 test("Cloudflare Workers AI displays an expandable model row with truthful binding status",()=>{
  const css=fs.readFileSync("bilik-antara.css","utf8");
- assert.match(html,/const expandable=id==="openrouter"\|\|id==="workers_ai"/);
+ assert.match(html,/const expandable=id==="gemini"\|\|id==="openrouter"\|\|id==="workers_ai"/);
  assert.match(html,/if\(id==="workers_ai"\)\{/);
  assert.match(html,/GLM-4\.7-Flash/);
  assert.match(html,/live\?"Connected":state==="ready"\?"Ready"/);
