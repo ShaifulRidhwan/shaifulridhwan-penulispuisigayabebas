@@ -53,7 +53,7 @@
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
 <link rel="stylesheet" href="bilik-antara.css?v=103">
-<link rel="stylesheet" href="bilik-antara-attachments.css?v=1" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="bilik-antara-attachments.css?v=2" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-attachments.css?v=1"></noscript>
 <!-- Noncritical shared header refinements load without blocking first paint. -->
 <link rel="stylesheet" href="aksara-header.css?v=3" media="print" onload="this.media='all'">
@@ -212,7 +212,7 @@
     </div>
    </div>
    <div class="composer-area">
-    <div id="attachmentTray" class="attachment-tray" role="group" aria-label="Lampiran yang dipilih" hidden></div><div id="docStatus" role="status" aria-live="polite"></div><button type="button" id="removeAttachment" hidden aria-label="Buang semua lampiran">× Buang semua</button>
+    <div class="attachment-preview-row"><div id="attachmentTray" class="attachment-tray" role="group" aria-label="Lampiran yang dipilih" hidden></div><button type="button" id="removeAttachment" hidden aria-label="Buang semua lampiran">Kosongkan</button></div><div id="docStatus" role="status" aria-live="polite"></div>
     <form class="composer" id="composer">
      <button type="button" class="attach-label" id="attachmentTrigger" aria-haspopup="dialog" aria-controls="attachmentDialog" aria-expanded="false" aria-label="Pilih Foto, Video, Dokumen, Audio atau Kod" title="Tambah lampiran">
       <span class="sr-only">Lampir fail</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.4 11.6-8.9 9a6.4 6.4 0 0 1-9.1-9.1L13 1.9a4.3 4.3 0 0 1 6.1 6.1l-9.5 9.5a2.2 2.2 0 0 1-3.1-3.1l8.6-8.6"/></svg>
@@ -1058,7 +1058,7 @@ async function submit(event){
    publicAccount:data.publicAccount||null});
   
   addIdeas(data.thoughtLedger);save();
-  if(selectedFile&&selectedFile===fileState)ui.docStatus.textContent="Fail ni masih ada kalau kau nak tanya lagi · "+selectedFile.name;
+  if(selectedFile&&selectedFile===fileState){ui.docStatus.dataset.state="ready";ui.docStatus.textContent="Lampiran kekal tersedia untuk soalan susulan · "+selectedFile.name;}
   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
   const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio";
   status(localAnswer?"configured":"online",localAnswer?"Jawapan tersedia Aksara":"Multi A.I Connected","");
@@ -1090,7 +1090,14 @@ async function submit(event){
   }else{
   const limited=error?.status===429||["API_QUOTA","RATE_LIMIT","ALL_PROVIDERS_BUSY"].includes(error?.code);
   if(error.code==="CAPABILITY_UNAVAILABLE"){
-   status("error","Function ni belum available",String(error.message));
+   const documentSelected=!!selectedFile?.text;
+   const rawPdf=!!selectedFile?.media?.some(item=>item.mimeType==="application/pdf");
+   const message=documentSelected&&!ui.contextFallback.checked
+    ?"Gemini gagal atau tidak tersedia. Dokumen teks tidak boleh dihantar ke penyedia sandaran tanpa izin kau. Semak Privasi & Tetapan → Benarkan penyedia sandaran memproses fail teks."
+    :rawPdf
+     ?"PDF asal memerlukan model Gemini yang menyokong dokumen. Jika ia PDF berteks, cuba pilih semula fail supaya pembacaan teks setempat digunakan."
+     :String(error.message||"Model yang sesuai untuk lampiran atau alat ini belum tersedia.");
+   status("error",documentSelected?"Dokumen belum dapat dianalisis":rawPdf?"Model PDF belum tersedia":"Keupayaan model tidak tersedia",message);
   }else if(limited){
    quotaCooldownUntil=Date.now()+Math.min(120,Math.max(5,Number(error.retryAfterSeconds)||30))*1000;
    const rateLimited=error?.code==="RATE_LIMIT",allBusy=error?.code==="ALL_PROVIDERS_BUSY";
@@ -1160,7 +1167,8 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-code-chat.js?v=6" defer></script>
 <script src="bilik-antara-code-bridge.js?v=2" defer></script>
 <script src="bilik-antara-code-agent.js?v=3" defer></script>
-<script src="bilik-antara-attachments.js?v=1" defer></script>
+<script src="bilik-antara-pdf-reader.js?v=1" defer></script>
+<script src="bilik-antara-attachments.js?v=2" defer></script>
 <script src="bilik-antara-code-workspace.js?v=4" defer></script>
 <script src="bilik-antara-code-evaluation.js?v=1" defer></script>
 <script src="bilik-antara-brain.js?v=15" defer></script>
