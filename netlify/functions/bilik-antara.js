@@ -599,6 +599,9 @@ exports.handler=async event=>{
       if(alternative.attempts)providerFailures.push(...alternative.attempts);
       if(alternative.retryAfterSeconds)providerRetrySeconds=alternative.retryAfterSeconds;
       if(alternative.reply){
+        // A requested live research handoff needs evidence that the provider
+        // actually invoked its browser tool, not merely offered it.
+        if(options.requireWebEvidence&&!alternative.toolsUsed?.includes("browser_search"))return null;
         alternative.reply=Structured.render(reactionReply(alternative.reply,intent,history),Structured.wantsJson(question)).reply;
         lastTextProvider=alternative.provider;lastTextSuccessAt=Date.now();
         log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
@@ -715,6 +718,20 @@ exports.handler=async event=>{
     if(intent.search&&!tools.some(t=>t.google_search)&&researchResult.status!=="search-snippets")warnings.push("Live web search belum aktif atau belum berjaya, jadi info terkini belum disahkan.");
     else if(intent.search&&!sources.length)warnings.push("Aku belum jumpa sumber yang dapat disahkan untuk jawapan ni.");
     if(intent.hasLink&&!tavilyRead&&!actualTools.includes("url_context")&&!sources.length)warnings.push(researchResult.status==="local-budget-store-unavailable"?"Storan untuk had tambahan pilihan pemilik bermasalah; ini bukan bukti kredit Tavily habis.":researchResult.status==="upstream-auth-failed"?"Tavily menolak pengesahan API.":researchResult.status==="upstream-rate-limited"?"Tavily melaporkan rate limit, bukan had bulanan.":researchResult.status==="upstream-credits-exhausted"?"Tavily sendiri melaporkan had kredit.":"Aku belum dapat pastikan link ni berjaya dibaca.");
+    // Gemini's free URL Context is not general Google Search Grounding.
+    // For explicitly current facts without live sources, prefer a verified
+    // Groq browser-search result over an ungrounded memorized answer.
+    if(intent.search&&!intent.hasLink&&textOnly&&!Structured.wantsJson(question)&&
+      Capabilities.webEligible(webIntent)&&
+      Router.configured(cloudflareAI).some(p=>p.id==="groq")&&
+      Capabilities.manifest().groq.browserSearch&&
+      researchResult.status!=="search-snippets"&&
+      !(candidate?.groundingMetadata?.webSearchQueries?.length)&&
+      remaining()>8500){
+      const live=await useAlternative({only:["groq"],prefer:"groq",
+        firstResponseDeadline:deadline,webIntent,requireWebEvidence:true});
+      if(live?.statusCode===200)return live;
+    }
     const unverifiedReview=intent.hasLink&&!ownedPage&&!tavilyRead&&!actualTools.includes("url_context")&&!directSources.length&&
       /\b(?:review|audit|analisis|semak|nilai|periksa|buka|baca|masuk|lawat|layari|tengok)\b/i.test(question);
     // If Google's URL retrieval has no success metadata, attempt free web tools
