@@ -281,7 +281,8 @@ test("AI bubbles and ambient background particles remain without hand sparks",()
  assert.match(css,/\.world-embers i\{animation-duration:17s\}/);
  assert.doesNotMatch(html,/class="world-hand-sparks"/);
  assert.equal((html.match(/style="--delay:/g)||[]).length,0);
- assert.match(html,/Multi A\.I Connected/);
+ const multiStatus=fs.readFileSync("bilik-antara-multi-ai-status.js","utf8");
+ assert.match(multiStatus,/Multi A\.I Connected/);
  assert.doesNotMatch(html,/Multi AI Connected/);
  assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
 });
