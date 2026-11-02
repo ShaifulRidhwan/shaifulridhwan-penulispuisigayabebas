@@ -27,25 +27,27 @@ styles.textContent=[
 '.conversation .code-engine-message .bubble{white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.6}',
 '@media(max-width:420px){.conversation .code-action-bar{font-size:10px;padding-inline:9px}.conversation .code-action-bar button{font-size:10px;padding:6px 9px}}'
 ].join("\n");document.head.appendChild(styles);
-const langName=l=>({javascript:"JavaScript",python:"Python",typescript:"TypeScript",sql:"SQL"})[l]||"Code";
+const langName=l=>({javascript:"JavaScript",python:"Python",typescript:"TypeScript",sql:"SQL",cpp:"C++"})[l]||"Code";
 function detect(source){
  const full=String(source||"").trim();
  if(!full||full.length>12000)return null;
  if(full.startsWith("[AKSARA CODE BRIDGE]"))return null; // Explicitly consented AI report is not executable code.
  // Only an entire fenced block is treated as executable; explanatory prose is ordinary chat.
- const fenced=/^```(javascript|js|python|py|typescript|ts|sql)\s*\n([\s\S]*?)\n```$/i.exec(full);
+ const fenced=/^```(javascript|js|python|py|typescript|ts|sql|cpp|c\+\+|cxx|cc)\s*\n([\s\S]*?)\n```$/i.exec(full);
  if(fenced){
   const token=fenced[1].toLowerCase();
-  const language=/^(py|python)$/.test(token)?"python":/^(ts|typescript)$/.test(token)?"typescript":token==="sql"?"sql":"javascript";
+  const language=/^(py|python)$/.test(token)?"python":/^(ts|typescript)$/.test(token)?"typescript":/^(cpp|c\+\+|cxx|cc)$/.test(token)?"cpp":token==="sql"?"sql":"javascript";
   return fenced[2].trim()?{language,code:fenced[2].trim(),format:"fenced"}:null;
  }
  if(/^```/.test(full))return null;
  const js=/\b(?:console\.(?:log|warn|error|info)\s*\(|(?:const|let|var)\s+[A-Za-z_$][\w$]*\s*=|function\s+[A-Za-z_$][\w$]*\s*\(|(?:=>\s*[{(]?)|throw\s+new\s+Error\s*\()/m;
  const py=/^(?:\s*(?:print\s*\(|def\s+[a-zA-Z_]\w*\s*\(|for\s+[a-zA-Z_]\w*\s+in\s+(?:range\(|\w+)|from\s+[a-zA-Z_]\w*\s+import\s+|import\s+[a-zA-Z_]\w*|class\s+[a-zA-Z_]\w*\s*:|if\s+__name__\s*==|while\s+\S+:\s*$))/m;
  const isSql=/^(?:SELECT|WITH|CREATE\s+TABLE|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\b/i.test(full);
+ const isCpp=/^\s*#include\s*[<"][^>"\n]+[>"]|\bint\s+main\s*\(|\bstd::(?:cout|cin|vector|string|endl)\b/m.test(full);
  const isTs=/\b(?:interface\s+\w+|type\s+\w+\s*=|(?:const|let|var)\s+\w+\s*:\s*[A-Za-z]|function\s+\w+\s*\([^)]*:\s*[A-Za-z])/m.test(full);
  const isJs=js.test(full),isPy=py.test(full);
  if(isSql)return {language:"sql",code:full,format:"raw"};
+ if(isCpp)return {language:"cpp",code:full,format:"raw"};
  if(isTs)return {language:"typescript",code:full,format:"raw"};
  if(isJs===isPy)return null;
  return {language:isPy?"python":"javascript",code:full,format:"raw"};
