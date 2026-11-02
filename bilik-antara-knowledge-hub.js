@@ -115,14 +115,16 @@
     wrap.append(link);
    }
    if(question){
-    const ask=make("button","Tanya AKSARA");ask.type="button";
+    const ask=make("button","Sediakan soalan");ask.type="button";ask.title="Isi soalan dalam chat. Tekan Hantar selepas menyemaknya.";
     ask.addEventListener("click",()=>handoff(question));wrap.append(ask);
    }
    card.append(wrap);
   }
   function handoff(question){
    const chat=doc.getElementById("input");if(!chat)return false;
-   chat.value=String(question).slice(0,1300);
+   const prepared=String(question).slice(0,1300),draft=chat.value.trim();
+   // Jangan padam draf yang belum dihantar apabila memilih rujukan lain.
+   chat.value=draft&&draft!==prepared?draft+"\n\n"+prepared:prepared;
    chat.dispatchEvent(new Event("input",{bubbles:true}));
    dialog.close();chat.focus({preventScroll:true});
    return true; // User must still press Hantar.
