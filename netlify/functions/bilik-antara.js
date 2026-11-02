@@ -824,7 +824,7 @@ exports.handler=async event=>{
     if(unverifiedReview){
       return result(200,{mode:"local-limitation",provider:"local",model:"gemini-url-evidence-guard",
         thoughtMode,researchStatus:researchResult.status,
-        reply:"Gemini memberi jawapan tentang URL itu, tetapi tiada bukti URL Context berjaya membaca halaman yang tepat. Status: "+urlTrace.status+". Aku tak akan mempersembahkan pengetahuan umum sebagai hasil bacaan halaman secara langsung.",
+        reply:"Gemini memberi jawapan tentang URL itu, tetapi URL belum berjaya disahkan sebagai halaman yang benar-benar dibaca. Status URL Context: "+urlTrace.status+". Aku tak akan mempersembahkan pengetahuan umum sebagai hasil bacaan halaman secara langsung.",
         sources:[],toolsUsed:actualTools,toolsOffered:tools.map(t=>Object.keys(t)[0]),
         urlTrace,reviewApplied:false,
         disclaimer:"URL khusus belum berjaya disahkan melalui URL Context, Tavily Extract atau HTML milik sendiri.",
