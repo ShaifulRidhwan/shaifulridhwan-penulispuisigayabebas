@@ -70,8 +70,9 @@
    });
    const js=mapped.find(r=>r.language==="javascript");
    const verified=mapped.filter(r=>r.language!=="html"&&r.status==="verified").length;
-   const overall=checking?"checking":js.status==="verified"?"ready":
-    js.status==="unavailable"?"unavailable":"unverified";
+   // A JavaScript self-test failure cannot condemn four untested runtimes.
+   const overall=checking?"checking":js.status==="unavailable"?"degraded":
+    verified>0?"ready":"unverified";
    return {overall,verified,rows:mapped,permission,activity:request,checking,lastCheckedAt,
     checkedAgo:lastCheckedAt?fmtAge(Math.max(0,now-lastCheckedAt)):"Not checked"};
   }
