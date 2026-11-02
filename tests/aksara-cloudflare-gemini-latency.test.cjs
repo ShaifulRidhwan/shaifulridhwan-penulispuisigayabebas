@@ -15,7 +15,7 @@ test("Cloudflare Gemini time budget is independent from Netlify",()=>{
 test("A timed-out Gemini health probe is not mislabeled as an actual offline upstream failure",()=>{
  const chat=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
  const html=fs.readFileSync("bilik-antara.html","utf8");
- assert.match(chat,/const temporary=e\.name==="AbortError"\|\|!e\.status\|\|e\.status>=500/);
+ assert.match(chat,/const temporary=e\.name==="AbortError"\|\|e\.status===429\|\|!e\.status\|\|e\.status>=500/);
  assert.match(chat,/status:temporary\?"ready":"offline"/);
  assert.match(chat,/reason:"health_empty_reply",http:200/);
  assert.match(chat,/reason:e\.name==="AbortError"\?"health_timeout"/);
@@ -29,5 +29,5 @@ test("Gemini health probe quota does not poison real chat cooldown and surfaces 
  assert.match(chat,/e\.status===429\?"health_probe_quota"/);
  assert.match(html,/Ready · Probe 429/);
  assert.match(html,/Offline · HTTP /);
- assert.match(html,/Cooldown · /);
+ assert.match(html,/Cooldown /);
 });
