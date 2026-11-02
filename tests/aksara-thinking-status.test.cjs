@@ -1,0 +1,76 @@
+"use strict";
+const {test}=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),vm=require("node:vm");
+const Thinking=require("../bilik-antara-thinking-status.js");
+const Modes=require("../bilik-antara-modes.js");
+const read=name=>fs.readFileSync(name,"utf8");
+test("Pilihan Cahaya/Gelap kekal mod penyampaian, bukan dakwaan reasoning model",()=>{
+ assert.equal(Thinking.nama("cahaya"),"Cahaya");
+ assert.equal(Thinking.nama("gelap"),"Gelap");
+ assert.equal(Thinking.nama("HIGH"),"Cahaya");
+ assert.equal(Thinking.sah("gelap"),true);
+ assert.equal(Thinking.sah("high"),false);
+ const js=read("bilik-antara-thinking-status.js");
+ assert.doesNotThrow(()=>new vm.Script(js));
+ assert.match(js,/Tahap penaakulan model ditentukan secara adaptif/);
+ assert.doesNotMatch(js,/thinkingLevel\s*:\s*"(low|medium|high)"/);
+});
+test("Mod dipilih berasingan daripada mod permintaan yang sudah dihantar",()=>{
+ let clock=1700000000000;
+ const m=Thinking.create("cahaya",()=>clock);
+ assert.equal(m.snapshot().dipilih,"Cahaya");
+ assert.equal(m.snapshot().semasa,null);
+ m.mula("cahaya");
+ m.pilih("gelap");
+ assert.deepEqual([m.snapshot().dipilih,m.snapshot().semasa.mode,m.snapshot().berbeza],
+  ["Gelap","Cahaya",true]);
+ assert.equal(m.hasil("selesai"),true);
+ clock+=1000;
+ assert.equal(m.tamat(),true);
+ assert.equal(m.snapshot().semasa,null);
+ assert.deepEqual([m.snapshot().terakhir.mode,m.snapshot().terakhir.hasil],["Cahaya","selesai"]);
+ assert.equal(m.snapshot().dipilih,"Gelap");
+ m.mula("gelap");
+ assert.equal(m.snapshot().semasa.mode,"Gelap");
+ m.hasil("gagal");m.tamat();
+ assert.deepEqual([m.snapshot().terakhir.mode,m.snapshot().terakhir.hasil],["Gelap","gagal"]);
+});
+test("Henti dan respons tak dapat disahkan tidak direka sebagai kejayaan",()=>{
+ const m=Thinking.create("gelap",()=>1700000000000);
+ assert.equal(m.hasil("selesai"),false);
+ assert.equal(m.tamat(),false);
+ m.mula("gelap");assert.equal(m.hasil("dihentikan"),true);m.tamat();
+ assert.equal(m.snapshot().terakhir.hasil,"dihentikan");
+ m.mula("gelap");assert.equal(m.hasil("success"),false);m.tamat();
+ assert.equal(m.snapshot().terakhir.hasil,"tidak_disahkan");
+ m.setSemula("cahaya");assert.equal(m.snapshot().terakhir,null);
+ assert.equal(m.snapshot().dipilih,"Cahaya");
+});
+test("Mod adaptif backend dan pemisahan daripada status Multi A.I kekal",()=>{
+ const html=read("bilik-antara.html"),router=read("netlify/functions/aksara-provider-router.js");
+ assert.ok(html.includes("bilik-antara-thinking-status.js?v=1"));
+ assert.ok(html.includes('const MODE_STORAGE="bilik-antara-mode-v1";'));
+ assert.ok(html.includes('const requestMode=thoughtMode;'));
+ assert.ok(html.includes('const payload={question,thoughtMode:requestMode,'));
+ assert.ok(html.includes('new CustomEvent("ba:thinking-request-start",{detail:{mode:requestMode}})'));
+ assert.ok(html.includes('ba:thought-mode-changed'));
+ assert.ok(html.includes('window.BilikAntaraThought=Object.freeze({getMode:()=>thoughtMode})'));
+ assert.ok(html.includes('id="thoughtModeTitle">Thinking Mode</strong>'));
+ assert.ok(html.includes('class="thinking-brain"'));
+ assert.ok(html.length<80000);
+ assert.equal(Modes.normalize("gelap"),"gelap");
+ assert.equal(Modes.normalize("CAHAYA"),"cahaya");
+ assert.equal(Modes.plan("gelap",{task:"critique"},{thinkingLevel:"low",maxTokens:2200},"Moral itu mutlak?").thinkingLevel,"high");
+ assert.ok(router.includes("reasoningLevel"));
+ assert.ok(read("bilik-antara-multi-ai-status.js").includes("Multi A.I Connected"));
+ assert.ok(read("bilik-antara-code-health.js").includes("EVIDENCE_TTL"));
+});
+test("Status mod hanya membaca metadata, tanpa menyimpan atau menghantar teks chat",()=>{
+ const js=read("bilik-antara-thinking-status.js");
+ assert.doesNotMatch(js,/fetch\s*\(|XMLHttpRequest|localStorage|sessionStorage|document\.cookie/);
+ assert.doesNotMatch(js,/\.question|\.answer|\.messages|\.prompt|\.history|\.token/);
+ assert.match(js,/role="status"|setAttribute\("aria-label"/);
+ const s=Thinking.create("cahaya");
+ s.mula("cahaya");const snap=s.snapshot();
+ assert.equal(snap.semasa.mode,"Cahaya");
+ assert.equal("question" in snap.semasa,false);
+});

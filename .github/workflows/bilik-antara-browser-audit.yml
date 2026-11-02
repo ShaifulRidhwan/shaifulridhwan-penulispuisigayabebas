@@ -56,6 +56,7 @@ jobs:
             sleep 1
           done
           node scripts/test-bilik-antara-browser.cjs
+          node scripts/test-thinking-mode-status-browser.cjs
           node scripts/test-code-engine-browser.cjs
           node scripts/test-attachments-browser.cjs
           node scripts/test-multi-ai-status-browser.cjs
