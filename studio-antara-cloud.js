@@ -2,6 +2,7 @@
 'use strict';
 const $=id=>document.getElementById(id),C=window.StudioConfig,H=window.StudioHistory,D=window.StudioCooldown;
 const form=$('imageForm');if(!form||!C||!D)return;
+const statusEvent=(stage,model,extra={})=>window.dispatchEvent(new CustomEvent('studio:status',{detail:{stage,model,...extra}}));
 const ui={prompt:$('imagePrompt'),count:$('promptCount'),style:$('imageStyle'),ratio:$('imageRatio'),quality:$('imageQuality'),model:$('imageModel'),seed:$('imageSeed'),go:$('generateImage'),stop:$('stopImage'),status:$('generationStatus'),result:$('generatedImage'),empty:$('resultEmpty'),loading:$('stageLoading'),indicator:$('resultIndicator'),meta:$('imageMetadata'),download:$('downloadImage')};
 let busy=false,controller=null,current=null,imageUrl=null,galleryRows=[],galleryLimit=6,galleryEpoch=0,thumbUrls=[],originalPrompt=null;
 const cooldownStorage=(()=>{try{return window.localStorage;}catch(_){return null;}})();
@@ -106,18 +107,19 @@ async function thumbnail(img){const canvas=document.createElement('canvas'),scal
 async function generate(settings){
  if(busy)return;
  const waiting=cooldownFor(settings.model);
- if(waiting){updateCooldown();announce(cooldownCopy(waiting),true);return;}
- if(!navigator.onLine){announce('Internet terputus. Prompt kau masih ada; cuba bila dah online.',true);return;}
- const startedAt=Date.now(),ctrl=new AbortController();controller=ctrl;const timer=setTimeout(()=>ctrl.abort(),55000);setBusy(true);announce(settings.model==='ovh'?'OVHcloud SDXL Beta sedang dicuba. Sambungan mungkin gagal atau lambat.':'Cloudflare sedang menjana imej. Setiap percubaan menggunakan kuota.');
+ if(waiting){updateCooldown();statusEvent('terhad',settings.model);announce(cooldownCopy(waiting),true);return;}
+ if(!navigator.onLine){statusEvent('gagal',settings.model);announce('Internet terputus. Prompt kau masih ada; cuba bila dah online.',true);return;}
+ const startedAt=Date.now(),ctrl=new AbortController();controller=ctrl;const timer=setTimeout(()=>ctrl.abort(),55000);setBusy(true);statusEvent('mula',settings.model);announce(settings.model==='ovh'?'OVHcloud SDXL Beta sedang dicuba. Sambungan mungkin gagal atau lambat.':'Cloudflare sedang menjana imej. Setiap percubaan menggunakan kuota.');
  try{
   const res=await fetch('/.netlify/functions/studio-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:settings.prompt,style:settings.style,model:settings.model,quality:settings.quality,ratio:settings.ratio,seed:settings.seed}),signal:ctrl.signal});
-  const data=await res.json();if(!res.ok){if(res.status===429)rememberRateLimit(res,data);throw Error(data.error||'Penjanaan gagal. Cuba lagi nanti.');}if(!data.ok||!data.settings)throw Error('Respons pelayan tak lengkap.');
+  const data=await res.json();if(!res.ok){if(res.status===429)rememberRateLimit(res,data);const err=Error(data.error||'Penjanaan gagal. Cuba lagi nanti.');err.http=res.status;throw err;}if(!data.ok||!data.settings)throw Error('Respons pelayan tak lengkap.');
   const blob=imageBlob(data.image,data.mime),meta={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),createdAt:Date.now(),settings:data.settings,promptUsed:data.promptUsed,modelName:data.modelName,durationMs:Date.now()-startedAt,cloudMs:data.durationMs};
-  const img=await render(meta,blob,ctrl.signal);ui.stop.hidden=true;clearTimeout(timer);if(matchMedia('(max-width:680px)').matches)$('resultStage').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});let saved=true;
+  const img=await render(meta,blob,ctrl.signal);statusEvent('siap',settings.model,{durationMs:meta.durationMs});ui.stop.hidden=true;clearTimeout(timer);if(matchMedia('(max-width:680px)').matches)$('resultStage').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});let saved=true;
   try{await H.put(meta,blob,await thumbnail(img));}catch(_){saved=false;}
+  statusEvent(saved?'disimpan':'gagal_simpan',settings.model);
   announce('Imej dah siap dalam '+(meta.durationMs/1000).toFixed(1)+' saat.'+(saved?' Disimpan pada peranti ini.':' Sejarah tak dapat disimpan (storan penuh atau tak tersedia). Simpan imej sekarang.'));
   if($('historyPanel').open)await refreshHistory();
- }catch(error){announce(error.name==='AbortError'?'Permintaan dihentikan atau masa menunggu tamat. Kuota untuk permintaan yang dah dihantar mungkin tetap digunakan.':error.message||'Sambungan gagal. Prompt kau masih ada.',true);}
+ }catch(error){statusEvent(error.name==='AbortError'?'dihentikan':error.http===429?'terhad':'gagal',settings.model);announce(error.name==='AbortError'?'Permintaan dihentikan atau masa menunggu tamat. Kuota untuk permintaan yang dah dihantar mungkin tetap digunakan.':error.message||'Sambungan gagal. Prompt kau masih ada.',true);}
  finally{clearTimeout(timer);if(controller===ctrl)controller=null;setBusy(false);}
 }
 form.addEventListener('submit',e=>{e.preventDefault();if(busy)return;try{generate(selected());}catch(error){announce(error.message,true);}});
