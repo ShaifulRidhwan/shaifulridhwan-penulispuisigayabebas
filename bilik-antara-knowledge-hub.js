@@ -45,6 +45,10 @@
   return !u?"":"Baca teks halaman awam di URL ini: "+u+
    " . Nyatakan sama ada bacaan URL berjaya atau hanya petikan carian. Jangan mereka bukti atau pemeriksaan visual.";
  }
+ function calculationQuestion(expression){
+  const e=String(expression||"").trim();
+  return e&&e.length<=85&&/^[0-9+*\-\/().\s]+$/.test(e)&&/\d/.test(e)?"Kira "+e:"";
+ }
  function mount(win){
   const d=win.document,dialog=d.getElementById("knowledgeDialog"),host=d.getElementById("knowledgeHub"),
    trigger=d.getElementById("featureKnowledge"),input=d.getElementById("input");
@@ -53,7 +57,8 @@
    '<div class="knowledge-tabs" role="tablist" aria-label="Kategori rujukan">',
     '<button type="button" role="tab" data-tab="works" id="knowledgeTabWorks" aria-controls="knowledgeWorks" aria-selected="true">Karya asli</button>',
     '<button type="button" role="tab" data-tab="wiki" id="knowledgeTabWiki" aria-controls="knowledgeWiki" aria-selected="false">Wikipedia</button>',
-    '<button type="button" role="tab" data-tab="url" id="knowledgeTabUrl" aria-controls="knowledgeUrl" aria-selected="false">Semak URL</button>',
+    '<button type="button" role="tab" data-tab="url" id="knowledgeTabUrl" aria-controls="knowledgeUrl" aria-selected="false">URL</button>',
+    '<button type="button" role="tab" data-tab="calc" id="knowledgeTabCalc" aria-controls="knowledgeCalc" aria-selected="false">Kira</button>',
    '</div>',
    '<section id="knowledgeWorks" role="tabpanel" aria-labelledby="knowledgeTabWorks">',
     '<label for="knowledgeWorkSearch">Cari dalam arkib puisi AKSARA</label>',
@@ -73,6 +78,12 @@
     '<input id="knowledgeUrlInput" type="url" inputmode="url" maxlength="1600" placeholder="https://example.com/artikel">',
     '<p class="knowledge-note">Semakan hanya bermula selepas soalan dihantar. Kejayaan membaca URL bergantung pada alat tersedia.</p>',
     '<button type="button" id="knowledgeUrlDraft" class="knowledge-primary">Sediakan semakan URL</button>',
+   '</section>',
+   '<section id="knowledgeCalc" role="tabpanel" aria-labelledby="knowledgeTabCalc" hidden>',
+    '<label for="knowledgeCalcInput">Ungkapan matematik</label>',
+    '<input id="knowledgeCalcInput" inputmode="text" maxlength="85" autocomplete="off" value="(12+8)*3" placeholder="Contoh: (12+8)*3">',
+    '<p class="knowledge-note">Sediakan pengiraan untuk alat selamat AKSARA jika tersedia. Tiada kod sewenang-wenangnya dijalankan.</p>',
+    '<button type="button" id="knowledgeCalcDraft" class="knowledge-primary">Sediakan pengiraan</button>',
    '</section>',
    '<p id="knowledgeHubAlert" class="knowledge-alert" role="status" hidden></p>',
    '<section class="knowledge-recent" aria-labelledby="knowledgeSourcesTitle">',
@@ -123,11 +134,11 @@
    return pending;
   }
   function tab(name){
-   selected=["works","wiki","url"].includes(name)?name:"works";
+   selected=["works","wiki","url","calc"].includes(name)?name:"works";
    for(const b of host.querySelectorAll("[data-tab]")){
     const yes=b.dataset.tab===selected;b.setAttribute("aria-selected",String(yes));b.tabIndex=yes?0:-1;
    }
-   for(const part of ["Works","Wiki","Url"])get("knowledge"+part).hidden=part.toLowerCase()!==selected;
+   for(const part of ["Works","Wiki","Url","Calc"])get("knowledge"+part).hidden=part.toLowerCase()!==selected;
    warn("");if(selected==="works")load();
   }
   for(const b of host.querySelectorAll("[data-tab]"))b.addEventListener("click",()=>tab(b.dataset.tab));
@@ -138,9 +149,12 @@
   get("knowledgeUrlDraft").addEventListener("click",()=>{
    if(!draft(urlQuestion(get("knowledgeUrlInput").value)))warn("Masukkan URL HTTPS awam yang sah, bukan alamat setempat.");
   });
-  for(const id of ["knowledgeWikiQuery","knowledgeUrlInput"])
+  get("knowledgeCalcDraft").addEventListener("click",()=>{
+   if(!draft(calculationQuestion(get("knowledgeCalcInput").value)))warn("Gunakan nombor dan operator +, -, *, / atau kurungan sahaja.");
+  });
+  for(const id of ["knowledgeWikiQuery","knowledgeUrlInput","knowledgeCalcInput"])
    get(id).addEventListener("keydown",e=>{if(e.key==="Enter"){
-    e.preventDefault();get(id==="knowledgeWikiQuery"?"knowledgeWikiDraft":"knowledgeUrlDraft").click();
+    e.preventDefault();get(id==="knowledgeWikiQuery"?"knowledgeWikiDraft":id==="knowledgeUrlInput"?"knowledgeUrlDraft":"knowledgeCalcDraft").click();
    }});
   function renderSources(){
    const list=get("knowledgeSourcesList"),summary=get("knowledgeSourceSummary");
@@ -167,8 +181,8 @@
   for(const event of ["ba:session-changed","ba:cleared"])win.addEventListener(event,()=>{sources=[];renderSources();});
   trigger.addEventListener("click",()=>{if(selected==="works")load();renderSources();});
   renderSources();
-  win.AksaraKnowledgeHubUI=Object.freeze({rankPoems,safeLink,wikipediaQuestion,urlQuestion,
+  win.AksaraKnowledgeHubUI=Object.freeze({rankPoems,safeLink,wikipediaQuestion,urlQuestion,calculationQuestion,
    getLastSources:()=>sources.map(x=>({...x}))});
  }
- return Object.freeze({rankPoems,safeLink,wikipediaQuestion,urlQuestion,mount});
+ return Object.freeze({rankPoems,safeLink,wikipediaQuestion,urlQuestion,calculationQuestion,mount});
 });
