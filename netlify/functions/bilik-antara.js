@@ -585,7 +585,7 @@ exports.handler=async event=>{
   const fallbackLinkNote=intent.hasLink?(ownedPage?
     "[PENGESAHAN BACKEND] Kandungan HTML awam laman ini memang telah dibaca sebagai teks. Nilai apa yang dapat dibuktikan; jangan dakwa menguji CSS, screenshot, fungsi interaktif atau runtime.":
     tavilyRead?"[PENGESAHAN BACKEND] Tavily Extract telah membaca teks awam dalam RUJUKAN WEB. Ini bukan pemeriksaan visual, JavaScript atau prestasi halaman. Gunakan teks sebagai bukti terhad.":
-     "[PENGESAHAN BACKEND] URL belum berjaya disahkan melalui Gemini. Jika alat Browser Search atau Web Fetch tersedia, gunakan alat itu untuk cuba mendapatkan bukti. Jika ia gagal, jangan mereka review atau sumber dan jangan minta URL yang sudah diberikan."):"";
+     "[PENGESAHAN BACKEND] URL belum berjaya disahkan melalui Gemini. Jika alat Browser Search atau Web Fetch tersedia, gunakan alat itu untuk cuba mendapatkan bukti. Browser Search sahaja bukan bukti URL tertentu telah dibuka atau keseluruhan HTML dibaca. Jika ia gagal, jangan mereka review atau sumber dan jangan minta URL yang sudah diberikan."):"";
   async function useAlternative(options={}){
       alternativeTried=true;
       // The text-only fallback cannot read URL Context. An honest local answer
@@ -618,6 +618,28 @@ exports.handler=async event=>{
         // actually invoked its browser tool, not merely offered it.
         if(options.requireWebEvidence&&!alternative.toolsUsed?.includes("browser_search"))return null;
         if(options.requireCodeEvidence&&!alternative.toolsUsed?.includes("code_interpreter"))return null;
+        const browserUsed=alternative.toolsUsed?.includes("browser_search")===true;
+        const codeUsed=alternative.toolsUsed?.includes("code_interpreter")===true;
+        // A generic free chat answer is not a live search. Do not pass
+        // memorized headlines to visitors as news after the browser failed.
+        if(intent.search&&!intent.hasLink&&!tavilySearched&&!browserUsed){
+          const failure=[...providerFailures].reverse().find(x=>x.provider==="groq");
+          const diagnostic=failure?(typeof failure.status==="number"?"HTTP "+failure.status:String(failure.reason||"upstream_unavailable").slice(0,40)):"tiada hasil alat yang dapat disahkan";
+          return result(200,{mode:"local-limitation",provider:"local",model:"verified-web-guard",thoughtMode,
+            reply:"Aku dah cuba laluan carian berita, tetapi tiada hasil Browser Search yang dapat disahkan. Groq: "+diagnostic+". Jadi aku belum boleh senaraikan berita 2 November 2026 dengan sumber yang benar. Ini kegagalan carian semasa, bukan bermakna alat web tiada dalam AKSARA.",
+            sources:[],toolsUsed:[],toolsOffered:alternative.toolsOffered||[],reviewApplied:false,
+            disclaimer:"Carian web belum disahkan; jawapan model tanpa sumber langsung tidak digunakan.",
+            routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()}},H);
+        }
+        // A search result is not proof of fetching the exact linked page.
+        // Only verified URL Context or actual extracted HTML can establish that.
+        if(intent.hasLink&&/(?:benar-benar|betul-betul)/i.test(question)&&!ownedPage&&!tavilyRead){
+          return result(200,{mode:"local-limitation",provider:"local",model:"verified-url-guard",thoughtMode,
+            reply:browserUsed?"Groq berjaya menjalankan Browser Search, tetapi metadatanya tidak membuktikan halaman URL yang kau beri benar-benar dibuka atau dibaca. Aku belum boleh menyatakan kandungan tepat halaman itu sebagai hasil bacaan langsung.":"URL yang kau beri belum berjaya dibaca melalui URL Context atau alat ekstrak halaman. Aku tak akan mereka kandungan seolah-olah sudah membuka halaman itu.",
+            sources:[],toolsUsed:browserUsed?["browser_search"]:[],toolsOffered:alternative.toolsOffered||[],reviewApplied:false,
+            disclaimer:"URL khusus belum disahkan; Browser Search tidak bersamaan dengan URL Context atau ekstrak HTML.",
+            routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()}},H);
+        }
         alternative.reply=Structured.render(reactionReply(alternative.reply,intent,history),Structured.wantsJson(question)).reply;
         lastTextProvider=alternative.provider;lastTextSuccessAt=Date.now();
         log("fallback_success",{provider:alternative.provider,ms:Date.now()-started});
@@ -628,7 +650,7 @@ exports.handler=async event=>{
           reply:alternative.reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources:[...(ownedPage?[{title:ownedPage.title||"Halaman awam AKSARA",url:ownedPage.url}]:[]),...publicSources.map(({title,url})=>({title,url}))].slice(0,8),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[...(ownedPage?["owned_page_html"]:[]),...(tavilyRead?["tavily_extract"]:tavilySearched?["tavily_search"]:[]),...(alternative.toolsUsed||[])],
           toolsOffered:alternative.toolsOffered||[],
-          disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",workers_ai:"Cloudflare Workers AI",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.hasLink?(ownedPage?" · HTML awam laman AKSARA telah dibaca; visual, JavaScript dan prestasi sebenar tidak diuji.":tavilyRead?" · Teks halaman telah diekstrak melalui Tavily; visual, JavaScript dan prestasi sebenar tidak diuji.":alternative.toolsUsed?.includes("browser_search")?" · Groq menjalankan browser search; hasil carian bukan audit visual penuh.":alternative.toolsOffered?.includes("openrouter:web_fetch")?" · OpenRouter Web Fetch ditawarkan, tetapi metadata bacaan halaman tidak dibekalkan; jangan dakwa audit visual.":" · Kandungan URL tidak berjaya dibaca atau disahkan. Ini bukan review laman sebenar."):(intent.search?(researchResult.status==="search-snippets"?" · Hasil carian awam ialah snippet sahaja; kandungan penuh belum dibaca.":" · Carian web langsung tidak berjaya; info terkini belum disahkan."):"")),
+          disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",workers_ai:"Cloudflare Workers AI",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.hasLink?(ownedPage?" · HTML awam laman AKSARA telah dibaca; visual, JavaScript dan prestasi sebenar tidak diuji.":tavilyRead?" · Teks halaman telah diekstrak melalui Tavily; visual, JavaScript dan prestasi sebenar tidak diuji.":browserUsed?" · Groq menjalankan Browser Search; URL khusus belum disahkan dibuka atau dibaca.":alternative.toolsOffered?.includes("openrouter:web_fetch")?" · OpenRouter Web Fetch ditawarkan, tetapi metadata bacaan halaman tidak dibekalkan; jangan dakwa audit visual.":" · Kandungan URL tidak berjaya dibaca atau disahkan. Ini bukan review laman sebenar."):(intent.search?(browserUsed?" · Groq benar-benar menjalankan Browser Search. Semak pautan sumber untuk mengesahkan dakwaan.":researchResult.status==="search-snippets"?" · Hasil carian awam ialah snippet sahaja; kandungan penuh belum dibaca.":" · Carian web langsung tidak berjaya; info terkini belum disahkan."):(codeUsed?" · Groq menjalankan Code Interpreter (Python), disahkan melalui executed_tools.":""))),
           usage:alternative.usage,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()}
         },H);
       }
@@ -650,7 +672,7 @@ exports.handler=async event=>{
     Capabilities.manifest().groq.browserSearch){
     const live=await useAlternative({only:["groq"],prefer:"groq",publicWebOnly:true,
       requireWebEvidence:true,onDelta:null,
-      firstResponseDeadline:Math.min(deadline,started+11500)});
+      firstResponseDeadline:Math.min(deadline,started+14500),timeoutMs:11500,bufferedTimeoutMs:11500});
     if(live?.statusCode===200)return live;
   }
   // A request to RUN Python/code needs execution, not merely a correct answer.
