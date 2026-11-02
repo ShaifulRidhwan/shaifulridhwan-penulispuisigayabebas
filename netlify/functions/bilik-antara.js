@@ -218,7 +218,7 @@ exports.handler=async event=>{
     if(apiKey){
       // A cached green probe must not hide a later real-chat quota failure.
       if(googleWait(fastModel)>0)google={id:"gemini",model:fastModel,status:"offline",reason:"cooldown",retryAfterSeconds:googleWait(fastModel)};
-      else if(googleHealth.value&&Date.now()-googleHealth.time<90000)google=googleHealth.value;
+      else if(googleHealth.value&&Date.now()-googleHealth.time<(googleHealth.value.status==="ready"?30000:90000))google=googleHealth.value;
       else{
         if(!googleHealth.pending)googleHealth.pending=(async()=>{
           const time=Date.now();
@@ -230,11 +230,13 @@ exports.handler=async event=>{
             // not proof that a working chat model is offline.
             return {id:"gemini",model:fastModel,status:verified?"online":"ready",...(verified?{}:{reason:"health_empty_reply",http:200}),latencyMs:Date.now()-time};
           }catch(e){
-            googleCooldown(fastModel,e);
-            const temporary=e.name==="AbortError"||!e.status||e.status>=500;
+            // IMPORTANT: a synthetic health request must never poison the
+            // real-chat quota cooldown. Only a failed real inference may do that.
+            // HTTP 429 here is inconclusive: chat may still succeed immediately.
+            const temporary=e.name==="AbortError"||e.status===429||!e.status||e.status>=500;
             // A transient probe error should not disable the primary route.
             // Auth/model errors and genuine quota cooldown still remain offline.
-            return {id:"gemini",model:fastModel,status:temporary?"ready":"offline",reason:e.name==="AbortError"?"health_timeout":e.status>=500?"health_upstream_busy":e.status?"upstream_http":"transport_error",...(e.status?{http:e.status}:{}),...(e.quotaKind?{quotaKind:e.quotaKind}:{})};
+            return {id:"gemini",model:fastModel,status:temporary?"ready":"offline",reason:e.name==="AbortError"?"health_timeout":e.status===429?"health_probe_quota":e.status>=500?"health_upstream_busy":e.status?"upstream_http":"transport_error",...(e.status?{http:e.status}:{}),...(e.quotaKind?{quotaKind:e.quotaKind}:{})};
           }
         })();
         try{google=await googleHealth.pending;googleHealth.value=google;googleHealth.time=Date.now();}finally{googleHealth.pending=null;}
