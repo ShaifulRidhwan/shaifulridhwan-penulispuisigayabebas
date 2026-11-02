@@ -560,6 +560,12 @@ exports.handler=async event=>{
   // URL requests must reach Gemini URL Context before any text-only fallback.\n  // Other providers have no URL tool; they may only use separately fetched evidence.\n  // Text research can use the existing public references when Gemini is down.
   // Never claim a live web/URL tool ran on the fallback route.
   const textOnly=media.length===0&&!tiktokHandle&&(!privateContext||payload.contextFallback===true)&&!intent.sensitive;
+  const webIntent={question:followUpWebUrl||question,hasLink:intent.hasLink,search:intent.search,
+    calculate:intent.calculate,sensitive:intent.sensitive,privateContext:!!(documentText||userMemory||memory),
+    attachment:media.length>0,account:!!tiktokHandle};
+  const freeWebConfigured=Capabilities.webEligible(webIntent)&&Router.configured(cloudflareAI).some(p=>
+    p.id==="groq"&&Capabilities.manifest().groq.browserSearch||
+    p.id==="openrouter"&&Capabilities.manifest().openrouter.webFetchFree);
   // A link never becomes proof by itself. Fallbacks may discuss verified owned-page
   // HTML or state clearly that an external URL was NOT read, instead of hard-failing.
   let providerFailures=[],alternativeTried=false,quotaRecoveryTried=false,providerRetrySeconds=3;
@@ -575,14 +581,14 @@ exports.handler=async event=>{
       alternativeTried=true;
       // The text-only fallback cannot read URL Context. An honest local answer
       // beats wasting another provider call or fabricating a website review.
-      if(intent.hasLink&&!ownedPage&&!tavilyRead&&/\b(?:review|audit|analisis|semak|nilai|periksa|buka|baca|masuk|lawat|layari|tengok)\b/i.test(question))
+      if(intent.hasLink&&!ownedPage&&!tavilyRead&&!freeWebConfigured&&/\b(?:review|audit|analisis|semak|nilai|periksa|buka|baca|masuk|lawat|layari|tengok)\b/i.test(question))
         return result(200,{mode:"local-limitation",provider:"local",model:"url-access-guard",thoughtMode,
           researchStatus:researchResult.status,
           reply:researchResult.status==="local-budget-store-unavailable"?"Had tambahan pilihan pemilik tak dapat diperiksa kerana storan Netlify bermasalah. Ini bukan bukti kredit Tavily habis.":researchResult.status==="local-cap-reached"?"Had tambahan yang pemilik tetapkan dalam AKSARA sudah dicapai, bukan semestinya kredit Tavily habis.":researchResult.status==="upstream-auth-failed"?"Tavily menolak API key (401/403). Semak kunci dalam Netlify tanpa menghantarnya dalam chat.":researchResult.status==="upstream-credits-exhausted"?"Tavily sendiri melaporkan kredit tak mencukupi.":researchResult.status==="upstream-rate-limited"?"Tavily sedang hadkan kadar permintaan (429), bukan semestinya had bulanan.":researchResult.status==="upstream-timeout"?"Sambungan Tavily mengambil masa terlalu lama.":researchResult.status==="page-extract-failed"?"Tavily menerima permintaan tetapi tidak berjaya membaca teks halaman ini.":"Kandungan pautan belum berjaya diperoleh. Aku tak akan reka review; semak status carian untuk punca.",
           sources:[],toolsUsed:[],reviewApplied:false,disclaimer:"URL belum dibaca. Tiada hasil review direka."},H);
       let alternative;
       try{
-        alternative=await Router.complete({cloudflareAI,system,history,question:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[feedbackContext,fallbackLinkNote,work,references]):Context.composeTurn(question,[feedbackContext,fallbackLinkNote,doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
+        alternative=await Router.complete({cloudflareAI,system,history,question:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[feedbackContext,fallbackLinkNote,work,references]):Context.composeTurn(question,[feedbackContext,fallbackLinkNote,doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,webIntent,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
@@ -599,8 +605,9 @@ exports.handler=async event=>{
         return result(200,{
           mode:"fallback",aiMode:"automatic",thoughtMode,model:alternative.model,provider:alternative.provider,researchStatus:researchResult.status,
           reply:alternative.reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources:[...(ownedPage?[{title:ownedPage.title||"Halaman awam AKSARA",url:ownedPage.url}]:[]),...publicSources.map(({title,url})=>({title,url}))].slice(0,8),argumentMap:[],truthAudit:[],
-          thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[...(ownedPage?["owned_page_html"]:[]),...(tavilyRead?["tavily_extract"]:tavilySearched?["tavily_search"]:[])],toolsOffered:[],
-          disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",workers_ai:"Cloudflare Workers AI",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.hasLink?(ownedPage?" · HTML awam laman AKSARA telah dibaca; visual, JavaScript dan prestasi sebenar tidak diuji.":tavilyRead?" · Teks halaman telah diekstrak melalui Tavily; visual, JavaScript dan prestasi sebenar tidak diuji.":" · Kandungan URL tidak berjaya dibaca atau disahkan. Ini bukan review laman sebenar."):(intent.search?(researchResult.status==="search-snippets"?" · Hasil carian awam ialah snippet sahaja; kandungan penuh belum dibaca.":" · Carian web langsung tidak berjaya; info terkini belum disahkan."):"")),
+          thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[...(ownedPage?["owned_page_html"]:[]),...(tavilyRead?["tavily_extract"]:tavilySearched?["tavily_search"]:[]),...(alternative.toolsUsed||[])],
+          toolsOffered:alternative.toolsOffered||[],
+          disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",workers_ai:"Cloudflare Workers AI",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.hasLink?(ownedPage?" · HTML awam laman AKSARA telah dibaca; visual, JavaScript dan prestasi sebenar tidak diuji.":tavilyRead?" · Teks halaman telah diekstrak melalui Tavily; visual, JavaScript dan prestasi sebenar tidak diuji.":alternative.toolsUsed?.includes("browser_search")?" · Groq menjalankan browser search; hasil carian bukan audit visual penuh.":alternative.toolsOffered?.includes("openrouter:web_fetch")?" · OpenRouter Web Fetch ditawarkan, tetapi metadata bacaan halaman tidak dibekalkan; jangan dakwa audit visual.":" · Kandungan URL tidak berjaya dibaca atau disahkan. Ini bukan review laman sebenar."):(intent.search?(researchResult.status==="search-snippets"?" · Hasil carian awam ialah snippet sahaja; kandungan penuh belum dibaca.":" · Carian web langsung tidak berjaya; info terkini belum disahkan."):"")),
           usage:alternative.usage,durMs:Date.now()-started,timings:timings(),routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()}
         },H);
       }
@@ -708,6 +715,12 @@ exports.handler=async event=>{
     if(intent.hasLink&&!tavilyRead&&!actualTools.includes("url_context")&&!sources.length)warnings.push(researchResult.status==="local-budget-store-unavailable"?"Storan untuk had tambahan pilihan pemilik bermasalah; ini bukan bukti kredit Tavily habis.":researchResult.status==="upstream-auth-failed"?"Tavily menolak pengesahan API.":researchResult.status==="upstream-rate-limited"?"Tavily melaporkan rate limit, bukan had bulanan.":researchResult.status==="upstream-credits-exhausted"?"Tavily sendiri melaporkan had kredit.":"Aku belum dapat pastikan link ni berjaya dibaca.");
     const unverifiedReview=intent.hasLink&&!ownedPage&&!tavilyRead&&!actualTools.includes("url_context")&&!directSources.length&&
       /\b(?:review|audit|analisis|semak|nilai|periksa|buka|baca|masuk|lawat|layari|tengok)\b/i.test(question);
+    // If Google's URL retrieval has no success metadata, attempt free web tools
+    // from the already configured fallback providers without inventing evidence.
+    if(unverifiedReview&&freeWebConfigured&&textOnly&&remaining()>7000){
+      const webFallback=await useAlternative({only:["groq","openrouter"],firstResponseDeadline:deadline,webIntent});
+      if(webFallback?.statusCode===200)return webFallback;
+    }
     const reliableReply=unverifiedReview
       ?"Aku cuba membaca pautan itu, tetapi kandungan laman belum berjaya disahkan. Aku tak boleh buat review sebenar tanpa kandungannya. Berikan teks atau screenshot laman untuk analisis berasaskan bukti."
       :revised;
