@@ -7,7 +7,7 @@ const path=require("node:path");
 const read=name=>fs.readFileSync(path.join(__dirname,"..",name),"utf8");
 
 test("Code Engine v0.3 modules parse",()=>{
- for(const name of ["bilik-antara-code-runtime.js","bilik-antara-code-status.js",
+ for(const name of ["bilik-antara-code-runtime.js","bilik-antara-code-health.js","bilik-antara-code-status.js",
    "bilik-antara-code-workspace.js","bilik-antara-code-chat.js",
    "bilik-antara-code-agent.js","bilik-antara-code-bridge.js",
    "bilik-antara-code-execution.js"]){
@@ -56,7 +56,7 @@ test("C++ project workflow exposes code, stdin, stop and output",()=>{
 });
 test("v0.3 page loads fresh Code Engine JS",()=>{
  const html=read("bilik-antara.html");
- for(const asset of ["runtime.js?v=5","status.js?v=17","workspace.js?v=4","chat.js?v=6"]){
+ for(const asset of ["runtime.js?v=6","status.js?v=18","workspace.js?v=4","chat.js?v=6"]){
   assert.ok(html.includes("bilik-antara-code-"+asset),"Missing "+asset);
  }
 });
