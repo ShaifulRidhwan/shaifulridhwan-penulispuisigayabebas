@@ -61,9 +61,23 @@ function manifest(env=process.env){
     workers_ai:{ownedPageEvidence:true,arbitraryWebFetch:false,webSearch:false}
   };
 }
-function urlTrace(data,offeredTools=[]){
+function normalizedUrl(value){
+ try{
+  const u=new URL(String(value||""));
+  if(u.protocol!=="https:"||u.username||u.password)return "";
+  return u.origin+u.pathname.replace(/\\/+$/,"")+(u.search||"");
+ }catch(_){return "";}
+}
+function urlTrace(data,offeredTools=[],targetUrl=null){
  const entries=(data?.candidates?.[0]?.urlContextMetadata?.urlMetadata||data?.urlContextMetadata?.urlMetadata||[]);
- const statuses=Array.isArray(entries)?entries.map(x=>String(x?.urlRetrievalStatus||"UNKNOWN").slice(0,70)).slice(0,8):[];
- return {offered:offeredTools.some(x=>!!x.url_context),status:statuses.includes("URL_RETRIEVAL_STATUS_SUCCESS")?"success":statuses.length?"failed":"not_reported",retrievalStatuses:statuses};
+ const all=Array.isArray(entries)?entries.slice(0,8):[];
+ const target=targetUrl?normalizedUrl(targetUrl):"";
+ // Success for some other retrieved URL is not proof that the user's URL was read.
+ const scoped=target?all.filter(x=>normalizedUrl(x?.retrievedUrl)===target):all;
+ const statuses=scoped.map(x=>String(x?.urlRetrievalStatus||"UNKNOWN").slice(0,70));
+ const succeeded=statuses.includes("URL_RETRIEVAL_STATUS_SUCCESS");
+ return {offered:offeredTools.some(x=>!!x.url_context),
+  status:succeeded?"success":statuses.length?"failed":all.length&&target?"target_not_reported":"not_reported",
+  retrievalStatuses:statuses,targetMatched:!!target&&scoped.length>0};
 }
 module.exports={safePublicUrl,webEligible,offered,executed,manifest,geminiFunctions,urlTrace,FUNCTION_NAME};
