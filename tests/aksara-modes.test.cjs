@@ -130,7 +130,7 @@ test("identity, fallback, review and frontend share the complete GELAP mode",()=
  assert.ok(backend.includes('aiMode:"automatic",thoughtMode,model:alternative.model'));
  assert.ok(html.includes("const requestMode=thoughtMode"));
  assert.ok(html.includes('data.reply=window.BilikAntaraChatStyle.reply(data.reply,{mode:data.thoughtMode||requestMode})'));
- assert.ok(html.includes('history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,thoughtMode:requestMode'));
+ assert.ok(html.includes('history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,provider:data.provider||null,model:data.model||null,thoughtMode:requestMode'));
  assert.ok(html.includes('summary:summary,summarizedThrough,thoughtMode'));
  assert.ok(html.includes("setThoughtMode(stored.thoughtMode)"));
 });
@@ -593,7 +593,7 @@ test("Session archive titles render as compact headings and preserve functional 
  assert.match(css,/\.ba-drawer \.ba-session button\.ba-session-title\{/);
  assert.match(css,/-webkit-backdrop-filter:none;backdrop-filter:none;/);
  assert.match(css,/background:transparent;box-shadow:none;/);
- assert.match(html,/bilik-antara-suite\.css\?v=8/);
+ assert.match(html,/bilik-antara-suite\.css\?v=9/);
  assert.match(html,/bilik-antara-suite\.js\?v=15/);
 });
 
