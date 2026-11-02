@@ -3,14 +3,14 @@
 "use strict";
 const bridge=window.BilikAntaraBridge,engine=window.AksaraCodeRuntime;
 if(!bridge||!engine)return;
-const ext={javascript:".js",python:".py",typescript:".ts",sql:".sql",html:".html",css:".css"};
+const ext={javascript:".js",python:".py",typescript:".ts",sql:".sql",html:".html",css:".css",cpp:".cpp"};
 const languageOf=name=>Object.keys(ext).find(k=>name.toLowerCase().endsWith(ext[k]))||null;
 let files=[{name:"main.js",language:"javascript",code:""}],index=0;
 const dialog=document.createElement("dialog");
 dialog.id="codeWorkspaceDialog";dialog.className="multi-ai-dialog code-workspace-dialog";
 dialog.innerHTML=[
  '<div class="multi-ai-head"><div><strong>AKSARA Code Workspace</strong><p>Snippet dalam tab ini. Tidak disimpan pada server, tidak dihantar ke AI dan tidak dijalankan automatik.</p></div><button type="button" id="cwClose" aria-label="Tutup">×</button></div>',
- '<div class="cw-body"><label for="cwFiles">Fail</label><select id="cwFiles"></select><div class="cw-tools"><button id="cwAdd" type="button">+ Fail</button><button id="cwDelete" type="button">Buang</button><button id="cwImport" type="button">Import</button><input type="file" accept=".js,.py,.ts,.sql,.html,.css" id="cwUpload" hidden/></div><label for="cwEditor">Editor</label><textarea id="cwEditor" rows="12" spellcheck="false"></textarea><p id="cwInfo" role="status" aria-live="polite"></p></div>',
+ '<div class="cw-body"><label for="cwFiles">Fail</label><select id="cwFiles"></select><div class="cw-tools"><button id="cwAdd" type="button">+ Fail</button><button id="cwDelete" type="button">Buang</button><button id="cwImport" type="button">Import</button><input type="file" accept=".js,.py,.ts,.sql,.html,.css,.cpp" id="cwUpload" hidden/></div><label for="cwEditor">Editor</label><textarea id="cwEditor" rows="12" spellcheck="false"></textarea><p id="cwInfo" role="status" aria-live="polite"></p></div>',
  '<div class="cw-preview" id="cwPreviewPanel"><div class="cw-preview-head"><strong>HTML / CSS · Live Preview</strong><div class="cw-preview-tools"><button type="button" id="cwMobile" aria-pressed="false">Mobile</button><button type="button" id="cwDesktop" aria-pressed="true">Desktop</button><button type="button" id="cwPreviewRefresh">Segar semula</button></div></div><p id="cwPreviewInfo" role="status" aria-live="polite">Tambah fail .html untuk melihat paparan.</p><div class="cw-preview-frame"><iframe id="cwPreviewFrame" title="HTML/CSS Live Preview (sandbox)" sandbox="" referrerpolicy="no-referrer"></iframe></div><p class="cw-preview-note">Preview setempat sahaja · JavaScript dan rangkaian dinyahaktifkan dalam preview v0.2.</p></div>',
  '<div class="multi-ai-actions cw-actions"><button type="button" id="cwUse">Gunakan di chatbox</button><button type="button" id="cwExport">Eksport JSON</button></div>'
 ].join("");
@@ -43,7 +43,7 @@ function render(){
 }
 function add(name,code=""){
  const lang=languageOf(name);
- if(!lang||!/^[A-Za-z0-9_.-]{1,70}\.(js|ts|py|sql|html|css)$/i.test(name))throw Error("Hanya fail .js, .ts, .py, .sql, .html atau .css.");
+ if(!lang||!/^[A-Za-z0-9_.-]{1,70}\.(js|ts|py|sql|html|css|cpp)$/i.test(name))throw Error("Hanya fail .js, .ts, .py, .sql, .html, .css atau .cpp.");
  if(files.length>=12||code.length>12000)throw Error("Had 12 fail, maksimum 12,000 aksara setiap fail.");
  if(files.some(f=>f.name.toLowerCase()===name.toLowerCase()))throw Error("Nama fail sudah wujud.");
  save();files.push({name,language:lang,code});index=files.length-1;render();schedulePreview();
@@ -62,6 +62,15 @@ function ensureWebStarter(){
  files.push({name:"index.html",language:"html",code:'<main class="card">\n  <h1>Antara Aksara dan Code</h1>\n  <p>HTML + CSS Live Preview v0.2</p>\n  <button>AKSARA</button>\n</main>'});
  files.push({name:"style.css",language:"css",code:'body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #101827; color: #f3e7d0; font: 16px system-ui; }\n.card { text-align: center; padding: 24px; }\nbutton { padding: 10px 18px; border-radius: 12px; border: 1px solid #dec194; background: transparent; color: inherit; }'});
  index=files.length-2;
+}
+function ensureCppStarter(){
+ const current=files.findIndex(f=>f.language==="cpp");
+ if(current>=0){save();index=current;return;}
+ if(files.length>=12){info.textContent="Had 12 fail sudah dicapai.";return;}
+ save();
+ files.push({name:"main.cpp",language:"cpp",
+  code:'#include <iostream>\\nint main() {\\n    std::cout << "Salam dari AKSARA C++!" << std::endl;\\n    std::cout << (6 * 7) << std::endl;\\n    return 0;\\n}'});
+ index=files.length-1;
 }
 function safePreviewDocument(html,css){
  const doc=new DOMParser().parseFromString(html,"text/html");
@@ -143,8 +152,9 @@ dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
 dialog.addEventListener("close",()=>{clearTimeout(previewTimer);previewFrame.removeAttribute("srcdoc");});
 window.addEventListener("aksara:code-workspace-open",event=>{
  if(event.detail?.language==="html")ensureWebStarter();
+ if(event.detail?.language==="cpp")ensureCppStarter();
  render();if(!dialog.open)dialog.showModal();schedulePreview();
 });
 window.addEventListener("ba:cleared",()=>{files=[{name:"main.js",language:"javascript",code:""}];index=0;clearTimeout(previewTimer);previewFrame.removeAttribute("srcdoc");if(dialog.open)dialog.close();});
-window.AksaraCodeWorkspace=Object.freeze({version:"1.2",fileCount:()=>files.length,previewAvailable:true});
+window.AksaraCodeWorkspace=Object.freeze({version:"1.3",fileCount:()=>files.length,previewAvailable:true});
 })();
