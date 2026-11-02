@@ -830,7 +830,8 @@ exports.handler=async event=>{
         disclaimer:"URL khusus belum berjaya disahkan melalui URL Context, Tavily Extract atau HTML milik sendiri.",
         routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()}},H);
     }
-    const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,researchStatus:researchResult.status,reply:Structured.render(revised,Structured.wantsJson(question)).reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources,
+    const reliableReply=revised;
+    const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,researchStatus:researchResult.status,reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources,
       ...(publicAccount?{publicAccount}:{}),
       argumentMap:review?review.argumentMap:[],truthAudit:review?review.truthAudit:[],
       thoughtLedger:review?review.thoughtLedger:[],hypothesis:review?review.hypothesis:"",
