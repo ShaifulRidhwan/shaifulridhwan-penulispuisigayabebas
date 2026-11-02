@@ -19,7 +19,8 @@ test("A timed-out Gemini health probe is not mislabeled as an actual offline ups
  assert.match(chat,/status:\[401,403,404,400\]\.includes\(e\.status\)\?"offline":"ready"/);
  assert.match(chat,/http:200,reason:"health_empty_reply"/);
  assert.match(chat,/e\.name==="AbortError"\?"health_timeout"/);
- assert.match(html,/id==="gemini"&&item\?\.reason==="health_timeout"/);
+ assert.match(html,/item\?\.reason==="health_timeout"\)statusText\.textContent="Timeout"/);
+ assert.match(html,/id==="gemini"&&state!=="unverified"/);
 });
 
 test("Gemini health probe quota does not poison real chat cooldown and surfaces diagnostic status",()=>{

@@ -1,0 +1,13 @@
+/* Multi A.I Status Engine v2: compact provider chip, independent request activity. */
+.conversation-head .connection[data-health-state="ready"] .dot{color:#e6c88f}
+.conversation-head .connection[data-health-state="unverified"] .dot,
+.conversation-head .connection[data-health-state="stale"] .dot,
+.conversation-head .connection[data-health-state="checking"] .dot{color:#beb7ad}
+.multi-ai-health-stamp{margin:2px 0 10px!important;font:500 10px/1.4 'DM Sans',sans-serif!important;opacity:.85!important;letter-spacing:.015em}
+.multi-ai-health-stamp[data-state="connected"]{color:#96dbb5}
+.multi-ai-health-stamp[data-state="ready"]{color:#efd19b}
+.multi-ai-health-stamp[data-state="offline"]{color:#f3aaa9}
+.multi-ai-request-note[hidden]{display:none!important}
+.multi-ai-request-note{font:500 11px/1.5 'DM Sans',sans-serif;color:#ead8c1;border:1px solid rgba(230,199,149,.23);border-radius:10px;background:rgba(255,255,255,.035);padding:10px 12px;margin:0 0 12px;overflow-wrap:anywhere}
+.multi-ai-dialog .multi-ai-state.is-muted{color:#ada79d}
+@media(max-width:420px){.multi-ai-request-note{padding:9px 10px;font-size:10px}.multi-ai-health-stamp{font-size:9.5px!important}}

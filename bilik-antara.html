@@ -53,6 +53,8 @@
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
 <link rel="stylesheet" href="bilik-antara.css?v=103">
+<link rel="stylesheet" href="bilik-antara-multi-ai-status.css?v=1" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="bilik-antara-multi-ai-status.css?v=1"></noscript>
 <link rel="stylesheet" href="bilik-antara-attachments.css?v=2" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-attachments.css?v=1"></noscript>
 <!-- Noncritical shared header refinements load without blocking first paint. -->
@@ -133,13 +135,14 @@
      <button type="button" id="voiceLive" class="voice-action voice-action--live" aria-pressed="false" title="Voice Live menghantar audio terus ke Google Gemini semasa sesi aktif">Voice Chat</button>
     </div>
     <div class="chat-controls">
-     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Lihat status empat penyedia AI dan model yang tersedia"><span class="dot multi-ai-network" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path class="network-links" d="M5 5.5 12 12l7-7M12 12l7.3 7M12 12 4.8 18.5"/><circle class="network-node" cx="5" cy="5.5" r="1.55"/><circle class="network-node" cx="19" cy="5" r="1.55"/><circle class="network-node" cx="19.3" cy="19" r="1.55"/><circle class="network-node" cx="4.8" cy="18.5" r="1.55"/><path class="network-spark" d="m12 7.2 1.25 3.55L16.8 12l-3.55 1.25L12 16.8l-1.25-3.55L7.2 12l3.55-1.25Z"/></svg></span><span id="connectionText">Checking Multi A.I.…</span></button>
+     <button type="button" class="connection multi-ai-trigger" id="connection" aria-haspopup="dialog" aria-controls="multiAiDialog" aria-label="Open provider health details"><span class="dot multi-ai-network" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><path class="network-links" d="M5 5.5 12 12l7-7M12 12l7.3 7M12 12 4.8 18.5"/><circle class="network-node" cx="5" cy="5.5" r="1.55"/><circle class="network-node" cx="19" cy="5" r="1.55"/><circle class="network-node" cx="19.3" cy="19" r="1.55"/><circle class="network-node" cx="4.8" cy="18.5" r="1.55"/><path class="network-spark" d="m12 7.2 1.25 3.55L16.8 12l-3.55 1.25L12 16.8l-1.25-3.55L7.2 12l3.55-1.25Z"/></svg></span><span id="connectionText">Multi A.I Checking</span></button>
     </div>
    </header>
    <dialog class="multi-ai-dialog" id="multiAiDialog" aria-labelledby="multiAiTitle">
- <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I. · Sambungan</strong><p>Empat penyedia teks Aksara. Status setiap sambungan disemak secara berasingan; Ready bukan Connected. Gemini mempunyai empat sambungan.</p></div><button type="button" id="multiAiClose" aria-label="Tutup status penyedia">×</button></div>
+ <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I · Provider Health</strong><p>Four text providers · Gemini pool 1–4. Ready does not mean Connected.</p><p id="multiAiCheckedAt" class="multi-ai-health-stamp">Not checked yet</p></div><button type="button" id="multiAiClose" aria-label="Close provider health">×</button></div>
+ <div id="multiAiRequestActivity" class="multi-ai-request-note" role="status" hidden></div>
  <div class="multi-ai-list" id="multiAiList" aria-live="polite"></div>
- <div class="multi-ai-actions"><button type="button" id="multiAiRefresh">Semak semula</button></div>
+ <div class="multi-ai-actions"><button type="button" id="multiAiRefresh">Refresh Status</button></div>
 </dialog>
    <dialog class="multi-ai-dialog" id="knowledgeDialog" aria-labelledby="knowledgeTitle" aria-describedby="knowledgeDescription">
  <div class="multi-ai-head"><div><strong id="knowledgeTitle">Pengetahuan &amp; Rujukan</strong><p id="knowledgeDescription">Aksara menggunakan rujukan yang tersedia, nota sesi yang kau benarkan, dan alat pengiraan terhad. Carian semantik masih versi setempat, bukan pangkalan vektor.</p></div><button type="button" id="knowledgeClose" aria-label="Tutup Pengetahuan dan Rujukan">×</button></div>
@@ -186,7 +189,7 @@
  <div class="meta-location-actions"><button id="metaLocationClear" type="button">Padam lokasi</button><button id="metaLocationSave" type="button">Simpan untuk mesej baharu</button></div>
 </dialog>
    <div id="voiceNotice" class="voice-notice" role="status" aria-live="polite" hidden></div>
-    <div id="connectionInfo" class="connection-info" role="status" aria-live="polite"><span id="connectionInfoText"></span><button type="button" id="retryBtn">Cuba semula</button></div>
+    <div id="connectionInfo" class="connection-info" role="status" aria-live="polite"><span id="connectionInfoText"></span><button type="button" id="retryBtn">Retry</button></div>
    <div class="messages" id="chat" role="log" aria-live="polite" aria-relevant="additions" aria-label="Mesej perbualan"></div>
    <div class="starters" id="starters" aria-label="Soalan permulaan">
     <button class="starter" type="button">Siapa Aku</button>
@@ -267,7 +270,8 @@ if(root)root.BilikAntaraChatStyle=api;
 })(typeof globalThis!=="undefined"?globalThis:this);
 
 </script>
-<script src="bilik-antara-gemini-status.js?v=1" defer></script>
+<script src="bilik-antara-gemini-status.js?v=2" defer></script>
+<script src="bilik-antara-multi-ai-status.js?v=1"></script>
 <script>
 (function(){
 "use strict";
@@ -408,21 +412,13 @@ function link(parent,label,url){
 }
 ui.html.setAttribute("data-theme","dark");
 try{localStorage.removeItem("bilik-antara-theme");}catch(_){}
-let connectionRevision=0;
-function status(kind,label,explain){
- connectionRevision++;
- ui.conn.className="connection multi-ai-trigger"+(["ready","online"].includes(kind)?" ready":["error","limited"].includes(kind)?" error":"");
- ui.connText.textContent=label==="Connected"?"Multi A.I Connected":label;
- ui.conn.title=kind==="configured"?"Empat penyedia AI didaftarkan; status semasa perlu disemak satu persatu.":"Semak status empat penyedia AI";
- ui.connInfo.className="connection-info"+(explain?" active"+(["error","limited"].includes(kind)?" error":""):"");
- ui.connInfoText.textContent=explain||"";
- ui.retry.hidden=kind==="ready"||kind==="online"||kind==="limited";
-}
-window.addEventListener("ba:voice-connected",()=>status("online","Multi A.I Connected",""));
-async function probe(){
- if(Date.now()<quotaCooldownUntil){status("limited","Kuota API tengah penuh","Kuota AI tengah penuh. Kita try lagi nanti.");return;}
- return checkProviders();
-}
+const multiHealth=window.AksaraMultiStatus.create({
+ pill:ui.conn,label:ui.connText,activity:ui.connInfo,activityText:ui.connInfoText,
+ retry:ui.retry,stamp:el("multiAiCheckedAt"),requestNote:el("multiAiRequestActivity")
+});
+function status(kind,label,explain){multiHealth.request(kind,label,explain);}
+// Voice connection is independent evidence: it must not color text-provider health green.
+async function probe(){return checkProviders();}
 ui.retry.addEventListener("click",()=>{
  if(busy)return;
  if(ui.input.value.trim()||fileState)submit({preventDefault(){}});else probe();
@@ -448,13 +444,14 @@ function renderProviderRows(rows,catalog=null){
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
   const waitLabel=waitSeconds>0?"Retry in "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" sec"):"";
   let stateLabel=state==="online"?"Connected":state==="ready"?"Ready":
-   state==="offline"?(item?.reason==="free_quota_exhausted"?"Kuota percuma habis":waitLabel||(item?.http===503?"Servis sibuk (503)":"Offline")):
-   state==="off"?"Not active":"Checking…";
+   state==="degraded"?"Degraded":state==="unverified"?"Unverified":
+   state==="offline"?(item?.reason==="free_quota_exhausted"?"Quota Exceeded":waitLabel||(item?.http===503?"Service Unavailable (503)":item?.http===401||item?.http===403?"Access Denied":"Offline")):
+   state==="off"?"Disabled":"Checking…";
   if(id==="gemini")stateLabel=item?.reason==="health_probe_quota"?"Ready · Probe 429":item?.reason==="cooldown"?(waitLabel||"Cooldown").replace("Retry in ","Cooldown "):state==="offline"&&item?.http?"Offline · HTTP "+item.http:stateLabel;
   const statusText=elem("span","multi-ai-state "+(state==="online"?"is-online":state==="offline"?"is-offline":state==="ready"?"is-ready":"is-muted"),stateLabel);
-  if(id==="gemini"&&item?.reason==="health_timeout")statusText.textContent="Semakan lambat";
-  if(id==="gemini"&&item?.http===400&&item?.category==="location_restricted")statusText.textContent="HTTP 400 · Region";
-  if(id==="gemini"&&item?.http===400&&item?.category==="thinking_parameter")statusText.textContent="HTTP 400 · Thinking";
+  if(id==="gemini"&&state!=="unverified"&&item?.reason==="health_timeout")statusText.textContent="Timeout";
+  if(id==="gemini"&&state!=="unverified"&&item?.http===400&&item?.category==="location_restricted")statusText.textContent="HTTP 400 · Region Restricted";
+  if(id==="gemini"&&state!=="unverified"&&item?.http===400&&item?.category==="thinking_parameter")statusText.textContent="HTTP 400 · Thinking Rejected";
   line.append(elem("span","multi-ai-provider",name),statusText);
   if(!expandable){multiList.appendChild(line);continue;}
   const group=elem("details","multi-ai-provider-details");group.dataset.provider=id;
@@ -466,18 +463,18 @@ function renderProviderRows(rows,catalog=null){
    else modelList.appendChild(elem("p","multi-ai-model-note","Status Gemini sedang dimuat…"));
   }else if(id==="groq"){
     const model=typeof item?.model==="string"&&item.model?item.model:"openai/gpt-oss-120b";
-    const label=state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?"Offline":state==="off"?"Not active":"Checking…";
+    const label=state==="online"?"Connected":state==="ready"?"Ready":state==="offline"?"Offline":state==="unverified"?"Unverified":state==="off"?"Disabled":"Checking…";
     const child=elem("div","multi-ai-model-row");
     child.title="Groq · "+model;
     child.append(elem("span","multi-ai-model-name",model),
       elem("span","multi-ai-model-state"+(state==="online"?" is-online":""),label));
     modelList.appendChild(child);
-    const note=state==="online"?"Model disahkan melalui respons probe Groq.":"Model ini ialah konfigurasi backend; sambungan belum disahkan.";
+    const note=state==="online"?"Verified by a successful Groq response.":"Configured model · successful response not confirmed.";
     modelList.appendChild(elem("p","multi-ai-model-note",note));
    }else if(id==="workers_ai"){
     const live=state==="online";
-   const modelState=live?"Connected":state==="ready"?"Ready":state==="off"?"Not active":
-    state==="offline"?"Offline":"Checking…";
+   const modelState=live?"Connected":state==="ready"?"Ready":state==="off"?"Disabled":
+    state==="offline"?"Offline":state==="unverified"?"Unverified":"Checking…";
    const child=elem("div","multi-ai-model-row");
    child.title="Cloudflare Workers AI · @cf/zai-org/glm-4.7-flash";
    child.append(elem("span","multi-ai-model-name","GLM-4.7-Flash"),
@@ -488,15 +485,15 @@ function renderProviderRows(rows,catalog=null){
     if(!model||typeof model.id!=="string")continue;
     const child=elem("div","multi-ai-model-row"),fullName=String(model.name||model.id).slice(0,140);
     child.title=fullName+" · "+model.id.slice(0,140);
-    child.setAttribute("aria-label",fullName+", status berdasarkan penggunaan sebenar jika sudah diuji");
-    const liveModel=(item?.status==="online"&&item.model===model.id)||
-     (model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000);
+    child.setAttribute("aria-label",fullName+", status based on a verified response if available");
+    const liveModel=item?.status==="online"&&(item.model===model.id||
+     (model.id===lastOpenRouterModel&&Date.now()-lastOpenRouterAt<90000));
     child.append(elem("span","multi-ai-model-name",shortOpenRouterName(model)),
      elem("span","multi-ai-model-state"+(liveModel?" is-online":""),liveModel?"Connected":"Listed"));
     modelList.appendChild(child);
    }
-   if(catalog.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Showing a saved list; the latest list is unavailable."));
-  }else modelList.appendChild(elem("p","multi-ai-model-note",!catalog?"Loading models…":catalog.status==="unavailable"?"Model list unavailable.":"No models listed yet."));
+   if(catalog.status==="stale")modelList.appendChild(elem("p","multi-ai-model-note","Stale model list · latest catalog unavailable."));
+  }else modelList.appendChild(elem("p","multi-ai-model-note",!catalog?"Loading models…":catalog.status==="unavailable"?"Model catalog unavailable.":"No models listed yet."));
   group.appendChild(modelList);multiList.appendChild(group);
  }
 }
@@ -504,33 +501,42 @@ window.addEventListener("aksara:gemini-status-ready",()=>renderProviderRows(late
 async function checkProviders(force=false){
  if(multiChecking)return;
  if(!force&&Date.now()-multiLastCheck<20000)return;
- multiChecking=true;el("multiAiRefresh").disabled=true;renderProviderRows(null,multiCatalog);
- if(!busy)status("connecting","Sekejap, aku check connection…","");
- const revision=connectionRevision;
+ multiChecking=true;el("multiAiRefresh").disabled=true;
+ multiHealth.startCheck();
+ if(!latestProviderRows)renderProviderRows(multiHealth.getRows(),multiCatalog);
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),force?24000:12500);
  try{
   const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
    body:JSON.stringify({providerStatus:true,geminiPoolRefresh:force===true}),signal:controller.signal});
-  if(!res.ok)throw Error("Semakan penyedia tidak tersedia");
-  const data=await res.json();if(!Array.isArray(data.providers))throw Error("Status tidak lengkap");
+  if(!res.ok)throw Error("Health check unavailable (HTTP "+res.status+")");
+  const data=await res.json();if(!Array.isArray(data.providers))throw Error("Invalid provider status");
   multiCatalog=data.freeModels||null;
-  renderProviderRows(data.providers,multiCatalog);multiLastCheck=Date.now();
+  multiHealth.update(data);
+  renderProviderRows(multiHealth.getRows(),multiCatalog);
+  multiLastCheck=Date.now();
   const preferred=data.providers.find(p=>p.id===data.preferredProvider&&["online","ready"].includes(p.status))||data.providers.find(p=>p.status==="online");
   if(preferred&&providers.some(([id])=>id===preferred.id)&&(!lastProvider||Date.now()-lastProviderAt>=90000)){
    lastProvider=preferred.id;lastProviderAt=Date.now();
   }
-  if(!busy&&connectionRevision===revision){
-   if(data.someOnline)status("ready","Multi A.I Connected","");
-   else if(data.someReady)status("configured","Multi A.I Ready","");
-   else status("error","Multi A.I tengah offline","");
-  }
  }catch(_){
-  renderProviderRows([],multiCatalog?{...multiCatalog,status:"stale"}:null);
-  if(!busy&&connectionRevision===revision)status("error","Connection belum confirm","");
+  // Network/probe failure must never invent an offline verdict for all providers.
+  multiHealth.failure();
+  renderProviderRows(multiHealth.getRows(),multiCatalog?{...multiCatalog,status:"stale"}:null);
  }
  finally{clearTimeout(timer);multiChecking=false;el("multiAiRefresh").disabled=false;}
 }
-ui.conn.addEventListener("click",()=>{if(!multiDialog.open)multiDialog.showModal();checkProviders();});
+ui.conn.addEventListener("click",()=>{
+ multiHealth.render();
+ renderProviderRows(multiHealth.getRows(),multiCatalog);
+ if(!multiDialog.open)multiDialog.showModal();
+ checkProviders();
+});
+let lastHealthVisual="";
+setInterval(()=>{
+ const state=multiHealth.render(),signature=state.rows.map(p=>p.id+":"+p.status).join("|");
+ if(multiDialog.open&&signature!==lastHealthVisual)renderProviderRows(state.rows,multiCatalog);
+ lastHealthVisual=signature;
+},15000);
 el("multiAiClose").addEventListener("click",()=>multiDialog.close());
 el("multiAiRefresh").addEventListener("click",()=>{multiLastCheck=0;checkProviders(true);});
 multiDialog.addEventListener("click",e=>{if(e.target===multiDialog)multiDialog.close();});
@@ -991,10 +997,10 @@ async function submit(event){
  const sentAt=Date.now(),sentLocation=messageLocation;
  if(Date.now()<quotaCooldownUntil){
   const seconds=Math.max(1,Math.ceil((quotaCooldownUntil-Date.now())/1000));
-  status("limited","Tunggu jap ya…","Tunggu lebih kurang "+seconds+" saat ya. Mesej kau masih ada dalam chatbox.");return;
+  status("limited","Rate Limited","Retry available in approximately "+seconds+"s. Your message is preserved.");return;
  }
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
- busy=true;stoppedByUser=false;update();status("connecting","Sekejap, aku jawab…","");ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
+ busy=true;stoppedByUser=false;update();status("connecting","Generating Response","");ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
  const pendingUser=addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""),{timestamp:sentAt,locationLabel:sentLocation});
  let typing=showTyping();
  ui.input.value="";resize();update();
@@ -1037,13 +1043,13 @@ async function submit(event){
   const requestBytes=new TextEncoder().encode(JSON.stringify(payload)).byteLength;
   if(requestBytes>5350000)throw Error("Jumlah mesej dan lampiran melebihi had Netlify 5.35 MB. Buang beberapa lampiran atau pendekkan dokumen sebelum menghantar.");
   const data=await askWithReconnect(payload,ctrl.signal,receive,
-   ({attempt,seconds,offline,reason})=>status("connecting",offline?"Internet hilang. Aku tunggu jap…":reason==="capacity"?"Model tengah busy. Tunggu jap…":"Aku try sambung balik…",
-    offline?"Internet putus. Aku tunggu dia kembali, lepas tu try lagi. Tekan Henti kalau nak cancel.":
-     (reason==="capacity"?"Model tengah busy. Aku try lagi dalam "+seconds+" saat. Nak cancel, tekan Henti.":"Aku try lagi dalam "+seconds+" saat · cubaan "+attempt+"/2.")),
+   ({attempt,seconds,offline,reason})=>status("connecting",offline?"Network Offline":reason==="capacity"?"Waiting for Capacity":"Retrying Request",
+    offline?"Connection unavailable. Automatic retry resumes when online.":
+     "Retry in "+seconds+"s · attempt "+attempt+"/2. You may cancel the request."),
    attempt=>{
     cancelPartialFrame();
     typing.remove();partialNode?.remove();partial="";partialNode=null;partialBubble=null;firstTokenMs=null;
-    typing=showTyping();status("connecting","Connecting balik · "+attempt+"/2","");
+    typing=showTyping();status("connecting","Retrying Request · "+attempt+"/2","");
    });
     if(data.model==="project-identity")await reconnectPause(Math.max(0,3000-(performance.now()-startedAt)),ctrl.signal);
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
@@ -1061,7 +1067,8 @@ async function submit(event){
   if(selectedFile&&selectedFile===fileState){ui.docStatus.dataset.state="ready";ui.docStatus.textContent="Lampiran kekal tersedia untuk soalan susulan · "+selectedFile.name;}
   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
   const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio";
-  status(localAnswer?"configured":"online",localAnswer?"Jawapan tersedia Aksara":"Multi A.I Connected","");
+  status("online","Request Completed","");
+  if(!localAnswer){multiHealth.reply(data.provider,data.model);renderProviderRows(multiHealth.getRows(),multiCatalog);}
   if(!localAnswer){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
   if(data.provider==="openrouter"&&typeof data.model==="string"){lastOpenRouterModel=data.model;lastOpenRouterAt=Date.now();}
   compact();
@@ -1086,23 +1093,25 @@ async function submit(event){
     addMessage("assistant",content,{timestamp:stoppedAt,locationLabel:sentLocation,thoughtMode:requestMode,disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});
     history.push({role:"user",content:question,timestamp:sentAt,locationLabel:sentLocation},{role:"assistant",content,timestamp:stoppedAt,locationLabel:sentLocation,thoughtMode:requestMode,disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});save();
    }
-   status("configured","Okay, aku stop dulu",partial?"Jawapan yang sempat keluar masih ada dalam chat.":"Mesej kau masih ada kalau nak try lagi.");
+   status("configured","Request Cancelled",partial?"Partial output retained in this conversation.":"Message preserved for retry.");
   }else{
   const limited=error?.status===429||["API_QUOTA","RATE_LIMIT","ALL_PROVIDERS_BUSY"].includes(error?.code);
   if(error.code==="CAPABILITY_UNAVAILABLE"){
    const doc=!!selectedFile?.text,pdf=selectedFile?.media?.some(m=>m.mimeType==="application/pdf");
-   status("error",doc?"Dokumen belum diproses":pdf?"Model PDF tak tersedia":"Model belum tersedia",
-    doc&&!ui.contextFallback.checked?"Gemini tak tersedia. Jika mahu penyedia sandaran baca teks dokumen, benarkan di Privasi & Tetapan.":pdf?"PDF mentah perlukan Gemini. Pilih semula PDF berteks untuk pembacaan setempat.":String(error.message));
+   status("error",doc?"Document Unavailable":pdf?"PDF Model Unavailable":"Capability Unavailable",
+    doc&&!ui.contextFallback.checked?"Gemini unavailable. Enable document fallback consent in Privacy Settings to allow another provider to read extracted text.":
+    pdf?"Raw PDF requires a compatible multimodal provider. Try a text-based PDF for local extraction.":"The selected provider cannot complete this request.");
   }else if(limited){
    quotaCooldownUntil=Date.now()+Math.min(120,Math.max(5,Number(error.retryAfterSeconds)||30))*1000;
    const rateLimited=error?.code==="RATE_LIMIT",allBusy=error?.code==="ALL_PROVIDERS_BUSY";
-   status("limited",rateLimited?"Request tengah banyak":allBusy?"Model tengah busy":"Kuota API tengah penuh",rateLimited
-    ?"Request tengah banyak dalam masa singkat. Mesej kau masih ada, cuba lagi jap."
-    :allBusy?"Otak utama dengan sandaran belum dapat jawab. Mesej kau masih ada, kita try lagi nanti."
-    :"Kuota Gemini tengah penuh. Mesej kau masih ada, cuba lagi nanti.");
+   status("limited",rateLimited?"Rate Limited":allBusy?"Waiting for Capacity":"Quota Exceeded",rateLimited
+    ?"Too many requests. Your message is preserved."
+    :allBusy?"Primary and fallback providers are busy. Your message is preserved."
+    :"Provider quota has been reached. Retry when capacity returns.");
   }else{
-   const desc=error?.name==="AbortError"?"Jawapan ambil masa lama sangat.":String(error?.message||"Ada error yang aku tak dapat kenal pasti.").slice(0,180);
-   status("error","Alamak, tak lepas",desc+" Mesej kau masih ada kalau nak try lagi.");
+   const failureCode=String(error?.code||"").slice(0,40),httpCode=Number(error?.status)||0;
+   const desc=error?.name==="AbortError"?"Timeout":failureCode||httpCode?"Code: "+(failureCode||"HTTP "+httpCode):"Connection or provider error";
+   status("error","Request Failed",desc+" · Your message is preserved for retry.");
   }
   }
   if(!stoppedByUser)window.dispatchEvent(new CustomEvent("ba:request-failed",{detail:{elapsedMs:Math.round(performance.now()-startedAt),code:error?.code||"",status:Number(error?.status)||0}}));

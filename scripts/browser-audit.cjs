@@ -122,16 +122,21 @@ async function chat(page,device){
  await page.waitForFunction(()=>!!window.BilikAntaraIdentity);
  await page.evaluate(()=>{window.__localAnswerStarted=performance.now();document.querySelector('.starter').click();});
  await page.waitForTimeout(2000);
- assert.equal(await page.locator('#connectionText').textContent(),"Sekejap, aku jawab…");
+ assert.match(await page.locator('#connectionInfoText').textContent(),/Generating Response/);
+ const priorHealth=await page.locator('#connectionText').textContent();
+ assert.match(priorHealth,/Multi A\.I/,"Provider health pill stays independent of request activity");
  assert.equal(await page.locator('#chat .typing').count(),1,"Typing feedback stays visible while the local answer waits");
- await page.waitForFunction(()=>document.querySelector('#connectionText')?.textContent==='Jawapan tersedia Aksara');
+ await page.waitForFunction(()=>document.querySelector('#chat .typing')===null&&
+  !document.querySelector('#connectionInfo')?.classList.contains('active'));
+ assert.equal(await page.locator('#connectionText').textContent(),priorHealth,"Local identity response cannot establish provider health");
  assert.ok(await page.evaluate(()=>performance.now()-window.__localAnswerStarted)>=3000,"Prepared answer waits at least three seconds");
  assert.match(await page.locator('#chat').textContent(),/Aku Aksara A\.I\./);
  // Henti must cancel the local wait and keep the user's message for retry.
  await page.locator('#input').fill('The Coder Poet');
  await page.locator('#composer').evaluate(el=>el.requestSubmit());
  await page.locator('#stopBtn').click();
- await page.waitForFunction(()=>document.querySelector('#connectionText')?.textContent==='Okay, aku stop dulu');
+ await page.waitForFunction(()=>document.querySelector('#connectionInfoText')?.textContent.includes('Request Cancelled'));
+ assert.equal(await page.locator('#connectionText').textContent(),priorHealth,"Cancel must not override provider health");
  assert.equal(await page.locator('#input').inputValue(),'The Coder Poet');
  await page.evaluate(()=>window.BilikAntaraBridge.fresh());
  // Normal text chat must retain its real face without loading the 2.7 MB GLB,
