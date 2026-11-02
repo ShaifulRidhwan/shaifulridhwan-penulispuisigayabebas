@@ -42,6 +42,16 @@ function field(xml,name){
  const match=xml.match(new RegExp("<"+name+"(?:\\s[^>]*)?>([\\s\\S]*?)<\\/"+name+"\\s*>","i"));
  return match?match[1]:"";
 }
+// Publisher category feeds sometimes include unrelated startup/business news.
+ // Relevance must be evidenced by the HEADLINE itself; summaries and feed
+ // categories alone are too weak and caused Founder Summit to appear as AI news.
+const AI_HEADLINE=/(?:\b(?:ai|a\.i\.|artificial intelligence|kecerdasan buatan|openai|chatgpt|gpt-\d|gemini|deepseek|anthropic|claude|llm|llms|generative ai|machine learning|deep learning|neural network(?:s)?|language model(?:s)?|ai agent(?:s)?|copilot|chatbot(?:s)?|large language model(?:s)?)\b)/i;
+function relevantHeadline(title){
+ if(typeof title!=="string")return false;
+ // A literal "non-AI" news headline is not positive evidence of AI coverage.
+ if(/\bnon[- ]AI\b/i.test(title))return false;
+ return AI_HEADLINE.test(title);
+}
 function parse(xml,feed,now=Date.now(),targetDate=null){
  if(typeof xml!=="string"||xml.length>400000)return [];
  const items=[...xml.matchAll(/<item(?:\s[^>]*)?>([\s\S]*?)<\/item>/gi)].slice(0,80);
@@ -56,8 +66,7 @@ function parse(xml,feed,now=Date.now(),targetDate=null){
   if(targetDate?date!==targetDate:timestamp<now-7*86400000)return [];
   if(!title)return [];
   const summary=cleanText(field(item,"description"),280);
-  const relevant=feed.publisher==="BBC Technology"?/\b(?:ai|artificial intelligence|chatgpt|gemini|openai|anthropic|machine learning)\b/i.test(title+" "+summary):true;
-  if(!relevant)return [];
+  if(!relevantHeadline(title))return [];
   return [{title,url:url.href,date,publishedAt:timestamp,publisher:feed.publisher,summary}];
  });
 }
@@ -97,7 +106,7 @@ function render(data){
  const header=data.targetDate
   ?"Tajuk berita AI yang tersenarai dalam RSS penerbit untuk "+data.targetDate+" (tarikh UTC):"
   :"Tajuk berita AI terkini yang tersenarai dalam RSS penerbit:";
- return header+"\n\n"+articles.map((x,i)=>(i+1)+". **"+x.title.replace(/[\[\]*]/g,"")+"** ("+x.publisher+", "+x.date+")\n   "+x.url).join("\n\n")+
-  "\n\nSumber: metadata RSS penerbit. Tajuk, tarikh dan pautan diperoleh daripada suapan awam; isi penuh artikel dan ketepatan dakwaan belum diperiksa.";
+ return header+"\n\n"+articles.map((x,i)=>(i+1)+". **"+x.title.replace(/[\[\]*]/g,"")+"** ("+x.publisher+", "+x.date+")").join("\n\n")+
+  "\n\nPautan artikel ada pada bahagian **Sumber Semakan** di bawah. Tajuk dan tarikh diperoleh daripada RSS penerbit; isi penuh artikel dan ketepatan dakwaan belum diperiksa.";
 }
-module.exports={FEEDS,eligible,requestedDate,parse,search,render};
+module.exports={FEEDS,eligible,requestedDate,relevantHeadline,parse,search,render};
