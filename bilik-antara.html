@@ -984,10 +984,10 @@ async function submit(event){
  const sentAt=Date.now(),sentLocation=messageLocation;
  if(Date.now()<quotaCooldownUntil){
   const seconds=Math.max(1,Math.ceil((quotaCooldownUntil-Date.now())/1000));
-  status("limited","Tunggu jap ya…","Tunggu lebih kurang "+seconds+" saat ya. Mesej kau masih ada dalam chatbox.");return;
+  status("limited","Rate Limited","Retry available in approximately "+seconds+"s. Your message is preserved.");return;
  }
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
- busy=true;stoppedByUser=false;update();status("connecting","Sekejap, aku jawab…","");ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
+ busy=true;stoppedByUser=false;update();status("connecting","Generating Response","");ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
  const pendingUser=addMessage("user",question+(selectedFile?"\n📎 "+selectedFile.name:""),{timestamp:sentAt,locationLabel:sentLocation});
  let typing=showTyping();
  ui.input.value="";resize();update();
@@ -1030,13 +1030,13 @@ async function submit(event){
   const requestBytes=new TextEncoder().encode(JSON.stringify(payload)).byteLength;
   if(requestBytes>5350000)throw Error("Jumlah mesej dan lampiran melebihi had Netlify 5.35 MB. Buang beberapa lampiran atau pendekkan dokumen sebelum menghantar.");
   const data=await askWithReconnect(payload,ctrl.signal,receive,
-   ({attempt,seconds,offline,reason})=>status("connecting",offline?"Internet hilang. Aku tunggu jap…":reason==="capacity"?"Model tengah busy. Tunggu jap…":"Aku try sambung balik…",
-    offline?"Internet putus. Aku tunggu dia kembali, lepas tu try lagi. Tekan Henti kalau nak cancel.":
-     (reason==="capacity"?"Model tengah busy. Aku try lagi dalam "+seconds+" saat. Nak cancel, tekan Henti.":"Aku try lagi dalam "+seconds+" saat · cubaan "+attempt+"/2.")),
+   ({attempt,seconds,offline,reason})=>status("connecting",offline?"Network Offline":reason==="capacity"?"Waiting for Capacity":"Retrying Request",
+    offline?"Connection unavailable. Automatic retry resumes when online.":
+     "Retry in "+seconds+"s · attempt "+attempt+"/2. You may cancel the request."),
    attempt=>{
     cancelPartialFrame();
     typing.remove();partialNode?.remove();partial="";partialNode=null;partialBubble=null;firstTokenMs=null;
-    typing=showTyping();status("connecting","Connecting balik · "+attempt+"/2","");
+    typing=showTyping();status("connecting","Retrying Request · "+attempt+"/2","");
    });
     if(data.model==="project-identity")await reconnectPause(Math.max(0,3000-(performance.now()-startedAt)),ctrl.signal);
   if(typeof data.reply!=="string"||!data.reply.trim())throw Error("Jawapan pelayan kosong.");
@@ -1054,7 +1054,8 @@ async function submit(event){
   if(selectedFile&&selectedFile===fileState){ui.docStatus.dataset.state="ready";ui.docStatus.textContent="Lampiran kekal tersedia untuk soalan susulan · "+selectedFile.name;}
   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[]}}));
   const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio";
-  status(localAnswer?"configured":"online",localAnswer?"Jawapan tersedia Aksara":"Multi A.I Connected","");
+  status("online","Request Completed","");
+  if(!localAnswer){multiHealth.reply(data.provider,data.model);renderProviderRows(multiHealth.getRows(),multiCatalog);}
   if(!localAnswer){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
   if(data.provider==="openrouter"&&typeof data.model==="string"){lastOpenRouterModel=data.model;lastOpenRouterAt=Date.now();}
   compact();
@@ -1079,23 +1080,25 @@ async function submit(event){
     addMessage("assistant",content,{timestamp:stoppedAt,locationLabel:sentLocation,thoughtMode:requestMode,disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});
     history.push({role:"user",content:question,timestamp:sentAt,locationLabel:sentLocation},{role:"assistant",content,timestamp:stoppedAt,locationLabel:sentLocation,thoughtMode:requestMode,disclaimer:"Jawapan ni belum habis — kau dah stop tadi."});save();
    }
-   status("configured","Okay, aku stop dulu",partial?"Jawapan yang sempat keluar masih ada dalam chat.":"Mesej kau masih ada kalau nak try lagi.");
+   status("configured","Request Cancelled",partial?"Partial output retained in this conversation.":"Message preserved for retry.");
   }else{
   const limited=error?.status===429||["API_QUOTA","RATE_LIMIT","ALL_PROVIDERS_BUSY"].includes(error?.code);
   if(error.code==="CAPABILITY_UNAVAILABLE"){
    const doc=!!selectedFile?.text,pdf=selectedFile?.media?.some(m=>m.mimeType==="application/pdf");
-   status("error",doc?"Dokumen belum diproses":pdf?"Model PDF tak tersedia":"Model belum tersedia",
-    doc&&!ui.contextFallback.checked?"Gemini tak tersedia. Jika mahu penyedia sandaran baca teks dokumen, benarkan di Privasi & Tetapan.":pdf?"PDF mentah perlukan Gemini. Pilih semula PDF berteks untuk pembacaan setempat.":String(error.message));
+   status("error",doc?"Document Unavailable":pdf?"PDF Model Unavailable":"Capability Unavailable",
+    doc&&!ui.contextFallback.checked?"Gemini unavailable. Enable document fallback consent in Privacy Settings to allow another provider to read extracted text.":
+    pdf?"Raw PDF requires a compatible multimodal provider. Try a text-based PDF for local extraction.":"The selected provider cannot complete this request.");
   }else if(limited){
    quotaCooldownUntil=Date.now()+Math.min(120,Math.max(5,Number(error.retryAfterSeconds)||30))*1000;
    const rateLimited=error?.code==="RATE_LIMIT",allBusy=error?.code==="ALL_PROVIDERS_BUSY";
-   status("limited",rateLimited?"Request tengah banyak":allBusy?"Model tengah busy":"Kuota API tengah penuh",rateLimited
-    ?"Request tengah banyak dalam masa singkat. Mesej kau masih ada, cuba lagi jap."
-    :allBusy?"Otak utama dengan sandaran belum dapat jawab. Mesej kau masih ada, kita try lagi nanti."
-    :"Kuota Gemini tengah penuh. Mesej kau masih ada, cuba lagi nanti.");
+   status("limited",rateLimited?"Rate Limited":allBusy?"Waiting for Capacity":"Quota Exceeded",rateLimited
+    ?"Too many requests. Your message is preserved."
+    :allBusy?"Primary and fallback providers are busy. Your message is preserved."
+    :"Provider quota has been reached. Retry when capacity returns.");
   }else{
-   const desc=error?.name==="AbortError"?"Jawapan ambil masa lama sangat.":String(error?.message||"Ada error yang aku tak dapat kenal pasti.").slice(0,180);
-   status("error","Alamak, tak lepas",desc+" Mesej kau masih ada kalau nak try lagi.");
+   const failureCode=String(error?.code||"").slice(0,40),httpCode=Number(error?.status)||0;
+   const desc=error?.name==="AbortError"?"Timeout":failureCode||httpCode?"Code: "+(failureCode||"HTTP "+httpCode):"Connection or provider error";
+   status("error","Request Failed",desc+" · Your message is preserved for retry.");
   }
   }
   if(!stoppedByUser)window.dispatchEvent(new CustomEvent("ba:request-failed",{detail:{elapsedMs:Math.round(performance.now()-startedAt),code:error?.code||"",status:Number(error?.status)||0}}));
