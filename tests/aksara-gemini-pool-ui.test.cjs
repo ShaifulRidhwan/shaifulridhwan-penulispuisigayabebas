@@ -48,9 +48,11 @@ test("Multi AI UI nests four status rows and explicit refresh under the original
  const html=fs.readFileSync("bilik-antara.html","utf8");
  const css=fs.readFileSync("bilik-antara.css","utf8");
  assert.match(html,/const expandable=id==="gemini"\|\|id==="openrouter"/);
- assert.match(html,/for\(let slot=1;slot<=4;slot\+\+\)/);
- assert.match(html,/child\.dataset\.geminiSlot=String\(slot\)/);
- assert.match(html,/item\?\.pool/);
+ const renderer=fs.readFileSync("bilik-antara-gemini-status.js","utf8");
+ assert.match(renderer,/for\(let slot=1;slot<=4;slot\+\+\)/);
+ assert.match(renderer,/child\.dataset\.geminiSlot=String\(slot\)/);
+ assert.match(renderer,/item\?\.pool/);
+ assert.match(html,/src="bilik-antara-gemini-status\.js\?v=1"/);
  assert.match(html,/geminiPoolRefresh:force===true/);
  assert.match(css,/\.multi-ai-gemini-detail/);
  assert.match(html,/Ready bukan Connected/);
