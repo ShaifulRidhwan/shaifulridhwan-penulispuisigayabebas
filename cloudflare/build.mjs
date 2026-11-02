@@ -28,17 +28,15 @@ for(const file of listed){
   // Original Netlify page, Studio and Novel remain unchanged.
   if(file==="bilik-antara.html"){
    for(const sheet of ["aksara-header.css"]){
-    const marker='<link rel="stylesheet" href="aksara-header.css?v=3">';
+    const marker='<link rel="stylesheet" href="aksara-header.css?v=3" media="print" onload="this.media='all'">\n<noscript><link rel="stylesheet" href="aksara-header.css?v=3"></noscript>'.replace(/\\n/g,String.fromCharCode(10));
     if(html.split(marker).length!==2)throw Error("Bilik stylesheet marker changed: "+sheet);
     const css=await readFile(path.join(root,sheet),"utf8");
     if(css.toLowerCase().includes("</style"))throw Error("Unexpected style closure in "+sheet);
     html=html.replace(marker,'<style data-aksara-inline="'+sheet+'">'+String.fromCharCode(10)+css+String.fromCharCode(10)+'</style>');
    }
-   const deferred='<link rel="stylesheet" href="bilik-antara-code-execution.css?v=1">';
-   if(html.split(deferred).length!==2)throw Error("Runtime CSS link changed");
-   html=html.replace(deferred,
-    `<link rel="stylesheet" href="bilik-antara-code-execution.css?v=1" media="print" onload="this.media='all'">`+String.fromCharCode(10)+
-    `<noscript><link rel="stylesheet" href="bilik-antara-code-execution.css?v=1"></noscript>`);
+   const deferred='<link rel="stylesheet" href="bilik-antara-code-execution.css?v=1" media="print" onload="this.media=\'all\'">';
+   const noScript='<noscript><link rel="stylesheet" href="bilik-antara-code-execution.css?v=1"></noscript>';
+   if(!html.includes(deferred)||!html.includes(noScript))throw Error("Runtime CSS must be non-blocking");
   }
   // Private bot verification is loaded only on the separate Cloudflare apps.
   // No extra UI, network requests or third-party script when not enabled.
