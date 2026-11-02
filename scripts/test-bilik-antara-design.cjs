@@ -311,3 +311,14 @@ test("Bilik message autoscroll and initial viewport avoid unnecessary forced geo
  assert.match(source,/const followBottom=appliedAppHeight!==null&&/);
  assert.match(source,/if\(followBottom\)scrollDown\(\)/);
 });
+
+test("Netlify QA Bilik alias bypasses only the legacy UI redirect",()=>{
+ const redirects=fs.readFileSync("_redirects","utf8");
+ const headers=fs.readFileSync("_headers","utf8");
+ const lines=redirects.split(/\r?\n/).filter(s=>s&&!s.trim().startsWith("#"));
+ const qaIndex=lines.findIndex(s=>s.trim()==="/bilik-antara-netlify-qa.html /bilik-antara.html 200!");
+ const normalIndex=lines.findIndex(s=>/^\/bilik-antara\.html\s+https:\/\/aksara-apps\.mshaifulridhwan\.workers\.dev\/bilik-antara\.html\s+302!\s*$/.test(s));
+ assert.ok(qaIndex>=0&&normalIndex>qaIndex,"QA rewrite must precede the unchanged production redirect");
+ assert.match(headers,/\/bilik-antara-netlify-qa\.html\s+X-Robots-Tag: noindex, nofollow\s+Cache-Control: no-store/);
+ assert.match(html,/const ENDPOINT="\/\.netlify\/functions\/bilik-antara"/,"Netlify QA must call same-origin Netlify Functions");
+});
