@@ -1090,14 +1090,9 @@ async function submit(event){
   }else{
   const limited=error?.status===429||["API_QUOTA","RATE_LIMIT","ALL_PROVIDERS_BUSY"].includes(error?.code);
   if(error.code==="CAPABILITY_UNAVAILABLE"){
-   const documentSelected=!!selectedFile?.text;
-   const rawPdf=!!selectedFile?.media?.some(item=>item.mimeType==="application/pdf");
-   const message=documentSelected&&!ui.contextFallback.checked
-    ?"Gemini gagal atau tidak tersedia. Dokumen teks tidak boleh dihantar ke penyedia sandaran tanpa izin kau. Semak Privasi & Tetapan → Benarkan penyedia sandaran memproses fail teks."
-    :rawPdf
-     ?"PDF asal memerlukan model Gemini yang menyokong dokumen. Jika ia PDF berteks, cuba pilih semula fail supaya pembacaan teks setempat digunakan."
-     :String(error.message||"Model yang sesuai untuk lampiran atau alat ini belum tersedia.");
-   status("error",documentSelected?"Dokumen belum dapat dianalisis":rawPdf?"Model PDF belum tersedia":"Keupayaan model tidak tersedia",message);
+   const doc=!!selectedFile?.text,pdf=selectedFile?.media?.some(m=>m.mimeType==="application/pdf");
+   status("error",doc?"Dokumen belum diproses":pdf?"Model PDF tak tersedia":"Model belum tersedia",
+    doc&&!ui.contextFallback.checked?"Gemini tak tersedia. Jika mahu penyedia sandaran baca teks dokumen, benarkan di Privasi & Tetapan.":pdf?"PDF mentah perlukan Gemini. Pilih semula PDF berteks untuk pembacaan setempat.":String(error.message));
   }else if(limited){
    quotaCooldownUntil=Date.now()+Math.min(120,Math.max(5,Number(error.retryAfterSeconds)||30))*1000;
    const rateLimited=error?.code==="RATE_LIMIT",allBusy=error?.code==="ALL_PROVIDERS_BUSY";
