@@ -91,10 +91,15 @@ async function search({question,signal,deadline=Date.now()+3800,fetchImpl=fetch,
    }catch(_){return [];}
   }));
   const combined=results.flat().sort((a,b)=>b.publishedAt-a.publishedAt);
-  const seen=new Set(),sources=[];
-  for(const item of combined){
-   if(seen.has(item.url))continue;
-   seen.add(item.url);sources.push(item);if(sources.length===3)break;
+  const seen=new Set(),usedPublishers=new Set(),sources=[];
+  // Prefer a mix of publishers when other recent and relevant feeds exist.
+  for(const diverse of [true,false]){
+   for(const item of combined){
+    if(seen.has(item.url)||(diverse&&usedPublishers.has(item.publisher)))continue;
+    seen.add(item.url);usedPublishers.add(item.publisher);sources.push(item);
+    if(sources.length===3)break;
+   }
+   if(sources.length===3)break;
   }
   return {status:sources.length?"success":"no_matching_items",sources,targetDate};
  }catch(_){return {status:"feeds_unavailable",sources:[],targetDate};}
@@ -106,7 +111,7 @@ function render(data){
  const header=data.targetDate
   ?"Tajuk berita AI yang tersenarai dalam RSS penerbit untuk "+data.targetDate+" (tarikh UTC):"
   :"Tajuk berita AI terkini yang tersenarai dalam RSS penerbit:";
- return header+"\n\n"+articles.map((x,i)=>(i+1)+". **"+x.title.replace(/[\[\]*]/g,"")+"** ("+x.publisher+", "+x.date+")").join("\n\n")+
+ return header+"\n\n"+articles.map((x,i)=>(i+1)+") **"+x.title.replace(/[\[\]*]/g,"")+"** ("+x.publisher+", "+x.date+")").join("\n\n")+
   "\n\nPautan artikel ada pada bahagian **Sumber Semakan** di bawah. Tajuk dan tarikh diperoleh daripada RSS penerbit; isi penuh artikel dan ketepatan dakwaan belum diperiksa.";
 }
 module.exports={FEEDS,eligible,requestedDate,relevantHeadline,parse,search,render};

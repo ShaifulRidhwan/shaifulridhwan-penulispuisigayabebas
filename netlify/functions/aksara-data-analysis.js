@@ -44,11 +44,30 @@ function analyze(name,text){
   const list=rows.map(x=>String(x[key]??"").trim()).filter(Boolean);
   if(!list.length||!list.every(v=>/^-?(?:\d+\.?\d*|\.\d+)$/.test(v)&&Number.isFinite(Number(v))))continue;
   const numbers=list.map(Number),sum=numbers.reduce((a,b)=>a+b,0);
-  numeric[key]={count:numbers.length,sum:Number(sum.toPrecision(12)),mean:Number((sum/numbers.length).toPrecision(12)),
-   min:Math.min(...numbers),max:Math.max(...numbers)};
+  const sorted=[...numbers].sort((a,b)=>a-b),mid=Math.floor(sorted.length/2);
+  const median=sorted.length%2?sorted[mid]:(sorted[mid-1]+sorted[mid])/2;
+  const mean=sum/numbers.length;
+  const variance=numbers.length>1?numbers.reduce((acc,n)=>acc+(n-mean)**2,0)/(numbers.length-1):0;
+  numeric[key]={count:numbers.length,sum:Number(sum.toPrecision(12)),mean:Number(mean.toPrecision(12)),
+   median:Number(median.toPrecision(12)),min:sorted[0],max:sorted[sorted.length-1],
+   sampleStdDev:Number(Math.sqrt(variance).toPrecision(12)),
+   missing:rows.length-list.length};
  }
+ const categorical={};
+ for(const key of keys.slice(0,MAX_COLUMNS)){
+  if(numeric[key])continue;
+  const counts=new Map();
+  for(const row of rows){
+   const value=String(row[key]??"").trim().slice(0,100);
+   if(value)counts.set(value,(counts.get(value)||0)+1);
+  }
+  if(counts.size<=12&&counts.size>0)categorical[key]=[...counts.entries()]
+   .sort((a,b)=>b[1]-a[1]).slice(0,6).map(([value,count])=>({value,count}));
+ }
+ const missingByColumn=Object.fromEntries(keys.map(k=>[k,rows.filter(row=>!String(row[k]??"").trim()).length]));
  return {type:String(name).toLowerCase().endsWith(".json")?"json":"csv",columns:keys,
-   rows:rows.length,preview:rows.slice(0,3),numeric,limited:rows.length>=MAX_ROWS};
+   rows:rows.length,preview:rows.slice(0,3),numeric,categorical,missingByColumn,
+   limited:rows.length>=MAX_ROWS};
 }
 function fromAttachment(documentName,documentText){
  const name=String(documentName||"").split(",")[0].trim();
