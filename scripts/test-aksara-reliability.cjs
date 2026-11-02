@@ -428,7 +428,7 @@ test("health checks are coalesced and do not consume the conversation request li
  assert.equal((await handler(chat)).statusCode,200,"Health traffic cannot consume chat capacity");
 });
 test("a failed Google network path can still use the healthy chat provider",async t=>{
- const handler=setup(t),calls=[];
+ const handler=setup(t),calls=[];process.env.AKSARA_HYBRID_ROUTER="true";
  global.fetch=async url=>{calls.push(url);if(url.includes("googleapis"))throw new TypeError("network");return reply("Aku boleh jawab.");};
  const r=await handler(event({question:"Apa itu atom?",preferredProvider:"gemini"}));
  assert.equal(r.statusCode,200);assert.equal(JSON.parse(r.body).provider,"groq");assert.equal(calls.length,2);
@@ -614,7 +614,7 @@ test("light turns use the configured Flash-Lite model while deep tasks honor an 
 test("model-specific quota blocks that model, and project-wide quota blocks every Gemini variant",async t=>{
  for(const scope of ["model","project","mixed"]){
   const modelScoped=scope==="model";
-  const handler=setup(t);let google=0;
+  const handler=setup(t);let google=0;process.env.AKSARA_HYBRID_ROUTER="true";
   // Explicitly exercise separate model quotas; production defaults remain 3.5 Flash-Lite.
   process.env.GEMINI_MODEL_FAST="gemini-3.1-flash-lite";
   process.env.GEMINI_MODEL_COMPLEX="gemini-3.6-flash";
