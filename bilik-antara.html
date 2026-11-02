@@ -439,7 +439,7 @@ function renderProviderRows(rows,catalog=null){
  multiList.replaceChildren();
  for(const [id,name] of providers){
   const item=(rows||[]).find(x=>x.id===id),state=item?.status||"checking";
-  const expandable=id==="gemini"||id==="groq"||id==="openrouter"||id==="workers_ai";
+  const expandable=id==="gemini"||id==="openrouter"||id==="workers_ai"||id==="groq";
   const line=elem(expandable?"summary":"div","multi-ai-row"+(expandable?" multi-ai-expand-trigger":""));
   const waitSeconds=Number(item?.retryAfterSeconds)||0;
   const waitLabel=waitSeconds>0?"Retry in "+(waitSeconds>=60?Math.ceil(waitSeconds/60)+" min":Math.ceil(waitSeconds)+" sec"):"";
