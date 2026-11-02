@@ -19,6 +19,13 @@ test("five executable runtimes preserve v0.2 menu and HTML preview",()=>{
  const workspace=read("bilik-antara-code-workspace.js");
  assert.ok(!status.includes("codeEngineProbeAll"),"Old manual probe button must remain removed");
  assert.ok(status.includes('id="codeHtmlPreview"'));
+ const list=status.slice(status.indexOf('id="codeRuntimeList"'));
+ const markers=['id="codeHtmlPreview"','data-code-language="javascript"',
+   'data-code-language="python"','data-code-language="typescript"',
+   'data-code-language="sql"','data-code-language="cpp"'];
+ const positions=markers.map(m=>list.indexOf(m));
+ assert.ok(positions.every((p,i)=>p>=0&&(i===0||p>positions[i-1])),
+  "HTML/CSS preview must be first; runtime order stays unchanged");
  assert.ok(status.includes('data-code-language="cpp"'));
  assert.ok(runtime.includes('const LANGUAGES=Object.freeze(["javascript","python","typescript","sql","cpp"]);'));
  assert.ok(workspace.includes('sandbox=""')&&workspace.includes("script-src 'none'"));
@@ -49,7 +56,7 @@ test("C++ project workflow exposes code, stdin, stop and output",()=>{
 });
 test("v0.3 page loads fresh Code Engine JS",()=>{
  const html=read("bilik-antara.html");
- for(const asset of ["runtime.js?v=5","status.js?v=16","workspace.js?v=3","chat.js?v=6"]){
+ for(const asset of ["runtime.js?v=5","status.js?v=17","workspace.js?v=3","chat.js?v=6"]){
   assert.ok(html.includes("bilik-antara-code-"+asset),"Missing "+asset);
  }
 });
