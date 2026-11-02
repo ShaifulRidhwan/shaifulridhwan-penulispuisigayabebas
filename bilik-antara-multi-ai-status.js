@@ -22,15 +22,17 @@
  }
  function summarize(rows,checkedAt,now=Date.now(),failure=false,checking=false){
   const age=Number.isFinite(checkedAt)&&checkedAt>0?Math.max(0,now-checkedAt):Infinity;
-  const verified=Array.isArray(rows)?rows.filter(p=>p.status==="online").length:0;
+  const verified=Array.isArray(rows)?rows.filter(p=>p.status==="online"&&
+   (p.reason==="recent_reply"&&Number.isFinite(p.checkedAt)?now-p.checkedAt<=REPLY_TTL:age<=HEALTH_TTL)).length:0;
   const ready=Array.isArray(rows)?rows.filter(p=>p.status==="ready"||p.status==="degraded").length:0;
   const enabled=Array.isArray(rows)?rows.filter(p=>p.status!=="off").length:0;
+  const unknown=Array.isArray(rows)&&rows.some(p=>p.status==="unverified"||p.status==="checking");
   if(verified)return {state:"connected",label:"Multi A.I Connected",verified,checkedAt,age};
   if(failure)return {state:"unverified",label:"Multi A.I Unverified",verified,checkedAt,age};
   if(age>HEALTH_TTL&&Number.isFinite(age))return {state:"stale",label:"Multi A.I Unverified",verified,checkedAt,age};
   if(ready)return {state:"ready",label:"Multi A.I Ready",verified,checkedAt,age};
   if(checking)return {state:"checking",label:"Multi A.I Checking",verified,checkedAt,age};
-  if(!Array.isArray(rows)||!rows.length)return {state:"unverified",label:"Multi A.I Unverified",verified,checkedAt,age};
+  if(!Array.isArray(rows)||!rows.length||unknown)return {state:"unverified",label:"Multi A.I Unverified",verified,checkedAt,age};
   if(!enabled)return {state:"disabled",label:"Multi A.I Disabled",verified,checkedAt,age};
   return {state:"offline",label:"Multi A.I Offline",verified,checkedAt,age};
  }
