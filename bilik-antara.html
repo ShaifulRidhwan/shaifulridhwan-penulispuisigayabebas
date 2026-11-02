@@ -957,7 +957,7 @@ function rebuildFileState(note=""){
  }
  ui.docStatus.textContent=note||(stagedFiles.length?
    stagedFiles.length+" fail tersedia · "+bytesLabel(stagedFiles.reduce((sum,f)=>sum+(f.uploadSize||f.size),0))+
-   " · Disimpan dalam tab sehingga dihantar.":"");
+   " · "+stagedFiles.map(f=>f.name).join(", ").slice(0,110)+" · Disimpan dalam tab sehingga dihantar.":"");
  ui.remove.hidden=!stagedFiles.length;
  renderAttachmentTray();update();
 }
