@@ -32,6 +32,13 @@ function followUpUrl(question,history){
 async function research(question,intent,{enabled=true,attachment=false,account=false,privateContext=false,signal}={}){
  if(!enabled)return {sources:[],status:"disabled"};
  if(intent?.sensitive||attachment||account||privateContext)return {sources:[],status:"not-eligible"};
+ // An explicit Wikipedia request is encyclopedia research, even if the
+ // intent classifier also tags "cari" as a generic live-web search.
+ // Do not charge a Tavily/Brave lookup for this dedicated public source.
+ if(!intent?.hasLink&&/\b(?:wikipedia|ensiklopedia)\b/i.test(String(question||""))){
+  const sources=curate(await publicReferences(question,intent,attachment,account));
+  return {sources,status:sources.length?"encyclopedia":"unverified"};
+ }
  if(intent?.hasLink||intent?.search){
   const options={attachment,account,privateContext,sensitive:intent?.sensitive,hasLink:!!intent?.hasLink,signal};
   // Tavily is opt-in only. Keep the owner API key configured but never call
