@@ -4,6 +4,7 @@
  * Hanya utiliti Wikipedia sedia ada yang menyekat host kepada ms/en.wikipedia.org.
  */
 const {publicReferences}=require("./antara-free-research");
+const SafeTools=require("./aksara-safe-tools");
 const attempts=new Map();
 const TIME_WINDOW_MS=60000,MAX_PER_MINUTE=12;
 const noStore={"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store, max-age=0","X-Content-Type-Options":"nosniff"};
@@ -28,7 +29,14 @@ async function handler(event={}){
  if(typeof event.body!=="string"||event.body.length>1100)return respond(413,{error:"Permintaan terlalu panjang."});
  let body;
  try{body=JSON.parse(event.isBase64Encoded?Buffer.from(event.body,"base64").toString("utf8"):event.body);}catch(_){return respond(400,{error:"Format permintaan tidak sah."});}
- if(!body||body.action!=="wikipedia")return respond(400,{error:"Hanya carian Wikipedia awam dibenarkan."});
+ if(!body||typeof body!=="object"||Array.isArray(body))return respond(400,{error:"Format permintaan tidak sah."});
+ if(body.action==="calculate"){
+  if(typeof body.expression!=="string"||body.expression.length>120)return respond(400,{error:"Ungkapan matematik tidak sah."});
+  const result=SafeTools.execute({name:"calculate",arguments:{expression:body.expression}},{enabled:true,allowKnowledge:false});
+  return result.ok?respond(200,{status:"berjaya",expression:body.expression,result:result.result,source:"Pengiraan matematik setempat pada pelayan, bukan jawapan AI."}):
+   respond(422,{status:"gagal",error:result.error});
+ }
+ if(body.action!=="wikipedia")return respond(400,{error:"Hanya carian Wikipedia dan pengiraan terhad dibenarkan."});
  const query=cleanQuery(body.query);
  if(!query)return respond(400,{error:"Masukkan topik umum antara 3 hingga 85 aksara, tanpa URL atau data peribadi."});
  const headers=event.headers||{};
