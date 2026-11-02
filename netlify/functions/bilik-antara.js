@@ -248,7 +248,7 @@ exports.handler=async event=>{
       const cooldown=googleWait(fastModel);
       if(cooldown>0)return {status:"offline",reason:"cooldown"};
       // Auth failure quarantine is respected even on manual refresh.
-      if(GeminiTextPool.snapshot().some(x=>x.slot===entry.slot&&x.status==="offline"))
+      if(GeminiTextPool.snapshot().some(x=>x.slot===entry.slot&&x.status==="offline"&&x.reason==="authentication_or_access"))
         return {status:"offline",reason:"authentication_or_access"};
       const maxAge=cache.value?.status==="online"?90000:30000;
       if(cache.value&&Date.now()-cache.time<maxAge)return cache.value;
@@ -283,12 +283,21 @@ exports.handler=async event=>{
       }finally{cache.pending=null;}
     }
     await Promise.all(probeEntries.map(checkGeminiSlot));
-    const poolStatuses=GeminiTextPool.snapshot(undefined,fastModel);
     const googleCooldownSeconds=googleWait(fastModel);
+    const poolStatuses=GeminiTextPool.snapshot(undefined,fastModel).map(x=>
+      googleCooldownSeconds>0?{...x,status:"offline",reason:"cooldown"}:x);
     const anyOnline=poolStatuses.some(x=>x.status==="online");
     const anyReady=poolStatuses.some(x=>x.status==="ready"||x.status==="degraded");
+    const selectedStatus=poolStatuses.find(x=>x.slot===poolKey?.slot)||poolStatuses[0];
     const google={id:"gemini",model:fastModel,
       status:googleCooldownSeconds>0?"offline":anyOnline?"online":anyReady?"ready":poolStatuses.length?"offline":"off",
+      ...(selectedStatus?{
+        ...(selectedStatus.http?{http:selectedStatus.http}:{}),
+        ...(selectedStatus.reason?{reason:selectedStatus.reason}:{}),
+        ...(selectedStatus.category?{category:selectedStatus.category}:{}),
+        ...(selectedStatus.upstreamCode?{upstreamCode:selectedStatus.upstreamCode}:{}),
+        ...(selectedStatus.upstreamReason?{upstreamReason:selectedStatus.upstreamReason}:{})
+      }:{}),
       ...(googleCooldownSeconds>0?{reason:"cooldown",retryAfterSeconds:googleCooldownSeconds}:{}),
       pool:poolStatuses};
     const [alternatives,freeModels]=await Promise.all([alternativeChecks,freeModelsCheck]);
