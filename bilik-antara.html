@@ -54,6 +54,7 @@
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
 <link rel="stylesheet" href="bilik-antara.css?v=103">
 <link rel="stylesheet" href="bilik-antara-multi-ai-status.css?v=1" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="bilik-antara-reference-hub.css?v=1" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-multi-ai-status.css?v=1"></noscript>
 <link rel="stylesheet" href="bilik-antara-attachments.css?v=2" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-attachments.css?v=1"></noscript>
@@ -98,7 +99,7 @@
         </button>
         <button type="button" class="feature-hub-item" id="featureKnowledge" aria-haspopup="dialog" aria-controls="knowledgeDialog" aria-expanded="false">
          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5c3-1.5 5.5-1.5 8 .2 2.5-1.7 5-1.7 8-.2V19c-3-1.5-5.5-1.5-8 .2-2.5-1.7-5-1.7-8-.2zM12 5.7v13.5"/></svg>
-         <span><strong>Pengetahuan &amp; Rujukan</strong><small>Karya · ensiklopedia · pengiraan selamat</small></span><span class="feature-hub-arrow" aria-hidden="true">›</span>
+         <span><strong>Pengetahuan &amp; Rujukan</strong><small>Carian karya · Wikipedia · semak URL</small></span><span class="feature-hub-arrow" aria-hidden="true">›</span>
         </button>
        </div>
        <details class="feature-privacy" id="privacySettings">
@@ -137,18 +138,14 @@
     </div>
    </header>
    <dialog class="multi-ai-dialog" id="multiAiDialog" aria-labelledby="multiAiTitle">
- <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I · Provider Health</strong><p>Four text providers · Gemini pool 1–4. Ready does not mean Connected.</p><p id="multiAiCheckedAt" class="multi-ai-health-stamp">Not checked yet</p></div><button type="button" id="multiAiClose" aria-label="Close provider health">×</button></div>
+ <div class="multi-ai-head"><div><strong id="multiAiTitle">Multi A.I · Provider Health</strong><p>Empat penyedia teks dengan empat slot Gemini. Status Ready bermaksud tersedia, bukan sambungan yang sudah disahkan (Connected).</p><p id="multiAiCheckedAt" class="multi-ai-health-stamp">Not checked yet</p></div><button type="button" id="multiAiClose" aria-label="Close provider health">×</button></div>
  <div id="multiAiRequestActivity" class="multi-ai-request-note" role="status" hidden></div>
  <div class="multi-ai-list" id="multiAiList" aria-live="polite"></div>
  <div class="multi-ai-actions"><button type="button" id="multiAiRefresh">Refresh Status</button></div>
 </dialog>
    <dialog class="multi-ai-dialog" id="knowledgeDialog" aria-labelledby="knowledgeTitle" aria-describedby="knowledgeDescription">
- <div class="multi-ai-head"><div><strong id="knowledgeTitle">Pengetahuan &amp; Rujukan</strong><p id="knowledgeDescription">Aksara menggunakan rujukan yang tersedia, nota sesi yang kau benarkan, dan alat pengiraan terhad. Carian semantik masih versi setempat, bukan pangkalan vektor.</p></div><button type="button" id="knowledgeClose" aria-label="Tutup Pengetahuan dan Rujukan">×</button></div>
- <div class="multi-ai-actions">
-  <button type="button" class="outline-btn" data-knowledge-question="Cari karya Aksara tentang aporia dan pengetahuan.">Jelajah karya</button>
-  <button type="button" class="outline-btn" data-knowledge-question="Cari rujukan Wikipedia tentang falsafah dan terangkan dengan sumber yang diperoleh.">Cari rujukan</button>
-  <button type="button" class="outline-btn" data-knowledge-question="Kira (12+8)*3">Uji pengiraan</button>
- </div>
+ <div class="multi-ai-head"><div><strong id="knowledgeTitle">Pusat Rujukan</strong><p id="knowledgeDescription">Cari karya asal, sediakan carian Wikipedia atau semak teks URL. Bukti diperlihatkan selepas jawapan diterima.</p></div><button type="button" id="knowledgeClose" aria-label="Tutup Pusat Rujukan">×</button></div>
+ <div id="referenceHub" class="reference-hub"></div>
 </dialog>
 <dialog class="multi-ai-dialog thought-mode-dialog" id="thoughtModeDialog" aria-labelledby="thoughtModeTitle" aria-describedby="thoughtModeSummary">
     <div class="multi-ai-head">
@@ -353,12 +350,6 @@ knowledgeDialog.addEventListener("close",()=>{
  knowledgeTrigger.setAttribute("aria-expanded","false");
  knowledgeTrigger.focus({preventScroll:true});
 });
-for(const action of knowledgeDialog.querySelectorAll("[data-knowledge-question]")){
- action.addEventListener("click",()=>{
-  ui.input.value=action.dataset.knowledgeQuestion||"";
-  knowledgeDialog.close();ui.input.dispatchEvent(new Event("input",{bubbles:true}));ui.input.focus({preventScroll:true});
- });
-}
 window.BilikAntaraThought=Object.freeze({getMode:()=>thoughtMode});
 modeButton.addEventListener("click",()=>{
  if(!modeDialog.open){modeDialog.showModal();modeButton.setAttribute("aria-expanded","true");}
@@ -1180,6 +1171,7 @@ renderIdeas();renderHistory();update();probe();
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
 <script src="bilik-antara-dialek.js?v=2" defer></script>
 <script src="bilik-antara-voice.js?v=44" defer></script>
+<script src="bilik-antara-reference-hub.js?v=1" defer></script>
 <script src="bilik-antara-observability.js?v=1" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
 
