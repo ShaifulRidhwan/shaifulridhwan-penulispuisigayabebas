@@ -52,7 +52,7 @@
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=103">
+<link rel="stylesheet" href="bilik-antara.css?v=104">
 <!-- Noncritical shared header refinements load without blocking first paint. -->
 <link rel="stylesheet" href="aksara-header.css?v=3" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="aksara-header.css?v=3"></noscript>
@@ -175,7 +175,7 @@
  <button type="button" class="attachment-option" data-attachment-type="code"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-16-4 24"/></svg><span><strong>Kod</strong><small>HTML, CSS, JS, TS, Python, SQL, C++</small></span><span aria-hidden="true">›</span></button>
  </div>
  <div class="attachment-quick-actions"><button type="button" id="attachmentCameraAction">Ambil gambar dengan kamera</button><button type="button" id="attachmentRecordAction">Rakam suara</button><button type="button" id="attachmentRecordStop" hidden>Henti rakaman</button></div>
- <p id="attachmentRecordStatus" class="attachment-helper" role="status" aria-live="polite">Kamera dan mikrofon hanya diakses selepas izin kau.</p>
+ <p id="attachmentRecordStatus" class="attachment-helper" role="status" aria-live="polite">Teks sehingga 1 juta aksara · gambar besar dimampatkan setempat · media gabungan 3.85 MB selepas mampatan. Kamera dan mikrofon hanya selepas izin kau.</p>
 </dialog>
 <dialog class="multi-ai-dialog meta-location-dialog" id="metaLocationDialog" aria-labelledby="metaLocationTitle" aria-describedby="metaLocationHelp">
  <div class="multi-ai-head"><div><strong id="metaLocationTitle">Lokasi mesej</strong><p id="metaLocationHelp">Pilihan. Isi bandar atau negeri sahaja. Tiada GPS automatik, dan lokasi ini tidak dihantar kepada model A.I.</p></div><button type="button" id="metaLocationClose" aria-label="Tutup lokasi">×</button></div>
@@ -1269,6 +1269,8 @@ async function submit(event){
    documentName:selectedFile&&selectedFile.name||"",
    media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt(question)||""};
   payload.question=contextQuestion;
+  const requestBytes=new TextEncoder().encode(JSON.stringify(payload)).byteLength;
+  if(requestBytes>5350000)throw Error("Jumlah mesej dan lampiran melebihi had Netlify 5.35 MB. Buang beberapa lampiran atau pendekkan dokumen sebelum menghantar.");
   const data=await askWithReconnect(payload,ctrl.signal,receive,
    ({attempt,seconds,offline,reason})=>status("connecting",offline?"Internet hilang. Aku tunggu jap…":reason==="capacity"?"Model tengah busy. Tunggu jap…":"Aku try sambung balik…",
     offline?"Internet putus. Aku tunggu dia kembali, lepas tu try lagi. Tekan Henti kalau nak cancel.":
@@ -1393,7 +1395,7 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-code-chat.js?v=6" defer></script>
 <script src="bilik-antara-code-bridge.js?v=2" defer></script>
 <script src="bilik-antara-code-agent.js?v=3" defer></script>
-<script src="bilik-antara-code-workspace.js?v=3" defer></script>
+<script src="bilik-antara-code-workspace.js?v=4" defer></script>
 <script src="bilik-antara-code-evaluation.js?v=1" defer></script>
 <script src="bilik-antara-brain.js?v=15" defer></script>
 <script src="bilik-antara-modes.js?v=4" defer></script>
