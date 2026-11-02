@@ -585,7 +585,9 @@ test("Groq 429 + Google Grounding 404 can return dated publisher RSS links",asyn
  assert.deepEqual(data.toolsUsed,["publisher_rss"]);
  assert.equal(data.sources.length,3);
  assert.equal(data.routing.googleGrounding.status,"model_unavailable");
- assert.match(data.reply,/metadata RSS penerbit/);
+ assert.match(data.reply,/RSS penerbit/);
+ assert.match(data.reply,/Sumber Semakan/);
+ assert.doesNotMatch(data.reply,/https?:\/\//);
  assert.match(data.disclaimer,/belum diaudit/);
 });
 
