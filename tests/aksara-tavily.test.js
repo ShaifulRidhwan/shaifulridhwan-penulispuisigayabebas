@@ -26,7 +26,7 @@ test("basic web search uses Tavily API with bounded output and never leaks key t
  const fetchImpl=async (url,init)=>{request={url,init};return {
   ok:true,async json(){return {results:[{title:"New discoveries",url:"https://example.com/post",
    content:"Something happened today."}]};}};};
- const r=await Tavily.lookup("latest discoveries today",{env:{TAVILY_API_KEY:"sample-key"},fetchImpl});
+ const r=await Tavily.lookup("latest discoveries today",{env:{TAVILY_API_KEY:"sample-key"},fetchImpl,reserveImpl:async()=>{}});
  assert.equal(r.status,"search-snippets");assert.equal(r.sources.length,1);
  assert.equal(r.sources[0].verifiedLive,false);
  assert.equal(request.url,"https://api.tavily.com/search");
@@ -35,7 +35,7 @@ test("basic web search uses Tavily API with bounded output and never leaks key t
 });
 test("URL extract returns true page text evidence, not just search snippets",async()=>{
  const fetchImpl=async()=>({ok:true,json:async()=>({results:[{url:"https://example.org/article",raw_content:"Read from the page."}]})});
- const r=await Tavily.lookup("Semak https://example.org/article",{env:{TAVILY_API_KEY:"sample-key"},fetchImpl,hasLink:true});
+ const r=await Tavily.lookup("Semak https://example.org/article",{env:{TAVILY_API_KEY:"sample-key"},fetchImpl,hasLink:true,reserveImpl:async()=>{}});
  assert.equal(r.status,"page-read");assert.equal(r.sources[0].kind,"page-extract");
  assert.equal(r.sources[0].verifiedLive,true);
 });
@@ -43,4 +43,22 @@ test("Research API remains callable when Tavily is not configured",async()=>{
  const r=await Research.research("Berita terkini zaman sekarang",{search:true,hasLink:false,sensitive:false},
   {attachment:true});
  assert.equal(r.status,"not-eligible");
+});
+
+test("fail closed when credit budget is exhausted without calling external API",async()=>{
+ let calls=0;
+ const out=await Tavily.lookup("unique query example for credit limit",{
+  env:{TAVILY_API_KEY:"sample-key"},reserveImpl:async()=>{throw Error("limit");},
+  fetchImpl:async()=>{calls++;throw Error("Unexpected");}});
+ assert.equal(out.status,"budget-unavailable-or-exhausted");assert.equal(calls,0);
+});
+test("durable credit counter stops at configured monthly ceiling",async()=>{
+ const {reserve}=require("../netlify/functions/lib/aksara-tavily-budget");
+ let value=0;
+ const store={async getWithMetadata(){return value?{data:{used:value},etag:String(value)}:null;},
+  async setJSON(k,data,opt){if(value&&opt.onlyIfMatch!==String(value))return {modified:false};
+   value=data.used;return {modified:true};}};
+ await reserve({store,cap:2});await reserve({store,cap:2});
+ await assert.rejects(()=>reserve({store,cap:2}),/exhausted/);
+ assert.equal(value,2);
 });
