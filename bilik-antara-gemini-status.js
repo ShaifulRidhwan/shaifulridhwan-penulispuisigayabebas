@@ -33,7 +33,7 @@
     parts.push(reasonNames[key.reason]||"Reason: "+key.reason.replace(/_/g," ").slice(0,60));
    if(Number.isFinite(key?.checkedAt)&&key.checkedAt>0)
     parts.push("Checked "+new Date(key.checkedAt).toLocaleTimeString("en-MY",{hour:"2-digit",minute:"2-digit"}));
-   if(!key)parts.push(!item?"Awaiting health check…":"API key not configured");
+   if(!key)parts.push(!item||item.status==="unverified"||item.status==="checking"?"Awaiting health verification…":"API key not configured");
    else if(!Number.isFinite(key?.checkedAt))parts.push("Not verified · Ready is not Connected");
    child.appendChild(elem("div","multi-ai-gemini-detail",parts.join(" · ")));
    list.appendChild(child);
