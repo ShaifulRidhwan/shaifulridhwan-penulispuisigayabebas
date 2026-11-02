@@ -129,7 +129,7 @@ test("Ready is not falsely labelled Connected, and live status is provider-speci
  assert.match(html,/multiHealth\.update\(data\)/);
  assert.match(html,/multiHealth\.request|function status\(kind,label,explain\)/);
  assert.match(html,/state==="online"\?"Connected":state==="ready"\?"Ready"/);
- assert.match(html,/Ready does not mean Connected/);
+ assert.match(html,/Status Sedia tidak bermaksud sambungan telah disahkan/);
  assert.match(backend,/const providers=\[google,\.\.\.alternatives\]/);
  const src=fs.readFileSync("netlify/functions/aksara-provider-router.js","utf8");
  assert.match(src,/model:"openrouter\/free"/);

@@ -20,6 +20,7 @@
   if(trace==="success"&&used.includes("url_context"))return {state:"dibaca",label:"URL dibaca sebagai teks",count};
   if(used.includes("tavily_extract")||used.includes("owned_page_html"))return {state:"dibaca",label:"Teks halaman diperoleh",count};
   if(used.includes("google_search")&&count>0)return {state:"dirujuk",label:"Carian Google bersumber",count};
+  if(used.includes("wikipedia_summary")&&count>0)return {state:"ringkasan",label:"Ringkasan Wikipedia diperoleh",count};
   if(used.includes("publisher_rss")&&count>0)return {state:"ringkasan",label:"Tajuk dan pautan RSS",count};
   if(used.includes("tavily_search")||data.researchStatus==="search-snippets")return {state:"ringkasan",label:"Petikan carian sahaja",count};
   if(used.includes("groq_browser_search")||used.includes("browser_search"))return {state:"carian",label:"Carian web digunakan; URL khusus belum disahkan",count};

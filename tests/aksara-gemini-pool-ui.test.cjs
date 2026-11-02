@@ -57,7 +57,7 @@ test("Multi AI UI nests four status rows and explicit refresh under the original
  assert.match(html,/return checkProviders\(\);/,"Startup uses a one-slot probe");
  assert.match(html,/multiAiRefresh"\)\.addEventListener\("click",\(\)=>\{multiLastCheck=0;checkProviders\(true\);\}\)/,"Explicit refresh probes four keys");
  assert.match(css,/\.multi-ai-gemini-detail/);
- assert.match(html,/Ready does not mean Connected/);
+ assert.match(html,/Status Sedia tidak bermaksud sambungan telah disahkan/);
  const live=fs.readFileSync("netlify/functions/bilik-antara-live-token.js","utf8");
  assert.doesNotMatch(live,/GeminiTextPool|geminiPoolRefresh/);
 });

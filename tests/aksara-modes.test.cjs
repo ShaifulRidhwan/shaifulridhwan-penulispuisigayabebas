@@ -439,7 +439,11 @@ test("Knowledge Engine is discoverable in Ciri & Fungsi without exposing admin c
  assert.ok(html.includes('id="featureKnowledge" aria-haspopup="dialog"'));
  assert.ok(html.includes('id="knowledgeDialog" aria-labelledby="knowledgeTitle"'));
  assert.ok(html.includes("Pengetahuan &amp; Rujukan"));
- assert.ok(html.includes('data-knowledge-question="Kira (12+8)*3"'));
+ const hub=fs.readFileSync("bilik-antara-knowledge-hub.js","utf8");
+ assert.ok(html.includes('id="knowledgeHub"'));
+ assert.match(hub,/knowledgeTabCalc/);
+ assert.match(hub,/knowledgeCalcDraft/);
+ assert.equal(require("../bilik-antara-knowledge-hub.js").calculationQuestion("(12+8)*3"),"Kira (12+8)*3");
  assert.ok(html.includes('knowledgeDialog.showModal()'));
  assert.ok(!html.includes('id="featureSecurityKillSwitch"'));
 });
