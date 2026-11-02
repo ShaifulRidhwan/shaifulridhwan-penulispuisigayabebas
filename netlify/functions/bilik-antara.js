@@ -13,6 +13,7 @@ const ChatStyle=require("../../bilik-antara-chat-style");
 const Router=require("./aksara-provider-router");
 const Capabilities=require("./aksara-capabilities");
 const GoogleGrounding=require("./aksara-google-grounding");
+const PublicNewsRSS=require("./aksara-public-news-rss");
 const GeminiTextPool=require("./lib/gemini-text-pool");
 const Hybrid=require("./aksara-hybrid-policy");
 const Ops=require("./aksara-ops");
@@ -707,6 +708,25 @@ exports.handler=async event=>{
   }else if(intent.search&&!intent.hasLink){
     googleGroundingDiagnosis={model:GoogleGrounding.MODEL,
       status:!apiKey?"no_gemini_key":!publicGroundingEligible?"not_eligible":"insufficient_time"};
+  }
+  // Zero-key fallback: publisher RSS, not an arbitrary web crawler or full-article audit.
+  // Fixed publisher hosts only; private context and attachments never forwarded.
+  if(PublicNewsRSS.eligible({...webIntent,question,search:intent.search})&&remaining()>1100){
+    const rss=await PublicNewsRSS.search({question,signal:event.signal,
+      deadline:Math.min(deadline,started+23500)});
+    log("publisher_rss_news",{status:rss.status,count:rss.sources.length});
+    if(rss.status==="success"){
+      const rssSources=rss.sources.map(x=>({title:x.title,url:x.url,publisher:x.publisher,date:x.date}));
+      return result(200,{mode:"public-rss",aiMode:"automatic",thoughtMode,
+        provider:"local",model:"aksara-public-rss",reply:PublicNewsRSS.render(rss),
+        sources:rssSources,toolsUsed:["publisher_rss"],toolsOffered:["publisher_rss"],
+        researchStatus:"publisher-rss",reviewApplied:false,
+        disclaimer:"Tajuk, tarikh dan pautan terus daripada RSS penerbit. Kandungan penuh dan kesahihan dakwaan artikel belum diaudit. Ini bukan Google Search Grounding.",
+        routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis(),
+          googleGrounding:googleGroundingDiagnosis},
+        durMs:Date.now()-started,timings:timings()},H);
+    }
+    providerFailures.push({provider:"publisher_rss",reason:rss.status,status:"unavailable"});
   }
   // A request to RUN Python/code needs execution, not merely a correct answer.
   // Use the provider's verified sandbox, with the existing free-tier guard.
