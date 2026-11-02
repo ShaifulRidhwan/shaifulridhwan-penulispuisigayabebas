@@ -60,7 +60,7 @@ test("AI permission is independent and cannot imply compiler readiness or run ar
  m.setPermission(false,false);
  assert.equal(m.snapshot().permission,"off");
  m.probe(false,{error:"JS self-test failed"});
- assert.equal(m.snapshot().overall,"unavailable");
+ assert.equal(m.snapshot().overall,"degraded","JS failure cannot condemn untested Python, C++ or SQL");
  assert.equal(m.snapshot().verified,0);
 });
 test("Status v2 uses English and keeps Core Engine, Voice, AI routing and sandbox untouched",()=>{
