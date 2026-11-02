@@ -30,6 +30,12 @@ test("URL and Groq execution must be evidenced, not inferred from offered tools"
  assert.equal(C.urlTrace({candidates:[{urlContextMetadata:{urlMetadata:[
   {urlRetrievalStatus:"URL_RETRIEVAL_STATUS_ERROR"}]}}]},[{url_context:{}}]).status,"failed");
  assert.equal(C.urlTrace({},[{url_context:{}}]).status,"not_reported");
+ assert.equal(C.urlTrace({candidates:[{urlContextMetadata:{urlMetadata:[{
+  retrievedUrl:"https://www.wikipedia.org/",urlRetrievalStatus:"URL_RETRIEVAL_STATUS_SUCCESS"
+ }]}}]},[{url_context:{}}],"https://www.wikipedia.org/").status,"success");
+ assert.equal(C.urlTrace({candidates:[{urlContextMetadata:{urlMetadata:[{
+  retrievedUrl:"https://www.wikipedia.org/",urlRetrievalStatus:"URL_RETRIEVAL_STATUS_SUCCESS"
+ }]}}]},[{url_context:{}}],"https://example.com/").status,"target_not_reported");
  assert.deepEqual(C.executed("groq",{choices:[{message:{executed_tools:[{name:"browser_search"},{name:"python"}]}}]}),
   ["browser_search","code_interpreter"]);
  assert.deepEqual(C.executed("openrouter",{choices:[{message:{content:"some text"}}]}),[]);
@@ -276,4 +282,77 @@ test("failed Groq browser plus ungrounded OpenRouter must return truthful live-n
  assert.match(data.reply,/tiada hasil Browser Search/);
  assert.doesNotMatch(data.reply,/invented AI headlines/);
  assert.ok(data.routing.failedAttempts.some(x=>x.provider==="groq"&&x.status===429));
+});
+
+test("Gemini news reply without verified live search is blocked even when fluent",async t=>{
+ setupEvidenceEnvironment(t);
+ const {handler}=require("../netlify/functions/bilik-antara");
+ let geminiCalled=false;
+ global.fetch=async(url)=>{
+  const u=String(url);
+  if(u.includes("api.groq.com"))return Response.json({error:{message:"rate limited"}},{status:429,headers:{"retry-after":"1"}});
+  if(u.includes("googleapis")){
+   geminiCalled=true;
+   return Response.json({candidates:[{content:{parts:[{text:"Three made-up headlines about tomorrow."}]},finishReason:"STOP"}]});
+  }
+  throw Error("Unexpected provider "+u);
+ };
+ const out=await handler({httpMethod:"POST",headers:{
+  origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+  "x-nf-client-connection-ip":"qa-gemini-ungrounded-news"
+ },body:JSON.stringify({question:"Cari tiga berita AI terkini pada 2 November 2026 dan sertakan sumber."})});
+ const data=JSON.parse(out.body);
+ assert.equal(out.statusCode,200);
+ assert.equal(geminiCalled,true);
+ assert.equal(data.provider,"local");
+ assert.deepEqual(data.sources,[]);
+ assert.match(data.reply,/bukan hasil carian web yang disahkan/);
+ assert.doesNotMatch(data.reply,/made-up headlines/);
+ assert.ok(data.routing.failedAttempts.some(x=>x.provider==="groq"&&x.status===429));
+});
+test("Gemini cannot call a URL read verified from another retrieved URL",async t=>{
+ setupEvidenceEnvironment(t);
+ process.env.GROQ_FREE_CONFIRMED="false";
+ const {handler}=require("../netlify/functions/bilik-antara");
+ global.fetch=async url=>{
+  if(!String(url).includes("googleapis"))throw Error("Only Gemini expected");
+  return Response.json({candidates:[{content:{parts:[{text:"Wikipedia looks just like I remember."}]},
+   urlContextMetadata:{urlMetadata:[{
+    retrievedUrl:"https://somewhere-else.example.net/",
+    urlRetrievalStatus:"URL_RETRIEVAL_STATUS_SUCCESS"
+   }]},finishReason:"STOP"}]});
+ };
+ const out=await handler({httpMethod:"POST",headers:{
+  origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+  "x-nf-client-connection-ip":"qa-gemini-wrong-url"
+ },body:JSON.stringify({question:"Buka https://www.wikipedia.org/ dan terangkan kandungan halaman yang benar-benar dapat dibaca."})});
+ const data=JSON.parse(out.body);
+ assert.equal(out.statusCode,200);
+ assert.equal(data.provider,"local");
+ assert.equal(data.urlTrace.status,"target_not_reported");
+ assert.deepEqual(data.sources,[]);
+ assert.doesNotMatch(data.reply,/looks just like/);
+});
+test("Gemini matching URL Context retrieval is surfaced as evidence of text access",async t=>{
+ setupEvidenceEnvironment(t);
+ process.env.GROQ_FREE_CONFIRMED="false";
+ const {handler}=require("../netlify/functions/bilik-antara");
+ global.fetch=async url=>{
+  if(!String(url).includes("googleapis"))throw Error("Only Gemini expected");
+  return Response.json({candidates:[{content:{parts:[{text:"This is a response grounded in the homepage text."}]},
+   urlContextMetadata:{urlMetadata:[{
+    retrievedUrl:"https://www.wikipedia.org/",
+    urlRetrievalStatus:"URL_RETRIEVAL_STATUS_SUCCESS"
+   }]},finishReason:"STOP"}]});
+ };
+ const out=await handler({httpMethod:"POST",headers:{
+  origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+  "x-nf-client-connection-ip":"qa-gemini-valid-url"
+ },body:JSON.stringify({question:"Buka https://www.wikipedia.org/ dan terangkan kandungan halaman yang benar-benar dapat dibaca."})});
+ const data=JSON.parse(out.body);
+ assert.equal(out.statusCode,200);
+ assert.equal(data.provider,"gemini");
+ assert.ok(data.toolsUsed.includes("url_context"));
+ assert.equal(data.urlTrace.status,"success");
+ assert.match(data.disclaimer,/URL Context berjaya/);
 });
