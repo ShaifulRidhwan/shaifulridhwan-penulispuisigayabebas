@@ -198,14 +198,14 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   const cppOutput=await page.locator("#cwCppOutput").innerText();
   assert.match(cppStatus,/BERJAYA/,"Clang compiler must compile and execute: "+cppStatus+" "+cppOutput.slice(0,350));
   assert.match(cppOutput,/AKSARA_CPP 50/,"C++ standard input/output must work");
+
+  assert.equal(aiChatRequests.length,0,"C++ local compilation never posts to any AI endpoint");
+  await page.locator("#cwClose").click();
   await page.locator("#codeEngineStatus").click();
   assert.equal(await page.locator("#codeCPPState").innerText(),"Verified","Real C++ compilation verifies only C++");
   assert.match(await page.locator("#codeHealthCheckedAt").innerText(),/2\/5 runtimes verified/);
   assert.match(await page.locator("#codeEngineActivity").innerText(),/Execution Completed/);
   await page.locator("#codeMenuClose").click();
-
-  assert.equal(aiChatRequests.length,0,"C++ local compilation never posts to any AI endpoint");
-  await page.locator("#cwClose").click();
   await page.locator("#codeEngineStatus").click();
   await page.locator("#codeEvalOpen").click();
   assert.equal(await page.locator("#codeEvaluationDialog").isVisible(),true);
