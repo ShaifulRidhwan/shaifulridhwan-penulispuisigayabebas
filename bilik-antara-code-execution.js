@@ -79,7 +79,7 @@ function close(){
 function open(language,onStop){
  if(active)close();
  active={onStop,focus:document.activeElement};
- badge.textContent=language==="python"?"Python":"JavaScript";
+ badge.textContent=({python:"Python",javascript:"JavaScript",typescript:"TypeScript",sql:"SQL",cpp:"C++"})[language]||"Code";
  stage.textContent="Membina sandbox…";
  modal.hidden=false;
  modal.showModal();
