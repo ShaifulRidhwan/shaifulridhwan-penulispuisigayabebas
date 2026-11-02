@@ -1,0 +1,30 @@
+name: AKSARA Gemini status variance diagnostic once
+on:
+  push:
+    branches: [diagnostic/gemini-status-variance-20261102]
+    paths: ['.github/workflows/aksara-gemini-status-variance-once.yml']
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '24'}
+      - name: Compare backend status, real chat, and deployed browser code
+        run: |
+          node --input-type=module <<'NODE'
+          const base="https://aksara-apps.mshaifulridhwan.workers.dev";
+          async function post(name,payload){
+            try{
+              const r=await fetch(base+"/.netlify/functions/bilik-antara",{method:"POST",headers:{"Origin":base,"Content-Type":"application/json"},body:JSON.stringify(payload),signal:AbortSignal.timeout(40000)});
+              const d=await r.json().catch(()=>({}));
+              const g=d.providers?.find(x=>x.id==="gemini");
+              console.log(name,JSON.stringify({http:r.status,gemini:g||null,preferredProvider:d.preferredProvider||null,provider:d.provider||null,model:d.model||null,hasReply:!!d.reply,reason:d.routing?.geminiDiagnosis||null,failedAttempts:d.routing?.failedAttempts||d.providerFailures||[],code:d.code||null,checkedAt:d.checkedAt||null}));
+            }catch(e){console.log(name,JSON.stringify({error:e.name,message:String(e.message).slice(0,100)}));process.exitCode=1}
+          }
+          await post("STATUS_1",{providerStatus:true});
+          await post("CHAT_1",{question:"Apa beza puisi dan prosa? Jawab dengan satu ayat.",history:[]});
+          await post("STATUS_2",{providerStatus:true});
+          await post("STATUS_3",{providerStatus:true});
+          NODE
