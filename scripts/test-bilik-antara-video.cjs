@@ -14,7 +14,8 @@ test("Same artwork serves Studio and Novel without running an ambient MP4",()=>{
  const studio=fs.readFileSync("studio-antara.css","utf8");
  const library=fs.readFileSync("perpustakaan-aksara.css","utf8");
  const reader=fs.readFileSync("antara-cahaya-dan-gelap.html","utf8");
- for(const item of [studio,library,reader])assert.match(item,/aksara-celestial-static\.webp\?v=1/);
+ for(const item of [studio,library])assert.match(item,/aksara-celestial-static\.webp\?v=1/);
+ assert.match(reader,/assets\/novel\/cover-01\.jpg/,"Novel book cover must remain original");
  for(const page of ["studio-antara.html","perpustakaan-aksara.html","antara-cahaya-dan-gelap.html"])
   assert.doesNotMatch(fs.readFileSync(page,"utf8"),/id="aksaraAmbientVideo"/);
  const bytes=fs.statSync("aksara-celestial-static.webp");
