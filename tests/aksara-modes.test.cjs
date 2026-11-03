@@ -460,15 +460,15 @@ test("Aksara offline evaluation lab stays separate from live model performance c
 
 test("Pipeline phase 2 defaults to local session saving and optional memory, without third-party consent",()=>{
  const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
- assert.match(html, /id="rememberChat">/);
+ assert.match(html, /id="rememberChat" checked>/);
  assert.match(html, /id="contextFallback">/);
  assert.match(html, /id="allowOpenRouterImages">/);
  assert.match(html, /const SESSION_PREF_STORAGE="bilik-antara-session-save-pref-v1"/);
  assert.match(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,ui\.remember\.checked\?"on":"off"\)/);
  assert.doesNotMatch(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,"off"\)/);
  assert.match(html, /bilik-antara-session-utils\.js\?v=2/);
- assert.match(html, /bilik-antara-suite\.js\?v=15/);
- assert.match(suite, /let memory=read\(KEYS\.memory,\{enabled:false,text:""\}\)/);
+ assert.match(html, /bilik-antara-suite\.js\?v=16/);
+ assert.match(suite, /let memory=read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
  assert.match(suite, /const disabled=\{enabled:false,text:""\}/);
  assert.match(suite, /write\(KEYS\.memory,disabled\)/);
  assert.match(suite, /sandaran hanya jika kau benarkan/);
@@ -479,9 +479,9 @@ test("Pipeline phase 2 respects saved session opt-out across reloads",()=>{
  assert.ok(fn,"Restore function must be testable");
  const saved=JSON.stringify({history:[{role:"user",content:"hello"}],summary:"old"});
  const cases=[
-  {pref:null,stored:null,expectedChecked:false,historySize:0},
+  {pref:null,stored:null,expectedChecked:true,historySize:0},
   {pref:"off",stored:saved,expectedChecked:false,historySize:0},
-  {pref:null,stored:saved,expectedChecked:false,historySize:0},
+  {pref:null,stored:saved,expectedChecked:true,historySize:1},
   {pref:"on",stored:saved,expectedChecked:true,historySize:1},
  ];
  for(const scenario of cases){
