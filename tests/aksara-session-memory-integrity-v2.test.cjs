@@ -72,9 +72,9 @@ test("Concurrent memory writes require a deliberate overwrite confirmation",()=>
 test("Disabling session saving is deliberate, keeps memory separate and respects other tab's opt-out",()=>{
  const h=fs.readFileSync("bilik-antara.html","utf8");
  const s=fs.readFileSync("bilik-antara-suite.js","utf8");
- assert.match(h,/Matikan Simpan sesi\? Semua arkib sesi tersimpan/);
+ assert.match(s,/Matikan Simpan sesi\? Semua arkib sesi tersimpan/);
  assert.match(h,/if\(localStorage\.getItem\(SESSION_PREF_STORAGE\)==="off"\)/);
- assert.match(h,/window\.addEventListener\("storage",event=>/);
+ assert.match(s,/window\.addEventListener\("storage",event=>/);
  assert.match(s,/Opt-out is confirmed in the main privacy checkbox/);
  assert.match(s,/memoryForPrompt:question=>memory\.enabled/);
  assert.match(h,/id="contextFallback">/);

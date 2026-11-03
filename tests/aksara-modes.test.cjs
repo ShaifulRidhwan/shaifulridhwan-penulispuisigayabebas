@@ -464,7 +464,7 @@ test("Pipeline phase 2 defaults to local session saving and optional memory, wit
  assert.match(html, /id="contextFallback">/);
  assert.match(html, /id="allowOpenRouterImages">/);
  assert.match(html, /const SESSION_PREF_STORAGE="bilik-antara-session-save-pref-v1"/);
- assert.match(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,ui\.remember\.checked\?"on":"off"\)/);
+ assert.match(suite, /localStorage\.setItem\(preferenceKey,enabled\?"on":"off"\)/);
  assert.doesNotMatch(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,"off"\)/);
  assert.match(html, /bilik-antara-session-utils\.js\?v=3/);
  assert.match(html, /bilik-antara-suite\.js\?v=17/);
@@ -573,7 +573,7 @@ test("Deleting an open session also clears its active snapshot, so autosave cann
 test("Delete conversation keeps the visitor's save preference; consent remains explicit",()=>{
  assert.doesNotMatch(html,/ui\.remember\.checked=false;ui\.mediaFallback\.checked=false/);
  assert.match(html,/localStorage\.removeItem\(STORAGE\)/);
- assert.match(html,/ui\.remember\.checked\?"on":"off"/);
+ assert.match(suite,/rememberCheckbox\.checked/);
  assert.match(html,/memoryForPrompt\(question\)/);
  const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
  assert.match(suite,/function clearAllArchive\(\)/);
