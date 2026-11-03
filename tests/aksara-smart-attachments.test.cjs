@@ -50,8 +50,8 @@ test("PDF text reader and compact composer protect user consent",()=>{
  const html=read("bilik-antara.html"),client=read("bilik-antara-attachments.js");
  const reader=read("bilik-antara-pdf-reader.js"),css=read("bilik-antara-attachments.css");
  const backend=read("netlify/functions/bilik-antara.js");
- assert.ok(html.includes('bilik-antara-pdf-reader.js?v=1'));
- assert.ok(html.includes('bilik-antara-attachments.js?v=2'));
+ assert.ok(html.includes('bilik-antara-pdf-reader.js?v=2'));
+ assert.ok(html.includes('bilik-antara-attachments.js?v=4'));
  assert.ok(html.includes('bilik-antara-attachments.css?v=2'));
  assert.ok(html.includes('class="attachment-preview-row"'));
  assert.ok(html.length<80000,"Bilik Antara HTML must remain below the performance budget");
