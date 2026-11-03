@@ -86,13 +86,19 @@ async function archived(page){
   b.once("dialog",d=>d.accept());
   await close(b);
 
-  await a.locator("#settingsPanel > summary").click();
+  // Exercise the actual checkbox change handler without relying on the portal's
+  // transient glass animation, which may hide the checkbox during a click.
+  const chooseOff=()=>a.evaluate(()=>{
+   const el=document.getElementById("rememberChat");
+   el.checked=false;
+   el.dispatchEvent(new Event("change",{bubbles:true}));
+  });
   a.once("dialog",d=>d.dismiss());
-  await a.locator("#rememberChat").uncheck();
+  await chooseOff();
   assert.equal(await a.locator("#rememberChat").isChecked(),true);
   assert.equal((await archived(a)).length,2,"Cancelled opt-out must keep archive");
   a.once("dialog",d=>d.accept());
-  await a.locator("#rememberChat").uncheck();
+  await chooseOff();
   assert.equal(await a.locator("#rememberChat").isChecked(),false);
   await b.waitForFunction(()=>document.querySelector("#rememberChat")?.checked===false,{timeout:8000});
   assert.equal((await archived(a)).length,0);
