@@ -573,9 +573,9 @@ test("Deleting an open session also clears its active snapshot, so autosave cann
 test("Delete conversation keeps the visitor's save preference; consent remains explicit",()=>{
  assert.doesNotMatch(html,/ui\.remember\.checked=false;ui\.mediaFallback\.checked=false/);
  assert.match(html,/localStorage\.removeItem\(STORAGE\)/);
+ const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
  assert.match(suite,/rememberCheckbox\.checked/);
  assert.match(html,/memoryForPrompt\(question\)/);
- const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
  assert.match(suite,/function clearAllArchive\(\)/);
  assert.match(suite,/function removeArchiveEntry\(item\)/);
  assert.match(suite,/titleEdited=old\.titleEdited===true/);
