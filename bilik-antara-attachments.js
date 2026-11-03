@@ -14,6 +14,10 @@ attachmentDialog.addEventListener("close",()=>{
  attachmentTrigger.focus({preventScroll:true});
 });
 const recordStatus=el("attachmentRecordStatus"),recordButton=el("attachmentRecordAction"),recordStop=el("attachmentRecordStop");
+const Large=root.AksaraLargeMedia;
+if(!Large)throw Error("Modul media besar belum dimuatkan.");
+new MutationObserver(()=>{recordStatus.hidden=!recordStatus.textContent.trim();})
+ .observe(recordStatus,{childList:true,characterData:true,subtree:true});
 let micRecorder=null,micStream=null,micTimer=0,micParts=[],micCancelled=false;
 function stopMicrophone(discard=false){
  if(!micRecorder||micRecorder.state==="inactive")return;
@@ -91,10 +95,12 @@ for(const [kind,field] of Object.entries(attachmentInputs)){
  });
 }
 
- /* Attachment limits reflect Netlify's 6 MB platform request ceiling.
- * The 3.85 MB media budget permits Base64 + normal JSON overhead.
- * Files and media only exist in this tab, and nothing uploads before Send. */
+ /* Source limits are separate from the unchanged Netlify chat payload budget.
+  * Video sources are converted to representative frames locally. Audio and
+  * unsampled footage are NOT analyzed; raw originals are never uploaded. */
 const MAX_MEDIA_BYTES=3850000,MAX_TEXT_BYTES=2000000,MAX_TEXT_CHARS=1000000;
+const MAX_IMAGE_SOURCE_BYTES=Large.MAX_IMAGE_SOURCE_BYTES;
+const MAX_VIDEO_SOURCE_BYTES=Large.MAX_VIDEO_SOURCE_BYTES;
 const MAX_ATTACHMENT_FILES=12;
 let stagedFiles=[],attachmentEpoch=0,attachmentQueue=Promise.resolve();
 function observeAttachment(phase,failed=0){
@@ -111,7 +117,7 @@ const validMediaExtensions={
  webm:"video/webm",mp4:"video/mp4",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",
  gif:"image/gif",webp:"image/webp"
 };
-const imageMime=new Set(["image/jpeg","image/png","image/webp"]);
+const imageMime=new Set(["image/jpeg","image/png","image/webp","image/gif"]);
 async function imageDimensions(file){
  if(typeof createImageBitmap!=="function")return null;
  let bitmap=null;
@@ -145,6 +151,7 @@ function renderAttachmentTray(){
   details.append(name,elem("span","attachment-chip-size",bytesLabel(item.size)+
    (item.uploadSize&&item.uploadSize<item.size?" → "+bytesLabel(item.uploadSize):"")+
    (item.pdfPages?" · "+item.pdfPages+" hlm · teks":"")+
+   (item.sampledFrames?" · "+item.sampledFrames+" bingkai visual":"")+
    (item.metadata?.width?" · "+item.metadata.width+"×"+item.metadata.height+" px":"")));
   const remove=document.createElement("button");remove.type="button";
   remove.className="attachment-chip-remove";remove.textContent="×";
@@ -161,8 +168,12 @@ function rebuildFileState(note=""){
  if(!stagedFiles.length)fileState=null;
  else{
   const texts=stagedFiles.filter(f=>f.kind==="text").map(f=>"[FAIL: "+f.name+"]\n"+f.text);
+  const clips=stagedFiles.filter(f=>f.videoSampled).map(f=>
+   "[VIDEO: "+f.name+"] Analisis ini berasaskan "+f.sampledFrames+
+   " bingkai visual terpilih sahaja; audio, pergerakan antara bingkai dan keseluruhan video tidak diperiksa.");
   fileState={name:stagedFiles.map(f=>f.name).join(", ").slice(0,240),
-   text:texts.join("\n\n"),media:stagedFiles.filter(f=>f.kind==="media").map(f=>f.media),
+   text:[...texts,...clips].join("\n\n"),
+   media:stagedFiles.filter(f=>f.kind==="media").flatMap(f=>f.mediaList||[f.media]),
    metadata:stagedFiles.map(f=>({...f.metadata}))};
  }
  // The chip already displays the file name and size; screen readers still get the status.
@@ -217,6 +228,7 @@ async function blobToBase64(blob){
 function queueAttachmentFiles(files){
  const captured=Array.from(files||[]),epoch=attachmentEpoch;
  if(!captured.length)return;
+ recordStatus.textContent="";
  observeAttachment("dipilih");
  attachmentQueue=attachmentQueue.catch(()=>{}).then(()=>readFiles(captured,epoch));
 }
@@ -294,23 +306,57 @@ async function readFiles(files,epoch=attachmentEpoch){
     if(ext==="wav")mime="audio/wav";
     if(ext==="ogg")mime="audio/ogg";
     if(!MEDIA.has(mime))throw Error("Format media belum disokong. Pilih PDF, gambar, audio atau video yang sah.");
-    // Source photos up to 32 MB can be resized locally, without paying an API.
-    if(file.size>MAX_MEDIA_BYTES&&(!imageMime.has(mime)||file.size>32000000))
-     throw Error("Media ini melebihi had penghantaran terus. Gambar sehingga 32 MB boleh cuba dimampatkan.");
-    let blob=file;
-    if(imageMime.has(mime)&&(file.size>1100000||mediaBytes+file.size>MAX_MEDIA_BYTES)){
+    // Large sources are prepared locally; Netlify's 3.85 MB aggregate chat budget is unchanged.
+    if(imageMime.has(mime)&&file.size>MAX_IMAGE_SOURCE_BYTES)
+     throw Error("Gambar asal melebihi 64 MB.");
+    if(mime.startsWith("video/")&&file.size>MAX_VIDEO_SOURCE_BYTES)
+     throw Error("Video asal melebihi 128 MB.");
+    if(!imageMime.has(mime)&&!mime.startsWith("video/")&&file.size>MAX_MEDIA_BYTES)
+     throw Error("Media audio/PDF melebihi had penghantaran 3.85 MB.");
+    if(mime.startsWith("video/")&&(file.size>MAX_MEDIA_BYTES||mediaBytes+file.size>MAX_MEDIA_BYTES)){
      const remaining=Math.min(1650000,MAX_MEDIA_BYTES-mediaBytes);
-     if(remaining<30000)throw Error("Ruang media hampir penuh. Buang fail lain dahulu.");
-     blob=await compressImageForChat(file,remaining);
-     mime=blob.type||"image/webp";
+     if(remaining<160000)throw Error("Ruang media tidak cukup untuk bingkai video. Buang lampiran lain.");
+     ui.docStatus.dataset.state="warning";
+     ui.docStatus.textContent="Memproses bingkai video setempat… 0%";
+     const result=await Large.sampleVideo(file,{mimeType:mime,budget:remaining,
+      cancelled:()=>epoch!==attachmentEpoch,
+      onProgress:percent=>{if(epoch===attachmentEpoch){
+       ui.docStatus.dataset.state="warning";
+       ui.docStatus.textContent="Memproses bingkai video setempat… "+percent+"%";
+      }}});
+     if(epoch!==attachmentEpoch)throw Error("Pemprosesan dibatalkan.");
+     const mediaList=[];
+     for(const frame of result.frames){
+      const data=await blobToBase64(frame.blob);
+      if(!data)throw Error("Tidak dapat mengekod bingkai video.");
+      mediaList.push({name:name+" · bingkai "+frame.index+" ("+frame.atSeconds+"s), visual sahaja",
+       mimeType:"image/jpeg",data});
+     }
+     if(mediaBytes+result.totalBytes>MAX_MEDIA_BYTES)throw Error("Had media bagi satu mesej telah dicapai.");
+     pdfWarning=name+": "+mediaList.length+" bingkai visual dipilih. Audio dan keseluruhan video tidak dianalisis.";
+     item={name,size:file.size,uploadSize:result.totalBytes,kind:"media",mimeType:mime,pdfWarning,
+      videoSampled:true,sampledFrames:mediaList.length,mediaList,
+      durationSeconds:result.durationSeconds,
+      previewURL:URL.createObjectURL(file)};
+     mediaBytes+=result.totalBytes;
+    }else{
+     let blob=file;
+     if(imageMime.has(mime)&&(file.size>1100000||mediaBytes+file.size>MAX_MEDIA_BYTES)){
+      const remaining=Math.min(1650000,MAX_MEDIA_BYTES-mediaBytes);
+      if(remaining<30000)throw Error("Ruang media hampir penuh. Buang fail lain dahulu.");
+      ui.docStatus.dataset.state="warning";
+      ui.docStatus.textContent="Memampatkan gambar setempat…";
+      blob=await compressImageForChat(file,remaining);
+      mime=blob.type||"image/webp";
+     }
+     if(mediaBytes+blob.size>MAX_MEDIA_BYTES)throw Error("Jumlah media melebihi 3.85 MB selepas pemampatan.");
+     const data=await blobToBase64(blob);
+     if(!data)throw Error("Gagal mengekod media.");
+     item={name,size:file.size,uploadSize:blob.size,kind:"media",mimeType:mime,pdfWarning,
+      media:{name,mimeType:mime,data},
+      previewURL:(mime.startsWith("image/")||mime.startsWith("video/"))?URL.createObjectURL(blob):null};
+     mediaBytes+=blob.size;
     }
-    if(mediaBytes+blob.size>MAX_MEDIA_BYTES)throw Error("Jumlah media melebihi 3.85 MB selepas pemampatan; ini had Netlify untuk request terus.");
-    const data=await blobToBase64(blob);
-    if(!data)throw Error("Gagal mengekod media.");
-    item={name,size:file.size,uploadSize:blob.size,kind:"media",mimeType:mime,pdfWarning,
-     media:{name,mimeType:mime,data},
-     previewURL:(mime.startsWith("image/")||mime.startsWith("video/"))?URL.createObjectURL(blob):null};
-    mediaBytes+=blob.size;
    }
    if(pdfWarning&&!item.pdfWarning)item.pdfWarning=pdfWarning;
    // File name, MIME, original byte size and last-modified timestamp are browser File metadata.
@@ -319,6 +365,13 @@ async function readFiles(files,epoch=attachmentEpoch){
    const fileMeta={name,bytes:file.size,mimeType:file.type||item.mimeType||"application/octet-stream",
     lastModified:Number(file.lastModified)||0};
    if(item.pdfPages)fileMeta.pages=Number(item.pdfPages);
+   if(item.videoSampled){
+    fileMeta.videoFramesSampled=item.sampledFrames;
+    fileMeta.durationSeconds=item.durationSeconds;
+    fileMeta.visualOnly=true;
+    fileMeta.audioAnalyzed=false;
+    fileMeta.rawUploaded=false;
+   }
    if(item.kind==="media"&&/^image\//.test(item.mimeType)){
     const dimensions=await imageDimensions(file);
     if(dimensions)Object.assign(fileMeta,dimensions);

@@ -8,6 +8,7 @@
 .attachment-quick-actions button:hover{background:rgba(255,255,255,.09)}
 .attachment-quick-actions button:disabled{opacity:.5;cursor:wait}
 .attachment-quick-actions button[hidden]{display:none!important}
+ .attachment-helper[hidden]{display:none!important}
 .attachment-helper{font:400 11px/1.5 'DM Sans',sans-serif;color:#c5b9a7;margin:11px 1px 0}
 .attachment-tray[hidden]{display:none!important}
 .attachment-tray{display:flex;gap:8px;overflow-x:auto;scrollbar-width:thin;padding:5px 2px 7px;max-width:100%;margin-bottom:5px}

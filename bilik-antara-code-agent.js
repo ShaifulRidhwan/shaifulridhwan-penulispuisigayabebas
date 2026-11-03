@@ -8,7 +8,6 @@ let allowed=false,pending=null,controller=null,running=false,runs=0;
 const holder=document.createElement("div");
 holder.id="codeAiExecutionGate";
 holder.innerHTML='<label class="code-ai-permission"><input type="checkbox" id="codeAiExecutionAllowed"/> <span>Benarkan A.I. jalankan kod dalam sandbox</span></label>'+
- '<p>Tab ini sahaja. A.I. boleh menjalankan satu blok kod apabila kau sendiri meminta ujian kod. Tiada akses terminal pelayan, fail peribadi atau API key.</p>'+
  '<div id="codeAiExecutionState" role="status" aria-live="polite">A.I. Code Execution · OFF</div>'+
  '<button type="button" id="codeAiExecutionStop" hidden>■ Henti pelaksanaan A.I.</button>';
 menu.querySelector(".multi-ai-actions")?.before(holder);

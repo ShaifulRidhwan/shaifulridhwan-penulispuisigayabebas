@@ -34,6 +34,10 @@ function textPdf(){
   assert.deepEqual(names,["photo","video","document","audio","code"]);
   assert.equal(await page.locator("#attachmentCameraAction").isVisible(),true);
   assert.equal(await page.locator("#attachmentRecordAction").isVisible(),true);
+  assert.equal(await page.locator("#attachmentRecordStatus").isHidden(),true,"Static attachment footer must be hidden");
+  assert.match(await page.locator('[data-attachment-type="photo"] small').innerText(),/64 MB/);
+  assert.match(await page.locator('[data-attachment-type="video"] small').innerText(),/128 MB/);
+  assert.equal(await page.evaluate(()=>!!window.AksaraLargeMedia?.sampleVideo),true);
   await page.locator("#attachmentClose").click();
   // Historical 100 KB restriction: 150 KB text must now be accepted.
   await page.locator("#attachmentDocument").setInputFiles({name:"long.txt",mimeType:"text/plain",buffer:Buffer.alloc(150000,65)});
@@ -87,6 +91,25 @@ function textPdf(){
   assert.equal(await page.locator("#cwFiles option").last().innerText(),"hello.html");
   assert.equal(await page.locator("#cwCppStatus").innerText(),"Sedia untuk compile.");
   await page.locator("#cwClose").click();
+  await page.waitForSelector("#codeEngineMenu",{state:"attached"});
+  const dialogCheck=await page.evaluate(()=>{
+   const dialog=document.getElementById("codeEngineMenu"),list=document.getElementById("codeRuntimeList");
+   dialog.showModal();
+   const before=dialog.querySelector(".multi-ai-head").getBoundingClientRect(),beforeModalTop=dialog.getBoundingClientRect().top;
+   const rows=Array.from({length:12},()=>{const item=document.createElement("div");item.className="multi-ai-row";item.textContent="QA";list.appendChild(item);return item;});
+   list.scrollTop=list.scrollHeight;
+   const after=dialog.querySelector(".multi-ai-head").getBoundingClientRect();
+   const d=dialog.getBoundingClientRect();
+   const result={headerAbove:after.top>=d.top-2,headerOffsetStable:Math.abs((after.top-d.top)-(before.top-beforeModalTop))<2,
+    scrollTop:list.scrollTop,scrollState:getComputedStyle(list).overflowY,
+    codeExplanationPresent:dialog.textContent.includes("Tab ini sahaja.")};
+   rows.forEach(x=>x.remove());dialog.close();return result;
+  });
+  assert.equal(dialogCheck.codeExplanationPresent,false,"Remove verbose Code Engine footer");
+  assert.equal(dialogCheck.headerAbove,true,"Code Engine header stays visible");
+  assert.equal(dialogCheck.headerOffsetStable,true,"Code Engine header is outside scrollable runtime list");
+  assert.ok(dialogCheck.scrollTop>0,"Only runtime list should scroll");
+  assert.equal(dialogCheck.scrollState,"auto");
   assert.equal(errors.length,0,"No JS runtime errors: "+errors.join("; "));
   console.log("AKSARA smart attachments: picker, >100KB text, removable previews, code import PASS.");
  }finally{await browser.close();}
