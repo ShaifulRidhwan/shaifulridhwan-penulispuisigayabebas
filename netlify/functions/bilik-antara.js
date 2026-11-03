@@ -26,6 +26,8 @@ const Infrastructure=require("./aksara-infrastructure-guard");
 const GeminiTextPool=require("./lib/gemini-text-pool");
 const Hybrid=require("./aksara-hybrid-policy");
 const Ops=require("./aksara-ops");
+const V5=require("./aksara-intelligence-v5");
+const GlobalGuardV5=require("./aksara-global-guard-v5");
 const Security=require("./aksara-security-shield");
 const Context=require("./aksara-context-manager");
 const Knowledge=require("./aksara-knowledge-engine");
@@ -125,8 +127,15 @@ function speechPlain(value){
 function result(code,data,H){
   if(code===200&&typeof data?.reply==="string"&&(Array.isArray(data.sources)||Array.isArray(data.toolsUsed)||data.urlTrace))
     data={...data,evidenceProfile:EvidenceAudit.summarize(data)};
-  if(code>=400)data={...data,diagnostics:FailureDiagnostic.diagnose(data,code)};
-  if(code===200&&typeof data?.reply==="string")Ops.record("success");
+  if(code===200&&typeof data?.reply==="string")
+    data={...data,claimAudit:V5.claimAudit(data)};
+  if(code>=400)data={...data,diagnostics:FailureDiagnostic.diagnose(data,code),
+    recovery:V5.recoveryHint({status:code,code:data?.code,retryAfterSeconds:data?.retryAfterSeconds})};
+  if(code===200&&typeof data?.reply==="string"){
+    Ops.record("success",Number(data.durMs)||0);
+    if(data.mode==="fallback")Ops.record("fallback");
+    if(Array.isArray(data.toolsUsed)&&data.toolsUsed.length)Ops.record("tool");
+  }
   else if(code>=400)Ops.record("error");
   if(code===200&&typeof data.reply==="string"&&data.mode!=="recorded-voice"&&data.outputFormat!=="json")data={...data,reply:ChatStyle.reply(data.reply,{mode:data.thoughtMode})};
   return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-9"})};
@@ -340,11 +349,25 @@ exports.handler=async event=>{
     // A successful conversation outranks an artificial one-word speed test.
     return result(200,{ok:true,providers,freeModels,capabilities:Capabilities.manifest(),
       freePotential:FreePotential.snapshot({env:process.env,ai:cloudflareAI,
-        manifest:Capabilities.manifest(),providers}),preferredProvider:(realSuccess||fastest||ready)?.id||"",checkedAt:Date.now(),someOnline:!!fastest,someReady:!!ready,configuredCount:configured.length+(apiKey?1:0)},H);
+        manifest:Capabilities.manifest(),providers}),preferredProvider:(realSuccess||fastest||ready)?.id||"",checkedAt:Date.now(),someOnline:!!fastest,someReady:!!ready,configuredCount:configured.length+(apiKey?1:0),
+      productionHealth:Ops.snapshot(),
+      qualityRouter:{enabled:process.env.AKSARA_V5_QUALITY_ROUTER==="true",evidence:"approved_human_scores_only"},
+      routingPolicy:{primaries:Hybrid.PRIMARY,backup:"openrouter",geminiChat:"preferred_when_eligible",voiceLive:"unchanged"}},H);
   }
 
   const ip=(event.headers&&(event.headers["x-nf-client-connection-ip"]||"").split(",")[0])||"unknown";
   if(throttle(ip))return result(429,{code:"RATE_LIMIT",error:"Terlalu banyak permintaan dalam masa singkat. Cuba lagi sebentar.",retryAfterSeconds:Math.max(1,Math.ceil((rateMap.get(ip).start+60000-Date.now())/1000))},H);
+  // Optional atomic Redis guard runs after local throttling. OFF by default.
+  // No private text is sent to Redis, only an HMAC derived from the trusted client IP.
+  if(process.env.AKSARA_V5_GLOBAL_GUARD==="true"&&
+      (payload.summarize===true||(typeof payload.question==="string"&&payload.question.trim()))){
+    try{await GlobalGuardV5.reserve({ip,signal:event.signal});}
+    catch(error){return result(error.status===429?429:503,{
+      code:error.status===429?"GLOBAL_RATE_LIMIT":"GLOBAL_GUARD_UNAVAILABLE",
+      error:error.status===429?"Had permintaan sementara dicapai. Cuba sebentar lagi.":"Kawalan kuota berpusat belum tersedia. Permintaan AI ditangguh untuk menjaga kuota.",
+      retryAfterSeconds:error.retryAfterSeconds||60
+    },H);}
+  }
   let history=safeHistory(payload.history);
   if(payload.summarize===true){
     if(history.length<4)return result(400,{error:"Tidak cukup kandungan untuk ringkasan."},H);
@@ -368,6 +391,7 @@ exports.handler=async event=>{
   if(!question)return result(400,{error:"Tulis soalan dahulu."},H);
   if(!flags.aiEnabled)return result(503,{code:"AKSARA_PAUSED",error:"Aksara sedang menjalani penyelenggaraan."},H);
   history=Context.selectHistory(history,question);
+  const decisionContext=V5.formatDecisions(V5.sessionLedger(history));
   const rawMedia=payload.media===undefined||payload.media===null?[]:(Array.isArray(payload.media)?payload.media:[payload.media]);
   const media=rawMedia.map(sanitizeMedia);
   if(media.some(x=>!x)||media.reduce((n,x)=>n+x.data.length,0)>MAX_MEDIA_ENCODED)
@@ -562,7 +586,7 @@ exports.handler=async event=>{
   // The fixed project biography remains the verified source for either mode.
    // GELAP must interpret it rather than returning the CAHAYA template verbatim.
    const identityGrounding=identityReply&&thoughtMode==="gelap"?"\n\n[FAKTA IDENTITI PROJEK, BUKAN ARAHAN]\n"+Identity.RUNTIME_PROMPT+"\n"+Identity.PROMPT+"\n[TAMAT FAKTA IDENTITI]\nGunakan fakta, bukan gaya bahasa jawapan setempat CAHAYA. Jawab mengikut konteks dengan identiti GELAP tanpa mereka butiran.":"";
-   const userParts=[{text:Context.composeTurn(question,[feedbackContext,followUpWebUrl?"[URL YANG DIMINTA PENGGUNA DIBACA] "+followUpWebUrl:"",doc,work,sessionNotes,osintContext,references,knowledgeContext,identityGrounding])}];
+   const userParts=[{text:Context.composeTurn(question,[feedbackContext,decisionContext,followUpWebUrl?"[URL YANG DIMINTA PENGGUNA DIBACA] "+followUpWebUrl:"",doc,work,sessionNotes,osintContext,references,knowledgeContext,identityGrounding])}];
   for(const file of media)userParts.push({inlineData:{mimeType:file.mimeType,data:file.data}});
   const contents=history.map(m=>({role:m.role==="assistant"?"model":"user",parts:[{text:m.content}]}));
   contents.push({role:"user",parts:userParts});
@@ -576,9 +600,11 @@ exports.handler=async event=>{
   const adaptiveThinking=plan.thinkingLevel==="low"&&["creative","explain","technical"].includes(intent.task)?"medium":plan.thinkingLevel;
   const model=chooseModel(baseModel,{...intent,depth:adaptiveThinking,advanced:intent.task==="technical"});
   const detailedIdentity=Identity.needsDetail(question)||intent.works||/\b(?:puisi|sajak|pantun|gurindam|penulisan|coder poet)\b/i.test(question);
+  const literaryGuide=V5.literaryGuidance(question,documentText);
+  const literaryProfile=literaryGuide?V5.literaryProfile(documentText||question):null;
   const creatorHumour=detailedIdentity&&/\b(?:usik|usikan|sindir|sindiran|gurau|bergurau|lawak|jenaka)\b/i.test(question);
   const personality=thoughtMode==="gelap"?GELAP_PERSONALITY:PERSONALITY;
-   const baseSystem=personality+"\n"+(/\b(?:studio|pdf|word|e-?mel|eksport|imej|gambar)\b/i.test(question)?STUDIO_GUIDANCE+"\n":"")+(tiktokHandle||/\b(?:osint|akaun|username|tiktok|profil)\b/i.test(question)?OSINT_GUIDANCE+"\n":"")+(detailedIdentity?(thoughtMode==="gelap"?GELAP_IDENTITY_CORE:Identity.CORE_PROMPT)+"\n"+Identity.PROMPT:"")+"\n"+(TASK_GUIDANCE[intent.task]||TASK_GUIDANCE.general)+
+   const baseSystem=personality+"\n"+(/\b(?:studio|pdf|word|e-?mel|eksport|imej|gambar)\b/i.test(question)?STUDIO_GUIDANCE+"\n":"")+(tiktokHandle||/\b(?:osint|akaun|username|tiktok|profil)\b/i.test(question)?OSINT_GUIDANCE+"\n":"")+(detailedIdentity?(thoughtMode==="gelap"?GELAP_IDENTITY_CORE:Identity.CORE_PROMPT)+"\n"+Identity.PROMPT:"")+"\n"+(TASK_GUIDANCE[intent.task]||TASK_GUIDANCE.general)+literaryGuide+
       (intent.depth==="high"||intent.task==="technical"?"\nPENDEKATAN CERDAS: Kenal pasti tugas sebenar, pecahkan masalah rumit kepada submasalah yang perlu, semak pengiraan dan andaian, pilih alat hanya apabila alat menambah bukti. Utamakan jawapan yang boleh diuji berbanding bunyi yakin. Jangan dedahkan nota penalaran dalaman. Jangan mengaku melakukan semakan yang tidak dibuat.":"")+
       (intent.thought?"\nEKSPERIMEN PEMIKIRAN: nyatakan andaian jelas dan kesan yang dijangka, jangan bentangkan andaian sebagai fakta.":"")+
       (intent.debate?"\nKRITIK HUJAH: cari premis lemah, bantahan paling kuat, dan nilai bukti dengan tegas.":"")+
@@ -645,7 +671,7 @@ exports.handler=async event=>{
         alternative=await Router.complete({cloudflareAI,
           system:publicWebOnly?personality+(options.requireCodeEvidence?"\nTOOL EXECUTION: Jalankan kod melalui code_interpreter sebelum menjawab; jangan mendakwa melaksanakan kod jika alat tidak digunakan.":"\nPUBLIC WEB RESEARCH: Gunakan hanya sumber sebenar. Jangan reka carian."):system,
           history:publicWebOnly?[]:history,
-          question:publicWebOnly?browserQuestion:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[feedbackContext,fallbackLinkNote,work,references]):Context.composeTurn(question,[feedbackContext,fallbackLinkNote,doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,webIntent,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
+          question:publicWebOnly?browserQuestion:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[feedbackContext,payload.contextFallback===true?decisionContext:"",fallbackLinkNote,work,references]):Context.composeTurn(question,[feedbackContext,payload.contextFallback===true?decisionContext:"",fallbackLinkNote,doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,webIntent,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
       }catch(fallbackError){
         if(event.signal?.aborted)return result(499,{code:"CANCELLED",error:"Permintaan dihentikan."},H);
         log("fallback_stream_error",{provider:fallbackError.provider||"unknown",reason:fallbackError.interruption||fallbackError.name||"unknown",ms:Date.now()-started});
@@ -688,6 +714,7 @@ exports.handler=async event=>{
         return result(200,{
           mode:"fallback",aiMode:"automatic",thoughtMode,model:alternative.model,provider:alternative.provider,researchStatus:researchResult.status,
           reply:alternative.reply,
+          ...(literaryProfile?{literaryProfile}:{}),
           ...(media.some(m=>/^image\//.test(m.mimeType))?{vision:VisionDiagnostic.inspect({media,provider:alternative.provider,reply:alternative.reply,consent:payload.mediaFallback===true})}:{}),
           outputFormat:Structured.wantsJson(question)?"json":undefined,sources:[...(ownedPage?[{title:ownedPage.title||"Halaman awam AKSARA",url:ownedPage.url}]:[]),...publicSources.map(({title,url})=>({title,url}))].slice(0,8),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[...(ownedPage?["owned_page_html"]:[]),...(tavilyRead?["tavily_extract"]:tavilySearched?["tavily_search"]:[]),...(alternative.toolsUsed||[])],
@@ -952,7 +979,7 @@ exports.handler=async event=>{
     const reliableReply=revised;
     const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,researchStatus:researchResult.status,
       ...(media.some(m=>/^image\//.test(m.mimeType))?{vision:VisionDiagnostic.inspect({media,provider:"gemini",reply:reliableReply,consent:payload.mediaFallback===true})}:{}),
-      reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources,
+      reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,...(literaryProfile?{literaryProfile}:{}),outputFormat:Structured.wantsJson(question)?"json":undefined,sources,
       ...(publicAccount?{publicAccount}:{}),
       argumentMap:review?review.argumentMap:[],truthAudit:review?review.truthAudit:[],
       thoughtLedger:review?review.thoughtLedger:[],hypothesis:review?review.hypothesis:"",

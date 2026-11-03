@@ -1,6 +1,7 @@
 "use strict";
 /* Adaptive Model Registry 3.0. Availability/reliability observations are NOT
  * answer-quality scores. No persistent user data, external telemetry or paid calls. */
+const V5=require("./aksara-intelligence-v5");
 const CAPS=Object.freeze({
  groq:Object.freeze({reasoning:"high",text:true,vision:false,cost:"verified-free-only"}),
  openrouter:Object.freeze({reasoning:"variable",text:true,vision:true,cost:"free-pool"}),
@@ -37,6 +38,8 @@ function select(providers,{task="general",thinking="low",prefer="",last="",image
   if(task==="technical"&&p.id==="groq")n+=7;
   if(["critique","hypothetical"].includes(task)&&p.id==="workers_ai")n+=5;
   if(task==="conversation"&&p.id==="groq")n+=3;
+  // Disabled unless ten or more manually graded results per task/provider exist.
+  n+=V5.qualityDelta(p.id,task);
   // Penalize demonstrated failures, never mistake successful HTTP responses
   // for correctness, and avoid trusting fewer than three observations.
   if(total>=3)n+=12*(m.success/total)-22*(m.failure/total);
