@@ -240,9 +240,12 @@ test("health status leaves hidden tabs idle and resumes on visibility change",()
 test("brain and network breath retain motion without animating expensive filters",()=>{
  const css=require("node:fs").readFileSync("bilik-antara.css","utf8");
  for(const name of ["networkSparkBreath","thinkingBrainBreath"]){
-  const keyframe=css.match(new RegExp("@keyframes "+name+"\\\\{([^}]*(?:}[^}]*)?)\\\\}"));
-  assert.ok(keyframe,name+" animation exists");
-  assert.doesNotMatch(keyframe[0],/filter\s*:/,name+" must not animate filters");
+  const start=css.indexOf("@keyframes "+name+"{");
+  assert.ok(start>=0,name+" animation exists");
+  const end=css.indexOf("\n}",start);
+  assert.ok(end>start,name+" complete keyframe block");
+  const keyframe=css.slice(start,end+2);
+  assert.doesNotMatch(keyframe,/filter\s*:/,name+" must not animate filters");
  }
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
 });
