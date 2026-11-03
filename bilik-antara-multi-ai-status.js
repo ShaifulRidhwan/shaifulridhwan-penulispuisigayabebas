@@ -36,8 +36,15 @@
   if(!enabled)return {state:"disabled",label:"Multi A.I Disabled",verified,checkedAt,age};
   return {state:"offline",label:"Multi A.I Offline",verified,checkedAt,age};
  }
+ function formatHealthError(error={}){
+  const http=Number(error.http),wait=Math.ceil(Number(error.retryAfterSeconds));
+  if(http===429)return "HTTP 429 · "+(Number.isFinite(wait)&&wait>0?"Retry in "+Math.min(wait,3600)+"s":"Rate limited");
+  if(http===404)return "HTTP 404 · Endpoint unavailable";
+  if(http>=400&&http<=599)return "HTTP "+http;
+  return error.timeout===true?"Timeout":"Network error";
+ }
  function create({pill,label,activity,activityText,retry,stamp,requestNote}){
-  let snapshot=[],checkedAt=0,checking=true,failed=false;
+  let snapshot=[],checkedAt=0,checking=true,failed=false,failureDetails="";
   const replies=new Map();
   function effective(now=Date.now()){
    const fresh=checkedAt>0&&now-checkedAt<=HEALTH_TTL&&!failed;
@@ -65,7 +72,7 @@
    label.textContent=report.label;
    const live=report.rows.filter(r=>r.status==="online").length;
    const time=checkedAt?"Last checked: "+elapsed(now-checkedAt):"Not checked yet";
-   const suffix=failed?" · Health check failed":checking?" · Checking…":"";
+   const suffix=failed?" · Health check failed"+(failureDetails?" · "+failureDetails:""):checking?" · Checking…":"";
    const header=live+"/4 Connected · "+time+suffix;
    pill.title=header;
    pill.setAttribute("aria-label","Provider health: "+report.label+". "+header+". Open provider details.");
@@ -81,12 +88,12 @@
    snapshot=data.providers.filter(p=>p&&known.has(p.id));
    const time=Number(data.checkedAt);
    checkedAt=Number.isFinite(time)&&time>0&&time<Date.now()+30000?time:Date.now();
-   checking=false;failed=false;
+   checking=false;failed=false;failureDetails="";
    // Do not revive a provider if the latest check explicitly reports an outage.
    for(const item of snapshot)if(item.status==="offline"||item.status==="off")replies.delete(item.id);
    return render();
   }
-  function failure(){checking=false;failed=true;return render();}
+  function failure(error={}){checking=false;failed=true;failureDetails=formatHealthError(error);return render();}
   function reply(provider,model){
    if(!known.has(provider))return render();
    replies.set(provider,{at:Date.now(),model:typeof model==="string"?model.slice(0,140):""});
@@ -106,5 +113,5 @@
   return Object.freeze({startCheck,update,failure,reply,request,render,state,
    getRows:()=>effective(),getLastCheckedAt:()=>checkedAt});
  }
- return Object.freeze({create,summarize,elapsed,PROVIDERS,HEALTH_TTL,REPLY_TTL});
+ return Object.freeze({create,summarize,elapsed,formatHealthError,PROVIDERS,HEALTH_TTL,REPLY_TTL});
 });
