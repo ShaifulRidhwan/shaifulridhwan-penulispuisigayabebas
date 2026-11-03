@@ -120,10 +120,10 @@ test("No source or prior history leads to no invented evidence or memory",()=>{
 });
 test("Request-local architecture is integrated with no Voice Live code edits",()=>{
  const s=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
- assert.match(s,/ThinkingV3\.depth/);
- assert.match(s,/ThinkingV3\.planRequest/);
+ assert.match(s,/ThinkingV4\.planRequest/);
+ assert.match(s,/ThinkingV4\.guidance/);
  assert.match(s,/thinkingV3\.guidance/);
- assert.match(s,/thinkingArchitecture:\{version:3/);
+ assert.match(s,/thinkingArchitecture:\{version:4/);
  assert.match(s,/Modes\.instructions\(thoughtMode,"voice",true\)/);
  assert.match(s,/const poolKey=payload\.voiceFallback===true\?null:GeminiTextPool\.pick\(\)/);
 });

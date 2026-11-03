@@ -87,6 +87,10 @@ jobs:
           node --test tests/aksara-intelligence-v5.test.cjs
           node --check netlify/functions/aksara-thinking-v3.js
           node --test tests/aksara-thinking-v3.test.cjs
+          node --check netlify/functions/aksara-thinking-v4.js
+          node --test tests/aksara-thinking-v4.test.cjs
+          node --check scripts/aksara-thinking-benchmark-v4.cjs
+          node -e "const s=require('./scripts/aksara-thinking-benchmark-v4.cjs').offline();if(s.providerCalls!==0||s.cases<60||s.humanGraded)throw Error('Thinking V4 offline benchmark contract failed');console.log('Thinking V4 offline benchmark:',s.cases,'cases,',s.pairs,'plans, zero provider calls')"
           node --check netlify/functions/aksara-telemetry-v6.js
           node --check netlify/functions/aksara-response-efficiency-v6.js
           node --test tests/aksara-reliability-v6.test.cjs
