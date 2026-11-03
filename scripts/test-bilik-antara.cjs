@@ -219,3 +219,30 @@ test("memory context capacity is increased without moving it to system instructi
  assert.ok(content.includes(notes.trim()));
  assert.ok(!latestPrimary().systemInstruction.parts[0].text.includes(notes.trim()));
 });
+
+// Bilik UI performance contracts: browser audit covers actual DOM/visual behaviour.
+test("restored chat uses one off-DOM batch without delaying live messages",()=>{
+ const fs=require("node:fs");
+ const page=fs.readFileSync("bilik-antara.html","utf8");
+ assert.match(page,/function addMessage\(role,text,data,container=ui\.chat\)/);
+ assert.match(page,/const batch=document\.createDocumentFragment\(\);/);
+ assert.match(page,/for\(const m of history\)addMessage\(m\.role,m\.content,m,batch\);/);
+ assert.match(page,/ui\.chat\.appendChild\(batch\);/);
+ assert.match(page,/if\(!restoringHistory\)scrollDown\(\);/);
+});
+test("health status leaves hidden tabs idle and resumes on visibility change",()=>{
+ const fs=require("node:fs");
+ const page=fs.readFileSync("bilik-antara.html","utf8");
+ assert.match(page,/function refreshHealthVisual\(\)\{[\s\S]*?if\(document\.hidden\)return;/);
+ assert.match(page,/setInterval\(refreshHealthVisual,15000\);/);
+ assert.match(page,/document\.addEventListener\("visibilitychange",refreshHealthVisual\);/);
+});
+test("brain and network breath retain motion without animating expensive filters",()=>{
+ const css=require("node:fs").readFileSync("bilik-antara.css","utf8");
+ for(const name of ["networkSparkBreath","thinkingBrainBreath"]){
+  const keyframe=css.match(new RegExp("@keyframes "+name+"\\\\{([^}]*(?:}[^}]*)?)\\\\}"));
+  assert.ok(keyframe,name+" animation exists");
+  assert.doesNotMatch(keyframe[0],/filter\s*:/,name+" must not animate filters");
+ }
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
+});
