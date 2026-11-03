@@ -6,25 +6,7 @@
 <meta name="theme-color" content="#070911">
 <meta name="description" content="Aksara A.I. ialah pembantu kecerdasan buatan berbahasa Melayu santai dalam Bilik Antara, dibangunkan oleh Shaiful Ridhwan. Sembang teks, Voice Chat, pembelajaran dan penulisan.">
 <meta name="author" content="Shaiful Ridhwan">
-<script type="application/ld+json">{
-"@context": "https://schema.org",
-"@type": "WebApplication",
-"@id": "https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html#app",
-"name": "Aksara A.I.",
-"alternateName": "Bilik Antara",
-"description": "Aksara A.I. ialah pembantu AI berbahasa Melayu Malaysia dalam Bilik Antara, dibangunkan oleh Shaiful Ridhwan.",
-"applicationCategory": "CommunicationApplication",
-"operatingSystem": "Web",
-"inLanguage": "ms",
-"url": "https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html",
-"image": "https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara-cover-art.jpg",
-"author": {
-"@id": "https://shaifulridhwan-penulispuisigayabebas.netlify.app/#author"
-},
-"isPartOf": {
-"@id": "https://shaifulridhwan-penulispuisigayabebas.netlify.app/#website"
-}
-}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","@id":"https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html#app","name":"Aksara A.I.","alternateName":"Bilik Antara","description":"Aksara A.I. ialah pembantu AI berbahasa Melayu Malaysia dalam Bilik Antara, dibangunkan oleh Shaiful Ridhwan.","applicationCategory":"CommunicationApplication","operatingSystem":"Web","inLanguage":"ms","url":"https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html","image":"https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara-cover-art.jpg","author":{"@id":"https://shaifulridhwan-penulispuisigayabebas.netlify.app/#author"},"isPartOf":{"@id":"https://shaifulridhwan-penulispuisigayabebas.netlify.app/#website"}}</script>
 <meta name="color-scheme" content="dark">
 <title>Aksara A.I. | Bilik Antara oleh Shaiful Ridhwan</title>
 <link rel="canonical" href="https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html">
@@ -198,15 +180,11 @@
 <span class="voice-live-label"><span class="voice-live-name">AKSARA A.I.</span><span class="voice-live-subtitle">JOM VOICE CHAT</span></span>
 <div class="voice-panel-head-actions"><button type="button" id="voiceMinimize" class="voice-stop" aria-expanded="true" aria-label="Minimize Voice Chat panel">Minimize</button><button type="button" id="voiceStop" class="voice-stop" aria-label="End Voice Chat session">End Session</button></div>
 </div>
-<div class="voice-style-row">
-<label for="voiceDialectSelect">Loghat &amp; gaya</label>
-<select id="voiceDialectSelect" aria-label="Pilih loghat atau gaya bahasa Voice Chat"><option value="auto">Bahasa Melayu Santai</option></select>
-<span id="voiceDialectHint" class="voice-style-hint">Suara Aoede kekal · gaya pertuturan berubah</span>
-</div>
+<div class="voice-style-row"><label for="voiceDialectSelect">Loghat &amp; gaya</label><select id="voiceDialectSelect"><option value="auto">Bahasa Melayu Santai</option></select><span id="voiceDialectHint" class="voice-style-hint">Aoede kekal</span></div>
 <div class="voice-avatar-stage" id="voiceAvatarStage" aria-label="Ruang avatar AI cahaya dan gelap"><div class="voice-avatar-glow" aria-hidden="true"></div><div class="voice-avatar-caption">AKSARA A.I.</div></div>
 <div class="voice-wave" id="voiceWave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
 <div class="voice-dialogue-dock">
-<span id="voicePhaseLabel" class="voice-phase-label" data-phase="idle" aria-live="polite">Sedia</span>
+<span id="voicePhaseLabel" class="voice-phase-label">Sedia</span>
 <div id="voiceStatus" class="voice-status" role="status" aria-live="polite">Belum connect lagi.</div>
 <div id="voiceTranscript" class="voice-transcript" hidden aria-hidden="true"></div>
 <div class="voice-session-controls">
@@ -325,7 +303,7 @@ if(window.visualViewport)window.visualViewport.addEventListener("resize",queueVi
 const ENDPOINT="/.netlify/functions/bilik-antara";
 const STREAM_ENDPOINT="/.netlify/functions/bilik-antara-stream";
 const STORAGE="bilik-antara-session-v2";
-const SESSION_PREF_STORAGE="bilik-antara-session-save-pref-v1"; // Explicit opt-out survives reload; no chat content here.
+const SESSION_PREF_STORAGE="bilik-antara-session-save-pref-v1";
 const MODE_STORAGE="bilik-antara-mode-v1";
 let thoughtMode="cahaya";
 const modeButton=document.getElementById("thoughtMode");
@@ -746,7 +724,7 @@ ui.starters.hidden=history.length>0;
 if(!history.length)welcome(batch);
 ui.chat.appendChild(batch);
 }finally{restoringHistory=false;}
-scrollDown(); // One layout after the entire history is ready.
+scrollDown();
 }
 function save(){
 if(!ui.remember.checked)return;
