@@ -146,6 +146,137 @@ const setButtonState=()=>{
   speakerButton.setAttribute("aria-pressed",speakerEnabled?"true":"false");
   voiceUI?.renderControls?.();
 };
+
+/* Voice UI v4: progressive enhancement; the native selector remains a fallback.
+   The 3D avatar, audio route and token broker are intentionally untouched. */
+function mountEnhancedVoiceUI(){
+ if(!document.body||!document.createElement||!document.createElementNS||
+    !styleSelect||!dialectControl?.options||!panel.querySelector)return null;
+ const row=styleSelect.closest(".voice-style-row");
+ const head=panel.querySelector(".voice-panel-head-actions");
+ if(!row||!head)return null;
+ const create=(tag,className,text)=>{
+   const el=document.createElement(tag);
+   if(className)el.className=className;
+   if(text!==undefined)el.textContent=text;
+   return el;
+ };
+ const svgIcon=name=>{
+   const paths={
+     mic:["M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3","M5 10v1a7 7 0 0 0 14 0v-1","M12 18v4","M8 22h8"],
+     "mic-off":["M2 2l20 20","M9 9v2a3 3 0 0 0 5 2","M15 9V5a3 3 0 0 0-5.6-1.5","M5 10v1a7 7 0 0 0 12 5","M19 10v1a7 7 0 0 1-.7 3","M12 18v4","M8 22h8"],
+     volume:["M11 5 6 9H3v6h3l5 4V5Z","M15 9a5 5 0 0 1 0 6","M18 6a9 9 0 0 1 0 12"],
+     "volume-x":["M11 5 6 9H3v6h3l5 4V5Z","M17 9l5 6","M22 9l-5 6"],
+     brain:["M12 20V5a3 3 0 0 0-5.8-.9A3.7 3.7 0 0 0 3.5 9a3.4 3.4 0 0 0 .1 5.4A3.6 3.6 0 0 0 6.8 19 3 3 0 0 0 12 20Z","M12 20V5a3 3 0 0 1 5.8-.9A3.7 3.7 0 0 1 20.5 9a3.4 3.4 0 0 1-.1 5.4A3.6 3.6 0 0 1 17.2 19 3 3 0 0 1 12 20Z"],
+     chevron:["M6 9l6 6 6-6"],
+     check:["M5 12l4 4L19 6"],
+     x:["M6 6l12 12","M18 6 6 18"]
+   };
+   const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg");
+   svg.setAttribute("viewBox","0 0 24 24");
+   svg.setAttribute("aria-hidden","true");
+   svg.setAttribute("fill","none");svg.setAttribute("stroke","currentColor");
+   svg.setAttribute("stroke-width","1.8");svg.setAttribute("stroke-linecap","round");
+   svg.setAttribute("stroke-linejoin","round");
+   for(const d of paths[name]||[]){
+     const path=document.createElementNS(ns,"path");path.setAttribute("d",d);svg.appendChild(path);
+   }
+   return svg;
+ };
+ row.classList.add("voice-style-enhanced");
+ const label=row.querySelector("label");
+ if(label)label.removeAttribute("for");
+ styleSelect.hidden=true;
+ const trigger=create("button","voice-style-trigger");
+ trigger.type="button";trigger.id="voiceStyleTrigger";
+ trigger.setAttribute("aria-haspopup","dialog");
+ trigger.setAttribute("aria-label","Pilih gaya pertuturan Voice Chat");
+ trigger.setAttribute("aria-describedby","voiceDialectHint");
+ row.insertBefore(trigger,styleHint);
+ const dialog=create("dialog","aksara-voice-style-dialog");
+ dialog.id="voiceStyleDialog";dialog.setAttribute("aria-labelledby","voiceStyleDialogTitle");
+ const body=create("div","voice-style-modal-body");
+ const top=create("div","voice-style-modal-head");
+ const heading=create("h2","", "Gaya Pertuturan");
+ heading.id="voiceStyleDialogTitle";
+ const close=create("button","voice-style-close","Tutup");
+ close.type="button";close.setAttribute("aria-label","Tutup pilihan loghat");
+ top.append(heading,close);
+ const intro=create("p","voice-style-intro","Pilih gaya untuk Voice Chat. Suara Aoede kekal.");
+ const group=create("div","voice-style-options");
+ group.setAttribute("role","group");
+ group.setAttribute("aria-label","Lapan gaya pertuturan");
+ const choices=new Map();
+ for(const style of dialectControl.options){
+   const button=create("button","voice-style-option");
+   button.type="button";button.dataset.styleId=style.id;
+   const name=create("span","voice-style-option-name",style.label);
+   const tick=create("span","voice-style-option-tick","✓");tick.setAttribute("aria-hidden","true");
+   button.append(name,tick);group.appendChild(button);choices.set(style.id,button);
+   button.addEventListener("click",()=>{
+     styleSelect.value=style.id;
+     // Reuse the existing debounced style-change pipeline.
+     styleSelect.dispatchEvent(new Event("change",{bubbles:true}));
+     dialog.close();
+   });
+ }
+ body.append(top,intro,group);dialog.append(body);
+ document.body.appendChild(dialog);
+ trigger.setAttribute("aria-controls",dialog.id);
+ const show=()=>{
+   if(typeof dialog.showModal==="function"){dialog.showModal();trigger.setAttribute("aria-expanded","true");}
+   else{styleSelect.hidden=false;styleSelect.focus();}
+ };
+ trigger.addEventListener("click",show);
+ close.addEventListener("click",()=>dialog.close());
+ dialog.addEventListener("click",event=>{if(event.target===dialog)dialog.close();});
+ dialog.addEventListener("close",()=>{
+   trigger.setAttribute("aria-expanded","false");
+   if(panel.hidden===false)trigger.focus({preventScroll:true});
+ });
+ const modeChip=create("button","voice-mode-chip");
+ modeChip.type="button";modeChip.id="voiceModeBadge";
+ modeChip.setAttribute("aria-label","Pilih Thinking Mode untuk Voice Chat");
+ modeChip.title="Thinking Mode";
+ head.insertBefore(modeChip,head.firstElementChild);
+ modeChip.addEventListener("click",()=>document.getElementById("thoughtMode")?.click());
+ function updateMode(){
+   const mode=window.BilikAntaraThought?.getMode?.()==="gelap"?"Gelap":"Cahaya";
+   modeChip.replaceChildren(svgIcon("brain"),create("span","",mode));
+   modeChip.dataset.mode=mode.toLowerCase();
+   modeChip.setAttribute("aria-label","Thinking Mode · "+mode+". Tekan untuk ubah.");
+ }
+ const setIcon=(button,enabled,onIcon,offIcon,onText,offText)=>{
+   button.classList.add("voice-ui-toggle");
+   button.dataset.enabled=enabled?"true":"false";
+   button.replaceChildren(svgIcon(enabled?onIcon:offIcon),create("span","",enabled?onText:offText));
+   button.setAttribute("aria-label",enabled?"Tutup "+(button===micButton?"mikrofon":"suara"):"Buka "+(button===micButton?"mikrofon":"suara"));
+ };
+ function renderControls(){
+   setIcon(micButton,micEnabled,"mic","mic-off","Mic ON","Mic OFF");
+   setIcon(speakerButton,speakerEnabled,"volume","volume-x","Audio ON","Audio OFF");
+   updateMode();
+ }
+ function updateSelection(){
+   const selected=dialectControl.label(preferredStyleId);
+   const active=liveActive&&liveReady&&confirmedStyleId===preferredStyleId;
+   const pending=liveActive&&!active;
+   trigger.replaceChildren(create("span","voice-style-trigger-text",selected),svgIcon("chevron"));
+   trigger.dataset.state=active?"active":pending?"pending":"selected";
+   styleHint.textContent=active?"Aoede · Gaya aktif":pending?"Aoede · Dipilih, sedang aktifkan":"Aoede · Default apabila Voice bermula";
+   for(const [id,button] of choices){
+     const selectedOption=id===preferredStyleId;
+     button.setAttribute("aria-pressed",String(selectedOption));
+     button.classList.toggle("is-selected",selectedOption);
+     button.dataset.active=String(liveReady&&confirmedStyleId===id);
+   }
+ }
+ if(styleHint)styleHint.setAttribute("role","status");
+ updateMode();updateSelection();renderControls();
+ return Object.freeze({updateMode,updateSelection,renderControls});
+}
+voiceUI=mountEnhancedVoiceUI();
+
 if(!speechAPI){
   dictate.disabled=true;dictate.title="Pelayar ini tak boleh tukar suara jadi teks. Cuba Jom Voice Live.";
 }
