@@ -15,7 +15,7 @@ const voiceCore=window.AksaraVoiceCoreV3;
 const styleSelect=$("voiceDialectSelect"),styleHint=$("voiceDialectHint"),phaseLabel=$("voicePhaseLabel");
 const STYLE_KEY="ba:voice-style:v3";
 let preferredStyleId="gaul",voicePhase="idle",confirmedStyleId=null,voiceUI=null;
-try{const saved=window.sessionStorage?.getItem(STYLE_KEY);if(saved&&dialectControl?.has(saved))preferredStyleId=saved;}catch(_){}
+try{const saved=window.sessionStorage?.getItem(STYLE_KEY);if(saved&&dialectControl?.options?.some(item=>item.id===saved))preferredStyleId=saved;}catch(_){}
 if(styleSelect&&dialectControl?.options){
  styleSelect.replaceChildren();
  for(const style of dialectControl.options){
