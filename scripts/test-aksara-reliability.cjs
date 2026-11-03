@@ -11,7 +11,7 @@ function setup(t){
  const old=Object.fromEntries(envKeys.map(k=>[k,process.env[k]]));
  Object.assign(process.env,{AKSARA_HYBRID_ROUTER:"false",GEMINI_API_KEY:"mock",AKSARA_FREE_FALLBACKS:"true",GROQ_API_KEY:"mock",GROQ_FREE_CONFIRMED:"true"});
  for(const k of ["MISTRAL_API_KEY","OPENROUTER_API_KEY"])delete process.env[k];
- for(const p of ["../netlify/functions/bilik-antara","../netlify/functions/aksara-provider-router"])delete require.cache[require.resolve(p)];
+ for(const p of ["../netlify/functions/bilik-antara","../netlify/functions/aksara-provider-router","../netlify/functions/lib/gemini-text-pool"])delete require.cache[require.resolve(p)];
  t.after(()=>{global.fetch=savedFetch;for(const k of envKeys){if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];}});
  return require("../netlify/functions/bilik-antara").handler;
 }
