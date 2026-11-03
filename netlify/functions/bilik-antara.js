@@ -639,7 +639,7 @@ exports.handler=async event=>{
     ?PromptOptimization.compose([systemRaw],{dedupeExact:true}):systemRaw;
   const legacyMaxTokens=adaptiveThinking==="medium"?Math.max(plan.maxTokens,4000):plan.maxTokens;
   const efficiencyV6=EfficiencyV6.decide({system,history,question,intent,plan,maxTokens:legacyMaxTokens,
-    hasMedia:media.length>0,hasPrivate:!!(documentText||userMemory||memory),
+    hasMedia:media.length>0,hasPrivate:!!(documentText||userMemory||memory),hasJson:Structured.wantsJson(question),
     dualPerspective:thinkingV3.dualPerspective});
   const maxTokens=efficiencyV6.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,

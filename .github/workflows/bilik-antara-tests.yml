@@ -87,6 +87,9 @@ jobs:
           node --test tests/aksara-intelligence-v5.test.cjs
           node --check netlify/functions/aksara-thinking-v3.js
           node --test tests/aksara-thinking-v3.test.cjs
+          node --check netlify/functions/aksara-telemetry-v6.js
+          node --check netlify/functions/aksara-response-efficiency-v6.js
+          node --test tests/aksara-reliability-v6.test.cjs
           node --test tests/aksara-smart-attachments.test.cjs
           node --test tests/aksara-multi-ai-status.test.cjs
           node --test tests/aksara-capabilities.test.cjs
