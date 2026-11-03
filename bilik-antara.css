@@ -2259,6 +2259,10 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  font:600 12px/1.35 'DM Sans',sans-serif;
 }
 .multi-ai-actions #multiAiRefresh:hover{background:rgba(255,255,255,.095)}
+/* Shared refresh glass must not change colour when a health check disables one button. */
+.multi-ai-dialog .multi-ai-actions :is(#multiAiRefresh,#codeEngineRefresh){
+ background:linear-gradient(145deg,rgba(255,247,224,.035),rgba(125,167,205,.018))!important;
+}
 
 /* Compact model rows follow OpenRouter in the same list. No nested panel. */
 .multi-ai-model-row{
