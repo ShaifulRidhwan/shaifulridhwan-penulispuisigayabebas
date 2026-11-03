@@ -1,6 +1,7 @@
 "use strict";
 // Live evaluation is explicit, quota-consuming and needs human grades.
 const fs=require("node:fs");
+const Sampling=require("./aksara-balanced-sampling-v6.cjs");
 const questions={
  explain:["Beza haba dan suhu?","Kenapa langit kelihatan biru?","Bagaimana DNS berfungsi?","Kenapa korelasi bukan kausaliti?","Apa itu entropi?","Terangkan bias pengesahan.","Bagaimana fotosintesis?","Apa beza accuracy dan precision?","Hash berbanding encryption?","Apa fungsi UTC?"],
  technical:["Output JavaScript 2+'2'?","Kenapa Array.sort nombor mengelirukan?","Fungsi JS buang pendua tanpa ubah susunan.","Beza HTTP 401 dan 403?","Apa maksud idempotent API?","Apa jadi bila Promise.all satu reject?","Terangkan CORS dengan tepat.","Cara uji fungsi async offline?","Debouncing lawan throttling?","Risiko token API dalam frontend?"],
@@ -18,7 +19,7 @@ async function run({endpoint=process.env.AKSARA_V5_EVAL_URL,count=5,preferredPro
  if(u.protocol!=="https:"&&u.hostname!=="localhost"&&u.hostname!=="127.0.0.1")throw Error("HTTPS endpoint required");
  if(!/\/(?:\.netlify\/functions\/bilik-antara|api\/bilik-antara)$/.test(u.pathname))throw Error("Bilik Antara JSON endpoint required");
  const records=[];
- for(const sample of cases.slice(0,Math.max(1,Math.min(50,Math.floor(count))))){
+ for(const sample of Sampling.pick(cases,Math.max(1,Math.min(50,Math.floor(count))))){
   const started=Date.now();
   try{
    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),23000);

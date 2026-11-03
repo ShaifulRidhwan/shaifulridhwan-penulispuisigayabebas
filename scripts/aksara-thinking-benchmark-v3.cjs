@@ -3,6 +3,7 @@
  * Comparing mode style is NOT an IQ measurement. Never perform paid/provider calls in CI.
  */
 const fs=require("node:fs");
+const Sampling=require("./aksara-balanced-sampling-v6.cjs");
 const Thinking=require("../netlify/functions/aksara-thinking-v3");
 const Modes=require("../bilik-antara-modes");
 const Intelligence=require("../netlify/functions/antara-intelligence");
@@ -47,7 +48,7 @@ async function run({endpoint=process.env.AKSARA_THINKING_V3_EVAL_URL,count=3,fet
  if(!/\/(?:\.netlify\/functions\/bilik-antara|api\/bilik-antara)$/.test(url.pathname))
   throw Error("Only Bilik Antara JSON endpoint accepted");
  const rows=[];
- for(const item of cases.slice(0,Math.max(1,Math.min(10,Math.floor(count)||3)))){
+ for(const item of Sampling.pick(cases,Math.max(1,Math.min(10,Math.floor(count)||3)))){
   const record={id:item.id,task:item.task,question:item.question};
   for(const mode of ["cahaya","gelap"]){
    const start=Date.now(),ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),23000);
