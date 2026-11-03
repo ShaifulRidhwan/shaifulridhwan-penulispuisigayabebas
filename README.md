@@ -101,3 +101,8 @@ Kebebasan memberi ruang untuk memilih bentuk. Pemikiran menentukan arah. Bahasa 
 © 2026 Shaiful Ridhwan. Hak cipta karya asli terpelihara.
 
 Semua puisi, tulisan asli dan kandungan kreatif yang diterbitkan oleh Shaiful Ridhwan dilindungi oleh hak cipta yang berkenaan, kecuali jika dinyatakan sebaliknya.
+
+
+### AKSARA Thinking Architecture 3.0
+
+CAHAYA dan GELAP berkongsi fakta, routing, alat dan privasi. Thinking Depth menyesuaikan soalan ringkas berbanding hujah mendalam; penilaian dua mod menggunakan benchmark offline dan ujian live opt-in. Untuk melihat dua sudut dalam satu respons, taip **"Cuba lihat dari kedua-dua sudut: ..."** atau **"Jawab dari sudut CAHAYA dan GELAP: ..."**. Dual Perspective bukan mod ketiga atau dua panggilan API. Panduan: [Thinking Architecture 3.0](docs/AKSARA-THINKING-ARCHITECTURE-V3.md).
