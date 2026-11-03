@@ -79,7 +79,7 @@ test("Static wallpaper and retained glass layer",()=>{
  assert.doesNotMatch(css,/@keyframes glassGlide|animation:glassGlide/);
  assert.match(css,/transform:translate3d\(/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
- assert.match(css,/\.conversation::after\{animation:none/);
+ assert.match(css,/\.conversation::after\{content:none;animation:none/);
  assert.ok(!css.includes("@import"));
 });
 
@@ -272,12 +272,12 @@ test("Voice and Multi AI pills share starter-question sizing and genuinely clear
  assert.doesNotMatch(clear,/rgba\(255,242,207,\.96\)|rgba\(214,172,111,\.91\)/);
 });
 
-test("AI bubbles and ambient background particles remain without hand sparks",()=>{
+test("AI bubbles remain without retired ambient particle styles",()=>{
  assert.match(css,/\.messages \.message\.ai \.bubble,\s*\.messages\.is-welcome \.message\.ai \.bubble\{/);
  assert.match(css,/rgba\(243,226,198,\.048\)/);
  assert.doesNotMatch(css,/\.world-hand-sparks\{/);
  assert.doesNotMatch(css,/@keyframes handSparkDescent/);
- assert.match(css,/\.world-embers i\{animation-duration:17s\}/);
+ assert.doesNotMatch(css,/\.world-embers\b|@keyframes embersTravel/);
  assert.doesNotMatch(html,/class="world-hand-sparks"/);
  assert.equal((html.match(/style="--delay:/g)||[]).length,0);
  const multiStatus=fs.readFileSync("bilik-antara-multi-ai-status.js","utf8");
