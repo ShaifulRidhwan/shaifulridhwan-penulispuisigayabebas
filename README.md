@@ -111,3 +111,8 @@ CAHAYA dan GELAP berkongsi fakta, routing, alat dan privasi. Thinking Depth meny
 ### AKSARA Reliability & Quality v6
 
 Permintaan sesi dibaca dengan pengesanan pembetulan terkini, error recovery diperjelas, dan benchmark live kini menggunakan sampling berstrata. Selain itu tersedia output-budget adaptif berpilihan, telemetry agregat rentas instance melalui Redis berpilihan, profil mutu provider berpandukan semakan manusia dan 20 ujian struktur sastera. **Tiada pilihan berkuota dihidupkan automatik**, dan ujian offline tidak membuktikan mutu model live. Panduan: [Reliability & Quality v6](docs/AKSARA-RELIABILITY-QUALITY-V6.md).
+
+
+### Sesi & Memori Integrity v2
+
+Arkib kini ditulis dengan semakan versi terkini bagi mengurangkan konflik tab, sesi asal dipulihkan selepas reload, editor memori dilindungi daripada kehilangan draf, dan tindakan OFF disahkan sebelum memadam sejarah. Kedua-duanya kekal default ON untuk tetapan baharu, sementara OFF yang disimpan sebelum ini dihormati. [Baca audit dan had teknikal](docs/AKSARA-SESSION-MEMORY-INTEGRITY-V2.md).

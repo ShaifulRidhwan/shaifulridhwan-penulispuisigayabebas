@@ -727,6 +727,10 @@ function renderHistory(){
 }
 function save(){
  if(!ui.remember.checked)return;
+ // Respect an opt-out made in another open tab, even before its storage event.
+ try{if(localStorage.getItem(SESSION_PREF_STORAGE)==="off"){
+  ui.remember.checked=false;return;
+ }}catch(_){}
  try{localStorage.setItem(STORAGE,JSON.stringify({at:Date.now(),history,
  summary:summary,summarizedThrough,thoughtMode,thoughtLedger:ideas.slice(-12)}));window.dispatchEvent(new Event("ba:saved"));}
  catch(e){ui.docStatus.textContent="Sesi tak dapat disimpan pada device ni.";}
@@ -825,12 +829,6 @@ function discardFile(){
  fileState=null;ui.upload.value="";ui.docStatus.textContent="";ui.remove.hidden=true;update();
 }
 
-ui.remember.addEventListener("change",()=>{
- try{localStorage.setItem(SESSION_PREF_STORAGE,ui.remember.checked?"on":"off");}catch(_){}
- if(ui.remember.checked)save();
- else try{localStorage.removeItem(STORAGE);}catch(e){}
- window.dispatchEvent(new CustomEvent("ba:storage",{detail:{enabled:ui.remember.checked}}));
-});
 ui.forget.addEventListener("click",()=>{ideas=[];renderIdeas();save();});
 ui.clear.addEventListener("click",()=>{
  if(busy)return;
@@ -1133,6 +1131,7 @@ ui.form.addEventListener("submit",submit);
 window.BilikAntaraBridge={
  snapshot:()=>({history:history.map(m=>({...m})),summary,summarizedThrough,thoughtMode,thoughtLedger:ideas.slice(-12)}),
  remember:()=>ui.remember.checked,
+ persistSession:save,
  load:entry=>{
  if(busy)return false;
  conversationEpoch++;discardFile();
@@ -1173,8 +1172,8 @@ renderIdeas();renderHistory();update();probe();
 </script>
 <script src="bilik-antara-docx.js?v=1" defer></script>
 <script src="bilik-antara-identity.js?v=30" defer></script>
-<script src="bilik-antara-session-utils.js?v=2" defer></script>
-<script src="bilik-antara-suite.js?v=16" defer></script>
+<script src="bilik-antara-session-utils.js?v=3" defer></script>
+<script src="bilik-antara-suite.js?v=17" defer></script>
 <script src="bilik-antara-code-runtime.js?v=6" defer></script>
 <script src="bilik-antara-code-health.js?v=1" defer></script>
 <script src="bilik-antara-code-status.js?v=19" defer></script>

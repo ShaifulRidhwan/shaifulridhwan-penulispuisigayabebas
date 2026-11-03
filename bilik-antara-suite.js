@@ -29,14 +29,17 @@ const write=(key,obj)=>{
  catch(_){markStorage("write",false);notice("Ruang simpanan pelayar penuh atau disekat.");return false;}
 };
 function freshId(){return "s"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
-let archive=Array.isArray(read(KEYS.archive,[]))?read(KEYS.archive,[]):[];
+const initialArchive=read(KEYS.archive,[]);
+let archive=Array.isArray(initialArchive)?initialArchive:[];
 const sessionHelpers=window.AksaraSessionUtils;
 const restoredHistory=api.snapshot().history;
 let activeId="";
 try{
  const previous=sessionStorage.getItem(PREFIX+"-active")||"";
- const match=api.remember()?sessionHelpers?.matchArchivedSession(archive,restoredHistory):null;
- activeId=match||(previous&&!archive.some(item=>item.id===previous)?previous:freshId());
+ const resolved=api.remember()?sessionHelpers?.resolveActiveSession(archive,restoredHistory,previous):null;
+ activeId=resolved?.id||freshId();
+ // Another tab may have overwritten the single legacy active snapshot.
+ if(resolved?.restoreEntry&&!api.active())api.load(resolved.restoreEntry);
  sessionStorage.setItem(PREFIX+"-active",activeId);
 }catch(_){activeId=sessionHelpers?.matchArchivedSession(archive,restoredHistory)||freshId();}
 let titleChanges=false;
@@ -46,7 +49,8 @@ for(const item of archive){
   if(title&&title!==item.title){item.title=title;titleChanges=true;}
  }
 }
-if(titleChanges&&api.remember()){try{localStorage.setItem(KEYS.archive,JSON.stringify(archive));markStorage("write",true);}catch(_){markStorage("write",false);}}
+// Repair old titles for display only: page load must not rewrite a stale archive.
+if(titleChanges)storageHealth.restored="tajuk_dikemas";
 
 let memory=read(KEYS.memory,{enabled:true,text:""});
 if(!memory||typeof memory!=="object"||typeof memory.enabled!=="boolean")memory={enabled:true,text:""};
@@ -60,7 +64,18 @@ metrics={...blankMetrics(),...metrics,byProvider:metrics.byProvider&&typeof metr
  durations:Array.isArray(metrics.durations)?metrics.durations.slice(-50):[],
  elapsed:Array.isArray(metrics.elapsed)?metrics.elapsed.slice(-120):[]};
 const persistMetrics=()=>{if(api.remember())write(KEYS.metrics,metrics);};
-let currentPanel="",sessionSearchTerm="";
+let currentPanel="",sessionSearchTerm="",memoryDraft=null;
+function memoryDirty(){
+ return currentPanel==="sessions"&&!!memoryDraft&&
+  (memoryDraft.field.value!==memoryDraft.originalText||
+   memoryDraft.toggle.checked!==memoryDraft.originalEnabled);
+}
+function confirmMemoryDiscard(){
+ return !memoryDirty()||window.confirm("Draf memori belum disimpan. Buang perubahan dan tutup panel?");
+}
+function rawMemoryVersion(){
+ try{return localStorage.getItem(KEYS.memory);}catch(_){return null;}
+}
 const convo=document.querySelector(".conversation");
 if(!convo)return;
 const drawer=make("aside",undefined,"ba-drawer");
@@ -78,29 +93,78 @@ document.body.appendChild(drawer); // keep fixed overlay outside clipped glass c
 // Reuse the feature icon beside Multi AI Connected, not a second toolbar inside chat.
 featureSessions?.addEventListener("click",()=>open("sessions"));
 featureMetrics?.addEventListener("click",()=>open("metrics"));
+
+const rememberCheckbox=$("rememberChat");
+const preferenceKey="bilik-antara-session-save-pref-v1";
+const snapshotKey="bilik-antara-session-v2";
+rememberCheckbox?.addEventListener("change",()=>{
+ const enabled=rememberCheckbox.checked;
+ if(!enabled&&!window.confirm("Matikan Simpan sesi? Semua arkib sesi tersimpan pada peranti ini akan dipadam. Eksport arkib dahulu jika mahu menyimpannya.")){
+  rememberCheckbox.checked=true;return;
+ }
+ try{localStorage.setItem(preferenceKey,enabled?"on":"off");}
+ catch(_){notice("Pilihan simpan sesi tidak boleh dikekalkan: storan pelayar disekat.");}
+ if(enabled)api.persistSession();
+ else try{localStorage.removeItem(snapshotKey);}catch(_){notice("Gagal padam snapshot sesi. Semak data laman dalam pelayar.");}
+ window.dispatchEvent(new CustomEvent("ba:storage",{detail:{enabled}}));
+});
+window.addEventListener("storage",event=>{
+ if(event.key!==preferenceKey)return;
+ const enabled=event.newValue!=="off";
+ if(rememberCheckbox)rememberCheckbox.checked=enabled;
+ if(!enabled)try{localStorage.removeItem(snapshotKey);}catch(_){}
+ window.dispatchEvent(new CustomEvent("ba:storage",{detail:{enabled,external:true}}));
+});
+
 function notice(message){
  let status=$("baNotification");
  if(!status){status=make("div",undefined,"ba-notification");status.id="baNotification";status.setAttribute("role","status");head.after(status);}
  status.textContent=String(message||"").slice(0,240);
 }
 function open(panel){
+ if(!drawer.hidden&&!confirmMemoryDiscard())return;
+ memoryDraft=null;
  if(settings)settings.open=false;
  currentPanel=panel;drawer.hidden=false;document.body.classList.add("ba-panel-open");
  render();
 }
-function close(){drawer.hidden=true;currentPanel="";document.body.classList.remove("ba-panel-open");}
+function close(){
+ if(!confirmMemoryDiscard())return false;
+ memoryDraft=null;
+ drawer.hidden=true;currentPanel="";document.body.classList.remove("ba-panel-open");
+ return true;
+}
 document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!drawer.hidden)close();});
+window.addEventListener("beforeunload",event=>{
+ if(!memoryDirty())return;
+ event.preventDefault();event.returnValue="";
+});
 function section(text){content.appendChild(make("h3",text,"ba-h3"));}
 function paragraph(text){content.appendChild(make("p",text,"ba-hint"));}
 function controlRow(...nodes){const row=make("div",undefined,"ba-row");row.append(...nodes);content.appendChild(row);return row;}
-function persistArchive(){
+function persistArchive({upserts=[],removedIds=[],clearAll=false}={}){
  if(!api.remember())return false;
- archive=archive.filter(x=>x&&typeof x.id==="string"&&Array.isArray(x.history))
-   .sort((a,b)=>(Number(b.pinned)-Number(a.pinned))||(b.at-a.at));
- if(!archive.length){
-  try{localStorage.removeItem(KEYS.archive);markStorage("write",true);return true;}catch(_){markStorage("write",false);notice("Arkib tak dapat dikosongkan dalam pelayar.");return false;}
+ let latest;
+ try{
+  const raw=localStorage.getItem(KEYS.archive);
+  latest=raw===null?[]:JSON.parse(raw);
+  if(!Array.isArray(latest))throw Error("invalid archive");
+  markStorage("read",true);
+ }catch(_){
+  markStorage("read",false);
+  notice("Arkib tidak dapat dibaca. Simpanan baharu dibatalkan untuk melindungi sesi lama.");
+  return false;
  }
- return write(KEYS.archive,archive);
+ const merged=sessionHelpers?.mergeArchive(latest,{upserts,removedIds,clearAll});
+ if(!Array.isArray(merged)){notice("Penyelaras arkib tidak tersedia; sesi lama tidak diubah.");return false;}
+ if(merged.length){
+  if(!write(KEYS.archive,merged))return false;
+ }else{
+  try{localStorage.removeItem(KEYS.archive);markStorage("write",true);}
+  catch(_){markStorage("write",false);notice("Arkib tak dapat dikosongkan dalam pelayar.");return false;}
+ }
+ archive=merged;
+ return true;
 }
 function snapshotCurrent(){
  if(!api.remember())return;
@@ -113,26 +177,53 @@ function snapshotCurrent(){
  const title=titleEdited&&typeof old.title==="string"?old.title:(sessionHelpers?.conversationTitle(snapshot.history)||String(first?.content||"Perbualan baharu").slice(0,75));
  const entry={id:activeId,title,at:Date.now(),titleEdited,
   pinned:!!old.pinned,history:snapshot.history,summary:snapshot.summary,summarizedThrough:snapshot.summarizedThrough,thoughtLedger:snapshot.thoughtLedger};
- if(idx>=0)archive.splice(idx,1);archive.unshift(entry);persistArchive();
+ persistArchive({upserts:[entry]});
 }
 window.addEventListener("ba:saved",snapshotCurrent);
 window.addEventListener("ba:cleared",()=>{
- archive=archive.filter(x=>x.id!==activeId);
+ const removedId=activeId;
+ if(api.remember())persistArchive({removedIds:[removedId]});
+ else archive=archive.filter(x=>x.id!==removedId);
  activeId=freshId(); // Deleted conversation never reuses the deleted archive identity.
  try{sessionStorage.setItem(PREFIX+"-active",activeId);}catch(_){}
- // Clear explicitly deleted this entry even though the native UI has unchecked persistence.
- if(archive.length)write(KEYS.archive,archive);
- else try{localStorage.removeItem(KEYS.archive);}catch(_){}
  if(currentPanel==="sessions")render();
 });
 window.addEventListener("ba:storage",event=>{
  if(!event.detail||event.detail.enabled)return;
- // Opting out of conversation storage removes the entire local conversation archive.
- archive=[];try{localStorage.removeItem(KEYS.archive);}catch(_){}
+ // Opt-out is confirmed in the main privacy checkbox.
+ try{localStorage.removeItem(KEYS.archive);archive=[];markStorage("write",true);}
+ catch(_){markStorage("write",false);notice("Gagal memadam arkib. Padam data laman dalam pelayar untuk privasi.");}
  if(currentPanel==="sessions")render();
+});
+window.addEventListener("storage",event=>{
+ if(event.storageArea!==localStorage)return;
+ if(event.key===KEYS.archive){
+  try{
+   const next=event.newValue===null?[]:JSON.parse(event.newValue);
+   if(!Array.isArray(next))throw Error("invalid");
+   archive=next;
+   if(currentPanel==="sessions"){
+    if(memoryDirty())notice("Sesi berubah di tab lain. Draf memori kau dikekalkan.");
+    else render();
+   }
+  }catch(_){markStorage("read",false);notice("Arkib tab lain gagal dibaca; tidak ditimpa.");}
+ }
+ if(event.key===KEYS.memory){
+  try{
+   const next=event.newValue===null?{enabled:true,text:""}:JSON.parse(event.newValue);
+   if(!next||typeof next.enabled!=="boolean"||typeof next.text!=="string")throw Error("invalid");
+   memory={enabled:next.enabled,text:next.text.slice(0,8000)};
+   if(currentPanel==="sessions"){
+    if(memoryDirty())notice("Memori berubah di tab lain. Semak sebelum menimpa simpanan terkini.");
+    else render();
+   }
+  }catch(_){markStorage("read",false);notice("Memori tab lain tidak sah; data tidak ditimpa.");}
+ }
 });
 function beginSession(entry){
  if(api.active()){notice("Tunggu jawapan semasa selesai dahulu.");return;}
+ if(!confirmMemoryDiscard())return;
+ memoryDraft=null;
  snapshotCurrent();
  const previous=activeId,next=entry&&entry.id||freshId();
  activeId=next;
@@ -164,7 +255,7 @@ function removeArchiveEntry(item){
  if(item.id===activeId&&!rotateActiveSession())return false;
  const previous=archive.slice();
  archive=archive.filter(x=>x.id!==item.id);
- if(!persistArchive()){archive=previous;return false;}
+ if(!persistArchive({removedIds:[item.id]})){archive=previous;return false;}
  notice("Sesi dipadam daripada peranti ini.");
  return true;
 }
@@ -172,7 +263,7 @@ function clearAllArchive(){
  if(!rotateActiveSession())return false;
  const previous=archive.slice();
  archive=[];
- if(!persistArchive()){archive=previous;return false;}
+ if(!persistArchive({clearAll:true})){archive=previous;return false;}
  notice("Semua sejarah sesi pada peranti ini dipadam.");
  return true;
 }
@@ -260,7 +351,7 @@ function renderSessions(){
    controls.append(
     button(item.pinned?"Nyahpin":"Pin",()=>{
      item.pinned=!item.pinned;
-     if(!persistArchive())item.pinned=!item.pinned;
+     if(!persistArchive({upserts:[item]}))item.pinned=!item.pinned;
      render();
     },"ba-tiny"),
     button("Nama",()=>{
@@ -273,7 +364,7 @@ function renderSessions(){
       if(!cancelled&&value){
        const oldTitle=item.title,oldEdited=item.titleEdited;
        item.title=value;item.titleEdited=true;
-       if(!persistArchive()){item.title=oldTitle;item.titleEdited=oldEdited;}
+       if(!persistArchive({upserts:[item]})){item.title=oldTitle;item.titleEdited=oldEdited;}
       }
       render();
      };
@@ -305,8 +396,9 @@ function renderSessions(){
    if(!restored.length)throw Error("Tiada sesi untuk diimport.");
    if(!confirm("Import "+restored.length+" sesi ke peranti ini? Sesi sedia ada tidak akan dipadam."))return;
    const previous=archive.slice();
-   archive=[...archive,...restored.map(item=>({...item,id:freshId()}))];
-   if(!persistArchive()){archive=previous;return;}
+   const additions=restored.map(item=>({...item,id:freshId()}));
+   archive=[...archive,...additions];
+   if(!persistArchive({upserts:additions})){archive=previous;return;}
    sessionSearchTerm="";
    notice(restored.length+" sesi berjaya diimport.");
    render();
@@ -332,6 +424,7 @@ function renderMemory(){
  const label=make("label"," Aktifkan memori");label.prepend(toggle);content.appendChild(label);
  const field=make("textarea");field.className="ba-editor";field.rows=8;field.maxLength=8000;
  field.value=typeof memory.text==="string"?memory.text:"";
+ memoryDraft={field,toggle,originalText:field.value,originalEnabled:toggle.checked,version:rawMemoryVersion()};
  field.addEventListener("input",()=>{draftStatus.textContent="Draf berubah · belum disimpan";});
  toggle.addEventListener("change",()=>{draftStatus.textContent="Pilihan berubah · belum disimpan";});
  field.placeholder="Catat projek aktif, keputusan penting, atau gaya jawapan yang kau mahu Aksara ingat…";
@@ -347,19 +440,22 @@ function renderMemory(){
    "Perkara yang aku mahu elakkan: [tulis sendiri]"
   ].join("\n");
   field.focus();
+  draftStatus.textContent="Draf berubah · belum disimpan";
   notice("Templat belum disimpan. Ganti atau buang [tulis sendiri], kemudian tekan Simpan memori.");
  },"ba-tiny ba-memory-template");
  templateRow.append(templateHint,templateButton);content.appendChild(templateRow);
  controlRow(button("Simpan memori",()=>{
   const updated={enabled:toggle.checked,text:field.value.trim().slice(0,8000)};
   if(updated.text.includes("[tulis sendiri]")){notice("Lengkapkan atau padam penanda [tulis sendiri] sebelum simpan.");return;}
+  if(rawMemoryVersion()!==memoryDraft?.version&&
+     !window.confirm("Memori sudah berubah di tab lain. Timpa nota terbaru dengan draf ini?"))return;
   if(!write(KEYS.memory,updated))return;
-  memory=updated;draftStatus.textContent="Nota disimpan pada peranti";notice("Pilihan memori disimpan pada peranti.");render();
+  memory=updated;memoryDraft=null;draftStatus.textContent="Nota disimpan pada peranti";notice("Pilihan memori disimpan pada peranti.");render();
  }),button("Padam memori",()=>{
   if(!confirm("Padam semua memori pilihan di peranti ini?"))return;
   const disabled={enabled:false,text:""};
   if(!write(KEYS.memory,disabled)){notice("Tak dapat padam memori tersimpan. Semak storan pelayar.");return;}
-  memory=disabled;notice("Memori pilihan dipadam.");render();
+  memory=disabled;memoryDraft=null;notice("Memori pilihan dipadam.");render();
  }));
  controlRow(button("Bawa konteks sesi ini",()=>{
   const snapshot=api.snapshot();
@@ -370,6 +466,7 @@ function renderMemory(){
   const combined=[field.value.trim(),piece].filter(Boolean).join("\n\n");
   if(combined.length>8000){notice("Memori penuh. Ringkaskan nota sebelum tambah konteks.");return;}
   field.value=combined;toggle.checked=true;field.focus();
+  draftStatus.textContent="Draf berubah · belum disimpan";
   notice("Draf konteks ditambah. Semak dahulu, kemudian tekan Simpan memori.");
  }),button("Pratonton memori tersimpan",()=>{
   const question=$("input")?.value||"";
@@ -498,8 +595,20 @@ function renderMetrics(){
  );
 }
 function render(){
+ const draft=memoryDirty()?{text:memoryDraft.field.value,checked:memoryDraft.toggle.checked,
+  originalText:memoryDraft.originalText,originalEnabled:memoryDraft.originalEnabled,
+  version:memoryDraft.version}:null;
  content.replaceChildren();title.textContent=({sessions:"Sesi & Memori",workspace:"Ruang kerja",metrics:"Prestasi setempat"})[currentPanel]||"Bilik Antara";
- if(currentPanel==="sessions"){renderSessions();section("Memori pilihan");renderMemory();}
+ if(currentPanel==="sessions"){
+  renderSessions();section("Memori pilihan");renderMemory();
+  if(draft&&memoryDraft){
+   memoryDraft.field.value=draft.text;memoryDraft.toggle.checked=draft.checked;
+   memoryDraft.originalText=draft.originalText;memoryDraft.originalEnabled=draft.originalEnabled;
+   memoryDraft.version=draft.version;
+   const status=document.getElementById("ba-memory-save-status");
+   if(status)status.textContent="Draf berubah · belum disimpan";
+  }
+ }
  else if(currentPanel==="workspace")renderWorkspace();
  else if(currentPanel==="metrics")renderMetrics();
 }

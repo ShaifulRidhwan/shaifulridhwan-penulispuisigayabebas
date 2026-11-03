@@ -22,6 +22,7 @@
     "test:aksara-thinking-v3": "node --test tests/aksara-thinking-v3.test.cjs",
     "benchmark:aksara:thinking-v3": "node scripts/aksara-thinking-benchmark-v3.cjs",
     "test:aksara-v6": "node --test tests/aksara-reliability-v6.test.cjs",
+    "test:aksara-memory-integrity": "node --test tests/aksara-session-memory-integrity-v2.test.cjs",
     "benchmark:aksara:v6:context": "node scripts/aksara-context-regression-v6.cjs",
     "benchmark:aksara:v6:literary": "node scripts/aksara-literary-benchmark-v6.cjs",
     "report:aksara:v6": "node scripts/aksara-ops-report-v6.cjs"

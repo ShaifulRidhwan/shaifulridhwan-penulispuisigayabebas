@@ -9,9 +9,9 @@ test("session saving defaults ON for first visit but explicit OFF survives reloa
  assert.match(html,/<input type="checkbox" id="rememberChat" checked>/);
  assert.match(html,/ui\.remember\.checked=localStorage\.getItem\(SESSION_PREF_STORAGE\)!=="off";/);
  assert.match(html,/if\(!ui\.remember\.checked\)return;\s+const stored=/);
- assert.match(html,/localStorage\.setItem\(SESSION_PREF_STORAGE,ui\.remember\.checked\?"on":"off"\)/);
- assert.match(html,/if\(ui\.remember\.checked\)save\(\);/);
- assert.match(html,/else try\{localStorage\.removeItem\(STORAGE\);\}/);
+ assert.match(suite,/localStorage\.setItem\(preferenceKey,enabled\?"on":"off"\)/);
+ assert.match(suite,/if\(enabled\)api\.persistSession\(\);/);
+ assert.match(suite,/else try\{localStorage\.removeItem\(snapshotKey\);\}/);
 });
 
 test("memory notes default ON without pre-filling notes, explicit OFF remains intact",()=>{
@@ -28,7 +28,7 @@ test("existing saved session OFF, saved memory OFF and saved notes are not migra
  assert.match(suite,/read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
  assert.doesNotMatch(suite,/localStorage\.removeItem\(KEYS\.memory\)/);
  assert.doesNotMatch(suite,/localStorage\.setItem\(KEYS\.memory.*enabled:true/);
- assert.match(html,/bilik-antara-suite\.js\?v=16/);
+ assert.match(html,/bilik-antara-suite\.js\?v=17/);
 });
 
 test("changing default never wipes old session archives or memory notes",()=>{
