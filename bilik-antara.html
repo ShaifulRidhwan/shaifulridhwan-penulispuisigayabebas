@@ -54,7 +54,7 @@
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
 <link rel="stylesheet" href="bilik-antara.css?v=103">
 <link rel="stylesheet" href="bilik-antara-multi-ai-status.css?v=1" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="bilik-antara-knowledge-hub.css?v=1" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="bilik-antara-knowledge-hub.css?v=2" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-multi-ai-status.css?v=1"></noscript>
 <link rel="stylesheet" href="bilik-antara-attachments.css?v=2" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-attachments.css?v=1"></noscript>
@@ -890,7 +890,26 @@ function showTyping(){
  b.appendChild(dots);msg.appendChild(b);ui.chat.appendChild(msg);scrollDown();return msg;
 }
 let streamAvailable=true;
+function localFileMetadata(question,files){
+ if(!Array.isArray(files)||!files.length||
+  !/(?:metadata|meta data|exif|resolusi|dimensi|maklumat\s+(?:fail|file|gambar|imej)|(?:saiz|size)\s+(?:fail|file|gambar|imej))/i.test(question))return "";
+ const size=n=>n<1000000?Math.round(n/1000)+" KB":(n/1000000).toFixed(2)+" MB";
+ const lines=files.slice(0,12).filter(x=>x&&typeof x.name==="string").map(info=>{
+  const parts=["Fail: "+info.name,"Jenis: "+String(info.mimeType||"tidak diketahui"),
+   "Saiz asal: "+size(Math.max(0,Number(info.bytes)||0))];
+  if(Number(info.width)>0&&Number(info.height)>0)
+   parts.push("Resolusi: "+info.width+" × "+info.height+" piksel");
+  if(Number(info.pages)>0)parts.push("Halaman PDF yang dibaca: "+info.pages);
+  if(Number(info.lastModified)>0)parts.push("Tarikh terakhir diubah (fail): "+new Date(info.lastModified).toLocaleString("ms-MY"));
+  return parts.join("\n");
+ });
+ if(!lines.length)return "";
+ return "Metadata fail yang dibaca setempat dalam browser:\n\n"+lines.join("\n\n")+
+  "\n\nNota: tarikh terakhir diubah bukan semestinya tarikh gambar diambil. Data EXIF (termasuk lokasi GPS dan maklumat peranti) tidak diekstrak. Metadata ini tidak dihantar kepada AI untuk pertanyaan ini.";
+}
 async function ask(payload,signal,onDelta){
+ const metadataReply=localFileMetadata(payload.question,payload.fileMetadata);
+ if(metadataReply)return {reply:metadataReply,model:"local-file-metadata",provider:"local",mode:"local",sources:[],durMs:0};
  if(typeof window!=="undefined"&&!payload.documentText&&(!payload.media||Array.isArray(payload.media)&&!payload.media.length)){
   const local=window.BilikAntaraIdentity?.answerIdentity(payload.question);
   if(local)return {reply:local,model:"project-identity",provider:"local",mode:"local",sources:[],durMs:0};
@@ -899,7 +918,9 @@ async function ask(payload,signal,onDelta){
   const raw=res.headers.get("retry-after");if(!raw)return undefined;
   const seconds=Number(raw);return Number.isFinite(seconds)?Math.max(0,seconds):Math.max(0,Math.ceil((Date.parse(raw)-Date.now())/1000))||undefined;
  };
- const options={method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload),signal};
+ // Local metadata stays in the browser, never sent to a provider for ordinary requests.
+  const {fileMetadata,...remotePayload}=payload;
+  const options={method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(remotePayload),signal};
  if(streamAvailable&&typeof ReadableStream!=="undefined"){
   const res=await fetch(STREAM_ENDPOINT,options);
   if([404,405,409,501].includes(res.status)||res.ok&&!/application\/x-ndjson/i.test(res.headers.get("content-type")||""))streamAvailable=false;
@@ -1027,7 +1048,7 @@ async function submit(event){
    summary,thoughtLedger:ideas.slice(-8),mediaFallback:ui.mediaFallback.checked,
    documentText:selectedFile&&selectedFile.text||"",
    documentName:selectedFile&&selectedFile.name||"",
-   media:selectedFile&&selectedFile.media||null,memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt(question)||""};
+   media:selectedFile&&selectedFile.media||null,fileMetadata:selectedFile&&selectedFile.metadata||[],memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt(question)||""};
   payload.question=contextQuestion;
   const requestBytes=new TextEncoder().encode(JSON.stringify(payload)).byteLength;
   if(requestBytes>5350000)throw Error("Jumlah mesej dan lampiran melebihi had Netlify 5.35 MB. Buang beberapa lampiran atau pendekkan dokumen sebelum menghantar.");
@@ -1054,8 +1075,8 @@ async function submit(event){
   
   addIdeas(data.thoughtLedger);save();
   if(selectedFile&&selectedFile===fileState){ui.docStatus.dataset.state="ready";ui.docStatus.textContent="Lampiran kekal tersedia untuk soalan susulan · "+selectedFile.name;}
-  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[],researchStatus:data.researchStatus||"",toolsUsed:data.toolsUsed||[],urlTraceStatus:data.urlTrace?.status||"",sourceCount:data.sources?.length||0,mode:data.mode||""}}));
-  const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio";
+  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio"||data.model==="local-file-metadata")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[],researchStatus:data.researchStatus||"",toolsUsed:data.toolsUsed||[],urlTraceStatus:data.urlTrace?.status||"",sourceCount:data.sources?.length||0,mode:data.mode||""}}));
+  const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio"||data.model==="local-file-metadata";
   status("online","Request Completed","");
   if(!localAnswer){multiHealth.reply(data.provider,data.model);renderProviderRows(multiHealth.getRows(),multiCatalog);}
   if(!localAnswer){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
@@ -1087,9 +1108,14 @@ async function submit(event){
   const limited=error?.status===429||["API_QUOTA","RATE_LIMIT","ALL_PROVIDERS_BUSY"].includes(error?.code);
   if(error.code==="CAPABILITY_UNAVAILABLE"){
    const doc=!!selectedFile?.text,pdf=selectedFile?.media?.some(m=>m.mimeType==="application/pdf");
-   status("error",doc?"Document Unavailable":pdf?"PDF Model Unavailable":"Capability Unavailable",
-    doc&&!ui.contextFallback.checked?"Gemini unavailable. Enable document fallback consent in Privacy Settings to allow another provider to read extracted text.":
-    pdf?"Raw PDF requires a compatible multimodal provider. Try a text-based PDF for local extraction.":"The selected provider cannot complete this request.");
+   const images=selectedFile?.media?.some(m=>/^image\//.test(m.mimeType||""));
+   status("error",images?"Analisis Imej Tidak Tersedia":doc?"Dokumen Tidak Tersedia":pdf?"Model PDF Tidak Tersedia":"Keupayaan Tidak Tersedia",
+    images?(ui.mediaFallback.checked
+     ?"Model vision yang dicuba belum dapat memproses gambar. Semak sambungan atau kuota penyedia, kemudian cuba lagi."
+     :"Model utama belum berjaya membaca gambar. Jika kau setuju berkongsi gambar dengan OpenRouter, aktifkan izin sandaran imej di Privasi & Tetapan lalu tekan Cuba semula."):
+    doc&&!ui.contextFallback.checked?"Benarkan sandaran teks dokumen di Privasi & Tetapan jika model utama gagal.":
+    pdf?"PDF imbasan memerlukan model multimodal. Cuba PDF dengan teks boleh diekstrak.":
+    "Model yang tersedia belum boleh menyelesaikan permintaan ini.");
   }else if(limited){
    quotaCooldownUntil=Date.now()+Math.min(120,Math.max(5,Number(error.retryAfterSeconds)||30))*1000;
    const rateLimited=error?.code==="RATE_LIMIT",allBusy=error?.code==="ALL_PROVIDERS_BUSY";
@@ -1162,7 +1188,7 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-code-bridge.js?v=2" defer></script>
 <script src="bilik-antara-code-agent.js?v=3" defer></script>
 <script src="bilik-antara-pdf-reader.js?v=1" defer></script>
-<script src="bilik-antara-attachments.js?v=2" defer></script>
+<script src="bilik-antara-attachments.js?v=3" defer></script>
 <script src="bilik-antara-code-workspace.js?v=4" defer></script>
 <script src="bilik-antara-code-evaluation.js?v=1" defer></script>
 <script src="bilik-antara-brain.js?v=15" defer></script>
@@ -1172,7 +1198,7 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-dialek.js?v=2" defer></script>
 <script src="bilik-antara-voice.js?v=44" defer></script>
 <script src="bilik-antara-observability.js?v=1" defer></script>
-<script src="bilik-antara-knowledge-hub.js?v=1" defer></script>
+<script src="bilik-antara-knowledge-hub.js?v=2" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
 
 <script>
