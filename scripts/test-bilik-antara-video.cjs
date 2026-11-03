@@ -8,7 +8,7 @@ test("Bilik uses static WebP with no video/loop downloaded or autoplay controlle
  assert.doesNotMatch(html,/bilik-antara-video\.(?:css|js)/);
  assert.match(css,/\.world-scene \.world-art\{/);
  assert.match(css,/animation:none!important/);
- assert.match(css,/\.world-scene \.world-haze,\.world-scene \.world-embers,\.world-scene \.world-video\{display:none!important\}/);
+ assert.doesNotMatch(css,/\.world-haze\b|\.world-embers\b|\.world-video\b|@keyframes embersTravel/);
 });
 test("Same artwork serves Studio and Novel without running an ambient MP4",()=>{
  const studio=fs.readFileSync("studio-antara.css","utf8");
