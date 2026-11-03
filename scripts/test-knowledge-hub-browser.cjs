@@ -40,7 +40,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    const hub=page.locator("#knowledgeHub");
    await page.waitForFunction(()=>document.querySelectorAll("#knowledgeWorkResults .knowledge-item").length>0,{timeout:12000});
    assert.equal(await page.locator("#knowledgeDialog #knowledgeTitle").innerText(),"Pusat Pengetahuan & Rujukan");
-   assert.match(await page.locator("#knowledgeWorkStatus").innerText(),/entri arkib/);
+   assert.match(await page.locator("#knowledgeWorkStatus").innerText(),/9 daripada 9 puisi bersiri dipaparkan/);
    assert.equal(sent.length,0,"Local archive must not trigger AI or external research");
    await page.locator("#knowledgeWorkSearch").fill("aporia");
    assert.match(await hub.locator(".knowledge-item").first().innerText(),/ANTARA TAHU DAN APORIA/);
