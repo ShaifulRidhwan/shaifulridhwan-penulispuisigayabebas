@@ -246,7 +246,27 @@ async function readFiles(files,epoch=attachmentEpoch){
        text:parsed.text,mimeType:"application/pdf",pdfPages:parsed.pages};
       textChars+=newChars+2;
       if(parsed.truncated)pdfWarning=name+": hanya sebahagian teks PDF dibaca. Fail asal tidak dihantar.";
-     }else pdfWarning=name+": PDF ini tiada teks boleh dibaca (mungkin imbasan). Model multimodal diperlukan.";
+     }else{
+       pdfWarning=name+": PDF ini tiada teks boleh dibaca (mungkin imbasan).";
+       // OCR must be an explicit choice; neither OCR nor media is sent automatically.
+       const eligible=file.size<=12000000&&window.AksaraPdfReader?.readOcr&&typeof window.confirm==="function";
+       if(eligible&&window.confirm("PDF imbasan tiada teks. Jalankan OCR setempat untuk maksimum 3 halaman? Engine dan bahasa OCR perlu dimuat turun dari CDN; kandungan kekal dalam browser.")){
+        try{
+         const ocr=await window.AksaraPdfReader.readOcr(file,{allowed:true,maxPages:3});
+         if(ocr.text){
+          const newChars=("[FAIL: "+name+"]\n"+ocr.text).length;
+          if(textChars+newChars>MAX_TEXT_CHARS)throw Error("Had 1 juta aksara telah dicapai.");
+          item={name,size:file.size,uploadSize:0,kind:"text",
+           text:ocr.text,mimeType:"application/pdf",pdfPages:ocr.scannedPages};
+          textChars+=newChars+2;
+          pdfWarning=name+": OCR setempat membaca "+ocr.scannedPages+" daripada "+ocr.pages+
+           " halaman sahaja; semak ketepatan teks. PDF asal tidak dihantar.";
+         }else pdfWarning=name+": OCR tidak menemui teks. Model multimodal masih diperlukan.";
+        }catch(ocrError){
+         pdfWarning=name+": OCR gagal ("+String(ocrError.message||"ralat").slice(0,70)+"). Model multimodal mungkin diperlukan.";
+        }
+       }else pdfWarning+=" Model multimodal diperlukan jika OCR tidak dijalankan.";
+      }
     }catch(error){
      if(/melebihi|lebih 250|Bahagikan|kata laluan|password/i.test(String(error.message||"")))
       throw error;
