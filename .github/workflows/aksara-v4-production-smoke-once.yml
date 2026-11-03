@@ -1,0 +1,55 @@
+name: AKSARA v4 read-only production smoke
+on:
+  push:
+    branches:
+      - qa/aksara-v4-live-smoke-20261103
+permissions:
+  contents: read
+jobs:
+  live-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read-only Netlify deployment and reference-tool checks
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import urllib.request, urllib.error, json, sys, time
+          root="https://shaifulridhwan-penulispuisigayabebas.netlify.app"
+          def fetch(path, data=None):
+              request=urllib.request.Request(root+path,
+                  headers={"User-Agent":"AKSARA-v4-QA/1.0",
+                           **({"Content-Type":"application/json"} if data is not None else {})},
+                  data=(json.dumps(data).encode("utf-8") if data is not None else None),
+                  method=("POST" if data is not None else "GET"))
+              try:
+                  with urllib.request.urlopen(request,timeout=16) as resp:
+                      return resp.status,resp.read(300000).decode("utf-8","replace")
+              except urllib.error.HTTPError as exc:
+                  return exc.code,exc.read(2000).decode("utf-8","replace")
+          def check(name, ok, evidence):
+              print(("PASS" if ok else "FAIL")+" "+name+" "+str(evidence)[:180], flush=True)
+              if not ok: raise AssertionError(name)
+          status,html=fetch("/bilik-antara.html")
+          check("production HTTP",status==200,status)
+          check("v4 PDF reader asset referenced", 'bilik-antara-pdf-reader.js?v=2' in html, "v2")
+          check("v4 attachment asset referenced", 'bilik-antara-attachments.js?v=4' in html, "v4")
+          status,pdf=fetch("/bilik-antara-pdf-reader.js?v=2")
+          check("production PDF JS HTTP",status==200,status)
+          check("OCR function deployed", "async function readOcr" in pdf, "readOcr")
+          check("OCR consent gate deployed", 'if(!allowed)throw Error(' in pdf, "opt-in")
+          status,att=fetch("/bilik-antara-attachments.js?v=4")
+          check("production attachments JS HTTP",status==200,status)
+          check("OCR user consent prompt deployed", 'window.confirm("PDF imbasan' in att, "prompt")
+          status,calc=fetch("/.netlify/functions/aksara-reference-hub",
+                            {"action":"calculate","expression":"(12+8)*3"})
+          result={}
+          try: result=json.loads(calc)
+          except Exception: pass
+          check("live reference calculator HTTP",status==200,status)
+          check("live reference calculator equals 60",str(result.get("result")) in ("60","60.0"),result)
+          status,error=fetch("/.netlify/functions/aksara-reference-hub",
+                             {"action":"wikipedia","query":"http://127.0.0.1"})
+          check("reject private URL in reference search",status==400,status)
+          print("AKSARA V4 production smoke: ALL PASS. No AI inference requests, no API keys.")
+          PY
