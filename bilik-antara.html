@@ -727,6 +727,10 @@ function renderHistory(){
 }
 function save(){
  if(!ui.remember.checked)return;
+ // Respect an opt-out made in another open tab, even before its storage event.
+ try{if(localStorage.getItem(SESSION_PREF_STORAGE)==="off"){
+  ui.remember.checked=false;return;
+ }}catch(_){}
  try{localStorage.setItem(STORAGE,JSON.stringify({at:Date.now(),history,
  summary:summary,summarizedThrough,thoughtMode,thoughtLedger:ideas.slice(-12)}));window.dispatchEvent(new Event("ba:saved"));}
  catch(e){ui.docStatus.textContent="Sesi tak dapat disimpan pada device ni.";}
@@ -826,10 +830,21 @@ function discardFile(){
 }
 
 ui.remember.addEventListener("change",()=>{
- try{localStorage.setItem(SESSION_PREF_STORAGE,ui.remember.checked?"on":"off");}catch(_){}
+ if(!ui.remember.checked&&!window.confirm("Matikan Simpan sesi? Semua arkib sesi tersimpan pada peranti ini akan dipadam. Eksport arkib dahulu jika mahu menyimpannya.")){
+  ui.remember.checked=true;return;
+ }
+ try{localStorage.setItem(SESSION_PREF_STORAGE,ui.remember.checked?"on":"off");}
+ catch(_){ui.docStatus.textContent="Pilihan simpan sesi tidak boleh dikekalkan: storan pelayar disekat.";}
  if(ui.remember.checked)save();
- else try{localStorage.removeItem(STORAGE);}catch(e){}
+ else try{localStorage.removeItem(STORAGE);}catch(_){ui.docStatus.textContent="Gagal padam snapshot sesi. Semak data laman dalam pelayar.";}
  window.dispatchEvent(new CustomEvent("ba:storage",{detail:{enabled:ui.remember.checked}}));
+});
+window.addEventListener("storage",event=>{
+ if(event.key!==SESSION_PREF_STORAGE)return;
+ const enabled=event.newValue!=="off";
+ ui.remember.checked=enabled;
+ if(!enabled)try{localStorage.removeItem(STORAGE);}catch(_){}
+ window.dispatchEvent(new CustomEvent("ba:storage",{detail:{enabled,external:true}}));
 });
 ui.forget.addEventListener("click",()=>{ideas=[];renderIdeas();save();});
 ui.clear.addEventListener("click",()=>{
@@ -1173,8 +1188,8 @@ renderIdeas();renderHistory();update();probe();
 </script>
 <script src="bilik-antara-docx.js?v=1" defer></script>
 <script src="bilik-antara-identity.js?v=30" defer></script>
-<script src="bilik-antara-session-utils.js?v=2" defer></script>
-<script src="bilik-antara-suite.js?v=16" defer></script>
+<script src="bilik-antara-session-utils.js?v=3" defer></script>
+<script src="bilik-antara-suite.js?v=17" defer></script>
 <script src="bilik-antara-code-runtime.js?v=6" defer></script>
 <script src="bilik-antara-code-health.js?v=1" defer></script>
 <script src="bilik-antara-code-status.js?v=19" defer></script>
