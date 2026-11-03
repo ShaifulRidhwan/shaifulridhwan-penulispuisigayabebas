@@ -518,11 +518,14 @@ ui.conn.addEventListener("click",()=>{
  checkProviders();
 });
 let lastHealthVisual="";
-setInterval(()=>{
+function refreshHealthVisual(){
+ if(document.hidden)return;
  const state=multiHealth.render(),signature=state.rows.map(p=>p.id+":"+p.status).join("|");
  if(multiDialog.open&&signature!==lastHealthVisual)renderProviderRows(state.rows,multiCatalog);
  lastHealthVisual=signature;
-},15000);
+}
+setInterval(refreshHealthVisual,15000);
+document.addEventListener("visibilitychange",refreshHealthVisual);
 el("multiAiClose").addEventListener("click",()=>multiDialog.close());
 el("multiAiRefresh").addEventListener("click",()=>{multiLastCheck=0;checkProviders(true);});
 multiDialog.addEventListener("click",e=>{if(e.target===multiDialog)multiDialog.close();});
@@ -608,7 +611,7 @@ function renderMessageMeta(msg,role,data){
  const place=String(data?.locationLabel||"").trim().slice(0,80);
  msg.appendChild(line);
 }
-function addMessage(role,text,data){
+function addMessage(role,text,data,container=ui.chat){
  const msg=elem("article","message "+(role==="user"?"user":"ai")+(restoringHistory?" is-restored":""));
  if(data?.mode==="code")msg.classList.add("code-engine-message");
  msg.appendChild(elem("div","byline",role==="user"?"Kau":data?.mode==="code"?"AKSARA CODE ENGINE":"Aksara A.I."));
@@ -616,7 +619,7 @@ function addMessage(role,text,data){
  if(data?.mode==="code")bubble.textContent=String(text||"");
  else format(bubble,role==="user"||data?.mode==="voice"||data?.outputFormat==="json"?text:data?.intro===true?text:window.BilikAntaraChatStyle.reply(text,{mode:data?.thoughtMode||"cahaya"}));
  if(role!=="user"&&data)renderExtras(bubble,data);
- msg.appendChild(bubble);renderMessageMeta(msg,role,data);ui.chat.appendChild(msg);scrollDown();return msg;
+ msg.appendChild(bubble);renderMessageMeta(msg,role,data);container.appendChild(msg);if(!restoringHistory)scrollDown();return msg;
 }
 function renderExtras(bubble,data){
  if(data?.coderPoetFollowUp===true){
@@ -710,24 +713,25 @@ function renderExtras(bubble,data){
  }
  if(data.disclaimer)bubble.appendChild(elem("div","aside-note",String(data.disclaimer).slice(0,450)));
 }
-function welcome(){
- addMessage("assistant","Antara aksara dan code,\nGAYA yang bebas,\nBEBAS dalam bentuk,\nLUAS dalam pemikiran.",{timestamp:Date.now(),thoughtMode,intro:true});
+function welcome(container=ui.chat){
+ addMessage("assistant","Antara aksara dan code,\nGAYA yang bebas,\nBEBAS dalam bentuk,\nLUAS dalam pemikiran.",{timestamp:Date.now(),thoughtMode,intro:true},container);
 }
 function renderHistory(){
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
- restoringHistory=true; // No synchronous scrolling for each restored bubble.
+ restoringHistory=true;
  try{
  ui.chat.textContent="";
  ui.chat.classList.toggle("is-welcome",history.length===0);
- for(const m of history)addMessage(m.role,m.content,m);
+ const batch=document.createDocumentFragment();
+ for(const m of history)addMessage(m.role,m.content,m,batch);
  ui.starters.hidden=history.length>0;
- if(!history.length)welcome();
+ if(!history.length)welcome(batch);
+ ui.chat.appendChild(batch);
  }finally{restoringHistory=false;}
  scrollDown(); // One layout after the entire history is ready.
 }
 function save(){
  if(!ui.remember.checked)return;
- // Respect an opt-out made in another open tab, even before its storage event.
  try{if(localStorage.getItem(SESSION_PREF_STORAGE)==="off"){
   ui.remember.checked=false;return;
  }}catch(_){}
@@ -737,7 +741,6 @@ function save(){
 }
 function restore(){
  try{
- // ON for a new installation. An explicit OFF choice remains authoritative.
  ui.remember.checked=localStorage.getItem(SESSION_PREF_STORAGE)!=="off";
  if(!ui.remember.checked)return;
  const stored=JSON.parse(localStorage.getItem(STORAGE)||"null");
@@ -994,7 +997,7 @@ async function submit(event){
  if(!typed&&!fileState)return;
  const question=typed||"Analisis lampiran ini dan bezakan fakta daripada perkara yang belum disahkan.";
  const followUpTarget=starterFollowUpTarget;
- starterFollowUpTarget=""; // One-shot intent from a clicked starter, never inferred from chat text.
+ starterFollowUpTarget="";
  const selectedFile=fileState;
  const requestMode=thoughtMode;
  const sentAt=Date.now(),sentLocation=messageLocation;

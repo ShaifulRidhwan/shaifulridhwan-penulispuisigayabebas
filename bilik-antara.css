@@ -2259,6 +2259,10 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  font:600 12px/1.35 'DM Sans',sans-serif;
 }
 .multi-ai-actions #multiAiRefresh:hover{background:rgba(255,255,255,.095)}
+/* Shared refresh glass must not change colour when a health check disables one button. */
+.multi-ai-dialog .multi-ai-actions :is(#multiAiRefresh,#codeEngineRefresh){
+ background:linear-gradient(145deg,rgba(255,247,224,.035),rgba(125,167,205,.018))!important;
+}
 
 /* Compact model rows follow OpenRouter in the same list. No nested panel. */
 .multi-ai-model-row{
@@ -3309,16 +3313,17 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-ve
 }
 .conversation-head #connection:not(.ready) .multi-ai-network{color:#c1b393}
 .conversation-head #connection.error .multi-ai-network{color:#e7a08e}
+/* Keep the original static glow but animate compositable opacity/transform only. */
 @keyframes networkSparkBreath{
- 0%,100%{opacity:.65;filter:drop-shadow(0 0 1px rgba(91,219,196,.12))}
- 50%{opacity:1;filter:drop-shadow(0 0 5px rgba(91,219,196,.56))}
+ 0%,100%{opacity:.65}
+ 50%{opacity:1}
 }
 @keyframes networkNodeSignal{
- 0%,100%{fill-opacity:.3;opacity:.65}50%{fill-opacity:1;opacity:1}
+ 0%,100%{opacity:.65}50%{opacity:1}
 }
 @keyframes networkSparkTwinkle{
- 0%,100%{transform:scale(.82);fill-opacity:.16}
- 52%{transform:scale(1.12);fill-opacity:.67}
+ 0%,100%{transform:scale(.82);opacity:.35}
+ 52%{transform:scale(1.12);opacity:1}
 }
 @media(min-width:761px){
  /* Match the original 7px status dot's pill width without stretching glass. */
@@ -3351,8 +3356,8 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-ve
  animation-duration:4.4s;
 }
 @keyframes thinkingBrainBreath{
- 0%,100%{opacity:.73;filter:drop-shadow(0 0 1px currentColor)}
- 50%{opacity:1;filter:drop-shadow(0 0 6px currentColor)}
+ 0%,100%{opacity:.73}
+ 50%{opacity:1}
 }
 @keyframes thinkingNeurons{0%,100%{opacity:.42}50%{opacity:1}}
 @media(prefers-reduced-motion:reduce){
