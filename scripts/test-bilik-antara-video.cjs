@@ -23,6 +23,6 @@ test("Same artwork serves Studio and Novel without running an ambient MP4",()=>{
 });
 
 test("Retired ambient video assets are not in the live repository",()=>{
- for(const file of ["aksara-bilik-antara-ambient.mp4","bilik-antara-video.js","bilik-antara-video.css"])
+ for(const file of ["aksara-bilik-antara-ambient.mp4","bilik-antara-background.mp4","bilik-antara-bg-desktop.webp","bilik-antara-bg-mobile.webp","bilik-antara-video.js","bilik-antara-video.css"])
   assert.equal(fs.existsSync(file),false,`Retired video file must stay absent: ${file}`);
 });
