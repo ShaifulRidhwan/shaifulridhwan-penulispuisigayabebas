@@ -36,8 +36,8 @@ test("Shared AKSARA wallpaper is packaged as a real WebP asset for Cloudflare",(
   const stylesheet=text("dist/"+page+".css");
   assert.ok(stylesheet.includes(filename+"?v=1"),page+" must load deployed portrait asset");
  }
- assert.equal(text("dist/bilik-antara.html").split(filename+"?v=1").length-1,2,
-  "Both Bilik preload links must use the same shipped asset");
+ assert.equal(text("dist/bilik-antara.html").split(filename+"?v=1").length-1,1,
+  "Bilik must preload the shipped asset exactly once");
 });
 test("Bilik and other AKSARA rooms ship a real static WebP, no ambient player",()=>{
  const html=text("dist/bilik-antara.html");

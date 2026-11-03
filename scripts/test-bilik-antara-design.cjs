@@ -30,7 +30,7 @@ test("Bilik, Studio and Novel share optimized WebP wallpapers without changing t
   assert.ok(sheet.includes(asset+"?v=1"),page+" must use the same selected portrait wallpaper");
   assert.ok(!sheet.includes("bilik-antara-bg-desktop.webp"),page+" must not stretch the old landscape variant");
  }
- assert.equal(html.split(asset+"?v=1").length-1,2,"Desktop/mobile preloads must share one cached asset");
+ assert.equal(html.split(asset+"?v=1").length-1,1,"Shared wallpaper must have one preload without duplication");
  const bytes=fs.statSync(asset).size;
  assert.ok(bytes>1000&&bytes<100000,"Shared portrait wallpaper must remain a lightweight WebP");
  assert.match(css,/background-size:auto 100%,cover/, "Desktop must preserve the portrait aspect ratio");

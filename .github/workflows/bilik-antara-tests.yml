@@ -9,8 +9,6 @@ on:
       - "bilik-antara.html"
       - "bilik-antara.css"
       - "bilik-antara-*.js"
-      - "bilik-antara-video.css"
-      - "bilik-antara-background.mp4"
       - "aksara-celestial-static.webp"
       - "tests/**"
       - "scripts/test-aksara-reliability.cjs"
@@ -35,8 +33,6 @@ on:
       - "bilik-antara.html"
       - "bilik-antara.css"
       - "bilik-antara-*.js"
-      - "bilik-antara-video.css"
-      - "bilik-antara-background.mp4"
       - "aksara-celestial-static.webp"
       - "tests/**"
       - "scripts/test-aksara-reliability.cjs"
@@ -67,7 +63,6 @@ jobs:
           node --check netlify/functions/bilik-antara.js
           node --check netlify/functions/bilik-antara-live-token.js
           node --check bilik-antara-voice.js
-          node --check bilik-antara-video.js
           node --check bilik-antara-avatar.js
           node --check bilik-antara-pcm-worklet.js
           node --check netlify/functions/antara-intelligence.js
