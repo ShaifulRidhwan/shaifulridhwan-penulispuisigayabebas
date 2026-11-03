@@ -333,6 +333,7 @@ async function readFiles(files,epoch=attachmentEpoch){
        mimeType:"image/jpeg",data});
      }
      if(mediaBytes+result.totalBytes>MAX_MEDIA_BYTES)throw Error("Had media bagi satu mesej telah dicapai.");
+     pdfWarning=name+": "+mediaList.length+" bingkai visual dipilih. Audio dan keseluruhan video tidak dianalisis.";
      item={name,size:file.size,uploadSize:result.totalBytes,kind:"media",mimeType:mime,pdfWarning,
       videoSampled:true,sampledFrames:mediaList.length,mediaList,
       durationSeconds:result.durationSeconds,
