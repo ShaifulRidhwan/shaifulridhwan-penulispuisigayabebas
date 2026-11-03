@@ -36,7 +36,7 @@ const DECISIONS=[
  {key:"ui",pattern:/\b(?:ui|header|status|panel|ikon|butang|latar|background)\b/i},
  {key:"document",pattern:/\b(?:dokumen|pdf|ocr|lampiran|imej|vision)\b/i}
 ];
-const DIRECTIVE=/\b(?:kekalkan|jangan|jgn|tak nak|tidak mahu|aku pilih|pilih|revert|batalkan|cancel|default\s+(?:off|on)|mula|hentikan|gunakan|ubah|tukar|maksud aku)\b/i;
+const DIRECTIVE=/\b(?:kekalkan|jangan|jgn|tak nak|tidak mahu|aku pilih|pilih|revert|batalkan|cancel|default(?:\s+(?:memori|memory|nota|sesi)){0,3}\s+(?:off|on)|default\s+(?:off|on)|mula|hentikan|gunakan|ubah|tukar|maksud aku)\b/i;
 function sessionLedger(history){
  const selected=new Map();
  for(const m of Array.isArray(history)?history.slice(-55):[]){
