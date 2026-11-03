@@ -41,11 +41,12 @@ function selectVoiceStyle(id){
 selectVoiceStyle(preferredStyleId);
 let activeDialect="auto",dialectContextStart=0,dialectSwitching=false;
 let pendingDialect=null,dialectTimer=null,dialectReconnect=null,replayDialectRequest="";
-let modeReconnect=null,thoughtUpdateTimer=null,thoughtUpdatePendingSince=0;
+let modeReconnect=null,thoughtUpdateTimer=null,thoughtUpdatePendingSince=0,styleChangeTimer=null;
 function scheduleDialectSwitch(phrase){
  if(!dialectControl||!liveActive)return;
  const desired=dialectControl.detectRequest(phrase);
  if(!desired||desired.id===activeDialect)return;
+ if(styleChangeTimer){clearTimeout(styleChangeTimer);styleChangeTimer=null;}
  if(dialectTimer)clearTimeout(dialectTimer);
  pendingDialect={...desired,request:voicePlainText(phrase).slice(-950)};
  // The previous regional accent must not keep speaking after a switch is heard.
@@ -194,6 +195,7 @@ async function closeLive(reason){
   liveReady=false;liveActive=false;
   if(dialectTimer){clearTimeout(dialectTimer);dialectTimer=null;}
   if(thoughtUpdateTimer){clearTimeout(thoughtUpdateTimer);thoughtUpdateTimer=null;}
+  if(styleChangeTimer){clearTimeout(styleChangeTimer);styleChangeTimer=null;}
   modeReconnect=null;thoughtUpdatePendingSince=0;
   pendingDialect=null;dialectReconnect=null;replayDialectRequest="";dialectSwitching=false;activeDialect="auto";dialectContextStart=0;
   if(startAbort){startAbort.abort();startAbort=null;}
@@ -814,7 +816,7 @@ window.addEventListener("ba:thought-mode-changed",()=>{
  const check=()=>{
    thoughtUpdateTimer=null;
    if(!liveActive)return;
-   if(document.hidden||reconnecting||!liveReady||dialectSwitching||pendingDialect||
+   if(document.hidden||reconnecting||!liveReady||dialectSwitching||pendingDialect||styleChangeTimer||
       playbackBusy()||reasoningActive||Date.now()-lastSpeechAt<1800){
      if(Date.now()-thoughtUpdatePendingSince<90000)thoughtUpdateTimer=setTimeout(check,650);
      return;
@@ -825,11 +827,19 @@ window.addEventListener("ba:thought-mode-changed",()=>{
 });
 if(styleSelect)styleSelect.addEventListener("change",()=>{
   const chosen=selectVoiceStyle(styleSelect.value);
+  if(styleChangeTimer){clearTimeout(styleChangeTimer);styleChangeTimer=null;}
   if(liveActive&&chosen!==activeDialect){
-    const request={id:chosen,label:dialectControl.label(chosen),request:""};
-    if(dialectReconnect)dialectReconnect(request);
-    else activeDialect=chosen;
-  }else if(liveActive)sayStatus("Gaya "+dialectControl.label(chosen)+" dah dipilih. Aku dengar.");
+    // A keyboard sweep through 20 styles must not burn one-use Google tokens
+    // for every intermediate selection. Apply only the settled choice.
+    sayStatus("Gaya "+(dialectControl?.label?.(chosen)||"baharu")+" dipilih. Aku sambung semula…");
+    styleChangeTimer=setTimeout(()=>{
+      styleChangeTimer=null;
+      if(!liveActive||chosen!==preferredStyleId||chosen===activeDialect)return;
+      const request={id:chosen,label:dialectControl.label(chosen),request:""};
+      if(dialectReconnect)dialectReconnect(request);
+      else activeDialect=chosen;
+    },800);
+  }else if(liveActive)sayStatus("Gaya "+(dialectControl?.label?.(chosen)||"semasa")+" dah dipilih. Aku dengar.");
 });
 liveButton.addEventListener("click",startLive);
 if(minimizeButton)minimizeButton.addEventListener("click",()=>{
