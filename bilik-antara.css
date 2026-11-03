@@ -667,8 +667,6 @@ padding:15px 11px
 font-size:8px
 }
 }
-@media(max-height:740px) and (min-width:761px){
-}
 @media(prefers-reduced-motion:reduce){
 *, *::before, *::after{
 animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important
@@ -699,13 +697,10 @@ position:relative;z-index:1;isolation:isolate;
 position:absolute;z-index:0;inset:0;overflow:hidden;
  pointer-events:none;background:#080b13;isolation:isolate;
 }
+/* Static celestial background without retired wallpaper animation. */
 .world-art{
-position:absolute;inset:-2.5%;
-  will-change:transform;
- background-image:url("./aksara-background-cahaya-gelap.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e);
- background-size:auto 100%,cover;background-position:center center,center;background-repeat:no-repeat;
- transform:scale(1.035);transform-origin:center;
- animation:worldBreath 22s ease-in-out infinite alternate;
+ position:absolute;inset:0;
+ background:linear-gradient(110deg,#27170f,#060b15 52%,#071b2e) center/cover no-repeat;
 }
 .world-scene::after{
 content:"";position:absolute;inset:0;z-index:3;
@@ -713,52 +708,10 @@ content:"";position:absolute;inset:0;z-index:3;
  linear-gradient(180deg,rgba(6,8,15,.26) 0%,rgba(7,10,17,.24) 14%,rgba(5,8,15,.67) 43%,rgba(5,7,14,.77) 76%,rgba(4,6,12,.83) 100%),
  radial-gradient(ellipse 52% 55% at 50% 55%,rgba(6,9,17,.49),transparent 93%);
 }
-.world-haze{
-position:absolute;inset:-12%;z-index:1;
-  will-change:transform,opacity;
- background:radial-gradient(ellipse 34% 59% at 3% 45%,rgba(238,187,89,.30),transparent 86%),
- radial-gradient(ellipse 35% 52% at 98% 42%,rgba(50,79,126,.26),transparent 84%);
- mix-blend-mode:screen;opacity:.82;
- animation:hazeDrift 14s ease-in-out infinite alternate;
-}
-.world-embers{
- position:absolute;inset:0;z-index:2;opacity:.55;overflow:hidden;
-}
 /* Three separately composited repeating star layers. Their travel distances
    equal two exact tile heights, preserving the original seamless parallax. */
-.world-embers i{
- position:absolute;top:0;left:0;right:0;display:block;
- height:calc(100% + var(--ember-travel));
- background-repeat:repeat;pointer-events:none;
- animation:embersTravel 35s linear infinite;
- will-change:transform;
-}
-.world-embers i:nth-child(1){
- --ember-travel:334px;
- background-image:radial-gradient(circle,rgba(239,193,123,.85) .7px,transparent 1.7px);
- background-size:149px 167px;background-position:39px 11px;
-}
-.world-embers i:nth-child(2){
- --ember-travel:622px;
- background-image:radial-gradient(circle,rgba(255,211,136,.65) 1px,transparent 2px);
- background-size:287px 311px;background-position:91px 120px;
-}
-.world-embers i:nth-child(3){
- --ember-travel:434px;
- background-image:radial-gradient(circle,rgba(255,220,149,.9) 1px,transparent 2px);
- background-size:193px 217px;background-position:11px 58px;
-}
 
 
-@keyframes worldBreath{
-to{transform:scale(1.09) translateY(-.8%)}
-}
-@keyframes hazeDrift{
-to{transform:translate(2.5%,-1%);opacity:1}
-}
-@keyframes embersTravel{
- to{transform:translate3d(0,calc(-1 * var(--ember-travel)),0)}
-}
 .topbar, .app-shell, .footer-note{
 position:relative;z-index:1
 }
@@ -1037,11 +990,6 @@ font-size:14px
 padding-bottom:5px
 }
 }
-@media(prefers-reduced-motion:reduce){
-.world-art, .world-haze, .world-embers i{
-animation:none!important
-}
-}
 
 /* bilik-antara-editorial-glass.css (consolidated) */
 body{
@@ -1071,12 +1019,6 @@ background:
       rgba(4,6,11,.52) 76%,
       rgba(3,5,11,.61) 100%),
     radial-gradient(ellipse 73% 42% at 50% 49%,rgba(1,4,12,.40),transparent 90%);
-}
-.world-haze{
-opacity:.75
-}
-.world-embers{
-opacity:.55
 }
 .topbar{
 flex:none;
@@ -1437,8 +1379,6 @@ font-size:8px;max-width:100px
 padding-top:8px
 }
 }
-@media(max-width:760px) and (max-height:540px){
-}
 @media(prefers-reduced-motion:reduce){
 .message{
 animation:none
@@ -1523,36 +1463,8 @@ min-height:52px;padding:7px 12px;gap:6px
 padding:6px 10px
 }
 }
-@media(max-width:760px) and (max-height:680px){
-}
-@media(max-width:760px) and (max-height:540px){
-}
-@media(min-width:761px) and (max-height:700px){
-}
-
 /* Final motion: faster atmosphere and gentle transparent glass sweep. */
-.world-art{animation-duration:11s}
-.world-haze{animation-duration:7s}
-.world-embers i{animation-duration:17s}
-.conversation::after{
-  content:"";
-  display:block;
-  position:absolute;
-  inset:-18% -27%;
-  width:auto;
-  height:auto;
-  z-index:0;
-  border:0;
-  border-radius:0;
-  background:linear-gradient(107deg,transparent 36%,rgba(235,199,132,.065) 49%,rgba(139,175,221,.04) 52%,transparent 66%);
-  pointer-events:none;
-  animation:glassGlide 5.4s ease-in-out infinite alternate;
-  will-change:transform,opacity;
-}
-@keyframes glassGlide{
-  from{transform:translate3d(-28%,0,0);opacity:.22}
-  to{transform:translate3d(28%,0,0);opacity:.62}
-}
+
 .conversation-head{
   min-height:38px;
   padding:5px 18px;
@@ -1560,11 +1472,7 @@ padding:6px 10px
 .chat-controls{margin-left:auto}
 @media(max-width:760px){
   .conversation-head{min-height:36px;padding:4px 10px}
-  .world-art{animation-duration:11s}
-}
-@media(prefers-reduced-motion:reduce){
-  .conversation::after{animation:none;opacity:.25;will-change:auto}
-}
+  }
 
 
 /* VOICE 2026 — opt-in controls; original light/dark composition untouched. */
@@ -2464,17 +2372,16 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .conversation::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:inherit;will-change:opacity;background:radial-gradient(ellipse at 0% 45%,rgba(255,205,125,.13),transparent 58%),radial-gradient(ellipse at 100% 55%,rgba(124,160,213,.07),transparent 52%);animation:antaraAmbientPane 6.5s ease-in-out infinite alternate}
 .conversation::after{content:none;animation:none!important}
 
-@keyframes antaraAmbientPane{from{opacity:.4}to{opacity:.85}}
 
 
 .conversation>.conversation-head,.conversation>.messages,.conversation>.composer-area,.conversation>.starters,.conversation>#connectionInfo{position:relative;z-index:2}
-@media(max-width:760px){.conversation{-webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15)}.world-light-glow{width:72%;left:-30%}.conversation>.glass-shadow-mist::before{filter:blur(12px)}.conversation>.glass-shadow-mist::after{filter:blur(15px)}}
+@media(max-width:760px){.conversation{-webkit-backdrop-filter:blur(10px) saturate(1.15);backdrop-filter:blur(10px) saturate(1.15)}}
 /* The status dialogue and all call controls sit together at the bottom. */
 .voice-panel .voice-dialogue-dock{position:relative;z-index:3;display:flex;flex-direction:column;align-items:stretch;gap:10px;width:100%;margin-top:auto;flex:0 0 auto}
 .voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-status{align-self:stretch;width:100%;max-width:none;margin:0;padding:12px 15px;border:1px solid rgba(220,196,154,.36);border-radius:17px;background:linear-gradient(120deg,rgba(8,14,24,.42),rgba(22,29,40,.2));box-shadow:inset 0 1px 0 rgba(255,240,207,.1),0 7px 22px rgba(0,0,0,.13);font-size:12px;line-height:1.55;text-align:center;overflow-wrap:anywhere;-webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px)}
 .voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-session-controls{margin:0;padding:0;background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none;row-gap:12px}
 .voice-panel.is-minimized .voice-dialogue-dock{margin:0;gap:0}
-@media(max-width:760px){.voice-panel:not(.is-minimized){padding-bottom:14px}.voice-panel .voice-dialogue-dock{gap:9px}.voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-status{padding:10px 12px;font-size:11px}.glass-shadow-mist::before{filter:blur(16px)}.glass-shadow-mist::after{filter:blur(20px)}}
+@media(max-width:760px){.voice-panel:not(.is-minimized){padding-bottom:14px}.voice-panel .voice-dialogue-dock{gap:9px}.voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-status{padding:10px 12px;font-size:11px}}
 
 
 /* Every navigation link gets the same dark glass treatment as the chat controls. */
@@ -2482,11 +2389,15 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .topbar .brand,.topbar .nav-link{border:1px solid rgba(220,196,154,.26);border-radius:999px;background:linear-gradient(115deg,rgba(255,234,198,.065),rgba(110,153,196,.055));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,241,214,.1);padding:7px 11px}
 .topbar .brand{border-radius:13px;padding:7px 10px}
 .topbar .nav-link:hover,.topbar .brand:hover{background:rgba(217,185,136,.13);border-color:rgba(236,208,164,.48)}
-@media(max-width:760px){.topbar{gap:6px;padding-inline:9px}.topbar .brand{padding:5px 7px}.topbar .nav-actions{gap:4px}.topbar .nav-link{font-size:10px;padding:6px 8px}.glass-shadow-mist::before{filter:blur(11px)}.glass-shadow-mist::after{filter:blur(15px)}}
+@media(max-width:760px){.topbar{gap:6px;padding-inline:9px}.topbar .brand{padding:5px 7px}.topbar .nav-actions{gap:4px}.topbar .nav-link{font-size:10px;padding:6px 8px}}
 @media(max-width:390px){.topbar .nav-actions{gap:3px}.topbar .nav-link{font-size:9px;padding:6px}.topbar .brand{padding:5px 6px}}
 
 
-@media(prefers-reduced-motion:reduce){.world-light-glow{animation:antaraLeftGlow 5.8s ease-in-out infinite alternate!important}.conversation::before{animation:antaraAmbientPane 6.5s ease-in-out infinite alternate!important}.conversation>.glass-shadow-mist::before{animation:antaraSmokeGlow 7.8s ease-in-out infinite alternate!important}.conversation>.glass-shadow-mist::after{animation:antaraSmokeHalo 9.3s ease-in-out infinite alternate!important}}
+/* Reduced motion must never re-enable an obsolete ambient animation. */
+@media(prefers-reduced-motion:reduce){
+ .conversation::before,.conversation::after,
+ .frame-glow--light,.frame-glow--shadow{animation:none!important;will-change:auto!important}
+}
 
 
 /* Unified feature hub: privacy controls remain in the original icon. */
@@ -3046,17 +2957,10 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 @media(max-width:390px){.voice-panel .voice-live-label{padding:7px 10px}}
 
 /* Mobile LCP: avoid downloading a second, hidden JPEG wallpaper behind the responsive WebP. Desktop remains unchanged. */
-@media(max-width:760px){
-  .world-art{
-    background-image:url("./aksara-background-cahaya-gelap.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e);
-    background-size:cover,cover;
-    background-position:center 48%,center;
-  }
-}
 
 /* Performance cleanup: remove unused moving light/smoke overlays while preserving glass and artwork. */
 .conversation::before{animation:none;will-change:auto;opacity:.55}
-.world-haze,.world-light-glow,.conversation>.glass-shadow-mist{display:none!important;animation:none!important}
+.conversation>.glass-shadow-mist{display:none!important;animation:none!important}
 
 /* Thought mode: compact trigger. Existing glass dialog recipe is shared with Multi A.I. */
 .conversation .composer #thoughtMode{
@@ -3166,13 +3070,6 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
 .message.user .message-meta{justify-content:flex-end;text-align:right}
 .message.ai .message-meta{justify-content:flex-start}
 .message-clock{white-space:nowrap;font-variant-numeric:tabular-nums}
-.message-place{overflow-wrap:anywhere;color:rgba(190,208,231,.83)}
-.message-place-action{
- font:500 10px/1.4 'DM Sans',sans-serif;color:rgba(210,224,242,.9);
- background:none!important;border:0!important;box-shadow:none!important;
- padding:5px 2px;text-decoration:underline;text-underline-offset:3px;
-}
-.message-place-action:hover{color:#f6dab0}
 @media(max-width:760px){
  .message-meta{font-size:10px}
  .attachment-dialog,.meta-location-dialog{padding:15px}
@@ -3376,5 +3273,5 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-ve
  background-image:url("./aksara-celestial-static.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e)!important;
  background-position:center,center!important;background-size:auto 100%,cover!important;background-repeat:no-repeat!important;
 }
-.world-scene .world-haze,.world-scene .world-embers,.world-scene .world-video{display:none!important}
+
 @media(max-width:760px){.world-scene .world-art{background-size:cover,cover!important;background-position:center,center!important}}

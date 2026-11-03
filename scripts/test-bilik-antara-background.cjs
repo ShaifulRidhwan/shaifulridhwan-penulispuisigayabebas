@@ -33,6 +33,14 @@ async function inspect(browser,width,height,blockImage=false){
  assert.equal(state.videos,0,"No ambient video player");
  assert.match(state.glass,/blur\(/,"Glass UI remains");
  assert.equal(state.frameAnimation,"frameLightBreathe","Existing glass frame animation remains");
+ await page.emulateMedia({reducedMotion:"reduce"});
+ const reduced=await page.evaluate(()=>({
+  pane:getComputedStyle(document.querySelector(".conversation"),"::before").animationName,
+  light:getComputedStyle(document.querySelector(".frame-glow--light")).animationName,
+  dark:getComputedStyle(document.querySelector(".frame-glow--shadow")).animationName
+ }));
+ assert.deepEqual(reduced,{pane:"none",light:"none",dark:"none"},"Reduced-motion should disable glass motion");
+ await page.emulateMedia({reducedMotion:"no-preference"});
  if(!blockImage){
   const dimension=await page.evaluate(async()=>{
    const i=new Image();i.src="/aksara-celestial-static.webp?v=1";await i.decode();

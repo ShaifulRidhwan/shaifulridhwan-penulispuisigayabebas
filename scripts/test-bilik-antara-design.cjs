@@ -74,17 +74,16 @@ test("No obsolete orbital, dashboard or removed title styles",()=>{
 test("Static wallpaper and retained glass layer",()=>{
  assert.match(css,/\.world-scene \.world-art\{/);
  assert.match(css,/animation:none!important/);
- assert.match(css,/\.world-scene \.world-haze,\.world-scene \.world-embers/);
- assert.match(css,/\.conversation::after\{\s*content:"";\s*display:block/);
- assert.match(css,/@keyframes glassGlide/);
- assert.match(css,/animation:glassGlide 5\.4s/);
+ assert.doesNotMatch(css,/\.world-haze\b|\.world-embers\b|@keyframes embersTravel/);
+ assert.match(css,/\.conversation::after\{content:none;animation:none!important\}/);
+ assert.doesNotMatch(css,/@keyframes glassGlide|animation:glassGlide/);
  assert.match(css,/transform:translate3d\(/);
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
  assert.match(css,/\.conversation::after\{animation:none/);
  assert.ok(!css.includes("@import"));
 });
 
-test("Calm glass frame keeps the chat clear and preserves ambient particles",()=>{
+test("Calm glass frame keeps chat clear without retired particles",()=>{
  const starterLabels=[...html.matchAll(/<button class="starter" type="button">([^<]+)<\/button>/g)].map(m=>m[1]);
  assert.deepEqual(starterLabels,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas"]);
  assert.match(html,/<div class="glass-frame-orbit" aria-hidden="true">/);
@@ -95,7 +94,7 @@ test("Calm glass frame keeps the chat clear and preserves ambient particles",()=
  assert.match(css,/mask-composite:exclude/);
  assert.match(css,/animation:frameLightBreathe 12s ease-in-out infinite/);
  assert.match(css,/animation:frameShadowBreathe 12s ease-in-out infinite/);
- assert.match(css,/@keyframes embersTravel/);
+ assert.doesNotMatch(css,/@keyframes embersTravel/);
  assert.doesNotMatch(css,/@keyframes handSparkDescent/);
  assert.equal((html.match(/style="--delay:/g)||[]).length,0,"Hand sparks removed");
   assert.doesNotMatch(html,/class="world-embers"/);
@@ -334,4 +333,16 @@ test("Each AI answer shows a verified provider icon label and persists provenanc
  assert.match(html,/role==="assistant"&&data\?\.mode!=="code"/);
  assert.match(html,/bilik-antara-suite\.css\?v=9/);
  assert.match(suite,/\.message\.ai \.message-provider\{/);
+});
+
+
+test("Retired ambient CSS and blank breakpoints stay removed",()=>{
+ assert.doesNotMatch(css,/@media[^{}]*\{\s*\}/);
+ for(const name of ["worldBreath","hazeDrift","embersTravel","antaraAmbientPane","glassGlide"])
+  assert.doesNotMatch(css,new RegExp("@keyframes\\s+"+name+"\\b"));
+ assert.doesNotMatch(css,/\.world-haze\b|\.world-embers\b|\.world-light-glow\b/);
+ assert.match(html,/bilik-antara\.css\?v=104/,"Bust cached 30-day stylesheet");
+ assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\s*\.conversation::before,\.conversation::after,[\s\S]*?animation:none!important/);
+ assert.doesNotMatch(css,/prefers-reduced-motion:reduce\)\{[^}]*animation:[^;}]*infinite/);
+ assert.doesNotMatch(css,/\.message-place(?:-action)?\b/,"Location remains hidden from chat metadata");
 });
