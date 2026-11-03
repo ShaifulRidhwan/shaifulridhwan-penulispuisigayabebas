@@ -599,7 +599,7 @@ test("Session archive titles render as compact headings and preserve functional 
  assert.match(css,/-webkit-backdrop-filter:none;backdrop-filter:none;/);
  assert.match(css,/background:transparent;box-shadow:none;/);
  assert.match(html,/bilik-antara-suite\.css\?v=9/);
- assert.match(html,/bilik-antara-suite\.js\?v=15/);
+ assert.match(html,/bilik-antara-suite\.js\?v=16/);
 });
 
 test("Optional memory starter stays editable and is never automatically saved",()=>{
