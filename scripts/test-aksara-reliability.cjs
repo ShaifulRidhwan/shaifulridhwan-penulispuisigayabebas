@@ -351,7 +351,7 @@ test("opening the page tests providers before showing Connected and never instal
  assert.equal(label.textContent,"Multi A.I Checking");
  assert.match(html,/providerStatus:true,geminiPoolRefresh:force===true/);
  assert.match(html,/multiHealth\.update\(data\)/);
- assert.match(html,/multiHealth\.failure\(\)/);
+ assert.match(html,/multiHealth\.failure\(\{http:error\.http,timeout:error\.name==="AbortError"/);
  assert.doesNotMatch(html,/status\("ready","Multi A\.I Connected"/);
  health.update({checkedAt:Date.now(),providers:[{id:"groq",status:"online"}]});
  assert.equal(label.textContent,"Multi A.I Connected");
