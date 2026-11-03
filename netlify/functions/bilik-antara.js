@@ -18,6 +18,11 @@ const FreePotential=require("./aksara-free-potential");
 const MultiURL=require("./aksara-multi-url");
 const WorkersFree=require("./aksara-workers-free");
 const DocumentIntelligence=require("./aksara-document-intelligence");
+const EvidenceAudit=require("./aksara-evidence-audit");
+const VisionDiagnostic=require("./aksara-vision-diagnostics");
+const FailureDiagnostic=require("./aksara-failure-diagnostics");
+const PromptOptimization=require("./aksara-prompt-optimizer");
+const Infrastructure=require("./aksara-infrastructure-guard");
 const GeminiTextPool=require("./lib/gemini-text-pool");
 const Hybrid=require("./aksara-hybrid-policy");
 const Ops=require("./aksara-ops");
@@ -118,18 +123,16 @@ function speechPlain(value){
   .replace(/ {2,}/g," ").trim();
 }
 function result(code,data,H){
+  if(code===200&&typeof data?.reply==="string"&&(Array.isArray(data.sources)||Array.isArray(data.toolsUsed)||data.urlTrace))
+    data={...data,evidenceProfile:EvidenceAudit.summarize(data)};
+  if(code>=400)data={...data,diagnostics:FailureDiagnostic.diagnose(data,code)};
   if(code===200&&typeof data?.reply==="string")Ops.record("success");
   else if(code>=400)Ops.record("error");
   if(code===200&&typeof data.reply==="string"&&data.mode!=="recorded-voice"&&data.outputFormat!=="json")data={...data,reply:ChatStyle.reply(data.reply,{mode:data.thoughtMode})};
   return {statusCode:code,headers:H,body:JSON.stringify({...data,routingRevision:"latency-9"})};
 }
 function throttle(ip,store=rateMap,limit=12){
-  const now=Date.now();
-  if(store.size>750)for(const [k,v] of store)if(now-v.start>60000)store.delete(k);
-  if(store.size>1200)store.clear();
-  const e=store.get(ip);
-  if(!e||now-e.start>60000){store.set(ip,{count:1,start:now});return false;}
-  return ++e.count>limit;
+ return Infrastructure.throttle(store,ip,limit);
 }
 function errorMessage(status){
   if(status===429)return "Kuota API Google sedang penuh. Cuba sebentar lagi.";
@@ -587,8 +590,11 @@ exports.handler=async event=>{
       (creatorHumour?"\nUSIKAN BERASASKAN FAKTA: Usik hanya ciri projek yang diketahui, seperti pilihan bentuk puisi bersiri atau usaha mengubah suai Aksara. Jangan cipta atau meneka tabiat, waktu tidur, emosi, kebimbangan, peristiwa atau kehidupan peribadi Shaiful, walaupun sebagai perbandingan atau gurauan. Boleh selit ‘mwehehe’ di hujung jika sesuai.":"")+
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
   const activeModeInstruction="\nMOD AKTIF UNTUK JAWAPAN INI: "+(thoughtMode==="gelap"?"GELAP. Jawab dengan falsafah moden dan pemeriksaan premis apabila relevan, tetapi jangan merosakkan soalan fakta atau arahan teknikal.":"CAHAYA. Jawab secara santai, jelas dan praktikal; jangan menyamar sebagai GELAP.")+". Dua mod dalam Bilik Antara adalah gaya pemikiran/respons, bukan dua model API. Jika ditanya, terangkan kedua-dua mod serta cara menukarnya pada ikon pelaras di sebelah Hantar. Jangan mendakwa menggunakan model khusus kerana mod.";
-   const system=baseSystem+"\n"+DocumentIntelligence.guidance({documentText,documentName,media})+
+   const systemRaw=baseSystem+"\n"+DocumentIntelligence.guidance({documentText,documentName,media})+
     "\n"+cognitiveGuidance(cognition)+"\n"+Research.guidance(researchResult)+activeModeInstruction+(thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false)+"\n"+Modes.contextGuidance(thoughtMode,question,history):"");
+  // Disabled by default until benchmark comparison is approved.
+  const system=process.env.AKSARA_PROMPT_OPTIMIZE==="true"
+    ?PromptOptimization.compose([systemRaw],{dedupeExact:true}):systemRaw;
   const maxTokens=adaptiveThinking==="medium"?Math.max(plan.maxTokens,4000):plan.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
     works:!!poem,multimodal:media.length>0,model,review:intent.review,cognitiveFocus:cognition.focus,reasoningLevel:plan.thinkingLevel});
@@ -681,7 +687,9 @@ exports.handler=async event=>{
         const check=flags.reviewEnabled&&!imageOnly&&remaining()>1000?await Router.crossReview({cloudflareAI,question,reply:alternative.reply,originalProvider:alternative.provider,task:intent.task,timeoutMs:Math.min(3000,remaining())}):null;
         return result(200,{
           mode:"fallback",aiMode:"automatic",thoughtMode,model:alternative.model,provider:alternative.provider,researchStatus:researchResult.status,
-          reply:alternative.reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources:[...(ownedPage?[{title:ownedPage.title||"Halaman awam AKSARA",url:ownedPage.url}]:[]),...publicSources.map(({title,url})=>({title,url}))].slice(0,8),argumentMap:[],truthAudit:[],
+          reply:alternative.reply,
+          ...(media.some(m=>/^image\//.test(m.mimeType))?{vision:VisionDiagnostic.inspect({media,provider:alternative.provider,reply:alternative.reply,consent:payload.mediaFallback===true})}:{}),
+          outputFormat:Structured.wantsJson(question)?"json":undefined,sources:[...(ownedPage?[{title:ownedPage.title||"Halaman awam AKSARA",url:ownedPage.url}]:[]),...publicSources.map(({title,url})=>({title,url}))].slice(0,8),argumentMap:[],truthAudit:[],
           thoughtLedger:[],hypothesis:"",reviewApplied:false,toolsUsed:[...(ownedPage?["owned_page_html"]:[]),...(tavilyRead?["tavily_extract"]:tavilySearched?["tavily_search"]:[]),...(alternative.toolsUsed||[])],
           toolsOffered:alternative.toolsOffered||[],
           disclaimer:"Jawapan dari model sandaran · "+({groq:"Groq",openrouter:"OpenRouter",workers_ai:"Cloudflare Workers AI",gemini:"Gemini"}[alternative.provider]||alternative.provider)+(intent.hasLink?(ownedPage?" · HTML awam laman AKSARA telah dibaca; visual, JavaScript dan prestasi sebenar tidak diuji.":tavilyRead?" · Teks halaman telah diekstrak melalui Tavily; visual, JavaScript dan prestasi sebenar tidak diuji.":browserUsed?" · Groq menjalankan Browser Search; URL khusus belum disahkan dibuka atau dibaca.":alternative.toolsOffered?.includes("openrouter:web_fetch")?" · OpenRouter Web Fetch ditawarkan, tetapi metadata bacaan halaman tidak dibekalkan; jangan dakwa audit visual.":" · Kandungan URL tidak berjaya dibaca atau disahkan. Ini bukan review laman sebenar."):(intent.search?(browserUsed?" · Groq benar-benar menjalankan Browser Search. Semak pautan sumber untuk mengesahkan dakwaan.":researchResult.status==="search-snippets"?" · Hasil carian awam ialah snippet sahaja; kandungan penuh belum dibaca.":" · Carian web langsung tidak berjaya; info terkini belum disahkan."):(codeUsed?" · Groq menjalankan Code Interpreter (Python), disahkan melalui executed_tools.":""))),
@@ -942,7 +950,9 @@ exports.handler=async event=>{
         routing:{failedAttempts:providerFailures,geminiDiagnosis:routingDiagnosis()}},H);
     }
     const reliableReply=revised;
-    const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,researchStatus:researchResult.status,reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources,
+    const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,researchStatus:researchResult.status,
+      ...(media.some(m=>/^image\//.test(m.mimeType))?{vision:VisionDiagnostic.inspect({media,provider:"gemini",reply:reliableReply,consent:payload.mediaFallback===true})}:{}),
+      reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,outputFormat:Structured.wantsJson(question)?"json":undefined,sources,
       ...(publicAccount?{publicAccount}:{}),
       argumentMap:review?review.argumentMap:[],truthAudit:review?review.truthAudit:[],
       thoughtLedger:review?review.thoughtLedger:[],hypothesis:review?review.hypothesis:"",

@@ -16,6 +16,14 @@
   const used=Array.isArray(data.toolsUsed)?data.toolsUsed.filter(x=>typeof x==="string"):[],
    count=safeCount(data.sourceCount),trace=String(data.urlTraceStatus||"");
   if(data.requestFailed)return {state:"gagal",label:"Permintaan gagal",count:0};
+  const evidence=data.evidenceProfile;
+  if(evidence&&evidence.scope==="tool_metadata_not_fact_verification"){
+   const labels={page_text:"Teks halaman diperoleh",grounded_search:"Carian bersumber",
+    search_excerpt:"Petikan carian sahaja",links_only:"Pautan ada, bacaan belum disahkan",
+    no_external_evidence:"Tiada bukti sumber luaran"};
+   const label=labels[evidence.level];
+   if(label)return {state:evidence.level,label,count:safeCount(evidence.sourceCount)};
+  }
   if(data.mode==="local-limitation")return {state:"belum_disahkan",label:"Sumber belum disahkan",count:0};
   if(trace==="success"&&used.includes("url_context"))return {state:"dibaca",label:"URL dibaca sebagai teks",count};
   if(used.includes("tavily_extract")||used.includes("owned_page_html"))return {state:"dibaca",label:"Teks halaman diperoleh",count};

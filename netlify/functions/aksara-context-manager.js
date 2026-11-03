@@ -5,6 +5,20 @@ const STOP=new Set("yang dan atau untuk kepada dalam adalah dengan saya aku kau 
 function words(s){return [...new Set(String(s||"").toLocaleLowerCase("ms-MY").match(/[\p{L}\p{N}]{3,}/gu)||[])].filter(w=>!STOP.has(w)).slice(0,72);}
 const CORRECTION=/(?:maksud aku|bukan begitu|bukan macam tu|sebenarnya|pembetulan|jangan ubah|jangan usik|aku pilih|keputusan akhir|kekalkan|tolong ingat|yang aku nak)/i;
 const ELLIPTICAL=/^(?:lagi|teruskan|sambung|yang tadi|yang tu|itu|dia|kenapa|mengapa|maksudnya|yang kedua|yang ketiga|bukan tu|bukan macam tu|pastu|lepas tu|jadi|macam mana|kalau begitu|ok|okay|ye|ya)\b/i;
+const ORDINAL_WORDS=["pertama","kedua","ketiga","keempat","kelima","keenam"];
+function requestedOrdinal(question){
+ const q=String(question||"").toLocaleLowerCase("ms-MY");
+ const words=ORDINAL_WORDS.join("|");
+ const match=q.match(new RegExp("\\b(?:yang|pilihan|opsyen|cadangan|nombor|no\\.?|item)\\s*(?:"+words+"|[1-6])\\b","i"));
+ if(!match)return 0;
+ const choice=match[0].match(new RegExp("("+words+"|[1-6])$","i"))?.[1]||"";
+ return /^[1-6]$/.test(choice)?Number(choice):ORDINAL_WORDS.indexOf(choice)+1;
+}
+function ordinalMention(text,index){
+ if(!index)return false;
+ const word=ORDINAL_WORDS[index-1];
+ return new RegExp("(?:\\b"+word+"\\b|(?:^|\\n)\\s*"+index+"\\s*[).:]|\\b(?:pilihan|opsyen|cadangan|nombor)\\s*"+index+"\\b)","i").test(text);
+}
 function selectHistory(rows,question,{maxChars=28000,keepRecent=7}={}){
  const history=Array.isArray(rows)?rows.filter(x=>x&&["user","assistant"].includes(x.role)&&typeof x.content==="string"&&x.content.trim()).slice(-70):[];
  if(!history.length)return [];
@@ -22,16 +36,18 @@ function selectHistory(rows,question,{maxChars=28000,keepRecent=7}={}){
  for(let i=history.length-1;i>=recentStart;i--)include(i);
  const tokens=new Set(words(question));
  const continuity=ELLIPTICAL.test(String(question||"").trim());
+ const ordinal=requestedOrdinal(question);
  const candidates=[];
  for(let i=0;i<recentStart;i++){
   const message=history[i],terms=words(message.content);
   const overlap=terms.filter(w=>tokens.has(w)).length;
   const correction=message.role==="user"&&CORRECTION.test(message.content);
+  const ordinalMatched=continuity&&ordinalMention(message.content,ordinal);
   // Keep explicit decisions useful in short follow-ups, but favour recent
   // corrections over stale ones and avoid blindly copying every old message.
-  const score=overlap*6+(correction?(overlap?12:continuity?7:2):0)+
+  const score=overlap*6+(ordinalMatched?19:0)+(correction?(overlap?12:continuity?7:2):0)+
    (message.role==="user"?1:0)+i/Math.max(1,recentStart);
-  if(overlap||correction)candidates.push({i,score});
+  if(overlap||correction||ordinalMatched)candidates.push({i,score});
  }
  candidates.sort((a,b)=>b.score-a.score||b.i-a.i);
  let older=0;
@@ -57,4 +73,4 @@ function composeTurn(question,sections=[]){
 function isReplyFeedback(question){
  return /(?:bahasa\s+(?:indonesia|indo|melayu)\s+ke\s+(?:tu|itu|ni|ini)|(?:kenapa|mengapa)\s+(?:kau|awak|ai)\s+(?:jawab|cakap|guna)|(?:jawapan|ayat|bahasa)\s+(?:kau|tadi|tu|itu)\s+(?:salah|pelik|lain)|(?:itu|tu)\s+(?:bahasa\s+)?indonesia)/i.test(String(question||"").trim());
 }
-module.exports={words,selectHistory,summarizeCorrection,composeTurn,isReplyFeedback};
+module.exports={words,requestedOrdinal,ordinalMention,selectHistory,summarizeCorrection,composeTurn,isReplyFeedback};
