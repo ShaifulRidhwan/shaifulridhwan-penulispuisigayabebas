@@ -4,7 +4,7 @@
  */
 const V3=require("./aksara-thinking-v3");
 const DETAIL=/(?:detail|terperinci|mendalam|perincian|perincikan|panjang lebar|kupas|huraikan|elaborate|in.depth|thorough|jelaskan lagi|terangkan lagi|explain lebih|lebih jelas|jelaskan lebih|terangkan lebih|lebih panjang|lebih detail|langkah demi langkah|jangan ringkas|tak nak ringkas|tak mahu ringkas)/i;
-const SHORT=/(?:ringkaskan|secara ringkas|jawab ringkas|jawab pendek|jawab padat|satu ayat|1 ayat|tl;dr|brief|tak perlu panjang|jangan panjang)/i;
+const SHORT=/(?:ringkaskan|secara ringkas|jawab ringkas|jawab pendek|jawab padat|huraikan ringkas|ringkas je|pendek je|satu ayat|1 ayat|tl;dr|brief|tak perlu panjang|jangan panjang)/i;
 const FOLLOWUP=/^(?:lagi|sambung|teruskan|lanjutkan|jelaskan lagi|terangkan lagi|lebih detail|lebih mendalam|lebih terperinci)[?.!\s]*$/i;
 const COMPLEX=new Set(["explain","technical","research","critique","hypothetical"]);
 function answerDepth({question="",intent={},history=[]}={}){
@@ -13,9 +13,10 @@ function answerDepth({question="",intent={},history=[]}={}){
  if(intent.reaction)return {level:"ringkas",reason:"reaction",explicit:false};
  if(intent.sensitive||intent.task==="support"||intent.simpleCalculation)
   return {level:"berisi",reason:"sensitive_or_simple",explicit:false};
+ const rejectsShort=/(?:jangan|tak nak|tak mahu)\s+(?:terlalu\s+)?(?:ringkas|pendek)/i.test(q);
+ if(SHORT.test(q)&&!rejectsShort)return {level:"ringkas",reason:"explicit_short",explicit:true};
  if(DETAIL.test(q)||(hasHistory&&FOLLOWUP.test(q)))
   return {level:"mendalam",reason:hasHistory&&FOLLOWUP.test(q)?"detailed_followup":"explicit_detail",explicit:true};
- if(SHORT.test(q))return {level:"ringkas",reason:"explicit_short",explicit:true};
  return {level:"berisi",reason:COMPLEX.has(intent.task)?"substantive_explanation":"default",explicit:false};
 }
 function planRequest({question="",mode="cahaya",intent={},profile={},basePlan={},history=[]}={}){

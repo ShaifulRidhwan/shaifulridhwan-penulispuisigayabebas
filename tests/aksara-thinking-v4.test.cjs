@@ -24,6 +24,8 @@ test("Explicit concise instructions override verbosity without silencing reasoni
  assert.equal(p.answerDepth,"ringkas");
  assert.equal(p.plan.thinkingLevel,"high");
  assert.equal(plan("Jelaskan DNS secara ringkas").answerDepth,"ringkas");
+ assert.equal(plan("Huraikan secara ringkas").answerDepth,"ringkas");
+ assert.equal(plan("Jelaskan lagi secara ringkas").answerDepth,"ringkas");
 });
 test("Acknowledgments and maths remain concise",()=>{
  assert.equal(plan("haa",{task:"conversation",reaction:true}).answerDepth,"ringkas");
