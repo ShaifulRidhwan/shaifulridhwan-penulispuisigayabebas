@@ -1,0 +1,46 @@
+/* AKSARA Voice 3.0 · progressive styling; existing glass UI stays intact. */
+.voice-style-row{
+  position:relative;z-index:2;width:min(100%,530px);
+  display:grid;grid-template-columns:auto minmax(145px,1fr);gap:6px 10px;align-items:center;
+  margin:0 auto;padding:8px 12px;border-radius:14px;
+  border:1px solid rgba(241,207,150,.25);
+  background:rgba(16,23,37,.52);backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+}
+.voice-style-row label{font:600 11px/1.25 'Space Grotesk','DM Sans',sans-serif;color:#f3dfbd;white-space:nowrap}
+.voice-style-row select{
+  width:100%;min-width:0;min-height:34px;max-width:100%;padding:6px 30px 6px 12px;
+  border:1px solid rgba(242,201,135,.36);border-radius:10px;
+  color:#f5e5ce;background:rgba(17,27,42,.93);
+  font:600 11px/1.35 'DM Sans',sans-serif;
+  color-scheme:dark;cursor:pointer;
+}
+.voice-style-row select option{color:#f5e5ce;background:#111b2a}
+.voice-style-row select:focus-visible{outline:2px solid #f8d9a2;outline-offset:2px}
+.voice-style-row select:disabled{opacity:.58;cursor:not-allowed}
+.voice-style-hint{grid-column:1/-1;font:400 10px/1.35 'DM Sans',sans-serif;text-align:center;color:#c9c2b6}
+.voice-phase-label{
+  position:relative;z-index:1;display:inline-flex;justify-content:center;align-items:center;
+  border:1px solid rgba(243,209,159,.24);border-radius:99px;
+  background:rgba(28,36,51,.6);color:#e9d2b0;
+  padding:4px 11px;font:600 10px/1.35 'Space Grotesk','DM Sans',sans-serif;
+  letter-spacing:.02em;
+}
+.voice-phase-label[data-phase="listening"]{border-color:rgba(135,207,177,.45);color:#b6e4cd}
+.voice-phase-label[data-phase="speaking"]{border-color:rgba(144,196,238,.49);color:#c0dff4}
+.voice-phase-label[data-phase="thinking"]{border-color:rgba(234,191,131,.5);color:#f2d4a1}
+.voice-phase-label[data-phase="connecting"]{border-color:rgba(242,193,139,.34)}
+.voice-phase-label[data-phase="paused"],.voice-phase-label[data-phase="error"]{border-color:rgba(243,155,145,.4)}
+.voice-panel[data-voice-phase="speaking"] .voice-wave i{box-shadow:0 0 20px rgba(160,202,244,.32)}
+@media(max-width:760px){
+  .voice-style-row{width:100%;padding:6px 8px;gap:4px 6px;grid-template-columns:75px minmax(0,1fr)}
+  .voice-style-row label,.voice-style-row select{font-size:10px}
+  .voice-style-row select{min-height:32px}
+  .voice-style-hint{font-size:9px}
+  .voice-phase-label{padding:3px 9px;font-size:9px}
+}
+@media(max-height:630px){
+  .voice-style-hint{display:none}
+  .voice-style-row{padding:4px 8px}
+}
+@media(prefers-reduced-motion:reduce){.voice-panel[data-voice-phase="speaking"] .voice-wave i{animation:none}}
