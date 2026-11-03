@@ -829,23 +829,6 @@ function discardFile(){
  fileState=null;ui.upload.value="";ui.docStatus.textContent="";ui.remove.hidden=true;update();
 }
 
-ui.remember.addEventListener("change",()=>{
- if(!ui.remember.checked&&!window.confirm("Matikan Simpan sesi? Semua arkib sesi tersimpan pada peranti ini akan dipadam. Eksport arkib dahulu jika mahu menyimpannya.")){
-  ui.remember.checked=true;return;
- }
- try{localStorage.setItem(SESSION_PREF_STORAGE,ui.remember.checked?"on":"off");}
- catch(_){ui.docStatus.textContent="Pilihan simpan sesi tidak boleh dikekalkan: storan pelayar disekat.";}
- if(ui.remember.checked)save();
- else try{localStorage.removeItem(STORAGE);}catch(_){ui.docStatus.textContent="Gagal padam snapshot sesi. Semak data laman dalam pelayar.";}
- window.dispatchEvent(new CustomEvent("ba:storage",{detail:{enabled:ui.remember.checked}}));
-});
-window.addEventListener("storage",event=>{
- if(event.key!==SESSION_PREF_STORAGE)return;
- const enabled=event.newValue!=="off";
- ui.remember.checked=enabled;
- if(!enabled)try{localStorage.removeItem(STORAGE);}catch(_){}
- window.dispatchEvent(new CustomEvent("ba:storage",{detail:{enabled,external:true}}));
-});
 ui.forget.addEventListener("click",()=>{ideas=[];renderIdeas();save();});
 ui.clear.addEventListener("click",()=>{
  if(busy)return;
@@ -1148,6 +1131,7 @@ ui.form.addEventListener("submit",submit);
 window.BilikAntaraBridge={
  snapshot:()=>({history:history.map(m=>({...m})),summary,summarizedThrough,thoughtMode,thoughtLedger:ideas.slice(-12)}),
  remember:()=>ui.remember.checked,
+ persistSession:save,
  load:entry=>{
  if(busy)return false;
  conversationEpoch++;discardFile();
