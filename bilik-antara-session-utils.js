@@ -96,7 +96,34 @@ function matchArchivedSession(archive,history){
  matches.sort((a,b)=>b.history.length-a.history.length||Number(b.at||0)-Number(a.at||0));
  return matches[0]?.id||null;
 }
-const api={tokens,selectMemory,importArchive,conversationTitle,matchArchivedSession};
+
+/* Apply only the entries actually changed in the current tab.
+ * A stale archive array must not overwrite other tabs' recent sessions. */
+function mergeArchive(latest,{upserts=[],removedIds=[],clearAll=false}={}){
+ const rows=Array.isArray(latest)?latest:[];
+ const byId=new Map();
+ if(!clearAll)for(const item of rows)
+  if(item&&typeof item.id==="string"&&item.id&&Array.isArray(item.history))
+   byId.set(item.id,item);
+ if(!clearAll){
+  for(const id of removedIds)if(typeof id==="string")byId.delete(id);
+  for(const item of upserts)if(item&&typeof item.id==="string"&&item.id&&Array.isArray(item.history))
+   byId.set(item.id,item);
+ }
+ return [...byId.values()].sort((a,b)=>(Number(!!b.pinned)-Number(!!a.pinned))||
+  (Number(b.at||0)-Number(a.at||0)));
+}
+/* A tab should recover its OWN archived conversation when another tab has
+ * overwritten the single legacy active snapshot in localStorage. */
+function resolveActiveSession(archive,restoredHistory,previousId){
+ const items=Array.isArray(archive)?archive:[];
+ const match=matchArchivedSession(items,restoredHistory);
+ const previous=typeof previousId==="string"?items.find(x=>x?.id===previousId):null;
+ if(previous)return {id:previousId,restoreEntry:match===previousId?null:previous};
+ if(match)return {id:match,restoreEntry:null};
+ return {id:null,restoreEntry:null};
+}
+const api={tokens,selectMemory,importArchive,conversationTitle,matchArchivedSession,mergeArchive,resolveActiveSession};
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 if(root)root.AksaraSessionUtils=api;
 })(typeof globalThis!=="undefined"?globalThis:this);
