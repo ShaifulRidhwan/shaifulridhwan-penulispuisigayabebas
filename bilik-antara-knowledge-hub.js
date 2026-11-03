@@ -9,6 +9,14 @@
 })(typeof window!=="undefined"?window:null,function(){
  "use strict";
  const fold=s=>String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("ms-MY");
+ // The nine published series poems: two in Duologi, three in Trilogi and four in Tetralogi.
+ // Restrict this panel to the user's actual published serial works, not the full archive.
+ const SERIES=Object.freeze([
+  {id:"duologi",label:"Duologi",ids:[25,26]},
+  {id:"trilogi",label:"Trilogi",ids:[27,28,29]},
+  {id:"tetralogi",label:"Tetralogi",ids:[30,31,32,33]}
+ ]);
+ const SERIES_BY_ID=new Map(SERIES.flatMap(series=>series.ids.map(id=>[id,series])));
  function rankPoems(poems,query,limit=7){
   const q=fold(query).trim().slice(0,90),terms=q.split(/\s+/).filter(t=>t.length>1).slice(0,8);
   return (Array.isArray(poems)?poems:[])
@@ -61,9 +69,9 @@
     '<button type="button" role="tab" data-tab="calc" id="knowledgeTabCalc" aria-controls="knowledgeCalc" aria-selected="false">Kira</button>',
    '</div>',
    '<section id="knowledgeWorks" role="tabpanel" aria-labelledby="knowledgeTabWorks">',
-    '<label for="knowledgeWorkSearch">Cari dalam arkib puisi AKSARA</label>',
-    '<input id="knowledgeWorkSearch" type="search" maxlength="90" autocomplete="off" placeholder="Contoh: aporia, masa, kebebasan">',
-    '<p class="knowledge-note">Carian setempat daripada arkib karya asli. Tidak menggunakan AI atau API berbayar.</p>',
+    '<label for="knowledgeWorkSearch">Puisi bersiri AKSARA</label>',
+    '<input id="knowledgeWorkSearch" type="search" maxlength="90" autocomplete="off" placeholder="Cari judul atau baris puisi bersiri">',
+    '<p class="knowledge-note">Duologi · Trilogi · Tetralogi. Sembilan puisi asal, dibaca setempat tanpa API berbayar.</p>',
     '<p id="knowledgeWorkStatus" class="knowledge-note" role="status">Arkib dimuatkan apabila panel dibuka.</p>',
     '<div id="knowledgeWorkResults" class="knowledge-results"></div>',
    '</section>',
@@ -109,6 +117,12 @@
    box.className="knowledge-item";box.append(title,excerpt);
    const details=made("details"),summary=made("summary","Baca teks karya");
    details.append(summary,made("p",p.lines.join("\n")));box.append(details);
+   const series=SERIES_BY_ID.get(Number(p.id));
+   if(series){
+    const link=made("a","Buka siri di laman utama");
+    link.className="knowledge-series-link";link.href="/#"+series.id;
+    link.target="_blank";link.rel="noopener noreferrer";box.append(link);
+   }
    const button=made("button","Tanya AKSARA");button.type="button";
    button.addEventListener("click",()=>draft("Analisis puisi "+p.title+
     " karya Shaiful Ridhwan. Huraikan metafora dan makna berdasarkan arkib AKSARA; jangan reka petikan."));
@@ -116,10 +130,18 @@
   }
   function filter(){
    if(!poems)return;
-   const items=rankPoems(poems,search.value);
-   results.replaceChildren(...items.map(card));
-   status.textContent=items.length?items.length+" karya dipaparkan daripada "+poems.length+" entri arkib.":
-    "Tiada karya sepadan. Cuba kata kunci lain.";
+   const items=rankPoems(poems,search.value,9);
+   const fragment=d.createDocumentFragment();
+   for(const series of SERIES){
+    const group=items.filter(p=>SERIES_BY_ID.get(p.id)?.id===series.id);
+    if(!group.length)continue;
+    const heading=made("h3",series.label+" · "+group.length+" puisi");
+    heading.className="knowledge-group-title";
+    fragment.append(heading,...group.map(card));
+   }
+   results.replaceChildren(fragment);
+   status.textContent=items.length?items.length+" daripada "+poems.length+" puisi bersiri dipaparkan.":
+    "Tiada puisi bersiri sepadan. Cuba judul atau kata kunci lain.";
   }
   function load(){
    if(pending)return pending;
@@ -127,7 +149,7 @@
    pending=win.fetch("karya-index.json",{headers:{Accept:"application/json"}})
     .then(r=>{if(!r.ok)throw Error("Arkib tidak tersedia");return r.json();})
     .then(data=>{if(!Array.isArray(data))throw Error("Format arkib tidak sah");
-     poems=data.filter(p=>p&&typeof p.title==="string"&&Array.isArray(p.lines));
+     poems=data.filter(p=>p&&typeof p.title==="string"&&Array.isArray(p.lines)&&SERIES_BY_ID.has(Number(p.id)));
      filter();return poems.length;})
     .catch(()=>{status.textContent="Arkib gagal dimuatkan. Semak sambungan dan buka semula panel.";
      pending=null;return 0;});

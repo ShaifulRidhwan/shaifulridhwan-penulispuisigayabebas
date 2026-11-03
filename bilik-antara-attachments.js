@@ -112,6 +112,15 @@ const validMediaExtensions={
  gif:"image/gif",webp:"image/webp"
 };
 const imageMime=new Set(["image/jpeg","image/png","image/webp"]);
+async function imageDimensions(file){
+ if(typeof createImageBitmap!=="function")return null;
+ let bitmap=null;
+ try{
+  bitmap=await createImageBitmap(file);
+  return {width:bitmap.width,height:bitmap.height};
+ }catch(_){return null;}
+ finally{bitmap?.close?.();}
+}
 function cleanupStaged(items){
  for(const item of items)if(item.previewURL)URL.revokeObjectURL(item.previewURL);
 }
@@ -135,7 +144,8 @@ function renderAttachmentTray(){
   name.title=item.name;
   details.append(name,elem("span","attachment-chip-size",bytesLabel(item.size)+
    (item.uploadSize&&item.uploadSize<item.size?" → "+bytesLabel(item.uploadSize):"")+
-   (item.pdfPages?" · "+item.pdfPages+" hlm · teks":"")));
+   (item.pdfPages?" · "+item.pdfPages+" hlm · teks":"")+
+   (item.metadata?.width?" · "+item.metadata.width+"×"+item.metadata.height+" px":"")));
   const remove=document.createElement("button");remove.type="button";
   remove.className="attachment-chip-remove";remove.textContent="×";
   remove.setAttribute("aria-label","Buang "+item.name);remove.disabled=getBusy();
@@ -152,7 +162,8 @@ function rebuildFileState(note=""){
  else{
   const texts=stagedFiles.filter(f=>f.kind==="text").map(f=>"[FAIL: "+f.name+"]\n"+f.text);
   fileState={name:stagedFiles.map(f=>f.name).join(", ").slice(0,240),
-   text:texts.join("\n\n"),media:stagedFiles.filter(f=>f.kind==="media").map(f=>f.media)};
+   text:texts.join("\n\n"),media:stagedFiles.filter(f=>f.kind==="media").map(f=>f.media),
+   metadata:stagedFiles.map(f=>({...f.metadata}))};
  }
  // The chip already displays the file name and size; screen readers still get the status.
  ui.docStatus.dataset.state=note?"warning":"ready";
@@ -282,6 +293,17 @@ async function readFiles(files,epoch=attachmentEpoch){
     mediaBytes+=blob.size;
    }
    if(pdfWarning&&!item.pdfWarning)item.pdfWarning=pdfWarning;
+   // File name, MIME, original byte size and last-modified timestamp are browser File metadata.
+   // Never extract EXIF GPS, device identifiers or camera serials, and never upload these
+   // values merely because the user selected a file.
+   const fileMeta={name,bytes:file.size,mimeType:file.type||item.mimeType||"application/octet-stream",
+    lastModified:Number(file.lastModified)||0};
+   if(item.pdfPages)fileMeta.pages=Number(item.pdfPages);
+   if(item.kind==="media"&&/^image\//.test(item.mimeType)){
+    const dimensions=await imageDimensions(file);
+    if(dimensions)Object.assign(fileMeta,dimensions);
+   }
+   item.metadata=fileMeta;
    added.push(item);knownNames.add(name.toLowerCase());
   }catch(error){if(item?.previewURL)URL.revokeObjectURL(item.previewURL);
    errors.push(String(file.name||"Fail")+": "+String(error.message||error).slice(0,150));}
