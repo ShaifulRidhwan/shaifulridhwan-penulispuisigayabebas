@@ -25,3 +25,11 @@
 #knowledgeHub [hidden]{display:none!important}
 @media(max-width:420px){#knowledgeHub{font-size:11px}#knowledgeHub .knowledge-results{max-height:210px}.knowledge-tabs button{font-size:10px}}
 @media(prefers-reduced-motion:reduce){#knowledgeHub *{scroll-behavior:auto!important}}
+
+/* Rujukan sebenar tanpa meninggalkan panel, pautan ke sumber asal tetap jelas. */
+#knowledgeHub .knowledge-work-original{display:inline-flex;align-items:center;justify-content:center;margin:6px 9px 4px 0;padding:8px 11px;min-height:32px;box-sizing:border-box;border:1px solid rgba(236,202,152,.4);border-radius:9px;color:#f0d39e;text-decoration:none;font:600 11px/1.4 "DM Sans",sans-serif}
+#knowledgeHub .knowledge-work-original:hover{background:rgba(235,197,141,.12);border-color:#f0d39e}
+#knowledgeHub .knowledge-work-original:focus-visible{outline:2px solid #f0d39e;outline-offset:2px}
+#knowledgeWikiStatus,#knowledgeCalcStatus{overflow-wrap:anywhere}
+#knowledgeWikiResults{max-height:min(275px,34dvh)}
+#knowledgeHub #knowledgeWikiSearch,#knowledgeHub #knowledgeCalcRun{background:rgba(235,197,141,.19)}
