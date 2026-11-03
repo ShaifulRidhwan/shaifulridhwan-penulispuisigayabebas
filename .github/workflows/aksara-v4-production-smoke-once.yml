@@ -54,6 +54,7 @@ jobs:
           print("AKSARA V4 production smoke: ALL PASS. No AI inference requests, no API keys.")
           PY
 
+      - uses: actions/checkout@v4
       - name: Install Chromium and PDF test tools
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.56.0 pdf-lib@1.17.1
