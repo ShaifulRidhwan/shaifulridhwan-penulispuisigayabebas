@@ -519,7 +519,6 @@ ui.conn.addEventListener("click",()=>{
 });
 let lastHealthVisual="";
 function refreshHealthVisual(){
- // Background tabs do not need status DOM work; resume on foreground.
  if(document.hidden)return;
  const state=multiHealth.render(),signature=state.rows.map(p=>p.id+":"+p.status).join("|");
  if(multiDialog.open&&signature!==lastHealthVisual)renderProviderRows(state.rows,multiCatalog);
@@ -719,11 +718,10 @@ function welcome(container=ui.chat){
 }
 function renderHistory(){
  if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
- restoringHistory=true; // No synchronous scrolling for each restored bubble.
+ restoringHistory=true;
  try{
  ui.chat.textContent="";
  ui.chat.classList.toggle("is-welcome",history.length===0);
- // Build off-DOM: one append and one final scroll for long restored sessions.
  const batch=document.createDocumentFragment();
  for(const m of history)addMessage(m.role,m.content,m,batch);
  ui.starters.hidden=history.length>0;
@@ -734,7 +732,6 @@ function renderHistory(){
 }
 function save(){
  if(!ui.remember.checked)return;
- // Respect an opt-out made in another open tab, even before its storage event.
  try{if(localStorage.getItem(SESSION_PREF_STORAGE)==="off"){
   ui.remember.checked=false;return;
  }}catch(_){}
@@ -744,7 +741,6 @@ function save(){
 }
 function restore(){
  try{
- // ON for a new installation. An explicit OFF choice remains authoritative.
  ui.remember.checked=localStorage.getItem(SESSION_PREF_STORAGE)!=="off";
  if(!ui.remember.checked)return;
  const stored=JSON.parse(localStorage.getItem(STORAGE)||"null");
@@ -1001,7 +997,7 @@ async function submit(event){
  if(!typed&&!fileState)return;
  const question=typed||"Analisis lampiran ini dan bezakan fakta daripada perkara yang belum disahkan.";
  const followUpTarget=starterFollowUpTarget;
- starterFollowUpTarget=""; // One-shot intent from a clicked starter, never inferred from chat text.
+ starterFollowUpTarget="";
  const selectedFile=fileState;
  const requestMode=thoughtMode;
  const sentAt=Date.now(),sentLocation=messageLocation;
