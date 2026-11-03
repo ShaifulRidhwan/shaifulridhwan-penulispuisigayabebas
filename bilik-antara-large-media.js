@@ -56,8 +56,8 @@ async function frameBlob(video,limitBytes){
  if(smallest&&smallest.size<=limitBytes)return smallest;
  throw Error("Bingkai video tidak dapat dimampatkan dalam had mesej.");
 }
-async function sampleVideo(file,{budget=MAX_FRAME_BUDGET,onProgress=()=>{},cancelled=()=>false}={}){
- if(!file||!acceptedSource(file.type,file.size)||!file.type.startsWith("video/"))
+async function sampleVideo(file,{mimeType=file?.type,budget=MAX_FRAME_BUDGET,onProgress=()=>{},cancelled=()=>false}={}){
+ if(!file||!acceptedSource(mimeType,file.size)||!mimeType.startsWith("video/"))
   throw Error("Video mesti MP4/WebM dan tidak melebihi 128 MB.");
  if(typeof document==="undefined"||typeof URL?.createObjectURL!=="function")
   throw Error("Penyediaan video memerlukan browser yang menyokong video dan canvas.");

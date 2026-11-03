@@ -56,8 +56,8 @@
 <link rel="stylesheet" href="bilik-antara-multi-ai-status.css?v=1" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="bilik-antara-knowledge-hub.css?v=2" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-multi-ai-status.css?v=1"></noscript>
-<link rel="stylesheet" href="bilik-antara-attachments.css?v=2" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="bilik-antara-attachments.css?v=1"></noscript>
+<link rel="stylesheet" href="bilik-antara-attachments.css?v=3" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="bilik-antara-attachments.css?v=3"></noscript>
 <link rel="stylesheet" href="aksara-header.css?v=3" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="aksara-header.css?v=3"></noscript>
 <link rel="stylesheet" href="bilik-antara-suite.css?v=9" media="print" onload="this.media='all'">
@@ -168,14 +168,14 @@
 <dialog class="multi-ai-dialog attachment-dialog" id="attachmentDialog" aria-labelledby="attachmentTitle" aria-describedby="attachmentHelp">
 <div class="multi-ai-head"><div><strong id="attachmentTitle">Tambah lampiran</strong><p id="attachmentHelp">Pilih bahan untuk analisis atau buka kod dalam Workspace. Fail kekal dalam tab ini sehingga dihantar.</p></div><button type="button" id="attachmentClose" aria-label="Tutup pilihan lampiran">×</button></div>
 <div class="attachment-options">
-<button type="button" class="attachment-option" data-attachment-type="photo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="2"/><path d="m4 17 5-5 4 4 3-3 5 4"/></svg><span><strong>Foto &amp; Kamera</strong><small>JPG, PNG, WebP, GIF · Galeri</small></span><span aria-hidden="true">›</span></button>
-<button type="button" class="attachment-option" data-attachment-type="video"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 6 3-6 3z"/></svg><span><strong>Video</strong><small>MP4, WebM · Media pendek</small></span><span aria-hidden="true">›</span></button>
+<button type="button" class="attachment-option" data-attachment-type="photo"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8" cy="9" r="2"/><path d="m4 17 5-5 4 4 3-3 5 4"/></svg><span><strong>Foto &amp; Kamera</strong><small>JPG, PNG, WebP, GIF · 64 MB</small></span><span aria-hidden="true">›</span></button>
+<button type="button" class="attachment-option" data-attachment-type="video"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="m10 9 6 3-6 3z"/></svg><span><strong>Video</strong><small>MP4, WebM · 128 MB</small></span><span aria-hidden="true">›</span></button>
 <button type="button" class="attachment-option" data-attachment-type="document"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M9 12h6M9 16h6"/></svg><span><strong>Dokumen</strong><small>PDF, DOCX, TXT, MD, CSV, JSON</small></span><span aria-hidden="true">›</span></button>
 <button type="button" class="attachment-option" data-attachment-type="audio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="10" y="3" width="4" height="11" rx="2"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M8 21h8"/></svg><span><strong>Audio</strong><small>MP3, M4A, WAV, OGG, WebM</small></span><span aria-hidden="true">›</span></button>
 <button type="button" class="attachment-option" data-attachment-type="code"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-16-4 24"/></svg><span><strong>Kod</strong><small>HTML, CSS, JS, TS, Python, SQL, C++</small></span><span aria-hidden="true">›</span></button>
 </div>
 <div class="attachment-quick-actions"><button type="button" id="attachmentCameraAction">Ambil gambar dengan kamera</button><button type="button" id="attachmentRecordAction">Rakam suara</button><button type="button" id="attachmentRecordStop" hidden>Henti rakaman</button></div>
-<p id="attachmentRecordStatus" class="attachment-helper" role="status" aria-live="polite">Teks sehingga 1 juta aksara · gambar besar dimampatkan setempat · media gabungan 3.85 MB selepas mampatan. Kamera dan mikrofon hanya selepas izin kau.</p>
+<p id="attachmentRecordStatus" class="attachment-helper" role="status" aria-live="polite" hidden></p>
 </dialog>
 <dialog class="multi-ai-dialog meta-location-dialog" id="metaLocationDialog" aria-labelledby="metaLocationTitle" aria-describedby="metaLocationHelp">
 <div class="multi-ai-head"><div><strong id="metaLocationTitle">Lokasi mesej</strong><p id="metaLocationHelp">Pilihan. Isi bandar atau negeri sahaja. Tiada GPS automatik, dan lokasi ini tidak dihantar kepada model A.I.</p></div><button type="button" id="metaLocationClose" aria-label="Tutup lokasi">×</button></div>
@@ -1190,13 +1190,14 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-suite.js?v=17" defer></script>
 <script src="bilik-antara-code-runtime.js?v=6" defer></script>
 <script src="bilik-antara-code-health.js?v=1" defer></script>
-<script src="bilik-antara-code-status.js?v=19" defer></script>
+<script src="bilik-antara-code-status.js?v=20" defer></script>
 <script src="bilik-antara-code-execution.js?v=2" defer></script>
 <script src="bilik-antara-code-chat.js?v=6" defer></script>
 <script src="bilik-antara-code-bridge.js?v=2" defer></script>
-<script src="bilik-antara-code-agent.js?v=3" defer></script>
+<script src="bilik-antara-code-agent.js?v=4" defer></script>
 <script src="bilik-antara-pdf-reader.js?v=3" defer></script>
-<script src="bilik-antara-attachments.js?v=4" defer></script>
+<script src="bilik-antara-large-media.js?v=1" defer></script>
+<script src="bilik-antara-attachments.js?v=5" defer></script>
 <script src="bilik-antara-code-workspace.js?v=4" defer></script>
 <script src="bilik-antara-code-evaluation.js?v=1" defer></script>
 <script src="bilik-antara-brain.js?v=15" defer></script>
