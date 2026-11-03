@@ -40,7 +40,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await voice.count(),1);
   const voiceText=await voice.locator(".aksara-observe-body").textContent();
   assert.match(voiceText,/Sambungan: Tidak aktif/);
-  assert.match(voiceText,/Konteks audio aktif bukan bukti suara/);
+  assert.match(voiceText,/Masa audio pertama ialah jadual Web Audio/);
 
   // Memory is enabled for new visitors; draft edits are not persisted until Save.
   await page.locator("#settingsPanel > summary").click();

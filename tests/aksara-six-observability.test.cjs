@@ -83,7 +83,7 @@ test("Voice: diagnostik membezakan sambungan sebenar, mikrofon dan AudioContext"
  assert.match(ui,/snap\.connected\?"Tersambung"/);
  assert.match(ui,/snap\.microphoneState==="running"/);
  assert.match(ui,/snap\.playbackState==="running"/);
- assert.match(ui,/Konteks audio aktif bukan bukti suara telah dimainkan/);
+ assert.match(ui,/Masa audio pertama ialah jadual Web Audio/);
  assert.doesNotMatch(ui,/transcript\.|media\.data|pendingAudio\b/);
 });
 test("Prestasi: hanya sampel sebenar, token tidak dilaporkan bukan sifar",()=>{
@@ -103,7 +103,7 @@ test("Enam status v2 tidak menghantar telemetry, mengaktifkan alat atau mendedah
   assert.doesNotMatch(code,/fetch\s*\(|XMLHttpRequest|sendBeacon|localStorage\.setItem|sessionStorage\.setItem/);
   assert.doesNotMatch(code,/\.prompt|\.question|\.answer|\.transcript|\.token|\.apiKey|\.messages/);
  }
- assert.match(html,/bilik-antara-observability\.js\?v=1/);
+ assert.match(html,/bilik-antara-observability\.js\?v=2/);
  assert.match(studio,/studio-antara-status\.js\?v=1/);
  assert.match(studio,/studio-antara-cloud\.js\?v=9/);
  assert.ok(html.length<80000,"Bilik Antara initial HTML budget");

@@ -31,10 +31,11 @@ test("Retired recorded-audio UI is absent from source and active live page",()=>
  assert.doesNotMatch(css,/\.voice-fallback|\.composer-voice|#voiceFallback(Start|Stop|Status)/);
  assert.doesNotMatch(js,/getElementById\("voiceFallback"\)/);
 });
-test("Regional voice selector is removed, leaving only colloquial Malaysian Malay",()=>{
- assert.doesNotMatch(html,/id="voiceDialect"|voice-dialect-bar|bilik-antara-voice-locale/);
+test("Voice regional selector exposes colloquial Malay and new dialect styles",()=>{
+ assert.match(html,/id="voiceDialectSelect"/);
+ assert.match(html,/bilik-antara-dialek\.js\?v=4/);
+ assert.match(js,/styleSelect=\$\("voiceDialectSelect"\)/);
  assert.doesNotMatch(css,/\.voice-dialect-bar/);
- assert.doesNotMatch(js,/dialectChoice|dialectSelect|voiceLocale|voiceDialect/);
   assert.match(html,/>Voice Chat<\/button>/);
   assert.match(js,/liveButton\.textContent=liveActive\?"Sedang berbual":"Voice Chat"/);
   assert.match(css,/\.conversation-head #voiceLive::before/);
@@ -53,7 +54,7 @@ test("Short Malay words trigger a natural answer, not five requests to repeat",(
  assert.match(js,/removeItem\("bilik-antara:voice-dialect:v1"\)/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/lapar/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/Jangan meminta ulang/);
- assert.match(js,/Bahasa Melayu Malaysia santai/);
+ assert.match(js,/Bahasa Gaul/);
 });
 test("Long generated speech is buffered and does not cut off after three seconds",()=>{
  assert.match(js,/function drainAudioQueue\(\)/);
@@ -78,6 +79,7 @@ test("A 12.5-second generated reply plays every chunk in order without truncatio
  };
  const simulate=new Function("context",[
   "let pendingAudio=[],pendingAudioBytes=0,audioQueueGeneration=0,modelTurnFinished=false;",
+  "let turnHeardAt=0,voiceMetrics={firstAudioScheduledMs:null,audioOverflows:0};function setVoicePhase(){}",
   "const MAX_PENDING_AUDIO_BYTES=12*1024*1024,MAX_SCHEDULE_AHEAD=5;",
   "let playSources=new Set(),nextAudioTime=0,playContext=context,playGain=null,speakerEnabled=true,suppressPlaybackUntilUser=false;",
   "const panel={classList:{add(){},remove(){}}};let warnings=[];",
@@ -433,7 +435,7 @@ test("Voice errors distinguish Google token rejection from permission and WebSoc
  assert.match(js,/ws\.onclose=event=>/);
  assert.match(js,/Number\(event\.code\)\|\|1006/);
  assert.match(js,/visibilityTimer=setTimeout/);
- assert.match(js,/8000/);
+ assert.match(js,/45000/);
 });
 test("Rejected Google token attempts are not counted as completed Live sessions",async()=>{
  process.env.GEMINI_API_KEY="fake-key-for-test";
@@ -464,7 +466,7 @@ function voiceHarness(options={}){
  const item=id=>{
   if(items.has(id))return items.get(id);
   const handlers={},attrs={};
-  const x={hidden:false,disabled:false,style:{setProperty(){}},classList:{add(){},remove(){},toggle(){return true}},textContent:"",children:[],value:"",scrollHeight:0,
+  const x={hidden:false,disabled:false,dataset:{},style:{setProperty(){}},classList:{add(){},remove(){},toggle(){return true}},textContent:"",children:[],value:"",scrollHeight:0,
    addEventListener:(n,fn)=>handlers[n]=fn,listener:n=>handlers[n],
    setAttribute:(n,v)=>attrs[n]=v,getAttribute:n=>attrs[n],
    querySelectorAll(){return [];},replaceChildren(){this.children=[];},appendChild(v){this.children.push(v);},disconnect(){}};
@@ -475,7 +477,7 @@ function voiceHarness(options={}){
  const stream={getTracks:()=>[track],getAudioTracks:()=>[track]};
  const audioSources=[];
  class Audio{static instances=[];constructor(){Audio.instances.push(this);this.state="running";this.resumeCount=0;this.audioWorklet={addModule:async()=>{}};this.destination={};this.currentTime=0;}
-  resume(){this.state="running";this.resumeCount++;return Promise.resolve()}close(){return Promise.resolve()}
+  resume(){this.state="running";this.resumeCount++;return Promise.resolve()}suspend(){this.state="suspended";return Promise.resolve()}close(){return Promise.resolve()}
   createBuffer(_channels,frames,rate){return{duration:frames/rate,getChannelData:()=>new Float32Array(frames)}}
   createBufferSource(){const source={connect(){},disconnect(){},start(){},stop(){this.stopped=true}};audioSources.push(source);return source;}
   createMediaStreamSource(){return{connect(){},disconnect(){}}}
@@ -494,6 +496,8 @@ function voiceHarness(options={}){
   isSecureContext:true,AudioContext:Audio,AudioWorkletNode:Worklet,WebSocket:Socket,
   BilikAntaraBrain:sharedBrain,
   BilikAntaraIdentity:creatorIdentity,
+  BilikAntaraDialek:require("../bilik-antara-dialek.js"),
+  AksaraVoiceCoreV3:require("../bilik-antara-voice-core-v3.js"),
   addEventListener:(n,fn)=>events.set(n,[...(events.get(n)||[]),fn]),
   removeEventListener:(n,fn)=>events.set(n,(events.get(n)||[]).filter(f=>f!==fn)),
   dispatchEvent:e=>(events.get(e.type)||[]).forEach(fn=>fn(e))
@@ -538,6 +542,37 @@ function voiceHarness(options={}){
   visibility:async(hidden)=>{doc.hidden=hidden;docEvents.get("visibilitychange")?.();await flush();}
  };
 }
+test("Voice v3 selector debounces Perak and keeps Aoede on the new socket",async()=>{
+ const h=voiceHarness(),first=await h.start(),selector=h.item("voiceDialectSelect");
+ assert.ok(selector.children.some(option=>option.value==="gaul"));
+ selector.value="perak";selector.listener("change")();
+ await h.advance(500);
+ assert.equal(h.called(),1,"Do not waste credentials on intermediate style choices");
+ await h.advance(350);
+ assert.equal(h.called(),2);
+ const second=h.Socket.instances.at(-1);
+ assert.notEqual(second,first);
+ assert.equal(second.sent[0].setup.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName,"Aoede");
+ assert.match(second.sent[0].setup.systemInstruction.parts[0].text,/GAYA BAHASA VOICE YANG AKTIF: Perak/);
+ assert.equal(h.track.stopped,undefined);
+});
+test("Voice v3 Thinking Mode change reconfigures without ending the microphone session",async()=>{
+ const h=voiceHarness();await h.start();
+ h.page.dispatchEvent({type:"ba:thought-mode-changed"});
+ await h.advance(750);
+ assert.equal(h.called(),2,"Mode change requires a fresh one-use token at a quiet boundary");
+ assert.equal(h.track.stopped,undefined,"Mode change should preserve microphone permission");
+});
+test("Voice v3 pauses microphone in background and safely resumes within 45 seconds",async()=>{
+ const h=voiceHarness();await h.start();
+ await h.visibility(true);
+ assert.equal(h.track.enabled,false);
+ await h.advance(10000);
+ assert.equal(h.track.stopped,undefined);
+ await h.visibility(false);
+ assert.equal(h.track.enabled,true);
+ assert.equal(h.called(),1,"Healthy foreground recovery should not create a new socket");
+});
 test("Voice resumption reuses microphone and keeps Google handle in memory only",async()=>{
  const h=voiceHarness();
  const {item,Socket,track,events,modeRequests}=h;
