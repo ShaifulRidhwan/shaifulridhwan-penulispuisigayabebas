@@ -55,5 +55,45 @@
    await task.destroy().catch(()=>{});
   }
  }
- root.AksaraPdfReader=Object.freeze({read,maxBytes:MAX_PDF_BYTES,maxPages:MAX_PAGES});
+ // Explicit opt-in only. PDF.js rasterizes at most three pages locally;
+ // Tesseract does not accept PDFs directly. Language assets load from CDN.
+ const OCR_URL="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.0/dist/tesseract.esm.min.js";
+ async function readOcr(file,{allowed=false,maxPages=3,signal}={}){
+  if(!allowed)throw Error("OCR memerlukan izin pengguna.");
+  if(!file||!file.size||file.size>12000000)throw Error("OCR terhad kepada PDF sehingga 12 MB.");
+  if(signal?.aborted)throw Error("OCR dibatalkan.");
+  const pdfjs=await engine();
+  const module=await import(OCR_URL);
+  if(typeof module.createWorker!=="function")throw Error("OCR engine tidak tersedia.");
+  const task=pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer()),
+   isEvalSupported:false,enableXfa:false,stopAtErrors:false});
+  let worker=null;
+  try{
+   const doc=await task.promise,limit=Math.min(doc.numPages,Math.max(1,Math.min(3,maxPages)));
+   worker=await module.createWorker("eng");
+   const sections=[];let characters=0;
+   for(let i=1;i<=limit;i++){
+    if(signal?.aborted)throw Error("OCR dibatalkan.");
+    const page=await doc.getPage(i),viewport=page.getViewport({scale:1.3});
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
+    if(canvas.width*canvas.height>6500000)throw Error("Resolusi halaman terlalu tinggi untuk OCR setempat.");
+    const context=canvas.getContext("2d",{alpha:false});
+    if(!context)throw Error("Canvas tidak disokong.");
+    try{
+     await page.render({canvasContext:context,viewport}).promise;
+     const result=await worker.recognize(canvas);
+     const text=String(result?.data?.text||"").trim().slice(0,30000);
+     if(text){sections.push("[OCR Halaman "+i+"]\n"+text);characters+=text.length;}
+    }finally{canvas.width=0;canvas.height=0;page.cleanup();}
+    if(characters>85000)break;
+   }
+   return {text:sections.join("\n\n").slice(0,95000),pages:doc.numPages,
+    scannedPages:limit,partial:doc.numPages>limit,method:"local_ocr_not_full_document"};
+  }finally{
+   if(worker)await worker.terminate().catch(()=>{});
+   await task.destroy().catch(()=>{});
+  }
+ }
+ root.AksaraPdfReader=Object.freeze({read,readOcr,maxBytes:MAX_PDF_BYTES,maxPages:MAX_PAGES});
 })(window);
