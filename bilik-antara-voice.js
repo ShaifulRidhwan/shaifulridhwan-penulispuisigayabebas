@@ -34,7 +34,7 @@ function selectVoiceStyle(id){
  if(!dialectControl?.has(id))id="auto";
  preferredStyleId=id;
  if(styleSelect)styleSelect.value=id;
- if(styleHint)styleHint.textContent="Aoede kekal · "+dialectControl.label(id)+" dipilih";
+ if(styleHint)styleHint.textContent="Aoede kekal · "+(dialectControl?.label?.(id)||"Bahasa Melayu Santai")+" dipilih";
  try{window.sessionStorage?.setItem(STYLE_KEY,id);}catch(_){}
  return id;
 }
