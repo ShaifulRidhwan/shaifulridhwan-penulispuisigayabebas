@@ -14,7 +14,7 @@ const dialectControl=window.BilikAntaraDialek;
 const voiceCore=window.AksaraVoiceCoreV3;
 const styleSelect=$("voiceDialectSelect"),styleHint=$("voiceDialectHint"),phaseLabel=$("voicePhaseLabel");
 const STYLE_KEY="ba:voice-style:v3";
-let preferredStyleId="auto",voicePhase="idle";
+let preferredStyleId="gaul",voicePhase="idle",confirmedStyleId=null,voiceUI=null;
 try{const saved=window.sessionStorage?.getItem(STYLE_KEY);if(saved&&dialectControl?.has(saved))preferredStyleId=saved;}catch(_){}
 if(styleSelect&&dialectControl?.options){
  styleSelect.replaceChildren();
@@ -29,17 +29,19 @@ function setVoicePhase(phase){
  voicePhase=Object.prototype.hasOwnProperty.call(labels,phase)?phase:"idle";
  panel.dataset.voicePhase=voicePhase;
  if(phaseLabel){phaseLabel.dataset.phase=voicePhase;phaseLabel.textContent=labels[voicePhase];}
+ voiceUI?.updateSelection?.();
 }
 function selectVoiceStyle(id){
- if(!dialectControl?.has(id))id="auto";
+ if(!dialectControl?.has(id))id="gaul";
  preferredStyleId=id;
  if(styleSelect)styleSelect.value=id;
- if(styleHint)styleHint.textContent="Aoede kekal · "+(dialectControl?.label?.(id)||"Bahasa Melayu Santai")+" dipilih";
+ if(styleHint)styleHint.textContent="Aoede · "+(dialectControl?.label?.(id)||"Bahasa Gaul")+" dipilih";
+ voiceUI?.updateSelection?.();
  try{window.sessionStorage?.setItem(STYLE_KEY,id);}catch(_){}
  return id;
 }
 selectVoiceStyle(preferredStyleId);
-let activeDialect="auto",dialectContextStart=0,dialectSwitching=false;
+let activeDialect="gaul",dialectContextStart=0,dialectSwitching=false;
 let pendingDialect=null,dialectTimer=null,dialectReconnect=null,replayDialectRequest="";
 let modeReconnect=null,thoughtUpdateTimer=null,thoughtUpdatePendingSince=0,styleChangeTimer=null;
 function scheduleDialectSwitch(phrase){
@@ -62,8 +64,8 @@ function scheduleDialectSwitch(phrase){
 // The regional voice preference was retired; clean its obsolete browser key.
 try{window.localStorage?.removeItem("bilik-antara:voice-dialect:v1");}catch(_){}
 const languageLock=[
- "Speak naturally in Malaysian Malay. Default to colloquial Bahasa Melayu Malaysia, but YOU MAY SPEAK IN MALAYSIAN STATE DIALECTS when requested or when the user consistently speaks one. Do not randomly switch to Spanish or another unrelated language.",
- "Boleh faham serta bertutur dalam loghat Perak, Kedah, Penang, Kelantan, Terengganu, Negeri Sembilan, Johor, Sabah, Sarawak dan lain-lain. Ikut loghat pengguna secara organik; jangan reka loghat atau menukar negeri berdasarkan satu perkataan. Jika tak pasti, guna Melayu Malaysia santai.",
+ "Speak naturally in Malaysian Malay. Default to natural Malaysian Bahasa Gaul, unless the user selects a regional speech style. Never switch dialects or languages without a user request.",
+ "Gaya tersedia: Bahasa Gaul, Perak, Kedah dan Penang, Kelantan, Terengganu, Negeri Sembilan, Sabah dan Sarawak. Hormati pilihan eksplisit pengguna. Jika tak pasti, gunakan Melayu gaul yang bersahaja tanpa mereka-reka loghat.",
  "Untuk loghat tempatan, utamakan kosa kata dan ritma yang betul berbanding meniru aksen secara berlebihan. Suara sintesis mungkin tidak mampu menghasilkan semua sebutan negeri dengan tepat.",
  "VOICE SAHAJA: Hasilkan ayat lisan biasa tanpa emoji, nama emoji, reaksi ikon, Markdown, label visual atau arahan pentas. Jangan menyebut perkataan wink, smiley, emoji atau simbol sebagai penutup ayat. Jangan bacakan emoji dalam sejarah sembang.",
  "Perkataan pendek seperti 'lapar', 'haus', 'penat' dan 'bosan' ialah input yang jelas; jawab maksudnya terus. Jangan meminta ulang kecuali audio benar-benar tidak boleh difahami.",
@@ -99,7 +101,7 @@ const VOICE_TOOLS=[{functionDeclarations:[
 ]}];
 let advancedVoiceConfig=true,turnStartAt=0,turnHeardAt=0,lastCommand="",lastCommandAt=0,echoRiskSince=0,suppressPlaybackUntilUser=false;
 let voiceMetrics={startedAt:0,connections:0,reconnects:0,interruptions:0,commands:0,turns:0,audioChunks:0,echoRiskEvents:0,lastResponseLatencyMs:null,firstAudioScheduledMs:null,audioOverflows:0,backgroundPauses:0,modeChanges:0,styleChanges:0};
-const voiceDiagnosticSnapshot=()=>({...voiceMetrics,connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,advancedFeatures:advancedVoiceConfig,model:liveModel||"unknown",lockedVoice:LIVE_LOCKED_VOICE,voicePhase,selectedStyle:preferredStyleId,queuedAudioBytes:pendingAudioBytes,thoughtMode:window.BilikAntaraThought?.getMode?.()||"cahaya",dialect:activeDialect,dialectSwitching,reconnectAttempts:connectionAttempts,microphoneState:micContext?.state||"closed",playbackState:playContext?.state||"closed",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
+const voiceDiagnosticSnapshot=()=>({...voiceMetrics,connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,advancedFeatures:advancedVoiceConfig,model:liveModel||"unknown",lockedVoice:LIVE_LOCKED_VOICE,voicePhase,selectedStyle:preferredStyleId,confirmedStyle:confirmedStyleId,queuedAudioBytes:pendingAudioBytes,thoughtMode:window.BilikAntaraThought?.getMode?.()||"cahaya",dialect:activeDialect,dialectSwitching,reconnectAttempts:connectionAttempts,microphoneState:micContext?.state||"closed",playbackState:playContext?.state||"closed",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
 window.BilikAntaraVoiceDiagnostics={snapshot:voiceDiagnosticSnapshot};
 function handleSpokenControl(text){
  const q=String(text||"").toLocaleLowerCase("ms-MY").replace(/[.,!?]+$/g,"").trim();
@@ -127,6 +129,8 @@ const sayStatus=(value)=>{
  status.textContent=value;
  const derived=voiceCore?.phaseFromStatus?.(value)||"idle";
  if(derived!=="idle")setVoicePhase(derived==="thinking"&&playbackBusy()?"speaking":derived);
+ const critical=/gagal|tak dapat|tolak|putus|token|kuota|dihenti|latar|mikrofon terputus/i.test(String(value||""));
+ status.dataset.compact=critical?"false":"true";
 };
 const showNotice=(message)=>{notice.textContent=String(message||"").slice(0,230);notice.hidden=!message;};
 const setWave=(value)=>{waveform.style.setProperty("--voice-intensity",String(Math.max(.08,Math.min(1,value||0))));};
@@ -140,6 +144,7 @@ const setButtonState=()=>{
   micButton.setAttribute("aria-pressed",micEnabled?"true":"false");
   speakerButton.textContent=speakerEnabled?"Senyapkan suara":"Hidupkan suara";
   speakerButton.setAttribute("aria-pressed",speakerEnabled?"true":"false");
+  voiceUI?.renderControls?.();
 };
 if(!speechAPI){
   dictate.disabled=true;dictate.title="Pelayar ini tak boleh tukar suara jadi teks. Cuba Jom Voice Live.";
@@ -192,12 +197,12 @@ function stopAudioQueue(){
 }
 async function closeLive(reason){
   liveGeneration++;
-  liveReady=false;liveActive=false;
+  liveReady=false;liveActive=false;confirmedStyleId=null;
   if(dialectTimer){clearTimeout(dialectTimer);dialectTimer=null;}
   if(thoughtUpdateTimer){clearTimeout(thoughtUpdateTimer);thoughtUpdateTimer=null;}
   if(styleChangeTimer){clearTimeout(styleChangeTimer);styleChangeTimer=null;}
   modeReconnect=null;thoughtUpdatePendingSince=0;
-  pendingDialect=null;dialectReconnect=null;replayDialectRequest="";dialectSwitching=false;activeDialect="auto";dialectContextStart=0;
+  pendingDialect=null;dialectReconnect=null;replayDialectRequest="";dialectSwitching=false;activeDialect="gaul";dialectContextStart=0;
   if(startAbort){startAbort.abort();startAbort=null;}
   if(sessionTimer){clearTimeout(sessionTimer);sessionTimer=null;}
   if(dayTimer){clearTimeout(dayTimer);dayTimer=null;}
@@ -226,7 +231,7 @@ async function closeLive(reason){
   if(voiceTurns.length)window.BilikAntaraBridge?.addVoice?.(voiceTurns);
   transcript.replaceChildren();
   lastTurn=null;
-  setWave(0);setButtonState();setVoicePhase("idle");
+  setWave(0);setButtonState();setVoicePhase("idle");voiceUI?.updateSelection?.();
   if(reason)liveButton.title=reason;
 }
 function bytesBase64(pcm){
@@ -331,9 +336,9 @@ function onServerMessage(payload){
   if(payload.toolCall){handleVoiceTools(payload.toolCall);return;}
   if(payload.setupComplete){
     voiceMetrics.connections++;if(voiceMetrics.connections>1)voiceMetrics.reconnects++;
-    liveReady=true;setVoicePhase("listening");
+    liveReady=true;confirmedStyleId=activeDialect;setVoicePhase("listening");
     if(thoughtUpdateTimer){clearTimeout(thoughtUpdateTimer);thoughtUpdateTimer=null;thoughtUpdatePendingSince=0;}
-    selectVoiceStyle(activeDialect);
+    voiceUI?.updateSelection?.();
     window.dispatchEvent(new Event("ba:voice-connected"));
     if(connectTimer){clearTimeout(connectTimer);connectTimer=null;}
     const switched=dialectSwitching;
@@ -452,7 +457,7 @@ async function startLive(){
   panel.classList.remove("is-minimized");
   if(minimizeButton){minimizeButton.textContent="Minimize";minimizeButton.setAttribute("aria-expanded","true");}
   const speakingRule=languageLock;
-  activeDialect=preferredStyleId;dialectContextStart=0;dialectSwitching=false;
+  activeDialect=preferredStyleId;confirmedStyleId=null;dialectContextStart=0;dialectSwitching=false;
   pendingDialect=null;replayDialectRequest="";dialectReconnect=null;
   if(dialectTimer){clearTimeout(dialectTimer);dialectTimer=null;}
   liveActive=true;liveReady=false;micEnabled=true;speakerEnabled=true;
@@ -461,7 +466,7 @@ async function startLive(){
   sessionStarted=Date.now();resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;lastSpeechAt=0;connectedAt=0;
   try{preferStandardFallback=window.sessionStorage?.getItem(FALLBACK_CACHE_KEY)==="1";}catch(_){preferStandardFallback=false;}
   lastTurn=null;transcript.replaceChildren();panel.classList.remove("voice-speaking");
-  setButtonState();sayStatus("Sekejap, aku nak access mikrofon…");
+  setButtonState();voiceUI?.updateSelection?.();sayStatus("Sekejap, aku nak access mikrofon…");
   const generation=++liveGeneration;
   // Begin token request in parallel with microphone permission and audio setup,
   // so network latency doesn't accumulate after the user's permission dialog.
@@ -586,6 +591,7 @@ async function startLive(){
     dialectReconnect=(request)=>{
       if(generation!==liveGeneration||!liveActive||!request||request.id===activeDialect)return;
       activeDialect=selectVoiceStyle(request.id);
+      voiceUI?.updateSelection?.();
       voiceMetrics.styleChanges++;
       dialectContextStart=0; // Keep prior dialogue as DATA; the new style instruction overrides its diction.
       dialectSwitching=true;replayDialectRequest=request.request||"Cuba loghat "+request.label;
@@ -808,6 +814,7 @@ async function startLive(){
 // A mode change should not end the user's active session. Reconfigure via a
 // fresh one-use Live token only at a quiet boundary, preserving recent dialogue.
 window.addEventListener("ba:thought-mode-changed",()=>{
+ voiceUI?.updateMode?.();
  if(!liveActive)return;
  voiceMetrics.modeChanges++;
  if(thoughtUpdateTimer){clearTimeout(thoughtUpdateTimer);thoughtUpdateTimer=null;}
@@ -829,7 +836,7 @@ if(styleSelect)styleSelect.addEventListener("change",()=>{
   const chosen=selectVoiceStyle(styleSelect.value);
   if(styleChangeTimer){clearTimeout(styleChangeTimer);styleChangeTimer=null;}
   if(liveActive&&chosen!==activeDialect){
-    // A keyboard sweep through 20 styles must not burn one-use Google tokens
+    // Browsing style options must not burn one-use Google tokens
     // for every intermediate selection. Apply only the settled choice.
     sayStatus("Gaya "+(dialectControl?.label?.(chosen)||"baharu")+" dipilih. Aku sambung semula…");
     styleChangeTimer=setTimeout(()=>{
@@ -840,6 +847,7 @@ if(styleSelect)styleSelect.addEventListener("change",()=>{
       else activeDialect=chosen;
     },800);
   }else if(liveActive)sayStatus("Gaya "+(dialectControl?.label?.(chosen)||"semasa")+" dah dipilih. Aku dengar.");
+  voiceUI?.updateSelection?.();
 });
 liveButton.addEventListener("click",startLive);
 if(minimizeButton)minimizeButton.addEventListener("click",()=>{
