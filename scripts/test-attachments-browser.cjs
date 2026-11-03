@@ -95,12 +95,12 @@ function textPdf(){
   const dialogCheck=await page.evaluate(()=>{
    const dialog=document.getElementById("codeEngineMenu"),list=document.getElementById("codeRuntimeList");
    dialog.showModal();
-   const before=dialog.querySelector(".multi-ai-head").getBoundingClientRect();
+   const before=dialog.querySelector(".multi-ai-head").getBoundingClientRect(),beforeModalTop=dialog.getBoundingClientRect().top;
    const rows=Array.from({length:12},()=>{const item=document.createElement("div");item.className="multi-ai-row";item.textContent="QA";list.appendChild(item);return item;});
    list.scrollTop=list.scrollHeight;
    const after=dialog.querySelector(".multi-ai-head").getBoundingClientRect();
    const d=dialog.getBoundingClientRect();
-   const result={headerAbove:after.top>=d.top-2,headerOffsetStable:Math.abs((after.top-d.top)-(before.top-d.top))<2,
+   const result={headerAbove:after.top>=d.top-2,headerOffsetStable:Math.abs((after.top-d.top)-(before.top-beforeModalTop))<2,
     scrollTop:list.scrollTop,scrollState:getComputedStyle(list).overflowY,
     codeExplanationPresent:dialog.textContent.includes("Tab ini sahaja.")};
    rows.forEach(x=>x.remove());dialog.close();return result;
