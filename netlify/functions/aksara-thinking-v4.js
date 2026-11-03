@@ -38,6 +38,7 @@ function answerGuidance(request,{intent={},history=[]}={}){
  if(intent.sensitive||intent.task==="support"||intent.simpleCalculation)return "";
  if(intent.task==="creative")
   return "\nKELENGKAPAN KARYA 4.0: Ikut genre, format, bilangan bahagian dan panjang yang diminta. Jangan menukar karya menjadi penerangan.";
+ if(!COMPLEX.has(intent.task)&&request.answerDepth!=="mendalam")return "";
  if(request.answerDepth==="ringkas")
   return "\nPANJANG JAWAPAN 4.0 (RINGKAS): Pengguna mahu jawapan padat. Berikan inti dan cukup alasan tanpa meleret.";
  if(request.answerDepth==="mendalam")
@@ -65,7 +66,8 @@ function guidance({request,question="",intent={},profile={},history=[],research=
   V3.dualGuidance(request.dualPerspective),
   answerGuidance(request,{intent,history}),
   argumentVerification({question,intent,profile}),
-  intent.sensitive||intent.task==="support"||intent.task==="creative"?"":"\nSEMAKAN KELENGKAPAN 4.0: Sebelum menghantar, pastikan jawapan benar-benar menjawab permintaan dan tidak terhenti terlalu awal. Jika diminta lebih detail, tambah alasan, contoh dan implikasi yang belum diterangkan. Jangan cipta sumber, hasil ujian, kepastian atau nama alat. Ini semakan arahan kualiti, bukan panggilan AI tambahan."
+  intent.sensitive||intent.task==="support"||intent.task==="creative"||
+   (!COMPLEX.has(intent.task)&&request.answerDepth!=="mendalam")?"":"\nSEMAKAN KELENGKAPAN 4.0: Sebelum menghantar, pastikan jawapan benar-benar menjawab permintaan dan tidak terhenti terlalu awal. Jika diminta lebih detail, tambah alasan, contoh dan implikasi yang belum diterangkan. Jangan cipta sumber, hasil ujian, kepastian atau nama alat. Ini semakan arahan kualiti, bukan panggilan AI tambahan."
  ].filter(Boolean);
  return {guidance:lines.join("\n"),evidenceState:evidenceState({research,sources,ownedPage})};
 }
