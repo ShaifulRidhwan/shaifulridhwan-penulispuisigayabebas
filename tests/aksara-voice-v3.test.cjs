@@ -7,29 +7,32 @@ const dialect=require("../bilik-antara-dialek.js");
 const voice=require("../bilik-antara-voice-core-v3.js");
 const read=file=>fs.readFileSync(path.join(__dirname,"..",file),"utf8");
 
-test("catalog includes Malaysian Malay santai, gaul and every state",()=>{
- const ids=new Set(dialect.options.map(x=>x.id));
- for(const state of ["perlis","kedah","pulau-pinang","perak","selangor","negeri-sembilan",
-  "melaka","johor","pahang","terengganu","kelantan","sabah","sarawak"]){
-  assert.ok(ids.has(state),"missing state "+state);
- }
- for(const territory of ["kuala-lumpur","putrajaya","labuan"])assert.ok(ids.has(territory));
- for(const mode of ["auto","gaul","baku","utara"])assert.ok(ids.has(mode));
- assert.equal(ids.size,dialect.options.length);
+test("eight exact speech styles and Gaul first, with Kedah and Penang grouped",()=>{
+ const ids=dialect.options.map(x=>x.id);
+ assert.deepEqual(ids,["gaul","perak","kedah-penang","kelantan","terengganu","negeri-sembilan","sabah","sarawak"]);
+ assert.equal(dialect.options[0].label,"Bahasa Gaul");
+ assert.equal(dialect.label("kedah-penang"),"Kedah & Penang");
 });
-test("Santai stays the default, while gaul explicitly includes local expressions",()=>{
- assert.match(dialect.label("auto"),/Santai/);
+test("Bahasa Gaul is the default without aggressive imitation",()=>{
+ assert.equal(dialect.label("auto"),"Bahasa Gaul");
  assert.match(dialect.instruction("gaul"),/do, lah, laa/);
- assert.match(dialect.instruction("gaul"),/Jangan penuhkan setiap ayat/);
+ assert.match(dialect.instruction("gaul"),/Jangan sumbat setiap ayat/);
  assert.match(dialect.instruction("gaul"),/Aoede/);
 });
-test("Voice commands switch specific regional style and preserve neutral style",()=>{
- assert.equal(dialect.detectRequest("cuba loghat Kedah").id,"kedah");
- assert.equal(dialect.detectRequest("tukar ke loghat Perlis").id,"perlis");
- assert.equal(dialect.detectRequest("boleh cakap loghat Pulau Pinang?").id,"pulau-pinang");
- assert.equal(dialect.detectRequest("cuba bahasa gaul laa").id,"gaul");
- assert.equal(dialect.detectRequest("guna bahasa santai balik").id,"auto");
+test("Spoken dialect switches resolve specific styles without triggering on travel facts",()=>{
+ for(const phrase of ["cuba loghat Kedah","cuba loghat Penang","boleh cakap loghat Pulau Pinang?"]){
+  assert.equal(dialect.detectRequest(phrase)?.id,"kedah-penang");
+ }
+ assert.equal(dialect.detectRequest("tukar ke loghat Perak")?.id,"perak");
+ assert.equal(dialect.detectRequest("cuba bahasa gaul laa")?.id,"gaul");
+ assert.equal(dialect.detectRequest("guna bahasa santai balik")?.id,"gaul");
  assert.equal(dialect.detectRequest("Aku melawat Kelantan minggu depan"),null);
+});
+test("Old style ids migrate to permitted styles",()=>{
+ assert.equal(dialect.label("standard"),"Bahasa Gaul");
+ assert.equal(dialect.has("auto"),true);
+ assert.equal(dialect.has("pulau-pinang"),true);
+ assert.equal(dialect.has("unknown"),false);
 });
 test("Never assume a specific dialect is an exact synthesized accent",()=>{
  assert.match(dialect.instruction("sabah"),/Aoede|sintesis/);
@@ -69,8 +72,23 @@ test("Voice HTML contains the selector and status badge",()=>{
  const html=read("bilik-antara.html");
  assert.match(html,/id="voiceDialectSelect"/);
  assert.match(html,/id="voicePhaseLabel"/);
+ assert.match(html,/<option value="gaul">Bahasa Gaul<\/option>/);
+ assert.match(html,/bilik-antara-dialek\.js\?v=4/);
  assert.match(html,/bilik-antara-voice-core-v3.js\?v=1/);
- assert.match(html,/bilik-antara-voice-v3.css\?v=1/);
+ assert.match(html,/bilik-antara-voice-v3.css\?v=2/);
+});
+test("Voice UI enhances native picker with accessible dialog, mode chip and control icons",()=>{
+ const script=read("bilik-antara-voice.js");
+ const css=read("bilik-antara-voice-v3.css");
+ assert.match(script,/function mountEnhancedVoiceUI\(\)/);
+ assert.match(script,/dialog\.showModal\(\)/);
+ assert.match(script,/styleSelect\.dispatchEvent\(new Event\("change"/);
+ assert.match(script,/voiceModeBadge/);
+ assert.match(script,/voice-ui-toggle/);
+ assert.match(script,/confirmedStyleId=activeDialect/);
+ assert.match(css,/\.aksara-voice-style-dialog/);
+ assert.match(css,/min-height:44px/);
+ assert.match(css,/voice-status\[data-compact="true"\]/);
 });
 test("Voice mode changes no longer close session and hidden tab is safely paused",()=>{
  const script=read("bilik-antara-voice.js");
