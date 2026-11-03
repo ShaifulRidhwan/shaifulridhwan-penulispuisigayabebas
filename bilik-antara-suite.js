@@ -29,14 +29,17 @@ const write=(key,obj)=>{
  catch(_){markStorage("write",false);notice("Ruang simpanan pelayar penuh atau disekat.");return false;}
 };
 function freshId(){return "s"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
-let archive=Array.isArray(read(KEYS.archive,[]))?read(KEYS.archive,[]):[];
+const initialArchive=read(KEYS.archive,[]);
+let archive=Array.isArray(initialArchive)?initialArchive:[];
 const sessionHelpers=window.AksaraSessionUtils;
 const restoredHistory=api.snapshot().history;
 let activeId="";
 try{
  const previous=sessionStorage.getItem(PREFIX+"-active")||"";
- const match=api.remember()?sessionHelpers?.matchArchivedSession(archive,restoredHistory):null;
- activeId=match||(previous&&!archive.some(item=>item.id===previous)?previous:freshId());
+ const resolved=api.remember()?sessionHelpers?.resolveActiveSession(archive,restoredHistory,previous):null;
+ activeId=resolved?.id||freshId();
+ // Another tab may have overwritten the single legacy active snapshot.
+ if(resolved?.restoreEntry&&!api.active())api.load(resolved.restoreEntry);
  sessionStorage.setItem(PREFIX+"-active",activeId);
 }catch(_){activeId=sessionHelpers?.matchArchivedSession(archive,restoredHistory)||freshId();}
 let titleChanges=false;
@@ -46,7 +49,8 @@ for(const item of archive){
   if(title&&title!==item.title){item.title=title;titleChanges=true;}
  }
 }
-if(titleChanges&&api.remember()){try{localStorage.setItem(KEYS.archive,JSON.stringify(archive));markStorage("write",true);}catch(_){markStorage("write",false);}}
+// Repair old titles for display only: page load must not rewrite a stale archive.
+if(titleChanges)storageHealth.restored="tajuk_dikemas";
 
 let memory=read(KEYS.memory,{enabled:true,text:""});
 if(!memory||typeof memory!=="object"||typeof memory.enabled!=="boolean")memory={enabled:true,text:""};
@@ -93,14 +97,29 @@ document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!drawer.hid
 function section(text){content.appendChild(make("h3",text,"ba-h3"));}
 function paragraph(text){content.appendChild(make("p",text,"ba-hint"));}
 function controlRow(...nodes){const row=make("div",undefined,"ba-row");row.append(...nodes);content.appendChild(row);return row;}
-function persistArchive(){
+function persistArchive({upserts=[],removedIds=[],clearAll=false}={}){
  if(!api.remember())return false;
- archive=archive.filter(x=>x&&typeof x.id==="string"&&Array.isArray(x.history))
-   .sort((a,b)=>(Number(b.pinned)-Number(a.pinned))||(b.at-a.at));
- if(!archive.length){
-  try{localStorage.removeItem(KEYS.archive);markStorage("write",true);return true;}catch(_){markStorage("write",false);notice("Arkib tak dapat dikosongkan dalam pelayar.");return false;}
+ let latest;
+ try{
+  const raw=localStorage.getItem(KEYS.archive);
+  latest=raw===null?[]:JSON.parse(raw);
+  if(!Array.isArray(latest))throw Error("invalid archive");
+  markStorage("read",true);
+ }catch(_){
+  markStorage("read",false);
+  notice("Arkib tidak dapat dibaca. Simpanan baharu dibatalkan untuk melindungi sesi lama.");
+  return false;
  }
- return write(KEYS.archive,archive);
+ const merged=sessionHelpers?.mergeArchive(latest,{upserts,removedIds,clearAll});
+ if(!Array.isArray(merged)){notice("Penyelaras arkib tidak tersedia; sesi lama tidak diubah.");return false;}
+ if(merged.length){
+  if(!write(KEYS.archive,merged))return false;
+ }else{
+  try{localStorage.removeItem(KEYS.archive);markStorage("write",true);}
+  catch(_){markStorage("write",false);notice("Arkib tak dapat dikosongkan dalam pelayar.");return false;}
+ }
+ archive=merged;
+ return true;
 }
 function snapshotCurrent(){
  if(!api.remember())return;
@@ -113,23 +132,48 @@ function snapshotCurrent(){
  const title=titleEdited&&typeof old.title==="string"?old.title:(sessionHelpers?.conversationTitle(snapshot.history)||String(first?.content||"Perbualan baharu").slice(0,75));
  const entry={id:activeId,title,at:Date.now(),titleEdited,
   pinned:!!old.pinned,history:snapshot.history,summary:snapshot.summary,summarizedThrough:snapshot.summarizedThrough,thoughtLedger:snapshot.thoughtLedger};
- if(idx>=0)archive.splice(idx,1);archive.unshift(entry);persistArchive();
+ persistArchive({upserts:[entry]});
 }
 window.addEventListener("ba:saved",snapshotCurrent);
 window.addEventListener("ba:cleared",()=>{
- archive=archive.filter(x=>x.id!==activeId);
+ const removedId=activeId;
+ if(api.remember())persistArchive({removedIds:[removedId]});
+ else archive=archive.filter(x=>x.id!==removedId);
  activeId=freshId(); // Deleted conversation never reuses the deleted archive identity.
  try{sessionStorage.setItem(PREFIX+"-active",activeId);}catch(_){}
- // Clear explicitly deleted this entry even though the native UI has unchecked persistence.
- if(archive.length)write(KEYS.archive,archive);
- else try{localStorage.removeItem(KEYS.archive);}catch(_){}
  if(currentPanel==="sessions")render();
 });
 window.addEventListener("ba:storage",event=>{
  if(!event.detail||event.detail.enabled)return;
- // Opting out of conversation storage removes the entire local conversation archive.
- archive=[];try{localStorage.removeItem(KEYS.archive);}catch(_){}
+ // Opt-out is confirmed in the main privacy checkbox.
+ try{localStorage.removeItem(KEYS.archive);archive=[];markStorage("write",true);}
+ catch(_){markStorage("write",false);notice("Gagal memadam arkib. Padam data laman dalam pelayar untuk privasi.");}
  if(currentPanel==="sessions")render();
+});
+window.addEventListener("storage",event=>{
+ if(event.storageArea!==localStorage)return;
+ if(event.key===KEYS.archive){
+  try{
+   const next=event.newValue===null?[]:JSON.parse(event.newValue);
+   if(!Array.isArray(next))throw Error("invalid");
+   archive=next;
+   if(currentPanel==="sessions"){
+    if(memoryDirty())notice("Sesi berubah di tab lain. Draf memori kau dikekalkan.");
+    else render();
+   }
+  }catch(_){markStorage("read",false);notice("Arkib tab lain gagal dibaca; tidak ditimpa.");}
+ }
+ if(event.key===KEYS.memory){
+  try{
+   const next=event.newValue===null?{enabled:true,text:""}:JSON.parse(event.newValue);
+   if(!next||typeof next.enabled!=="boolean"||typeof next.text!=="string")throw Error("invalid");
+   memory={enabled:next.enabled,text:next.text.slice(0,8000)};
+   if(currentPanel==="sessions"){
+    if(memoryDirty())notice("Memori berubah di tab lain. Semak sebelum menimpa simpanan terkini.");
+    else render();
+   }
+  }catch(_){markStorage("read",false);notice("Memori tab lain tidak sah; data tidak ditimpa.");}
+ }
 });
 function beginSession(entry){
  if(api.active()){notice("Tunggu jawapan semasa selesai dahulu.");return;}
@@ -164,7 +208,7 @@ function removeArchiveEntry(item){
  if(item.id===activeId&&!rotateActiveSession())return false;
  const previous=archive.slice();
  archive=archive.filter(x=>x.id!==item.id);
- if(!persistArchive()){archive=previous;return false;}
+ if(!persistArchive({removedIds:[item.id]})){archive=previous;return false;}
  notice("Sesi dipadam daripada peranti ini.");
  return true;
 }
@@ -172,7 +216,7 @@ function clearAllArchive(){
  if(!rotateActiveSession())return false;
  const previous=archive.slice();
  archive=[];
- if(!persistArchive()){archive=previous;return false;}
+ if(!persistArchive({clearAll:true})){archive=previous;return false;}
  notice("Semua sejarah sesi pada peranti ini dipadam.");
  return true;
 }
@@ -260,7 +304,7 @@ function renderSessions(){
    controls.append(
     button(item.pinned?"Nyahpin":"Pin",()=>{
      item.pinned=!item.pinned;
-     if(!persistArchive())item.pinned=!item.pinned;
+     if(!persistArchive({upserts:[item]}))item.pinned=!item.pinned;
      render();
     },"ba-tiny"),
     button("Nama",()=>{
@@ -273,7 +317,7 @@ function renderSessions(){
       if(!cancelled&&value){
        const oldTitle=item.title,oldEdited=item.titleEdited;
        item.title=value;item.titleEdited=true;
-       if(!persistArchive()){item.title=oldTitle;item.titleEdited=oldEdited;}
+       if(!persistArchive({upserts:[item]})){item.title=oldTitle;item.titleEdited=oldEdited;}
       }
       render();
      };
@@ -305,8 +349,9 @@ function renderSessions(){
    if(!restored.length)throw Error("Tiada sesi untuk diimport.");
    if(!confirm("Import "+restored.length+" sesi ke peranti ini? Sesi sedia ada tidak akan dipadam."))return;
    const previous=archive.slice();
-   archive=[...archive,...restored.map(item=>({...item,id:freshId()}))];
-   if(!persistArchive()){archive=previous;return;}
+   const additions=restored.map(item=>({...item,id:freshId()}));
+   archive=[...archive,...additions];
+   if(!persistArchive({upserts:additions})){archive=previous;return;}
    sessionSearchTerm="";
    notice(restored.length+" sesi berjaya diimport.");
    render();
