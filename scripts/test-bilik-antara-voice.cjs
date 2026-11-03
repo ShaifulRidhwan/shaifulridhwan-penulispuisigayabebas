@@ -33,7 +33,7 @@ test("Retired recorded-audio UI is absent from source and active live page",()=>
 });
 test("Voice regional selector exposes colloquial Malay and new dialect styles",()=>{
  assert.match(html,/id="voiceDialectSelect"/);
- assert.match(html,/bilik-antara-dialek\.js\?v=3/);
+ assert.match(html,/bilik-antara-dialek\.js\?v=4/);
  assert.match(js,/styleSelect=\$\("voiceDialectSelect"\)/);
  assert.doesNotMatch(css,/\.voice-dialect-bar/);
   assert.match(html,/>Voice Chat<\/button>/);
@@ -54,7 +54,7 @@ test("Short Malay words trigger a natural answer, not five requests to repeat",(
  assert.match(js,/removeItem\("bilik-antara:voice-dialect:v1"\)/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/lapar/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/Jangan meminta ulang/);
- assert.match(js,/Bahasa Melayu Malaysia santai/);
+ assert.match(js,/Bahasa Gaul/);
 });
 test("Long generated speech is buffered and does not cut off after three seconds",()=>{
  assert.match(js,/function drainAudioQueue\(\)/);
@@ -542,10 +542,10 @@ function voiceHarness(options={}){
   visibility:async(hidden)=>{doc.hidden=hidden;docEvents.get("visibilitychange")?.();await flush();}
  };
 }
-test("Voice v3 selector debounces Bahasa Gaul and keeps Aoede on the new socket",async()=>{
+test("Voice v3 selector debounces Perak and keeps Aoede on the new socket",async()=>{
  const h=voiceHarness(),first=await h.start(),selector=h.item("voiceDialectSelect");
  assert.ok(selector.children.some(option=>option.value==="gaul"));
- selector.value="gaul";selector.listener("change")();
+ selector.value="perak";selector.listener("change")();
  await h.advance(500);
  assert.equal(h.called(),1,"Do not waste credentials on intermediate style choices");
  await h.advance(350);
@@ -553,7 +553,7 @@ test("Voice v3 selector debounces Bahasa Gaul and keeps Aoede on the new socket"
  const second=h.Socket.instances.at(-1);
  assert.notEqual(second,first);
  assert.equal(second.sent[0].setup.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName,"Aoede");
- assert.match(second.sent[0].setup.systemInstruction.parts[0].text,/GAYA BAHASA VOICE YANG AKTIF: Bahasa Gaul/);
+ assert.match(second.sent[0].setup.systemInstruction.parts[0].text,/GAYA BAHASA VOICE YANG AKTIF: Perak/);
  assert.equal(h.track.stopped,undefined);
 });
 test("Voice v3 Thinking Mode change reconfigures without ending the microphone session",async()=>{
