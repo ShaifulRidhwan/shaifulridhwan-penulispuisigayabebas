@@ -105,11 +105,24 @@
    const playback=!snap.sessionActive?"Tidak aktif":snap.speakerEnabled?
     snap.playbackState==="running"?"Konteks audio aktif":"Audio belum sedia":"Disenyapkan";
    const attempts=safeCount(snap.reconnectAttempts);
-   voice.content.textContent="Sambungan: "+connection+"\nMikrofon: "+mic+
-    "\nAudio: "+playback+"\nData audio diterima: "+safeCount(snap.audioChunks)+
-    " ketulan\nSambungan semula: "+attempts+" cubaan"+
+   const ms=n=>Number.isFinite(n)&&n>=0?Math.round(n)+" ms":"Belum diukur";
+   voice.content.textContent="Sambungan: "+connection+
+    "\nKeadaan: "+String(snap.voicePhase||"idle")+
+    "\nGaya: "+String(win.BilikAntaraDialek?.label?.(snap.selectedStyle)||"Bahasa Melayu santai")+
+    "\nMod: "+String(snap.thoughtMode||"cahaya")+
+    "\nMikrofon: "+mic+"\nAudio: "+playback+
+    "\nData audio diterima: "+safeCount(snap.audioChunks)+" ketulan"+
+    "\nAudio menunggu: "+Math.round(Number(snap.queuedAudioBytes||0)/1024)+" KB"+
+    "\nSambungan semula: "+attempts+" cubaan"+
+    "\nRespons transkripsi: "+ms(snap.lastResponseLatencyMs)+
+    "\nAudio pertama dijadual: "+ms(snap.firstAudioScheduledMs)+
+    "\nInterruptions: "+safeCount(snap.interruptions)+
+    "\nPerubahan mod: "+safeCount(snap.modeChanges)+
+    "\nPertukaran gaya: "+safeCount(snap.styleChanges)+
+    "\nJeda latar: "+safeCount(snap.backgroundPauses)+
+    "\nTekanan queue: "+safeCount(snap.audioOverflows)+
     "\nSuara ditetapkan: "+(snap.lockedVoice==="Aoede"?"Aoede":"Tidak diketahui")+
-    "\nKonteks audio aktif bukan bukti suara telah dimainkan dengan jelas.";
+    "\nMasa audio pertama ialah jadual Web Audio, bukan pengesahan suara didengar. Tiada audio atau transkrip disimpan oleh diagnostik.";
    voice.d.dataset.voiceState=snap.connected?"tersambung":snap.sessionActive?"menunggu":"tidak_aktif";
   }
   win.addEventListener("ba:attachment-stage",e=>{state.file(e.detail);refreshFile();});
