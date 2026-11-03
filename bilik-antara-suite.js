@@ -48,8 +48,8 @@ for(const item of archive){
 }
 if(titleChanges&&api.remember()){try{localStorage.setItem(KEYS.archive,JSON.stringify(archive));markStorage("write",true);}catch(_){markStorage("write",false);}}
 
-let memory=read(KEYS.memory,{enabled:false,text:""});
-if(!memory||typeof memory!=="object"||typeof memory.enabled!=="boolean")memory={enabled:false,text:""};
+let memory=read(KEYS.memory,{enabled:true,text:""});
+if(!memory||typeof memory!=="object"||typeof memory.enabled!=="boolean")memory={enabled:true,text:""};
 let workspace=read(KEYS.workspace,{title:"",content:"",at:0});
 if(!workspace||typeof workspace!=="object")workspace={title:"",content:"",at:0};
 const blankMetrics=()=>({calls:0,failures:0,tokens:0,reportedUsageCount:0,durations:[],elapsed:[],events:[],times:[],byProvider:{}});

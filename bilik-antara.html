@@ -107,7 +107,7 @@
  <div class="feature-privacy-content">
  <p>Avatar 3D Voice menggunakan model contoh brunette daripada <a href="https://github.com/met4citizen/TalkingHead" target="_blank" rel="noopener noreferrer">TalkingHead</a> (lesen CC BY-NC 4.0 untuk penggunaan bukan komersial). Ia bukan model 3D yang dibina oleh laman ini.</p>
  <p>Perbualan dihantar kepada penyedia AI untuk dijawab. Penyedia sandaran boleh memproses mesej teks jika diaktifkan. Imej boleh dihantar ke OpenRouter hanya jika kau mengizinkannya melalui pilihan di bawah dan Gemini tidak tersedia. Lampiran kekal dalam memori tab untuk soalan susulan sehingga dibuang atau tab ditutup; fail mentah tidak disimpan dalam arkib sesi. Sejarah perbualan disimpan pada peranti ini secara default, dan kau boleh matikannya pada bila-bila masa melalui pilihan di bawah.</p>
- <label class="settings-row"><input type="checkbox" id="rememberChat"><span>Simpan sesi pada peranti ini</span></label>
+ <label class="settings-row"><input type="checkbox" id="rememberChat" checked><span>Simpan sesi pada peranti ini</span></label>
  <label class="settings-row"><input type="checkbox" id="contextFallback"><span>Benarkan penyedia sandaran memproses memori pilihan dan fail teks yang aku lampirkan.</span></label>
  <label class="settings-row"><input type="checkbox" id="allowOpenRouterImages"><span>Benarkan OpenRouter memproses imej jika Gemini tidak tersedia (pilihan).</span></label>
  <div class="settings-actions"><button class="outline-btn" id="clearChat" type="button">Padam perbualan</button></div>
@@ -733,7 +733,8 @@ function save(){
 }
 function restore(){
  try{
- ui.remember.checked=localStorage.getItem(SESSION_PREF_STORAGE)==="on";
+ // ON for a new installation. An explicit OFF choice remains authoritative.
+ ui.remember.checked=localStorage.getItem(SESSION_PREF_STORAGE)!=="off";
  if(!ui.remember.checked)return;
  const stored=JSON.parse(localStorage.getItem(STORAGE)||"null");
  if(!stored||!Array.isArray(stored.history)){
@@ -1173,7 +1174,7 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-docx.js?v=1" defer></script>
 <script src="bilik-antara-identity.js?v=30" defer></script>
 <script src="bilik-antara-session-utils.js?v=2" defer></script>
-<script src="bilik-antara-suite.js?v=15" defer></script>
+<script src="bilik-antara-suite.js?v=16" defer></script>
 <script src="bilik-antara-code-runtime.js?v=6" defer></script>
 <script src="bilik-antara-code-health.js?v=1" defer></script>
 <script src="bilik-antara-code-status.js?v=19" defer></script>

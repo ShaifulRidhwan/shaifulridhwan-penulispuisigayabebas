@@ -5,19 +5,30 @@ const fs=require("node:fs");
 const html=fs.readFileSync("bilik-antara.html","utf8");
 const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
 
-test("session save is unticked by default and requires explicit saved on preference",()=>{
- assert.match(html,/<input type="checkbox" id="rememberChat">/);
- assert.doesNotMatch(html,/<input type="checkbox" id="rememberChat" checked>/);
- assert.match(html,/ui\.remember\.checked=localStorage\.getItem\(SESSION_PREF_STORAGE\)==="on";/);
+test("session saving defaults ON for first visit but explicit OFF survives reload",()=>{
+ assert.match(html,/<input type="checkbox" id="rememberChat" checked>/);
+ assert.match(html,/ui\.remember\.checked=localStorage\.getItem\(SESSION_PREF_STORAGE\)!=="off";/);
  assert.match(html,/if\(!ui\.remember\.checked\)return;\s+const stored=/);
  assert.match(html,/localStorage\.setItem\(SESSION_PREF_STORAGE,ui\.remember\.checked\?"on":"off"\)/);
+ assert.match(html,/if\(ui\.remember\.checked\)save\(\);/);
+ assert.match(html,/else try\{localStorage\.removeItem\(STORAGE\);\}/);
 });
 
-test("memory notes are unticked when unconfigured, previous explicit saves honored",()=>{
- assert.match(suite,/read\(KEYS\.memory,\{enabled:false,text:""\}\)/);
- assert.match(suite,/memory=\{enabled:false,text:""\}/);
+test("memory notes default ON without pre-filling notes, explicit OFF remains intact",()=>{
+ assert.match(suite,/read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
+ assert.match(suite,/memory=\{enabled:true,text:""\}/);
  assert.match(suite,/toggle\.checked=!!memory\.enabled/);
  assert.match(suite,/const updated=\{enabled:toggle\.checked,text:field\.value\.trim\(\)\.slice\(0,8000\)\}/);
+ assert.match(suite,/memory\.enabled&&typeof memory\.text==="string"/);
+ assert.match(suite,/enabled:false,text:""/); // Manual delete explicitly disables memory.
+});
+
+test("existing saved session OFF, saved memory OFF and saved notes are not migrated away",()=>{
+ assert.match(html,/localStorage\.getItem\(SESSION_PREF_STORAGE\)!=="off"/);
+ assert.match(suite,/read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
+ assert.doesNotMatch(suite,/localStorage\.removeItem\(KEYS\.memory\)/);
+ assert.doesNotMatch(suite,/localStorage\.setItem\(KEYS\.memory.*enabled:true/);
+ assert.match(html,/bilik-antara-suite\.js\?v=16/);
 });
 
 test("changing default never wipes old session archives or memory notes",()=>{
