@@ -36,9 +36,11 @@ Sistem teks ini menggunakan **AI routing**, **fallback management**, **context h
 - **CAHAYA:** Santai, praktikal dan jelas.
 - **GELAP:** Lebih kritis, analitikal dan berfalsafah.
 
-**Gemini, Groq dan Cloudflare Workers AI** membentuk tiga laluan utama teks mengikut tugas dan availability. **OpenRouter** ialah universal fallback terakhir, termasuk untuk imej hanya selepas pengguna membenarkan. Aksara juga menyokong **Voice Live melalui Gemini Live**. Ini eksperimen routing; kestabilan live masih perlu diuji.
+**Polisi chat 3+1:** Gemini, Groq dan Cloudflare Workers AI ialah tiga penyedia utama, manakala **OpenRouter free** ialah sandaran terakhir. Chat berusaha menggunakan Gemini apabila dikonfigurasi dan sesuai, tetapi aliran carian web atau pelaksanaan kod mungkin menggunakan alat Groq terlebih dahulu. Routing bergantung pada kesihatan, tugas, had masa dan persetujuan pengguna; ini bukan jaminan setiap permintaan menggunakan Gemini. Imej hanya dihantar ke sandaran dengan izin jelas. **Gemini Voice Live kekal laluan berasingan.** Penilaian kualiti berpandukan manusia dalam v5 adalah *opt-in* dan OFF secara lalai, tidak dianggap terbukti tanpa ujian live.
 
 Keempat-empat AI providers tidak semestinya aktif serentak. Status sambungan sebenar bergantung pada konfigurasi API, availability dan quota. `Ready` bukan bermaksud `Connected`.
+
+**Penambahbaikan Intelligence v5:** audit dakwaan berasaskan petikan (bukan pengesahan kebenaran automatik), keputusan sesi sementara, panduan sastera, metrik satu instance, pemulihan diagnostik, audit multimodal dan penilaian live dengan izin. Kawalan kadar berpusat memerlukan Redis REST yang dikonfigurasi secara pilihan. [Dokumentasi v5](docs/AKSARA-INTELLIGENCE-V5.md) menerangkan had, ujian, suis dan rollback.
 
 ## 🎨 STUDIO ANTARA | AI Image Generation
 
