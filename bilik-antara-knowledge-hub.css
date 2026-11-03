@@ -11,6 +11,9 @@
 #knowledgeHub .knowledge-primary{width:100%;margin:10px 0 4px;background:rgba(235,197,141,.13);border-color:rgba(236,202,152,.45);font-weight:650}
 #knowledgeHub .knowledge-results{display:grid;gap:8px;max-height:245px;overflow:auto;margin:12px 0;scrollbar-width:thin}
 #knowledgeHub .knowledge-item{padding:11px 12px;border:1px solid rgba(228,198,156,.21);border-radius:11px;background:rgba(255,255,255,.025);min-width:0}
+#knowledgeHub .knowledge-group-title{margin:12px 0 0;padding:4px 1px 0;font:700 12px/1.4 "Space Grotesk","DM Sans",sans-serif;letter-spacing:.045em;color:#ebd0a5}
+#knowledgeHub .knowledge-group-title:first-child{margin-top:0}
+#knowledgeHub .knowledge-item .knowledge-series-link{display:inline-block;margin:4px 10px 5px 0;color:#ebc995;text-decoration:underline;text-underline-offset:3px;font-size:11px}
 #knowledgeHub .knowledge-item h3{font:650 12px/1.45 "DM Sans",sans-serif;margin:0 0 5px;overflow-wrap:anywhere}
 #knowledgeHub .knowledge-item p{white-space:pre-wrap;font-size:11px;line-height:1.5;color:#c8c1b8;margin:5px 0 9px}
 #knowledgeHub .knowledge-item button{min-height:32px;padding:7px 11px;font-size:11px;margin-right:6px;margin-top:5px}
