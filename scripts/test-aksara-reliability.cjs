@@ -11,7 +11,7 @@ function setup(t){
  const old=Object.fromEntries(envKeys.map(k=>[k,process.env[k]]));
  Object.assign(process.env,{AKSARA_HYBRID_ROUTER:"false",GEMINI_API_KEY:"mock",AKSARA_FREE_FALLBACKS:"true",GROQ_API_KEY:"mock",GROQ_FREE_CONFIRMED:"true"});
  for(const k of ["MISTRAL_API_KEY","OPENROUTER_API_KEY"])delete process.env[k];
- for(const p of ["../netlify/functions/bilik-antara","../netlify/functions/aksara-provider-router"])delete require.cache[require.resolve(p)];
+ for(const p of ["../netlify/functions/bilik-antara","../netlify/functions/aksara-provider-router","../netlify/functions/lib/gemini-text-pool"])delete require.cache[require.resolve(p)];
  t.after(()=>{global.fetch=savedFetch;for(const k of envKeys){if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];}});
  return require("../netlify/functions/bilik-antara").handler;
 }
@@ -902,4 +902,27 @@ test("HTTP 400 diagnosis distinguishes Gemini thinking parameter errors safely",
  assert.equal(gemini.http,400);
  assert.equal(gemini.upstreamCode,"INVALID_ARGUMENT");
  assert.equal(gemini.category,"thinking_parameter");
+});
+
+
+test("an inconclusive health timeout does not mark chat Gemini degraded",async t=>{
+ const handler=setup(t);
+ process.env.AKSARA_HYBRID_ROUTER="true";
+ let googleCalls=0;
+ global.fetch=async url=>{
+  if(String(url).includes("googleapis")){
+   googleCalls++;
+   if(googleCalls===1)throw Object.assign(new Error("Synthetic probe timeout"),{name:"AbortError"});
+   return Response.json({candidates:[{content:{parts:[{text:"Gemini membalas."}]},finishReason:"STOP"}]});
+  }
+  return reply("Sandaran berfungsi.");
+ };
+ const first=JSON.parse((await handler(event({providerStatus:true}))).body);
+ const firstGemini=first.providers.find(p=>p.id==="gemini");
+ assert.equal(firstGemini.status,"ready");
+ assert.equal(firstGemini.reason,"health_timeout");
+ assert.equal(firstGemini.pool[0].status,"ready","An unverified probe must not demote the selectable pool");
+ const answer=JSON.parse((await handler(event({question:"Huraikan konsep analogi."}))).body);
+ assert.equal(answer.provider,"gemini","A timeout during health checking must not skip the chat key");
+ assert.equal(googleCalls,2);
 });

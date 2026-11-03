@@ -76,7 +76,7 @@ test("English-only compact UI, old Gemini pool and routing remain intact",()=>{
  assert.match(html,/Multi A\.I · Provider Health/);
  assert.match(html,/id="multiAiCheckedAt"/);
  assert.match(html,/id="multiAiRequestActivity"/);
- assert.match(html,/bilik-antara-multi-ai-status\.js\?v=2/);
+ assert.match(html,/bilik-antara-multi-ai-status\.js\?v=3/);
  assert.match(html,/bilik-antara-multi-ai-status\.css\?v=1/);
  assert.match(html,/multiHealth\.reply\(data\.provider,data\.model\)/);
  assert.doesNotMatch(html,/ba:voice-connected/);
@@ -98,4 +98,12 @@ test("failed health probes show a reason without claiming every AI is offline",(
  assert.equal(engine.formatHealthError({timeout:true}),"Timeout");
  assert.equal(engine.formatHealthError({http:503}),"HTTP 503");
  assert.equal(engine.formatHealthError({http:404}),"HTTP 404 · Endpoint unavailable");
+});
+
+test("server clock skew never makes the provider health time Unknown",()=>{
+ const f=fixture();
+ f.api.update({checkedAt:Date.now()+18000,providers:[{id:"groq",status:"online"}]});
+ assert.match(f.stamp.textContent,/Last checked: just now/);
+ assert.doesNotMatch(f.stamp.textContent,/Unknown/);
+ assert.equal(f.pill.dataset.healthState,"connected");
 });

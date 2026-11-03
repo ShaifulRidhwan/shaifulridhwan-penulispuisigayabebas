@@ -299,7 +299,7 @@ exports.handler=async event=>{
             system:"Pemeriksaan sambungan, jawab ringkas.",
             contents:[{role:"user",parts:[{text:"Balas OK."}]}],
             maxTokens:cloudflare?1024:640,thinkingLevel:fastModel.includes("flash-lite")?"minimal":"low",
-            timeoutMs:cloudflare?18500:6500,signal:event.signal});
+            timeoutMs:cloudflare?18500:(refreshAll?18500:14000),signal:event.signal});
           const elapsed=Date.now()-time;
           const verified=!!modelText(tested?.candidates?.[0]);
           if(verified)GeminiTextPool.success(entry.slot,{model:fastModel,latencyMs:elapsed});
@@ -307,10 +307,14 @@ exports.handler=async event=>{
           return {status:verified?"online":"ready",latencyMs:elapsed};
         }catch(e){
           const elapsed=Date.now()-time;
-          GeminiTextPool.failure(entry.slot,e,{model:fastModel,latencyMs:elapsed,
-            reason:GeminiDiagnosis.classify(e)==="authentication_or_access"?"authentication_or_access":
+          const reason=GeminiDiagnosis.classify(e)==="authentication_or_access"?"authentication_or_access":
             e.name==="AbortError"?"health_timeout":e.status===429?"health_probe_quota":
-            e.status>=500?"health_upstream_busy":e.googleCategory|| (e.status?"upstream_http":"transport_error")});
+            e.status>=500?"health_upstream_busy":e.googleCategory|| (e.status?"upstream_http":"transport_error");
+          const details={model:fastModel,latencyMs:elapsed,reason};
+          // A timed-out or rate-limited synthetic probe is inconclusive; only
+          // real inference failures may degrade the selectable chat pool.
+          if([400,401,403,404].includes(e.status))GeminiTextPool.failure(entry.slot,e,details);
+          else GeminiTextPool.ready(entry.slot,{...details,http:e.status||null});
           // A health probe NEVER triggers project-wide quota cooldown or
           // automatically changes to another key to defeat provider limits.
           return {status:[401,403,404,400].includes(e.status)?"offline":"ready",

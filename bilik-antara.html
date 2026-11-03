@@ -52,7 +52,7 @@
 <link rel="manifest" href="/bilik-antara.webmanifest">
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(min-width:761px)" fetchpriority="high">
 <link rel="preload" href="aksara-celestial-static.webp?v=1" as="image" type="image/webp" media="(max-width:760px)" fetchpriority="high">
-<link rel="stylesheet" href="bilik-antara.css?v=104">
+<link rel="stylesheet" href="bilik-antara.css?v=105">
 <link rel="stylesheet" href="bilik-antara-multi-ai-status.css?v=1" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="bilik-antara-knowledge-hub.css?v=2" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="bilik-antara-multi-ai-status.css?v=1"></noscript>
@@ -266,7 +266,7 @@ if(root)root.BilikAntaraChatStyle=api;
 
 </script>
 <script src="bilik-antara-gemini-status.js?v=2" defer></script>
-<script src="bilik-antara-multi-ai-status.js?v=2"></script>
+<script src="bilik-antara-multi-ai-status.js?v=3"></script>
 <script>
 (function(){
 "use strict";
@@ -492,7 +492,7 @@ if(!force&&Date.now()-multiLastCheck<20000)return;
 multiChecking=true;el("multiAiRefresh").disabled=true;
 multiHealth.startCheck();
 if(!latestProviderRows)renderProviderRows(multiHealth.getRows(),multiCatalog);
-const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),force?18000:14000);
+const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),force?28000:23000);
 try{
 const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
 body:JSON.stringify({providerStatus:true,geminiPoolRefresh:force===true}),signal:controller.signal});
@@ -521,7 +521,7 @@ finally{clearTimeout(timer);multiChecking=false;el("multiAiRefresh").disabled=Da
 ui.conn.addEventListener("click",()=>{
 multiHealth.render();
 renderProviderRows(multiHealth.getRows(),multiCatalog);
-if(!multiDialog.open)multiDialog.showModal();
+if(!multiDialog.open){multiDialog.showModal();multiList.scrollTop=0;}
 checkProviders();
 });
 let lastHealthVisual="";

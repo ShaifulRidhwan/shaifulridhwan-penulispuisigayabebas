@@ -3275,3 +3275,19 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-ve
 }
 
 @media(max-width:760px){.world-scene .world-art{background-size:cover,cover!important;background-position:center,center!important}}
+
+
+/* Multi A.I mobile dialog: keep header and Refresh in view while provider rows scroll.
+   No changes to other feature, settings or Code Engine dialogs. */
+#multiAiDialog[open]{
+ display:flex;flex-direction:column;overflow:hidden;
+ max-height:min(720px,calc(100dvh - 28px));
+}
+#multiAiDialog .multi-ai-head{flex:0 0 auto}
+#multiAiDialog .multi-ai-head>div{min-width:0}
+#multiAiDialog #multiAiList{
+ flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
+ scrollbar-width:thin;padding-right:2px;
+}
+#multiAiDialog .multi-ai-actions{flex:0 0 auto}
+#multiAiDialog .multi-ai-model-list{max-height:none;overflow:visible}

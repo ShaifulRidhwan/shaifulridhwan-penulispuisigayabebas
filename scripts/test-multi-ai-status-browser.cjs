@@ -52,6 +52,28 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#multiAiDialog").isVisible(),true);
   assert.match(await page.locator("#multiAiCheckedAt").innerText(),/1\/4 Connected/);
   assert.equal(await page.locator('[data-provider="gemini"] [data-gemini-slot]').count(),4);
+  // Long Gemini 1-4 detail must scroll inside the dialog, never hide its title or close button.
+  await page.locator('[data-provider="gemini"] > summary').click();
+  const modalGeometry=await page.evaluate(()=>{
+   const d=document.getElementById("multiAiDialog"),list=document.getElementById("multiAiList");
+   const header=d.querySelector(".multi-ai-head"),close=document.getElementById("multiAiClose");
+   const top=header.getBoundingClientRect().top,dialogTop=d.getBoundingClientRect().top;
+   const fillers=Array.from({length:18},()=>{const e=document.createElement("div");e.className="multi-ai-row";e.textContent="Overflow test";list.appendChild(e);return e;});
+   list.scrollTop=list.scrollHeight;
+   const after=header.getBoundingClientRect().top,dialogTopAfter=d.getBoundingClientRect().top,buttonTop=close.getBoundingClientRect().top;
+   const state={dialogTop,dialogTopAfter,headerTop:top,headerAfter:after,buttonTop,
+    listOverflow:getComputedStyle(list).overflowY,listScrollTop:list.scrollTop,dialogScrollTop:d.scrollTop,
+    height:d.getBoundingClientRect().height,viewport:innerHeight};
+   fillers.forEach(x=>x.remove());list.scrollTop=0;return state;
+  });
+  assert.ok(modalGeometry.dialogTop>=0, "Multi AI dialog must fit viewport");
+  assert.ok(modalGeometry.headerTop>=modalGeometry.dialogTop-2,"Multi AI title must remain visible");
+  assert.ok(Math.abs((modalGeometry.headerAfter-modalGeometry.dialogTopAfter)-(modalGeometry.headerTop-modalGeometry.dialogTop))<2,"Provider scrolling must not move header within dialog");
+  assert.ok(modalGeometry.buttonTop>=0&&modalGeometry.buttonTop<modalGeometry.viewport,"Close button must remain visible");
+  assert.ok(modalGeometry.listScrollTop>0,"Provider list should scroll internally");
+  assert.equal(modalGeometry.dialogScrollTop,0,"Outer modal must never scroll");
+  assert.equal(modalGeometry.listOverflow,"auto");
+  await page.locator('[data-provider="gemini"] > summary').click();
   phase="ready";
   await page.locator("#multiAiRefresh").click();
   await page.waitForFunction(()=>document.querySelector("#connectionText")?.textContent==="Multi A.I Ready",{timeout:12000});

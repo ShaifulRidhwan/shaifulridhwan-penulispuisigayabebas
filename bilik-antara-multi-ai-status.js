@@ -71,7 +71,7 @@
    pill.dataset.healthState=report.state;
    label.textContent=report.label;
    const live=report.rows.filter(r=>r.status==="online").length;
-   const time=checkedAt?"Last checked: "+elapsed(now-checkedAt):"Not checked yet";
+   const time=checkedAt?"Last checked: "+elapsed(Math.max(0,now-checkedAt)):"Not checked yet";
    const suffix=failed?" · Health check failed"+(failureDetails?" · "+failureDetails:""):checking?" · Checking…":"";
    const header=live+"/4 Connected · "+time+suffix;
    pill.title=header;
@@ -87,7 +87,8 @@
    if(!Array.isArray(data?.providers))throw Error("Invalid provider health payload");
    snapshot=data.providers.filter(p=>p&&known.has(p.id));
    const time=Number(data.checkedAt);
-   checkedAt=Number.isFinite(time)&&time>0&&time<Date.now()+30000?time:Date.now();
+   const now=Date.now();
+   checkedAt=Number.isFinite(time)&&time>0&&time<now+30000?Math.min(time,now):now;
    checking=false;failed=false;failureDetails="";
    // Do not revive a provider if the latest check explicitly reports an outage.
    for(const item of snapshot)if(item.status==="offline"||item.status==="off")replies.delete(item.id);
