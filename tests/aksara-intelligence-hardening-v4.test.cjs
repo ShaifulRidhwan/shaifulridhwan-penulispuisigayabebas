@@ -1,0 +1,15 @@
+"use strict";
+const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs");
+const Bench=require("../scripts/aksara-intelligence-benchmark-v4.cjs");
+const Infra=require("../netlify/functions/aksara-infrastructure-guard");
+const Evidence=require("../netlify/functions/aksara-evidence-audit");
+const Vision=require("../netlify/functions/aksara-vision-diagnostics");
+const Failure=require("../netlify/functions/aksara-failure-diagnostics");
+const Prompt=require("../netlify/functions/aksara-prompt-optimizer");
+test("50 offline feature contracts pass",()=>{const x=Bench.run();assert.equal(x.total,50);assert.equal(x.failed,0,JSON.stringify(x.cases.filter(y=>!y.pass)));});
+test("Tool evidence does not prove factual accuracy",()=>{const x=Evidence.summarize({sources:[{url:"https://example.com"}],toolsUsed:["browser_search"]});assert.equal(x.level,"search_excerpt");assert.equal(x.claimAccuracyVerified,false);});
+test("Vision reply is not image accuracy verification",()=>{assert.equal(Vision.inspect({media:[{mimeType:"image/png"}],provider:"gemini",reply:"Dibalas"}).actualImageUnderstandingConfirmed,false);});
+test("Diagnostics do not leak upstream secrets",()=>{const x=Failure.diagnose({providerFailures:[{reason:"quota_cooldown",secret:"private"}]},429);assert.equal(x.kind,"quota_or_rate_limit");assert.equal(JSON.stringify(x).includes("private"),false);});
+test("Prompt dedupe is disabled by default",()=>{assert.equal(Prompt.compose(["A\nB\nA"]),"A\nB\nA");assert.equal(Prompt.compose(["A\nB\nA"],{dedupeExact:true}),"A\nB");});
+test("Infrastructure is per-instance and bounded",()=>{const m=new Map();assert.equal(Infra.throttle(m,"a",2,1000),false);assert.equal(Infra.throttle(m,"a",2,1010),false);assert.equal(Infra.throttle(m,"a",2,1020),true);assert.equal(Infra.throttle(m,"a",2,61001),false);assert.equal(Infra.budget({bodyBytes:5500001}).ok,false);});
+test("Scanned PDF OCR remains user-consented",()=>{const p=fs.readFileSync("bilik-antara-pdf-reader.js","utf8"),a=fs.readFileSync("bilik-antara-attachments.js","utf8"),b=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");assert.match(p,/if\(!allowed\)throw Error/);assert.match(a,/window\.confirm\("PDF imbasan/);assert.match(b,/VisionDiagnostic\.inspect/);assert.match(b,/AKSARA_PROMPT_OPTIMIZE==="true"/);});
