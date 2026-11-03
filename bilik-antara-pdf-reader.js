@@ -64,13 +64,14 @@
   if(signal?.aborted)throw Error("OCR dibatalkan.");
   const pdfjs=await engine();
   const module=await import(OCR_URL);
-  if(typeof module.createWorker!=="function")throw Error("OCR engine tidak tersedia.");
+  const createWorker=module.createWorker||module.default?.createWorker;
+  if(typeof createWorker!=="function")throw Error("OCR engine tidak tersedia.");
   const task=pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer()),
    isEvalSupported:false,enableXfa:false,stopAtErrors:false});
   let worker=null;
   try{
    const doc=await task.promise,limit=Math.min(doc.numPages,Math.max(1,Math.min(3,maxPages)));
-   worker=await module.createWorker("eng");
+   worker=await createWorker("eng");
    const sections=[];let characters=0;
    for(let i=1;i<=limit;i++){
     if(signal?.aborted)throw Error("OCR dibatalkan.");
