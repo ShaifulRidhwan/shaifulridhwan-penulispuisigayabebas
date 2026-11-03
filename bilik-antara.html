@@ -1075,7 +1075,7 @@ async function submit(event){
   
   addIdeas(data.thoughtLedger);save();
   if(selectedFile&&selectedFile===fileState){ui.docStatus.dataset.state="ready";ui.docStatus.textContent="Lampiran kekal tersedia untuk soalan susulan · "+selectedFile.name;}
-  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio"||data.model==="local-file-metadata")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[],researchStatus:data.researchStatus||"",toolsUsed:data.toolsUsed||[],urlTraceStatus:data.urlTrace?.status||"",sourceCount:data.sources?.length||0,mode:data.mode||""}}));
+  window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio"||data.model==="local-file-metadata")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[],researchStatus:data.researchStatus||"",toolsUsed:data.toolsUsed||[],urlTraceStatus:data.urlTrace?.status||"",sourceCount:data.sources?.length||0,mode:data.mode||"",evidenceProfile:data.evidenceProfile||null,visionStatus:data.vision?.status||"not_requested"}}));
   const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio"||data.model==="local-file-metadata";
   status("online","Request Completed","");
   if(!localAnswer){multiHealth.reply(data.provider,data.model);renderProviderRows(multiHealth.getRows(),multiCatalog);}
@@ -1126,7 +1126,7 @@ async function submit(event){
   }else{
    const failureCode=String(error?.code||"").slice(0,40),httpCode=Number(error?.status)||0;
    const desc=error?.name==="AbortError"?"Timeout":failureCode||httpCode?"Code: "+(failureCode||"HTTP "+httpCode):"Connection or provider error";
-   status("error","Request Failed",desc+" · Your message is preserved for retry.");
+   status("error","Request Failed",desc+(error?.diagnostics?.action?" · "+String(error.diagnostics.action).slice(0,160):"")+" · Your message is preserved for retry.");
   }
   }
   if(!stoppedByUser)window.dispatchEvent(new CustomEvent("ba:request-failed",{detail:{elapsedMs:Math.round(performance.now()-startedAt),code:error?.code||"",status:Number(error?.status)||0}}));
