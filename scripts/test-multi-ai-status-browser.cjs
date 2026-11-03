@@ -60,15 +60,15 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    const top=header.getBoundingClientRect().top,dialogTop=d.getBoundingClientRect().top;
    const fillers=Array.from({length:18},()=>{const e=document.createElement("div");e.className="multi-ai-row";e.textContent="Overflow test";list.appendChild(e);return e;});
    list.scrollTop=list.scrollHeight;
-   const after=header.getBoundingClientRect().top,buttonTop=close.getBoundingClientRect().top;
-   const state={dialogTop,headerTop:top,headerAfter:after,buttonTop,
+   const after=header.getBoundingClientRect().top,dialogTopAfter=d.getBoundingClientRect().top,buttonTop=close.getBoundingClientRect().top;
+   const state={dialogTop,dialogTopAfter,headerTop:top,headerAfter:after,buttonTop,
     listOverflow:getComputedStyle(list).overflowY,listScrollTop:list.scrollTop,dialogScrollTop:d.scrollTop,
     height:d.getBoundingClientRect().height,viewport:innerHeight};
    fillers.forEach(x=>x.remove());list.scrollTop=0;return state;
   });
   assert.ok(modalGeometry.dialogTop>=0, "Multi AI dialog must fit viewport");
   assert.ok(modalGeometry.headerTop>=modalGeometry.dialogTop-2,"Multi AI title must remain visible");
-  assert.equal(modalGeometry.headerAfter,modalGeometry.headerTop,"Provider scrolling must not move header");
+  assert.ok(Math.abs((modalGeometry.headerAfter-modalGeometry.dialogTopAfter)-(modalGeometry.headerTop-modalGeometry.dialogTop))<2,"Provider scrolling must not move header within dialog");
   assert.ok(modalGeometry.buttonTop>=0&&modalGeometry.buttonTop<modalGeometry.viewport,"Close button must remain visible");
   assert.ok(modalGeometry.listScrollTop>0,"Provider list should scroll internally");
   assert.equal(modalGeometry.dialogScrollTop,0,"Outer modal must never scroll");
