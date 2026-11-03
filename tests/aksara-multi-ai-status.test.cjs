@@ -76,7 +76,7 @@ test("English-only compact UI, old Gemini pool and routing remain intact",()=>{
  assert.match(html,/Multi A\.I · Provider Health/);
  assert.match(html,/id="multiAiCheckedAt"/);
  assert.match(html,/id="multiAiRequestActivity"/);
- assert.match(html,/bilik-antara-multi-ai-status\.js\?v=1/);
+ assert.match(html,/bilik-antara-multi-ai-status\.js\?v=2/);
  assert.match(html,/bilik-antara-multi-ai-status\.css\?v=1/);
  assert.match(html,/multiHealth\.reply\(data\.provider,data\.model\)/);
  assert.doesNotMatch(html,/ba:voice-connected/);

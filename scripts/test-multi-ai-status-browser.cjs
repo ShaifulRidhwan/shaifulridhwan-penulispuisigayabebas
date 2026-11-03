@@ -7,14 +7,16 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
  const browser=await chromium.launch({headless:true});
  try{
   const page=await browser.newPage({viewport:{width:390,height:844}});
-  const errors=[];let phase="connected";
+  const errors=[];let phase="connected",healthRequests=0;
   page.on("pageerror",e=>errors.push(e.message));
   await page.route("**/.netlify/functions/**",async route=>{
    const url=route.request().url();
    if(url.includes("-stream"))return route.fulfill({status:404,contentType:"application/json",body:"{}"});
    let body={};try{body=route.request().postDataJSON()||{};}catch(_){}
    if(body.providerStatus===true){
+    healthRequests++;
     if(phase==="error")return route.fulfill({status:503,contentType:"application/json",body:'{"error":"Provider health unavailable"}'});
+    if(phase==="limited")return route.fulfill({status:429,contentType:"application/json",body:'{"code":"STATUS_RATE_LIMIT","retryAfterSeconds":45}'});
     const providers=phase==="connected"?[
      {id:"gemini",status:"online",model:"gemini-flash",pool:[
       {slot:1,status:"online",checkedAt:Date.now(),model:"gemini-flash"},
@@ -61,6 +63,14 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.notEqual(await page.locator("#connectionText").innerText(),"Multi A.I Offline");
   assert.equal(await page.locator("#multiAiList .multi-ai-state.is-online").count(),0);
   assert.match(await page.locator("#multiAiCheckedAt").innerText(),/Health check failed/);
+  phase="limited";
+  await page.locator("#multiAiRefresh").click();
+  await page.waitForFunction(()=>document.querySelector("#multiAiCheckedAt")?.textContent.includes("HTTP 429"),{timeout:12000});
+  assert.match(await page.locator("#multiAiCheckedAt").innerText(),/Retry in 45s/);
+  assert.equal(await page.locator("#multiAiRefresh").isDisabled(),true,"Respect server Retry-After");
+  const callsAtLimit=healthRequests;
+  await health.evaluate(el=>el.click());
+  assert.equal(healthRequests,callsAtLimit,"An in-cooldown retry must not call the backend");
   await page.locator("#multiAiClose").click();
   assert.equal(errors.length,0,"Browser errors: "+errors.join("; "));
   console.log("Multi A.I Status v2 PASS: connected, request isolation, Gemini 1-4, ready, refresh failure.");
