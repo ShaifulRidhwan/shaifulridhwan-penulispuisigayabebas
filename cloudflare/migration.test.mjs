@@ -58,7 +58,7 @@ test("Bilik-only Cloudflare render removes tiny blocking CSS requests without al
  }
  assert.ok(html.includes(`bilik-antara-code-execution.css?v=1" media="print" onload="this.media='all'"`));
  assert.ok(html.includes('<noscript><link rel="stylesheet" href="bilik-antara-code-execution.css?v=1"></noscript>'));
- assert.ok(html.includes('<link rel="stylesheet" href="bilik-antara.css?v=104">'));
+ assert.ok(html.includes('<link rel="stylesheet" href="bilik-antara.css?v=105">'));
  for(const file of ["studio-antara.html","perpustakaan-aksara.html"]){
   assert.ok(!text("dist/"+file).includes("data-aksara-inline"),"Other room must not be modified: "+file);
  }

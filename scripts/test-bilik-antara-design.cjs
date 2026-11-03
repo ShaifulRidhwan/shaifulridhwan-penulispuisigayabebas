@@ -341,7 +341,7 @@ test("Retired ambient CSS and blank breakpoints stay removed",()=>{
  for(const name of ["worldBreath","hazeDrift","embersTravel","antaraAmbientPane","glassGlide"])
   assert.doesNotMatch(css,new RegExp("@keyframes\\s+"+name+"\\b"));
  assert.doesNotMatch(css,/\.world-haze\b|\.world-embers\b|\.world-light-glow\b/);
- assert.match(html,/bilik-antara\.css\?v=104/,"Bust cached 30-day stylesheet");
+ assert.match(html,/bilik-antara\.css\?v=105/,"Bust cached 30-day stylesheet");
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\s*\.conversation::before,\.conversation::after,[\s\S]*?animation:none!important/);
  assert.doesNotMatch(css,/prefers-reduced-motion:reduce\)\{[^}]*animation:[^;}]*infinite/);
  assert.doesNotMatch(css,/\.message-place(?:-action)?\b/,"Location remains hidden from chat metadata");

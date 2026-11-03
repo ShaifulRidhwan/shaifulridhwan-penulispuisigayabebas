@@ -56,11 +56,19 @@ test("Multi AI UI nests four status rows and explicit refresh under the original
  assert.match(html,/geminiPoolRefresh:force===true/);
  assert.match(html,/multiAutoRetryPending/);
  assert.match(html,/Date\.now\(\)<multiRetryAt/);
- assert.match(fs.readFileSync("netlify/functions/bilik-antara.js","utf8"),/timeoutMs:cloudflare\?18500:6500/);
+ assert.match(fs.readFileSync("netlify/functions/bilik-antara.js","utf8"),/timeoutMs:cloudflare\?18500:\(refreshAll\?18500:14000\)/);
  assert.match(html,/return checkProviders\(\);/,"Startup uses a one-slot probe");
  assert.match(html,/multiAiRefresh"\)\.addEventListener\("click",\(\)=>\{multiLastCheck=0;checkProviders\(true\);\}\)/,"Explicit refresh probes four keys");
  assert.match(css,/\.multi-ai-gemini-detail/);
  assert.match(html,/Status Sedia tidak bermaksud sambungan telah disahkan/);
  const live=fs.readFileSync("netlify/functions/bilik-antara-live-token.js","utf8");
  assert.doesNotMatch(live,/GeminiTextPool|geminiPoolRefresh/);
+});
+
+test("Multi AI health probes have a separate reasonable mobile deadline",()=>{
+ const html=fs.readFileSync("bilik-antara.html","utf8");
+ const backend=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");
+ assert.match(html,/controller\.abort\(\),force\?28000:23000/);
+ assert.match(backend,/timeoutMs:cloudflare\?18500:\(refreshAll\?18500:14000\)/);
+ assert.match(backend,/else GeminiTextPool\.ready\(entry\.slot,\{\.\.\.details,http:e\.status\|\|null\}\)/);
 });

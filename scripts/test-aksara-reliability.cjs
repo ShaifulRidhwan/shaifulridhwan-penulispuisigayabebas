@@ -903,3 +903,26 @@ test("HTTP 400 diagnosis distinguishes Gemini thinking parameter errors safely",
  assert.equal(gemini.upstreamCode,"INVALID_ARGUMENT");
  assert.equal(gemini.category,"thinking_parameter");
 });
+
+
+test("an inconclusive health timeout does not mark chat Gemini degraded",async t=>{
+ const handler=setup(t);
+ process.env.AKSARA_HYBRID_ROUTER="true";
+ let googleCalls=0;
+ global.fetch=async url=>{
+  if(String(url).includes("googleapis")){
+   googleCalls++;
+   if(googleCalls===1)throw Object.assign(new Error("Synthetic probe timeout"),{name:"AbortError"});
+   return Response.json({candidates:[{content:{parts:[{text:"Gemini membalas."}]},finishReason:"STOP"}]});
+  }
+  return reply("Sandaran berfungsi.");
+ };
+ const first=JSON.parse((await handler(event({providerStatus:true}))).body);
+ const firstGemini=first.providers.find(p=>p.id==="gemini");
+ assert.equal(firstGemini.status,"ready");
+ assert.equal(firstGemini.reason,"health_timeout");
+ assert.equal(firstGemini.pool[0].status,"ready","An unverified probe must not demote the selectable pool");
+ const answer=JSON.parse((await handler(event({question:"Huraikan konsep analogi."}))).body);
+ assert.equal(answer.provider,"gemini","A timeout during health checking must not skip the chat key");
+ assert.equal(googleCalls,2);
+});
