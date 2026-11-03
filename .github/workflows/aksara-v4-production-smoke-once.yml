@@ -30,11 +30,15 @@ jobs:
           def check(name, ok, evidence):
               print(("PASS" if ok else "FAIL")+" "+name+" "+str(evidence)[:180], flush=True)
               if not ok: raise AssertionError(name)
-          status,html=fetch("/bilik-antara.html")
+          for attempt in range(9):
+              status,html=fetch("/bilik-antara.html")
+              if status==200 and 'bilik-antara-pdf-reader.js?v=3' in html: break
+              print("Production v3 not served yet; check "+str(attempt+1),flush=True)
+              time.sleep(10)
           check("production HTTP",status==200,status)
-          check("v4 PDF reader asset referenced", 'bilik-antara-pdf-reader.js?v=2' in html, "v2")
+          check("v4 PDF reader asset referenced", 'bilik-antara-pdf-reader.js?v=3' in html, "v2")
           check("v4 attachment asset referenced", 'bilik-antara-attachments.js?v=4' in html, "v4")
-          status,pdf=fetch("/bilik-antara-pdf-reader.js?v=2")
+          status,pdf=fetch("/bilik-antara-pdf-reader.js?v=3")
           check("production PDF JS HTTP",status==200,status)
           check("OCR function deployed", "async function readOcr" in pdf, "readOcr")
           check("OCR consent gate deployed", 'if(!allowed)throw Error(' in pdf, "opt-in")
