@@ -91,7 +91,7 @@ function textPdf(){
   assert.equal(await page.locator("#cwFiles option").last().innerText(),"hello.html");
   assert.equal(await page.locator("#cwCppStatus").innerText(),"Sedia untuk compile.");
   await page.locator("#cwClose").click();
-  await page.waitForSelector("#codeEngineMenu");
+  await page.waitForSelector("#codeEngineMenu",{state:"attached"});
   const dialogCheck=await page.evaluate(()=>{
    const dialog=document.getElementById("codeEngineMenu"),list=document.getElementById("codeRuntimeList");
    dialog.showModal();
