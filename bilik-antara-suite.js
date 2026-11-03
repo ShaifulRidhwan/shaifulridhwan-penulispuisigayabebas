@@ -427,12 +427,12 @@ function renderMemory(){
   if(rawMemoryVersion()!==memoryDraft?.version&&
      !window.confirm("Memori sudah berubah di tab lain. Timpa nota terbaru dengan draf ini?"))return;
   if(!write(KEYS.memory,updated))return;
-  memory=updated;draftStatus.textContent="Nota disimpan pada peranti";notice("Pilihan memori disimpan pada peranti.");render();
+  memory=updated;memoryDraft=null;draftStatus.textContent="Nota disimpan pada peranti";notice("Pilihan memori disimpan pada peranti.");render();
  }),button("Padam memori",()=>{
   if(!confirm("Padam semua memori pilihan di peranti ini?"))return;
   const disabled={enabled:false,text:""};
   if(!write(KEYS.memory,disabled)){notice("Tak dapat padam memori tersimpan. Semak storan pelayar.");return;}
-  memory=disabled;notice("Memori pilihan dipadam.");render();
+  memory=disabled;memoryDraft=null;notice("Memori pilihan dipadam.");render();
  }));
  controlRow(button("Bawa konteks sesi ini",()=>{
   const snapshot=api.snapshot();
