@@ -93,6 +93,29 @@ document.body.appendChild(drawer); // keep fixed overlay outside clipped glass c
 // Reuse the feature icon beside Multi AI Connected, not a second toolbar inside chat.
 featureSessions?.addEventListener("click",()=>open("sessions"));
 featureMetrics?.addEventListener("click",()=>open("metrics"));
+
+const rememberCheckbox=$("rememberChat");
+const preferenceKey="bilik-antara-session-save-pref-v1";
+const snapshotKey="bilik-antara-session-v2";
+rememberCheckbox?.addEventListener("change",()=>{
+ const enabled=rememberCheckbox.checked;
+ if(!enabled&&!window.confirm("Matikan Simpan sesi? Semua arkib sesi tersimpan pada peranti ini akan dipadam. Eksport arkib dahulu jika mahu menyimpannya.")){
+  rememberCheckbox.checked=true;return;
+ }
+ try{localStorage.setItem(preferenceKey,enabled?"on":"off");}
+ catch(_){notice("Pilihan simpan sesi tidak boleh dikekalkan: storan pelayar disekat.");}
+ if(enabled)api.persistSession();
+ else try{localStorage.removeItem(snapshotKey);}catch(_){notice("Gagal padam snapshot sesi. Semak data laman dalam pelayar.");}
+ window.dispatchEvent(new CustomEvent("ba:storage",{detail:{enabled}}));
+});
+window.addEventListener("storage",event=>{
+ if(event.key!==preferenceKey)return;
+ const enabled=event.newValue!=="off";
+ if(rememberCheckbox)rememberCheckbox.checked=enabled;
+ if(!enabled)try{localStorage.removeItem(snapshotKey);}catch(_){}
+ window.dispatchEvent(new CustomEvent("ba:storage",{detail:{enabled,external:true}}));
+});
+
 function notice(message){
  let status=$("baNotification");
  if(!status){status=make("div",undefined,"ba-notification");status.id="baNotification";status.setAttribute("role","status");head.after(status);}
