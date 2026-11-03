@@ -231,7 +231,7 @@
   });
   for(const id of ["knowledgeWikiQuery","knowledgeUrlInput","knowledgeCalcInput"])
    get(id).addEventListener("keydown",e=>{if(e.key==="Enter"){
-    e.preventDefault();get(id==="knowledgeWikiQuery"?"knowledgeWikiDraft":id==="knowledgeUrlInput"?"knowledgeUrlDraft":"knowledgeCalcDraft").click();
+    e.preventDefault();get(id==="knowledgeWikiQuery"?"knowledgeWikiSearch":id==="knowledgeUrlInput"?"knowledgeUrlDraft":"knowledgeCalcRun").click();
    }});
   function renderSources(){
    const list=get("knowledgeSourcesList"),summary=get("knowledgeSourceSummary");
