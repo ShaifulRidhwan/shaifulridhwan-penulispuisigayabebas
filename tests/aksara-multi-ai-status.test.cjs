@@ -76,7 +76,7 @@ test("English-only compact UI, old Gemini pool and routing remain intact",()=>{
  assert.match(html,/Multi A\.I · Provider Health/);
  assert.match(html,/id="multiAiCheckedAt"/);
  assert.match(html,/id="multiAiRequestActivity"/);
- assert.match(html,/bilik-antara-multi-ai-status\.js\?v=1/);
+ assert.match(html,/bilik-antara-multi-ai-status\.js\?v=2/);
  assert.match(html,/bilik-antara-multi-ai-status\.css\?v=1/);
  assert.match(html,/multiHealth\.reply\(data\.provider,data\.model\)/);
  assert.doesNotMatch(html,/ba:voice-connected/);
@@ -87,4 +87,15 @@ test("English-only compact UI, old Gemini pool and routing remain intact",()=>{
  assert.match(router,/async function checkStatus/);
  assert.match(router,/function reflectCooldown/);
  assert.ok(html.length<80000,"Keep the primary HTML below 80 KB");
+});
+
+test("failed health probes show a reason without claiming every AI is offline",()=>{
+ const f=fixture();
+ f.api.failure({http:429,retryAfterSeconds:37});
+ assert.equal(f.pill.dataset.healthState,"unverified");
+ assert.match(f.stamp.textContent,/HTTP 429 · Retry in 37s/);
+ assert.deepEqual(f.api.getRows().filter(p=>p.status==="offline"),[]);
+ assert.equal(engine.formatHealthError({timeout:true}),"Timeout");
+ assert.equal(engine.formatHealthError({http:503}),"HTTP 503");
+ assert.equal(engine.formatHealthError({http:404}),"HTTP 404 · Endpoint unavailable");
 });

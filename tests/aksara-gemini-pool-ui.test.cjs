@@ -54,6 +54,9 @@ test("Multi AI UI nests four status rows and explicit refresh under the original
  assert.match(renderer,/item\?\.pool/);
  assert.match(html,/src="bilik-antara-gemini-status\.js\?v=2"/);
  assert.match(html,/geminiPoolRefresh:force===true/);
+ assert.match(html,/multiAutoRetryPending/);
+ assert.match(html,/Date\.now\(\)<multiRetryAt/);
+ assert.match(fs.readFileSync("netlify/functions/bilik-antara.js","utf8"),/timeoutMs:cloudflare\?18500:6500/);
  assert.match(html,/return checkProviders\(\);/,"Startup uses a one-slot probe");
  assert.match(html,/multiAiRefresh"\)\.addEventListener\("click",\(\)=>\{multiLastCheck=0;checkProviders\(true\);\}\)/,"Explicit refresh probes four keys");
  assert.match(css,/\.multi-ai-gemini-detail/);

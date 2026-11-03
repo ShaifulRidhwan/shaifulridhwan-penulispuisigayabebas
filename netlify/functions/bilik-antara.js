@@ -299,7 +299,7 @@ exports.handler=async event=>{
             system:"Pemeriksaan sambungan, jawab ringkas.",
             contents:[{role:"user",parts:[{text:"Balas OK."}]}],
             maxTokens:cloudflare?1024:640,thinkingLevel:fastModel.includes("flash-lite")?"minimal":"low",
-            timeoutMs:cloudflare?18500:12000,signal:event.signal});
+            timeoutMs:cloudflare?18500:6500,signal:event.signal});
           const elapsed=Date.now()-time;
           const verified=!!modelText(tested?.candidates?.[0]);
           if(verified)GeminiTextPool.success(entry.slot,{model:fastModel,latencyMs:elapsed});

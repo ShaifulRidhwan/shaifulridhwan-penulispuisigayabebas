@@ -9,7 +9,7 @@ test("Cloudflare Gemini time budget is independent from Netlify",()=>{
  assert.match(chat,/deadline=started\+\(cloudflare\?46000:24000\)/);
  assert.match(chat,/plan\.thinkingLevel==="high"\?28000:19000/);
  assert.match(chat,/plan\.thinkingLevel==="high"\?15000:6500/);
- assert.match(chat,/timeoutMs:cloudflare\?18500:12000/);
+ assert.match(chat,/timeoutMs:cloudflare\?18500:6500/);
  assert.match(stream,/AKSARA_CLOUD_MIGRATION==="preview"\?44000:26000/);
 });
 test("A timed-out Gemini health probe is not mislabeled as an actual offline upstream failure",()=>{
