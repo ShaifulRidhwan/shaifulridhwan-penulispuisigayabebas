@@ -62,15 +62,26 @@
   if(!allowed)throw Error("OCR memerlukan izin pengguna.");
   if(!file||!file.size||file.size>12000000)throw Error("OCR terhad kepada PDF sehingga 12 MB.");
   if(signal?.aborted)throw Error("OCR dibatalkan.");
+  // pdfjs-dist v6 rendering calls the ES2026 Map helper. Provide it only
+  // when OCR is requested on browsers that have not implemented it.
+  if(typeof Map.prototype.getOrInsertComputed!=="function"){
+   Object.defineProperty(Map.prototype,"getOrInsertComputed",{
+    configurable:true,writable:true,value:function(key,compute){
+     if(this.has(key))return this.get(key);
+     const item=compute(key);this.set(key,item);return item;
+    }
+   });
+  }
   const pdfjs=await engine();
   const module=await import(OCR_URL);
-  if(typeof module.createWorker!=="function")throw Error("OCR engine tidak tersedia.");
+  const createWorker=module.createWorker||module.default?.createWorker;
+  if(typeof createWorker!=="function")throw Error("OCR engine tidak tersedia.");
   const task=pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer()),
    isEvalSupported:false,enableXfa:false,stopAtErrors:false});
   let worker=null;
   try{
    const doc=await task.promise,limit=Math.min(doc.numPages,Math.max(1,Math.min(3,maxPages)));
-   worker=await module.createWorker("eng");
+   worker=await createWorker("eng");
    const sections=[];let characters=0;
    for(let i=1;i<=limit;i++){
     if(signal?.aborted)throw Error("OCR dibatalkan.");

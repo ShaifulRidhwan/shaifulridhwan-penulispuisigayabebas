@@ -13,3 +13,10 @@ test("Diagnostics do not leak upstream secrets",()=>{const x=Failure.diagnose({p
 test("Prompt dedupe is disabled by default",()=>{assert.equal(Prompt.compose(["A\nB\nA"]),"A\nB\nA");assert.equal(Prompt.compose(["A\nB\nA"],{dedupeExact:true}),"A\nB");});
 test("Infrastructure is per-instance and bounded",()=>{const m=new Map();assert.equal(Infra.throttle(m,"a",2,1000),false);assert.equal(Infra.throttle(m,"a",2,1010),false);assert.equal(Infra.throttle(m,"a",2,1020),true);assert.equal(Infra.throttle(m,"a",2,61001),false);assert.equal(Infra.budget({bodyBytes:5500001}).ok,false);});
 test("Scanned PDF OCR remains user-consented",()=>{const p=fs.readFileSync("bilik-antara-pdf-reader.js","utf8"),a=fs.readFileSync("bilik-antara-attachments.js","utf8"),b=fs.readFileSync("netlify/functions/bilik-antara.js","utf8");assert.match(p,/if\(!allowed\)throw Error/);assert.match(a,/window\.confirm\("PDF imbasan/);assert.match(b,/VisionDiagnostic\.inspect/);assert.match(b,/AKSARA_PROMPT_OPTIMIZE==="true"/);});
+
+test("OCR Tesseract CDN ESM default export and PDF.js Map compatibility are guarded",()=>{
+ const src=fs.readFileSync("bilik-antara-pdf-reader.js","utf8");
+ assert.ok(src.includes("module.default?.createWorker"));
+ assert.ok(src.includes('typeof Map.prototype.getOrInsertComputed!=="function"'));
+ assert.ok(src.includes('worker=await createWorker("eng")'));
+});
