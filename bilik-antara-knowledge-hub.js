@@ -71,7 +71,10 @@
     '<label for="knowledgeWikiQuery">Topik ensiklopedia</label>',
     '<input id="knowledgeWikiQuery" maxlength="110" autocomplete="off" placeholder="Contoh: falsafah eksistensialisme">',
     '<p class="knowledge-note">Sumber Wikipedia ialah ringkasan ensiklopedia, bukan bukti berita langsung atau kajian primer.</p>',
-    '<button type="button" id="knowledgeWikiDraft" class="knowledge-primary">Sediakan soalan Wikipedia</button>',
+    '<button type="button" id="knowledgeWikiSearch" class="knowledge-primary">Cari ringkasan sekarang</button>',
+    '<p id="knowledgeWikiStatus" class="knowledge-note" role="status">Carian hanya bermula selepas butang ditekan.</p>',
+    '<div id="knowledgeWikiResults" class="knowledge-results"></div>',
+    '<button type="button" id="knowledgeWikiDraft" class="knowledge-primary">Sediakan soalan Wikipedia dalam chat</button>',
    '</section>',
    '<section id="knowledgeUrl" role="tabpanel" aria-labelledby="knowledgeTabUrl" hidden>',
     '<label for="knowledgeUrlInput">Pautan laman awam (HTTPS)</label>',
@@ -83,7 +86,9 @@
     '<label for="knowledgeCalcInput">Ungkapan matematik</label>',
     '<input id="knowledgeCalcInput" inputmode="text" maxlength="85" autocomplete="off" value="(12+8)*3" placeholder="Contoh: (12+8)*3">',
     '<p class="knowledge-note">Sediakan pengiraan untuk alat selamat AKSARA jika tersedia. Tiada kod sewenang-wenangnya dijalankan.</p>',
-    '<button type="button" id="knowledgeCalcDraft" class="knowledge-primary">Sediakan pengiraan</button>',
+    '<button type="button" id="knowledgeCalcRun" class="knowledge-primary">Kira terus</button>',
+    '<p id="knowledgeCalcStatus" class="knowledge-note" role="status">Masukkan ungkapan dan tekan Kira terus.</p>',
+    '<button type="button" id="knowledgeCalcDraft" class="knowledge-primary">Sediakan pengiraan dalam chat</button>',
    '</section>',
    '<p id="knowledgeHubAlert" class="knowledge-alert" role="status" hidden></p>',
    '<section class="knowledge-recent" aria-labelledby="knowledgeSourcesTitle">',
@@ -112,7 +117,11 @@
    const button=made("button","Tanya AKSARA");button.type="button";
    button.addEventListener("click",()=>draft("Analisis puisi "+p.title+
     " karya Shaiful Ridhwan. Huraikan metafora dan makna berdasarkan arkib AKSARA; jangan reka petikan."));
-   box.append(button);return box;
+   const open=made("a","Buka puisi asal");
+   open.href="index.html?karya="+encodeURIComponent(p.title)+"#karya";
+   open.target="_blank";open.rel="noopener noreferrer";
+   open.className="knowledge-work-original";
+   box.append(open,button);return box;
   }
   function filter(){
    if(!poems)return;
@@ -160,6 +169,65 @@
   });
   get("knowledgeCalcDraft").addEventListener("click",()=>{
    if(!draft(calculationQuestion(get("knowledgeCalcInput").value)))warn("Gunakan nombor dan operator +, -, *, / atau kurungan sahaja.");
+  });
+  // Hasil ringkasan awam dan kalkulator diperoleh secara terus, bukan AI.
+  // Butang sedia ada kekal untuk menyediakan soalan melalui chat.
+  async function referencePost(payload){
+   const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),10000);
+   try{
+    const response=await win.fetch("/.netlify/functions/aksara-reference-hub",{
+     method:"POST",headers:{"Content-Type":"application/json"},
+     body:JSON.stringify(payload),signal:ctrl.signal
+    });
+    const data=await response.json();
+    if(!response.ok)throw Error(String(data?.error||"Semakan gagal.").slice(0,160));
+    return data;
+   }finally{clearTimeout(timer);}
+  }
+  const wikiResults=get("knowledgeWikiResults"),wikiStatus=get("knowledgeWikiStatus"),
+   wikiButton=get("knowledgeWikiSearch");
+  wikiButton.addEventListener("click",async()=>{
+   const query=get("knowledgeWikiQuery").value.trim();
+   wikiResults.replaceChildren();
+   if(query.length<3||query.length>85){
+    wikiStatus.textContent="Masukkan topik antara 3 hingga 85 aksara.";return;
+   }
+   wikiButton.disabled=true;wikiStatus.textContent="Mencari ringkasan Wikipedia…";
+   try{
+    const data=await referencePost({action:"wikipedia",query});
+    const sources=Array.isArray(data?.sources)?data.sources:[];
+    let shown=0;
+    for(const item of sources.slice(0,3)){
+     const url=safeLink(item?.url);
+     if(!url||!/^https:\/\/(?:ms|en)\.wikipedia\.org\/wiki\//i.test(url))continue;
+     const card=made("article"),title=made("h3",String(item.title||"Wikipedia").slice(0,130)),
+      excerpt=made("p",String(item.excerpt||"").slice(0,500)),
+      link=made("a","Buka artikel Wikipedia");
+     card.className="knowledge-item";card.append(title,excerpt);
+     link.href=url;link.rel="noopener noreferrer";link.target="_blank";
+     link.className="knowledge-work-original";card.append(link);
+     wikiResults.append(card);shown++;
+    }
+    wikiStatus.textContent=shown?shown+" ringkasan diperoleh. Ini bukan pengesahan keseluruhan artikel.":
+     "Tiada hasil yang dapat disahkan, atau Wikipedia tidak dapat dicapai.";
+   }catch(error){
+    wikiStatus.textContent=error?.name==="AbortError"?"Carian tamat masa. Cuba lagi.":
+     String(error?.message||"Semakan gagal.").slice(0,160);
+   }finally{wikiButton.disabled=false;}
+  });
+  const calcButton=get("knowledgeCalcRun"),calcStatus=get("knowledgeCalcStatus");
+  calcButton.addEventListener("click",async()=>{
+   const expression=get("knowledgeCalcInput").value.trim();
+   if(!expression||expression.length>120){calcStatus.textContent="Ungkapan matematik tidak sah.";return;}
+   calcButton.disabled=true;calcStatus.textContent="Mengira dengan parser terhad…";
+   try{
+    const data=await referencePost({action:"calculate",expression});
+    calcStatus.textContent=expression+" = "+String(data.result)+
+     " · Pengiraan selamat, bukan jawapan model AI.";
+   }catch(error){
+    calcStatus.textContent=error?.name==="AbortError"?"Pengiraan tamat masa. Cuba lagi.":
+     String(error?.message||"Pengiraan gagal.").slice(0,160);
+   }finally{calcButton.disabled=false;}
   });
   for(const id of ["knowledgeWikiQuery","knowledgeUrlInput","knowledgeCalcInput"])
    get(id).addEventListener("keydown",e=>{if(e.key==="Enter"){
