@@ -1,5 +1,6 @@
 "use strict";
 const assert=require("node:assert/strict");
+const fs=require("node:fs");
 const {chromium}=require("playwright");
 const {PDFDocument}=require("pdf-lib");
 (async()=>{
@@ -14,7 +15,7 @@ const {PDFDocument}=require("pdf-lib");
   p.drawImage(embedded,{x:0,y:0,width:900,height:400});
   const pdf=await doc.save();
   await page.goto("https://shaifulridhwan-penulispuisigayabebas.netlify.app/index.html",{waitUntil:"domcontentloaded",timeout:30000});
-  await page.addScriptTag({url:"https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara-pdf-reader.js?v=2"});
+  await page.addScriptTag({content:fs.readFileSync("bilik-antara-pdf-reader.js","utf8")});
   const out=await page.evaluate(async payload=>{
    const bytes=Uint8Array.from(atob(payload),c=>c.charCodeAt(0));
    const file=new File([bytes],"aksara-scanned-test.pdf",{type:"application/pdf"});
