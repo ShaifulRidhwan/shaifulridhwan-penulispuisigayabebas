@@ -54,7 +54,9 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.evaluate(()=>window.BilikAntaraSuite.getStorageStatus().memoryEnabled),true);
   assert.equal(await page.evaluate(()=>window.BilikAntaraSuite.getStorageStatus().memorySaved),false,
    "An unsaved draft must not become a stored memory automatically");
+  page.once("dialog",dialog=>dialog.accept());
   await page.keyboard.press("Escape");
+  await page.waitForFunction(()=>!document.body.classList.contains("ba-panel-open"),{timeout:6000});
 
   // Real mocked HTTP completion carries verified tool metadata to the local UI.
   await page.locator("#input").fill("Terangkan sumber halaman web untuk ujian");

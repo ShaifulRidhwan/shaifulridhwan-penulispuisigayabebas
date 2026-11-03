@@ -466,8 +466,8 @@ test("Pipeline phase 2 defaults to local session saving and optional memory, wit
  assert.match(html, /const SESSION_PREF_STORAGE="bilik-antara-session-save-pref-v1"/);
  assert.match(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,ui\.remember\.checked\?"on":"off"\)/);
  assert.doesNotMatch(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,"off"\)/);
- assert.match(html, /bilik-antara-session-utils\.js\?v=2/);
- assert.match(html, /bilik-antara-suite\.js\?v=16/);
+ assert.match(html, /bilik-antara-session-utils\.js\?v=3/);
+ assert.match(html, /bilik-antara-suite\.js\?v=17/);
  assert.match(suite, /let memory=read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
  assert.match(suite, /const disabled=\{enabled:false,text:""\}/);
  assert.match(suite, /write\(KEYS\.memory,disabled\)/);
@@ -546,7 +546,7 @@ test("Session archive import validates schema and strips unsafe extra fields",()
 
 test("Deleting an open session also clears its active snapshot, so autosave cannot resurrect it",()=>{
  const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
- const a=suite.indexOf("function persistArchive(){"),b=suite.indexOf('window.addEventListener("ba:saved"');
+ const a=suite.indexOf("function persistArchive("),b=suite.indexOf('window.addEventListener("ba:saved"');
  const c=suite.indexOf("function rotateActiveSession(){"),d=suite.indexOf("function renderSessions(){");
  assert.ok(a>=0&&b>a&&c>b&&d>c);
  const persisted=new Map();
@@ -558,8 +558,10 @@ test("Deleting an open session also clears its active snapshot, so autosave cann
   api:{remember:()=>true,active:()=>false,
    snapshot:()=>({history:activeHistory,summary:"",summarizedThrough:0,thoughtLedger:[]}),
    fresh:()=>{activeHistory=[];return true;}},
+  sessionHelpers:{mergeArchive:require("../bilik-antara-session-utils.js").mergeArchive},
   write:(key,value)=>{persisted.set(key,JSON.parse(JSON.stringify(value)));return true;},
-  localStorage:{removeItem:key=>persisted.delete(key)},
+  localStorage:{getItem:key=>persisted.has(key)?JSON.stringify(persisted.get(key)):null,
+    removeItem:key=>persisted.delete(key)},
   sessionStorage:{setItem:(key,value)=>persisted.set(key,value)},
   notice:()=>{},markStorage:()=>{},freshId:()=>"fresh-"+(++idIndex)
  };
@@ -599,7 +601,7 @@ test("Session archive titles render as compact headings and preserve functional 
  assert.match(css,/-webkit-backdrop-filter:none;backdrop-filter:none;/);
  assert.match(css,/background:transparent;box-shadow:none;/);
  assert.match(html,/bilik-antara-suite\.css\?v=9/);
- assert.match(html,/bilik-antara-suite\.js\?v=16/);
+ assert.match(html,/bilik-antara-suite\.js\?v=17/);
 });
 
 test("Optional memory starter stays editable and is never automatically saved",()=>{
