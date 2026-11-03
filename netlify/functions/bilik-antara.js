@@ -10,6 +10,7 @@ const Identity=require("../../bilik-antara-identity");
 const Brain=require("../../bilik-antara-brain");
 const Modes=require("../../bilik-antara-modes");
 const ThinkingV3=require("./aksara-thinking-v3");
+const ThinkingV4=require("./aksara-thinking-v4");
 const ConsistencyV6=require("./aksara-context-consistency-v6");
 const EfficiencyV6=require("./aksara-response-efficiency-v6");
 const RecoveryV6=require("./aksara-recovery-v6");
@@ -487,8 +488,8 @@ exports.handler=async event=>{
   const cognition=cognitiveProfile(question,history,intent,thoughtMode);
   const legacyPlan=cognitivePlan(intent,Modes.plan(thoughtMode,intent,intelligencePlan(intent),question),cognition);
   // Refine keyword-only depth without overriding sensitive/support/simple contracts.
-  const depthV3=ThinkingV3.depth({question,mode:thoughtMode,intent,profile:cognition,base:legacyPlan});
-  const plan=depthV3.plan;
+  const thinkingV4=ThinkingV4.planRequest({question,mode:thoughtMode,intent,profile:cognition,basePlan:legacyPlan,history});
+  const plan=thinkingV4.plan;
   const identityReply=(!media.length&&!documentText)?Identity.answerIdentity(question):null;
    // Verified mode guide and selected elementary philosophy have independent
    // mode-aware local answers; no cheap fallback can override their meaning.
@@ -612,12 +613,12 @@ exports.handler=async event=>{
   if(!tools.length&&!Structured.wantsJson(question))tools.push(...functionTools);
   // Light conversation = low, writing and explanations = medium, complex = high.
   // Technical prompts use advanced Flash, but ordinary text stays on Flash-Lite.
-  const adaptiveThinking=plan.thinkingLevel==="low"&&["creative","explain","technical"].includes(intent.task)?"medium":plan.thinkingLevel;
+  const adaptiveThinking=plan.thinkingLevel;
   const model=chooseModel(baseModel,{...intent,depth:adaptiveThinking,advanced:intent.task==="technical"});
   const detailedIdentity=Identity.needsDetail(question)||intent.works||/\b(?:puisi|sajak|pantun|gurindam|penulisan|coder poet)\b/i.test(question);
   // The dual view is explicitly requested by the user, not a third mode or a second model call.
-  const thinkingV3=ThinkingV3.planRequest({question,mode:thoughtMode,intent,profile:cognition,
-    plan,history,research:researchResult,sources:publicSources,ownedPage:!!ownedPage});
+  const thinkingV3={...ThinkingV4.guidance({request:thinkingV4,question,intent,profile:cognition,
+    history,research:researchResult,sources:publicSources,ownedPage:!!ownedPage}),...thinkingV4};
   const literaryGuide=V5.literaryGuidance(question,documentText);
   const literaryProfile=literaryGuide?V5.literaryProfile(documentText||question):null;
   const creatorHumour=detailedIdentity&&/\b(?:usik|usikan|sindir|sindiran|gurau|bergurau|lawak|jenaka)\b/i.test(question);
@@ -644,10 +645,10 @@ exports.handler=async event=>{
   const legacyMaxTokens=adaptiveThinking==="medium"?Math.max(plan.maxTokens,4000):plan.maxTokens;
   const efficiencyV6=EfficiencyV6.decide({system,history,question,intent,plan,maxTokens:legacyMaxTokens,
     hasMedia:media.length>0,hasPrivate:!!(documentText||userMemory||memory),hasJson:Structured.wantsJson(question),
-    dualPerspective:thinkingV3.dualPerspective});
+    dualPerspective:thinkingV3.dualPerspective,answerDepth:thinkingV4.answerDepth});
   const maxTokens=efficiencyV6.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
-    works:!!poem,multimodal:media.length>0,model,review:intent.review,cognitiveFocus:cognition.focus,reasoningLevel:plan.thinkingLevel,thinkingVersion:3,dualPerspective:thinkingV3.dualPerspective,outputBudgetReduced:efficiencyV6.reduced});
+    works:!!poem,multimodal:media.length>0,model,review:intent.review,cognitiveFocus:cognition.focus,reasoningLevel:plan.thinkingLevel,thinkingVersion:4,answerDepth:thinkingV4.answerDepth,dualPerspective:thinkingV3.dualPerspective,outputBudgetReduced:efficiencyV6.reduced});
   const privateContext=!!(documentText||userMemory);
   // Opt-in image fallback: other media stay on Gemini. Never silently send
   // attached images or private session notes to an extra provider.
@@ -740,8 +741,9 @@ exports.handler=async event=>{
           reply:alternative.reply,
           reliabilityV6:{context:contextV6,efficiency:{reduced:efficiencyV6.reduced,
             estimatedPromptTokens:efficiencyV6.estimate.systemTokens+efficiencyV6.estimate.historyTokens}},
-          thinkingArchitecture:{version:3,mode:thoughtMode,dualPerspective:thinkingV3.dualPerspective,
-            depth:plan.thinkingLevel,evidenceState:thinkingV3.evidenceState},
+          thinkingArchitecture:{version:4,mode:thoughtMode,dualPerspective:thinkingV3.dualPerspective,
+            depth:adaptiveThinking,answerDepth:thinkingV4.answerDepth,evidenceState:thinkingV3.evidenceState,
+            completeness:ThinkingV4.auditReply({reply:alternative.reply,request:thinkingV4,intent,outputFormat:Structured.wantsJson(question)?"json":""}).status},
           ...(literaryProfile?{literaryProfile}:{}),
           ...(media.some(m=>/^image\//.test(m.mimeType))?{vision:VisionDiagnostic.inspect({media,provider:alternative.provider,reply:alternative.reply,consent:payload.mediaFallback===true})}:{}),
           outputFormat:Structured.wantsJson(question)?"json":undefined,sources:[...(ownedPage?[{title:ownedPage.title||"Halaman awam AKSARA",url:ownedPage.url}]:[]),...publicSources.map(({title,url})=>({title,url}))].slice(0,8),argumentMap:[],truthAudit:[],
@@ -1010,8 +1012,9 @@ exports.handler=async event=>{
       reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,
       reliabilityV6:{context:contextV6,efficiency:{reduced:efficiencyV6.reduced,
         estimatedPromptTokens:efficiencyV6.estimate.systemTokens+efficiencyV6.estimate.historyTokens}},
-      thinkingArchitecture:{version:3,mode:thoughtMode,dualPerspective:thinkingV3.dualPerspective,
-        depth:plan.thinkingLevel,evidenceState:thinkingV3.evidenceState},
+      thinkingArchitecture:{version:4,mode:thoughtMode,dualPerspective:thinkingV3.dualPerspective,
+        depth:adaptiveThinking,answerDepth:thinkingV4.answerDepth,evidenceState:thinkingV3.evidenceState,
+        completeness:ThinkingV4.auditReply({reply:reliableReply,request:thinkingV4,intent,outputFormat:Structured.wantsJson(question)?"json":""}).status},
       ...(literaryProfile?{literaryProfile}:{}),outputFormat:Structured.wantsJson(question)?"json":undefined,sources,
       ...(publicAccount?{publicAccount}:{}),
       argumentMap:review?review.argumentMap:[],truthAudit:review?review.truthAudit:[],
