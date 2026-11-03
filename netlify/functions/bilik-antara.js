@@ -10,6 +10,10 @@ const Identity=require("../../bilik-antara-identity");
 const Brain=require("../../bilik-antara-brain");
 const Modes=require("../../bilik-antara-modes");
 const ThinkingV3=require("./aksara-thinking-v3");
+const ConsistencyV6=require("./aksara-context-consistency-v6");
+const EfficiencyV6=require("./aksara-response-efficiency-v6");
+const RecoveryV6=require("./aksara-recovery-v6");
+const TelemetryV6=require("./aksara-telemetry-v6");
 const ChatStyle=require("../../bilik-antara-chat-style");
 const Router=require("./aksara-provider-router");
 const Capabilities=require("./aksara-capabilities");
@@ -131,7 +135,7 @@ function result(code,data,H){
   if(code===200&&typeof data?.reply==="string")
     data={...data,claimAudit:V5.claimAudit(data)};
   if(code>=400)data={...data,diagnostics:FailureDiagnostic.diagnose(data,code),
-    recovery:V5.recoveryHint({status:code,code:data?.code,retryAfterSeconds:data?.retryAfterSeconds})};
+    recovery:RecoveryV6.guide({status:code,code:data?.code,retryAfterSeconds:data?.retryAfterSeconds,failures:data?.providerFailures})};
   if(code===200&&typeof data?.reply==="string"){
     Ops.record("success",Number(data.durMs)||0);
     if(data.mode==="fallback")Ops.record("fallback");
@@ -352,6 +356,7 @@ exports.handler=async event=>{
       freePotential:FreePotential.snapshot({env:process.env,ai:cloudflareAI,
         manifest:Capabilities.manifest(),providers}),preferredProvider:(realSuccess||fastest||ready)?.id||"",checkedAt:Date.now(),someOnline:!!fastest,someReady:!!ready,configuredCount:configured.length+(apiKey?1:0),
       productionHealth:Ops.snapshot(),
+      globalObservability:{configured:TelemetryV6.config().enabled,scope:"private_aggregate_only",verifiedCollection:false},
       qualityRouter:{enabled:process.env.AKSARA_V5_QUALITY_ROUTER==="true",evidence:"approved_human_scores_only"},
       routingPolicy:{primaries:Hybrid.PRIMARY,backup:"openrouter",geminiChat:"preferred_when_eligible",voiceLive:"unchanged"}},H);
   }
@@ -393,6 +398,8 @@ exports.handler=async event=>{
   if(!flags.aiEnabled)return result(503,{code:"AKSARA_PAUSED",error:"Aksara sedang menjalani penyelenggaraan."},H);
   history=Context.selectHistory(history,question);
   const decisionContext=V5.formatDecisions(V5.sessionLedger(history));
+  const contextV6=ConsistencyV6.inspect(history,question);
+  const contextGuidanceV6=ConsistencyV6.guidance(history,question);
   const rawMedia=payload.media===undefined||payload.media===null?[]:(Array.isArray(payload.media)?payload.media:[payload.media]);
   const media=rawMedia.map(sanitizeMedia);
   if(media.some(x=>!x)||media.reduce((n,x)=>n+x.data.length,0)>MAX_MEDIA_ENCODED)
@@ -626,13 +633,17 @@ exports.handler=async event=>{
    const systemRaw=baseSystem+"\n"+DocumentIntelligence.guidance({documentText,documentName,media})+
     "\n"+cognitiveGuidance(cognition)+"\n"+Research.guidance(researchResult)+activeModeInstruction+
     (thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false)+"\n"+Modes.contextGuidance(thoughtMode,question,history):"")+
-    thinkingV3.guidance;
+    thinkingV3.guidance+contextGuidanceV6;
   // Disabled by default until benchmark comparison is approved.
   const system=process.env.AKSARA_PROMPT_OPTIMIZE==="true"
     ?PromptOptimization.compose([systemRaw],{dedupeExact:true}):systemRaw;
-  const maxTokens=adaptiveThinking==="medium"?Math.max(plan.maxTokens,4000):plan.maxTokens;
+  const legacyMaxTokens=adaptiveThinking==="medium"?Math.max(plan.maxTokens,4000):plan.maxTokens;
+  const efficiencyV6=EfficiencyV6.decide({system,history,question,intent,plan,maxTokens:legacyMaxTokens,
+    hasMedia:media.length>0,hasPrivate:!!(documentText||userMemory||memory),
+    dualPerspective:thinkingV3.dualPerspective});
+  const maxTokens=efficiencyV6.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
-    works:!!poem,multimodal:media.length>0,model,review:intent.review,cognitiveFocus:cognition.focus,reasoningLevel:plan.thinkingLevel,thinkingVersion:3,dualPerspective:thinkingV3.dualPerspective});
+    works:!!poem,multimodal:media.length>0,model,review:intent.review,cognitiveFocus:cognition.focus,reasoningLevel:plan.thinkingLevel,thinkingVersion:3,dualPerspective:thinkingV3.dualPerspective,outputBudgetReduced:efficiencyV6.reduced});
   const privateContext=!!(documentText||userMemory);
   // Opt-in image fallback: other media stay on Gemini. Never silently send
   // attached images or private session notes to an extra provider.
@@ -723,6 +734,8 @@ exports.handler=async event=>{
         return result(200,{
           mode:"fallback",aiMode:"automatic",thoughtMode,model:alternative.model,provider:alternative.provider,researchStatus:researchResult.status,
           reply:alternative.reply,
+          reliabilityV6:{context:contextV6,efficiency:{reduced:efficiencyV6.reduced,
+            estimatedPromptTokens:efficiencyV6.estimate.systemTokens+efficiencyV6.estimate.historyTokens}},
           thinkingArchitecture:{version:3,mode:thoughtMode,dualPerspective:thinkingV3.dualPerspective,
             depth:plan.thinkingLevel,evidenceState:thinkingV3.evidenceState},
           ...(literaryProfile?{literaryProfile}:{}),
@@ -991,6 +1004,8 @@ exports.handler=async event=>{
     const output={mode:"live",aiMode:"automatic",thoughtMode,provider:"gemini",model,researchStatus:researchResult.status,
       ...(media.some(m=>/^image\//.test(m.mimeType))?{vision:VisionDiagnostic.inspect({media,provider:"gemini",reply:reliableReply,consent:payload.mediaFallback===true})}:{}),
       reply:Structured.render(reliableReply,Structured.wantsJson(question)).reply,
+      reliabilityV6:{context:contextV6,efficiency:{reduced:efficiencyV6.reduced,
+        estimatedPromptTokens:efficiencyV6.estimate.systemTokens+efficiencyV6.estimate.historyTokens}},
       thinkingArchitecture:{version:3,mode:thoughtMode,dualPerspective:thinkingV3.dualPerspective,
         depth:plan.thinkingLevel,evidenceState:thinkingV3.evidenceState},
       ...(literaryProfile?{literaryProfile}:{}),outputFormat:Structured.wantsJson(question)?"json":undefined,sources,
@@ -1040,3 +1055,19 @@ exports.handler=async event=>{
   }
 };
 
+
+// V6 telemetry writes only aggregate buckets, after the chat result is formed.
+// Optional and fail-open: telemetry must never override the user's actual answer.
+const aksaraV6CoreHandler=exports.handler;
+exports.handler=async event=>{
+  const startedAt=Date.now();
+  let response;
+  try{
+    response=await aksaraV6CoreHandler(event);
+    return response;
+  }finally{
+    if(response&&event?.httpMethod==="POST"&&process.env.AKSARA_V6_TELEMETRY==="true"){
+      try{await TelemetryV6.record({response,elapsedMs:Date.now()-startedAt});}catch(_){}
+    }
+  }
+};
