@@ -64,7 +64,18 @@ metrics={...blankMetrics(),...metrics,byProvider:metrics.byProvider&&typeof metr
  durations:Array.isArray(metrics.durations)?metrics.durations.slice(-50):[],
  elapsed:Array.isArray(metrics.elapsed)?metrics.elapsed.slice(-120):[]};
 const persistMetrics=()=>{if(api.remember())write(KEYS.metrics,metrics);};
-let currentPanel="",sessionSearchTerm="";
+let currentPanel="",sessionSearchTerm="",memoryDraft=null;
+function memoryDirty(){
+ return currentPanel==="sessions"&&!!memoryDraft&&
+  (memoryDraft.field.value!==memoryDraft.originalText||
+   memoryDraft.toggle.checked!==memoryDraft.originalEnabled);
+}
+function confirmMemoryDiscard(){
+ return !memoryDirty()||window.confirm("Draf memori belum disimpan. Buang perubahan dan tutup panel?");
+}
+function rawMemoryVersion(){
+ try{return localStorage.getItem(KEYS.memory);}catch(_){return null;}
+}
 const convo=document.querySelector(".conversation");
 if(!convo)return;
 const drawer=make("aside",undefined,"ba-drawer");
@@ -88,12 +99,23 @@ function notice(message){
  status.textContent=String(message||"").slice(0,240);
 }
 function open(panel){
+ if(!drawer.hidden&&!confirmMemoryDiscard())return;
+ memoryDraft=null;
  if(settings)settings.open=false;
  currentPanel=panel;drawer.hidden=false;document.body.classList.add("ba-panel-open");
  render();
 }
-function close(){drawer.hidden=true;currentPanel="";document.body.classList.remove("ba-panel-open");}
+function close(){
+ if(!confirmMemoryDiscard())return false;
+ memoryDraft=null;
+ drawer.hidden=true;currentPanel="";document.body.classList.remove("ba-panel-open");
+ return true;
+}
 document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!drawer.hidden)close();});
+window.addEventListener("beforeunload",event=>{
+ if(!memoryDirty())return;
+ event.preventDefault();event.returnValue="";
+});
 function section(text){content.appendChild(make("h3",text,"ba-h3"));}
 function paragraph(text){content.appendChild(make("p",text,"ba-hint"));}
 function controlRow(...nodes){const row=make("div",undefined,"ba-row");row.append(...nodes);content.appendChild(row);return row;}
@@ -177,6 +199,8 @@ window.addEventListener("storage",event=>{
 });
 function beginSession(entry){
  if(api.active()){notice("Tunggu jawapan semasa selesai dahulu.");return;}
+ if(!confirmMemoryDiscard())return;
+ memoryDraft=null;
  snapshotCurrent();
  const previous=activeId,next=entry&&entry.id||freshId();
  activeId=next;
@@ -377,6 +401,7 @@ function renderMemory(){
  const label=make("label"," Aktifkan memori");label.prepend(toggle);content.appendChild(label);
  const field=make("textarea");field.className="ba-editor";field.rows=8;field.maxLength=8000;
  field.value=typeof memory.text==="string"?memory.text:"";
+ memoryDraft={field,toggle,originalText:field.value,originalEnabled:toggle.checked,version:rawMemoryVersion()};
  field.addEventListener("input",()=>{draftStatus.textContent="Draf berubah · belum disimpan";});
  toggle.addEventListener("change",()=>{draftStatus.textContent="Pilihan berubah · belum disimpan";});
  field.placeholder="Catat projek aktif, keputusan penting, atau gaya jawapan yang kau mahu Aksara ingat…";
@@ -392,12 +417,15 @@ function renderMemory(){
    "Perkara yang aku mahu elakkan: [tulis sendiri]"
   ].join("\n");
   field.focus();
+  draftStatus.textContent="Draf berubah · belum disimpan";
   notice("Templat belum disimpan. Ganti atau buang [tulis sendiri], kemudian tekan Simpan memori.");
  },"ba-tiny ba-memory-template");
  templateRow.append(templateHint,templateButton);content.appendChild(templateRow);
  controlRow(button("Simpan memori",()=>{
   const updated={enabled:toggle.checked,text:field.value.trim().slice(0,8000)};
   if(updated.text.includes("[tulis sendiri]")){notice("Lengkapkan atau padam penanda [tulis sendiri] sebelum simpan.");return;}
+  if(rawMemoryVersion()!==memoryDraft?.version&&
+     !window.confirm("Memori sudah berubah di tab lain. Timpa nota terbaru dengan draf ini?"))return;
   if(!write(KEYS.memory,updated))return;
   memory=updated;draftStatus.textContent="Nota disimpan pada peranti";notice("Pilihan memori disimpan pada peranti.");render();
  }),button("Padam memori",()=>{
@@ -415,6 +443,7 @@ function renderMemory(){
   const combined=[field.value.trim(),piece].filter(Boolean).join("\n\n");
   if(combined.length>8000){notice("Memori penuh. Ringkaskan nota sebelum tambah konteks.");return;}
   field.value=combined;toggle.checked=true;field.focus();
+  draftStatus.textContent="Draf berubah · belum disimpan";
   notice("Draf konteks ditambah. Semak dahulu, kemudian tekan Simpan memori.");
  }),button("Pratonton memori tersimpan",()=>{
   const question=$("input")?.value||"";
@@ -543,8 +572,20 @@ function renderMetrics(){
  );
 }
 function render(){
+ const draft=memoryDirty()?{text:memoryDraft.field.value,checked:memoryDraft.toggle.checked,
+  originalText:memoryDraft.originalText,originalEnabled:memoryDraft.originalEnabled,
+  version:memoryDraft.version}:null;
  content.replaceChildren();title.textContent=({sessions:"Sesi & Memori",workspace:"Ruang kerja",metrics:"Prestasi setempat"})[currentPanel]||"Bilik Antara";
- if(currentPanel==="sessions"){renderSessions();section("Memori pilihan");renderMemory();}
+ if(currentPanel==="sessions"){
+  renderSessions();section("Memori pilihan");renderMemory();
+  if(draft&&memoryDraft){
+   memoryDraft.field.value=draft.text;memoryDraft.toggle.checked=draft.checked;
+   memoryDraft.originalText=draft.originalText;memoryDraft.originalEnabled=draft.originalEnabled;
+   memoryDraft.version=draft.version;
+   const status=document.getElementById("ba-memory-save-status");
+   if(status)status.textContent="Draf berubah · belum disimpan";
+  }
+ }
  else if(currentPanel==="workspace")renderWorkspace();
  else if(currentPanel==="metrics")renderMetrics();
 }
