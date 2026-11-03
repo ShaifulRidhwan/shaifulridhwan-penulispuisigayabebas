@@ -74,7 +74,7 @@ test("Sesi dan memori: bukti operasi storan, draf belum simpan dan consent tidak
  assert.match(suite,/renderStorageStatus\(\)/);
  assert.match(suite,/storageHealth\.restored=ok/);
  assert.match(html,/const SESSION_PREF_STORAGE=/);
- assert.match(suite,/memory=\{enabled:false,text:""\}/);
+ assert.match(suite,/memory=\{enabled:true,text:""\}/);
  assert.match(suite,/if\(!api\.remember\(\)\)return false/);
 });
 test("Voice: diagnostik membezakan sambungan sebenar, mikrofon dan AudioContext",()=>{

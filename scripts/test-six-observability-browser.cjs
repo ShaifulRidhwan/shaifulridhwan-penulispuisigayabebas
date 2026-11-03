@@ -42,7 +42,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.match(voiceText,/Sambungan: Tidak aktif/);
   assert.match(voiceText,/Konteks audio aktif bukan bukti suara/);
 
-  // Switching on memory while editing is not consent; only save commits it.
+  // Memory is enabled for new visitors; draft edits are not persisted until Save.
   await page.locator("#settingsPanel > summary").click();
   await page.locator("#featureSessions").click();
   await page.waitForFunction(()=>document.body.classList.contains("ba-panel-open"),{timeout:6000});
@@ -51,7 +51,9 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   const memoryDraft=page.locator(".ba-editor").first();
   await memoryDraft.fill("Nota demo yang belum disimpan");
   await page.waitForFunction(()=>document.getElementById("ba-memory-save-status")?.textContent.includes("belum disimpan"));
-  assert.equal(await page.evaluate(()=>window.BilikAntaraSuite.getStorageStatus().memoryEnabled),false);
+  assert.equal(await page.evaluate(()=>window.BilikAntaraSuite.getStorageStatus().memoryEnabled),true);
+  assert.equal(await page.evaluate(()=>window.BilikAntaraSuite.getStorageStatus().memorySaved),false,
+   "An unsaved draft must not become a stored memory automatically");
   await page.keyboard.press("Escape");
 
   // Real mocked HTTP completion carries verified tool metadata to the local UI.
