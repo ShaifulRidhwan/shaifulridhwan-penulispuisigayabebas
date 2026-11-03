@@ -106,3 +106,8 @@ Semua puisi, tulisan asli dan kandungan kreatif yang diterbitkan oleh Shaiful Ri
 ### AKSARA Thinking Architecture 3.0
 
 CAHAYA dan GELAP berkongsi fakta, routing, alat dan privasi. Thinking Depth menyesuaikan soalan ringkas berbanding hujah mendalam; penilaian dua mod menggunakan benchmark offline dan ujian live opt-in. Untuk melihat dua sudut dalam satu respons, taip **"Cuba lihat dari kedua-dua sudut: ..."** atau **"Jawab dari sudut CAHAYA dan GELAP: ..."**. Dual Perspective bukan mod ketiga atau dua panggilan API. Panduan: [Thinking Architecture 3.0](docs/AKSARA-THINKING-ARCHITECTURE-V3.md).
+
+
+### AKSARA Reliability & Quality v6
+
+Permintaan sesi dibaca dengan pengesanan pembetulan terkini, error recovery diperjelas, dan benchmark live kini menggunakan sampling berstrata. Selain itu tersedia output-budget adaptif berpilihan, telemetry agregat rentas instance melalui Redis berpilihan, profil mutu provider berpandukan semakan manusia dan 20 ujian struktur sastera. **Tiada pilihan berkuota dihidupkan automatik**, dan ujian offline tidak membuktikan mutu model live. Panduan: [Reliability & Quality v6](docs/AKSARA-RELIABILITY-QUALITY-V6.md).
