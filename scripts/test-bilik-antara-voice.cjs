@@ -542,6 +542,37 @@ function voiceHarness(options={}){
   visibility:async(hidden)=>{doc.hidden=hidden;docEvents.get("visibilitychange")?.();await flush();}
  };
 }
+test("Voice v3 selector debounces Bahasa Gaul and keeps Aoede on the new socket",async()=>{
+ const h=voiceHarness(),first=await h.start(),selector=h.item("voiceDialectSelect");
+ assert.ok(selector.children.some(option=>option.value==="gaul"));
+ selector.value="gaul";selector.listener("change")();
+ await h.advance(500);
+ assert.equal(h.called(),1,"Do not waste credentials on intermediate style choices");
+ await h.advance(350);
+ assert.equal(h.called(),2);
+ const second=h.Socket.instances.at(-1);
+ assert.notEqual(second,first);
+ assert.equal(second.sent[0].setup.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName,"Aoede");
+ assert.match(second.sent[0].setup.systemInstruction.parts[0].text,/GAYA BAHASA VOICE YANG AKTIF: Bahasa Gaul/);
+ assert.equal(h.track.stopped,undefined);
+});
+test("Voice v3 Thinking Mode change reconfigures without ending the microphone session",async()=>{
+ const h=voiceHarness();await h.start();
+ h.page.dispatchEvent({type:"ba:thought-mode-changed"});
+ await h.advance(750);
+ assert.equal(h.called(),2,"Mode change requires a fresh one-use token at a quiet boundary");
+ assert.equal(h.track.stopped,undefined,"Mode change should preserve microphone permission");
+});
+test("Voice v3 pauses microphone in background and safely resumes within 45 seconds",async()=>{
+ const h=voiceHarness();await h.start();
+ await h.visibility(true);
+ assert.equal(h.track.enabled,false);
+ await h.advance(10000);
+ assert.equal(h.track.stopped,undefined);
+ await h.visibility(false);
+ assert.equal(h.track.enabled,true);
+ assert.equal(h.called(),1,"Healthy foreground recovery should not create a new socket");
+});
 test("Voice resumption reuses microphone and keeps Google handle in memory only",async()=>{
  const h=voiceHarness();
  const {item,Socket,track,events,modeRequests}=h;
