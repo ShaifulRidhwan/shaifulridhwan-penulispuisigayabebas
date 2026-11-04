@@ -86,3 +86,39 @@ test("unsupported tkinter is flagged before loading runtime",async()=>{
  assert.match(output.error,/Python Pyodide/);
  assert.equal(engine.compatibility("python","print(17)").ok,true);
 });
+
+test("HTML fenced replies are detected as one sandbox preview target",()=>{
+ const ctx=setup([{role:"assistant",content:"Boleh cuba:\n"+code("html","<!doctype html><html><body><h1>Love You</h1></body></html>")}],"jalankan kod");
+ assert.equal(ctx.action.hidden,false);
+ assert.match(ctx.run.textContent,/Live Preview/);
+ assert.equal(ctx.runs(),0,"HTML must never execute in the Python/JS runner");
+ let blocked=0;
+ ctx.form.listeners.submit[0]({preventDefault(){blocked++;},stopImmediatePropagation(){blocked++;}});
+ assert.equal(blocked,2,"HTML run request must remain local");
+});
+test("HTML and CSS authored separately are detected without guessing",()=>{
+ const ctx=setup([{role:"assistant",content:code("html","<main>Love You</main>")+"\n\n"+code("css","main{animation:pulse 1s infinite;}")}],"jalankan kod");
+ assert.equal(ctx.action.hidden,false);
+ assert.match(ctx.run.textContent,/Live Preview/);
+});
+test("HTML in current composer is sent to Live Preview, not AI",()=>{
+ const ctx=setup([],code("html","<h1>Love You</h1>"));
+ assert.equal(ctx.action.hidden,false);
+ assert.match(ctx.run.textContent,/Live Preview/);
+ let blocked=0;
+ ctx.form.listeners.submit[0]({preventDefault(){blocked++;},stopImmediatePropagation(){blocked++;}});
+ assert.equal(blocked,2);
+});
+test("multiple HTML documents are ambiguous and do not auto-select a preview",()=>{
+ const ctx=setup([{role:"assistant",content:code("html","<h1>One</h1>")+"\n"+code("html","<h1>Two</h1>")}],"jalankan kod");
+ assert.equal(ctx.action.hidden,true);
+});
+test("HTML preview bridge reuses script-disabled workspace instead of creating another runtime",()=>{
+ const js=fs.readFileSync(path.join(__dirname,"..","bilik-antara-code-workspace.js"),"utf8");
+ assert.match(js,/aksara:code-workspace-preview-ai/);
+ assert.match(js,/extractWebCode/);
+ assert.match(js,/openAIPreview/);
+ assert.match(js,/safePreviewDocument/);
+ assert.match(js,/script-src 'none'/);
+ assert.match(js,/previewFrame\.srcdoc/);
+});
