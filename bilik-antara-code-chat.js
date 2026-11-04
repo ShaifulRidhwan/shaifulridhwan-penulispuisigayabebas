@@ -44,7 +44,7 @@ function detect(source){
  const py=/^(?:\s*(?:print\s*\(|def\s+[a-zA-Z_]\w*\s*\(|for\s+[a-zA-Z_]\w*\s+in\s+(?:range\(|\w+)|from\s+[a-zA-Z_]\w*\s+import\s+|import\s+[a-zA-Z_]\w*|class\s+[a-zA-Z_]\w*\s*:|if\s+__name__\s*==|while\s+\S+:\s*$))/m;
  const isSql=/^(?:SELECT|WITH|CREATE\s+TABLE|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\b/i.test(full);
  const isCpp=/^\s*#include\s*[<"][^>"\n]+[>"]|\bint\s+main\s*\(|\bstd::(?:cout|cin|vector|string|endl)\b/m.test(full);
- const isJava=/(?:^|\n)\s*(?:package\s+[\w.]+\s*;|import\s+(?:javax\.swing|java\.awt|java\.util|java\.lang)\b|public\s+(?:final\s+)?class\s+\w+\b|(?:public\s+)?static\s+void\s+main\s*\(\s*String\s*\[\s*\])|@Override\b)|\bnew\s+JFrame\s*\(/m.test(full);
+ const isJava=/(?:^|\n)\s*(?:import\s+java[x]?\.[\w.*]+\s*;|public\s+(?:final\s+)?class\s+\w+|@Override\b|(?:public\s+)?static\s+void\s+main\s*\()/m.test(full)||/\bnew\s+JFrame\s*\(/.test(full);
  const isTs=/\b(?:interface\s+\w+|type\s+\w+\s*=|(?:const|let|var)\s+\w+\s*:\s*[A-Za-z]|function\s+\w+\s*\([^)]*:\s*[A-Za-z])/m.test(full);
  const isJs=js.test(full),isPy=py.test(full);
  if(isSql)return {language:"sql",code:full,format:"raw"};
