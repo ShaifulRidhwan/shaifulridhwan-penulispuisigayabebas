@@ -480,7 +480,10 @@ function wireFrame(){
    if(a.dataset.unifiedBound)return;a.dataset.unifiedBound="true";
    a.addEventListener("click",function(ev){ev.preventDefault();ev.stopImmediatePropagation();window.location.assign("index.html")},true);
   });
-  if(requestResume&&savedPage()>0&&typeof win.enterBook==="function")win.enterBook(savedPage());
+  if(typeof win.enterBook==="function"){
+   if(requestResume&&savedPage()>0)win.enterBook(savedPage());
+   else win.enterBook(0); // Mula membaca opens the actual first page, not a second cover inside the iframe.
+  }
   requestResume=false;error.hidden=true;
  }catch(e){error.hidden=false;error.textContent="Pembaca tidak dapat dimuatkan. Sila kembali ke kulit buku dan cuba lagi."}
 }
