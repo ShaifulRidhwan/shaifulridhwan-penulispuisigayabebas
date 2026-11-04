@@ -1,0 +1,94 @@
+name: AKSARA Game v0.5 Staging
+
+on:
+  push:
+    branches:
+      - experiment/aksara-game-v05-staging
+    paths:
+      - 'aksara-game/**'
+      - '.github/workflows/aksara-game-v05-staging.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: aksara-game-v05-staging
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  staged-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot 4.3 Compatibility export templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          unzip -q Godot_v4.3-stable_linux.x86_64.zip
+          chmod +x Godot_v4.3-stable_linux.x86_64
+          mkdir -p ~/.local/share/godot/export_templates/4.3.stable
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
+          unzip -q Godot_v4.3-stable_export_templates.tpz
+          mv templates/* ~/.local/share/godot/export_templates/4.3.stable/
+
+      - name: Download CC0 art assets and verify GLB file headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p aksara-game/assets
+          curl -fL --retry 3 --max-time 120 -sS 'https://gobkit.com/freebies/human003/Priestess.glb' -o aksara-game/assets/hero.glb
+          curl -fL --retry 3 --max-time 120 -sS 'https://cdn.3dassets.dev/assets/28779/v1/model.glb' -o aksara-game/assets/oak.glb
+          curl -fL --retry 3 --max-time 120 -sS 'https://cdn.3dassets.dev/assets/30441/v1/model.glb' -o aksara-game/assets/sanctuary.glb
+          curl -fL --retry 3 --max-time 120 -sS 'https://cdn.3dassets.dev/assets/23508/v1/model.glb' -o aksara-game/assets/courtyard.glb
+          python3 - <<'PY'
+          import os
+          for key in ('hero','oak','sanctuary','courtyard'):
+              path=f'aksara-game/assets/{key}.glb'
+              with open(path,'rb') as file:
+                  header=file.read(12)
+              assert header[:4]==b'glTF' and len(header)==12 and os.path.getsize(path)>1024, f'Invalid GLB: {key}'
+              print(f'{key}: {os.path.getsize(path)/1048576:.2f} MiB')
+          PY
+
+      - name: Import assets, audit GLB meshes and stage scene
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./Godot_v4.3-stable_linux.x86_64 --headless --path aksara-game --import
+          ./Godot_v4.3-stable_linux.x86_64 --headless --path aksara-game --script res://asset_audit.gd
+          ./Godot_v4.3-stable_linux.x86_64 --headless --path aksara-game --script res://scene_audit.gd
+
+      - name: Export Android-friendly browser game
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/aksara-game
+          printf '[preset.0]\nname="Web"\nplatform="Web"\nrunnable=true\nexport_filter="all_resources"\ninclude_filter=""\nexclude_filter=""\nexport_path="../public/aksara-game/index.html"\n\n[preset.0.options]\nvariant/extensions_support=false\n' > aksara-game/export_presets.cfg
+          ./Godot_v4.3-stable_linux.x86_64 --headless --path aksara-game --export-release Web ../public/aksara-game/index.html
+          test -s public/aksara-game/index.html
+          test -s public/aksara-game/index.wasm
+          printf '{"version":"hybrid-v0.5-staging","git_sha":"%s"}\n' "$GITHUB_SHA" > public/aksara-game/version.json
+          printf '/index.html\n  Cache-Control: no-cache\n/version.json\n  Cache-Control: no-store\n' > public/aksara-game/_headers
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aksara-v05-staging
+          path: public/aksara-game/
+          retention-days: 7
+
+      - name: Deploy preview only, never replace current Netlify production
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.AKSARA_GAME_NETLIFY_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.AKSARA_GAME_NETLIFY_SITE_ID }}
+        if: ${{ env.NETLIFY_AUTH_TOKEN != '' && env.NETLIFY_SITE_ID != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes netlify-cli@20 deploy --no-build --dir=public/aksara-game --alias=aksara-v05 --site="$NETLIFY_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" --message="AKSARA staging v0.5 $GITHUB_SHA"
+          echo "### AKSARA v0.5 isolated draft preview" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://aksara-v05--strong-croissant-bda21b.netlify.app/" >> "$GITHUB_STEP_SUMMARY"
+          echo "The existing production preview URL has not been changed." >> "$GITHUB_STEP_SUMMARY"
