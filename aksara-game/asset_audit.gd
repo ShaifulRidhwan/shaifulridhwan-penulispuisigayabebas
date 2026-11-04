@@ -17,6 +17,8 @@ func _initialize() -> void:
   root.add_child(model)
   var count := 0
   var pieces := model.find_children("*", "MeshInstance3D", true, false)
+  if model is MeshInstance3D:
+   pieces.push_front(model)
   for n in pieces:
    var part := n as MeshInstance3D
    if part != null and part.mesh != null and part.mesh.get_surface_count() > 0:
