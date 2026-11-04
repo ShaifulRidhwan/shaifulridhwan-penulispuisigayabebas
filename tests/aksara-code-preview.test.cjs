@@ -56,7 +56,18 @@ test("C++ project workflow exposes code, stdin, stop and output",()=>{
 });
 test("v0.3 page loads fresh Code Engine JS",()=>{
  const html=read("bilik-antara.html");
- for(const asset of ["runtime.js?v=6","status.js?v=20","workspace.js?v=4","chat.js?v=7"]){
+ for(const asset of ["runtime.js?v=6","status.js?v=20","workspace.js?v=4","chat.js?v=7","agent.js?v=5"]){
   assert.ok(html.includes("bilik-antara-code-"+asset),"Missing "+asset);
  }
 });
+
+test("AI Code Agent starts enabled without removing manual OFF and stop",()=>{
+ const agent=read("bilik-antara-code-agent.js");
+ assert.ok(agent.includes("setPermission(true);"),"Default AI code permission must be ON");
+ assert.ok(agent.includes('input.addEventListener("change",()=>setPermission(input.checked))'),"User must retain manual OFF");
+ assert.ok(agent.includes("if(!allowed){pending=null;controller?.abort();}"),"Manual OFF must abort queued execution");
+ assert.ok(agent.includes('window.addEventListener("ba:cleared",()=>{pending=null;controller?.abort();setPermission(allowed);});'),"Clearing chat must not silently re-enable a manual OFF");
+ assert.ok(agent.includes("if(!allowed||running||!requested(d.question))return"),"No unrelated auto-execution");
+ assert.ok(agent.includes('stop.addEventListener("click"'),"Execution stop must stay available");
+});
+require("./aksara-code-followup.test.cjs");
