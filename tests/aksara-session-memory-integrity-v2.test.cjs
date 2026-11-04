@@ -88,3 +88,14 @@ test("Both defaults remain ON, no server memory or hidden auto-save of note draf
  assert.match(h,/bilik-antara-suite\.js\?v=17/);
  assert.match(h,/bilik-antara-session-utils\.js\?v=3/);
 });
+
+test("Suite drawer behaves as a keyboard modal without changing session data",()=>{
+ const s=fs.readFileSync("bilik-antara-suite.js","utf8");
+ assert.match(s,/drawer\.setAttribute\("role","dialog"\)/);
+ assert.match(s,/drawer\.setAttribute\("aria-modal","true"\)/);
+ assert.match(s,/closeButton\.focus\(\{preventScroll:true\}\)/);
+ assert.match(s,/panelTrigger=document\.activeElement/);
+ assert.match(s,/event\.key!=="Tab"/);
+ assert.match(s,/trigger\.focus\(\{preventScroll:true\}\)/);
+ assert.doesNotThrow(()=>new (require("node:vm").Script)(s));
+});
