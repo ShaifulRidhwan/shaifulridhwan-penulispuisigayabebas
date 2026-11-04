@@ -362,7 +362,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    return {version:window.AksaraCodeRuntime.version,ok:r.ok,stderr:r.stderr,stdoutLength:r.stdout.length,
     truncated:r.truncated,diagnostics:r.diagnostics,limits:r.limits,runtimeMs:r.runtimeMs};
   });
-  assert.equal(contract.version,"0.6");
+  assert.equal(contract.version,"0.7","Code Runtime browser contract must match the shipped 0.7 API");
   assert.equal(contract.ok,true);
   assert.match(contract.stderr,/WARN_CHECK/);
   assert.ok(contract.stdoutLength<=10000,"Worker output budget must be enforced");
@@ -370,8 +370,13 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(contract.limits.maxSource,12000);
   assert.ok(contract.runtimeMs>=0);
 
-  // Session-only authority: model text is inert until the user enables the AI code permission.
-  assert.equal(await page.locator("#codeAiExecutionAllowed").isChecked(),false);
+  // AI execution is ON by default in the current product, but its OFF switch must
+  // still prevent all implicit sandbox runs and never persist across sessions.
+  assert.equal(await page.locator("#codeAiExecutionAllowed").isChecked(),true);
+  await page.locator("#codeEngineStatus").click();
+  await page.locator("#codeAiExecutionAllowed").uncheck();
+  assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.enabled()),false);
+  await page.locator("#codeMenuClose").click();
   assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.runs()),0);
   // Build the test reply with actual Markdown fences without duplicating data.
   const aiReply=String.fromCharCode(96).repeat(3)+'javascript\nconsole.log("AI AGENT 42");\n'+String.fromCharCode(96).repeat(3)+" 🙂 ✨";
@@ -381,7 +386,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    window.dispatchEvent(new Event("ba:ready-for-tools"));
   },aiReply);
   await page.waitForTimeout(180);
-  assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.runs()),0,"AI execution defaults to disabled");
+  assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.runs()),0,"Explicit OFF must suppress AI execution despite default ON");
   const unarmedCoreColor=await page.locator("#codeEngineStatus .code-engine-core").evaluate(el=>getComputedStyle(el).color);
   await page.locator("#codeEngineStatus").click();
   await page.locator("#codeAiExecutionAllowed").check();

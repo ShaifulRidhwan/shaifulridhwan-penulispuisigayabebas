@@ -79,10 +79,11 @@ function rawMemoryVersion(){
 const convo=document.querySelector(".conversation");
 if(!convo)return;
 const drawer=make("aside",undefined,"ba-drawer");
-drawer.hidden=true;drawer.setAttribute("aria-label","Alat dan penyimpanan setempat");
+drawer.hidden=true;drawer.setAttribute("aria-label","Alat dan penyimpanan setempat");drawer.setAttribute("role","dialog");drawer.setAttribute("aria-modal","true");
 const sheet=make("div",undefined,"ba-sheet"),top=make("div",undefined,"ba-drawer-top");
 const title=make("strong","Alat Bilik Antara");
-top.append(title,button("✕",()=>close(),"ba-close"));
+const closeButton=button("✕",()=>close(),"ba-close");
+top.append(title,closeButton);
 const content=make("div",undefined,"ba-content");
 sheet.append(top,content);drawer.appendChild(sheet);
 const backdrop=button("",()=>close(),"ba-backdrop");backdrop.setAttribute("aria-label","Tutup panel");drawer.prepend(backdrop);
@@ -121,20 +122,35 @@ function notice(message){
  if(!status){status=make("div",undefined,"ba-notification");status.id="baNotification";status.setAttribute("role","status");head.after(status);}
  status.textContent=String(message||"").slice(0,240);
 }
+let panelTrigger=null;
 function open(panel){
  if(!drawer.hidden&&!confirmMemoryDiscard())return;
+ if(drawer.hidden)panelTrigger=document.activeElement;
  memoryDraft=null;
  if(settings)settings.open=false;
  currentPanel=panel;drawer.hidden=false;document.body.classList.add("ba-panel-open");
  render();
+ closeButton.focus({preventScroll:true});
 }
 function close(){
  if(!confirmMemoryDiscard())return false;
  memoryDraft=null;
  drawer.hidden=true;currentPanel="";document.body.classList.remove("ba-panel-open");
+ const trigger=panelTrigger;panelTrigger=null;
+ if(trigger?.isConnected&&typeof trigger.focus==="function")trigger.focus({preventScroll:true});
  return true;
 }
-document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!drawer.hidden)close();});
+document.addEventListener("keydown",event=>{
+ if(drawer.hidden)return;
+ if(event.key==="Escape"){event.preventDefault();close();return;}
+ if(event.key!=="Tab")return;
+ const focusable=[...drawer.querySelectorAll('a[href],button:not([disabled]):not(.ba-backdrop),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+  .filter(el=>el.getClientRects().length>0);
+ if(!focusable.length){event.preventDefault();closeButton.focus();return;}
+ const first=focusable[0],last=focusable[focusable.length-1],active=document.activeElement;
+ if(event.shiftKey&&(active===first||!drawer.contains(active))){event.preventDefault();last.focus();}
+ else if(!event.shiftKey&&(active===last||!drawer.contains(active))){event.preventDefault();first.focus();}
+});
 window.addEventListener("beforeunload",event=>{
  if(!memoryDirty())return;
  event.preventDefault();event.returnValue="";

@@ -54,3 +54,12 @@ test("Illustration attributes remain valid after Base64 extraction",()=>{
   assert.match(img,/\bdecoding="async"/,"Illustrations should decode asynchronously");
  }
 });
+
+test("Opening and resizing the novel preserves the intended reading position",()=>{
+ assert.match(shell,/else win\.enterBook\(0\)/,"First click must enter the reader, not another cover");
+ assert.match(shell,/win\.enterBook\(savedPage\(\)\)/,"Resume continues to use the saved page");
+ assert.match(reader,/function captureReadingPosition\(\)/);
+ assert.match(reader,/function restoreReadingPosition\(position\)/);
+ assert.match(reader,/var position=captureReadingPosition\(\);/);
+ assert.ok((reader.match(/restoreReadingPosition\(position\);/g)||[]).length>=3,"Font and viewport re-pagination must restore progress");
+});
