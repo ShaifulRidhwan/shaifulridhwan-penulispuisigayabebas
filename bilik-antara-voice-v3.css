@@ -34,10 +34,11 @@
 
 /* When JS is active, a single row of two small controls replaces the big card. */
 .voice-panel:not(.is-minimized) .voice-style-row.voice-style-enhanced{
-  box-sizing:border-box;display:flex;align-items:center;justify-content:flex-start;
-  align-self:flex-start;flex-wrap:nowrap;gap:7px;width:auto;min-width:0;
-  max-width:100%;margin:0;padding:0;border:0;border-radius:0;
-  background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;
+  box-sizing:border-box;position:absolute;top:79px;right:14px;z-index:6;
+  display:flex;align-items:center;justify-content:flex-end;flex-wrap:nowrap;
+  gap:0;width:auto;min-width:0;max-width:100%;margin:0;padding:0;
+  border:0;border-radius:0;background:none;box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
 }
 .voice-style-enhanced #voiceDialectSelect[hidden]{display:none!important}
 .voice-style-row.voice-style-enhanced>label,
@@ -61,6 +62,16 @@
   justify-content:space-between;min-width:100px;width:auto;
   max-width:min(58vw,210px);padding:9px 12px;
 }
+.voice-panel .voice-live-label .voice-style-trigger{
+  display:inline-flex;justify-content:flex-start;gap:5px;min-height:24px;
+  width:100%;min-width:0;max-width:100%;padding:0;
+  border:0;border-radius:0;background:none;box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+  font:600 11px/1.25 'DM Sans',sans-serif;color:#f4dfbf;
+}
+.voice-panel .voice-live-label .voice-style-trigger::before{display:none}
+.voice-panel .voice-live-label .voice-style-trigger svg{width:13px;height:13px}
+.voice-panel .voice-live-label .voice-live-subtitle[hidden]{display:none!important}
 .voice-style-trigger::before{
   content:"";display:block;flex:0 0 6px;width:6px;height:6px;border-radius:100%;
   background:#c9b9a1;box-shadow:0 0 6px rgba(240,208,163,.14);
@@ -75,19 +86,15 @@
 .voice-panel .voice-mode-chip svg{width:17px;height:17px;flex:0 0 17px}
 .voice-panel .voice-mode-chip[data-mode="gelap"]{border-color:rgba(143,162,209,.55);color:#d5dcf7}
 .voice-panel .voice-panel-head{z-index:6;align-self:stretch;min-width:0}
-.voice-panel .voice-panel-head .voice-live-label{min-width:0;flex:1 1 auto}
+.voice-panel .voice-panel-head .voice-live-label{box-sizing:border-box;min-width:0;flex:0 1 auto;width:min(220px,44vw);max-width:220px}
 .voice-panel .voice-panel-head-actions{display:flex;flex:0 0 auto;gap:6px;flex-wrap:nowrap}
 .voice-panel .voice-panel-head-actions .voice-stop{
   box-sizing:border-box;min-width:44px;min-height:44px;
   padding:7px 12px;white-space:nowrap;
 }
 .voice-panel:not(.is-minimized) .voice-dialogue-dock{z-index:5}
-.voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-status[data-compact="true"],
-.voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-status:not([data-compact]){
-  position:absolute!important;width:1px!important;height:1px!important;
-  min-height:0!important;margin:-1px!important;padding:0!important;border:0!important;
-  overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;
-}
+/* Original full-width dialogue is visible; the extra phase pill is not needed. */
+.voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-phase-label{display:none!important}
 .voice-panel .voice-session-controls .voice-ui-toggle{
   box-sizing:border-box;min-height:44px;min-width:92px;
   display:inline-flex;align-items:center;justify-content:center;
@@ -104,6 +111,7 @@
 .aksara-voice-style-dialog{
   box-sizing:border-box;width:min(92vw,385px);max-height:calc(100dvh - 28px);
   margin:auto;padding:0;border:1px solid rgba(235,208,160,.40);
+  transform:translateY(24px); /* Lower the choice dialog slightly on spacious screens. */
   border-radius:20px;color:#f8ebd8;color-scheme:dark;overflow:hidden;
   background:linear-gradient(150deg,rgba(17,25,39,.98),rgba(8,13,23,.99));
   box-shadow:0 25px 80px rgba(0,0,0,.64),inset 0 1px 0 rgba(255,239,206,.1);
@@ -153,7 +161,7 @@
 }
 @media(max-width:760px){
  .voice-panel:not(.is-minimized){gap:7px}
- .voice-panel:not(.is-minimized) .voice-style-row.voice-style-enhanced{gap:6px}
+ .voice-panel:not(.is-minimized) .voice-style-row.voice-style-enhanced{gap:0}
  .voice-panel .voice-style-row .voice-style-trigger{padding:9px 11px;font-size:11px}
  .voice-panel .voice-style-row .voice-mode-chip{padding:8px 10px;font-size:11px}
  .voice-panel .voice-panel-head-actions .voice-stop{min-height:44px;padding:8px 10px;font-size:10px}
@@ -167,7 +175,8 @@
  .voice-panel .voice-style-row .voice-mode-chip{padding:8px 9px}
  .aksara-voice-style-dialog .voice-style-modal-body{padding:11px}
 }
-@media(max-height:580px){
+@media(max-height:700px){.aksara-voice-style-dialog{transform:translateY(8px)}}
+@media(max-height:580px){.aksara-voice-style-dialog{transform:none}
  .voice-panel .voice-dialogue-dock{gap:6px}
  .voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-status[data-compact="false"]{padding:7px}
  .aksara-voice-style-dialog .voice-style-option{min-height:44px}

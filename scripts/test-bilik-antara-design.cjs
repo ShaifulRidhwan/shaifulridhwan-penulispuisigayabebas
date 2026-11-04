@@ -104,10 +104,11 @@ test("Composited glass label, ambient motion and older-browser rim fallback are 
  assert.match(html,/href="bilik-antara\.css\?v=\d+"/);
  assert.match(css,/\.voice-panel \.voice-live-label::after\{/);
  assert.match(css,/@keyframes voiceIdentityBorderLight\{/);
- assert.match(css,/@keyframes voiceIdentityBreath\{\s*0%,100%\{transform:scale\(1\)\}/);
+ assert.match(css,/@keyframes voiceIdentityBreath\{\s*0%,100%\{filter:brightness\(1\)\}/);
  const voiceBreath=css.match(/@keyframes voiceIdentityBreath\{([\s\S]*?)\n\}/)?.[1]||"";
  assert.ok(voiceBreath,"Voice identity animation block missing");
  assert.doesNotMatch(voiceBreath,/border-color:/);
+ assert.doesNotMatch(voiceBreath,/transform:/,"Voice glass must not move interactive dialect button");
  assert.match(css,/animation:voiceIdentityShimmer 4\.8s ease-in-out infinite/);
  assert.match(css,/\.conversation>\.glass-frame-orbit \.frame-glow\{display:none\}/);
  assert.match(css,/@keyframes frameLightBreathe/);

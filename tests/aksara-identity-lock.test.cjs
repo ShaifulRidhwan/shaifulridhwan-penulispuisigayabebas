@@ -4,7 +4,7 @@
  * revise identity later, review and update the fingerprint and contracts.
  * v0.3: code-chat fingerprint updated only for explicit C++ fenced/raw detection;
  * creator identity, personality and provider locks remain untouched.
- * Voice fingerprint explicitly updated for the authorized v3 feature set. */
+ * Voice fingerprint reviewed for the authorized classic UI, volume and resume fix (2026-11-04). */
 const {test}=require("node:test");
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
@@ -19,7 +19,7 @@ const protectedFiles=Object.freeze({
  "bilik-antara-brain.js":"edb5b73fd35d7b070c4623385ee4b12817df268d",
  "bilik-antara-modes.js":"30e8ebb88cee73529c7493a637986c5155357e51",
  "bilik-antara-chat-style.js":"9fc607daf19e2e838d29b7905fce63a2da1ecf78",
- "bilik-antara-voice.js":"ab2b1a9636c0d2f48676417d3bb3cc1853affb0b",
+ "bilik-antara-voice.js":"aa649b09fdabe5d485eccfb959ff82ee4cc460e2",
  "netlify/functions/aksara-provider-router.js":"f364a7ac8c0d896a4c39987c24af036b3bbb3428",
  "bilik-antara-code-chat.js":"5267dde2c1dcca0111c63aadb1f2717c1e7d457e"
 });

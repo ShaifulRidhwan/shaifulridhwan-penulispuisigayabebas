@@ -2941,9 +2941,11 @@ body:not(.voice-focus):has(#settingsPanel[open]) .settings-card{
  border:1px solid rgba(248,218,173,.48);opacity:0;
  animation:voiceIdentityBorderLight 3.2s ease-in-out infinite;
 }
+/* Preserve the breathing glow without moving its clickable dialect selector.
+   Transform-scale animated the button's hitbox and prevented stable clicking. */
 @keyframes voiceIdentityBreath{
- 0%,100%{transform:scale(1)}
- 50%{transform:scale(1.025)}
+ 0%,100%{filter:brightness(1)}
+ 50%{filter:brightness(1.07)}
 }
 @keyframes voiceIdentityBorderLight{
  0%,100%{opacity:0}
