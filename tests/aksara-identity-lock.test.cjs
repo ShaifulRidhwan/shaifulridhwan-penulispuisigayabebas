@@ -2,7 +2,7 @@
 /* Explicit identity compatibility lock for P0–P2 integration. No external API
  * calls, uploads, network fetches or production mutation. To intentionally
  * revise identity later, review and update the fingerprint and contracts.
- * v0.3: code-chat fingerprint updated only for explicit C++ fenced/raw detection;
+ * v0.3: code-chat adds reviewed local follow-up execution for one previously generated AI code block;
  * creator identity, personality and provider locks remain untouched.
  * Voice fingerprint reviewed for the authorized classic UI, volume and resume fix (2026-11-04). */
 const {test}=require("node:test");
@@ -21,7 +21,7 @@ const protectedFiles=Object.freeze({
  "bilik-antara-chat-style.js":"9fc607daf19e2e838d29b7905fce63a2da1ecf78",
  "bilik-antara-voice.js":"aa649b09fdabe5d485eccfb959ff82ee4cc460e2",
  "netlify/functions/aksara-provider-router.js":"f364a7ac8c0d896a4c39987c24af036b3bbb3428",
- "bilik-antara-code-chat.js":"5267dde2c1dcca0111c63aadb1f2717c1e7d457e"
+ "bilik-antara-code-chat.js":"523485db213414b62448604d264f8358c3eb5d93"
 });
 function gitBlob(bytes){
  const prefix=Buffer.from("blob "+bytes.length+"\0");
