@@ -86,7 +86,7 @@
 .voice-panel .voice-mode-chip svg{width:17px;height:17px;flex:0 0 17px}
 .voice-panel .voice-mode-chip[data-mode="gelap"]{border-color:rgba(143,162,209,.55);color:#d5dcf7}
 .voice-panel .voice-panel-head{z-index:6;align-self:stretch;min-width:0}
-.voice-panel .voice-panel-head .voice-live-label{min-width:0;flex:1 1 auto}
+.voice-panel .voice-panel-head .voice-live-label{min-width:0;flex:0 1 auto;width:min(220px,44vw);max-width:220px}
 .voice-panel .voice-panel-head-actions{display:flex;flex:0 0 auto;gap:6px;flex-wrap:nowrap}
 .voice-panel .voice-panel-head-actions .voice-stop{
   box-sizing:border-box;min-width:44px;min-height:44px;
