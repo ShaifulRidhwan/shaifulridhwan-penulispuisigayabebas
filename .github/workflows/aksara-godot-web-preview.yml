@@ -56,7 +56,7 @@ jobs:
           ./Godot_v4.3-stable_linux.x86_64 --headless --path aksara-game --export-release Web ../public/aksara-game/index.html
       - name: Stamp preview build version and disable stale HTML cache
         run: |
-          printf '{"version":"hybrid-v0.3","git_sha":"%s","branch":"%s"}\n' "$GITHUB_SHA" "$GITHUB_REF_NAME" > public/aksara-game/version.json
+          printf '{"version":"hybrid-v0.4","git_sha":"%s","branch":"%s"}\n' "$GITHUB_SHA" "$GITHUB_REF_NAME" > public/aksara-game/version.json
           printf '/index.html\n  Cache-Control: no-cache\n/version.json\n  Cache-Control: no-store\n' > public/aksara-game/_headers
       - uses: actions/upload-artifact@v4
         with:
