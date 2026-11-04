@@ -156,6 +156,10 @@ function refresh(){
  run.disabled=bridge.active();
 }
 input.addEventListener("input",()=>{confirmSend=false;refresh();});
+// The chat composer clears itself programmatically on send; recheck stale runtime hints.
+window.addEventListener("ba:answered",()=>{if(!executing){selected=null;confirmSend=false;refresh();}});
+window.addEventListener("ba:ready-for-tools",()=>refresh());
+window.addEventListener("ba:cleared",()=>{selected=null;confirmSend=false;refresh();});
 window.addEventListener("aksara:code-language",event=>{
  const language=event.detail?.language;
  if(!engine.available.includes(language))return;
