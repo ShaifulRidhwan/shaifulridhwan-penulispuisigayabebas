@@ -6,6 +6,10 @@ on:
     paths:
       - 'aksara-game/**'
       - '.github/workflows/aksara-godot-web-preview.yml'
+concurrency:
+  group: aksara-game-preview-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   export:
     runs-on: ubuntu-latest
@@ -23,17 +27,14 @@ jobs:
       - name: Create export preset
         run: |
           printf '[preset.0]\nname="Web"\nplatform="Web"\nrunnable=true\nexport_filter="all_resources"\ninclude_filter=""\nexclude_filter=""\nexport_path="../public/aksara-game/index.html"\n\n[preset.0.options]\nvariant/extensions_support=false\n' > aksara-game/export_presets.cfg
-      - name: Fetch CC0 rigged hero and landscape GLBs
+      - name: Fetch licensed CC0 hero and environment GLBs
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p aksara-game/assets
           curl --fail --location --retry 3 --max-time 120 --silent --show-error \
-            'https://gobkit.com/freebies/human003/Priestess.glb' \
-            --output aksara-game/assets/hero.glb
-          curl --fail --location --retry 3 --max-time 120 --silent --show-error \
-            'https://cdn.3dassets.dev/assets/28779/v1/model.glb' \
-            --output aksara-game/assets/oak.glb
+            'https://grab3d.com/dl/queen/queen.glb' \
+            --output aksara-game/assets/queen.glb
           curl --fail --location --retry 3 --max-time 120 --silent --show-error \
             'https://cdn.3dassets.dev/assets/30441/v1/model.glb' \
             --output aksara-game/assets/sanctuary.glb
@@ -42,7 +43,7 @@ jobs:
             --output aksara-game/assets/courtyard.glb
           python3 - <<'PY'
           import os,struct
-          for name in ['hero','oak','sanctuary','courtyard']:
+          for name in ['queen','sanctuary','courtyard']:
               p=f'aksara-game/assets/{name}.glb'
               with open(p,'rb') as f:
                   data=f.read(12)
@@ -53,11 +54,10 @@ jobs:
         run: |
           mkdir -p public/aksara-game
           ./Godot_v4.3-stable_linux.x86_64 --headless --path aksara-game --import
-          ./Godot_v4.3-stable_linux.x86_64 --headless --path aksara-game --script res://asset_audit.gd
           ./Godot_v4.3-stable_linux.x86_64 --headless --path aksara-game --export-release Web ../public/aksara-game/index.html
       - name: Stamp preview build version and disable stale HTML cache
         run: |
-          printf '{"version":"hybrid-v0.4.1","git_sha":"%s","branch":"%s"}\n' "$GITHUB_SHA" "$GITHUB_REF_NAME" > public/aksara-game/version.json
+          printf '{"version":"hybrid-v0.3-recovery","git_sha":"%s","branch":"%s"}\n' "$GITHUB_SHA" "$GITHUB_REF_NAME" > public/aksara-game/version.json
           printf '/index.html\n  Cache-Control: no-cache\n/version.json\n  Cache-Control: no-store\n' > public/aksara-game/_headers
       - uses: actions/upload-artifact@v4
         with:
