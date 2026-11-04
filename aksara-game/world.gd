@@ -180,6 +180,8 @@ func build_world() -> void:
 # Normalize actual visible mesh bounds, not just the scene root's transform.
 func normalize_character(model: Node3D) -> bool:
  var meshes := model.find_children("*", "MeshInstance3D", true, false)
+ if model is MeshInstance3D:
+  meshes.push_front(model)
  var bounds := AABB()
  var found := false
  for node in meshes:
@@ -246,7 +248,7 @@ func build_ui() -> void:
  var ui := CanvasLayer.new()
  add_child(ui)
  hud = Label.new()
- hud.text = "AKSARA  •  BETWEEN TWO ETERNITIES\nANTARA  /  CHAPTER ZERO\nMOVE  •  LEFT     LOOK  •  RIGHT"
+ hud.text = "AKSARA  •  BETWEEN TWO ETERNITIES\nANTARA  /  CHAPTER ZERO\nMOVE  •  LEFT     LOOK  •  RIGHT\nHERO: " + ("3D MODEL" if imported_hero else "FALLBACK")
  hud.position = Vector2(18,18)
  hud.add_theme_color_override("font_color",Color("#f6e8ce"))
  hud.add_theme_font_size_override("font_size",13)
