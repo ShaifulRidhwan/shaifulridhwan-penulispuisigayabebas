@@ -67,3 +67,22 @@ test("ordinary current Python source still shows existing manual Run action",()=
  assert.equal(ctx.action.hidden,false);
  assert.equal(ctx.run.textContent,"▶ Jalankan Kod");
 });
+
+test("plain command runs through explicit local click",()=>{
+ const ctx=setup([{role:"assistant",content:code("python","print(17)")}],"jalankan kod");
+ assert.equal(ctx.action.hidden,false);
+ assert.match(ctx.run.textContent,/Jalankan Kod Tadi/);
+ let blocked=0;ctx.form.listeners.submit[0]({preventDefault(){blocked++},stopImmediatePropagation(){blocked++}});
+ assert.equal(blocked,2);assert.equal(ctx.runs(),0);
+});
+test("unsupported tkinter is flagged before loading runtime",async()=>{
+ const window={};
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,"..","bilik-antara-code-runtime.js"),"utf8"),{window});
+ const engine=window.AksaraCodeRuntime;
+ const source="import tkinter as tk\nroot=tk.Tk()";
+ assert.equal(engine.compatibility("python",source).ok,false);
+ const output=await engine.run("python",source);
+ assert.equal(output.ok,false);assert.equal(output.runtimeMs,0);
+ assert.match(output.error,/Python Pyodide/);
+ assert.equal(engine.compatibility("python","print(17)").ok,true);
+});
