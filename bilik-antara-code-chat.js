@@ -52,11 +52,28 @@ function detect(source){
  if(isJs===isPy)return null;
  return {language:isPy?"python":"javascript",code:full,format:"raw"};
 }
+// HTML/CSS belongs in the existing no-script Code Workspace preview, not a Python/JS runtime.
+function extractWebCode(reply){
+ const source=String(reply||"");
+ if(!source||source.length>40000)return null;
+ const blocks=[...source.matchAll(/(?:^|\n)[ \t]*\x60\x60\x60(html|htm|css)?[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*\x60\x60\x60(?=\s|$)/gi)];
+ const html=[],css=[];
+ for(const block of blocks){
+  const type=String(block[1]||"").toLowerCase(),code=block[2].trim();
+  if(type==="html"||type==="htm"||(!type&&/^(?:<!doctype\s+html\b|<html\b|<head\b|<body\b|<main\b|<div\b)/i.test(code)))html.push(code);
+  else if(type==="css")css.push(code);
+ }
+ // A single whole document, optionally with a separate stylesheet, is unambiguous.
+ if(html.length!==1||css.length>1||!html[0]||html[0].length>12000||(css[0]||"").length>12000)return null;
+ return {html:html[0],css:css[0]||""};
+}
 function candidate(){
  const raw=input.value.trim();if(!raw||raw.length>12000)return null;
  const found=detect(raw);
  const previous=asksToRunPreviousCode(raw)?previousAICode():null;
  if(previous)return previous;
+ const web=extractWebCode(raw);
+ if(web)return {language:"html",code:web.html,css:web.css,format:"web-preview"};
  if(selected&&!raw.startsWith("```"))return {language:selected,code:raw,format:"manual"};
  if(found)return found;
  return null;
@@ -69,6 +86,8 @@ function previousAICode(){
  for(let i=entries.length-1,checked=0;i>=0&&checked<18;i--,checked++){
   const message=entries[i];
   if(message?.role!=="assistant"||message.mode==="code"||message.mode==="voice")continue;
+  const web=extractWebCode(message.content);
+  if(web)return {language:"html",code:web.html,css:web.css,format:"previous-html"};
   const blocks=[...String(message.content||"").matchAll(
    /(?:^|\n)[ \t]*\x60\x60\x60(javascript|js|python|py|typescript|ts|sql|cpp|c\+\+|cxx|cc)[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*\x60\x60\x60(?=\s|$)/gi)];
   if(!blocks.length)continue;
@@ -100,7 +119,10 @@ function refresh(){
  action.hidden=!found;
  run.hidden=false;stop.hidden=true;sendAI.hidden=!confirmSend;
  if(!found){confirmSend=false;return;}
- if(found.format==="previous-ai"){
+ if(found.language==="html"){
+  desc.textContent="HTML/CSS dikesan · Live Preview tanpa JavaScript";
+  run.textContent="▶ Buka Live Preview";
+ }else if(found.format==="previous-ai"){
   const check=engine.compatibility?.(found.language,found.code);
   desc.textContent=check?.ok===false?check.message:
    confirmSend?"Kod terdahulu dikesan. Pilih tindakan:":langName(found.language)+" daripada jawapan A.I. terdahulu";
@@ -122,7 +144,7 @@ form.addEventListener("submit",event=>{
  if(executing){event.preventDefault();event.stopImmediatePropagation();return;}
  if(bridge.active())return;
  // Detect executable syntax, but never interpret ordinary chat text as a command.
- if((candidate()?.format==="previous-ai"||detect(input.value))&&document.getElementById("removeAttachment")?.hidden!==false){
+ if((["previous-ai","previous-html","web-preview"].includes(candidate()?.format)||detect(input.value))&&document.getElementById("removeAttachment")?.hidden!==false){
   event.preventDefault();event.stopImmediatePropagation();confirmSend=true;refresh();
  }
 },true);
@@ -134,7 +156,13 @@ stop.addEventListener("click",()=>controller?.abort());
 run.addEventListener("click",async()=>{
  const found=candidate();
  if(!found||executing||bridge.active())return;
- const source=input.value.trim(),started=performance.now();
+ const source=input.value.trim();
+ if(found.language==="html"){
+  window.dispatchEvent(new CustomEvent("aksara:code-workspace-preview-ai",{detail:{html:found.code,css:found.css||""}}));
+  if(input.value.trim()===source){input.value="";input.dispatchEvent(new Event("input",{bubbles:true}));}
+  return;
+ }
+ const started=performance.now();
  controller=new AbortController();executing=true;refresh();
  const session=window.AksaraRuntimeOverlay?.open(found.language,()=>controller?.abort())||null;
  session?.update("Menjalankan kod dalam sandbox…");
@@ -189,5 +217,5 @@ run.addEventListener("click",async()=>{
  controller=null;executing=false;selected=null;confirmSend=false;refresh();
 });
 refresh();
-window.AksaraCodeChat=Object.freeze({detect,selectedLanguage:()=>selected,isRunning:()=>executing});
+window.AksaraCodeChat=Object.freeze({detect,extractWebCode,selectedLanguage:()=>selected,isRunning:()=>executing});
 })();
