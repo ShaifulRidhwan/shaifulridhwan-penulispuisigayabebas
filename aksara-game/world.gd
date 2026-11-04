@@ -97,7 +97,7 @@ func build_terrain() -> void:
    var q0 := Vector3(x_other,terrain_height(x_other,z0)+0.11,z0)
    var q1 := Vector3(x_other,terrain_height(x_other,z1)+0.11,z1)
    if side > 0.0:
-    for vertex in [p0,p1,q0,q0,p1,q1]:
+    for vertex in [p0,q0,p1,q0,q1,p1]:
      path_mesh.set_uv(Vector2(vertex.x*0.1,vertex.z*0.1))
      path_mesh.add_vertex(vertex)
  path_mesh.generate_normals()
@@ -303,6 +303,7 @@ func _ready() -> void:
  camera.current = true
  camera.fov = 65
  add_child(camera)
+ camera.position = hero.position + Vector3(0,4.2,5.8)
  build_ui()
  update_camera()
 
