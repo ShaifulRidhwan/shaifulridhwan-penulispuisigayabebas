@@ -27,16 +27,16 @@ styles.textContent=[
 '.conversation .code-engine-message .bubble{white-space:pre-wrap;overflow-wrap:anywhere;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;line-height:1.6}',
 '@media(max-width:420px){.conversation .code-action-bar{font-size:10px;padding-inline:9px}.conversation .code-action-bar button{font-size:10px;padding:6px 9px}}'
 ].join("\n");document.head.appendChild(styles);
-const langName=l=>({javascript:"JavaScript",python:"Python",typescript:"TypeScript",sql:"SQL",cpp:"C++"})[l]||"Code";
+const langName=l=>({javascript:"JavaScript",python:"Python",typescript:"TypeScript",sql:"SQL",cpp:"C++",java:"Java",html:"HTML/CSS"})[l]||"Code";
 function detect(source){
  const full=String(source||"").trim();
  if(!full||full.length>12000)return null;
  if(full.startsWith("[AKSARA CODE BRIDGE]"))return null; // Explicitly consented AI report is not executable code.
  // Only an entire fenced block is treated as executable; explanatory prose is ordinary chat.
- const fenced=/^```(javascript|js|python|py|typescript|ts|sql|cpp|c\+\+|cxx|cc)\s*\n([\s\S]*?)\n```$/i.exec(full);
+ const fenced=/^```(javascript|js|python|py|typescript|ts|sql|cpp|c\+\+|cxx|cc|java)\s*\n([\s\S]*?)\n```$/i.exec(full);
  if(fenced){
   const token=fenced[1].toLowerCase();
-  const language=/^(py|python)$/.test(token)?"python":/^(ts|typescript)$/.test(token)?"typescript":/^(cpp|c\+\+|cxx|cc)$/.test(token)?"cpp":token==="sql"?"sql":"javascript";
+  const language=/^(py|python)$/.test(token)?"python":/^(ts|typescript)$/.test(token)?"typescript":/^(cpp|c\+\+|cxx|cc)$/.test(token)?"cpp":token==="sql"?"sql":token==="java"?"java":"javascript";
   return fenced[2].trim()?{language,code:fenced[2].trim(),format:"fenced"}:null;
  }
  if(/^```/.test(full))return null;
@@ -44,10 +44,12 @@ function detect(source){
  const py=/^(?:\s*(?:print\s*\(|def\s+[a-zA-Z_]\w*\s*\(|for\s+[a-zA-Z_]\w*\s+in\s+(?:range\(|\w+)|from\s+[a-zA-Z_]\w*\s+import\s+|import\s+[a-zA-Z_]\w*|class\s+[a-zA-Z_]\w*\s*:|if\s+__name__\s*==|while\s+\S+:\s*$))/m;
  const isSql=/^(?:SELECT|WITH|CREATE\s+TABLE|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\b/i.test(full);
  const isCpp=/^\s*#include\s*[<"][^>"\n]+[>"]|\bint\s+main\s*\(|\bstd::(?:cout|cin|vector|string|endl)\b/m.test(full);
+ const isJava=/(?:^|\n)\s*(?:import\s+java[x]?\.[\w.*]+\s*;|public\s+(?:final\s+)?class\s+\w+|@Override\b|(?:public\s+)?static\s+void\s+main\s*\()/m.test(full)||/\bnew\s+JFrame\s*\(/.test(full);
  const isTs=/\b(?:interface\s+\w+|type\s+\w+\s*=|(?:const|let|var)\s+\w+\s*:\s*[A-Za-z]|function\s+\w+\s*\([^)]*:\s*[A-Za-z])/m.test(full);
  const isJs=js.test(full),isPy=py.test(full);
  if(isSql)return {language:"sql",code:full,format:"raw"};
  if(isCpp)return {language:"cpp",code:full,format:"raw"};
+ if(isJava)return {language:"java",code:full,format:"raw"};
  if(isTs)return {language:"typescript",code:full,format:"raw"};
  if(isJs===isPy)return null;
  return {language:isPy?"python":"javascript",code:full,format:"raw"};
@@ -66,6 +68,21 @@ function extractWebCode(reply){
  // A single whole document, optionally with a separate stylesheet, is unambiguous.
  if(html.length!==1||css.length>1||!html[0]||html[0].length>12000||(css[0]||"").length>12000)return null;
  return {html:html[0],css:css[0]||""};
+}
+// Java source is recognised but never passed to the JavaScript sandbox as if it were JavaScript.
+function extractJavaCode(reply){
+ const blocks=[...String(reply||"").matchAll(/(?:^|\n)[ \t]*\x60\x60\x60java[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*\x60\x60\x60(?=\s|$)/gi)];
+ if(blocks.length!==1)return null;
+ const code=blocks[0][1].trim();
+ return code&&code.length<=12000?code:null;
+}
+function convertJava(code){
+ if(bridge.active()||typeof code!=="string"||!code.trim()||code.length>12000)return false;
+ const question="Tukarkan kod Java berikut kepada SATU fail HTML5 lengkap dengan CSS inline (tanpa JavaScript, CDN atau fail luar), supaya animasi yang setara boleh dipaparkan melalui AKSARA Code Workspace Live Preview di telefon. Jawab dengan SATU blok markdown berlabel html, pastikan animasi CSS benar-benar bergerak. Jangan dakwa kod Java asal telah dijalankan.\\n\\n"+String.fromCharCode(96).repeat(3)+"java\n"+code+"\n"+String.fromCharCode(96).repeat(3);
+ bridge.fill(question);
+ allowAISendOnce=true;
+ form.requestSubmit();
+ return true;
 }
 function candidate(){
  const raw=input.value.trim();if(!raw||raw.length>12000)return null;
@@ -88,6 +105,8 @@ function previousAICode(){
   if(message?.role!=="assistant"||message.mode==="code"||message.mode==="voice")continue;
   const web=extractWebCode(message.content);
   if(web)return {language:"html",code:web.html,css:web.css,format:"previous-html"};
+  const java=extractJavaCode(message.content);
+  if(java)return {language:"java",code:java,format:"previous-java"};
   const blocks=[...String(message.content||"").matchAll(
    /(?:^|\n)[ \t]*\x60\x60\x60(javascript|js|python|py|typescript|ts|sql|cpp|c\+\+|cxx|cc)[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*\x60\x60\x60(?=\s|$)/gi)];
   if(!blocks.length)continue;
@@ -106,7 +125,7 @@ function asksToRunPreviousCode(text){
  if(!q||q.length>240)return false;
  // Short, explicit run commands refer to the last unambiguous AI code block.
  // They must never be sent to OpenRouter simply because "tadi" was omitted.
- const direct=/^(?:(?:kau|awak|boleh|tolong|please|cuba)\s+)*(?:jalankan|laksanakan|run|execute|uji|test)\s+(?:kod|code|skrip|script|program)(?:\s+(?:tu|itu|tadi|ni|ini|sekarang))?[.!?]*$/i;
+ const direct=/^(?:(?:kau|awak|boleh|tolong|please|cuba|try)\s+)*(?:(?:jalankan|laksanakan|run|execute|uji|test)(?:\s+(?:kod|code|skrip|script|program))?(?:\s+(?:tu|itu|tadi|ni|ini|sekarang|terus))?|terus\s+(?:jalankan|run|execute))(?:\s+(?:sekarang|terus))?[.!?]*$/i;
  if(direct.test(q))return true;
  return /\b(?:jalankan|laksanakan|run|execute|uji|test|cuba)\b/i.test(q)&&
   /\b(?:kod|code|skrip|script|program|python|javascript|typescript|sql|c\+\+)\b/i.test(q)&&
@@ -119,7 +138,10 @@ function refresh(){
  action.hidden=!found;
  run.hidden=false;stop.hidden=true;sendAI.hidden=!confirmSend;
  if(!found){confirmSend=false;return;}
- if(found.language==="html"){
+ if(found.language==="java"){
+  desc.textContent="Java (.java) dikesan · compiler Java belum tersedia; bukan JavaScript";
+  run.textContent="▶ Tukar ke HTML/CSS dengan A.I.";
+ }else if(found.language==="html"){
   desc.textContent="HTML/CSS dikesan · Live Preview tanpa JavaScript";
   run.textContent="▶ Buka Live Preview";
  }else if(found.format==="previous-ai"){
@@ -134,6 +156,10 @@ function refresh(){
  run.disabled=bridge.active();
 }
 input.addEventListener("input",()=>{confirmSend=false;refresh();});
+// The chat composer clears itself programmatically on send; recheck stale runtime hints.
+window.addEventListener("ba:answered",()=>{if(!executing){selected=null;confirmSend=false;refresh();}});
+window.addEventListener("ba:ready-for-tools",()=>refresh());
+window.addEventListener("ba:cleared",()=>{selected=null;confirmSend=false;refresh();});
 window.addEventListener("aksara:code-language",event=>{
  const language=event.detail?.language;
  if(!engine.available.includes(language))return;
@@ -144,7 +170,7 @@ form.addEventListener("submit",event=>{
  if(executing){event.preventDefault();event.stopImmediatePropagation();return;}
  if(bridge.active())return;
  // Detect executable syntax, but never interpret ordinary chat text as a command.
- if((["previous-ai","previous-html","web-preview"].includes(candidate()?.format)||detect(input.value))&&document.getElementById("removeAttachment")?.hidden!==false){
+ if((["previous-ai","previous-java","previous-html","web-preview"].includes(candidate()?.format)||detect(input.value))&&document.getElementById("removeAttachment")?.hidden!==false){
   event.preventDefault();event.stopImmediatePropagation();confirmSend=true;refresh();
  }
 },true);
@@ -157,6 +183,7 @@ run.addEventListener("click",async()=>{
  const found=candidate();
  if(!found||executing||bridge.active())return;
  const source=input.value.trim();
+ if(found.language==="java"){convertJava(found.code);return;}
  if(found.language==="html"){
   window.dispatchEvent(new CustomEvent("aksara:code-workspace-preview-ai",{detail:{html:found.code,css:found.css||""}}));
   if(input.value.trim()===source){input.value="";input.dispatchEvent(new Event("input",{bubbles:true}));}
@@ -217,5 +244,5 @@ run.addEventListener("click",async()=>{
  controller=null;executing=false;selected=null;confirmSend=false;refresh();
 });
 refresh();
-window.AksaraCodeChat=Object.freeze({detect,extractWebCode,selectedLanguage:()=>selected,isRunning:()=>executing});
+window.AksaraCodeChat=Object.freeze({detect,extractWebCode,extractJavaCode,convertJava,selectedLanguage:()=>selected,isRunning:()=>executing});
 })();
