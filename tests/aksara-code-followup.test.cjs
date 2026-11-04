@@ -13,8 +13,10 @@ function setup(history,text){
   addEventListener(type,cb){(this.listeners[type]??=[]).push(cb);}
  });
  const form=element(),input=element();
- const bridge={snapshot:()=>({history}),active:()=>false,addLocalCode:()=>true};
+ let filled="",submissions=0;
+ const bridge={snapshot:()=>({history}),active:()=>false,addLocalCode:()=>true,fill:value=>{filled=String(value);input.value=filled;}};
  let runs=0;
+ form.requestSubmit=()=>{submissions++;};
  const window={
   AksaraCodeRuntime:{available:["python","javascript","typescript","sql","cpp"],run:()=>{runs++;return Promise.resolve({ok:true,output:""});}},
   BilikAntaraBridge:bridge,
@@ -30,7 +32,8 @@ function setup(history,text){
  input.value=text;
  for(const listener of input.listeners.input||[])listener();
  return {form,input,run:elements.find(x=>x.id==="codeRunAction"),
-  action:elements.find(x=>x.id==="codeActionBar"),runs:()=>runs};
+  action:elements.find(x=>x.id==="codeActionBar"),desc:elements.find(x=>x.id==="codeActionText"),agent:window.AksaraCodeChat,
+  runs:()=>runs,filled:()=>filled,submissions:()=>submissions};
 }
 const code=(language,text)=>"\x60\x60\x60"+language+"\n"+text+"\n\x60\x60\x60";
 test("follow-up refers to earlier Python answer and offers local Run action",()=>{
@@ -121,4 +124,46 @@ test("HTML preview bridge reuses script-disabled workspace instead of creating a
  assert.match(js,/safePreviewDocument/);
  assert.match(js,/script-src 'none'/);
  assert.match(js,/previewFrame\.srcdoc/);
+});
+
+test("Java source must not be misclassified as JavaScript",()=>{
+ const sample="import javax.swing.JFrame;\npublic class LoveYouAnimation {\n public static void main(String[] args) {new JFrame(\"Love\");}\n}";
+ const ctx=setup([],sample);
+ assert.equal(ctx.agent.detect(sample).language,"java");
+ assert.equal(ctx.run.textContent,"▶ Tukar ke HTML/CSS dengan A.I.");
+ assert.match(ctx.desc.textContent,/Java/);
+ assert.equal(ctx.runs(),0);
+});
+test("Gemini Java source plus 'jalankan terus' routes to user-click conversion",async()=>{
+ const java="import javax.swing.*;\npublic class LoveYouAnimation { public static void main(String[] args) {new JFrame(\"Love\");}}";
+ const ctx=setup([{role:"assistant",content:"Ini kod:\n"+code("java",java)}],"jalankan terus");
+ assert.equal(ctx.action.hidden,false);
+ assert.match(ctx.run.textContent,/HTML\/CSS/);
+ let blocked=0;
+ ctx.form.listeners.submit[0]({preventDefault(){blocked++;},stopImmediatePropagation(){blocked++;}});
+ assert.equal(blocked,2);
+ assert.equal(ctx.runs(),0);
+ await ctx.run.listeners.click[0]();
+ assert.equal(ctx.runs(),0,"Java code never enters JS runtime");
+ assert.equal(ctx.submissions(),1);
+ assert.match(ctx.filled(),/Tukarkan kod Java/);
+ assert.match(ctx.filled(),/SATU blok markdown berlabel html/);
+});
+test("unrelated Java concept question remains ordinary chat",()=>{
+ const ctx=setup([{role:"assistant",content:code("java","public class A {}")}],"apa beza Java dan JavaScript?");
+ assert.equal(ctx.action.hidden,true);
+});
+test("active AI HTML preview does not render first old file or mix unrelated CSS",()=>{
+ const js=fs.readFileSync(path.join(__dirname,"..","bilik-antara-code-workspace.js"),"utf8");
+ assert.match(js,/current\?\.language==="html"\?current/);
+ assert.match(js,/htmlFile\.name\.startsWith\("ai-preview-"\)/);
+ assert.match(js,/cssFiles=htmlFile\.name/);
+ assert.match(js,/extractJavaCode/);
+ assert.match(js,/Tukar Java ke HTML\/CSS/);
+});
+test("AI models are told the true Code Engine capability limits",()=>{
+ const source=fs.readFileSync(path.join(__dirname,"..","netlify/functions/bilik-antara.js"),"utf8");
+ assert.match(source,/codeRuntimeGuidance/);
+ assert.match(source,/BELUM mempunyai Java compiler/);
+ assert.match(source,/Code Workspace Live Preview/);
 });
