@@ -83,7 +83,7 @@ const CONNECTION_SPAN=8*60*1000; // Renew before Google's ~10-minute connection 
 let recognizer=null,dictating=false,liveGeneration=0;
 let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null,playGain=null;
 let liveActive=false,liveReady=false,micEnabled=true,speakerEnabled=true;
-let voiceVolume=0.16; // 40% slider uses a finer low-volume gain curve; device volume stays independent.
+let voiceVolume=0.5; // 50% default maps to Web Audio gain 0.5; device volume remains independent.
 let startAbort=null,sessionTimer=null,connectTimer=null,visibilityTimer=null,nextAudioTime=0,playSources=new Set(),lastTurn=null;
 let pendingAudio=[],pendingAudioBytes=0,audioQueueGeneration=0,modelTurnFinished=false,reasoningActive=false;
 const MAX_PENDING_AUDIO_BYTES=12*1024*1024; // ~4 minutes of mono PCM, bounded for phones
@@ -101,7 +101,7 @@ const VOICE_TOOLS=[{functionDeclarations:[
 ]}];
 let advancedVoiceConfig=true,turnStartAt=0,turnHeardAt=0,lastCommand="",lastCommandAt=0,echoRiskSince=0,suppressPlaybackUntilUser=false;
 let voiceMetrics={startedAt:0,connections:0,reconnects:0,interruptions:0,commands:0,turns:0,audioChunks:0,echoRiskEvents:0,lastResponseLatencyMs:null,firstAudioScheduledMs:null,audioOverflows:0,backgroundPauses:0,modeChanges:0,styleChanges:0};
-const voiceDiagnosticSnapshot=()=>({...voiceMetrics,connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,advancedFeatures:advancedVoiceConfig,model:liveModel||"unknown",lockedVoice:LIVE_LOCKED_VOICE,voicePhase,selectedStyle:preferredStyleId,confirmedStyle:confirmedStyleId,queuedAudioBytes:pendingAudioBytes,thoughtMode:window.BilikAntaraThought?.getMode?.()||"cahaya",dialect:activeDialect,dialectSwitching,reconnectAttempts:connectionAttempts,microphoneState:micContext?.state||"closed",playbackState:playContext?.state||"closed",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
+const voiceDiagnosticSnapshot=()=>({...voiceMetrics,connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,volumePercent:Number(volumeInput?.value??50),volumeGain:voiceVolume,advancedFeatures:advancedVoiceConfig,model:liveModel||"unknown",lockedVoice:LIVE_LOCKED_VOICE,voicePhase,selectedStyle:preferredStyleId,confirmedStyle:confirmedStyleId,queuedAudioBytes:pendingAudioBytes,thoughtMode:window.BilikAntaraThought?.getMode?.()||"cahaya",dialect:activeDialect,dialectSwitching,reconnectAttempts:connectionAttempts,microphoneState:micContext?.state||"closed",playbackState:playContext?.state||"closed",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
 window.BilikAntaraVoiceDiagnostics={snapshot:voiceDiagnosticSnapshot};
 function handleSpokenControl(text){
  const q=String(text||"").toLocaleLowerCase("ms-MY").replace(/[.,!?]+$/g,"").trim();
@@ -192,7 +192,12 @@ function mountEnhancedVoiceUI(){
  trigger.setAttribute("aria-haspopup","dialog");
  trigger.setAttribute("aria-label","Pilih gaya pertuturan Voice Chat");
  trigger.setAttribute("aria-describedby","voiceDialectHint");
- row.insertBefore(trigger,styleHint);
+ const identity=panel.querySelector(".voice-live-label");
+ if(identity){
+   const subtitle=identity.querySelector(".voice-live-subtitle");
+   if(subtitle)subtitle.hidden=true;
+   identity.appendChild(trigger); // Keep the original glass identity card; no extra toolbar height.
+ }else row.insertBefore(trigger,styleHint);
  const dialog=create("dialog","aksara-voice-style-dialog");
  dialog.id="voiceStyleDialog";dialog.setAttribute("aria-labelledby","voiceStyleDialogTitle");
  const body=create("div","voice-style-modal-body");
@@ -245,22 +250,15 @@ function mountEnhancedVoiceUI(){
    modeChip.dataset.mode=mode.toLowerCase();
    modeChip.setAttribute("aria-label","Thinking Mode · "+mode+". Tekan untuk ubah.");
  }
- const setIcon=(button,enabled,onIcon,offIcon,onText,offText)=>{
-   button.classList.add("voice-ui-toggle");
-   button.dataset.enabled=enabled?"true":"false";
-   button.replaceChildren(svgIcon(enabled?onIcon:offIcon),create("span","",enabled?onText:offText));
-   button.setAttribute("aria-label",enabled?"Tutup "+(button===micButton?"mikrofon":"suara"):"Buka "+(button===micButton?"mikrofon":"suara"));
- };
  function renderControls(){
-   setIcon(micButton,micEnabled,"mic","mic-off","Mic ON","Mic OFF");
-   setIcon(speakerButton,speakerEnabled,"volume","volume-x","Audio ON","Audio OFF");
+   // Keep the classic full-text controls rather than replacing them with compact icon pills.
    updateMode();
  }
  function updateSelection(){
    const selected=dialectControl.label(preferredStyleId);
    const active=liveActive&&liveReady&&confirmedStyleId===preferredStyleId;
    const pending=liveActive&&!active;
-   trigger.replaceChildren(create("span","voice-style-trigger-text",preferredStyleId==="gaul"?"Gaul":selected),svgIcon("chevron"));
+   trigger.replaceChildren(create("span","voice-style-trigger-text",selected),svgIcon("chevron"));
    trigger.setAttribute("aria-label","Loghat: "+selected+(active?". Aktif":pending?". Sedang diaktifkan":". Dipilih")+". Tekan untuk ubah.");
    trigger.dataset.state=active?"active":pending?"pending":"selected";
    styleHint.textContent=active?"Loghat aktif":pending?"Loghat dipilih, sedang diaktifkan":"Loghat dipilih untuk sesi berikutnya";
@@ -1007,8 +1005,8 @@ micButton.addEventListener("click",()=>{
 if(volumeInput){
  const adjustVoiceVolume=()=>{
    const val=Math.max(0,Math.min(100,Number(volumeInput.value)||0));
-   // A quadratic curve gives finer control at the quiet end, where mobile users need it.
-   voiceVolume=(val/100)**2;
+   // Linear gain keeps the displayed percentage aligned with the actual output gain.
+   voiceVolume=val/100;
    if(playGain&&playContext){
      const now=playContext.currentTime;
      playGain.gain.cancelScheduledValues(now);
@@ -1042,6 +1040,14 @@ document.addEventListener("visibilitychange",()=>{
   if(!document.hidden){
     // Restore only the user's existing mic choice. Never auto-unmute a muted mic.
     if(mediaStream)mediaStream.getAudioTracks().forEach(track=>{track.enabled=micEnabled;});
+    // Audio was suspended in the background. Without resume(), volume appears normal but voice stays silent.
+    if(playContext&&playContext.state!=="running"&&playContext.state!=="closed"){
+      void playContext.resume().then(()=>{
+        if(liveActive&&!document.hidden)drainAudioQueue();
+      }).catch(()=>{
+        if(liveActive)showNotice("Audio belum dapat disambung. Cuba aktifkan semula Voice Chat.");
+      });
+    }
     recoverVoice?.("Memulihkan sesi suara selepas kembali ke tab…");
     return;
   }
