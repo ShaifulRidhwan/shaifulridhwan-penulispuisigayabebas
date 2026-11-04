@@ -20,9 +20,17 @@ A wet engraved stone causeway through a foggy ravine, leading toward a massive c
 5. Controls: left touch move, right drag camera; obvious, consistent navigation.
 
 ## Temporary CC0 assets fetched at build time
-- Desert Queen (external model, temporary female hero): https://grab3d.com/models/characters/queen/ ; model https://grab3d.com/dl/queen/queen.glb ; declared CC0 by publisher.
+- Priestess (temporary rigged fantasy character with Idle/Walk clips): https://gobkit.com/freebies/human003/Priestess.glb ; published CC0 in https://gobkit.com/api/free . This is visibly stylized/low-poly and is NOT the final AKSARA woman.
+- Oak tree replacement for the original primitive cones: https://cdn.3dassets.dev/assets/28779/v1/model.glb ; published as CC0 at https://3dassets.dev/assets/medieval-mmo-starter-realm-oak-tree-c7fbe965 .
 - Sanctuary of the Seven Tones (fantasy environment): https://3dassets.dev/assets/enchanted-harp-garden-and-music-sanctuar-5f06b16f-starter-scene ; GLB https://cdn.3dassets.dev/assets/30441/v1/model.glb ; declared CC0.
 - Blue Banner Castle Courtyard: https://3dassets.dev/assets/medieval-castle-construction-castle-cour-480ed575-starter-scene ; GLB https://cdn.3dassets.dev/assets/23508/v1/model.glb ; declared CC0.
+
+### Visual rebuild v0.4
+- Replaced the Egyptian-inspired Desert Queen with a rigged fantasy Priestess, because the former's clothing and crown were the wrong era.
+- Changed the repeated wooden slats to a continuous world-space cracked stone shader.
+- Replaced the square portal with concentric celestial rings.
+- Replaced procedurally generated cone trees with CC0 oak models.
+- Animated Idle and Walk clips when source GLB exports these names, subject to device verification.
 
 ### Honest stage status
 The generated illustration shared in chat is **concept art, not actual gameplay**. The imported CC0 model is **not** the final bespoke AKSARA woman. Both asset import and Android frame rate must be verified in a successful build and on-device. This experiment intentionally does not promise Unreal Engine 5 graphics in a phone browser.
