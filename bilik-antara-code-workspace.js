@@ -110,12 +110,20 @@ function safePreviewDocument(html,css){
 }
 function updatePreview(){
  if(!dialog.open)return;
- const htmlFile=files.find(f=>f.language==="html");
+ const current=files[index];
+ const htmlFile=current?.language==="html"?current:
+  current?.language==="css"&&current.name.startsWith("ai-preview-")
+   ?files.find(f=>f.name===current.name.replace(/\.css$/,".html")):
+   files.find(f=>f.language==="html");
  if(!htmlFile){previewFrame.removeAttribute("srcdoc");previewInfo.textContent="Tambah fail .html untuk melihat paparan.";return;}
- const css=files.filter(f=>f.language==="css").map(f=>f.code).join("\n");
+ // Never mix another AI preview's CSS into this document.
+ const cssFiles=htmlFile.name.startsWith("ai-preview-")
+  ?files.filter(f=>f.name===htmlFile.name.replace(/\.html$/,".css"))
+  :files.filter(f=>f.language==="css"&&!f.name.startsWith("ai-preview-"));
+ const css=cssFiles.map(f=>f.code).join("\n");
  try{
   previewFrame.srcdoc=safePreviewDocument(htmlFile.code,css);
-  previewInfo.textContent="Preview: "+htmlFile.name+" · "+files.filter(f=>f.language==="css").length+" fail CSS · rangkaian/JavaScript disekat";
+  previewInfo.textContent="Preview: "+htmlFile.name+" · "+cssFiles.length+" fail CSS · rangkaian/JavaScript disekat";
  }catch(error){
   previewFrame.removeAttribute("srcdoc");
   previewInfo.textContent="Preview gagal: "+String(error.message||error).slice(0,100);
@@ -221,12 +229,14 @@ function openAIPreview(source){
 }
 function attachPreviewAction(reply,element){
  const parsed=window.AksaraCodeChat?.extractWebCode?.(reply);
- if(!parsed||!element||element.querySelector(".aksara-ai-preview-action"))return false;
+ const java=parsed?null:window.AksaraCodeChat?.extractJavaCode?.(reply);
+ if((!parsed&&!java)||!element||element.querySelector(".aksara-ai-preview-action"))return false;
  const action=document.createElement("button");
  action.type="button";action.className="msg-followup-btn aksara-ai-preview-action";
- action.textContent="▶ Live Preview · Code Engine";
- action.setAttribute("aria-label","Buka HTML dan CSS ini dalam AKSARA Code Workspace");
- action.addEventListener("click",()=>openAIPreview(parsed));
+ action.textContent=parsed?"▶ Live Preview · Code Engine":"▶ Tukar Java ke HTML/CSS";
+ action.setAttribute("aria-label",parsed?"Buka HTML dan CSS ini dalam AKSARA Code Workspace":
+  "Hantar kod Java ini ke A.I. untuk ditukar kepada HTML dan CSS, bukan menjalankan Java");
+ action.addEventListener("click",()=>parsed?openAIPreview(parsed):window.AksaraCodeChat?.convertJava?.(java));
  element.appendChild(action);
  return true;
 }
@@ -244,8 +254,6 @@ function restorePreviewActions(){
 }
 window.addEventListener("ba:answered",event=>{
  const answer=String(event.detail?.answer||"");
- const parsed=window.AksaraCodeChat?.extractWebCode?.(answer);
- if(!parsed)return;
  const bubbles=document.querySelectorAll(".conversation .message.ai .bubble");
  const bubble=bubbles[bubbles.length-1];
  attachPreviewAction(answer,bubble);
