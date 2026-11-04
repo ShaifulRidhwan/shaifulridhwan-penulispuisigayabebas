@@ -75,9 +75,10 @@ test("Voice HTML contains the selector and status badge",()=>{
  assert.match(html,/<option value="gaul">Bahasa Gaul<\/option>/);
  assert.match(html,/bilik-antara-dialek\.js\?v=4/);
  assert.match(html,/bilik-antara-voice-core-v3.js\?v=1/);
- assert.match(html,/bilik-antara-voice-v3.css\?v=3/);
+ assert.match(html,/bilik-antara-voice-v3.css\?v=4/);
+ assert.match(html,/bilik-antara-voice\.js\?v=48/);
 });
-test("Voice UI enhances native picker with accessible dialog, mode chip and control icons",()=>{
+test("Voice UI retains full-size classical layout with accessible picker and mode chip",()=>{
  const script=read("bilik-antara-voice.js");
  const css=read("bilik-antara-voice-v3.css");
  assert.match(script,/function mountEnhancedVoiceUI\(\)/);
@@ -86,11 +87,28 @@ test("Voice UI enhances native picker with accessible dialog, mode chip and cont
  assert.match(script,/voiceModeBadge/);
  assert.match(script,/row\.insertBefore\(modeChip,styleHint\)/);
  assert.doesNotMatch(script,/head\.insertBefore\(modeChip/);
- assert.match(script,/voice-ui-toggle/);
+ assert.match(script,/identity\.appendChild\(trigger\)/);
+ assert.doesNotMatch(script,/setIcon\(micButton/);
+ assert.match(script,/classic full-text controls/);
  assert.match(script,/confirmedStyleId=activeDialect/);
  assert.match(css,/\.aksara-voice-style-dialog/);
  assert.match(css,/min-height:44px/);
- assert.match(css,/voice-status\[data-compact="true"\]/);
+ assert.doesNotMatch(css,/voice-status\[data-compact="true"\]/);
+ assert.match(css,/voice-phase-label\{display:none!important\}/);
+ assert.match(css,/transform:translateY\(24px\)/);
+});
+test("Voice volume defaults to 50%, uses linear gain and resumes after tab return",()=>{
+ const script=read("bilik-antara-voice.js");
+ const html=read("bilik-antara.html");
+ assert.match(html,/id="voiceVolume"[^>]+value="50"[^>]+--volume-fill:50%/);
+ assert.match(html,/aria-valuetext="50 peratus"/);
+ assert.match(html,/<output id="voiceVolumeValue"[^>]*>50%<\/output>/);
+ assert.match(script,/let voiceVolume=0\.5;/);
+ assert.match(script,/voiceVolume=val\/100;/);
+ assert.doesNotMatch(script,/voiceVolume=\(val\/100\)\*\*2/);
+ assert.match(script,/playGain\.gain\.setTargetAtTime\(voiceVolume,now/);
+ assert.match(script,/playContext\.resume\(\)\.then/);
+ assert.match(script,/volumeInput\.addEventListener\("input",adjustVoiceVolume/);
 });
 test("Voice mode changes no longer close session and hidden tab is safely paused",()=>{
  const script=read("bilik-antara-voice.js");
