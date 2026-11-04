@@ -192,6 +192,68 @@ $("cwExport").addEventListener("click",()=>{
 $("cwClose").addEventListener("click",()=>dialog.close());
 dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
 dialog.addEventListener("close",()=>{cppController?.abort();clearTimeout(previewTimer);previewFrame.removeAttribute("srcdoc");});
+// Turn a single AI HTML document into a local, editable, script-disabled Live Preview.
+function openAIPreview(source){
+ const html=String(source?.html||"").trim(),css=String(source?.css||"").trim();
+ if(!html||html.length>12000||css.length>12000){
+  info.textContent="Kod HTML/CSS melebihi had 12,000 aksara setiap fail atau tiada HTML sah.";
+  if(!dialog.open)dialog.showModal();
+  return false;
+ }
+ const needed=css?2:1;
+ if(files.length+needed>12){
+  info.textContent="Code Workspace sudah hampir penuh. Maksimum 12 fail; buang fail yang tidak diperlukan sebelum membuka preview baharu.";
+  if(!dialog.open)dialog.showModal();
+  return false;
+ }
+ save();
+ let number=1;
+ const taken=name=>files.some(f=>f.name===name);
+ while(taken("ai-preview-"+number+".html")||taken("ai-preview-"+number+".css"))number++;
+ files.push({name:"ai-preview-"+number+".html",language:"html",code:html});
+ if(css)files.push({name:"ai-preview-"+number+".css",language:"css",code:css});
+ index=files.length-needed;
+ render();
+ if(!dialog.open)dialog.showModal();
+ info.textContent="Kod AI dibuka sebagai fail sementara. Preview HTML/CSS sandbox menyekat JavaScript dan akses rangkaian.";
+ clearTimeout(previewTimer);updatePreview();
+ return true;
+}
+function attachPreviewAction(reply,element){
+ const parsed=window.AksaraCodeChat?.extractWebCode?.(reply);
+ if(!parsed||!element||element.querySelector(".aksara-ai-preview-action"))return false;
+ const action=document.createElement("button");
+ action.type="button";action.className="msg-followup-btn aksara-ai-preview-action";
+ action.textContent="▶ Live Preview · Code Engine";
+ action.setAttribute("aria-label","Buka HTML dan CSS ini dalam AKSARA Code Workspace");
+ action.addEventListener("click",()=>openAIPreview(parsed));
+ element.appendChild(action);
+ return true;
+}
+function restorePreviewActions(){
+ const messages=Array.from(document.querySelectorAll(".conversation .message"));
+ const history=bridge.snapshot?.().history;
+ if(!Array.isArray(history)||!history.length)return;
+ // Restore buttons for the most recent visible AI code replies without inspecting user code.
+ const offset=Math.max(0,messages.length-history.length);
+ for(let i=Math.max(0,history.length-24);i<history.length;i++){
+  const message=history[i],node=messages[i+offset];
+  if(message?.role==="assistant"&&message.mode!=="code"&&message.mode!=="voice")
+   attachPreviewAction(message.content,node?.querySelector(".bubble"));
+ }
+}
+window.addEventListener("ba:answered",event=>{
+ const answer=String(event.detail?.answer||"");
+ const parsed=window.AksaraCodeChat?.extractWebCode?.(answer);
+ if(!parsed)return;
+ const bubbles=document.querySelectorAll(".conversation .message.ai .bubble");
+ const bubble=bubbles[bubbles.length-1];
+ attachPreviewAction(answer,bubble);
+});
+window.addEventListener("aksara:code-workspace-preview-ai",event=>{
+ openAIPreview(event.detail);
+});
+window.addEventListener("ba:saved",()=>{if(!dialog.open)restorePreviewActions();});
 window.addEventListener("aksara:code-workspace-open",event=>{
  if(event.detail?.language==="html")ensureWebStarter();
  if(event.detail?.language==="cpp")ensureCppStarter();
@@ -223,5 +285,6 @@ async function importFiles(selected){
  info.textContent=batch.length+" fail kod diimport secara setempat. Tiada kod dijalankan atau dihantar ke AI.";
  return batch.length;
 }
-window.AksaraCodeWorkspace=Object.freeze({version:"1.4",fileCount:()=>files.length,previewAvailable:true,importFiles});
+window.AksaraCodeWorkspace=Object.freeze({version:"1.5",fileCount:()=>files.length,previewAvailable:true,openAIPreview,importFiles});
+restorePreviewActions();
 })();
