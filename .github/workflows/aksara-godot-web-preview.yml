@@ -32,3 +32,11 @@ jobs:
         with:
           name: aksara-godot-web-preview
           path: public/aksara-game/
+
+      - name: Auto-deploy to isolated Netlify test site
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.AKSARA_GAME_NETLIFY_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.AKSARA_GAME_NETLIFY_SITE_ID }}
+        if: ${{ env.NETLIFY_AUTH_TOKEN != '' && env.NETLIFY_SITE_ID != '' }}
+        run: |
+          npx --yes netlify-cli@20 deploy --prod --dir=public/aksara-game --site="$NETLIFY_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" --message="AKSARA game preview ${{ github.sha }}"
