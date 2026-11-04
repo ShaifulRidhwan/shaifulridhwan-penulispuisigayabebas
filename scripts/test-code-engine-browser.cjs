@@ -362,7 +362,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    return {version:window.AksaraCodeRuntime.version,ok:r.ok,stderr:r.stderr,stdoutLength:r.stdout.length,
     truncated:r.truncated,diagnostics:r.diagnostics,limits:r.limits,runtimeMs:r.runtimeMs};
   });
-  assert.equal(contract.version,"0.6");
+  assert.equal(contract.version,"0.7","Code Runtime browser contract must match the shipped 0.7 API");
   assert.equal(contract.ok,true);
   assert.match(contract.stderr,/WARN_CHECK/);
   assert.ok(contract.stdoutLength<=10000,"Worker output budget must be enforced");
