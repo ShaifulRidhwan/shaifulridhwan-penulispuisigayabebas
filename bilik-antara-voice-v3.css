@@ -1,183 +1,179 @@
-/* AKSARA Voice 3.0 · progressive styling; existing glass UI stays intact. */
+/* AKSARA Voice · one compact style toolbar, one modal, no stacked glass cards.
+   Layered ONLY on Voice UI. Voice transport, Aoede and 3D avatar are unchanged. */
+
+/* Native select remains usable if progressive enhancement fails. */
 .voice-style-row{
-  position:relative;z-index:2;width:min(100%,530px);
-  display:grid;grid-template-columns:auto minmax(145px,1fr);gap:6px 10px;align-items:center;
-  margin:0 auto;padding:8px 12px;border-radius:14px;
-  border:1px solid rgba(241,207,150,.25);
-  background:rgba(16,23,37,.52);backdrop-filter:blur(14px);
-  -webkit-backdrop-filter:blur(14px);
+  box-sizing:border-box;position:relative;z-index:5;
+  width:min(100%,330px);max-width:100%;margin:0;min-width:0;
+  display:grid;grid-template-columns:76px minmax(0,1fr);
+  gap:6px;align-items:center;padding:8px 10px;
+  border:1px solid rgba(230,205,165,.28);border-radius:14px;
+  background:rgba(7,12,22,.44);
+  -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
 }
-.voice-style-row label{font:600 11px/1.25 'Space Grotesk','DM Sans',sans-serif;color:#f3dfbd;white-space:nowrap}
+.voice-style-row label{font:600 11px/1.3 'DM Sans',sans-serif;color:#f4e2c8}
 .voice-style-row select{
-  width:100%;min-width:0;min-height:34px;max-width:100%;padding:6px 30px 6px 12px;
-  border:1px solid rgba(242,201,135,.36);border-radius:10px;
-  color:#f5e5ce;background:rgba(17,27,42,.93);
-  font:600 11px/1.35 'DM Sans',sans-serif;
-  color-scheme:dark;cursor:pointer;
+  box-sizing:border-box;width:100%;min-width:0;min-height:44px;
+  color:#f4e7d5;background:#101a2a;border:1px solid rgba(226,192,144,.45);
+  border-radius:11px;padding:8px 10px;font:600 12px/1.3 'DM Sans',sans-serif;
+  color-scheme:dark;
 }
-.voice-style-row select option{color:#f5e5ce;background:#111b2a}
-.voice-style-row select:focus-visible{outline:2px solid #f8d9a2;outline-offset:2px}
-.voice-style-row select:disabled{opacity:.58;cursor:not-allowed}
-.voice-style-hint{grid-column:1/-1;font:400 10px/1.35 'DM Sans',sans-serif;text-align:center;color:#c9c2b6}
+.voice-style-hint{grid-column:1/-1;font:400 10px/1.3 'DM Sans',sans-serif;color:#c7c3ba}
 .voice-phase-label{
-  position:relative;z-index:1;display:inline-flex;justify-content:center;align-items:center;
-  border:1px solid rgba(243,209,159,.24);border-radius:99px;
-  background:rgba(28,36,51,.6);color:#e9d2b0;
-  padding:4px 11px;font:600 10px/1.35 'Space Grotesk','DM Sans',sans-serif;
-  letter-spacing:.02em;
+  position:relative;z-index:4;display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid rgba(243,209,159,.28);border-radius:99px;
+  background:rgba(9,16,27,.58);color:#e9d2b0;
+  padding:6px 13px;font:600 11px/1.3 'DM Sans',sans-serif;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
 }
-.voice-phase-label[data-phase="listening"]{border-color:rgba(135,207,177,.45);color:#b6e4cd}
-.voice-phase-label[data-phase="speaking"]{border-color:rgba(144,196,238,.49);color:#c0dff4}
-.voice-phase-label[data-phase="thinking"]{border-color:rgba(234,191,131,.5);color:#f2d4a1}
-.voice-phase-label[data-phase="connecting"]{border-color:rgba(242,193,139,.34)}
-.voice-phase-label[data-phase="paused"],.voice-phase-label[data-phase="error"]{border-color:rgba(243,155,145,.4)}
-.voice-panel[data-voice-phase="speaking"] .voice-wave i{box-shadow:0 0 20px rgba(160,202,244,.32)}
-@media(max-width:760px){
-  .voice-style-row{width:100%;padding:6px 8px;gap:4px 6px;grid-template-columns:75px minmax(0,1fr)}
-  .voice-style-row label,.voice-style-row select{font-size:10px}
-  .voice-style-row select{min-height:32px}
-  .voice-style-hint{font-size:9px}
-  .voice-phase-label{padding:3px 9px;font-size:9px}
-}
-@media(max-height:630px){
-  .voice-style-hint{display:none}
-  .voice-style-row{padding:4px 8px}
-}
-@media(prefers-reduced-motion:reduce){.voice-panel[data-voice-phase="speaking"] .voice-wave i{animation:none}}
+.voice-phase-label[data-phase="listening"]{border-color:rgba(135,207,177,.52);color:#c3e9d1}
+.voice-phase-label[data-phase="speaking"]{border-color:rgba(144,196,238,.55);color:#d0e6f7}
+.voice-phase-label[data-phase="thinking"]{border-color:rgba(234,191,131,.52);color:#f7dbb0}
+.voice-phase-label[data-phase="paused"],.voice-phase-label[data-phase="error"]{border-color:rgba(243,155,145,.55);color:#f4b9af}
+.voice-phase-label[data-phase="connecting"]{border-color:rgba(242,193,139,.48)}
 
-
-/* Voice UI 3.1 · avatar-first glass overlay with eight deliberate styles */
-.voice-panel:not(.is-minimized) .voice-style-row{
-  z-index:5;align-self:flex-start;margin:0;
-  width:min(100%,370px);max-width:100%;
-  grid-template-columns:88px minmax(0,1fr);
-  gap:4px 8px;padding:8px 10px;
-  border-color:rgba(241,218,176,.32);
-  border-radius:16px;background:linear-gradient(140deg,rgba(9,14,25,.66),rgba(15,22,35,.37));
-  box-shadow:inset 0 1px 0 rgba(255,246,221,.1),0 4px 20px rgba(0,0,0,.12);
-  backdrop-filter:blur(11px) saturate(1.12);
-  -webkit-backdrop-filter:blur(11px) saturate(1.12);
+/* When JS is active, a single row of two small controls replaces the big card. */
+.voice-panel:not(.is-minimized) .voice-style-row.voice-style-enhanced{
+  box-sizing:border-box;display:flex;align-items:center;justify-content:flex-start;
+  align-self:flex-start;flex-wrap:nowrap;gap:7px;width:auto;min-width:0;
+  max-width:100%;margin:0;padding:0;border:0;border-radius:0;
+  background:none;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;
 }
-.voice-panel .voice-style-row label{letter-spacing:0;font-weight:600;color:#efe2cd}
 .voice-style-enhanced #voiceDialectSelect[hidden]{display:none!important}
-.voice-panel .voice-style-row .voice-style-trigger{
-  box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
-  gap:7px;text-align:left;width:100%;min-height:44px;min-width:0;
-  padding:8px 11px;border-radius:12px;border:1px solid rgba(237,211,164,.44);
-  background:rgba(9,15,27,.35);color:#f9e9d4;
-  font:600 12px/1.35 'DM Sans',system-ui,sans-serif;
-  cursor:pointer;
-}
-.voice-panel .voice-style-row .voice-style-trigger[data-state="active"]{border-color:rgba(156,213,184,.53)}
-.voice-panel .voice-style-row .voice-style-trigger[data-state="pending"]{border-color:rgba(236,190,117,.59)}
-.voice-style-trigger-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.voice-style-trigger svg{width:16px;height:16px;flex:0 0 16px;color:#e8d1a8}
-.voice-style-enhanced .voice-style-hint{
-  grid-column:1/-1;text-align:left;display:block;
-  padding-left:2px;font-size:10px;color:#c9c6bd
-}
-.voice-panel:not(.is-minimized) .voice-panel-head{z-index:5}
-.voice-panel .voice-mode-chip{
-  display:inline-flex;align-items:center;justify-content:center;gap:5px;
-  box-sizing:border-box;min-height:44px;min-width:44px;padding:7px 10px;
-  color:#e6d4b9;border:1px solid rgba(236,208,157,.38);border-radius:999px;
-  background:rgba(7,13,23,.35);font:650 11px/1.2 'DM Sans',sans-serif;
-}
-.voice-panel .voice-mode-chip svg{height:16px;width:16px;flex:0 0 16px}
-.voice-panel .voice-mode-chip[data-mode="gelap"]{border-color:rgba(154,170,206,.58);color:#d2d6f1}
-.voice-panel .voice-panel-head-actions{gap:6px;flex-wrap:nowrap}
-.voice-panel .voice-panel-head-actions .voice-stop{
-  box-sizing:border-box;min-height:44px;padding:8px 11px;white-space:nowrap;
-}
-.voice-panel .voice-dialogue-dock{z-index:5}
-.voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-status[data-compact="true"]{
+.voice-style-row.voice-style-enhanced>label,
+.voice-style-row.voice-style-enhanced>.voice-style-hint{
   position:absolute!important;width:1px!important;height:1px!important;
-  min-height:0!important;padding:0!important;border:0!important;
-  clip-path:inset(50%)!important;white-space:nowrap!important;overflow:hidden!important;
+  padding:0!important;margin:-1px!important;overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;clip-path:inset(50%)!important;
+  white-space:nowrap!important;border:0!important;
 }
-.voice-panel .voice-dialogue-dock .voice-phase-label{
-  align-self:center;border-radius:999px;padding:7px 16px;
-  font-size:12px;background:rgba(7,13,23,.66);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+.voice-panel .voice-style-row .voice-style-trigger,
+.voice-panel .voice-style-row .voice-mode-chip{
+  box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+  flex:0 1 auto;gap:7px;min-height:44px;max-width:100%;
+  border:1px solid rgba(241,210,162,.36);border-radius:999px;
+  background:linear-gradient(145deg,rgba(12,19,30,.70),rgba(21,28,42,.48));
+  color:#f6e6d0;font:600 11px/1.25 'DM Sans',sans-serif;
+  cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,247,223,.08);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+.voice-panel .voice-style-row .voice-style-trigger{
+  justify-content:space-between;min-width:100px;width:auto;
+  max-width:min(58vw,210px);padding:9px 12px;
+}
+.voice-style-trigger::before{
+  content:"";display:block;flex:0 0 6px;width:6px;height:6px;border-radius:100%;
+  background:#c9b9a1;box-shadow:0 0 6px rgba(240,208,163,.14);
+}
+.voice-style-trigger[data-state="active"]::before{background:#8bdaa9;box-shadow:0 0 8px rgba(145,218,172,.5)}
+.voice-style-trigger[data-state="pending"]::before{background:#f0c279}
+.voice-style-trigger-text{min-width:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.voice-style-trigger svg{width:14px;height:14px;flex:0 0 14px;color:#efd2a6}
+.voice-panel .voice-style-row .voice-mode-chip{
+  flex:0 0 auto;gap:6px;min-width:44px;padding:8px 12px;
+}
+.voice-panel .voice-mode-chip svg{width:17px;height:17px;flex:0 0 17px}
+.voice-panel .voice-mode-chip[data-mode="gelap"]{border-color:rgba(143,162,209,.55);color:#d5dcf7}
+.voice-panel .voice-panel-head{z-index:6;align-self:stretch;min-width:0}
+.voice-panel .voice-panel-head .voice-live-label{min-width:0;flex:1 1 auto}
+.voice-panel .voice-panel-head-actions{display:flex;flex:0 0 auto;gap:6px;flex-wrap:nowrap}
+.voice-panel .voice-panel-head-actions .voice-stop{
+  box-sizing:border-box;min-width:44px;min-height:44px;
+  padding:7px 12px;white-space:nowrap;
+}
+.voice-panel:not(.is-minimized) .voice-dialogue-dock{z-index:5}
+.voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-status[data-compact="true"],
+.voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-status:not([data-compact]){
+  position:absolute!important;width:1px!important;height:1px!important;
+  min-height:0!important;margin:-1px!important;padding:0!important;border:0!important;
+  overflow:hidden!important;clip-path:inset(50%)!important;white-space:nowrap!important;
 }
 .voice-panel .voice-session-controls .voice-ui-toggle{
-  box-sizing:border-box;min-width:108px;min-height:44px;
-  display:inline-flex;align-items:center;justify-content:center;gap:7px;
-  padding:8px 12px;border-radius:999px;
-  font:600 11px/1.3 'DM Sans',sans-serif;
+  box-sizing:border-box;min-height:44px;min-width:92px;
+  display:inline-flex;align-items:center;justify-content:center;
+  gap:7px;padding:8px 12px;border-radius:999px;font:600 11px/1.25 'DM Sans',sans-serif;
 }
-.voice-panel .voice-session-controls .voice-ui-toggle svg{
-  width:19px;height:19px;flex:0 0 19px;
-}
+.voice-panel .voice-session-controls .voice-ui-toggle svg{width:18px;height:18px;flex:0 0 18px}
 .voice-panel .voice-session-controls .voice-ui-toggle[data-enabled="false"]{
-  border-color:rgba(241,155,150,.57)!important;color:#f5c5bf!important;
-}
-.voice-panel .voice-style-trigger:focus-visible,
-.voice-panel .voice-mode-chip:focus-visible,
-.aksara-voice-style-dialog button:focus-visible{
-  outline:2px solid #f8d9a2;outline-offset:3px;
+  border-color:rgba(241,155,150,.55)!important;color:#f5c5bf!important;
 }
 .voice-panel.is-minimized .voice-style-row,
 .voice-panel.is-minimized .voice-phase-label{display:none!important}
 
-/* Top-layer native dialog: Escape, focus trapping and outside-click close remain native. */
+/* Single-column touch menu, native top-layer focus containment and Escape. */
 .aksara-voice-style-dialog{
-  box-sizing:border-box;width:min(92vw,410px);
-  max-height:min(80dvh,680px);margin:auto;padding:0;
-  border:1px solid rgba(235,208,160,.49);border-radius:22px;
-  color:#f8ebd8;color-scheme:dark;overflow:hidden;
-  background:linear-gradient(155deg,rgba(15,23,37,.98),rgba(8,14,25,.99));
-  box-shadow:0 28px 90px rgba(0,0,0,.65),inset 0 1px 0 rgba(255,237,196,.14);
-  -webkit-backdrop-filter:blur(19px);backdrop-filter:blur(19px);
+  box-sizing:border-box;width:min(92vw,385px);max-height:calc(100dvh - 28px);
+  margin:auto;padding:0;border:1px solid rgba(235,208,160,.40);
+  border-radius:20px;color:#f8ebd8;color-scheme:dark;overflow:hidden;
+  background:linear-gradient(150deg,rgba(17,25,39,.98),rgba(8,13,23,.99));
+  box-shadow:0 25px 80px rgba(0,0,0,.64),inset 0 1px 0 rgba(255,239,206,.1);
+  -webkit-backdrop-filter:blur(15px);backdrop-filter:blur(15px);
 }
-.aksara-voice-style-dialog::backdrop{background:rgba(1,5,12,.77);backdrop-filter:blur(3px)}
-.aksara-voice-style-dialog .voice-style-modal-body{box-sizing:border-box;max-height:80dvh;overflow:auto;overscroll-behavior:contain;padding:18px}
-.aksara-voice-style-dialog .voice-style-modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.aksara-voice-style-dialog h2{font:650 18px/1.3 'Space Grotesk','DM Sans',sans-serif;margin:0;color:#f9e5c5}
-.aksara-voice-style-dialog .voice-style-intro{margin:7px 0 15px;font:400 12px/1.5 'DM Sans',sans-serif;color:#bcb7ae}
+.aksara-voice-style-dialog::backdrop{background:rgba(1,5,12,.77);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.aksara-voice-style-dialog .voice-style-modal-body{
+  box-sizing:border-box;max-height:calc(100dvh - 28px);overflow-y:auto;
+  overscroll-behavior:contain;padding:14px;
+}
+.aksara-voice-style-dialog .voice-style-modal-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin-bottom:12px;
+}
+.aksara-voice-style-dialog h2{
+  margin:0;color:#f9e5c5;font:650 17px/1.3 'Space Grotesk','DM Sans',sans-serif;
+}
 .aksara-voice-style-dialog button{
-  cursor:pointer;background:rgba(30,39,56,.56);color:#f3e7d7;
-  border:1px solid rgba(236,207,159,.3);
+  box-sizing:border-box;cursor:pointer;border:1px solid rgba(226,200,159,.22);
+  background:rgba(33,43,60,.24);color:#f4e6d4;
   font:600 12px/1.3 'DM Sans',sans-serif;
 }
-.aksara-voice-style-dialog .voice-style-close{min-height:44px;padding:9px 15px;border-radius:999px}
-.aksara-voice-style-dialog .voice-style-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.aksara-voice-style-dialog .voice-style-close{
+  min-width:58px;min-height:44px;padding:9px 12px;border-radius:999px;
+}
+.aksara-voice-style-dialog .voice-style-options{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:5px;
+}
 .aksara-voice-style-dialog .voice-style-option{
-  min-height:54px;border-radius:14px;padding:10px 12px;display:flex;
-  align-items:center;justify-content:space-between;gap:7px;text-align:left;
+  box-sizing:border-box;display:flex;align-items:center;justify-content:space-between;
+  width:100%;min-height:47px;text-align:left;
+  gap:12px;padding:10px 13px;border-radius:12px;
 }
 .aksara-voice-style-dialog .voice-style-option.is-selected{
-  border-color:rgba(245,207,139,.8);background:rgba(167,125,69,.22);color:#fff0d3;
+  background:rgba(177,139,78,.20);border-color:rgba(241,207,153,.60);
+  color:#fff2d9;
 }
-.aksara-voice-style-dialog .voice-style-option-tick{color:#f4d49d;opacity:0}
+.aksara-voice-style-dialog .voice-style-option-tick{
+  opacity:0;color:#f3d49b;font-size:17px;
+}
 .aksara-voice-style-dialog .voice-style-option.is-selected .voice-style-option-tick{opacity:1}
-.aksara-voice-style-dialog .voice-style-option[data-active="true"]:not(.is-selected){
-  border-color:rgba(147,211,172,.5);
+.aksara-voice-style-dialog .voice-style-option[data-active="true"]:not(.is-selected){border-color:rgba(139,210,169,.48)}
+.voice-panel .voice-style-trigger:focus-visible,
+.voice-panel .voice-mode-chip:focus-visible,
+.aksara-voice-style-dialog button:focus-visible{
+  outline:2px solid #f8d9a2;outline-offset:2px;
 }
 @media(max-width:760px){
- .voice-panel:not(.is-minimized){gap:6px}
- .voice-panel:not(.is-minimized) .voice-style-row{width:min(100%,325px);padding:6px 9px;gap:3px 7px;grid-template-columns:76px minmax(0,1fr)}
- .voice-panel .voice-style-row .voice-style-trigger{min-height:44px;font-size:11px}
- .voice-panel .voice-mode-chip{min-height:44px;padding:7px 8px;font-size:10px}
- .voice-panel .voice-panel-head-actions .voice-stop{min-height:44px;padding:7px 8px;font-size:10px}
- .voice-panel .voice-panel-head-actions{gap:4px}
- .voice-panel .voice-session-controls .voice-ui-toggle{min-height:44px;min-width:94px;padding:8px 10px}
- .voice-panel .voice-style-enhanced .voice-style-hint{font-size:9px}
- .aksara-voice-style-dialog .voice-style-modal-body{padding:15px}
+ .voice-panel:not(.is-minimized){gap:7px}
+ .voice-panel:not(.is-minimized) .voice-style-row.voice-style-enhanced{gap:6px}
+ .voice-panel .voice-style-row .voice-style-trigger{padding:9px 11px;font-size:11px}
+ .voice-panel .voice-style-row .voice-mode-chip{padding:8px 10px;font-size:11px}
+ .voice-panel .voice-panel-head-actions .voice-stop{min-height:44px;padding:8px 10px;font-size:10px}
+ .voice-panel .voice-dialogue-dock .voice-phase-label{padding:5px 13px;font-size:11px}
 }
 @media(max-width:365px){
  .voice-panel .voice-live-subtitle{display:none}
- .voice-panel .voice-mode-chip span{font-size:9px}
- .voice-panel .voice-panel-head-actions .voice-stop{padding-inline:7px;font-size:9px}
- .voice-panel:not(.is-minimized) .voice-style-row{width:100%;grid-template-columns:69px minmax(0,1fr)}
- .aksara-voice-style-dialog .voice-style-options{grid-template-columns:1fr}
+ .voice-panel .voice-live-name{white-space:nowrap;font-size:10px;letter-spacing:.055em}
+ .voice-panel .voice-panel-head-actions .voice-stop{padding-inline:9px;font-size:10px}
+ .voice-panel .voice-style-row .voice-style-trigger{max-width:195px}
+ .voice-panel .voice-style-row .voice-mode-chip{padding:8px 9px}
+ .aksara-voice-style-dialog .voice-style-modal-body{padding:11px}
 }
-@media(max-height:625px){
- .voice-panel:not(.is-minimized) .voice-style-row{padding-top:3px;padding-bottom:3px}
- .voice-panel .voice-dialogue-dock .voice-phase-label{padding:4px 11px;font-size:10px}
- .voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-status[data-compact="false"]{padding:5px 8px}
+@media(max-height:580px){
+ .voice-panel .voice-dialogue-dock{gap:6px}
+ .voice-panel:not(.is-minimized) .voice-dialogue-dock .voice-status[data-compact="false"]{padding:7px}
+ .aksara-voice-style-dialog .voice-style-option{min-height:44px}
 }
 @media(prefers-reduced-motion:reduce){
- .voice-panel .voice-mode-chip,.voice-panel .voice-style-trigger,
+ .voice-panel[data-voice-phase="speaking"] .voice-wave i{animation:none}
+ .voice-panel .voice-style-trigger,.voice-panel .voice-mode-chip,
  .aksara-voice-style-dialog button{transition:none!important;animation:none!important}
 }
