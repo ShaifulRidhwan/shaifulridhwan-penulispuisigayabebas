@@ -19,7 +19,7 @@
   frame.src='bilik-antara-living-v08-bg.html?v=1';
   frame.title='';frame.setAttribute('aria-hidden','true');frame.tabIndex=-1;
   frame.loading='lazy';frame.referrerPolicy='same-origin';
-  frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;z-index:0;';
+  frame.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;z-index:2;';
   scene.appendChild(frame);
  };
  const observer=new MutationObserver(sync);
