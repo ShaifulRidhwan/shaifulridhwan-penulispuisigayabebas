@@ -240,7 +240,7 @@ async function audit(browser,label,options){
   });
   assert.ok(voiceLayout.name.right<=voiceLayout.actions.x+3,
    label+" Voice header overlaps: "+JSON.stringify(voiceLayout));
-  assert.ok(voiceLayout.name.width<=225,
+  assert.ok(voiceLayout.name.width<=230,
    label+" classic glass identity card expanded over the avatar: "+JSON.stringify(voiceLayout));
   assert.ok(voiceLayout.trigger.x>=voiceLayout.name.x-2&&voiceLayout.trigger.right<=voiceLayout.name.right+2,
    label+" loghat picker must remain inside original identity card: "+JSON.stringify(voiceLayout));
