@@ -80,15 +80,37 @@ jobs:
           path: public/aksara-game/
           retention-days: 7
 
-      - name: Deploy preview only, never replace current Netlify production
+      - name: Deploy and verify real Netlify draft preview URL
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.AKSARA_GAME_NETLIFY_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.AKSARA_GAME_NETLIFY_SITE_ID }}
-        if: ${{ env.NETLIFY_AUTH_TOKEN != '' && env.NETLIFY_SITE_ID != '' }}
         shell: bash
         run: |
           set -euo pipefail
-          npx --yes netlify-cli@20 deploy --no-build --dir=public/aksara-game --alias=aksara-v05 --site="$NETLIFY_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" --message="AKSARA staging v0.5 $GITHUB_SHA"
-          echo "### AKSARA v0.5 isolated draft preview" >> "$GITHUB_STEP_SUMMARY"
-          echo "https://aksara-v05--strong-croissant-bda21b.netlify.app/" >> "$GITHUB_STEP_SUMMARY"
-          echo "The existing production preview URL has not been changed." >> "$GITHUB_STEP_SUMMARY"
+          if [[ -z "${NETLIFY_AUTH_TOKEN}" || -z "${NETLIFY_SITE_ID}" ]]; then
+            echo "::error::Netlify staging secrets are missing. No preview has been deployed."
+            exit 1
+          fi
+          npx --yes netlify-cli@20 deploy --no-build --json --dir=public/aksara-game --alias=aksara-v05 --site="$NETLIFY_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" --message="AKSARA staging v0.5 $GITHUB_SHA" > netlify-deploy.json
+          python3 - <<'PY'
+          import json, pathlib
+          data=json.loads(pathlib.Path("netlify-deploy.json").read_text())
+          url=data.get("deploy_url") or data.get("deployUrl") or data.get("url")
+          if not url or not url.startswith("https://"):
+              raise SystemExit("Netlify did not return a valid preview deploy URL")
+          pathlib.Path("/tmp/aksara-preview-url.txt").write_text(url)
+          print("Netlify returned preview URL:",url)
+          PY
+          preview_url="$(cat /tmp/aksara-preview-url.txt)"
+          curl --fail --location --silent --show-error --retry 6 --retry-all-errors --retry-delay 5 --max-time 25 "$preview_url" --output /tmp/aksara-preview-index.html
+          grep -qi "godot\|AKSARA\|canvas" /tmp/aksara-preview-index.html || { echo "::error::Draft URL does not serve the game page"; exit 1; }
+          curl --fail --location --silent --show-error --retry 4 --retry-delay 3 --max-time 20 "${preview_url%/}/version.json" | grep -q "hybrid-v0.5-staging"
+          {
+            echo "### AKSARA v0.5 Netlify draft deploy verified"
+            echo ""
+            echo "Live preview: $preview_url"
+            echo ""
+            echo "Commit: \`$GITHUB_SHA\`"
+            echo "Main game URL unchanged."
+          } >> "$GITHUB_STEP_SUMMARY"
+
