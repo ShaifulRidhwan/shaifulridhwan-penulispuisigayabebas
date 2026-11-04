@@ -253,6 +253,13 @@ function documentFor(language){
   "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; connect-src 'none'; worker-src blob:; img-src 'none'; style-src 'none'; base-uri 'none'; form-action 'none'";
  return '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="'+csp+'"></head><body><script>('+sandboxBootstrap.toString()+')();<\/script></body></html>';
 }
+function compatibility(language,source){
+ if(language==="python"&&/(?:^|\n)\s*(?:import\s+(?:tkinter|turtle)(?:\b|\.)|from\s+(?:tkinter|turtle)(?:\b|\.)[^\n]*\s+import\b)/im.test(String(source||""))){
+  return Object.freeze({ok:false,code:"PYTHON_DESKTOP_GUI_UNSUPPORTED",
+   message:"Python Pyodide tidak menyokong tetingkap tkinter/turtle dalam browser. Kod ini memerlukan Python desktop. Untuk animasi terus di Bilik Antara, minta versi HTML/CSS (Live Preview)."});
+ }
+ return Object.freeze({ok:true});
+}
 function run(language,source,options={}){
  const emit=(phase,extra={})=>{
   try{root.dispatchEvent(new CustomEvent("aksara:code-runtime-activity",{detail:{
@@ -263,6 +270,14 @@ function run(language,source,options={}){
   if(!LANGUAGES.includes(language)){reject(Error("Runtime belum tersedia."));return;}
   if(typeof source!=="string"||!source.trim()){reject(Error("Masukkan kod dahulu."));return;}
   if(source.length>MAX_SOURCE){reject(Error("Kod maksimum "+MAX_SOURCE+" aksara."));return;}
+  const check=compatibility(language,source);
+  if(!check.ok){
+   const limits=Object.freeze({maxSource:MAX_SOURCE,maxOutput:MAX_OUTPUT,timeoutMs:TIMEOUTS[language]});
+   resolve({ok:false,output:"",stdout:"",stderr:"",error:check.message,
+    diagnostics:[{severity:"error",code:check.code,message:check.message}],
+    truncated:false,limits,runtimeMs:0,language});
+   return;
+  }
   let stdin="";
   if(options.stdin!==undefined){
    if(language!=="cpp"||typeof options.stdin!=="string"||options.stdin.length>4000){
@@ -361,5 +376,5 @@ async function evaluate(cases,{signal,onResult}={}){
  return Object.freeze({version:"1.0",total:items.length,passed:items.filter(x=>x.passed).length,
   failed:items.filter(x=>!x.passed).length,elapsedMs:Math.round(performance.now()-started),results:Object.freeze(items)});
 }
-root.AksaraCodeRuntime=Object.freeze({run,probe,probeLanguage,evaluate,available:LANGUAGES,version:"0.6",limits:Object.freeze({maxSource:MAX_SOURCE,maxOutput:MAX_OUTPUT,timeouts:TIMEOUTS})});
+root.AksaraCodeRuntime=Object.freeze({run,probe,probeLanguage,evaluate,compatibility,available:LANGUAGES,version:"0.7",limits:Object.freeze({maxSource:MAX_SOURCE,maxOutput:MAX_OUTPUT,timeouts:TIMEOUTS})});
 })(window);
