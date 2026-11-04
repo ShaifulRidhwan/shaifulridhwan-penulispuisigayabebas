@@ -223,6 +223,11 @@ async function audit(browser,label,options){
     return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};
    };
    return {
+    panel:rect("#voicePanel"),
+    avatar:rect("#voiceAvatarStage"),
+    status:rect("#voiceStatus"),
+    rowPosition:getComputedStyle(document.querySelector(".voice-panel .voice-style-row")).position,
+    volumeValue:document.querySelector("#voiceVolume").value,
     name:rect(".voice-panel .voice-live-label"),
     actions:rect(".voice-panel .voice-panel-head-actions"),
     row:rect(".voice-panel .voice-style-row"),
@@ -235,10 +240,20 @@ async function audit(browser,label,options){
   });
   assert.ok(voiceLayout.name.right<=voiceLayout.actions.x+3,
    label+" Voice header overlaps: "+JSON.stringify(voiceLayout));
+  assert.ok(voiceLayout.name.width<=225,
+   label+" classic glass identity card expanded over the avatar: "+JSON.stringify(voiceLayout));
+  assert.ok(voiceLayout.trigger.x>=voiceLayout.name.x-2&&voiceLayout.trigger.right<=voiceLayout.name.right+2,
+   label+" loghat picker must remain inside original identity card: "+JSON.stringify(voiceLayout));
+  assert.equal(voiceLayout.rowPosition,"absolute",label+" Thinking Mode chip must not consume avatar height");
   assert.ok(voiceLayout.row.height<=54,
-   label+" loghat toolbar must be one compact row: "+JSON.stringify(voiceLayout));
-  assert.ok(Math.abs(voiceLayout.trigger.y-voiceLayout.mode.y)<5,
-   label+" loghat and mode controls must share one row: "+JSON.stringify(voiceLayout));
+   label+" floating mode chip oversized: "+JSON.stringify(voiceLayout));
+  assert.ok(voiceLayout.mode.y>=voiceLayout.actions.bottom-4,
+   label+" floating mode chip overlaps header actions: "+JSON.stringify(voiceLayout));
+  assert.ok(voiceLayout.avatar.height>=320&&voiceLayout.avatar.width>=voiceLayout.panel.width-4,
+   label+" full-size avatar stage was compressed: "+JSON.stringify(voiceLayout));
+  assert.ok(voiceLayout.status.width>=100&&voiceLayout.status.height>=15,
+   label+" classic Voice dialogue must remain visible: "+JSON.stringify(voiceLayout));
+  assert.equal(voiceLayout.volumeValue,"50",label+" Voice slider should start at 50 percent");
   assert.ok(voiceLayout.hint.width<=2,
    label+" explanatory Aoede line should be screen-reader-only");
   assert.ok(voiceLayout.contentWidth<=voiceLayout.viewportWidth+3,
