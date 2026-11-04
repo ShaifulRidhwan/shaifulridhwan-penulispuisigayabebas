@@ -1,0 +1,73 @@
+name: AKSARA Godot Web Preview
+on:
+  workflow_dispatch:
+  push:
+    branches: [experiment/aksara-godot-web-v01]
+    paths:
+      - 'aksara-game/**'
+      - '.github/workflows/aksara-godot-web-preview.yml'
+concurrency:
+  group: aksara-game-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Godot 4.3 and export templates
+        run: |
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
+          unzip -q Godot_v4.3-stable_linux.x86_64.zip
+          chmod +x Godot_v4.3-stable_linux.x86_64
+          mkdir -p ~/.local/share/godot/export_templates/4.3.stable
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
+          unzip -q Godot_v4.3-stable_export_templates.tpz
+          mv templates/* ~/.local/share/godot/export_templates/4.3.stable/
+      - name: Create export preset
+        run: |
+          printf '[preset.0]\nname="Web"\nplatform="Web"\nrunnable=true\nexport_filter="all_resources"\ninclude_filter=""\nexclude_filter=""\nexport_path="../public/aksara-game/index.html"\n\n[preset.0.options]\nvariant/extensions_support=false\n' > aksara-game/export_presets.cfg
+      - name: Fetch licensed CC0 hero and environment GLBs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p aksara-game/assets
+          curl --fail --location --retry 3 --max-time 120 --silent --show-error \
+            'https://grab3d.com/dl/queen/queen.glb' \
+            --output aksara-game/assets/queen.glb
+          curl --fail --location --retry 3 --max-time 120 --silent --show-error \
+            'https://cdn.3dassets.dev/assets/30441/v1/model.glb' \
+            --output aksara-game/assets/sanctuary.glb
+          curl --fail --location --retry 3 --max-time 120 --silent --show-error \
+            'https://cdn.3dassets.dev/assets/23508/v1/model.glb' \
+            --output aksara-game/assets/courtyard.glb
+          python3 - <<'PY'
+          import os,struct
+          for name in ['queen','sanctuary','courtyard']:
+              p=f'aksara-game/assets/{name}.glb'
+              with open(p,'rb') as f:
+                  data=f.read(12)
+              assert len(data)==12 and data[:4]==b'glTF' and os.path.getsize(p)>1024, f'Invalid GLB: {name}'
+              print(name,round(os.path.getsize(p)/1024/1024,2),'MB / valid glTF header')
+          PY
+      - name: Export web
+        run: |
+          mkdir -p public/aksara-game
+          ./Godot_v4.3-stable_linux.x86_64 --headless --path aksara-game --import
+          ./Godot_v4.3-stable_linux.x86_64 --headless --path aksara-game --export-release Web ../public/aksara-game/index.html
+      - name: Stamp preview build version and disable stale HTML cache
+        run: |
+          printf '{"version":"hybrid-v0.3-recovery","git_sha":"%s","branch":"%s"}\n' "$GITHUB_SHA" "$GITHUB_REF_NAME" > public/aksara-game/version.json
+          printf '/index.html\n  Cache-Control: no-cache\n/version.json\n  Cache-Control: no-store\n' > public/aksara-game/_headers
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aksara-godot-web-preview
+          path: public/aksara-game/
+
+      - name: Auto-deploy to isolated Netlify test site
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.AKSARA_GAME_NETLIFY_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.AKSARA_GAME_NETLIFY_SITE_ID }}
+        if: ${{ env.NETLIFY_AUTH_TOKEN != '' && env.NETLIFY_SITE_ID != '' }}
+        run: |
+          npx --yes netlify-cli@20 deploy --prod --dir=public/aksara-game --site="$NETLIFY_SITE_ID" --auth="$NETLIFY_AUTH_TOKEN" --message="AKSARA game preview ${{ github.sha }}"
