@@ -84,8 +84,12 @@ function previousAICode(){
 }
 function asksToRunPreviousCode(text){
  const q=String(text||"").trim();
- return q.length>0&&q.length<=240&&
-  /\b(?:jalankan|laksanakan|run|execute|uji|test|cuba)\b/i.test(q)&&
+ if(!q||q.length>240)return false;
+ // Short, explicit run commands refer to the last unambiguous AI code block.
+ // They must never be sent to OpenRouter simply because "tadi" was omitted.
+ const direct=/^(?:(?:kau|awak|boleh|tolong|please|cuba)\s+)*(?:jalankan|laksanakan|run|execute|uji|test)\s+(?:kod|code|skrip|script|program)(?:\s+(?:tu|itu|tadi|ni|ini|sekarang))?[.!?]*$/i;
+ if(direct.test(q))return true;
+ return /\b(?:jalankan|laksanakan|run|execute|uji|test|cuba)\b/i.test(q)&&
   /\b(?:kod|code|skrip|script|program|python|javascript|typescript|sql|c\+\+)\b/i.test(q)&&
   /\b(?:tu|itu|tadi|sebelum|atas|baru)\b/i.test(q);
 }
@@ -97,8 +101,10 @@ function refresh(){
  run.hidden=false;stop.hidden=true;sendAI.hidden=!confirmSend;
  if(!found){confirmSend=false;return;}
  if(found.format==="previous-ai"){
-  desc.textContent=confirmSend?"Kod terdahulu dikesan. Pilih tindakan:":langName(found.language)+" daripada jawapan A.I. terdahulu";
-  run.textContent="▶ Jalankan Kod Tadi";
+  const check=engine.compatibility?.(found.language,found.code);
+  desc.textContent=check?.ok===false?check.message:
+   confirmSend?"Kod terdahulu dikesan. Pilih tindakan:":langName(found.language)+" daripada jawapan A.I. terdahulu";
+  run.textContent=check?.ok===false?"▶ Semak Keserasian":"▶ Jalankan Kod Tadi";
  }else{
   desc.textContent=confirmSend?"Kod dikesan. Pilih tindakan:":langName(found.language)+" dikesan · tanpa AI";
   run.textContent="▶ Jalankan Kod";
