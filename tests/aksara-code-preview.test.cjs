@@ -56,7 +56,7 @@ test("C++ project workflow exposes code, stdin, stop and output",()=>{
 });
 test("v0.3 page loads fresh Code Engine JS",()=>{
  const html=read("bilik-antara.html");
- for(const asset of ["runtime.js?v=6","status.js?v=20","workspace.js?v=4","chat.js?v=6"]){
+ for(const asset of ["runtime.js?v=6","status.js?v=20","workspace.js?v=4","chat.js?v=7"]){
   assert.ok(html.includes("bilik-antara-code-"+asset),"Missing "+asset);
  }
 });
