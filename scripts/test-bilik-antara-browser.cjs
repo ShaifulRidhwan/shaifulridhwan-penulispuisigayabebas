@@ -214,6 +214,50 @@ async function audit(browser,label,options){
   });
   assert.match(labelStyles.animation,/voiceIdentityBreath/);
   assert.match(labelStyles.rimAnimation,/voiceIdentityBorderLight/);
+  // Prevent the 320px regression: the original header clipped AKSARA, while
+  // the oversized dialect card and duplicate status obscured the 3D stage.
+  await page.locator("#voiceStyleTrigger").waitFor({state:"visible",timeout:5000});
+  const voiceLayout=await page.evaluate(()=>{
+   const rect=selector=>{
+    const node=document.querySelector(selector),r=node.getBoundingClientRect();
+    return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};
+   };
+   return {
+    name:rect(".voice-panel .voice-live-label"),
+    actions:rect(".voice-panel .voice-panel-head-actions"),
+    row:rect(".voice-panel .voice-style-row"),
+    trigger:rect("#voiceStyleTrigger"),
+    mode:rect("#voiceModeBadge"),
+    hint:rect("#voiceDialectHint"),
+    viewportWidth:document.documentElement.clientWidth,
+    contentWidth:document.documentElement.scrollWidth
+   };
+  });
+  assert.ok(voiceLayout.name.right<=voiceLayout.actions.x+3,
+   label+" Voice header overlaps: "+JSON.stringify(voiceLayout));
+  assert.ok(voiceLayout.row.height<=54,
+   label+" loghat toolbar must be one compact row: "+JSON.stringify(voiceLayout));
+  assert.ok(Math.abs(voiceLayout.trigger.y-voiceLayout.mode.y)<5,
+   label+" loghat and mode controls must share one row: "+JSON.stringify(voiceLayout));
+  assert.ok(voiceLayout.hint.width<=2,
+   label+" explanatory Aoede line should be screen-reader-only");
+  assert.ok(voiceLayout.contentWidth<=voiceLayout.viewportWidth+3,
+   label+" Voice UI caused horizontal overflow");
+  await page.locator("#voiceStyleTrigger").click();
+  const dialectDialog=page.locator("#voiceStyleDialog");
+  await dialectDialog.waitFor({state:"visible",timeout:3000});
+  assert.equal(await dialectDialog.locator(".voice-style-option").count(),8);
+  const dialLayout=await page.evaluate(()=>{
+   const d=document.querySelector("#voiceStyleDialog").getBoundingClientRect();
+   const xs=[...document.querySelectorAll("#voiceStyleDialog .voice-style-option")].map(el=>el.getBoundingClientRect().x);
+   return {left:d.left,right:d.right,viewport:document.documentElement.clientWidth,oneColumn:xs.every(x=>Math.abs(x-xs[0])<2)};
+  });
+  assert.ok(dialLayout.left>=-1&&dialLayout.right<=dialLayout.viewport+1,
+   label+" dialect dialog overflows screen: "+JSON.stringify(dialLayout));
+  assert.equal(dialLayout.oneColumn,true,label+" dialect choices must not be crammed into two columns");
+  await page.screenshot({path:path.join(OUT,label+"-voice-loghat-menu.png"),animations:"disabled"});
+  await page.keyboard.press("Escape");
+  await dialectDialog.waitFor({state:"hidden",timeout:3000});
   await page.screenshot({path:path.join(OUT,label+"-voice-visual.png"),animations:"disabled"});
   await page.locator("#voicePanel").evaluate(el=>{el.hidden=true;});
 

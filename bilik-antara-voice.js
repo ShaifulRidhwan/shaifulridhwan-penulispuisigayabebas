@@ -197,13 +197,12 @@ function mountEnhancedVoiceUI(){
  dialog.id="voiceStyleDialog";dialog.setAttribute("aria-labelledby","voiceStyleDialogTitle");
  const body=create("div","voice-style-modal-body");
  const top=create("div","voice-style-modal-head");
- const heading=create("h2","", "Gaya Pertuturan");
+ const heading=create("h2","", "Pilih loghat");
  heading.id="voiceStyleDialogTitle";
  const close=create("button","voice-style-close","Tutup");
  close.type="button";close.setAttribute("aria-label","Tutup pilihan loghat");
  top.append(heading,close);
- const intro=create("p","voice-style-intro","Pilih gaya untuk Voice Chat. Suara Aoede kekal.");
- const group=create("div","voice-style-options");
+  const group=create("div","voice-style-options");
  group.setAttribute("role","group");
  group.setAttribute("aria-label","Lapan gaya pertuturan");
  const choices=new Map();
@@ -220,7 +219,7 @@ function mountEnhancedVoiceUI(){
      dialog.close();
    });
  }
- body.append(top,intro,group);dialog.append(body);
+ body.append(top,group);dialog.append(body);
  document.body.appendChild(dialog);
  trigger.setAttribute("aria-controls",dialog.id);
  const show=()=>{
@@ -238,7 +237,7 @@ function mountEnhancedVoiceUI(){
  modeChip.type="button";modeChip.id="voiceModeBadge";
  modeChip.setAttribute("aria-label","Pilih Thinking Mode untuk Voice Chat");
  modeChip.title="Thinking Mode";
- head.insertBefore(modeChip,head.firstElementChild);
+ row.insertBefore(modeChip,styleHint);
  modeChip.addEventListener("click",()=>document.getElementById("thoughtMode")?.click());
  function updateMode(){
    const mode=window.BilikAntaraThought?.getMode?.()==="gelap"?"Gelap":"Cahaya";
@@ -261,9 +260,10 @@ function mountEnhancedVoiceUI(){
    const selected=dialectControl.label(preferredStyleId);
    const active=liveActive&&liveReady&&confirmedStyleId===preferredStyleId;
    const pending=liveActive&&!active;
-   trigger.replaceChildren(create("span","voice-style-trigger-text",selected),svgIcon("chevron"));
+   trigger.replaceChildren(create("span","voice-style-trigger-text",preferredStyleId==="gaul"?"Gaul":selected),svgIcon("chevron"));
+   trigger.setAttribute("aria-label","Loghat: "+selected+(active?". Aktif":pending?". Sedang diaktifkan":". Dipilih")+". Tekan untuk ubah.");
    trigger.dataset.state=active?"active":pending?"pending":"selected";
-   styleHint.textContent=active?"Aoede · Gaya aktif":pending?"Aoede · Dipilih, sedang aktifkan":"Aoede · Default apabila Voice bermula";
+   styleHint.textContent=active?"Loghat aktif":pending?"Loghat dipilih, sedang diaktifkan":"Loghat dipilih untuk sesi berikutnya";
    for(const [id,button] of choices){
      const selectedOption=id===preferredStyleId;
      button.setAttribute("aria-pressed",String(selectedOption));
@@ -586,7 +586,7 @@ async function startLive(){
   }
   closeDictation();showNotice("");
   panel.classList.remove("is-minimized");
-  if(minimizeButton){minimizeButton.textContent="Minimize";minimizeButton.setAttribute("aria-expanded","true");}
+  if(minimizeButton){minimizeButton.textContent="Kecilkan";minimizeButton.setAttribute("aria-expanded","true");}
   const speakingRule=languageLock;
   activeDialect=preferredStyleId;confirmedStyleId=null;dialectContextStart=0;dialectSwitching=false;
   pendingDialect=null;replayDialectRequest="";dialectReconnect=null;
@@ -983,9 +983,9 @@ if(styleSelect)styleSelect.addEventListener("change",()=>{
 liveButton.addEventListener("click",startLive);
 if(minimizeButton)minimizeButton.addEventListener("click",()=>{
  const minimized=panel.classList.toggle("is-minimized");
- minimizeButton.textContent=minimized?"Expand":"Minimize";
+ minimizeButton.textContent=minimized?"Besarkan":"Kecilkan";
  minimizeButton.setAttribute("aria-expanded",String(!minimized));
- minimizeButton.setAttribute("aria-label",minimized?"Expand Voice Chat panel":"Minimize Voice Chat panel");
+ minimizeButton.setAttribute("aria-label",minimized?"Besarkan panel Voice Chat":"Kecilkan panel Voice Chat");
 });
 stopButton.addEventListener("click",()=>closeLive("Sembang suara dihentikan."));
 micButton.addEventListener("click",()=>{

@@ -75,7 +75,7 @@ test("Voice HTML contains the selector and status badge",()=>{
  assert.match(html,/<option value="gaul">Bahasa Gaul<\/option>/);
  assert.match(html,/bilik-antara-dialek\.js\?v=4/);
  assert.match(html,/bilik-antara-voice-core-v3.js\?v=1/);
- assert.match(html,/bilik-antara-voice-v3.css\?v=2/);
+ assert.match(html,/bilik-antara-voice-v3.css\?v=3/);
 });
 test("Voice UI enhances native picker with accessible dialog, mode chip and control icons",()=>{
  const script=read("bilik-antara-voice.js");
@@ -84,6 +84,8 @@ test("Voice UI enhances native picker with accessible dialog, mode chip and cont
  assert.match(script,/dialog\.showModal\(\)/);
  assert.match(script,/styleSelect\.dispatchEvent\(new Event\("change"/);
  assert.match(script,/voiceModeBadge/);
+ assert.match(script,/row\.insertBefore\(modeChip,styleHint\)/);
+ assert.doesNotMatch(script,/head\.insertBefore\(modeChip/);
  assert.match(script,/voice-ui-toggle/);
  assert.match(script,/confirmedStyleId=activeDialect/);
  assert.match(css,/\.aksara-voice-style-dialog/);
