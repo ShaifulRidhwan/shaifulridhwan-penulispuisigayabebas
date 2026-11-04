@@ -1,6 +1,6 @@
 extends Node3D
-# AKSARA v0.2: stylized fantasy landscape, mobile web prototype.
-# No remote assets or paid dependencies. Geometry is intentionally procedural.
+# AKSARA Hybrid v0.3. Free CC0 3D assets imported at build time.
+# Placeholder geometry remains only as a graceful fallback when model downloads fail.
 var hero: Node3D
 var camera: Camera3D
 var direction := Vector2.ZERO
@@ -16,6 +16,8 @@ var hud: Label
 var rng := RandomNumberGenerator.new()
 var gown: MeshInstance3D
 var water: MeshInstance3D
+var imported_hero := false
+var hero_animation: AnimationPlayer
 
 func mat(c: Color, metallic := 0.0, roughness := 0.8, emission := 0.0) -> StandardMaterial3D:
  var m := StandardMaterial3D.new()
@@ -111,6 +113,20 @@ func ruins(pos: Vector3, dark: bool) -> void:
  for j in range(3):
   box(self,pos+Vector3(float(j-1)*2.0,6.35,0),Vector3(1.1,0.55,1.4),gold)
 
+func load_scene_asset(path: String, position: Vector3, scale_factor := 1.0) -> bool:
+ if not ResourceLoader.exists(path):
+  return false
+ var packed := load(path) as PackedScene
+ if packed == null:
+  return false
+ var scene := packed.instantiate() as Node3D
+ if scene == null:
+  return false
+ scene.position = position
+ scene.scale = Vector3.ONE * scale_factor
+ add_child(scene)
+ return true
+
 func build_world() -> void:
  rng.seed = 4126
  build_terrain()
@@ -120,10 +136,12 @@ func build_world() -> void:
   if abs(x) < 7.5 or (z < -29 and z > -70):
    continue
   tree(Vector3(x,terrain_height(x,z),z),x<0)
- for i in range(8):
-  var x := -28.0 if i%2==0 else 28.0
-  var z := -30.0 + float(i)*12.0
-  ruins(Vector3(x,terrain_height(x,z),z),x<0)
+ if not load_scene_asset("res://assets/courtyard.glb", Vector3(0,0,-51)):
+  for i in range(8):
+   var x := -28.0 if i%2==0 else 28.0
+   var z := -30.0 + float(i)*12.0
+   ruins(Vector3(x,terrain_height(x,z),z),x<0)
+ load_scene_asset("res://assets/sanctuary.glb", Vector3(-20,0,-20), 1.0)
  for i in range(65):
   var x := rng.randf_range(-55,55)
   var z := rng.randf_range(-55,55)
@@ -139,6 +157,19 @@ func build_world() -> void:
 func build_hero() -> void:
  hero = Node3D.new()
  add_child(hero)
+ if ResourceLoader.exists("res://assets/queen.glb"):
+  var packed := load("res://assets/queen.glb") as PackedScene
+  if packed != null:
+   var model := packed.instantiate() as Node3D
+   if model != null:
+    hero.add_child(model)
+    model.position.y = 0.04
+    model.scale = Vector3.ONE
+    imported_hero = true
+    hero_animation = model.find_child("AnimationPlayer",true,false) as AnimationPlayer
+    if hero_animation != null and hero_animation.get_animation_list().size() > 0:
+     hero_animation.play(hero_animation.get_animation_list()[0])
+    return
  var skin := mat(Color("#d6a98f"))
  var ivory := mat(Color("#e8dfcf"),0.1,0.65)
  var midnight := mat(Color("#222b49"),0.25,0.45)
@@ -161,17 +192,27 @@ func build_ui() -> void:
  var ui := CanvasLayer.new()
  add_child(ui)
  hud = Label.new()
- hud.text = "AKSARA  /  BETWEEN TWO ETERNITIES\nSOLARA   •   ANTARA   •   NOCTARA\nMove: left touch  |  Look: right touch"
+ hud.text = "AKSARA  •  BETWEEN TWO ETERNITIES\nANTARA  /  CHAPTER ZERO\nMOVE  •  LEFT     LOOK  •  RIGHT"
  hud.position = Vector2(18,18)
  hud.add_theme_color_override("font_color",Color("#f6e8ce"))
- hud.add_theme_font_size_override("font_size",15)
+ hud.add_theme_font_size_override("font_size",13)
  ui.add_child(hud)
 
 func _ready() -> void:
  var envnode := WorldEnvironment.new()
  var env := Environment.new()
- env.background_mode = Environment.BG_COLOR
- env.background_color = Color("#111a30")
+ var sky := Sky.new()
+ var sky_mat := ProceduralSkyMaterial.new()
+ sky_mat.sky_top_color = Color("#0b1837")
+ sky_mat.sky_horizon_color = Color("#9a7188")
+ sky_mat.ground_bottom_color = Color("#152c33")
+ sky_mat.ground_horizon_color = Color("#876c6f")
+ sky.sky_material = sky_mat
+ env.background_mode = Environment.BG_SKY
+ env.sky = sky
+ env.fog_enabled = true
+ env.fog_light_color = Color("#68718b")
+ env.fog_density = 0.006
  env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
  env.ambient_light_color = Color("#8193b6")
  env.ambient_light_energy = 0.6
@@ -204,14 +245,15 @@ func _process(delta: float) -> void:
  var motion := keys if keys.length()>0.1 else direction
  var forward := Vector3(sin(heading),0,cos(heading))
  var right := Vector3(cos(heading),0,-sin(heading))
- var move := right*motion.x-forward*motion.y
+ var move := right*motion.x+forward*motion.y
  if move.length()>0.08:
   hero.position += move.normalized()*speed*delta
   hero.rotation.y = lerp_angle(hero.rotation.y,atan2(move.x,move.z),minf(1.0,delta*8.0))
  hero.position.x = clampf(hero.position.x,-68,68)
  hero.position.z = clampf(hero.position.z,-68,68)
  hero.position.y = terrain_height(hero.position.x,hero.position.z)
- gown.rotation.z = sin(t*5.0)*0.025 if move.length()>0.08 else sin(t*1.5)*0.012
+ if gown != null:
+  gown.rotation.z = sin(t*5.0)*0.025 if move.length()>0.08 else sin(t*1.5)*0.012
  water.position.y = -1.6+sin(t*0.7)*0.03
  update_camera()
 
