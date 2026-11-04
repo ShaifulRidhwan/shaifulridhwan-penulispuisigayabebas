@@ -75,11 +75,11 @@ test("attachment pipeline stages sampled JPEGs without uploading original video"
  assert.match(html,/MP4, WebM · 128 MB/);
  assert.ok(html.length<80000);
 });
-test("code dialog remains consent-based and removes only explanatory footnote",()=>{
+test("code dialog retains user control and removes only explanatory footnote",()=>{
  const html=read("bilik-antara.html"),code=read("bilik-antara-code-agent.js"),menu=read("bilik-antara-code-status.js");
  assert.doesNotMatch(code,/Tab ini sahaja\. A\.I\. boleh menjalankan satu blok kod/);
  assert.match(code,/id="codeAiExecutionAllowed"/);
  assert.match(code,/id="codeAiExecutionState"/);
  assert.match(menu,/#codeRuntimeList\{flex:1 1 auto/);
- assert.match(html,/code-agent\.js\?v=4/);
+ assert.match(html,/code-agent\.js\?v=5/);
 });
