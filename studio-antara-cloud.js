@@ -11,6 +11,20 @@ let cooldownTickId=null,wasCooldownVisible=false;
 const qualityName=value=>({fast:'Pantas',balanced:'Seimbang',detail:'Detail'}[value]||value);
 const text=(el,value)=>{el.textContent=value;};
 function announce(message,error=false){text(ui.status,message);ui.status.hidden=!message;ui.status.classList.toggle('is-error',error);}
+/* Netlify gateways may return HTML/plain text on 502/503, not JSON. */
+async function readStudioJSON(res){
+ let data;
+ try{data=await res.json();}
+ catch(_){
+  if(!res.ok)return {error:'Pelayan Studio tidak tersedia (HTTP '+res.status+'). Cuba sebentar lagi.'};
+  throw Error('Pelayan Studio memulangkan data yang tidak boleh dibaca. Cuba lagi.');
+ }
+ if(!data||Array.isArray(data)||typeof data!=='object'){
+  if(!res.ok)return {error:'Pelayan Studio tidak tersedia (HTTP '+res.status+'). Cuba sebentar lagi.'};
+  throw Error('Format respons Studio tidak sah.');
+ }
+ return data;
+}
 function count(){text(ui.count,ui.prompt.value.length+' / 1200');}
 function cooldownFor(model){
  const now=Date.now(),shared=cooldownUntil.studio;
@@ -112,7 +126,7 @@ async function generate(settings){
  const startedAt=Date.now(),ctrl=new AbortController();controller=ctrl;const timer=setTimeout(()=>ctrl.abort(),55000);setBusy(true);statusEvent('mula',settings.model);announce(settings.model==='ovh'?'OVHcloud SDXL Beta sedang dicuba. Sambungan mungkin gagal atau lambat.':'Cloudflare sedang menjana imej. Setiap percubaan menggunakan kuota.');
  try{
   const res=await fetch('/.netlify/functions/studio-image',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt:settings.prompt,style:settings.style,model:settings.model,quality:settings.quality,ratio:settings.ratio,seed:settings.seed}),signal:ctrl.signal});
-  const data=await res.json();if(!res.ok){if(res.status===429)rememberRateLimit(res,data);const err=Error(data.error||'Penjanaan gagal. Cuba lagi nanti.');err.http=res.status;throw err;}if(!data.ok||!data.settings)throw Error('Respons pelayan tak lengkap.');
+  const data=await readStudioJSON(res);if(!res.ok){if(res.status===429)rememberRateLimit(res,data);const err=Error(data.error||'Penjanaan gagal. Cuba lagi nanti.');err.http=res.status;throw err;}if(!data.ok||!data.settings)throw Error('Respons pelayan tak lengkap.');
   const blob=imageBlob(data.image,data.mime),meta={id:crypto.randomUUID?crypto.randomUUID():String(Date.now()),createdAt:Date.now(),settings:data.settings,promptUsed:data.promptUsed,modelName:data.modelName,durationMs:Date.now()-startedAt,cloudMs:data.durationMs};
   const img=await render(meta,blob,ctrl.signal);statusEvent('siap',settings.model,{durationMs:meta.durationMs});ui.stop.hidden=true;clearTimeout(timer);if(matchMedia('(max-width:680px)').matches)$('resultStage').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});let saved=true;
   try{await H.put(meta,blob,await thumbnail(img));}catch(_){saved=false;}
@@ -139,7 +153,7 @@ $('enhancePrompt').addEventListener('click',async()=>{
  if(busy)return;const prompt=ui.prompt.value.trim();if(prompt.length<4||prompt.length>850){draft(C.lightEnhance(prompt),'Prompt panjang: guna mod ringan atau edit sendiri. AI menerima hingga 850 aksara.');return;}
  if(!navigator.onLine){draft(C.lightEnhance(prompt),'Tiada internet. Mod ringan digunakan tanpa menghantar prompt.');return;}
  const ctrl=new AbortController();controller=ctrl;setBusy(true,'enhance');announce('Groq sedang perkemas prompt. Imej belum dijana.');const timer=setTimeout(()=>ctrl.abort(),14000);
- try{const res=await fetch('/.netlify/functions/studio-enhance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt}),signal:ctrl.signal});const data=await res.json();if(!res.ok)throw Error(data.error);if(ctrl.signal.aborted)return;draft(data.prompt,data.note);announce('Draf dah tersedia. Semak sebelum guna.');}
+ try{const res=await fetch('/.netlify/functions/studio-enhance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt}),signal:ctrl.signal});const data=await readStudioJSON(res);if(!res.ok)throw Error(data.error||'Perkemas AI gagal.');if(ctrl.signal.aborted)return;if(typeof data.prompt!=='string'||data.prompt.trim().length<4||data.prompt.length>1200)throw Error('Draf AI tidak sah.');draft(data.prompt,typeof data.note==='string'?data.note:'Draf AI tersedia untuk disemak.');announce('Draf dah tersedia. Semak sebelum guna.');}
  catch(error){if(error.name==='AbortError')announce('Perkemas dihentikan. Prompt asal kekal.');else{draft(C.lightEnhance(prompt),'AI tak tersedia. Mod ringan digunakan; semak dahulu.');announce('Draf mod ringan tersedia.');}}
  finally{clearTimeout(timer);controller=null;setBusy(false);}
 });
