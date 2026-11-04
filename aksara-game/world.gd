@@ -176,6 +176,35 @@ func build_world() -> void:
  portal_glow.light_energy = 1.5
  add_child(portal_glow)
 
+# Imported GLBs can be authored in centimetres or with offset pivots.
+# Normalize actual visible mesh bounds, not just the scene root's transform.
+func normalize_character(model: Node3D) -> bool:
+ var meshes := model.find_children("*", "MeshInstance3D", true, false)
+ var bounds := AABB()
+ var found := false
+ for node in meshes:
+  var part := node as MeshInstance3D
+  if part == null or part.mesh == null:
+   continue
+  var local_aabb := part.get_aabb()
+  if local_aabb.size.length() < 0.0001:
+   continue
+  for corner in range(8):
+   var point := model.to_local(part.to_global(local_aabb.get_endpoint(corner)))
+   if not found:
+    bounds = AABB(point, Vector3.ZERO)
+    found = true
+   else:
+    bounds = bounds.expand(point)
+ if not found or bounds.size.y <= 0.001:
+  push_error("AKSARA HERO: GLB has no usable mesh bounds")
+  return false
+ var fit := clampf(2.35 / bounds.size.y, 0.001, 100.0)
+ model.scale = Vector3.ONE * fit
+ model.position = Vector3(-bounds.get_center().x * fit, -bounds.position.y * fit, -bounds.get_center().z * fit)
+ print("AKSARA HERO: meshes=", meshes.size(), " raw_height=", bounds.size.y, " fitted_scale=", fit)
+ return true
+
 func build_hero() -> void:
  hero = Node3D.new()
  add_child(hero)
@@ -185,13 +214,16 @@ func build_hero() -> void:
    var model := packed.instantiate() as Node3D
    if model != null:
     hero.add_child(model)
-    model.position.y = 0.04
-    model.scale = Vector3.ONE
-    imported_hero = true
-    hero_animation = model.find_child("AnimationPlayer",true,false) as AnimationPlayer
-    if hero_animation != null and hero_animation.get_animation_list().size() > 0:
-     hero_animation.play(hero_animation.get_animation_list()[0])
-    return
+    if normalize_character(model):
+     imported_hero = true
+     hero_animation = model.find_child("AnimationPlayer",true,false) as AnimationPlayer
+     if hero_animation != null:
+      for clip in hero_animation.get_animation_list():
+       if clip.to_lower().ends_with("idle"):
+        hero_animation.play(clip)
+        break
+     return
+    model.queue_free()
  var skin := mat(Color("#d6a98f"))
  var ivory := mat(Color("#e8dfcf"),0.1,0.65)
  var midnight := mat(Color("#222b49"),0.25,0.45)
@@ -289,8 +321,11 @@ func update_camera() -> void:
  if camera == null or hero == null:
   return
  var target := hero.position + Vector3(0,1.5,0)
- var desired := target + Vector3(sin(heading)*5.6,2.7,cos(heading)*5.6)
- camera.position = camera.position.lerp(desired,0.16)
+ var desired := target + Vector3(sin(heading)*6.2,3.0,cos(heading)*6.2)
+ if camera.position.distance_to(target) > 18.0:
+  camera.position = desired
+ else:
+  camera.position = camera.position.lerp(desired,0.16)
  camera.look_at(target)
 
 func _unhandled_input(event: InputEvent) -> void:
