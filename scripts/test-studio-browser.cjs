@@ -63,7 +63,9 @@ async function main(){
   page.on('pageerror',e=>errors.push(e.message));await page.route('**/*',r=>new URL(r.request().url()).origin===ORIGIN?r.continue():r.abort());
   await page.route('**/.netlify/functions/**',async route=>{
    const data=route.request().postDataJSON();calls.push({url:route.request().url(),...data});
+   if(route.request().url().includes('enhance')&&data.prompt.includes('invalidEnhance'))return route.fulfill({json:{ok:true,prompt:17,note:'Malformed mocked draft'}});
    if(route.request().url().includes('enhance'))return data.prompt.includes('enhance503')?route.fulfill({status:503,json:{error:'AI mock unavailable'}}):route.fulfill({json:{ok:true,prompt:data.prompt+', clear visual composition',method:'ai',note:'Draf ujian. Semak dulu.'}});
+   if(data.prompt.includes('gateway503'))return route.fulfill({status:503,contentType:'text/html',body:'<html>Upstream unavailable</html>'});
    if(data.prompt.includes('fail429'))return route.fulfill({status:429,json:{error:'Had ujian dicapai.'}});
    if(data.prompt.includes('limit429'))return route.fulfill({status:429,headers:{'Retry-After':'75'},json:{error:'Had 8 percubaan dalam 10 minit dah dicapai.',scope:'studio'}});
    if(data.prompt.includes('ovh429'))return route.fulfill({status:429,headers:{'Retry-After':'55'},json:{error:'OVHcloud Beta sedang terhad.',scope:'ovh'}});
@@ -193,6 +195,7 @@ async function main(){
   assert.match(await page.locator('#enhancedPrompt').inputValue(),/enhance503 subjek asal/);const lightCalls=calls.length;
   await page.locator('#lightEnhance').click();assert.equal(calls.length,lightCalls,'Light enhancement stays local');
   await page.locator('#cancelEnhanced').click();assert.equal(await page.locator('#imagePrompt').inputValue(),'enhance503 subjek asal');
+  await page.locator('#imagePrompt').fill('invalidEnhance subjek asal');await page.locator('#enhancePrompt').click();await page.locator('#enhancePanel').waitFor({state:'visible'});assert.match(await page.locator('#enhancedPrompt').inputValue(),/invalidEnhance subjek asal/);await page.locator('#cancelEnhanced').click();
   const prompt='Sebuah rumah api di tepi lautan';await page.locator('#imagePrompt').fill(prompt);await page.locator('#enhancePrompt').click();await page.locator('#enhancePanel').waitFor({state:'visible'});assert.equal(await page.locator('#imagePrompt').inputValue(),prompt);
   await page.locator('#enhancedPrompt').fill(prompt+' dengan cahaya senja');await page.locator('#useEnhanced').click();assert.ok((await page.locator('#imagePrompt').inputValue()).includes('senja'));await page.locator('#restorePrompt').click();assert.equal(await page.locator('#imagePrompt').inputValue(),prompt);
   await pick(page,'imageRatio','9:16');assert.equal(await page.locator('#imageModel').inputValue(),'klein');assert.equal(await page.locator('#imageModel + button span').textContent(),C.models.klein.name,'Automatic model switch updates the visible caption');await pick(page,'imageQuality','fast');await pick(page,'imageStyle','falsafah');
@@ -210,6 +213,7 @@ async function main(){
   const downloadEvent=page.waitForEvent('download');await page.locator('#downloadImage').click();const downloaded=await downloadEvent;assert.ok(fs.statSync(await downloaded.path()).size>100);
   await page.locator('#historyPanel > summary').click();await page.waitForFunction(()=>document.querySelectorAll('.history-card').length===3);await page.reload();await page.locator('#historyPanel > summary').click();await page.waitForFunction(()=>document.querySelectorAll('.history-card').length===3);const before=calls.length;await page.locator('.history-card .view-result').first().click();await page.locator('#generatedImage').waitFor({state:'visible'});assert.equal(calls.length,before,'Opening history never runs inference');
   await page.locator('.history-card [data-action="delete"]').first().click();await page.waitForFunction(()=>document.querySelectorAll('.history-card').length===2);
+  await page.locator('#imagePrompt').fill('gateway503 mock error');await page.locator('#generateImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);assert.match(await page.locator('#generationStatus').textContent(),/HTTP 503/);assert.equal(await page.locator('#imagePrompt').inputValue(),'gateway503 mock error');
   await page.locator('#imagePrompt').fill('fail429 quota');await page.locator('#generateImage').click();await page.waitForFunction(()=>!document.querySelector('#generateImage').disabled);assert.match(await page.locator('#generationStatus').textContent(),/Had ujian/);assert.equal(await page.locator('#imagePrompt').inputValue(),'fail429 quota');
   await page.locator("#studioStatusV2 > summary").click();
   assert.match(await page.locator("#studioStatusV2Body").innerText(),/Had penyedia dilaporkan/);
