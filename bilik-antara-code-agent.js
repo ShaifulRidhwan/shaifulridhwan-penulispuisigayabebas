@@ -1,4 +1,4 @@
-/* AKSARA AI Code Agent v1. Sandbox only; user-opt-in in current tab only. */
+/* AKSARA AI Code Agent v1. Sandbox only; default ON in this tab; user can turn it OFF. */
 (function(){
 "use strict";
 const engine=window.AksaraCodeRuntime,chat=window.BilikAntaraBridge;
@@ -8,7 +8,7 @@ let allowed=false,pending=null,controller=null,running=false,runs=0;
 const holder=document.createElement("div");
 holder.id="codeAiExecutionGate";
 holder.innerHTML='<label class="code-ai-permission"><input type="checkbox" id="codeAiExecutionAllowed"/> <span>Benarkan A.I. jalankan kod dalam sandbox</span></label>'+
- '<div id="codeAiExecutionState" role="status" aria-live="polite">A.I. Code Execution · OFF</div>'+
+ '<div id="codeAiExecutionState" role="status" aria-live="polite">A.I. Code Execution · ON</div>'+
  '<button type="button" id="codeAiExecutionStop" hidden>■ Henti pelaksanaan A.I.</button>';
 menu.querySelector(".multi-ai-actions")?.before(holder);
 const input=holder.querySelector("#codeAiExecutionAllowed"),status=holder.querySelector("#codeAiExecutionState"),stop=holder.querySelector("#codeAiExecutionStop");
@@ -94,8 +94,9 @@ async function execute(){
  }}));
 }
 window.addEventListener("ba:ready-for-tools",()=>{if(pending&&!running)void execute();});
-window.addEventListener("ba:cleared",()=>setPermission(false));
+window.addEventListener("ba:cleared",()=>{pending=null;controller?.abort();setPermission(allowed);});
 window.addEventListener("pagehide",()=>{pending=null;controller?.abort();});
-window.AksaraAICodeAgent=Object.freeze({version:"1.0",enabled:()=>allowed,running:()=>running,
+setPermission(true);
+window.AksaraAICodeAgent=Object.freeze({version:"1.1",enabled:()=>allowed,running:()=>running,
  runs:()=>runs,extract,isExplicitRequest:requested});
 })();

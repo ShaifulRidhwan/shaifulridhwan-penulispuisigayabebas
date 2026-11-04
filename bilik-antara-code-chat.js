@@ -55,9 +55,39 @@ function detect(source){
 function candidate(){
  const raw=input.value.trim();if(!raw||raw.length>12000)return null;
  const found=detect(raw);
+ const previous=asksToRunPreviousCode(raw)?previousAICode():null;
+ if(previous)return previous;
  if(selected&&!raw.startsWith("```"))return {language:selected,code:raw,format:"manual"};
  if(found)return found;
  return null;
+}
+// Reuse only one fenced executable block from a recent AI reply.
+// Chat history is read locally; the code still requires an explicit Run click.
+function previousAICode(){
+ const entries=bridge.snapshot?.().history;
+ if(!Array.isArray(entries))return null;
+ for(let i=entries.length-1,checked=0;i>=0&&checked<18;i--,checked++){
+  const message=entries[i];
+  if(message?.role!=="assistant"||message.mode==="code"||message.mode==="voice")continue;
+  const blocks=[...String(message.content||"").matchAll(
+   /(?:^|\n)[ \t]*\x60\x60\x60(javascript|js|python|py|typescript|ts|sql|cpp|c\+\+|cxx|cc)[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*\x60\x60\x60(?=\s|$)/gi)];
+  if(!blocks.length)continue;
+  // Multiple blocks are ambiguous: never guess which one to execute.
+  if(blocks.length!==1)return null;
+  const token=blocks[0][1].toLowerCase(),code=blocks[0][2].trim();
+  const map={js:"javascript",py:"python",ts:"typescript",cxx:"cpp",cc:"cpp","c++":"cpp"};
+  const language=map[token]||token;
+  if(!engine.available.includes(language)||!code||code.length>6000)return null;
+  return {language,code,format:"previous-ai"};
+ }
+ return null;
+}
+function asksToRunPreviousCode(text){
+ const q=String(text||"").trim();
+ return q.length>0&&q.length<=240&&
+  /\b(?:jalankan|laksanakan|run|execute|uji|test|cuba)\b/i.test(q)&&
+  /\b(?:kod|code|skrip|script|program|python|javascript|typescript|sql|c\+\+)\b/i.test(q)&&
+  /\b(?:tu|itu|tadi|sebelum|atas|baru)\b/i.test(q);
 }
 let confirmSend=false;
 function refresh(){
@@ -66,8 +96,14 @@ function refresh(){
  action.hidden=!found;
  run.hidden=false;stop.hidden=true;sendAI.hidden=!confirmSend;
  if(!found){confirmSend=false;return;}
- desc.textContent=confirmSend?"Kod dikesan. Pilih tindakan:":langName(found.language)+" dikesan · tanpa AI";
- run.textContent="▶ Jalankan Kod";run.disabled=bridge.active();
+ if(found.format==="previous-ai"){
+  desc.textContent=confirmSend?"Kod terdahulu dikesan. Pilih tindakan:":langName(found.language)+" daripada jawapan A.I. terdahulu";
+  run.textContent="▶ Jalankan Kod Tadi";
+ }else{
+  desc.textContent=confirmSend?"Kod dikesan. Pilih tindakan:":langName(found.language)+" dikesan · tanpa AI";
+  run.textContent="▶ Jalankan Kod";
+ }
+ run.disabled=bridge.active();
 }
 input.addEventListener("input",()=>{confirmSend=false;refresh();});
 window.addEventListener("aksara:code-language",event=>{
@@ -80,7 +116,7 @@ form.addEventListener("submit",event=>{
  if(executing){event.preventDefault();event.stopImmediatePropagation();return;}
  if(bridge.active())return;
  // Detect executable syntax, but never interpret ordinary chat text as a command.
- if(detect(input.value)&&document.getElementById("removeAttachment")?.hidden!==false){
+ if((candidate()?.format==="previous-ai"||detect(input.value))&&document.getElementById("removeAttachment")?.hidden!==false){
   event.preventDefault();event.stopImmediatePropagation();confirmSend=true;refresh();
  }
 },true);
