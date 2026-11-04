@@ -82,16 +82,19 @@ func build_terrain() -> void:
     st.add_vertex(v)
  st.generate_normals()
  mesh_node(self,st.commit(),Vector3.ZERO,mat(Color("#303b35")))
- var pathmat := mat(Color("#83766a"))
- for i in range(70):
-  var z := -65.0 + float(i)*1.9
-  box(self,Vector3(0,0.03,z),Vector3(3.5,0.08,1.55),pathmat)
+ var path_mesh := PlaneMesh.new()
+ path_mesh.size = Vector2(4.7,140.0)
+ var paving := ShaderMaterial.new()
+ paving.shader = load("res://stone_causeway.gdshader") as Shader
+ mesh_node(self,path_mesh,Vector3(0,0.085,0),paving)
  var wm := PlaneMesh.new()
  wm.size = Vector2(95,45)
  water = mesh_node(self,wm,Vector3(0,-1.6,-50),mat(Color("#254e64"),0.55,0.16))
  water.rotation.x = 0.0
 
 func tree(pos: Vector3, dark: bool) -> void:
+ if load_scene_asset("res://assets/oak.glb",pos,1.0):
+  return
  var trunk := mat(Color("#241e2d") if dark else Color("#473a2d"))
  var leaves := mat(Color("#273c53") if dark else Color("#63734a"))
  cylinder(self,pos+Vector3(0,2.4,0),0.15,0.34,4.8,trunk)
@@ -130,7 +133,7 @@ func load_scene_asset(path: String, position: Vector3, scale_factor := 1.0) -> b
 func build_world() -> void:
  rng.seed = 4126
  build_terrain()
- for i in range(90):
+ for i in range(64):
   var x := rng.randf_range(-67,67)
   var z := rng.randf_range(-67,67)
   if abs(x) < 7.5 or (z < -29 and z > -70):
@@ -148,17 +151,36 @@ func build_world() -> void:
   if abs(x) < 4.0:
    continue
   sphere(self,Vector3(x,terrain_height(x,z)+0.45,z),rng.randf_range(0.13,0.4),mat(Color("#b2c8df") if x<0 else Color("#f6cb79"),0.0,0.3,1.4))
- var portal := mat(Color("#a5a2dc"),0.6,0.25,1.1)
- cylinder(self,Vector3(0,0.2,-35),4.0,4.0,0.35,portal)
+ # Three concentric rings replace the square portal from v0.3.
+ # Torus is horizontal by default; rotate 90 degrees into the camera-facing XY plane.
+ var moon_metal := mat(Color("#768bb6"),0.75,0.25)
+ var sun_metal := mat(Color("#e0b97d"),0.75,0.24)
+ var energy := mat(Color("#a3a8f9"),0.2,0.18,2.1)
+ for ring_index in range(3):
+  var ring_mesh := TorusMesh.new()
+  ring_mesh.inner_radius = 2.90 + float(ring_index)*0.31
+  ring_mesh.outer_radius = 3.08 + float(ring_index)*0.31
+  ring_mesh.rings = 64
+  ring_mesh.ring_segments = 10
+  var ring_mat := energy if ring_index == 1 else (sun_metal if ring_index == 0 else moon_metal)
+  var ring_node := mesh_node(self,ring_mesh,Vector3(0,4.25,-35),ring_mat)
+  ring_node.rotation.x = PI*0.5
  for side in [-1,1]:
-  cylinder(self,Vector3(side*3.4,3.1,-35),0.35,0.45,6.2,portal)
- box(self,Vector3(0,6.1,-35),Vector3(7.5,0.6,0.7),portal)
+  var pillar := Vector3(float(side)*4.4,0.0,-35)
+  cylinder(self,pillar+Vector3(0,2.5,0),0.47,0.7,5.0,moon_metal if side<0 else sun_metal)
+  cylinder(self,pillar+Vector3(0,5.2,0),0.85,0.85,0.35,energy)
+ var portal_glow := OmniLight3D.new()
+ portal_glow.position = Vector3(0,4.0,-35)
+ portal_glow.omni_range = 18.0
+ portal_glow.light_color = Color("#a7b5ff")
+ portal_glow.light_energy = 1.5
+ add_child(portal_glow)
 
 func build_hero() -> void:
  hero = Node3D.new()
  add_child(hero)
- if ResourceLoader.exists("res://assets/queen.glb"):
-  var packed := load("res://assets/queen.glb") as PackedScene
+ if ResourceLoader.exists("res://assets/hero.glb"):
+  var packed := load("res://assets/hero.glb") as PackedScene
   if packed != null:
    var model := packed.instantiate() as Node3D
    if model != null:
@@ -254,6 +276,12 @@ func _process(delta: float) -> void:
  hero.position.y = terrain_height(hero.position.x,hero.position.z)
  if gown != null:
   gown.rotation.z = sin(t*5.0)*0.025 if move.length()>0.08 else sin(t*1.5)*0.012
+ if hero_animation != null:
+  var wanted := "Walk" if move.length()>0.08 else "Idle"
+  for clip in hero_animation.get_animation_list():
+   if clip.to_lower().ends_with(wanted.to_lower()) and hero_animation.current_animation != clip:
+    hero_animation.play(clip,0.18)
+    break
  water.position.y = -1.6+sin(t*0.7)*0.03
  update_camera()
 
