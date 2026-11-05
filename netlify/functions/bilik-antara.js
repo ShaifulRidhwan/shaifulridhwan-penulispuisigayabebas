@@ -94,6 +94,7 @@ function googleCooldown(model,error,slot){
 let lastTextProvider="",lastTextSuccessAt=0;
 const GEMINI_COOLDOWN_MS=120000;
 
+const AKSARA_TEXT_TONE="NADA AKSARA: BM santai, teknikal bila sesuai. Huraikan sebab dan contoh secukupnya. Jangan puji atau setuju tanpa alasan; bantah dengan bukti. Elak ayat berbunga dan angka editorial sambungan.";
 const PERSONALITY=Brain.CORE+"\n"+Brain.TEXT_DELIVERY+"\n"+Identity.RUNTIME_PROMPT+"\n"+"OSINT PRIVASI: Jangan cuba mengenal pasti pemilik sebenar akaun pseudonim, menghubungkan akaun tersembunyi, keluarga, nombor peribadi, e-mel, IP, peranti atau lokasi fizikal pengguna. Jangan terbitkan latitud, longitud, koordinat GPS, rumah, sekolah, tempat kerja, lokasi masa nyata atau infer lokasi daripada gambar, geotag, catatan, video atau masa siaran. Negara hanya boleh disebut sebagai pernyataan sukarela dalam bio yang disahkan, bukan lokasi sebenar.";
 // GELAP inherits every shared capability, fact and safety policy but has its own delivery contract.
 const GELAP_PERSONALITY=PERSONALITY.replace(Brain.TEXT_DELIVERY,Modes.DELIVERY);
@@ -647,7 +648,7 @@ exports.handler=async event=>{
       (creatorHumour?"\nUSIKAN BERASASKAN FAKTA: Usik hanya ciri projek yang diketahui, seperti pilihan bentuk puisi bersiri atau usaha mengubah suai Aksara. Jangan cipta atau meneka tabiat, waktu tidur, emosi, kebimbangan, peristiwa atau kehidupan peribadi Shaiful, walaupun sebagai perbandingan atau gurauan. Boleh selit ‘mwehehe’ di hujung jika sesuai.":"")+
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
   const activeModeInstruction="\nMOD AKTIF UNTUK JAWAPAN INI: "+(thoughtMode==="gelap"?"GELAP. Jawab dengan falsafah moden dan pemeriksaan premis apabila relevan, tetapi jangan merosakkan soalan fakta atau arahan teknikal.":"CAHAYA. Jawab secara santai, jelas dan praktikal; jangan menyamar sebagai GELAP.")+". Dua mod dalam Bilik Antara adalah gaya pemikiran/respons, bukan dua model API. Jika ditanya, terangkan kedua-dua mod serta cara menukarnya pada ikon pelaras di sebelah Hantar. Jangan mendakwa menggunakan model khusus kerana mod.";
-   const systemRaw=baseSystem+"\n"+DocumentIntelligence.guidance({documentText,documentName,media})+
+   const systemRaw=baseSystem+"\n"+AKSARA_TEXT_TONE+"\n"+DocumentIntelligence.guidance({documentText,documentName,media})+
     "\n"+cognitiveGuidance(cognition)+"\n"+Research.guidance(researchResult)+activeModeInstruction+
     (thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false)+"\n"+Modes.contextGuidance(thoughtMode,question,history):"")+
     thinkingV3.guidance+contextGuidanceV6;
@@ -706,7 +707,7 @@ exports.handler=async event=>{
         ?question+"\n"+followUpWebUrl:question;
       try{
         alternative=await Router.complete({cloudflareAI,
-          system:publicWebOnly?personality+(options.requireCodeEvidence?"\nTOOL EXECUTION: Jalankan kod melalui code_interpreter sebelum menjawab; jangan mendakwa melaksanakan kod jika alat tidak digunakan.":"\nPUBLIC WEB RESEARCH: Gunakan hanya sumber sebenar. Jangan reka carian."):system,
+          system:publicWebOnly?personality+"\n"+AKSARA_TEXT_TONE+(options.requireCodeEvidence?"\nTOOL EXECUTION: Jalankan kod melalui code_interpreter sebelum menjawab; jangan mendakwa melaksanakan kod jika alat tidak digunakan.":"\nPUBLIC WEB RESEARCH: Gunakan hanya sumber sebenar. Jangan reka carian."):system,
           history:publicWebOnly?[]:history,
           question:publicWebOnly?browserQuestion:(imageOnly&&payload.contextFallback!==true?Context.composeTurn(question,[feedbackContext,payload.contextFallback===true?decisionContext:"",fallbackLinkNote,work,references]):Context.composeTurn(question,[feedbackContext,payload.contextFallback===true?decisionContext:"",fallbackLinkNote,doc,work,fallbackSessionNotes,references,fallbackKnowledgeContext,identityGrounding])),maxTokens,timeoutMs:plan.thinkingLevel==="high"?9000:6000,bufferedTimeoutMs:10000,deadline,webIntent,firstResponseDeadline:emit?Math.min(deadline,started+14000):deadline,systemPrefix:personality,signal:event.signal,onDelta:emit,reasoningLevel:plan.thinkingLevel,task:intent.task,reaction:!!intent.reaction,...(imageOnly?{mediaImages:media,only:["openrouter"]}:{}),...options});
       }catch(fallbackError){
