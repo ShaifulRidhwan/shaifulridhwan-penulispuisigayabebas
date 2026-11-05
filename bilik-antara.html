@@ -249,6 +249,14 @@ viewportFrame=requestAnimationFrame(()=>{viewportFrame=0;syncViewport();});
 syncViewport();
 window.addEventListener("resize",queueViewportSync,{passive:true});
 if(window.visualViewport)window.visualViewport.addEventListener("resize",queueViewportSync,{passive:true});
+// Keep latest chat message visible after mobile keyboard/layout geometry settles.
+// Respect readers of older messages: follow only when input gained focus near bottom.
+if(typeof ResizeObserver!=="undefined"){
+ const chatViewportObserver=new ResizeObserver(()=>{
+  if(document.activeElement===ui.input&&followOnInputResize)scrollDown();
+ });
+ chatViewportObserver.observe(ui.chat);
+}
 const ENDPOINT="/.netlify/functions/bilik-antara";
 const STREAM_ENDPOINT="/.netlify/functions/bilik-antara-stream";
 const STORAGE="bilik-antara-session-v2";
