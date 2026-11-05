@@ -354,9 +354,11 @@ test("opening the page tests providers before showing Connected and never instal
  assert.match(html,/multiHealth\.failure\(\{http:error\.http,timeout:error\.name==="AbortError"/);
  assert.doesNotMatch(html,/status\("ready","Multi A\.I Connected"/);
  health.update({checkedAt:Date.now(),providers:[{id:"groq",status:"online"}]});
- assert.equal(label.textContent,"Multi A.I Connected");
+ assert.equal(label.textContent,"Connection");
+ assert.equal(health.state().state,"degraded","One verified provider is not proof all configured providers are connected");
  health.request("connecting","Waiting for Capacity","");
- assert.equal(label.textContent,"Multi A.I Connected");
+ assert.equal(label.textContent,"Connection");
+ assert.equal(health.state().state,"degraded","Request activity must not overwrite connection health");
  const suite=fs.readFileSync(path.join(__dirname,"../bilik-antara-suite.js"),"utf8");
  assert.doesNotMatch(suite,/function quickActions|bubble\.appendChild\(row\)/);
  assert.match(html,/if\(data\.disclaimer\)/,"Fallback provenance is retained");
