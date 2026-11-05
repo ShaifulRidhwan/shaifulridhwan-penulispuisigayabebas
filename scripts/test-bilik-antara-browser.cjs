@@ -317,21 +317,25 @@ async function audit(browser,label,options){
    await page.screenshot({path:path.join(OUT,label+"-keyboard.png"),animations:"disabled"});
   }
   if(label==="desktop"){
-   // Typed identity questions remain clean. The contextual suggestion belongs
-   // ONLY to a real starter click, and navigates nowhere by itself.
+   // Any exact journey topic, typed or clicked, offers the next creator story.
    await page.evaluate(()=>window.BilikAntaraBridge.fresh());
    await page.locator("#input").fill("Siapa Aku");
    await page.locator("#composer").evaluate(form=>form.requestSubmit());
    await page.waitForFunction(()=>[...document.querySelectorAll(".message.ai .bubble")].some(el=>el.textContent.includes("AI routing")),{timeout:12000});
-   assert.equal(await page.locator(".msg-followup-btn").count(),0,"No suggestion for manually typed prompts");
+   assert.equal(await page.locator(".msg-followup-btn").count(),1,"Typed journey question offers one relevant follow-up");
+   assert.match(await page.locator(".msg-followup-btn").innerText(),/Sambung · The Coder Poet/);
    await page.evaluate(()=>window.BilikAntaraBridge.fresh());
    await page.locator("#starters .starter").first().click();
    const suggestion=page.locator(".msg-followup-btn");
    await suggestion.waitFor({state:"visible",timeout:12000});
-   assert.match(await suggestion.innerText(),/Nak tahu tentang "The Coder Poet" pulak ke/);
+   assert.match(await suggestion.innerText(),/Sambung · The Coder Poet/);
    await suggestion.click();
    await page.waitForFunction(()=>[...document.querySelectorAll(".message.ai .bubble")].some(el=>el.textContent.includes("Twister Kernel")),{timeout:12000});
-   assert.equal(await page.locator(".msg-followup-btn").count(),1,"Do not chain suggestions after The Coder Poet");
+   const next=page.locator(".msg-followup-btn").last();
+   assert.match(await next.innerText(),/Sambung · Apa Target Shaiful\?/);
+   await next.click();
+   await page.waitForFunction(()=>[...document.querySelectorAll(".message.ai .bubble")].some(el=>el.textContent.includes("Aku nampak target Shaiful")),{timeout:12000});
+   assert.match(await page.locator(".msg-followup-btn").last().innerText(),/Macam Mana Shaiful Mula Coding\?/);
    await page.screenshot({path:path.join(OUT,"desktop-coder-poet-followup.png"),animations:"disabled"});
   }
   assert.deepEqual(errors,[],"Browser console or asset errors");
