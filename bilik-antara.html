@@ -1171,6 +1171,11 @@ renderHistory();save();compact();return true;
 restore();
 try{const lastMode=localStorage.getItem(MODE_STORAGE);if(lastMode==="gelap"||lastMode==="cahaya")setThoughtMode(lastMode);}catch(_){}
 renderIdeas();renderHistory();update();probe();
+// Deferred journey script loads after this inline script. Refresh restored journey
+// badges once the module is available, without modifying saved history.
+window.addEventListener("DOMContentLoaded",()=>{
+ if(window.AksaraJourney&&history.some(m=>m.role==="user"&&window.AksaraJourney.indexOfQuestion(m.content)>=0))renderHistory();
+},{once:true});
 })();
 </script>
 <script src="bilik-antara-docx.js?v=1" defer></script>
