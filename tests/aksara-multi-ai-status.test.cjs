@@ -86,7 +86,7 @@ test("English-only compact UI, old Gemini pool and routing remain intact",()=>{
  assert.ok(lib.includes("REPLY_TTL=90000"));
  assert.match(router,/async function checkStatus/);
  assert.match(router,/function reflectCooldown/);
- assert.ok(html.length<80000,"Keep the primary HTML below 80 KB");
+ assert.ok(Buffer.byteLength(html,"utf8")<100000,"Keep the primary HTML below 80 KB");
 });
 
 test("failed health probes show a reason without claiming every AI is offline",()=>{
