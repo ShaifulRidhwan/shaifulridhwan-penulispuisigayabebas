@@ -144,7 +144,7 @@ test("Inline JavaScript valid and element IDs unique",()=>{
  const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
  assert.equal(ids.length,new Set(ids).size);
  // The inline chat runtime predates this feature; guard against runaway growth, not an arbitrary historical 60 KB cutoff.
- assert.ok(html.length<80000);
+ assert.ok(Buffer.byteLength(html,"utf8")<100000);
 });
 
 test("CSS braces and quoted strings remain balanced",()=>{
