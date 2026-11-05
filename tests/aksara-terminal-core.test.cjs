@@ -13,7 +13,7 @@ test("AI terminal modules parse and stay behind sandbox runtime",()=>{
   "Project Memory","aitPatchBox","window.confirm(","core.zip(files)","storage(\"delete\")"]){
   assert.ok(ui.includes(token),"Missing AI Terminal feature "+token);
  }
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=4"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=5"));
  assert.ok(html.includes("bilik-antara-terminal-core.js?v=3"));
  assert.ok(html.includes("codeContext")&&html.includes("CODE_GUIDANCE"));
 });
@@ -204,12 +204,12 @@ test("terminal's new glass header entry is iconed, accessible, responsive and in
   'id="aitTitle"',
   'trigger.setAttribute("aria-expanded","false")',
   'triggerIcon.className="code-engine-core ai-terminal-core"',
-  'triggerLabel.textContent="AI Terminal"',
+  'triggerLabel.textContent="Terminal"',
   'window.addEventListener("aksara:code-runtime-activity"',
   'trigger.dataset.terminalState=state',
   'dialog.addEventListener("close"',
   'dialog.showModal()',
-  '@media(max-width:420px)',
+  '@media(max-width:520px)',
   '.conversation-head #codeEngineStatus,.conversation-head #codeAITerminalOpen',
   '.conversation-head #connection{flex:1 1 0!important;min-width:0!important}',
   '@media(prefers-reduced-motion:reduce)'
@@ -238,5 +238,39 @@ test("AI Terminal still opens its original dialog and keeps every execution safe
  ])assert.ok(ui.includes(marker),"Original Terminal workflow missing: "+marker);
  const brain=read("bilik-antara-code-brain.js");
  assert.ok(brain.includes("PINTU MASUK TERMINAL 2.3"));
- assert.ok(brain.includes("AI Terminal dan Code Engine menggunakan runtime yang sama."));
+ assert.ok(brain.includes("Manual, AI Assist dan AI Agent yang berkongsi runtime Code Engine."));
+});
+
+test("Terminal header and dialog use the concise name without losing AI modes",()=>{
+ const ui=read("bilik-antara-ai-terminal.js");
+ for(const s of [
+  'triggerLabel.textContent="Terminal"',
+  '<strong id="aitTitle">AKSARA Terminal</strong>',
+  'aria-label="Tutup Terminal"',
+  'Buka Terminal. Status:',
+  'Manually', // checked separately below to avoid relying on English mode labels
+ ])if(s!=="Manually")assert.ok(ui.includes(s),"Missing Terminal label "+s);
+ for(const s of ['data-mode="manual"','data-mode="assist"','data-mode="agent"']){
+  assert.ok(ui.includes(s),"Original AI modes missing: "+s);
+ }
+ const html=read("bilik-antara.html");
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=5"));
+ assert.ok(html.includes("bilik-antara-code-brain.js?v=5"));
+});
+test("Terminal Liquid Glass groups editor, runtime and project tools while keeping readable output",()=>{
+ const ui=read("bilik-antara-ai-terminal.js");
+ for(const s of [
+  'ait-glass-panel--editor',
+  'ait-glass-panel--runtime',
+  'ait-glass-panel--tools',
+  'Editor Projek',
+  'Runtime & Console',
+  'Projek & Bantuan A.I.',
+  'backdrop-filter:blur(14px)',
+  'backdrop-filter:blur(6px)',
+  '#aksaraAITerminal #aitEditor',
+  '#aksaraAITerminal #aitOutput',
+  'background:rgba(3,9,17,.94)',
+  'prefers-reduced-motion:reduce'
+ ])assert.ok(ui.includes(s),"Missing glass/legibility feature "+s);
 });
