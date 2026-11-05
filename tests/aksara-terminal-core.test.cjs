@@ -13,8 +13,8 @@ test("AI terminal modules parse and stay behind sandbox runtime",()=>{
   "Project Memory","aitPatchBox","window.confirm(","core.zip(files)","storage(\"delete\")"]){
   assert.ok(ui.includes(token),"Missing AI Terminal feature "+token);
  }
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=2"));
- assert.ok(html.includes("bilik-antara-terminal-core.js?v=2"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=3"));
+ assert.ok(html.includes("bilik-antara-terminal-core.js?v=3"));
  assert.ok(html.includes("codeContext")&&html.includes("CODE_GUIDANCE"));
 });
 test("terminal command grammar rejects shell and wrong runtime",()=>{
