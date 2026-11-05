@@ -32,6 +32,7 @@ menu.innerHTML=[
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="cpp"><span class="multi-ai-provider">C++ · Clang WASM</span><span class="multi-ai-state is-muted" id="codeCPPState">Not Tested · ~29 MB</span></button>',
  '</div>',
  ' <p class="code-refresh-data-note">Refresh menyemak lima runtime sebenar. Ujian C++ boleh memuatkan sekitar 29 MB data.</p>',
+ ' <div id="codeRefreshConsent" class="code-refresh-consent" role="group" aria-label="Pengesahan ujian runtime" hidden><p>Refresh akan menguji lima runtime. Python, TypeScript dan SQLite memerlukan muat turun. C++ Clang boleh menggunakan sekitar 29 MB data. Teruskan?</p><div class="code-refresh-consent-actions"><button type="button" id="codeRefreshCancel">Batal</button><button type="button" id="codeRefreshProceed">Teruskan</button></div></div>',
  ' <div class="multi-ai-actions"><button type="button" id="codeEngineRefresh">Refresh Status</button><button type="button" id="codeWorkspaceOpen">Code Workspace</button><button type="button" id="codeEvalOpen">Evaluation Lab</button></div>'
 ].join("");
 document.body.appendChild(menu);
@@ -70,6 +71,13 @@ css.textContent=[
 '@media(max-width:390px){.conversation .conversation-head{gap:3px!important;padding-inline:5px!important}.conversation-head #voiceLive{padding-inline:6px!important;font-size:9px!important}.conversation-head .chat-controls{gap:3px!important}.conversation-head .code-engine-status{max-width:118px!important;padding-inline:6px!important;font-size:9px!important}.conversation-head #connection{padding-inline:5px!important}.conversation-head #connectionText{font-size:9px!important}.conversation-head #settingsPanel>summary{width:34px!important;min-width:34px!important;height:37px!important}}',
 '.code-health-freshness{font:500 10px/1.45 "DM Sans",sans-serif!important;opacity:.8;margin:3px 0 9px!important}',
 '.code-engine-dialog .code-refresh-data-note{margin:9px 0 3px;color:rgba(235,219,190,.72);font:500 10px/1.45 "DM Sans",sans-serif}',
+'.code-engine-dialog .code-refresh-consent[hidden]{display:none!important}',
+'.code-engine-dialog .code-refresh-consent{display:flex;flex-direction:column;gap:10px;margin:10px 0 4px;padding:14px;border-radius:14px;border:1px solid rgba(231,203,157,.28);background:linear-gradient(145deg,rgba(255,255,255,.07),rgba(8,10,22,.29));backdrop-filter:blur(16px) saturate(1.15);-webkit-backdrop-filter:blur(16px) saturate(1.15);box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 24px rgba(0,0,0,.18)}',
+'.code-engine-dialog .code-refresh-consent p{margin:0;color:#eadcc5;font:500 12px/1.6 "DM Sans",sans-serif}',
+'.code-engine-dialog .code-refresh-consent-actions{display:flex;gap:9px;justify-content:flex-end}',
+'.code-engine-dialog .code-refresh-consent-actions button{min-height:42px;min-width:88px;padding:9px 15px;border:1px solid rgba(231,203,157,.35);border-radius:11px;color:#eadcc5;background:rgba(255,255,255,.055);font:600 12px "DM Sans",sans-serif;cursor:pointer}',
+'.code-engine-dialog #codeRefreshProceed{background:linear-gradient(145deg,rgba(224,185,119,.23),rgba(255,255,255,.04))}',
+'.code-engine-dialog .code-refresh-consent-actions button:focus-visible{outline:2px solid #eec98e;outline-offset:2px}',
 '.code-health-activity[hidden]{display:none!important}',
 '.code-health-activity{font:500 11px/1.5 "DM Sans",sans-serif;color:#ead9bf;padding:9px 11px;margin:0 0 11px;border:1px solid rgba(222,193,151,.24);border-radius:11px;background:rgba(255,255,255,.032);overflow-wrap:anywhere}',
 '.conversation-head .code-engine-status[data-runtime-health="unverified"] .code-engine-core{color:#c8c2b5}',
@@ -175,12 +183,28 @@ function checkRuntime(){
  }).finally(()=>{runtimeChecking=false;button.disabled=false;});
 }
 const refreshAll=menu.querySelector("#codeEngineRefresh");
+const consent=menu.querySelector("#codeRefreshConsent");
+const consentProceed=menu.querySelector("#codeRefreshProceed");
+const consentCancel=menu.querySelector("#codeRefreshCancel");
 let verificationController=null;
-refreshAll.addEventListener("click",async()=>{
+refreshAll.addEventListener("click",()=>{
  if(verificationController){verificationController.abort();return;}
  if(runtimeChecking)return;
- // The dedicated Refresh button is the user's explicit consent to test runtimes.
- // No native browser confirm: this panel uses the shared dark glass UI.
+ consent.hidden=false;
+ consentProceed.focus({preventScroll:true});
+});
+consentCancel.addEventListener("click",()=>{
+ consent.hidden=true;
+ refreshAll.focus({preventScroll:true});
+});
+menu.addEventListener("close",()=>{
+ consent.hidden=true;
+ pill.setAttribute("aria-expanded","false");
+});
+consentProceed.addEventListener("click",async()=>{
+ if(verificationController||runtimeChecking)return;
+ consent.hidden=true;
+ // Confirm within the existing glass dialog; never use a native white prompt.
  const controller=new AbortController();
  verificationController=controller;
  let passed=0,checked=0;
