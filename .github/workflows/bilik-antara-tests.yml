@@ -80,6 +80,7 @@ jobs:
           node --test tests/aksara-centered-dialogs.test.cjs
           node --test tests/aksara-code-preview.test.cjs
           node --test tests/aksara-code-health.test.cjs
+          node --test tests/aksara-cloudflare-rest-netlify.test.cjs
           node --test tests/aksara-thinking-status.test.cjs
           node --test tests/aksara-six-observability.test.cjs
           node --test tests/aksara-knowledge-hub.test.cjs
