@@ -23,11 +23,11 @@
 </a>
 <button type="button" class="feature-hub-item" id="featureMetrics">
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V12M10 20V5M16 20v-9M22 20v-5M2 20h20"/></svg>
-<span><strong>Prestasi A.I</strong><small>Statistik respons dan penggunaan AI</small></span><span class="feature-hub-arrow" aria-hidden="true">›</span>
+<span><strong>Prestasi A.I</strong><small>Respons, provider dan kesihatan storan</small></span><span class="feature-hub-arrow" aria-hidden="true">›</span>
 </button>
 <button type="button" class="feature-hub-item" id="featureSessions">
 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 10h18M8 2v4M16 2v4M8 15h8"/></svg>
-<span><strong>Sesi &amp; Memori</strong><small>Sejarah, arkib dan ingatan pilihan</small></span><span class="feature-hub-arrow" aria-hidden="true">›</span>
+<span><strong>Sesi &amp; Sejarah</strong><small>Perbualan, carian dan arkib JSON</small></span><span class="feature-hub-arrow" aria-hidden="true">›</span>
 </button>
 <button type="button" class="feature-hub-item" id="featureKnowledge" aria-haspopup="dialog" aria-controls="knowledgeDialog" aria-expanded="false">
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5c3-1.5 5.5-1.5 8 .2 2.5-1.7 5-1.7 8-.2V19c-3-1.5-5.5-1.5-8 .2-2.5-1.7-5-1.7-8-.2zM12 5.7v13.5"/></svg>
@@ -121,7 +121,6 @@
 <div class="starters" id="starters" aria-label="Soalan permulaan">
 <button class="starter" type="button">Siapa Aku</button>
 <button class="starter" type="button">The Coder Poet</button>
-<button class="starter" type="button">Apa itu Puisi Gaya Bebas</button>
 </div>
 <div class="voice-focus-veil" id="voiceFocusVeil" aria-hidden="true"></div>
 <div class="voice-panel" id="voicePanel" hidden aria-label="Perbualan Voice Live">
@@ -590,14 +589,18 @@ if(role!=="user"&&data)renderExtras(bubble,data);
 msg.appendChild(bubble);renderMessageMeta(msg,role,data);container.appendChild(msg);if(!restoringHistory)scrollDown();return msg;
 }
 function renderExtras(bubble,data){
-if(data?.coderPoetFollowUp===true){
+const journeyNext=data?.journeyNext||(data?.coderPoetFollowUp===true?window.AksaraJourney?.nextFor("Siapa Aku"):null);
+if(journeyNext&&typeof journeyNext.question==="string"&&journeyNext.question.length<100){
 const area=elem("div","msg-followup");
-const suggestion=elem("button","msg-followup-btn",'Nak tahu tentang "The Coder Poet" pulak ke?');
+const progress=Number(journeyNext.position)||0;
+const total=Number(journeyNext.total)||20;
+if(progress>0&&progress<=total)area.appendChild(elem("span","section-label","Kenali Shaiful · Sambungan "+progress+"/"+total));
+const suggestion=elem("button","msg-followup-btn","Sambung · "+journeyNext.question);
 suggestion.type="button";
 suggestion.addEventListener("click",()=>{
 if(busy)return;
-ui.input.value="The Coder Poet";
-resize();update();ui.form.requestSubmit();
+ui.input.value=journeyNext.question;
+resize();update();if(document.activeElement===ui.input)ui.input.blur();ui.form.requestSubmit();
 });
 area.appendChild(suggestion);bubble.appendChild(area);
 }
@@ -857,11 +860,9 @@ if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){
 e.preventDefault();if(!ui.send.disabled)ui.form.requestSubmit();
 }
 });
-let starterFollowUpTarget="";
 ui.starters.querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
 if(busy)return;
 const starterText=btn.textContent.trim();
-starterFollowUpTarget=starterText==="Siapa Aku"?"The Coder Poet":"";
 ui.input.value=starterText;resize();update();if(document.activeElement===ui.input)ui.input.blur();ui.form.requestSubmit();
 }));
 function showTyping(){
@@ -981,8 +982,6 @@ event.preventDefault();if(busy)return;
 const typed=ui.input.value.trim();
 if(!typed&&!fileState)return;
 const question=typed||"Analisis lampiran ini dan bezakan fakta daripada perkara yang belum disahkan.";
-const followUpTarget=starterFollowUpTarget;
-starterFollowUpTarget="";
 const selectedFile=fileState;
 const requestMode=thoughtMode;
 const sentAt=Date.now(),sentLocation=messageLocation;
@@ -1050,16 +1049,17 @@ if(data.outputFormat!=="json")data.reply=window.BilikAntaraChatStyle.reply(data.
 cancelPartialFrame();
 typing.remove();partialNode?.remove();
 const receivedAt=Date.now();
-addMessage("assistant",data.reply,{...data,coderPoetFollowUp:followUpTarget==="The Coder Poet"&&data.model==="project-identity"&&!selectedFile,timestamp:receivedAt,locationLabel:sentLocation});
+const journeyNext=!selectedFile?window.AksaraJourney?.nextFor(question)||null:null;
+addMessage("assistant",data.reply,{...data,journeyNext,timestamp:receivedAt,locationLabel:sentLocation});
 history.push({role:"user",timestamp:sentAt,locationLabel:sentLocation,content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
 history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,provider:data.provider||null,model:data.model||null,thoughtMode:requestMode,sources:data.sources||[],
-studioHint:data.studioHint===true,outputFormat:data.outputFormat||"",argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
+journeyNext,studioHint:data.studioHint===true,outputFormat:data.outputFormat||"",argumentMap:data.argumentMap||[],truthAudit:data.truthAudit||[],hypothesis:data.hypothesis||"",
 publicAccount:data.publicAccount||null});
 
 addIdeas(data.thoughtLedger);save();
 if(selectedFile&&selectedFile===fileState){ui.docStatus.dataset.state="ready";ui.docStatus.textContent="Lampiran kekal tersedia untuk soalan susulan · "+selectedFile.name;}
-window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio"||data.model==="local-file-metadata")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[],researchStatus:data.researchStatus||"",toolsUsed:data.toolsUsed||[],urlTraceStatus:data.urlTrace?.status||"",sourceCount:data.sources?.length||0,mode:data.mode||"",evidenceProfile:data.evidenceProfile||null,visionStatus:data.vision?.status||"not_requested"}}));
-const localAnswer=data.model==="project-identity"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio"||data.model==="local-file-metadata";
+window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question,answer:data.reply,usage:data.usage||null,duration:data.durMs||0,elapsedMs:Math.round(performance.now()-startedAt),firstTokenMs,provider:data.provider||((data.model==="project-identity"||data.model==="project-journey"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio"||data.model==="local-file-metadata")?"local":(data.mode==="live"?"gemini":"unknown")),model:data.model||null,sources:data.sources||[],researchStatus:data.researchStatus||"",toolsUsed:data.toolsUsed||[],urlTraceStatus:data.urlTrace?.status||"",sourceCount:data.sources?.length||0,mode:data.mode||"",evidenceProfile:data.evidenceProfile||null,visionStatus:data.vision?.status||"not_requested"}}));
+const localAnswer=data.model==="project-identity"||data.model==="project-journey"||data.model==="local-reflection"||data.model==="local-knowledge"||data.model==="local-studio"||data.model==="local-file-metadata";
 status("online","Request Completed","");
 if(!localAnswer){multiHealth.reply(data.provider,data.model);renderProviderRows(multiHealth.getRows(),multiCatalog);}
 if(!localAnswer){lastProvider=data.provider||"gemini";lastProviderAt=Date.now();}
@@ -1162,8 +1162,9 @@ renderIdeas();renderHistory();update();probe();
 </script>
 <script src="bilik-antara-docx.js?v=1" defer></script>
 <script src="bilik-antara-identity.js?v=30" defer></script>
+<script src="bilik-antara-journey.js?v=1" defer></script>
 <script src="bilik-antara-session-utils.js?v=3" defer></script>
-<script src="bilik-antara-suite.js?v=17" defer></script>
+<script src="bilik-antara-suite.js?v=18" defer></script>
 <script src="bilik-antara-code-runtime.js?v=8" defer></script>
 <script src="bilik-antara-code-health.js?v=2" defer></script>
 <script src="bilik-antara-code-status.js?v=21" defer></script>
