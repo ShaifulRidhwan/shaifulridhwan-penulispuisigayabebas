@@ -14,7 +14,9 @@ dialog.innerHTML=[
 '<div class="ait-modes" role="group" aria-label="Mod terminal"><button data-mode="manual" type="button">Manual</button><button data-mode="assist" type="button">AI Assist</button><button data-mode="agent" type="button">AI Agent</button></div>',
 '<div class="ait-row"><label for="aitFile">Fail</label><select id="aitFile"></select><button id="aitAdd" type="button">+ Fail</button><button id="aitDelete" type="button">Buang</button></div>',
 '<textarea id="aitEditor" rows="8" spellcheck="false" aria-label="Editor kod projek"></textarea>',
-'<div class="ait-row"><button id="aitRun" type="button">▶ Run</button><button id="aitStop" type="button" disabled>■ Stop</button><button id="aitTests" type="button">Uji</button><button id="aitUndo" type="button">Rollback</button><button id="aitWorkspace" type="button">Editor penuh</button></div>',
+'<div class="ait-row"><button id="aitRun" type="button">▶ Run</button><button id="aitStop" type="button" disabled>■ Stop</button><button id="aitTests" type="button">Uji</button><button id="aitUndo" type="button">Rollback</button><button id="aitWorkspace" type="button">Editor penuh</button><button id="aitPreview" type="button">Live Preview</button></div>',
+'<div class="ait-row"><button id="aitRepl" type="button">Python REPL</button><button id="aitAgentCycle" type="button">Uji & baiki · Agent</button><small id="aitReplStatus">Python REPL · OFF</small></div>',
+'<div class="ait-row" id="aitStdinWrap" hidden><label for="aitStdin">C++ stdin</label><textarea id="aitStdin" maxlength="4000" rows="2" placeholder="Input untuk std::cin"></textarea></div>',
 '<section class="ait-console"><div class="ait-row"><strong>TERMINAL</strong><small id="aitProfile">Belum diuji</small></div><pre id="aitOutput" role="log" aria-live="polite"></pre>',
 '<form id="aitCommandForm"><label for="aitCommand">aksara@runtime:~$</label><input id="aitCommand" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="help · ls · run main.py"/><button type="submit">Enter</button></form></section>',
 '<section class="ait-patch" id="aitPatchBox" hidden><strong>AI Patch · Semak sebelum guna</strong><pre id="aitDiff"></pre><div class="ait-row"><button id="aitApply" type="button">Gunakan patch</button><button id="aitReject" type="button">Tolak</button></div></section>',
@@ -47,7 +49,7 @@ css.textContent=[
 ].join("");
 document.head.appendChild(css);
 const $=id=>dialog.querySelector("#"+id),langLabel={python:"Python",javascript:"JavaScript",typescript:"TypeScript",sql:"SQL",cpp:"C++",html:"HTML",css:"CSS"};
-let files=[{name:"main.py",language:"python",code:'print("Salam AKSARA Terminal")'}],index=0,mode="assist",controller=null,last=null,pending=null,undo=[],attempts=0,waitingAI=null,commands=[],saveTimer=null;
+let files=[{name:"main.py",language:"python",code:'print("Salam AKSARA Terminal")'}],index=0,mode="assist",controller=null,last=null,pending=null,undo=[],attempts=0,waitingAI=null,commands=[],saveTimer=null,repl=null,replActive=false,replBusy=false,historyCursor=-1;
 const dbName="aksara-terminal-v2",storeName="projects",prefKey="aksara-terminal-save-consent";
 function message(s){$("aitHelp").textContent=String(s||"").slice(0,360);}
 function output(s){const pre=$("aitOutput");pre.textContent=(pre.textContent+"\n"+String(s||"")).slice(-11000);pre.scrollTop=pre.scrollHeight;}
@@ -56,7 +58,12 @@ function render(){
  $("aitFile").replaceChildren();
  files.forEach((f,i)=>{const o=document.createElement("option");o.value=String(i);o.textContent=f.name;$("aitFile").append(o);});
  $("aitFile").value=String(index);$("aitEditor").value=file().code;
- $("aitUndo").disabled=!undo.length;$("aitRun").disabled=Boolean(controller)||!engine.available.includes(file().language);
+ $("aitUndo").disabled=!undo.length;$("aitRun").disabled=Boolean(controller)||replBusy||!engine.available.includes(file().language);
+ $("aitTests").disabled=Boolean(controller)||replBusy;
+ $("aitStdinWrap").hidden=file().language!=="cpp";
+ $("aitRepl").disabled=file().language!=="python"||replBusy;
+ $("aitAgentCycle").disabled=mode!=="agent"||Boolean(controller)||replBusy||!engine.available.includes(file().language);
+ $("aitReplStatus").textContent=replActive?"Python REPL · "+(replBusy?"RUNNING":"ON · reset jika ubah fail"):"Python REPL · OFF";
  $("aitPatchBox").hidden=!pending;
  dialog.querySelectorAll("[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===mode)));
 }
@@ -96,6 +103,30 @@ async function restore(){
   }
  }catch(e){message("Project Memory tidak tersedia dalam browser ini.");}
 }
+function pythonFiles(){return files.filter(f=>f.language==="python"&&/^[A-Za-z][A-Za-z0-9_]{0,59}\.py$/.test(f.name)).map(f=>({name:f.name,code:f.code}));}
+function closeRepl(reason="Sesi REPL ditutup."){
+ if(repl){repl.stop(reason);repl=null;}
+ replActive=false;replBusy=false;render();
+}
+async function replCommand(source){
+ if(replBusy||controller){message("Runtime sedang digunakan.");return;}
+ if(!replActive){message("Aktifkan Python REPL dahulu.");return;}
+ if(!window.AksaraPythonSession){message("Modul Python REPL belum dimuatkan.");return;}
+ try{
+  if(!repl)repl=window.AksaraPythonSession.create({files:pythonFiles(),onStatus:state=>$("aitRuntimeState").textContent=state});
+  replBusy=true;$("aitStop").disabled=false;render();
+  const began=performance.now(),result=await repl.execute(source,{onOutput:(stream,chunk)=>{
+   output((stream==="stderr"?"ERR> ":"")+chunk);
+  }});
+  $("aitProfile").textContent=Math.round(performance.now()-began)+" ms · Python REPL";
+  if(!result.stdout&&!result.stderr&&!result.error)output("(Tiada output)");
+  if(result.error)output("PYTHON ERROR: "+result.error);
+  if(result.truncated)output("Output dipotong mengikut had keselamatan.");
+ }catch(error){
+  output("Python REPL: "+String(error.message||error).slice(0,350));
+  if(repl&&!repl.active()){repl=null;replActive=false;}
+ }finally{replBusy=false;$("aitStop").disabled=Boolean(controller);render();}
+}
 function sourceReport(result){
  const d=(result.diagnostics||[]).map(x=>String(x.code||"RUNTIME_ERROR")+": "+String(x.message||"").slice(0,300)).join("\n");
  return String(result.output||"(Tiada output)").slice(0,6500)+(d?"\nDIAGNOSTIK:\n"+d:"")+(result.error&&!d?"\nERROR: "+result.error:"");
@@ -106,7 +137,8 @@ async function execute(f,{signal,quiet=false,expect=null}={}){
  let overlay=null;
  try{
   if(!quiet){output("▶ "+f.name+" ("+f.language+")");overlay=window.AksaraRuntimeOverlay?.open(f.language,()=>ctl.abort())||null;}
-  const result=await engine.run(f.language,f.code,{signal:ctl.signal,onProgress:x=>{
+  const extra=f.language==="python"?{projectFiles:pythonFiles()}:f.language==="cpp"?{stdin:$("aitStdin").value.slice(0,4000)}:{};
+  const result=await engine.run(f.language,f.code,{...extra,signal:ctl.signal,onProgress:x=>{
    if(!quiet){$("aitRuntimeState").textContent=String(x).slice(0,75);overlay?.update(String(x));}
   }});
   if(!quiet){
@@ -123,11 +155,11 @@ async function execute(f,{signal,quiet=false,expect=null}={}){
 async function runNamed(name){
  saveCurrent();const f=files.find(x=>x.name===name);
  if(!f){output("Fail tidak ditemui: "+name);return;}
- if(controller){message("Runtime masih sibuk.");return;}
- try{await execute({...f});}catch(e){output("Runtime dihentikan / gagal: "+String(e.message||e).slice(0,500));}
+ if(controller||replBusy){message("Runtime masih sibuk.");return;}
+ try{return await execute({...f});}catch(e){output("Runtime dihentikan / gagal: "+String(e.message||e).slice(0,500));return null;}
 }
 async function tests(){
- if(controller)return;saveCurrent();const f={...file()};
+ if(controller||replBusy)return;saveCurrent();const f={...file()};
  const smoke={python:['print(sum([2,3,5,7]))',"17"],javascript:['console.log(6*7)',"42"],
   typescript:['const n:number=6*7;console.log(n)',"42"],sql:['SELECT 6+7 AS total;',"13"],
   cpp:['#include <iostream>\nint main(){std::cout << 42 << "\\n";return 0;}',"42"]}[f.language];
@@ -144,10 +176,15 @@ async function tests(){
  finally{controller=null;$("aitStop").disabled=true;$("aitTests").disabled=false;$("aitRun").disabled=false;}
 }
 function command(s){
- const cmd=core.command(s);commands.push(s);commands=commands.slice(-40);
+ const trimmed=String(s||"").trim();
+ commands.push(trimmed);commands=commands.slice(-40);historyCursor=-1;
+ if(replActive&&!["help","exit","reset","status"].includes(trimmed)){
+  output("py>>> "+trimmed);void replCommand(trimmed);return;
+ }
+ const cmd=core.command(trimmed);
  output("aksara@runtime:~$ "+s);
  switch(cmd.type){
- case "help":output("help, pwd, ls, cat nama.py, run nama.py, python nama.py, node main.js, tsc main.ts, sqlite query.sql, clang main.cpp, tests, history, status, clear. Tiada shell sebenar.");break;
+ case "help":output("help, pwd, ls, cat nama.py, run nama.py, python nama.py, node main.js, tsc main.ts, sqlite query.sql, clang main.cpp, tests, history, status, clear, repl, reset, exit. Dalam REPL taip arahan Python terus. Tiada shell sebenar.");break;
  case "pwd":output("/aksara/project");break;
  case "ls":output(files.map(x=>x.name).join("  "));break;
  case "cat":output(files.find(x=>x.name===cmd.name)?.code||"Fail tidak ditemui.");break;
@@ -156,6 +193,14 @@ function command(s){
  case "status":output("Runtime: "+engine.available.join(", ")+"; mod: "+mode+"; fail: "+files.length);break;
  case "history":output(commands.map((x,i)=>(i+1)+". "+x).join("\n"));break;
  case "clear":$("aitOutput").textContent="";break;
+ case "repl":
+  if(file().language!=="python"){message("Pilih fail .py untuk Python REPL.");break;}
+  replActive=true;render();output("Python REPL aktif. Taip Python terus, contohnya x=6 kemudian print(x*7). reset untuk kosongkan state, exit untuk keluar.");break;
+ case "reset":
+  if(repl)repl.stop("Python REPL direset.");
+  repl=null;replActive=true;replBusy=false;render();output("Sesi Python direset. Pemboleh ubah lama sudah tiada.");break;
+ case "exit":
+  closeRepl();output("Keluar daripada Python REPL.");break;
  default:output(cmd.message||"Arahan tak disokong.");
  }
 }
