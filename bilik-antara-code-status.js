@@ -31,7 +31,8 @@ menu.innerHTML=[
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="sql"><span class="multi-ai-provider">SQL · SQLite WASM</span><span class="multi-ai-state is-muted" id="codeSQLState">Not Tested · On Demand</span></button>',
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="cpp"><span class="multi-ai-provider">C++ · Clang WASM</span><span class="multi-ai-state is-muted" id="codeCPPState">Not Tested · ~29 MB</span></button>',
  '</div>',
- ' <div class="multi-ai-actions"><button type="button" id="codeEngineRefresh">Refresh Status · Uji Runtime</button><button type="button" id="codeWorkspaceOpen">Code Workspace</button><button type="button" id="codeEvalOpen">Evaluation Lab</button></div>'
+ ' <p class="code-refresh-data-note">Refresh menyemak lima runtime sebenar. Ujian C++ boleh memuatkan sekitar 29 MB data.</p>',
+ ' <div class="multi-ai-actions"><button type="button" id="codeEngineRefresh">Refresh Status</button><button type="button" id="codeWorkspaceOpen">Code Workspace</button><button type="button" id="codeEvalOpen">Evaluation Lab</button></div>'
 ].join("");
 document.body.appendChild(menu);
 const css=document.createElement("style");
@@ -68,6 +69,7 @@ css.textContent=[
 '@media(max-width:760px){.conversation .conversation-head{flex-wrap:nowrap!important;gap:5px!important;padding:8px 8px!important}.conversation-head .voice-toolbar{flex:0 0 auto!important;width:auto!important;min-width:0!important;justify-content:flex-start!important}.conversation-head #voiceLive{padding-inline:9px!important;font-size:10px!important;white-space:nowrap!important}.conversation-head .chat-controls{display:flex!important;flex:1 1 0!important;width:auto!important;min-width:0!important;margin-left:0!important;justify-content:flex-end!important;gap:4px!important;flex-wrap:nowrap!important}.conversation-head #connection{flex:1 1 0!important;min-width:0!important;max-width:none!important;overflow:hidden!important;padding-inline:7px!important;gap:5px!important}.conversation-head #connectionText{display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:10px!important}.conversation-head .code-engine-status{flex:0 0 auto!important;max-width:125px!important;min-width:0!important;padding:0 8px!important;font-size:10px!important;gap:5px!important}.conversation-head .code-engine-status #codeEngineStatusText{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.conversation-head #settingsPanel{flex:0 0 auto!important;margin-left:0!important}}',
 '@media(max-width:390px){.conversation .conversation-head{gap:3px!important;padding-inline:5px!important}.conversation-head #voiceLive{padding-inline:6px!important;font-size:9px!important}.conversation-head .chat-controls{gap:3px!important}.conversation-head .code-engine-status{max-width:118px!important;padding-inline:6px!important;font-size:9px!important}.conversation-head #connection{padding-inline:5px!important}.conversation-head #connectionText{font-size:9px!important}.conversation-head #settingsPanel>summary{width:34px!important;min-width:34px!important;height:37px!important}}',
 '.code-health-freshness{font:500 10px/1.45 "DM Sans",sans-serif!important;opacity:.8;margin:3px 0 9px!important}',
+'.code-engine-dialog .code-refresh-data-note{margin:9px 0 3px;color:rgba(235,219,190,.72);font:500 10px/1.45 "DM Sans",sans-serif}',
 '.code-health-activity[hidden]{display:none!important}',
 '.code-health-activity{font:500 11px/1.5 "DM Sans",sans-serif;color:#ead9bf;padding:9px 11px;margin:0 0 11px;border:1px solid rgba(222,193,151,.24);border-radius:11px;background:rgba(255,255,255,.032);overflow-wrap:anywhere}',
 '.conversation-head .code-engine-status[data-runtime-health="unverified"] .code-engine-core{color:#c8c2b5}',
@@ -177,12 +179,12 @@ let verificationController=null;
 refreshAll.addEventListener("click",async()=>{
  if(verificationController){verificationController.abort();return;}
  if(runtimeChecking)return;
- // This is a deliberate action; opening the dialog still performs no CDN downloads.
- if(!window.confirm("Refresh akan menguji 5 runtime sebenar. Python, TypeScript dan SQLite memuatkan CDN; C++ Clang boleh menggunakan sekitar 29 MB data. Teruskan?"))return;
+ // The dedicated Refresh button is the user's explicit consent to test runtimes.
+ // No native browser confirm: this panel uses the shared dark glass UI.
  const controller=new AbortController();
  verificationController=controller;
  let passed=0,checked=0;
- const originalLabel="Refresh Status · Uji Runtime";
+ const originalLabel="Refresh Status";
  try{
   for(const language of engine.available){
    if(controller.signal.aborted)break;
