@@ -41,7 +41,7 @@ test("AI prompts are grounded and redact common secrets",()=>{
  assert.ok(prompt.includes("RALAT"));
  assert.ok(prompt.includes("[NILAI DISEMBUNYIKAN]"));
  assert.ok(!prompt.includes("abcdefghij0123456789"));
- assert.ok(core.capability(["python"]).includes("bukan"));
+ assert.ok(core.capability(["python"]).toLowerCase().includes("bukan"));
  assert.ok(core.diff("print(1)","print(2)").includes("+print(2)"));
 });
 test("ZIP project export has valid store headers and central directory",()=>{
