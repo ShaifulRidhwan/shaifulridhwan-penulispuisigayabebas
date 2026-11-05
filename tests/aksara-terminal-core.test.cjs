@@ -13,7 +13,7 @@ test("AI terminal modules parse and stay behind sandbox runtime",()=>{
   "Project Memory","aitPatchBox","window.confirm(","core.zip(files)","storage(\"delete\")"]){
   assert.ok(ui.includes(token),"Missing AI Terminal feature "+token);
  }
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=5"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=6"));
  assert.ok(html.includes("bilik-antara-terminal-core.js?v=3"));
  assert.ok(html.includes("codeContext")&&html.includes("CODE_GUIDANCE"));
 });
@@ -254,7 +254,7 @@ test("Terminal header and dialog use the concise name without losing AI modes",(
   assert.ok(ui.includes(s),"Original AI modes missing: "+s);
  }
  const html=read("bilik-antara.html");
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=5"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=6"));
  assert.ok(html.includes("bilik-antara-code-brain.js?v=5"));
 });
 test("Terminal Liquid Glass groups editor, runtime and project tools while keeping readable output",()=>{
