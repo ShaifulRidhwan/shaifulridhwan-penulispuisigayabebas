@@ -20,8 +20,8 @@ test("Terminal modal stays centered and does not focus command on open",()=>{
 
 test("Portal remains in the same details element but uses viewport top layer",()=>{
  const html=read("bilik-antara.html"),css=read("bilik-antara.css");
- assert.match(html,/bilik-antara\\.css\\?v=106/);
- assert.match(html,/bilik-antara-ai-terminal\\.js\\?v=6/);
+ assert.ok(html.includes("bilik-antara.css?v=106"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=6"));
  assert.match(html,/id="settingsPanel"/);
  assert.match(html,/id="portalCard" popover="manual"/);
  assert.match(html,/function syncPortalPopover\(\)/);
