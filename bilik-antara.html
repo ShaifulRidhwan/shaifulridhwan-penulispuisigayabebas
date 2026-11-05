@@ -3,15 +3,15 @@
 <div class="shell">
 <div class="world-scene" aria-hidden="true"><div class="world-art"></div></div>
 <header class="topbar aksara-header">
-<a class="brand aksara-brand" href="index.html" title="Kembali ke laman utama Gaya Bebas">
+<div class="brand aksara-brand" aria-label="Aksara A.I. oleh Shaiful Ridhwan">
 <span class="brand-name aksara-brand-name"><span class="aksara-name">AKSARA A.I</span><span class="aksara-credit">oleh Shaiful Ridhwan</span></span>
-</a>
+</div>
 <nav class="nav-actions aksara-nav" aria-label="Navigasi laman">
 <a class="nav-link aksara-nav-link" href="index.html">Laman utama</a>
 <details class="settings" id="settingsPanel">
 <summary class="portal-trigger" aria-label="Buka Portal Aksara" title="PORTAL"><span>PORTAL</span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg></summary>
-<div class="settings-card">
-<div class="settings-title">Ciri &amp; Fungsi</div>
+<div class="settings-card" id="portalCard" popover="manual" role="dialog" aria-labelledby="portalTitle" tabindex="-1">
+<div class="portal-modal-head"><div class="settings-title" id="portalTitle">Ciri &amp; Fungsi</div><button type="button" id="portalClose" aria-label="Tutup Ciri dan Fungsi">×</button></div>
 <div class="feature-hub" role="group" aria-label="Ciri dan fungsi Aksara">
 <a class="feature-hub-item" id="featureStudio" href="studio-antara.html">
 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h8l4 4v14H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M15 3v5h5M9 13h7M9 17h7"/></svg>
@@ -812,6 +812,21 @@ window.dispatchEvent(new Event("ba:cleared"));
 });
 let featureCloseTimer=null;
 const featureSummary=ui.settings.querySelector(":scope > summary");
+const portalCard=el("portalCard");
+const hasPortalPopover=typeof portalCard?.showPopover==="function";
+if(!hasPortalPopover)portalCard?.removeAttribute("popover");
+function syncPortalPopover(){
+ if(!hasPortalPopover)return;
+ const isVisible=portalCard.matches(":popover-open");
+ if(ui.settings.open&&!isVisible){
+  portalCard.showPopover();
+  portalCard.focus({preventScroll:true});
+ }else if(!ui.settings.open&&isVisible){
+  portalCard.hidePopover();
+ }
+}
+ui.settings.addEventListener("toggle",syncPortalPopover);
+el("portalClose").addEventListener("click",()=>closeFeatureMenu());
 function closeFeatureMenu(){
 if(!ui.settings.open)return;
 if(featureCloseTimer!==null)clearTimeout(featureCloseTimer);
@@ -828,6 +843,7 @@ if(ui.settings.open&&!ui.settings.classList.contains("is-closing")){closeFeature
 if(featureCloseTimer!==null){clearTimeout(featureCloseTimer);featureCloseTimer=null;}
 ui.settings.classList.remove("is-closing");
 ui.settings.open=true;
+syncPortalPopover();
 });
 document.addEventListener("pointerdown",e=>{
 if(ui.settings.open&&!ui.settings.contains(e.target))closeFeatureMenu();
