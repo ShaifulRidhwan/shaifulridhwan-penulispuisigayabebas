@@ -561,7 +561,7 @@ target.appendChild(p);
 const providerMarks=Object.freeze({
 gemini:["✦","Gemini"],groq:["ϟ","Groq"],
 workers_ai:["☁","Workers AI"],openrouter:["◇","OpenRouter"],
-local_knowledge:["⌁","Tempatan"],local:["⌁","Tempatan"]
+local_knowledge:["⌁","Aksara A.I."],local:["⌁","Aksara A.I."]
 });
 function renderMessageMeta(msg,role,data){
 const ms=Number(data?.timestamp);
@@ -575,7 +575,7 @@ const mark=role==="assistant"&&data?.mode!=="code"?providerMarks[data?.provider]
 if(mark){
 const tag=elem("span","message-provider");
 tag.append(elem("span","message-provider-icon",mark[0]),document.createTextNode(mark[1]));
-tag.title=String(data?.model||mark[1]).slice(0,90);
+tag.title=(data?.provider==="local"||data?.provider==="local_knowledge"?"Respons setempat Aksara, bukan model live · ":"")+String(data?.model||mark[1]).slice(0,90);
 line.appendChild(tag);
 }
 msg.appendChild(line);
@@ -596,7 +596,7 @@ if(journeyNext&&typeof journeyNext.question==="string"&&journeyNext.question.len
 const area=elem("div","msg-followup");
 const progress=Number(journeyNext.position)||0;
 const total=Number(journeyNext.total)||window.AksaraJourney?.steps?.length||30;
-if(progress>0&&progress<=total)area.appendChild(elem("span","section-label","Kenali Shaiful · Sambungan "+progress+"/"+total));
+if(progress>0&&progress<=total)area.appendChild(elem("span","section-label","Kenali Shaiful · Sambungan"));
 const suggestion=elem("button","msg-followup-btn","Sambung · "+journeyNext.question);
 suggestion.type="button";
 suggestion.addEventListener("click",()=>{
@@ -1180,7 +1180,7 @@ window.addEventListener("DOMContentLoaded",()=>{
 </script>
 <script src="bilik-antara-docx.js?v=1" defer></script>
 <script src="bilik-antara-identity.js?v=30" defer></script>
-<script src="bilik-antara-journey.js?v=2" defer></script>
+<script src="bilik-antara-journey.js?v=3" defer></script>
 <script src="bilik-antara-session-utils.js?v=3" defer></script>
 <script src="bilik-antara-suite.js?v=18" defer></script>
 <script src="bilik-antara-code-runtime.js?v=8" defer></script>
