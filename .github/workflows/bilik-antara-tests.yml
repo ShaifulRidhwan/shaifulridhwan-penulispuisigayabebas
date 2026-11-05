@@ -113,6 +113,7 @@ jobs:
           node --test tests/aksara-session-cutover.test.cjs
           node --check tests/aksara-p0-p2-integration.test.cjs
           node --test tests/aksara-p0-p2-integration.test.cjs
+          node --test tests/aksara-journey-local-flow.test.cjs
           node --test tests/aksara-identity-lock.test.cjs
           node --test tests/aksara-p0-p2.test.cjs cloudflare/owned-page-evidence.test.mjs
           node --test scripts/test-bilik-antara-video.cjs
