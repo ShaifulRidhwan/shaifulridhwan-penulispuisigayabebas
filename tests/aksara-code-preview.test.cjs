@@ -56,7 +56,7 @@ test("C++ project workflow exposes code, stdin, stop and output",()=>{
 });
 test("v0.3 page loads fresh Code Engine JS",()=>{
  const html=read("bilik-antara.html");
- for(const asset of ["runtime.js?v=7","status.js?v=20","workspace.js?v=6","chat.js?v=10","agent.js?v=5"]){
+ for(const asset of ["runtime.js?v=7","status.js?v=20","workspace.js?v=7","chat.js?v=11","agent.js?v=5"]){
   assert.ok(html.includes("bilik-antara-code-"+asset),"Missing "+asset);
  }
 });
@@ -71,3 +71,23 @@ test("AI Code Agent starts enabled without removing manual OFF and stop",()=>{
  assert.ok(agent.includes('stop.addEventListener("click"'),"Execution stop must stay available");
 });
 require("./aksara-code-followup.test.cjs");
+
+test("AI HTML preview renders inline with an isolated iframe and an editor action",()=>{
+ const workspace=read("bilik-antara-code-workspace.js");
+ for(const token of ['className="aksara-inline-preview"','frame.setAttribute("sandbox","")',
+  'frame.srcdoc=safePreviewDocument(parsed.html,parsed.css)',
+  'window.addEventListener("ba:answered"','Buka Editor · Code Engine']){
+  assert.ok(workspace.includes(token),"Missing inline preview behavior: "+token);
+ }
+ assert.ok(workspace.includes("inline:i===history.length-1"),"Old history must not render dozens of iframes");
+});
+test("Workspace runs JavaScript, Python, TypeScript and SQL without round-tripping through AI",()=>{
+ const workspace=read("bilik-antara-code-workspace.js");
+ for(const token of ['id="cwRuntimePanel"','id="cwRuntimeRun"','id="cwRuntimeStop"',
+  'id="cwRuntimeOutput"','engine.run(language,source','runtimeController?.abort()',
+  'setRuntimeRunning(true)','language==="cpp"']){
+  assert.ok(workspace.includes(token),"Missing unified runtime: "+token);
+ }
+ assert.ok(workspace.includes('frame.setAttribute("sandbox","")'));
+ assert.ok(workspace.includes('script-src \'none\''));
+});

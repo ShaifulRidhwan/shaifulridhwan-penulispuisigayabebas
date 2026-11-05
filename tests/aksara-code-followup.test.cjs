@@ -167,3 +167,27 @@ test("AI models are told the true Code Engine capability limits",()=>{
  assert.match(source,/BELUM mempunyai Java compiler/);
  assert.match(source,/Code Workspace Live Preview/);
 });
+
+test("duplicate AI HTML example under Pratonton selects the complete document",()=>{
+ const first='<!doctype html><html><head><style>h1{animation:pulse 2s infinite}</style></head><body><h1>Yaya - A Girl From Nowhere</h1></body></html>';
+ const second='<html><body><h1>Yaya - A Girl From Nowhere</h1></body></html>';
+ const text=code("html",first)+"\nPratonton (jika editor menyokong HTML langsung):\n"+code("html",second);
+ const ctx=setup([{role:"assistant",content:text}],"jalankan kod");
+ const found=ctx.agent.extractWebCode(text);
+ assert.ok(found,"Repeated preview should be recognized safely");
+ assert.match(found.html,/<style>/);
+ assert.equal(ctx.action.hidden,false);
+ assert.match(ctx.run.textContent,/Live Preview/);
+});
+test("different HTML documents remain ambiguous even with preview label",()=>{
+ const text=code("html","<h1>One</h1>")+"\nPratonton:\n"+code("html","<h1>Two</h1>");
+ const ctx=setup([{role:"assistant",content:text}],"jalankan kod");
+ assert.equal(ctx.agent.extractWebCode(text),null);
+ assert.equal(ctx.action.hidden,true);
+});
+test("raw complete HTML document can be sent straight to preview",()=>{
+ const source='<!doctype html><html><body><h1>Code Engine</h1></body></html>';
+ const ctx=setup([],source);
+ assert.equal(ctx.agent.extractWebCode(source).html,source);
+ assert.match(ctx.run.textContent,/Live Preview/);
+});

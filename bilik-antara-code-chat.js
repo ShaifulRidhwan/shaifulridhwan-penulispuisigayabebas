@@ -62,12 +62,32 @@ function extractWebCode(reply){
  const html=[],css=[];
  for(const block of blocks){
   const type=String(block[1]||"").toLowerCase(),code=block[2].trim();
-  if(type==="html"||type==="htm"||(!type&&/^(?:<!doctype\s+html\b|<html\b|<head\b|<body\b|<main\b|<div\b)/i.test(code)))html.push(code);
+  if(type==="html"||type==="htm"||(!type&&/^(?:<!doctype\s+html\b|<html\b|<head\b|<body\b|<main\b|<div\b|<h1\b)/i.test(code)))
+   html.push({code,offset:block.index||0});
   else if(type==="css")css.push(code);
  }
- // A single whole document, optionally with a separate stylesheet, is unambiguous.
- if(html.length!==1||css.length>1||!html[0]||html[0].length>12000||(css[0]||"").length>12000)return null;
- return {html:html[0],css:css[0]||""};
+ // A complete raw HTML document is a preview, never an executable JS snippet.
+ if(!blocks.length&&/^(?:<!doctype\s+html\b|<html\b)/i.test(source.trim()))
+  html.push({code:source.trim(),offset:0});
+ if(!html.length||html.some(item=>!item.code||item.code.length>12000)||css.some(code=>code.length>12000))
+  return null;
+ const normalize=s=>s.replace(/>\s+</g,"><").replace(/\s+/g,"").toLowerCase();
+ const unique=[...new Set(html.map(item=>normalize(item.code)))];
+ if(unique.length>1){
+  // AI sometimes repeats the SAME example under "Pratonton"; require the same H1
+  // and an explicit preview label. Two different documents stay ambiguous.
+  if(html.length!==2||!/pratonton|preview/i.test(source.slice(Math.max(0,html[1].offset-170),html[1].offset)))
+   return null;
+  const heading=s=>String((/<h1\b[^>]*>([\s\S]*?)<\/h1>/i.exec(s)||[])[1]||"")
+   .replace(/<[^>]+>/g,"").replace(/\s+/g," ").trim().toLowerCase();
+  if(!heading(html[0].code)||heading(html[0].code)!==heading(html[1].code))return null;
+ }
+ const score=item=>(/<!doctype\s+html/i.test(item.code)?8:0)+
+  (/<html\b/i.test(item.code)?4:0)+(/<style\b/i.test(item.code)?2:0)+item.code.length/100000;
+ const primary=html.slice().sort((a,b)=>score(b)-score(a))[0];
+ const cssUnique=[...new Set(css.map(normalize))];
+ if(cssUnique.length>1)return null;
+ return {html:primary.code,css:css[0]||""};
 }
 // Java source is recognised but never passed to the JavaScript sandbox as if it were JavaScript.
 function extractJavaCode(reply){
