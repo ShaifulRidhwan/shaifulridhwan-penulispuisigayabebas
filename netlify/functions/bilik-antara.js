@@ -497,7 +497,9 @@ exports.handler=async event=>{
   const thinkingV4=ThinkingV4.planRequest({question,mode:thoughtMode,intent,profile:cognition,basePlan:legacyPlan,history});
   const plan=thinkingV4.plan;
   const identityReply=(!media.length&&!documentText)?Identity.answerIdentity(question):null;
-  const journeyReply=(!media.length&&!documentText)?Journey.answer(question):null;
+  // An explicit journey action may request a server-side local fallback.
+// Free-typed messages never get intercepted by static chapter lookup.
+  const journeyReply=(payload.journeyStep===true&&!media.length&&!documentText)?Journey.answer(question):null;
    // Verified mode guide and selected elementary philosophy have independent
    // mode-aware local answers; no cheap fallback can override their meaning.
    const modeGuide=!media.length&&!documentText?Modes.localModeGuide(question,thoughtMode,Identity):null;
