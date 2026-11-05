@@ -67,7 +67,7 @@ test("Status v2 uses English and keeps Core Engine, Voice, AI routing and sandbo
  const status=read("bilik-antara-code-status.js"),runtime=read("bilik-antara-code-runtime.js"),html=read("bilik-antara.html");
  assert.doesNotThrow(()=>new vm.Script(status));
  assert.doesNotThrow(()=>new vm.Script(runtime));
- assert.ok(html.includes("bilik-antara-code-health.js?v=1"));
+ assert.ok(html.includes("bilik-antara-code-health.js?v=2"));
  assert.ok(html.includes("bilik-antara-code-status.js?v=20"));
  assert.ok(html.includes("bilik-antara-code-runtime.js?v=7"));
  assert.ok(html.length<80000,"Bilik Antara primary HTML budget");
