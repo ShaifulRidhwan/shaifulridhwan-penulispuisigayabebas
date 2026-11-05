@@ -109,7 +109,7 @@ test("Locked Malay casual + English technical language applies to Gemini, all fa
  assert.match(html,/Nak tahu tentang "The Coder Poet" pulak ke/);
  assert.match(css,/\.msg-followup-btn/);
  assert.match(html,/bilik-antara-identity\.js\?v=30/);
- assert.match(html,/bilik-antara-brain\.js\?v=16/);
+ assert.match(html,/bilik-antara-brain\.js\?v=15/);
 });
 
 test("Unrelated creative requests and recommendations must not hijack the four-brain answer",()=>{
