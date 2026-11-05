@@ -19,3 +19,6 @@
 - Browser mudah alih: \`scripts/test-code-engine-browser.cjs\`, periksa HTML inline preview/animasi dan empat butang Run.
 - Akses CDN sebenar: Python/TypeScript/SQL/C++ **belum disahkan** berjaya di Brave Android selagi smoke test setiap bahasa tidak dijalankan. C++ mungkin memuatkan ~29 MB.
 - Kualiti dan sekatan: javascript \`console.log(42)\`, Python \`print(42)\`, TypeScript \`const n: number=42; console.log(n)\`, SQL \`SELECT 42 AS n;\`, C++20 \`std::cout << 42;\`, HTML animasi CSS. Java memaparkan notis tidak disokong.
+
+## Pengesahan runtime
+Butang **Uji 5 Runtime** dalam dialog Code Engine meminta persetujuan sebelum memuatkan aset CDN, kemudian menjalankan contoh sebenar bagi setiap bahasa dalam sandbox. Tekan lagi untuk Henti. Status Verified tamat selepas lima minit. Tiada unduhan automatik semasa halaman dibuka, dan ini bukan bukti offline-ready.

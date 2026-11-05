@@ -56,7 +56,7 @@ test("C++ project workflow exposes code, stdin, stop and output",()=>{
 });
 test("v0.3 page loads fresh Code Engine JS",()=>{
  const html=read("bilik-antara.html");
- for(const asset of ["runtime.js?v=7","status.js?v=20","workspace.js?v=7","chat.js?v=11","agent.js?v=5"]){
+ for(const asset of ["runtime.js?v=7","status.js?v=21","workspace.js?v=7","chat.js?v=11","agent.js?v=5"]){
   assert.ok(html.includes("bilik-antara-code-"+asset),"Missing "+asset);
  }
 });
@@ -90,4 +90,17 @@ test("Workspace runs JavaScript, Python, TypeScript and SQL without round-trippi
  }
  assert.ok(workspace.includes('frame.setAttribute("sandbox","")'));
  assert.ok(workspace.includes('script-src \'none\''));
+});
+
+test("on-demand smoke checks verify runtime evidence without permanent Ready claims",()=>{
+ const status=read("bilik-antara-code-status.js"),health=read("bilik-antara-code-health.js");
+ for(const marker of ['id="codeEngineVerifyAll"','engine.probeLanguage(language,{signal:controller.signal})',
+  'verificationController.abort()','window.confirm(','health.verifyRuntime(language,report.ready===true'])
+  assert.ok(status.includes(marker),"Missing runtime verification: "+marker);
+ const sandbox={};vm.runInNewContext(health,{window:sandbox});
+ let now=100000;const monitor=sandbox.AksaraCodeHealth.create(()=>now);
+ assert.equal(monitor.verifyRuntime("python",true,{latencyMs:410}),true);
+ assert.equal(monitor.snapshot().rows.find(r=>r.language==="python").status,"verified");
+ now+=300001;
+ assert.equal(monitor.snapshot().rows.find(r=>r.language==="python").status,"unverified");
 });
