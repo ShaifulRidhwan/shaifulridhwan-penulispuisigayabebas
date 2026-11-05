@@ -317,25 +317,40 @@ async function audit(browser,label,options){
    await page.screenshot({path:path.join(OUT,label+"-keyboard.png"),animations:"disabled"});
   }
   if(label==="desktop"){
-   // Any exact journey topic, typed or clicked, offers the next creator story.
+   // Typing is a free-form chat action, never an implicit chapter command.
    await page.evaluate(()=>window.BilikAntaraBridge.fresh());
    await page.locator("#input").fill("Siapa Aku");
    await page.locator("#composer").evaluate(form=>form.requestSubmit());
    await page.waitForFunction(()=>[...document.querySelectorAll(".message.ai .bubble")].some(el=>el.textContent.includes("AI routing")),{timeout:12000});
-   assert.equal(await page.locator(".msg-followup-btn").count(),1,"Typed journey question offers one relevant follow-up");
-   assert.match(await page.locator(".msg-followup-btn").innerText(),/Sambung · The Coder Poet/);
+   assert.equal(await page.locator(".msg-followup-btn").count(),0,"Typed questions must not auto-start the chapter series");
    await page.evaluate(()=>window.BilikAntaraBridge.fresh());
+   const providerRequests=[];
+   const chapterRequest=request=>{
+    if(request.method()!=="POST"||!/\/\.netlify\/functions\/bilik-antara(?:-stream)?$/.test(new URL(request.url()).pathname))return;
+    try{
+     const body=JSON.parse(request.postData()||"{}");
+     if(typeof body.question==="string"&&!body.probe)providerRequests.push(body.question);
+    }catch(_){}
+   };
+   page.on("request",chapterRequest);
    await page.locator("#starters .starter").first().click();
    const suggestion=page.locator(".msg-followup-btn");
    await suggestion.waitFor({state:"visible",timeout:12000});
    assert.match(await suggestion.innerText(),/Sambung · The Coder Poet/);
-   await suggestion.click();
-   await page.waitForFunction(()=>[...document.querySelectorAll(".message.ai .bubble")].some(el=>el.textContent.includes("Twister Kernel")),{timeout:12000});
-   const next=page.locator(".msg-followup-btn").last();
-   assert.match(await next.innerText(),/Sambung · Apa Target Shaiful\?/);
-   await next.click();
-   await page.waitForFunction(()=>[...document.querySelectorAll(".message.ai .bubble")].some(el=>el.textContent.includes("Aku nampak target Shaiful")),{timeout:12000});
-   assert.match(await page.locator(".msg-followup-btn").last().innerText(),/Macam Mana Shaiful Mula Coding\?/);
+   const chapters=require("../bilik-antara-journey").steps;
+   for(let i=1;i<chapters.length;i++){
+    const button=page.locator(".msg-followup-btn").last();
+    assert.equal((await button.innerText()).trim(),"Sambung · "+chapters[i].question);
+    await button.click();
+    const last=page.locator(".message.ai").last();
+    await last.locator(".message-provider").waitFor({state:"visible",timeout:12000});
+    assert.match(await last.locator(".message-provider").innerText(),/Aksara A\.I\./);
+    assert.equal(providerRequests.length,0,"Journey step invoked provider at position "+i);
+   }
+   const ending=page.locator(".message.ai").last();
+   assert.match(await ending.locator(".bubble").innerText(),/Tamat · Kenali Shaiful/);
+   assert.equal(await ending.locator(".msg-followup-btn").count(),0,"Ending must not offer another chapter");
+   page.off("request",chapterRequest);
    await page.screenshot({path:path.join(OUT,"desktop-coder-poet-followup.png"),animations:"disabled"});
   }
   assert.deepEqual(errors,[],"Browser console or asset errors");
