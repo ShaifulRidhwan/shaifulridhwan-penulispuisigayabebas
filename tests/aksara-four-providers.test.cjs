@@ -124,8 +124,8 @@ test("Unrelated creative requests and recommendations must not hijack the four-b
 
 test("Ready is not falsely labelled Connected, and live status is provider-specific",()=>{
  const health=fs.readFileSync("bilik-antara-multi-ai-status.js","utf8");
- assert.match(health,/label:"Ready"/);
- assert.match(health,/label:"Connected"/);
+ assert.match(health,/result\("ready","Ready"\)/);
+ assert.match(health,/result\("connected","Connected"\)/);
  assert.match(html,/multiHealth\.update\(data\)/);
  assert.match(html,/multiHealth\.request|function status\(kind,label,explain\)/);
  assert.match(html,/state==="online"\?"Connected":state==="ready"\?"Ready"/);
