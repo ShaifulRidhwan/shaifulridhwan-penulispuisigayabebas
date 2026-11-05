@@ -36,7 +36,7 @@ style.textContent=[
 '.code-workspace-dialog .cw-preview-frame iframe{width:100%;height:245px;max-width:100%;border:0;background:white;transition:max-width .2s ease}',
 '.code-workspace-dialog .cw-preview-frame.is-mobile iframe{max-width:375px}',
 '.code-workspace-dialog :is(#cwPreviewInfo,.cw-preview-note){margin:0;color:#bdb4a8;font:500 11px/1.5 "DM Sans",sans-serif}',
-'.code-workspace-dialog .cw-runtime[hidden],.code-workspace-dialog .cw-cpp[hidden]{display:none!important}',
+'.code-workspace-dialog .cw-runtime[hidden],.code-workspace-dialog .cw-cpp[hidden],.code-workspace-dialog .cw-preview[hidden]{display:none!important}',
 '.code-workspace-dialog .cw-runtime{display:grid;gap:9px;margin:12px 0;padding:12px;border:1px solid rgba(232,205,161,.28);border-radius:13px;background:rgba(6,12,21,.28);font:500 12px "DM Sans",sans-serif}',
 '.code-workspace-dialog .cw-runtime-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;color:#e9d5b7}',
 '.code-workspace-dialog .cw-runtime-head span{font-size:10px;color:#bfb7ad}',
@@ -51,6 +51,11 @@ style.textContent=[
 '.aksara-inline-preview strong{display:block;margin:0 0 8px;color:#ead6b9;font:600 12px "DM Sans",sans-serif}',
 '.aksara-inline-preview iframe{display:block;width:100%;height:240px;border:0;border-radius:8px;background:white}',
 '.aksara-inline-preview small{display:block;margin-top:7px;color:#bfb7ad;font:500 10px/1.45 "DM Sans",sans-serif}',
+'.aksara-inline-console .aksara-console-actions{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0}',
+'.aksara-inline-console button{padding:8px 11px;border:1px solid rgba(232,205,161,.36);border-radius:9px;background:rgba(224,191,143,.08);color:#f0dabb;font:600 11px "DM Sans",sans-serif;cursor:pointer}',
+'.aksara-inline-console button[hidden]{display:none!important}',
+'.aksara-inline-console button:disabled{opacity:.5;cursor:default}',
+'.aksara-inline-console pre{margin:8px 0 0;max-height:240px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:10px;border:1px solid rgba(232,205,161,.2);border-radius:9px;background:rgba(1,7,13,.65);color:#e7ebe7;font:12px/1.55 ui-monospace,Consolas,monospace}',
 '.code-workspace-dialog .cw-cpp{display:grid;gap:9px;margin:12px 0;padding:12px;border:1px solid rgba(232,205,161,.28);border-radius:13px;background:rgba(6,12,21,.28);font:500 12px "DM Sans",sans-serif}',
 '.code-workspace-dialog .cw-cpp strong{color:#e9d5b7}',
 '.code-workspace-dialog .cw-cpp p{margin:0;color:#bfb7ad;font-size:11px;line-height:1.5}',
@@ -69,6 +74,7 @@ function render(){
  cppPanel.hidden=files[index].language!=="cpp";
  const active=files[index].language;
  runtimePanel.hidden=!engine.available.includes(active)||active==="cpp";
+ $("cwPreviewPanel").hidden=active!=="html"&&active!=="css";
  $("cwRuntimeLabel").textContent=({javascript:"JavaScript · Browser Sandbox",python:"Python · Pyodide WASM",typescript:"TypeScript · Compiler + Sandbox",sql:"SQL · SQLite WASM"})[active]||"Runtime Sandbox";
 }
 function add(name,code=""){
@@ -279,10 +285,78 @@ function openAIPreview(source){
  clearTimeout(previewTimer);updatePreview();
  return true;
 }
+// AI-generated executable blocks get their own console and optional editor.
+// Model output is always textContent, never HTML or main-window eval.
+function openAICode(job){
+ if(!job||!engine.available.includes(job.language)||!job.code||job.code.length>12000)return false;
+ if(files.length>=12){
+  info.textContent="Code Workspace penuh (12 fail). Buang fail sebelum membuka snippet baharu.";
+  if(!dialog.open)dialog.showModal();
+  return false;
+ }
+ save();
+ let number=1,name="";
+ do{name="ai-code-"+number+ext[job.language];number++;}while(files.some(f=>f.name===name));
+ files.push({name,language:job.language,code:job.code});index=files.length-1;
+ render();schedulePreview();
+ if(!dialog.open)dialog.showModal();
+ info.textContent="Kod A.I. dibuka dalam editor. Tekan Run untuk melaksanakan dalam sandbox.";
+ (job.language==="cpp"?$("cwCppRun"):$("cwRuntimeRun"))?.focus();
+ return true;
+}
+function inlineCodeConsole(job,element){
+ const labels={javascript:"JavaScript",python:"Python",typescript:"TypeScript",sql:"SQL",cpp:"C++"};
+ const label=labels[job.language]||job.language;
+ const panel=document.createElement("section");panel.className="aksara-inline-preview aksara-inline-console";
+ const heading=document.createElement("strong");heading.textContent="Code Engine · "+label+" Console";
+ const actions=document.createElement("div");actions.className="aksara-console-actions";
+ const run=document.createElement("button");run.type="button";run.textContent="▶ Jalankan "+label;
+ const stop=document.createElement("button");stop.type="button";stop.textContent="■ Henti";stop.hidden=true;
+ const state=document.createElement("small");state.setAttribute("role","status");state.setAttribute("aria-live","polite");
+ state.textContent="Sedia · "+(job.language==="python"?"Pyodide WebAssembly":"sandbox setempat")+".";
+ const output=document.createElement("pre");output.setAttribute("role","log");output.textContent="Belum dijalankan.";
+ actions.append(run,stop);panel.append(heading,actions,state,output);element.appendChild(panel);
+ let controller=null;
+ const cleanup=new AbortController();
+ function display(report){
+  const diagnostics=Array.isArray(report?.diagnostics)?report.diagnostics.map(d=>
+   (d.line?"Baris "+d.line+" · ":"")+String(d.code||"RUNTIME_ERROR")+": "+String(d.message||"")).join("\n"):"";
+  output.textContent=String(report?.stdout||report?.output||"(Tiada output)").slice(0,12000)+
+   (report?.stderr?"\nSTDERR:\n"+String(report.stderr).slice(0,4000):"")+
+   (diagnostics?"\nDIAGNOSTIK:\n"+diagnostics:"")+
+   (report?.error&&!diagnostics?"\nERROR: "+String(report.error).slice(0,1200):"");
+  state.textContent=(report?.ok?"BERJAYA":"RALAT")+" · "+(Number(report?.runtimeMs)||0)+" ms · "+label+" sandbox";
+ }
+ // Also display output from the existing opt-in A.I. auto-execution agent.
+ window.addEventListener("aksara:code-result",event=>{
+  if(event.detail?.language===job.language&&event.detail?.code===job.code&&event.detail?.report)
+   display(event.detail.report);
+ },{signal:cleanup.signal});
+ window.addEventListener("ba:cleared",()=>{controller?.abort();cleanup.abort();},{once:true,signal:cleanup.signal});
+ stop.addEventListener("click",()=>controller?.abort());
+ run.addEventListener("click",async()=>{
+  if(controller||window.AksaraAICodeAgent?.running()){state.textContent="Pelaksanaan lain sedang berjalan.";return;}
+  controller=new AbortController();run.disabled=true;stop.hidden=false;
+  let overlay=null;
+  try{
+   overlay=window.AksaraRuntimeOverlay?.open(job.language,()=>controller?.abort())||null;
+   state.textContent="Menjalankan "+label+" dalam sandbox…";
+   const result=await engine.run(job.language,job.code,{signal:controller.signal,onProgress:message=>{
+    state.textContent=String(message||"Memuatkan runtime…").slice(0,110);overlay?.update(state.textContent);
+   }});
+   display(result);
+   window.dispatchEvent(new CustomEvent("aksara:code-result",{detail:{language:job.language,code:job.code,
+    report:{ok:result.ok,stdout:result.stdout,stderr:result.stderr,error:result.error,
+     diagnostics:result.diagnostics||[],runtimeMs:result.runtimeMs,truncated:result.truncated,limits:result.limits}}}));
+  }catch(error){state.textContent="Runtime dihentikan atau gagal.";output.textContent=String(error?.message||error).slice(0,600);}
+  finally{overlay?.close();controller=null;run.disabled=false;stop.hidden=true;}
+ });
+}
 function attachPreviewAction(reply,element,{inline=true}={}){
  const parsed=window.AksaraCodeChat?.extractWebCode?.(reply);
  const java=parsed?null:window.AksaraCodeChat?.extractJavaCode?.(reply);
- if((!parsed&&!java)||!element||element.querySelector(".aksara-ai-preview-action"))return false;
+ const runnable=!parsed&&!java?window.AksaraAICodeAgent?.extract?.(reply):null;
+ if((!parsed&&!java&&!runnable)||!element||element.querySelector(".aksara-ai-preview-action"))return false;
  if(parsed&&inline){
   // A static, isolated visual preview: scripts, forms and network remain blocked.
   // Previous chat history only previews the newest AI reply to avoid many iframes.
@@ -306,12 +380,16 @@ function attachPreviewAction(reply,element,{inline=true}={}){
    console.warn("AKSARA inline preview failed",error);
   }
  }
+ if(runnable&&inline)inlineCodeConsole(runnable,element);
  const action=document.createElement("button");
  action.type="button";action.className="msg-followup-btn aksara-ai-preview-action";
- action.textContent=parsed?"▶ Buka Editor · Code Engine":"▶ Tukar Java ke HTML/CSS";
- action.setAttribute("aria-label",parsed?"Buka HTML dan CSS ini dalam AKSARA Code Workspace":
-  "Hantar kod Java ini ke A.I. untuk ditukar kepada HTML dan CSS, bukan menjalankan Java");
- action.addEventListener("click",()=>parsed?openAIPreview(parsed):window.AksaraCodeChat?.convertJava?.(java));
+ const label=({javascript:"JavaScript",python:"Python",typescript:"TypeScript",sql:"SQL",cpp:"C++"})[runnable?.language]||"Code";
+ action.textContent=parsed?"▶ Buka Editor · Code Engine":java?"▶ Tukar Java ke HTML/CSS":"▶ Buka Editor · "+label;
+ action.setAttribute("aria-label",parsed?"Buka HTML dan CSS ini dalam AKSARA Code Workspace":java?
+  "Hantar kod Java ini ke A.I. untuk ditukar kepada HTML dan CSS, bukan menjalankan Java":
+  "Buka kod "+label+" dalam AKSARA Code Workspace untuk disunting dan dijalankan");
+ action.addEventListener("click",()=>parsed?openAIPreview(parsed):java?
+  window.AksaraCodeChat?.convertJava?.(java):openAICode(runnable));
  element.appendChild(action);
  return true;
 }
@@ -368,6 +446,6 @@ async function importFiles(selected){
  info.textContent=batch.length+" fail kod diimport secara setempat. Tiada kod dijalankan atau dihantar ke AI.";
  return batch.length;
 }
-window.AksaraCodeWorkspace=Object.freeze({version:"1.6",fileCount:()=>files.length,previewAvailable:true,openAIPreview,importFiles});
+window.AksaraCodeWorkspace=Object.freeze({version:"1.7",fileCount:()=>files.length,previewAvailable:true,openAIPreview,importFiles});
 restorePreviewActions();
 })();
