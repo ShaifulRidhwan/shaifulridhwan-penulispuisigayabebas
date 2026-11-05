@@ -192,7 +192,7 @@ test("AI Terminal is a dedicated glass header chip next to Code Engine, not nest
  assert.ok(ui.includes('trigger.id="codeAITerminalOpen"'));
  assert.ok(!ui.includes('menu.querySelector(".multi-ai-actions")?.append(trigger)'));
  assert.ok(!codeStatus.includes('codeAITerminalOpen'));
- assert.match(page,/bilik-antara-ai-terminal\.js\?v=4/);
+ assert.match(page,/bilik-antara-ai-terminal\.js\?v=5/);
  assert.match(page,/bilik-antara-code-brain\.js\?v=4/);
 });
 test("terminal's new glass header entry is iconed, accessible, responsive and in sync with runtime",()=>{
@@ -237,7 +237,7 @@ test("AI Terminal still opens its original dialog and keeps every execution safe
   'trigger.addEventListener("click",openTerminal)'
  ])assert.ok(ui.includes(marker),"Original Terminal workflow missing: "+marker);
  const brain=read("bilik-antara-code-brain.js");
- assert.ok(brain.includes("PINTU MASUK TERMINAL 2.3"));
+ assert.ok(brain.includes("PINTU MASUK TERMINAL:"));
  assert.ok(brain.includes("Manual, AI Assist dan AI Agent yang berkongsi runtime Code Engine."));
 });
 
