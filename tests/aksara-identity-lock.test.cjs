@@ -21,7 +21,7 @@ const protectedFiles=Object.freeze({
  "bilik-antara-chat-style.js":"9fc607daf19e2e838d29b7905fce63a2da1ecf78",
  "bilik-antara-voice.js":"aa649b09fdabe5d485eccfb959ff82ee4cc460e2",
  "netlify/functions/aksara-provider-router.js":"f364a7ac8c0d896a4c39987c24af036b3bbb3428",
- "bilik-antara-code-chat.js":"44db9d36a98ca72eaac5e680bf2d27900b1838f6"
+ "bilik-antara-code-chat.js":"cbc4d15a7dc4a92375372927da85c7a62f5b62eb"
 });
 function gitBlob(bytes){
  const prefix=Buffer.from("blob "+bytes.length+"\0");
