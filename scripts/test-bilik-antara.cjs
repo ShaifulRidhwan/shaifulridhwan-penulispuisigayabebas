@@ -226,7 +226,9 @@ test("restored chat uses one off-DOM batch without delaying live messages",()=>{
  const page=fs.readFileSync("bilik-antara.html","utf8");
  assert.match(page,/function addMessage\(role,text,data,container=ui\.chat\)/);
  assert.match(page,/const batch=document\.createDocumentFragment\(\);/);
- assert.match(page,/for\(const m of history\)addMessage\(m\.role,m\.content,m,batch\);/);
+ assert.match(page,/for\(const m of history\)\{/);
+ assert.match(page,/addMessage\(m\.role,m\.content,currentNext\?\{\.\.\.m,journeyNext:currentNext\}:m,batch\);/);
+ assert.match(page,/window\.AksaraJourney\?\.nextFor\(previousUserQuestion\)/);
  assert.match(page,/ui\.chat\.appendChild\(batch\);/);
  assert.match(page,/if\(!restoringHistory\)scrollDown\(\);/);
 });
