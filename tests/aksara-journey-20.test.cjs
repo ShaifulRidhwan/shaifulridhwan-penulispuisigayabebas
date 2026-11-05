@@ -57,5 +57,7 @@ test("Journey 20->21 resumes from stored sessions and ends with summary and penu
  const html=fs.readFileSync("bilik-antara.html","utf8");
  assert.match(html,/bilik-antara-journey\.js\?v=2/);
  assert.match(html,/let previousUserQuestion="";/);
+ assert.match(html,/window\.addEventListener\("DOMContentLoaded",/);
+ assert.match(html,/window\.AksaraJourney\.indexOfQuestion\(m\.content\)/);
  assert.match(html,/currentNext\?\{\.\.\.m,journeyNext:currentNext\}:m/);
 });
