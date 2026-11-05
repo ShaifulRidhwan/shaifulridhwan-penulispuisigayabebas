@@ -135,14 +135,24 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.deepEqual(codeFooter,multiFooter,"Code Engine footer must match Multi AI refresh styling");
   assert.equal(await page.locator("#codeEngineVerifyAll").count(),0,
    "Full runtime verification must be inside the single Refresh button");
-  let sawConsent=false;
-  page.once("dialog",async dialog=>{
-   sawConsent=true;
-   assert.match(dialog.message(),/29 MB/,"Large C++ download needs consent");
-   await dialog.dismiss(); // CI deliberately avoids downloading a compiler.
-  });
+  let nativePrompt=false;
+  const onNativeDialog=async dialog=>{nativePrompt=true;await dialog.dismiss();};
+  page.on("dialog",onNativeDialog);
   await page.locator("#codeEngineRefresh").click();
-  assert.equal(sawConsent,true,"Refresh must request explicit download consent");
+  const glassConsent=page.locator("#codeRefreshConsent");
+  assert.equal(await glassConsent.isVisible(),true,"Refresh must ask consent inside the glass dialog");
+  assert.match(await glassConsent.innerText(),/29 MB/,"Large C++ download needs clear consent");
+  const consentStyle=await glassConsent.evaluate(el=>{
+   const style=getComputedStyle(el);
+   return {radius:style.borderRadius,background:style.backgroundImage,blur:style.backdropFilter};
+  });
+  assert.notEqual(consentStyle.radius,"0px","Consent must have a rounded glass surface");
+  assert.notEqual(consentStyle.background,"none","Consent must keep the glass gradient");
+  assert.notEqual(consentStyle.blur,"none","Consent must use backdrop blur");
+  await page.locator("#codeRefreshCancel").click(); // CI deliberately avoids downloading a compiler.
+  assert.equal(await glassConsent.isVisible(),false,"Cancel should close only the inline confirmation");
+  assert.equal(nativePrompt,false,"Do not show the browser's white confirmation dialog");
+  page.off("dialog",onNativeDialog);
   await page.waitForFunction(()=>document.querySelector("#codeJavaScriptState")?.textContent==="Verified",{timeout:12000});
   assert.equal(await page.locator("#codeEngineMenu").isVisible(),true,"Refresh cannot close the dialog");
   assert.equal(await page.locator("#codeEngineStatus").getAttribute("aria-expanded"),"true");
