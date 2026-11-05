@@ -21,16 +21,17 @@ menu.className="multi-ai-dialog code-engine-dialog";
 menu.setAttribute("aria-labelledby","codeEngineMenuTitle");
 menu.setAttribute("aria-describedby","codeEngineMenuDescription");
 menu.innerHTML=[
- '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Runtime Health</strong><p id="codeEngineMenuDescription">Lima runtime untuk menjalankan kod termasuk C++20. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.</p><p id="codeHealthCheckedAt" class="code-health-freshness" role="status">Not checked yet</p></div><button type="button" id="codeMenuClose" aria-label="Close Code Engine">×</button></div>',
+ '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Runtime Health</strong><p id="codeEngineMenuDescription">Lima runtime untuk menjalankan kod termasuk C++20. Ujian sebenar atas permintaan. Python, TypeScript, SQLite dan Clang masih memuatkan komponen daripada CDN bila diperlukan. HTML/CSS dipratonton dalam sandbox tanpa JavaScript.</p><p id="codeHealthCheckedAt" class="code-health-freshness" role="status">Not checked yet</p></div><button type="button" id="codeMenuClose" aria-label="Close Code Engine">×</button></div>',
  '<div id="codeEngineActivity" class="code-health-activity" role="status" aria-live="polite" hidden></div>',
  '<div class="multi-ai-list" id="codeRuntimeList" aria-label="Runtime availability and verified execution status">',
   '<button type="button" class="multi-ai-row code-menu-language" id="codeHtmlPreview"><span class="multi-ai-provider">HTML · CSS</span><span class="multi-ai-state is-ready" id="codeHtmlState">Available</span></button>',
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="javascript"><span class="multi-ai-provider">JavaScript</span><span class="multi-ai-state is-muted" id="codeJavaScriptState">Checking…</span></button>',
-  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="python"><span class="multi-ai-provider">Python · Pyodide</span><span class="multi-ai-state is-muted" id="codePythonState">Not Tested · On Demand</span></button>',
-  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="typescript"><span class="multi-ai-provider">TypeScript</span><span class="multi-ai-state is-muted" id="codeTypeScriptState">Not Tested · On Demand</span></button>',
-  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="sql"><span class="multi-ai-provider">SQL · SQLite WASM</span><span class="multi-ai-state is-muted" id="codeSQLState">Not Tested · On Demand</span></button>',
-  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="cpp"><span class="multi-ai-provider">C++ · Clang WASM</span><span class="multi-ai-state is-muted" id="codeCPPState">Not Tested · ~29 MB</span></button>',
+  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="python"><span class="multi-ai-provider">Python · Pyodide (CDN)</span><span class="multi-ai-state is-muted" id="codePythonState">Not Tested · On Demand</span></button>',
+  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="typescript"><span class="multi-ai-provider">TypeScript (CDN)</span><span class="multi-ai-state is-muted" id="codeTypeScriptState">Not Tested · On Demand</span></button>',
+  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="sql"><span class="multi-ai-provider">SQL · SQLite WASM (CDN)</span><span class="multi-ai-state is-muted" id="codeSQLState">Not Tested · On Demand</span></button>',
+  '<button type="button" class="multi-ai-row code-menu-language" data-code-language="cpp"><span class="multi-ai-provider">C++ · Clang WASM (CDN)</span><span class="multi-ai-state is-muted" id="codeCPPState">Not Tested · ~29 MB</span></button>',
  '</div>',
+ ' <div class="code-verify-tools"><label for="codeVerifyLanguage">Ujian compiler sebenar (atas permintaan)</label><select id="codeVerifyLanguage"><option value="javascript">JavaScript</option><option value="python">Python · Pyodide</option><option value="typescript">TypeScript</option><option value="sql">SQL · SQLite</option><option value="cpp">C++20 · Clang (~29 MB)</option></select><button type="button" id="codeVerifySelected">▶ Uji Runtime</button><span id="codeVerifyResult" role="status" aria-live="polite">Ujian tidak memuatkan compiler lain secara automatik.</span></div>',
  ' <div class="multi-ai-actions"><button type="button" id="codeEngineRefresh">Refresh Status</button><button type="button" id="codeWorkspaceOpen">Code Workspace</button><button type="button" id="codeEvalOpen">Evaluation Lab</button></div>'
 ].join("");
 document.body.appendChild(menu);
@@ -67,6 +68,12 @@ css.textContent=[
 '@media(max-width:760px){.conversation-head .code-engine-status{height:37px;min-height:37px;padding:0 9px;font-size:11px}.conversation-head .code-engine-core{flex-basis:15px;width:15px;height:15px}.conversation-head .code-engine-core svg{width:15px;height:15px}}',
 '@media(max-width:760px){.conversation .conversation-head{flex-wrap:nowrap!important;gap:5px!important;padding:8px 8px!important}.conversation-head .voice-toolbar{flex:0 0 auto!important;width:auto!important;min-width:0!important;justify-content:flex-start!important}.conversation-head #voiceLive{padding-inline:9px!important;font-size:10px!important;white-space:nowrap!important}.conversation-head .chat-controls{display:flex!important;flex:1 1 0!important;width:auto!important;min-width:0!important;margin-left:0!important;justify-content:flex-end!important;gap:4px!important;flex-wrap:nowrap!important}.conversation-head #connection{flex:1 1 0!important;min-width:0!important;max-width:none!important;overflow:hidden!important;padding-inline:7px!important;gap:5px!important}.conversation-head #connectionText{display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:10px!important}.conversation-head .code-engine-status{flex:0 0 auto!important;max-width:125px!important;min-width:0!important;padding:0 8px!important;font-size:10px!important;gap:5px!important}.conversation-head .code-engine-status #codeEngineStatusText{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.conversation-head #settingsPanel{flex:0 0 auto!important;margin-left:0!important}}',
 '@media(max-width:390px){.conversation .conversation-head{gap:3px!important;padding-inline:5px!important}.conversation-head #voiceLive{padding-inline:6px!important;font-size:9px!important}.conversation-head .chat-controls{gap:3px!important}.conversation-head .code-engine-status{max-width:118px!important;padding-inline:6px!important;font-size:9px!important}.conversation-head #connection{padding-inline:5px!important}.conversation-head #connectionText{font-size:9px!important}.conversation-head #settingsPanel>summary{width:34px!important;min-width:34px!important;height:37px!important}}',
+'.code-engine-dialog .code-verify-tools{display:grid;gap:7px;margin:9px 0 13px;padding:11px;border:1px solid rgba(232,205,161,.2);border-radius:12px;background:rgba(255,255,255,.025)}',
+'.code-engine-dialog .code-verify-tools label{font:600 11px "DM Sans",sans-serif;color:#e8d6b8}',
+'.code-engine-dialog .code-verify-tools select{width:100%;border:1px solid rgba(232,205,161,.32);background:#182130;border-radius:9px;color:#f4e7d5;padding:9px}',
+'.code-engine-dialog .code-verify-tools button{border:1px solid rgba(232,205,161,.32);background:rgba(255,255,255,.05);border-radius:9px;padding:10px;color:#f2dfbe;font:600 11px "DM Sans",sans-serif}',
+'.code-engine-dialog .code-verify-tools button:disabled{opacity:.5}',
+'.code-engine-dialog #codeVerifyResult{font:500 10px/1.5 "DM Sans",sans-serif;color:#c6d5d8}',
 '.code-health-freshness{font:500 10px/1.45 "DM Sans",sans-serif!important;opacity:.8;margin:3px 0 9px!important}',
 '.code-health-activity[hidden]{display:none!important}',
 '.code-health-activity{font:500 11px/1.5 "DM Sans",sans-serif;color:#ead9bf;padding:9px 11px;margin:0 0 11px;border:1px solid rgba(222,193,151,.24);border-radius:11px;background:rgba(255,255,255,.032);overflow-wrap:anywhere}',
@@ -86,6 +93,24 @@ pill.addEventListener("click",()=>{
 menu.querySelector("#codeMenuClose").addEventListener("click",()=>{closeMenu();pill.focus();});
 menu.addEventListener("click",event=>{if(event.target===menu)closeMenu();});
 menu.querySelector("#codeEngineRefresh").addEventListener("click",()=>{checkRuntime();});
+let verifyController=null;
+menu.querySelector("#codeVerifySelected").addEventListener("click",async()=>{
+ if(verifyController)return;
+ const language=menu.querySelector("#codeVerifyLanguage").value;
+ const button=menu.querySelector("#codeVerifySelected");
+ const result=menu.querySelector("#codeVerifyResult");
+ verifyController=new AbortController();button.disabled=true;
+ result.textContent="Menjalankan ujian "+language+" dalam sandbox…";
+ try{
+  const report=await engine.probeLanguage(language,{signal:verifyController.signal});
+  health.verifyResult(language,report);
+  result.textContent=report.ready?"LULUS · "+language+" · "+report.runtimeMs+" ms":
+   "GAGAL · "+language+" · "+String(report.error||"Semak output dan sambungan CDN").slice(0,110);
+  renderHealth();
+ }catch(error){result.textContent="Ujian gagal: "+String(error?.message||error).slice(0,110);}
+ finally{verifyController=null;button.disabled=false;}
+});
+menu.addEventListener("close",()=>{verifyController?.abort();pill.setAttribute("aria-expanded","false");});
 menu.querySelector("#codeWorkspaceOpen").addEventListener("click",()=>{closeMenu();window.dispatchEvent(new Event("aksara:code-workspace-open"));});
 menu.querySelector("#codeHtmlPreview").addEventListener("click",()=>{closeMenu();window.dispatchEvent(new CustomEvent("aksara:code-workspace-open",{detail:{language:"html"}}));});
 menu.querySelector("#codeEvalOpen").addEventListener("click",()=>{closeMenu();window.dispatchEvent(new Event("aksara:code-evaluation-open"));});

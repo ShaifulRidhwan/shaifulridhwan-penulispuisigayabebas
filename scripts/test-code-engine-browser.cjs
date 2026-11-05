@@ -157,6 +157,12 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#codeWorkspaceDialog").isVisible(),true);
   assert.equal(await page.locator("#cwFiles option").count(),1);
   await page.locator("#cwEditor").fill('console.log("WORKSPACE SNIPPET");');
+  assert.equal(await page.locator("#cwRunPanel").isVisible(),true,"JavaScript should run inside Workspace without copying to chat");
+  await page.locator("#cwRun").click();
+  await page.waitForFunction(()=>document.querySelector("#cwRunStatus")?.textContent.includes("BERJAYA"),{timeout:14000});
+  assert.match(await page.locator("#cwRunOutput").innerText(),/WORKSPACE SNIPPET/);
+  assert.equal(aiChatRequests.length,0,"Workspace console is local and cannot call AI");
+
   assert.equal(aiChatRequests.length,0);
   await page.locator("#cwUse").click();
   assert.equal(await page.locator("#codeWorkspaceDialog").isVisible(),false);
@@ -362,7 +368,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    return {version:window.AksaraCodeRuntime.version,ok:r.ok,stderr:r.stderr,stdoutLength:r.stdout.length,
     truncated:r.truncated,diagnostics:r.diagnostics,limits:r.limits,runtimeMs:r.runtimeMs};
   });
-  assert.equal(contract.version,"0.7","Code Runtime browser contract must match the shipped 0.7 API");
+  assert.equal(contract.version,"0.8","Code Runtime browser contract must match the shipped 0.8 API");
   assert.equal(contract.ok,true);
   assert.match(contract.stderr,/WARN_CHECK/);
   assert.ok(contract.stdoutLength<=10000,"Worker output budget must be enforced");
@@ -472,6 +478,34 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#codeBridgeDialog").isVisible(),false);
   assert.equal(await page.locator("#runtimeAntaraDialog").isVisible(),false,"AI review cannot run code");
   assert.ok(aiChatRequests.length>=1,"An explicit user click routes into the existing Multi AI endpoint");
+
+
+  // Regression for the Brave Android screenshot: an AI HTML reply renders a
+  // passive inline preview immediately, even when two distinct examples exist.
+  await page.evaluate(()=>{
+   const msg=document.createElement("article");msg.className="message ai";
+   const bubble=document.createElement("div");bubble.className="bubble";msg.appendChild(bubble);
+   document.getElementById("chat").appendChild(msg);
+   const fence=String.fromCharCode(96).repeat(3);
+   const first='<!doctype html><html><body><h1 id="yaya-preview">Yaya One</h1><script>parent.document.body.dataset.insecure="yes"</script></body></html>';
+   const second='<!doctype html><html><body><h1 id="yaya-preview">Yaya Two</h1></body></html>';
+   const reply=fence+"html\n"+first+"\n"+fence+"\nPratonton:\n"+fence+"html\n"+second+"\n"+fence;
+   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question:"Tunjuk HTML",answer:reply}}));
+  });
+  assert.equal(await page.locator(".aksara-inline-preview").count(),1);
+  const inline=page.locator(".aksara-inline-preview");
+  assert.equal(await inline.locator("iframe").getAttribute("sandbox"),"");
+  await page.frameLocator(".aksara-inline-preview iframe").locator("#yaya-preview").waitFor({timeout:8000});
+  assert.match(await page.frameLocator(".aksara-inline-preview iframe").locator("#yaya-preview").innerText(),/Yaya One/);
+  assert.equal(await page.frameLocator(".aksara-inline-preview iframe").locator("script").count(),0);
+  await inline.getByRole("button",{name:"Pratonton 2"}).click();
+  await page.waitForFunction(()=>document.querySelector(".aksara-inline-preview iframe")?.srcdoc.includes("Yaya Two"),{timeout:4000});
+  assert.match(await page.frameLocator(".aksara-inline-preview iframe").locator("#yaya-preview").innerText(),/Yaya Two/);
+  await inline.getByRole("button",{name:"Buka dalam Code Workspace"}).click();
+  assert.equal(await page.locator("#codeWorkspaceDialog").isVisible(),true);
+  assert.match(await page.locator("#cwEditor").inputValue(),/Yaya Two/);
+  await page.locator("#cwClose").click();
+  assert.equal(await page.evaluate(()=>document.body.dataset.insecure||""),"","HTML preview must not execute scripts in the host page");
 
   assert.deepEqual(errors,[],"Browser page errors: "+errors.join("; "));
   console.log("AKSARA in-chat Code Engine PASS: status menu, explicit consent, JS 100, Python 17, offline AI, worker watchdog and recovery.");

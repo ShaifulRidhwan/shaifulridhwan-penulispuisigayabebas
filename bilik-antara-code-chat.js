@@ -55,19 +55,40 @@ function detect(source){
  return {language:isPy?"python":"javascript",code:full,format:"raw"};
 }
 // HTML/CSS belongs in the existing no-script Code Workspace preview, not a Python/JS runtime.
-function extractWebCode(reply){
+// Extract visible previews separately from executable code. Multiple HTML examples
+// may be previewed, but a bare "run previous code" command remains unambiguous only.
+function extractWebCandidates(reply){
  const source=String(reply||"");
- if(!source||source.length>40000)return null;
+ if(!source||source.length>40000)return [];
  const blocks=[...source.matchAll(/(?:^|\n)[ \t]*\x60\x60\x60(html|htm|css)?[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*\x60\x60\x60(?=\s|$)/gi)];
  const html=[],css=[];
  for(const block of blocks){
   const type=String(block[1]||"").toLowerCase(),code=block[2].trim();
-  if(type==="html"||type==="htm"||(!type&&/^(?:<!doctype\s+html\b|<html\b|<head\b|<body\b|<main\b|<div\b)/i.test(code)))html.push(code);
+  if(type==="html"||type==="htm"||(!type&&/^(?:<!doctype\s+html\b|<html\b|<head\b|<body\b|<main\b|<div\b|<h[1-6]\b|<section\b|<svg\b)/i.test(code)))html.push(code);
   else if(type==="css")css.push(code);
  }
- // A single whole document, optionally with a separate stylesheet, is unambiguous.
- if(html.length!==1||css.length>1||!html[0]||html[0].length>12000||(css[0]||"").length>12000)return null;
- return {html:html[0],css:css[0]||""};
+ // A plain full document without markdown also qualifies. Never scrape arbitrary chat prose.
+ if(!blocks.length&&/^(?:<!doctype\s+html\b|<html\b|<body\b|<main\b|<div\b|<h[1-6]\b|<section\b|<svg\b)/i.test(source.trim())){
+  html.push(source.trim());
+ }
+ const uniqueCSS=[...new Set(css.filter(code=>code&&code.length<=12000))];
+ // Do not silently attach the wrong stylesheet when several different CSS blocks exist.
+ const stylesheet=uniqueCSS.length===1?uniqueCSS[0]:"";
+ const seen=new Set(),results=[];
+ for(const code of html){
+  if(!code||code.length>12000)continue;
+  const key=code.replace(/\s+/g," ").trim();
+  if(seen.has(key))continue;
+  seen.add(key);
+  results.push({html:code,css:stylesheet});
+  if(results.length===3)break;
+ }
+ return results;
+}
+function extractWebCode(reply){
+ const candidates=extractWebCandidates(reply);
+ // Two distinct documents are ambiguous for an unqualified Run command.
+ return candidates.length===1?candidates[0]:null;
 }
 // Java source is recognised but never passed to the JavaScript sandbox as if it were JavaScript.
 function extractJavaCode(reply){
@@ -244,5 +265,5 @@ run.addEventListener("click",async()=>{
  controller=null;executing=false;selected=null;confirmSend=false;refresh();
 });
 refresh();
-window.AksaraCodeChat=Object.freeze({detect,extractWebCode,extractJavaCode,convertJava,selectedLanguage:()=>selected,isRunning:()=>executing});
+window.AksaraCodeChat=Object.freeze({detect,extractWebCode,extractWebCandidates,extractJavaCode,convertJava,selectedLanguage:()=>selected,isRunning:()=>executing});
 })();

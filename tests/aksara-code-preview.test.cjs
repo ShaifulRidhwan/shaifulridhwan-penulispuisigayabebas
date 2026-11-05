@@ -56,7 +56,7 @@ test("C++ project workflow exposes code, stdin, stop and output",()=>{
 });
 test("v0.3 page loads fresh Code Engine JS",()=>{
  const html=read("bilik-antara.html");
- for(const asset of ["runtime.js?v=7","status.js?v=20","workspace.js?v=6","chat.js?v=10","agent.js?v=5"]){
+ for(const asset of ["runtime.js?v=8","status.js?v=21","workspace.js?v=7","chat.js?v=11","agent.js?v=5"]){
   assert.ok(html.includes("bilik-antara-code-"+asset),"Missing "+asset);
  }
 });
@@ -71,3 +71,30 @@ test("AI Code Agent starts enabled without removing manual OFF and stop",()=>{
  assert.ok(agent.includes('stop.addEventListener("click"'),"Execution stop must stay available");
 });
 require("./aksara-code-followup.test.cjs");
+
+test("Workspace runs JavaScript, Python, TypeScript, SQL and C++ through isolated runtime",()=>{
+ const workspace=read("bilik-antara-code-workspace.js");
+ for(const marker of ['id="cwRunPanel"','id="cwRun"','id="cwStop"','id="cwRunOutput"',
+   "engine.run(language,source","workspaceController?.abort()",
+   'id="cwCppRun"','id="cwPreviewFrame"'])assert.ok(workspace.includes(marker),marker);
+ assert.ok(workspace.includes("engine.available.includes(files[index].language)"));
+ assert.ok(workspace.includes('files[index].language!=="cpp"'));
+});
+test("automatic HTML/CSS bubble previews remain passive, sandboxed and editable",()=>{
+ const workspace=read("bilik-antara-code-workspace.js");
+ const chat=read("bilik-antara-code-chat.js");
+ assert.ok(chat.includes("function extractWebCandidates"));
+ assert.ok(workspace.includes("extractWebCandidates?.(reply)"));
+ assert.ok(workspace.includes('frame.setAttribute("sandbox","")'));
+ assert.ok(workspace.includes("frame.srcdoc=safePreviewDocument("));
+ assert.ok(workspace.includes('button.textContent="Pratonton "+(i+1)'));
+ assert.ok(workspace.includes("openAIPreview(candidates[active])"));
+ assert.ok(workspace.includes("script-src 'none'"));
+});
+test("manual runtime verification reports evidence without downloading all compilers",()=>{
+ const status=read("bilik-antara-code-status.js"),health=read("bilik-antara-code-health.js");
+ assert.ok(status.includes("codeVerifySelected")&&status.includes("codeVerifyLanguage"));
+ assert.ok(status.includes("engine.probeLanguage(language"));
+ assert.ok(health.includes("verifyResult(language,report)"));
+ assert.ok(status.includes("CDN"));
+});
