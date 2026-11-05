@@ -23,8 +23,9 @@ triggerLabel.textContent="AI Terminal";
 trigger.append(triggerIcon,triggerLabel);
 engineChip.insertAdjacentElement("afterend",trigger);
 const dialog=document.createElement("dialog");dialog.id="aksaraAITerminal";dialog.className="multi-ai-dialog aksara-ai-terminal";
+dialog.setAttribute("aria-labelledby","aitTitle");
 dialog.innerHTML=[
-'<div class="multi-ai-head"><div><strong>AKSARA · AI TERMINAL</strong><p>Terminal maya dalam sandbox browser, bukan shell OS atau server.</p></div><button id="aitClose" type="button" aria-label="Tutup AI Terminal">×</button></div>',
+'<div class="multi-ai-head"><div><strong id="aitTitle">AKSARA · AI TERMINAL</strong><p>Terminal maya dalam sandbox browser, bukan shell OS atau server.</p></div><button id="aitClose" type="button" aria-label="Tutup AI Terminal">×</button></div>',
 '<div class="ait-shell">',
 '<div class="ait-row"><strong>Code Intelligence 2.0</strong><small id="aitRuntimeState">Sandbox · on demand</small></div>',
 '<div class="ait-modes" role="group" aria-label="Mod terminal"><button data-mode="manual" type="button">Manual</button><button data-mode="assist" type="button">AI Assist</button><button data-mode="agent" type="button">AI Agent</button></div>',
