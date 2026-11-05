@@ -591,7 +591,7 @@ if(role!=="user"&&data)renderExtras(bubble,data);
 msg.appendChild(bubble);renderMessageMeta(msg,role,data);container.appendChild(msg);if(!restoringHistory)scrollDown();return msg;
 }
 function renderExtras(bubble,data){
-const journeyNext=data?.journeyNext||(data?.coderPoetFollowUp===true?window.AksaraJourney?.nextFor("Siapa Aku"):null);
+const journeyNext=data?.journeyNext||null;
 if(journeyNext&&typeof journeyNext.question==="string"&&journeyNext.question.length<100){
 const area=elem("div","msg-followup");
 const progress=Number(journeyNext.position)||0;
@@ -599,11 +599,7 @@ const total=Number(journeyNext.total)||window.AksaraJourney?.steps?.length||30;
 if(progress>0&&progress<=total)area.appendChild(elem("span","section-label","Kenali Shaiful · Sambungan"));
 const suggestion=elem("button","msg-followup-btn","Sambung · "+journeyNext.question);
 suggestion.type="button";
-suggestion.addEventListener("click",()=>{
-if(busy)return;
-ui.input.value=journeyNext.question;
-resize();update();if(document.activeElement===ui.input)ui.input.blur();ui.form.requestSubmit();
-});
+suggestion.addEventListener("click",()=>{playJourney(journeyNext.question);});
 area.appendChild(suggestion);bubble.appendChild(area);
 }
 if(data?.studioHint===true){
@@ -686,6 +682,35 @@ bubble.appendChild(card);
 }
 if(data.disclaimer)bubble.appendChild(elem("div","aside-note",String(data.disclaimer).slice(0,450)));
 }
+// Journey buttons play a verified local chapter immediately: zero API calls,
+// zero retries, no network cooldown, and no modification to attached files or drafts.
+function playJourney(question){
+ if(busy)return false;
+ const chapter=window.AksaraJourney?.resolve(question,window.BilikAntaraIdentity,"journey-button");
+ if(!chapter){
+  status("error","Sambungan Tidak Tersedia","Kandungan Aksara belum dimuat. Muat semula Bilik Antara tanpa memanggil provider.");
+  return false;
+ }
+ if(history.at(-1)?.journeyStep===chapter.index&&history.at(-1)?.model===chapter.model)return false;
+ if(failedPreview){failedPreview.user.remove();failedPreview.node.remove();failedPreview=null;}
+ const sentAt=Date.now(),receivedAt=sentAt+1,mode=thoughtMode;
+ const reply=window.BilikAntaraChatStyle.reply(chapter.reply,{mode});
+ ui.starters.hidden=true;ui.chat.classList.remove("is-welcome");
+ addMessage("user",chapter.question,{timestamp:sentAt,locationLabel:messageLocation});
+ addMessage("assistant",reply,{timestamp:receivedAt,locationLabel:messageLocation,
+  model:chapter.model,provider:"local",mode:"local",thoughtMode:mode,journeyStep:chapter.index,journeyNext:chapter.next});
+ history.push({role:"user",content:chapter.question,timestamp:sentAt,locationLabel:messageLocation,journeyStep:chapter.index},
+  {role:"assistant",content:reply,timestamp:receivedAt,locationLabel:messageLocation,
+   provider:"local",model:chapter.model,mode:"local",thoughtMode:mode,journeyStep:chapter.index,journeyNext:chapter.next});
+ save();status("online","Request Completed","");
+ window.dispatchEvent(new CustomEvent("ba:answered",{detail:{
+  question:chapter.question,answer:reply,usage:null,duration:0,elapsedMs:0,firstTokenMs:0,
+  provider:"local",model:chapter.model,sources:[],researchStatus:"",
+  toolsUsed:[],sourceCount:0,mode:"local",evidenceProfile:null,visionStatus:"not_requested"
+ }}));
+ window.dispatchEvent(new Event("ba:ready-for-tools"));
+ return true;
+}
 function welcome(container=ui.chat){
 addMessage("assistant","Antara aksara dan code,\nGAYA yang bebas,\nBEBAS dalam bentuk,\nLUAS dalam pemikiran.",{timestamp:Date.now(),thoughtMode,intro:true},container);
 }
@@ -703,8 +728,10 @@ for(const m of history){
   addMessage(m.role,m.content,m,batch);
   continue;
  }
- const currentNext=window.AksaraJourney?.nextFor(previousUserQuestion)||null;
- addMessage(m.role,m.content,currentNext?{...m,journeyNext:currentNext}:m,batch);
+ const localChapter=m.model==="project-journey"||
+  (m.model==="project-identity"&&(Number.isInteger(m.journeyStep)||!!m.journeyNext));
+ const currentNext=localChapter?window.AksaraJourney?.nextFor(previousUserQuestion)||null:null;
+ addMessage(m.role,m.content,currentNext?{...m,journeyNext:currentNext}:{...m,journeyNext:null},batch);
 }
 ui.starters.hidden=history.length>0;
 if(!history.length)welcome(batch);
@@ -872,9 +899,7 @@ e.preventDefault();if(!ui.send.disabled)ui.form.requestSubmit();
 }
 });
 ui.starters.querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{
-if(busy)return;
-const starterText=btn.textContent.trim();
-ui.input.value=starterText;resize();update();if(document.activeElement===ui.input)ui.input.blur();ui.form.requestSubmit();
+ playJourney(btn.textContent.trim());
 }));
 function showTyping(){
 const msg=elem("article","message ai");
@@ -907,8 +932,8 @@ if(metadataReply)return {reply:metadataReply,model:"local-file-metadata",provide
 if(typeof window!=="undefined"&&!payload.documentText&&(!payload.media||Array.isArray(payload.media)&&!payload.media.length)){
 const local=window.BilikAntaraIdentity?.answerIdentity(payload.question);
 if(local)return {reply:local,model:"project-identity",provider:"local",mode:"local",sources:[],durMs:0};
-const journey=window.AksaraJourney?.answer(payload.question);
-if(journey)return {reply:journey,model:"project-journey",provider:"local",mode:"local",sources:[],durMs:0};
+// Typed free-form questions are handled by the ordinary chat route, even if
+// their wording happens to match a title from the local Kenali Shaiful series.
 }
 const retryAfter=res=>{
 const raw=res.headers.get("retry-after");if(!raw)return undefined;
@@ -1062,7 +1087,7 @@ if(data.outputFormat!=="json")data.reply=window.BilikAntaraChatStyle.reply(data.
 cancelPartialFrame();
 typing.remove();partialNode?.remove();
 const receivedAt=Date.now();
-const journeyNext=!selectedFile?window.AksaraJourney?.nextFor(question)||null:null;
+const journeyNext=null; // Provider replies never silently join the fixed narrative.
 addMessage("assistant",data.reply,{...data,journeyNext,timestamp:receivedAt,locationLabel:sentLocation});
 history.push({role:"user",timestamp:sentAt,locationLabel:sentLocation,content:question+(selectedFile?"\n[Lampiran sesi: "+selectedFile.name+". Fail mentah hanya tersedia dalam tab asal sehingga dibuang.]":"")});
 history.push({role:"assistant",content:data.reply,timestamp:receivedAt,locationLabel:sentLocation,provider:data.provider||null,model:data.model||null,thoughtMode:requestMode,sources:data.sources||[],
@@ -1180,7 +1205,7 @@ window.addEventListener("DOMContentLoaded",()=>{
 </script>
 <script src="bilik-antara-docx.js?v=1" defer></script>
 <script src="bilik-antara-identity.js?v=30" defer></script>
-<script src="bilik-antara-journey.js?v=3" defer></script>
+<script src="bilik-antara-journey.js?v=4" defer></script>
 <script src="bilik-antara-session-utils.js?v=3" defer></script>
 <script src="bilik-antara-suite.js?v=18" defer></script>
 <script src="bilik-antara-code-runtime.js?v=8" defer></script>
