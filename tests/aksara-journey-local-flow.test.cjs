@@ -23,7 +23,7 @@ test("all thirty chapters resolve locally, in order, including introduction and 
 });
 
 test("typing a question is never an implicit invitation to start the scripted journey",()=>{
- const chapter=Journey.steps[14].question;
+ const chapter=Journey.steps[15].question;
  assert.equal(chapter,"Code Engine Aku Boleh Buat Apa?");
  assert.equal(Journey.resolve(chapter,Identity,"typed"),null);
  assert.equal(Journey.resolve(chapter,Identity),null);
