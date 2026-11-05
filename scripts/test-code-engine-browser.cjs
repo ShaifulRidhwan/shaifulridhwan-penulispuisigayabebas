@@ -133,7 +133,16 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
    return {borderRadius:s.borderRadius,minHeight:s.minHeight,padding:s.padding,font:s.font,backgroundImage:s.backgroundImage};
   });
   assert.deepEqual(codeFooter,multiFooter,"Code Engine footer must match Multi AI refresh styling");
+  assert.equal(await page.locator("#codeEngineVerifyAll").count(),0,
+   "Full runtime verification must be inside the single Refresh button");
+  let sawConsent=false;
+  page.once("dialog",async dialog=>{
+   sawConsent=true;
+   assert.match(dialog.message(),/29 MB/,"Large C++ download needs consent");
+   await dialog.dismiss(); // CI deliberately avoids downloading a compiler.
+  });
   await page.locator("#codeEngineRefresh").click();
+  assert.equal(sawConsent,true,"Refresh must request explicit download consent");
   await page.waitForFunction(()=>document.querySelector("#codeJavaScriptState")?.textContent==="Verified",{timeout:12000});
   assert.equal(await page.locator("#codeEngineMenu").isVisible(),true,"Refresh cannot close the dialog");
   assert.equal(await page.locator("#codeEngineStatus").getAttribute("aria-expanded"),"true");
