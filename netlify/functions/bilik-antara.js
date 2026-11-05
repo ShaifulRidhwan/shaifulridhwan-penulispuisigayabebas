@@ -24,6 +24,7 @@ const PublicNewsRSS=require("./aksara-public-news-rss");
 const FreePotential=require("./aksara-free-potential");
 const MultiURL=require("./aksara-multi-url");
 const WorkersFree=require("./aksara-workers-free");
+const CloudflareRest=require("./aksara-cloudflare-rest");
 const DocumentIntelligence=require("./aksara-document-intelligence");
 const EvidenceAudit=require("./aksara-evidence-audit");
 const VisionDiagnostic=require("./aksara-vision-diagnostics");
@@ -232,7 +233,10 @@ async function reviewAnswer({apiKey,model,question,reply,sources,evidence,intent
   return review;
 }
 exports.handler=async event=>{
-  const rawCloudflareAI=event.aiBinding||null;
+  // Netlify does not supply Cloudflare's native event.aiBinding. Use a
+  // scoped REST adapter when server-side credentials already exist; native
+  // bindings still win on Cloudflare Worker deployments.
+  const rawCloudflareAI=event.aiBinding||CloudflareRest.create({env:process.env})||null;
   const gatewayOptions=WorkersFree.gatewayOptions();
   // Preserve the identity-locked provider router. Apply optional AI Gateway
   // only to native Workers AI models; no third-party Unified Billing.
