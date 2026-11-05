@@ -36,6 +36,12 @@
    });
    request={state:"idle",language:"",message:"",at:clock()};
   }
+  function verifyRuntime(language,ready,{latencyMs=0,error=""}={}){
+   if(!rows.has(language)||language==="html")return false;
+   setEvidence(language,ready===true?"verified":"unavailable",{source:"manual-smoke-test",
+    latencyMs,reason:ready===true?"":error||"Runtime smoke test failed"});
+   return true;
+  }
   function previewVerified(){
    setEvidence("html","verified",{source:"sandbox-preview"});
   }
@@ -76,7 +82,7 @@
    return {overall,verified,rows:mapped,permission,activity:request,checking,lastCheckedAt,
     checkedAgo:lastCheckedAt?fmtAge(Math.max(0,now-lastCheckedAt)):"Not checked"};
   }
-  return Object.freeze({beginProbe,probe,activity,previewVerified,setPermission,snapshot});
+  return Object.freeze({beginProbe,probe,verifyRuntime,activity,previewVerified,setPermission,snapshot});
  }
  return Object.freeze({create,LANGUAGES,LABELS,EVIDENCE_TTL,fmtAge});
 });

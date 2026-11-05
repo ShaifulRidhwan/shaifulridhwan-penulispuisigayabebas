@@ -12,11 +12,12 @@ dialog.innerHTML=[
  '<div class="multi-ai-head"><div><strong>AKSARA Code Workspace</strong><p>Snippet dalam tab ini. Tidak disimpan pada server, tidak dihantar ke AI dan tidak dijalankan automatik.</p></div><button type="button" id="cwClose" aria-label="Tutup">×</button></div>',
  '<div class="cw-body"><label for="cwFiles">Fail</label><select id="cwFiles"></select><div class="cw-tools"><button id="cwAdd" type="button">+ Fail</button><button id="cwDelete" type="button">Buang</button><button id="cwImport" type="button">Import</button><input type="file" accept=".js,.py,.ts,.sql,.html,.css,.cpp" id="cwUpload" hidden/></div><label for="cwEditor">Editor</label><textarea id="cwEditor" rows="12" spellcheck="false"></textarea><p id="cwInfo" role="status" aria-live="polite"></p></div>',
  '<div class="cw-preview" id="cwPreviewPanel"><div class="cw-preview-head"><strong>HTML / CSS · Live Preview</strong><div class="cw-preview-tools"><button type="button" id="cwMobile" aria-pressed="false">Mobile</button><button type="button" id="cwDesktop" aria-pressed="true">Desktop</button><button type="button" id="cwPreviewRefresh">Segar semula</button></div></div><p id="cwPreviewInfo" role="status" aria-live="polite">Tambah fail .html untuk melihat paparan.</p><div class="cw-preview-frame"><iframe id="cwPreviewFrame" title="HTML/CSS Live Preview (sandbox)" sandbox="" referrerpolicy="no-referrer"></iframe></div><p class="cw-preview-note">Preview setempat sahaja · JavaScript dan rangkaian dinyahaktifkan dalam preview v0.2.</p></div>',
+ '<section class="cw-runtime" id="cwRuntimePanel" hidden><div class="cw-runtime-head"><strong id="cwRuntimeLabel">Runtime Sandbox</strong><span>Jalankan hanya selepas klik Run</span></div><div class="cw-runtime-actions"><button type="button" id="cwRuntimeRun">▶ Jalankan Kod</button><button type="button" id="cwRuntimeStop" disabled>■ Henti</button></div><p id="cwRuntimeStatus" role="status" aria-live="polite">Belum dijalankan.</p><pre id="cwRuntimeOutput" role="log" aria-live="polite">Output console akan muncul di sini.</pre></section>',
  '<section class="cw-cpp" id="cwCppPanel" hidden><strong>C++20 · Clang WASM Console</strong><p>Compiler sebenar dimuatkan bila Run ditekan (~29 MB kali pertama). Kod kekal dalam sandbox browser.</p><label for="cwCppStdin">Standard input (cin), jika perlu</label><textarea id="cwCppStdin" rows="2" maxlength="4000" placeholder="Input untuk std::cin (pilihan)"></textarea><div class="cw-cpp-actions"><button type="button" id="cwCppRun">▶ Run C++</button><button type="button" id="cwCppStop" disabled>■ Henti</button></div><p id="cwCppStatus" role="status" aria-live="polite">Sedia untuk compile.</p><pre id="cwCppOutput" role="log" aria-live="polite">Output console akan muncul di sini.</pre></section>',
  '<div class="multi-ai-actions cw-actions"><button type="button" id="cwUse">Gunakan di chatbox</button><button type="button" id="cwExport">Eksport JSON</button></div>'
 ].join("");
 document.body.appendChild(dialog);
-const $=id=>dialog.querySelector("#"+id),select=$("cwFiles"),editor=$("cwEditor"),info=$("cwInfo"),cppPanel=$("cwCppPanel");
+const $=id=>dialog.querySelector("#"+id),select=$("cwFiles"),editor=$("cwEditor"),info=$("cwInfo"),cppPanel=$("cwCppPanel"),runtimePanel=$("cwRuntimePanel");
 const style=document.createElement("style");
 style.textContent=[
 '.code-workspace-dialog .cw-body{display:grid;gap:8px;margin-top:14px;font:500 12px "DM Sans",sans-serif}',
@@ -35,7 +36,21 @@ style.textContent=[
 '.code-workspace-dialog .cw-preview-frame iframe{width:100%;height:245px;max-width:100%;border:0;background:white;transition:max-width .2s ease}',
 '.code-workspace-dialog .cw-preview-frame.is-mobile iframe{max-width:375px}',
 '.code-workspace-dialog :is(#cwPreviewInfo,.cw-preview-note){margin:0;color:#bdb4a8;font:500 11px/1.5 "DM Sans",sans-serif}',
-'.code-workspace-dialog .cw-cpp[hidden]{display:none!important}',
+'.code-workspace-dialog .cw-runtime[hidden],.code-workspace-dialog .cw-cpp[hidden]{display:none!important}',
+'.code-workspace-dialog .cw-runtime{display:grid;gap:9px;margin:12px 0;padding:12px;border:1px solid rgba(232,205,161,.28);border-radius:13px;background:rgba(6,12,21,.28);font:500 12px "DM Sans",sans-serif}',
+'.code-workspace-dialog .cw-runtime-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;color:#e9d5b7}',
+'.code-workspace-dialog .cw-runtime-head span{font-size:10px;color:#bfb7ad}',
+'.code-workspace-dialog .cw-runtime-actions{display:flex;gap:8px}',
+'.code-workspace-dialog .cw-runtime-actions button{flex:1;padding:10px 12px;border:1px solid rgba(232,205,161,.32);border-radius:10px;color:#f2e0c6;background:rgba(255,255,255,.035);cursor:pointer}',
+'.code-workspace-dialog .cw-runtime-actions button:disabled{opacity:.4;cursor:default}',
+'.code-workspace-dialog #cwRuntimeStatus{margin:0;color:#c5baa9;font-size:11px;line-height:1.5}',
+'.code-workspace-dialog #cwRuntimeOutput{margin:0;box-sizing:border-box;max-height:220px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:rgba(2,7,14,.55);border:1px solid rgba(232,205,161,.17);border-radius:9px;padding:10px;color:#e9e6dd;font:12px/1.5 ui-monospace,Consolas,monospace}',
+'.code-workspace-dialog .aksara-inline-preview{margin:12px 0 7px;padding:10px;border:1px solid rgba(232,205,161,.25);border-radius:12px;background:rgba(7,13,22,.45);white-space:normal}',
+'.code-workspace-dialog .aksara-inline-preview iframe{display:block;width:100%;height:240px;border:0;border-radius:8px;background:#fff}',
+'.aksara-inline-preview{margin:12px 0 7px;padding:10px;border:1px solid rgba(232,205,161,.32);border-radius:12px;background:rgba(7,13,22,.55);white-space:normal;max-width:100%;overflow:hidden}',
+'.aksara-inline-preview strong{display:block;margin:0 0 8px;color:#ead6b9;font:600 12px "DM Sans",sans-serif}',
+'.aksara-inline-preview iframe{display:block;width:100%;height:240px;border:0;border-radius:8px;background:white}',
+'.aksara-inline-preview small{display:block;margin-top:7px;color:#bfb7ad;font:500 10px/1.45 "DM Sans",sans-serif}',
 '.code-workspace-dialog .cw-cpp{display:grid;gap:9px;margin:12px 0;padding:12px;border:1px solid rgba(232,205,161,.28);border-radius:13px;background:rgba(6,12,21,.28);font:500 12px "DM Sans",sans-serif}',
 '.code-workspace-dialog .cw-cpp strong{color:#e9d5b7}',
 '.code-workspace-dialog .cw-cpp p{margin:0;color:#bfb7ad;font-size:11px;line-height:1.5}',
@@ -52,6 +67,9 @@ function render(){
  select.replaceChildren();files.forEach((f,i)=>{const o=document.createElement("option");o.value=i;o.textContent=f.name;select.append(o);});
  select.value=String(index);editor.value=files[index].code;info.textContent=files.length+" fail sementara · tiada auto-simpan";
  cppPanel.hidden=files[index].language!=="cpp";
+ const active=files[index].language;
+ runtimePanel.hidden=!engine.available.includes(active)||active==="cpp";
+ $("cwRuntimeLabel").textContent=({javascript:"JavaScript · Browser Sandbox",python:"Python · Pyodide WASM",typescript:"TypeScript · Compiler + Sandbox",sql:"SQL · SQLite WASM"})[active]||"Runtime Sandbox";
 }
 function add(name,code=""){
  const lang=languageOf(name);
@@ -137,6 +155,40 @@ $("cwPreviewRefresh").addEventListener("click",()=>{clearTimeout(previewTimer);u
 $("cwMobile").addEventListener("click",()=>{previewBox.classList.add("is-mobile");$("cwMobile").setAttribute("aria-pressed","true");$("cwDesktop").setAttribute("aria-pressed","false");});
 $("cwDesktop").addEventListener("click",()=>{previewBox.classList.remove("is-mobile");$("cwMobile").setAttribute("aria-pressed","false");$("cwDesktop").setAttribute("aria-pressed","true");});
 
+let runtimeController=null;
+function setRuntimeRunning(on){
+ $("cwRuntimeRun").disabled=on;$("cwRuntimeStop").disabled=!on;
+}
+$("cwRuntimeStop").addEventListener("click",()=>runtimeController?.abort());
+$("cwRuntimeRun").addEventListener("click",async()=>{
+ if(runtimeController)return;
+ save();
+ const file=files[index],language=file.language,source=file.code;
+ if(!engine.available.includes(language)||language==="cpp")return;
+ if(!source.trim()){$("cwRuntimeStatus").textContent="Masukkan kod dahulu.";return;}
+ runtimeController=new AbortController();setRuntimeRunning(true);
+ const status=$("cwRuntimeStatus"),output=$("cwRuntimeOutput");
+ status.textContent="Menjalankan "+language+" dalam sandbox…";output.textContent="";
+ try{
+  const result=await engine.run(language,source,{signal:runtimeController.signal,
+   onProgress:detail=>{status.textContent=String(detail||"Memuatkan runtime…").slice(0,120);}});
+  const diag=(result.diagnostics||[]).map(d=>
+   (d.line?"Baris "+d.line+(d.column?":"+d.column:"")+" · ":"")+
+   String(d.code||"RUNTIME_ERROR")+": "+String(d.message||"").slice(0,400));
+  output.textContent=(result.output||"(Tiada output)")+
+   (diag.length?"\nDIAGNOSTIK:\n"+diag.join("\n"):"")+
+   (result.error&&!diag.length?"\nERROR: "+result.error:"");
+  status.textContent=(result.ok?"BERJAYA":"RALAT")+" · "+result.runtimeMs+" ms"+
+   (result.truncated?" · output dipotong":"")+" · setempat, tanpa AI";
+  window.dispatchEvent(new CustomEvent("aksara:code-result",{detail:{language,code:source,
+   report:{ok:result.ok,stdout:result.stdout,stderr:result.stderr,error:result.error,
+    diagnostics:result.diagnostics||[],runtimeMs:result.runtimeMs,truncated:result.truncated,limits:result.limits}}}));
+ }catch(error){
+  output.textContent=String(error?.message||error).slice(0,600);
+  status.textContent="Pelaksanaan dihentikan atau gagal.";
+ }finally{runtimeController=null;setRuntimeRunning(false);}
+});
+
 let cppController=null;
 function setCppRunning(on){
  $("cwCppRun").disabled=on;$("cwCppStop").disabled=!on;
@@ -199,7 +251,7 @@ $("cwExport").addEventListener("click",()=>{
 });
 $("cwClose").addEventListener("click",()=>dialog.close());
 dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
-dialog.addEventListener("close",()=>{cppController?.abort();clearTimeout(previewTimer);previewFrame.removeAttribute("srcdoc");});
+dialog.addEventListener("close",()=>{cppController?.abort();runtimeController?.abort();clearTimeout(previewTimer);previewFrame.removeAttribute("srcdoc");});
 // Turn a single AI HTML document into a local, editable, script-disabled Live Preview.
 function openAIPreview(source){
  const html=String(source?.html||"").trim(),css=String(source?.css||"").trim();
@@ -227,13 +279,36 @@ function openAIPreview(source){
  clearTimeout(previewTimer);updatePreview();
  return true;
 }
-function attachPreviewAction(reply,element){
+function attachPreviewAction(reply,element,{inline=true}={}){
  const parsed=window.AksaraCodeChat?.extractWebCode?.(reply);
  const java=parsed?null:window.AksaraCodeChat?.extractJavaCode?.(reply);
  if((!parsed&&!java)||!element||element.querySelector(".aksara-ai-preview-action"))return false;
+ if(parsed&&inline){
+  // A static, isolated visual preview: scripts, forms and network remain blocked.
+  // Previous chat history only previews the newest AI reply to avoid many iframes.
+  try{
+   const panel=document.createElement("section");
+   panel.className="aksara-inline-preview";
+   const heading=document.createElement("strong");heading.textContent="Live Preview · HTML/CSS";
+   const frame=document.createElement("iframe");
+   frame.title="Pratonton HTML/CSS daripada jawapan A.I.";
+   frame.setAttribute("sandbox","");
+   frame.setAttribute("referrerpolicy","no-referrer");
+   frame.setAttribute("loading","eager");
+   const note=document.createElement("small");
+   note.textContent="Pratonton setempat · JavaScript, borang dan rangkaian disekat";
+   panel.append(heading,frame,note);
+   element.appendChild(panel);
+   frame.addEventListener("load",()=>window.dispatchEvent(new Event("aksara:code-preview-ready")),{once:true});
+   frame.srcdoc=safePreviewDocument(parsed.html,parsed.css);
+  }catch(error){
+   // Failure to render must not remove the user's manual workspace action.
+   console.warn("AKSARA inline preview failed",error);
+  }
+ }
  const action=document.createElement("button");
  action.type="button";action.className="msg-followup-btn aksara-ai-preview-action";
- action.textContent=parsed?"▶ Live Preview · Code Engine":"▶ Tukar Java ke HTML/CSS";
+ action.textContent=parsed?"▶ Buka Editor · Code Engine":"▶ Tukar Java ke HTML/CSS";
  action.setAttribute("aria-label",parsed?"Buka HTML dan CSS ini dalam AKSARA Code Workspace":
   "Hantar kod Java ini ke A.I. untuk ditukar kepada HTML dan CSS, bukan menjalankan Java");
  action.addEventListener("click",()=>parsed?openAIPreview(parsed):window.AksaraCodeChat?.convertJava?.(java));
@@ -249,7 +324,7 @@ function restorePreviewActions(){
  for(let i=Math.max(0,history.length-24);i<history.length;i++){
   const message=history[i],node=messages[i+offset];
   if(message?.role==="assistant"&&message.mode!=="code"&&message.mode!=="voice")
-   attachPreviewAction(message.content,node?.querySelector(".bubble"));
+   attachPreviewAction(message.content,node?.querySelector(".bubble"),{inline:i===history.length-1});
  }
 }
 window.addEventListener("ba:answered",event=>{
@@ -267,7 +342,7 @@ window.addEventListener("aksara:code-workspace-open",event=>{
  if(event.detail?.language==="cpp")ensureCppStarter();
  render();if(!dialog.open)dialog.showModal();schedulePreview();
 });
-window.addEventListener("ba:cleared",()=>{cppController?.abort();files=[{name:"main.js",language:"javascript",code:""}];index=0;clearTimeout(previewTimer);previewFrame.removeAttribute("srcdoc");if(dialog.open)dialog.close();});
+window.addEventListener("ba:cleared",()=>{cppController?.abort();runtimeController?.abort();files=[{name:"main.js",language:"javascript",code:""}];index=0;clearTimeout(previewTimer);previewFrame.removeAttribute("srcdoc");if(dialog.open)dialog.close();});
 
 async function importFiles(selected){
  const chosen=Array.from(selected||[]);
@@ -293,6 +368,6 @@ async function importFiles(selected){
  info.textContent=batch.length+" fail kod diimport secara setempat. Tiada kod dijalankan atau dihantar ke AI.";
  return batch.length;
 }
-window.AksaraCodeWorkspace=Object.freeze({version:"1.5",fileCount:()=>files.length,previewAvailable:true,openAIPreview,importFiles});
+window.AksaraCodeWorkspace=Object.freeze({version:"1.6",fileCount:()=>files.length,previewAvailable:true,openAIPreview,importFiles});
 restorePreviewActions();
 })();

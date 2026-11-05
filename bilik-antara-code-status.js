@@ -31,7 +31,7 @@ menu.innerHTML=[
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="sql"><span class="multi-ai-provider">SQL · SQLite WASM</span><span class="multi-ai-state is-muted" id="codeSQLState">Not Tested · On Demand</span></button>',
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="cpp"><span class="multi-ai-provider">C++ · Clang WASM</span><span class="multi-ai-state is-muted" id="codeCPPState">Not Tested · ~29 MB</span></button>',
  '</div>',
- ' <div class="multi-ai-actions"><button type="button" id="codeEngineRefresh">Refresh Status</button><button type="button" id="codeWorkspaceOpen">Code Workspace</button><button type="button" id="codeEvalOpen">Evaluation Lab</button></div>'
+ ' <div class="multi-ai-actions"><button type="button" id="codeEngineRefresh">Refresh Status</button><button type="button" id="codeEngineVerifyAll">Uji 5 Runtime · Atas Permintaan</button><button type="button" id="codeWorkspaceOpen">Code Workspace</button><button type="button" id="codeEvalOpen">Evaluation Lab</button></div>'
 ].join("");
 document.body.appendChild(menu);
 const css=document.createElement("style");
@@ -62,7 +62,7 @@ css.textContent=[
 '.code-engine-dialog .code-menu-language .multi-ai-state{flex:none}',
 '.code-engine-dialog .code-menu-planned .multi-ai-model-note{margin:0 0 0 14px}',
 '.code-engine-dialog .multi-ai-actions #codeEngineRefresh{display:flex;align-items:center;justify-content:center;width:100%;min-height:49px;margin:0;padding:12px 16px;border-radius:13px;border:1px solid rgba(231,203,157,.3);background:linear-gradient(145deg,rgba(255,255,255,.065),rgba(255,255,255,.015));-webkit-backdrop-filter:blur(16px) saturate(1.15);backdrop-filter:blur(16px) saturate(1.15);box-shadow:inset 0 1px 0 rgba(255,255,255,.09),0 5px 18px rgba(0,0,0,.15);font:600 12px/1.35 "DM Sans",sans-serif}',
-'.code-engine-dialog .multi-ai-actions #codeWorkspaceOpen,.code-engine-dialog .multi-ai-actions #codeEvalOpen{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;margin-top:8px;padding:11px 14px;border-radius:13px;border:1px solid rgba(231,203,157,.3);color:#eadcc5;background:linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.015));font:600 12px "DM Sans",sans-serif;cursor:pointer}',
+'.code-engine-dialog .multi-ai-actions #codeEngineVerifyAll,.code-engine-dialog .multi-ai-actions #codeWorkspaceOpen,.code-engine-dialog .multi-ai-actions #codeEvalOpen{display:flex;align-items:center;justify-content:center;width:100%;min-height:44px;margin-top:8px;padding:11px 14px;border-radius:13px;border:1px solid rgba(231,203,157,.3);color:#eadcc5;background:linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.015));font:600 12px "DM Sans",sans-serif;cursor:pointer}',
 '.code-engine-dialog .multi-ai-actions #codeEngineRefresh:hover{background:rgba(255,255,255,.095)}',
 '@media(max-width:760px){.conversation-head .code-engine-status{height:37px;min-height:37px;padding:0 9px;font-size:11px}.conversation-head .code-engine-core{flex-basis:15px;width:15px;height:15px}.conversation-head .code-engine-core svg{width:15px;height:15px}}',
 '@media(max-width:760px){.conversation .conversation-head{flex-wrap:nowrap!important;gap:5px!important;padding:8px 8px!important}.conversation-head .voice-toolbar{flex:0 0 auto!important;width:auto!important;min-width:0!important;justify-content:flex-start!important}.conversation-head #voiceLive{padding-inline:9px!important;font-size:10px!important;white-space:nowrap!important}.conversation-head .chat-controls{display:flex!important;flex:1 1 0!important;width:auto!important;min-width:0!important;margin-left:0!important;justify-content:flex-end!important;gap:4px!important;flex-wrap:nowrap!important}.conversation-head #connection{flex:1 1 0!important;min-width:0!important;max-width:none!important;overflow:hidden!important;padding-inline:7px!important;gap:5px!important}.conversation-head #connectionText{display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:10px!important}.conversation-head .code-engine-status{flex:0 0 auto!important;max-width:125px!important;min-width:0!important;padding:0 8px!important;font-size:10px!important;gap:5px!important}.conversation-head .code-engine-status #codeEngineStatusText{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.conversation-head #settingsPanel{flex:0 0 auto!important;margin-left:0!important}}',
@@ -172,6 +172,40 @@ function checkRuntime(){
   renderHealth();return false;
  }).finally(()=>{runtimeChecking=false;button.disabled=false;});
 }
+const verifyAll=menu.querySelector("#codeEngineVerifyAll");
+let verificationController=null;
+verifyAll.addEventListener("click",async()=>{
+ if(verificationController){verificationController.abort();return;}
+ if(!window.confirm("Uji 5 runtime sebenar? Python/TypeScript/SQLite memuatkan CDN dan C++ Clang boleh menggunakan ~29 MB data. Teruskan?"))return;
+ const controller=new AbortController();
+ verificationController=controller;
+ const refresh=menu.querySelector("#codeEngineRefresh");
+ refresh.disabled=true;
+ let passed=0,checked=0;
+ try{
+  for(const language of engine.available){
+   if(controller.signal.aborted)break;
+   verifyAll.textContent="Uji "+(window.AksaraCodeHealth.LABELS[language]||language)+" · "+(checked+1)+"/5 · Henti";
+   const report=await engine.probeLanguage(language,{signal:controller.signal});
+   if(controller.signal.aborted)break;
+   checked++;
+   if(report.ready===true)passed++;
+   health.verifyRuntime(language,report.ready===true,{
+    latencyMs:report.runtimeMs||0,error:report.error||"Output smoke test tidak padan"
+   });
+   renderHealth();
+  }
+ }catch(error){
+  console.warn("AKSARA runtime verification stopped",error);
+ }finally{
+  verifyAll.textContent=controller.signal.aborted?"Ujian dihentikan · Tekan untuk uji semula":
+   "Uji 5 Runtime · "+passed+"/"+checked+" Disahkan";
+  verificationController=null;
+  refresh.disabled=false;
+  renderHealth();
+ }
+});
+window.addEventListener("pagehide",()=>verificationController?.abort(),{once:true});
 const freshnessTimer=setInterval(renderHealth,20000);
 window.addEventListener("pagehide",()=>clearInterval(freshnessTimer),{once:true});
 checkRuntime();
