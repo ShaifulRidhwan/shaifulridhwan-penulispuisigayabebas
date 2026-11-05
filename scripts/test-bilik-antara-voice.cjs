@@ -190,7 +190,7 @@ test("Opt-in voice UI, screen-reader status and independent original text input"
 test("Casual Malay UI uses Cakap instead of technical Dikte",()=>{
  assert.match(html,/id="voiceDictate"[^>]*>Cakap jadi teks<\/button>/);
  const health=fs.readFileSync("bilik-antara-multi-ai-status.js","utf8");
- assert.match(health,/Multi A\.I Connected/);
+ assert.match(health,/result\("connected","Connected"\)/);
  assert.doesNotMatch(html,/ba:voice-connected/,"Voice success must not mark text providers connected");
  assert.match(js,/dictate\.textContent="🎙 Cakap"/);
  assert.match(js,/dictate\.textContent="■ Berhenti"/);
