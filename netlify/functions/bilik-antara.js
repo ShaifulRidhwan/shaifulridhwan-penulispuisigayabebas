@@ -92,6 +92,18 @@ function googleCooldown(model,error,slot){
 }
 // Warm Netlify instances remember quota exhaustion; no repeated Google calls while cooling down.
 let lastTextProvider="",lastTextSuccessAt=0;
+const workersAiProbeCache={at:0,value:null,pending:null};
+async function manualWorkersAiCheck(ai,signal){
+ if(!ai||typeof ai.run!=="function")return null;
+ if(workersAiProbeCache.value&&Date.now()-workersAiProbeCache.at<60000)return workersAiProbeCache.value;
+ if(workersAiProbeCache.pending)return workersAiProbeCache.pending;
+ workersAiProbeCache.pending=(async()=>{
+  const checked=await CloudflareRest.probe(ai,{signal,timeoutMs:7500});
+  workersAiProbeCache.value=checked;workersAiProbeCache.at=Date.now();return checked;
+ })();
+ try{return await workersAiProbeCache.pending;}
+ finally{workersAiProbeCache.pending=null;}
+}
 const GEMINI_COOLDOWN_MS=120000;
 
 const AKSARA_TEXT_TONE="NADA AKSARA: BM santai, teknikal bila sesuai. Huraikan sebab dan contoh secukupnya. Jangan puji atau setuju tanpa alasan; bantah dengan bukti. Elak ayat berbunga dan angka editorial sambungan.";
@@ -353,7 +365,19 @@ exports.handler=async event=>{
       }:{}),
       ...(googleCooldownSeconds>0?{reason:"cooldown",retryAfterSeconds:googleCooldownSeconds}:{}),
       pool:poolStatuses};
-    const [alternatives,freeModels]=await Promise.all([alternativeChecks,freeModelsCheck]);
+    const workersConfigured=configured.some(p=>p.id==="workers_ai");
+    const manualCheck=payload.workersAiLiveCheck===true&&workersConfigured;
+    const [alternatives,freeModels,workersVerified]=await Promise.all([
+      alternativeChecks,freeModelsCheck,
+      manualCheck?manualWorkersAiCheck(cloudflareAI,event.signal):Promise.resolve(null)
+    ]);
+    const workersSetup=event.aiBinding?{enabled:workersConfigured,reason:"native_binding"}:CloudflareRest.readiness(process.env);
+    const workerRow=alternatives.find(p=>p.id==="workers_ai");
+    if(workerRow){
+      if(workersVerified)Object.assign(workerRow,workersVerified);
+      else if(!workersConfigured)workerRow.reason=workersSetup.reason;
+      else if(workerRow.status==="ready"&&!workerRow.reason)workerRow.reason="configured_not_verified";
+    }
     // Display-only Groq model metadata; protected provider routing stays unchanged.
     const groqModel=configured.find(p=>p.id==="groq")?.model||"";
     const providers=[google,...alternatives];
@@ -365,7 +389,10 @@ exports.handler=async event=>{
     // A successful conversation outranks an artificial one-word speed test.
     return result(200,{ok:true,providers,freeModels,capabilities:Capabilities.manifest(),
       freePotential:FreePotential.snapshot({env:process.env,ai:cloudflareAI,
-        manifest:Capabilities.manifest(),providers}),preferredProvider:(realSuccess||fastest||ready)?.id||"",checkedAt:Date.now(),someOnline:!!fastest,someReady:!!ready,configuredCount:configured.length+(apiKey?1:0),
+        manifest:Capabilities.manifest(),providers}),workersAiDiagnostic:{
+        configured:workersConfigured,reason:workersVerified?.reason||workersSetup.reason,
+        liveCheck:manualCheck===true,verified:workersVerified?.status==="online"
+      },preferredProvider:(realSuccess||fastest||ready)?.id||"",checkedAt:Date.now(),someOnline:!!fastest,someReady:!!ready,configuredCount:configured.length+(apiKey?1:0),
       productionHealth:Ops.snapshot(),
       globalObservability:{configured:TelemetryV6.config().enabled,scope:"private_aggregate_only",verifiedCollection:false},
       qualityRouter:{enabled:process.env.AKSARA_V5_QUALITY_ROUTER==="true",evidence:"approved_human_scores_only"},
