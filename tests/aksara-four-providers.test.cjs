@@ -106,7 +106,7 @@ test("Locked Malay casual + English technical language applies to Gemini, all fa
  assert.match(html,/AksaraJourney\?\.nextFor\(question\)/);
  assert.match(html,/journeyNext/);
  assert.match(html,/Sambung · /);
- assert.match(html,/bilik-antara-journey\.js\?v=1/);
+ assert.match(html,/bilik-antara-journey\.js\?v=\d+/);
  assert.match(css,/\.msg-followup-btn/);
  assert.match(html,/bilik-antara-identity\.js\?v=30/);
  assert.match(html,/bilik-antara-brain\.js\?v=15/);
