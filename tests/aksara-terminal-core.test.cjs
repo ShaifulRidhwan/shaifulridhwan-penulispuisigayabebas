@@ -200,6 +200,8 @@ test("terminal's new glass header entry is iconed, accessible, responsive and in
  for(const marker of [
   'trigger.setAttribute("aria-haspopup","dialog")',
   'trigger.setAttribute("aria-controls","aksaraAITerminal")',
+  'dialog.setAttribute("aria-labelledby","aitTitle")',
+  'id="aitTitle"',
   'trigger.setAttribute("aria-expanded","false")',
   'triggerIcon.className="code-engine-core ai-terminal-core"',
   'triggerLabel.textContent="AI Terminal"',
