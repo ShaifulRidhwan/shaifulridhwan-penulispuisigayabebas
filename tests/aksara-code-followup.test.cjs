@@ -119,7 +119,7 @@ test("multiple HTML documents are ambiguous and do not auto-select a preview",()
 test("HTML preview bridge reuses script-disabled workspace instead of creating another runtime",()=>{
  const js=fs.readFileSync(path.join(__dirname,"..","bilik-antara-code-workspace.js"),"utf8");
  assert.match(js,/aksara:code-workspace-preview-ai/);
- assert.match(js,/extractWebCode/);
+ assert.match(js,/extractWebCandidates/);
  assert.match(js,/openAIPreview/);
  assert.match(js,/safePreviewDocument/);
  assert.match(js,/script-src 'none'/);
