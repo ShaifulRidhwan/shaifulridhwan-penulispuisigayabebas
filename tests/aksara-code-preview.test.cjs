@@ -97,7 +97,7 @@ test("on-demand smoke checks verify runtime evidence without permanent Ready cla
  for(const marker of ['id="codeEngineVerifyAll"','engine.probeLanguage(language,{signal:controller.signal})',
   'verificationController.abort()','window.confirm(','health.verifyRuntime(language,report.ready===true'])
   assert.ok(status.includes(marker),"Missing runtime verification: "+marker);
- const sandbox={};vm.runInNewContext(health,{window:sandbox});
+ const sandbox={document:{}};vm.runInNewContext(health,{window:sandbox});
  let now=100000;const monitor=sandbox.AksaraCodeHealth.create(()=>now);
  assert.equal(monitor.verifyRuntime("python",true,{latencyMs:410}),true);
  assert.equal(monitor.snapshot().rows.find(r=>r.language==="python").status,"verified");
