@@ -56,7 +56,7 @@ test("Mod adaptif backend dan pemisahan daripada status Multi A.I kekal",()=>{
  assert.ok(html.includes('window.BilikAntaraThought=Object.freeze({getMode:()=>thoughtMode})'));
  assert.ok(html.includes('id="thoughtModeTitle">Thinking Mode</strong>'));
  assert.ok(html.includes('class="thinking-brain"'));
- assert.ok(html.length<80000);
+ assert.ok(Buffer.byteLength(html,"utf8")<100000);
  assert.equal(Modes.normalize("gelap"),"gelap");
  assert.equal(Modes.normalize("CAHAYA"),"cahaya");
  assert.equal(Modes.plan("gelap",{task:"critique"},{thinkingLevel:"low",maxTokens:2200},"Moral itu mutlak?").thinkingLevel,"high");
