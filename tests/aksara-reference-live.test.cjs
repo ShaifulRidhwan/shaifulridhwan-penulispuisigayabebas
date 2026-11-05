@@ -55,7 +55,7 @@ test("Pusat Rujukan v3.1 menyimpan tab dan privasi sedia ada, menambah hasil ter
  assert.match(hub,/ba:session-changed/);
  assert.match(html,/bilik-antara-knowledge-hub\.js\?v=2/);
  assert.match(html,/bilik-antara-knowledge-hub\.css\?v=2/);
- assert.match(html,/bilik-antara-code-status\.js\?v=21/);
+ assert.match(html,/bilik-antara-code-status\.js\?v=22/);
  assert.match(read("index.html"),/gaya-bebas\.js\?v=3/);
  assert.match(read("gaya-bebas.js"),/new URLSearchParams\(location\.search\)\.get\('karya'\)/);
  assert.doesNotMatch(hub,/localStorage\.setItem|sessionStorage\.setItem|sendBeacon/);
