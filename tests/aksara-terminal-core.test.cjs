@@ -13,8 +13,8 @@ test("AI terminal modules parse and stay behind sandbox runtime",()=>{
   "Project Memory","aitPatchBox","window.confirm(","core.zip(files)","storage(\"delete\")"]){
   assert.ok(ui.includes(token),"Missing AI Terminal feature "+token);
  }
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=1"));
- assert.ok(html.includes("bilik-antara-terminal-core.js?v=1"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=2"));
+ assert.ok(html.includes("bilik-antara-terminal-core.js?v=2"));
  assert.ok(html.includes("codeContext")&&html.includes("CODE_GUIDANCE"));
 });
 test("terminal command grammar rejects shell and wrong runtime",()=>{
@@ -75,4 +75,49 @@ test("No stale 80 KB Bilik Antara HTML budget checks remain",()=>{
    found.push(path.relative(path.join(__dirname,".."),path.join(folder,name)));
  }
  assert.deepEqual(found,[], "Legacy 80 KB guards must be migrated to 100 KB");
+});
+
+test("terminal ZIP round-trips without losing code or accepting corrupted data",()=>{
+ const project=[
+  {name:"main.py",language:"python",code:"from utils import answer\nprint(answer())\n"},
+  {name:"utils.py",language:"python",code:"def answer():\n    return 42\n"}
+ ];
+ const zip=core.zip(project);
+ assert.deepEqual(core.unzipStore(zip),project);
+ const corrupt=new Uint8Array(zip);corrupt[40]^=0x01;
+ assert.throws(()=>core.unzipStore(corrupt),/Checksum|ZIP|sah/);
+ assert.throws(()=>core.unzipStore(new Uint8Array(30)),/ZIP|sah/);
+});
+test("supervised AI patch accepts only one correct fenced block",()=>{
+ const answer="Cadangan:\n"+String.fromCharCode(96).repeat(3)+"python\nprint(42)\n"+String.fromCharCode(96).repeat(3);
+ assert.deepEqual(core.extractPatch(answer,"python"),{language:"python",code:"print(42)"});
+ assert.equal(core.extractPatch(answer,"javascript"),null);
+ assert.equal(core.extractPatch(answer+"\n"+answer,"python"),null);
+ assert.equal(core.command("repl").type,"repl");
+ assert.equal(core.command("reset").type,"reset");
+ assert.equal(core.command("exit").type,"exit");
+});
+test("persistent Python session has strict file constraints and sandbox isolation",()=>{
+ const session=require("../bilik-antara-python-session.js");
+ assert.equal(session.validFiles([{name:"utils.py",code:"x=42"}]),true);
+ assert.equal(session.validFiles([{name:"../secret.py",code:"x=1"}]),false);
+ assert.equal(session.validFiles([{name:"my-utils.py",code:"x=1"}]),false);
+ assert.equal(session.validFiles([{name:"utils.py",code:"x=1"},{name:"utils.py",code:"x=2"}]),false);
+ assert.doesNotThrow(()=>new vm.Script(read("bilik-antara-python-session.js")));
+ const source=read("bilik-antara-python-session.js");
+ assert.ok(source.includes('frame.setAttribute("sandbox","allow-scripts")'));
+ assert.ok(source.includes("loadPyodide"));
+ assert.ok(source.includes("worker.postMessage"));
+ assert.ok(!source.includes("allow-same-origin"));
+});
+test("terminal supports Python project imports and explicit agent patch review",()=>{
+ const runtime=read("bilik-antara-code-runtime.js"),terminal=read("bilik-antara-ai-terminal.js");
+ assert.ok(runtime.includes("projectFiles:job.projectFiles"));
+ assert.ok(runtime.includes("py.FS.writeFile"));
+ assert.ok(runtime.includes("options.projectFiles"));
+ for(const phrase of ["pythonFiles()","core.extractPatch","file().code!==pending.before",
+  "files[pos].code===target.source","agentCycle()","aitRepl","aitPreview",
+  "aitImportZIP","core.unzipStore","aitStdin","closeRepl"]){
+  assert.ok(terminal.includes(phrase),"Missing terminal feature: "+phrase);
+ }
 });

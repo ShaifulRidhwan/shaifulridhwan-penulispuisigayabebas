@@ -14,11 +14,13 @@ dialog.innerHTML=[
 '<div class="ait-modes" role="group" aria-label="Mod terminal"><button data-mode="manual" type="button">Manual</button><button data-mode="assist" type="button">AI Assist</button><button data-mode="agent" type="button">AI Agent</button></div>',
 '<div class="ait-row"><label for="aitFile">Fail</label><select id="aitFile"></select><button id="aitAdd" type="button">+ Fail</button><button id="aitDelete" type="button">Buang</button></div>',
 '<textarea id="aitEditor" rows="8" spellcheck="false" aria-label="Editor kod projek"></textarea>',
-'<div class="ait-row"><button id="aitRun" type="button">▶ Run</button><button id="aitStop" type="button" disabled>■ Stop</button><button id="aitTests" type="button">Uji</button><button id="aitUndo" type="button">Rollback</button><button id="aitWorkspace" type="button">Editor penuh</button></div>',
+'<div class="ait-row"><button id="aitRun" type="button">▶ Run</button><button id="aitStop" type="button" disabled>■ Stop</button><button id="aitTests" type="button">Uji</button><button id="aitUndo" type="button">Rollback</button><button id="aitWorkspace" type="button">Editor penuh</button><button id="aitPreview" type="button">Live Preview</button></div>',
+'<div class="ait-row"><button id="aitRepl" type="button">Python REPL</button><button id="aitAgentCycle" type="button">Uji & baiki · Agent</button><small id="aitReplStatus">Python REPL · OFF</small></div>',
+'<div class="ait-row" id="aitStdinWrap" hidden><label for="aitStdin">C++ stdin</label><textarea id="aitStdin" maxlength="4000" rows="2" placeholder="Input untuk std::cin"></textarea></div>',
 '<section class="ait-console"><div class="ait-row"><strong>TERMINAL</strong><small id="aitProfile">Belum diuji</small></div><pre id="aitOutput" role="log" aria-live="polite"></pre>',
 '<form id="aitCommandForm"><label for="aitCommand">aksara@runtime:~$</label><input id="aitCommand" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="help · ls · run main.py"/><button type="submit">Enter</button></form></section>',
 '<section class="ait-patch" id="aitPatchBox" hidden><strong>AI Patch · Semak sebelum guna</strong><pre id="aitDiff"></pre><div class="ait-row"><button id="aitApply" type="button">Gunakan patch</button><button id="aitReject" type="button">Tolak</button></div></section>',
-'<div class="ait-row"><button id="aitAI" type="button">Minta A.I. bantu</button><button id="aitExport" type="button">Eksport ZIP</button><button id="aitImport" type="button">Import Workspace</button><label><input id="aitRemember" type="checkbox"/> Project Memory</label></div>',
+'<div class="ait-row"><button id="aitAI" type="button">Minta A.I. bantu</button><button id="aitExport" type="button">Eksport ZIP</button><button id="aitImportZIP" type="button">Import ZIP</button><input id="aitZipFile" type="file" accept=".zip,application/zip" hidden/><button id="aitImport" type="button">Import Workspace</button><label><input id="aitRemember" type="checkbox"/> Project Memory</label></div>',
 '<p id="aitHelp" role="status" aria-live="polite">Kod kekal setempat kecuali kau sahkan penghantaran kepada A.I.</p></div>'
 ].join("");
 document.body.appendChild(dialog);
@@ -41,13 +43,13 @@ css.textContent=[
 '#aitOutput{min-height:130px;max-height:29dvh}#aitDiff{max-height:190px}',
 '#aitCommandForm{display:flex;align-items:center;gap:7px;flex-wrap:wrap}#aitCommandForm label{color:#86d5ac;font:11px ui-monospace,Consolas,monospace}',
 '#aitCommand{flex:1;min-width:110px;padding:8px;font:12px ui-monospace,Consolas,monospace!important}',
-'#aitPatchBox[hidden]{display:none!important}#aitPatchBox{padding:10px;border:1px solid rgba(230,199,138,.4);border-radius:12px}',
+'#aitPatchBox[hidden],#aitStdinWrap[hidden],#aitZipFile[hidden]{display:none!important}#aitPatchBox{padding:10px;border:1px solid rgba(230,199,138,.4);border-radius:12px}',
 '#aitHelp{margin:0;font-size:11px;color:#bfc5c6}',
 '@media(max-width:460px){#aksaraAITerminal{padding:9px}#aksaraAITerminal button{padding:8px;font-size:11px}#aitEditor{min-height:110px}}'
 ].join("");
 document.head.appendChild(css);
 const $=id=>dialog.querySelector("#"+id),langLabel={python:"Python",javascript:"JavaScript",typescript:"TypeScript",sql:"SQL",cpp:"C++",html:"HTML",css:"CSS"};
-let files=[{name:"main.py",language:"python",code:'print("Salam AKSARA Terminal")'}],index=0,mode="assist",controller=null,last=null,pending=null,undo=[],attempts=0,waitingAI=null,commands=[],saveTimer=null;
+let files=[{name:"main.py",language:"python",code:'print("Salam AKSARA Terminal")'}],index=0,mode="assist",controller=null,last=null,pending=null,undo=[],attempts=0,waitingAI=null,commands=[],saveTimer=null,repl=null,replActive=false,replBusy=false,historyCursor=-1;
 const dbName="aksara-terminal-v2",storeName="projects",prefKey="aksara-terminal-save-consent";
 function message(s){$("aitHelp").textContent=String(s||"").slice(0,360);}
 function output(s){const pre=$("aitOutput");pre.textContent=(pre.textContent+"\n"+String(s||"")).slice(-11000);pre.scrollTop=pre.scrollHeight;}
@@ -56,7 +58,12 @@ function render(){
  $("aitFile").replaceChildren();
  files.forEach((f,i)=>{const o=document.createElement("option");o.value=String(i);o.textContent=f.name;$("aitFile").append(o);});
  $("aitFile").value=String(index);$("aitEditor").value=file().code;
- $("aitUndo").disabled=!undo.length;$("aitRun").disabled=Boolean(controller)||!engine.available.includes(file().language);
+ $("aitUndo").disabled=!undo.length;$("aitRun").disabled=Boolean(controller)||replBusy||!engine.available.includes(file().language);
+ $("aitTests").disabled=Boolean(controller)||replBusy;
+ $("aitStdinWrap").hidden=file().language!=="cpp";
+ $("aitRepl").disabled=file().language!=="python"||replBusy;
+ $("aitAgentCycle").disabled=mode!=="agent"||Boolean(controller)||replBusy||!engine.available.includes(file().language);
+ $("aitReplStatus").textContent=replActive?"Python REPL · "+(replBusy?"RUNNING":"ON · reset jika ubah fail"):"Python REPL · OFF";
  $("aitPatchBox").hidden=!pending;
  dialog.querySelectorAll("[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===mode)));
 }
@@ -73,6 +80,7 @@ function idb(){return new Promise((yes,no)=>{
 });}
 async function storage(op,value){
  const db=await idb();
+ if(op==="put"&&!$("aitRemember").checked){db.close();return false;}
  try{return await new Promise((yes,no)=>{
   const tx=db.transaction(storeName,op==="get"?"readonly":"readwrite"),store=tx.objectStore(storeName);
   const req=op==="get"?store.get("default"):op==="delete"?store.delete("default"):store.put(value,"default");
@@ -96,6 +104,30 @@ async function restore(){
   }
  }catch(e){message("Project Memory tidak tersedia dalam browser ini.");}
 }
+function pythonFiles(){return files.filter(f=>f.language==="python"&&/^[A-Za-z][A-Za-z0-9_]{0,59}\.py$/.test(f.name)).map(f=>({name:f.name,code:f.code}));}
+function closeRepl(reason="Sesi REPL ditutup."){
+ if(repl){repl.stop(reason);repl=null;}
+ replActive=false;replBusy=false;render();
+}
+async function replCommand(source){
+ if(replBusy||controller||window.AksaraAICodeAgent?.running()){message("Runtime sedang digunakan oleh pelaksanaan lain.");return;}
+ if(!replActive){message("Aktifkan Python REPL dahulu.");return;}
+ if(!window.AksaraPythonSession){message("Modul Python REPL belum dimuatkan.");return;}
+ try{
+  if(!repl)repl=window.AksaraPythonSession.create({files:pythonFiles(),onStatus:state=>$("aitRuntimeState").textContent=state});
+  replBusy=true;$("aitStop").disabled=false;render();
+  const began=performance.now(),result=await repl.execute(source,{onOutput:(stream,chunk)=>{
+   output((stream==="stderr"?"ERR> ":"")+chunk);
+  }});
+  $("aitProfile").textContent=Math.round(performance.now()-began)+" ms · Python REPL";
+  if(!result.stdout&&!result.stderr&&!result.error)output("(Tiada output)");
+  if(result.error)output("PYTHON ERROR: "+result.error);
+  if(result.truncated)output("Output dipotong mengikut had keselamatan.");
+ }catch(error){
+  output("Python REPL: "+String(error.message||error).slice(0,350));
+  if(repl&&!repl.active()){repl=null;replActive=false;}
+ }finally{replBusy=false;$("aitStop").disabled=Boolean(controller);render();}
+}
 function sourceReport(result){
  const d=(result.diagnostics||[]).map(x=>String(x.code||"RUNTIME_ERROR")+": "+String(x.message||"").slice(0,300)).join("\n");
  return String(result.output||"(Tiada output)").slice(0,6500)+(d?"\nDIAGNOSTIK:\n"+d:"")+(result.error&&!d?"\nERROR: "+result.error:"");
@@ -106,7 +138,8 @@ async function execute(f,{signal,quiet=false,expect=null}={}){
  let overlay=null;
  try{
   if(!quiet){output("▶ "+f.name+" ("+f.language+")");overlay=window.AksaraRuntimeOverlay?.open(f.language,()=>ctl.abort())||null;}
-  const result=await engine.run(f.language,f.code,{signal:ctl.signal,onProgress:x=>{
+  const extra=f.language==="python"?{projectFiles:pythonFiles()}:f.language==="cpp"?{stdin:$("aitStdin").value.slice(0,4000)}:{};
+  const result=await engine.run(f.language,f.code,{...extra,signal:ctl.signal,onProgress:x=>{
    if(!quiet){$("aitRuntimeState").textContent=String(x).slice(0,75);overlay?.update(String(x));}
   }});
   if(!quiet){
@@ -123,11 +156,11 @@ async function execute(f,{signal,quiet=false,expect=null}={}){
 async function runNamed(name){
  saveCurrent();const f=files.find(x=>x.name===name);
  if(!f){output("Fail tidak ditemui: "+name);return;}
- if(controller){message("Runtime masih sibuk.");return;}
- try{await execute({...f});}catch(e){output("Runtime dihentikan / gagal: "+String(e.message||e).slice(0,500));}
+ if(controller||replBusy||window.AksaraAICodeAgent?.running()){message("Runtime masih sibuk.");return;}
+ try{return await execute({...f});}catch(e){output("Runtime dihentikan / gagal: "+String(e.message||e).slice(0,500));return null;}
 }
 async function tests(){
- if(controller)return;saveCurrent();const f={...file()};
+ if(controller||replBusy||window.AksaraAICodeAgent?.running())return;saveCurrent();const f={...file()};
  const smoke={python:['print(sum([2,3,5,7]))',"17"],javascript:['console.log(6*7)',"42"],
   typescript:['const n:number=6*7;console.log(n)',"42"],sql:['SELECT 6+7 AS total;',"13"],
   cpp:['#include <iostream>\nint main(){std::cout << 42 << "\\n";return 0;}',"42"]}[f.language];
@@ -144,10 +177,15 @@ async function tests(){
  finally{controller=null;$("aitStop").disabled=true;$("aitTests").disabled=false;$("aitRun").disabled=false;}
 }
 function command(s){
- const cmd=core.command(s);commands.push(s);commands=commands.slice(-40);
+ const trimmed=String(s||"").trim();
+ commands.push(trimmed);commands=commands.slice(-40);historyCursor=-1;
+ if(replActive&&!["help","exit","reset","status"].includes(trimmed)){
+  output("py>>> "+trimmed);void replCommand(trimmed);return;
+ }
+ const cmd=core.command(trimmed);
  output("aksara@runtime:~$ "+s);
  switch(cmd.type){
- case "help":output("help, pwd, ls, cat nama.py, run nama.py, python nama.py, node main.js, tsc main.ts, sqlite query.sql, clang main.cpp, tests, history, status, clear. Tiada shell sebenar.");break;
+ case "help":output("help, pwd, ls, cat nama.py, run nama.py, python nama.py, node main.js, tsc main.ts, sqlite query.sql, clang main.cpp, tests, history, status, clear, repl, reset, exit. Dalam REPL taip arahan Python terus. Tiada shell sebenar.");break;
  case "pwd":output("/aksara/project");break;
  case "ls":output(files.map(x=>x.name).join("  "));break;
  case "cat":output(files.find(x=>x.name===cmd.name)?.code||"Fail tidak ditemui.");break;
@@ -156,6 +194,14 @@ function command(s){
  case "status":output("Runtime: "+engine.available.join(", ")+"; mod: "+mode+"; fail: "+files.length);break;
  case "history":output(commands.map((x,i)=>(i+1)+". "+x).join("\n"));break;
  case "clear":$("aitOutput").textContent="";break;
+ case "repl":
+  if(file().language!=="python"){message("Pilih fail .py untuk Python REPL.");break;}
+  replActive=true;render();output("Python REPL aktif. Taip Python terus, contohnya x=6 kemudian print(x*7). reset untuk kosongkan state, exit untuk keluar.");break;
+ case "reset":
+  if(repl)repl.stop("Python REPL direset.");
+  repl=null;replActive=true;replBusy=false;render();output("Sesi Python direset. Pemboleh ubah lama sudah tiada.");break;
+ case "exit":
+  closeRepl();output("Keluar daripada Python REPL.");break;
  default:output(cmd.message||"Arahan tak disokong.");
  }
 }
@@ -166,6 +212,18 @@ function propose(job){
  $("aitDiff").textContent=core.diff(pending.before,pending.after);
  $("aitPatchBox").hidden=false;message("Patch tersedia untuk semakan. Belum digunakan atau dijalankan.");
 }
+async function agentCycle(){
+ if(mode!=="agent"){message("Pilih mod AI Agent untuk Uji & baiki.");return;}
+ if(controller||replBusy||waitingAI||window.AksaraAICodeAgent?.running()){message("Tugas lain masih berjalan.");return;}
+ if(pending){message("Semak dan terima/tolak patch yang masih menunggu dahulu.");return;}
+ saveCurrent();
+ const result=await runNamed(file().name);
+ if(!result)return;
+ if(result.ok){output("AGENT · Runtime lulus. Semak hasil dan ujian fungsi sebelum anggap lengkap.");return;}
+ if(attempts>=3){message("Had 3 cubaan AI Agent telah dicapai.");return;}
+ output("AGENT · Runtime gagal. Seterusnya minta cadangan patch A.I. dengan izin kau.");
+ askAI();
+}
 function askAI(){
  saveCurrent();
  if(mode==="manual"){message("Pilih AI Assist atau AI Agent.");return;}
@@ -175,15 +233,15 @@ function askAI(){
  if(mode==="agent"&&attempts>=3){message("Had tiga cubaan patch dicapai. Tukar mod atau Rollback untuk mula semula.");return;}
  const attempt=mode==="agent"?attempts+1:0;
  const prompt=core.aiPrompt({mode,attempt,language:f.language,code:f.code,
-  report:last?.name===f.name?last.report:null,thoughtMode:bridge.snapshot?.().thoughtMode||"cahaya",
+  report:last?.name===f.name&&last.code===f.code?last.report:null,thoughtMode:bridge.snapshot?.().thoughtMode||"cahaya",
   task:mode==="agent"?"Diagnosis dan patch ralat sebenar serta edge case":"Semak kod dan cadangkan pembaikan"});
  if(!window.confirm("Hantar kod dan diagnostik ditapis kepada A.I.? Semak sendiri dahulu supaya tiada rahsia atau kunci API."))return;
  if(mode==="agent")attempts++;
- waitingAI={name:f.name,language:f.language};
+ waitingAI={name:f.name,language:f.language,source:f.code};
  dialog.close();bridge.fill(prompt);form.requestSubmit();
  message("Permintaan dihantar melalui chat. Tunggu cadangan patch untuk semakan.");
 }
-trigger.addEventListener("click",()=>{if(menu.open)menu.close();dialog.showModal();$("aitCommand").focus();});
+trigger.addEventListener("click",()=>{if(menu.open)menu.close();trigger.textContent="AI Terminal · Projek";dialog.showModal();$("aitCommand").focus();});
 $("aitClose").addEventListener("click",()=>dialog.close());
 dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
 dialog.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{mode=b.dataset.mode;attempts=0;render();saveLater();}));
@@ -199,7 +257,7 @@ $("aitDelete").addEventListener("click",()=>{
  files.splice(index,1);index=Math.min(index,files.length-1);render();saveLater();
 });
 $("aitRun").addEventListener("click",()=>void runNamed(file().name));
-$("aitStop").addEventListener("click",()=>controller?.abort());
+$("aitStop").addEventListener("click",()=>{controller?.abort();if(replBusy)closeRepl("Python REPL dihentikan melalui Stop.");});
 $("aitTests").addEventListener("click",()=>void tests());
 $("aitUndo").addEventListener("click",()=>{
  const previous=undo.pop();if(!previous)return;
@@ -207,7 +265,7 @@ $("aitUndo").addEventListener("click",()=>{
  files[pos].code=previous.code;index=pos;pending=null;render();saveLater();output("Rollback "+previous.name);
 });
 $("aitApply").addEventListener("click",()=>{
- if(!pending||file().name!==pending.name){pending=null;render();return;}
+ if(!pending||file().name!==pending.name||file().code!==pending.before){pending=null;render();message("Patch tidak lagi sepadan dengan kod semasa. Minta A.I. analisis semula.");return;}
  undo.push({name:file().name,code:file().code});undo=undo.slice(-15);
  file().code=pending.after;pending=null;render();saveLater();output("Patch digunakan. Tekan Run untuk mengesahkan.");
 });
@@ -219,6 +277,31 @@ $("aitWorkspace").addEventListener("click",()=>{
  else message("Fail diimport dan dibuka dalam Code Workspace.");
 });
 $("aitAI").addEventListener("click",askAI);
+$("aitAgentCycle").addEventListener("click",()=>void agentCycle());
+$("aitRepl").addEventListener("click",()=>{
+ if(file().language!=="python")return;
+ if(replActive)closeRepl();
+ else{replActive=true;render();output("Python REPL aktif. Cuba x=6 kemudian print(x*7).");}
+});
+$("aitPreview").addEventListener("click",()=>{
+ saveCurrent();
+ const selected=file(),html=selected.language==="html"?selected:files.find(f=>f.language==="html");
+ if(!html){message("Tambah fail HTML dahulu. Live Preview hanya untuk HTML/CSS.");return;}
+ const workspace=window.AksaraCodeWorkspace;
+ if(!workspace?.receiveFile){message("Code Workspace tidak tersedia.");return;}
+ let imported=0;
+ for(const item of [html,...files.filter(f=>f.language==="css")]){
+  imported+=Number(workspace.receiveFile({...item}));
+ }
+ message(imported+" fail dipindah sebagai salinan ke Workspace Live Preview tanpa JavaScript.");
+});
+$("aitCommand").addEventListener("keydown",event=>{
+ if(event.key!=="ArrowUp"&&event.key!=="ArrowDown")return;
+ if(!commands.length)return;
+ event.preventDefault();
+ historyCursor=event.key==="ArrowUp"?Math.min(commands.length-1,historyCursor+1):Math.max(-1,historyCursor-1);
+ $("aitCommand").value=historyCursor<0?"":commands[commands.length-1-historyCursor];
+});
 $("aitCommandForm").addEventListener("submit",e=>{e.preventDefault();const value=$("aitCommand").value;$("aitCommand").value="";command(value);});
 $("aitExport").addEventListener("click",()=>{
  saveCurrent();
@@ -227,6 +310,19 @@ $("aitExport").addEventListener("click",()=>{
   a.href=url;a.download="AKSARA-Project.zip";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   message(files.length+" fail dieksport sebagai ZIP setempat.");
  }catch(e){message("ZIP gagal: "+String(e.message||e).slice(0,160));}
+});
+$("aitImportZIP").addEventListener("click",()=>$("aitZipFile").click());
+$("aitZipFile").addEventListener("change",async()=>{
+ const fileToImport=$("aitZipFile").files?.[0];$("aitZipFile").value="";
+ if(!fileToImport)return;
+ if(fileToImport.size>256000){message("ZIP projek melebihi 256 KB.");return;}
+ try{
+  const loaded=core.unzipStore(await fileToImport.arrayBuffer());
+  if(controller||replBusy){message("Hentikan pelaksanaan sebelum mengimport projek.");return;}
+  if(!window.confirm("Gantikan projek terminal dengan "+loaded.length+" fail daripada ZIP ini? Projek semasa akan diganti."))return;
+  closeRepl();files=loaded;index=0;pending=null;undo=[];last=null;attempts=0;
+  render();saveLater();message("ZIP projek disahkan dan diimport: "+loaded.length+" fail.");
+ }catch(error){message("ZIP ditolak: "+String(error.message||error).slice(0,220));}
 });
 $("aitImport").addEventListener("click",()=>{
  const items=window.AksaraCodeWorkspace?.snapshot?.();
@@ -243,16 +339,17 @@ $("aitRemember").addEventListener("change",async()=>{
 window.addEventListener("ba:answered",e=>{
  if(!waitingAI)return;
  const target=waitingAI;waitingAI=null;
- const job=window.AksaraAICodeAgent?.extract?.(String(e.detail?.answer||""));
+ const job=core.extractPatch(String(e.detail?.answer||""),target.language);
  const pos=files.findIndex(x=>x.name===target.name&&x.language===target.language);
- if(pos>=0&&job?.language===target.language){index=pos;render();propose(job);output("Cadangan patch A.I. diterima, belum dilaksanakan.");}
+ if(pos>=0&&job?.language===target.language&&files[pos].code===target.source){index=pos;render();propose(job);output("Cadangan patch A.I. diterima, belum dilaksanakan. Buka semula AI Terminal untuk menyemak diff.");trigger.textContent="AI Terminal · Patch tersedia";}
+ else if(pos>=0&&files[pos].code!==target.source){message("Kod berubah semasa A.I. menjawab. Patch lama ditolak bagi melindungi perubahan baharu.");}
  else message("Respons A.I. bukan satu blok patch kod yang sah. Semak jawapan di chat.");
 });
 window.addEventListener("ba:request-failed",()=>{if(waitingAI){waitingAI=null;message("Permintaan A.I. gagal. Kod asal kekal.");}});
 window.addEventListener("ba:cleared",()=>{waitingAI=null;controller?.abort();});
 window.addEventListener("pagehide",()=>{controller?.abort();clearTimeout(saveTimer);});
 window.AksaraAITerminal=Object.freeze({
- version:"2.0",open:()=>{if(!dialog.open)dialog.showModal();},
+ version:"2.1",open:()=>{if(!dialog.open)dialog.showModal();},
  capabilityPrompt:q=>/\b(?:kod|code|coding|program|python|javascript|typescript|sql|cpp|c\+\+|compiler|runtime|debug|terminal|script|skrip)\b/i.test(String(q||""))?core.capability(engine.available):"",
  state:()=>({mode,files:files.length,hasRun:Boolean(last),pendingPatch:Boolean(pending),projectMemory:$("aitRemember").checked})
 });
