@@ -20,7 +20,7 @@ dialog.innerHTML=[
 '<section class="ait-console"><div class="ait-row"><strong>TERMINAL</strong><small id="aitProfile">Belum diuji</small></div><pre id="aitOutput" role="log" aria-live="polite"></pre>',
 '<form id="aitCommandForm"><label for="aitCommand">aksara@runtime:~$</label><input id="aitCommand" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="help · ls · run main.py"/><button type="submit">Enter</button></form></section>',
 '<section class="ait-patch" id="aitPatchBox" hidden><strong>AI Patch · Semak sebelum guna</strong><pre id="aitDiff"></pre><div class="ait-row"><button id="aitApply" type="button">Gunakan patch</button><button id="aitReject" type="button">Tolak</button></div></section>',
-'<div class="ait-row"><button id="aitAI" type="button">Minta A.I. bantu</button><button id="aitExport" type="button">Eksport ZIP</button><button id="aitImport" type="button">Import Workspace</button><label><input id="aitRemember" type="checkbox"/> Project Memory</label></div>',
+'<div class="ait-row"><button id="aitAI" type="button">Minta A.I. bantu</button><button id="aitExport" type="button">Eksport ZIP</button><button id="aitImportZIP" type="button">Import ZIP</button><input id="aitZipFile" type="file" accept=".zip,application/zip" hidden/><button id="aitImport" type="button">Import Workspace</button><label><input id="aitRemember" type="checkbox"/> Project Memory</label></div>',
 '<p id="aitHelp" role="status" aria-live="polite">Kod kekal setempat kecuali kau sahkan penghantaran kepada A.I.</p></div>'
 ].join("");
 document.body.appendChild(dialog);
@@ -43,7 +43,7 @@ css.textContent=[
 '#aitOutput{min-height:130px;max-height:29dvh}#aitDiff{max-height:190px}',
 '#aitCommandForm{display:flex;align-items:center;gap:7px;flex-wrap:wrap}#aitCommandForm label{color:#86d5ac;font:11px ui-monospace,Consolas,monospace}',
 '#aitCommand{flex:1;min-width:110px;padding:8px;font:12px ui-monospace,Consolas,monospace!important}',
-'#aitPatchBox[hidden]{display:none!important}#aitPatchBox{padding:10px;border:1px solid rgba(230,199,138,.4);border-radius:12px}',
+'#aitPatchBox[hidden],#aitStdinWrap[hidden],#aitZipFile[hidden]{display:none!important}#aitPatchBox{padding:10px;border:1px solid rgba(230,199,138,.4);border-radius:12px}',
 '#aitHelp{margin:0;font-size:11px;color:#bfc5c6}',
 '@media(max-width:460px){#aksaraAITerminal{padding:9px}#aksaraAITerminal button{padding:8px;font-size:11px}#aitEditor{min-height:110px}}'
 ].join("");
@@ -211,6 +211,18 @@ function propose(job){
  $("aitDiff").textContent=core.diff(pending.before,pending.after);
  $("aitPatchBox").hidden=false;message("Patch tersedia untuk semakan. Belum digunakan atau dijalankan.");
 }
+async function agentCycle(){
+ if(mode!=="agent"){message("Pilih mod AI Agent untuk Uji & baiki.");return;}
+ if(controller||replBusy||waitingAI){message("Tugas lain masih berjalan.");return;}
+ if(pending){message("Semak dan terima/tolak patch yang masih menunggu dahulu.");return;}
+ saveCurrent();
+ const result=await runNamed(file().name);
+ if(!result)return;
+ if(result.ok){output("AGENT · Runtime lulus. Semak hasil dan ujian fungsi sebelum anggap lengkap.");return;}
+ if(attempts>=3){message("Had 3 cubaan AI Agent telah dicapai.");return;}
+ output("AGENT · Runtime gagal. Seterusnya minta cadangan patch A.I. dengan izin kau.");
+ askAI();
+}
 function askAI(){
  saveCurrent();
  if(mode==="manual"){message("Pilih AI Assist atau AI Agent.");return;}
@@ -220,15 +232,15 @@ function askAI(){
  if(mode==="agent"&&attempts>=3){message("Had tiga cubaan patch dicapai. Tukar mod atau Rollback untuk mula semula.");return;}
  const attempt=mode==="agent"?attempts+1:0;
  const prompt=core.aiPrompt({mode,attempt,language:f.language,code:f.code,
-  report:last?.name===f.name?last.report:null,thoughtMode:bridge.snapshot?.().thoughtMode||"cahaya",
+  report:last?.name===f.name&&last.code===f.code?last.report:null,thoughtMode:bridge.snapshot?.().thoughtMode||"cahaya",
   task:mode==="agent"?"Diagnosis dan patch ralat sebenar serta edge case":"Semak kod dan cadangkan pembaikan"});
  if(!window.confirm("Hantar kod dan diagnostik ditapis kepada A.I.? Semak sendiri dahulu supaya tiada rahsia atau kunci API."))return;
  if(mode==="agent")attempts++;
- waitingAI={name:f.name,language:f.language};
+ waitingAI={name:f.name,language:f.language,source:f.code};
  dialog.close();bridge.fill(prompt);form.requestSubmit();
  message("Permintaan dihantar melalui chat. Tunggu cadangan patch untuk semakan.");
 }
-trigger.addEventListener("click",()=>{if(menu.open)menu.close();dialog.showModal();$("aitCommand").focus();});
+trigger.addEventListener("click",()=>{if(menu.open)menu.close();trigger.textContent="AI Terminal · Projek";dialog.showModal();$("aitCommand").focus();});
 $("aitClose").addEventListener("click",()=>dialog.close());
 dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
 dialog.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{mode=b.dataset.mode;attempts=0;render();saveLater();}));
@@ -244,7 +256,7 @@ $("aitDelete").addEventListener("click",()=>{
  files.splice(index,1);index=Math.min(index,files.length-1);render();saveLater();
 });
 $("aitRun").addEventListener("click",()=>void runNamed(file().name));
-$("aitStop").addEventListener("click",()=>controller?.abort());
+$("aitStop").addEventListener("click",()=>{controller?.abort();if(replBusy)closeRepl("Python REPL dihentikan melalui Stop.");});
 $("aitTests").addEventListener("click",()=>void tests());
 $("aitUndo").addEventListener("click",()=>{
  const previous=undo.pop();if(!previous)return;
@@ -252,7 +264,7 @@ $("aitUndo").addEventListener("click",()=>{
  files[pos].code=previous.code;index=pos;pending=null;render();saveLater();output("Rollback "+previous.name);
 });
 $("aitApply").addEventListener("click",()=>{
- if(!pending||file().name!==pending.name){pending=null;render();return;}
+ if(!pending||file().name!==pending.name||file().code!==pending.before){pending=null;render();message("Patch tidak lagi sepadan dengan kod semasa. Minta A.I. analisis semula.");return;}
  undo.push({name:file().name,code:file().code});undo=undo.slice(-15);
  file().code=pending.after;pending=null;render();saveLater();output("Patch digunakan. Tekan Run untuk mengesahkan.");
 });
@@ -264,6 +276,31 @@ $("aitWorkspace").addEventListener("click",()=>{
  else message("Fail diimport dan dibuka dalam Code Workspace.");
 });
 $("aitAI").addEventListener("click",askAI);
+$("aitAgentCycle").addEventListener("click",()=>void agentCycle());
+$("aitRepl").addEventListener("click",()=>{
+ if(file().language!=="python")return;
+ if(replActive)closeRepl();
+ else{replActive=true;render();output("Python REPL aktif. Cuba x=6 kemudian print(x*7).");}
+});
+$("aitPreview").addEventListener("click",()=>{
+ saveCurrent();
+ const selected=file(),html=selected.language==="html"?selected:files.find(f=>f.language==="html");
+ if(!html){message("Tambah fail HTML dahulu. Live Preview hanya untuk HTML/CSS.");return;}
+ const workspace=window.AksaraCodeWorkspace;
+ if(!workspace?.receiveFile){message("Code Workspace tidak tersedia.");return;}
+ let imported=0;
+ for(const item of [html,...files.filter(f=>f.language==="css")]){
+  imported+=Number(workspace.receiveFile({...item}));
+ }
+ message(imported+" fail dipindah sebagai salinan ke Workspace Live Preview tanpa JavaScript.");
+});
+$("aitCommand").addEventListener("keydown",event=>{
+ if(event.key!=="ArrowUp"&&event.key!=="ArrowDown")return;
+ if(!commands.length)return;
+ event.preventDefault();
+ historyCursor=event.key==="ArrowUp"?Math.min(commands.length-1,historyCursor+1):Math.max(-1,historyCursor-1);
+ $("aitCommand").value=historyCursor<0?"":commands[commands.length-1-historyCursor];
+});
 $("aitCommandForm").addEventListener("submit",e=>{e.preventDefault();const value=$("aitCommand").value;$("aitCommand").value="";command(value);});
 $("aitExport").addEventListener("click",()=>{
  saveCurrent();
@@ -272,6 +309,19 @@ $("aitExport").addEventListener("click",()=>{
   a.href=url;a.download="AKSARA-Project.zip";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   message(files.length+" fail dieksport sebagai ZIP setempat.");
  }catch(e){message("ZIP gagal: "+String(e.message||e).slice(0,160));}
+});
+$("aitImportZIP").addEventListener("click",()=>$("aitZipFile").click());
+$("aitZipFile").addEventListener("change",async()=>{
+ const fileToImport=$("aitZipFile").files?.[0];$("aitZipFile").value="";
+ if(!fileToImport)return;
+ if(fileToImport.size>256000){message("ZIP projek melebihi 256 KB.");return;}
+ try{
+  const loaded=core.unzipStore(await fileToImport.arrayBuffer());
+  if(controller||replBusy){message("Hentikan pelaksanaan sebelum mengimport projek.");return;}
+  if(!window.confirm("Gantikan projek terminal dengan "+loaded.length+" fail daripada ZIP ini? Projek semasa akan diganti."))return;
+  closeRepl();files=loaded;index=0;pending=null;undo=[];last=null;attempts=0;
+  render();saveLater();message("ZIP projek disahkan dan diimport: "+loaded.length+" fail.");
+ }catch(error){message("ZIP ditolak: "+String(error.message||error).slice(0,220));}
 });
 $("aitImport").addEventListener("click",()=>{
  const items=window.AksaraCodeWorkspace?.snapshot?.();
@@ -288,9 +338,10 @@ $("aitRemember").addEventListener("change",async()=>{
 window.addEventListener("ba:answered",e=>{
  if(!waitingAI)return;
  const target=waitingAI;waitingAI=null;
- const job=window.AksaraAICodeAgent?.extract?.(String(e.detail?.answer||""));
+ const job=core.extractPatch(String(e.detail?.answer||""),target.language);
  const pos=files.findIndex(x=>x.name===target.name&&x.language===target.language);
- if(pos>=0&&job?.language===target.language){index=pos;render();propose(job);output("Cadangan patch A.I. diterima, belum dilaksanakan.");}
+ if(pos>=0&&job?.language===target.language&&files[pos].code===target.source){index=pos;render();propose(job);output("Cadangan patch A.I. diterima, belum dilaksanakan. Buka semula AI Terminal untuk menyemak diff.");trigger.textContent="AI Terminal · Patch tersedia";}
+ else if(pos>=0&&files[pos].code!==target.source){message("Kod berubah semasa A.I. menjawab. Patch lama ditolak bagi melindungi perubahan baharu.");}
  else message("Respons A.I. bukan satu blok patch kod yang sah. Semak jawapan di chat.");
 });
 window.addEventListener("ba:request-failed",()=>{if(waitingAI){waitingAI=null;message("Permintaan A.I. gagal. Kod asal kekal.");}});
