@@ -20,9 +20,11 @@ test("Netlify homepage links to Netlify Bilik and keeps session exports",()=>{
  const home=fs.readFileSync("index.html","utf8");
  assert.equal((home.match(/href="bilik-antara\.html"/g)||[]).length,2);
  const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
- assert.match(suite,/Eksport semua sesi \(JSON\) dahulu/);
+ assert.match(suite,/Eksport semua sesi \(JSON\)/);
  assert.match(suite,/ba-session-group/);
- assert.match(suite,/shaifulridhwan-penulispuisigayabebas\.netlify\.app\/bilik-antara\.html/);
+ assert.doesNotMatch(suite,/Buka Bilik Antara Cloudflare|import pada Cloudflare/);
+ const bilik=fs.readFileSync("bilik-antara.html","utf8");
+ assert.match(bilik,/shaifulridhwan-penulispuisigayabebas\.netlify\.app\/bilik-antara\.html/);
 });
 test("Netlify Bilik returns directly while separate session archive remains available",()=>{
  const redirects=fs.readFileSync("_redirects","utf8");

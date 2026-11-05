@@ -421,10 +421,11 @@ test("Unsupported Live token response presents actionable status rather than a f
   assert.doesNotMatch(js,/panel\.hidden=false/);
  }finally{global.fetch=old;delete process.env.GEMINI_API_KEY;}
 });
-test("Identity and poetry starters remain available and workspace nav is hidden",()=>{
+test("Two Aksara identity starters remain available and workspace nav is hidden",()=>{
  const match=[...html.matchAll(/<button class="starter"[^>]*>([^<]+)<\/button>/g)];
- assert.equal(match.length,3);
+ assert.equal(match.length,2);
  assert.equal(match[0][1],"Siapa Aku");
+ assert.equal(match[1][1],"The Coder Poet");
  const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
  assert.doesNotMatch(suite,/\["workspace","Ruang kerja"\]/);
 });

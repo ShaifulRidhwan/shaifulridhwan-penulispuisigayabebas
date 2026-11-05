@@ -85,7 +85,7 @@ test("Static wallpaper and retained glass layer",()=>{
 
 test("Calm glass frame keeps chat clear without retired particles",()=>{
  const starterLabels=[...html.matchAll(/<button class="starter" type="button">([^<]+)<\/button>/g)].map(m=>m[1]);
- assert.deepEqual(starterLabels,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas"]);
+ assert.deepEqual(starterLabels,["Siapa Aku","The Coder Poet"]);
  assert.match(html,/<div class="glass-frame-orbit" aria-hidden="true">/);
  assert.match(html,/frame-glow--light/);
  assert.match(html,/frame-glow--shadow/);

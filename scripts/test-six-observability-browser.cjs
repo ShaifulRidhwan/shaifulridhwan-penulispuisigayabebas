@@ -42,19 +42,15 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.match(voiceText,/Sambungan: Tidak aktif/);
   assert.match(voiceText,/Masa audio pertama ialah jadual Web Audio/);
 
-  // Memory is enabled for new visitors; draft edits are not persisted until Save.
+  // Sesi & Sejarah stays clean; optional legacy memory data stays intact.
   await page.locator("#settingsPanel > summary").click();
   await page.locator("#featureSessions").click();
   await page.waitForFunction(()=>document.body.classList.contains("ba-panel-open"),{timeout:6000});
-  assert.match(await page.locator(".ba-drawer").innerText(),/Kesihatan simpanan/);
-  assert.match(await page.locator(".ba-drawer").innerText(),/Memori pilihan/);
-  const memoryDraft=page.locator(".ba-editor").first();
-  await memoryDraft.fill("Nota demo yang belum disimpan");
-  await page.waitForFunction(()=>document.getElementById("ba-memory-save-status")?.textContent.includes("belum disimpan"));
+  assert.match(await page.locator(".ba-drawer").innerText(),/Sesi & Sejarah/);
+  assert.doesNotMatch(await page.locator(".ba-drawer").innerText(),/Kesihatan simpanan|Memori pilihan|Buka Bilik Antara Cloudflare/);
   assert.equal(await page.evaluate(()=>window.BilikAntaraSuite.getStorageStatus().memoryEnabled),true);
   assert.equal(await page.evaluate(()=>window.BilikAntaraSuite.getStorageStatus().memorySaved),false,
-   "An unsaved draft must not become a stored memory automatically");
-  page.once("dialog",dialog=>dialog.accept());
+   "Hiding the old memory editor must not fabricate or overwrite notes");
   await page.keyboard.press("Escape");
   await page.waitForFunction(()=>!document.body.classList.contains("ba-panel-open"),{timeout:6000});
 
@@ -76,6 +72,8 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.waitForFunction(()=>document.body.classList.contains("ba-panel-open"));
   assert.match(await page.locator(".ba-drawer").innerText(),/Status pengukuran: Data tempatan tersedia/);
   assert.match(await page.locator(".ba-drawer").innerText(),/Peristiwa terakhir/);
+  assert.match(await page.locator(".ba-drawer").innerText(),/Kesihatan simpanan/);
+  assert.match(await page.locator(".ba-drawer").innerText(),/Bacaan storan/);
   await page.keyboard.press("Escape");
   assert.deepEqual(errors,[],"Browser errors "+errors.join("; "));
   console.log("AKSARA Observability v2 LULUS: lampiran, Voice, simpanan, bukti carian dan prestasi.");

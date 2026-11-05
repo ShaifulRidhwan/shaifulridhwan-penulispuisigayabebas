@@ -294,7 +294,6 @@ function renderStorageStatus(){
  const fmt=t=>t?new Date(t).toLocaleTimeString("ms-MY",{hour:"2-digit",minute:"2-digit"}):"Belum disahkan";
  const rows=[
   ["Simpan sejarah sesi",status.active?"Diaktifkan":"Dimatikan"],
-  ["Memori pilihan",status.memoryEnabled?"Diaktifkan":"Dimatikan"],
   ["Bacaan storan",status.read==="berjaya"?"Berjaya":status.read==="gagal"?"Gagal":"Belum diuji"],
   ["Tulisan storan",status.write==="berjaya"?"Berjaya":status.write==="gagal"?"Gagal":"Belum diuji"],
   ["Sesi disimpan",String(status.archiveCount)],
@@ -309,19 +308,13 @@ function renderStorageStatus(){
  paragraph("Status berdasarkan operasi storan pelayar ini, bukan salinan awan. Berjaya menulis tidak menjamin storan kekal jika data pelayar dipadam.");
 }
 function renderSessions(){
- renderStorageStatus();
  section("Sejarah perbualan");
  paragraph("Sesi disimpan pada peranti ini, bukan akaun awan. Cari, namakan semula, pin atau pulihkan sesi. Eksport JSON untuk sandaran, kemudian import semula pada peranti yang kau pilih.");
- if(location.hostname==="shaifulridhwan-penulispuisigayabebas.netlify.app"){
-  paragraph("Sejarah Netlify tidak berpindah secara automatik. Eksport semua sesi (JSON) dahulu, kemudian import pada Cloudflare.");
-  const link=make("a","Buka Bilik Antara Cloudflare","ba-button");
-  link.href="https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html";link.rel="noopener noreferrer";controlRow(link);
- }
  controlRow(button("+ Sesi baharu",()=>beginSession(null)),button("Eksport sesi ini",()=>{
   download("bilik-antara-sesi.md",sessionText(api.snapshot().history),"text/markdown;charset=utf-8");
  }));
  if(!api.remember()){
-  paragraph("Penyimpanan perbualan dimatikan. Hidupkannya melalui Privasi & sesi. Memori pilihan masih boleh diurus di bawah.");
+  paragraph("Penyimpanan perbualan dimatikan. Hidupkannya melalui Privasi & Tetapan.");
   return;
  }
  const search=make("input");search.type="search";search.placeholder="Cari sejarah perbualan…";search.className="ba-input";search.value=sessionSearchTerm;
@@ -533,6 +526,7 @@ function renderMetrics(){
   " · Peristiwa terakhir: "+lastAt+
   ". Statistik cuma diambil daripada respons dan kegagalan yang dilaporkan, bukan semakan kesihatan model.");
  paragraph("Statistik sembang teks pada pelayar ini sahaja, bukan semua pengguna atau Voice Live. Kejayaan teknikal tidak menjamin jawapan tepat. Rekod lama mungkin tidak lengkap.");
+ renderStorageStatus();
  const successes=Math.max(0,Number(metrics.calls)||0),failures=Math.max(0,Number(metrics.failures)||0),total=successes+failures;
  const valid=values=>(Array.isArray(values)?values:[]).filter(v=>Number.isFinite(v)&&v>=0);
  const elapsed=valid(metrics.elapsed),backend=valid(metrics.durations);
@@ -603,7 +597,7 @@ function renderMetrics(){
   row.append(make("span",date+" · "+text),make("strong",Number.isFinite(item.ms)?(item.ms/1000).toFixed(2)+" s":"—"));content.appendChild(row);
  }
  section("Storan dan privasi");
- paragraph("Sejarah sesi: "+(api.remember()?"diaktifkan":"dimatikan")+". Memori pilihan: "+(memory.enabled?"diaktifkan":"dimatikan")+". Sesi tersimpan: "+archive.length+". Peristiwa prestasi disimpan hanya jika Simpan sesi diaktifkan.");
+ paragraph("Sejarah sesi: "+(api.remember()?"diaktifkan":"dimatikan")+". Sesi tersimpan: "+archive.length+". Peristiwa prestasi disimpan hanya jika Simpan sesi diaktifkan.");
  paragraph("Masa pengguna meliputi rangkaian dan pemprosesan. Masa backend dilaporkan pelayan. Rekod aktiviti terhad kepada 120 peristiwa, sampel masa pengguna 120 dan backend 50. Kejayaan permintaan bukan bukti ketepatan jawapan. Voice Live tidak termasuk.");
  controlRow(
   button("Eksport JSON",()=>download("aksara-prestasi.json",JSON.stringify({exportedAt:new Date().toISOString(),metrics},null,2),"application/json")),
@@ -611,20 +605,9 @@ function renderMetrics(){
  );
 }
 function render(){
- const draft=memoryDirty()?{text:memoryDraft.field.value,checked:memoryDraft.toggle.checked,
-  originalText:memoryDraft.originalText,originalEnabled:memoryDraft.originalEnabled,
-  version:memoryDraft.version}:null;
- content.replaceChildren();title.textContent=({sessions:"Sesi & Memori",workspace:"Ruang kerja",metrics:"Prestasi setempat"})[currentPanel]||"Bilik Antara";
- if(currentPanel==="sessions"){
-  renderSessions();section("Memori pilihan");renderMemory();
-  if(draft&&memoryDraft){
-   memoryDraft.field.value=draft.text;memoryDraft.toggle.checked=draft.checked;
-   memoryDraft.originalText=draft.originalText;memoryDraft.originalEnabled=draft.originalEnabled;
-   memoryDraft.version=draft.version;
-   const status=document.getElementById("ba-memory-save-status");
-   if(status)status.textContent="Draf berubah · belum disimpan";
-  }
- }
+ content.replaceChildren();
+ title.textContent=({sessions:"Sesi & Sejarah",workspace:"Ruang kerja",metrics:"Prestasi A.I."})[currentPanel]||"Bilik Antara";
+ if(currentPanel==="sessions")renderSessions();
  else if(currentPanel==="workspace")renderWorkspace();
  else if(currentPanel==="metrics")renderMetrics();
 }
