@@ -51,7 +51,7 @@ test("Default starter lists four brains; user interface and provider registry ag
 
 test("Every default question has a prepared answer without obsolete provider claims",()=>{
  const starters=[...html.matchAll(/<button class="starter" type="button">([^<]+)<[/]button>/g)].map(m=>m[1]);
- assert.deepEqual(starters,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas"]);
+ assert.deepEqual(starters,["Siapa Aku","The Coder Poet"]);
  for(const question of starters){
   const answer=Identity.answerIdentity(question);
   assert.ok(typeof answer==="string"&&answer.length>80,"Missing prepared answer for "+question);
@@ -102,11 +102,11 @@ test("Locked Malay casual + English technical language applies to Gemini, all fa
  assert.match(Identity.VOICE_CORE_PROMPT,/English technical terms/);
  assert.doesNotMatch(who+coder,/penghalaan|sandaran lapisan/i);
  const starters=[...html.matchAll(/<button class="starter" type="button">([^<]+)<[/]button>/g)].map(x=>x[1]);
- assert.deepEqual(starters,["Siapa Aku","The Coder Poet","Apa itu Puisi Gaya Bebas"]);
- assert.match(html,/starterFollowUpTarget=starterText==="Siapa Aku"\?"The Coder Poet":""/);
- assert.match(html,/coderPoetFollowUp:followUpTarget==="The Coder Poet"/);
- assert.match(html,/if\(data\?\.coderPoetFollowUp===true\)/);
- assert.match(html,/Nak tahu tentang "The Coder Poet" pulak ke/);
+ assert.deepEqual(starters,["Siapa Aku","The Coder Poet"]);
+ assert.match(html,/AksaraJourney\?\.nextFor\(question\)/);
+ assert.match(html,/journeyNext/);
+ assert.match(html,/Sambung · /);
+ assert.match(html,/bilik-antara-journey\.js\?v=1/);
  assert.match(css,/\.msg-followup-btn/);
  assert.match(html,/bilik-antara-identity\.js\?v=30/);
  assert.match(html,/bilik-antara-brain\.js\?v=15/);
