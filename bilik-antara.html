@@ -262,8 +262,13 @@ if(window.visualViewport)window.visualViewport.addEventListener("resize",queueVi
 // Respect readers of older messages: follow only when input gained focus near bottom.
 if(typeof ResizeObserver!=="undefined"){
  const chatViewportObserver=new ResizeObserver(()=>{
-  if(document.activeElement===ui.input&&followOnInputResize)
-   ui.chat.scrollTop=ui.chat.scrollHeight;
+  if(document.activeElement!==ui.input||!followOnInputResize)return;
+  // Respect an explicit jump to old messages before the scroll event fires.
+  if(ui.chat.scrollTop<20&&lastChatScrollTop>80){
+   followOnInputResize=false;return;
+  }
+  // Avoid forced scrollHeight layout reads on every mobile resize.
+  ui.chat.scrollTop=1e9;
  });
  chatViewportObserver.observe(ui.chat);
 }
