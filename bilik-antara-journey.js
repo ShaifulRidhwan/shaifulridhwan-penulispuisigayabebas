@@ -42,10 +42,26 @@ const steps=Object.freeze([
 const normalize=value=>String(value||"").normalize("NFKC").trim().toLocaleLowerCase("ms-MY").replace(/[?!.,]+$/g,"").replace(/\s+/g," ");
 const indexOfQuestion=question=>steps.findIndex(item=>normalize(item.question)===normalize(question));
 const answer=question=>{const i=indexOfQuestion(question);return i>=2?steps[i].answer:null;};
+// An explicit journey-button action owns the whole narrative locally.
+// Free-typed prompts must never be misclassified as journey steps.
+const resolve=(question,identity,origin)=>{
+ if(origin!=="journey-button")return null;
+ const i=indexOfQuestion(question);
+ if(i<0)return null;
+ const step=steps[i];
+ const fixed=i<2&&typeof identity?.answerIdentity==="function"
+  ?identity.answerIdentity(step.question):step.answer;
+ if(typeof fixed!=="string"||!fixed.trim())return null;
+ return Object.freeze({
+  question:step.question,reply:fixed,index:i,
+  model:i<2?"project-identity":"project-journey",
+  provider:"local",next:nextFor(step.question)
+ });
+};
 const nextFor=question=>{
  const i=indexOfQuestion(question);
  if(i<0||i>=steps.length-1)return null;
  return {question:steps[i+1].question,position:i+2,total:steps.length};
 };
-return Object.freeze({steps,indexOfQuestion,answer,nextFor});
+return Object.freeze({steps,indexOfQuestion,answer,nextFor,resolve});
 });
