@@ -67,12 +67,12 @@ test("code guidance does not modify Gemini Voice Guidance",()=>{
 });
 
 test("No stale 80 KB Bilik Antara HTML budget checks remain",()=>{
- const names=fs.readdirSync(__dirname).filter(x=>x.endsWith(".cjs")||x.endsWith(".js"));
+ const folders=[__dirname,path.join(__dirname,"..","scripts")];
  const found=[];
- for(const name of names){
-  const content=fs.readFileSync(path.join(__dirname,name),"utf8");
+ for(const folder of folders)for(const name of fs.readdirSync(folder).filter(x=>x.endsWith(".cjs")||x.endsWith(".js"))){
+  const content=fs.readFileSync(path.join(folder,name),"utf8");
   if(/html\.length\s*<\s*80000|html\.length\s*<=\s*80000|byteLength\(html(?:,\s*"utf8")?\)\s*<\s*80000/.test(content))
-   found.push(name);
+   found.push(path.relative(path.join(__dirname,".."),path.join(folder,name)));
  }
  assert.deepEqual(found,[], "Legacy 80 KB guards must be migrated to 100 KB");
 });
