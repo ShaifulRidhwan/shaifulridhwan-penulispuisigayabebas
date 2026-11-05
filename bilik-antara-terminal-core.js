@@ -17,6 +17,56 @@ function command(raw){
  if(Object.hasOwn(RUN,cmd)&&filename(name))return RUN[cmd]===language(name)?{type:"run",name,language:language(name)}:{type:"invalid",message:"Bahasa dan fail tak sepadan."};
  return {type:"invalid",message:"Ini terminal maya, bukan shell OS. Taip help."};
 }
+
+/* No implicit execution: identify source pasted into a command-only prompt. */
+function classifyInput(raw){
+ const s=String(raw||"").trim();
+ if(!s||s.length>MAX_SOURCE)return null;
+ if(/[→➜⟶]/.test(s))return {type:"steps",message:"Simbol → ialah langkah panduan, bukan arahan. Taip satu arahan dan tekan Enter setiap kali. Contoh: reset, kemudian print(x), kemudian exit."};
+ const cppInput=/^\s*(std::cin\s*>>[\s\S]*?)\s*\|\s*stdin\s*:\s*([\s\S]{1,100})$/i.exec(s);
+ if(cppInput)return {type:"code",language:"cpp",code:cppInput[1].trim(),stdin:cppInput[2].trim(),fragment:true};
+ const patterns=[
+  ["typescript",/^\s*(?:(?:const|let|var)\s+\w+\s*:\s*(?:number|string|boolean|any|unknown|[A-Z]\w*)\s*=|(?:interface|type)\s+\w+[\s={])/i],
+  ["javascript",/^\s*(?:(?:console\.(?:log|error|warn|info)\s*\(|(?:const|let|var)\s+\w+\s*=)|(?:async\s+)?function\s+\w+\s*\()/i],
+  ["sql",/^\s*(?:SELECT\b|WITH\b|CREATE\s+TABLE\b|INSERT\s+INTO\b|UPDATE\s+\w+\b|DELETE\s+FROM\b|DROP\s+TABLE\b)/i],
+  ["cpp",/^\s*(?:#include\b|std::\w+|using\s+namespace\s+std\b|int\s+main\s*\()/i],
+  ["python",/^\s*(?:print\s*\(|def\s+\w+\s*\(|class\s+\w+\s*[:(]|from\s+\w+\s+import\b|import\s+[A-Za-z_]\w*|[A-Za-z_]\w*\s*=\s*(?:\d+|["']|True\b|False\b|None\b))/],
+  ["html",/^\s*(?:<!doctype\s+html\b|<html\b|<(?:h[1-6]|div|main|section|p|article|button|span)\b)/i],
+  ["css",/^\s*(?:body|html|main|h1|h2|\.\w+|#\w+)\s*\{[\s\S]*\}/i]
+ ];
+ for(const [language,pattern] of patterns)if(pattern.test(s))return {type:"code",language,code:s};
+ return null;
+}
+const EXAMPLES=Object.freeze([
+ {id:"python",label:"Python · 42",language:"python",files:[{name:"demo_py.py",code:"print(6 * 7)\n"}]},
+ {id:"python-project",label:"Python · import modul",language:"python",files:[{name:"demo_modul.py",code:"from demo_utils import answer\nprint(answer())\n"},{name:"demo_utils.py",code:"def answer():\n    return 42\n"}]},
+ {id:"javascript",label:"JavaScript · 42",language:"javascript",files:[{name:"demo_js.js",code:"console.log(6 * 7);\n"}]},
+ {id:"typescript",label:"TypeScript · 42",language:"typescript",files:[{name:"demo_ts.ts",code:"const n: number = 6 * 7;\nconsole.log(n);\n"}]},
+ {id:"sql",label:"SQL · 42",language:"sql",files:[{name:"demo_sql.sql",code:"SELECT 6 * 7 AS hasil;\n"}]},
+ {id:"cpp",label:"C++ · stdin 6 → 42",language:"cpp",files:[{name:"demo_cpp.cpp",code:"#include <iostream>\nint main() {\n    int n = 0;\n    if (!(std::cin >> n)) return 1;\n    std::cout << n * 7 << std::endl;\n    return 0;\n}\n"}],stdin:"6"},
+ {id:"html",label:"HTML/CSS · Preview",language:"html",files:[{name:"demo_html.html",code:"<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>AKSARA</title></head><body><main><h1>AKSARA</h1><p>Live Preview berfungsi.</p></main></body></html>"},{name:"demo_style.css",code:"body { background: #101827; color: #f7db9c; font-family: sans-serif; }\nmain { margin: 2rem; }\n"}]}
+]);
+/* Produce unique, valid file names and adjust Python imports when suffixing. */
+function prepareExample(id,existing=[]){
+ const entry=EXAMPLES.find(x=>x.id===id);
+ if(!entry||!Array.isArray(existing))return null;
+ const used=new Set(existing.map(x=>String(x).toLowerCase()));
+ let suffix=0,names;
+ while(suffix<99){
+  const tail=suffix?"_"+(suffix+1):"";
+  names=entry.files.map(f=>f.name.replace(/(\.[a-z]+)$/i,tail+"$1"));
+  if(names.every(x=>filename(x)&&!used.has(x.toLowerCase())))break;
+  suffix++;
+ }
+ if(suffix>=99)return null;
+ const rename=new Map(entry.files.map((f,i)=>[f.name.replace(/\.py$/i,""),names[i].replace(/\.py$/i,"")]));
+ const result=entry.files.map((f,i)=>{
+  let content=f.code;
+  if(entry.id==="python-project")content=content.replace(/\bdemo_utils\b/g,rename.get("demo_utils"));
+  return {name:names[i],language:language(names[i]),code:content};
+ });
+ return {label:entry.label,files:result,stdin:entry.stdin||"",primary:result[0].name};
+}
 function redact(s){return String(s||"").replace(/-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----/gi,"[KUNCI DISEMBUNYIKAN]").replace(/\b(?:sk-(?:proj-)?|gh[opus]_|github_pat_|nvapi-|AIza)[A-Za-z0-9_-]{12,}\b/g,"[TOKEN DISEMBUNYIKAN]").replace(/(\b(?:api[_-]?key|access[_-]?token|client[_-]?secret|password)\b\s*[:=]\s*["']?)([^\s"',;]{8,})/gi,"$1[NILAI DISEMBUNYIKAN]");}
 function diff(before,after){
  if(before===after)return "Tiada perubahan.";
@@ -113,7 +163,7 @@ function unzipStore(input){
  if(cursor!==eocd||!filesValid(files))throw Error("Nama pendua atau direktori ZIP tidak sah.");
  return files;
 }
-const api=Object.freeze({version:"2.2",language,filename,validFile,filesValid,command,redact,diff,capability,aiPrompt,extractPatch,zip,unzipStore,MAX_FILES,MAX_SOURCE});
+const api=Object.freeze({version:"2.3",language,filename,validFile,filesValid,command,classifyInput,examples:EXAMPLES.map(x=>({id:x.id,label:x.label,language:x.language})),prepareExample,redact,diff,capability,aiPrompt,extractPatch,zip,unzipStore,MAX_FILES,MAX_SOURCE});
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 if(root)root.AksaraTerminalCore=api;
 })(typeof window!=="undefined"?window:null);
