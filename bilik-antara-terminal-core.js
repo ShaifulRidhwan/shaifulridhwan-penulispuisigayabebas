@@ -70,7 +70,50 @@ function extractPatch(reply,expected){
  const dialect=blocks[0][1].toLowerCase(),lang=aliases[dialect]||dialect,code=blocks[0][2].trim();
  return lang===expected&&code.length>0&&code.length<=MAX_SOURCE?{language:lang,code}:null;
 }
-const api=Object.freeze({version:"2.1",language,filename,validFile,filesValid,command,redact,diff,capability,aiPrompt,extractPatch,zip,MAX_FILES,MAX_SOURCE});
+// Imports the restricted, uncompressed ZIP format produced by this same app.
+// Never extracts paths onto a device. ZIP64, encryption, symlinks and compression are rejected.
+function unzipStore(input){
+ const bytes=input instanceof Uint8Array?input:new Uint8Array(input);
+ if(bytes.length>256000||bytes.length<22)throw Error("ZIP terlalu besar atau tidak sah.");
+ const v=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
+ const u16=p=>v.getUint16(p,true),u32=p=>v.getUint32(p,true);
+ const eocd=bytes.length-22;
+ if(u32(eocd)!==0x06054b50||u16(eocd+20)!==0||u16(eocd+4)!==0||u16(eocd+6)!==0)
+  throw Error("ZIP perlu satu cakera, tanpa komen.");
+ const count=u16(eocd+10),dirSize=u32(eocd+12),dirOffset=u32(eocd+16);
+ if(count!==u16(eocd+8)||count===0||count>MAX_FILES||dirOffset+dirSize!==eocd)
+  throw Error("Indeks ZIP tidak sah.");
+ const decoder=new TextDecoder("utf-8",{fatal:true}),files=[];let cursor=dirOffset;
+ function crc(bytes){
+  let c=0xffffffff;for(const b of bytes){c^=b;for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0);}
+  return (c^0xffffffff)>>>0;
+ }
+ for(let i=0;i<count;i++){
+  if(cursor+46>eocd||u32(cursor)!==0x02014b50)throw Error("Direktori ZIP rosak.");
+  const flags=u16(cursor+8),method=u16(cursor+10),checksum=u32(cursor+16),
+   length=u32(cursor+20),plain=u32(cursor+24),nameSize=u16(cursor+28),extra=u16(cursor+30),
+   comment=u16(cursor+32),external=u32(cursor+38),localAt=u32(cursor+42);
+  if(flags!==0||method!==0||length!==plain||plain>MAX_SOURCE*4||extra!==0||comment!==0||
+     external!==0||nameSize===0||nameSize>75)
+   throw Error("ZIP mengandungi kaedah atau fail tidak disokong.");
+  if(cursor+46+nameSize>eocd||localAt+30>dirOffset||u32(localAt)!==0x04034b50)
+   throw Error("Header fail ZIP rosak.");
+  const name=decoder.decode(bytes.subarray(cursor+46,cursor+46+nameSize));
+  if(!filename(name)||u16(localAt+8)!==0||u16(localAt+26)!==nameSize||u16(localAt+28)!==0||
+     decoder.decode(bytes.subarray(localAt+30,localAt+30+nameSize))!==name)
+   throw Error("Nama fail ZIP tidak sah.");
+  const start=localAt+30+nameSize;
+  if(start+length>dirOffset)throw Error("Data fail ZIP melebihi had.");
+  const data=bytes.subarray(start,start+length);
+  if(crc(data)!==checksum)throw Error("Checksum ZIP tidak sepadan.");
+  const code=decoder.decode(data),file={name,language:language(name),code};
+  if(!validFile(file))throw Error("Fail ZIP tidak disokong.");
+  files.push(file);cursor+=46+nameSize;
+ }
+ if(cursor!==eocd||!filesValid(files))throw Error("Nama pendua atau direktori ZIP tidak sah.");
+ return files;
+}
+const api=Object.freeze({version:"2.2",language,filename,validFile,filesValid,command,redact,diff,capability,aiPrompt,extractPatch,zip,unzipStore,MAX_FILES,MAX_SOURCE});
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 if(root)root.AksaraTerminalCore=api;
 })(typeof window!=="undefined"?window:null);
