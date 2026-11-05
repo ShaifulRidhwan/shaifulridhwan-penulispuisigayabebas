@@ -7,6 +7,7 @@ const {
 const {extractTikTokHandle,researchPublicAccount}=require("./tiktok-public-research");
 const {publicReferences}=require("./antara-free-research");
 const Identity=require("../../bilik-antara-identity");
+const Journey=require("../../bilik-antara-journey");
 const Brain=require("../../bilik-antara-brain");
 const Modes=require("../../bilik-antara-modes");
 const ThinkingV3=require("./aksara-thinking-v3");
@@ -491,6 +492,7 @@ exports.handler=async event=>{
   const thinkingV4=ThinkingV4.planRequest({question,mode:thoughtMode,intent,profile:cognition,basePlan:legacyPlan,history});
   const plan=thinkingV4.plan;
   const identityReply=(!media.length&&!documentText)?Identity.answerIdentity(question):null;
+  const journeyReply=(!media.length&&!documentText)?Journey.answer(question):null;
    // Verified mode guide and selected elementary philosophy have independent
    // mode-aware local answers; no cheap fallback can override their meaning.
    const modeGuide=!media.length&&!documentText?Modes.localModeGuide(question,thoughtMode,Identity):null;
@@ -516,6 +518,11 @@ exports.handler=async event=>{
      mode:"live",aiMode:"automatic",model:"local-reflection",thoughtMode,
      reply:darkReflection,sources:[],argumentMap:[],truthAudit:[],thoughtLedger:[],hypothesis:"",
      reviewApplied:false,disclaimer:""
+   },H);
+   if(journeyReply)return result(200,{
+    mode:"live",aiMode:"automatic",model:"project-journey",thoughtMode,reply:journeyReply,
+    sources:[],argumentMap:[],truthAudit:[],thoughtLedger:[],hypothesis:"",
+    reviewApplied:false,disclaimer:"Kisah Shaiful dari perspektif Aksara, berpandukan maklumat projek."
    },H);
    if(identityReply&&thoughtMode!=="gelap")return result(200,{
     mode:"live",aiMode:"automatic",model:"project-identity",thoughtMode,reply:identityReply,
