@@ -157,6 +157,10 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(await page.locator("#codeWorkspaceDialog").isVisible(),true);
   assert.equal(await page.locator("#cwFiles option").count(),1);
   await page.locator("#cwEditor").fill('console.log("WORKSPACE SNIPPET");');
+  assert.equal(await page.locator("#cwRuntimePanel").isVisible(),true,"JS runner must be available inside Workspace");
+  await page.locator("#cwRuntimeRun").click();
+  await page.waitForFunction(()=>document.querySelector("#cwRuntimeStatus")?.textContent.includes("BERJAYA"),null,{timeout:12000});
+  assert.match(await page.locator("#cwRuntimeOutput").innerText(),/WORKSPACE SNIPPET/);
   assert.equal(aiChatRequests.length,0);
   await page.locator("#cwUse").click();
   assert.equal(await page.locator("#codeWorkspaceDialog").isVisible(),false);
@@ -444,6 +448,27 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.waitForTimeout(180);
   assert.equal(await page.evaluate(()=>window.AksaraAICodeAgent.runs()),2,"OFF must never execute code");
 
+
+  // AI HTML goes straight into an isolated inline browser preview, not another text-only block.
+  const liveHtml='<!doctype html><html><head><style>h1{animation:pulse 1s infinite}@keyframes pulse{50%{opacity:.5}}</style></head><body><h1 id="inline-html-verified">AKSARA LIVE</h1><script>document.body.dataset.unsafe="yes"</script></body></html>';
+  const aiHtml=String.fromCharCode(96).repeat(3)+"html\n"+liveHtml+"\n"+String.fromCharCode(96).repeat(3);
+  await page.evaluate(reply=>{
+   const parent=document.getElementById("chat");
+   const msg=document.createElement("div");msg.className="message ai";
+   const bubble=document.createElement("div");bubble.className="bubble";
+   bubble.textContent=reply;msg.appendChild(bubble);parent.appendChild(msg);
+   window.dispatchEvent(new CustomEvent("ba:answered",{detail:{question:"Buat animasi HTML",answer:reply}}));
+  },aiHtml);
+  const selector="#chat > .message.ai:last-child .aksara-inline-preview iframe";
+  await page.locator(selector).waitFor({timeout:6000});
+  assert.equal(await page.locator(selector).getAttribute("sandbox"),"");
+  await page.frameLocator(selector).locator("#inline-html-verified").waitFor({timeout:6000});
+  assert.equal(await page.frameLocator(selector).locator("script").count(),0,"Inline preview must strip JS");
+  await page.locator("#chat > .message.ai:last-child .aksara-ai-preview-action").click();
+  assert.equal(await page.locator("#codeWorkspaceDialog").isVisible(),true);
+  assert.match(await page.locator("#cwEditor").inputValue(),/AKSARA LIVE/);
+  await page.locator("#cwClose").click();
+  assert.equal(aiChatRequests.length,0,"Inline Live Preview must not call AI");
 
   assert.equal(aiChatRequests.length,0,"No AI requests in the entire code test");
 
