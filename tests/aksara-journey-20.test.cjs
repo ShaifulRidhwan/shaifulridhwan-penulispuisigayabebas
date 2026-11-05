@@ -34,6 +34,7 @@ test("Journey UI preserves session history and does not change protected identit
  const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
  assert.match(html,/bilik-antara-journey\.js/);
  assert.match(html,/journeyNext/);
+ assert.match(html,/window\.AksaraJourney\?\.answer\(payload\.question\)/);
  assert.match(suite,/Sesi & Sejarah/);
  assert.doesNotMatch(suite,/Buka Bilik Antara Cloudflare/);
  assert.match(suite,/function renderStorageStatus\(\)/);
