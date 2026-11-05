@@ -31,7 +31,7 @@ test("attachment previews, removal, compression and code bridge are explicit and
  assert.ok(client.includes("micStream?.getTracks().forEach(t=>t.stop())"));
  assert.ok(client.includes("workspace.importFiles(files)"));
  assert.ok(workspace.includes("async function importFiles(selected)"));
- assert.ok(workspace.includes("importFiles});"));
+ assert.ok(workspace.includes("importFiles,receiveFile,snapshot});"));
  assert.ok(workspace.includes("if(!dialog.open)dialog.showModal()"));
  assert.doesNotMatch(workspace,/importFiles\(selected\)[\s\S]{0,850}engine\.run/);
 });
