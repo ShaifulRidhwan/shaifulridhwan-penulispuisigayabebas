@@ -13,8 +13,8 @@ test("AI terminal modules parse and stay behind sandbox runtime",()=>{
   "Project Memory","aitPatchBox","window.confirm(","core.zip(files)","storage(\"delete\")"]){
   assert.ok(ui.includes(token),"Missing AI Terminal feature "+token);
  }
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=2"));
- assert.ok(html.includes("bilik-antara-terminal-core.js?v=2"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=3"));
+ assert.ok(html.includes("bilik-antara-terminal-core.js?v=3"));
  assert.ok(html.includes("codeContext")&&html.includes("CODE_GUIDANCE"));
 });
 test("terminal command grammar rejects shell and wrong runtime",()=>{
@@ -120,4 +120,64 @@ test("terminal supports Python project imports and explicit agent patch review",
   "aitImportZIP","core.unzipStore","aitStdin","closeRepl"]){
   assert.ok(terminal.includes(phrase),"Missing terminal feature: "+phrase);
  }
+});
+
+test("terminal identifies source pasted into command prompt without executing it",()=>{
+ const items=[
+  ["console.log(6*7)","javascript"],
+  ["const n:number=6*7; console.log(n);","typescript"],
+  ["SELECT 6*7 AS hasil;","sql"],
+  ['print("Salam")',"python"],
+  ["std::cin >> n; | stdin: 6","cpp"],
+  ['#include <iostream>\nint main(){std::cout<<42;}',"cpp"],
+  ["<main><h1>AKSARA</h1></main>","html"],
+  ["body { color: red; }","css"]
+ ];
+ for(const [source,language] of items){
+  const result=core.classifyInput(source);
+  assert.equal(result?.type,"code",source);
+  assert.equal(result?.language,language,source);
+ }
+ const cpp=core.classifyInput("std::cin >> n; | stdin: 6");
+ assert.equal(cpp.fragment,true);
+ assert.equal(cpp.stdin,"6");
+ assert.equal(core.classifyInput("reset → print(x) → exit")?.type,"steps");
+ assert.equal(core.classifyInput("rm -rf /"),null);
+ assert.equal(core.classifyInput("pip install requests"),null);
+ assert.equal(core.command("rm -rf /").type,"invalid");
+});
+test("safe examples cover 5 executable languages and HTML/CSS",()=>{
+ const choices=["python","python-project","javascript","typescript","sql","cpp","html"];
+ for(const id of choices){
+  const example=core.prepareExample(id,[]);
+  assert.ok(example,id);
+  assert.ok(core.filesValid(example.files),id);
+  assert.ok(example.files.some(f=>f.name===example.primary),id);
+  assert.equal(example.files.length,id==="python-project"||id==="html"?2:1);
+ }
+ const cpp=core.prepareExample("cpp",[]);
+ assert.equal(cpp.stdin,"6");
+ assert.match(cpp.files[0].code,/int main\(\)/);
+ assert.match(cpp.files[0].code,/std::cin/);
+ const sql=core.prepareExample("sql",[]);
+ assert.match(sql.files[0].code,/SELECT 6 \* 7 AS hasil/);
+});
+test("examples never overwrite existing project files",()=>{
+ const first=core.prepareExample("python-project",[]);
+ const second=core.prepareExample("python-project",first.files.map(f=>f.name));
+ assert.ok(second);
+ assert.ok(second.files.every(f=>!first.files.some(o=>o.name===f.name)));
+ assert.match(second.files[0].code,/from demo_utils_2 import answer/);
+ assert.ok(core.filesValid(second.files));
+ assert.equal(core.prepareExample("does-not-exist",[]),null);
+});
+test("AI Terminal UI separates prompt commands from source code",()=>{
+ const source=read("bilik-antara-ai-terminal.js");
+ for(const token of ["aitExampleSelect","aitLoadExample","core.prepareExample","core.classifyInput",
+  "aitCodeSuggestion","aitUseSnippet","importSnippet()","suggestCode(","editor atas",
+  "candidate?.type===\"steps\"","candidate?.type===\"code\""]){
+  assert.ok(source.includes(token),"UI missing "+token);
+ }
+ assert.ok(!/function importSnippet\(\)[\s\S]{0,1300}engine\.run/.test(source),
+  "Pasting source must not silently execute it");
 });
