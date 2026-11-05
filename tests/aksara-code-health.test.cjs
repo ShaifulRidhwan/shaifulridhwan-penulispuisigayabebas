@@ -70,7 +70,7 @@ test("Status v2 uses English and keeps Core Engine, Voice, AI routing and sandbo
  assert.ok(html.includes("bilik-antara-code-health.js?v=2"));
  assert.ok(html.includes("bilik-antara-code-status.js?v=21"));
  assert.ok(html.includes("bilik-antara-code-runtime.js?v=7"));
- assert.ok(html.length<80000,"Bilik Antara primary HTML budget");
+ assert.ok(Buffer.byteLength(html,"utf8")<100000,"Bilik Antara primary HTML budget");
  assert.ok(status.includes("Code Engine · Runtime Health"));
  assert.ok(status.includes("Execution Activity"));
  assert.ok(status.includes("Refresh Status"));

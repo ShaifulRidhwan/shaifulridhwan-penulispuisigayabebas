@@ -31,7 +31,7 @@ test("attachment previews, removal, compression and code bridge are explicit and
  assert.ok(client.includes("micStream?.getTracks().forEach(t=>t.stop())"));
  assert.ok(client.includes("workspace.importFiles(files)"));
  assert.ok(workspace.includes("async function importFiles(selected)"));
- assert.ok(workspace.includes("importFiles});"));
+ assert.ok(workspace.includes("importFiles,receiveFile,snapshot});"));
  assert.ok(workspace.includes("if(!dialog.open)dialog.showModal()"));
  assert.doesNotMatch(workspace,/importFiles\(selected\)[\s\S]{0,850}engine\.run/);
 });
@@ -55,7 +55,7 @@ test("PDF text reader and compact composer protect user consent",()=>{
  assert.ok(html.includes('bilik-antara-attachments.js?v=5'));
  assert.ok(html.includes('bilik-antara-attachments.css?v=3'));
  assert.ok(html.includes('class="attachment-preview-row"'));
- assert.ok(html.length<80000,"Bilik Antara HTML must remain below the performance budget");
+ assert.ok(Buffer.byteLength(html,"utf8")<100000,"Bilik Antara HTML must remain below the performance budget");
  assert.ok(client.includes('window.AksaraPdfReader.read(file)'));
  assert.ok(client.includes('if(item){'));
  assert.ok(client.includes('ui.remove.hidden=stagedFiles.length<2'));

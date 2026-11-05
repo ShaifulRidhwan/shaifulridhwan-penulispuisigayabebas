@@ -448,6 +448,29 @@ async function importFiles(selected){
  info.textContent=batch.length+" fail kod diimport secara setempat. Tiada kod dijalankan atau dihantar ke AI.";
  return batch.length;
 }
-window.AksaraCodeWorkspace=Object.freeze({version:"1.7",fileCount:()=>files.length,previewAvailable:true,openAIPreview,importFiles});
+// Explicit, user-triggered transfer between AI Terminal and existing Workspace.
+// Never silently overwrite a workspace file with the same name.
+function receiveFile(source){
+ const original=String(source?.name||""),code=String(source?.code||"");
+ const language=languageOf(original);
+ if(!language||!/[.]((?:py)|(?:js)|(?:ts)|(?:sql)|(?:cpp)|(?:html)|(?:css))$/i.test(original)||
+    !/^[A-Za-z0-9][A-Za-z0-9_.-]{0,69}$/.test(original)||original.includes("..")||
+    code.length>12000||files.length>=12)return false;
+ save();
+ let name=original,count=1;
+ while(files.some(f=>f.name.toLowerCase()===name.toLowerCase())){
+  name="terminal-"+count+++original.slice(original.lastIndexOf("."));
+ }
+ files.push({name,language,code});index=files.length-1;
+ render();schedulePreview();
+ if(!dialog.open)dialog.showModal();
+ info.textContent="Fail "+original+" disalin daripada AI Terminal. Salinan Workspace berasingan dan tidak ditimpa.";
+ return true;
+}
+function snapshot(){
+ save();
+ return files.map(f=>({name:f.name,language:f.language,code:f.code}));
+}
+window.AksaraCodeWorkspace=Object.freeze({version:"1.8",fileCount:()=>files.length,previewAvailable:true,openAIPreview,importFiles,receiveFile,snapshot});
 restorePreviewActions();
 })();

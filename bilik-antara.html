@@ -991,7 +991,9 @@ summary,thoughtLedger:ideas.slice(-8),mediaFallback:ui.mediaFallback.checked,
 documentText:selectedFile&&selectedFile.text||"",
 documentName:selectedFile&&selectedFile.name||"",
 media:selectedFile&&selectedFile.media||null,fileMetadata:selectedFile&&selectedFile.metadata||[],memoryNotes:window.BilikAntaraSuite&&window.BilikAntaraSuite.memoryForPrompt(question)||""};
-payload.question=contextQuestion;
+const codeContext=window.AksaraAITerminal?.capabilityPrompt?.(question)||"";
+const brainCode=codeContext?(window.AksaraCodeBrain?.CODE_GUIDANCE||""):"";
+payload.question=contextQuestion+(codeContext?"\n\n[AKSARA CODE INTELLIGENCE · keupayaan setempat, bukan bukti ujian]\n"+brainCode+"\n"+codeContext:"");
 const requestBytes=new TextEncoder().encode(JSON.stringify(payload)).byteLength;
 if(requestBytes>5350000)throw Error("Jumlah mesej dan lampiran melebihi had Netlify 5.35 MB. Buang beberapa lampiran atau pendekkan dokumen sebelum menghantar.");
 const data=await askWithReconnect(payload,ctrl.signal,receive,
@@ -1133,7 +1135,10 @@ renderIdeas();renderHistory();update();probe();
 <script src="bilik-antara-pdf-reader.js?v=3" defer></script>
 <script src="bilik-antara-large-media.js?v=1" defer></script>
 <script src="bilik-antara-attachments.js?v=5" defer></script>
-<script src="bilik-antara-code-workspace.js?v=8" defer></script>
+<script src="bilik-antara-code-workspace.js?v=9" defer></script>
+<script src="bilik-antara-terminal-core.js?v=1" defer></script>
+<script src="bilik-antara-ai-terminal.js?v=1" defer></script>
+<script src="bilik-antara-code-brain.js?v=1" defer></script>
 <script src="bilik-antara-code-evaluation.js?v=1" defer></script>
 <script src="bilik-antara-brain.js?v=15" defer></script>
 <script src="bilik-antara-modes.js?v=4" defer></script>

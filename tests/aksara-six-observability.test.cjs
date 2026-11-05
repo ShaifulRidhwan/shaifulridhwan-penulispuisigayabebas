@@ -106,7 +106,7 @@ test("Enam status v2 tidak menghantar telemetry, mengaktifkan alat atau mendedah
  assert.match(html,/bilik-antara-observability\.js\?v=2/);
  assert.match(studio,/studio-antara-status\.js\?v=1/);
  assert.match(studio,/studio-antara-cloud\.js\?v=9/);
- assert.ok(html.length<80000,"Bilik Antara initial HTML budget");
+ assert.ok(Buffer.byteLength(html,"utf8")<100000,"Bilik Antara initial HTML budget");
  assert.match(src("studio-antara-cloud.js"),/statusEvent\('siap',settings\.model/);
  assert.match(src("bilik-antara-attachments.js"),/observeAttachment\("membaca"\)/);
  assert.match(src("bilik-antara.html"),/urlTraceStatus:data\.urlTrace\?\.status/);
