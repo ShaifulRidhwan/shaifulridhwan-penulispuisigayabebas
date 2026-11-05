@@ -3293,3 +3293,64 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-ve
 }
 #multiAiDialog .multi-ai-actions{flex:0 0 auto}
 #multiAiDialog .multi-ai-model-list{max-height:none;overflow:visible}
+
+
+/* Portal 3.2: keep existing feature controls and settings, but move the open
+   card to the browser top layer so the filtered glass header cannot offset it. */
+#portalCard[popover]:not(:popover-open){display:none!important}
+.topbar #settingsPanel .settings-card:popover-open{
+ position:fixed!important;
+ inset:0!important;
+ top:0!important;right:0!important;bottom:0!important;left:0!important;
+ margin:auto!important;
+ box-sizing:border-box!important;
+ width:min(410px,calc(100vw - 28px))!important;
+ max-width:410px!important;
+ height:max-content!important;
+ max-height:min(84dvh,700px)!important;
+ overflow-x:hidden!important;
+ overflow-y:auto!important;
+ overscroll-behavior:contain;
+ padding:18px!important;
+ border-radius:19px!important;
+ border:1px solid rgba(231,203,157,.48)!important;
+ background:linear-gradient(150deg,rgba(24,33,49,.94),rgba(10,16,28,.96))!important;
+ box-shadow:inset 0 1px 0 rgba(255,244,224,.12),0 28px 80px rgba(0,4,13,.50)!important;
+ -webkit-backdrop-filter:blur(14px) saturate(1.08)!important;
+ backdrop-filter:blur(14px) saturate(1.08)!important;
+ animation:none!important;transform:none!important;transform-origin:center!important;
+ will-change:auto!important;
+ scrollbar-width:thin;
+}
+#portalCard::backdrop{
+ background:rgba(3,7,15,.45);
+ -webkit-backdrop-filter:blur(8px);
+ backdrop-filter:blur(8px);
+}
+.topbar #settingsPanel .portal-modal-head{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ margin-bottom:13px;padding-bottom:12px;
+ border-bottom:1px solid rgba(232,206,161,.18);
+}
+.topbar #settingsPanel .portal-modal-head .settings-title{
+ margin:0!important;font:600 15px/1.35 "Space Grotesk","DM Sans",sans-serif;
+}
+.topbar #settingsPanel #portalClose{
+ display:grid;place-items:center;flex:none;
+ width:31px;height:31px;padding:0;border-radius:10px;
+ border:1px solid rgba(233,198,151,.32);
+ background:rgba(255,255,255,.045);color:#f5e9d8;
+ font:600 20px/1 "DM Sans",sans-serif;cursor:pointer;
+}
+.topbar #settingsPanel #portalClose:focus-visible{
+ outline:2px solid #f2c984;outline-offset:2px;
+}
+@media(max-width:560px){
+ .topbar #settingsPanel .settings-card:popover-open{
+  width:calc(100vw - 28px)!important;
+  max-height:min(82dvh,640px)!important;
+  padding:14px!important;
+  -webkit-backdrop-filter:blur(8px)!important;
+  backdrop-filter:blur(8px)!important;
+ }
+}
