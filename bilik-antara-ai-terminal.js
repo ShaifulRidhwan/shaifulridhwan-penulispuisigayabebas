@@ -3,12 +3,29 @@
 "use strict";
 const core=window.AksaraTerminalCore,engine=window.AksaraCodeRuntime,bridge=window.BilikAntaraBridge;
 const menu=document.getElementById("codeEngineMenu"),form=document.getElementById("composer");
-if(!core||!engine||!bridge||!menu||!form)return;
-const trigger=document.createElement("button");trigger.type="button";trigger.id="codeAITerminalOpen";trigger.textContent="AI Terminal · Projek";
-menu.querySelector(".multi-ai-actions")?.append(trigger);
+const engineChip=document.getElementById("codeEngineStatus");
+if(!core||!engine||!bridge||!form||!engineChip?.parentElement)return;
+// Independent top-level glass chip, immediately beside Code Engine.
+// Reuse Code Engine glass, size and core animation so the header remains cohesive.
+const trigger=document.createElement("button");
+trigger.type="button";trigger.id="codeAITerminalOpen";
+trigger.className="code-engine-status ai-terminal-status";
+trigger.setAttribute("aria-haspopup","dialog");
+trigger.setAttribute("aria-controls","aksaraAITerminal");
+trigger.setAttribute("aria-expanded","false");
+const triggerIcon=document.createElement("span");
+triggerIcon.className="code-engine-core ai-terminal-core";
+triggerIcon.setAttribute("aria-hidden","true");
+triggerIcon.innerHTML='<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><rect x="2.5" y="4.2" width="19" height="15.6" rx="2.8"/><path d="m7 9 3.7 3-3.7 3m6.2.4h4.2"/></svg>';
+const triggerLabel=document.createElement("span");
+triggerLabel.id="aiTerminalStatusText";
+triggerLabel.textContent="AI Terminal";
+trigger.append(triggerIcon,triggerLabel);
+engineChip.insertAdjacentElement("afterend",trigger);
 const dialog=document.createElement("dialog");dialog.id="aksaraAITerminal";dialog.className="multi-ai-dialog aksara-ai-terminal";
+dialog.setAttribute("aria-labelledby","aitTitle");
 dialog.innerHTML=[
-'<div class="multi-ai-head"><div><strong>AKSARA · AI TERMINAL</strong><p>Terminal maya dalam sandbox browser, bukan shell OS atau server.</p></div><button id="aitClose" type="button" aria-label="Tutup AI Terminal">×</button></div>',
+'<div class="multi-ai-head"><div><strong id="aitTitle">AKSARA · AI TERMINAL</strong><p>Terminal maya dalam sandbox browser, bukan shell OS atau server.</p></div><button id="aitClose" type="button" aria-label="Tutup AI Terminal">×</button></div>',
 '<div class="ait-shell">',
 '<div class="ait-row"><strong>Code Intelligence 2.0</strong><small id="aitRuntimeState">Sandbox · on demand</small></div>',
 '<div class="ait-modes" role="group" aria-label="Mod terminal"><button data-mode="manual" type="button">Manual</button><button data-mode="assist" type="button">AI Assist</button><button data-mode="agent" type="button">AI Agent</button></div>',
@@ -29,6 +46,19 @@ dialog.innerHTML=[
 document.body.appendChild(dialog);
 const css=document.createElement("style");
 css.textContent=[
+/* Inherit the very same glass styling as Code Engine. No new header row or page. */
+'.conversation-head #codeAITerminalOpen{flex:0 0 auto;min-width:0;max-width:160px;justify-content:center;gap:7px;color:#eaddc4}',
+'.conversation-head #codeAITerminalOpen .ai-terminal-core{color:#d8bb8b}',
+'.conversation-head #codeAITerminalOpen .ai-terminal-core svg{stroke-width:1.7;filter:drop-shadow(0 0 3px rgba(228,194,140,.24))}',
+'.conversation-head #codeAITerminalOpen[data-terminal-state="running"] .ai-terminal-core svg{animation:codeCoreWorking .75s ease-in-out infinite}',
+'.conversation-head #codeAITerminalOpen[data-terminal-state="error"] .ai-terminal-core{color:#e7a08e}',
+'.conversation-head #codeAITerminalOpen[data-terminal-state="running"]{border-color:rgba(232,204,143,.53)}',
+'.conversation-head #codeAITerminalOpen:focus-visible{outline:2px solid rgba(242,201,143,.85)!important;outline-offset:2px!important}',
+'.conversation-head #aiTerminalStatusText{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}',
+'@media(min-width:421px) and (max-width:760px){.conversation-head #codeAITerminalOpen{max-width:105px!important;padding-inline:8px!important;font-size:10px!important}}',
+'@media(max-width:420px){.conversation-head #codeEngineStatus,.conversation-head #codeAITerminalOpen{flex:0 0 38px!important;width:38px!important;max-width:38px!important;min-width:38px!important;padding:0!important;justify-content:center!important;gap:0!important}.conversation-head #codeEngineStatus #codeEngineStatusText,.conversation-head #codeAITerminalOpen #aiTerminalStatusText{display:none!important}.conversation-head #codeAITerminalOpen .ai-terminal-core{flex:0 0 17px!important;width:17px!important;height:17px!important}.conversation-head #codeAITerminalOpen .ai-terminal-core svg{width:17px!important;height:17px!important}.conversation-head #connection{flex:1 1 0!important;min-width:0!important}}',
+'@media(max-width:340px){.conversation-head #codeEngineStatus,.conversation-head #codeAITerminalOpen{flex-basis:36px!important;width:36px!important;max-width:36px!important;min-width:36px!important}.conversation .conversation-head{gap:3px!important}}',
+'@media(prefers-reduced-motion:reduce){.conversation-head #codeAITerminalOpen .ai-terminal-core svg{animation:none!important}}',
 '#aksaraAITerminal{box-sizing:border-box;width:min(740px,calc(100vw - 20px));max-width:740px;max-height:95dvh;overflow:auto;padding:15px;border-radius:18px;background:#0b111d;color:#ecdfcc;border:1px solid rgba(232,205,161,.34)}',
 '#aksaraAITerminal::backdrop{background:rgba(0,0,0,.76)}',
 '#aksaraAITerminal .ait-shell{display:grid;gap:11px;font:500 12px/1.5 "DM Sans",system-ui,sans-serif}',
@@ -171,7 +201,7 @@ async function replCommand(source){
  if(!window.AksaraPythonSession){message("Modul Python REPL belum dimuatkan.");return;}
  try{
   if(!repl)repl=window.AksaraPythonSession.create({files:pythonFiles(),onStatus:state=>$("aitRuntimeState").textContent=state});
-  replBusy=true;$("aitStop").disabled=false;render();
+  replBusy=true;$("aitStop").disabled=false;render();paintTrigger();
   const began=performance.now(),result=await repl.execute(source,{onOutput:(stream,chunk)=>{
    output((stream==="stderr"?"ERR> ":"")+chunk);
   }});
@@ -182,7 +212,7 @@ async function replCommand(source){
  }catch(error){
   output("Python REPL: "+String(error.message||error).slice(0,350));
   if(repl&&!repl.active()){repl=null;replActive=false;}
- }finally{replBusy=false;$("aitStop").disabled=Boolean(controller);render();}
+ }finally{replBusy=false;$("aitStop").disabled=Boolean(controller);render();paintTrigger();}
 }
 function sourceReport(result){
  const d=(result.diagnostics||[]).map(x=>String(x.code||"RUNTIME_ERROR")+": "+String(x.message||"").slice(0,300)).join("\n");
@@ -316,9 +346,36 @@ for(const item of core.examples){
 $("aitLoadExample").addEventListener("click",addExample);
 $("aitUseSnippet").addEventListener("click",importSnippet);
 $("aitDismissSnippet").addEventListener("click",clearSuggestion);
-trigger.addEventListener("click",()=>{if(menu.open)menu.close();trigger.textContent="AI Terminal · Projek";dialog.showModal();$("aitCommand").focus();});
+let activeCodeRuns=0,terminalError=false;
+function paintTrigger(){
+ const state=activeCodeRuns>0||replBusy?"running":terminalError?"error":"sandbox";
+ trigger.dataset.terminalState=state;
+ const status=state==="running"?"Running":state==="error"?"Error · semak output":"Sandbox · sedia";
+ trigger.title="AI Terminal · "+status;
+ trigger.setAttribute("aria-label","Buka AI Terminal. Status: "+status);
+}
+window.addEventListener("aksara:code-runtime-activity",event=>{
+ const phase=String(event.detail?.phase||"");
+ if(phase==="started"){activeCodeRuns=Math.min(20,activeCodeRuns+1);terminalError=false;}
+ else if(["completed","cancelled","timeout"].includes(phase)){
+  activeCodeRuns=Math.max(0,activeCodeRuns-1);
+  if(phase==="completed")terminalError=event.detail?.ok===false;
+  else if(phase==="timeout")terminalError=true;
+  else terminalError=false;
+ }
+ if(["started","loading","completed","cancelled","timeout"].includes(phase))paintTrigger();
+});
+function openTerminal(){
+ if(menu?.open)menu.close();
+ if(dialog.open){dialog.focus();return;}
+ dialog.showModal();
+ trigger.setAttribute("aria-expanded","true");
+ $("aitCommand").focus();
+}
+trigger.addEventListener("click",openTerminal);
 $("aitClose").addEventListener("click",()=>dialog.close());
 dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
+dialog.addEventListener("close",()=>{trigger.setAttribute("aria-expanded","false");trigger.focus({preventScroll:true});});
 dialog.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{mode=b.dataset.mode;attempts=0;render();saveLater();}));
 $("aitFile").addEventListener("change",()=>{saveCurrent();index=Number($("aitFile").value)||0;render();});
 $("aitEditor").addEventListener("input",()=>{saveCurrent();pending=null;$("aitPatchBox").hidden=true;});
@@ -416,7 +473,7 @@ window.addEventListener("ba:answered",e=>{
  const target=waitingAI;waitingAI=null;
  const job=core.extractPatch(String(e.detail?.answer||""),target.language);
  const pos=files.findIndex(x=>x.name===target.name&&x.language===target.language);
- if(pos>=0&&job?.language===target.language&&files[pos].code===target.source){index=pos;render();propose(job);output("Cadangan patch A.I. diterima, belum dilaksanakan. Buka semula AI Terminal untuk menyemak diff.");trigger.textContent="AI Terminal · Patch tersedia";}
+ if(pos>=0&&job?.language===target.language&&files[pos].code===target.source){index=pos;render();propose(job);output("Cadangan patch A.I. diterima, belum dilaksanakan. Buka semula AI Terminal untuk menyemak diff.");trigger.title="AI Terminal · Patch menunggu semakan";}
  else if(pos>=0&&files[pos].code!==target.source){message("Kod berubah semasa A.I. menjawab. Patch lama ditolak bagi melindungi perubahan baharu.");}
  else message("Respons A.I. bukan satu blok patch kod yang sah. Semak jawapan di chat.");
 });
@@ -424,10 +481,10 @@ window.addEventListener("ba:request-failed",()=>{if(waitingAI){waitingAI=null;me
 window.addEventListener("ba:cleared",()=>{waitingAI=null;controller?.abort();});
 window.addEventListener("pagehide",()=>{controller?.abort();clearTimeout(saveTimer);});
 window.AksaraAITerminal=Object.freeze({
- version:"2.2",open:()=>{if(!dialog.open)dialog.showModal();},
+ version:"2.3",open:openTerminal,
  capabilityPrompt:q=>/\b(?:kod|code|coding|program|python|javascript|typescript|sql|cpp|c\+\+|compiler|runtime|debug|terminal|script|skrip)\b/i.test(String(q||""))?core.capability(engine.available):"",
  state:()=>({mode,files:files.length,hasRun:Boolean(last),pendingPatch:Boolean(pending),projectMemory:$("aitRemember").checked})
 });
-render();$("aitOutput").textContent="AKSARA AI Terminal 2.2\nTaip help untuk arahan, atau pilih Contoh Kod → Muat contoh → Run. Kod program diletakkan dalam editor atas, bukan dalam prompt terminal.";
+render();paintTrigger();$("aitOutput").textContent="AKSARA AI Terminal 2.3\nTaip help untuk arahan, atau pilih Contoh Kod → Muat contoh → Run. Kod program diletakkan dalam editor atas, bukan dalam prompt terminal.";
 void restore();
 })();

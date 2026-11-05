@@ -13,7 +13,7 @@ test("AI terminal modules parse and stay behind sandbox runtime",()=>{
   "Project Memory","aitPatchBox","window.confirm(","core.zip(files)","storage(\"delete\")"]){
   assert.ok(ui.includes(token),"Missing AI Terminal feature "+token);
  }
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=3"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=4"));
  assert.ok(html.includes("bilik-antara-terminal-core.js?v=3"));
  assert.ok(html.includes("codeContext")&&html.includes("CODE_GUIDANCE"));
 });
@@ -180,4 +180,63 @@ test("AI Terminal UI separates prompt commands from source code",()=>{
  }
  assert.ok(!/function importSnippet\(\)[\s\S]{0,1300}engine\.run/.test(source),
   "Pasting source must not silently execute it");
+});
+
+test("AI Terminal is a dedicated glass header chip next to Code Engine, not nested in its dialog",()=>{
+ const ui=read("bilik-antara-ai-terminal.js");
+ const codeStatus=read("bilik-antara-code-status.js");
+ const page=read("bilik-antara.html");
+ assert.ok(ui.includes('const engineChip=document.getElementById("codeEngineStatus");'));
+ assert.ok(ui.includes('engineChip.insertAdjacentElement("afterend",trigger);'));
+ assert.ok(ui.includes('trigger.className="code-engine-status ai-terminal-status";'));
+ assert.ok(ui.includes('trigger.id="codeAITerminalOpen"'));
+ assert.ok(!ui.includes('menu.querySelector(".multi-ai-actions")?.append(trigger)'));
+ assert.ok(!codeStatus.includes('codeAITerminalOpen'));
+ assert.match(page,/bilik-antara-ai-terminal\.js\?v=4/);
+ assert.match(page,/bilik-antara-code-brain\.js\?v=4/);
+});
+test("terminal's new glass header entry is iconed, accessible, responsive and in sync with runtime",()=>{
+ const ui=read("bilik-antara-ai-terminal.js");
+ for(const marker of [
+  'trigger.setAttribute("aria-haspopup","dialog")',
+  'trigger.setAttribute("aria-controls","aksaraAITerminal")',
+  'dialog.setAttribute("aria-labelledby","aitTitle")',
+  'id="aitTitle"',
+  'trigger.setAttribute("aria-expanded","false")',
+  'triggerIcon.className="code-engine-core ai-terminal-core"',
+  'triggerLabel.textContent="AI Terminal"',
+  'window.addEventListener("aksara:code-runtime-activity"',
+  'trigger.dataset.terminalState=state',
+  'dialog.addEventListener("close"',
+  'dialog.showModal()',
+  '@media(max-width:420px)',
+  '.conversation-head #codeEngineStatus,.conversation-head #codeAITerminalOpen',
+  '.conversation-head #connection{flex:1 1 0!important;min-width:0!important}',
+  '@media(prefers-reduced-motion:reduce)'
+ ])assert.ok(ui.includes(marker),"Missing glass accessibility/status/mobile contract: "+marker);
+ assert.ok(!ui.includes('trigger.textContent="AI Terminal · Patch tersedia"'));
+ assert.ok(ui.includes('replBusy=true;$("aitStop").disabled=false;render();paintTrigger();'));
+ assert.ok(ui.includes('render();paintTrigger();'));
+});
+test("AI Terminal still opens its original dialog and keeps every execution safeguard",()=>{
+ const ui=read("bilik-antara-ai-terminal.js");
+ for(const marker of [
+  'const dialog=document.createElement("dialog")',
+  'dialog.id="aksaraAITerminal"',
+  'core.classifyInput(trimmed)',
+  'core.zip(files)',
+  'core.unzipStore',
+  'window.confirm("Hantar kod',
+  'function agentCycle()',
+  'core.extractPatch(',
+  'function replCommand(',
+  'engine.run(f.language,f.code',
+  'aitRemember',
+  'aitLoadExample',
+  'aitImportZIP',
+  'trigger.addEventListener("click",openTerminal)'
+ ])assert.ok(ui.includes(marker),"Original Terminal workflow missing: "+marker);
+ const brain=read("bilik-antara-code-brain.js");
+ assert.ok(brain.includes("PINTU MASUK TERMINAL 2.3"));
+ assert.ok(brain.includes("AI Terminal dan Code Engine menggunakan runtime yang sama."));
 });
