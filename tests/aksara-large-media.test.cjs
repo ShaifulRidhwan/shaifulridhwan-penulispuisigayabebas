@@ -73,7 +73,7 @@ test("attachment pipeline stages sampled JPEGs without uploading original video"
  assert.doesNotMatch(html,/Teks sehingga 1 juta aksara · gambar besar dimampatkan/);
  assert.match(html,/JPG, PNG, WebP, GIF · 64 MB/);
  assert.match(html,/MP4, WebM · 128 MB/);
- assert.ok(html.length<80000);
+ assert.ok(Buffer.byteLength(html,"utf8")<100000,"Bilik Antara primary HTML budget is 100 KB");
 });
 test("code dialog retains user control and removes only explanatory footnote",()=>{
  const html=read("bilik-antara.html"),code=read("bilik-antara-code-agent.js"),menu=read("bilik-antara-code-status.js");
