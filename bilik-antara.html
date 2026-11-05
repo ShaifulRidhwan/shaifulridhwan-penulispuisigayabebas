@@ -896,6 +896,8 @@ if(metadataReply)return {reply:metadataReply,model:"local-file-metadata",provide
 if(typeof window!=="undefined"&&!payload.documentText&&(!payload.media||Array.isArray(payload.media)&&!payload.media.length)){
 const local=window.BilikAntaraIdentity?.answerIdentity(payload.question);
 if(local)return {reply:local,model:"project-identity",provider:"local",mode:"local",sources:[],durMs:0};
+const journey=window.AksaraJourney?.answer(payload.question);
+if(journey)return {reply:journey,model:"project-journey",provider:"local",mode:"local",sources:[],durMs:0};
 }
 const retryAfter=res=>{
 const raw=res.headers.get("retry-after");if(!raw)return undefined;
