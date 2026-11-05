@@ -75,6 +75,9 @@ jobs:
           node --check netlify/functions/aksara-tavily.js
           node --check netlify/functions/aksara-capabilities.js
           node --check netlify/functions/aksara-owned-page.js
+          node --check bilik-antara-ai-terminal.js
+          node --test tests/aksara-terminal-core.test.cjs
+          node --test tests/aksara-centered-dialogs.test.cjs
           node --test tests/aksara-code-preview.test.cjs
           node --test tests/aksara-code-health.test.cjs
           node --test tests/aksara-thinking-status.test.cjs

@@ -158,6 +158,16 @@ async function audit(browser,label,options){
     Math.abs(featureGlass.veil.top-featureGlass.chat.top)<=1 &&
     Math.abs(featureGlass.veil.bottom-featureGlass.chat.bottom)<=1,
     label+" feature veil does not cover the full chat border: "+JSON.stringify(featureGlass));
+  const portalPosition=await page.locator("#portalCard").evaluate(node=>{
+    const box=node.getBoundingClientRect();
+    return {open:node.matches(":popover-open"),centerX:box.left+box.width/2,
+      centerY:box.top+box.height/2,viewportX:innerWidth/2,viewportY:innerHeight/2,
+      width:box.width};
+   });
+   assert.ok(portalPosition.open,label+" Portal must be in the browser top layer");
+   assert.ok(Math.abs(portalPosition.centerX-portalPosition.viewportX)<4,label+" Portal horizontal alignment "+JSON.stringify(portalPosition));
+   assert.ok(Math.abs(portalPosition.centerY-portalPosition.viewportY)<4,label+" Portal vertical alignment "+JSON.stringify(portalPosition));
+   assert.ok(portalPosition.width<=state.width-20,label+" Portal exceeds viewport");
   await page.screenshot({path:path.join(OUT,label+"-feature-glass.png"),animations:"disabled"});
   await page.keyboard.press("Escape");
   await page.waitForFunction(()=>!document.querySelector("#settingsPanel").open,{timeout:3000});
@@ -172,6 +182,24 @@ async function audit(browser,label,options){
     label+" closing Ciri & Fungsi must restore the original background");
   assert.doesNotMatch(recoveredGlass.chat,/blur\(14px\)/,
     label+" closing Ciri & Fungsi must restore normal glass performance");
+
+  // Terminal opens in the center without automatically focusing its command input.
+   await page.locator("#codeAITerminalOpen").click();
+   const terminalLayout=await page.locator("#aksaraAITerminal").evaluate(node=>{
+    const box=node.getBoundingClientRect();
+    return {open:node.open,centerX:box.left+box.width/2,centerY:box.top+box.height/2,
+      viewportX:innerWidth/2,viewportY:innerHeight/2,width:box.width,
+      focusedCommand:document.activeElement?.id==="aitCommand",
+      documentWidth:document.documentElement.scrollWidth};
+   });
+   assert.ok(terminalLayout.open,label+" Terminal must open");
+   assert.ok(Math.abs(terminalLayout.centerX-terminalLayout.viewportX)<4,label+" Terminal horizontal alignment "+JSON.stringify(terminalLayout));
+   assert.ok(Math.abs(terminalLayout.centerY-terminalLayout.viewportY)<4,label+" Terminal vertical alignment "+JSON.stringify(terminalLayout));
+   assert.equal(terminalLayout.focusedCommand,false,label+" opening Terminal must not summon the software keyboard");
+   assert.ok(terminalLayout.documentWidth<=state.width+6,label+" Terminal must not cause page overflow");
+   await page.screenshot({path:path.join(OUT,label+"-terminal-centered.png"),animations:"disabled"});
+   await page.keyboard.press("Escape");
+   assert.equal(await page.locator("#aksaraAITerminal").isVisible(),false,"Escape must close Terminal");
 
   const attachmentTrigger=page.locator("#attachmentTrigger"),attachmentDialog=page.locator("#attachmentDialog");
   await attachmentTrigger.click();

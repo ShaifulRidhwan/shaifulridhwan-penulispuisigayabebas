@@ -171,7 +171,9 @@ test("Feature icon consolidates sessions, performance, studio and keeps privacy 
  const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
  const suiteCSS=fs.readFileSync("bilik-antara-suite.css","utf8");
  assert.match(html,/<summary class="portal-trigger" aria-label="Buka Portal Aksara"/);
- assert.match(html,/<div class="settings-title">Ciri &amp; Fungsi<\/div>/);
+ assert.match(html,/<div class="settings-title" id="portalTitle">Ciri &amp; Fungsi<\/div>/);
+ assert.match(html,/id="portalCard" popover="manual"/);
+ assert.match(html,/id="portalClose"/);
   assert.match(html,/<span>PORTAL<\/span><svg/,"Grid icon must sit to the RIGHT of PORTAL");
   assert.doesNotMatch(html,/class="nav-link aksara-nav-link" href="studio-antara\.html"/,"Studio must remain in Portal");
  for(const id of ["featureSessions","featureMetrics","featureStudio","privacySettings","rememberChat","contextFallback","clearChat","voiceDictate","ideaLedger","forgetIdeas"]){
@@ -342,7 +344,7 @@ test("Retired ambient CSS and blank breakpoints stay removed",()=>{
  for(const name of ["worldBreath","hazeDrift","embersTravel","antaraAmbientPane","glassGlide"])
   assert.doesNotMatch(css,new RegExp("@keyframes\\s+"+name+"\\b"));
  assert.doesNotMatch(css,/\.world-haze\b|\.world-embers\b|\.world-light-glow\b/);
- assert.match(html,/bilik-antara\.css\?v=105/,"Bust cached 30-day stylesheet");
+ assert.match(html,/bilik-antara\.css\?v=106/,"Bust cached 30-day stylesheet");
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\s*\.conversation::before,\.conversation::after,[\s\S]*?animation:none!important/);
  assert.doesNotMatch(css,/prefers-reduced-motion:reduce\)\{[^}]*animation:[^;}]*infinite/);
  assert.doesNotMatch(css,/\.message-place(?:-action)?\b/,"Location remains hidden from chat metadata");
