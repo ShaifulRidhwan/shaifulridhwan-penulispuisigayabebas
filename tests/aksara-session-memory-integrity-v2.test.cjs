@@ -85,7 +85,7 @@ test("Both defaults remain ON, no server memory or hidden auto-save of note draf
  assert.match(h,/id="rememberChat" checked>/);
  assert.match(s,/let memory=read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
  assert.match(s,/const updated=\{enabled:toggle\.checked,text:field\.value\.trim\(\)\.slice\(0,8000\)\}/);
- assert.match(h,/bilik-antara-suite\.js\?v=17/);
+ assert.match(h,/bilik-antara-suite\.js\?v=18/);
  assert.match(h,/bilik-antara-session-utils\.js\?v=3/);
 });
 
