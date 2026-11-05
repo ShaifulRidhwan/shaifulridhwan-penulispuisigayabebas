@@ -32,11 +32,20 @@ function extract(reply){
  if(!engine.available.includes(language)||!code||code.length>6000)return null;
  return {language,code};
 }
-function requested(question){
- const q=String(question||"").toLowerCase().slice(0,500);
- return /\b(?:jalankan|laksanakan|run|execute|uji|test|cuba)\b/i.test(q)&&
-  /\b(?:kod|code|skrip|script|program|code engine|typescript|javascript|python|sql|cpp|c\+\+)\b/i.test(q)&&
-  !q.includes("[aksara code bridge]");
+function requested(question,language){
+ const q=String(question||"").trim().toLowerCase().slice(0,500);
+ if(/\b(?:jalankan|laksanakan|run|execute|uji|test|cuba)\b/i.test(q)&&
+    /\b(?:kod|code|skrip|script|program|code engine|typescript|javascript|python|sql|cpp|c\+\+)\b/i.test(q)&&
+    !q.includes("[aksara code bridge]"))return true;
+ // "python pulak" is a follow-up only when the prior assistant offered HTML/code.
+ const match=/^(?:kalau\s+)?(?:versi\s+)?(python|py|javascript|js|typescript|ts|sql|cpp|c\+\+)\s+(pulak|pula|sekarang|versi)[.!?]*$/i.exec(q);
+ if(!match||!language)return false;
+ const aliases={py:"python",js:"javascript",ts:"typescript","c++":"cpp"};
+ if((aliases[match[1]]||match[1])!==language)return false;
+ const history=chat.snapshot?.().history;
+ if(!Array.isArray(history)||history.length<4)return false;
+ const prior=history.slice(0,-2).reverse().find(m=>m?.role==="assistant"&&m.mode!=="code"&&m.mode!=="voice");
+ return Boolean(prior&&(window.AksaraCodeChat?.extractWebCode?.(prior.content)||extract(prior.content)));
 }
 function setPermission(value){
  allowed=Boolean(value);input.checked=allowed;
@@ -48,8 +57,9 @@ input.addEventListener("change",()=>setPermission(input.checked));
 stop.addEventListener("click",()=>{pending=null;controller?.abort();});
 window.addEventListener("ba:answered",e=>{
  const d=e.detail||{};pending=null;
- if(!allowed||running||!requested(d.question))return;
+ if(!allowed||running)return;
  const job=extract(d.answer);
+ if(!requested(d.question,job?.language))return;
  if(!job){status.textContent="A.I. Execution · Tiada satu blok kod sah ditemui";return;}
  pending=job;status.textContent="A.I. mencadangkan "+named[job.language]+" · sedia jalankan";
 });
@@ -97,6 +107,6 @@ window.addEventListener("ba:ready-for-tools",()=>{if(pending&&!running)void exec
 window.addEventListener("ba:cleared",()=>{pending=null;controller?.abort();setPermission(allowed);});
 window.addEventListener("pagehide",()=>{pending=null;controller?.abort();});
 setPermission(true);
-window.AksaraAICodeAgent=Object.freeze({version:"1.1",enabled:()=>allowed,running:()=>running,
+window.AksaraAICodeAgent=Object.freeze({version:"1.2",enabled:()=>allowed,running:()=>running,
  runs:()=>runs,extract,isExplicitRequest:requested});
 })();

@@ -56,7 +56,7 @@ test("C++ project workflow exposes code, stdin, stop and output",()=>{
 });
 test("v0.3 page loads fresh Code Engine JS",()=>{
  const html=read("bilik-antara.html");
- for(const asset of ["runtime.js?v=7","status.js?v=21","workspace.js?v=7","chat.js?v=11","agent.js?v=5"]){
+ for(const asset of ["runtime.js?v=7","status.js?v=21","workspace.js?v=8","chat.js?v=11","agent.js?v=6"]){
   assert.ok(html.includes("bilik-antara-code-"+asset),"Missing "+asset);
  }
 });
@@ -67,7 +67,8 @@ test("AI Code Agent starts enabled without removing manual OFF and stop",()=>{
  assert.ok(agent.includes('input.addEventListener("change",()=>setPermission(input.checked))'),"User must retain manual OFF");
  assert.ok(agent.includes("if(!allowed){pending=null;controller?.abort();}"),"Manual OFF must abort queued execution");
  assert.ok(agent.includes('window.addEventListener("ba:cleared",()=>{pending=null;controller?.abort();setPermission(allowed);});'),"Clearing chat must not silently re-enable a manual OFF");
- assert.ok(agent.includes("if(!allowed||running||!requested(d.question))return"),"No unrelated auto-execution");
+ assert.ok(agent.includes("if(!allowed||running)return;")&&
+    agent.includes("if(!requested(d.question,job?.language))return;"),"No unrelated auto-execution");
  assert.ok(agent.includes('stop.addEventListener("click"'),"Execution stop must stay available");
 });
 require("./aksara-code-followup.test.cjs");
@@ -79,8 +80,24 @@ test("AI HTML preview renders inline with an isolated iframe and an editor actio
   'window.addEventListener("ba:answered"','Buka Editor · Code Engine']){
   assert.ok(workspace.includes(token),"Missing inline preview behavior: "+token);
  }
- assert.ok(workspace.includes("inline:i===history.length-1"),"Old history must not render dozens of iframes");
+ assert.ok(workspace.includes("inline:i===newestAI")&&
+    workspace.includes('const newestAI=history.findLastIndex'),"Only newest non-code AI reply should render an inline preview");
 });
+
+test("AI Python follow-up can show console and editor without disturbing HTML preview",()=>{
+ const agent=read("bilik-antara-code-agent.js"),workspace=read("bilik-antara-code-workspace.js");
+ const html=read("bilik-antara.html");
+ for(const marker of ["function inlineCodeConsole(job,element)","function openAICode(job)",
+  "engine.run(job.language,job.code","aksara-inline-console","runnable&&inline",
+  "window.addEventListener(\"aksara:code-result\""]){
+  assert.ok(workspace.includes(marker),"Missing AI code integration: "+marker);
+ }
+ assert.ok(agent.includes('const match=/^(?:kalau\\s+)?'),"Short language-switch follow-ups must be detected");
+ assert.ok(agent.includes('window.AksaraCodeChat?.extractWebCode?.(prior.content)'),"Previous code context required");
+ assert.ok(html.includes('new Event("ba:history-rendered")'),"Restored console must work with memory OFF");
+ assert.ok(workspace.includes('window.addEventListener("ba:history-rendered"'),"History re-render must restore action");
+});
+
 test("Workspace runs JavaScript, Python, TypeScript and SQL without round-tripping through AI",()=>{
  const workspace=read("bilik-antara-code-workspace.js");
  for(const token of ['id="cwRuntimePanel"','id="cwRuntimeRun"','id="cwRuntimeStop"',
