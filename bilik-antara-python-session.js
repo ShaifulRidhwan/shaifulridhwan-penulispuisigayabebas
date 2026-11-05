@@ -75,6 +75,8 @@ function create({files=[],onStatus=()=>{}}={}){
  let active=true,ready=false,pending=null,sequence=0,bootTimer=null;
  let resolveReady,rejectReady;
  const boot=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject;});
+ // A user can close an idle session before issuing a command. Avoid an unhandled rejection.
+ void boot.catch(()=>{});
  const frame=document.createElement("iframe");
  frame.setAttribute("sandbox","allow-scripts");
  frame.setAttribute("referrerpolicy","no-referrer");
