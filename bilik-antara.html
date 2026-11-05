@@ -222,6 +222,15 @@ followOnInputResize=ui.chat.scrollHeight-ui.chat.scrollTop-ui.chat.clientHeight<
 ui.input.addEventListener("blur",()=>{followOnInputResize=false;});
 ui.chat.addEventListener("wheel",()=>{followOnInputResize=false;},{passive:true});
 ui.chat.addEventListener("touchmove",()=>{followOnInputResize=false;},{passive:true});
+let lastChatScrollTop=ui.chat.scrollTop;
+ui.chat.addEventListener("scroll",()=>{
+ const top=ui.chat.scrollTop;
+ // Programmatic scroll / scrollbar drag to older messages is also user intent.
+ // Do not reactivate the keyboard-follow behavior on the next viewport resize.
+ if(document.activeElement===ui.input&&followOnInputResize&&
+   top<20&&lastChatScrollTop>80)followOnInputResize=false;
+ lastChatScrollTop=top;
+},{passive:true});
 let viewportWidth=window.innerWidth;
 let stableAppHeight=Math.round(window.visualViewport?.height||window.innerHeight);
 function syncViewport(){
@@ -253,7 +262,8 @@ if(window.visualViewport)window.visualViewport.addEventListener("resize",queueVi
 // Respect readers of older messages: follow only when input gained focus near bottom.
 if(typeof ResizeObserver!=="undefined"){
  const chatViewportObserver=new ResizeObserver(()=>{
-  if(document.activeElement===ui.input&&followOnInputResize)scrollDown();
+  if(document.activeElement===ui.input&&followOnInputResize)
+   ui.chat.scrollTop=ui.chat.scrollHeight;
  });
  chatViewportObserver.observe(ui.chat);
 }
