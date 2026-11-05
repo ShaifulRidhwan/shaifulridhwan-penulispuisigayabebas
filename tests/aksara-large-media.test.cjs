@@ -81,5 +81,5 @@ test("code dialog retains user control and removes only explanatory footnote",()
  assert.match(code,/id="codeAiExecutionAllowed"/);
  assert.match(code,/id="codeAiExecutionState"/);
  assert.match(menu,/#codeRuntimeList\{flex:1 1 auto/);
- assert.match(html,/code-agent\.js\?v=5/);
+ assert.match(html,/code-agent\.js\?v=6/);
 });
