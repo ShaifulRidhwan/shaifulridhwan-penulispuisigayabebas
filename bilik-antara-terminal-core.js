@@ -11,7 +11,7 @@ function filesValid(fs){return Array.isArray(fs)&&fs.length<=MAX_FILES&&fs.every
 function command(raw){
  const s=String(raw||"").trim();if(!s||s.length>200)return {type:"invalid",message:"Arahan kosong atau terlalu panjang."};
  const [verb,...args]=s.split(/\s+/),name=args.join(" "),cmd=verb.toLowerCase();
- if(["help","ls","pwd","history","clear","status","tests"].includes(cmd)&&!name)return {type:cmd};
+ if(["help","ls","pwd","history","clear","status","tests","repl","reset","exit"].includes(cmd)&&!name)return {type:cmd};
  if(cmd==="cat"&&filename(name))return {type:"cat",name};
  if(cmd==="run"&&filename(name))return {type:"run",name,language:language(name)};
  if(Object.hasOwn(RUN,cmd)&&filename(name))return RUN[cmd]===language(name)?{type:"run",name,language:language(name)}:{type:"invalid",message:"Bahasa dan fail tak sepadan."};
@@ -63,7 +63,14 @@ function zip(fs){
  const index=join(central);
  return join([...parts,index,new Uint8Array([80,75,5,6,0,0,0,0,...u16(fs.length),...u16(fs.length),...u32(index.length),...u32(offset),0,0])]);
 }
-const api=Object.freeze({version:"2.0",language,filename,validFile,filesValid,command,redact,diff,capability,aiPrompt,zip,MAX_FILES,MAX_SOURCE});
+function extractPatch(reply,expected){
+ const blocks=[...String(reply||"").matchAll(/(?:^|\n)[ \t]*\x60\x60\x60([A-Za-z+0-9]+)[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*\x60\x60\x60(?=\s|$)/g)];
+ if(blocks.length!==1||typeof expected!=="string")return null;
+ const aliases={js:"javascript",ts:"typescript",py:"python","c++":"cpp",cxx:"cpp",cc:"cpp"};
+ const dialect=blocks[0][1].toLowerCase(),lang=aliases[dialect]||dialect,code=blocks[0][2].trim();
+ return lang===expected&&code.length>0&&code.length<=MAX_SOURCE?{language:lang,code}:null;
+}
+const api=Object.freeze({version:"2.1",language,filename,validFile,filesValid,command,redact,diff,capability,aiPrompt,extractPatch,zip,MAX_FILES,MAX_SOURCE});
 if(typeof module!=="undefined"&&module.exports)module.exports=api;
 if(root)root.AksaraTerminalCore=api;
 })(typeof window!=="undefined"?window:null);
