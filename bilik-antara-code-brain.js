@@ -10,9 +10,10 @@ const CODE_GUIDANCE=[
  "AI TERMINAL 2.1: Terminal menyokong arahan repl, reset dan exit untuk Python REPL WebAssembly yang mengekalkan pemboleh ubah sepanjang worker sesi masih aktif. Ia bukan terminal Linux, dan REPL akan hilang selepas reset, Stop, refresh atau tutup halaman.",
  "PROJEK: Python .py yang sah boleh mengimport modul .py projek secara setempat ketika Run. JavaScript, TypeScript, SQL dan C++ masih berjalan sebagai fail tunggal; C++ ada input stdin sehingga 4000 aksara. HTML/CSS boleh ditinjau melalui Code Workspace Live Preview yang menyekat JavaScript dan rangkaian.",
  "AGENT TERKAWAL: Uji & baiki menjalankan kod sebenar dan meminta kebenaran pengguna sebelum menghantar kod serta ralat kepada penyedia AI. Patch mesti dipaparkan sebagai diff dan mendapat kelulusan, dengan maksimum tiga cubaan AI. Jika kod berubah semasa menunggu respons, tolak patch lapuk.",
+ "INPUT TERMINAL 2.2: Prompt aksara@runtime menerima ARAHAN seperti help, ls, run main.py, node demo_js.js, sqlite demo_sql.sql. Kod program JavaScript, TypeScript, SQL dan C++ diletakkan dalam EDITOR atas, kemudian tekan Run; Python mentah hanya boleh ditaip terus apabila Python REPL aktif. Untuk mencuba semua bahasa, guna pilihan Contoh Kod → Muat contoh → Run. Simbol anak panah dalam panduan bermaksud langkah berasingan, bukan satu arahan untuk ditampal bulat-bulat. Kod yang dikesan di prompt boleh ditawarkan Masuk Editor, jangan jalankan secara senyap.",
  "PROJEK DAN PRIVASI: Fail boleh dieksport sebagai ZIP dan diimport semula dengan pengesahan. Project Memory menggunakan IndexedDB hanya selepas opt-in. Tiada akses terminal peranti, pemasangan pakej, shell arbitrari atau screenshot automatik. Untuk visual debugging, pengguna boleh memberi screenshot sebagai lampiran chat jika multimodal tersedia."
 ].join("\n");
-const API=Object.freeze({CODE_GUIDANCE,version:"2.1"});
+const API=Object.freeze({CODE_GUIDANCE,version:"2.2"});
 if(typeof module!=="undefined"&&module.exports)module.exports=API;
 if(root)root.AksaraCodeBrain=API;
 })(typeof window!=="undefined"?window:null);
