@@ -59,9 +59,10 @@ test("ZIP project export has valid store headers and central directory",()=>{
  assert.equal(raw,10);
 });
 test("code guidance does not modify Gemini Voice Guidance",()=>{
- const b=read("bilik-antara-brain.js");
- assert.ok(b.includes("const CODE_GUIDANCE="));
- assert.ok(b.includes("CORE,VOICE_GUIDANCE,TEXT_DELIVERY,CODE_GUIDANCE"));
+ const b=read("bilik-antara-brain.js"),coding=read("bilik-antara-code-brain.js");
+ assert.ok(coding.includes("const CODE_GUIDANCE="));
+ assert.ok(coding.includes("root.AksaraCodeBrain=API"));
+ assert.ok(b.includes("CORE,VOICE_GUIDANCE,TEXT_DELIVERY")); 
  assert.ok(!b.includes("VOICE_GUIDANCE.push("));
 });
 
