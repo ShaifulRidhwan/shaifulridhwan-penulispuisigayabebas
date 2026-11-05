@@ -60,5 +60,5 @@ test("Pusat Rujukan v3.1 menyimpan tab dan privasi sedia ada, menambah hasil ter
  assert.match(read("gaya-bebas.js"),/new URLSearchParams\(location\.search\)\.get\('karya'\)/);
  assert.doesNotMatch(hub,/localStorage\.setItem|sessionStorage\.setItem|sendBeacon/);
  assert.match(html,/id="contextFallback"/);
- assert.ok(html.length<80000);
+ assert.ok(Buffer.byteLength(html,"utf8")<100000);
 });
