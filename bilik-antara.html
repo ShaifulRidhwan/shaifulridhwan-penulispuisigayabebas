@@ -673,6 +673,7 @@ ui.starters.hidden=history.length>0;
 if(!history.length)welcome(batch);
 ui.chat.appendChild(batch);
 }finally{restoringHistory=false;}
+window.dispatchEvent(new Event("ba:history-rendered"));
 scrollDown();
 }
 function save(){
