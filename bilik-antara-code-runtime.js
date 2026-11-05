@@ -204,6 +204,14 @@ function sandboxBootstrap(){
      const py=await loadPyodide({indexURL:"https://cdn.jsdelivr.net/pyodide/v0.27.8/full/"});
      py.setStdout({batched:add});
      py.setStderr({batched:message=>emit("stderr",message)});
+     if(Array.isArray(job.projectFiles)&&job.projectFiles.length){
+      const base=py.FS.cwd();
+      for(const item of job.projectFiles){
+       if(!/^[A-Za-z][A-Za-z0-9_]{0,59}\.py$/.test(item.name)||typeof item.code!=="string")continue;
+       py.FS.writeFile(base+"/"+item.name,item.code,{encoding:"utf8"});
+      }
+      await py.runPythonAsync("import sys, os\nsys.path.insert(0, os.getcwd())");
+     }
      result=await py.runPythonAsync(job.source);
     }else throw Error("Bahasa belum disokong.");
     if(result!==undefined&&result!==null)add(printable(result));
@@ -240,7 +248,7 @@ function sandboxBootstrap(){
     });
    };
    worker.onerror=e=>{e.preventDefault();done({ok:false,output:"",error:"Worker runtime gagal. Semak polisi browser atau sambungan CDN.",diagnostics:[]});};
-   worker.postMessage({language:job.language,source:job.source,sqlParams:job.sqlParams,stdin:job.stdin});
+   worker.postMessage({language:job.language,source:job.source,sqlParams:job.sqlParams,stdin:job.stdin,projectFiles:job.projectFiles});
   }catch(error){done({ok:false,output:"",error:String(error?.message||error).slice(0,1800),diagnostics:[]});}
  },{once:true});
  say("","boot",{});
@@ -295,6 +303,19 @@ function run(language,source,options={}){
    }
    sqlParams=params;
   }
+  let projectFiles=[];
+  if(options.projectFiles!==undefined){
+   const items=options.projectFiles;
+   const valid=Array.isArray(items)&&items.length<=12&&
+    items.every(f=>f&&/^[A-Za-z][A-Za-z0-9_]{0,59}\.py$/.test(f.name)&&
+      typeof f.code==="string"&&f.code.length<=MAX_SOURCE)&&
+    items.reduce((total,f)=>total+f.code.length,0)<=48000&&
+    new Set(items.map(f=>f.name.toLowerCase())).size===items.length;
+   if(language!=="python"||!valid){
+    reject(Error("Project Files hanya untuk Python (.py), maksimum 12 fail dan 48,000 aksara."));return;
+   }
+   projectFiles=items.map(f=>({name:f.name,code:f.code}));
+  }
   if(options.signal?.aborted){reject(Error("Pelaksanaan dihentikan."));return;}
   emit("started");
   const id="code-"+(root.crypto?.randomUUID?.()||Math.random().toString(36).slice(2));
@@ -316,7 +337,7 @@ function run(language,source,options={}){
    if(event.source!==frame.contentWindow||event.data?.aksaraCodeV1!==true)return;
    const data=event.data;
    if(data.type==="boot"&&data.id===""){
-    frame.contentWindow.postMessage({type:"execute",id,language,source,sqlParams,stdin},"*");
+    frame.contentWindow.postMessage({type:"execute",id,language,source,sqlParams,stdin,projectFiles},"*");
    }else if(data.id===id&&data.type==="loading"){
     emit("loading");options.onProgress?.(String(data.detail||"Memuatkan runtime…"));
    }else if(data.id===id&&data.type==="done"&&clean()){
