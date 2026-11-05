@@ -348,8 +348,10 @@ async function probeLanguage(language,{signal}={}){
  if(!spec)return {language,ready:false,error:"Runtime belum disokong."};
  try{
   const r=await run(language,spec.source,{signal});
-  return {language,ready:r.ok===true&&r.output.trim()===spec.expected,
-    runtimeMs:r.runtimeMs,diagnostics:r.diagnostics};
+  const ready=r.ok===true&&r.output.trim()===spec.expected;
+  return {language,ready,runtimeMs:r.runtimeMs,diagnostics:r.diagnostics,
+    error:ready?"":r.ok===false?String(r.error||"Runtime gagal.").slice(0,200):
+     "Output ujian tidak sepadan dengan jangkaan."};
  }catch(e){return {language,ready:false,error:String(e?.message||e).slice(0,200)};}
 }
 async function probe(){return (await probeLanguage("javascript")).ready;}
@@ -376,5 +378,5 @@ async function evaluate(cases,{signal,onResult}={}){
  return Object.freeze({version:"1.0",total:items.length,passed:items.filter(x=>x.passed).length,
   failed:items.filter(x=>!x.passed).length,elapsedMs:Math.round(performance.now()-started),results:Object.freeze(items)});
 }
-root.AksaraCodeRuntime=Object.freeze({run,probe,probeLanguage,evaluate,compatibility,available:LANGUAGES,version:"0.7",limits:Object.freeze({maxSource:MAX_SOURCE,maxOutput:MAX_OUTPUT,timeouts:TIMEOUTS})});
+root.AksaraCodeRuntime=Object.freeze({run,probe,probeLanguage,evaluate,compatibility,available:LANGUAGES,version:"0.8",limits:Object.freeze({maxSource:MAX_SOURCE,maxOutput:MAX_OUTPUT,timeouts:TIMEOUTS})});
 })(window);

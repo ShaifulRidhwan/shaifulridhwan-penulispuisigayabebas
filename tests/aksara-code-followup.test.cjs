@@ -167,3 +167,26 @@ test("AI models are told the true Code Engine capability limits",()=>{
  assert.match(source,/BELUM mempunyai Java compiler/);
  assert.match(source,/Code Workspace Live Preview/);
 });
+
+test("duplicate AI HTML documents become one preview target",()=>{
+ const html="<!doctype html><html><body><h1>Yaya - A Girl From Nowhere</h1></body></html>";
+ const reply=code("html",html)+"\n\nPratonton:\n"+code("html",html);
+ const ctx=setup([{role:"assistant",content:reply}],"jalankan kod");
+ assert.equal(ctx.agent.extractWebCandidates(reply).length,1);
+ assert.equal(ctx.agent.extractWebCode(reply).html,html);
+ assert.match(ctx.run.textContent,/Live Preview/);
+});
+test("multiple distinct HTML examples are selectable but never silently executed",()=>{
+ const reply=code("html","<h1>First</h1>")+"\n"+code("html","<h1>Second</h1>");
+ const ctx=setup([{role:"assistant",content:reply}],"jalankan kod");
+ const previews=ctx.agent.extractWebCandidates(reply);
+ assert.equal(previews.length,2);
+ assert.match(previews[0].html,/First/);
+ assert.match(previews[1].html,/Second/);
+ assert.equal(ctx.agent.extractWebCode(reply),null);
+ assert.equal(ctx.action.hidden,true,"a vague Run must not choose between distinct documents");
+});
+test("a plain HTML document gets a safe preview target without a fence",()=>{
+ const ctx=setup([],"<html><body><h1>Live</h1></body></html>");
+ assert.equal(ctx.agent.extractWebCandidates("<html><body><h1>Live</h1></body></html>").length,1);
+});

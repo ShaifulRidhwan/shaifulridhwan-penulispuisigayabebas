@@ -13,7 +13,8 @@ dialog.innerHTML=[
  '<div class="cw-body"><label for="cwFiles">Fail</label><select id="cwFiles"></select><div class="cw-tools"><button id="cwAdd" type="button">+ Fail</button><button id="cwDelete" type="button">Buang</button><button id="cwImport" type="button">Import</button><input type="file" accept=".js,.py,.ts,.sql,.html,.css,.cpp" id="cwUpload" hidden/></div><label for="cwEditor">Editor</label><textarea id="cwEditor" rows="12" spellcheck="false"></textarea><p id="cwInfo" role="status" aria-live="polite"></p></div>',
  '<div class="cw-preview" id="cwPreviewPanel"><div class="cw-preview-head"><strong>HTML / CSS · Live Preview</strong><div class="cw-preview-tools"><button type="button" id="cwMobile" aria-pressed="false">Mobile</button><button type="button" id="cwDesktop" aria-pressed="true">Desktop</button><button type="button" id="cwPreviewRefresh">Segar semula</button></div></div><p id="cwPreviewInfo" role="status" aria-live="polite">Tambah fail .html untuk melihat paparan.</p><div class="cw-preview-frame"><iframe id="cwPreviewFrame" title="HTML/CSS Live Preview (sandbox)" sandbox="" referrerpolicy="no-referrer"></iframe></div><p class="cw-preview-note">Preview setempat sahaja · JavaScript dan rangkaian dinyahaktifkan dalam preview v0.2.</p></div>',
  '<section class="cw-cpp" id="cwCppPanel" hidden><strong>C++20 · Clang WASM Console</strong><p>Compiler sebenar dimuatkan bila Run ditekan (~29 MB kali pertama). Kod kekal dalam sandbox browser.</p><label for="cwCppStdin">Standard input (cin), jika perlu</label><textarea id="cwCppStdin" rows="2" maxlength="4000" placeholder="Input untuk std::cin (pilihan)"></textarea><div class="cw-cpp-actions"><button type="button" id="cwCppRun">▶ Run C++</button><button type="button" id="cwCppStop" disabled>■ Henti</button></div><p id="cwCppStatus" role="status" aria-live="polite">Sedia untuk compile.</p><pre id="cwCppOutput" role="log" aria-live="polite">Output console akan muncul di sini.</pre></section>',
- '<div class="multi-ai-actions cw-actions"><button type="button" id="cwUse">Gunakan di chatbox</button><button type="button" id="cwExport">Eksport JSON</button></div>'
+ '<section class="cw-run" id="cwRunPanel" hidden><div class="cw-run-head"><strong id="cwRunTitle">Code Engine · Console</strong><span>Sandbox setempat · tanpa API AI</span></div><div class="cw-run-actions"><button id="cwRun" type="button">▶ Jalankan Fail</button><button id="cwStop" type="button" disabled>■ Henti</button></div><p id="cwRunStatus" role="status" aria-live="polite">Sedia untuk dijalankan.</p><pre id="cwRunOutput" role="log" aria-live="polite">Output akan muncul di sini.</pre></section>',
+ ' <div class="multi-ai-actions cw-actions"><button type="button" id="cwUse">Gunakan di chatbox</button><button type="button" id="cwExport">Eksport JSON</button></div>'
 ].join("");
 document.body.appendChild(dialog);
 const $=id=>dialog.querySelector("#"+id),select=$("cwFiles"),editor=$("cwEditor"),info=$("cwInfo"),cppPanel=$("cwCppPanel");
@@ -35,6 +36,22 @@ style.textContent=[
 '.code-workspace-dialog .cw-preview-frame iframe{width:100%;height:245px;max-width:100%;border:0;background:white;transition:max-width .2s ease}',
 '.code-workspace-dialog .cw-preview-frame.is-mobile iframe{max-width:375px}',
 '.code-workspace-dialog :is(#cwPreviewInfo,.cw-preview-note){margin:0;color:#bdb4a8;font:500 11px/1.5 "DM Sans",sans-serif}',
+'.code-workspace-dialog .cw-run[hidden]{display:none!important}',
+'.code-workspace-dialog .cw-run{display:grid;gap:9px;margin:12px 0;padding:12px;border:1px solid rgba(232,205,161,.28);border-radius:13px;background:rgba(6,12,21,.28);font:500 12px "DM Sans",sans-serif}',
+'.code-workspace-dialog .cw-run-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;color:#ead8b9}',
+'.code-workspace-dialog .cw-run-head span{color:#bfb7ad;font-size:10px}',
+'.code-workspace-dialog .cw-run-actions{display:flex;gap:8px}',
+'.code-workspace-dialog .cw-run-actions button{flex:1;padding:10px 12px;border:1px solid rgba(232,205,161,.32);border-radius:10px;color:#f2e0c6;background:rgba(255,255,255,.035);cursor:pointer}',
+'.code-workspace-dialog .cw-run-actions button:disabled{opacity:.4;cursor:default}',
+'.code-workspace-dialog #cwRunStatus{margin:0;color:#bfb7ad;font-size:11px;line-height:1.5}',
+'.code-workspace-dialog #cwRunOutput{margin:0;box-sizing:border-box;max-height:210px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;background:rgba(2,7,14,.55);border:1px solid rgba(232,205,161,.17);border-radius:9px;padding:10px;color:#e9e6dd;font:12px/1.5 ui-monospace,Consolas,monospace}',
+'.conversation .aksara-inline-preview{display:grid;gap:8px;margin:14px 0 4px;padding:11px;border:1px solid rgba(232,205,161,.25);border-radius:12px;background:rgba(7,13,24,.27);min-width:0}',
+'.conversation .aksara-inline-preview .aksara-inline-title{color:#ead7b8;font:650 12px/1.45 "DM Sans",system-ui,sans-serif}',
+'.conversation .aksara-inline-preview .aksara-inline-note{color:#b9c6cd;font:500 10px/1.5 "DM Sans",system-ui,sans-serif}',
+'.conversation .aksara-inline-preview iframe{width:100%;height:245px;border:0;border-radius:9px;background:#fff;max-width:100%;display:block}',
+'.conversation .aksara-inline-preview .aksara-inline-actions{display:flex;gap:6px;flex-wrap:wrap}',
+'.conversation .aksara-inline-preview button{border:1px solid rgba(232,205,161,.3);border-radius:9px;background:rgba(255,255,255,.04);color:#e9d8bc;padding:8px 10px;font:600 11px "DM Sans",system-ui,sans-serif;cursor:pointer}',
+'.conversation .aksara-inline-preview button[aria-pressed="true"]{background:rgba(209,172,117,.23)}',
 '.code-workspace-dialog .cw-cpp[hidden]{display:none!important}',
 '.code-workspace-dialog .cw-cpp{display:grid;gap:9px;margin:12px 0;padding:12px;border:1px solid rgba(232,205,161,.28);border-radius:13px;background:rgba(6,12,21,.28);font:500 12px "DM Sans",sans-serif}',
 '.code-workspace-dialog .cw-cpp strong{color:#e9d5b7}',
@@ -52,6 +69,9 @@ function render(){
  select.replaceChildren();files.forEach((f,i)=>{const o=document.createElement("option");o.value=i;o.textContent=f.name;select.append(o);});
  select.value=String(index);editor.value=files[index].code;info.textContent=files.length+" fail sementara · tiada auto-simpan";
  cppPanel.hidden=files[index].language!=="cpp";
+ const runnable=engine.available.includes(files[index].language)&&files[index].language!=="cpp";
+ $("cwRunPanel").hidden=!runnable;
+ $("cwRunTitle").textContent=(files[index].language==="sql"?"SQLite SQL":files[index].language==="python"?"Python · Pyodide":files[index].language==="typescript"?"TypeScript":"JavaScript")+" · Console";
 }
 function add(name,code=""){
  const lang=languageOf(name);
@@ -164,6 +184,44 @@ $("cwCppRun").addEventListener("click",async()=>{
  }finally{cppController=null;setCppRunning(false);}
 });
 
+
+let workspaceController=null;
+function setWorkspaceRunning(on){
+ $("cwRun").disabled=on;$("cwStop").disabled=!on;
+ select.disabled=on;$("cwDelete").disabled=on;
+}
+$("cwStop").addEventListener("click",()=>workspaceController?.abort());
+$("cwRun").addEventListener("click",async()=>{
+ if(workspaceController)return;
+ save();
+ const file=files[index],language=file.language,source=file.code;
+ if(!engine.available.includes(language)||language==="cpp")return;
+ const status=$("cwRunStatus"),output=$("cwRunOutput");
+ if(!source.trim()){status.textContent="Masukkan kod dahulu.";return;}
+ workspaceController=new AbortController();setWorkspaceRunning(true);
+ status.textContent="Membina sandbox "+language+"…";output.textContent="";
+ try{
+  const result=await engine.run(language,source,{signal:workspaceController.signal,
+   onProgress:message=>{status.textContent=String(message).slice(0,120);}});
+  const diagnostic=(result.diagnostics||[]).map(d=>
+   (d.line?"Baris "+d.line+(d.column?", kolum "+d.column:"")+": ":"")+
+   String(d.code||"ERROR")+" · "+String(d.message||"").slice(0,300)).join("\n");
+  output.textContent=(result.output||"(Tiada output)")+
+   (diagnostic?"\nDIAGNOSTIK:\n"+diagnostic:"")+
+   (result.error&&!diagnostic?"\nERROR: "+result.error:"");
+  status.textContent=(result.ok?"BERJAYA":"RALAT")+" · "+result.runtimeMs+" ms"+
+   (result.truncated?" · output dipotong":"");
+  window.dispatchEvent(new CustomEvent("aksara:code-result",{detail:{
+   language,code:source,report:{ok:result.ok,stdout:result.stdout,stderr:result.stderr,
+    error:result.error,diagnostics:result.diagnostics,runtimeMs:result.runtimeMs,
+    truncated:result.truncated,limits:result.limits}
+  }}));
+ }catch(error){
+  output.textContent=String(error?.message||error).slice(0,600);
+  status.textContent="Runtime gagal atau dihentikan.";
+ }finally{workspaceController=null;setWorkspaceRunning(false);}
+});
+
 editor.addEventListener("input",()=>{save();schedulePreview();});
 select.addEventListener("change",()=>{save();index=Number(select.value);render();schedulePreview();});
 $("cwAdd").addEventListener("click",()=>{
@@ -199,7 +257,7 @@ $("cwExport").addEventListener("click",()=>{
 });
 $("cwClose").addEventListener("click",()=>dialog.close());
 dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
-dialog.addEventListener("close",()=>{cppController?.abort();clearTimeout(previewTimer);previewFrame.removeAttribute("srcdoc");});
+dialog.addEventListener("close",()=>{cppController?.abort();workspaceController?.abort();clearTimeout(previewTimer);previewFrame.removeAttribute("srcdoc");});
 // Turn a single AI HTML document into a local, editable, script-disabled Live Preview.
 function openAIPreview(source){
  const html=String(source?.html||"").trim(),css=String(source?.css||"").trim();
@@ -227,17 +285,57 @@ function openAIPreview(source){
  clearTimeout(previewTimer);updatePreview();
  return true;
 }
+// Inline previews are passive HTML/CSS renderings, never code execution. Distinct
+// examples get selectors instead of silently choosing the wrong document.
 function attachPreviewAction(reply,element){
- const parsed=window.AksaraCodeChat?.extractWebCode?.(reply);
- const java=parsed?null:window.AksaraCodeChat?.extractJavaCode?.(reply);
- if((!parsed&&!java)||!element||element.querySelector(".aksara-ai-preview-action"))return false;
- const action=document.createElement("button");
- action.type="button";action.className="msg-followup-btn aksara-ai-preview-action";
- action.textContent=parsed?"▶ Live Preview · Code Engine":"▶ Tukar Java ke HTML/CSS";
- action.setAttribute("aria-label",parsed?"Buka HTML dan CSS ini dalam AKSARA Code Workspace":
-  "Hantar kod Java ini ke A.I. untuk ditukar kepada HTML dan CSS, bukan menjalankan Java");
- action.addEventListener("click",()=>parsed?openAIPreview(parsed):window.AksaraCodeChat?.convertJava?.(java));
- element.appendChild(action);
+ const candidates=window.AksaraCodeChat?.extractWebCandidates?.(reply)||[];
+ const java=candidates.length?null:window.AksaraCodeChat?.extractJavaCode?.(reply);
+ if((!candidates.length&&!java)||!element||element.querySelector(".aksara-ai-preview-action"))return false;
+ if(!candidates.length){
+  const action=document.createElement("button");
+  action.type="button";action.className="msg-followup-btn aksara-ai-preview-action";
+  action.textContent="▶ Tukar Java ke HTML/CSS";
+  action.setAttribute("aria-label","Tukar kod Java kepada HTML/CSS melalui A.I. sebelum pratonton");
+  action.addEventListener("click",()=>window.AksaraCodeChat?.convertJava?.(java));
+  element.appendChild(action);return true;
+ }
+ const wrapper=document.createElement("section");
+ wrapper.className="aksara-inline-preview";
+ const title=document.createElement("strong");title.className="aksara-inline-title";
+ title.textContent="Live Preview · HTML/CSS";
+ const note=document.createElement("span");note.className="aksara-inline-note";
+ note.textContent="Paparan automatik · JavaScript, rangkaian dan borang disekat";
+ const frame=document.createElement("iframe");
+ frame.title="Pratonton HTML/CSS daripada jawapan A.I.";
+ frame.setAttribute("sandbox","");
+ frame.setAttribute("referrerpolicy","no-referrer");
+ frame.setAttribute("loading","lazy");
+ const actions=document.createElement("div");actions.className="aksara-inline-actions";
+ let active=0;
+ const selectors=[];
+ function show(n){
+  active=n;
+  frame.srcdoc=safePreviewDocument(candidates[n].html,candidates[n].css||"");
+  selectors.forEach((btn,i)=>btn.setAttribute("aria-pressed",String(i===n)));
+ }
+ if(candidates.length>1){
+  candidates.forEach((candidate,i)=>{
+   const button=document.createElement("button");button.type="button";
+   button.textContent="Pratonton "+(i+1);
+   button.setAttribute("aria-label","Tunjuk contoh HTML "+(i+1));
+   button.addEventListener("click",()=>show(i));
+   selectors.push(button);actions.appendChild(button);
+  });
+ }
+ const edit=document.createElement("button");
+ edit.type="button";edit.className="aksara-ai-preview-action";
+ edit.textContent="Buka dalam Code Workspace";
+ edit.addEventListener("click",()=>openAIPreview(candidates[active]));
+ actions.appendChild(edit);
+ wrapper.append(title,note,frame,actions);
+ element.appendChild(wrapper);
+ frame.addEventListener("load",()=>window.dispatchEvent(new Event("aksara:code-preview-ready")));
+ show(0);
  return true;
 }
 function restorePreviewActions(){
@@ -293,6 +391,6 @@ async function importFiles(selected){
  info.textContent=batch.length+" fail kod diimport secara setempat. Tiada kod dijalankan atau dihantar ke AI.";
  return batch.length;
 }
-window.AksaraCodeWorkspace=Object.freeze({version:"1.5",fileCount:()=>files.length,previewAvailable:true,openAIPreview,importFiles});
+window.AksaraCodeWorkspace=Object.freeze({version:"1.6",fileCount:()=>files.length,previewAvailable:true,openAIPreview,importFiles});
 restorePreviewActions();
 })();
