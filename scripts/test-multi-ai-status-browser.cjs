@@ -22,9 +22,9 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
       {slot:1,status:"online",checkedAt:Date.now(),model:"gemini-flash"},
       {slot:2,status:"ready",model:"gemini-flash"},
       {slot:3,status:"off"},{slot:4,status:"off"}]},
-     {id:"groq",status:"ready",model:"openai/gpt-oss-120b"},
+     {id:"groq",status:"online",model:"openai/gpt-oss-120b"},
      {id:"workers_ai",status:"off"},
-     {id:"openrouter",status:"ready"}]:[
+     {id:"openrouter",status:"online"}]:[
       {id:"gemini",status:"ready",pool:[]},
       {id:"groq",status:"ready"},{id:"workers_ai",status:"off"},
       {id:"openrouter",status:"ready"}
@@ -38,19 +38,21 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
     body:JSON.stringify({code:"ALL_PROVIDERS_BUSY",error:"Provider unavailable",retryable:false})});
   });
   await page.goto(BASE+"/bilik-antara.html",{waitUntil:"domcontentloaded"});
-  await page.waitForFunction(()=>document.querySelector("#connectionText")?.textContent==="Multi A.I Connected",{timeout:15000});
+  await page.waitForFunction(()=>document.querySelector("#connection")?.dataset.healthState==="connected",{timeout:15000});
+   assert.match(await page.locator("#connection").getAttribute("aria-label"),/^Connection · Connected\./);
+   assert.match(await page.locator("#connectionText").innerText(),/^(Connection|Connected)$/);
   const health=page.locator("#connection");
   assert.equal(await health.getAttribute("data-health-state"),"connected");
   await page.evaluate(()=>window.dispatchEvent(new Event("ba:voice-connected")));
-  assert.equal(await page.locator("#connectionText").innerText(),"Multi A.I Connected","Voice must not override text-provider health");
+  assert.equal(await health.getAttribute("data-health-state"),"connected","Voice must not override text-provider health");
   await page.locator("#input").fill("Hello, test compact status separation");
   await page.locator("#sendBtn").click();
   await page.waitForFunction(()=>document.querySelector("#connectionInfoText")?.textContent.includes("Waiting for Capacity"),{timeout:12000});
-  assert.equal(await page.locator("#connectionText").innerText(),"Multi A.I Connected","Busy request must NOT overwrite health pill");
+  assert.equal(await health.getAttribute("data-health-state"),"connected","Busy request must NOT overwrite health pill");
   assert.match(await page.locator("#connectionInfoText").innerText(),/Waiting for Capacity/);
   await health.click();
   assert.equal(await page.locator("#multiAiDialog").isVisible(),true);
-  assert.match(await page.locator("#multiAiCheckedAt").innerText(),/1\/4 Connected/);
+  assert.match(await page.locator("#multiAiCheckedAt").innerText(),/3\/4 Connected/);
   assert.equal(await page.locator('[data-provider="gemini"] [data-gemini-slot]').count(),4);
   // Long Gemini 1-4 detail must scroll inside the dialog, never hide its title or close button.
   await page.locator('[data-provider="gemini"] > summary').click();
@@ -76,18 +78,19 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   await page.locator('[data-provider="gemini"] > summary').click();
   phase="ready";
   await page.locator("#multiAiRefresh").click();
-  await page.waitForFunction(()=>document.querySelector("#connectionText")?.textContent==="Multi A.I Ready",{timeout:12000});
+  await page.waitForFunction(()=>document.querySelector("#connection")?.dataset.healthState==="ready",{timeout:12000});
   assert.equal(await health.getAttribute("data-health-state"),"ready");
   assert.equal(await health.evaluate(el=>el.classList.contains("ready")),false,"Ready cannot be green");
   phase="error";
   await page.locator("#multiAiRefresh").click();
-  await page.waitForFunction(()=>document.querySelector("#connectionText")?.textContent==="Multi A.I Unverified",{timeout:12000});
-  assert.notEqual(await page.locator("#connectionText").innerText(),"Multi A.I Offline");
+  await page.waitForFunction(()=>document.querySelector("#connection")?.dataset.healthState==="unverified",{timeout:12000});
+  assert.notEqual(await health.getAttribute("data-health-state"),"offline");
   assert.equal(await page.locator("#multiAiList .multi-ai-state.is-online").count(),0);
   assert.match(await page.locator("#multiAiCheckedAt").innerText(),/Health check failed/);
   phase="limited";
   await page.locator("#multiAiRefresh").click();
   await page.waitForFunction(()=>document.querySelector("#multiAiCheckedAt")?.textContent.includes("HTTP 429"),{timeout:12000});
+   assert.equal(await health.getAttribute("data-health-state"),"limited");
   assert.match(await page.locator("#multiAiCheckedAt").innerText(),/Retry in 45s/);
   assert.equal(await page.locator("#multiAiRefresh").isDisabled(),true,"Respect server Retry-After");
   const callsAtLimit=healthRequests;
@@ -95,6 +98,6 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   assert.equal(healthRequests,callsAtLimit,"An in-cooldown retry must not call the backend");
   await page.locator("#multiAiClose").click();
   assert.equal(errors.length,0,"Browser errors: "+errors.join("; "));
-  console.log("Multi A.I Status v2 PASS: connected, request isolation, Gemini 1-4, ready, refresh failure.");
+  console.log("Connection Status 3.1 PASS: verified connected, request isolation, Gemini 1-4, ready, unavailable, rate limit.");
  }finally{await browser.close();}
 })().catch(err=>{console.error(err);process.exitCode=1;});
