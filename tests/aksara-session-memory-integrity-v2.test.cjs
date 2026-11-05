@@ -85,8 +85,24 @@ test("Both defaults remain ON, no server memory or hidden auto-save of note draf
  assert.match(h,/id="rememberChat" checked>/);
  assert.match(s,/let memory=read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
  assert.match(s,/const updated=\{enabled:toggle\.checked,text:field\.value\.trim\(\)\.slice\(0,8000\)\}/);
- assert.match(h,/bilik-antara-suite\.js\?v=18/);
+ assert.match(h,/bilik-antara-suite\.js\?v=19/);
  assert.match(h,/bilik-antara-session-utils\.js\?v=3/);
+});
+
+test("A new visit shows starter questions but reload does not erase chat or memory",()=>{
+ const suite=fs.readFileSync("bilik-antara-suite.js","utf8");
+ const html=fs.readFileSync("bilik-antara.html","utf8");
+ assert.match(suite,/navigationType!=="reload"/);
+ assert.match(suite,/if\(firstLoadIsNewVisit\)startFreshVisit\(\)/);
+ assert.match(suite,/if\(!event\.persisted\)return/);
+ assert.match(suite,/if\(!snapshotCurrent\(\)\)return false/);
+ assert.match(suite,/activeId=freshId\(\)/);
+ assert.match(suite,/if\(!api\.fresh\(\)\)/);
+ assert.match(html,/function welcome\(/);
+ assert.match(html,/id="starters"/);
+ assert.match(html,/Siapa Aku/);
+ assert.match(html,/The Coder Poet/);
+ assert.match(html,/bilik-antara-suite\.js\?v=19/);
 });
 
 test("Suite drawer behaves as a keyboard modal without changing session data",()=>{

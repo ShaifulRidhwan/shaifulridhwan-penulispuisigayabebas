@@ -56,6 +56,10 @@ async function archived(page){
   assert.equal((await archived(a)).length,1);
 
   const b=await context.newPage();await mock(b);await ready(b);
+  assert.equal(await b.evaluate(()=>window.BilikAntaraBridge.snapshot().history.length),0,
+   "Entering from a new tab opens a fresh chat without losing A's archive");
+  assert.equal(await b.locator("#starters .starter").count(),2,"Both original starter questions must return");
+  assert.equal((await archived(b)).length,1,"New visits must keep the previous saved session");
   assert.equal(await b.evaluate(()=>window.BilikAntaraSuite.memoryForPrompt("Apa ingatan?")),"Ingatan A yang disahkan");
   await sessions(b);
   await b.getByRole("button",{name:"+ Sesi baharu",exact:true}).click();

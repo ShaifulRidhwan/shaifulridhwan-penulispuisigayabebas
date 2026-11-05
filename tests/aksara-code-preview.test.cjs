@@ -58,7 +58,7 @@ test("C++ project workflow exposes code, stdin, stop and output",()=>{
 });
 test("v0.3 page loads fresh Code Engine JS",()=>{
  const html=read("bilik-antara.html");
- for(const asset of ["runtime.js?v=8","status.js?v=21","workspace.js?v=10","chat.js?v=11","agent.js?v=6"]){
+ for(const asset of ["runtime.js?v=8","status.js?v=22","workspace.js?v=10","chat.js?v=11","agent.js?v=6"]){
   assert.ok(html.includes("bilik-antara-code-"+asset),"Missing "+asset);
  }
 });
@@ -114,7 +114,7 @@ test("Workspace runs JavaScript, Python, TypeScript and SQL without round-trippi
 test("on-demand smoke checks verify runtime evidence without permanent Ready claims",()=>{
  const status=read("bilik-antara-code-status.js"),health=read("bilik-antara-code-health.js");
  for(const marker of ['id="codeEngineRefresh"','engine.probeLanguage(language,{signal:controller.signal})',
-  'verificationController.abort()','window.confirm(','health.verifyRuntime(language,report.ready===true'])
+  'verificationController.abort()','code-refresh-data-note','health.verifyRuntime(language,report.ready===true'])
   assert.ok(status.includes(marker),"Missing runtime verification: "+marker);
  assert.ok(!status.includes('id="codeEngineVerifyAll"'),"No duplicate full-runtime button");
  const sandbox={document:{}};vm.runInNewContext(health,{window:sandbox});

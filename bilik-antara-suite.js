@@ -33,6 +33,10 @@ const initialArchive=read(KEYS.archive,[]);
 let archive=Array.isArray(initialArchive)?initialArchive:[];
 const sessionHelpers=window.AksaraSessionUtils;
 const restoredHistory=api.snapshot().history;
+// A full page visit starts a fresh chat. Reload deliberately resumes the active chat.
+const navigationType=typeof performance!=="undefined"?
+ performance.getEntriesByType?.("navigation")?.[0]?.type:"";
+const firstLoadIsNewVisit=!!navigationType&&navigationType!=="reload";
 let activeId="";
 try{
  const previous=sessionStorage.getItem(PREFIX+"-active")||"";
@@ -183,9 +187,9 @@ function persistArchive({upserts=[],removedIds=[],clearAll=false}={}){
  return true;
 }
 function snapshotCurrent(){
- if(!api.remember())return;
+ if(!api.remember())return true;
  const snapshot=api.snapshot();
- if(!snapshot.history.length)return;
+ if(!snapshot.history.length)return true;
  const idx=archive.findIndex(x=>x.id===activeId);
  const old=archive[idx]||{};
  const first=snapshot.history.find(x=>x.role==="user");
@@ -193,7 +197,20 @@ function snapshotCurrent(){
  const title=titleEdited&&typeof old.title==="string"?old.title:(sessionHelpers?.conversationTitle(snapshot.history)||String(first?.content||"Perbualan baharu").slice(0,75));
  const entry={id:activeId,title,at:Date.now(),titleEdited,
   pinned:!!old.pinned,history:snapshot.history,summary:snapshot.summary,summarizedThrough:snapshot.summarizedThrough,thoughtLedger:snapshot.thoughtLedger};
- persistArchive({upserts:[entry]});
+ return persistArchive({upserts:[entry]});
+}
+// Never delete old sessions or user memory on entry. Archive first, rotate the
+// active conversation ID, then show the original welcome and two starters.
+function startFreshVisit(){
+ if(api.active())return false;
+ if(!snapshotCurrent())return false; // Storage errors must not silently discard history.
+ const previous=activeId;
+ activeId=freshId();
+ if(!api.fresh()){activeId=previous;return false;}
+ try{sessionStorage.setItem(PREFIX+"-active",activeId);}catch(_){}
+ storageHealth.restored="sesi_baharu";
+ window.dispatchEvent(new Event("ba:session-changed"));
+ return true;
 }
 window.addEventListener("ba:saved",snapshotCurrent);
 window.addEventListener("ba:cleared",()=>{
@@ -636,6 +653,14 @@ window.addEventListener("ba:request-failed",event=>{
  metrics.events=[...metrics.events,{at:Date.now(),ok:false,code:String(item.code||item.status||"UNKNOWN").slice(0,32),ms:Number.isFinite(elapsed)?elapsed:null}].slice(-120);
  persistMetrics();if(currentPanel==="metrics")render();
 });
+// On back/forward-cache restoration the script does not run again, but this is
+// still a new visit, unlike the user's explicit Refresh/reload action.
+window.addEventListener("pageshow",event=>{
+ if(!event.persisted)return;
+ if(!startFreshVisit())window.addEventListener("ba:ready-for-tools",startFreshVisit,{once:true});
+});
+if(firstLoadIsNewVisit)startFreshVisit();
+
 window.BilikAntaraSuite={
  getStorageStatus:storageSnapshot,
  memoryForPrompt:question=>memory.enabled&&typeof memory.text==="string"?window.AksaraSessionUtils?.selectMemory(memory.text,question)||"":"",
