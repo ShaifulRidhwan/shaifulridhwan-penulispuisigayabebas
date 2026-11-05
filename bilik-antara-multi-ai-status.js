@@ -73,8 +73,10 @@
   function state(now=Date.now()){
    const rows=effective(now);
    const report=summarize(rows,checkedAt,now,failed,checking);
+   // HTTP 429 is a verified rate-limit event, not proof that all providers are offline.
+   const limited=failed&&/^HTTP 429\b/.test(failureDetails)&&report.verified===0;
    // If all evidence has expired, never show a lingering green chip.
-   return {...report,rows,checking};
+   return {...report,...(limited?{state:"limited",label:"Rate Limited"}:{}),rows,checking};
   }
   function render(now=Date.now()){
    const report=state(now);
