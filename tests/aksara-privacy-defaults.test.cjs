@@ -28,7 +28,7 @@ test("existing saved session OFF, saved memory OFF and saved notes are not migra
  assert.match(suite,/read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
  assert.doesNotMatch(suite,/localStorage\.removeItem\(KEYS\.memory\)/);
  assert.doesNotMatch(suite,/localStorage\.setItem\(KEYS\.memory.*enabled:true/);
- assert.match(html,/bilik-antara-suite\.js\?v=17/);
+ assert.match(html,/bilik-antara-suite\.js\?v=18/);
 });
 
 test("changing default never wipes old session archives or memory notes",()=>{
