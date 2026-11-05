@@ -1,4 +1,4 @@
-/* AKSARA AI Terminal v2: sandboxed project console, consent-gated AI and code review. */
+/* AKSARA Terminal: browser sandbox, consent-gated AI and project console. */
 (function(){
 "use strict";
 const core=window.AksaraTerminalCore,engine=window.AksaraCodeRuntime,bridge=window.BilikAntaraBridge;
@@ -19,29 +19,34 @@ triggerIcon.setAttribute("aria-hidden","true");
 triggerIcon.innerHTML='<svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><rect x="2.5" y="4.2" width="19" height="15.6" rx="2.8"/><path d="m7 9 3.7 3-3.7 3m6.2.4h4.2"/></svg>';
 const triggerLabel=document.createElement("span");
 triggerLabel.id="aiTerminalStatusText";
-triggerLabel.textContent="AI Terminal";
+triggerLabel.textContent="Terminal";
 trigger.append(triggerIcon,triggerLabel);
 engineChip.insertAdjacentElement("afterend",trigger);
 const dialog=document.createElement("dialog");dialog.id="aksaraAITerminal";dialog.className="multi-ai-dialog aksara-ai-terminal";
 dialog.setAttribute("aria-labelledby","aitTitle");
 dialog.innerHTML=[
-'<div class="multi-ai-head"><div><strong id="aitTitle">AKSARA · AI TERMINAL</strong><p>Terminal maya dalam sandbox browser, bukan shell OS atau server.</p></div><button id="aitClose" type="button" aria-label="Tutup AI Terminal">×</button></div>',
+'<div class="multi-ai-head"><div><strong id="aitTitle">AKSARA Terminal</strong><p>Terminal maya dalam sandbox browser, bukan shell OS atau server.</p></div><button id="aitClose" type="button" aria-label="Tutup Terminal">×</button></div>',
 '<div class="ait-shell">',
-'<div class="ait-row"><strong>Code Intelligence 2.0</strong><small id="aitRuntimeState">Sandbox · on demand</small></div>',
+'<div class="ait-row"><strong>Code Intelligence</strong><small id="aitRuntimeState">Sandbox · on demand</small></div>',
 '<div class="ait-modes" role="group" aria-label="Mod terminal"><button data-mode="manual" type="button">Manual</button><button data-mode="assist" type="button">AI Assist</button><button data-mode="agent" type="button">AI Agent</button></div>',
+'<section class="ait-glass-panel ait-glass-panel--editor"><div class="ait-section-heading"><strong>Editor Projek</strong><small>Fail & contoh kod</small></div>',
 '<div class="ait-row"><label for="aitFile">Fail</label><select id="aitFile"></select><button id="aitAdd" type="button">+ Fail</button><button id="aitDelete" type="button">Buang</button></div>',
 '<textarea id="aitEditor" rows="8" spellcheck="false" aria-label="Editor kod projek"></textarea>',
 '<div class="ait-example-row"><label for="aitExampleSelect">Contoh Kod</label><select id="aitExampleSelect" aria-label="Pilih contoh bahasa"></select><button id="aitLoadExample" type="button">Muat contoh</button></div>',
 '<p class="ait-input-hint">Editor atas = kod program. Terminal bawah = satu arahan setiap Enter. Contoh: <code>run main.py</code>. Kod tidak dijalankan secara automatik.</p>',
+'</section>',
+'<section class="ait-glass-panel ait-glass-panel--runtime"><div class="ait-section-heading"><strong>Runtime & Console</strong><small>Sandbox setempat</small></div>',
 '<div class="ait-row"><button id="aitRun" type="button">▶ Run</button><button id="aitStop" type="button" disabled>■ Stop</button><button id="aitTests" type="button">Uji</button><button id="aitUndo" type="button">Rollback</button><button id="aitWorkspace" type="button">Editor penuh</button><button id="aitPreview" type="button">Live Preview</button></div>',
 '<div class="ait-row"><button id="aitRepl" type="button">Python REPL</button><button id="aitAgentCycle" type="button">Uji & baiki · Agent</button><small id="aitReplStatus">Python REPL · OFF</small></div>',
 '<div class="ait-row" id="aitStdinWrap" hidden><label for="aitStdin">C++ stdin</label><textarea id="aitStdin" maxlength="4000" rows="2" placeholder="Input untuk std::cin"></textarea></div>',
 '<section class="ait-console"><div class="ait-row"><strong>TERMINAL</strong><small id="aitProfile">Belum diuji</small></div><pre id="aitOutput" role="log" aria-live="polite"></pre>',
 '<form id="aitCommandForm"><label id="aitPromptLabel" for="aitCommand">aksara@runtime:~$</label><input id="aitCommand" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="Arahan terminal: help · ls · run main.py"/><button type="submit">Enter</button></form>',
 '<div id="aitCodeSuggestion" class="ait-code-suggestion" hidden><span id="aitSuggestionText"></span><button id="aitUseSnippet" type="button">Masuk Editor</button><button id="aitDismissSnippet" type="button">Batal</button></div></section>',
+'</section>',
 '<section class="ait-patch" id="aitPatchBox" hidden><strong>AI Patch · Semak sebelum guna</strong><pre id="aitDiff"></pre><div class="ait-row"><button id="aitApply" type="button">Gunakan patch</button><button id="aitReject" type="button">Tolak</button></div></section>',
+'<section class="ait-glass-panel ait-glass-panel--tools"><div class="ait-section-heading"><strong>Projek & Bantuan A.I.</strong><small>Eksport, import dan privasi</small></div>',
 '<div class="ait-row"><button id="aitAI" type="button">Minta A.I. bantu</button><button id="aitExport" type="button">Eksport ZIP</button><button id="aitImportZIP" type="button">Import ZIP</button><input id="aitZipFile" type="file" accept=".zip,application/zip" hidden/><button id="aitImport" type="button">Import Workspace</button><label><input id="aitRemember" type="checkbox"/> Project Memory</label></div>',
-'<p id="aitHelp" role="status" aria-live="polite">Kod kekal setempat kecuali kau sahkan penghantaran kepada A.I.</p></div>'
+'<p id="aitHelp" role="status" aria-live="polite">Kod kekal setempat kecuali kau sahkan penghantaran kepada A.I.</p></section></div>'
 ].join("");
 document.body.appendChild(dialog);
 const css=document.createElement("style");
@@ -87,6 +92,7 @@ css.textContent=[
 '#aitPatchBox[hidden],#aitStdinWrap[hidden],#aitZipFile[hidden]{display:none!important}#aitPatchBox{padding:10px;border:1px solid rgba(230,199,138,.4);border-radius:12px}',
 '#aitHelp{margin:0;font-size:11px;color:#bfc5c6}',
 '@media(max-width:460px){#aksaraAITerminal{padding:9px}#aksaraAITerminal button{padding:8px;font-size:11px}#aitEditor{min-height:110px}}'
+,"\n/* AKSARA Terminal Liquid Glass 3.1: blur once on outer dialog, never on source text. */\n#aksaraAITerminal{\n padding:18px!important;\n background:linear-gradient(148deg,rgba(25,36,54,.93),rgba(11,17,30,.95) 56%,rgba(15,24,38,.94))!important;\n border:1px solid rgba(238,209,164,.36)!important;border-radius:20px!important;\n box-shadow:inset 0 1px 0 rgba(255,248,228,.14),0 18px 52px rgba(0,5,13,.46)!important;\n backdrop-filter:blur(14px) saturate(1.12)!important;\n -webkit-backdrop-filter:blur(14px) saturate(1.12)!important;\n overscroll-behavior:contain;\n}\n#aksaraAITerminal .multi-ai-head{padding-bottom:13px;margin-bottom:3px;border-bottom:1px solid rgba(236,208,160,.16)}\n#aksaraAITerminal .multi-ai-head strong{font:600 16px/1.3 \"Space Grotesk\",\"DM Sans\",sans-serif;letter-spacing:.015em;color:#f1e4cc}\n#aksaraAITerminal .multi-ai-head p{color:#acbac3;font-size:11px}\n#aksaraAITerminal .multi-ai-head #aitClose{border-radius:50%;min-width:33px;height:33px;padding:0!important}\n#aksaraAITerminal .ait-shell{gap:12px}\n#aksaraAITerminal .ait-glass-panel{\n display:grid;gap:10px;padding:13px;border:1px solid rgba(223,207,177,.17);\n border-radius:15px;background:linear-gradient(150deg,rgba(184,208,230,.052),rgba(13,24,39,.21));\n box-shadow:inset 0 1px 0 rgba(255,251,238,.07),0 4px 16px rgba(0,3,13,.1);\n}\n#aksaraAITerminal .ait-section-heading{display:flex;align-items:center;justify-content:space-between;gap:8px}\n#aksaraAITerminal .ait-section-heading strong{font:600 12px/1.4 \"Space Grotesk\",\"DM Sans\",sans-serif;color:#eed6ab}\n#aksaraAITerminal .ait-section-heading small{font:500 10px/1.4 \"DM Sans\",sans-serif;color:#a8bbc5;text-align:right}\n#aksaraAITerminal .ait-modes{\n display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px!important;\n padding:4px;border:1px solid rgba(219,196,159,.17);border-radius:13px;\n background:rgba(4,9,18,.34);\n}\n#aksaraAITerminal .ait-modes button{\n padding:9px 7px!important;min-width:0;background:transparent!important;\n border:1px solid transparent!important;border-radius:10px;color:#b8bec5!important;\n font-weight:600;white-space:nowrap;\n}\n#aksaraAITerminal .ait-modes button[aria-pressed=\"true\"]{\n background:linear-gradient(145deg,rgba(233,204,153,.21),rgba(147,180,198,.10))!important;\n border-color:rgba(238,211,167,.32)!important;color:#f4e5c9!important;\n box-shadow:inset 0 1px 0 rgba(255,243,211,.09)!important;\n}\n#aksaraAITerminal .ait-glass-panel button:not(:disabled),\n#aksaraAITerminal .ait-glass-panel select,\n#aksaraAITerminal .ait-glass-panel input:not([type=\"checkbox\"]){\n background:linear-gradient(150deg,rgba(213,231,241,.07),rgba(9,19,33,.32))!important;\n border-color:rgba(221,204,173,.22)!important;color:#e5e8e9;\n box-shadow:inset 0 1px 0 rgba(255,251,233,.06)!important;\n}\n#aksaraAITerminal .ait-glass-panel button:hover:not(:disabled){\n border-color:rgba(238,208,165,.53)!important;background:rgba(226,199,158,.13)!important;\n}\n#aksaraAITerminal #aitRun{\n background:linear-gradient(135deg,rgba(181,213,184,.21),rgba(214,178,113,.1))!important;\n border-color:rgba(166,220,190,.42)!important;color:#e7f3dd!important;font-weight:700;\n}\n#aksaraAITerminal #aitEditor{\n padding:12px!important;min-height:145px;border:1px solid rgba(155,180,206,.23)!important;\n border-radius:11px;background:rgba(3,9,17,.94)!important;color:#e7edf0!important;\n box-shadow:inset 0 1px 7px rgba(0,0,0,.24);\n line-height:1.65!important;tab-size:2;\n}\n#aksaraAITerminal .ait-console{\n padding:12px!important;border:1px solid rgba(133,180,166,.2)!important;\n background:rgba(3,9,15,.94)!important;border-radius:12px!important;\n box-shadow:inset 0 1px 8px rgba(0,0,0,.19);\n}\n#aksaraAITerminal .ait-console strong{font:600 11px/1.3 \"Space Grotesk\",sans-serif;color:#e9d3aa;letter-spacing:.035em}\n#aksaraAITerminal #aitOutput{color:#d2e5dc!important;font:12px/1.6 ui-monospace,Consolas,monospace!important;min-height:140px}\n#aksaraAITerminal #aitCommandForm{padding-top:7px;border-top:1px solid rgba(155,195,169,.13)}\n#aksaraAITerminal #aitCommand{background:rgba(9,20,30,.85)!important;color:#e6ede7!important}\n#aksaraAITerminal #aitHelp{\n padding:10px;border-radius:10px;background:rgba(174,194,213,.055);\n border:1px solid rgba(211,199,175,.14);color:#bcc9ca!important;\n}\n#aksaraAITerminal .ait-patch{\n padding:12px!important;border:1px solid rgba(221,185,126,.37)!important;\n border-radius:14px;background:rgba(79,64,43,.23);\n}\n#aksaraAITerminal .ait-input-hint{color:#b9c3c8}\n@media(max-width:560px){\n #aksaraAITerminal{padding:10px!important;max-height:calc(100dvh - 12px)!important;\n  backdrop-filter:blur(6px) saturate(1.06)!important;-webkit-backdrop-filter:blur(6px) saturate(1.06)!important}\n #aksaraAITerminal .ait-glass-panel{padding:10px;gap:9px}\n #aksaraAITerminal .ait-shell{gap:9px}\n #aksaraAITerminal #aitEditor{min-height:112px}\n #aksaraAITerminal #aitOutput{min-height:110px}\n #aksaraAITerminal .ait-section-heading small{font-size:9px}\n}\n@media(prefers-reduced-motion:reduce){#aksaraAITerminal button{transition:none!important;animation:none!important}}\n"
 ].join("");
 document.head.appendChild(css);
 const $=id=>dialog.querySelector("#"+id),langLabel={python:"Python",javascript:"JavaScript",typescript:"TypeScript",sql:"SQL",cpp:"C++",html:"HTML",css:"CSS"};
@@ -351,8 +357,8 @@ function paintTrigger(){
  const state=activeCodeRuns>0||replBusy?"running":terminalError?"error":"sandbox";
  trigger.dataset.terminalState=state;
  const status=state==="running"?"Running":state==="error"?"Error · semak output":"Sandbox · sedia";
- trigger.title="AI Terminal · "+status;
- trigger.setAttribute("aria-label","Buka AI Terminal. Status: "+status);
+ trigger.title="Terminal · "+status;
+ trigger.setAttribute("aria-label","Buka Terminal. Status: "+status);
 }
 window.addEventListener("aksara:code-runtime-activity",event=>{
  const phase=String(event.detail?.phase||"");
@@ -473,7 +479,7 @@ window.addEventListener("ba:answered",e=>{
  const target=waitingAI;waitingAI=null;
  const job=core.extractPatch(String(e.detail?.answer||""),target.language);
  const pos=files.findIndex(x=>x.name===target.name&&x.language===target.language);
- if(pos>=0&&job?.language===target.language&&files[pos].code===target.source){index=pos;render();propose(job);output("Cadangan patch A.I. diterima, belum dilaksanakan. Buka semula AI Terminal untuk menyemak diff.");trigger.title="AI Terminal · Patch menunggu semakan";}
+ if(pos>=0&&job?.language===target.language&&files[pos].code===target.source){index=pos;render();propose(job);output("Cadangan patch A.I. diterima, belum dilaksanakan. Buka semula Terminal untuk menyemak diff.");trigger.title="Terminal · Patch menunggu semakan";}
  else if(pos>=0&&files[pos].code!==target.source){message("Kod berubah semasa A.I. menjawab. Patch lama ditolak bagi melindungi perubahan baharu.");}
  else message("Respons A.I. bukan satu blok patch kod yang sah. Semak jawapan di chat.");
 });
@@ -485,6 +491,6 @@ window.AksaraAITerminal=Object.freeze({
  capabilityPrompt:q=>/\b(?:kod|code|coding|program|python|javascript|typescript|sql|cpp|c\+\+|compiler|runtime|debug|terminal|script|skrip)\b/i.test(String(q||""))?core.capability(engine.available):"",
  state:()=>({mode,files:files.length,hasRun:Boolean(last),pendingPatch:Boolean(pending),projectMemory:$("aitRemember").checked})
 });
-render();paintTrigger();$("aitOutput").textContent="AKSARA AI Terminal 2.3\nTaip help untuk arahan, atau pilih Contoh Kod → Muat contoh → Run. Kod program diletakkan dalam editor atas, bukan dalam prompt terminal.";
+render();paintTrigger();$("aitOutput").textContent="AKSARA Terminal\nTaip help untuk arahan, atau pilih Contoh Kod → Muat contoh → Run. Kod program diletakkan dalam editor atas, bukan dalam prompt terminal.";
 void restore();
 })();
