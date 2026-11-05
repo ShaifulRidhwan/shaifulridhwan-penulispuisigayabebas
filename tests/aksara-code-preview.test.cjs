@@ -6,6 +6,8 @@ const vm=require("node:vm");
 const path=require("node:path");
 const read=name=>fs.readFileSync(path.join(__dirname,"..",name),"utf8");
 
+require("./aksara-terminal-core.test.cjs");
+
 test("Code Engine v0.3 modules parse",()=>{
  for(const name of ["bilik-antara-code-runtime.js","bilik-antara-code-health.js","bilik-antara-code-status.js",
    "bilik-antara-code-workspace.js","bilik-antara-code-chat.js",
@@ -56,7 +58,7 @@ test("C++ project workflow exposes code, stdin, stop and output",()=>{
 });
 test("v0.3 page loads fresh Code Engine JS",()=>{
  const html=read("bilik-antara.html");
- for(const asset of ["runtime.js?v=7","status.js?v=21","workspace.js?v=8","chat.js?v=11","agent.js?v=6"]){
+ for(const asset of ["runtime.js?v=7","status.js?v=21","workspace.js?v=9","chat.js?v=11","agent.js?v=6"]){
   assert.ok(html.includes("bilik-antara-code-"+asset),"Missing "+asset);
  }
 });
