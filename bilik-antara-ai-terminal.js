@@ -14,11 +14,14 @@ dialog.innerHTML=[
 '<div class="ait-modes" role="group" aria-label="Mod terminal"><button data-mode="manual" type="button">Manual</button><button data-mode="assist" type="button">AI Assist</button><button data-mode="agent" type="button">AI Agent</button></div>',
 '<div class="ait-row"><label for="aitFile">Fail</label><select id="aitFile"></select><button id="aitAdd" type="button">+ Fail</button><button id="aitDelete" type="button">Buang</button></div>',
 '<textarea id="aitEditor" rows="8" spellcheck="false" aria-label="Editor kod projek"></textarea>',
+'<div class="ait-example-row"><label for="aitExampleSelect">Contoh Kod</label><select id="aitExampleSelect" aria-label="Pilih contoh bahasa"></select><button id="aitLoadExample" type="button">Muat contoh</button></div>',
+'<p class="ait-input-hint">Editor atas = kod program. Terminal bawah = satu arahan setiap Enter. Contoh: <code>run main.py</code>. Kod tidak dijalankan secara automatik.</p>',
 '<div class="ait-row"><button id="aitRun" type="button">▶ Run</button><button id="aitStop" type="button" disabled>■ Stop</button><button id="aitTests" type="button">Uji</button><button id="aitUndo" type="button">Rollback</button><button id="aitWorkspace" type="button">Editor penuh</button><button id="aitPreview" type="button">Live Preview</button></div>',
 '<div class="ait-row"><button id="aitRepl" type="button">Python REPL</button><button id="aitAgentCycle" type="button">Uji & baiki · Agent</button><small id="aitReplStatus">Python REPL · OFF</small></div>',
 '<div class="ait-row" id="aitStdinWrap" hidden><label for="aitStdin">C++ stdin</label><textarea id="aitStdin" maxlength="4000" rows="2" placeholder="Input untuk std::cin"></textarea></div>',
 '<section class="ait-console"><div class="ait-row"><strong>TERMINAL</strong><small id="aitProfile">Belum diuji</small></div><pre id="aitOutput" role="log" aria-live="polite"></pre>',
-'<form id="aitCommandForm"><label for="aitCommand">aksara@runtime:~$</label><input id="aitCommand" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="help · ls · run main.py"/><button type="submit">Enter</button></form></section>',
+'<form id="aitCommandForm"><label id="aitPromptLabel" for="aitCommand">aksara@runtime:~$</label><input id="aitCommand" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="Arahan terminal: help · ls · run main.py"/><button type="submit">Enter</button></form>',
+'<div id="aitCodeSuggestion" class="ait-code-suggestion" hidden><span id="aitSuggestionText"></span><button id="aitUseSnippet" type="button">Masuk Editor</button><button id="aitDismissSnippet" type="button">Batal</button></div></section>',
 '<section class="ait-patch" id="aitPatchBox" hidden><strong>AI Patch · Semak sebelum guna</strong><pre id="aitDiff"></pre><div class="ait-row"><button id="aitApply" type="button">Gunakan patch</button><button id="aitReject" type="button">Tolak</button></div></section>',
 '<div class="ait-row"><button id="aitAI" type="button">Minta A.I. bantu</button><button id="aitExport" type="button">Eksport ZIP</button><button id="aitImportZIP" type="button">Import ZIP</button><input id="aitZipFile" type="file" accept=".zip,application/zip" hidden/><button id="aitImport" type="button">Import Workspace</button><label><input id="aitRemember" type="checkbox"/> Project Memory</label></div>',
 '<p id="aitHelp" role="status" aria-live="polite">Kod kekal setempat kecuali kau sahkan penghantaran kepada A.I.</p></div>'
@@ -37,6 +40,14 @@ css.textContent=[
 '#aksaraAITerminal button:focus-visible,#aksaraAITerminal input:focus-visible{outline:2px solid #ebc68d;outline-offset:2px}',
 '#aksaraAITerminal [data-mode][aria-pressed="true"]{background:#c2dac8;color:#08201c}',
 '#aitFile{flex:1;min-width:100px;padding:8px}',
+'#aksaraAITerminal .ait-example-row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}',
+'#aksaraAITerminal .ait-example-row select{flex:1 1 140px;min-width:110px;padding:8px}',
+'#aksaraAITerminal .ait-example-row label{color:#d7c1a2;white-space:nowrap}',
+'#aksaraAITerminal .ait-input-hint{margin:0;color:#bfc6c4;font:11px/1.5 "DM Sans",sans-serif}',
+'#aksaraAITerminal .ait-input-hint code{color:#e0c48e}',
+'#aitCodeSuggestion[hidden]{display:none!important}',
+'#aksaraAITerminal .ait-code-suggestion{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:8px;border:1px solid rgba(206,181,132,.35);border-radius:10px;background:rgba(83,63,37,.17)}',
+'#aitSuggestionText{flex:1 1 160px;color:#e9ddc6;font-size:11px}',
 '#aitEditor{box-sizing:border-box;width:100%;min-height:140px;max-height:35dvh;resize:vertical;background:#09121e!important;color:#dde6ea!important;font:12px/1.65 ui-monospace,Consolas,monospace!important;padding:10px}',
 '#aksaraAITerminal .ait-console{display:grid;gap:8px;border:1px solid rgba(230,204,159,.25);border-radius:13px;padding:11px;background:#060d17}',
 '#aitOutput,#aitDiff{margin:0;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.55 ui-monospace,Consolas,monospace;color:#d9e3db}',
@@ -49,7 +60,7 @@ css.textContent=[
 ].join("");
 document.head.appendChild(css);
 const $=id=>dialog.querySelector("#"+id),langLabel={python:"Python",javascript:"JavaScript",typescript:"TypeScript",sql:"SQL",cpp:"C++",html:"HTML",css:"CSS"};
-let files=[{name:"main.py",language:"python",code:'print("Salam AKSARA Terminal")'}],index=0,mode="assist",controller=null,last=null,pending=null,undo=[],attempts=0,waitingAI=null,commands=[],saveTimer=null,repl=null,replActive=false,replBusy=false,historyCursor=-1;
+let files=[{name:"main.py",language:"python",code:'print("Salam AKSARA Terminal")'}],index=0,mode="assist",controller=null,last=null,pending=null,undo=[],attempts=0,waitingAI=null,commands=[],saveTimer=null,repl=null,replActive=false,replBusy=false,historyCursor=-1,suggestedCode=null;
 const dbName="aksara-terminal-v2",storeName="projects",prefKey="aksara-terminal-save-consent";
 function message(s){$("aitHelp").textContent=String(s||"").slice(0,360);}
 function output(s){const pre=$("aitOutput");pre.textContent=(pre.textContent+"\n"+String(s||"")).slice(-11000);pre.scrollTop=pre.scrollHeight;}
@@ -64,10 +75,55 @@ function render(){
  $("aitRepl").disabled=file().language!=="python"||replBusy;
  $("aitAgentCycle").disabled=mode!=="agent"||Boolean(controller)||replBusy||!engine.available.includes(file().language);
  $("aitReplStatus").textContent=replActive?"Python REPL · "+(replBusy?"RUNNING":"ON · reset jika ubah fail"):"Python REPL · OFF";
+ $("aitPromptLabel").textContent=replActive?"py>>>":"aksara@runtime:~$";
+ $("aitCommand").placeholder=replActive?"Kod Python: x=6 atau print(x*7)":"Arahan terminal: help · ls · run main.py";
+ $("aitLoadExample").disabled=Boolean(controller)||replBusy;
  $("aitPatchBox").hidden=!pending;
  dialog.querySelectorAll("[data-mode]").forEach(x=>x.setAttribute("aria-pressed",String(x.dataset.mode===mode)));
 }
 function saveCurrent(){file().code=$("aitEditor").value.slice(0,core.MAX_SOURCE);saveLater();}
+function clearSuggestion(){
+ suggestedCode=null;$("aitCodeSuggestion").hidden=true;$("aitSuggestionText").textContent="";
+}
+function suggestCode(job){
+ if(job.fragment){
+  output("C++ ini cuma potongan kod, bukan program lengkap. Pilih Contoh Kod → C++ stdin, tekan Muat contoh dan Run. Isi input di ruang stdin.");
+  message("C++ memerlukan fungsi main(). Gunakan contoh lengkap C++ stdin.");
+  clearSuggestion();return;
+ }
+ suggestedCode=job;
+ const name=langLabel[job.language]||job.language;
+ $("aitSuggestionText").textContent="Kod "+name+" dikesan. Masukkan ke fail baharu dalam editor? Kod tidak akan dijalankan sehingga kau tekan Run.";
+ $("aitCodeSuggestion").hidden=false;
+ output("Kod "+name+" dikesan dalam input terminal. Tekan Masuk Editor di bawah sebelum Run.");
+ message("Kod program masuk editor atas, bukan prompt terminal. Aku boleh letakkan ke fail baharu tanpa menimpa fail asal.");
+}
+function addExample(){
+ if(controller||replBusy){message("Hentikan runtime dahulu.");return;}
+ const sample=core.prepareExample($("aitExampleSelect").value,files.map(f=>f.name));
+ if(!sample||files.length+sample.files.length>core.MAX_FILES){message("Had 12 fail projek dicapai atau contoh tidak dapat disediakan.");return;}
+ saveCurrent();files.push(...sample.files);index=files.findIndex(f=>f.name===sample.primary);
+ if(sample.stdin)$("aitStdin").value=sample.stdin;
+ if(replActive)closeRepl("Projek bertukar; REPL ditutup supaya sesi tidak bercampur.");
+ clearSuggestion();render();saveLater();
+ output("Contoh "+sample.label+" dimuat ke "+sample.primary+". Tekan Run untuk menjalankan kod.");
+ message("Contoh dimuat sebagai fail baharu tanpa menimpa kod asal. "+(sample.stdin?"Input C++ stdin telah diisi. ":"")+"Tekan Run atau Live Preview.");
+}
+function importSnippet(){
+ const job=suggestedCode;if(!job)return;
+ if(controller||replBusy){message("Runtime masih sibuk.");return;}
+ const ext={python:".py",javascript:".js",typescript:".ts",sql:".sql",cpp:".cpp",html:".html",css:".css"}[job.language];
+ if(!ext){message("Bahasa kod tidak disokong.");return;}
+ let number=1,name="";
+ do{name="paste_"+number++ +ext;}while(files.some(f=>f.name.toLowerCase()===name.toLowerCase())&&number<=100);
+ if(!core.filename(name)||files.length>=core.MAX_FILES){message("Tiada ruang fail baharu (maksimum 12).");return;}
+ saveCurrent();files.push({name,language:job.language,code:job.code});index=files.length-1;
+ if(job.stdin)$("aitStdin").value=job.stdin;
+ if(replActive)closeRepl("Editor bertukar kepada fail baharu.");
+ clearSuggestion();render();saveLater();$("aitEditor").focus();
+ output("Kod dimasukkan ke "+name+". Tekan Run (atau Live Preview untuk HTML/CSS) untuk menguji.");
+ message("Kod "+(langLabel[job.language]||job.language)+" disimpan dalam editor. Belum dijalankan.");
+}
 function add(name,code=""){
  if(!core.filename(name)||typeof code!=="string"||code.length>core.MAX_SOURCE||files.length>=core.MAX_FILES||files.some(f=>f.name.toLowerCase()===name.toLowerCase()))return false;
  saveCurrent();files.push({name,language:core.language(name),code});index=files.length-1;render();saveLater();return true;
@@ -178,14 +234,25 @@ async function tests(){
 }
 function command(s){
  const trimmed=String(s||"").trim();
+ if(!trimmed)return;
  commands.push(trimmed);commands=commands.slice(-40);historyCursor=-1;
+ clearSuggestion();
+ const candidate=core.classifyInput(trimmed);
+ if(candidate?.type==="steps"){
+  output((replActive?"py>>> ":"aksara@runtime:~$ ")+trimmed);
+  output(candidate.message);message(candidate.message);return;
+ }
  if(replActive&&!["help","exit","reset","status"].includes(trimmed)){
+  if(candidate?.type==="code"&&candidate.language!=="python"){
+   output("py>>> "+trimmed);suggestCode(candidate);return;
+  }
   output("py>>> "+trimmed);void replCommand(trimmed);return;
  }
  const cmd=core.command(trimmed);
- output("aksara@runtime:~$ "+s);
+ output("aksara@runtime:~$ "+trimmed);
+ if(cmd.type==="invalid"&&candidate?.type==="code"){suggestCode(candidate);return;}
  switch(cmd.type){
- case "help":output("help, pwd, ls, cat nama.py, run nama.py, python nama.py, node main.js, tsc main.ts, sqlite query.sql, clang main.cpp, tests, history, status, clear, repl, reset, exit. Dalam REPL taip arahan Python terus. Tiada shell sebenar.");break;
+ case "help":output("ARAHAN TERMINAL (satu arahan setiap Enter): help, pwd, ls, cat main.py, run main.py, python main.py, node demo_js.js, tsc demo_ts.ts, sqlite demo_sql.sql, clang demo_cpp.cpp, tests, history, status, clear, repl, reset, exit.\nKOD PROGRAM: letak di editor atas atau pilih Contoh Kod → Muat contoh.\nPYTHON REPL: tekan Python REPL, barulah taip x=6 dan print(x*7).\nHTML/CSS: buka Live Preview. Terminal bukan shell OS; pip/npm tidak tersedia.");break;
  case "pwd":output("/aksara/project");break;
  case "ls":output(files.map(x=>x.name).join("  "));break;
  case "cat":output(files.find(x=>x.name===cmd.name)?.code||"Fail tidak ditemui.");break;
@@ -203,6 +270,8 @@ function command(s){
  case "exit":
   closeRepl();output("Keluar daripada Python REPL.");break;
  default:output(cmd.message||"Arahan tak disokong.");
+  output("Petua: pilih Contoh Kod dan tekan Muat contoh untuk mencuba JavaScript, TypeScript, SQL, Python atau C++. Taip help untuk arahan terminal.");
+  break;
  }
 }
 function propose(job){
@@ -241,6 +310,12 @@ function askAI(){
  dialog.close();bridge.fill(prompt);form.requestSubmit();
  message("Permintaan dihantar melalui chat. Tunggu cadangan patch untuk semakan.");
 }
+for(const item of core.examples){
+ const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.label;$("aitExampleSelect").append(opt);
+}
+$("aitLoadExample").addEventListener("click",addExample);
+$("aitUseSnippet").addEventListener("click",importSnippet);
+$("aitDismissSnippet").addEventListener("click",clearSuggestion);
 trigger.addEventListener("click",()=>{if(menu.open)menu.close();trigger.textContent="AI Terminal · Projek";dialog.showModal();$("aitCommand").focus();});
 $("aitClose").addEventListener("click",()=>dialog.close());
 dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
@@ -349,10 +424,10 @@ window.addEventListener("ba:request-failed",()=>{if(waitingAI){waitingAI=null;me
 window.addEventListener("ba:cleared",()=>{waitingAI=null;controller?.abort();});
 window.addEventListener("pagehide",()=>{controller?.abort();clearTimeout(saveTimer);});
 window.AksaraAITerminal=Object.freeze({
- version:"2.1",open:()=>{if(!dialog.open)dialog.showModal();},
+ version:"2.2",open:()=>{if(!dialog.open)dialog.showModal();},
  capabilityPrompt:q=>/\b(?:kod|code|coding|program|python|javascript|typescript|sql|cpp|c\+\+|compiler|runtime|debug|terminal|script|skrip)\b/i.test(String(q||""))?core.capability(engine.available):"",
  state:()=>({mode,files:files.length,hasRun:Boolean(last),pendingPatch:Boolean(pending),projectMemory:$("aitRemember").checked})
 });
-render();$("aitOutput").textContent="AKSARA AI Terminal 2.0\nTaip help untuk arahan. Runtime berada dalam sandbox.";
+render();$("aitOutput").textContent="AKSARA AI Terminal 2.2\nTaip help untuk arahan, atau pilih Contoh Kod → Muat contoh → Run. Kod program diletakkan dalam editor atas, bukan dalam prompt terminal.";
 void restore();
 })();
