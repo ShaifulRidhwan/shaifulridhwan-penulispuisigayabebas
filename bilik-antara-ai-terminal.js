@@ -80,6 +80,7 @@ function idb(){return new Promise((yes,no)=>{
 });}
 async function storage(op,value){
  const db=await idb();
+ if(op==="put"&&!$("aitRemember").checked){db.close();return false;}
  try{return await new Promise((yes,no)=>{
   const tx=db.transaction(storeName,op==="get"?"readonly":"readwrite"),store=tx.objectStore(storeName);
   const req=op==="get"?store.get("default"):op==="delete"?store.delete("default"):store.put(value,"default");
@@ -109,7 +110,7 @@ function closeRepl(reason="Sesi REPL ditutup."){
  replActive=false;replBusy=false;render();
 }
 async function replCommand(source){
- if(replBusy||controller){message("Runtime sedang digunakan.");return;}
+ if(replBusy||controller||window.AksaraAICodeAgent?.running()){message("Runtime sedang digunakan oleh pelaksanaan lain.");return;}
  if(!replActive){message("Aktifkan Python REPL dahulu.");return;}
  if(!window.AksaraPythonSession){message("Modul Python REPL belum dimuatkan.");return;}
  try{
@@ -155,11 +156,11 @@ async function execute(f,{signal,quiet=false,expect=null}={}){
 async function runNamed(name){
  saveCurrent();const f=files.find(x=>x.name===name);
  if(!f){output("Fail tidak ditemui: "+name);return;}
- if(controller||replBusy){message("Runtime masih sibuk.");return;}
+ if(controller||replBusy||window.AksaraAICodeAgent?.running()){message("Runtime masih sibuk.");return;}
  try{return await execute({...f});}catch(e){output("Runtime dihentikan / gagal: "+String(e.message||e).slice(0,500));return null;}
 }
 async function tests(){
- if(controller||replBusy)return;saveCurrent();const f={...file()};
+ if(controller||replBusy||window.AksaraAICodeAgent?.running())return;saveCurrent();const f={...file()};
  const smoke={python:['print(sum([2,3,5,7]))',"17"],javascript:['console.log(6*7)',"42"],
   typescript:['const n:number=6*7;console.log(n)',"42"],sql:['SELECT 6+7 AS total;',"13"],
   cpp:['#include <iostream>\nint main(){std::cout << 42 << "\\n";return 0;}',"42"]}[f.language];
@@ -213,7 +214,7 @@ function propose(job){
 }
 async function agentCycle(){
  if(mode!=="agent"){message("Pilih mod AI Agent untuk Uji & baiki.");return;}
- if(controller||replBusy||waitingAI){message("Tugas lain masih berjalan.");return;}
+ if(controller||replBusy||waitingAI||window.AksaraAICodeAgent?.running()){message("Tugas lain masih berjalan.");return;}
  if(pending){message("Semak dan terima/tolak patch yang masih menunggu dahulu.");return;}
  saveCurrent();
  const result=await runNamed(file().name);
@@ -348,7 +349,7 @@ window.addEventListener("ba:request-failed",()=>{if(waitingAI){waitingAI=null;me
 window.addEventListener("ba:cleared",()=>{waitingAI=null;controller?.abort();});
 window.addEventListener("pagehide",()=>{controller?.abort();clearTimeout(saveTimer);});
 window.AksaraAITerminal=Object.freeze({
- version:"2.0",open:()=>{if(!dialog.open)dialog.showModal();},
+ version:"2.1",open:()=>{if(!dialog.open)dialog.showModal();},
  capabilityPrompt:q=>/\b(?:kod|code|coding|program|python|javascript|typescript|sql|cpp|c\+\+|compiler|runtime|debug|terminal|script|skrip)\b/i.test(String(q||""))?core.capability(engine.available):"",
  state:()=>({mode,files:files.length,hasRun:Boolean(last),pendingPatch:Boolean(pending),projectMemory:$("aitRemember").checked})
 });
