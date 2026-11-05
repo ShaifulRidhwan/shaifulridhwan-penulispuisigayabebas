@@ -118,12 +118,11 @@ async function chat(page,device){
  assert.match(surface.bodyFont,/DM Sans/,"Chat typography must be unchanged");
  assert.equal(surface.suite,true,"Extra panel styles must load");
  await snapshot(page,device+"-chat");
- // Prepared answers keep the same typing feedback for at least three seconds.
- await page.waitForFunction(()=>!!window.BilikAntaraIdentity);
- await page.evaluate(()=>{window.__localAnswerStarted=performance.now();document.querySelector('.starter').click();});
- await page.waitForTimeout(2000);
- assert.match(await page.locator('#connectionInfoText').textContent(),/Generating Response/);
- const providerStatus=async()=>await page.locator('#connection').getAttribute('aria-label');
+ // Chapter starter answers are immediate and never use provider waiting feedback.
+ await page.waitForFunction(()=>!!window.BilikAntaraIdentity&&!!window.AksaraJourney);
+ await page.evaluate(()=>document.querySelector(".starter").click());
+ await page.waitForFunction(()=>!!document.querySelector(".msg-followup-btn"));
+ const providerStatus=async()=>await page.locator("#connection").getAttribute("aria-label");
  const verifyProviderPill=async()=>{
   const label=await providerStatus();
   assert.match(label,/^Connection · (?:Checking|Connected|Degraded|Ready|Unverified|Rate Limited|Offline|Disabled)\./,
@@ -131,16 +130,12 @@ async function chat(page,device){
   assert.doesNotMatch(label,/Generating Response|Request Cancelled|Waiting for Capacity/);
  };
  await verifyProviderPill();
- assert.match(await page.locator('#connectionText').textContent(),
+ assert.match(await page.locator("#connectionText").textContent(),
   /^(?:Connection|Checking|Connected|Degraded|Ready|Unverified|Rate Limited|Offline|Disabled)$/,
   "Connection pill alternates a single-line label");
- assert.equal(await page.locator('#chat .typing').count(),1,"Typing feedback stays visible while the local answer waits");
- await page.waitForFunction(()=>document.querySelector('#chat .typing')===null&&
-  !document.querySelector('#connectionInfo')?.classList.contains('active'));
- await verifyProviderPill();
- // A concurrent real probe may legitimately update provider health while the chat replies.
- assert.ok(await page.evaluate(()=>performance.now()-window.__localAnswerStarted)>=3000,"Prepared answer waits at least three seconds");
- assert.match(await page.locator('#chat').textContent(),/Aku Aksara A\.I\./);
+ assert.equal(await page.locator("#chat .typing").count(),0,"Local story must not show provider typing feedback");
+ assert.match(await page.locator("#chat").textContent(),/Aku Aksara A\.I\./);
+ assert.match(await page.locator(".msg-followup-btn").last().textContent(),/Sambung · The Coder Poet/);
  // Henti must cancel the local wait and keep the user's message for retry.
  await page.locator('#input').fill('The Coder Poet');
  await page.locator('#composer').evaluate(el=>el.requestSubmit());
