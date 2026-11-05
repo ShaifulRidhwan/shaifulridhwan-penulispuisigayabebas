@@ -459,7 +459,9 @@ function receiveFile(source){
  save();
  let name=original,count=1;
  while(files.some(f=>f.name.toLowerCase()===name.toLowerCase())){
-  name="terminal-"+count+++original.slice(original.lastIndexOf("."));
+  const suffix=original.slice(original.lastIndexOf("."));
+  name=("terminal-"+count+++"-"+original.slice(0,48))+suffix;
+  if(count>110)return false;
  }
  files.push({name,language,code});index=files.length-1;
  render();schedulePreview();
