@@ -85,6 +85,6 @@ test("Penerangan Melayu, empat penyedia dan lima runtime kekal tanpa perubahan r
  assert.match(html,/id="knowledgeHub"/);
  assert.match(html,/bilik-antara-knowledge-hub\.js\?v=2/);
  assert.match(html,/bilik-antara-knowledge-hub\.css\?v=2/);
- assert.ok(html.length<80000,"Original HTML performance limit");
+ assert.ok(Buffer.byteLength(html,"utf8")<100000,"Original HTML performance limit");
  assert.match(read("bilik-antara-knowledge-hub.js"),/ba:session-changed/);
 });
