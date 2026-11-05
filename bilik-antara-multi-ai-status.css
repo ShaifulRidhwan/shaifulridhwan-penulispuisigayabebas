@@ -11,3 +11,50 @@
 .multi-ai-request-note{font:500 11px/1.5 'DM Sans',sans-serif;color:#ead8c1;border:1px solid rgba(230,199,149,.23);border-radius:10px;background:rgba(255,255,255,.035);padding:10px 12px;margin:0 0 12px;overflow-wrap:anywhere}
 .multi-ai-dialog .multi-ai-state.is-muted{color:#ada79d}
 @media(max-width:420px){.multi-ai-request-note{padding:9px 10px;font-size:10px}.multi-ai-health-stamp{font-size:9.5px!important}}
+
+/* Connection 3.1: single-line rotating label with zero horizontal layout shift.
+ * Real health status is accessible in aria-label, title and detail dialog at all times. */
+.conversation-head #connection.multi-ai-trigger{
+ display:inline-flex!important;align-items:center!important;justify-content:center!important;
+ box-sizing:border-box;flex:0 0 146px!important;width:146px!important;min-width:0!important;
+ max-width:146px!important;gap:7px!important;overflow:hidden!important;
+ border:1px solid rgba(242,201,143,.29)!important;border-radius:999px!important;
+ color:#eaddc4!important;white-space:nowrap!important;
+ background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(5,8,16,.16))!important;
+ box-shadow:inset 0 1px 0 rgba(255,237,198,.11),0 4px 15px rgba(0,0,0,.07)!important;
+ backdrop-filter:blur(9px) saturate(1.1)!important;
+ -webkit-backdrop-filter:blur(9px) saturate(1.1)!important;
+}
+.conversation-head #connection.multi-ai-trigger #connectionText{
+ flex:1 1 0!important;min-width:0!important;width:auto!important;max-width:none!important;
+ display:block!important;text-align:center!important;overflow:hidden!important;
+ text-overflow:ellipsis!important;white-space:nowrap!important;
+ font:600 11px/1.25 "DM Sans",system-ui,sans-serif!important;letter-spacing:0!important;
+}
+.conversation-head #connection.multi-ai-trigger .multi-ai-network{
+ flex:0 0 16px!important;width:16px!important;height:16px!important;
+ color:#d0bea1!important;
+}
+.conversation-head #connection[data-health-state="connected"] .multi-ai-network{color:#97ddb3!important}
+.conversation-head #connection[data-health-state="degraded"] .multi-ai-network,
+.conversation-head #connection[data-health-state="limited"] .multi-ai-network{color:#e9c27e!important}
+.conversation-head #connection[data-health-state="offline"] .multi-ai-network{color:#ec9c91!important}
+.conversation-head #connection[data-health-state="checking"] .network-spark{transform-origin:12px 12px;animation:connectionSpark 2.8s ease-in-out infinite}
+@keyframes connectionSpark{0%,100%{opacity:.3;transform:scale(.76)}50%{opacity:1;transform:scale(1.08)}}
+.multi-ai-health-stamp[data-state="degraded"],.multi-ai-health-stamp[data-state="limited"]{color:#efd19b}
+.multi-ai-health-stamp[data-state="checking"],.multi-ai-health-stamp[data-state="unverified"],.multi-ai-health-stamp[data-state="stale"]{color:#b8beca}
+@media(max-width:760px){
+ .conversation-head #connection.multi-ai-trigger{
+  flex:1 1 0!important;width:auto!important;max-width:none!important;
+  padding:0 6px!important;gap:4px!important;
+ }
+ .conversation-head #connection.multi-ai-trigger #connectionText{font-size:10px!important}
+}
+@media(max-width:390px){
+ .conversation-head #connection.multi-ai-trigger{padding:0 4px!important;gap:3px!important}
+ .conversation-head #connection.multi-ai-trigger #connectionText{font-size:9px!important}
+ .conversation-head #connection.multi-ai-trigger .multi-ai-network{flex-basis:14px!important;width:14px!important;height:14px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ .conversation-head #connection .network-spark{animation:none!important}
+}

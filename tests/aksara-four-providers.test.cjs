@@ -33,7 +33,7 @@ test("Canonical identity contains four providers and clear capability/status sem
 
 test("Default starter lists four brains; user interface and provider registry agree",()=>{
  assert.doesNotMatch(html,/<button class="starter" type="button">Empat Otak Aksara<\/button>/);
- assert.match(html,/aria-label="Open provider health details"/);
+ assert.match(html,/aria-label="Buka status Connection penyedia A\.I\."/);
  assert.doesNotMatch(html,/status lima penyedia AI/i);
  const found=html.match(/const providers=(\[\[.+?\]\]);/);
  assert.ok(found,"Multi A.I. list missing");
@@ -124,8 +124,8 @@ test("Unrelated creative requests and recommendations must not hijack the four-b
 
 test("Ready is not falsely labelled Connected, and live status is provider-specific",()=>{
  const health=fs.readFileSync("bilik-antara-multi-ai-status.js","utf8");
- assert.match(health,/Multi A\.I Ready/);
- assert.match(health,/Multi A\.I Connected/);
+ assert.match(health,/result\("ready","Ready"\)/);
+ assert.match(health,/result\("connected","Connected"\)/);
  assert.match(html,/multiHealth\.update\(data\)/);
  assert.match(html,/multiHealth\.request|function status\(kind,label,explain\)/);
  assert.match(html,/state==="online"\?"Connected":state==="ready"\?"Ready"/);

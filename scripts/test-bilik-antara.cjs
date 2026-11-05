@@ -234,7 +234,7 @@ test("health status leaves hidden tabs idle and resumes on visibility change",()
  const fs=require("node:fs");
  const page=fs.readFileSync("bilik-antara.html","utf8");
  assert.match(page,/function refreshHealthVisual\(\)\{[\s\S]*?if\(document\.hidden\)return;/);
- assert.match(page,/setInterval\(refreshHealthVisual,15000\);/);
+ assert.match(page,/setInterval\(refreshHealthVisual,2500\);/);
  assert.match(page,/document\.addEventListener\("visibilitychange",refreshHealthVisual\);/);
 });
 test("brain and network breath retain motion without animating expensive filters",()=>{

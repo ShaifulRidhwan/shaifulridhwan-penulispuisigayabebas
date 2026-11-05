@@ -30,20 +30,20 @@ test("a request never changes the provider pill or its verification class",()=>{
   {id:"openrouter",status:"off"},
   {id:"workers_ai",status:"offline"}
  ]});
- assert.equal(f.label.textContent,"Multi A.I Connected");
- assert.equal(f.pill.dataset.healthState,"connected");
+ assert.equal(f.label.textContent,"Connection");
+ assert.equal(f.pill.dataset.healthState,"degraded");
  f.api.request("connecting","Waiting for Capacity","Retry in 5s");
- assert.equal(f.label.textContent,"Multi A.I Connected");
- assert.equal(f.pill.dataset.healthState,"connected");
+ assert.equal(f.label.textContent,"Connection");
+ assert.equal(f.pill.dataset.healthState,"degraded");
  assert.match(f.activityText.textContent,/Waiting for Capacity/);
  assert.match(f.requestNote.textContent,/Request Activity/);
  f.api.request("error","Request Failed","HTTP 503");
- assert.equal(f.label.textContent,"Multi A.I Connected");
+ assert.equal(f.label.textContent,"Connection");
  assert.equal(f.retry.hidden,false);
  f.api.request("online","Request Completed","");
  assert.equal(f.activity.className,"connection-info");
  assert.equal(f.requestNote.hidden,true);
- assert.equal(f.label.textContent,"Multi A.I Connected");
+ assert.equal(f.label.textContent,"Connection");
 });
 test("health failures never invent mass provider outages",()=>{
  const f=fixture();
@@ -51,7 +51,7 @@ test("health failures never invent mass provider outages",()=>{
   {id:"gemini",status:"online"},{id:"groq",status:"ready"}
  ]});
  f.api.failure();
- assert.equal(f.label.textContent,"Multi A.I Unverified");
+ assert.equal(f.label.textContent,"Connection");
  assert.equal(f.pill.dataset.healthState,"unverified");
  assert.ok(f.api.getRows().every(p=>p.status!=="offline"));
  assert.equal(f.activity.dataset.requestState,undefined);
@@ -59,7 +59,7 @@ test("health failures never invent mass provider outages",()=>{
 test("real chat success can verify only the responding provider",()=>{
  const f=fixture();
  f.api.reply("groq","openai/gpt-oss-120b");
- assert.equal(f.label.textContent,"Multi A.I Connected");
+ assert.equal(f.label.textContent,"Connection");
  assert.deepEqual(f.api.getRows().filter(p=>p.status==="online").map(p=>p.id),["groq"]);
  f.api.reply("not-real","foo");
  assert.deepEqual(f.api.getRows().filter(p=>p.status==="online").map(p=>p.id),["groq"]);
@@ -72,12 +72,12 @@ test("real chat success can verify only the responding provider",()=>{
 test("English-only compact UI, old Gemini pool and routing remain intact",()=>{
  const html=read("bilik-antara.html"),gemini=read("bilik-antara-gemini-status.js");
  const lib=read("bilik-antara-multi-ai-status.js"),router=read("netlify/functions/aksara-provider-router.js");
- assert.match(html,/id="connectionText">Multi A\.I Checking/);
- assert.match(html,/Multi A\.I · Provider Health/);
+ assert.match(html,/id="connectionText">Connection/);
+ assert.match(html,/Connection · Provider Health/);
  assert.match(html,/id="multiAiCheckedAt"/);
  assert.match(html,/id="multiAiRequestActivity"/);
- assert.match(html,/bilik-antara-multi-ai-status\.js\?v=3/);
- assert.match(html,/bilik-antara-multi-ai-status\.css\?v=1/);
+ assert.match(html,/bilik-antara-multi-ai-status\.js\?v=4/);
+ assert.match(html,/bilik-antara-multi-ai-status\.css\?v=2/);
  assert.match(html,/multiHealth\.reply\(data\.provider,data\.model\)/);
  assert.doesNotMatch(html,/ba:voice-connected/);
  assert.doesNotMatch(html,/status\("connecting","Model tengah busy/);
@@ -86,13 +86,13 @@ test("English-only compact UI, old Gemini pool and routing remain intact",()=>{
  assert.ok(lib.includes("REPLY_TTL=90000"));
  assert.match(router,/async function checkStatus/);
  assert.match(router,/function reflectCooldown/);
- assert.ok(Buffer.byteLength(html,"utf8")<100000,"Keep the primary HTML below 80 KB");
+ assert.ok(Buffer.byteLength(html,"utf8")<100000,"Keep the primary HTML below 100 KB");
 });
 
 test("failed health probes show a reason without claiming every AI is offline",()=>{
  const f=fixture();
  f.api.failure({http:429,retryAfterSeconds:37});
- assert.equal(f.pill.dataset.healthState,"unverified");
+ assert.equal(f.pill.dataset.healthState,"limited");
  assert.match(f.stamp.textContent,/HTTP 429 · Retry in 37s/);
  assert.deepEqual(f.api.getRows().filter(p=>p.status==="offline"),[]);
  assert.equal(engine.formatHealthError({timeout:true}),"Timeout");
@@ -105,5 +105,41 @@ test("server clock skew never makes the provider health time Unknown",()=>{
  f.api.update({checkedAt:Date.now()+18000,providers:[{id:"groq",status:"online"}]});
  assert.match(f.stamp.textContent,/Last checked: just now/);
  assert.doesNotMatch(f.stamp.textContent,/Unknown/);
+ assert.equal(f.pill.dataset.healthState,"degraded");
+});
+
+test("Connection rotates one line without changing verified provider status",()=>{
+ const f=fixture(),now=Date.now();
+ f.api.update({checkedAt:now,providers:engine.PROVIDERS.map(id=>({id,status:"online"}))});
+ assert.equal(f.api.state().state,"connected");
+ assert.equal(f.label.textContent,"Connection");
  assert.equal(f.pill.dataset.healthState,"connected");
+ f.api.render(now+4300);
+ assert.equal(f.label.textContent,"Connected");
+ assert.match(f.pill.attrs["aria-label"],/^Connection · Connected\./);
+ f.api.render(now+8200);
+ assert.equal(f.label.textContent,"Connection");
+ assert.doesNotMatch(f.label.textContent,/\n/);
+});
+test("Partial provider evidence is Degraded, not falsely all Connected",()=>{
+ const now=Date.now();
+ const partial=engine.summarize([{status:"online"},{status:"ready"},{status:"offline"},{status:"off"}],now,now);
+ assert.equal(partial.state,"degraded");
+ assert.equal(partial.label,"Degraded");
+ assert.equal(engine.summarize([{status:"ready"},{status:"ready"}],now,now).state,"ready");
+ assert.equal(engine.summarize([{status:"off"},{status:"off"}],now,now).state,"disabled");
+ assert.equal(engine.summarize([{status:"offline"},{status:"offline"}],now,now).state,"offline");
+});
+test("Connection glass remains stable on mobile and respects reduced motion",()=>{
+ const css=read("bilik-antara-multi-ai-status.css");
+ for(const marker of [
+  '#connection.multi-ai-trigger',
+  'flex:0 0 146px!important',
+  '@media(max-width:760px)',
+  '@media(max-width:390px)',
+  '@media(prefers-reduced-motion:reduce)',
+  'data-health-state="degraded"',
+  'data-health-state="limited"'
+ ])assert.ok(css.includes(marker),"Missing responsive style "+marker);
+ assert.match(read("bilik-antara.html"),/setInterval\(refreshHealthVisual,2500\)/);
 });

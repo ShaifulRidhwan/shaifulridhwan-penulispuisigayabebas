@@ -61,7 +61,7 @@ test("Mod adaptif backend dan pemisahan daripada status Multi A.I kekal",()=>{
  assert.equal(Modes.normalize("CAHAYA"),"cahaya");
  assert.equal(Modes.plan("gelap",{task:"critique"},{thinkingLevel:"low",maxTokens:2200},"Moral itu mutlak?").thinkingLevel,"high");
  assert.ok(router.includes("reasoningLevel"));
- assert.ok(read("bilik-antara-multi-ai-status.js").includes("Multi A.I Connected"));
+ assert.ok(read("bilik-antara-multi-ai-status.js").includes('result("connected","Connected")'));
  assert.ok(read("bilik-antara-code-health.js").includes("EVIDENCE_TTL"));
 });
 test("Status mod hanya membaca metadata, tanpa menyimpan atau menghantar teks chat",()=>{
