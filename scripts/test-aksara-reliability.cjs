@@ -348,7 +348,7 @@ test("opening the page tests providers before showing Connected and never instal
  const pill=node(),label=node(),activity=node(),activityText=node(),retry=node(),stamp=node();
  const health=engine.create({pill,label,activity,activityText,retry,stamp});
  health.startCheck();
- assert.equal(label.textContent,"Multi A.I Checking");
+ assert.equal(label.textContent,"Connection");
  assert.match(html,/providerStatus:true,geminiPoolRefresh:force===true/);
  assert.match(html,/multiHealth\.update\(data\)/);
  assert.match(html,/multiHealth\.failure\(\{http:error\.http,timeout:error\.name==="AbortError"/);
