@@ -123,12 +123,18 @@ async function chat(page,device){
  await page.evaluate(()=>{window.__localAnswerStarted=performance.now();document.querySelector('.starter').click();});
  await page.waitForTimeout(2000);
  assert.match(await page.locator('#connectionInfoText').textContent(),/Generating Response/);
- const priorHealth=await page.locator('#connectionText').textContent();
- assert.match(priorHealth,/Multi A\.I/,"Provider health pill stays independent of request activity");
+ const priorHealth=await page.locator('#connection').getAttribute('data-health-state');
+ const priorHealthStamp=await page.locator('#multiAiCheckedAt').textContent();
+ assert.match(await page.locator('#connectionText').textContent(),
+  /^(?:Connection|Checking|Connected|Degraded|Ready|Unverified|Rate Limited|Offline|Disabled)$/,
+  "Connection pill alternates its single-line status without showing request activity");
  assert.equal(await page.locator('#chat .typing').count(),1,"Typing feedback stays visible while the local answer waits");
  await page.waitForFunction(()=>document.querySelector('#chat .typing')===null&&
   !document.querySelector('#connectionInfo')?.classList.contains('active'));
- assert.equal(await page.locator('#connectionText').textContent(),priorHealth,"Local identity response cannot establish provider health");
+ assert.equal(await page.locator('#connection').getAttribute('data-health-state'),priorHealth,
+  "Local identity response must not change verified health state");
+ assert.equal(await page.locator('#multiAiCheckedAt').textContent(),priorHealthStamp,
+  "Local identity response must not modify the last health probe");
  assert.ok(await page.evaluate(()=>performance.now()-window.__localAnswerStarted)>=3000,"Prepared answer waits at least three seconds");
  assert.match(await page.locator('#chat').textContent(),/Aku Aksara A\.I\./);
  // Henti must cancel the local wait and keep the user's message for retry.
@@ -136,7 +142,8 @@ async function chat(page,device){
  await page.locator('#composer').evaluate(el=>el.requestSubmit());
  await page.locator('#stopBtn').click();
  await page.waitForFunction(()=>document.querySelector('#connectionInfoText')?.textContent.includes('Request Cancelled'));
- assert.equal(await page.locator('#connectionText').textContent(),priorHealth,"Cancel must not override provider health");
+ assert.equal(await page.locator('#connection').getAttribute('data-health-state'),priorHealth,
+  "Cancel must not override verified health state");
  assert.equal(await page.locator('#input').inputValue(),'The Coder Poet');
  await page.evaluate(()=>window.BilikAntaraBridge.fresh());
  // Normal text chat must retain its real face without loading the 2.7 MB GLB,
