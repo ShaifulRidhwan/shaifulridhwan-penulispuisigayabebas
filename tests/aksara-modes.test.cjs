@@ -467,7 +467,7 @@ test("Pipeline phase 2 defaults to local session saving and optional memory, wit
  assert.match(suite, /localStorage\.setItem\(preferenceKey,enabled\?"on":"off"\)/);
  assert.doesNotMatch(html, /localStorage\.setItem\(SESSION_PREF_STORAGE,"off"\)/);
  assert.match(html, /bilik-antara-session-utils\.js\?v=3/);
- assert.match(html, /bilik-antara-suite\.js\?v=18/);
+ assert.match(html, /bilik-antara-suite\.js\?v=19/);
  assert.match(suite, /let memory=read\(KEYS\.memory,\{enabled:true,text:""\}\)/);
  assert.match(suite, /const disabled=\{enabled:false,text:""\}/);
  assert.match(suite, /write\(KEYS\.memory,disabled\)/);
@@ -601,7 +601,7 @@ test("Session archive titles render as compact headings and preserve functional 
  assert.match(css,/-webkit-backdrop-filter:none;backdrop-filter:none;/);
  assert.match(css,/background:transparent;box-shadow:none;/);
  assert.match(html,/bilik-antara-suite\.css\?v=9/);
- assert.match(html,/bilik-antara-suite\.js\?v=18/);
+ assert.match(html,/bilik-antara-suite\.js\?v=19/);
 });
 
 test("Optional memory starter stays editable and is never automatically saved",()=>{
