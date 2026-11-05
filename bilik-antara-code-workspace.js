@@ -399,10 +399,11 @@ function restorePreviewActions(){
  if(!Array.isArray(history)||!history.length)return;
  // Restore buttons for the most recent visible AI code replies without inspecting user code.
  const offset=Math.max(0,messages.length-history.length);
+ const newestAI=history.findLastIndex(m=>m?.role==="assistant"&&m.mode!=="code"&&m.mode!=="voice");
  for(let i=Math.max(0,history.length-24);i<history.length;i++){
   const message=history[i],node=messages[i+offset];
   if(message?.role==="assistant"&&message.mode!=="code"&&message.mode!=="voice")
-   attachPreviewAction(message.content,node?.querySelector(".bubble"),{inline:i===history.length-1});
+   attachPreviewAction(message.content,node?.querySelector(".bubble"),{inline:i===newestAI});
  }
 }
 window.addEventListener("ba:answered",event=>{
@@ -415,6 +416,7 @@ window.addEventListener("aksara:code-workspace-preview-ai",event=>{
  openAIPreview(event.detail);
 });
 window.addEventListener("ba:saved",()=>{if(!dialog.open)restorePreviewActions();});
+window.addEventListener("ba:history-rendered",()=>{if(!dialog.open)restorePreviewActions();});
 window.addEventListener("aksara:code-workspace-open",event=>{
  if(event.detail?.language==="html")ensureWebStarter();
  if(event.detail?.language==="cpp")ensureCppStarter();
