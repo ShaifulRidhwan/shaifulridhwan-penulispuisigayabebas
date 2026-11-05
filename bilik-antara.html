@@ -426,6 +426,26 @@ child.title="Cloudflare Workers AI · @cf/zai-org/glm-4.7-flash";
 child.append(elem("span","multi-ai-model-name","GLM-4.7-Flash"),
 elem("span","multi-ai-model-state"+(live?" is-online":""),modelState));
 modelList.appendChild(child);
+const hints={
+ adapter_configured:"REST configured · belum diuji secara langsung.",
+ configured_not_verified:"Ready sahaja, inferens belum disahkan.",
+ native_binding:"Native Workers AI binding configured.",
+ inference_verified:"Inferens sebenar berjaya melalui Refresh Status.",
+ missing_or_invalid_account:"Netlify: CLOUDFLARE_ACCOUNT_ID tiada atau tidak sah.",
+ missing_or_invalid_token:"Netlify: token Workers AI tiada atau tidak sah.",
+ fallbacks_disabled:"Netlify: AKSARA_FREE_FALLBACKS belum diaktifkan.",
+ rest_disabled:"Netlify: AKSARA_WORKERS_REST_ENABLED=false.",
+ authorization_or_access:"Cloudflare menolak akses. Semak skop token untuk Workers AI.",
+ quota:"Kuota Workers AI telah dicapai.",
+ probe_timeout:"Ujian model tamat masa. Sambungan belum dapat disahkan.",
+ model_or_request_rejected:"Cloudflare menolak model atau format permintaan.",
+ upstream_unavailable:"Cloudflare tidak tersedia ketika pemeriksaan.",
+ transport_error:"Sambungan Cloudflare gagal.",
+ empty_probe_reply:"HTTP berjaya tetapi model tidak menghasilkan teks."
+};
+const diagnostic=String(item?.reason||"");
+modelList.appendChild(elem("p","multi-ai-model-note",hints[diagnostic]||(
+ state==="online"?"Disahkan oleh jawapan model sebenar.":"Semak Refresh Status untuk ujian inferens sebenar.")));
 }else if(Array.isArray(catalog?.models)&&catalog.models.length){
 for(const model of catalog.models){
 if(!model||typeof model.id!=="string")continue;
@@ -453,7 +473,7 @@ if(!latestProviderRows)renderProviderRows(multiHealth.getRows(),multiCatalog);
 const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),force?28000:23000);
 try{
 const res=await fetch(ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},
-body:JSON.stringify({providerStatus:true,geminiPoolRefresh:force===true}),signal:controller.signal});
+body:JSON.stringify({providerStatus:true,geminiPoolRefresh:force===true,workersAiLiveCheck:force===true}),signal:controller.signal});
 if(!res.ok){
  const data=await res.json().catch(()=>({})),error=new Error("Health HTTP "+res.status);
  error.http=res.status;error.retryAfterSeconds=Number(data.retryAfterSeconds)||0;throw error;
