@@ -595,7 +595,7 @@ const journeyNext=data?.journeyNext||(data?.coderPoetFollowUp===true?window.Aksa
 if(journeyNext&&typeof journeyNext.question==="string"&&journeyNext.question.length<100){
 const area=elem("div","msg-followup");
 const progress=Number(journeyNext.position)||0;
-const total=Number(journeyNext.total)||20;
+const total=Number(journeyNext.total)||window.AksaraJourney?.steps?.length||30;
 if(progress>0&&progress<=total)area.appendChild(elem("span","section-label","Kenali Shaiful · Sambungan "+progress+"/"+total));
 const suggestion=elem("button","msg-followup-btn","Sambung · "+journeyNext.question);
 suggestion.type="button";
@@ -696,7 +696,16 @@ try{
 ui.chat.textContent="";
 ui.chat.classList.toggle("is-welcome",history.length===0);
 const batch=document.createDocumentFragment();
-for(const m of history)addMessage(m.role,m.content,m,batch);
+let previousUserQuestion="";
+for(const m of history){
+ if(m.role==="user"){
+  previousUserQuestion=String(m.content||"");
+  addMessage(m.role,m.content,m,batch);
+  continue;
+ }
+ const currentNext=window.AksaraJourney?.nextFor(previousUserQuestion)||null;
+ addMessage(m.role,m.content,currentNext?{...m,journeyNext:currentNext}:m,batch);
+}
 ui.starters.hidden=history.length>0;
 if(!history.length)welcome(batch);
 ui.chat.appendChild(batch);
@@ -1166,7 +1175,7 @@ renderIdeas();renderHistory();update();probe();
 </script>
 <script src="bilik-antara-docx.js?v=1" defer></script>
 <script src="bilik-antara-identity.js?v=30" defer></script>
-<script src="bilik-antara-journey.js?v=1" defer></script>
+<script src="bilik-antara-journey.js?v=2" defer></script>
 <script src="bilik-antara-session-utils.js?v=3" defer></script>
 <script src="bilik-antara-suite.js?v=18" defer></script>
 <script src="bilik-antara-code-runtime.js?v=8" defer></script>
