@@ -103,7 +103,7 @@ test("Locked Malay casual + English technical language applies to Gemini, all fa
  assert.doesNotMatch(who+coder,/penghalaan|sandaran lapisan/i);
  const starters=[...html.matchAll(/<button class="starter" type="button">([^<]+)<[/]button>/g)].map(x=>x[1]);
  assert.deepEqual(starters,["Siapa Aku","The Coder Poet"]);
- assert.match(html,/AksaraJourney\?\.nextFor\(question\)/);
+ assert.match(html,/AksaraJourney\?\.resolve\(question,window\.BilikAntaraIdentity,"journey-button"\)/);
  assert.match(html,/journeyNext/);
  assert.match(html,/Sambung · /);
  assert.match(html,/bilik-antara-journey\.js\?v=\d+/);
