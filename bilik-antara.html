@@ -263,10 +263,12 @@ if(typeof ResizeObserver!=="undefined"){
  const chatViewportObserver=new ResizeObserver(()=>{
   if(document.activeElement!==ui.input||!followOnInputResize)return;
   // Respect an explicit jump to old messages before the scroll event fires.
-  if(ui.chat.scrollTop<20&&lastChatScrollTop>80){
+  // Top of a scrollable chat means the reader chose older messages.
+  // This also catches programmatic scroll before its asynchronous scroll event.
+  if(ui.chat.scrollTop<20&&ui.chat.scrollHeight-ui.chat.clientHeight>120){
    followOnInputResize=false;return;
   }
-  // Avoid forced scrollHeight layout reads on every mobile resize.
+  // Avoid forced scrollHeight layout reads on ordinary mobile resizes.
   ui.chat.scrollTop=1e9;
  });
  chatViewportObserver.observe(ui.chat);
