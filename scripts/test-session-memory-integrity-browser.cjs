@@ -44,11 +44,13 @@ async function archived(page){
   const a=await context.newPage();await mock(a);await ready(a);
   assert.equal(await a.locator("#rememberChat").isChecked(),true);
   assert.equal(await a.evaluate(()=>window.BilikAntaraSuite.getStorageStatus().memoryEnabled),true);
-  await sessions(a);
-  const fieldA=a.locator(".ba-drawer .ba-editor").first();
-  await fieldA.fill("Ingatan A yang disahkan");
-  await a.getByRole("button",{name:"Simpan memori",exact:true}).click();
+  // Optional memory editor UI is hidden; preserve and restore existing data.
+  await a.evaluate(key=>localStorage.setItem(key,JSON.stringify({enabled:true,text:"Ingatan A yang disahkan"})),MEM);
+  await a.reload({waitUntil:"domcontentloaded"});
+  await a.waitForFunction(()=>!!window.BilikAntaraSuite,{timeout:20000});
   assert.equal(await a.evaluate(()=>window.BilikAntaraSuite.memoryForPrompt("Apa ingatan?")),"Ingatan A yang disahkan");
+  await sessions(a);
+  assert.equal(await a.locator(".ba-drawer .ba-editor").count(),0,"Legacy memory editor must not render");
   await close(a);
   assert.equal(await localMessage(a,"A"),true);
   assert.equal((await archived(a)).length,1);
@@ -70,20 +72,13 @@ async function archived(page){
   assert.ok(restoredB.some(x=>x.content.includes("Perbualan B")),"Tab B must restore B");
 
   await sessions(b);
-  await b.locator(".ba-drawer .ba-editor").first().fill("Draf B yang belum disimpan");
+  assert.equal(await b.locator(".ba-drawer .ba-editor").count(),0,"Hidden memory UI remains unavailable in tab B");
   await sessions(a);
-  await a.locator(".ba-drawer .ba-editor").first().fill("Ingatan A yang dikemas kini");
-  await a.getByRole("button",{name:"Simpan memori",exact:true}).click();
-  await close(a);
-  const dialogs=[];
-  b.once("dialog",async d=>{dialogs.push(d.message());await d.dismiss();});
-  await b.getByRole("button",{name:"Simpan memori",exact:true}).click();
-  assert.ok(dialogs.some(x=>x.includes("berubah di tab lain")),"Stale note save requires confirmation");
+  assert.equal(await a.locator(".ba-drawer .ba-editor").count(),0,"Hidden memory UI remains unavailable in tab A");
+  await a.evaluate(key=>localStorage.setItem(key,JSON.stringify({enabled:true,text:"Ingatan A yang dikemas kini"})),MEM);
+  await b.waitForFunction(()=>window.BilikAntaraSuite?.memoryForPrompt("Apa ingatan?")==="Ingatan A yang dikemas kini",{timeout:8000});
   assert.equal(await b.evaluate(key=>JSON.parse(localStorage.getItem(key)).text,MEM),"Ingatan A yang dikemas kini");
-  b.once("dialog",d=>d.dismiss());
-  await b.keyboard.press("Escape");
-  assert.equal(await b.locator(".ba-drawer").isVisible(),true,"Cancel must retain unsaved draft");
-  b.once("dialog",d=>d.accept());
+  await close(a);
   await close(b);
 
   // Exercise the actual checkbox change handler without relying on the portal's
@@ -107,6 +102,6 @@ async function archived(page){
   assert.equal(await a.evaluate(key=>JSON.parse(localStorage.getItem(key)).text,MEM),
    "Ingatan A yang dikemas kini","Session opt-out never deletes separately saved memory");
   await context.close();
-  console.log("AKSARA Sesi & Memori Integrity v2 PASS: two tabs, note drafts, opt-outs, no inference calls.");
+  console.log("AKSARA Sesi & Memori Integrity v2 PASS: two tabs, hidden editor, preserved notes, opt-outs, no inference calls.");
  }finally{await browser.close();}
 })().catch(error=>{console.error(error);process.exitCode=1;});
