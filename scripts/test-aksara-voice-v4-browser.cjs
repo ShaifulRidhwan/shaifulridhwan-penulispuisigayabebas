@@ -48,7 +48,14 @@ async function audit(browser,label,viewport){
     heroPhase:$(".voice-x-hero").dataset.phase||"",
     hiddenDiagnostics:styles("#voiceObserveV2").display,
     modelFallback:$(".voice-x-avatar-fallback")?.getAttribute("src"),
-    heading:$(".voice-v4-brand").textContent.replace(/\s+/g," ").trim()
+    heading:$(".voice-v4-brand").textContent.replace(/\s+/g," ").trim(),
+    decorativeBrandMarks:document.querySelectorAll(".voice-v4-brand-mark").length,
+    panelRadius:styles("#voicePanel").borderTopLeftRadius,
+    settingsRadius:styles("#voicePanel .voice-x-aside").borderTopLeftRadius,
+    dockRadius:styles("#voicePanel .voice-x-footer").borderTopLeftRadius,
+    settingsGlass:styles("#voicePanel .voice-x-aside").backdropFilter,
+    dockGlass:styles("#voicePanel .voice-x-footer").backdropFilter,
+    endIcon:styles("#voicePanel .voice-x-end::before").maskImage
    };
   });
   assert.ok(data.pageWidth<=data.width+4,label+" horizontal overflow "+JSON.stringify(data));
@@ -60,12 +67,21 @@ async function audit(browser,label,viewport){
   assert.match(data.brandFont,/Space Grotesk/);
   assert.match(data.glass,/blur\(/);
   assert.match(data.heading,/AKSARA.*VOICE CHAT/);
+  assert.equal(data.decorativeBrandMarks,0,"No extraneous icon beside AKSARA");
+  assert.ok(parseFloat(data.settingsRadius)>=18,label+" settings must be rounded");
+  assert.ok(parseFloat(data.dockRadius)>=18,label+" call dock must be rounded");
+  assert.match(data.settingsGlass,/blur\(/,label+" settings must be frosted glass");
+  assert.match(data.dockGlass,/blur\(/,label+" dock must be frosted glass");
+  assert.ok(data.endIcon.includes("M3.1%207.9"),label+" end icon must use optically balanced SVG");
   assert.equal(data.hiddenDiagnostics,"none");
   assert.ok(data.modelFallback?.includes("portrait"),"Use captured existing 3D avatar only");
   console.log("V4 LAYOUT "+label+" "+JSON.stringify({mic:data.mic,end:data.end,speaker:data.speaker,hero:data.hero,aside:data.aside,footer:data.footer}));
   await page.screenshot({path:path.join(OUT,"aksara-voice-v4-"+label+".png"),fullPage:false});
   assert.ok(data.mic.cx<data.end.cx&&data.end.cx<data.speaker.cx,label+" wrong order");
   assert.ok(Math.abs(data.mic.cy-data.speaker.cy)<3,label+" mic/speaker not aligned");
+  assert.ok(Math.abs(data.mic.w-data.end.w)<1,label+" end circle not same diameter");
+  assert.ok(Math.abs(data.mic.w-data.speaker.w)<1,label+" speaker circle not same diameter");
+  assert.ok(Math.abs(data.mic.h-data.end.h)<1,label+" end circle height differs");
   assert.ok(Math.abs(data.end.cx-(data.mic.cx+data.speaker.cx)/2)<4,label+" hangup must be centered");
   assert.ok(data.footer.bottom<=data.height+4,label+" controls clipped by viewport");
   const ui=page.locator("#voiceStyleTrigger");
