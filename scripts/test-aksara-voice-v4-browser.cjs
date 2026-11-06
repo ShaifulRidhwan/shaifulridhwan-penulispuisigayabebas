@@ -34,7 +34,7 @@ async function audit(browser,label,viewport){
   const data=await page.evaluate(()=>{
    const $=sel=>document.querySelector(sel);
    const rect=sel=>{const r=$(sel).getBoundingClientRect();return {x:r.x,y:r.y,w:r.width,h:r.height,right:r.right,bottom:r.bottom,cx:r.x+r.width/2,cy:r.y+r.height/2};};
-   const styles=sel=>getComputedStyle($(sel));
+   const styles=(sel,pseudo)=>getComputedStyle($(sel),pseudo||null);
    return {
     width:innerWidth,height:innerHeight,pageWidth:document.documentElement.scrollWidth,
     panel:rect("#voicePanel"),header:rect("#voicePanel .voice-panel-head"),
@@ -55,7 +55,7 @@ async function audit(browser,label,viewport){
     dockRadius:styles("#voicePanel .voice-x-footer").borderTopLeftRadius,
     settingsGlass:styles("#voicePanel .voice-x-aside").backdropFilter,
     dockGlass:styles("#voicePanel .voice-x-footer").backdropFilter,
-    endIcon:styles("#voicePanel .voice-x-end::before").maskImage
+    endIcon:styles("#voicePanel .voice-x-end","::before").maskImage
    };
   });
   assert.ok(data.pageWidth<=data.width+4,label+" horizontal overflow "+JSON.stringify(data));
