@@ -83,7 +83,7 @@ test("same-size vector controls and stable mic / hangup / speaker order",()=>{
  assert.match(css,/\.voice-x-end::before/);
  assert.match(css,/#voiceMuteMic::before/);
  assert.match(css,/#voiceMuteSpeaker::before/);
- assert.match(css,/stroke-width=|stroke%2Dwidth=/);
+ assert.match(css,/stroke-width%3D/);
  assert.doesNotMatch(css,/[🎙♫☎]/u);
 });
 test("existing avatar is never replaced; fallback disappears once WebGL is ready",()=>{
@@ -91,7 +91,7 @@ test("existing avatar is never replaced; fallback disappears once WebGL is ready
  const css=read("bilik-antara-voice-experiment-v3.css");
  assert.match(script,/bilik-antara-chat-portrait\.png\?v=1/);
  assert.match(script,/stage\.append\(fallback\)/);
- assert.match(css,/\.avatar-stage\.avatar-ready \.voice-x-avatar-fallback/);
+ assert.match(css,/\.voice-avatar-stage\.avatar-ready \.voice-x-avatar-fallback/);
  assert.match(css,/opacity:0;visibility:hidden/);
  assert.doesNotMatch(script,/import\("three"/);
 });
