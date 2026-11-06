@@ -58,6 +58,24 @@ test("Context trims history and discards unknown roles without persistence",()=>
  assert.deepEqual(JSON.parse(out),[{role:"user",content:"Kenapa?"},{role:"assistant",content:"Sebab graviti."}]);
  assert.ok(!out.includes("secret"));
 });
+test("Follow-up voice guidance adds new information instead of repeating the creator biography",()=>{
+ const guidance=voice.replyGuidance("cahaya");
+ assert.match(guidance,/apa lagi/);
+ assert.match(guidance,/Pengulangan tak jadi baharu/);
+ assert.match(guidance,/Jangan beralih ke topik atau loghat/);
+ const script=read("bilik-antara-voice.js");
+ assert.match(script,/sharedIdentity\?\.RUNTIME_PROMPT/);
+ assert.match(script,/voiceCore\?\.mergeTranscript/);
+ assert.doesNotMatch(script,/dengan 6 hingga 10 ayat lengkap/);
+ assert.match(script,/handle\?"Sesi berjaya disambung melalui session resumption/);
+});
+test("Overlapping transcript fragments never duplicate a repeated prefix",()=>{
+ assert.equal(voice.mergeTranscript("Shaiful penulis puisi", "penulis puisi dan pembangun"), "Shaiful penulis puisi dan pembangun");
+ assert.equal(voice.mergeTranscript("Selamat pagi","Selamat pagi"),"Selamat pagi");
+ assert.equal(voice.mergeTranscript("Aku Aksara", "Aku Aksara A.I."),"Aku Aksara A.I.");
+ assert.equal(voice.mergeTranscript("Aku Aksara A.I.", "Aku Aksara"),"Aku Aksara A.I.");
+ assert.equal(voice.mergeTranscript("Sebab graviti", "lebih kuat"),"Sebab graviti lebih kuat");
+});
 test("Connection backoff is bounded",()=>{
  assert.equal(voice.reconnectDelay(0),800);
  assert.ok(voice.reconnectDelay(8)<=6000);
@@ -74,9 +92,9 @@ test("Voice HTML contains the selector and status badge",()=>{
  assert.match(html,/id="voicePhaseLabel"/);
  assert.match(html,/<option value="gaul">Bahasa Gaul<\/option>/);
  assert.match(html,/bilik-antara-dialek\.js\?v=4/);
- assert.match(html,/bilik-antara-voice-core-v3.js\?v=1/);
+ assert.match(html,/bilik-antara-voice-core-v3.js\?v=2/);
  assert.match(html,/bilik-antara-voice-v3.css\?v=4/);
- assert.match(html,/bilik-antara-voice\.js\?v=48/);
+ assert.match(html,/bilik-antara-voice\.js\?v=49/);
 });
 test("Voice UI retains full-size classical layout with accessible picker and mode chip",()=>{
  const script=read("bilik-antara-voice.js");

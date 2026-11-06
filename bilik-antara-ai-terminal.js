@@ -331,7 +331,7 @@ async function agentCycle(){
  output("AGENT · Runtime gagal. Seterusnya minta cadangan patch A.I. dengan izin kau.");
  askAI();
 }
-function askAI(){
+async function askAI(){
  saveCurrent();
  if(mode==="manual"){message("Pilih AI Assist atau AI Agent.");return;}
  if(bridge.active()||waitingAI){message("Permintaan A.I. lain masih aktif.");return;}
@@ -342,7 +342,8 @@ function askAI(){
  const prompt=core.aiPrompt({mode,attempt,language:f.language,code:f.code,
   report:last?.name===f.name&&last.code===f.code?last.report:null,thoughtMode:bridge.snapshot?.().thoughtMode||"cahaya",
   task:mode==="agent"?"Diagnosis dan patch ralat sebenar serta edge case":"Semak kod dan cadangkan pembaikan"});
- if(!window.confirm("Hantar kod dan diagnostik ditapis kepada A.I.? Semak sendiri dahulu supaya tiada rahsia atau kunci API."))return;
+ if(!await window.AksaraDialog.confirm({title:"Kongsi kod dengan A.I.?",message:"Hantar kod dan diagnostik ditapis kepada A.I.? Semak sendiri dahulu supaya tiada rahsia atau kunci API.",confirmText:"Hantar kepada A.I."}))return;
+ if(bridge.active()||waitingAI){message("Permintaan A.I. lain masih aktif.");return;}
  if(mode==="agent")attempts++;
  waitingAI={name:f.name,language:f.language,source:f.code};
  dialog.close();bridge.fill(prompt);form.requestSubmit();
@@ -388,13 +389,13 @@ dialog.addEventListener("close",()=>{trigger.setAttribute("aria-expanded","false
 dialog.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",()=>{mode=b.dataset.mode;attempts=0;render();saveLater();}));
 $("aitFile").addEventListener("change",()=>{saveCurrent();index=Number($("aitFile").value)||0;render();});
 $("aitEditor").addEventListener("input",()=>{saveCurrent();pending=null;$("aitPatchBox").hidden=true;});
-$("aitAdd").addEventListener("click",()=>{
- const name=window.prompt("Fail baharu: .py, .js, .ts, .sql, .cpp, .html atau .css","script.py");
+$("aitAdd").addEventListener("click",async()=>{
+ const name=await window.AksaraDialog.prompt({title:"Tambah fail",message:"Fail baharu: .py, .js, .ts, .sql, .cpp, .html atau .css",defaultValue:"script.py",confirmText:"Tambah"});
  if(name!==null&&!add(name.trim()))message("Fail tidak sah, pendua atau maksimum 12 fail.");
 });
-$("aitDelete").addEventListener("click",()=>{
+$("aitDelete").addEventListener("click",async()=>{
  if(files.length<=1){message("Minimum satu fail.");return;}
- if(!window.confirm("Buang fail "+file().name+" daripada projek terminal?"))return;
+ if(!await window.AksaraDialog.confirm({title:"Buang fail?",message:"Buang fail "+file().name+" daripada projek terminal?",confirmText:"Buang"}))return;
  files.splice(index,1);index=Math.min(index,files.length-1);render();saveLater();
 });
 $("aitRun").addEventListener("click",()=>void runNamed(file().name));
@@ -460,7 +461,7 @@ $("aitZipFile").addEventListener("change",async()=>{
  try{
   const loaded=core.unzipStore(await fileToImport.arrayBuffer());
   if(controller||replBusy){message("Hentikan pelaksanaan sebelum mengimport projek.");return;}
-  if(!window.confirm("Gantikan projek terminal dengan "+loaded.length+" fail daripada ZIP ini? Projek semasa akan diganti."))return;
+  if(!await window.AksaraDialog.confirm({title:"Ganti projek Terminal?",message:"Gantikan projek terminal dengan "+loaded.length+" fail daripada ZIP ini? Projek semasa akan diganti.",confirmText:"Gantikan"}))return;
   closeRepl();files=loaded;index=0;pending=null;undo=[];last=null;attempts=0;
   render();saveLater();message("ZIP projek disahkan dan diimport: "+loaded.length+" fail.");
  }catch(error){message("ZIP ditolak: "+String(error.message||error).slice(0,220));}

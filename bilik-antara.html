@@ -863,9 +863,10 @@ fileState=null;ui.upload.value="";ui.docStatus.textContent="";ui.remove.hidden=t
 }
 
 ui.forget.addEventListener("click",()=>{ideas=[];renderIdeas();save();});
-ui.clear.addEventListener("click",()=>{
+ui.clear.addEventListener("click",async()=>{
 if(busy)return;
-if(history.length&&!window.confirm("Padam perbualan dan nota idea sesi ini?"))return;
+if(history.length&&!await window.AksaraDialog.confirm({title:"Padam perbualan?",message:"Padam perbualan dan nota idea sesi ini?",confirmText:"Padam"}))return;
+if(busy)return;
 conversationEpoch++;history=[];summary="";ideas=[];summarizedThrough=0;ui.mediaFallback.checked=false;
 try{localStorage.removeItem(STORAGE);}catch(e){}
 discardFile();renderIdeas();renderHistory();ui.settings.open=false;
@@ -1238,19 +1239,20 @@ window.addEventListener("DOMContentLoaded",()=>{
 <script src="bilik-antara-pdf-reader.js?v=3" defer></script>
 <script src="bilik-antara-large-media.js?v=1" defer></script>
 <script src="bilik-antara-attachments.js?v=5" defer></script>
-<script src="bilik-antara-code-workspace.js?v=10" defer></script>
+<script src="bilik-antara-dialog.js?v=1" defer></script>
+<script src="bilik-antara-code-workspace.js?v=11" defer></script>
 <script src="bilik-antara-terminal-core.js?v=3" defer></script>
 <script src="bilik-antara-python-session.js?v=1" defer></script>
-<script src="bilik-antara-ai-terminal.js?v=6" defer></script>
+<script src="bilik-antara-ai-terminal.js?v=7" defer></script>
 <script src="bilik-antara-code-brain.js?v=5" defer></script>
 <script src="bilik-antara-code-evaluation.js?v=1" defer></script>
 <script src="bilik-antara-brain.js?v=15" defer></script>
 <script src="bilik-antara-modes.js?v=4" defer></script>
 <script src="bilik-antara-thinking-status.js?v=1" defer></script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.184.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.184.0/examples/jsm/"}}</script>
-<script src="bilik-antara-voice-core-v3.js?v=1" defer></script>
+<script src="bilik-antara-voice-core-v3.js?v=2" defer></script>
 <script src="bilik-antara-dialek.js?v=4" defer></script>
-<script src="bilik-antara-voice.js?v=48" defer></script>
+<script src="bilik-antara-voice.js?v=49" defer></script>
 <script src="bilik-antara-observability.js?v=2" defer></script>
 <script src="bilik-antara-knowledge-hub.js?v=2" defer></script>
 <script src="bilik-antara-focus.js?v=1" defer></script>
