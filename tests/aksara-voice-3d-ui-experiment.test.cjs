@@ -138,7 +138,7 @@ test("v4 retains original endpoints and audio handlers, with no new network call
  assert.match(js,/panel\.dataset\.voiceV4Connected/);
  assert.doesNotMatch(js,/getUserMedia|new WebSocket|new AudioContext|\.netlify\/functions|fetch\(/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=7/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=8/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=6/);
 });
 
@@ -169,6 +169,18 @@ test("v4.1 follows original Bilik Antara frosted glass, curves and real compact 
  assert.match(css,/grid-template-columns:repeat\(3,56px\)/);
  assert.match(css,/grid-template-columns:repeat\(3,52px\)/);
  assert.match(css,/M3\.1%207\.9/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=7/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=8/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=6/);
+});
+
+test("v4.2 has one equal optical SVG family and fixed control grid",()=>{
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ assert.match(css,/Voice V4\.2: one icon family/);
+ assert.match(css,/grid-template-columns:repeat\(3,var\(--voice-control-size,58px\)\)/);
+ assert.match(css,/top:50%!important;left:50%!important/);
+ assert.match(css,/transform:translate\(-50%,-50%\)!important/);
+ assert.match(css,/width:27px!important;height:27px!important/);
+ assert.match(css,/--voice-control-size:56px/);
+ assert.match(css,/--voice-control-size:52px/);
+ assert.match(css,/M3\.3%209\.1/);
 });
