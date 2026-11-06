@@ -1054,3 +1054,13 @@ body.aksara-voice-3d-experiment {
  #voicePanel.voice-ui-experiment-v3 {--voice-control-size:52px;}
  #voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls{column-gap:20px!important}
 }
+
+
+/* Pixel-lock hangup glyph: legacy .voice-x-end::before had higher specificity. */
+#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>button.voice-x-end::before{
+ width:27px!important;height:27px!important;
+ min-width:27px!important;min-height:27px!important;
+ max-width:27px!important;max-height:27px!important;
+ top:50%!important;left:50%!important;right:auto!important;bottom:auto!important;
+ transform:translate(-50%,-50%)!important;
+}
