@@ -101,8 +101,78 @@
   /* Internal diagnostics stay available but do not occupy the call UI. */
   const diagnostics=panel.querySelector("#voiceObserveV2");
   if(diagnostics){diagnostics.open=false;diagnostics.hidden=true;}
+  /* Explicit UI preview for this experimental branch. The Cloudflare preview
+     may not have the Gemini Live token broker, and UI testing must never request
+     microphone access or claim a live connection. &voice-live=1 opts into the
+     existing Live handler for separate integration testing. */
+  const liveButton=document.getElementById("voiceLive");
+  const previewOnly=new URLSearchParams(location.search).get("voice-live")!=="1";
+  let previewOpen=false;
+  const previewStatus="Pratonton reka bentuk sahaja. Mikrofon dan Gemini Live tidak diaktifkan.";
+  function closePreview(){
+    if(!previewOpen)return;
+    previewOpen=false;
+    panel.hidden=true;
+    panel.classList.remove("is-minimized");
+    liveButton?.setAttribute("aria-pressed","false");
+    liveButton?.setAttribute("aria-expanded","false");
+    liveButton?.removeAttribute("data-voice-preview");
+    for(const control of [mic,speaker])if(control)control.disabled=false;
+    document.body.classList.remove("voice-focus");
+  }
+  function openPreview(event){
+    if(!previewOnly)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    if(previewOpen)return;
+    previewOpen=true;
+    panel.hidden=false;
+    panel.classList.remove("is-minimized");
+    panel.dataset.voicePhase="idle";
+    liveButton?.setAttribute("aria-pressed","true");
+    liveButton?.setAttribute("aria-expanded","true");
+    liveButton?.setAttribute("data-voice-preview","true");
+    document.body.classList.add("voice-focus");
+    const phaseLabel=document.getElementById("voicePhaseLabel");
+    if(phaseLabel)phaseLabel.textContent="Pratonton";
+    const status=document.getElementById("voiceStatus");
+    if(status)status.textContent=previewStatus;
+    for(const control of [mic,speaker]){
+      if(!control)continue;
+      control.disabled=true;
+      control.title="Kawalan audio hanya aktif dalam panggilan sebenar";
+    }
+    /* Preserve the original GLB loading path for the UI preview. */
+    import("./bilik-antara-avatar.js?v=14").catch(()=>{
+      stage.classList.add("avatar-unavailable");
+    });
+    refresh();
+  }
+  if(previewOnly&&liveButton){
+    liveButton.addEventListener("click",openPreview,{capture:true});
+    /* Intercept the original close handler in this UI-only preview.
+       The custom central end button delegates to this same original button. */
+    stop.addEventListener("click",event=>{
+      if(!previewOpen)return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closePreview();
+    },{capture:true});
+    document.addEventListener("keydown",event=>{
+      if(event.key==="Escape"&&previewOpen)closePreview();
+    });
+    window.addEventListener("pagehide",closePreview,{once:true});
+  }
   const refresh=()=>{
     if(panel.hidden)return;
+    if(previewOpen){
+      live.dataset.connected="false";
+      liveText.textContent="PRATONTON UI";
+      timer.textContent="00:00";
+      hero.dataset.phase="idle";
+      panel.dataset.voiceV4Connected="false";
+      return;
+    }
     const d=window.BilikAntaraVoiceDiagnostics?.snapshot?.();
     const connected=Boolean(d?.connected);
     const phase=panel.dataset.voicePhase||"idle";
