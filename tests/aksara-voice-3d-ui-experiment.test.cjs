@@ -31,7 +31,7 @@ test("3D avatar and original voice engine remain in place",()=>{
  const html=read("bilik-antara.html");
  const avatar=read("bilik-antara-avatar.js");
  const voice=read("bilik-antara-voice.js");
- assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=14"\)/);
+ assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=15"\)/);
  assert.match(avatar,/brunette\.glb/);
  assert.match(avatar,/voiceAvatarStage/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
@@ -138,8 +138,8 @@ test("v4 retains original endpoints and audio handlers, with no new network call
  assert.match(js,/panel\.dataset\.voiceV4Connected/);
  assert.doesNotMatch(js,/getUserMedia|new WebSocket|new AudioContext|\.netlify\/functions|fetch\(/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=9/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=6/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=10/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=7/);
 });
 
 test("UI preview click is connected to the real Voice Chat entry without a Live token",()=>{
@@ -169,8 +169,8 @@ test("v4.1 follows original Bilik Antara frosted glass, curves and real compact 
  assert.match(css,/grid-template-columns:repeat\(3,56px\)/);
  assert.match(css,/grid-template-columns:repeat\(3,52px\)/);
  assert.match(css,/M3\.1%207\.9/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=9/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=6/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=10/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=7/);
 });
 
 test("v4.2 has one equal optical SVG family and fixed control grid",()=>{
@@ -188,4 +188,23 @@ test("v4.2 has one equal optical SVG family and fixed control grid",()=>{
 test("V4.2 hangup icon overrides legacy selector with exact 27px glyph",()=>{
  const css=read("bilik-antara-voice-experiment-v3.css");
  assert.match(css,/button\.voice-x-end::before\{\s*width:27px!important;height:27px!important/);
+});
+test("v4.3 cinematic framing, status waveform, quiet panels and accessible end call",()=>{
+ const avatar=read("bilik-antara-avatar.js");
+ const js=read("bilik-antara-voice-experiment-v3.js");
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ const html=read("bilik-antara.html");
+ assert.match(avatar,/panel\.classList\.contains\("voice-ui-experiment-v3"\)/);
+ assert.match(avatar,/Math\.max\(\.75,distance\)\*1\.07/);
+ assert.match(avatar,/:\s*Math\.max\(\.75,distance\)/);
+ assert.match(js,/dock\.insertBefore\(wave,dock\.firstChild\)/);
+ assert.doesNotMatch(js,/if\(wave\)hero\.append\(wave\)/);
+ assert.match(css,/V4\.3 cinematic final-pass/);
+ assert.match(css,/\.voice-x-avatar-fallback\{\s*transform:scale\(\.935\)!important/);
+ assert.match(css,/\.voice-dialogue-dock \.voice-wave\{/);
+ assert.match(css,/rgba\(231,197,149,.13\)/);
+ assert.match(css,/button\.voice-x-end\{\s*background:linear-gradient\(145deg,rgba\(180,71,78,.90\)/);
+ assert.match(html,/bilik-antara-avatar\.js\?v=15/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=10/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=7/);
 });
