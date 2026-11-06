@@ -138,8 +138,8 @@ test("v4 retains original endpoints and audio handlers, with no new network call
  assert.match(js,/panel\.dataset\.voiceV4Connected/);
  assert.doesNotMatch(js,/getUserMedia|new WebSocket|new AudioContext|\.netlify\/functions|fetch\(/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=11/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=7/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=12/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=8/);
 });
 
 test("UI preview click is connected to the real Voice Chat entry without a Live token",()=>{
@@ -169,8 +169,8 @@ test("v4.1 follows original Bilik Antara frosted glass, curves and real compact 
  assert.match(css,/grid-template-columns:repeat\(3,56px\)/);
  assert.match(css,/grid-template-columns:repeat\(3,52px\)/);
  assert.match(css,/M3\.1%207\.9/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=11/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=7/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=12/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=8/);
 });
 
 test("v4.2 has one equal optical SVG family and fixed control grid",()=>{
@@ -205,12 +205,32 @@ test("v4.3 cinematic framing, status waveform, quiet panels and accessible end c
  assert.match(css,/rgba\(231,197,149,.13\)/);
  assert.match(css,/button\.voice-x-end\{\s*background:linear-gradient\(145deg,rgba\(180,71,78,.90\)/);
  assert.match(html,/bilik-antara-avatar\.js\?v=15/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=11/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=7/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=12/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=8/);
 });
 
 test("V4.3 red end-call wins over base liquid-glass :is specificity without modifying production styles",()=>{
  const css=read("bilik-antara-voice-experiment-v3.css");
  assert.match(css,/#voicePanel#voicePanel\.voice-ui-experiment-v3 \.voice-v4-control-deck \.voice-session-controls>button\.voice-x-end\{/);
  assert.match(css,/background:linear-gradient\(145deg,rgba\(180,71,78,.90\)/);
+});
+
+test("v4.4 uses Bilik Antara glass for brand, circular X and dialect dialog with rounded options",()=>{
+ const html=read("bilik-antara.html");
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ const js=read("bilik-antara-voice-experiment-v3.js");
+ assert.match(js,/voice-x-setting-label","Volume"/);
+ assert.doesNotMatch(js,/voice-x-setting-label","Kelantangan"/);
+ assert.match(css,/AKSARA VOICE V4\.4/);
+ assert.match(css,/#voicePanel\.voice-ui-experiment-v3 \.voice-v4-brand\{/);
+ assert.match(css,/border-radius:17px!important/);
+ assert.match(css,/#voicePanel#voicePanel\.voice-ui-experiment-v3 \.voice-panel-head-actions #voiceStop\{/);
+ assert.match(css,/border-radius:50%!important/);
+ assert.match(css,/body\.aksara-voice-3d-experiment \.aksara-voice-style-dialog\{/);
+ assert.match(css,/border-radius:29px!important/);
+ assert.match(css,/backdrop-filter:blur\(28px\) saturate\(1\.22\)/);
+ assert.match(css,/body\.aksara-voice-3d-experiment \.aksara-voice-style-dialog::backdrop/);
+ assert.match(css,/\.voice-style-option\.is-selected/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=12/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=8/);
 });
