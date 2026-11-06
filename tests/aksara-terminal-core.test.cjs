@@ -10,10 +10,10 @@ test("AI terminal modules parse and stay behind sandbox runtime",()=>{
  assert.doesNotThrow(()=>new vm.Script(read("bilik-antara-ai-terminal.js")));
  const ui=read("bilik-antara-ai-terminal.js"),html=read("bilik-antara.html");
  for(const token of ["engine.run(f.language,f.code","codeAITerminalOpen","AksaraCodeWorkspace?.receiveFile",
-  "Project Memory","aitPatchBox","window.confirm(","core.zip(files)","storage(\"delete\")"]){
+  "Project Memory","aitPatchBox","window.AksaraDialog.confirm(","core.zip(files)","storage(\"delete\")"]){
   assert.ok(ui.includes(token),"Missing AI Terminal feature "+token);
  }
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=6"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=7"));
  assert.ok(html.includes("bilik-antara-terminal-core.js?v=3"));
  assert.ok(html.includes("codeContext")&&html.includes("CODE_GUIDANCE"));
 });
@@ -192,7 +192,7 @@ test("AI Terminal is a dedicated glass header chip next to Code Engine, not nest
  assert.ok(ui.includes('trigger.id="codeAITerminalOpen"'));
  assert.ok(!ui.includes('menu.querySelector(".multi-ai-actions")?.append(trigger)'));
  assert.ok(!codeStatus.includes('codeAITerminalOpen'));
- assert.match(page,/bilik-antara-ai-terminal\.js\?v=6/);
+ assert.match(page,/bilik-antara-ai-terminal\.js\?v=7/);
  assert.match(page,/bilik-antara-code-brain\.js\?v=5/);
 });
 test("terminal's new glass header entry is iconed, accessible, responsive and in sync with runtime",()=>{
@@ -226,7 +226,7 @@ test("AI Terminal still opens its original dialog and keeps every execution safe
   'core.classifyInput(trimmed)',
   'core.zip(files)',
   'core.unzipStore',
-  'window.confirm("Hantar kod',
+  'window.AksaraDialog.confirm({title:"Kongsi kod dengan A.I.?"',
   'function agentCycle()',
   'core.extractPatch(',
   'function replCommand(',
@@ -254,7 +254,7 @@ test("Terminal header and dialog use the concise name without losing AI modes",(
   assert.ok(ui.includes(s),"Original AI modes missing: "+s);
  }
  const html=read("bilik-antara.html");
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=6"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=7"));
  assert.ok(html.includes("bilik-antara-code-brain.js?v=5"));
 });
 test("Terminal Liquid Glass groups editor, runtime and project tools while keeping readable output",()=>{
