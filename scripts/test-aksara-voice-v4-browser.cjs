@@ -53,6 +53,8 @@ async function audit(browser,label,viewport){
   assert.match(data.heading,/AKSARA.*VOICE CHAT/);
   assert.equal(data.hiddenDiagnostics,"none");
   assert.ok(data.modelFallback?.includes("portrait"),"Use captured existing 3D avatar only");
+  console.log("V4 LAYOUT "+label+" "+JSON.stringify({mic:data.mic,end:data.end,speaker:data.speaker,hero:data.hero,aside:data.aside,footer:data.footer}));
+  await page.screenshot({path:path.join(OUT,"aksara-voice-v4-"+label+".png"),fullPage:false});
   assert.ok(data.mic.cx<data.end.cx&&data.end.cx<data.speaker.cx,label+" wrong order");
   assert.ok(Math.abs(data.mic.cy-data.speaker.cy)<3,label+" mic/speaker not aligned");
   assert.ok(Math.abs(data.end.cx-(data.mic.cx+data.speaker.cx)/2)<4,label+" hangup must be centered");
@@ -63,7 +65,6 @@ async function audit(browser,label,viewport){
   assert.equal(await page.locator("#voiceStyleDialog").isVisible(),true,"Dialect menu must open");
   await page.locator("#voiceStyleDialog .voice-style-close").click();
   assert.equal(await page.locator("#voiceStyleDialog").isVisible(),false,"Dialect menu must close");
-  await page.screenshot({path:path.join(OUT,"aksara-voice-v4-"+label+".png"),fullPage:false});
   assert.deepEqual(pageErrors,[],label+" browser errors: "+pageErrors.join("; "));
   console.log("Voice V4 "+label+" PASS: glass, typography, hero, icons, controls, dialog, bounds.");
  }finally{await context.close();}
