@@ -192,6 +192,16 @@ async function audit(browser,label,viewport){
   assert.equal(await panel.isVisible(),false,"Header close must close preview");
   assert.equal(tokenRequests.length,0,"No Gemini token requests may occur in UI preview");
   assert.deepEqual(pageErrors,[],label+" browser errors: "+pageErrors.join("; "));
+  // Emergency classic fallback must NOT hydrate new voice UI or request a token.
+  const classic=await context.newPage();
+  await classic.goto(ROOT+"/bilik-antara.html?voice-ui=classic",
+    {waitUntil:"domcontentloaded",timeout:30000});
+  await classic.waitForTimeout(400);
+  assert.equal(await classic.locator("#voicePanel.voice-ui-experiment-v3").count(),0,
+    label+" classic rollback unexpectedly mounted V4");
+  assert.equal(await classic.locator(".voice-v4-brand").count(),0,
+    label+" classic rollback left V4 header behind");
+  await classic.close();
   console.log("Voice V4 "+label+" PASS: glass, typography, hero, icons, controls, dialog, bounds.");
  }finally{await context.close();}
 }
