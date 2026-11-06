@@ -55,7 +55,8 @@
   fallback.setAttribute("aria-hidden","true");
   stage.append(fallback);
   hero.append(stage);
-  if(wave)hero.append(wave);
+  /* Waveform belongs to the conversational status, not the avatar chest. */
+  if(wave)dock.insertBefore(wave,dock.firstChild);
   hero.append(dock);
   const sectionTitle=el("h2","voice-x-heading","Tetapan suara");
   aside.append(sectionTitle);
