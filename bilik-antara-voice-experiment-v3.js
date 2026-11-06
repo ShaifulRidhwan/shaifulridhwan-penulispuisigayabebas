@@ -34,10 +34,21 @@
   const metrics=el("div","voice-x-metrics");
   metrics.append(live,timer);
   head.insertBefore(metrics,actions);
-  const name=head.querySelector(".voice-live-name");
-  if(name)name.textContent="AKSARA Voice Chat";
+  /* The original identity element contains the pre-existing style trigger.
+     Leave it mounted, and add a dedicated, typographically consistent brand. */
+  const brand=el("div","voice-v4-brand");
+  const mark=el("span","voice-v4-brand-mark");
+  mark.setAttribute("aria-hidden","true");
+  mark.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.1 7.4 7.4 2.1-7.4 2.1-2.1 7.4-2.1-7.4-7.4-2.1 7.4-2.1L12 2.5Z"/><path d="M18.6 3.8v3.8m-1.9-1.9h3.8"/></svg>';
+  const wordmark=el("span","voice-v4-wordmark");
+  wordmark.append(el("strong","","AKSARA"),el("small","","VOICE CHAT"));
+  brand.append(mark,wordmark);
+  head.insertBefore(brand,metrics);
+  const originalIdentity=head.querySelector(".voice-live-label");
+  if(originalIdentity)originalIdentity.classList.add("voice-v4-original-identity");
   const main=el("div","voice-x-main");
-  const hero=el("div","voice-x-hero");
+  const hero=el("div","voice-x-hero voice-v4-hero");
+  hero.setAttribute("aria-label","Avatar Voice Chat Aksara");
   const aside=el("aside","voice-x-aside");
   aside.setAttribute("aria-label","Tetapan Voice Chat");
   /* A still of the existing GLB avatar, only until WebGL is ready. */
@@ -50,7 +61,7 @@
   hero.append(stage);
   if(wave)hero.append(wave);
   hero.append(dock);
-  const sectionTitle=el("h2","voice-x-heading","Tetapan sesi");
+  const sectionTitle=el("h2","voice-x-heading","Tetapan suara");
   aside.append(sectionTitle);
   const style=el("div","voice-x-setting");
   style.append(el("span","voice-x-setting-label","Gaya bahasa"));
@@ -72,7 +83,7 @@
     aside.append(volumeRow);
   }
   main.append(hero,aside);
-  const footer=el("div","voice-x-footer");
+  const footer=el("div","voice-x-footer voice-v4-control-deck");
   footer.setAttribute("role","group");
   footer.setAttribute("aria-label","Kawalan sesi suara");
   footer.append(controls);
@@ -96,7 +107,7 @@
     const connected=Boolean(d?.connected);
     const phase=panel.dataset.voicePhase||"idle";
     live.dataset.connected=connected?"true":"false";
-    const next=connected?"TERSAMBUNG":phase==="error"?"TERPUTUS":phase==="connecting"?"MENYAMBUNG": "VOICE LIVE";
+    const next=connected?"TERSAMBUNG":phase==="error"?"TERPUTUS":phase==="connecting"?"MENYAMBUNG":"VOICE LIVE";
     if(liveText.textContent!==next)liveText.textContent=next;
     const seconds=Math.max(0,Number(d?.elapsedSeconds)||0);
     const mm=String(Math.floor(seconds/60)).padStart(2,"0");
@@ -104,6 +115,7 @@
     timer.textContent=mm+":"+ss;
     /* No fake status or raw diagnostics in Voice Chat. Internal snapshot only informs the simple status and timer. */
     hero.dataset.phase=phase;
+    panel.dataset.voiceV4Connected=connected?"true":"false";
   };
   refresh();
   const observer=new MutationObserver(refresh);
