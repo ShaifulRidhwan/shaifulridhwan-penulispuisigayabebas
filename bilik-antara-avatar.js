@@ -112,7 +112,10 @@ async function begin(){
     const visibleHeight=Math.max(headHeight*2.55,headWidth*1.8/(w/h),.42);
     const fov=THREE.MathUtils.degToRad(camera.fov);
     const distance=visibleHeight/(2*Math.tan(fov/2));
-    camera.position.set(target.x,target.y-headHeight*.38,target.z+Math.max(.75,distance));
+    // Experimental UI only: widen 3D framing by 7% without changing baseline voice.
+    const framingDistance=panel.classList.contains("voice-ui-experiment-v3")
+      ?Math.max(.75,distance)*1.07:Math.max(.75,distance);
+    camera.position.set(target.x,target.y-headHeight*.38,target.z+framingDistance);
     camera.lookAt(target.x,target.y-headHeight*.38,target.z);
   };
   face=root.getObjectByName("Wolf3D_Head")||null;

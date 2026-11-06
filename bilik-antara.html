@@ -1264,7 +1264,7 @@ let loading=false,loaded=false;
 document.getElementById("voiceLive")?.addEventListener("click",()=>{
 if(loading||loaded)return;
 loading=true;
-import("./bilik-antara-avatar.js?v=14").then(()=>{loaded=true;}).catch(error=>{
+import("./bilik-antara-avatar.js?v=15").then(()=>{loaded=true;}).catch(error=>{
 loading=false;document.getElementById("voiceAvatarStage")?.classList.add("avatar-unavailable");console.warn("Voice avatar unavailable",error);
 });
 });
@@ -1279,5 +1279,17 @@ document.body.appendChild(profiler);
 }
 </script>
 <script src="bilik-antara-living-v08.js?v=2" defer></script>
+<script>
+/* Experimental UI opt-in only. Voice transport / avatar are not changed. */
+document.addEventListener("DOMContentLoaded",function(){
+ if(new URLSearchParams(location.search).get("voice-ui")!=="3d")return;
+ const sheet=document.createElement("link");
+ sheet.rel="stylesheet";sheet.href="bilik-antara-voice-experiment-v3.css?v=13";
+ document.head.appendChild(sheet);
+ const script=document.createElement("script");
+ script.src="bilik-antara-voice-experiment-v3.js?v=9";
+ document.body.appendChild(script);
+});
+</script>
 </body>
 </html>
