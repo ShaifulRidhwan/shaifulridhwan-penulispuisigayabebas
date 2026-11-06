@@ -160,9 +160,19 @@
     });
     window.addEventListener("pagehide",closePreview,{once:true});
   }
+  // A timer is a connected call timer, not the duration of microphone/token setup.
+  // Keep it running across brief transport reconnects, but reset for each new call.
+  let firstConnectedAt=0;
+  let lastSessionStartedAt=0;
   const refresh=()=>{
-    if(panel.hidden)return;
+    if(panel.hidden){
+      firstConnectedAt=0;
+      lastSessionStartedAt=0;
+      return;
+    }
     if(previewOpen){
+      firstConnectedAt=0;
+      lastSessionStartedAt=0;
       live.dataset.connected="false";
       liveText.textContent="PRATONTON UI";
       timer.textContent="00:00";
@@ -171,18 +181,34 @@
       return;
     }
     const d=window.BilikAntaraVoiceDiagnostics?.snapshot?.();
-    const connected=Boolean(d?.connected);
+    const active=d?.sessionActive===true;
+    const connected=active&&d?.connected===true;
+    const startedAt=Math.max(0,Number(d?.startedAt)||0);
+    if(!active||(startedAt&&startedAt!==lastSessionStartedAt)){
+      firstConnectedAt=0;
+    }
+    lastSessionStartedAt=active?startedAt:0;
+    if(connected&&!firstConnectedAt)firstConnectedAt=Date.now();
     const phase=panel.dataset.voicePhase||"idle";
+    const offline=navigator.onLine===false;
+    const next=!active?"SEDIA":
+      phase==="paused"?"DIJEDA":
+      offline&&!connected?"LUAR TALIAN":
+      connected?"TERSAMBUNG":
+      phase==="error"?"GANGGUAN":
+      (Number(d?.connections)||0)>0?"SAMBUNG SEMULA":"MENYAMBUNG";
     live.dataset.connected=connected?"true":"false";
-    const next=connected?"TERSAMBUNG":phase==="error"?"TERPUTUS":phase==="connecting"?"MENYAMBUNG":"VOICE LIVE";
     if(liveText.textContent!==next)liveText.textContent=next;
-    const seconds=Math.max(0,Number(d?.elapsedSeconds)||0);
+    const seconds=active&&firstConnectedAt?
+      Math.max(0,Math.floor((Date.now()-firstConnectedAt)/1000)):0;
     const mm=String(Math.floor(seconds/60)).padStart(2,"0");
     const ss=String(seconds%60).padStart(2,"0");
     timer.textContent=mm+":"+ss;
-    /* No fake status or raw diagnostics in Voice Chat. Internal snapshot only informs the simple status and timer. */
+    timer.setAttribute("aria-label","Tempoh sambungan Voice Chat "+mm+" minit "+ss+" saat");
     hero.dataset.phase=phase;
     panel.dataset.voiceV4Connected=connected?"true":"false";
+    /* Keep native controls authoritative: their aria-pressed reflects the
+       actual track/output state set by bilik-antara-voice.js. */
   };
   refresh();
   const observer=new MutationObserver(refresh);
