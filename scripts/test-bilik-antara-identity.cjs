@@ -87,7 +87,7 @@ test("Creator is credited as builder of the application, not trainer of Gemini",
  assert.match(who,/Shaiful Ridhwan.*membangunkan/);
  assert.match(who,/Google.*Gemini/i);
  assert.match(ID.VOICE_CREATOR_PROMPT,/BILA DITANYA TENTANG SHAIFUL/);
- assert.match(ID.VOICE_CREATOR_PROMPT,/6 hingga 10 ayat/);
+ assert.match(ID.VOICE_CREATOR_PROMPT,/Tiada bilangan ayat|tanpa bilangan ayat tetap/);
  assert.match(ID.VOICE_CREATOR_PROMPT,/JANGAN REKA/);
  assert.equal(ID.CREATOR_PROFILE.creativeName,"puisigayabebas");
  assert.match(ID.CREATOR_PROFILE.provenance,/bukan melatih semula model asas/);
