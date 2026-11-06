@@ -16,7 +16,7 @@
   if(!panel||!head||!actions||!stage||!dock||!controls||!row||!stop)return;
   document.body.classList.add("aksara-voice-3d-experiment");
   panel.classList.add("voice-ui-experiment-v3");
-  /* Moving existing elements preserves every listener and DOM id. */
+  /* Existing GLB renderer and DOM handlers are retained. */
   document.body.appendChild(panel);
   const el=(tag,cls,value)=>{
     const node=document.createElement(tag);
@@ -40,6 +40,13 @@
   const hero=el("div","voice-x-hero");
   const aside=el("aside","voice-x-aside");
   aside.setAttribute("aria-label","Tetapan Voice Chat");
+  /* A still of the existing GLB avatar, only until WebGL is ready. */
+  const fallback=el("img","voice-x-avatar-fallback");
+  fallback.src="bilik-antara-chat-portrait.png?v=1";
+  fallback.alt="";
+  fallback.decoding="async";
+  fallback.setAttribute("aria-hidden","true");
+  stage.append(fallback);
   hero.append(stage);
   if(wave)hero.append(wave);
   hero.append(dock);
@@ -74,9 +81,15 @@
   footerEnd.setAttribute("aria-label","Tamatkan sesi Voice Chat");
   footerEnd.addEventListener("click",()=>stop.click());
   const speaker=document.getElementById("voiceMuteSpeaker");
-  if(speaker)controls.insertBefore(footerEnd,speaker);
-  else controls.append(footerEnd);
+  const mic=document.getElementById("voiceMuteMic");
+  /* One sequence across every viewport: mic / end / speaker. */
+  if(mic)controls.append(mic);
+  controls.append(footerEnd);
+  if(speaker)controls.append(speaker);
   panel.append(main,footer);
+  /* Internal diagnostics stay available but do not occupy the call UI. */
+  const diagnostics=panel.querySelector("#voiceObserveV2");
+  if(diagnostics){diagnostics.open=false;diagnostics.hidden=true;}
   const refresh=()=>{
     if(panel.hidden)return;
     const d=window.BilikAntaraVoiceDiagnostics?.snapshot?.();
