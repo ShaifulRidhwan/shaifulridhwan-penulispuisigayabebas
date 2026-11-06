@@ -139,7 +139,7 @@ test("v4 retains original endpoints and audio handlers, with no new network call
  assert.doesNotMatch(js,/getUserMedia|new WebSocket|new AudioContext|\.netlify\/functions|fetch\(/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=13/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=8/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=9/);
 });
 
 test("UI preview click is connected to the real Voice Chat entry without a Live token",()=>{
@@ -170,7 +170,7 @@ test("v4.1 follows original Bilik Antara frosted glass, curves and real compact 
  assert.match(css,/grid-template-columns:repeat\(3,52px\)/);
  assert.match(css,/M3\.1%207\.9/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=13/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=8/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=9/);
 });
 
 test("v4.2 has one equal optical SVG family and fixed control grid",()=>{
@@ -206,7 +206,7 @@ test("v4.3 cinematic framing, status waveform, quiet panels and accessible end c
  assert.match(css,/button\.voice-x-end\{\s*background:linear-gradient\(145deg,rgba\(180,71,78,.90\)/);
  assert.match(html,/bilik-antara-avatar\.js\?v=15/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=13/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=8/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=9/);
 });
 
 test("V4.3 red end-call wins over base liquid-glass :is specificity without modifying production styles",()=>{
@@ -232,7 +232,7 @@ test("v4.4 uses Bilik Antara glass for brand, circular X and dialect dialog with
  assert.match(css,/body\.aksara-voice-3d-experiment \.aksara-voice-style-dialog::backdrop/);
  assert.match(css,/\.voice-style-option\.is-selected/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=13/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=8/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=9/);
 });
 
 test("v4.4 scoped polish reaches the real body-mounted dialect dialog, X and glass identity",()=>{
@@ -251,4 +251,19 @@ test("v4.4 scoped polish reaches the real body-mounted dialect dialog, X and gla
  assert.match(css,/border-radius:29px!important/);
  assert.match(css,/backdrop-filter:blur\(27px\) saturate\(1\.18\)/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=13/);
+});
+
+test("call status never claims connection before setupComplete and clock resets with each session",()=>{
+ const js=read("bilik-antara-voice-experiment-v3.js");
+ const browser=read("scripts/test-aksara-voice-v4-live-controls-browser.cjs");
+ assert.match(js,/firstConnectedAt=0/);
+ assert.match(js,/if\(connected&&!firstConnectedAt\)firstConnectedAt=Date\.now\(\)/);
+ assert.match(js,/active&&firstConnectedAt\?/);
+ assert.match(js,/!active\?"SEDIA"/);
+ assert.match(js,/connected\?"TERSAMBUNG"/);
+ assert.match(js,/"SAMBUNG SEMULA"/);
+ assert.match(browser,/actual media track wasn't muted/);
+ assert.match(browser,/end button didn't stop microphone stream/);
+ assert.match(browser,/timer started before handshake/);
+ assert.match(browser,/timer didn't reset for second session/);
 });
