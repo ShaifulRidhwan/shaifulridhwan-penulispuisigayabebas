@@ -1169,3 +1169,204 @@ body.aksara-voice-3d-experiment {
 #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>button.voice-x-end:hover{
  background:linear-gradient(145deg,rgba(195,79,86,.94),rgba(136,42,58,.92))!important;
 }
+
+
+/* AKSARA VOICE V4.4 · Bilik Antara glass & rounded system.
+   Experimental overlay only, no audio/renderer/production modifications. */
+#voicePanel.voice-ui-experiment-v3:not(.is-minimized) .voice-panel-head{
+  padding:10px 17px!important;min-height:65px!important;
+  align-items:center!important;
+  background:linear-gradient(110deg,rgba(237,201,155,.052),rgba(104,149,194,.032))!important;
+  border-bottom:1px solid rgba(243,214,175,.11)!important;
+  -webkit-backdrop-filter:blur(23px) saturate(1.20)!important;
+  backdrop-filter:blur(23px) saturate(1.20)!important;
+}
+#voicePanel.voice-ui-experiment-v3 .voice-v4-brand{
+  display:flex!important;align-items:center!important;
+  width:auto!important;min-width:0!important;max-width:145px!important;
+  min-height:46px!important;box-sizing:border-box!important;
+  margin:0!important;padding:7px 14px!important;
+  border:1px solid rgba(234,204,160,.21)!important;
+  border-radius:17px!important;
+  background:linear-gradient(145deg,rgba(246,218,180,.075),rgba(112,162,201,.044))!important;
+  box-shadow:inset 0 1px 0 rgba(255,246,223,.11),0 5px 16px rgba(0,0,0,.075)!important;
+  -webkit-backdrop-filter:blur(19px) saturate(1.13)!important;
+  backdrop-filter:blur(19px) saturate(1.13)!important;
+}
+#voicePanel.voice-ui-experiment-v3 .voice-v4-wordmark{
+  gap:2px!important;justify-content:center!important;
+}
+#voicePanel.voice-ui-experiment-v3 .voice-v4-wordmark strong{line-height:1.15!important}
+#voicePanel.voice-ui-experiment-v3 .voice-v4-wordmark small{line-height:1.2!important}
+#voicePanel.voice-ui-experiment-v3 .voice-panel-head-actions{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  flex:0 0 42px!important;margin:0!important;padding:0!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head-actions #voiceStop{
+  display:grid!important;place-items:center!important;
+  position:relative!important;
+  flex:0 0 42px!important;width:42px!important;height:42px!important;
+  min-width:42px!important;min-height:42px!important;
+  max-width:42px!important;max-height:42px!important;
+  padding:0!important;margin:0!important;
+  border:1px solid rgba(240,207,163,.28)!important;
+  border-radius:50%!important;
+  background:linear-gradient(145deg,rgba(246,222,191,.075),rgba(116,160,205,.05))!important;
+  box-shadow:inset 0 1px 0 rgba(255,244,225,.13),0 5px 16px rgba(0,0,0,.08)!important;
+  -webkit-backdrop-filter:blur(19px) saturate(1.16)!important;
+  backdrop-filter:blur(19px) saturate(1.16)!important;
+  color:var(--ink,#f6ead8)!important;
+  font-size:0!important;line-height:0!important;
+}
+#voicePanel.voice-ui-experiment-v3 #voiceStop::before{
+  width:18px!important;height:18px!important;
+  min-width:18px!important;min-height:18px!important;
+  background:currentColor!important;flex:none!important;transform:none!important;
+  margin:0!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head-actions #voiceStop:hover{
+  border-color:rgba(245,209,164,.46)!important;
+  background:linear-gradient(145deg,rgba(246,222,191,.13),rgba(116,160,205,.09))!important;
+}
+#voicePanel.voice-ui-experiment-v3 .voice-x-live{
+  border-radius:999px!important;
+  background:linear-gradient(145deg,rgba(246,217,177,.063),rgba(117,165,204,.045))!important;
+  -webkit-backdrop-filter:blur(18px) saturate(1.14)!important;
+  backdrop-filter:blur(18px) saturate(1.14)!important;
+}
+#voicePanel.voice-ui-experiment-v3 .voice-x-aside{
+  border-radius:23px!important;
+  border-color:rgba(235,205,161,.16)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(1.13)!important;
+  backdrop-filter:blur(22px) saturate(1.13)!important;
+}
+#voicePanel.voice-ui-experiment-v3 .voice-x-setting #voiceStyleTrigger,
+#voicePanel.voice-ui-experiment-v3 .voice-x-setting #voiceModeBadge,
+#voicePanel.voice-ui-experiment-v3 .voice-x-volume .voice-volume{
+  border-radius:17px!important;
+  border-color:rgba(233,199,157,.19)!important;
+  background:linear-gradient(135deg,rgba(246,220,183,.06),rgba(110,156,195,.045))!important;
+  -webkit-backdrop-filter:blur(16px) saturate(1.12)!important;
+  backdrop-filter:blur(16px) saturate(1.12)!important;
+}
+#voicePanel.voice-ui-experiment-v3 .voice-x-footer{
+  border-radius:23px!important;
+  border-color:rgba(235,205,161,.16)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(1.13)!important;
+  backdrop-filter:blur(22px) saturate(1.13)!important;
+}
+/* The dialect selector lives in the top-layer <dialog>, outside #voicePanel.
+   Style it through the experiment body instead of trying to inherit panel CSS. */
+body.aksara-voice-3d-experiment .aksara-voice-style-dialog{
+  box-sizing:border-box!important;
+  width:min(90vw,420px)!important;
+  max-height:min(85dvh,740px)!important;
+  margin:auto!important;
+  padding:0!important;
+  border:1px solid rgba(237,205,160,.28)!important;
+  border-radius:29px!important;
+  background:
+    radial-gradient(ellipse at 8% 3%,rgba(222,176,113,.10),transparent 63%),
+    radial-gradient(ellipse at 100% 92%,rgba(107,155,204,.11),transparent 66%),
+    rgba(13,20,33,.66)!important;
+  box-shadow:0 24px 75px rgba(0,0,0,.42),
+    inset 0 1px 0 rgba(255,245,220,.15)!important;
+  -webkit-backdrop-filter:blur(28px) saturate(1.22)!important;
+  backdrop-filter:blur(28px) saturate(1.22)!important;
+  color:var(--ink,#fff5e6)!important;
+  overflow:hidden!important;
+}
+body.aksara-voice-3d-experiment .aksara-voice-style-dialog::backdrop{
+  background:rgba(3,7,15,.49)!important;
+  -webkit-backdrop-filter:blur(10px) saturate(.90)!important;
+  backdrop-filter:blur(10px) saturate(.90)!important;
+}
+body.aksara-voice-3d-experiment .aksara-voice-style-dialog .voice-style-modal-body{
+  padding:19px!important;max-height:min(85dvh,740px)!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+}
+body.aksara-voice-3d-experiment .aksara-voice-style-dialog .voice-style-modal-head{
+  align-items:center!important;gap:12px!important;margin-bottom:16px!important;
+}
+body.aksara-voice-3d-experiment .aksara-voice-style-dialog h2{
+  font:600 18px/1.3 "Space Grotesk","DM Sans",sans-serif!important;
+  color:var(--ink,#fff5e6)!important;
+}
+body.aksara-voice-3d-experiment .aksara-voice-style-dialog .voice-style-close{
+  min-width:76px!important;min-height:44px!important;
+  padding:9px 15px!important;
+  border:1px solid rgba(234,207,168,.24)!important;
+  border-radius:999px!important;
+  color:var(--ink,#fff5e6)!important;
+  background:linear-gradient(145deg,rgba(243,213,176,.075),rgba(119,161,199,.047))!important;
+  box-shadow:inset 0 1px 0 rgba(255,245,224,.13)!important;
+  -webkit-backdrop-filter:blur(16px)!important;
+  backdrop-filter:blur(16px)!important;
+}
+body.aksara-voice-3d-experiment .aksara-voice-style-dialog .voice-style-options{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  gap:8px!important;
+}
+body.aksara-voice-3d-experiment .aksara-voice-style-dialog .voice-style-option{
+  width:100%!important;min-height:51px!important;
+  padding:11px 16px!important;
+  border:1px solid rgba(233,204,164,.18)!important;
+  border-radius:17px!important;
+  background:linear-gradient(135deg,rgba(248,224,190,.052),rgba(111,155,191,.04))!important;
+  color:var(--ink,#fff5e6)!important;
+  box-shadow:inset 0 1px 0 rgba(255,246,225,.075)!important;
+  -webkit-backdrop-filter:blur(15px) saturate(1.12)!important;
+  backdrop-filter:blur(15px) saturate(1.12)!important;
+}
+body.aksara-voice-3d-experiment .aksara-voice-style-dialog .voice-style-option.is-selected{
+  background:linear-gradient(135deg,rgba(231,184,115,.19),rgba(109,154,198,.07))!important;
+  border-color:rgba(245,208,150,.56)!important;
+  box-shadow:inset 0 1px 0 rgba(255,240,207,.16)!important;
+}
+body.aksara-voice-3d-experiment .aksara-voice-style-dialog .voice-style-option:hover{
+  border-color:rgba(242,208,160,.43)!important;
+  background:linear-gradient(135deg,rgba(235,197,140,.12),rgba(110,159,206,.075))!important;
+}
+body.aksara-voice-3d-experiment .aksara-voice-style-dialog :is(button,select):focus-visible,
+#voicePanel.voice-ui-experiment-v3 #voiceStop:focus-visible{
+  outline:2px solid var(--gold,#eac17c)!important;outline-offset:3px!important;
+}
+@media(max-width:760px){
+ #voicePanel.voice-ui-experiment-v3:not(.is-minimized) .voice-panel-head{
+  padding:8px 12px!important;gap:7px!important;
+ }
+ #voicePanel.voice-ui-experiment-v3 .voice-v4-brand{
+  min-height:42px!important;max-width:128px!important;
+  padding:6px 12px!important;border-radius:15px!important;
+ }
+ #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head-actions #voiceStop{
+  width:40px!important;height:40px!important;
+  min-width:40px!important;min-height:40px!important;
+  max-width:40px!important;max-height:40px!important;
+ }
+ body.aksara-voice-3d-experiment .aksara-voice-style-dialog{
+  width:min(91vw,420px)!important;border-radius:25px!important;
+  transform:none!important;
+ }
+ body.aksara-voice-3d-experiment .aksara-voice-style-dialog .voice-style-modal-body{padding:15px!important;}
+ body.aksara-voice-3d-experiment .aksara-voice-style-dialog .voice-style-option{
+  min-height:48px!important;border-radius:16px!important;
+ }
+}
+@media(max-width:385px){
+ #voicePanel.voice-ui-experiment-v3 .voice-v4-brand{max-width:102px!important;padding:5px 9px!important;}
+ #voicePanel.voice-ui-experiment-v3 .voice-v4-wordmark strong{font-size:12px!important}
+ #voicePanel.voice-ui-experiment-v3 .voice-v4-wordmark small{font-size:8px!important}
+ #voicePanel.voice-ui-experiment-v3 .voice-x-metrics{gap:5px!important}
+ body.aksara-voice-3d-experiment .aksara-voice-style-dialog .voice-style-modal-body{padding:11px!important}
+}
+@media(max-height:650px){
+ body.aksara-voice-3d-experiment .aksara-voice-style-dialog{
+  max-height:calc(100dvh - 16px)!important;transform:none!important;
+ }
+ body.aksara-voice-3d-experiment .aksara-voice-style-dialog .voice-style-modal-body{
+  max-height:calc(100dvh - 16px)!important;
+ }
+}
