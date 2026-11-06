@@ -139,5 +139,18 @@ test("v4 retains original endpoints and audio handlers, with no new network call
  assert.doesNotMatch(js,/getUserMedia|new WebSocket|new AudioContext|\.netlify\/functions|fetch\(/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=6/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=4/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=5/);
+});
+
+test("UI preview click is connected to the real Voice Chat entry without a Live token",()=>{
+ const s=read("bilik-antara-voice-experiment-v3.js");
+ assert.match(s,/const liveButton=document\.getElementById\("voiceLive"\)/);
+ assert.match(s,/liveButton\.addEventListener\("click",openPreview,\{capture:true\}\)/);
+ assert.match(s,/event\.stopImmediatePropagation\(\)/);
+ assert.match(s,/panel\.hidden=false/);
+ assert.match(s,/liveText\.textContent="PRATONTON UI"/);
+ assert.match(s,/previewStatus="Pratonton reka bentuk sahaja/);
+ assert.match(s,/stop\.addEventListener\("click"/);
+ assert.match(s,/panel\.hidden=true/);
+ assert.match(s,/voice-live"\)!=="1"/);
 });
