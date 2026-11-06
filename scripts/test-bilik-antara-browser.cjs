@@ -234,70 +234,51 @@ async function audit(browser,label,options){
   assert.equal(state.heavyAssets.some(x=>x.includes("bilik-antara-voice-fallback")),false);
   await page.screenshot({path:path.join(OUT,label+"-chat.png"),animations:"disabled"});
 
-  // Inspect the new Voice glass label without initiating microphone/paid API calls.
+  // Default Voice V4 audit without requesting a real Gemini Live token.
+  await page.locator("#voicePanel.voice-ui-experiment-v3 .voice-v4-brand")
+    .waitFor({state:"attached",timeout:10000});
   await page.locator("#voicePanel").evaluate(el=>{el.hidden=false;});
-  const labelStyles=await page.locator(".voice-live-label").evaluate(el=>{
-   const style=getComputedStyle(el),rim=getComputedStyle(el,"::after");
-   return {animation:style.animationName,rimAnimation:rim.animationName};
-  });
-  assert.match(labelStyles.animation,/voiceIdentityBreath/);
-  assert.match(labelStyles.rimAnimation,/voiceIdentityBorderLight/);
-  // Prevent the 320px regression: the original header clipped AKSARA, while
-  // the oversized dialect card and duplicate status obscured the 3D stage.
   await page.locator("#voiceStyleTrigger").waitFor({state:"visible",timeout:5000});
   const voiceLayout=await page.evaluate(()=>{
-   const rect=selector=>{
-    const node=document.querySelector(selector),r=node.getBoundingClientRect();
-    return {x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom};
-   };
-   return {
-    panel:rect("#voicePanel"),
-    avatar:rect("#voiceAvatarStage"),
-    status:rect("#voiceStatus"),
-    rowPosition:getComputedStyle(document.querySelector(".voice-panel .voice-style-row")).position,
-    volumeValue:document.querySelector("#voiceVolume").value,
-    name:rect(".voice-panel .voice-live-label"),
-    actions:rect(".voice-panel .voice-panel-head-actions"),
-    row:rect(".voice-panel .voice-style-row"),
-    trigger:rect("#voiceStyleTrigger"),
-    mode:rect("#voiceModeBadge"),
-    hint:rect("#voiceDialectHint"),
-    viewportWidth:document.documentElement.clientWidth,
-    contentWidth:document.documentElement.scrollWidth
-   };
+    const r=s=>{const rect=document.querySelector(s).getBoundingClientRect();
+      return {x:rect.x,y:rect.y,width:rect.width,height:rect.height,
+        right:rect.right,bottom:rect.bottom,cx:rect.x+rect.width/2,cy:rect.y+rect.height/2};};
+    const styles=s=>getComputedStyle(document.querySelector(s));
+    return {
+      brand:r(".voice-v4-brand"),actions:r(".voice-panel-head-actions"),
+      panel:r("#voicePanel"),hero:r("#voicePanel .voice-x-hero"),
+      footer:r("#voicePanel .voice-x-footer"),
+      mic:r("#voiceMuteMic"),end:r("#voicePanel .voice-x-end"),speaker:r("#voiceMuteSpeaker"),
+      style:r("#voiceStyleTrigger"),brandGlass:styles(".voice-v4-brand").backdropFilter,
+      asideGlass:styles(".voice-x-aside").backdropFilter,
+      volume:document.querySelector("#voiceVolume").value,
+      width:document.documentElement.scrollWidth,viewport:document.documentElement.clientWidth
+    };
   });
-  assert.ok(voiceLayout.name.right<=voiceLayout.actions.x+3,
-   label+" Voice header overlaps: "+JSON.stringify(voiceLayout));
-  assert.ok(voiceLayout.name.width<=230,
-   label+" classic glass identity card expanded over the avatar: "+JSON.stringify(voiceLayout));
-  assert.ok(voiceLayout.trigger.x>=voiceLayout.name.x-2&&voiceLayout.trigger.right<=voiceLayout.name.right+2,
-   label+" loghat picker must remain inside original identity card: "+JSON.stringify(voiceLayout));
-  assert.equal(voiceLayout.rowPosition,"absolute",label+" Thinking Mode chip must not consume avatar height");
-  assert.ok(voiceLayout.row.height<=54,
-   label+" floating mode chip oversized: "+JSON.stringify(voiceLayout));
-  assert.ok(voiceLayout.mode.y>=voiceLayout.actions.bottom-4,
-   label+" floating mode chip overlaps header actions: "+JSON.stringify(voiceLayout));
-  assert.ok(voiceLayout.avatar.height>=320&&voiceLayout.avatar.width>=voiceLayout.panel.width-4,
-   label+" full-size avatar stage was compressed: "+JSON.stringify(voiceLayout));
-  assert.ok(voiceLayout.status.width>=100&&voiceLayout.status.height>=15,
-   label+" classic Voice dialogue must remain visible: "+JSON.stringify(voiceLayout));
-  assert.equal(voiceLayout.volumeValue,"50",label+" Voice slider should start at 50 percent");
-  assert.ok(voiceLayout.hint.width<=2,
-   label+" explanatory Aoede line should be screen-reader-only");
-  assert.ok(voiceLayout.contentWidth<=voiceLayout.viewportWidth+3,
-   label+" Voice UI caused horizontal overflow");
+  assert.match(voiceLayout.brandGlass,/blur\(/,label+" default V4 identity not glass");
+  assert.match(voiceLayout.asideGlass,/blur\(/,label+" default V4 settings not glass");
+  assert.ok(voiceLayout.brand.right<=voiceLayout.actions.x+4,label+" new V4 header overlaps "+JSON.stringify(voiceLayout));
+  assert.ok(voiceLayout.hero.height>=170,label+" 3D hero compressed "+JSON.stringify(voiceLayout));
+  assert.ok(voiceLayout.mic.cx<voiceLayout.end.cx&&voiceLayout.end.cx<voiceLayout.speaker.cx,
+    label+" default V4 controls out of order");
+  assert.ok(Math.abs(voiceLayout.mic.cy-voiceLayout.speaker.cy)<3,label+" V4 controls not level");
+  assert.equal(voiceLayout.volume,"50",label+" Voice volume default not 50%");
+  assert.ok(voiceLayout.width<=voiceLayout.viewport+5,
+    label+" default V4 overflows viewport "+JSON.stringify(voiceLayout));
   await page.locator("#voiceStyleTrigger").click();
   const dialectDialog=page.locator("#voiceStyleDialog");
   await dialectDialog.waitFor({state:"visible",timeout:3000});
   assert.equal(await dialectDialog.locator(".voice-style-option").count(),8);
   const dialLayout=await page.evaluate(()=>{
-   const d=document.querySelector("#voiceStyleDialog").getBoundingClientRect();
-   const xs=[...document.querySelectorAll("#voiceStyleDialog .voice-style-option")].map(el=>el.getBoundingClientRect().x);
-   return {left:d.left,right:d.right,viewport:document.documentElement.clientWidth,oneColumn:xs.every(x=>Math.abs(x-xs[0])<2)};
+    const d=document.querySelector("#voiceStyleDialog").getBoundingClientRect();
+    const xs=[...document.querySelectorAll("#voiceStyleDialog .voice-style-option")]
+      .map(el=>el.getBoundingClientRect().x);
+    return {left:d.left,right:d.right,viewport:document.documentElement.clientWidth,
+      oneColumn:xs.every(x=>Math.abs(x-xs[0])<2)};
   });
   assert.ok(dialLayout.left>=-1&&dialLayout.right<=dialLayout.viewport+1,
-   label+" dialect dialog overflows screen: "+JSON.stringify(dialLayout));
-  assert.equal(dialLayout.oneColumn,true,label+" dialect choices must not be crammed into two columns");
+    label+" V4 loghat modal overflows screen "+JSON.stringify(dialLayout));
+  assert.equal(dialLayout.oneColumn,true,label+" loghat dialog must remain one column");
   await page.screenshot({path:path.join(OUT,label+"-voice-loghat-menu.png"),animations:"disabled"});
   await page.keyboard.press("Escape");
   await dialectDialog.waitFor({state:"hidden",timeout:3000});
