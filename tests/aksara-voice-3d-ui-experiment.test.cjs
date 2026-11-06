@@ -5,11 +5,11 @@ const fs=require("node:fs");
 const path=require("node:path");
 const read=name=>fs.readFileSync(path.join(__dirname,"..",name),"utf8");
 
-test("Voice V4 is default and only classic rollback disables it",()=>{
+test("Classic Voice is the default and V4 needs explicit opt-in",()=>{
  const html=read("bilik-antara.html");
  const js=read("bilik-antara-voice-experiment-v3.js");
- assert.match(html,/get\("voice-ui"\)==="classic"\)return/);
- assert.doesNotMatch(html,/get\("voice-ui"\)!=="3d"\)return/);
+ assert.match(html,/get\("voice-ui"\)!=="3d"\)return/);
+ assert.doesNotMatch(html,/get\("voice-ui"\)==="classic"\)return/);
  assert.match(html,/DOMContentLoaded/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.css/);
