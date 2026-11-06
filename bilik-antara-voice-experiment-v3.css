@@ -1571,3 +1571,27 @@ body.aksara-voice-3d-experiment #voiceStyleDialog button:focus-visible{
  #voicePanel.voice-ui-experiment-v3 .voice-panel-head #voiceStop,
  body.aksara-voice-3d-experiment #voiceStyleDialog button{transition:none!important;animation:none!important}
 }
+
+/* Voice V4 safety: show the existing native status/error notice in the
+   viewport, not behind the glass overlay. The original handler owns text. */
+body.aksara-voice-3d-experiment #voiceNotice.voice-notice:not([hidden]){
+ position:fixed!important;
+ top:calc(env(safe-area-inset-top,0px) + 14px)!important;
+ left:50%!important;right:auto!important;bottom:auto!important;
+ transform:translateX(-50%)!important;
+ z-index:2010!important;
+ display:block!important;
+ box-sizing:border-box!important;
+ width:min(540px,calc(100vw - 30px))!important;
+ max-height:min(40dvh,220px)!important;overflow-y:auto!important;
+ margin:0!important;padding:12px 17px!important;
+ border:1px solid rgba(242,188,151,.42)!important;
+ border-radius:17px!important;
+ color:#fff1df!important;
+ background:linear-gradient(135deg,rgba(51,28,33,.92),rgba(21,27,38,.94))!important;
+ box-shadow:0 16px 45px rgba(0,0,0,.52)!important;
+ -webkit-backdrop-filter:blur(18px)!important;backdrop-filter:blur(18px)!important;
+ font:500 12px/1.5 "DM Sans",sans-serif!important;
+ text-align:center!important;pointer-events:none!important;
+ overflow-wrap:anywhere!important;
+}
