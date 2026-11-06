@@ -1264,7 +1264,7 @@ let loading=false,loaded=false;
 document.getElementById("voiceLive")?.addEventListener("click",()=>{
 if(loading||loaded)return;
 loading=true;
-import("./bilik-antara-avatar.js?v=14").then(()=>{loaded=true;}).catch(error=>{
+import("./bilik-antara-avatar.js?v=15").then(()=>{loaded=true;}).catch(error=>{
 loading=false;document.getElementById("voiceAvatarStage")?.classList.add("avatar-unavailable");console.warn("Voice avatar unavailable",error);
 });
 });
@@ -1284,10 +1284,10 @@ document.body.appendChild(profiler);
 document.addEventListener("DOMContentLoaded",function(){
  if(new URLSearchParams(location.search).get("voice-ui")!=="3d")return;
  const sheet=document.createElement("link");
- sheet.rel="stylesheet";sheet.href="bilik-antara-voice-experiment-v3.css?v=9";
+ sheet.rel="stylesheet";sheet.href="bilik-antara-voice-experiment-v3.css?v=10";
  document.head.appendChild(sheet);
  const script=document.createElement("script");
- script.src="bilik-antara-voice-experiment-v3.js?v=6";
+ script.src="bilik-antara-voice-experiment-v3.js?v=7";
  document.body.appendChild(script);
 });
 </script>
