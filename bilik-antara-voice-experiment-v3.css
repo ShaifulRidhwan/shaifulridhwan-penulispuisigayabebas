@@ -777,3 +777,16 @@ body.aksara-voice-3d-experiment{
 #voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>#voiceMuteSpeaker{
  grid-column:3!important;grid-row:1!important;order:0!important;
 }
+
+/* Right-side controls are a compact floating deck, not a half-empty card. */
+@media(min-width:761px){
+ #voicePanel.voice-ui-experiment-v3 .voice-x-aside{
+  align-self:start!important;height:auto!important;min-height:0!important;
+  max-height:calc(100% - 30px)!important;margin:20px 18px 0 0!important;
+ }
+}
+@media(max-width:760px){
+ #voicePanel.voice-ui-experiment-v3 .voice-x-aside{
+  align-self:stretch!important;height:auto!important;
+ }
+}
