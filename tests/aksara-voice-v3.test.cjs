@@ -67,11 +67,13 @@ test("Follow-up voice guidance adds new information instead of repeating the cre
  assert.match(script,/sharedIdentity\?\.RUNTIME_PROMPT/);
  assert.match(script,/voiceCore\?\.mergeTranscript/);
  assert.doesNotMatch(script,/dengan 6 hingga 10 ayat lengkap/);
+ assert.match(script,/handle\?"Sesi berjaya disambung melalui session resumption/);
 });
 test("Overlapping transcript fragments never duplicate a repeated prefix",()=>{
  assert.equal(voice.mergeTranscript("Shaiful penulis puisi", "penulis puisi dan pembangun"), "Shaiful penulis puisi dan pembangun");
  assert.equal(voice.mergeTranscript("Selamat pagi","Selamat pagi"),"Selamat pagi");
  assert.equal(voice.mergeTranscript("Aku Aksara", "Aku Aksara A.I."),"Aku Aksara A.I.");
+ assert.equal(voice.mergeTranscript("Aku Aksara A.I.", "Aku Aksara"),"Aku Aksara A.I.");
  assert.equal(voice.mergeTranscript("Sebab graviti", "lebih kuat"),"Sebab graviti lebih kuat");
 });
 test("Connection backoff is bounded",()=>{
