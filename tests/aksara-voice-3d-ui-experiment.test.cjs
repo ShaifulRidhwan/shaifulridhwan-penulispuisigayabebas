@@ -142,8 +142,8 @@ test("v4 retains original endpoints and audio handlers, with no new network call
  assert.match(js,/panel\.dataset\.voiceV4Connected/);
  assert.doesNotMatch(js,/getUserMedia|new WebSocket|new AudioContext|\.netlify\/functions|fetch\(/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=13/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=10/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=14/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=11/);
 });
 
 test("UI preview click is connected to the real Voice Chat entry without a Live token",()=>{
@@ -173,8 +173,8 @@ test("v4.1 follows original Bilik Antara frosted glass, curves and real compact 
  assert.match(css,/grid-template-columns:repeat\(3,56px\)/);
  assert.match(css,/grid-template-columns:repeat\(3,52px\)/);
  assert.match(css,/M3\.1%207\.9/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=13/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=10/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=14/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=11/);
 });
 
 test("v4.2 has one equal optical SVG family and fixed control grid",()=>{
@@ -209,8 +209,8 @@ test("v4.3 cinematic framing, status waveform, quiet panels and accessible end c
  assert.match(css,/rgba\(231,197,149,.13\)/);
  assert.match(css,/button\.voice-x-end\{\s*background:linear-gradient\(145deg,rgba\(180,71,78,.90\)/);
  assert.match(html,/bilik-antara-avatar\.js\?v=15/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=13/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=10/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=14/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=11/);
 });
 
 test("V4.3 red end-call wins over base liquid-glass :is specificity without modifying production styles",()=>{
@@ -235,8 +235,8 @@ test("v4.4 uses Bilik Antara glass for brand, circular X and dialect dialog with
  assert.match(css,/backdrop-filter:blur\(28px\) saturate\(1\.22\)/);
  assert.match(css,/body\.aksara-voice-3d-experiment \.aksara-voice-style-dialog::backdrop/);
  assert.match(css,/\.voice-style-option\.is-selected/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=13/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=10/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=14/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=11/);
 });
 
 test("v4.4 scoped polish reaches the real body-mounted dialect dialog, X and glass identity",()=>{
@@ -254,7 +254,7 @@ test("v4.4 scoped polish reaches the real body-mounted dialect dialog, X and gla
  assert.match(css,/body\.aksara-voice-3d-experiment #voiceStyleDialog button\.voice-style-option\.is-selected/);
  assert.match(css,/border-radius:29px!important/);
  assert.match(css,/backdrop-filter:blur\(27px\) saturate\(1\.18\)/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=13/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=14/);
 });
 
 test("call status never claims connection before setupComplete and clock resets with each session",()=>{
@@ -270,4 +270,17 @@ test("call status never claims connection before setupComplete and clock resets 
  assert.match(browser,/end button didn't stop microphone stream/);
  assert.match(browser,/timer started before handshake/);
  assert.match(browser,/timer didn't reset for second session/);
+});
+
+
+test("V4 keeps the original Voice error notice visible above the glass modal",()=>{
+ const html=read("bilik-antara.html");
+ const js=read("bilik-antara-voice-experiment-v3.js");
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ assert.match(html,/id="voiceNotice"/);
+ assert.match(js,/const nativeNotice=document\.getElementById\("voiceNotice"\)/);
+ assert.match(js,/document\.body\.appendChild\(nativeNotice\)/);
+ assert.match(css,/body\.aksara-voice-3d-experiment #voiceNotice\.voice-notice:not\(\[hidden\]\)/);
+ assert.match(css,/z-index:2010!important/);
+ assert.doesNotMatch(js,/new WebSocket|new AudioContext|\.getUserMedia\(|fetch\(/);
 });
