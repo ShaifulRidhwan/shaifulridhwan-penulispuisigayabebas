@@ -47,7 +47,7 @@ test("responsive design, screen-reader labels and reduced-motion are preserved",
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)/);
  assert.match(css,/\.voice-avatar-stage/);
  assert.match(script,/setAttribute\("aria-label","Kawalan sesi suara"\)/);
- assert.match(script,/const connected=Boolean\(d\?\.connected\)/);
+ assert.match(script,/const connected=active&&d\?\.connected===true/);
  assert.match(script,/panel\.dataset\.voicePhase/);
 });
 test("voice UI uses Bilik Antara gold-blue glass and no emoji pseudo-icons",()=>{
