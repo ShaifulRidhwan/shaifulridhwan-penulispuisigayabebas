@@ -14,10 +14,13 @@ async function testViewport(browser,name,viewport) {
  const page=await context.newPage();
  const errors=[];
  let tokenRequests=0;
+ let tokenFailure=false;
  page.on("pageerror",e=>errors.push(e.message));
  await page.route("**/.netlify/functions/bilik-antara-live-token",async route=>{
   tokenRequests++;
-  await route.fulfill({status:200,contentType:"application/json",
+  await route.fulfill(tokenFailure?{status:503,contentType:"application/json",
+    body:JSON.stringify({error:"Token Voice mock ditolak.",reason:"TOKEN_HTTP_503"})}:
+    {status:200,contentType:"application/json",
     body:JSON.stringify({token:"browser-test-token",model:"gemini-2.0-flash-live"})});
  });
  await page.addInitScript(()=>{
