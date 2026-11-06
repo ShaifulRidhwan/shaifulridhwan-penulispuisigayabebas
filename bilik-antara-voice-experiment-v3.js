@@ -75,7 +75,7 @@
   const volume=controls.querySelector(".voice-volume");
   if(volume){
     const volumeRow=el("div","voice-x-setting voice-x-volume");
-    volumeRow.append(el("span","voice-x-setting-label","Kelantangan"));
+    volumeRow.append(el("span","voice-x-setting-label","Volume"));
     volumeRow.append(volume);
     aside.append(volumeRow);
   }
