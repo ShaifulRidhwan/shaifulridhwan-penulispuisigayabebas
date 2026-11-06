@@ -61,3 +61,44 @@ test("voice UI uses Bilik Antara gold-blue glass and no emoji pseudo-icons",()=>
  assert.doesNotMatch(js,/Wajah 3D asal/);
  assert.match(css,/#voiceObserveV2\{display:none!important\}/);
 });
+
+test("v3.2 inherits the actual Bilik Antara glass and font tokens",()=>{
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ const base=read("bilik-antara.css");
+ assert.match(base,/--gold:#e1b86d/);
+ assert.match(css,/--voice-gold:var\(--gold/);
+ assert.match(css,/--voice-ink:var\(--ink/);
+ assert.match(css,/--voice-glass:linear-gradient\(150deg,rgba\(23,31,45/);
+ assert.match(css,/"DM Sans"/);
+ assert.match(css,/"Space Grotesk"/);
+ assert.match(css,/\.voice-live-label::before\{\s*content:none!important/);
+ assert.match(css,/backdrop-filter:blur\(18px\)/);
+});
+test("same-size vector controls and stable mic / hangup / speaker order",()=>{
+ const script=read("bilik-antara-voice-experiment-v3.js");
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ assert.match(script,/if\(mic\)controls\.append\(mic\);[\s\S]*controls\.append\(footerEnd\);[\s\S]*if\(speaker\)controls\.append\(speaker\);/);
+ assert.match(css,/grid-template-columns:repeat\(3,60px\)/);
+ assert.match(css,/place-items:center!important/);
+ assert.match(css,/\.voice-x-end::before/);
+ assert.match(css,/#voiceMuteMic::before/);
+ assert.match(css,/#voiceMuteSpeaker::before/);
+ assert.match(css,/stroke-width=|stroke%2Dwidth=/);
+ assert.doesNotMatch(css,/[🎙♫☎]/u);
+});
+test("existing avatar is never replaced; fallback disappears once WebGL is ready",()=>{
+ const script=read("bilik-antara-voice-experiment-v3.js");
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ assert.match(script,/bilik-antara-chat-portrait\.png\?v=1/);
+ assert.match(script,/stage\.append\(fallback\)/);
+ assert.match(css,/\.avatar-stage\.avatar-ready \.voice-x-avatar-fallback/);
+ assert.match(css,/opacity:0;visibility:hidden/);
+ assert.doesNotMatch(script,/import\("three"/);
+});
+test("the in-call diagnostic panel does not occupy the interface",()=>{
+ const js=read("bilik-antara-voice-experiment-v3.js");
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ assert.match(js,/diagnostics\.hidden=true/);
+ assert.match(css,/#voiceObserveV2\{display:none!important\}/);
+ assert.match(js,/BilikAntaraVoiceDiagnostics\?\.snapshot/);
+});
