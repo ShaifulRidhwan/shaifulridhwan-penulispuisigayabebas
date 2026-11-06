@@ -60,7 +60,13 @@ async function audit(browser,label,viewport){
     speakerIcon:styles("#voiceMuteSpeaker","::before").maskImage,
     micGlyph:styles("#voiceMuteMic","::before").width,
     endGlyph:styles("#voicePanel .voice-x-end","::before").width,
-    speakerGlyph:styles("#voiceMuteSpeaker","::before").width
+    speakerGlyph:styles("#voiceMuteSpeaker","::before").width,
+    waveParent:$("#voiceWave").parentElement.className,
+    wavePosition:styles("#voiceWave").position,
+    waveBox:rect("#voiceWave"),
+    phaseBox:rect("#voicePhaseLabel"),
+    fallbackScale:styles(".voice-x-avatar-fallback").transform,
+    hangupBackground:styles(".voice-x-end").backgroundImage
    };
   });
   assert.ok(data.pageWidth<=data.width+4,label+" horizontal overflow "+JSON.stringify(data));
@@ -80,6 +86,11 @@ async function audit(browser,label,viewport){
   assert.ok(data.endIcon.includes("M3.3%209.1"),label+" end icon must use optically balanced SVG");
   assert.equal(data.hiddenDiagnostics,"none");
   assert.ok(data.modelFallback?.includes("portrait"),"Use captured existing 3D avatar only");
+  assert.match(data.waveParent,/voice-dialogue-dock/,label+" waveform must belong to status panel");
+  assert.equal(data.wavePosition,"relative",label+" waveform should not float over the chest");
+  assert.ok(data.waveBox.bottom<=data.phaseBox.y+4,label+" waveform must be above phase label");
+  assert.match(data.fallbackScale,/0\.935/,label+" fallback image needs wider framing");
+  assert.match(data.hangupBackground,/180, 71, 78/,label+" hangup must retain red visual emphasis");
   console.log("V4 LAYOUT "+label+" "+JSON.stringify({mic:data.mic,end:data.end,speaker:data.speaker,hero:data.hero,aside:data.aside,footer:data.footer}));
   await page.screenshot({path:path.join(OUT,"aksara-voice-v4-"+label+".png"),fullPage:false});
   assert.ok(data.mic.cx<data.end.cx&&data.end.cx<data.speaker.cx,label+" wrong order");
