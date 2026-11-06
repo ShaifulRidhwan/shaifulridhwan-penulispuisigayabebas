@@ -138,6 +138,6 @@ test("v4 retains original endpoints and audio handlers, with no new network call
  assert.match(js,/panel\.dataset\.voiceV4Connected/);
  assert.doesNotMatch(js,/getUserMedia|new WebSocket|new AudioContext|\.netlify\/functions|fetch\(/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=4/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=5/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=4/);
 });
