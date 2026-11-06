@@ -765,3 +765,15 @@ body.aksara-voice-3d-experiment{
   animation:none!important;transition:none!important;
  }
 }
+
+/* V4 optical layout lock. Source DOM order may change when the existing Voice
+   controller refreshes its native buttons. Pin the three actions in the grid. */
+#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>#voiceMuteMic{
+ grid-column:1!important;grid-row:1!important;order:0!important;
+}
+#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>.voice-x-end{
+ grid-column:2!important;grid-row:1!important;order:0!important;
+}
+#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>#voiceMuteSpeaker{
+ grid-column:3!important;grid-row:1!important;order:0!important;
+}
