@@ -34,15 +34,11 @@
   const metrics=el("div","voice-x-metrics");
   metrics.append(live,timer);
   head.insertBefore(metrics,actions);
-  /* The original identity element contains the pre-existing style trigger.
-     Leave it mounted, and add a dedicated, typographically consistent brand. */
+  /* Brand matches Bilik Antara: no decorative third-party icon. */
   const brand=el("div","voice-v4-brand");
-  const mark=el("span","voice-v4-brand-mark");
-  mark.setAttribute("aria-hidden","true");
-  mark.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.5l2.1 7.4 7.4 2.1-7.4 2.1-2.1 7.4-2.1-7.4-7.4-2.1 7.4-2.1L12 2.5Z"/><path d="M18.6 3.8v3.8m-1.9-1.9h3.8"/></svg>';
   const wordmark=el("span","voice-v4-wordmark");
   wordmark.append(el("strong","","AKSARA"),el("small","","VOICE CHAT"));
-  brand.append(mark,wordmark);
+  brand.append(wordmark);
   head.insertBefore(brand,metrics);
   const originalIdentity=head.querySelector(".voice-live-label");
   if(originalIdentity)originalIdentity.classList.add("voice-v4-original-identity");
