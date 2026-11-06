@@ -102,3 +102,42 @@ test("the in-call diagnostic panel does not occupy the interface",()=>{
  assert.match(css,/#voiceObserveV2\{display:none!important\}/);
  assert.match(js,/BilikAntaraVoiceDiagnostics\?\.snapshot/);
 });
+
+test("v4 brand header is native Aksara and never retains old identity pill",()=>{
+ const js=read("bilik-antara-voice-experiment-v3.js");
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ assert.match(js,/voice-v4-brand/);
+ assert.match(js,/voice-v4-brand-mark/);
+ assert.match(js,/AKSARA/);
+ assert.match(js,/VOICE CHAT/);
+ assert.match(css,/\.voice-v4-original-identity\{display:none!important\}/);
+ assert.match(css,/\.voice-v4-wordmark strong/);
+ assert.match(css,/\.voice-v4-wordmark small/);
+});
+test("v4 mobile scene is immersive and settings share one soft glass rhythm",()=>{
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ assert.match(css,/AKSARA VOICE V4/);
+ assert.match(css,/--voice-v4-fg:var\(--ink/);
+ assert.match(css,/--voice-v4-warm:var\(--gold/);
+ assert.match(css,/--voice-v4-glass:linear-gradient/);
+ assert.match(css,/\.voice-v4-hero::before/);
+ assert.match(css,/\.voice-v4-hero::after/);
+ assert.match(css,/\.voice-x-avatar-fallback/);
+ assert.match(css,/@media\(max-width:760px\)/);
+ assert.match(css,/#voicePanel\.voice-ui-experiment-v3\[hidden\]\{display:none!important\}/);
+ assert.match(css,/grid-template-columns:repeat\(3,56px\)/);
+});
+test("v4 retains original endpoints and audio handlers, with no new network calls",()=>{
+ const js=read("bilik-antara-voice-experiment-v3.js");
+ const voice=read("bilik-antara-voice.js");
+ const html=read("bilik-antara.html");
+ assert.match(js,/footerEnd\.addEventListener\("click",\(\)=>stop\.click\(\)\)/);
+ assert.match(js,/if\(mic\)controls\.append\(mic\)/);
+ assert.match(js,/if\(speaker\)controls\.append\(speaker\)/);
+ assert.match(js,/const diagnostics=panel\.querySelector\("#voiceObserveV2"\)/);
+ assert.match(js,/panel\.dataset\.voiceV4Connected/);
+ assert.doesNotMatch(js,/getUserMedia|new WebSocket|new AudioContext|\.netlify\/functions|fetch\(/);
+ assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=4/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=4/);
+});
