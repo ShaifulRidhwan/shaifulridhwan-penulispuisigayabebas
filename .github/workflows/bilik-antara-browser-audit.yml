@@ -10,6 +10,7 @@ on:
       - "bilik-antara-bg-*.webp"
       - "aksara-celestial-static.webp"
       - "scripts/test-bilik-antara-browser.cjs"
+      - "scripts/test-aksara-voice-v4-browser.cjs"
       - "scripts/test-bilik-antara-background.cjs"
       - ".github/workflows/bilik-antara-browser-audit.yml"
   push:
@@ -56,6 +57,7 @@ jobs:
             sleep 1
           done
           node scripts/test-bilik-antara-browser.cjs
+          node scripts/test-aksara-voice-v4-browser.cjs
           node scripts/test-thinking-mode-status-browser.cjs
           node scripts/test-six-observability-browser.cjs
           node scripts/test-session-memory-integrity-browser.cjs
