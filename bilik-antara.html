@@ -1279,5 +1279,17 @@ document.body.appendChild(profiler);
 }
 </script>
 <script src="bilik-antara-living-v08.js?v=2" defer></script>
+<script>
+/* Experimental UI opt-in only. Voice transport / avatar are not changed. */
+document.addEventListener("DOMContentLoaded",function(){
+ if(new URLSearchParams(location.search).get("voice-ui")!=="3d")return;
+ const sheet=document.createElement("link");
+ sheet.rel="stylesheet";sheet.href="bilik-antara-voice-experiment-v3.css?v=1";
+ document.head.appendChild(sheet);
+ const script=document.createElement("script");
+ script.src="bilik-antara-voice-experiment-v3.js?v=1";
+ document.body.appendChild(script);
+});
+</script>
 </body>
 </html>
