@@ -19,6 +19,7 @@ function mergeTranscript(previous="",incoming="",maxChars=2800){
  const before=clean(previous),after=clean(incoming);
  if(!after)return before.slice(-maxChars);
  if(!before||after.startsWith(before))return after.slice(-maxChars);
+ if(before.startsWith(after))return before.slice(-maxChars);
  if(before.endsWith(after)||before.includes(after)&&after.length>=16)return before.slice(-maxChars);
  let overlap=0;
  for(let n=Math.min(before.length,after.length);n>0;n--){if(before.endsWith(after.slice(0,n))){overlap=n;break;}}
