@@ -11,15 +11,24 @@ fs.mkdirSync(OUT,{recursive:true});
 async function audit(browser,label,viewport){
  const context=await browser.newContext({viewport,deviceScaleFactor:1,isMobile:label!=="desktop",hasTouch:label!=="desktop"});
  const page=await context.newPage();
- const pageErrors=[];
+ const pageErrors=[],tokenRequests=[];
  page.on("pageerror",error=>pageErrors.push(String(error.message)));
+ page.on("request",request=>{
+  if(/bilik-antara-live-token/.test(request.url()))tokenRequests.push(request.url());
+ });
  try{
   await page.goto(ROOT+"/bilik-antara.html?voice-ui=3d",{waitUntil:"domcontentloaded",timeout:30000});
   await page.waitForSelector("#voicePanel.voice-ui-experiment-v3 .voice-v4-brand",{state:"attached",timeout:18000});
   const panel=page.locator("#voicePanel");
-  assert.equal(await panel.isVisible(),false,"Panel must stay hidden before the call starts");
-  await page.evaluate(()=>{document.getElementById("voicePanel").hidden=false;});
+  assert.equal(await panel.isVisible(),false,"Panel must stay hidden before clicking Voice Chat");
+  const launch=page.locator("#voiceLive");
+  assert.equal(await launch.isEnabled(),true,"Voice Chat entry must be clickable");
+  await launch.click({timeout:5000});
   await page.waitForSelector("#voicePanel .voice-x-hero",{state:"visible",timeout:6000});
+  assert.equal(await panel.isVisible(),true,"Actual Voice Chat tap must open V4");
+  assert.equal(await page.locator("#voicePanel .voice-x-live-text").innerText(),"PRATONTON UI");
+  assert.match(await page.locator("#voiceStatus").innerText(),/Pratonton reka bentuk sahaja/);
+  assert.equal(tokenRequests.length,0,"Visual preview must not call the Live token endpoint");
   await page.locator(".voice-x-avatar-fallback").waitFor({state:"attached"});
   await page.evaluate(async()=>{await document.fonts.ready;});
   const data=await page.evaluate(()=>{
@@ -65,6 +74,14 @@ async function audit(browser,label,viewport){
   assert.equal(await page.locator("#voiceStyleDialog").isVisible(),true,"Dialect menu must open");
   await page.locator("#voiceStyleDialog .voice-style-close").click();
   assert.equal(await page.locator("#voiceStyleDialog").isVisible(),false,"Dialect menu must close");
+  await page.locator(".voice-x-end").click();
+  assert.equal(await panel.isVisible(),false,"Center end-call must close the visual preview");
+  assert.equal(await launch.isEnabled(),true,"Voice Chat entry must remain available after closing");
+  await launch.click();
+  assert.equal(await panel.isVisible(),true,"The same button must reopen the UI preview");
+  await page.locator("#voiceStop").click();
+  assert.equal(await panel.isVisible(),false,"Header close must close preview");
+  assert.equal(tokenRequests.length,0,"No Gemini token requests may occur in UI preview");
   assert.deepEqual(pageErrors,[],label+" browser errors: "+pageErrors.join("; "));
   console.log("Voice V4 "+label+" PASS: glass, typography, hero, icons, controls, dialog, bounds.");
  }finally{await context.close();}
