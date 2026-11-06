@@ -109,6 +109,38 @@ async function audit(browser,label,viewport){
   assert.equal(await ui.isVisible(),true,"Dialect control must remain accessible");
   await ui.click();
   assert.equal(await page.locator("#voiceStyleDialog").isVisible(),true,"Dialect menu must open");
+
+  assert.equal(await page.locator(".voice-x-volume .voice-x-setting-label").innerText(),"Volume","Volume label must be in English");
+  const glassQA=await page.evaluate(()=>{
+   const get=s=>document.querySelector(s);
+   const style=s=>getComputedStyle(get(s));
+   const brand=style("#voicePanel .voice-v4-brand");
+   const close=style("#voiceStop");
+   const dialog=style("#voiceStyleDialog");
+   const option=style("#voiceStyleDialog .voice-style-option");
+   const selected=style("#voiceStyleDialog .voice-style-option.is-selected");
+   return {
+     brandRadius:brand.borderTopLeftRadius,brandGlass:brand.backdropFilter,brandBackground:brand.backgroundImage,
+     closeWidth:close.width,closeHeight:close.height,closeRadius:close.borderTopLeftRadius,closeGlass:close.backdropFilter,
+     dialogRadius:dialog.borderTopLeftRadius,dialogGlass:dialog.backdropFilter,dialogBackground:dialog.backgroundColor,
+     optionRadius:option.borderTopLeftRadius,optionGlass:option.backdropFilter,
+     selectedBackground:selected.backgroundImage,
+     head:style("#voicePanel .voice-panel-head").backdropFilter
+   };
+  });
+  assert.ok(parseFloat(glassQA.brandRadius)>=15,label+" brand pill not rounded");
+  assert.match(glassQA.brandGlass,/blur\(/,label+" brand not glass");
+  assert.equal(glassQA.closeWidth,glassQA.closeHeight,label+" X button not round");
+  assert.ok(parseFloat(glassQA.closeRadius)>=19,label+" X button corners not round");
+  assert.match(glassQA.closeGlass,/blur\(/,label+" X button not glass");
+  assert.ok(parseFloat(glassQA.dialogRadius)>=24,label+" dialect modal not curved");
+  assert.match(glassQA.dialogGlass,/blur\(28px\)/,label+" dialect modal not translucent glass");
+  assert.ok(parseFloat(glassQA.optionRadius)>=15,label+" dialect options still squared");
+  assert.match(glassQA.optionGlass,/blur\(/,label+" dialect options not frosted glass");
+  assert.match(glassQA.selectedBackground,/linear-gradient/,label+" selected loghat missing glass state");
+  console.log("V4.4 GLASS "+label+" "+JSON.stringify(glassQA));
+  await page.screenshot({path:path.join(OUT,"aksara-voice-v44-loghat-"+label+".png"),fullPage:false});
+
   await page.locator("#voiceStyleDialog .voice-style-close").click();
   assert.equal(await page.locator("#voiceStyleDialog").isVisible(),false,"Dialect menu must close");
   await page.locator(".voice-x-end").click();
