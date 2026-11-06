@@ -66,7 +66,14 @@ async function audit(browser,label,viewport){
     waveBox:rect("#voiceWave"),
     phaseBox:rect("#voicePhaseLabel"),
     fallbackScale:styles(".voice-x-avatar-fallback").transform,
-    hangupBackground:styles(".voice-x-end").backgroundImage
+    hangupBackground:styles(".voice-x-end").backgroundImage,
+    wordmarkGlass:styles("#voicePanel .voice-v4-brand").backdropFilter,
+    wordmarkRadius:styles("#voicePanel .voice-v4-brand").borderTopLeftRadius,
+    wordmarkBackground:styles("#voicePanel .voice-v4-brand").backgroundImage,
+    closeRect:rect("#voiceStop"),
+    closeGlyphSize:styles("#voiceStop","::before").width,
+    closeRadius:styles("#voiceStop").borderTopLeftRadius,
+    volumeLabel:document.querySelector("#voicePanel .voice-x-volume .voice-x-setting-label")?.textContent.trim()
    };
   });
   assert.ok(data.pageWidth<=data.width+4,label+" horizontal overflow "+JSON.stringify(data));
@@ -78,6 +85,14 @@ async function audit(browser,label,viewport){
   assert.match(data.brandFont,/Space Grotesk/);
   assert.match(data.glass,/blur\(/);
   assert.match(data.heading,/AKSARA.*VOICE CHAT/);
+  assert.equal(data.volumeLabel,"Volume",label+" user-facing volume label");
+  assert.match(data.wordmarkGlass,/blur\(/,label+" brand must have real glass blur");
+  assert.ok(parseFloat(data.wordmarkRadius)>=15,label+" glass brand not rounded");
+  assert.match(data.wordmarkBackground,/linear-gradient/,label+" brand glass tint missing");
+  assert.ok(Math.abs(data.closeRect.w-data.closeRect.h)<1,label+" X button not square");
+  assert.ok(data.closeRect.w>=38&&data.closeRect.w<=42,label+" X button wrong touch target");
+  assert.equal(data.closeGlyphSize,"18px",label+" X glyph must have fixed optical size");
+  assert.ok(parseFloat(data.closeRadius)>=20,label+" X button must be circular");
   assert.equal(data.decorativeBrandMarks,0,"No extraneous icon beside AKSARA");
   assert.ok(parseFloat(data.settingsRadius)>=18,label+" settings must be rounded");
   assert.ok(parseFloat(data.dockRadius)>=18,label+" call dock must be rounded");
@@ -109,6 +124,27 @@ async function audit(browser,label,viewport){
   assert.equal(await ui.isVisible(),true,"Dialect control must remain accessible");
   await ui.click();
   assert.equal(await page.locator("#voiceStyleDialog").isVisible(),true,"Dialect menu must open");
+  const modalVisual=await page.locator("#voiceStyleDialog").evaluate(dialog=>{
+    const style=getComputedStyle(dialog);
+    const backdrop=getComputedStyle(dialog,"::backdrop");
+    const option=getComputedStyle(dialog.querySelector(".voice-style-option"));
+    const close=getComputedStyle(dialog.querySelector(".voice-style-close"));
+    const bounds=dialog.getBoundingClientRect();
+    return {
+      radius:style.borderTopLeftRadius,glass:style.backdropFilter,
+      background:style.backgroundImage,backdropBlur:backdrop.backdropFilter,
+      optionRadius:option.borderTopLeftRadius,optionGlass:option.backdropFilter,
+      closeRadius:close.borderTopLeftRadius,width:bounds.width
+    };
+  });
+  assert.ok(parseFloat(modalVisual.radius)>=25,label+" loghat modal not curved");
+  assert.match(modalVisual.glass,/blur\(/,label+" loghat modal must be translucent glass");
+  assert.match(modalVisual.background,/linear-gradient/,label+" loghat modal has no glass tint");
+  assert.match(modalVisual.backdropBlur,/blur\(/,label+" loghat dialog backdrop blur missing");
+  assert.ok(parseFloat(modalVisual.optionRadius)>=15,label+" loghat options too square");
+  assert.match(modalVisual.optionGlass,/blur\(/,label+" loghat options not glass");
+  assert.ok(modalVisual.width<=data.width-12,label+" loghat modal spills off screen");
+  await page.screenshot({path:path.join(OUT,"aksara-voice-v44-loghat-"+label+".png"),fullPage:false});
 
   assert.equal(await page.locator(".voice-x-volume .voice-x-setting-label").innerText(),"Volume","Volume label must be in English");
   const glassQA=await page.evaluate(()=>{
