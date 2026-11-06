@@ -7,6 +7,7 @@ on:
       - 'bilik-antara.html'
       - 'bilik-antara-observability.js'
       - 'tests/aksara-voice-v3.test.cjs'
+      - 'tests/aksara-voice-3d-ui-experiment.test.cjs'
       - '.github/workflows/aksara-voice-v3-ci.yml'
   push:
     branches:
@@ -26,7 +27,8 @@ jobs:
         run: |
           node --check bilik-antara-dialek.js
           node --check bilik-antara-voice.js
+          node --check bilik-antara-voice-experiment-v3.js
           node --check bilik-antara-voice-core-v3.js
           node --check bilik-antara-observability.js
       - name: Run Voice v3 regression
-        run: node --test tests/aksara-voice-v3.test.cjs
+        run: node --test tests/aksara-voice-v3.test.cjs tests/aksara-voice-3d-ui-experiment.test.cjs
