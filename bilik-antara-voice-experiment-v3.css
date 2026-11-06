@@ -1370,3 +1370,204 @@ body.aksara-voice-3d-experiment .aksara-voice-style-dialog :is(button,select):fo
   max-height:calc(100dvh - 16px)!important;
  }
 }
+
+
+/* AKSARA Voice V4.4 · liquid-glass refinement.
+   Scoped to experiment only. The dialect dialog lives in document.body, NOT
+   inside #voicePanel; style it separately. No WebGL/audio/session changes. */
+body.aksara-voice-3d-experiment{
+ --voice-v44-rim:rgba(243,217,178,.31);
+ --voice-v44-shine:rgba(255,247,230,.13);
+ --voice-v44-glass:linear-gradient(142deg,rgba(244,214,170,.085),rgba(98,154,201,.065) 62%,rgba(21,29,43,.16));
+}
+/* AKSARA wordmark gets the same rounded translucent glass identity as Bilik Antara. */
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head .voice-v4-brand{
+ box-sizing:border-box!important;display:inline-flex!important;align-items:center!important;
+ flex:0 1 auto!important;min-width:0!important;max-width:100%;
+ margin:0!important;padding:7px 13px!important;gap:0!important;
+ border:1px solid var(--voice-v44-rim)!important;border-radius:17px!important;
+ background:var(--voice-v44-glass)!important;
+ -webkit-backdrop-filter:blur(18px) saturate(1.13)!important;
+ backdrop-filter:blur(18px) saturate(1.13)!important;
+ box-shadow:inset 0 1px 0 var(--voice-v44-shine),0 4px 16px rgba(0,0,0,.07)!important;
+}
+#voicePanel.voice-ui-experiment-v3 .voice-v4-wordmark{
+ display:flex!important;align-items:flex-start!important;gap:2px!important;
+}
+#voicePanel.voice-ui-experiment-v3 .voice-v4-wordmark strong,
+#voicePanel.voice-ui-experiment-v3 .voice-v4-wordmark small{
+ white-space:nowrap!important;
+}
+/* Real X button: 42px touch target, 18px lightweight symbol with exact centering.
+   Extra IDs override shared :is() liquid-glass rules from the main application. */
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head-actions #voiceStop{
+ display:grid!important;place-items:center!important;
+ flex:0 0 42px!important;position:relative!important;
+ box-sizing:border-box!important;overflow:hidden!important;
+ width:42px!important;height:42px!important;min-width:42px!important;min-height:42px!important;
+ max-width:42px!important;max-height:42px!important;
+ padding:0!important;margin:0!important;font-size:0!important;line-height:0!important;
+ color:#f0e5d5!important;border-radius:50%!important;
+ border:1px solid rgba(240,207,160,.36)!important;
+ background:linear-gradient(145deg,rgba(242,215,174,.07),rgba(105,151,192,.055))!important;
+ box-shadow:inset 0 1px 0 rgba(255,246,227,.14),0 5px 14px rgba(0,0,0,.09)!important;
+ -webkit-backdrop-filter:blur(16px) saturate(1.1)!important;
+ backdrop-filter:blur(16px) saturate(1.1)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head-actions #voiceStop::before{
+ content:""!important;display:block!important;position:absolute!important;
+ top:50%!important;left:50%!important;right:auto!important;bottom:auto!important;
+ width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;
+ max-width:18px!important;max-height:18px!important;
+ margin:0!important;padding:0!important;background:currentColor!important;
+ transform:translate(-50%,-50%)!important;
+ -webkit-mask-size:contain!important;mask-size:contain!important;
+ -webkit-mask-repeat:no-repeat!important;mask-repeat:no-repeat!important;
+ -webkit-mask-position:center!important;mask-position:center!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head-actions #voiceStop:hover{
+ border-color:rgba(251,219,181,.61)!important;
+ background:linear-gradient(145deg,rgba(238,202,155,.15),rgba(104,148,195,.10))!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head-actions #voiceStop:focus-visible{
+ outline:2px solid #f2ce9d!important;outline-offset:3px!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-live{
+ border-radius:999px!important;
+ border-color:rgba(239,204,156,.25)!important;
+ background:var(--voice-v44-glass)!important;
+ -webkit-backdrop-filter:blur(18px) saturate(1.1)!important;
+ backdrop-filter:blur(18px) saturate(1.1)!important;
+}
+/* Transparent sculpted surfaces instead of rectangular cards. */
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-aside{
+ border-radius:24px!important;border-color:rgba(239,204,157,.19)!important;
+ background:var(--voice-v44-glass)!important;
+ -webkit-backdrop-filter:blur(21px) saturate(1.15)!important;
+ backdrop-filter:blur(21px) saturate(1.15)!important;
+ box-shadow:inset 0 1px 0 rgba(255,246,222,.11),0 9px 22px rgba(0,0,0,.07)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-setting #voiceStyleTrigger,
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-setting #voiceModeBadge,
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-volume .voice-volume{
+ border-radius:16px!important;
+ border-color:rgba(239,208,164,.27)!important;
+ background:linear-gradient(145deg,rgba(241,216,182,.073),rgba(112,160,201,.056))!important;
+ -webkit-backdrop-filter:blur(17px) saturate(1.13)!important;
+ backdrop-filter:blur(17px) saturate(1.13)!important;
+ box-shadow:inset 0 1px 0 rgba(255,246,226,.10)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-footer{
+ border-radius:24px!important;
+ border-color:rgba(237,207,162,.19)!important;
+ background:var(--voice-v44-glass)!important;
+ -webkit-backdrop-filter:blur(21px) saturate(1.13)!important;
+ backdrop-filter:blur(21px) saturate(1.13)!important;
+ box-shadow:inset 0 1px 0 rgba(255,247,229,.11),0 8px 22px rgba(0,0,0,.075)!important;
+}
+/* The dialect chooser is created by voice.js as a native dialog under <body>.
+   It needs its own frosted-glass recipe, unlike #voicePanel-scoped rules. */
+body.aksara-voice-3d-experiment dialog#voiceStyleDialog.aksara-voice-style-dialog{
+ box-sizing:border-box!important;
+ width:min(90vw,420px)!important;
+ max-width:calc(100vw - 26px)!important;
+ max-height:min(84dvh,760px)!important;
+ padding:0!important;margin:auto!important;
+ overflow:hidden!important;
+ border:1px solid rgba(244,215,171,.35)!important;
+ border-radius:29px!important;
+ color:#f5ead7!important;color-scheme:dark!important;
+ background:linear-gradient(145deg,rgba(29,39,53,.67),rgba(10,17,30,.59) 58%,rgba(25,38,54,.66))!important;
+ -webkit-backdrop-filter:blur(27px) saturate(1.18)!important;
+ backdrop-filter:blur(27px) saturate(1.18)!important;
+ box-shadow:inset 0 1px 0 rgba(255,248,230,.16),0 28px 72px rgba(0,0,0,.38)!important;
+ transform:none!important;
+}
+body.aksara-voice-3d-experiment dialog#voiceStyleDialog::backdrop{
+ background:rgba(2,6,13,.60)!important;
+ -webkit-backdrop-filter:blur(9px) saturate(.84)!important;
+ backdrop-filter:blur(9px) saturate(.84)!important;
+}
+body.aksara-voice-3d-experiment #voiceStyleDialog .voice-style-modal-body{
+ box-sizing:border-box!important;
+ max-height:min(84dvh,760px)!important;
+ overflow-y:auto!important;overscroll-behavior:contain!important;
+ padding:18px!important;
+ background:radial-gradient(ellipse at 8% 0%,rgba(232,190,126,.055),transparent 58%)!important;
+}
+body.aksara-voice-3d-experiment #voiceStyleDialog .voice-style-modal-head{
+ margin:0 0 15px!important;gap:12px!important;min-height:44px!important;
+}
+body.aksara-voice-3d-experiment #voiceStyleDialog .voice-style-modal-head h2{
+ color:#f7e8cf!important;font:650 18px/1.3 "Space Grotesk","DM Sans",sans-serif!important;
+ letter-spacing:.005em!important;
+}
+body.aksara-voice-3d-experiment #voiceStyleDialog .voice-style-close{
+ min-width:72px!important;min-height:42px!important;
+ border:1px solid rgba(244,214,173,.30)!important;
+ border-radius:999px!important;padding:9px 16px!important;
+ background:linear-gradient(138deg,rgba(247,223,188,.095),rgba(117,163,205,.075))!important;
+ color:#f6e8d2!important;
+ box-shadow:inset 0 1px 0 rgba(255,248,233,.12)!important;
+ -webkit-backdrop-filter:blur(14px)!important;backdrop-filter:blur(14px)!important;
+}
+body.aksara-voice-3d-experiment #voiceStyleDialog .voice-style-options{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:8px!important;
+}
+body.aksara-voice-3d-experiment #voiceStyleDialog button.voice-style-option{
+ box-sizing:border-box!important;
+ min-height:48px!important;width:100%!important;padding:10px 15px!important;
+ border-radius:17px!important;
+ border:1px solid rgba(224,199,160,.22)!important;
+ color:#f2e5d1!important;
+ background:linear-gradient(137deg,rgba(238,216,185,.07),rgba(100,151,197,.055))!important;
+ -webkit-backdrop-filter:blur(13px) saturate(1.1)!important;
+ backdrop-filter:blur(13px) saturate(1.1)!important;
+ box-shadow:inset 0 1px 0 rgba(255,243,223,.075)!important;
+}
+body.aksara-voice-3d-experiment #voiceStyleDialog button.voice-style-option.is-selected{
+ border-color:rgba(246,207,152,.57)!important;
+ background:linear-gradient(140deg,rgba(237,182,109,.23),rgba(133,168,201,.085))!important;
+ color:#fff4e2!important;
+ box-shadow:inset 0 1px 0 rgba(255,238,204,.16),0 3px 13px rgba(0,0,0,.06)!important;
+}
+body.aksara-voice-3d-experiment #voiceStyleDialog button.voice-style-option:hover{
+ border-color:rgba(247,217,172,.46)!important;
+ background:linear-gradient(140deg,rgba(232,192,135,.14),rgba(119,165,210,.10))!important;
+}
+body.aksara-voice-3d-experiment #voiceStyleDialog button:focus-visible{
+ outline:2px solid #ecc78f!important;outline-offset:2px!important;
+}
+@media(max-width:760px){
+ #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head .voice-v4-brand{
+  padding:6px 11px!important;border-radius:15px!important;
+ }
+ #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head-actions #voiceStop{
+  width:40px!important;height:40px!important;min-width:40px!important;min-height:40px!important;
+  max-width:40px!important;max-height:40px!important;flex-basis:40px!important;
+ }
+ body.aksara-voice-3d-experiment dialog#voiceStyleDialog.aksara-voice-style-dialog{
+  border-radius:26px!important;
+ }
+ body.aksara-voice-3d-experiment #voiceStyleDialog .voice-style-modal-body{
+  padding:14px!important;
+ }
+ body.aksara-voice-3d-experiment #voiceStyleDialog button.voice-style-option{
+  border-radius:15px!important;min-height:46px!important;
+ }
+}
+@media(max-width:375px){
+ #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head .voice-v4-brand{
+  padding:6px 9px!important;
+ }
+ #voicePanel.voice-ui-experiment-v3 .voice-v4-wordmark strong{font-size:12px!important}
+ #voicePanel.voice-ui-experiment-v3 .voice-v4-wordmark small{font-size:7.5px!important}
+ #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head-actions #voiceStop{
+  width:38px!important;height:38px!important;min-width:38px!important;min-height:38px!important;
+  max-width:38px!important;max-height:38px!important;flex-basis:38px!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #voicePanel.voice-ui-experiment-v3 .voice-panel-head #voiceStop,
+ body.aksara-voice-3d-experiment #voiceStyleDialog button{transition:none!important;animation:none!important}
+}
