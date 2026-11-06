@@ -18,6 +18,11 @@
   panel.classList.add("voice-ui-experiment-v3");
   /* Existing GLB renderer and DOM handlers are retained. */
   document.body.appendChild(panel);
+  // Native Voice notices were left in .conversation, behind the immersive V4
+  // overlay. Keep the exact original node and handler, but portal it to body
+  // so token, permission and transport errors are visible during the call.
+  const nativeNotice=document.getElementById("voiceNotice");
+  if(nativeNotice)document.body.appendChild(nativeNotice);
   const el=(tag,cls,value)=>{
     const node=document.createElement(tag);
     if(cls)node.className=cls;

@@ -14,10 +14,13 @@ async function testViewport(browser,name,viewport) {
  const page=await context.newPage();
  const errors=[];
  let tokenRequests=0;
+ let tokenFailure=false;
  page.on("pageerror",e=>errors.push(e.message));
  await page.route("**/.netlify/functions/bilik-antara-live-token",async route=>{
   tokenRequests++;
-  await route.fulfill({status:200,contentType:"application/json",
+  await route.fulfill(tokenFailure?{status:503,contentType:"application/json",
+    body:JSON.stringify({error:"Token Voice mock ditolak.",reason:"TOKEN_HTTP_503"})}:
+    {status:200,contentType:"application/json",
     body:JSON.stringify({token:"browser-test-token",model:"gemini-2.0-flash-live"})});
  });
  await page.addInitScript(()=>{
@@ -174,6 +177,24 @@ async function testViewport(browser,name,viewport) {
   assert.equal(tokenRequests,2,name+" token count after two sessions");
   assert.equal((await page.evaluate(()=>BilikAntaraVoiceDiagnostics.snapshot())).sessionActive,false);
   assert.equal(await page.locator("#voiceLive").isEnabled(),true,name+" call button not restored");
+
+  // A rejected Live token must produce a visible native diagnostic in V4.
+  tokenFailure=true;
+  await page.locator("#voiceLive").click();
+  await page.locator("#voiceNotice").waitFor({state:"visible",timeout:5000});
+  assert.match(await page.locator("#voiceNotice").innerText(),/Token Voice mock ditolak/,
+    name+" V4 did not display the API error");
+  const notice=await page.locator("#voiceNotice").evaluate(el=>({
+    parent:el.parentElement?.tagName,
+    position:getComputedStyle(el).position,
+    zIndex:Number(getComputedStyle(el).zIndex)
+  }));
+  assert.equal(notice.parent,"BODY",name+" Voice error is behind the overlay");
+  assert.equal(notice.position,"fixed",name+" Voice error not fixed in viewport");
+  assert.ok(notice.zIndex>2000,name+" Voice error is below the glass overlay");
+  assert.equal((await page.evaluate(()=>BilikAntaraVoiceDiagnostics.snapshot())).sessionActive,false,
+    name+" failed token left a ghost Voice session");
+  assert.equal(tokenRequests,3,name+" unexpected retry after a single token failure");
   assert.deepEqual(errors,[],name+" JS errors "+errors.join("; "));
   console.log("Voice real-control mock "+name+" PASS: end, mic, speaker, volume, status, timer, restart.");
  }finally{await context.close();}
