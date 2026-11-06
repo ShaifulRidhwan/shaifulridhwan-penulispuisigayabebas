@@ -50,3 +50,14 @@ test("responsive design, screen-reader labels and reduced-motion are preserved",
  assert.match(script,/const connected=Boolean\(d\?\.connected\)/);
  assert.match(script,/panel\.dataset\.voicePhase/);
 });
+test("voice UI uses Bilik Antara gold-blue glass and no emoji pseudo-icons",()=>{
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ const js=read("bilik-antara-voice-experiment-v3.js");
+ assert.match(css,/#e1b86d/);
+ assert.match(css,/#voiceMuteMic::before/);
+ assert.match(css,/#voiceMuteSpeaker::before/);
+ assert.match(css,/mask-image:url\(/);
+ assert.doesNotMatch(css,/[🎙♫☎]/u);
+ assert.doesNotMatch(js,/Wajah 3D asal/);
+ assert.match(css,/#voiceObserveV2\{display:none!important\}/);
+});
