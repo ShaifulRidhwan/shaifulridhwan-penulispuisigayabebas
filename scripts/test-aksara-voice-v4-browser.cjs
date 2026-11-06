@@ -55,7 +55,12 @@ async function audit(browser,label,viewport){
     dockRadius:styles("#voicePanel .voice-x-footer").borderTopLeftRadius,
     settingsGlass:styles("#voicePanel .voice-x-aside").backdropFilter,
     dockGlass:styles("#voicePanel .voice-x-footer").backdropFilter,
-    endIcon:styles("#voicePanel .voice-x-end","::before").maskImage
+    endIcon:styles("#voicePanel .voice-x-end","::before").maskImage,
+    micIcon:styles("#voiceMuteMic","::before").maskImage,
+    speakerIcon:styles("#voiceMuteSpeaker","::before").maskImage,
+    micGlyph:styles("#voiceMuteMic","::before").width,
+    endGlyph:styles("#voicePanel .voice-x-end","::before").width,
+    speakerGlyph:styles("#voiceMuteSpeaker","::before").width
    };
   });
   assert.ok(data.pageWidth<=data.width+4,label+" horizontal overflow "+JSON.stringify(data));
@@ -72,7 +77,7 @@ async function audit(browser,label,viewport){
   assert.ok(parseFloat(data.dockRadius)>=18,label+" call dock must be rounded");
   assert.match(data.settingsGlass,/blur\(/,label+" settings must be frosted glass");
   assert.match(data.dockGlass,/blur\(/,label+" dock must be frosted glass");
-  assert.ok(data.endIcon.includes("M3.1%207.9"),label+" end icon must use optically balanced SVG");
+  assert.ok(data.endIcon.includes("M3.3%209.1"),label+" end icon must use optically balanced SVG");
   assert.equal(data.hiddenDiagnostics,"none");
   assert.ok(data.modelFallback?.includes("portrait"),"Use captured existing 3D avatar only");
   console.log("V4 LAYOUT "+label+" "+JSON.stringify({mic:data.mic,end:data.end,speaker:data.speaker,hero:data.hero,aside:data.aside,footer:data.footer}));
@@ -80,6 +85,11 @@ async function audit(browser,label,viewport){
   assert.ok(data.mic.cx<data.end.cx&&data.end.cx<data.speaker.cx,label+" wrong order");
   assert.ok(Math.abs(data.mic.cy-data.speaker.cy)<3,label+" mic/speaker not aligned");
   assert.ok(Math.abs(data.mic.w-data.end.w)<1,label+" end circle not same diameter");
+  assert.equal(data.micGlyph,"27px",label+" mic icon size");
+  assert.equal(data.endGlyph,"27px",label+" end icon size");
+  assert.equal(data.speakerGlyph,"27px",label+" speaker icon size");
+  assert.match(data.micIcon,/data:image\/svg\+xml/,label+" mic vector icon");
+  assert.match(data.speakerIcon,/data:image\/svg\+xml/,label+" speaker vector icon");
   assert.ok(Math.abs(data.mic.w-data.speaker.w)<1,label+" speaker circle not same diameter");
   assert.ok(Math.abs(data.mic.h-data.end.h)<1,label+" end circle height differs");
   assert.ok(Math.abs(data.end.cx-(data.mic.cx+data.speaker.cx)/2)<4,label+" hangup must be centered");
