@@ -138,7 +138,7 @@ test("v4 retains original endpoints and audio handlers, with no new network call
  assert.match(js,/panel\.dataset\.voiceV4Connected/);
  assert.doesNotMatch(js,/getUserMedia|new WebSocket|new AudioContext|\.netlify\/functions|fetch\(/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=8/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=9/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=6/);
 });
 
@@ -169,7 +169,7 @@ test("v4.1 follows original Bilik Antara frosted glass, curves and real compact 
  assert.match(css,/grid-template-columns:repeat\(3,56px\)/);
  assert.match(css,/grid-template-columns:repeat\(3,52px\)/);
  assert.match(css,/M3\.1%207\.9/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=8/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=9/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=6/);
 });
 
@@ -183,4 +183,9 @@ test("v4.2 has one equal optical SVG family and fixed control grid",()=>{
  assert.match(css,/--voice-control-size:56px/);
  assert.match(css,/--voice-control-size:52px/);
  assert.match(css,/M3\.3%209\.1/);
+});
+
+test("V4.2 hangup icon overrides legacy selector with exact 27px glyph",()=>{
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ assert.match(css,/button\.voice-x-end::before\{\s*width:27px!important;height:27px!important/);
 });
