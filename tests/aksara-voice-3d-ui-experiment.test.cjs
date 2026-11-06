@@ -107,7 +107,7 @@ test("v4 brand header is native Aksara and never retains old identity pill",()=>
  const js=read("bilik-antara-voice-experiment-v3.js");
  const css=read("bilik-antara-voice-experiment-v3.css");
  assert.match(js,/voice-v4-brand/);
- assert.match(js,/voice-v4-brand-mark/);
+ assert.doesNotMatch(js,/voice-v4-brand-mark/);
  assert.match(js,/AKSARA/);
  assert.match(js,/VOICE CHAT/);
  assert.match(css,/\.voice-v4-original-identity\{display:none!important\}/);
@@ -138,8 +138,8 @@ test("v4 retains original endpoints and audio handlers, with no new network call
  assert.match(js,/panel\.dataset\.voiceV4Connected/);
  assert.doesNotMatch(js,/getUserMedia|new WebSocket|new AudioContext|\.netlify\/functions|fetch\(/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=6/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=5/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=7/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=6/);
 });
 
 test("UI preview click is connected to the real Voice Chat entry without a Live token",()=>{
@@ -153,4 +153,22 @@ test("UI preview click is connected to the real Voice Chat entry without a Live 
  assert.match(s,/stop\.addEventListener\("click"/);
  assert.match(s,/panel\.hidden=true/);
  assert.match(s,/voice-live"\)!=="1"/);
+});
+test("v4.1 follows original Bilik Antara frosted glass, curves and real compact icons",()=>{
+ const js=read("bilik-antara-voice-experiment-v3.js");
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ const html=read("bilik-antara.html");
+ assert.doesNotMatch(js,/const mark=el\(/);
+ assert.match(js,/brand\.append\(wordmark\)/);
+ assert.match(css,/V4\.1 · visual parity with Bilik Antara/);
+ assert.match(css,/--voice-curve-card:22px/);
+ assert.match(css,/--voice-glass-border:rgba\(236,207,161,.24\)/);
+ assert.match(css,/backdrop-filter:blur\(24px\)/);
+ assert.match(css,/background:linear-gradient\(145deg,rgba\(229,198,153,.07\)/);
+ assert.match(css,/grid-template-columns:repeat\(3,58px\)/);
+ assert.match(css,/grid-template-columns:repeat\(3,56px\)/);
+ assert.match(css,/grid-template-columns:repeat\(3,52px\)/);
+ assert.match(css,/M3\.1%207\.9/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=7/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=6/);
 });
