@@ -230,8 +230,8 @@ $("cwAdd").addEventListener("click",()=>{
  while(files.some(f=>f.name===name))name="snippet-"+(++n)+extension;
  try{add(name);}catch(e){info.textContent=e.message;}
 });
-$("cwDelete").addEventListener("click",()=>{
- if(!confirm("Buang "+files[index].name+" daripada tab ini?"))return;
+$("cwDelete").addEventListener("click",async()=>{
+  if(!await window.AksaraDialog.confirm({title:"Buang fail?",message:"Buang "+files[index].name+" daripada tab ini?",confirmText:"Buang"}))return;
  files.splice(index,1);if(!files.length)files=[{name:"main.js",language:"javascript",code:""}];
  index=Math.min(index,files.length-1);render();schedulePreview();
 });
