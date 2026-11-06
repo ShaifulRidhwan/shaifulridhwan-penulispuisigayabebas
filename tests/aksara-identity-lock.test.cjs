@@ -4,7 +4,7 @@
  * revise identity later, review and update the fingerprint and contracts.
  * v0.4: code-chat also resolves a bare explicit run command; still requires a click to execute;
  * creator identity, personality and provider locks remain untouched.
- * Voice fingerprint reviewed for the authorized classic UI, volume and resume fix (2026-11-04). */
+ * Voice fingerprint also reviewed for creator-follow-up continuity and resumption context (2026-11-06). */
 const {test}=require("node:test");
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
@@ -15,11 +15,11 @@ const Modes=require("../bilik-antara-modes");
 const ChatStyle=require("../bilik-antara-chat-style");
 const {handler}=require("../netlify/functions/bilik-antara");
 const protectedFiles=Object.freeze({
- "bilik-antara-identity.js":"5ade3406d8d730e10a0e2c945cc8c5b3dae647af",
+ "bilik-antara-identity.js":"793dbf6e8dbd520318cf7551ce62c78cdd3c9084",
  "bilik-antara-brain.js":"edb5b73fd35d7b070c4623385ee4b12817df268d",
  "bilik-antara-modes.js":"30e8ebb88cee73529c7493a637986c5155357e51",
  "bilik-antara-chat-style.js":"9fc607daf19e2e838d29b7905fce63a2da1ecf78",
- "bilik-antara-voice.js":"aa649b09fdabe5d485eccfb959ff82ee4cc460e2",
+ "bilik-antara-voice.js":"05d74ee872c1af53f418bf78febd760500c1dfc3",
  "netlify/functions/aksara-provider-router.js":"f364a7ac8c0d896a4c39987c24af036b3bbb3428",
  "bilik-antara-code-chat.js":"0f6a9190a619092b3bca6156348b8134e60676e9"
 });
