@@ -27,7 +27,7 @@
   const live=el("div","voice-x-live");
   live.setAttribute("role","status");
   const dot=el("span","voice-x-dot");dot.setAttribute("aria-hidden","true");
-  const liveText=el("span","voice-x-live-text","MENYAMBUNG");
+  const liveText=el("span","voice-x-live-text","VOICE LIVE");
   live.append(dot,liveText);
   const timer=el("span","voice-x-timer","00:00");
   timer.setAttribute("aria-label","Tempoh sesi suara");
@@ -64,9 +64,6 @@
     volumeRow.append(volume);
     aside.append(volumeRow);
   }
-  const info=el("div","voice-x-identity");
-  info.append(el("span","voice-x-info-dot"),el("span","","Wajah 3D asal · Suara Aoede"));
-  aside.append(info);
   main.append(hero,aside);
   const footer=el("div","voice-x-footer");
   footer.setAttribute("role","group");
@@ -86,13 +83,13 @@
     const connected=Boolean(d?.connected);
     const phase=panel.dataset.voicePhase||"idle";
     live.dataset.connected=connected?"true":"false";
-    const next=connected?"LIVE CONNECTED":phase==="error"?"TERPUTUS":phase==="connecting"?"MENYAMBUNG": "VOICE LIVE";
+    const next=connected?"TERSAMBUNG":phase==="error"?"TERPUTUS":phase==="connecting"?"MENYAMBUNG": "VOICE LIVE";
     if(liveText.textContent!==next)liveText.textContent=next;
     const seconds=Math.max(0,Number(d?.elapsedSeconds)||0);
     const mm=String(Math.floor(seconds/60)).padStart(2,"0");
     const ss=String(seconds%60).padStart(2,"0");
     timer.textContent=mm+":"+ss;
-    /* No simulated microphone/speaking states. Read actual voice state. */
+    /* No fake status or raw diagnostics in Voice Chat. Internal snapshot only informs the simple status and timer. */
     hero.dataset.phase=phase;
   };
   refresh();
