@@ -138,7 +138,7 @@ test("v4 retains original endpoints and audio handlers, with no new network call
  assert.match(js,/panel\.dataset\.voiceV4Connected/);
  assert.doesNotMatch(js,/getUserMedia|new WebSocket|new AudioContext|\.netlify\/functions|fetch\(/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=10/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=11/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=7/);
 });
 
@@ -169,7 +169,7 @@ test("v4.1 follows original Bilik Antara frosted glass, curves and real compact 
  assert.match(css,/grid-template-columns:repeat\(3,56px\)/);
  assert.match(css,/grid-template-columns:repeat\(3,52px\)/);
  assert.match(css,/M3\.1%207\.9/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=10/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=11/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=7/);
 });
 
@@ -205,6 +205,12 @@ test("v4.3 cinematic framing, status waveform, quiet panels and accessible end c
  assert.match(css,/rgba\(231,197,149,.13\)/);
  assert.match(css,/button\.voice-x-end\{\s*background:linear-gradient\(145deg,rgba\(180,71,78,.90\)/);
  assert.match(html,/bilik-antara-avatar\.js\?v=15/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=10/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=11/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=7/);
+});
+
+test("V4.3 red end-call wins over base liquid-glass :is specificity without modifying production styles",()=>{
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ assert.match(css,/#voicePanel#voicePanel\.voice-ui-experiment-v3 \.voice-v4-control-deck \.voice-session-controls>button\.voice-x-end\{/);
+ assert.match(css,/background:linear-gradient\(145deg,rgba\(180,71,78,.90\)/);
 });
