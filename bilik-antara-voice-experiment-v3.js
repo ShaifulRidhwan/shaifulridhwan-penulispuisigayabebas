@@ -98,12 +98,10 @@
   /* Internal diagnostics stay available but do not occupy the call UI. */
   const diagnostics=panel.querySelector("#voiceObserveV2");
   if(diagnostics){diagnostics.open=false;diagnostics.hidden=true;}
-  /* Explicit UI preview for this experimental branch. The Cloudflare preview
-     may not have the Gemini Live token broker, and UI testing must never request
-     microphone access or claim a live connection. &voice-live=1 opts into the
-     existing Live handler for separate integration testing. */
+  /* Production uses the existing Gemini Live handlers by default.
+     The opt-in ?voice-preview=1 is a UI-only sandbox for screenshots. */
   const liveButton=document.getElementById("voiceLive");
-  const previewOnly=new URLSearchParams(location.search).get("voice-live")!=="1";
+  const previewOnly=new URLSearchParams(location.search).get("voice-preview")==="1";
   let previewOpen=false;
   const previewStatus="Pratonton reka bentuk sahaja. Mikrofon dan Gemini Live tidak diaktifkan.";
   function closePreview(){
