@@ -17,7 +17,7 @@ async function audit(browser,label,viewport){
   if(/bilik-antara-live-token/.test(request.url()))tokenRequests.push(request.url());
  });
  try{
-  await page.goto(ROOT+"/bilik-antara.html?voice-preview=1",{waitUntil:"domcontentloaded",timeout:30000});
+  await page.goto(ROOT+"/bilik-antara.html?voice-ui=3d&voice-preview=1",{waitUntil:"domcontentloaded",timeout:30000});
   await page.waitForSelector("#voicePanel.voice-ui-experiment-v3 .voice-v4-brand",{state:"attached",timeout:18000});
   const panel=page.locator("#voicePanel");
   assert.equal(await panel.isVisible(),false,"Panel must stay hidden before clicking Voice Chat");
@@ -29,7 +29,7 @@ async function audit(browser,label,viewport){
   assert.equal(await page.locator("#voicePanel .voice-x-live-text").innerText(),"PRATONTON UI");
   assert.match(await page.locator("#voiceStatus").innerText(),/Pratonton reka bentuk sahaja/);
   assert.equal(tokenRequests.length,0,"Visual preview must not call the Live token endpoint");
-  assert.equal(new URL(page.url()).search,"?voice-preview=1",label+" preview must be explicitly opt-in");
+  assert.equal(new URL(page.url()).search,"?voice-ui=3d&voice-preview=1",label+" preview must be explicitly opt-in");
   await page.locator(".voice-x-avatar-fallback").waitFor({state:"attached"});
   await page.evaluate(async()=>{await document.fonts.ready;});
   const data=await page.evaluate(()=>{
@@ -194,13 +194,18 @@ async function audit(browser,label,viewport){
   assert.deepEqual(pageErrors,[],label+" browser errors: "+pageErrors.join("; "));
   // Emergency classic fallback must NOT hydrate new voice UI or request a token.
   const classic=await context.newPage();
-  await classic.goto(ROOT+"/bilik-antara.html?voice-ui=classic",
+  await classic.goto(ROOT+"/bilik-antara.html",
     {waitUntil:"domcontentloaded",timeout:30000});
   await classic.waitForTimeout(400);
   assert.equal(await classic.locator("#voicePanel.voice-ui-experiment-v3").count(),0,
     label+" classic rollback unexpectedly mounted V4");
   assert.equal(await classic.locator(".voice-v4-brand").count(),0,
-    label+" classic rollback left V4 header behind");
+    label+" default native layout left V4 header behind");
+  await classic.goto(ROOT+"/bilik-antara.html?voice-ui=classic",
+    {waitUntil:"domcontentloaded",timeout:30000});
+  await classic.waitForTimeout(400);
+  assert.equal(await classic.locator(".voice-v4-brand").count(),0,
+    label+" explicit classic rollback left V4 behind");
   await classic.close();
   console.log("Voice V4 "+label+" PASS: glass, typography, hero, icons, controls, dialog, bounds.");
  }finally{await context.close();}

@@ -1280,10 +1280,11 @@ document.body.appendChild(profiler);
 </script>
 <script src="bilik-antara-living-v08.js?v=2" defer></script>
 <script>
-/* Voice V4 is now the default UI. Native Gemini Live handlers stay unchanged.
-   Emergency rollback: ?voice-ui=classic restores the previous layout. */
+/* Fail-safe: keep the proven native Voice Chat as the default while the
+   production Gemini Live regression is investigated. V4 remains opt-in
+   via ?voice-ui=3d for controlled testing; audio handlers remain untouched. */
 document.addEventListener("DOMContentLoaded",function(){
- if(new URLSearchParams(location.search).get("voice-ui")==="classic")return;
+ if(new URLSearchParams(location.search).get("voice-ui")!=="3d")return;
  const sheet=document.createElement("link");
  sheet.rel="stylesheet";sheet.href="bilik-antara-voice-experiment-v3.css?v=13";
  document.head.appendChild(sheet);

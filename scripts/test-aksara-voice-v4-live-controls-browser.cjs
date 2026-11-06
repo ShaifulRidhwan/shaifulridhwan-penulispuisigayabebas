@@ -97,10 +97,10 @@ async function testViewport(browser,name,viewport) {
   window.__voiceControlsTest=state;
  });
  try {
-  await page.goto(ROOT+"/bilik-antara.html",
+  await page.goto(ROOT+"/bilik-antara.html?voice-ui=3d",
     {waitUntil:"domcontentloaded",timeout:35000});
   await page.waitForSelector(".voice-v4-brand",{state:"attached",timeout:15000});
-  assert.equal(new URL(page.url()).search,"",name+" requires default Live with no query flags");
+  assert.equal(new URL(page.url()).search,"?voice-ui=3d",name+" requires opt-in V4 Live");
   assert.equal(await page.locator("#voiceLive").getAttribute("data-voice-preview"),null,
     name+" default must never enter UI-only preview mode");
   const panel=page.locator("#voicePanel");

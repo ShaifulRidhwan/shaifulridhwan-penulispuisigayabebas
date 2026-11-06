@@ -19,7 +19,7 @@ async function audit(browser,label,options){
     !response.url().includes("/.netlify/functions/"))errors.push("HTTP "+response.status()+" "+response.url());
  });
  try{
-  await page.goto(BASE+"/bilik-antara.html",{waitUntil:"domcontentloaded",timeout:30000});
+  await page.goto(BASE+"/bilik-antara.html?voice-ui=3d",{waitUntil:"domcontentloaded",timeout:30000});
   await page.locator("#voiceLive").waitFor({timeout:15000});
   await page.waitForFunction(()=>document.querySelector(".message.ai")!==null,{timeout:10000}).catch(()=>{});
   const state=await page.evaluate(()=>{
@@ -234,7 +234,7 @@ async function audit(browser,label,options){
   assert.equal(state.heavyAssets.some(x=>x.includes("bilik-antara-voice-fallback")),false);
   await page.screenshot({path:path.join(OUT,label+"-chat.png"),animations:"disabled"});
 
-  // Default Voice V4 audit without requesting a real Gemini Live token.
+  // Opt-in Voice V4 audit without requesting a real Gemini Live token.
   await page.locator("#voicePanel.voice-ui-experiment-v3 .voice-v4-brand")
     .waitFor({state:"attached",timeout:10000});
   await page.locator("#voicePanel").evaluate(el=>{el.hidden=false;});
