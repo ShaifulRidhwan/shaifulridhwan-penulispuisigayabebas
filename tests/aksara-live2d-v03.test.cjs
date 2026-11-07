@@ -46,7 +46,7 @@ test("Live2D new mode is genuinely opt-in and never draws false face lines",()=>
  assert.match(code,/query\.get\("voice-avatar"\)!=="live2d"/);
  assert.match(code,/modelUrl="\.\/assets\/live2d\/aksara\/aksara\.model3\.json"/);
  assert.match(code,/\.moc3/);
- assert.match(code,/bridge\.state/);
+ assert.match(code,/motion\.step/);
  assert.match(code,/window\.AksaraVoiceAudio\?\.analyser/);
  assert.match(code,/ParamMouthOpenY|setParameterValueById/);
  assert.match(code,/model-missing/);
