@@ -29,7 +29,7 @@ async function check(browser,name,viewport){
   assert.ok(after.rig.frames>before.frames,name+" must animate real bones over time");
   assert.equal(after.canvas,1,"3D canvas missing");
   assert.equal(after.mode,"ready","real humanoid rig must be found");
-  assert.match(after.status,/Pratonton/);
+  assert.match(after.status,/Demo skeletal 3D/);
   assert.equal(tokenRequests.length,0,"no live Gemini token during 3D demo");
   assert.deepEqual(errors,[],"uncaught browser errors");
   await page.screenshot({path:path.join(folder,"aksara-skeletal3d-v07-"+name+".png")});
