@@ -1,0 +1,72 @@
+name: Install AKSARA experimental Live2D model and WebGL assets
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/aksara-live2d-install.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  install-live2d:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          persist-credentials: true
+      - name: Download finished rig artifact from completed auto-rig run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          curl -fSL --retry 3 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts/13574745966/zip" \
+            -o /tmp/aksara-live2d-model.zip
+          unzip -tq /tmp/aksara-live2d-model.zip | tail -n 1
+          mkdir -p /tmp/aksara-live2d-unpack assets/live2d/aksara assets/live2d/vendor
+          unzip -q /tmp/aksara-live2d-model.zip -d /tmp/aksara-live2d-unpack
+          cp /tmp/aksara-live2d-unpack/*.moc3 assets/live2d/aksara/
+          cp /tmp/aksara-live2d-unpack/*.model3.json assets/live2d/aksara/aksara.model3.json
+          cp /tmp/aksara-live2d-unpack/*.motion3.json assets/live2d/aksara/
+          cp /tmp/aksara-live2d-unpack/*.exp3.json assets/live2d/aksara/
+          cp /tmp/aksara-live2d-unpack/*.physics3.json assets/live2d/aksara/
+          cp /tmp/aksara-live2d-unpack/*.cdi3.json assets/live2d/aksara/
+          cp -r /tmp/aksara-live2d-unpack/*.2048 assets/live2d/aksara/
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path("assets/live2d/aksara")
+          data=json.loads((root/"aksara.model3.json").read_text())
+          refs=data["FileReferences"]
+          files=[refs["Moc"],*refs["Textures"],refs["Physics"],refs["DisplayInfo"]]
+          files += [x["File"] for x in refs.get("Expressions",[])]
+          files += [x["File"] for motions in refs.get("Motions",{}).values() for x in motions]
+          for x in files:
+              p=root/x
+              assert p.is_file() and p.stat().st_size>20,p
+          assert (root/refs["Moc"]).stat().st_size>1_000_000
+          print("Model dependencies verified:",len(files))
+          PY
+      - name: Install MIT-licensed display dependencies locally
+        run: |
+          set -euo pipefail
+          curl -fSL --retry 3 "https://cdn.jsdelivr.net/npm/pixi.js@6.5.10/dist/browser/pixi.min.js" -o assets/live2d/vendor/pixi.min.js
+          curl -fSL --retry 3 "https://cdn.jsdelivr.net/npm/pixi-live2d-display@0.4.0/dist/cubism4.min.js" -o assets/live2d/vendor/cubism4.min.js
+          wc -c assets/live2d/vendor/*.js
+          test "$(wc -c < assets/live2d/vendor/pixi.min.js)" -gt 100000
+          test "$(wc -c < assets/live2d/vendor/cubism4.min.js)" -gt 10000
+      - name: Publish model on experiment branch only
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF_NAME" != "main" || { echo "Main branch forbidden"; exit 1; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/live2d/aksara assets/live2d/vendor/pixi.min.js assets/live2d/vendor/cubism4.min.js
+          if git diff --cached --quiet; then echo "Already installed"; exit 0; fi
+          git commit -m "feat(live2d): install verified auto-rig model and permissive WebGL adapter [experiment]"
+          git push origin "HEAD:refs/heads/${{ github.event.pull_request.head.ref || github.ref_name }}"
