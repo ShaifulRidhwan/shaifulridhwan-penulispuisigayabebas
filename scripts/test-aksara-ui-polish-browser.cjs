@@ -46,9 +46,9 @@ async function inspect(browser,name,viewport){
   assert.ok(look.hasSvg,name+" microphone must be an SVG icon");
   assert.equal(look.iconText.trim(),"",name+" must not render an emoji microphone");
   assert.equal(look.iconWidth,"22px");assert.equal(look.iconHeight,"22px");
-  assert.match(look.bg,/0\\.67/);
-  assert.match(look.bg,/0\\.59/);
-  assert.doesNotMatch(look.bg,/0\\.95|0\\.97/);
+  assert.match(look.bg,/0\.67/);
+  assert.match(look.bg,/0\.59/);
+  assert.doesNotMatch(look.bg,/0\.95|0\.97/);
   assert.match(look.blur,/27px/);
   await page.locator("#aksaraMicCancel").click();
   assert.equal(await mic.isVisible(),false,name+" cancel should close preflight");
