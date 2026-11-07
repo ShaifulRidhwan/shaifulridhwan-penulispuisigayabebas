@@ -42,7 +42,7 @@ test("3D avatar and original voice engine remain in place",()=>{
  const html=read("bilik-antara.html");
  const avatar=read("bilik-antara-avatar.js");
  const voice=read("bilik-antara-voice.js");
- assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=15"\)/);
+ assert.match(html,/anime2D\?"\.\/bilik-antara-avatar-2d\.js\?v=1":"\.\/bilik-antara-avatar\.js\?v=15"/);
  assert.match(avatar,/brunette\.glb/);
  assert.match(avatar,/voiceAvatarStage/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
