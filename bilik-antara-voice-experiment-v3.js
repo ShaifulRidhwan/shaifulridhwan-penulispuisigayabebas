@@ -4,6 +4,7 @@
  * Gate: ?voice-ui=3d on experiment branch, leave baseline unchanged otherwise. */
 (function(){
   "use strict";
+  const anime2D=new URLSearchParams(location.search).get("voice-avatar")==="2d";
   const panel=document.getElementById("voicePanel");
   const head=panel?.querySelector(".voice-panel-head");
   const actions=head?.querySelector(".voice-panel-head-actions");
@@ -52,13 +53,13 @@
   hero.setAttribute("aria-label","Avatar Voice Chat Aksara");
   const aside=el("aside","voice-x-aside");
   aside.setAttribute("aria-label","Tetapan Voice Chat");
-  /* A still of the existing GLB avatar, only until WebGL is ready. */
+  /* GLB still for the 3D baseline only; 2D mode uses the vector portrait. */
   const fallback=el("img","voice-x-avatar-fallback");
   fallback.src="bilik-antara-chat-portrait.png?v=1";
   fallback.alt="";
   fallback.decoding="async";
   fallback.setAttribute("aria-hidden","true");
-  stage.append(fallback);
+  if(!anime2D)stage.append(fallback);
   hero.append(stage);
   /* Waveform belongs to the conversational status, not the avatar chest. */
   if(wave)dock.insertBefore(wave,dock.firstChild);
@@ -142,8 +143,8 @@
       control.disabled=true;
       control.title="Kawalan audio hanya aktif dalam panggilan sebenar";
     }
-    /* Preserve the original GLB loading path for the UI preview. */
-    import("./bilik-antara-avatar.js?v=15").catch(()=>{
+    /* Isolated preview: no Gemini token, microphone or voice transport. */
+    import(anime2D?"./bilik-antara-avatar-2d.js?v=1":"./bilik-antara-avatar.js?v=15").catch(()=>{
       stage.classList.add("avatar-unavailable");
     });
     refresh();
