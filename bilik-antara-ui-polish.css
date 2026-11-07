@@ -55,17 +55,23 @@ body>dialog.aksara-glass-prompt{
  max-height:min(86dvh,690px)!important;padding:23px!important;
  border:1px solid rgba(244,215,171,.35)!important;
  border-radius:29px!important;
- background:linear-gradient(145deg,rgba(29,39,53,.67),rgba(10,17,30,.59) 58%,rgba(25,38,54,.66))!important;
+ background:linear-gradient(145deg,rgba(29,39,53,.38),rgba(10,17,30,.30) 58%,rgba(25,38,54,.40))!important;
  color:#f3e8d4!important;
  -webkit-backdrop-filter:blur(27px) saturate(1.18)!important;
  backdrop-filter:blur(27px) saturate(1.18)!important;
- box-shadow:inset 0 1px 0 rgba(255,248,230,.16),0 28px 72px rgba(0,0,0,.38)!important;
+ box-shadow:inset 0 1px 0 rgba(255,248,230,.20),0 28px 72px rgba(0,0,0,.27)!important;
  font:500 13px/1.6 "DM Sans",sans-serif!important;
  color-scheme:dark!important;
 }
 body>dialog.aksara-glass-prompt::backdrop{
- background:rgba(2,6,13,.60)!important;
+ background:rgba(2,6,13,.30)!important;
  -webkit-backdrop-filter:blur(9px) saturate(.84)!important;backdrop-filter:blur(9px) saturate(.84)!important;
+}
+/* Users requesting reduced transparency retain solid text contrast. */
+@media(prefers-reduced-transparency:reduce){
+ body>dialog.aksara-glass-prompt{
+  background:rgba(12,18,30,.90)!important;
+ }
 }
 .aksara-glass-prompt-head{display:flex;align-items:center;gap:13px}
 .aksara-glass-mic-icon{
