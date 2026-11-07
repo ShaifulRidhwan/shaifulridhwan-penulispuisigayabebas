@@ -36,7 +36,7 @@ test("Sensitive terminal actions use a shared dark dialog, never native browser 
 test("Portal remains in the same details element but uses viewport top layer",()=>{
  const html=read("bilik-antara.html"),css=read("bilik-antara.css");
  assert.match(html,/bilik-antara\.css\?v=\d+/);
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=7"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=8"));
  assert.match(html,/id="settingsPanel"/);
  assert.match(html,/id="portalCard" popover="manual"/);
  assert.match(html,/function syncPortalPopover\(\)/);
