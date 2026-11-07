@@ -1,0 +1,85 @@
+name: AKSARA Live2D Rigging Research (Draft)
+on:
+  pull_request:
+    paths:
+      - 'scripts/build-aksara-live2d-psd.py'
+      - '.github/workflows/aksara-live2d-rig-draft.yml'
+      - 'bilik-antara-avatar-2d-art.webp'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  layered-psd:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build genuine named-layer PSD source
+        run: |
+          python -m pip install --disable-pip-version-check Pillow==11.3.0
+          python scripts/build-aksara-live2d-psd.py --source bilik-antara-avatar-2d-art.webp --output build/live2d/aksara-celestial-layered-draft.psd
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('build/live2d/aksara-celestial-layered-draft.psd')
+          b=p.read_bytes()
+          assert b[:4]==b'8BPS' and len(b)>100_000
+          assert all(x in b for x in (b'irides-l',b'irides-r',b'mouth close',b'front hair'))
+          print('PSD header, names and bytes verified',len(b))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aksara-celestial-layered-psd-draft
+          path: |
+            build/live2d/aksara-celestial-layered-draft.psd
+            build/live2d/parts/manifest.json
+          if-no-files-found: error
+  auto-rig-probe:
+    runs-on: ubuntu-latest
+    needs: layered-psd
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: aksara-site
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: aksara-celestial-layered-psd-draft
+          path: aksara-site/build/live2d
+      - uses: actions/checkout@v4
+        with:
+          repository: tsunehimatoi/psd2live
+          ref: c895a10ee6f3a1a1d58b9be5195f6443d7a2bb43
+          path: psd2live-tool
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Generate .moc3 compatibility proof with external PSD2Live
+        working-directory: psd2live-tool
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon -Ppsd2live.prebuiltRuntime=false run --args="--input ../aksara-site/build/live2d/aksara-celestial-layered-draft.psd --output ../aksara-site/build/live2d/auto-rig --lang en --atlas 2048"
+      - name: Check rig export files
+        if: success()
+        run: |
+          find aksara-site/build/live2d/auto-rig -type f | sort | head -n 60
+          python - <<'PY'
+          from pathlib import Path
+          root=Path('aksara-site/build/live2d/auto-rig')
+          assert list(root.rglob('*.moc3')), 'No actual .moc3 export found'
+          assert list(root.rglob('*.model3.json')), 'No .model3.json export found'
+          print('Automatic rig output exists; visual review is still required')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aksara-live2d-autorig-experiment
+          path: aksara-site/build/live2d/auto-rig/
+          if-no-files-found: warn
