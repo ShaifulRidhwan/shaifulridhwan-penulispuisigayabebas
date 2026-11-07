@@ -3,7 +3,7 @@
 	"FileReferences": {
 		"Moc": "aksara-celestial-layered-draft.moc3",
 		"Textures": [
-			"aksara-celestial-layered-draft.4096/texture_00.png"
+			"aksara-celestial-layered-draft.2048/texture_00.png"
 		],
 		"Physics": "aksara-celestial-layered-draft.physics3.json",
 		"DisplayInfo": "aksara-celestial-layered-draft.cdi3.json",
