@@ -74,3 +74,13 @@ test("Quality only URL bypasses live microphone and preserves existing control s
  assert.match(voice,/window\.AksaraVoiceAudio=\{analyser,context:playContext\}/);
  assert.match(voice,/ba:voice-avatar-text/);
 });
+
+test("v0.5 rig never reintroduces an opaque frozen original portrait beneath animated layers",()=>{
+ const builder=read("scripts/build-aksara-live2d-quality-v05.py");
+ assert.match(builder,/back hair root/);
+ assert.match(builder,/opaque_full_portrait_layer":False/);
+ assert.match(builder,/transparent_background":True/);
+ assert.match(builder,/cv2\.inpaint\(coarse/);
+ assert.doesNotMatch(builder,/\("background",\s*backdrop\.convert\("RGBA"\)\)/);
+ assert.doesNotMatch(builder,/\("background",\s*original\)/);
+});
