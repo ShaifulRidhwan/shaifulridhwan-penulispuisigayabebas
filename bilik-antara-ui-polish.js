@@ -7,6 +7,16 @@
  const live=$("voiceLive");
  const term=$("aksaraAITerminal");
  const previewOnly=new URLSearchParams(location.search).get("voice-preview")==="1";
+ // Load last in document order, after the optional V4.5 stylesheet.
+ // Classic rollback still gets glass permission and Terminal dialogs.
+ const applySkin=()=>{
+  const sheet=document.createElement("link");
+  sheet.rel="stylesheet";sheet.href="bilik-antara-ui-polish.css?v=1";
+  document.head.appendChild(sheet);
+ };
+ if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",applySkin,{once:true});
+ else applySkin();
+
 
  function microphonePreflight(){
   if(!live||!window.HTMLDialogElement||previewOnly)return;
