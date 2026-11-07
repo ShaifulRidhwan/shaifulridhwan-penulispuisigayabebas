@@ -11,7 +11,7 @@
  // Classic rollback still gets glass permission and Terminal dialogs.
  const applySkin=()=>{
   const sheet=document.createElement("link");
-  sheet.rel="stylesheet";sheet.href="bilik-antara-ui-polish.css?v=1";
+  sheet.rel="stylesheet";sheet.href="bilik-antara-ui-polish.css?v=2";
   document.head.appendChild(sheet);
  };
  if(document.readyState!=="complete")document.addEventListener("DOMContentLoaded",applySkin,{once:true});
@@ -26,7 +26,7 @@
   modal.setAttribute("aria-labelledby","aksaraMicTitle");
   modal.setAttribute("aria-describedby","aksaraMicDescription");
   modal.innerHTML=[
-   '<div class="aksara-glass-prompt-head"><span class="aksara-glass-mic-icon" aria-hidden="true">🎙</span><div><strong id="aksaraMicTitle">Aktifkan mikrofon</strong><small>AKSARA · VOICE CHAT</small></div></div>',
+   '<div class="aksara-glass-prompt-head"><span class="aksara-glass-mic-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/></svg></span><div><strong id="aksaraMicTitle">Aktifkan mikrofon</strong><small>AKSARA · VOICE CHAT</small></div></div>',
    '<p id="aksaraMicDescription">Aksara perlukan izin mikrofon untuk mendengar kau. Audio hanya dihantar ke Gemini Live apabila sesi suara diaktifkan.</p>',
    '<p class="aksara-glass-prompt-hint" id="aksaraMicHint">Brave akan minta kebenaran selepas kau tekan Aktifkan Mikrofon. Dialog keselamatan browser tidak boleh diubah.</p>',
    '<div class="aksara-glass-prompt-actions"><button type="button" id="aksaraMicCancel">Batal</button><button type="button" id="aksaraMicContinue">Aktifkan Mikrofon</button></div>'
