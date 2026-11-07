@@ -142,7 +142,7 @@ test("v4 retains original endpoints and audio handlers, with no new network call
  assert.match(js,/panel\.dataset\.voiceV4Connected/);
  assert.doesNotMatch(js,/getUserMedia|new WebSocket|new AudioContext|\.netlify\/functions|fetch\(/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=14/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=15/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=11/);
 });
 
@@ -173,7 +173,7 @@ test("v4.1 follows original Bilik Antara frosted glass, curves and real compact 
  assert.match(css,/grid-template-columns:repeat\(3,56px\)/);
  assert.match(css,/grid-template-columns:repeat\(3,52px\)/);
  assert.match(css,/M3\.1%207\.9/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=14/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=15/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=11/);
 });
 
@@ -209,7 +209,7 @@ test("v4.3 cinematic framing, status waveform, quiet panels and accessible end c
  assert.match(css,/rgba\(231,197,149,.13\)/);
  assert.match(css,/button\.voice-x-end\{\s*background:linear-gradient\(145deg,rgba\(180,71,78,.90\)/);
  assert.match(html,/bilik-antara-avatar\.js\?v=15/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=14/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=15/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=11/);
 });
 
@@ -235,7 +235,7 @@ test("v4.4 uses Bilik Antara glass for brand, circular X and dialect dialog with
  assert.match(css,/backdrop-filter:blur\(28px\) saturate\(1\.22\)/);
  assert.match(css,/body\.aksara-voice-3d-experiment \.aksara-voice-style-dialog::backdrop/);
  assert.match(css,/\.voice-style-option\.is-selected/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=14/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=15/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=11/);
 });
 
@@ -254,7 +254,7 @@ test("v4.4 scoped polish reaches the real body-mounted dialect dialog, X and gla
  assert.match(css,/body\.aksara-voice-3d-experiment #voiceStyleDialog button\.voice-style-option\.is-selected/);
  assert.match(css,/border-radius:29px!important/);
  assert.match(css,/backdrop-filter:blur\(27px\) saturate\(1\.18\)/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=14/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=15/);
 });
 
 test("call status never claims connection before setupComplete and clock resets with each session",()=>{
@@ -282,5 +282,22 @@ test("V4 keeps the original Voice error notice visible above the glass modal",()
  assert.match(js,/document\.body\.appendChild\(nativeNotice\)/);
  assert.match(css,/body\.aksara-voice-3d-experiment #voiceNotice\.voice-notice:not\(\[hidden\]\)/);
  assert.match(css,/z-index:2010!important/);
+ assert.doesNotMatch(js,/new WebSocket|new AudioContext|\.getUserMedia\(|fetch\(/);
+});
+
+
+test("V4.5 uses translucent A/B/C glass tokens while keeping the native voice bridge untouched",()=>{
+ const css=read("bilik-antara-voice-experiment-v3.css");
+ const html=read("bilik-antara.html");
+ const js=read("bilik-antara-voice-experiment-v3.js");
+ for(const token of ["--voice-v45-root","--voice-v45-secondary","--voice-v45-control","--voice-v45-rim","--voice-v45-gleam"]){
+   assert.ok(css.includes(token),token+" missing");
+ }
+ assert.match(css,/AKSARA VOICE V4\.5/);
+ assert.match(css,/#voiceMuteMic\[aria-pressed="false"\]/);
+ assert.match(css,/#voiceMuteSpeaker\[aria-pressed="false"\]/);
+ assert.match(css,/prefers-reduced-transparency:reduce/);
+ assert.match(css,/max-width:760px\) and \(max-height:670px/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=15/);
  assert.doesNotMatch(js,/new WebSocket|new AudioContext|\.getUserMedia\(|fetch\(/);
 });
