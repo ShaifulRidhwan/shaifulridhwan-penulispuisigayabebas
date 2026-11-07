@@ -114,9 +114,9 @@ async function testViewport(browser,name,viewport) {
   // Do not show 'connected' or advance the clock before setupComplete.
   await page.waitForTimeout(300);
   assert.equal(await page.locator(".voice-x-timer").innerText(),"00:00",name+" timer started before handshake");
-  assert.notEqual(await page.locator(".voice-x-live-text").innerText(),"TERSAMBUNG",name+" false connected");
+  assert.notEqual(await page.locator(".voice-x-live-text").innerText(),"LIVE",name+" false connected");
   await page.waitForFunction(()=>window.BilikAntaraVoiceDiagnostics?.snapshot()?.connected===true,null,{timeout:5000});
-  await page.waitForFunction(()=>document.querySelector(".voice-x-live-text")?.textContent==="TERSAMBUNG",null,{timeout:2000});
+  await page.waitForFunction(()=>document.querySelector(".voice-x-live-text")?.textContent==="LIVE",null,{timeout:2000});
   const initial=await page.locator(".voice-x-timer").innerText();
   assert.match(initial,/^\d{2,}:\d{2}$/,name+" clock format");
   await page.waitForFunction(()=>document.querySelector(".voice-x-timer")?.textContent!=="00:00",null,{timeout:4000});

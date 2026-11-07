@@ -7,6 +7,8 @@ on:
       - "bilik-antara.css"
       - "bilik-antara-suite.css"
       - "bilik-antara-*.js"
+      - "bilik-antara-ui-polish.css"
+      - "scripts/test-aksara-ui-polish-browser.cjs"
       - "bilik-antara-bg-*.webp"
       - "aksara-celestial-static.webp"
       - "scripts/test-bilik-antara-browser.cjs"
@@ -21,6 +23,8 @@ on:
       - "bilik-antara.css"
       - "bilik-antara-suite.css"
       - "bilik-antara-*.js"
+      - "bilik-antara-ui-polish.css"
+      - "scripts/test-aksara-ui-polish-browser.cjs"
       - "bilik-antara-bg-*.webp"
       - "aksara-celestial-static.webp"
       - "scripts/test-bilik-antara-browser.cjs"
@@ -60,6 +64,7 @@ jobs:
           node scripts/test-bilik-antara-browser.cjs
           node scripts/test-aksara-voice-v4-browser.cjs
           node scripts/test-aksara-voice-v4-live-controls-browser.cjs
+          node scripts/test-aksara-ui-polish-browser.cjs
           node scripts/test-thinking-mode-status-browser.cjs
           node scripts/test-six-observability-browser.cjs
           node scripts/test-session-memory-integrity-browser.cjs

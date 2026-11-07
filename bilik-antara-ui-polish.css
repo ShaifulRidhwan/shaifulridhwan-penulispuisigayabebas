@@ -1,0 +1,128 @@
+/* Aksara UI Polish v1: compact Live indicator, dark terminal choices, and mic preflight.
+   The browser/OS permission dialog is intentionally not styled or bypassed. */
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-metrics{
+ display:flex!important;align-items:center!important;gap:7px!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-live,
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-live[data-connected="true"]{
+ display:inline-flex!important;align-items:center!important;gap:6px!important;
+ min-height:26px!important;padding:2px 0!important;
+ border:0!important;border-radius:0!important;
+ background:transparent!important;box-shadow:none!important;
+ backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+ color:rgba(235,225,212,.86)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-live-text{
+ display:inline-block!important;max-width:76px!important;
+ font:600 10px/1.2 "Space Grotesk","DM Sans",sans-serif!important;
+ letter-spacing:.035em!important;white-space:nowrap!important;
+ text-overflow:ellipsis!important;overflow:hidden!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-dot{
+ width:6px!important;height:6px!important;flex:none!important;
+ box-shadow:none!important;opacity:.8!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-live[data-connected="true"] .voice-x-dot{
+ background:#73c6a4!important;box-shadow:0 0 7px rgba(115,198,164,.22)!important;
+ opacity:1!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-timer{
+ margin-left:0!important;white-space:nowrap!important;
+ font:500 11px/1.2 "DM Sans",sans-serif!important;
+ color:rgba(242,229,211,.75)!important;
+}
+#aksaraAITerminal select.ait-native-select{display:none!important}
+#aksaraAITerminal #aitFileGlass,
+#aksaraAITerminal #aitExampleGlass{
+ display:inline-flex!important;flex:1 1 145px!important;
+ align-items:center!important;justify-content:space-between!important;
+ min-width:0!important;min-height:42px!important;
+ gap:10px!important;padding:9px 13px!important;
+ border:1px solid rgba(233,207,164,.29)!important;
+ border-radius:15px!important;
+ background:linear-gradient(145deg,rgba(205,223,235,.105),rgba(20,34,52,.52))!important;
+ -webkit-backdrop-filter:blur(12px) saturate(1.1)!important;
+ backdrop-filter:blur(12px) saturate(1.1)!important;
+ color:#eee6d8!important;text-align:left!important;
+ box-shadow:inset 0 1px 0 rgba(255,247,225,.10)!important;
+}
+#aksaraAITerminal .ait-glass-select-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#aksaraAITerminal .ait-glass-chevron{font-size:20px;line-height:1;color:#e4bf81}
+body>dialog.aksara-glass-prompt{
+ position:fixed!important;inset:0!important;margin:auto!important;
+ box-sizing:border-box!important;overflow:hidden!important;
+ width:min(430px,calc(100vw - 30px))!important;max-width:430px!important;
+ max-height:min(86dvh,690px)!important;padding:23px!important;
+ border:1px solid rgba(233,206,162,.40)!important;
+ border-radius:27px!important;
+ background:linear-gradient(150deg,rgba(38,48,62,.95),rgba(12,23,39,.97))!important;
+ color:#f3e8d4!important;
+ -webkit-backdrop-filter:blur(22px) saturate(1.12)!important;
+ backdrop-filter:blur(22px) saturate(1.12)!important;
+ box-shadow:inset 0 1px 0 rgba(255,247,229,.17),0 24px 75px rgba(0,0,0,.58)!important;
+ font:500 13px/1.6 "DM Sans",sans-serif!important;
+ color-scheme:dark!important;
+}
+body>dialog.aksara-glass-prompt::backdrop{
+ background:rgba(2,6,14,.70)!important;
+ -webkit-backdrop-filter:blur(9px)!important;backdrop-filter:blur(9px)!important;
+}
+.aksara-glass-prompt-head{display:flex;align-items:center;gap:13px}
+.aksara-glass-mic-icon{
+ display:flex;align-items:center;justify-content:center;
+ width:48px;height:48px;flex:none;border-radius:16px;
+ border:1px solid rgba(238,199,139,.27);background:rgba(230,198,145,.08);
+ font-size:23px;
+}
+.aksara-glass-prompt-head>div{display:flex;flex-direction:column;gap:2px}
+.aksara-glass-prompt-head strong,
+.aksara-glass-picker-head strong{
+ font:600 17px/1.3 "Space Grotesk","DM Sans",sans-serif;color:#f6e7cc;
+}
+.aksara-glass-prompt-head small{font-size:10px;letter-spacing:.12em;color:#b9bfcb}
+.aksara-glass-prompt p{margin:17px 0 0;color:#e4e0db;line-height:1.65}
+.aksara-glass-prompt p.aksara-glass-prompt-hint{color:#b8c5ce;font-size:11px}
+.aksara-glass-prompt-actions{display:flex;gap:10px;margin-top:22px;justify-content:flex-end}
+body>dialog.aksara-glass-prompt button{
+ min-height:44px;cursor:pointer;font:600 12px/1.3 "DM Sans",sans-serif;
+ border-radius:14px;border:1px solid rgba(239,217,179,.26);
+ background:linear-gradient(145deg,rgba(198,221,233,.10),rgba(21,38,55,.7));
+ color:#f5ead9;padding:11px 17px;
+}
+body>dialog.aksara-glass-prompt #aksaraMicContinue{
+ background:linear-gradient(135deg,rgba(215,177,112,.37),rgba(130,163,194,.18));
+ border-color:rgba(237,206,148,.48);color:#fff1d8;
+}
+body>dialog.aksara-glass-prompt button:focus-visible{
+ outline:2px solid #f2ce91!important;outline-offset:3px!important;
+}
+body>dialog.aksara-terminal-picker{padding:18px!important}
+.aksara-glass-picker-head{
+ display:flex;align-items:center;justify-content:space-between;gap:8px;
+ padding-bottom:15px;border-bottom:1px solid rgba(238,219,183,.14);
+}
+.aksara-glass-picker-list{
+ display:grid;gap:8px;margin-top:15px;padding:0 1px 2px;
+ max-height:min(66dvh,535px);overflow-y:auto;overscroll-behavior:contain;
+}
+body>dialog.aksara-glass-prompt .aksara-glass-picker-option{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ width:100%;min-height:47px;text-align:left;border-radius:16px;
+ border:1px solid rgba(223,208,176,.23);
+ background:linear-gradient(145deg,rgba(221,231,239,.09),rgba(29,45,62,.32));
+}
+body>dialog.aksara-glass-prompt .aksara-glass-picker-option[aria-selected="true"]{
+ background:linear-gradient(145deg,rgba(218,184,130,.25),rgba(82,114,146,.22));
+ border-color:rgba(243,210,153,.50);color:#fff0d1;
+}
+.aksara-glass-picker-option span:last-child{color:#edc68b;font-size:19px}
+@media(max-width:420px){
+ #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-metrics{gap:5px!important}
+ #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-live-text{max-width:64px!important;font-size:9px!important}
+ body>dialog.aksara-glass-prompt{padding:17px!important;border-radius:24px!important}
+ body>dialog.aksara-glass-prompt .aksara-glass-prompt-actions{justify-content:stretch}
+ body>dialog.aksara-glass-prompt .aksara-glass-prompt-actions>button{flex:1 1 auto;padding-inline:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ body>dialog.aksara-glass-prompt button{animation:none!important;transition:none!important}
+}
