@@ -38,7 +38,8 @@ test("anime module selector leaves original 3D renderer intact without the gate"
  assert.match(html,/bilik-antara-avatar-2d\.css\?v=2/);
  assert.match(ui,/if\(!anime2D&&!genuineLive2D\)stage\.append\(fallback\)/);
  assert.match(ui,/import\(anime2D\?"\.\/bilik-antara-avatar-2d\.js\?v=2":"\.\/bilik-antara-avatar\.js\?v=15"\)/);
- assert.match(ui,/previewStatus="Pratonton reka bentuk sahaja/);
+ assert.match(ui,/previewStatus=genuineLive2D\?/);
+ assert.match(ui,/Pratonton reka bentuk sahaja/);
 });
 test("Gemini Live transport still supplies original speech output and transcript events",()=>{
  const voice=read("bilik-antara-voice.js");
