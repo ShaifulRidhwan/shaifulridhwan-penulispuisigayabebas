@@ -30,7 +30,7 @@
  const fpsLimit=60;
  let renderResolution=2;
  let performanceNotice="";
- panel.classList.add("voice-live2d-v04");
+ panel.classList.add("voice-live2d-v04","voice-live2d-v05");
  if(query.get("voice-preview")==="1")panel.classList.add("voice-live2d-preview");
  let modelNaturalWidth=1,modelNaturalHeight=1;
  const status=document.createElement("div");
