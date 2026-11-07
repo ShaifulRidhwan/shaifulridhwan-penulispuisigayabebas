@@ -1265,7 +1265,7 @@ let loading=false,loaded=false;
 document.getElementById("voiceLive")?.addEventListener("click",()=>{
 if(loading||loaded)return;
 loading=true;
-import("./bilik-antara-avatar.js?v=15").then(()=>{loaded=true;}).catch(error=>{
+import("./bilik-antara-avatar.js?v=16").then(()=>{loaded=true;}).catch(error=>{
 loading=false;document.getElementById("voiceAvatarStage")?.classList.add("avatar-unavailable");console.warn("Voice avatar unavailable",error);
 });
 });
