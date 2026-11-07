@@ -53,27 +53,27 @@ body>dialog.aksara-glass-prompt{
  box-sizing:border-box!important;overflow:hidden!important;
  width:min(430px,calc(100vw - 30px))!important;max-width:430px!important;
  max-height:min(86dvh,690px)!important;padding:23px!important;
- border:1px solid rgba(233,206,162,.40)!important;
+ border:1px solid rgba(231,203,157,.43)!important;
  border-radius:27px!important;
- background:linear-gradient(150deg,rgba(38,48,62,.95),rgba(12,23,39,.97))!important;
+ background:linear-gradient(145deg,rgba(228,190,137,.06),rgba(111,161,203,.055) 60%,rgba(16,24,38,.035)),rgba(12,18,30,.70)!important;
  color:#f3e8d4!important;
- -webkit-backdrop-filter:blur(22px) saturate(1.12)!important;
- backdrop-filter:blur(22px) saturate(1.12)!important;
+ -webkit-backdrop-filter:blur(20px) saturate(1.18)!important;
+ backdrop-filter:blur(20px) saturate(1.18)!important;
  box-shadow:inset 0 1px 0 rgba(255,247,229,.17),0 24px 75px rgba(0,0,0,.58)!important;
  font:500 13px/1.6 "DM Sans",sans-serif!important;
  color-scheme:dark!important;
 }
 body>dialog.aksara-glass-prompt::backdrop{
- background:rgba(2,6,14,.70)!important;
+ background:rgba(3,7,15,.45)!important;
  -webkit-backdrop-filter:blur(9px)!important;backdrop-filter:blur(9px)!important;
 }
 .aksara-glass-prompt-head{display:flex;align-items:center;gap:13px}
 .aksara-glass-mic-icon{
  display:flex;align-items:center;justify-content:center;
- width:48px;height:48px;flex:none;border-radius:16px;
- border:1px solid rgba(238,199,139,.27);background:rgba(230,198,145,.08);
- font-size:23px;
+ width:44px;height:44px;flex:none;border-radius:15px;
+ border:1px solid rgba(231,203,157,.27);background:rgba(255,255,255,.045);
 }
+.aksara-glass-mic-icon svg{width:22px;height:22px;fill:none;stroke:#e9d0a8;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .aksara-glass-prompt-head>div{display:flex;flex-direction:column;gap:2px}
 .aksara-glass-prompt-head strong,
 .aksara-glass-picker-head strong{
@@ -86,11 +86,11 @@ body>dialog.aksara-glass-prompt::backdrop{
 body>dialog.aksara-glass-prompt button{
  min-height:44px;cursor:pointer;font:600 12px/1.3 "DM Sans",sans-serif;
  border-radius:14px;border:1px solid rgba(239,217,179,.26);
- background:linear-gradient(145deg,rgba(198,221,233,.10),rgba(21,38,55,.7));
+ background:rgba(255,255,255,.045);
  color:#f5ead9;padding:11px 17px;
 }
 body>dialog.aksara-glass-prompt #aksaraMicContinue{
- background:linear-gradient(135deg,rgba(215,177,112,.37),rgba(130,163,194,.18));
+ background:linear-gradient(130deg,rgba(209,172,112,.20),rgba(122,163,195,.10));
  border-color:rgba(237,206,148,.48);color:#fff1d8;
 }
 body>dialog.aksara-glass-prompt button:focus-visible{
