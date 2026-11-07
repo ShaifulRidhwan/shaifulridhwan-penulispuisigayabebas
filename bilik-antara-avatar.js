@@ -2,7 +2,9 @@
    Avatar: TalkingHead example brunette.glb by Ready Player Me.
    Source: https://github.com/met4citizen/TalkingHead
    License: CC BY-NC 4.0 (noncommercial use with attribution). */
-const skeletal3D=new URLSearchParams(location.search).get("voice-rig")==="skeletal3d";
+const avatarOptions=new URLSearchParams(location.search);
+const skeletal3D=avatarOptions.get("voice-rig")==="skeletal3d";
+const skeletalDemo=skeletal3D&&avatarOptions.get("voice-preview")==="1"&&avatarOptions.get("voice-avatar-demo")==="1";
 const panel=document.getElementById("voicePanel");
 const stage=document.getElementById("voiceAvatarStage");
 if(panel&&stage){
@@ -159,11 +161,11 @@ async function begin(){
    // model and speaking state, but skip all invisible WebGL drawing work.
    if(panel.classList.contains("is-minimized")||document.hidden)return;
    raf=requestAnimationFrame(frame);
-   const speaking=panel.classList.contains("voice-speaking");
+   const speaking=panel.classList.contains("voice-speaking")||(skeletalDemo&&Math.floor(t/3400)%4===1);
    stage.classList.toggle("avatar-speaking",speaking);
    if(skeletal3D){
     root.rotation.set(0,0,0);
-    skeletalController?.step({time:t,speaking,level:window.AksaraVoiceAudio?.analyser?audioLevel():0,emotion,
+    skeletalController?.step({time:t,speaking,level:window.AksaraVoiceAudio?.analyser?audioLevel():skeletalDemo?.33+.18*Math.abs(Math.sin(t*.009)):0,emotion,
       reducedMotion:!!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches});
    }else{
     root.rotation.y=Math.sin(t*.0004)*.075;root.rotation.x=Math.sin(t*.00031)*.025+(emotion==="laugh"?Math.sin(t*.012)*.012:0);
@@ -173,7 +175,7 @@ async function begin(){
    if(duration>190)blinkAt=t+1900+Math.random()*2800;
    weights(["eyeBlinkLeft","eyeBlinkRight"],blink*.9);
    // Analyze the audio actually being played; silence naturally closes the mouth.
-   const level=speaking?audioLevel():0;
+   const level=speaking?(window.AksaraVoiceAudio?.analyser?audioLevel():skeletalDemo?.33+.18*Math.abs(Math.sin(t*.009)):0):0;
    const targetJaw=clamp(level*.23,0,.23),targetLips=clamp(level*.14,0,.14);
    jawMotion+=(targetJaw-jawMotion)*.28;lipMotion+=(targetLips-lipMotion)*.28;
    weights(["jawOpen"],jawMotion);
