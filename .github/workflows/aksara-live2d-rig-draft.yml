@@ -1,5 +1,9 @@
 name: AKSARA Live2D Rigging Research (Draft)
 on:
+  pull_request:
+    paths:
+      - 'scripts/build-aksara-live2d-quality-v05.py'
+      - '.github/workflows/aksara-live2d-rig-draft.yml'
   workflow_dispatch:
 permissions:
   contents: read
