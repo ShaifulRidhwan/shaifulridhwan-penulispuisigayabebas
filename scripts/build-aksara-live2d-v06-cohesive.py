@@ -98,6 +98,21 @@ def main():
       (0,899),(119,824)
     ],4)
     mask_arr=np.minimum(mask_arr,np.asarray(silhouette,dtype=np.float32))
+    # Long hair begins above the robe. Its original raster strands are owned
+    # by the body underlay, rather than cut away along a polygonal head edge.
+    left_hair=mask_poly([
+      (0,625),(89,477),(228,304),(327,290),(381,445),
+      (374,817),(432,1174),(334,1447),(0,1447)
+    ],6)
+    right_hair=mask_poly([
+      (752,295),(891,385),(991,520),(1085,662),
+      (1085,1447),(738,1447),(706,996),(716,653)
+    ],6)
+    mask_arr=np.maximum(mask_arr,np.asarray(left_hair,dtype=np.float32))
+    mask_arr=np.maximum(mask_arr,np.asarray(right_hair,dtype=np.float32))
+    # The central face is not duplicated in the lower layer.
+    # Safe left/right hair underpainting is naturally occluded by the
+    # intact coherent head at neutral pose.
     # Exclude duplicates: a pixel already fully owned by moving head is not
     # simultaneously owned by the still torso. Small underpaint near join
     # remains for disocclusion, but it cannot show when head is neutral.
@@ -119,6 +134,10 @@ def main():
       ("eyewhite-r",masked(src,eye_r)),
       ("mouth close",masked(src,mouth))
     ]
+    # Reject opaque geometric gaps through the highlighted hair on both sides.
+    for x,y in [(110,570),(180,650),(60,780),(940,630),(925,730)]:
+        if composed.getpixel((x,y))[3]<210:
+            raise RuntimeError("Visible hair cutout at (%d,%d)"%(x,y))
     # A neutral-pose pixel comparison guards against the accidental static
     # duplicate and gross clipping, but artistic review is still required.
     composed=compose(layers)
