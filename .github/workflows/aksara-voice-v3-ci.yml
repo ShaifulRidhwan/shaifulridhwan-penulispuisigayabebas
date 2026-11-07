@@ -9,6 +9,9 @@ on:
       - 'tests/aksara-voice-v3.test.cjs'
       - 'tests/aksara-voice-3d-ui-experiment.test.cjs'
       - 'tests/aksara-voice-2d-experiment.test.cjs'
+      - 'tests/aksara-live2d-v03.test.cjs'
+      - 'bilik-antara-live2d*'
+      - 'assets/live2d/**'
       - '.github/workflows/aksara-voice-v3-ci.yml'
   push:
     branches:
@@ -29,8 +32,10 @@ jobs:
           node --check bilik-antara-dialek.js
           node --check bilik-antara-voice.js
           node --check bilik-antara-avatar-2d.js
+          node --check bilik-antara-live2d-v03.js
+          node --check bilik-antara-live2d-bridge-v03.js
           node --check bilik-antara-voice-experiment-v3.js
           node --check bilik-antara-voice-core-v3.js
           node --check bilik-antara-observability.js
       - name: Run Voice v3 regression
-        run: node --test tests/aksara-voice-v3.test.cjs tests/aksara-voice-3d-ui-experiment.test.cjs tests/aksara-voice-2d-experiment.test.cjs
+        run: node --test tests/aksara-voice-v3.test.cjs tests/aksara-voice-3d-ui-experiment.test.cjs tests/aksara-voice-2d-experiment.test.cjs tests/aksara-live2d-v03.test.cjs
