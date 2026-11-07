@@ -60,3 +60,14 @@ Physics/deformer tambahan: rambut depan, rambut belakang, anting-anting bulan da
 ## Work atau chat biasa?
 
 Kod GitHub, dokumentasi dan CI boleh dibuat dari chat ini. Untuk kerja visual intensif (melukis layer yang tersembunyi, brush mask, memperbaiki ekspresi, deformer mesh dan physics dalam Cubism Editor), **Work** boleh lebih sesuai jika ada akses kepada aplikasi grafik dalam komputer/sesi yang digunakan. Ia tetap tidak menghasilkan .moc3 daripada satu imej secara automatik.
+## Natural Motion v0.4 (PR #263, experiment only)
+
+- Motion controller: `bilik-antara-live2d-motion-v04.js`. Deterministic, fully testable, separate from existing Gemini Live/Aoede transport.
+- P0: damped spring for head/body, easing for eyebrow/eye/mouth expression, wandering gaze, varied blink intervals rather than a 4.15s fixed blink.
+- P1: lip-sync amplitude mapped from **existing output analyser** with ~48ms opening and ~115ms closing. Not phoneme/viseme sync, and live audio permission tests remain separate.
+- P1: modest physics tuning on the eight existing *hair* groups: reduced output overshoot, slightly higher delay and drag. Existing eye/brow/body physics remain intact.
+- **Accessory limit:** the current exported model does not have independent moon/sun ornament parameters or physics. Headwear follows the head mesh. Independent inertial accessory movement requires a revised rig; do not claim it exists in v0.4.
+- P2: 30 FPS initial mobile / reduced-motion / power-saver and 60 FPS standard desktop, guarded 24 FPS minimum under sustained load; renderer internal resolution capped at 1.25 mobile and 1.5 desktop, low load 1.0. The quality meter is for debugging, not an SLA.
+- P2: preview-only compact translucent dialogue dock and concise status. Native mic, mute, speaker, end call, volume, style and mode controls **unchanged**.
+- Test commands: `node --test tests/aksara-live2d-v03.test.cjs tests/aksara-live2d-v04.test.cjs` and `node scripts/test-aksara-live2d-v03-browser.cjs` from the standard preview server.
+- Risk gates: real mobile call with Aoede still needs human listening/visual check; Cubism AI/chatbot distribution license must be reviewed before public launch; no automatic merge.
