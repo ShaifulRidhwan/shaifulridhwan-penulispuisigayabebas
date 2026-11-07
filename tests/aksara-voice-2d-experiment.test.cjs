@@ -17,7 +17,7 @@ test("2D artwork provides independent face, eyes, brows, mouth and hair layers",
  const svg=read("bilik-antara-avatar-2d.svg");
  assert.match(svg,/<svg\b[^>]+viewBox="0 0 500 620"/);
  for(const id of ["a2d-head","a2d-front-hair","a2d-back-hair","a2d-eye-left","a2d-eye-right","a2d-brow-left","a2d-brow-right","a2d-mouth","a2d-smile"])assert.ok(svg.includes('id="'+id+'"'),id);
- assert.doesNotMatch(svg,/<script|<foreignObject|<image\b|https?:\/\//i);
+ assert.doesNotMatch(svg,/<script|<foreignObject|<image\b|(?:xlink:)?href=/i);
 });
 test("2D styles are scoped and don't change the baseline voice UI",()=>{
  const css=read("bilik-antara-avatar-2d.css");
