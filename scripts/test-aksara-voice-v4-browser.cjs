@@ -106,7 +106,7 @@ async function audit(browser,label,viewport){
   assert.equal(data.wavePosition,"relative",label+" waveform should not float over the chest");
   assert.ok(data.waveBox.bottom<=data.phaseBox.y+4,label+" waveform must be above phase label");
   assert.match(data.fallbackScale,/0\.935/,label+" fallback image needs wider framing");
-  assert.match(data.hangupBackground,/180, 71, 78/,label+" hangup must retain red visual emphasis");
+  assert.match(data.hangupBackground,/189, 75, 84/,label+" hangup must retain red visual emphasis");
   console.log("V4 LAYOUT "+label+" "+JSON.stringify({mic:data.mic,end:data.end,speaker:data.speaker,hero:data.hero,aside:data.aside,footer:data.footer}));
   await page.screenshot({path:path.join(OUT,"aksara-voice-v4-"+label+".png"),fullPage:false});
   assert.ok(data.mic.cx<data.end.cx&&data.end.cx<data.speaker.cx,label+" wrong order");
@@ -172,12 +172,60 @@ async function audit(browser,label,viewport){
   assert.match(glassQA.closeGlass,/blur\(/,label+" X button not glass");
   assert.ok(parseFloat(glassQA.dialogRadius)>=24,label+" dialect modal not curved");
   const blurMatch=glassQA.dialogGlass.match(/blur\(([0-9.]+)px\)/);
-  assert.ok(blurMatch&&Number(blurMatch[1])>=20,label+" dialect glass blur too weak: "+glassQA.dialogGlass);
+  assert.ok(blurMatch&&Number(blurMatch[1])>=(label==="desktop"?20:16),label+" dialect glass blur too weak for its viewport: "+glassQA.dialogGlass);
   const alphaMatch=glassQA.dialogBackground.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\)$/);
   assert.ok(alphaMatch&&Number(alphaMatch[1])<.90,label+" dialect glass too opaque: "+glassQA.dialogBackground);
   assert.ok(parseFloat(glassQA.optionRadius)>=15,label+" dialect options still squared");
   assert.match(glassQA.optionGlass,/blur\(/,label+" dialect options not frosted glass");
   assert.match(glassQA.selectedBackground,/linear-gradient/,label+" selected loghat missing glass state");
+
+  // P1-P4 computed styles: visually transparent layers, a distinct control
+  // glass recipe, readable touch targets and a responsive mobile budget.
+  const liquidQA=await page.evaluate(()=>{
+    const s=selector=>getComputedStyle(document.querySelector(selector));
+    const root=s("#voicePanel"),aside=s("#voicePanel .voice-x-aside");
+    const footer=s("#voicePanel .voice-x-footer");
+    const mic=s("#voiceMuteMic"),speaker=s("#voiceMuteSpeaker");
+    const styleControl=s("#voiceStyleTrigger");
+    const dialog=s("#voiceStyleDialog");
+    const outer=document.querySelector("#voicePanel").getBoundingClientRect();
+    return {
+      token:s("body").getPropertyValue("--voice-v45-root").trim(),
+      panelColor:root.backgroundColor,
+      panelFilter:root.backdropFilter,
+      asideImage:aside.backgroundImage,
+      asideFilter:aside.backdropFilter,
+      footerImage:footer.backgroundImage,
+      fieldImage:styleControl.backgroundImage,
+      micImage:mic.backgroundImage,
+      speakerImage:speaker.backgroundImage,
+      micSize:parseFloat(mic.width),
+      controlRadius:mic.borderTopLeftRadius,
+      dialogColor:dialog.backgroundColor,
+      dialogFilter:dialog.backdropFilter,
+      totalHeight:outer.bottom,
+      asideBounds:document.querySelector("#voicePanel .voice-x-aside").getBoundingClientRect().bottom
+    };
+  });
+  const alphaOf=rgba=>Number(rgba.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\)$/)?.[1]);
+  assert.match(liquidQA.token,/\.53/,label+" P1 missing transparent root glass");
+  assert.ok(alphaOf(liquidQA.panelColor)<.80,label+" P1 primary panel is opaque "+liquidQA.panelColor);
+  assert.match(liquidQA.panelFilter,/blur\(/,label+" P1 root blur lost");
+  for(const field of ["asideImage","footerImage","fieldImage","micImage"]){
+    assert.match(liquidQA[field],/linear-gradient/,label+" P2/P3 "+field+" missing glass tint");
+  }
+  assert.match(liquidQA.asideFilter,/blur\(/,label+" P2 settings blur lost");
+  assert.ok(liquidQA.micSize>=48,label+" P3 control tap size under 48px");
+  assert.ok(parseFloat(liquidQA.controlRadius)>=24,label+" P3 control should stay circular");
+  assert.ok(alphaOf(liquidQA.dialogColor)<.8,label+" P3 dialect dialog too opaque");
+  assert.ok(liquidQA.totalHeight<=data.height+5,label+" P4 panel extends beyond the viewport");
+  assert.ok(liquidQA.asideBounds<=data.height+5,label+" P4 settings are clipped by viewport");
+  if(label!=="desktop"){
+    const blur=Number(liquidQA.asideFilter.match(/blur\(([0-9.]+)px\)/)?.[1]);
+    assert.ok(blur<=14,label+" P4 mobile blur is too expensive");
+  }
+  console.log("V4.5 GLASS "+label+" "+JSON.stringify(liquidQA));
+
   console.log("V4.4 GLASS "+label+" "+JSON.stringify(glassQA));
   await page.screenshot({path:path.join(OUT,"aksara-voice-v44-loghat-"+label+".png"),fullPage:false});
 
