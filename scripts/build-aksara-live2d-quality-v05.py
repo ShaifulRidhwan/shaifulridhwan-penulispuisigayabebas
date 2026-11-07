@@ -131,9 +131,40 @@ def main():
        (815,844),(756,741),(739,608),(722,423),(674,328),(639,229),(580,172)],2)
     sun=ornament(original,(167,83,459,355),"sun")
     moon=ornament(original,(660,78,929,368),"moon")
+
+    # v0.5 structural repair: NEVER export a full static portrait behind the
+    # animated parts. The old backdrop contained 100% opaque original hair,
+    # eyes, costume and ornaments, making doubled / "ghost" features inevitable.
+    # The app provides the environmental gradient behind the transparent rig.
+    #
+    # A real BACK HAIR part is kept for occlusion but gets a feature-free
+    # underpainting, not the whole frozen image.
+    hair_root=polygon([
+      (295,1),(720,1),(802,70),(888,171),(940,305),(936,491),
+      (898,648),(847,774),(819,1039),(803,1447),
+      (289,1447),(260,1081),(211,830),(178,642),(165,429),
+      (200,237),(249,103)],3)
+    from PIL import ImageChops
+    trim=ImageChops.lighter(left_back,right_back)
+    hair_root=ImageChops.subtract(hair_root,trim)
+    # Inpaint prominent front-hair strands and metal crown behind their
+    # corresponding moving layers; otherwise those pixels duplicate.
+    hidden_root=np.array(backdrop.convert("RGB"))
+    moving=np.zeros((H,W),np.uint8)
+    for feature in (front_left,front_right):
+        moving=np.maximum(moving,np.array(feature,dtype=np.uint8))
+    cv2.ellipse(moving,(315,220),(166,149),0,0,360,255,-1)
+    cv2.ellipse(moving,(792,217),(135,155),0,0,360,255,-1)
+    reduced=(round(W*.48),round(H*.48))
+    coarse=cv2.resize(hidden_root,reduced,interpolation=cv2.INTER_AREA)
+    coarse_mask=cv2.resize(moving,reduced,interpolation=cv2.INTER_NEAREST)
+    coarse_repair=cv2.inpaint(coarse,(coarse_mask>24).astype(np.uint8)*255,9,cv2.INPAINT_TELEA)
+    root_paint=Image.fromarray(cv2.resize(coarse_repair,(W,H),interpolation=cv2.INTER_CUBIC),"RGB")
+
     # PSD record order here is back -> front, tested in v0.3; don't reverse.
     parts=[
-      ("background",backdrop.convert("RGBA")),
+      # No full-resolution static portrait in the Cubism drawable list.
+      ("back hair root",rgba(root_paint,hair_root)),
       ("back hair left",rgba(original,left_back)),
       ("back hair right",rgba(original,right_back)),
       ("topwear",rgba(original,dress)),
@@ -172,7 +203,8 @@ def main():
     (props/"accessories.json").write_text(json.dumps({"canvas":[W,H],"sprites":coordinates,"isOverlay":True},indent=2),encoding="utf-8")
     metadata={"size":[W,H],"layers":[n for n,_ in parts],
       "quality":"high-resolution-automated-separation","fidelity":"requires-human-repaint-audit",
-      "rig_complete":False,"source_is_flattened":True,"atlas_target":4096}
+      "rig_complete":False,"source_is_flattened":True,"atlas_target":4096,
+      "opaque_full_portrait_layer":False,"transparent_background":True}
     (outdir/"manifest.json").write_text(json.dumps(metadata,indent=2),encoding="utf-8")
     print(json.dumps({"output":str(path),"bytes":path.stat().st_size,
       "layers":len(parts),"atlas":4096,"rig_ready":False}))
