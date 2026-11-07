@@ -14,6 +14,10 @@ async function verify(browser,label,viewport){
   await page.goto(BASE+"/bilik-antara.html?voice-avatar=live2d&voice-preview=1&voice-avatar-demo=1",{waitUntil:"domcontentloaded",timeout:35000});
   await page.waitForSelector("#voicePanel.voice-ui-experiment-v3",{state:"attached",timeout:20000});
   await page.locator("#voiceLive").click();
+  // Guard against accidentally rendering the old faceless rig artifact.
+  const moc=await page.request.get(BASE+"/assets/live2d/aksara/aksara-celestial-layered-draft.moc3");
+  assert.equal(moc.status(),200,label+" actual Cubism .moc3 must be served");
+  assert.ok((await moc.body()).length>1200000,label+" corrected face stacking model expected");
   await page.waitForFunction(()=>window.AksaraLive2DExperiment?.snapshot?.().status==="ready"||window.AksaraLive2DExperiment?.snapshot?.().failed,{timeout:35000});
   const result=await page.evaluate(()=>{
    const stage=document.getElementById("voiceAvatarStage");
