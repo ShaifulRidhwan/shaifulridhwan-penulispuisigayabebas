@@ -141,8 +141,8 @@ def main():
     # underpainting, not the whole frozen image.
     hair_root=polygon([
       (295,1),(720,1),(802,70),(888,171),(940,305),(936,491),
-      (898,648),(847,774),(819,1039),(803,1447),
-      (289,1447),(260,1081),(211,830),(178,642),(165,429),
+      (898,648),(847,774),(804,865),
+      (294,865),(211,830),(178,642),(165,429),
       (200,237),(249,103)],3)
     from PIL import ImageChops
     trim=ImageChops.lighter(left_back,right_back)
@@ -165,8 +165,8 @@ def main():
     parts=[
       # No full-resolution static portrait in the Cubism drawable list.
       ("back hair root",rgba(root_paint,hair_root)),
-      ("back hair left",rgba(original,left_back)),
-      ("back hair right",rgba(original,right_back)),
+      ("back hair left",rgba(root_paint,left_back)),
+      ("back hair right",rgba(root_paint,right_back)),
       ("topwear",rgba(original,dress)),
       ("face",rgba(skin,face)),
       ("mouth inside",mouth_inside(original)),
