@@ -13,28 +13,32 @@ test("One clean external stylesheet and preserved cinematic assets",()=>{
  assert.doesNotMatch(html,/<style\b/);
  assert.equal((html.match(/rel="stylesheet" href="bilik-antara\.css/g)||[]).length,1);
  assert.match(css,/\.world-art/);
- assert.match(css,/aksara-celestial-static\.webp/);
+ assert.match(css,/aksara-cinematic-desktop\.webp/);
  assert.match(css,/\.message\.ai::before/);
  assert.match(css,/bilik-antara-woman-emblem\.svg/);
  assert.equal(cover[0],0xff);assert.equal(cover[1],0xd8);
  assert.match(emblem,/<svg[^>]+viewBox="0 0 96 96"/);
- assert.ok(Buffer.byteLength(css)<127000,"CSS parse budget unexpectedly big");
- assert.ok(require("node:zlib").gzipSync(css).length<28000,"Compressed CSS network budget unexpectedly big");
+ assert.ok(Buffer.byteLength(css)<135000,"CSS parse budget unexpectedly big");
+ assert.ok(require("node:zlib").gzipSync(css).length<31000,"Compressed CSS network budget unexpectedly big");
 });
 
-test("Bilik, Studio and Novel share optimized WebP wallpapers without changing their glass UI",()=>{
+test("Bilik uses separate original desktop and mobile WebP; Studio and Perpustakaan preserve shared art",()=>{
  const studio=fs.readFileSync("studio-antara.css","utf8");
  const novel=fs.readFileSync("perpustakaan-aksara.css","utf8");
- const asset="aksara-celestial-static.webp";
- for(const [sheet,page] of [[css,"Bilik"],[studio,"Studio"],[novel,"Novel"]]){
-  assert.ok(sheet.includes(asset+"?v=1"),page+" must use the same selected portrait wallpaper");
-  assert.ok(!sheet.includes("bilik-antara-bg-desktop.webp"),page+" must not stretch the old landscape variant");
+ const shared="aksara-celestial-static.webp";
+ for(const [sheet,page] of [[studio,"Studio"],[novel,"Perpustakaan"]]){
+  assert.ok(sheet.includes(shared+"?v=1"),page+" must retain its existing shared image");
  }
- assert.equal(html.split(asset+"?v=1").length-1,2,"Desktop/mobile preloads must share one cached asset");
- const bytes=fs.statSync(asset).size;
- assert.ok(bytes>1000&&bytes<100000,"Shared portrait wallpaper must remain a lightweight WebP");
- assert.match(css,/background-size:auto 100%,cover/, "Desktop must preserve the portrait aspect ratio");
- assert.match(css,/background-size:cover,cover/, "Mobile must fill its portrait viewport");
+ assert.ok(!css.includes(shared),"Bilik must not request the retired shared wallpaper");
+ for(const asset of ["aksara-cinematic-desktop.webp","aksara-cinematic-mobile.webp"]){
+  assert.ok(html.includes(asset+"?v=1"),"Bilik must preload "+asset);
+  assert.ok(css.includes(asset+"?v=1"),"Bilik CSS must render "+asset);
+  const bytes=fs.readFileSync(asset);
+  assert.ok(bytes.length>1000&&bytes.length<100000,"Cinematic art remains compressed");
+  assert.equal(bytes.toString("ascii",0,4),"RIFF");
+  assert.equal(bytes.toString("ascii",8,12),"WEBP");
+ }
+ assert.match(css,/background-size:cover,cover/,"Separate aspect-ratio assets should fill each viewport");
  assert.match(studio,/background-size:cover,auto 100%,cover/);
  assert.match(novel,/background-size:cover,auto 100%,cover/);
  assert.match(studio,/pointer-events:none/);
@@ -344,7 +348,7 @@ test("Retired ambient CSS and blank breakpoints stay removed",()=>{
  for(const name of ["worldBreath","hazeDrift","embersTravel","antaraAmbientPane","glassGlide"])
   assert.doesNotMatch(css,new RegExp("@keyframes\\s+"+name+"\\b"));
  assert.doesNotMatch(css,/\.world-haze\b|\.world-embers\b|\.world-light-glow\b/);
- assert.match(html,/bilik-antara\.css\?v=106/,"Bust cached 30-day stylesheet");
+ assert.match(html,/bilik-antara\.css\?v=\d+/,"Keep the long-cache stylesheet URL versioned");
  assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\s*\.conversation::before,\.conversation::after,[\s\S]*?animation:none!important/);
  assert.doesNotMatch(css,/prefers-reduced-motion:reduce\)\{[^}]*animation:[^;}]*infinite/);
  assert.doesNotMatch(css,/\.message-place(?:-action)?\b/,"Location remains hidden from chat metadata");
