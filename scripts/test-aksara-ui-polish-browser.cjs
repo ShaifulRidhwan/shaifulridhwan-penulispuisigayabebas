@@ -35,9 +35,12 @@ async function inspect(browser,name,viewport){
   assert.equal(tokens,0,name+" preflight requested token before consent");
   assert.equal(await page.evaluate(()=>window.__micRequests),0,name+" preflight requested microphone before consent");
   const look=await mic.evaluate(el=>{
-   const s=getComputedStyle(el);return {bg:s.backgroundImage,blur:s.backdropFilter,radius:parseFloat(s.borderTopLeftRadius)};
+   const s=getComputedStyle(el);return {bg:s.backgroundImage,base:s.backgroundColor,blur:s.backdropFilter,radius:parseFloat(s.borderTopLeftRadius)};
   });
   assert.match(look.bg,/linear-gradient/);assert.match(look.blur,/blur/);assert.ok(look.radius>=20);
+  const opacity=Number((look.base.match(/rgba?\([^,]+,[^,]+,[^,]+,\s*([\d.]+)\)/)||[])[1]);
+  assert.ok(opacity>=0.60&&opacity<=0.78,name+" mic consent glass is too opaque: "+look.base);
+  assert.equal(await mic.locator(".aksara-glass-mic-icon svg").count(),1,name+" mic must use crisp SVG, not emoji");
   await page.locator("#aksaraMicCancel").click();
   assert.equal(await mic.isVisible(),false,name+" cancel should close preflight");
   assert.equal(await page.evaluate(()=>window.__micRequests),0);
