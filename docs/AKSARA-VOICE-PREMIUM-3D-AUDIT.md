@@ -3,6 +3,9 @@
 Date: 2026-11-08 (Asia/Kuala_Lumpur)
 
 **This is an audit, not a completed character or a working avatar preview.**
+
+**Latest update:** the local CPU route now works and Blender 4.3.2 is installed. Real GLB candidates and editable scenes were produced, rendered and visually rejected. See [actual local CPU results](AKSARA-LOCAL3D-CPU-RESULTS.md); access/login is no longer the active blocker for that route.
+
 No production files have been changed. Do not merge this experiment.
 
 ## Evidence inspected

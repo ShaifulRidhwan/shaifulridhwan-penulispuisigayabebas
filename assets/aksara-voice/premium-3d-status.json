@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "updatedDate": "2026-11-08",
   "timeZone": "Asia/Kuala_Lumpur",
-  "status": "blocked-at-character-production",
+  "status": "local-cpu-candidates-produced-visual-quality-rejected",
   "auditedMainCommit": "b2b98f78f328cb2227bc06de8a9d37aa6e821e3f",
   "experimentalBranch": "experiment/aksara-voice-premium-3d-rebuild",
-  "auditOnly": true,
+  "auditOnly": false,
   "mergeAllowed": false,
   "productionRuntimeModified": false,
   "modelUrl": null,
@@ -16,7 +16,7 @@
   "animationsCreated": false,
   "voiceIntegrated": false,
   "visualApproval": false,
-  "blenderInstalled": false,
+  "blenderInstalled": true,
   "falInstalledConfirmed": true,
   "falGenerationActionExposed": true,
   "falBillingBlocked": true,
@@ -35,7 +35,7 @@
   "characterPerformanceMeasured": false,
   "androidDeviceTested": false,
   "remaining": [
-    "Obtain usable character-production tool access",
+    "Create coherent character anatomy, eyes, hair, gown and crown that satisfy visual acceptance; automatic candidates failed",
     "Create and visually approve the actual AKSARA mesh and materials",
     "Create and verify facial, body, hair, gown and accessory deformation",
     "Implement and inspect natural state transitions and secondary motion",
@@ -52,5 +52,30 @@
   "freeGenerationBlock": "ZeroGPU quota exceeded for unauthenticated request",
   "freeGenerationGLB": null,
   "freeHFAccountAuthenticated": false,
-  "paidGenerationAllowed": false
+  "paidGenerationAllowed": false,
+  "candidateGeometryCreated": true,
+  "approvedCharacterCreated": false,
+  "localCPUInferenceProven": true,
+  "loginRequiredForLocalInference": false,
+  "newCharacterRigCreated": false,
+  "editableCandidateBlenderScenesCreated": true,
+  "candidateViewsRendered": [
+    "front",
+    "quarter",
+    "profile",
+    "back"
+  ],
+  "webGLFPSMeasured": false,
+  "candidatePerformanceSeconds": {
+    "triposrInference": 11.319,
+    "triposrExtraction": 22.517,
+    "hunyuanSampling": 203.216,
+    "correctTurboFloat32VAELoadAndDecode": 87.527
+  },
+  "repairCandidate": {
+    "vertices": 149382,
+    "triangles": 299902,
+    "visualApproval": false
+  },
+  "latestResultsDocument": "docs/AKSARA-LOCAL3D-CPU-RESULTS.md"
 }

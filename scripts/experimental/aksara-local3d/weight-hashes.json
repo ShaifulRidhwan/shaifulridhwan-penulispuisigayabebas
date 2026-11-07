@@ -1,0 +1,14 @@
+{
+  "local3d/weights/triposr/model.ckpt": {
+    "sha256": "429e2c6b22a0923967459de24d67f05962b235f79cde6b032aa7ed2ffcd970ee",
+    "bytes": 1677246742
+  },
+  "local3d/weights/hunyuan-mini-turbo/model.fp16.safetensors": {
+    "sha256": "bdbcef30dd0149a281e17d5b5b1fdad1122c904e098a42f3100e04e03c247bc4",
+    "bytes": 3822584202
+  },
+  "local3d/weights/hunyuan-vae-turbo/model.fp16.safetensors": {
+    "sha256": "5dcaca67a8da9e7079fb7b55714a572d0651ac95983bb43099913feaf6738f94",
+    "bytes": 407410402
+  }
+}
