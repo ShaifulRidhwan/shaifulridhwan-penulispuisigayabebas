@@ -331,10 +331,10 @@ test("glass preflight and Terminal picker are presentation-only",()=>{
  assert.match(skin,/backdrop-filter:blur/);
  assert.match(ui,/<svg viewBox="0 0 24 24"/);
  assert.doesNotMatch(ui,/🎙/);
- assert.match(ui,/bilik-antara-ui-polish\\.css\\?v=2/);
- assert.match(skin,/rgba\\(29,39,53,\\.67\\)/);
- assert.match(skin,/rgba\\(10,17,30,\\.59\\)/);
- assert.match(skin,/blur\\(27px\\) saturate\\(1\\.18\\)/);
- assert.match(skin,/\\.aksara-glass-mic-icon svg/);
+ assert.match(ui,/bilik-antara-ui-polish\.css\?v=2/);
+ assert.match(skin,/rgba\(29,39,53,\.67\)/);
+ assert.match(skin,/rgba\(10,17,30,\.59\)/);
+ assert.match(skin,/blur\(27px\) saturate\(1\.18\)/);
+ assert.match(skin,/\.aksara-glass-mic-icon svg/);
  assert.match(live,/LIVE_LOCKED_VOICE="Aoede"/);
 });
