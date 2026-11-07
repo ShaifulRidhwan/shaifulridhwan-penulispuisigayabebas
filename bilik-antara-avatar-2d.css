@@ -1,0 +1,44 @@
+/* AKSARA Voice 2D anime experiment, opt-in via ?voice-avatar=2d.
+   Fully isolated from voice transport, microphone, volume and native controls. */
+#voiceAvatarStage.avatar-2d-active{
+  isolation:isolate;contain:layout paint;
+}
+#voiceAvatarStage.avatar-2d-active .aksara-2d-portrait{
+  display:block;position:absolute;z-index:3;
+  width:min(100%,560px);height:100%;
+  max-height:100%;left:50%;top:0;
+  transform:translateX(-50%);
+  overflow:visible;pointer-events:none;
+  filter:drop-shadow(0 12px 24px rgba(0,0,0,.36));
+  will-change:transform;
+}
+#voiceAvatarStage.avatar-2d-active .voice-x-avatar-fallback,
+#voiceAvatarStage.avatar-2d-active .voice-avatar-canvas{display:none!important}
+#voiceAvatarStage.avatar-2d-active.avatar-ready .voice-avatar-glow{
+  opacity:.52!important;filter:blur(25px)!important;
+}
+#voiceAvatarStage.avatar-2d-active #a2d-head,
+#voiceAvatarStage.avatar-2d-active #a2d-front-hair,
+#voiceAvatarStage.avatar-2d-active #a2d-back-hair{
+  will-change:transform;
+}
+#voiceAvatarStage.avatar-2d-active #a2d-eye-left,
+#voiceAvatarStage.avatar-2d-active #a2d-eye-right,
+#voiceAvatarStage.avatar-2d-active #a2d-brow-left,
+#voiceAvatarStage.avatar-2d-active #a2d-brow-right{
+  transform-box:fill-box;transform-origin:center;
+}
+#voicePanel.voice-ui-experiment-v3 #voiceAvatarStage.avatar-2d-active .aksara-2d-portrait{
+  width:min(100%,530px);height:calc(100% - 3px);
+}
+@media(max-width:760px){
+  #voiceAvatarStage.avatar-2d-active .aksara-2d-portrait{
+    width:100%;height:100%;max-width:460px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #voiceAvatarStage.avatar-2d-active .aksara-2d-portrait,
+  #voiceAvatarStage.avatar-2d-active #a2d-head,
+  #voiceAvatarStage.avatar-2d-active #a2d-front-hair,
+  #voiceAvatarStage.avatar-2d-active #a2d-back-hair{will-change:auto}
+}
