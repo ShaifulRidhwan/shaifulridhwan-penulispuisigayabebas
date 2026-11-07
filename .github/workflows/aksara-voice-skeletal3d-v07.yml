@@ -1,0 +1,48 @@
+name: AKSARA Voice Skeletal3D v0.7
+on:
+  pull_request:
+    paths:
+      - 'bilik-antara-avatar.js'
+      - 'bilik-antara-avatar-skeletal-v07.js'
+      - 'bilik-antara-voice-experiment-v3.js'
+      - 'bilik-antara.html'
+      - 'tests/aksara-voice-skeletal3d-v07.test.cjs'
+      - 'scripts/test-aksara-skeletal3d-v07-browser.cjs'
+      - '.github/workflows/aksara-voice-skeletal3d-v07.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rig-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test real bone controller and preserve original Voice
+        run: |
+          node --check bilik-antara-avatar.js
+          node --check bilik-antara-avatar-skeletal-v07.js
+          node --test tests/aksara-voice-skeletal3d-v07.test.cjs tests/aksara-voice-v3.test.cjs tests/aksara-voice-3d-ui-experiment.test.cjs
+      - name: Install browser test dependency
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.0
+          npx playwright install --with-deps chromium
+      - name: Smoke test real skeletal GLB rendering in desktop and mobile
+        run: |
+          python3 -m http.server 4177 --bind 127.0.0.1 >/tmp/aksara-skeletal3d-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for n in 1 2 3 4 5;do
+            if curl -fsS http://127.0.0.1:4177/bilik-antara.html >/dev/null;then break;fi
+            sleep 1
+          done
+          node scripts/test-aksara-skeletal3d-v07-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aksara-skeletal3d-v07-browser-visual
+          path: browser-audit-artifacts/aksara-skeletal3d-v07-*.png
+          if-no-files-found: warn

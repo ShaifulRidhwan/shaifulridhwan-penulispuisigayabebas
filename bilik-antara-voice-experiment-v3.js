@@ -143,7 +143,7 @@
       control.title="Kawalan audio hanya aktif dalam panggilan sebenar";
     }
     /* Preserve the original GLB loading path for the UI preview. */
-    import("./bilik-antara-avatar.js?v=15").catch(()=>{
+    import("./bilik-antara-avatar.js?v=16").catch(()=>{
       stage.classList.add("avatar-unavailable");
     });
     refresh();

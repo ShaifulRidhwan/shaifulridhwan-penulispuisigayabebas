@@ -42,7 +42,7 @@ test("3D avatar and original voice engine remain in place",()=>{
  const html=read("bilik-antara.html");
  const avatar=read("bilik-antara-avatar.js");
  const voice=read("bilik-antara-voice.js");
- assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=15"\)/);
+ assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=16"\)/);
  assert.match(avatar,/brunette\.glb/);
  assert.match(avatar,/voiceAvatarStage/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
@@ -215,7 +215,7 @@ test("v4.3 cinematic framing, status waveform, quiet panels and accessible end c
  assert.match(css,/\.voice-dialogue-dock \.voice-wave\{/);
  assert.match(css,/rgba\(231,197,149,.13\)/);
  assert.match(css,/button\.voice-x-end\{\s*background:linear-gradient\(145deg,rgba\(180,71,78,.90\)/);
- assert.match(html,/bilik-antara-avatar\.js\?v=15/);
+ assert.match(html,/bilik-antara-avatar\.js\?v=16/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=15/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=12/);
 });
