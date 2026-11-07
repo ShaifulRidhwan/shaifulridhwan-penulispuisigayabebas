@@ -69,6 +69,7 @@ const languageLock=[
  "Untuk loghat tempatan, utamakan kosa kata dan ritma yang betul berbanding meniru aksen secara berlebihan. Suara sintesis mungkin tidak mampu menghasilkan semua sebutan negeri dengan tepat.",
  "VOICE SAHAJA: Hasilkan ayat lisan biasa tanpa emoji, nama emoji, reaksi ikon, Markdown, label visual atau arahan pentas. Jangan menyebut perkataan wink, smiley, emoji atau simbol sebagai penutup ayat. Jangan bacakan emoji dalam sejarah sembang.",
  "Perkataan pendek seperti 'lapar', 'haus', 'penat' dan 'bosan' ialah input yang jelas; jawab maksudnya terus. Jangan meminta ulang kecuali audio benar-benar tidak boleh difahami.",
+ "Seruan pendek seperti 'oi', 'weh', 'haa' dan 'hello' ialah panggilan, bukan soalan lengkap. Balas secara ringkas tanpa mengulang ayat sambutan yang sama berkali-kali. Tunggu soalan berikutnya.",
  "Berikan jawapan lengkap mengikut kesukaran soalan. Jangan memendekkan jawapan kepada serpihan ayat."
 ].join(" ");
 const voicePlainText=value=>String(value||"")
@@ -79,6 +80,8 @@ const SOCKET_BASE="wss://generativelanguage.googleapis.com/ws/google.ai.generati
 const MAX_DAY=24*60*60*1000; // Access window, NOT one 24-hour Google WebSocket.
 const MAX_RECONNECT_ATTEMPTS=3;
 const STABLE_CONNECTION_MS=30000;
+// Local level is used only for diagnostics and quiet-boundary timing. Gemini controls VAD.
+const VOICE_MIC_HINT_LEVEL=0.014;
 const CONNECTION_SPAN=8*60*1000; // Renew before Google's ~10-minute connection reset.
 let recognizer=null,dictating=false,liveGeneration=0;
 let socket=null,mediaStream=null,micContext=null,micNode=null,micSource=null,micSink=null,playContext=null,playGain=null;
@@ -100,8 +103,8 @@ const VOICE_TOOLS=[{functionDeclarations:[
 {name:"get_voice_session_status",description:"Dapatkan diagnostik sambungan voice tanpa teks atau rakaman suara.",parameters:{type:"OBJECT",properties:{}}}
 ]}];
 let advancedVoiceConfig=true,turnStartAt=0,turnHeardAt=0,lastCommand="",lastCommandAt=0,echoRiskSince=0,suppressPlaybackUntilUser=false;
-let voiceMetrics={startedAt:0,connections:0,reconnects:0,interruptions:0,commands:0,turns:0,audioChunks:0,echoRiskEvents:0,lastResponseLatencyMs:null,firstAudioScheduledMs:null,audioOverflows:0,backgroundPauses:0,modeChanges:0,styleChanges:0};
-const voiceDiagnosticSnapshot=()=>({...voiceMetrics,connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,volumePercent:Number(volumeInput?.value??50),volumeGain:voiceVolume,advancedFeatures:advancedVoiceConfig,model:liveModel||"unknown",lockedVoice:LIVE_LOCKED_VOICE,voicePhase,selectedStyle:preferredStyleId,confirmedStyle:confirmedStyleId,queuedAudioBytes:pendingAudioBytes,thoughtMode:window.BilikAntaraThought?.getMode?.()||"cahaya",dialect:activeDialect,dialectSwitching,reconnectAttempts:connectionAttempts,microphoneState:micContext?.state||"closed",playbackState:playContext?.state||"closed",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
+let voiceMetrics={startedAt:0,connections:0,reconnects:0,interruptions:0,commands:0,turns:0,audioChunks:0,echoRiskEvents:0,microphoneFramesSent:0,microphoneFramesDropped:0,microphoneAudibleFrames:0,lastMicrophoneLevel:0,peakMicrophoneLevel:0,transcriptSegments:0,lastTranscriptAt:0,lastResponseLatencyMs:null,firstAudioScheduledMs:null,audioOverflows:0,backgroundPauses:0,modeChanges:0,styleChanges:0};
+const voiceDiagnosticSnapshot=()=>({...voiceMetrics,detectionProfile:"voice-detection-v2",connected:liveReady,sessionActive:liveActive,micEnabled,speakerEnabled,volumePercent:Number(volumeInput?.value??50),volumeGain:voiceVolume,advancedFeatures:advancedVoiceConfig,model:liveModel||"unknown",lockedVoice:LIVE_LOCKED_VOICE,voicePhase,selectedStyle:preferredStyleId,confirmedStyle:confirmedStyleId,queuedAudioBytes:pendingAudioBytes,thoughtMode:window.BilikAntaraThought?.getMode?.()||"cahaya",dialect:activeDialect,dialectSwitching,reconnectAttempts:connectionAttempts,microphoneState:micContext?.state||"closed",playbackState:playContext?.state||"closed",elapsedSeconds:sessionStarted?Math.round((Date.now()-sessionStarted)/1000):0});
 window.BilikAntaraVoiceDiagnostics={snapshot:voiceDiagnosticSnapshot};
 function handleSpokenControl(text){
  const q=String(text||"").toLocaleLowerCase("ms-MY").replace(/[.,!?]+$/g,"").trim();
@@ -534,7 +537,7 @@ function onServerMessage(payload){
     sayStatus("Aku tengah dengar…");
   }
   if(c.inputTranscription&&c.inputTranscription.text){
-    turnStartAt=performance.now();turnHeardAt=turnStartAt;voiceMetrics.turns++;
+    turnStartAt=performance.now();turnHeardAt=turnStartAt;voiceMetrics.turns++;voiceMetrics.transcriptSegments++;voiceMetrics.lastTranscriptAt=Date.now();
     if(!handleSpokenControl(c.inputTranscription.text))suppressPlaybackUntilUser=false;
     appendTranscript("user",c.inputTranscription.text);
     scheduleDialectSwitch(lastTurn?.text||c.inputTranscription.text);
@@ -589,7 +592,7 @@ async function startLive(){
   if(dialectTimer){clearTimeout(dialectTimer);dialectTimer=null;}
   liveActive=true;liveReady=false;micEnabled=true;speakerEnabled=true;
   advancedVoiceConfig=true;turnStartAt=0;turnHeardAt=0;lastCommand="";lastCommandAt=0;echoRiskSince=0;suppressPlaybackUntilUser=false;
-  voiceMetrics={startedAt:Date.now(),connections:0,reconnects:0,interruptions:0,commands:0,turns:0,audioChunks:0,echoRiskEvents:0,lastResponseLatencyMs:null,firstAudioScheduledMs:null,audioOverflows:0,backgroundPauses:0,modeChanges:0,styleChanges:0};
+  voiceMetrics={startedAt:Date.now(),connections:0,reconnects:0,interruptions:0,commands:0,turns:0,audioChunks:0,echoRiskEvents:0,microphoneFramesSent:0,microphoneFramesDropped:0,microphoneAudibleFrames:0,lastMicrophoneLevel:0,peakMicrophoneLevel:0,transcriptSegments:0,lastTranscriptAt:0,lastResponseLatencyMs:null,firstAudioScheduledMs:null,audioOverflows:0,backgroundPauses:0,modeChanges:0,styleChanges:0};
   sessionStarted=Date.now();resumeHandle="";liveModel="";reconnecting=false;connectionAttempts=0;lastSpeechAt=0;connectedAt=0;
   try{preferStandardFallback=window.sessionStorage?.getItem(FALLBACK_CACHE_KEY)==="1";}catch(_){preferStandardFallback=false;}
   lastTurn=null;transcript.replaceChildren();panel.classList.remove("voice-speaking");
@@ -620,6 +623,7 @@ async function startLive(){
       const settings=micTrack.getSettings?.()||{};
       voiceMetrics.echoCancellationActive=settings.echoCancellation===true;
       voiceMetrics.noiseSuppressionActive=settings.noiseSuppression===true;
+      voiceMetrics.autoGainControlActive=settings.autoGainControl===true;
     }
     const Audio=window.AudioContext||window.webkitAudioContext;
     micContext=new Audio({latencyHint:"interactive"});
@@ -790,9 +794,11 @@ async function startLive(){
           sessionResumption:handle?{handle}:{},
           realtimeInputConfig:{
             automaticActivityDetection:{
-              startOfSpeechSensitivity:"START_SENSITIVITY_LOW",
+              // Higher onset sensitivity and shorter onset commitment recognize soft / short Malaysian speech.
+              // Keep a generous pause window to avoid cutting sentences mid-thought.
+              startOfSpeechSensitivity:"START_SENSITIVITY_HIGH",
               endOfSpeechSensitivity:"END_SENSITIVITY_LOW",
-              prefixPaddingMs:160,silenceDurationMs:1000
+              prefixPaddingMs:100,silenceDurationMs:1450
             },
             // Enable native Gemini Live barge-in: the user can speak over the AI.
             // Gemini detects real speech and sends serverContent.interrupted.
@@ -836,6 +842,7 @@ async function startLive(){
         micNode.port.onmessage=event=>{
           if(generation!==liveGeneration||socket!==ws||!micEnabled||!liveReady||ws.readyState!==WebSocket.OPEN)return;
           if(ws.bufferedAmount>250000){
+            voiceMetrics.microphoneFramesDropped++;
             if(!congestedAt)congestedAt=Date.now();
             if(Date.now()-congestedAt>5000)renewConnection("Audio tersekat jap. Aku cuba pulihkan…");
             return; // Don't send a backlog of stale microphone audio.
@@ -843,17 +850,21 @@ async function startLive(){
           congestedAt=0;
           const {pcm,level}=event.data||{};
           if(!(pcm instanceof ArrayBuffer))return;
-          if(Number(level)>0.028){
+          const micLevel=Math.max(0,Math.min(1,Number(level)||0));
+          voiceMetrics.lastMicrophoneLevel=Math.round(micLevel*10000)/10000;
+          voiceMetrics.peakMicrophoneLevel=Math.max(voiceMetrics.peakMicrophoneLevel,voiceMetrics.lastMicrophoneLevel);
+          if(micLevel>VOICE_MIC_HINT_LEVEL){
+            voiceMetrics.microphoneAudibleFrames++;
             lastSpeechAt=Date.now();
             if(playbackBusy()){
               if(!echoRiskSince)echoRiskSince=Date.now();
               else if(Date.now()-echoRiskSince>950){voiceMetrics.echoRiskEvents++;echoRiskSince=Date.now()+2400;}
             }else echoRiskSince=0;
           }
-          setWave((level||0)*4.6);
+          setWave(micLevel*4.6);
           try{ws.send(JSON.stringify({realtimeInput:{audio:{
             data:bytesBase64(pcm),mimeType:"audio/pcm;rate=16000"
-          }}}));}catch(_){renewConnection("Suara kau tersekat masa dihantar. Aku cuba pulihkan…");}
+          }}}));voiceMetrics.microphoneFramesSent++;}catch(_){voiceMetrics.microphoneFramesDropped++;renewConnection("Suara kau tersekat masa dihantar. Aku cuba pulihkan…");}
         };
         sayStatus("Connection dah buka. Tunggu Google confirm…");
       };
