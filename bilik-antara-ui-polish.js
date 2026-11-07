@@ -14,7 +14,7 @@
   sheet.rel="stylesheet";sheet.href="bilik-antara-ui-polish.css?v=1";
   document.head.appendChild(sheet);
  };
- if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",applySkin,{once:true});
+ if(document.readyState!=="complete")document.addEventListener("DOMContentLoaded",applySkin,{once:true});
  else applySkin();
 
 
