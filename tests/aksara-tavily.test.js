@@ -107,13 +107,13 @@ test("render path uses one blocking core stylesheet and defers secondary assets"
  const fs=require("node:fs");
  const html=fs.readFileSync("bilik-antara.html","utf8");
  const toml=fs.readFileSync("netlify.toml","utf8");
- assert.match(html,/rel="stylesheet" href="bilik-antara\.css\?v=106">/);
+ assert.match(html,/rel="stylesheet" href="bilik-antara\.css\?v=\d+">/);
  assert.match(html,/href="aksara-header\.css\?v=3" media="print" onload="this\.media='all'"/);
  assert.match(html,/href="bilik-antara-code-execution\.css\?v=1" media="print" onload="this\.media='all'"/);
  assert.match(html,/src="bilik-antara-gemini-status\.js\?v=2" defer/);
  assert.match(html,/bilik-antara-multi-ai-status\.css\?v=2" media="print"/);
- assert.equal((html.match(/href="aksara-celestial-static\.webp\?v=1" as="image"/g)||[]).length,2);
- for(const image of ["aksara-celestial-static.webp","aksara-background-cahaya-gelap.webp"]){
+ assert.equal((html.match(/href="aksara-cinematic-(?:desktop|mobile)\.webp\?v=1" as="image"/g)||[]).length,2);
+ for(const image of ["aksara-cinematic-desktop.webp","aksara-cinematic-mobile.webp","aksara-celestial-static.webp"]){
   const rule=toml.split("[[headers]]").find(s=>s.includes('for = "/'+image+'"'));
   assert.ok(rule?.includes("max-age=2592000"),image+" must have 30-day cache");
  }

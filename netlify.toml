@@ -82,12 +82,12 @@
 # Bump ?v= references when changing any cached asset; do not use immutable for frequently edited files.
 # Keep HTML documents uncached so future deployments appear promptly.
 [[headers]]
-  for = "/bilik-antara-bg-mobile.webp"
+  for = "/aksara-cinematic-mobile.webp"
   [headers.values]
     Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 [[headers]]
-  for = "/bilik-antara-bg-desktop.webp"
+  for = "/aksara-cinematic-desktop.webp"
   [headers.values]
     Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
@@ -127,15 +127,10 @@
   [headers.values]
     Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
-# New shared static wallpaper used by Bilik, Novel and Studio.
+# Living World v1 uses only versioned desktop and mobile WebP assets.
+
+# Shared wallpaper is still used by Studio and Perpustakaan.
 [[headers]]
   for = "/aksara-celestial-static.webp"
-  [headers.values]
-    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
-
-# Earlier artwork still appears in the layered stylesheet. Cache it for 30 days
-# as well; the displayed celestial wallpaper already has this same policy.
-[[headers]]
-  for = "/aksara-background-cahaya-gelap.webp"
   [headers.values]
     Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"

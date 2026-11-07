@@ -2,8 +2,11 @@
 const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs");
 const html=fs.readFileSync("bilik-antara.html","utf8");
 const css=fs.readFileSync("bilik-antara.css","utf8");
-test("Bilik uses static WebP with no video/loop downloaded or autoplay controller",()=>{
- assert.match(html,/aksara-celestial-static\.webp\?v=1/);
+test("Bilik uses original responsive WebP with lightweight CSS motion and no ambient video controller",()=>{
+ assert.match(html,/aksara-cinematic-desktop\.webp\?v=1/);
+ assert.match(html,/aksara-cinematic-mobile\.webp\?v=1/);
+ assert.match(html,/bilik-antara-cinematic\.js\?v=1/);
+ assert.doesNotMatch(html,/bilik-antara-living-v08|aksara-celestial-static\.webp/);
  assert.doesNotMatch(html,/<video\b|id="aksaraAmbientVideo"|aksara-bilik-antara-ambient\.mp4/);
  assert.doesNotMatch(html,/bilik-antara-video\.(?:css|js)/);
  assert.match(css,/\.world-scene \.world-art\{/);

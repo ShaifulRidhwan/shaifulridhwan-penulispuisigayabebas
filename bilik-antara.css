@@ -3268,17 +3268,6 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-ve
  .conversation .composer #thoughtMode .thinking-brain .brain-signal{animation:none!important}
 }
 
-/* Celestial 2026: one static WebP, no compositor-heavy wallpaper loops. */
-.world-scene .world-art{
- inset:0!important;transform:none!important;animation:none!important;will-change:auto!important;
- filter:none!important;opacity:1!important;
- background-image:url("./aksara-celestial-static.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e)!important;
- background-position:center,center!important;background-size:auto 100%,cover!important;background-repeat:no-repeat!important;
-}
-
-@media(max-width:760px){.world-scene .world-art{background-size:cover,cover!important;background-position:center,center!important}}
-
-
 /* Multi A.I mobile dialog: keep header and Refresh in view while provider rows scroll.
    No changes to other feature, settings or Code Engine dialogs. */
 #multiAiDialog[open]{
@@ -3354,3 +3343,95 @@ body:not(.voice-focus):has(#settingsPanel[open]) .conversation>.feature-focus-ve
   backdrop-filter:blur(8px)!important;
  }
 }
+
+
+/* AKSARA Cinematic Living World v1.0: one source image per viewport.
+   The backdrop remains a still WebP; only small compositor overlays animate. */
+.world-scene{--cinematic-gold:.74;--cinematic-blue:.46;contain:paint}
+.world-scene .world-art{
+ inset:0!important;transform:none!important;animation:none!important;
+ filter:none!important;opacity:1!important;will-change:auto!important;
+ background-image:url("./aksara-cinematic-desktop.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e)!important;
+ background-position:center center,center center!important;
+ background-size:cover,cover!important;background-repeat:no-repeat,no-repeat!important;
+}
+.world-scene::after{
+ content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+ background:
+  linear-gradient(180deg,rgba(3,6,13,.18),rgba(5,8,16,.10) 25%,rgba(3,6,12,.22) 49%,rgba(3,6,12,.42) 76%,rgba(3,6,12,.66)),
+  radial-gradient(ellipse 64% 56% at 50% 53%,rgba(3,7,15,.30),transparent 90%);
+}
+.world-scene .cinematic-glow,.world-scene .cinematic-clash,.world-scene .cinematic-mist{
+ position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:1;
+}
+.world-scene .cinematic-glow::before,
+.world-scene .cinematic-glow::after{
+ content:"";position:absolute;inset:-9%;
+ border-radius:50%;transform:translate3d(0,0,0) scale(1);
+ will-change:transform,opacity;mix-blend-mode:screen;
+ animation:cinematic-breathe 19s ease-in-out infinite alternate;
+}
+.world-scene .cinematic-glow::before{
+ background:radial-gradient(ellipse 24% 27% at 15% 24%,rgba(255,175,59,.17),transparent 76%);
+ opacity:var(--cinematic-gold);
+}
+.world-scene .cinematic-glow::after{
+ background:radial-gradient(ellipse 24% 26% at 85% 20%,rgba(106,157,250,.17),transparent 78%);
+ animation-duration:24s;animation-delay:-9s;opacity:var(--cinematic-blue);
+}
+.world-scene .cinematic-mist{
+ z-index:2;inset:auto -7% -8%;height:32%;
+ background:radial-gradient(ellipse at 17% 70%,rgba(151,102,45,.11),transparent 56%),radial-gradient(ellipse at 82% 62%,rgba(63,100,157,.14),transparent 58%);
+ opacity:.65;transform:translate3d(0,0,0);
+ animation:cinematic-mist-drift 26s ease-in-out infinite alternate;
+}
+.world-scene .cinematic-clash{
+ z-index:2;opacity:0;
+ background:radial-gradient(ellipse 11% 24% at 51% 49%,rgba(220,191,164,.15),transparent 95%);
+ transition:opacity 1s ease;
+}
+body:has(.app-shell.is-busy) .world-scene[data-motion="on"] .cinematic-clash{
+ opacity:.70;animation:cinematic-thinking-glow 5.8s ease-in-out infinite;
+}
+html[data-cinematic-mode="gelap"] .world-scene{--cinematic-gold:.30;--cinematic-blue:.95}
+html[data-cinematic-mode="cahaya"] .world-scene{--cinematic-gold:.80;--cinematic-blue:.45}
+html[data-cinematic-mode="gelap"] .world-scene .cinematic-clash{
+ background:radial-gradient(ellipse 12% 25% at 52% 49%,rgba(115,167,242,.21),transparent 94%);
+}
+@keyframes cinematic-breathe{
+ from{transform:translate3d(-.6%,0,0) scale(.98)}
+ to{transform:translate3d(.8%,-.6%,0) scale(1.055)}
+}
+@keyframes cinematic-mist-drift{
+ from{transform:translate3d(-1.4%,0,0);opacity:.36}
+ to{transform:translate3d(1.4%,-.7%,0);opacity:.72}
+}
+@keyframes cinematic-thinking-glow{
+ 0%,100%{opacity:.12}50%{opacity:.7}
+}
+.world-scene[data-motion="off"] .cinematic-glow::before,
+.world-scene[data-motion="off"] .cinematic-glow::after,
+.world-scene[data-motion="off"] .cinematic-mist,
+.world-scene[data-motion="off"] .cinematic-clash,
+body.voice-focus .world-scene .cinematic-glow::before,
+body.voice-focus .world-scene .cinematic-glow::after,
+body.voice-focus .world-scene .cinematic-mist,
+body.voice-focus .world-scene .cinematic-clash{
+ animation:none!important;
+}
+.world-scene[data-motion="off"] .cinematic-glow,.world-scene[data-motion="off"] .cinematic-clash{opacity:0}
+@media(max-width:760px){
+ .world-scene .world-art{
+  background-image:url("./aksara-cinematic-mobile.webp?v=1"),linear-gradient(110deg,#27170f,#060b15 52%,#071b2e)!important;
+  background-position:center center,center center!important;background-size:cover,cover!important;
+ }
+ .world-scene .cinematic-glow::before{background:radial-gradient(ellipse 35% 19% at 16% 13%,rgba(255,179,69,.18),transparent 79%)}
+ .world-scene .cinematic-glow::after{background:radial-gradient(ellipse 33% 18% at 82% 12%,rgba(115,170,251,.18),transparent 80%)}
+ .world-scene .cinematic-mist{height:29%;opacity:.4}
+ .world-scene::after{background:linear-gradient(180deg,rgba(3,6,12,.13) 0%,rgba(4,7,13,.18) 30%,rgba(3,6,13,.32) 55%,rgba(3,5,10,.61) 100%)}
+}
+@media(prefers-reduced-motion:reduce){
+ .world-scene .cinematic-glow::before,.world-scene .cinematic-glow::after,
+ .world-scene .cinematic-mist,.world-scene .cinematic-clash{animation:none!important}
+}
+
