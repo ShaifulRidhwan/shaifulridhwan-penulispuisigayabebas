@@ -1901,7 +1901,7 @@ body.aksara-voice-3d-experiment #voiceStyleDialog button.voice-style-option:hove
 }
 @media(max-width:760px) and (max-height:670px){
   #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-hero{
-    min-height:165px!important;
+    min-height:175px!important;
   }
   #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-main{
     overflow-y:auto!important;
