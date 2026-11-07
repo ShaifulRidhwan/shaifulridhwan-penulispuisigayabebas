@@ -98,8 +98,9 @@ async function begin(){
   if(!active){gltf.scene.traverse(o=>{o.geometry?.dispose?.();});return;}
   root=gltf.scene;scene.add(root);
   if(skeletal3D){
-   const {create}=await import("./bilik-antara-avatar-skeletal-v07.js?v=1");
-   skeletalController=create({THREE,root});
+   await import("./bilik-antara-avatar-skeletal-v07.js?v=1");
+   skeletalController=window.AksaraSkeletal3DRig?.create({THREE,root});
+   if(!skeletalController)throw Error("Skeletal 3D rig adapter not loaded");
    stage.dataset.skeletal3d=skeletalController.ready?"ready":"missing-armature";
   }
   // Frame only the upper body: this model contains a whole character.
