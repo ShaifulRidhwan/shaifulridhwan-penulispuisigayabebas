@@ -188,7 +188,7 @@
  observer.observe(panel,{attributes:true,attributeFilter:["hidden","class","data-voice-phase"]});
  document.addEventListener("visibilitychange",resume);
  window.AksaraLive2DExperiment=Object.freeze({
-  snapshot:()=>({version:"0.3",runtime:"cubism-model",ready,failed,
+  snapshot:()=>({version:"0.4",runtime:"cubism-model",ready,failed,
    status:stage.dataset.live2dStatus||"checking",
    modelLoaded:!!model,renderer:app?"webgl":null,
    lastFrame,voiceConnectionUnchanged:true,
