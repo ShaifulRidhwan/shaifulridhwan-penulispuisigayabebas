@@ -97,7 +97,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    timeout-minutes: 10
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
         with:
@@ -148,6 +148,29 @@ jobs:
                   shutil.copy2(file,target)
           print("Validated rig files",len(names),"plus isolated accessories",list((root/"accessories").iterdir()))
           PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm runtime renders new Cubism rig before publishing
+        run: |
+          set -euo pipefail
+          node --test tests/aksara-live2d-v04.test.cjs tests/aksara-live2d-v05.test.cjs
+          npm install --no-save --no-audit --no-fund playwright@1.56.0
+          npx playwright install --with-deps chromium
+          python3 -m http.server 4177 --bind 127.0.0.1 >/tmp/aksara-rig-v05-server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for i in 1 2 3 4 5;do
+            if curl -fsS http://127.0.0.1:4177/bilik-antara.html >/dev/null;then break;fi
+            sleep 1
+          done
+          node scripts/test-aksara-live2d-v03-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aksara-live2d-v05-post-rig-visual
+          path: browser-audit-artifacts/aksara-live2d-v05-*.png
+          if-no-files-found: warn
       - name: Push quality rig only into experimental PR branch
         run: |
           set -euo pipefail
