@@ -10,11 +10,11 @@ const read=file=>fs.readFileSync(path.join(__dirname,"..",file),"utf8");
 test("eight exact speech styles and Gaul first, with Kedah and Penang grouped",()=>{
  const ids=dialect.options.map(x=>x.id);
  assert.deepEqual(ids,["gaul","perak","kedah-penang","kelantan","terengganu","negeri-sembilan","sabah","sarawak"]);
- assert.equal(dialect.options[0].label,"Bahasa Gaul");
+ assert.equal(dialect.options[0].label,"Bahasa Santai");
  assert.equal(dialect.label("kedah-penang"),"Kedah & Penang");
 });
-test("Bahasa Gaul is the default without aggressive imitation",()=>{
- assert.equal(dialect.label("auto"),"Bahasa Gaul");
+test("Bahasa Santai is the default without aggressive imitation",()=>{
+ assert.equal(dialect.label("auto"),"Bahasa Santai");
  assert.match(dialect.instruction("gaul"),/do, lah, laa/);
  assert.match(dialect.instruction("gaul"),/Jangan sumbat setiap ayat/);
  assert.match(dialect.instruction("gaul"),/Aoede/);
@@ -29,7 +29,7 @@ test("Spoken dialect switches resolve specific styles without triggering on trav
  assert.equal(dialect.detectRequest("Aku melawat Kelantan minggu depan"),null);
 });
 test("Old style ids migrate to permitted styles",()=>{
- assert.equal(dialect.label("standard"),"Bahasa Gaul");
+ assert.equal(dialect.label("standard"),"Bahasa Santai");
  assert.equal(dialect.has("auto"),true);
  assert.equal(dialect.has("pulau-pinang"),true);
  assert.equal(dialect.has("unknown"),false);
@@ -90,11 +90,11 @@ test("Voice HTML contains the selector and status badge",()=>{
  const html=read("bilik-antara.html");
  assert.match(html,/id="voiceDialectSelect"/);
  assert.match(html,/id="voicePhaseLabel"/);
- assert.match(html,/<option value="gaul">Bahasa Gaul<\/option>/);
- assert.match(html,/bilik-antara-dialek\.js\?v=4/);
+ assert.match(html,/<option value="gaul">Bahasa Santai<\/option>/);
+ assert.match(html,/bilik-antara-dialek\.js\?v=5/);
  assert.match(html,/bilik-antara-voice-core-v3.js\?v=2/);
  assert.match(html,/bilik-antara-voice-v3.css\?v=4/);
- assert.match(html,/bilik-antara-voice\.js\?v=50/);
+ assert.match(html,/bilik-antara-voice\.js\?v=51/);
 });
 test("Voice UI retains full-size classical layout with accessible picker and mode chip",()=>{
  const script=read("bilik-antara-voice.js");

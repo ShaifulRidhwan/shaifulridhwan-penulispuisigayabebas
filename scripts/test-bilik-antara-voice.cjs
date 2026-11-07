@@ -33,7 +33,7 @@ test("Retired recorded-audio UI is absent from source and active live page",()=>
 });
 test("Voice regional selector exposes colloquial Malay and new dialect styles",()=>{
  assert.match(html,/id="voiceDialectSelect"/);
- assert.match(html,/bilik-antara-dialek\.js\?v=4/);
+ assert.match(html,/bilik-antara-dialek\.js\?v=5/);
  assert.match(js,/styleSelect=\$\("voiceDialectSelect"\)/);
  assert.doesNotMatch(css,/\.voice-dialect-bar/);
   assert.match(html,/>Voice Chat<\/button>/);
@@ -54,7 +54,7 @@ test("Short Malay words trigger a natural answer, not five requests to repeat",(
  assert.match(js,/removeItem\("bilik-antara:voice-dialect:v1"\)/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/lapar/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/Jangan meminta ulang/);
- assert.match(js,/Bahasa Gaul/);
+ assert.match(js,/Bahasa Santai/);
 });
 test("Voice Detection v2 catches short speech and exposes private audio delivery counts",()=>{
  assert.match(js,/START_SENSITIVITY_HIGH/);
