@@ -35,9 +35,21 @@ async function inspect(browser,name,viewport){
   assert.equal(tokens,0,name+" preflight requested token before consent");
   assert.equal(await page.evaluate(()=>window.__micRequests),0,name+" preflight requested microphone before consent");
   const look=await mic.evaluate(el=>{
-   const s=getComputedStyle(el);return {bg:s.backgroundImage,blur:s.backdropFilter,radius:parseFloat(s.borderTopLeftRadius)};
+   const s=getComputedStyle(el);
+   const glyph=el.querySelector(".aksara-glass-mic-icon svg");
+   const g=glyph?getComputedStyle(glyph):null;
+   return {bg:s.backgroundImage,blur:s.backdropFilter,radius:parseFloat(s.borderTopLeftRadius),
+    iconWidth:g?.width||"",iconHeight:g?.height||"",hasSvg:Boolean(glyph),
+    iconText:el.querySelector(".aksara-glass-mic-icon")?.textContent||""};
   });
   assert.match(look.bg,/linear-gradient/);assert.match(look.blur,/blur/);assert.ok(look.radius>=20);
+  assert.ok(look.hasSvg,name+" microphone must be an SVG icon");
+  assert.equal(look.iconText.trim(),"",name+" must not render an emoji microphone");
+  assert.equal(look.iconWidth,"22px");assert.equal(look.iconHeight,"22px");
+  assert.match(look.bg,/0\\.67/);
+  assert.match(look.bg,/0\\.59/);
+  assert.doesNotMatch(look.bg,/0\\.95|0\\.97/);
+  assert.match(look.blur,/27px/);
   await page.locator("#aksaraMicCancel").click();
   assert.equal(await mic.isVisible(),false,name+" cancel should close preflight");
   assert.equal(await page.evaluate(()=>window.__micRequests),0);
