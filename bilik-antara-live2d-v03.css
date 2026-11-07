@@ -27,3 +27,23 @@
 @media(prefers-reduced-motion:reduce){
  #voiceAvatarStage.avatar-live2d-active .aksara-live2d-webgl{animation:none!important;transition:none!important}
 }
+/* Natural Motion v0.4: preview-only adjustments; baseline voice UI stays identical. */
+#voicePanel#voicePanel.voice-ui-experiment-v3.voice-live2d-preview .voice-v4-hero .voice-dialogue-dock{
+ padding:21px 14px 12px!important;min-height:66px!important;gap:3px!important;
+ background:linear-gradient(180deg,transparent,rgba(6,11,19,.12) 35%,rgba(6,11,19,.62))!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3.voice-live2d-preview .voice-v4-hero .voice-dialogue-dock .voice-status{
+ font-size:11px!important;line-height:1.3!important;max-height:19px!important;
+ color:rgba(239,225,207,.73)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3.voice-live2d-preview .voice-v4-hero .voice-dialogue-dock .voice-wave{
+ opacity:.36!important;height:13px!important;min-height:13px!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3.voice-live2d-preview .voice-v4-hero .voice-dialogue-dock .voice-wave i{
+ height:9px!important;
+}
+@media(max-width:760px){
+ #voicePanel#voicePanel.voice-ui-experiment-v3.voice-live2d-preview .voice-v4-hero .voice-dialogue-dock{
+  padding:15px 12px 10px!important;min-height:58px!important;
+ }
+}
