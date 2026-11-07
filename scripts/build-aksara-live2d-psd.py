@@ -75,7 +75,10 @@ def psd_part(name,image):
 def save_psd(dst,preview,parts):
     header=b"8BPS"+struct.pack(">H",1)+bytes(6)+struct.pack(">HIIHH",4,HEIGHT,WIDTH,8,3)
     records=[];channels=[]
-    for name,image in reversed(parts):
+    # PSD2Live's exported drawable order follows the PSD record sequence.
+    # Put the opaque background first (rear), and facial meshes afterwards (front).
+    # The previous reversed() stacked the faceless background over the face.
+    for name,image in parts:
         record,data=psd_part(name,image)
         records.append(record);channels.append(data)
     body=struct.pack(">h",len(parts))+b"".join(records)+b"".join(channels)
