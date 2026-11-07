@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="aksara-2d-portrait" viewBox="0 0 500 620" role="img" aria-label="Aksara, watak anime 2D bermata keemasan dengan rambut gelap dan persalinan cahaya serta gelap">
+<defs>
+  <linearGradient id="a2d-hair" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#39445d"/><stop offset=".4" stop-color="#15192b"/><stop offset="1" stop-color="#090d19"/></linearGradient>
+  <linearGradient id="a2d-face" x1="0" y1="0" x2="1" y2=".95"><stop stop-color="#ffead9"/><stop offset=".53" stop-color="#efc5ad"/><stop offset="1" stop-color="#b58085"/></linearGradient>
+  <linearGradient id="a2d-jacket" x1="0" y1="0" x2="1" y2=".8"><stop stop-color="#27354c"/><stop offset=".52" stop-color="#121728"/><stop offset="1" stop-color="#070b13"/></linearGradient>
+  <linearGradient id="a2d-iris" x1="0" y1="0" x2=".95" y2="1"><stop stop-color="#f9d89a"/><stop offset=".55" stop-color="#b2783e"/><stop offset="1" stop-color="#503b50"/></linearGradient>
+  <radialGradient id="a2d-moon"><stop stop-color="#a7c7e8" stop-opacity=".23"/><stop offset="1" stop-color="#a7c7e8" stop-opacity="0"/></radialGradient>
+  <radialGradient id="a2d-sun"><stop stop-color="#eebd83" stop-opacity=".20"/><stop offset="1" stop-color="#eebd83" stop-opacity="0"/></radialGradient>
+  <linearGradient id="a2d-gown" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e2c4a1"/><stop offset=".48" stop-color="#a78389"/><stop offset="1" stop-color="#3b4d6a"/></linearGradient>
+  <filter id="a2d-soft-glow" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="9"/></filter>
+</defs>
+<circle cx="380" cy="238" r="178" fill="url(#a2d-moon)"/>
+<circle cx="142" cy="250" r="168" fill="url(#a2d-sun)"/>
+<path d="M94 615c14-107 57-179 131-190l52-6c82-2 151 75 161 196" fill="#060910" opacity=".45"/>
+<g id="a2d-body">
+ <path d="M67 620c9-99 57-167 140-187l43 23 42-23c80 20 132 92 143 187Z" fill="url(#a2d-jacket)" stroke="#a29a9a" stroke-opacity=".22" stroke-width="2"/>
+ <path d="M215 431l35 32 35-31-16 79-19 47-23-49Z" fill="url(#a2d-gown)"/>
+ <path d="M151 473c23 13 58 42 99 103 40-61 73-89 103-103" fill="none" stroke="#c7aa81" stroke-opacity=".55" stroke-width="3"/>
+ <path d="M121 493c46 20 63 79 65 127M375 490c-46 22-66 78-66 130" stroke="#8094aa" stroke-opacity=".43" stroke-width="2" fill="none"/>
+ <path d="M234 535l16 25 16-25-16-11Z" fill="#d9b77b" stroke="#fff0cc" stroke-opacity=".42"/>
+ <path d="M241 452v-58h18v58c-5 15-12 19-18 0Z" fill="#cb968e"/>
+</g>
+<g id="a2d-back-hair">
+ <path d="M125 220c-13-103 36-174 126-182 93-4 156 70 137 182-4 71 8 162 25 277-27 37-63 40-85 21-31 21-117 20-143 3-24 22-62 13-89-15 33-116 39-207 29-286Z" fill="url(#a2d-hair)" stroke="#6b6d86" stroke-opacity=".45" stroke-width="3"/>
+ <path d="M143 171c-33 149-14 261-42 325M361 175c35 128 22 249 51 308" fill="none" stroke="#8d92a8" stroke-opacity=".35" stroke-width="5"/>
+ <path d="M157 100c13-47 57-64 88-64 43-4 88 22 112 63" fill="none" stroke="#bdadbd" stroke-opacity=".35" stroke-width="5"/>
+</g>
+<g id="a2d-head">
+ <path d="M166 206c-3-93 29-127 87-129 72 0 109 52 100 136-2 75-20 140-59 168-27 19-60 18-86-1-35-28-49-94-42-174Z" fill="url(#a2d-face)" stroke="#ffe9db" stroke-opacity=".26" stroke-width="2"/>
+ <path d="M172 256c-16-8-24 13-15 33 5 13 13 18 20 16M348 257c17-10 25 13 15 33-5 14-12 18-19 17" fill="#e3b1a2" stroke="#b77e84" stroke-width="2"/>
+ <path d="M181 297c12 10 26 10 40 2M296 299c11 7 24 7 35-2" fill="none" stroke="#ce858e" stroke-opacity=".24" stroke-width="10" stroke-linecap="round"/>
+ <g id="a2d-brow-left"><path d="M184 230q28-16 55-5" fill="none" stroke="#413341" stroke-width="6" stroke-linecap="round"/></g>
+ <g id="a2d-brow-right"><path d="M268 225q28-12 54 4" fill="none" stroke="#413341" stroke-width="6" stroke-linecap="round"/></g>
+ <g id="a2d-eye-left">
+  <path d="M182 259q24-23 55 0-27 24-55 0Z" fill="#fbf5ee" stroke="#4f3e4e" stroke-width="3"/>
+  <ellipse id="a2d-iris-left" cx="210" cy="260" rx="13" ry="17" fill="url(#a2d-iris)"/>
+  <ellipse cx="210" cy="263" rx="5" ry="11" fill="#262333"/>
+  <ellipse cx="205" cy="254" rx="4.2" ry="5.1" fill="#fff8df"/>
+  <path d="M183 257q25-22 54 1" stroke="#382d3c" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M183 265l-8 2M235 262l7 2" stroke="#433242" stroke-width="2" stroke-linecap="round"/>
+ </g>
+ <g id="a2d-eye-right">
+  <path d="M269 259q27-23 55 1-28 24-55-1Z" fill="#fbf5ee" stroke="#4f3e4e" stroke-width="3"/>
+  <ellipse id="a2d-iris-right" cx="296" cy="260" rx="13" ry="17" fill="url(#a2d-iris)"/>
+  <ellipse cx="296" cy="263" rx="5" ry="11" fill="#262333"/>
+  <ellipse cx="291" cy="254" rx="4.2" ry="5.1" fill="#fff8df"/>
+  <path d="M269 258q26-24 55 0" stroke="#382d3c" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M270 263l-7 2M324 263l8 3" stroke="#433242" stroke-width="2" stroke-linecap="round"/>
+ </g>
+ <path d="M253 278c-4 17-9 29-3 33q4 3 11-2" fill="none" stroke="#b47780" stroke-opacity=".68" stroke-width="2.4" stroke-linecap="round"/>
+ <ellipse id="a2d-mouth" cx="254" cy="341" rx="16" ry="1.8" fill="#6b3343" stroke="#bd7d83" stroke-width="2"/>
+ <path id="a2d-smile" d="M239 339q15 12 29 0" fill="none" stroke="#863e4e" stroke-width="2.5" stroke-linecap="round" opacity="0"/>
+ <path d="M245 356q9 5 18 0" fill="none" stroke="#fae2d2" stroke-opacity=".33" stroke-width="2"/>
+ <path d="M189 327c14 9 28 10 41 7M286 335c15 0 28-3 37-9" fill="none" stroke="#ffdfca" stroke-opacity=".2" stroke-width="8"/>
+</g>
+<g id="a2d-front-hair">
+ <path d="M156 247c-9-58-5-122 20-160 25-33 59-45 99-43-38 31-52 72-59 119-12 43-33 68-60 84Z" fill="url(#a2d-hair)" stroke="#848aa0" stroke-opacity=".4" stroke-width="2"/>
+ <path d="M265 53c65 1 110 43 121 102-8 38-18 78-38 109-13-45-32-72-53-86-17-15-28-43-30-125Z" fill="url(#a2d-hair)" stroke="#9d91a4" stroke-opacity=".35" stroke-width="2"/>
+ <path d="M177 122c30-38 68-45 100-53M306 88c22 14 42 39 51 70M157 247c22-23 34-57 41-95" fill="none" stroke="#afb5c9" stroke-opacity=".32" stroke-width="4" stroke-linecap="round"/>
+ <path d="M178 191c-17 79-9 171-38 237M359 195c-10 88-3 176 20 236" fill="none" stroke="#0d1221" stroke-width="24" stroke-linecap="round"/>
+ <path d="M167 184c-9 87 0 173-30 248M361 179c-16 79-5 184 20 240" stroke="#8a96ab" stroke-opacity=".32" stroke-width="3" fill="none"/>
+</g>
+<g id="a2d-sparkles" fill="#f4d5a6">
+ <circle cx="112" cy="201" r="2.4" opacity=".74"/><circle cx="386" cy="167" r="2.8" opacity=".65"/>
+ <path d="M402 251v16m-8-8h16M91 328v14m-7-7h14" stroke="#9fc6dd" stroke-opacity=".5" stroke-width="1.5"/>
+</g>
+</svg>
