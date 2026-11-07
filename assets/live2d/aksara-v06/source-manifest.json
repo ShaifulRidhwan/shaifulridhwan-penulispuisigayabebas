@@ -1,0 +1,19 @@
+{
+  "name": "AKSARA cohesive raster rig v0.6",
+  "source": "locked cinematic fantasy woman artwork",
+  "parts": [
+    "topwear",
+    "face",
+    "eyewhite-l",
+    "eyewhite-r",
+    "mouth close"
+  ],
+  "part_count": 5,
+  "atlas": 4096,
+  "static_full_portrait_drawable": false,
+  "independent_duplicate_eyelid": false,
+  "independent_duplicate_lip": false,
+  "feature_layered": true,
+  "neutral_face_mae": 0.11,
+  "manual_rig_review_required": true
+}
