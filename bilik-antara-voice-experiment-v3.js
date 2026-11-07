@@ -147,7 +147,7 @@
     }
     /* Isolated preview: no Gemini token, microphone or voice transport. */
     const avatarImport=genuineLive2D
-      ?import("./bilik-antara-live2d-v03.js?v=4")
+      ?import("./bilik-antara-live2d-v03.js?v=5")
       :import(anime2D?"./bilik-antara-avatar-2d.js?v=2":"./bilik-antara-avatar.js?v=15");
     avatarImport.catch(()=>{
       stage.classList.add("avatar-unavailable");
