@@ -54,7 +54,7 @@ test("Live2D new mode is genuinely opt-in and never draws false face lines",()=>
  assert.match(code,/model-missing/);
  assert.doesNotMatch(code,/drawImage|ellipse\(|bezierCurve|\.webp|new WebSocket|getUserMedia|live-token/);
  assert.match(html,/genuineLive2D=avatarMode==="live2d"/);
- assert.match(html,/bilik-antara-live2d-v03\.js\?v=5/);
+ assert.match(html,/bilik-antara-live2d-v03\.js\?v=6/);
  assert.match(ui,/genuineLive2D=selectedAvatar==="live2d"/);
  assert.match(ui,/if\(!anime2D&&!genuineLive2D\)stage\.append\(fallback\)/);
  assert.match(css,/#voiceAvatarStage\.avatar-live2d-active/);
