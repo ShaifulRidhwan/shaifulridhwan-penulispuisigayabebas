@@ -13,6 +13,7 @@ on:
       - "aksara-celestial-static.webp"
       - "scripts/test-bilik-antara-browser.cjs"
       - "scripts/test-aksara-voice-v4-browser.cjs"
+      - "scripts/test-aksara-voice-2d-browser.cjs"
       - "scripts/test-aksara-voice-v4-live-controls-browser.cjs"
       - "scripts/test-bilik-antara-background.cjs"
       - ".github/workflows/bilik-antara-browser-audit.yml"
@@ -63,6 +64,7 @@ jobs:
           done
           node scripts/test-bilik-antara-browser.cjs
           node scripts/test-aksara-voice-v4-browser.cjs
+          node scripts/test-aksara-voice-2d-browser.cjs
           node scripts/test-aksara-voice-v4-live-controls-browser.cjs
           node scripts/test-aksara-ui-polish-browser.cjs
           node scripts/test-thinking-mode-status-browser.cjs
