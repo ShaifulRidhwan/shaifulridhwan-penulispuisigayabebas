@@ -136,7 +136,8 @@
     const phaseLabel=document.getElementById("voicePhaseLabel");
     if(phaseLabel)phaseLabel.textContent="Pratonton";
     const status=document.getElementById("voiceStatus");
-    if(status)status.textContent=previewStatus;
+    if(status)status.textContent=new URLSearchParams(location.search).get("voice-rig")==="skeletal3d"
+      ?"Demo skeletal 3D · model contoh, bukan wanita akhir Aksara. Mikrofon tidak aktif.":previewStatus;
     for(const control of [mic,speaker]){
       if(!control)continue;
       control.disabled=true;
