@@ -271,7 +271,7 @@ test("call status never claims connection before setupComplete and clock resets 
  assert.match(js,/if\(connected&&!firstConnectedAt\)firstConnectedAt=Date\.now\(\)/);
  assert.match(js,/active&&firstConnectedAt\?/);
  assert.match(js,/!active\?"SEDIA"/);
- assert.match(js,/connected\?"TERSAMBUNG"/);
+ assert.match(js,/connected\?"LIVE"/);
  assert.match(js,/"SAMBUNG SEMULA"/);
  assert.match(browser,/actual media track wasn't muted/);
  assert.match(browser,/end button didn't stop microphone stream/);
@@ -307,4 +307,27 @@ test("V4.5 uses translucent A/B/C glass tokens while keeping the native voice br
  assert.match(css,/max-width:760px\) and \(max-height:670px/);
  assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=15/);
  assert.doesNotMatch(js,/new WebSocket|new AudioContext|\.getUserMedia\(|fetch\(/);
+});
+
+
+test("glass preflight and Terminal picker are presentation-only",()=>{
+ const ui=read("bilik-antara-ui-polish.js");
+ const skin=read("bilik-antara-ui-polish.css");
+ const html=read("bilik-antara.html");
+ const live=read("bilik-antara-voice.js");
+ assert.match(html,/bilik-antara-ui-polish\.js\?v=1/);
+ assert.match(ui,/addEventListener\("click",event=>\{/);
+ assert.match(ui,/event\.stopImmediatePropagation\(\)/);
+ assert.match(ui,/navigator\.permissions\.query\(\{name:"microphone"\}\)/);
+ assert.match(ui,/permission==="granted"/);
+ assert.match(ui,/live\.click\(\)/);
+ assert.match(ui,/if\(!native\|\|!native\.parentElement\)return/);
+ assert.match(ui,/native\.dispatchEvent\(new Event\("change"/);
+ assert.match(ui,/attach\("aitFile","aitFileGlass"/);
+ assert.match(ui,/attach\("aitExampleSelect","aitExampleGlass"/);
+ assert.doesNotMatch(ui,/getUserMedia\(|new WebSocket|new AudioContext|\/\.netlify\/functions/);
+ assert.match(skin,/select\.ait-native-select\{display:none!important\}/);
+ assert.match(skin,/background:linear-gradient/);
+ assert.match(skin,/backdrop-filter:blur/);
+ assert.match(live,/LIVE_LOCKED_VOICE="Aoede"/);
 });
