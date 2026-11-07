@@ -315,7 +315,7 @@ test("glass preflight and Terminal picker are presentation-only",()=>{
  const skin=read("bilik-antara-ui-polish.css");
  const html=read("bilik-antara.html");
  const live=read("bilik-antara-voice.js");
- assert.match(html,/bilik-antara-ui-polish\.js\?v=1/);
+ assert.match(html,/bilik-antara-ui-polish\.js\?v=2/);
  assert.match(ui,/addEventListener\("click",event=>\{/);
  assert.match(ui,/event\.stopImmediatePropagation\(\)/);
  assert.match(ui,/navigator\.permissions\.query\(\{name:"microphone"\}\)/);
@@ -329,5 +329,12 @@ test("glass preflight and Terminal picker are presentation-only",()=>{
  assert.match(skin,/select\.ait-native-select\{display:none!important\}/);
  assert.match(skin,/background:linear-gradient/);
  assert.match(skin,/backdrop-filter:blur/);
+ assert.match(ui,/<svg viewBox="0 0 24 24"/);
+ assert.doesNotMatch(ui,/🎙/);
+ assert.match(ui,/bilik-antara-ui-polish\.css\?v=2/);
+ assert.match(skin,/rgba\(29,39,53,\.67\)/);
+ assert.match(skin,/rgba\(10,17,30,\.59\)/);
+ assert.match(skin,/blur\(27px\) saturate\(1\.18\)/);
+ assert.match(skin,/\.aksara-glass-mic-icon svg/);
  assert.match(live,/LIVE_LOCKED_VOICE="Aoede"/);
 });

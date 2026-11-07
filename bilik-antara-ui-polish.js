@@ -1,4 +1,4 @@
-/* Aksara UI Polish v1: presentation-only controls.
+/* Aksara UI Polish v2: presentation-only controls.
  * Do not access the microphone, Gemini Live transport, token broker, or terminal runtime.
  * Native selects remain authoritative, hidden behind accessible glass pickers. */
 (function(){
@@ -11,7 +11,7 @@
  // Classic rollback still gets glass permission and Terminal dialogs.
  const applySkin=()=>{
   const sheet=document.createElement("link");
-  sheet.rel="stylesheet";sheet.href="bilik-antara-ui-polish.css?v=1";
+  sheet.rel="stylesheet";sheet.href="bilik-antara-ui-polish.css?v=2";
   document.head.appendChild(sheet);
  };
  if(document.readyState!=="complete")document.addEventListener("DOMContentLoaded",applySkin,{once:true});
@@ -26,7 +26,7 @@
   modal.setAttribute("aria-labelledby","aksaraMicTitle");
   modal.setAttribute("aria-describedby","aksaraMicDescription");
   modal.innerHTML=[
-   '<div class="aksara-glass-prompt-head"><span class="aksara-glass-mic-icon" aria-hidden="true">🎙</span><div><strong id="aksaraMicTitle">Aktifkan mikrofon</strong><small>AKSARA · VOICE CHAT</small></div></div>',
+   '<div class="aksara-glass-prompt-head"><span class="aksara-glass-mic-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" focusable="false"><rect x="9" y="2.5" width="6" height="12" rx="3"/><path d="M5.5 10.5v1.6a6.5 6.5 0 0 0 13 0v-1.6M12 18.6V22m-4 0h8"/></svg></span><div><strong id="aksaraMicTitle">Aktifkan mikrofon</strong><small>AKSARA · VOICE CHAT</small></div></div>',
    '<p id="aksaraMicDescription">Aksara perlukan izin mikrofon untuk mendengar kau. Audio hanya dihantar ke Gemini Live apabila sesi suara diaktifkan.</p>',
    '<p class="aksara-glass-prompt-hint" id="aksaraMicHint">Brave akan minta kebenaran selepas kau tekan Aktifkan Mikrofon. Dialog keselamatan browser tidak boleh diubah.</p>',
    '<div class="aksara-glass-prompt-actions"><button type="button" id="aksaraMicCancel">Batal</button><button type="button" id="aksaraMicContinue">Aktifkan Mikrofon</button></div>'
