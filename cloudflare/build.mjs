@@ -64,6 +64,14 @@ try {
   }
   if((await stat(path.join(out,"assets","live2d","aksara","aksara.model3.json"))).size<500)
    throw Error("Incomplete Cubism model3 manifest");
+  // Separate optional Cubism experiment, never replace the working v0.5 model.
+  const cohesiveModel=path.join(root,"assets","live2d","aksara-v06");
+  try{
+   if((await stat(path.join(cohesiveModel,"aksara.model3.json"))).isFile()){
+    await cp(cohesiveModel,path.join(out,"assets","live2d","aksara-v06"),{recursive:true});
+    console.log("AKSARA v0.6 cohesive rig copied");
+   }
+  }catch(error){if(error.code!=="ENOENT")throw error;}
   console.log("AKSARA experimental Live2D assets copied (proprietary Cubism Core excluded)");
  }
 }catch(error){if(error.code!=="ENOENT")throw error;}
