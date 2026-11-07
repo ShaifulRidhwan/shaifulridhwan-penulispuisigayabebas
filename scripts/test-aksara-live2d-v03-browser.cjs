@@ -50,11 +50,11 @@ async function verify(browser,label,viewport){
   const later=await page.evaluate(()=>window.AksaraLive2DExperiment.snapshot());
   assert.ok(later.lastFrame>=result.state.lastFrame,label+" animation loop alive");
   // v0.4 regression: Cubism is animated by the new controller, not just painted.
-  assert.equal(later.version,"0.4");
+  assert.equal(later.version,"0.5");
   assert.ok(later.motion&&Number.isFinite(later.motion.headAngle),"missing natural-motion controller");
-  assert.ok(later.targetFPS<=60&&later.targetFPS>=24,"bounded frame rate");
-  assert.ok(later.resolution<=1.5,"capped mobile GPU pixel ratio");
-  if(label==="mobile")assert.ok(later.targetFPS<=30,"mobile battery FPS cap");
+  assert.equal(later.targetFPS,60,"Quality Mode must target 60 FPS even on Android");
+  assert.ok(later.resolution>=2&&later.resolution<=3,"Quality Mode must use sharp 2-3x supersampling");
+  if(label==="mobile")assert.equal(later.targetFPS,60,"no mobile battery fallback");
   await page.evaluate(()=>{
    window.dispatchEvent(new CustomEvent("ba:voice-avatar-text",{detail:{text:"Tahniah, syabas!"}}));
   });
@@ -67,9 +67,9 @@ async function verify(browser,label,viewport){
    panel:document.getElementById("voicePanel")?.className
   }));
   assert.match(smooth.preview,/Pratonton Live2D/);
-  assert.match(smooth.panel,/voice-live2d-v04/);
-  await page.screenshot({path:path.join(out,"aksara-live2d-v04-"+label+".png")});
-  console.log("LIVE2D v0.4 "+label+" MOTION OK",JSON.stringify({fps:smooth.snapshot.targetFPS,quality:smooth.snapshot.quality,mouth:smooth.snapshot.motion.mouth}));
+  assert.match(smooth.panel,/voice-live2d-v05/);
+  await page.screenshot({path:path.join(out,"aksara-live2d-v05-"+label+".png")});
+  console.log("LIVE2D v0.5 "+label+" QUALITY OK",JSON.stringify({fps:smooth.snapshot.targetFPS,quality:smooth.snapshot.quality,mouth:smooth.snapshot.motion.mouth}));
   await page.locator("#voicePanel .voice-x-end").click();
   assert.equal(await page.locator("#voicePanel").isVisible(),false);
   console.log("LIVE2D REAL "+label+" OK",JSON.stringify({ready:result.state.ready,canvas:result.realCanvas,size:result.size,frame:later.lastFrame}));
