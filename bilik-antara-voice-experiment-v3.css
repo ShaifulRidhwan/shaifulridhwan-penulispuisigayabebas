@@ -1595,3 +1595,345 @@ body.aksara-voice-3d-experiment #voiceNotice.voice-notice:not([hidden]){
  text-align:center!important;pointer-events:none!important;
  overflow-wrap:anywhere!important;
 }
+
+
+/* ==========================================================================
+   AKSARA VOICE V4.5 · LIQUID GLASS PASS · P1–P4
+   UI only; intentionally scoped to the experimental voice panel. The native
+   microphone, Gemini Live socket, token broker, Aoede and handlers are intact.
+   P1 = common glass tokens; P2 = composition; P3 = interactive controls;
+   P4 = mobile, short viewports, reduced motion & reduced transparency.
+   ========================================================================== */
+
+/* P1 · Three deliberately distinct levels of translucency and a unified rim. */
+body.aksara-voice-3d-experiment{
+  --voice-v45-rim:rgba(245,217,173,.27);
+  --voice-v45-rim-strong:rgba(248,223,187,.43);
+  --voice-v45-gleam:rgba(255,251,236,.16);
+  --voice-v45-root:rgba(10,17,29,.53);
+  --voice-v45-secondary:linear-gradient(145deg,rgba(250,228,196,.083),rgba(111,163,211,.060) 57%,rgba(15,25,39,.115));
+  --voice-v45-control:linear-gradient(137deg,rgba(249,224,186,.125),rgba(128,173,218,.072));
+  --voice-v45-shadow:0 23px 66px rgba(0,0,0,.35),inset 0 1px 0 var(--voice-v45-gleam);
+  --voice-v45-card-radius:26px;
+  --voice-v45-field-radius:17px;
+  --voice-v45-transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3:not(.is-minimized){
+  border:1px solid var(--voice-v45-rim-strong)!important;
+  border-radius:29px!important;
+  background:
+    radial-gradient(ellipse 80% 75% at -13% 30%,rgba(236,187,119,.12),transparent 76%),
+    radial-gradient(ellipse 83% 92% at 113% 83%,rgba(90,157,217,.11),transparent 78%),
+    var(--voice-v45-root)!important;
+  -webkit-backdrop-filter:blur(28px) saturate(1.22)!important;
+  backdrop-filter:blur(28px) saturate(1.22)!important;
+  box-shadow:var(--voice-v45-shadow),inset 0 0 42px rgba(255,221,177,.025)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3:not(.is-minimized) .voice-panel-head{
+  min-height:72px!important;
+  padding:10px 18px!important;
+  background:linear-gradient(115deg,rgba(240,204,159,.09),rgba(135,181,211,.055) 54%,rgba(13,22,37,.04))!important;
+  border-bottom:1px solid rgba(247,219,182,.13)!important;
+  box-shadow:inset 0 1px 0 rgba(255,251,237,.11)!important;
+  -webkit-backdrop-filter:blur(19px) saturate(1.2)!important;
+  backdrop-filter:blur(19px) saturate(1.2)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head .voice-v4-brand,
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-live{
+  border:1px solid var(--voice-v45-rim)!important;
+  background:var(--voice-v45-control)!important;
+  box-shadow:inset 0 1px 0 var(--voice-v45-gleam),0 4px 13px rgba(0,0,0,.06)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(1.16)!important;
+  backdrop-filter:blur(16px) saturate(1.16)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head .voice-v4-brand{
+  min-height:44px!important;
+  padding:7px 13px!important;
+  border-radius:17px!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-live{
+  border-radius:999px!important;
+  min-height:30px;
+  padding-inline:12px;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-live[data-connected="true"]{
+  border-color:rgba(156,222,186,.42)!important;
+  background:linear-gradient(145deg,rgba(130,220,171,.13),rgba(113,163,206,.07))!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-timer{
+  color:rgba(251,232,204,.88)!important;
+  font-variant-numeric:tabular-nums;
+}
+
+/* P2 · The portrait stays atmospheric while the settings and control surfaces
+   read as separate floating sheets, not opaque rectangles. */
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-main{
+  grid-template-columns:minmax(0,1.72fr) minmax(234px,.86fr)!important;
+  min-height:0!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-hero{
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse 68% 65% at 36% 40%,rgba(237,188,121,.12),transparent 78%),
+    radial-gradient(ellipse 59% 77% at 77% 61%,rgba(113,172,215,.09),transparent 81%),
+    transparent!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-hero .voice-dialogue-dock{
+  background:linear-gradient(180deg,transparent 0%,rgba(8,13,23,.24) 46%,rgba(7,13,24,.70) 100%)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-aside{
+  margin:16px 16px 16px 0!important;
+  padding:19px 17px!important;
+  gap:14px!important;
+  border-radius:var(--voice-v45-card-radius)!important;
+  border:1px solid var(--voice-v45-rim)!important;
+  background:var(--voice-v45-secondary)!important;
+  box-shadow:inset 0 1px 0 var(--voice-v45-gleam),0 10px 30px rgba(0,0,0,.09)!important;
+  -webkit-backdrop-filter:blur(19px) saturate(1.17)!important;
+  backdrop-filter:blur(19px) saturate(1.17)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-heading{
+  color:#f9e8ce!important;
+  border-bottom-color:rgba(250,222,186,.13)!important;
+  padding-bottom:11px!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-setting{
+  border-bottom-color:rgba(245,215,177,.10)!important;
+  gap:7px!important;
+  padding-bottom:13px!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-setting:last-of-type{
+  padding-bottom:0!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-setting-label{
+  color:rgba(247,226,194,.82)!important;
+  letter-spacing:.015em;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-footer{
+  margin:0 15px 14px!important;
+  min-height:89px!important;
+  border-radius:var(--voice-v45-card-radius)!important;
+  border:1px solid var(--voice-v45-rim)!important;
+  background:var(--voice-v45-secondary)!important;
+  box-shadow:inset 0 1px 0 var(--voice-v45-gleam),0 8px 23px rgba(0,0,0,.085)!important;
+  -webkit-backdrop-filter:blur(19px) saturate(1.15)!important;
+  backdrop-filter:blur(19px) saturate(1.15)!important;
+}
+
+/* P3 · One field-glass recipe, clear selected states, accessible focus and
+   tactile buttons. These are the *existing* live audio controls. */
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-setting #voiceStyleTrigger,
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-setting #voiceModeBadge,
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-volume .voice-volume{
+  border:1px solid rgba(243,213,173,.32)!important;
+  border-radius:var(--voice-v45-field-radius)!important;
+  background:var(--voice-v45-control)!important;
+  box-shadow:inset 0 1px 0 var(--voice-v45-gleam)!important;
+  -webkit-backdrop-filter:blur(15px) saturate(1.15)!important;
+  backdrop-filter:blur(15px) saturate(1.15)!important;
+  transition:var(--voice-v45-transition);
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-setting #voiceStyleTrigger:hover,
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-setting #voiceModeBadge:hover{
+  border-color:var(--voice-v45-rim-strong)!important;
+  background:linear-gradient(137deg,rgba(251,222,182,.19),rgba(123,179,222,.11))!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-volume .voice-volume{
+  min-height:43px!important;
+  padding:6px 12px!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 #voiceVolume{
+  min-width:0!important;
+  accent-color:#ebc891;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>button{
+  border:1px solid rgba(246,214,173,.37)!important;
+  border-radius:50%!important;
+  color:#fff0d8!important;
+  background:var(--voice-v45-control)!important;
+  box-shadow:inset 0 1px 0 rgba(255,251,237,.19),0 8px 18px rgba(0,0,0,.11)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(1.16)!important;
+  backdrop-filter:blur(16px) saturate(1.16)!important;
+  transition:var(--voice-v45-transition);
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>button:is(:hover,:focus-visible){
+  border-color:rgba(255,230,191,.66)!important;
+  box-shadow:inset 0 1px 0 rgba(255,252,242,.24),0 8px 23px rgba(225,172,105,.12)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>button:active{
+  transform:scale(.96)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>#voiceMuteMic[aria-pressed="false"],
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>#voiceMuteSpeaker[aria-pressed="false"]{
+  border-color:rgba(147,192,232,.58)!important;
+  color:#d7edff!important;
+  background:linear-gradient(140deg,rgba(95,154,202,.20),rgba(225,188,138,.055))!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>button.voice-x-end{
+  color:#fff1eb!important;
+  border-color:rgba(250,171,155,.60)!important;
+  background:linear-gradient(147deg,rgba(189,75,84,.84),rgba(105,33,52,.84))!important;
+  box-shadow:inset 0 1px 0 rgba(255,236,222,.23),0 7px 18px rgba(126,44,55,.16)!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>button.voice-x-end:hover{
+  border-color:rgba(255,206,191,.79)!important;
+  background:linear-gradient(147deg,rgba(203,83,90,.91),rgba(126,41,59,.88))!important;
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head-actions #voiceStop{
+  background:var(--voice-v45-control)!important;
+  border-color:rgba(246,215,179,.38)!important;
+  box-shadow:inset 0 1px 0 var(--voice-v45-gleam),0 5px 15px rgba(0,0,0,.08)!important;
+  transition:var(--voice-v45-transition);
+}
+#voicePanel#voicePanel.voice-ui-experiment-v3 :is(button,input):focus-visible,
+body.aksara-voice-3d-experiment #voiceStyleDialog button:focus-visible{
+  outline:2px solid #f4cd90!important;
+  outline-offset:3px!important;
+}
+
+/* Top-layer dialect dialog needs separate selectors because it is body-mounted. */
+body.aksara-voice-3d-experiment dialog#voiceStyleDialog.aksara-voice-style-dialog{
+  border:1px solid var(--voice-v45-rim-strong)!important;
+  border-radius:29px!important;
+  background-color:rgba(12,22,36,.68)!important;
+  background-image:
+    radial-gradient(ellipse 85% 55% at 5% 0%,rgba(244,207,151,.10),transparent 78%),
+    linear-gradient(144deg,rgba(248,224,184,.065),rgba(104,164,216,.075))!important;
+  box-shadow:0 25px 76px rgba(0,0,0,.47),inset 0 1px 0 var(--voice-v45-gleam)!important;
+  -webkit-backdrop-filter:blur(28px) saturate(1.19)!important;
+  backdrop-filter:blur(28px) saturate(1.19)!important;
+}
+body.aksara-voice-3d-experiment #voiceStyleDialog button.voice-style-option,
+body.aksara-voice-3d-experiment #voiceStyleDialog button.voice-style-close{
+  border-color:rgba(247,216,178,.30)!important;
+  border-radius:18px!important;
+  background:var(--voice-v45-control)!important;
+  box-shadow:inset 0 1px 0 rgba(255,247,229,.11)!important;
+  -webkit-backdrop-filter:blur(13px) saturate(1.14)!important;
+  backdrop-filter:blur(13px) saturate(1.14)!important;
+  transition:var(--voice-v45-transition);
+}
+body.aksara-voice-3d-experiment #voiceStyleDialog button.voice-style-option.is-selected{
+  border-color:rgba(246,211,158,.68)!important;
+  background:linear-gradient(140deg,rgba(234,190,127,.25),rgba(120,163,200,.11))!important;
+  box-shadow:inset 0 1px 0 rgba(255,242,213,.18),0 4px 13px rgba(0,0,0,.07)!important;
+}
+body.aksara-voice-3d-experiment #voiceStyleDialog button.voice-style-option:hover{
+  border-color:rgba(254,230,194,.58)!important;
+  background:linear-gradient(140deg,rgba(244,211,170,.16),rgba(124,178,221,.12))!important;
+}
+
+/* P4 · Full viewport mobile, readable controls and short-screen scrolling.
+   Decrease nested blur cost on phones without losing the glass aesthetic. */
+@media(max-width:760px){
+  #voicePanel#voicePanel.voice-ui-experiment-v3:not(.is-minimized){
+    inset:0!important;
+    width:100vw!important;height:100dvh!important;max-height:100dvh!important;
+    border:0!important;border-radius:0!important;
+    background:
+      radial-gradient(ellipse 90% 60% at -15% 30%,rgba(223,173,111,.12),transparent 74%),
+      radial-gradient(ellipse 86% 76% at 115% 70%,rgba(105,158,209,.10),transparent 75%),
+      rgba(9,16,28,.57)!important;
+    -webkit-backdrop-filter:blur(17px) saturate(1.14)!important;
+    backdrop-filter:blur(17px) saturate(1.14)!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3:not(.is-minimized) .voice-panel-head{
+    min-height:68px!important;padding:8px 13px!important;gap:8px;
+    -webkit-backdrop-filter:blur(13px) saturate(1.1)!important;
+    backdrop-filter:blur(13px) saturate(1.1)!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-hero{
+    min-height:clamp(168px,36dvh,490px)!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-main{
+    display:flex!important;flex-direction:column!important;min-height:0!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-aside{
+    margin:5px 11px 5px!important;
+    padding:11px 13px!important;gap:8px 10px!important;
+    border-radius:20px!important;
+    background:var(--voice-v45-secondary)!important;
+    -webkit-backdrop-filter:blur(12px) saturate(1.1)!important;
+    backdrop-filter:blur(12px) saturate(1.1)!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-setting{
+    padding:0!important;gap:4px!important;border:0!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-volume{grid-column:1/-1!important}
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-footer{
+    margin:5px 11px calc(9px + env(safe-area-inset-bottom,0px))!important;
+    min-height:76px!important;padding:7px 12px!important;
+    border-radius:20px!important;
+    -webkit-backdrop-filter:blur(12px) saturate(1.1)!important;
+    backdrop-filter:blur(12px) saturate(1.1)!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-setting #voiceStyleTrigger,
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-setting #voiceModeBadge,
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-volume .voice-volume{
+    min-height:42px!important;
+    -webkit-backdrop-filter:blur(10px) saturate(1.09)!important;
+    backdrop-filter:blur(10px) saturate(1.09)!important;
+  }
+  body.aksara-voice-3d-experiment dialog#voiceStyleDialog.aksara-voice-style-dialog{
+    width:min(430px,calc(100vw - 24px))!important;
+    max-height:calc(100dvh - 32px)!important;
+    border-radius:25px!important;
+    -webkit-backdrop-filter:blur(18px) saturate(1.11)!important;
+    backdrop-filter:blur(18px) saturate(1.11)!important;
+  }
+  body.aksara-voice-3d-experiment #voiceStyleDialog button.voice-style-option{
+    min-height:46px!important;
+  }
+}
+@media(max-width:385px){
+  #voicePanel#voicePanel.voice-ui-experiment-v3:not(.is-minimized) .voice-panel-head{
+    padding-inline:10px!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-panel-head .voice-v4-brand{
+    padding:6px 9px!important;min-height:40px!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-aside{
+    margin-inline:8px!important;padding:9px 10px!important;gap:7px!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-footer{
+    margin-inline:8px!important;
+  }
+}
+@media(max-width:760px) and (max-height:670px){
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-hero{
+    min-height:165px!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-main{
+    overflow-y:auto!important;
+    overscroll-behavior:contain;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-aside{
+    flex:0 0 auto!important;
+    margin-block:4px!important;padding:8px 11px!important;gap:6px!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-footer{
+    flex:0 0 auto!important;
+    min-height:70px!important;margin-block:4px 7px!important;
+  }
+}
+@media(hover:none){
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-v4-control-deck .voice-session-controls>button:hover{
+    box-shadow:inset 0 1px 0 rgba(255,251,237,.19),0 8px 18px rgba(0,0,0,.11)!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #voicePanel#voicePanel.voice-ui-experiment-v3 :is(button,.voice-v4-brand,.voice-x-live),
+  body.aksara-voice-3d-experiment #voiceStyleDialog button{
+    transition:none!important;animation:none!important;
+  }
+}
+@media(prefers-reduced-transparency:reduce){
+  #voicePanel#voicePanel.voice-ui-experiment-v3:not(.is-minimized){
+    background-color:rgba(10,17,29,.94)!important;
+  }
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-aside,
+  #voicePanel#voicePanel.voice-ui-experiment-v3 .voice-x-footer,
+  body.aksara-voice-3d-experiment dialog#voiceStyleDialog.aksara-voice-style-dialog{
+    background-color:rgba(16,24,36,.92)!important;
+  }
+}
