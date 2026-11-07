@@ -75,6 +75,34 @@
   model.anchor?.set?.(.5,.52);
   model.position.set(w*.5,h*.49);
  }
+ function tunePerformance(now){
+  if(!frameWindowStart){frameWindowStart=now;return;}
+  if(now-frameWindowStart<3400)return;
+  const actualFPS=windowFrames/Math.max(.1,(now-frameWindowStart)/1000);
+  measuredFPS=measuredFPS?measuredFPS*.4+actualFPS*.6:actualFPS;
+  motion.setFPS(measuredFPS);frameWindowStart=now;windowFrames=0;
+  if(actualFPS<fpsLimit*.75){lowWindows++;highWindows=0;}
+  else if(actualFPS>fpsLimit*.91){highWindows++;lowWindows=0;}
+  else{highWindows=0;lowWindows=0;}
+  if(lowWindows>=2){
+   lowWindows=0;
+   if(renderResolution>1.02){
+    renderResolution=1;quality="reduced";
+    app.renderer.resolution=renderResolution;position();
+   }else if(fpsLimit>24){
+    fpsLimit=Math.max(24,fpsLimit-15);quality="reduced";app.ticker.maxFPS=fpsLimit;
+   }
+  }else if(highWindows>=4&&!reduced&&!saveData){
+   highWindows=0;
+   const goal=reducedQuality?30:60;
+   if(fpsLimit<goal){fpsLimit=Math.min(goal,fpsLimit+15);app.ticker.maxFPS=fpsLimit;}
+   else if(renderResolution<(reducedQuality?1.25:1.5)){
+    renderResolution=reducedQuality?1.25:1.5;
+    app.renderer.resolution=renderResolution;position();quality="normal";
+   }
+  }
+  motion.setQuality(quality);
+ }
  function tick(){
   if(!ready||!model)return;
   if(panel.hidden||document.hidden||panel.classList.contains("is-minimized")){
