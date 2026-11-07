@@ -14,7 +14,9 @@
  const bridge=window.AksaraLive2DBridge;
  const motion=window.AksaraLive2DMotionV04?.createController({seed:.421});
  if(!bridge||!motion)return;
- const modelUrl="./assets/live2d/aksara/aksara.model3.json";
+ const cohesive=query.get("voice-rig")==="cohesive";
+ const modelUrl=cohesive?"./assets/live2d/aksara-v06/aksara.model3.json":"./assets/live2d/aksara/aksara.model3.json";
+ stage.dataset.rigVersion=cohesive?"cohesive-v06":"legacy-v05";
  const vendorFiles=[
   "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
   "./assets/live2d/vendor/pixi.min.js",
@@ -107,6 +109,12 @@
    now,phase:speaking?"speaking":phase,emotion:mood,
    audio:gain,reducedMotion:reduced,mode:window.BilikAntaraThought?.getMode?.()||"cahaya"
   });
+  // Conservative angles prevent fake hair/face pieces tearing apart on the auto-rig.
+  if(cohesive){
+   for(const id of ["ParamAngleX","ParamAngleY","ParamAngleZ"])values[id]*=.35;
+   for(const id of ["ParamBodyAngleX","ParamBodyAngleY","ParamBodyAngleZ"])values[id]*=.40;
+   values.ParamMouthOpenY*=.42;
+  }
   for(const [id,value] of Object.entries(values))setParameter(id,value);
   accessories?.refresh(now,values);
   stage.dataset.avatarPhase=speaking?"speaking":phase;
@@ -158,7 +166,7 @@
     status.hidden=true;
     if(typeof ResizeObserver!=="undefined"){resize=new ResizeObserver(position);resize.observe(stage);}
     else window.addEventListener("resize",position,{passive:true});
-    if(query.get("voice-accessories")!=="off"){
+    if(!cohesive&&query.get("voice-accessories")!=="off"){
      accessories=window.AksaraLive2DAccessoriesV05?.create({PIXI,app,model});
      if(accessories)void accessories.init();
     }
@@ -184,7 +192,7 @@
    modelLoaded:!!model,renderer:app?"webgl":null,
    lastFrame,voiceConnectionUnchanged:true,
    quality:ultra?"ultra":"quality",targetFPS:fpsLimit,measuredFPS:Math.round(measuredFPS*10)/10,performanceNotice,
-   resolution:renderResolution,motion:motion.snapshot(),accessories:accessories?.snapshot()||{active:false,reason:"not-loaded"}}),
+   resolution:renderResolution,rig:cohesive?"cohesive-v06":"legacy-v05",motion:motion.snapshot(),accessories:accessories?.snapshot()||{active:false,reason:"not-loaded"}}),
   retry:()=>{if(!ready){failed=false;void setup();}}
  });
  window.addEventListener("pagehide",()=>{
