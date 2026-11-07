@@ -10,9 +10,10 @@
  const panel=document.getElementById("voicePanel");
  const stage=document.getElementById("voiceAvatarStage");
  if(!panel||!stage)return;
- await import("./bilik-antara-live2d-bridge-v03.js?v=1");
+ await Promise.all([import("./bilik-antara-live2d-bridge-v03.js?v=1"),import("./bilik-antara-live2d-motion-v04.js?v=1")]);
  const bridge=window.AksaraLive2DBridge;
- if(!bridge)return;
+ const motion=window.AksaraLive2DMotionV04?.createController({seed:.421});
+ if(!bridge||!motion)return;
  const modelUrl="./assets/live2d/aksara/aksara.model3.json";
  const vendorFiles=[
   "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
@@ -23,6 +24,14 @@
  const demo=query.get("voice-preview")==="1"&&query.get("voice-avatar-demo")==="1";
  let ready=false,failed=false,loading=null,app=null,model=null,resize=null;
  let audioCache=null,audioAnalyser=null,emotion="neutral",emotionUntil=0,started=0,lastFrame=0;
+ let frameWindowStart=0,windowFrames=0,measuredFPS=0,lowWindows=0,highWindows=0;
+ const phone=window.matchMedia("(max-width: 760px)").matches;
+ const saveData=!!navigator.connection?.saveData;
+ const weakDevice=(navigator.deviceMemory&&navigator.deviceMemory<=3)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4);
+ const reducedQuality=reduced||phone||saveData||weakDevice;
+ let fpsLimit=reducedQuality?30:60,renderResolution=1,quality="normal";
+ panel.classList.add("voice-live2d-v04");
+ if(query.get("voice-preview")==="1")panel.classList.add("voice-live2d-preview");
  let modelNaturalWidth=1,modelNaturalHeight=1;
  const status=document.createElement("div");
  status.className="aksara-live2d-status";
