@@ -11,7 +11,7 @@
  // Classic rollback still gets glass permission and Terminal dialogs.
  const applySkin=()=>{
   const sheet=document.createElement("link");
-  sheet.rel="stylesheet";sheet.href="bilik-antara-ui-polish.css?v=1";
+  sheet.rel="stylesheet";sheet.href="bilik-antara-ui-polish.css?v=2";
   document.head.appendChild(sheet);
  };
  if(document.readyState!=="complete")document.addEventListener("DOMContentLoaded",applySkin,{once:true});
