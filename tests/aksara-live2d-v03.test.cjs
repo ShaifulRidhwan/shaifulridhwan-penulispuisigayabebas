@@ -44,7 +44,9 @@ test("Live2D new mode is genuinely opt-in and never draws false face lines",()=>
  const css=read("bilik-antara-live2d-v03.css");
  assert.doesNotThrow(()=>new Function(code));
  assert.match(code,/query\.get\("voice-avatar"\)!=="live2d"/);
- assert.match(code,/modelUrl="\.\/assets\/live2d\/aksara\/aksara\.model3\.json"/);
+ assert.match(code,/query\.get\("voice-rig"\)==="cohesive"/);
+ assert.match(code,/assets\/live2d\/aksara-v06\/aksara\.model3\.json/);
+ assert.match(code,/assets\/live2d\/aksara\/aksara\.model3\.json/);
  assert.match(code,/\.moc3/);
  assert.match(code,/motion\.step/);
  assert.match(code,/window\.AksaraVoiceAudio\?\.analyser/);
