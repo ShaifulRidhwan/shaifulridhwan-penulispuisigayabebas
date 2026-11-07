@@ -43,5 +43,14 @@
     "Deploy a genuine character preview without changing production",
     "Capture output screenshots and animation demonstration",
     "Measure desktop and Android performance and real Voice behavior"
-  ]
+  ],
+  "requiredBudgetUSD": 0,
+  "activePipeline": "official-trellis2-free-demo",
+  "freeReferencePreprocessSucceeded": true,
+  "freeGenerationAttempted": true,
+  "freeGenerationSucceeded": false,
+  "freeGenerationBlock": "ZeroGPU quota exceeded for unauthenticated request",
+  "freeGenerationGLB": null,
+  "freeHFAccountAuthenticated": false,
+  "paidGenerationAllowed": false
 }

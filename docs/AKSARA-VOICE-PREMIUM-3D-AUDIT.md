@@ -129,3 +129,38 @@ result. No Battery Mode is proposed.
 
 No automatic body-rig claim should be treated as evidence of a complete facial,
 hair, cloth or ornament rig. Visual approval remains required; no merge.
+
+## RM0 route requested and tested
+
+The user subsequently required a free route. Paid fal generation is therefore
+excluded from the active pipeline. Official sources checked:
+
+- https://huggingface.co/spaces/microsoft/TRELLIS.2 — official image-to-3D demo,
+  public API exposes image preprocessing, generation and GLB extraction.
+- https://huggingface.co/spaces/tencent/Hunyuan3D-2.1 — official alternative demo.
+- https://huggingface.co/docs/hub/spaces-zerogpu — existing Spaces are free
+  subject to account-tier quotas; documented anonymous quota 2 minutes/day,
+  free-account quota 5 minutes/day. These are quotas, not guaranteed completion.
+- https://mesh2motion.org/ — free browser rigging and animation, GLB/FBX export;
+  not established as a complete facial/hair/gown solution.
+- https://help.meshy.ai/en/articles/15696428-what-is-included-on-the-free-plan —
+  free textured downloads are excluded; not suitable as our main RM0 route.
+
+Actual test: retrieved the existing approved 720 x 960 portrait from PR #263's
+source revision (not the screenshot UI). Connected to the official TRELLIS.2
+Gradio API; initialized a session; uploaded and successfully preprocessed that
+portrait. Submitted image-to-3D at resolution 1024 with default sampling
+parameters and seed 1987. The generation returned a ZeroGPU quota error:
+`You have exceeded your ZeroGPU quota (120s requested vs. 180s left).`
+The service instructed waiting about 24 hours or authenticating with a
+Hugging Face token for more quota. Its reported numbers are preserved rather
+than interpreted as a reliable calculation. No GLB or new character was
+produced, and GLB extraction was not attempted. No repeat or alternate endpoint
+was used to bypass the quota.
+
+A free Hugging Face account has a larger documented quota, but its ability to
+complete this particular generation/export remains untested. No credentials
+were requested or entered. A browser login or an authorized HF connection is
+needed to use the user's account quota; the current anonymous session cannot
+prove that access. Further character modeling, facial deformation, cloth/hair
+rigging and visual inspection remain outstanding even if a mesh succeeds.
