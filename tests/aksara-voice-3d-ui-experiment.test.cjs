@@ -20,7 +20,7 @@ test("V4.5 is the default presentation; classic rollback leaves native Voice eng
  assert.match(js,/get\("voice-preview"\)==="1"/);
  assert.doesNotMatch(js,/get\("voice-live"\)!=="1"/);
  const voice=read("bilik-antara-voice.js");
- assert.match(html,/bilik-antara-voice\.js\?v=50/);
+ assert.match(html,/bilik-antara-voice\.js\?v=51/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
  assert.match(voice,/START_SENSITIVITY_HIGH/);
 });
