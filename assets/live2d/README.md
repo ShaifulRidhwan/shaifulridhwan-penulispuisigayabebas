@@ -71,3 +71,19 @@ Kod GitHub, dokumentasi dan CI boleh dibuat dari chat ini. Untuk kerja visual in
 - P2: preview-only compact translucent dialogue dock and concise status. Native mic, mute, speaker, end call, volume, style and mode controls **unchanged**.
 - Test commands: `node --test tests/aksara-live2d-v03.test.cjs tests/aksara-live2d-v04.test.cjs` and `node scripts/test-aksara-live2d-v03-browser.cjs` from the standard preview server.
 - Risk gates: real mobile call with Aoede still needs human listening/visual check; Cubism AI/chatbot distribution license must be reviewed before public launch; no automatic merge.
+
+## v0.5 · Visual Fidelity / Quality Mode (eksperimen)
+
+**Rupa wanita dikunci. Tiada Battery Mode atau fallback resolusi automatik.** Renderer menggunakan 60 FPS sasaran, 2x hingga 2.5x supersampling dalam `?voice-avatar=live2d`, dan sehingga 3x dengan `&voice-quality=ultra`. Pengguna yang lebih mengutamakan detail boleh memilih Ultra. Jika GPU perlahan, hanya log diagnostik, bukan pengurangan kualiti secara senyap. `prefers-reduced-motion` kekal sebagai pilihan aksesibiliti berasingan daripada Battery Mode.
+
+**P1**: Quality-first GPU antialias / supersampling untuk mengurangkan blur ketika model bergerak. Ini tidak menyelesaikan kelemahan piksel sumber.
+
+**P2 / P3**: `scripts/build-aksara-live2d-quality-v05.py` menjana PSD 1086x1448 (21 lapisan) daripada potret asal, eyelid/eyewhite/iris serta lip/bibir dan inner mouth berasingan, kawasan kulit di belakang ciri wajah dibaiki melalui inpainting, dan topeng rambut/aksesori dipotong lebih ketat. Rig auto-generated daripada sumber rata masih belum setara dengan repaint manual; audit mata, rambut dan mulut wajib.
+
+**P4**: `bilik-antara-live2d-accessories-v05.js` menyediakan fizikal spring terasing untuk dua sprite PNG matahari dan bulan yang mengikuti posisi kepala. Ia adalah *Pixi-based independent secondary motion*, bukan native Cubism ornament physics. Kod hanya menyembunyikan headwear asal jika part `PartHeadAccessories` boleh diakses, kedua-dua tekstur tersedia dan kedua-duanya dapat dialih dengan selamat. Jika tidak, model asal kekal, tiada overlay berganda.
+
+**Pipeline**: workflow `aksara-live2d-rig-draft.yml` menjana PSD, mencuba export `--atlas 4096` melalui versi PSD2Live dikunci, mengesahkan fail, menjalankan ujian WebGL desktop/mobile dan **hanya selepas lulus** memasang ke PR branch. Model yang tiada .moc3 atau rosak tidak diterbitkan.
+
+**Ujian visual:** `scripts/test-aksara-live2d-v03-browser.cjs` menghasilkan `aksara-live2d-v05-mobile.png` dan `aksara-live2d-v05-desktop.png` serta memastikan 60 FPS sasaran, resolusi >=2, muka WebGL dimuat, dan bila atlas 4096 dipasang, dua ornament physics overlay benar-benar aktif.
+
+**Had:** Live Aoede sebenar dan kesan akhir raster semasa transisi perlu dinilai di telefon; `.moc3` yang dieksport bukan bukti visual sempurna. Semak terma pengedaran Live2D untuk aplikasi AI/chatbot sebelum pelancaran umum.
