@@ -197,7 +197,7 @@
     const next=!active?"SEDIA":
       phase==="paused"?"DIJEDA":
       offline&&!connected?"LUAR TALIAN":
-      connected?"TERSAMBUNG":
+      connected?"LIVE":
       phase==="error"?"GANGGUAN":
       (Number(d?.connections)||0)>0?"SAMBUNG SEMULA":"MENYAMBUNG";
     live.dataset.connected=connected?"true":"false";
