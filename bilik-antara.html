@@ -1274,7 +1274,7 @@ document.getElementById("voiceLive")?.addEventListener("click",()=>{
 if(loading||loaded)return;
 loading=true;
 const avatarImport=genuineLive2D
- ?import("./bilik-antara-live2d-v03.js?v=5")
+ ?import("./bilik-antara-live2d-v03.js?v=6")
  :import(anime2D?"./bilik-antara-avatar-2d.js?v=2":"./bilik-antara-avatar.js?v=15");
 avatarImport.then(()=>{loaded=true;}).catch(error=>{
 loading=false;document.getElementById("voiceAvatarStage")?.classList.add("avatar-unavailable");console.warn("Voice avatar unavailable",error);
