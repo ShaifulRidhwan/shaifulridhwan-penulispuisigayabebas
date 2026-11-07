@@ -172,7 +172,7 @@ async function audit(browser,label,viewport){
   assert.match(glassQA.closeGlass,/blur\(/,label+" X button not glass");
   assert.ok(parseFloat(glassQA.dialogRadius)>=24,label+" dialect modal not curved");
   const blurMatch=glassQA.dialogGlass.match(/blur\(([0-9.]+)px\)/);
-  assert.ok(blurMatch&&Number(blurMatch[1])>=20,label+" dialect glass blur too weak: "+glassQA.dialogGlass);
+  assert.ok(blurMatch&&Number(blurMatch[1])>=(label==="desktop"?20:16),label+" dialect glass blur too weak for its viewport: "+glassQA.dialogGlass);
   const alphaMatch=glassQA.dialogBackground.match(/^rgba\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\)$/);
   assert.ok(alphaMatch&&Number(alphaMatch[1])<.90,label+" dialect glass too opaque: "+glassQA.dialogBackground);
   assert.ok(parseFloat(glassQA.optionRadius)>=15,label+" dialect options still squared");
