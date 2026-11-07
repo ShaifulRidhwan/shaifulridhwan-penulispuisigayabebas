@@ -23,6 +23,7 @@
  const demo=query.get("voice-preview")==="1"&&query.get("voice-avatar-demo")==="1";
  let ready=false,failed=false,loading=null,app=null,model=null,resize=null,attached=false;
  let audioCache=null,audioAnalyser=null,emotion="neutral",emotionUntil=0,started=0,lastFrame=0;
+ let modelNaturalWidth=1,modelNaturalHeight=1;
  const status=document.createElement("div");
  status.className="aksara-live2d-status";
  status.setAttribute("role","status");
@@ -59,7 +60,7 @@
   if(!app||!model)return;
   const w=Math.max(1,stage.clientWidth),h=Math.max(1,stage.clientHeight);
   app.renderer.resize(w,h);
-  const naturalW=Math.max(1,model.width),naturalH=Math.max(1,model.height);
+  const naturalW=modelNaturalWidth,naturalH=modelNaturalHeight;
   const ratio=Math.min(w/naturalW,h/naturalH)*1.07;
   model.scale.set(ratio);
   model.anchor?.set?.(.5,.52);
@@ -115,6 +116,8 @@
     app=new PIXI.Application(options);
     model=await Live2DModel.from(modelUrl);
     app.stage.addChild(model);
+    modelNaturalWidth=Math.max(1,Number(model.width)||1);
+    modelNaturalHeight=Math.max(1,Number(model.height)||1);
     model.anchor?.set?.(.5,.5);
     position();
     app.view.className="aksara-live2d-webgl";
