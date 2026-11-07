@@ -68,6 +68,18 @@ async function verify(browser,label,viewport){
   }));
   assert.match(smooth.preview,/Pratonton Live2D/);
   assert.match(smooth.panel,/voice-live2d-v05/);
+  const modelResponse=await page.request.get(BASE+"/assets/live2d/aksara/aksara.model3.json");
+  assert.equal(modelResponse.status(),200);
+  const manifest=await modelResponse.json();
+  if(manifest.FileReferences.Textures.some(name=>name.includes(".4096/"))){
+    await page.waitForFunction(()=>{
+      const v=window.AksaraLive2DExperiment?.snapshot?.();
+      return v?.accessories?.active||v?.accessories?.reason!=="not-loaded";
+    },null,{timeout:15000});
+    const accessoryState=await page.evaluate(()=>window.AksaraLive2DExperiment.snapshot().accessories);
+    assert.equal(accessoryState.active,true,"V0.5 high fidelity rig requires independently animated sun/moon accessories: "+JSON.stringify(accessoryState));
+    assert.equal(accessoryState.sprites,2);
+  }
   await page.screenshot({path:path.join(out,"aksara-live2d-v05-"+label+".png")});
   console.log("LIVE2D v0.5 "+label+" QUALITY OK",JSON.stringify({fps:smooth.snapshot.targetFPS,quality:smooth.snapshot.quality,mouth:smooth.snapshot.motion.mouth}));
   await page.locator("#voicePanel .voice-x-end").click();
