@@ -133,7 +133,9 @@ jobs:
         if: always()
         with:
           name: aksara-v06-browser-images
-          path: browser-audit-artifacts/aksara-v06-*.png
+          path: |
+            browser-audit-artifacts/aksara-v06-*.png
+            browser-audit-artifacts/aksara-v06-*.webm
           if-no-files-found: warn
       - name: Publish only gated optional new model to PR branch
         run: |
