@@ -12,7 +12,7 @@ async function verify(browser,label,viewport){
  page.on("pageerror",e=>errors.push(e.message));
  try{
   await page.goto(BASE+"/bilik-antara.html?voice-avatar=live2d&voice-preview=1&voice-avatar-demo=1",{waitUntil:"domcontentloaded",timeout:35000});
-  await page.waitForSelector("#voicePanel.voice-ui-experiment-v3",{timeout:20000});
+  await page.waitForSelector("#voicePanel.voice-ui-experiment-v3",{state:"attached",timeout:20000});
   await page.locator("#voiceLive").click();
   await page.waitForFunction(()=>window.AksaraLive2DExperiment?.snapshot?.().status==="ready"||window.AksaraLive2DExperiment?.snapshot?.().failed,{timeout:35000});
   const result=await page.evaluate(()=>{
