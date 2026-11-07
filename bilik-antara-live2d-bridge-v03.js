@@ -24,7 +24,7 @@
   return "neutral";
  }
  function sampleAudio(analyser,cache){
-  if(!analyser||typeof analyser.getFloatTimeDomainData!=="function")return 0;
+  if(!analyser||typeof analyser.getFloatTimeDomainData!=="function")return {rms:0,cache:null};
   const length=Math.max(32,Math.min(4096,Number(analyser.fftSize)||512));
   const arr=cache?.length===length?cache:new Float32Array(length);
   try{
