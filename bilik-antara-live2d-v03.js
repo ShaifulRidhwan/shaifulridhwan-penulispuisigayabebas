@@ -149,8 +149,10 @@
     const PIXI=window.PIXI;
     const Live2DModel=PIXI?.live2d?.Live2DModel;
     if(typeof Live2DModel?.from!=="function")throw Error("PixiJS Live2D Cubism4 adapter gagal dimuat.");
+    renderResolution=Math.min(window.devicePixelRatio||1,reducedQuality?1.25:1.5);
+    quality=reducedQuality?"battery":"normal";motion.setQuality(quality);
     const options={width:Math.max(1,stage.clientWidth),height:Math.max(1,stage.clientHeight),
-      transparent:true,antialias:true,autoStart:false,resolution:Math.min(window.devicePixelRatio||1,1.5)};
+      transparent:true,antialias:!reducedQuality,autoStart:false,resolution:renderResolution};
     app=new PIXI.Application(options);
     model=await Live2DModel.from(modelUrl);
     app.stage.addChild(model);
@@ -160,13 +162,15 @@
     position();
     app.view.className="aksara-live2d-webgl";
     stage.prepend(app.view);
-    app.ticker.add(tick);
-    ready=true;started=performance.now();
+    app.ticker.maxFPS=fpsLimit;
+    app.ticker.add(tick,undefined,PIXI.UPDATE_PRIORITY?.HIGH??25);
+    ready=true;started=performance.now();frameWindowStart=0;windowFrames=0;
     stage.classList.add("avatar-ready");
     stage.classList.remove("avatar-unavailable","avatar-loading");
     stage.dataset.live2dStatus="ready";
     status.hidden=true;
-    resize=new ResizeObserver(position);resize.observe(stage);
+    if(typeof ResizeObserver!=="undefined"){resize=new ResizeObserver(position);resize.observe(stage);}
+    else window.addEventListener("resize",position,{passive:true});
     resume();
    }catch(error){
     console.warn("AKSARA Live2D runtime unavailable",error);
@@ -187,13 +191,16 @@
   snapshot:()=>({version:"0.3",runtime:"cubism-model",ready,failed,
    status:stage.dataset.live2dStatus||"checking",
    modelLoaded:!!model,renderer:app?"webgl":null,
-   lastFrame,voiceConnectionUnchanged:true}),
+   lastFrame,voiceConnectionUnchanged:true,
+   quality,targetFPS:fpsLimit,measuredFPS:Math.round(measuredFPS*10)/10,
+   resolution:renderResolution,motion:motion.snapshot()}),
   retry:()=>{if(!ready){failed=false;void setup();}}
  });
  window.addEventListener("pagehide",()=>{
   observer.disconnect();document.removeEventListener("visibilitychange",resume);
   window.removeEventListener("ba:voice-avatar-text",onText);
-  app?.ticker?.stop();resize?.disconnect();
+  app?.ticker?.stop();resize?.disconnect();window.removeEventListener("resize",position);
+  motion.reset();
   try{model?.destroy?.();app?.destroy?.(true,{children:true,texture:true,baseTexture:true});}catch(_){}
  },{once:true});
  if(!panel.hidden)resume();
