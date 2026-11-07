@@ -24,12 +24,12 @@
  const demo=query.get("voice-preview")==="1"&&query.get("voice-avatar-demo")==="1";
  let ready=false,failed=false,loading=null,app=null,model=null,resize=null;
  let audioCache=null,audioAnalyser=null,emotion="neutral",emotionUntil=0,started=0,lastFrame=0;
- let frameWindowStart=0,windowFrames=0,measuredFPS=0,lowWindows=0,highWindows=0;
- const phone=window.matchMedia("(max-width: 760px)").matches;
- const saveData=!!navigator.connection?.saveData;
- const weakDevice=(navigator.deviceMemory&&navigator.deviceMemory<=3)||(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4);
- const reducedQuality=reduced||phone||saveData||weakDevice;
- let fpsLimit=reducedQuality?30:60,renderResolution=1,quality="normal";
+ let frameWindowStart=0,windowFrames=0,measuredFPS=0,lowWindows=0;
+ const ultra=query.get("voice-quality")==="ultra";
+ const quality="quality";
+ const fpsLimit=60;
+ let renderResolution=2;
+ let performanceNotice="";
  panel.classList.add("voice-live2d-v04");
  if(query.get("voice-preview")==="1")panel.classList.add("voice-live2d-preview");
  let modelNaturalWidth=1,modelNaturalHeight=1;
@@ -81,27 +81,11 @@
   const actualFPS=windowFrames/Math.max(.1,(now-frameWindowStart)/1000);
   measuredFPS=measuredFPS?measuredFPS*.4+actualFPS*.6:actualFPS;
   motion.setFPS(measuredFPS);frameWindowStart=now;windowFrames=0;
-  if(actualFPS<fpsLimit*.75){lowWindows++;highWindows=0;}
-  else if(actualFPS>fpsLimit*.91){highWindows++;lowWindows=0;}
-  else{highWindows=0;lowWindows=0;}
-  if(lowWindows>=2){
-   lowWindows=0;
-   if(renderResolution>1.02){
-    renderResolution=1;quality="reduced";
-    app.renderer.resolution=renderResolution;position();
-   }else if(fpsLimit>24){
-    fpsLimit=Math.max(24,fpsLimit-15);quality="reduced";app.ticker.maxFPS=fpsLimit;
-   }
-  }else if(highWindows>=4&&!reduced&&!saveData){
-   highWindows=0;
-   const goal=reducedQuality?30:60;
-   if(fpsLimit<goal){fpsLimit=Math.min(goal,fpsLimit+15);app.ticker.maxFPS=fpsLimit;}
-   else if(renderResolution<(reducedQuality?1.25:1.5)){
-    renderResolution=reducedQuality?1.25:1.5;
-    app.renderer.resolution=renderResolution;position();quality="normal";
-   }
-  }
-  motion.setQuality(quality);
+  // Quality is deliberately not lowered when FPS drops. Diagnose, never
+  // silently switch to battery mode during a visual-fidelity experiment.
+  if(actualFPS<42){lowWindows++;}else{lowWindows=0;}
+  performanceNotice=lowWindows>=2?"GPU perlahan dalam Quality Mode":"";
+  motion.setQuality(ultra?"ultra":"quality");
  }
  function tick(){
   if(!ready||!model)return;
@@ -121,7 +105,7 @@
   const gain=speaking?(analyser?signal.rms:demo?.35+.24*Math.abs(Math.sin(now*.015)):0):0;
   const values=motion.step({
    now,phase:speaking?"speaking":phase,emotion:mood,
-   audio:gain,reducedMotion:reduced||saveData,mode:window.BilikAntaraThought?.getMode?.()||"cahaya"
+   audio:gain,reducedMotion:reduced,mode:window.BilikAntaraThought?.getMode?.()||"cahaya"
   });
   for(const [id,value] of Object.entries(values))setParameter(id,value);
   stage.dataset.avatarPhase=speaking?"speaking":phase;
@@ -149,10 +133,12 @@
     const PIXI=window.PIXI;
     const Live2DModel=PIXI?.live2d?.Live2DModel;
     if(typeof Live2DModel?.from!=="function")throw Error("PixiJS Live2D Cubism4 adapter gagal dimuat.");
-    renderResolution=Math.min(window.devicePixelRatio||1,reducedQuality?1.25:1.5);
-    quality=reducedQuality?"battery":"normal";motion.setQuality(quality);
+    const dpr=Math.max(1,window.devicePixelRatio||1);
+    // Minimum 2x internal supersampling, including lower-DPR desktop screens.
+    renderResolution=ultra?Math.min(3,Math.max(2.25,dpr)):Math.min(2.5,Math.max(2,dpr));
+    motion.setQuality(ultra?"ultra":"quality");
     const options={width:Math.max(1,stage.clientWidth),height:Math.max(1,stage.clientHeight),
-      transparent:true,antialias:!reducedQuality,autoStart:false,resolution:renderResolution};
+      transparent:true,antialias:true,autoStart:false,resolution:renderResolution};
     app=new PIXI.Application(options);
     model=await Live2DModel.from(modelUrl);
     app.stage.addChild(model);
@@ -188,11 +174,11 @@
  observer.observe(panel,{attributes:true,attributeFilter:["hidden","class","data-voice-phase"]});
  document.addEventListener("visibilitychange",resume);
  window.AksaraLive2DExperiment=Object.freeze({
-  snapshot:()=>({version:"0.4",runtime:"cubism-model",ready,failed,
+  snapshot:()=>({version:"0.5",runtime:"cubism-model",ready,failed,
    status:stage.dataset.live2dStatus||"checking",
    modelLoaded:!!model,renderer:app?"webgl":null,
    lastFrame,voiceConnectionUnchanged:true,
-   quality,targetFPS:fpsLimit,measuredFPS:Math.round(measuredFPS*10)/10,
+   quality:ultra?"ultra":"quality",targetFPS:fpsLimit,measuredFPS:Math.round(measuredFPS*10)/10,performanceNotice,
    resolution:renderResolution,motion:motion.snapshot()}),
   retry:()=>{if(!ready){failed=false;void setup();}}
  });
