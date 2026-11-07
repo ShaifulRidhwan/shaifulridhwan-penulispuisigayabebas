@@ -1280,17 +1280,25 @@ document.body.appendChild(profiler);
 </script>
 <script src="bilik-antara-living-v08.js?v=2" defer></script>
 <script>
-/* Fail-safe: keep the proven native Voice Chat as the default while the
-   production Gemini Live regression is investigated. V4 remains opt-in
-   via ?voice-ui=3d for controlled testing; audio handlers remain untouched. */
+/* V4.5 Liquid Glass is the default Voice Chat presentation, never a replacement
+   for the native Gemini Live audio, Aoede, mute, speaker or reconnect handlers.
+   Emergency visual rollback only: ?voice-ui=classic. */
 document.addEventListener("DOMContentLoaded",function(){
- if(new URLSearchParams(location.search).get("voice-ui")!=="3d")return;
+ const mode=new URLSearchParams(location.search).get("voice-ui");
+ if(mode==="classic")return;
  const sheet=document.createElement("link");
  sheet.rel="stylesheet";sheet.href="bilik-antara-voice-experiment-v3.css?v=15";
+ sheet.onload=()=>{
+  const script=document.createElement("script");
+  script.src="bilik-antara-voice-experiment-v3.js?v=11";
+  script.onerror=()=>console.warn("Voice V4.5 presentation unavailable; the native audio engine is unchanged.");
+  document.body.appendChild(script);
+ };
+ sheet.onerror=()=>{
+  sheet.remove();
+  console.warn("Voice V4.5 stylesheet unavailable; keeping the original Voice Chat presentation.");
+ };
  document.head.appendChild(sheet);
- const script=document.createElement("script");
- script.src="bilik-antara-voice-experiment-v3.js?v=11";
- document.body.appendChild(script);
 });
 </script>
 </body>
