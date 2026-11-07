@@ -1,0 +1,146 @@
+name: AKSARA Live2D v0.6 Cohesive Rebuild
+on:
+  pull_request:
+    paths:
+      - 'scripts/build-aksara-live2d-v06-cohesive.py'
+      - 'scripts/test-aksara-live2d-v06-browser.cjs'
+      - '.github/workflows/aksara-live2d-v06.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Rebuild layered PSD and compare neutral face with locked artwork
+        run: |
+          python -m pip install --disable-pip-version-check Pillow==11.3.0 numpy==2.2.6 opencv-python-headless==4.12.0.88
+          python scripts/build-aksara-live2d-v06-cohesive.py --output build/live2d-v06/aksara-cohesive.psd
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('build/live2d-v06/aksara-cohesive.psd')
+          m=json.loads(Path('build/live2d-v06/parts/manifest.json').read_text())
+          assert p.read_bytes()[:4]==b'8BPS' and p.stat().st_size>100000
+          assert m['part_count']==5 and not m['static_full_portrait_drawable']
+          assert m['neutral_face_mae']<13,m
+          print('QA SOURCE PASS',m)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aksara-v06-psd
+          path: build/live2d-v06/
+          if-no-files-found: error
+  rig:
+    needs: source
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: aksara-site
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: aksara-v06-psd
+          path: aksara-site/build/live2d-v06/
+      - uses: actions/checkout@v4
+        with:
+          repository: tsunehimatoi/psd2live
+          ref: c895a10ee6f3a1a1d58b9be5195f6443d7a2bb43
+          path: psd2live-tool
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Generate genuine Cubism .moc3 and atlas 4096
+        working-directory: psd2live-tool
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon -Ppsd2live.prebuiltRuntime=false run --args="--input ../aksara-site/build/live2d-v06/aksara-cohesive.psd --output ../aksara-site/build/live2d-v06/auto-rig --lang en --atlas 4096"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aksara-v06-moc3
+          path: aksara-site/build/live2d-v06/auto-rig/
+          if-no-files-found: error
+  preview:
+    needs: [source,rig]
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'experiment/aksara-voice-anime-2d-v1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: experiment/aksara-voice-anime-2d-v1
+      - uses: actions/download-artifact@v4
+        with:
+          name: aksara-v06-moc3
+          path: /tmp/v06-model
+      - uses: actions/download-artifact@v4
+        with:
+          name: aksara-v06-psd
+          path: /tmp/v06-source
+      - name: Stage separate v06 assets, never replace v0.5
+        run: |
+          python3 - <<'PY'
+          import json,shutil
+          from pathlib import Path
+          files=list(Path('/tmp/v06-model').rglob('*.model3.json'))
+          assert len(files)==1,files
+          src=files[0].parent
+          refs=json.loads(files[0].read_text())['FileReferences']
+          names=[refs['Moc'],*refs['Textures']]
+          names += [refs[k] for k in ['Physics','DisplayInfo'] if refs.get(k)]
+          names += [x['File'] for x in refs.get('Expressions',[])]
+          names += [x['File'] for seq in refs.get('Motions',{}).values() for x in seq]
+          root=Path('assets/live2d/aksara-v06')
+          for n in names:
+              p=src/n
+              assert p.is_file() and p.stat().st_size>20,p
+              out=root/n
+              out.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copy2(p,out)
+          shutil.copy2(files[0],root/'aksara.model3.json')
+          shutil.copy2('/tmp/v06-source/parts/manifest.json',root/'source-manifest.json')
+          print('STAGED CUBISM V06',len(names))
+          PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Render and test actual v0.6 model on desktop and mobile
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.56.0
+          npx playwright install --with-deps chromium
+          python3 -m http.server 4177 --bind 127.0.0.1 >/tmp/v06-server.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in 1 2 3 4 5;do
+            curl -fsS http://127.0.0.1:4177/bilik-antara.html >/dev/null && break
+            sleep 1
+          done
+          node scripts/test-aksara-live2d-v06-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aksara-v06-browser-images
+          path: browser-audit-artifacts/aksara-v06-*.png
+          if-no-files-found: warn
+      - name: Publish only gated optional new model to PR branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/live2d/aksara-v06
+          if git diff --cached --quiet;then exit 0;fi
+          git commit -m "feat(live2d-v06): staged coherent raster rig for opt-in preview"
+          git pull --rebase origin experiment/aksara-voice-anime-2d-v1
+          git push origin HEAD:refs/heads/experiment/aksara-voice-anime-2d-v1
