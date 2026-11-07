@@ -60,8 +60,8 @@ test("High fidelity rig rebuild uses 4096 atlas and isolated read-only auto rigg
  assert.match(workflow,/--atlas 4096/);
  assert.match(workflow,/build-aksara-live2d-quality-v05\.py/);
  assert.match(workflow,/repository: tsunehimatoi\/psd2live/);
- assert.match(workflow,/name: auto-rig-probe[\s\S]*permissions:\s*\n\s*contents: read/);
- assert.match(workflow,/name: publish-experiment[\s\S]*contents: write/);
+ assert.match(workflow,/auto-rig-probe:[\s\S]*permissions:\s*\n\s*contents: read/);
+ assert.match(workflow,/publish-experiment:[\s\S]*contents: write/);
  assert.match(workflow,/experiment\/aksara-voice-anime-2d-v1/);
  assert.doesNotMatch(workflow,/git push origin main/);
 });
