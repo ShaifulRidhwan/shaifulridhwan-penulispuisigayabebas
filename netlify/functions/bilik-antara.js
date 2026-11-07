@@ -41,6 +41,7 @@ const Context=require("./aksara-context-manager");
 const Knowledge=require("./aksara-knowledge-engine");
 const PublicPoetry=require("./aksara-public-poetry");
 const SafeTools=require("./aksara-safe-tools");
+const Skills=require("./aksara-skills-v1");
 const GeminiDiagnosis={
  classify(e){return e.cooldownKnown?"quota_cooldown":e.googleCategory&&e.status===400?e.googleCategory:e.status===429?"quota_exceeded":e.name==="AbortError"?"timeout":[400,404].includes(e.status)?"invalid_model_or_request":[401,403].includes(e.status)?"authentication_or_access":e.status>=500?"api_error":"upstream_error";},
  summarize({decision,failures,model}){const failure=[...failures].reverse().find(x=>x.provider==="gemini");return {status:failure?"failed":decision==="gemini_attempted"?"attempted":"not_selected",reason:failure?.reason||decision,httpStatus:Number(failure?.status)||null,model:String(model).slice(0,64),...(failure?.upstreamCode?{upstreamCode:failure.upstreamCode}:{}),...(failure?.category?{category:failure.category}:{})};},
@@ -677,8 +678,10 @@ exports.handler=async event=>{
       (creatorHumour?"\nUSIKAN BERASASKAN FAKTA: Usik hanya ciri projek yang diketahui, seperti pilihan bentuk puisi bersiri atau usaha mengubah suai Aksara. Jangan cipta atau meneka tabiat, waktu tidur, emosi, kebimbangan, peristiwa atau kehidupan peribadi Shaiful, walaupun sebagai perbandingan atau gurauan. Boleh selit ‘mwehehe’ di hujung jika sesuai.":"")+
       (tiktokHandle?"\nKAJIAN AKAUN TIKTOK AWAM: boleh gunakan Google Search hanya untuk memastikan profil dan maklumat awam yang disiarkan sendiri. Jangan menyamakan hasil carian pihak ketiga dengan pengesahan TikTok. Jangan dedahkan atau teka lokasi tepat, negara daripada petunjuk sampingan, nombor telefon, IP, identiti sebenar atau akaun peribadi. Jika data tidak dapat disahkan, nyatakan tidak tersedia.":"");
   const activeModeInstruction="\nMOD AKTIF UNTUK JAWAPAN INI: "+(thoughtMode==="gelap"?"GELAP. Jawab dengan falsafah moden dan pemeriksaan premis apabila relevan, tetapi jangan merosakkan soalan fakta atau arahan teknikal.":"CAHAYA. Jawab secara santai, jelas dan praktikal; jangan menyamar sebagai GELAP.")+". Dua mod dalam Bilik Antara adalah gaya pemikiran/respons, bukan dua model API. Jika ditanya, terangkan kedua-dua mod serta cara menukarnya pada ikon pelaras di sebelah Hantar. Jangan mendakwa menggunakan model khusus kerana mod.";
+   const skillSelection=Skills.plan({question,intent,profile:cognition,hasDocument:!!documentText,hasMedia:media.length>0});
+   const skillsGuidance=Skills.guidance(skillSelection,{researchStatus:researchResult.status,sourceCount:researchResult.sources.length,hasOwnedPage:!!ownedPage,hasDocument:!!documentText});
    const systemRaw=baseSystem+"\n"+AKSARA_TEXT_TONE+"\n"+DocumentIntelligence.guidance({documentText,documentName,media})+
-    "\n"+cognitiveGuidance(cognition)+"\n"+Research.guidance(researchResult)+activeModeInstruction+
+    "\n"+cognitiveGuidance(cognition)+skillsGuidance+"\n"+Research.guidance(researchResult)+activeModeInstruction+
     (thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false)+"\n"+Modes.contextGuidance(thoughtMode,question,history):"")+
     thinkingV3.guidance+contextGuidanceV6;
   // Disabled by default until benchmark comparison is approved.
@@ -690,7 +693,7 @@ exports.handler=async event=>{
     dualPerspective:thinkingV3.dualPerspective,answerDepth:thinkingV4.answerDepth});
   const maxTokens=efficiencyV6.maxTokens;
   log("question",{chars:question.length,task:intent.task,depth:intent.depth,search:intent.search,code:intent.calculate,
-    works:!!poem,multimodal:media.length>0,model,review:intent.review,cognitiveFocus:cognition.focus,reasoningLevel:plan.thinkingLevel,thinkingVersion:4,answerDepth:thinkingV4.answerDepth,dualPerspective:thinkingV3.dualPerspective,outputBudgetReduced:efficiencyV6.reduced});
+    works:!!poem,multimodal:media.length>0,model,review:intent.review,cognitiveFocus:cognition.focus,activeSkills:skillSelection.active,reasoningLevel:plan.thinkingLevel,thinkingVersion:4,answerDepth:thinkingV4.answerDepth,dualPerspective:thinkingV3.dualPerspective,outputBudgetReduced:efficiencyV6.reduced});
   const privateContext=!!(documentText||userMemory);
   // Opt-in image fallback: other media stay on Gemini. Never silently send
   // attached images or private session notes to an extra provider.
