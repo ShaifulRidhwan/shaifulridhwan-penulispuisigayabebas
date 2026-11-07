@@ -138,10 +138,14 @@ def main():
         image.save(outdir/("%02d_%s.png"%(index,name.replace(" ","_"))),compress_level=6)
     # Also export tight transparent ornaments for independent Pixi physics test.
     props=outdir/"accessories";props.mkdir(exist_ok=True)
+    coordinates={}
     for name,mask in [("sun",sun),("moon",moon)]:
         image=rgba(original,mask)
         bbox=image.getchannel("A").getbbox()
-        if bbox:image.crop(bbox).save(props/(name+".png"))
+        if bbox:
+            image.crop(bbox).save(props/(name+".png"))
+            coordinates[name]={"file":name+".png","bounds":list(bbox)}
+    (props/"accessories.json").write_text(json.dumps({"canvas":[W,H],"sprites":coordinates,"isOverlay":True},indent=2),encoding="utf-8")
     metadata={"size":[W,H],"layers":[n for n,_ in parts],
       "quality":"high-resolution-automated-separation","fidelity":"requires-human-repaint-audit",
       "rig_complete":False,"source_is_flattened":True,"atlas_target":4096}
