@@ -9,6 +9,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: aksara-live2d-quality-${{ github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
 jobs:
   layered-psd:
     runs-on: ubuntu-latest
