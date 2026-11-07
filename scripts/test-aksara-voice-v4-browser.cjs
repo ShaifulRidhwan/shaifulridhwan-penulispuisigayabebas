@@ -240,20 +240,23 @@ async function audit(browser,label,viewport){
   assert.equal(await panel.isVisible(),false,"Header close must close preview");
   assert.equal(tokenRequests.length,0,"No Gemini token requests may occur in UI preview");
   assert.deepEqual(pageErrors,[],label+" browser errors: "+pageErrors.join("; "));
-  // Emergency classic fallback must NOT hydrate new voice UI or request a token.
+  // The normal URL must mount V4.5. Explicit classic rollback must not.
   const classic=await context.newPage();
   await classic.goto(ROOT+"/bilik-antara.html",
     {waitUntil:"domcontentloaded",timeout:30000});
-  await classic.waitForTimeout(400);
-  assert.equal(await classic.locator("#voicePanel.voice-ui-experiment-v3").count(),0,
-    label+" classic rollback unexpectedly mounted V4");
-  assert.equal(await classic.locator(".voice-v4-brand").count(),0,
-    label+" default native layout left V4 header behind");
+  await classic.waitForSelector("#voicePanel.voice-ui-experiment-v3 .voice-v4-brand",
+    {state:"attached",timeout:15000});
+  assert.equal(await classic.locator(".voice-v4-brand").count(),1,
+    label+" default Voice V4.5 presentation did not mount");
+  assert.equal(await classic.locator("#voicePanel").isVisible(),false,
+    label+" default Voice should remain closed before user opens it");
   await classic.goto(ROOT+"/bilik-antara.html?voice-ui=classic",
     {waitUntil:"domcontentloaded",timeout:30000});
   await classic.waitForTimeout(400);
+  assert.equal(await classic.locator("#voicePanel.voice-ui-experiment-v3").count(),0,
+    label+" classic visual rollback unexpectedly mounted V4");
   assert.equal(await classic.locator(".voice-v4-brand").count(),0,
-    label+" explicit classic rollback left V4 behind");
+    label+" explicit classic visual rollback left V4 behind");
   await classic.close();
   console.log("Voice V4 "+label+" PASS: glass, typography, hero, icons, controls, dialog, bounds.");
  }finally{await context.close();}

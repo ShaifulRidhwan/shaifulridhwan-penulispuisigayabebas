@@ -5,17 +5,24 @@ const fs=require("node:fs");
 const path=require("node:path");
 const read=name=>fs.readFileSync(path.join(__dirname,"..",name),"utf8");
 
-test("Classic Voice is the default and V4 needs explicit opt-in",()=>{
+test("V4.5 is the default presentation; classic rollback leaves native Voice engine intact",()=>{
  const html=read("bilik-antara.html");
  const js=read("bilik-antara-voice-experiment-v3.js");
- assert.match(html,/get\("voice-ui"\)!=="3d"\)return/);
- assert.doesNotMatch(html,/get\("voice-ui"\)==="classic"\)return/);
+ assert.match(html,/const mode=new URLSearchParams\(location.search\)\.get\("voice-ui"\)/);
+ assert.match(html,/if\(mode==="classic"\)return/);
+ assert.doesNotMatch(html,/get\("voice-ui"\)!=="3d"\)return/);
  assert.match(html,/DOMContentLoaded/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.js/);
- assert.match(html,/bilik-antara-voice-experiment-v3\.css/);
+ assert.match(html,/sheet\.onload=\(\)=>/);
+ assert.match(html,/sheet\.onerror=\(\)=>/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.js\?v=11/);
+ assert.match(html,/bilik-antara-voice-experiment-v3\.css\?v=15/);
  assert.doesNotMatch(html,/<link[^>]+href="bilik-antara-voice-experiment-v3\.css/);
  assert.match(js,/get\("voice-preview"\)==="1"/);
  assert.doesNotMatch(js,/get\("voice-live"\)!=="1"/);
+ const voice=read("bilik-antara-voice.js");
+ assert.match(html,/bilik-antara-voice\.js\?v=50/);
+ assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
+ assert.match(voice,/START_SENSITIVITY_HIGH/);
 });
 
 test("experiment only rearranges original voice DOM elements",()=>{
