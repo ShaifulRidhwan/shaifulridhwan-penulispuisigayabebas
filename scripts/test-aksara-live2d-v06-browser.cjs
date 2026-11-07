@@ -8,7 +8,7 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
 const output=path.resolve("browser-audit-artifacts");
 fs.mkdirSync(output,{recursive:true});
 async function audit(browser,name,viewport){
- const context=await browser.newContext({viewport,deviceScaleFactor:1});
+ const context=await browser.newContext({viewport,deviceScaleFactor:1,recordVideo:{dir:output,size:viewport}});
  const page=await context.newPage();
  const pageErrors=[],tokens=[];
  page.on("pageerror",err=>pageErrors.push(String(err.message)));
@@ -42,11 +42,17 @@ async function audit(browser,name,viewport){
   await page.evaluate(()=>document.querySelector("#voicePanel").classList.add("voice-speaking"));
   await page.waitForFunction(()=>window.AksaraLive2DExperiment.snapshot().motion.mouth>.05,null,{timeout:5000});
   await page.screenshot({path:path.join(output,"aksara-v06-"+name+"-speaking.png")});
+  // Record moving material, not merely a single still that can hide seams.
+  await page.waitForTimeout(4900);
   assert.deepEqual(pageErrors,[]);
   assert.equal(tokens.length,0);
   const latest=await page.evaluate(()=>window.AksaraLive2DExperiment.snapshot());
   console.log("AKSARA V06 COHESIVE "+name+" PASS",JSON.stringify({model:latest.rig,frame:latest.lastFrame,fpsTarget:latest.targetFPS,mouth:latest.motion.mouth}));
- }finally{await context.close();}
+ }finally{
+  const movie=page.video();
+  await context.close();
+  if(movie){fs.copyFileSync(await movie.path(),path.join(output,"aksara-v06-"+name+"-motion.webm"));}
+ }
 }
 (async()=>{
  const browser=await chromium.launch({headless:true});
