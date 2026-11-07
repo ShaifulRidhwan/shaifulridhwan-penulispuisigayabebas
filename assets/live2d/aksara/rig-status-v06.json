@@ -1,0 +1,20 @@
+{
+  "version": "0.6",
+  "stage": "art-source-review",
+  "original_art_locked": true,
+  "source_asset": "AKSARA-Live2D-Source-Rebuild-v06.psd (delivered separately in conversation)",
+  "source_layer_count": 23,
+  "source_resolution": [
+    1086,
+    1448
+  ],
+  "hand_repaint_completed": false,
+  "cubism_keyforms_authored": false,
+  "moc3_rebuilt": false,
+  "mobile_motion_visual_pass": false,
+  "desktop_motion_visual_pass": false,
+  "live_aoede_lipsync_verified": false,
+  "public_launch_authorized": false,
+  "merge_allowed": false,
+  "reason": "Current art-source occlusion still needs manual repaint and genuine Cubism Editor mesh/keyform authoring."
+}
