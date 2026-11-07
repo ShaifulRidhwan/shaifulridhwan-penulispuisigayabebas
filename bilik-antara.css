@@ -3435,3 +3435,63 @@ body.voice-focus .world-scene .cinematic-clash{
  .world-scene .cinematic-mist,.world-scene .cinematic-clash{animation:none!important}
 }
 
+
+/* Glass parity v1: Portal now matches Code Engine / Connection. UI only. */
+.topbar #settingsPanel #portalCard,
+.topbar #settingsPanel #portalCard:popover-open{
+ background:linear-gradient(150deg,rgba(23,31,45,.36),rgba(9,14,24,.43))!important;
+ border:1px solid rgba(244,217,176,.37)!important;
+ border-radius:19px!important;
+ box-shadow:inset 0 1px 0 rgba(255,244,224,.12),0 14px 35px rgba(0,4,13,.21)!important;
+ -webkit-backdrop-filter:blur(6px) saturate(1.08)!important;
+ backdrop-filter:blur(6px) saturate(1.08)!important;
+}
+.topbar #settingsPanel #portalCard:popover-open{padding:18px!important}
+.topbar #settingsPanel #portalCard .portal-modal-head{
+ margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid rgba(231,203,157,.16)
+}
+.topbar #settingsPanel #portalCard .portal-modal-head .settings-title{
+ font:700 16px/1.3 'DM Sans',sans-serif;letter-spacing:.025em;color:#f5e9d8;
+}
+.topbar #settingsPanel #portalClose{
+ flex:0 0 38px;width:38px;height:38px;min-height:38px;
+ padding:0;border-radius:11px!important;border:1px solid rgba(233,198,151,.32);
+ background:rgba(255,255,255,.045);color:#f5e9d8;
+}
+.topbar #settingsPanel #portalCard .feature-hub{gap:9px}
+.topbar #settingsPanel #portalCard .feature-hub-item{
+ min-height:65px;padding:12px;gap:10px;
+ grid-template-columns:22px minmax(0,1fr) 14px;
+ border:1px solid rgba(222,193,151,.17)!important;
+ border-radius:12px!important;
+ background:linear-gradient(145deg,rgba(255,255,255,.037),rgba(255,255,255,.018))!important;
+ box-shadow:inset 0 1px 0 rgba(255,255,255,.065)!important;
+ -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+.topbar #settingsPanel #portalCard .feature-hub-item:is(:hover,:focus-visible){
+ background:rgba(255,255,255,.075)!important;
+ border-color:rgba(240,209,165,.48)!important;
+}
+.topbar #settingsPanel #portalCard .feature-hub-item svg{width:21px;height:21px;stroke-width:1.65}
+.topbar #settingsPanel #portalCard .feature-hub-item strong{font-size:12.5px;letter-spacing:0}
+.topbar #settingsPanel #portalCard .feature-hub-item small{font-size:10.5px;line-height:1.5;color:#b9b9bb}
+.topbar #settingsPanel #portalCard .feature-hub-arrow{color:#d9c39e}
+.topbar #settingsPanel #portalCard .feature-privacy{border-top-color:rgba(231,203,157,.17);margin-top:16px}
+.topbar #settingsPanel #portalCard .feature-privacy>summary{min-height:42px;padding:10px 7px}
+#portalCard::backdrop{
+ background:rgba(3,7,15,.45);
+ -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+@media(max-width:560px){
+ .topbar #settingsPanel #portalCard:popover-open{padding:15px!important}
+ .topbar #settingsPanel #portalCard,
+ .topbar #settingsPanel #portalCard:popover-open{
+  -webkit-backdrop-filter:blur(4px) saturate(1.06)!important;
+  backdrop-filter:blur(4px) saturate(1.06)!important;
+ }
+ .topbar #settingsPanel #portalCard .feature-hub-item{min-height:62px;padding:10px 11px}
+}
+@media(prefers-reduced-motion:reduce){
+ .topbar #settingsPanel #portalCard .feature-hub-item{transition:none!important}
+}
+
