@@ -1,11 +1,5 @@
 name: AKSARA Live2D Rigging Research (Draft)
 on:
-  pull_request:
-    paths:
-      - 'scripts/build-aksara-live2d-psd.py'
-      - 'scripts/build-aksara-live2d-quality-v05.py'
-      - '.github/workflows/aksara-live2d-rig-draft.yml'
-      - 'bilik-antara-avatar-2d-art.webp'
   workflow_dispatch:
 permissions:
   contents: read
@@ -93,7 +87,7 @@ jobs:
     needs: [layered-psd, auto-rig-probe]
     # Only this one trusted, owned experiment branch receives write access.
     # The third-party auto-rigger runs in its own read-only job.
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'experiment/aksara-voice-anime-2d-v1'
+    if: (github.event_name == 'workflow_dispatch' && github.ref_name == 'experiment/aksara-voice-anime-2d-v1') || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'experiment/aksara-voice-anime-2d-v1')
     runs-on: ubuntu-latest
     permissions:
       contents: write
