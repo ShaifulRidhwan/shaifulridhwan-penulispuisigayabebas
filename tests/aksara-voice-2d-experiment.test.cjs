@@ -34,8 +34,9 @@ test("2D visual stage is scoped and never hides core controls",()=>{
 test("anime module selector leaves original 3D renderer intact without the gate",()=>{
  const html=read("bilik-antara.html"),ui=read("bilik-antara-voice-experiment-v3.js");
  assert.match(html,/anime2D\?"\.\/bilik-antara-avatar-2d\.js\?v=2":"\.\/bilik-antara-avatar\.js\?v=15"/);
- assert.match(html,/anime2D\)\{[\s\S]*bilik-antara-avatar-2d\.css\?v=2/);
- assert.match(ui,/if\(!anime2D\)stage\.append\(fallback\)/);
+ assert.match(html,/if\(anime2D\|\|genuineLive2D\)\{/);
+ assert.match(html,/bilik-antara-avatar-2d\.css\?v=2/);
+ assert.match(ui,/if\(!anime2D&&!genuineLive2D\)stage\.append\(fallback\)/);
  assert.match(ui,/import\(anime2D\?"\.\/bilik-antara-avatar-2d\.js\?v=2":"\.\/bilik-antara-avatar\.js\?v=15"\)/);
  assert.match(ui,/previewStatus="Pratonton reka bentuk sahaja/);
 });
