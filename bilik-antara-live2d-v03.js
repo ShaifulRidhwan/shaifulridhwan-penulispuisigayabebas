@@ -10,7 +10,7 @@
  const panel=document.getElementById("voicePanel");
  const stage=document.getElementById("voiceAvatarStage");
  if(!panel||!stage)return;
- await Promise.all([import("./bilik-antara-live2d-bridge-v03.js?v=1"),import("./bilik-antara-live2d-motion-v04.js?v=1")]);
+ await Promise.all([import("./bilik-antara-live2d-bridge-v03.js?v=1"),import("./bilik-antara-live2d-motion-v04.js?v=1"),import("./bilik-antara-live2d-accessories-v05.js?v=1")]);
  const bridge=window.AksaraLive2DBridge;
  const motion=window.AksaraLive2DMotionV04?.createController({seed:.421});
  if(!bridge||!motion)return;
@@ -22,7 +22,7 @@
  ];
  const reduced=!!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
  const demo=query.get("voice-preview")==="1"&&query.get("voice-avatar-demo")==="1";
- let ready=false,failed=false,loading=null,app=null,model=null,resize=null;
+ let ready=false,failed=false,loading=null,app=null,model=null,resize=null,accessories=null;
  let audioCache=null,audioAnalyser=null,emotion="neutral",emotionUntil=0,started=0,lastFrame=0;
  let frameWindowStart=0,windowFrames=0,measuredFPS=0,lowWindows=0;
  const ultra=query.get("voice-quality")==="ultra";
@@ -108,6 +108,7 @@
    audio:gain,reducedMotion:reduced,mode:window.BilikAntaraThought?.getMode?.()||"cahaya"
   });
   for(const [id,value] of Object.entries(values))setParameter(id,value);
+  accessories?.refresh(now,values);
   stage.dataset.avatarPhase=speaking?"speaking":phase;
   stage.dataset.expression=mood;
   lastFrame=now;windowFrames++;
@@ -157,6 +158,10 @@
     status.hidden=true;
     if(typeof ResizeObserver!=="undefined"){resize=new ResizeObserver(position);resize.observe(stage);}
     else window.addEventListener("resize",position,{passive:true});
+    if(query.get("voice-accessories")!=="off"){
+     accessories=window.AksaraLive2DAccessoriesV05?.create({PIXI,app,model});
+     if(accessories)void accessories.init();
+    }
     resume();
    }catch(error){
     console.warn("AKSARA Live2D runtime unavailable",error);
@@ -179,14 +184,14 @@
    modelLoaded:!!model,renderer:app?"webgl":null,
    lastFrame,voiceConnectionUnchanged:true,
    quality:ultra?"ultra":"quality",targetFPS:fpsLimit,measuredFPS:Math.round(measuredFPS*10)/10,performanceNotice,
-   resolution:renderResolution,motion:motion.snapshot()}),
+   resolution:renderResolution,motion:motion.snapshot(),accessories:accessories?.snapshot()||{active:false,reason:"not-loaded"}}),
   retry:()=>{if(!ready){failed=false;void setup();}}
  });
  window.addEventListener("pagehide",()=>{
   observer.disconnect();document.removeEventListener("visibilitychange",resume);
   window.removeEventListener("ba:voice-avatar-text",onText);
   app?.ticker?.stop();resize?.disconnect();window.removeEventListener("resize",position);
-  motion.reset();
+  accessories?.destroy();motion.reset();
   try{model?.destroy?.();app?.destroy?.(true,{children:true,texture:true,baseTexture:true});}catch(_){}
  },{once:true});
  if(!panel.hidden)resume();
