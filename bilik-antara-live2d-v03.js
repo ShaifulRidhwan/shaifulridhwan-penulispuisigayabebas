@@ -91,14 +91,15 @@
   const signal=speaking&&analyser?bridge.sampleAudio(analyser,analyser===audioAnalyser?audioCache:null):{rms:0,cache:null};
   audioAnalyser=analyser;audioCache=signal.cache;
   const gain=speaking?(analyser?signal.rms:demo?.35+.24*Math.abs(Math.sin(now*.015)):0):0;
-  const values=bridge.state({
-   time:now-started,phase:speaking?"speaking":phase,emotion:mood,
-   audio:gain,reducedMotion:reduced,mode:window.BilikAntaraThought?.getMode?.()||"cahaya"
+  const values=motion.step({
+   now,phase:speaking?"speaking":phase,emotion:mood,
+   audio:gain,reducedMotion:reduced||saveData,mode:window.BilikAntaraThought?.getMode?.()||"cahaya"
   });
   for(const [id,value] of Object.entries(values))setParameter(id,value);
   stage.dataset.avatarPhase=speaking?"speaking":phase;
   stage.dataset.expression=mood;
-  lastFrame=now;
+  lastFrame=now;windowFrames++;
+  tunePerformance(now);
  }
  async function setup(){
   if(ready||failed||loading)return loading;
