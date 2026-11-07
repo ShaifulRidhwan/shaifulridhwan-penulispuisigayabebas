@@ -1,128 +1,143 @@
-/* AKSARA: 2D anime portrait experiment. Presentation only.
-   ?voice-avatar=2d. Does not control Aoede, Gemini, microphone or playback. */
+/* AKSARA Voice | 2D cinematic anime experiment v0.2.
+ * Opt-in: ?voice-avatar=2d. This module controls only avatar presentation.
+ * No Gemini, microphone, token, TTS, speaker or playback manipulation. */
 (function(){
 "use strict";
 const params=new URLSearchParams(location.search);
 if(params.get("voice-avatar")!=="2d")return;
-const panel=document.getElementById("voicePanel"),stage=document.getElementById("voiceAvatarStage");
+const panel=document.getElementById("voicePanel");
+const stage=document.getElementById("voiceAvatarStage");
 if(!panel||!stage)return;
-stage.classList.add("avatar-2d-active");
-const reduced=!!matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
 const demo=params.get("voice-preview")==="1"&&params.get("voice-avatar-demo")==="1";
-const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
-let svg=null,loading=null,failed=false,active=false,raf=0,lastDraw=0,blinkAt=0,blinkBegin=-1;
-let analyser=null,samples=null,mouthLevel=0,expression="neutral",expressionUntil=0;
-const element=id=>svg?.querySelector("#"+id);
-function inferExpression(input){
- const s=String(input||"").toLocaleLowerCase("ms-MY").slice(-300);
- if(/\b(?:hahaha+|hehehe+|mwehehe|ketawa)\b/.test(s))return "laugh";
- if(/\b(?:tahniah|syabas|seronok|gembira)\b/.test(s))return "smile";
- if(/\b(?:terkejut|tak sangka)\b/.test(s))return "surprised";
- if(/\b(?:aku fikir|cuba fikir|menarik untuk difikirkan)\b/.test(s))return "thinking";
- if(/\b(?:sebaliknya|namun|tidak tepat|tak semestinya)\b/.test(s))return "serious";
+const reduced=!!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+const clamp=(number,min,max)=>Math.max(min,Math.min(max,number));
+const canvas=document.createElement("canvas");
+canvas.className="aksara-anime-canvas";
+canvas.width=720;canvas.height=960;
+canvas.setAttribute("aria-hidden","true");
+const context=canvas.getContext("2d",{alpha:true});
+if(!context)return;
+const portrait=new Image();portrait.decoding="async";
+portrait.src="./bilik-antara-avatar-2d-art.webp?v=2";
+let loaded=false,failed=false,active=false,frameId=0,lastDraw=0,nextBlink=0,blinkStart=-1;
+let audioAnalyser=null,audioArray=null,smoothAmplitude=0;
+let expression="neutral",expressionUntil=0;
+stage.classList.add("avatar-2d-active","avatar-loading");
+stage.prepend(canvas);
+function emotionForText(raw){
+ const text=String(raw||"").toLocaleLowerCase("ms-MY").slice(-360);
+ if(/\b(?:hahaha+|hehehe+|mwehehe|ketawa)\b/.test(text))return "laugh";
+ if(/\b(?:tahniah|syabas|seronok|gembira)\b/.test(text))return "smile";
+ if(/\b(?:terkejut|tak sangka)\b/.test(text))return "surprised";
+ if(/\b(?:aku fikir|cuba fikir|menarik untuk difikirkan)\b/.test(text))return "thinking";
+ if(/\b(?:sebaliknya|namun|tidak tepat|tak semestinya)\b/.test(text))return "serious";
  return "neutral";
 }
-function onAssistantText(event){
- const next=inferExpression(event.detail?.text);
- if(next==="neutral")return;
- expression=next;expressionUntil=performance.now()+3400;wake();
+function onResponse(event){
+ const found=emotionForText(event?.detail?.text);
+ if(found!=="neutral"){expression=found;expressionUntil=performance.now()+3600;resume();}
 }
-window.addEventListener("ba:voice-avatar-text",onAssistantText);
+window.addEventListener("ba:voice-avatar-text",onResponse);
 function audioLevel(){
- const source=window.AksaraVoiceAudio?.analyser;
- if(!source||typeof source.getFloatTimeDomainData!=="function")return null;
- if(source!==analyser){analyser=source;samples=new Float32Array(source.fftSize||512);}
+ const analyser=window.AksaraVoiceAudio?.analyser;
+ if(!analyser||typeof analyser.getFloatTimeDomainData!=="function")return null;
+ if(analyser!==audioAnalyser){audioAnalyser=analyser;audioArray=new Float32Array(analyser.fftSize||512);}
  try{
-  source.getFloatTimeDomainData(samples);
-  let square=0;for(const sample of samples)square+=sample*sample;
-  return clamp(Math.sqrt(square/samples.length)*8,0,1);
- }catch(_){analyser=null;samples=null;return null;}
+  analyser.getFloatTimeDomainData(audioArray);
+  let sum=0;for(const value of audioArray)sum+=value*value;
+  return clamp(Math.sqrt(sum/audioArray.length)*8,0,1);
+ }catch(_){audioAnalyser=null;audioArray=null;return null;}
 }
-async function ensureArt(){
- if(svg||failed)return;
- if(loading)return loading;
- loading=(async()=>{
-  const response=await fetch("./bilik-antara-avatar-2d.svg?v=1",{credentials:"same-origin"});
-  if(!response.ok)throw Error("Avatar 2D HTTP "+response.status);
-  const doc=new DOMParser().parseFromString(await response.text(),"image/svg+xml");
-  if(doc.querySelector("parsererror"))throw Error("Invalid SVG");
-  const imported=document.importNode(doc.documentElement,true);
-  if(imported.localName!=="svg")throw Error("Unexpected avatar artwork");
-  stage.prepend(imported);svg=imported;
-  stage.classList.add("avatar-ready");stage.classList.remove("avatar-loading","avatar-unavailable");
- })().catch(e=>{
-  failed=true;stage.classList.remove("avatar-loading");stage.classList.add("avatar-unavailable");
-  console.warn("Avatar 2D unavailable",e);
- }).finally(()=>{loading=null;});
- return loading;
+function blinkEye(x,y,amount,side){
+ if(amount<.01)return;
+ context.save();context.globalAlpha=clamp(amount,0,1);
+ const skin=context.createLinearGradient(x-30,y-17,x+33,y+20);
+ skin.addColorStop(0,side==="left"?"#c39a88":"#a88a84");
+ skin.addColorStop(.5,"#bc9085");skin.addColorStop(1,"#8b6d75");
+ context.fillStyle=skin;
+ context.beginPath();context.ellipse(x,y,43,15,0,0,Math.PI*2);context.fill();
+ context.strokeStyle="#45323e";context.lineWidth=2.1;
+ context.beginPath();context.moveTo(x-36,y-1);
+ context.quadraticCurveTo(x,y+4,x+36,y-2);context.stroke();
+ context.restore();
 }
-function draw(time){
- raf=0;
- if(!active||!svg||panel.hidden||panel.classList.contains("is-minimized")||document.hidden)return;
- if(!reduced&&time-lastDraw<33){raf=requestAnimationFrame(draw);return;}
+function animateMouth(phase,time,power){
+ const animated=phase==="speaking"?power:phase==="surprised"?.28:0;
+ if(animated<.06)return;
+ const amount=clamp(animated,0,1);
+ context.save();context.globalAlpha=Math.min(.86,amount*1.3);
+ context.fillStyle="#48222c";context.strokeStyle="#ac666c";
+ context.lineWidth=1.6;
+ context.beginPath();context.ellipse(360,389,22+amount*4,1+amount*8,0,0,Math.PI*2);
+ context.fill();context.stroke();context.restore();
+}
+function render(time){
+ frameId=0;
+ if(!active||!loaded||document.hidden||panel.hidden||panel.classList.contains("is-minimized"))return;
+ if(!reduced&&time-lastDraw<33){frameId=requestAnimationFrame(render);return;}
  lastDraw=time;
- const phase=panel.dataset.voicePhase||"idle";
- const demoStage=demo?Math.floor(time/3200)%5:-1;
- const speaking=panel.classList.contains("voice-speaking")||phase==="speaking"||demoStage===1||demoStage===2;
- const listening=phase==="listening"||demoStage===0;
- const thinking=phase==="thinking"||demoStage===3;
+ const callPhase=panel.dataset.voicePhase||"idle";
+ const demoStep=demo?Math.floor(time/3200)%5:-1;
+ const talking=panel.classList.contains("voice-speaking")||callPhase==="speaking"||demoStep===1||demoStep===2;
+ const listening=callPhase==="listening"||demoStep===0;
+ const thinking=callPhase==="thinking"||demoStep===3;
  if(time>expressionUntil)expression="neutral";
- const mood=expression!=="neutral"?expression:demoStage===4?"smile":thinking?"thinking":"neutral";
- stage.dataset.expression=mood;
- stage.dataset.avatarPhase=speaking?"speaking":thinking?"thinking":listening?"listening":phase;
- let amplitude=speaking?audioLevel():0;
- if(speaking&&amplitude===null){
-  // No analyser: a graceful approximation, not claimed to be phoneme-synced.
-  amplitude=.35+.25*Math.abs(Math.sin(time*.012))+.14*Math.abs(Math.sin(time*.026));
+ const mood=expression!=="neutral"?expression:demoStep===4?"smile":thinking?"thinking":"neutral";
+ const phase=talking?"speaking":thinking?"thinking":listening?"listening":callPhase;
+ stage.dataset.avatarPhase=phase;stage.dataset.expression=mood;
+ stage.dataset.avatarMode=window.BilikAntaraThought?.getMode?.()||"cahaya";
+ let power=talking?audioLevel():0;
+ if(talking&&power===null){
+  // Only approximate lip motion if an audio analyser is unavailable.
+  power=.30+.28*Math.abs(Math.sin(time*.014))+.12*Math.abs(Math.sin(time*.027));
  }
- mouthLevel+=(clamp(amplitude||0,0,1)-mouthLevel)*.29;
- if(!blinkAt)blinkAt=time+1900;
- if(!reduced&&time>=blinkAt&&blinkBegin<0)blinkBegin=time;
- const blink=blinkBegin>=0?Math.sin(clamp((time-blinkBegin)/150,0,1)*Math.PI):0;
- if(blinkBegin>=0&&time-blinkBegin>150){blinkBegin=-1;blinkAt=time+2400+Math.random()*2500;}
- for(const id of ["a2d-eye-left","a2d-eye-right"]){
-  const eye=element(id);if(eye)eye.style.transform="scaleY("+(reduced?1:1-blink*.94).toFixed(3)+")";
+ smoothAmplitude+=(clamp(power||0,0,1)-smoothAmplitude)*.29;
+ if(!nextBlink)nextBlink=time+2100;
+ if(!reduced&&time>=nextBlink&&blinkStart<0)blinkStart=time;
+ const blink=blinkStart>=0?Math.sin(clamp((time-blinkStart)/158,0,1)*Math.PI):0;
+ if(blinkStart>=0&&time-blinkStart>=158){blinkStart=-1;nextBlink=time+2450+Math.random()*2400;}
+ context.clearRect(0,0,canvas.width,canvas.height);
+ context.drawImage(portrait,0,0,720,960);
+ // Lightweight pseudo-rig v0.2, not Live2D mesh deformation.
+ blinkEye(289,267,blink+(mood==="thinking"?.12:0),"left");
+ blinkEye(416,267,blink+(mood==="thinking"?.12:0),"right");
+ animateMouth(talking?"speaking":mood,time,smoothAmplitude);
+ if((mood==="smile"||mood==="laugh")&&!talking){
+  context.save();context.globalAlpha=.46;context.strokeStyle="#965963";
+  context.lineWidth=2;context.beginPath();context.moveTo(338,390);
+  context.quadraticCurveTo(360,404,382,390);context.stroke();context.restore();
  }
- const brow=mood==="surprised"?-6:mood==="thinking"?-3:mood==="serious"?3:0;
- ["a2d-brow-left","a2d-brow-right"].forEach((id,i)=>{
-  const el=element(id);
-  if(el)el.style.transform="translateY("+brow+"px) rotate("+(mood==="thinking"?(i?-4:4):0)+"deg)";
- });
- const sway=reduced?0:Math.sin(time*.00052)*1.6;
- const breath=reduced?0:Math.sin(time*.00108)*2.3;
- const tilt=mood==="thinking"?-2:mood==="laugh"?1.4:listening?-1.2:0;
- const head=element("a2d-head"),front=element("a2d-front-hair"),back=element("a2d-back-hair");
- if(head)head.setAttribute("transform","translate("+sway.toFixed(2)+" "+breath.toFixed(2)+") rotate("+(tilt+sway*.3).toFixed(2)+" 250 310)");
- if(front)front.setAttribute("transform","translate("+(sway*.7).toFixed(2)+" "+(breath*.5).toFixed(2)+") rotate("+(-sway*.4).toFixed(2)+" 252 90)");
- if(back)back.setAttribute("transform","translate("+(sway*.45).toFixed(2)+" "+(breath*.35).toFixed(2)+")");
- const mouth=element("a2d-mouth"),smile=element("a2d-smile");
- if(mouth){
-  mouth.setAttribute("ry",(speaking?2+mouthLevel*17:mood==="surprised"?7:mood==="laugh"?4:1.8).toFixed(2));
-  mouth.setAttribute("rx",(speaking?13+mouthLevel*6:16).toFixed(2));
- }
- if(smile)smile.setAttribute("opacity",!speaking&&(mood==="smile"||mood==="laugh")?"1":"0");
- if(!reduced)raf=requestAnimationFrame(draw);
+ if(reduced)return;
+ const drift=Math.sin(time*.0005)*1.5;
+ const breath=Math.sin(time*.00095)*2.2;
+ canvas.style.transform="translate("+drift.toFixed(2)+"px,"+breath.toFixed(2)+"px) rotate("+(drift*.18).toFixed(2)+"deg)";
+ frameId=requestAnimationFrame(render);
 }
-function wake(){if(active&&svg&&!raf&&!document.hidden)raf=requestAnimationFrame(draw);}
 function pause(){
- active=false;if(raf)cancelAnimationFrame(raf);raf=0;lastDraw=0;
- mouthLevel=0;analyser=null;samples=null;
+ active=false;cancelAnimationFrame(frameId);frameId=0;lastDraw=0;smoothAmplitude=0;
+ audioAnalyser=null;audioArray=null;
 }
-async function sync(){
- if(panel.hidden||panel.classList.contains("is-minimized")||document.hidden){pause();return;}
- active=true;
- if(!svg&&!failed){stage.classList.add("avatar-loading");await ensureArt();}
- if(active&&svg)wake();
+function resume(){
+ if(!loaded||failed||document.hidden||panel.hidden||panel.classList.contains("is-minimized")){pause();return;}
+ active=true;if(!frameId)frameId=requestAnimationFrame(render);
 }
-const observer=new MutationObserver(()=>{void sync();});
+portrait.onload=()=>{
+ loaded=true;stage.classList.remove("avatar-loading","avatar-unavailable");
+ stage.classList.add("avatar-ready");resume();
+};
+portrait.onerror=()=>{
+ failed=true;stage.classList.remove("avatar-loading");
+ stage.classList.add("avatar-unavailable");canvas.remove();
+ console.warn("AKSARA 2D artwork could not be loaded");
+};
+const observer=new MutationObserver(resume);
 observer.observe(panel,{attributes:true,attributeFilter:["hidden","class","data-voice-phase"]});
-document.addEventListener("visibilitychange",sync);
+document.addEventListener("visibilitychange",resume);
 window.AksaraAvatar2D=Object.freeze({
- snapshot:()=>({loaded:!!svg,active,expression:stage.dataset.expression||"neutral",phase:stage.dataset.avatarPhase||"idle",demo,reducedMotion:reduced})
+ snapshot:()=>({version:"0.2",loaded,active,failed,expression:stage.dataset.expression||"neutral",phase:stage.dataset.avatarPhase||"idle",demo,reducedMotion:reduced,renderer:"canvas2d"})
 });
 window.addEventListener("pagehide",()=>{
- pause();observer.disconnect();window.removeEventListener("ba:voice-avatar-text",onAssistantText);
- document.removeEventListener("visibilitychange",sync);
+ pause();observer.disconnect();window.removeEventListener("ba:voice-avatar-text",onResponse);
+ document.removeEventListener("visibilitychange",resume);
 },{once:true});
-if(!panel.hidden)void sync();
 })();
