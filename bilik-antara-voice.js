@@ -35,7 +35,7 @@ function selectVoiceStyle(id){
  if(!dialectControl?.has(id))id="gaul";
  preferredStyleId=id;
  if(styleSelect)styleSelect.value=id;
- if(styleHint)styleHint.textContent="Aoede · "+(dialectControl?.label?.(id)||"Bahasa Gaul")+" dipilih";
+ if(styleHint)styleHint.textContent="Aoede · "+(dialectControl?.label?.(id)||"Bahasa Santai")+" dipilih";
  voiceUI?.updateSelection?.();
  try{window.sessionStorage?.setItem(STYLE_KEY,id);}catch(_){}
  return id;
@@ -64,8 +64,8 @@ function scheduleDialectSwitch(phrase){
 // The regional voice preference was retired; clean its obsolete browser key.
 try{window.localStorage?.removeItem("bilik-antara:voice-dialect:v1");}catch(_){}
 const languageLock=[
- "Speak naturally in Malaysian Malay. Default to natural Malaysian Bahasa Gaul, unless the user selects a regional speech style. Never switch dialects or languages without a user request.",
- "Gaya tersedia: Bahasa Gaul, Perak, Kedah dan Penang, Kelantan, Terengganu, Negeri Sembilan, Sabah dan Sarawak. Hormati pilihan eksplisit pengguna. Jika tak pasti, gunakan Melayu gaul yang bersahaja tanpa mereka-reka loghat.",
+ "Speak naturally in Malaysian Malay. Default to natural Malaysian Bahasa Santai, unless the user selects a regional speech style. Never switch dialects or languages without a user request.",
+ "Gaya tersedia: Bahasa Santai, Perak, Kedah dan Penang, Kelantan, Terengganu, Negeri Sembilan, Sabah dan Sarawak. Hormati pilihan eksplisit pengguna. Jika tak pasti, gunakan Melayu gaul yang bersahaja tanpa mereka-reka loghat.",
  "Untuk loghat tempatan, utamakan kosa kata dan ritma yang betul berbanding meniru aksen secara berlebihan. Suara sintesis mungkin tidak mampu menghasilkan semua sebutan negeri dengan tepat.",
  "VOICE SAHAJA: Hasilkan ayat lisan biasa tanpa emoji, nama emoji, reaksi ikon, Markdown, label visual atau arahan pentas. Jangan menyebut perkataan wink, smiley, emoji atau simbol sebagai penutup ayat. Jangan bacakan emoji dalam sejarah sembang.",
  "Perkataan pendek seperti 'lapar', 'haus', 'penat' dan 'bosan' ialah input yang jelas; jawab maksudnya terus. Jangan meminta ulang kecuali audio benar-benar tidak boleh difahami.",
