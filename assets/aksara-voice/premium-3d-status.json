@@ -18,7 +18,11 @@
   "visualApproval": false,
   "blenderInstalled": false,
   "falInstalledConfirmed": true,
-  "falGenerationActionExposed": false,
+  "falGenerationActionExposed": true,
+  "falBillingBlocked": true,
+  "falBlockReason": "balance_exhausted",
+  "referenceUploadSucceeded": false,
+  "generationRequestId": null,
   "generationSubmitted": false,
   "baselineRegression": {
     "command": "node --test tests/aksara-voice-v3.test.cjs tests/aksara-voice-3d-ui-experiment.test.cjs",

@@ -24,22 +24,27 @@ is possible as an artistic interpretation, but that interpretation has not been
 modeled or approved here. A single image is not inherently impossible to model.
 
 In this execution environment, neither the Blender executable nor Python `bpy`
-is installed. The connected tools do not currently supply a character modeling
-or image-to-3D operation callable in this session. Installing Blender alone would not create the detailed
+is installed. Installing Blender alone would not create the detailed
 mesh, topology, textures or facial deformations. No attempt is being represented
 as a finished premium character.
 
-Discovery found **fal**. The user subsequently connected it, and plugin discovery
-now confirms `installed: true`. Its official API documents image-to-3D generation
-and a separate humanoid rigging endpoint. Rechecking the available action
-registry and cloud skill catalog still exposed no callable fal generation
-operation in this session. No generation request was sent. This is an action
-availability limitation, not evidence that the user's connection failed.
-These capabilities offer a possible mesh starting point, not proof of identity
-fidelity, facial blendshapes, independent hair/cloth physics or final quality.
-The exact operations exposed by its ChatGPT connection remain unavailable here.
-Browser access is a possible fallback requiring the user's approval under the
-browser-access rules; it has not been initiated.
+Discovery found **fal**. The user connected it; its generation actions became
+available on the subsequent turn. The attempted attachment upload was rejected
+before transfer by HTTP 403 with `balance_exhausted`: the connected account
+`ShaifulRidhwan-PenulisPuisiGayaBebas` has no available credits. fal reports that
+uploads and generation are blocked while model discovery and pricing remain
+available. No model job was submitted and no request ID exists. The user must
+resolve this billing block before another upload/generation attempt; no account
+switching or browser workaround was attempted.
+
+Read-only model discovery returned `fal-ai/hunyuan-3d/v3.1/pro/image-to-3d`
+as a candidate requiring visual inspection for identity fidelity. Its schema
+supports textured GLB output, PBR materials and optional extra views. The current
+account rate is USD 0.015 per billing unit; the tool does not establish the
+units for our proposed request, so there is no verified total generation cost.
+`fal-ai/meshy/rigging` is priced at USD 0.80 per generation. Neither rate is a
+quote for the entire project. These capabilities offer a possible mesh starting
+point, not proof of facial blendshapes, hair/cloth physics or final quality.
 
 ## Inputs still needed versus assets still to create
 
@@ -48,7 +53,7 @@ the requested build. There are two distinct requirements:
 
 | Requirement | Purpose / current status |
 | --- | --- |
-| Access to a usable character modeling pipeline | The immediate execution blocker. An image-to-3D connection could provide an initial mesh for inspection; further editing and rigging tools are still needed if its output is inadequate. |
+| Access to a usable character modeling pipeline | fal is connected and callable, but the account's credit balance blocks uploads and generation. It could provide an initial mesh for inspection after that block is resolved; further editing and rigging tools are still needed if its output is inadequate. |
 | Clean high-resolution approved portrait, without UI | Preferable reference for eye, face, hairline, crown and material details. The attached screenshot remains the identity reference until replaced. |
 | Full-body front, profile and back design | Currently unspecified. The lower gown, side/back crown, rear hair volume and obscured shoulder/body anatomy need to be designed and approved, rather than claimed as recovered facts. A turnaround helps but is not a prerequisite to attempting a rough reconstruction. |
 | Editable coherent 3D geometry | Still to create: dimensional head/neck/shoulders/body, eyes with eyelids, lips with a mouth cavity, separate hair masses, gown, trim and ornaments. No image cards replacing the face/body. |
