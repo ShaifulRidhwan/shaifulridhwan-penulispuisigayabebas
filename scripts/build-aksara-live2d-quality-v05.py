@@ -79,7 +79,26 @@ def main():
     tiny=cv2.resize(np.array(original),small,interpolation=cv2.INTER_AREA)
     tiny_mask=cv2.resize(np.array(face),small,interpolation=cv2.INTER_AREA)
     hidden=cv2.inpaint(tiny,(tiny_mask>16).astype(np.uint8)*255,12,cv2.INPAINT_TELEA)
-    hidden=cv2.resize(hidden,(W,H),interpolation=cv2.INTER_CUBIC)
+    hidden=cv2.resize(hidden,(W,H),interpolation=cv2.INTER_CUBIC).astype(np.float32)
+    # Preserve *hair* texture in the exposed jaw silhouette. Pure inpainting
+    # reconstructs only a smooth brown plane, causing a visible polygon seam.
+    # Source hair is sampled from 245..330 (left) and 850..955 (right):
+    # no eyes, mouth, earrings or crown should leak into the underpainting.
+    rgb=np.array(original,dtype=np.float32)
+    for y in range(340,760):
+        fy=min(1.,max(0.,(y-340)/65.),max(0.,(760-y)/70.))
+        if fy<=0:continue
+        for x in range(315,540):
+            progress=(x-315)/225.
+            weight=.95*(1-progress)**1.28*fy
+            sample_x=int(245+progress*85)
+            hidden[y,x]=hidden[y,x]*(1-weight)+rgb[y,sample_x]*weight
+        for x in range(590,810):
+            progress=(810-x)/220.
+            weight=.90*(1-progress)**1.27*fy
+            sample_x=int(955-(1-progress)*105)
+            hidden[y,x]=hidden[y,x]*(1-weight)+rgb[y,sample_x]*weight
+    hidden=np.uint8(np.clip(hidden,0,255))
     backdrop=Image.composite(Image.fromarray(hidden,"RGB"),original,face)
     # Explicit back hair right/left give the head lateral texture overlap.
     left_back=polygon([(0,313),(159,176),(326,142),(310,595),(335,941),(300,1448),(0,1448)],2)
