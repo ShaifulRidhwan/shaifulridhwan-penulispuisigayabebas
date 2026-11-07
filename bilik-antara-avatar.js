@@ -83,8 +83,8 @@ async function begin(){
   ]);
   if(!active)return;
   scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(34,1,.1,40);camera.position.set(0,0,4.5);
-  renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:"low-power"});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));renderer.outputColorSpace=THREE.SRGBColorSpace;
+  renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:skeletal3D?"high-performance":"low-power"});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,skeletal3D?2.5:1.6));renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.25;
   renderer.domElement.className="voice-avatar-canvas";renderer.domElement.setAttribute("aria-hidden","true");
   stage.prepend(renderer.domElement);
