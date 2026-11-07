@@ -73,9 +73,14 @@ def main():
     face=polygon([(465,181),(595,188),(683,252),(733,362),(744,468),
       (716,566),(673,629),(617,688),(547,707),(478,700),(409,663),
       (367,601),(348,497),(352,371),(398,261)],1.4)
-    # Face cutout deliberately darkens ONLY missing skin beneath the face.
-    # The opaque backdrop sits at the back, never on top of movable parts.
-    backdrop=Image.composite(Image.new("RGB",(W,H),(18,21,37)),original,face)
+    # Reconstruct hidden hair/neck behind moving face. A solid dark face hole
+    # makes triangular seams visible around the jaw during head turns.
+    small=(round(W*.38),round(H*.38))
+    tiny=cv2.resize(np.array(original),small,interpolation=cv2.INTER_AREA)
+    tiny_mask=cv2.resize(np.array(face),small,interpolation=cv2.INTER_AREA)
+    hidden=cv2.inpaint(tiny,(tiny_mask>16).astype(np.uint8)*255,12,cv2.INPAINT_TELEA)
+    hidden=cv2.resize(hidden,(W,H),interpolation=cv2.INTER_CUBIC)
+    backdrop=Image.composite(Image.fromarray(hidden,"RGB"),original,face)
     # Explicit back hair right/left give the head lateral texture overlap.
     left_back=polygon([(0,313),(159,176),(326,142),(310,595),(335,941),(300,1448),(0,1448)],2)
     right_back=polygon([(735,150),(936,210),(1086,380),(1086,1448),
