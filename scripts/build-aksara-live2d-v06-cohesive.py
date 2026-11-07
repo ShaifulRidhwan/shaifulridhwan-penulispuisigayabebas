@@ -134,13 +134,14 @@ def main():
       ("eyewhite-r",masked(src,eye_r)),
       ("mouth close",masked(src,mouth))
     ]
+    # A neutral-pose pixel comparison guards against the accidental static
+    # duplicate and gross clipping, but artistic review is still required.
+    composed=compose(layers)
     # Reject opaque geometric gaps through the highlighted hair on both sides.
     for x,y in [(110,570),(180,650),(60,780),(940,630),(925,730)]:
         if composed.getpixel((x,y))[3]<210:
             raise RuntimeError("Visible hair cutout at (%d,%d)"%(x,y))
-    # A neutral-pose pixel comparison guards against the accidental static
-    # duplicate and gross clipping, but artistic review is still required.
-    composed=compose(layers)
+
     face_roi=(368,250,738,665)
     original=np.asarray(src.crop(face_roi).convert("RGB"),dtype=np.float32)
     neutral=np.asarray(composed.crop(face_roi).convert("RGBA"),dtype=np.float32)
