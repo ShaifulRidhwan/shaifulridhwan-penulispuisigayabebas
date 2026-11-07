@@ -20,6 +20,11 @@ async function audit(browser,label,viewport){
   await page.waitForSelector("#voicePanel.voice-ui-experiment-v3",{state:"attached",timeout:25000});
   await page.locator("#voiceLive").click();
   await page.waitForFunction(()=>window.AksaraAvatar2D?.snapshot?.().loaded===true,{timeout:25000});
+  // Canvas image.onload precedes the first animation frame; wait for real pixels.
+  await page.waitForFunction(()=>{
+   const canvas=document.querySelector("#voiceAvatarStage canvas.aksara-anime-canvas");
+   return !!canvas&&canvas.getContext("2d").getImageData(360,390,1,1).data[3]===255;
+  },null,{timeout:7000});
   const before=await page.evaluate(()=>{
    const stage=document.getElementById("voiceAvatarStage");
    const canvas=stage.querySelector("canvas.aksara-anime-canvas");
