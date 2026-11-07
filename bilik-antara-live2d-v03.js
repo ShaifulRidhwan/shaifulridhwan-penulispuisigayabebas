@@ -15,13 +15,13 @@
  if(!bridge)return;
  const modelUrl="./assets/live2d/aksara/aksara.model3.json";
  const vendorFiles=[
-  "./assets/live2d/vendor/live2dcubismcore.min.js",
+  "https://cubism.live2d.com/sdk-web/cubismcore/live2dcubismcore.min.js",
   "./assets/live2d/vendor/pixi.min.js",
   "./assets/live2d/vendor/cubism4.min.js"
  ];
  const reduced=!!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
  const demo=query.get("voice-preview")==="1"&&query.get("voice-avatar-demo")==="1";
- let ready=false,failed=false,loading=null,app=null,model=null,resize=null,attached=false;
+ let ready=false,failed=false,loading=null,app=null,model=null,resize=null;
  let audioCache=null,audioAnalyser=null,emotion="neutral",emotionUntil=0,started=0,lastFrame=0;
  let modelNaturalWidth=1,modelNaturalHeight=1;
  const status=document.createElement("div");
@@ -98,7 +98,7 @@
    let response;
    try{response=await fetch(modelUrl,{cache:"no-store",credentials:"same-origin"});}
    catch(_){report("model-missing","Model Live2D sebenar belum tersedia. Perlu eksport rig .moc3 daripada Cubism Editor.");return;}
-   if(!response.ok||!(response.headers.get("content-type")||"").includes("json")){
+   if(!response.ok){
     report("model-missing","Rig Live2D belum dipasang: fail .model3.json dan .moc3 diperlukan.");return;
    }
    let meta;
@@ -123,7 +123,7 @@
     app.view.className="aksara-live2d-webgl";
     stage.prepend(app.view);
     app.ticker.add(tick);
-    ready=true;attached=true;started=performance.now();
+    ready=true;started=performance.now();
     stage.classList.add("avatar-ready");
     stage.classList.remove("avatar-unavailable","avatar-loading");
     stage.dataset.live2dStatus="ready";
@@ -132,7 +132,7 @@
     resume();
    }catch(error){
     console.warn("AKSARA Live2D runtime unavailable",error);
-    failed=true;report("vendor-missing","SDK/rig Live2D belum lengkap. Pasang Cubism Core, PixiJS 6 dan adapter yang sah dahulu.");
+    failed=true;report("vendor-missing","Enjin Cubism belum dapat dimuatkan. Semak sambungan Core rasmi dan WebGL peranti.");
    }
   })().finally(()=>{loading=null;});
   return loading;
