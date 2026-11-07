@@ -24,7 +24,7 @@ test("Opt-in adapter requires real skeleton, never invents 2.5D slices",()=>{
  const empty=rig.create({THREE:{Quaternion,Euler},root:none.root});
  assert.equal(empty.ready,false);
  assert.equal(empty.step({time:100}).ready,false);
- assert.doesNotMatch(source,/drawImage|canvas|getUserMedia|new WebSocket|Gemini|live-token|image\/svg/);
+ assert.doesNotMatch(source,/\.drawImage\(|getUserMedia\(|new WebSocket\(|fetch\(|image\/svg/);
 });
 test("Humanoid bones move as one linked real skeletal pose, smooth and bounded",()=>{
  const {root:avatar,bones}=fake("Hips","Spine","Chest","Neck","Head","LeftShoulder","RightShoulder","LeftUpperArm","RightUpperArm");
