@@ -3,7 +3,7 @@
 /* Voice Chat v3: single source of truth for selectable Malaysian speech styles.
    Synthesized speech remains Gemini Live Aoede; dialect accuracy varies by model. */
 const dialects=[
- {id:"gaul",label:"Bahasa Gaul",words:["bahasa gaul","bahasa santai","bahasa melayu santai","melayu santai","cakap biasa","melayu biasa","tanpa loghat","tak nak loghat","tak payah loghat"],tip:"Cakap Melayu gaul Malaysia secara natural dan bersahaja. Guna do, lah, laa, wei, kot, kan, jap dan seumpamanya bila tepat pada tempatnya. Jangan sumbat setiap ayat dengan slang atau jadi parodi; kekalkan jelas, beradab dan mesra."},
+ {id:"gaul",label:"Bahasa Santai",words:["bahasa gaul","bahasa santai","bahasa melayu santai","melayu santai","cakap biasa","melayu biasa","tanpa loghat","tak nak loghat","tak payah loghat"],tip:"Cakap Melayu gaul Malaysia secara natural dan bersahaja. Guna do, lah, laa, wei, kot, kan, jap dan seumpamanya bila tepat pada tempatnya. Jangan sumbat setiap ayat dengan slang atau jadi parodi; kekalkan jelas, beradab dan mesra."},
  {id:"perak",label:"Perak",words:["perak"],tip:"Gunakan loghat Melayu Perak yang munasabah secara sederhana, jangan tiru loghat negeri lain."},
  {id:"kedah-penang",label:"Kedah & Penang",words:["kedah","penang","pulau pinang","pineng","utara"],tip:"Gunakan gaya Kedah atau Pulau Pinang yang bersesuaian dengan pertuturan pengguna. Hang, depa, mai dan awat boleh muncul secara semula jadi. Kedua-duanya tidak semestinya serupa, jadi elakkan mendakwa aksen tepat; jangan selit Kelantan."},
  {id:"kelantan",label:"Kelantan",words:["kelantan","kelate","klate"],tip:"Gunakan gaya Kelantan yang natural; kawe/demo boleh digunakan apabila sesuai, jangan campur kosa kata Kedah."},
