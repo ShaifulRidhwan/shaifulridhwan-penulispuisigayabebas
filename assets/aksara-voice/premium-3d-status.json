@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "updatedDate": "2026-11-08",
+  "timeZone": "Asia/Kuala_Lumpur",
+  "status": "blocked-at-character-production",
+  "auditedMainCommit": "b2b98f78f328cb2227bc06de8a9d37aa6e821e3f",
+  "experimentalBranch": "experiment/aksara-voice-premium-3d-rebuild",
+  "auditOnly": true,
+  "mergeAllowed": false,
+  "productionRuntimeModified": false,
+  "modelUrl": null,
+  "blenderSource": null,
+  "previewUrl": null,
+  "characterCreated": false,
+  "rigCreated": false,
+  "animationsCreated": false,
+  "voiceIntegrated": false,
+  "visualApproval": false,
+  "blenderInstalled": false,
+  "falInstalledConfirmed": true,
+  "falGenerationActionExposed": false,
+  "generationSubmitted": false,
+  "baselineRegression": {
+    "command": "node --test tests/aksara-voice-v3.test.cjs tests/aksara-voice-3d-ui-experiment.test.cjs",
+    "passed": 41,
+    "failed": 0,
+    "skipped": 0,
+    "provesVisualQuality": false,
+    "provesLiveVoice": false
+  },
+  "characterPerformanceMeasured": false,
+  "androidDeviceTested": false,
+  "remaining": [
+    "Obtain usable character-production tool access",
+    "Create and visually approve the actual AKSARA mesh and materials",
+    "Create and verify facial, body, hair, gown and accessory deformation",
+    "Implement and inspect natural state transitions and secondary motion",
+    "Integrate playback analyser with elapsed-time attack/release smoothing",
+    "Deploy a genuine character preview without changing production",
+    "Capture output screenshots and animation demonstration",
+    "Measure desktop and Android performance and real Voice behavior"
+  ]
+}
