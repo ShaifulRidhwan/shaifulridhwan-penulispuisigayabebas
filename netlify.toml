@@ -128,3 +128,9 @@
     Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"
 
 # Living World v1 uses only versioned desktop and mobile WebP assets.
+
+# Shared wallpaper is still used by Studio and Perpustakaan.
+[[headers]]
+  for = "/aksara-celestial-static.webp"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000, stale-while-revalidate=86400"

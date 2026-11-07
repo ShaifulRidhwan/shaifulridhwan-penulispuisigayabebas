@@ -7,7 +7,7 @@ import {fileURLToPath} from "node:url";
 const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,".."),out=path.join(here,"dist");
 const home="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
-const prefix=/^(?:bilik-antara(?:[.-])|studio-antara(?:[.-])|antara-cahaya-dan-gelap(?:[.-])|perpustakaan-aksara(?:[.-])|favicon-aksara-ai(?:[.-])|favicon-antara-cahaya-dan-gelap(?:[.-])|aksara-header\.css$|aksara-background-cahaya-gelap\.webp$|aksara-celestial-static\.webp$)/;
+const prefix=/^(?:bilik-antara(?:[.-])|studio-antara(?:[.-])|antara-cahaya-dan-gelap(?:[.-])|perpustakaan-aksara(?:[.-])|favicon-aksara-ai(?:[.-])|favicon-antara-cahaya-dan-gelap(?:[.-])|aksara-header\.css$|aksara-background-cahaya-gelap\.webp$|aksara-celestial-static\.webp$|aksara-cinematic-(?:desktop|mobile)\.webp$)/;
 function safe(pathname){return pathname&&!pathname.includes("..")&&!pathname.startsWith(".")&&!pathname.includes("\\");}
 await rm(out,{recursive:true,force:true});await mkdir(out,{recursive:true});
 const listed=(await readdir(root,{withFileTypes:true})).filter(x=>x.isFile()&&prefix.test(x.name)).map(x=>x.name);
@@ -59,8 +59,14 @@ await writeFile(reader,readerHtml);
 // Workers Static Assets _headers rules apply to responses from asset binding.
 // Cache the shared static WebP; version its URL when artwork changes.
 await writeFile(path.join(out,"_headers"),[
- "# AKSARA shared static wallpaper; bump ?v= when image changes.",
+ "# AKSARA Cinematic Bilik + shared static wallpaper; bump ?v= when artwork changes.",
  "/aksara-celestial-static.webp",
+ "  Cache-Control: public, max-age=2592000",
+ "  X-Content-Type-Options: nosniff",
+ "/aksara-cinematic-desktop.webp",
+ "  Cache-Control: public, max-age=2592000",
+ "  X-Content-Type-Options: nosniff",
+ "/aksara-cinematic-mobile.webp",
  "  Cache-Control: public, max-age=2592000",
  "  X-Content-Type-Options: nosniff",
 ].join(String.fromCharCode(10))+String.fromCharCode(10));
