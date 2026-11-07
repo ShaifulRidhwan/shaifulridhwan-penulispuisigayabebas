@@ -111,7 +111,7 @@
   const liveButton=document.getElementById("voiceLive");
   const previewOnly=new URLSearchParams(location.search).get("voice-preview")==="1";
   let previewOpen=false;
-  const previewStatus="Pratonton reka bentuk sahaja. Mikrofon dan Gemini Live tidak diaktifkan.";
+  const previewStatus=genuineLive2D?"Pratonton Live2D · Mikrofon tidak diaktifkan.":"Pratonton reka bentuk sahaja. Mikrofon dan Gemini Live tidak diaktifkan.";
   function closePreview(){
     if(!previewOpen)return;
     previewOpen=false;
