@@ -152,39 +152,24 @@
 			"Name": "Gloom"
 		},
 		{
-			"Id": "ParamHairFront1L1",
+			"Id": "ParamHairBack11",
 			"GroupId": "ParamGroupPhysics",
-			"Name": "front hair 2 Front1L1"
+			"Name": "back hair Back11"
 		},
 		{
-			"Id": "ParamHairFront1L2",
+			"Id": "ParamHairBack12",
 			"GroupId": "ParamGroupPhysics",
-			"Name": "front hair 2 Front1L2"
+			"Name": "back hair Back12"
 		},
 		{
-			"Id": "ParamHairFront1C1",
+			"Id": "ParamHairBack13",
 			"GroupId": "ParamGroupPhysics",
-			"Name": "front hair 2 Front1C1"
+			"Name": "back hair Back13"
 		},
 		{
-			"Id": "ParamHairFront1C2",
+			"Id": "ParamHairBack1Y",
 			"GroupId": "ParamGroupPhysics",
-			"Name": "front hair 2 Front1C2"
-		},
-		{
-			"Id": "ParamHairFront1R1",
-			"GroupId": "ParamGroupPhysics",
-			"Name": "front hair 2 Front1R1"
-		},
-		{
-			"Id": "ParamHairFront1R2",
-			"GroupId": "ParamGroupPhysics",
-			"Name": "front hair 2 Front1R2"
-		},
-		{
-			"Id": "ParamHairFront1Y",
-			"GroupId": "ParamGroupPhysics",
-			"Name": "front hair 2 Front1Y"
+			"Name": "back hair Back1Y"
 		},
 		{
 			"Id": "ParamHairFront21",
@@ -202,24 +187,39 @@
 			"Name": "front hair 1 Front2Y"
 		},
 		{
-			"Id": "ParamHairBack31",
+			"Id": "ParamHairFront3L1",
 			"GroupId": "ParamGroupPhysics",
-			"Name": "back hair Back31"
+			"Name": "front hair 2 Front3L1"
 		},
 		{
-			"Id": "ParamHairBack32",
+			"Id": "ParamHairFront3L2",
 			"GroupId": "ParamGroupPhysics",
-			"Name": "back hair Back32"
+			"Name": "front hair 2 Front3L2"
 		},
 		{
-			"Id": "ParamHairBack33",
+			"Id": "ParamHairFront3C1",
 			"GroupId": "ParamGroupPhysics",
-			"Name": "back hair Back33"
+			"Name": "front hair 2 Front3C1"
 		},
 		{
-			"Id": "ParamHairBack3Y",
+			"Id": "ParamHairFront3C2",
 			"GroupId": "ParamGroupPhysics",
-			"Name": "back hair Back3Y"
+			"Name": "front hair 2 Front3C2"
+		},
+		{
+			"Id": "ParamHairFront3R1",
+			"GroupId": "ParamGroupPhysics",
+			"Name": "front hair 2 Front3R1"
+		},
+		{
+			"Id": "ParamHairFront3R2",
+			"GroupId": "ParamGroupPhysics",
+			"Name": "front hair 2 Front3R2"
+		},
+		{
+			"Id": "ParamHairFront3Y",
+			"GroupId": "ParamGroupPhysics",
+			"Name": "front hair 2 Front3Y"
 		}
 	],
 	"ParameterGroups": [
@@ -300,64 +300,76 @@
 	],
 	"Drawables": [
 		{
-			"Id": "ArtMeshLayer",
-			"Name": "background"
+			"Id": "ArtMeshHeadwear",
+			"Name": "headwear moon"
 		},
 		{
-			"Id": "ArtMeshBackHair",
-			"Name": "back hair"
+			"Id": "ArtMeshHeadwear2",
+			"Name": "headwear sun"
 		},
 		{
-			"Id": "ArtMeshTopwear",
-			"Name": "topwear"
+			"Id": "ArtMeshFrontHair",
+			"Name": "front hair 2"
 		},
 		{
-			"Id": "ArtMeshFace",
-			"Name": "face"
-		},
-		{
-			"Id": "ArtMeshEyewhiteR",
-			"Name": "eyewhite-r"
-		},
-		{
-			"Id": "ArtMeshEyewhiteL",
-			"Name": "eyewhite-l"
-		},
-		{
-			"Id": "ArtMeshIridesR",
-			"Name": "irides-r"
-		},
-		{
-			"Id": "ArtMeshIridesL",
-			"Name": "irides-l"
-		},
-		{
-			"Id": "ArtMeshEyebrowR",
-			"Name": "eyebrow-r"
-		},
-		{
-			"Id": "ArtMeshEyebrowL",
-			"Name": "eyebrow-l"
+			"Id": "ArtMeshFrontHair2",
+			"Name": "front hair 1"
 		},
 		{
 			"Id": "ArtMeshMouthClose",
 			"Name": "mouth close"
 		},
 		{
-			"Id": "ArtMeshFrontHair",
-			"Name": "front hair 1"
+			"Id": "ArtMeshEyebrowL",
+			"Name": "eyebrow-l"
 		},
 		{
-			"Id": "ArtMeshFrontHair2",
-			"Name": "front hair 2"
+			"Id": "ArtMeshEyebrowR",
+			"Name": "eyebrow-r"
 		},
 		{
-			"Id": "ArtMeshHeadwear",
-			"Name": "headwear sun"
+			"Id": "ArtMeshIridesL",
+			"Name": "irides-l"
 		},
 		{
-			"Id": "ArtMeshHeadwear2",
-			"Name": "headwear moon"
+			"Id": "ArtMeshIridesR",
+			"Name": "irides-r"
+		},
+		{
+			"Id": "ArtMeshEyewhiteL",
+			"Name": "eyewhite-l"
+		},
+		{
+			"Id": "ArtMeshEyewhiteR",
+			"Name": "eyewhite-r"
+		},
+		{
+			"Id": "ArtMeshFace",
+			"Name": "face"
+		},
+		{
+			"Id": "ArtMeshTopwear",
+			"Name": "topwear"
+		},
+		{
+			"Id": "ArtMeshBackHair",
+			"Name": "back hair"
+		},
+		{
+			"Id": "ArtMeshLayer",
+			"Name": "background"
+		},
+		{
+			"Id": "ArtMeshEyebrowR_SeeThrough",
+			"Name": "eyebrow-r (through bangs)"
+		},
+		{
+			"Id": "ArtMeshFrontHair2_SeeThrough",
+			"Name": "front hair 1 (through bangs)"
+		},
+		{
+			"Id": "ArtMeshFrontHair_SeeThrough",
+			"Name": "front hair 2 (through bangs)"
 		}
 	]
 }
