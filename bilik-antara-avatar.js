@@ -2,9 +2,11 @@
    Avatar: TalkingHead example brunette.glb by Ready Player Me.
    Source: https://github.com/met4citizen/TalkingHead
    License: CC BY-NC 4.0 (noncommercial use with attribution). */
+const skeletal3D=new URLSearchParams(location.search).get("voice-rig")==="skeletal3d";
 const panel=document.getElementById("voicePanel");
 const stage=document.getElementById("voiceAvatarStage");
 if(panel&&stage){
+let skeletalController=null;
 let active=false,renderer=null,scene=null,camera=null,root=null,face=null,raf=0,resize=null,context=null,blinkAt=0,started=0,loading=false,jawMotion=0,lipMotion=0,morphIndex=null,resizeFrame=0,lastWidth=0,lastHeight=0,emotion="neutral",emotionUntil=0,emotionLevel=0,expressionWeights={},tearMeshes=[],audioArray=null,audioSpectrum=null,audioAnalyser=null,mouthRound=0,resumeDraw=null;
 const modelURL="https://cdn.jsdelivr.net/gh/met4citizen/TalkingHead@166b443a445eeb63a4ea02270aa9e7d6ba8b4d88/avatars/brunette.glb";
 // The chat still is an exact pre-rendered frame of this same GLB model.
@@ -67,6 +69,7 @@ function stop(){
  resumeDraw=null;active=false;cancelAnimationFrame(raf);raf=0;cancelAnimationFrame(resizeFrame);resizeFrame=0;resize?.disconnect();resize=null;
  if(renderer){renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();renderer=null;}
  if(scene){scene.traverse(o=>{if(o.isMesh){o.geometry?.dispose();const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats)m?.dispose?.();}});}
+ skeletalController?.dispose();skeletalController=null;
  scene=null;camera=null;root=null;face=null;morphIndex=null;tearMeshes=[];audioArray=null;audioSpectrum=null;audioAnalyser=null;mouthRound=0;emotion="neutral";emotionLevel=0;expressionWeights={};lastWidth=0;lastHeight=0;stage.classList.remove("avatar-ready","avatar-speaking","avatar-loading");
 }
 async function begin(){
@@ -92,6 +95,11 @@ async function begin(){
   finally{kt.dispose();} // Release transcoder resources even when network/model loading fails.
   if(!active){gltf.scene.traverse(o=>{o.geometry?.dispose?.();});return;}
   root=gltf.scene;scene.add(root);
+  if(skeletal3D){
+   const {create}=await import("./bilik-antara-avatar-skeletal-v07.js?v=1");
+   skeletalController=create({THREE,root});
+   stage.dataset.skeletal3d=skeletalController.ready?"ready":"missing-armature";
+  }
   // Frame only the upper body: this model contains a whole character.
   const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3()),center=bounds.getCenter(new THREE.Vector3());
   const scale=2.5/Math.max(size.y,.1);root.scale.setScalar(scale);
@@ -153,7 +161,13 @@ async function begin(){
    raf=requestAnimationFrame(frame);
    const speaking=panel.classList.contains("voice-speaking");
    stage.classList.toggle("avatar-speaking",speaking);
-   root.rotation.y=Math.sin(t*.0004)*.075;root.rotation.x=Math.sin(t*.00031)*.025+(emotion==="laugh"?Math.sin(t*.012)*.012:0);
+   if(skeletal3D){
+    root.rotation.set(0,0,0);
+    skeletalController?.step({time:t,speaking,level:window.AksaraVoiceAudio?.analyser?audioLevel():0,emotion,
+      reducedMotion:!!window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches});
+   }else{
+    root.rotation.y=Math.sin(t*.0004)*.075;root.rotation.x=Math.sin(t*.00031)*.025+(emotion==="laugh"?Math.sin(t*.012)*.012:0);
+   }
    root.position.y=basePosition.y+Math.sin(t*.00085)*.018;
    const duration=t-blinkAt,blink=(duration>=0&&duration<190)?Math.sin(duration/190*Math.PI):0;
    if(duration>190)blinkAt=t+1900+Math.random()*2800;
@@ -211,5 +225,6 @@ async function begin(){
 observer.observe(panel,{attributes:true,attributeFilter:["hidden","class"]});
 document.addEventListener("visibilitychange",()=>resumeDraw?.());
 if(!panel.hidden)begin();
+if(skeletal3D)window.AksaraVoiceSkeletal3D=Object.freeze({snapshot:()=>skeletalController?.snapshot()||{ready:false,status:"loading"}});
 window.addEventListener("pagehide",()=>{stop();observer.disconnect();window.removeEventListener("ba:voice-avatar-text",onAvatarText);},{once:true});
 }
