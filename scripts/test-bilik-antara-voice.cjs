@@ -43,9 +43,9 @@ test("Voice regional selector exposes colloquial Malay and new dialect styles",(
  assert.match(css,/\.conversation \.conversation-head\{display:flex/);
 });
 test("Short Malay words trigger a natural answer, not five requests to repeat",()=>{
- assert.match(js,/START_SENSITIVITY_LOW/);
- assert.match(js,/prefixPaddingMs:160/);
- assert.match(js,/silenceDurationMs:1000/);
+ assert.match(js,/START_SENSITIVITY_HIGH/);
+ assert.match(js,/prefixPaddingMs:100/);
+ assert.match(js,/silenceDurationMs:1450/);
  assert.match(js,/START_OF_ACTIVITY_INTERRUPTS/);
  assert.match(js,/Perkataan pendek seperti 'lapar'/);
  assert.match(js,/PERKATAAN PENDEK SAH/);
@@ -55,6 +55,20 @@ test("Short Malay words trigger a natural answer, not five requests to repeat",(
  assert.match(sharedBrain.VOICE_GUIDANCE,/lapar/);
  assert.match(sharedBrain.VOICE_GUIDANCE,/Jangan meminta ulang/);
  assert.match(js,/Bahasa Gaul/);
+});
+test("Voice Detection v2 catches short speech and exposes private audio delivery counts",()=>{
+ assert.match(js,/START_SENSITIVITY_HIGH/);
+ assert.match(js,/END_SENSITIVITY_LOW/);
+ assert.match(js,/prefixPaddingMs:100,silenceDurationMs:1450/);
+ assert.match(js,/VOICE_MIC_HINT_LEVEL=0\.014/);
+ assert.match(js,/voiceMetrics\.microphoneFramesSent\+\+/);
+ assert.match(js,/voiceMetrics\.microphoneFramesDropped\+\+/);
+ assert.match(js,/voiceMetrics\.microphoneAudibleFrames\+\+/);
+ assert.match(js,/voiceMetrics\.transcriptSegments\+\+/);
+ assert.match(js,/detectionProfile:"voice-detection-v2"/);
+ assert.match(js,/Seruan pendek seperti 'oi'/);
+ assert.match(js,/echoCancellation:true,noiseSuppression:true,autoGainControl:true/);
+ assert.match(js,/LIVE_LOCKED_VOICE="Aoede"/);
 });
 test("Long generated speech is buffered and does not cut off after three seconds",()=>{
  assert.match(js,/function drainAudioQueue\(\)/);
@@ -273,9 +287,9 @@ test("Long-running Voice is opted in and reconnects in foreground without storin
  assert.match(js,/BilikAntaraBridge\?\.addVoice/);
 });
 test("Live speech detection tolerates Malay pauses and refuses to guess unclear speech",()=>{
- assert.match(js,/silenceDurationMs:1000/);
- assert.match(js,/prefixPaddingMs:160/);
- assert.match(js,/START_SENSITIVITY_LOW/);
+ assert.match(js,/silenceDurationMs:1450/);
+ assert.match(js,/prefixPaddingMs:100/);
+ assert.match(js,/START_SENSITIVITY_HIGH/);
  assert.match(js,/TURN_INCLUDES_ONLY_ACTIVITY/);
  assert.match(js,/DENGAR BETUL-BETUL/);
  assert.match(js,/appendTranscript\("user"/);
