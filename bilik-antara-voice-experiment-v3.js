@@ -144,7 +144,7 @@
       control.title="Kawalan audio hanya aktif dalam panggilan sebenar";
     }
     /* Isolated preview: no Gemini token, microphone or voice transport. */
-    import(anime2D?"./bilik-antara-avatar-2d.js?v=1":"./bilik-antara-avatar.js?v=15").catch(()=>{
+    import(anime2D?"./bilik-antara-avatar-2d.js?v=2":"./bilik-antara-avatar.js?v=15").catch(()=>{
       stage.classList.add("avatar-unavailable");
     });
     refresh();
