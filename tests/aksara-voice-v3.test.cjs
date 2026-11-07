@@ -94,7 +94,7 @@ test("Voice HTML contains the selector and status badge",()=>{
  assert.match(html,/bilik-antara-dialek\.js\?v=4/);
  assert.match(html,/bilik-antara-voice-core-v3.js\?v=2/);
  assert.match(html,/bilik-antara-voice-v3.css\?v=4/);
- assert.match(html,/bilik-antara-voice\.js\?v=49/);
+ assert.match(html,/bilik-antara-voice\.js\?v=50/);
 });
 test("Voice UI retains full-size classical layout with accessible picker and mode chip",()=>{
  const script=read("bilik-antara-voice.js");
