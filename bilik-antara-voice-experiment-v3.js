@@ -4,6 +4,9 @@
  * Gate: ?voice-ui=3d on experiment branch, leave baseline unchanged otherwise. */
 (function(){
   "use strict";
+  const selectedAvatar=new URLSearchParams(location.search).get("voice-avatar");
+  const anime2D=selectedAvatar==="2d";
+  const genuineLive2D=selectedAvatar==="live2d";
   const panel=document.getElementById("voicePanel");
   const head=panel?.querySelector(".voice-panel-head");
   const actions=head?.querySelector(".voice-panel-head-actions");
@@ -52,13 +55,13 @@
   hero.setAttribute("aria-label","Avatar Voice Chat Aksara");
   const aside=el("aside","voice-x-aside");
   aside.setAttribute("aria-label","Tetapan Voice Chat");
-  /* A still of the existing GLB avatar, only until WebGL is ready. */
+  /* GLB still for the 3D baseline only; 2D mode uses the vector portrait. */
   const fallback=el("img","voice-x-avatar-fallback");
   fallback.src="bilik-antara-chat-portrait.png?v=1";
   fallback.alt="";
   fallback.decoding="async";
   fallback.setAttribute("aria-hidden","true");
-  stage.append(fallback);
+  if(!anime2D&&!genuineLive2D)stage.append(fallback);
   hero.append(stage);
   /* Waveform belongs to the conversational status, not the avatar chest. */
   if(wave)dock.insertBefore(wave,dock.firstChild);
@@ -108,7 +111,7 @@
   const liveButton=document.getElementById("voiceLive");
   const previewOnly=new URLSearchParams(location.search).get("voice-preview")==="1";
   let previewOpen=false;
-  const previewStatus="Pratonton reka bentuk sahaja. Mikrofon dan Gemini Live tidak diaktifkan.";
+  const previewStatus=genuineLive2D?"Pratonton Live2D · Mikrofon tidak diaktifkan.":"Pratonton reka bentuk sahaja. Mikrofon dan Gemini Live tidak diaktifkan.";
   function closePreview(){
     if(!previewOpen)return;
     previewOpen=false;
@@ -142,8 +145,11 @@
       control.disabled=true;
       control.title="Kawalan audio hanya aktif dalam panggilan sebenar";
     }
-    /* Preserve the original GLB loading path for the UI preview. */
-    import("./bilik-antara-avatar.js?v=15").catch(()=>{
+    /* Isolated preview: no Gemini token, microphone or voice transport. */
+    const avatarImport=genuineLive2D
+      ?import("./bilik-antara-live2d-v03.js?v=6")
+      :import(anime2D?"./bilik-antara-avatar-2d.js?v=2":"./bilik-antara-avatar.js?v=15");
+    avatarImport.catch(()=>{
       stage.classList.add("avatar-unavailable");
     });
     refresh();

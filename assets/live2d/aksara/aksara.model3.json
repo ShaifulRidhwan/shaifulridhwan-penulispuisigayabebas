@@ -1,0 +1,81 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "aksara-celestial-layered-draft.moc3",
+		"Textures": [
+			"aksara-celestial-layered-draft.4096/texture_00.png"
+		],
+		"Physics": "aksara-celestial-layered-draft.physics3.json",
+		"DisplayInfo": "aksara-celestial-layered-draft.cdi3.json",
+		"Expressions": [
+			{
+				"Name": "Smile",
+				"File": "aksara-celestial-layered-draft.smile.exp3.json"
+			},
+			{
+				"Name": "Sad",
+				"File": "aksara-celestial-layered-draft.sad.exp3.json"
+			},
+			{
+				"Name": "Angry",
+				"File": "aksara-celestial-layered-draft.angry.exp3.json"
+			},
+			{
+				"Name": "Surprised",
+				"File": "aksara-celestial-layered-draft.surprised.exp3.json"
+			},
+			{
+				"Name": "Shy",
+				"File": "aksara-celestial-layered-draft.shy.exp3.json"
+			},
+			{
+				"Name": "Gloomy",
+				"File": "aksara-celestial-layered-draft.gloom.exp3.json"
+			}
+		],
+		"Motions": {
+			"Idle": [
+				{
+					"File": "aksara-celestial-layered-draft.idle.motion3.json"
+				}
+			],
+			"Blink": [
+				{
+					"File": "aksara-celestial-layered-draft.blink.motion3.json"
+				}
+			],
+			"Nod": [
+				{
+					"File": "aksara-celestial-layered-draft.nod.motion3.json"
+				}
+			],
+			"Shake": [
+				{
+					"File": "aksara-celestial-layered-draft.shake.motion3.json"
+				}
+			],
+			"Talk": [
+				{
+					"File": "aksara-celestial-layered-draft.talk.motion3.json"
+				}
+			]
+		}
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": [
+				"ParamEyeLOpen",
+				"ParamEyeROpen"
+			]
+		},
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": [
+				"ParamMouthOpenY"
+			]
+		}
+	]
+}

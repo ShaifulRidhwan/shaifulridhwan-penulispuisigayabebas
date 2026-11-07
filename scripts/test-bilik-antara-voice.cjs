@@ -737,7 +737,7 @@ test("The true 3D voice avatar only skips invisible frame drawing while the voic
  const avatar=fs.readFileSync("bilik-antara-avatar.js","utf8");
  const html=fs.readFileSync("bilik-antara.html","utf8");
  const css=fs.readFileSync("bilik-antara.css","utf8");
- assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=(?:14|15)"\)/);
+ assert.match(html,/anime2D\?"\.\/bilik-antara-avatar-2d\.js\?v=2":"\.\/bilik-antara-avatar\.js\?v=15"/);
  assert.match(avatar,/panel\.classList\.contains\("is-minimized"\)\|\|document\.hidden/);
  assert.match(avatar,/renderer\.render\(scene,camera\)/);
  assert.match(avatar,/weights\(\["jawOpen"\],jawMotion\)/);

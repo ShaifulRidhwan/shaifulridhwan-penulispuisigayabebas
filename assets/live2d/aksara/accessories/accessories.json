@@ -1,0 +1,27 @@
+{
+  "canvas": [
+    1086,
+    1448
+  ],
+  "sprites": {
+    "sun": {
+      "file": "sun.png",
+      "bounds": [
+        169,
+        83,
+        461,
+        357
+      ]
+    },
+    "moon": {
+      "file": "moon.png",
+      "bounds": [
+        694,
+        80,
+        891,
+        369
+      ]
+    }
+  },
+  "isOverlay": true
+}

@@ -1,0 +1,81 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "aksara-cohesive.moc3",
+		"Textures": [
+			"aksara-cohesive.4096/texture_00.png"
+		],
+		"Physics": "aksara-cohesive.physics3.json",
+		"DisplayInfo": "aksara-cohesive.cdi3.json",
+		"Expressions": [
+			{
+				"Name": "Smile",
+				"File": "aksara-cohesive.smile.exp3.json"
+			},
+			{
+				"Name": "Sad",
+				"File": "aksara-cohesive.sad.exp3.json"
+			},
+			{
+				"Name": "Angry",
+				"File": "aksara-cohesive.angry.exp3.json"
+			},
+			{
+				"Name": "Surprised",
+				"File": "aksara-cohesive.surprised.exp3.json"
+			},
+			{
+				"Name": "Shy",
+				"File": "aksara-cohesive.shy.exp3.json"
+			},
+			{
+				"Name": "Gloomy",
+				"File": "aksara-cohesive.gloom.exp3.json"
+			}
+		],
+		"Motions": {
+			"Idle": [
+				{
+					"File": "aksara-cohesive.idle.motion3.json"
+				}
+			],
+			"Blink": [
+				{
+					"File": "aksara-cohesive.blink.motion3.json"
+				}
+			],
+			"Nod": [
+				{
+					"File": "aksara-cohesive.nod.motion3.json"
+				}
+			],
+			"Shake": [
+				{
+					"File": "aksara-cohesive.shake.motion3.json"
+				}
+			],
+			"Talk": [
+				{
+					"File": "aksara-cohesive.talk.motion3.json"
+				}
+			]
+		}
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": [
+				"ParamEyeLOpen",
+				"ParamEyeROpen"
+			]
+		},
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": [
+				"ParamMouthOpenY"
+			]
+		}
+	]
+}

@@ -1,0 +1,38 @@
+/* AKSARA Voice anime v0.2: opt-in ?voice-avatar=2d only.
+   This file cannot modify Gemini Live, mic, speaker, Aoede, or audio routing. */
+#voiceAvatarStage.avatar-2d-active{
+ isolation:isolate;contain:layout paint;
+ background:radial-gradient(ellipse at 24% 48%,rgba(201,144,83,.13),transparent 55%),
+ radial-gradient(ellipse at 80% 38%,rgba(88,145,203,.16),transparent 59%),
+ rgba(5,9,16,.35)!important;
+}
+#voiceAvatarStage.avatar-2d-active .aksara-anime-canvas{
+ box-sizing:border-box;display:block!important;position:absolute!important;inset:0!important;
+ z-index:3!important;width:100%!important;height:100%!important;
+ object-fit:contain;object-position:50% 50%;pointer-events:none;
+ filter:drop-shadow(0 9px 22px rgba(0,0,0,.35));
+ transform-origin:50% 40%;will-change:transform;
+}
+#voiceAvatarStage.avatar-2d-active .voice-x-avatar-fallback,
+#voiceAvatarStage.avatar-2d-active .voice-avatar-canvas{
+ display:none!important;
+}
+#voiceAvatarStage.avatar-2d-active .voice-avatar-glow{
+ opacity:.25!important;filter:blur(26px)!important;pointer-events:none;
+}
+#voiceAvatarStage.avatar-2d-active[data-avatar-mode="gelap"] .aksara-anime-canvas{
+ filter:brightness(.87) saturate(.88) contrast(1.04) drop-shadow(0 9px 22px rgba(0,0,0,.4));
+}
+#voiceAvatarStage.avatar-2d-active[data-avatar-mode="cahaya"]::after{
+ content:"";position:absolute;inset:0;z-index:3;pointer-events:none;
+ background:linear-gradient(110deg,rgba(246,190,112,.035),transparent 44%,rgba(111,167,229,.025));
+}
+#voicePanel.voice-ui-experiment-v3 #voiceAvatarStage.avatar-2d-active .aksara-anime-canvas{
+ width:100%!important;height:100%!important;
+}
+@media(max-width:760px){
+ #voiceAvatarStage.avatar-2d-active .aksara-anime-canvas{width:100%!important;height:100%!important;}
+}
+@media(prefers-reduced-motion:reduce){
+ #voiceAvatarStage.avatar-2d-active .aksara-anime-canvas{will-change:auto;transition:none!important}
+}

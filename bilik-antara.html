@@ -1262,10 +1262,21 @@ window.addEventListener("DOMContentLoaded",()=>{
 
 (()=>{
 let loading=false,loaded=false;
+const avatarMode=new URLSearchParams(location.search).get("voice-avatar");
+const anime2D=avatarMode==="2d";
+const genuineLive2D=avatarMode==="live2d";
+if(anime2D||genuineLive2D){
+ const style=document.createElement("link");
+ style.rel="stylesheet";style.href=genuineLive2D?"bilik-antara-live2d-v03.css?v=5":"bilik-antara-avatar-2d.css?v=2";
+ document.head.appendChild(style);
+}
 document.getElementById("voiceLive")?.addEventListener("click",()=>{
 if(loading||loaded)return;
 loading=true;
-import("./bilik-antara-avatar.js?v=15").then(()=>{loaded=true;}).catch(error=>{
+const avatarImport=genuineLive2D
+ ?import("./bilik-antara-live2d-v03.js?v=6")
+ :import(anime2D?"./bilik-antara-avatar-2d.js?v=2":"./bilik-antara-avatar.js?v=15");
+avatarImport.then(()=>{loaded=true;}).catch(error=>{
 loading=false;document.getElementById("voiceAvatarStage")?.classList.add("avatar-unavailable");console.warn("Voice avatar unavailable",error);
 });
 });

@@ -50,6 +50,32 @@ for(const file of listed){
  }else await cp(source,dest);
 }
 await cp(path.join(root,"assets","novel"),path.join(out,"assets","novel"),{recursive:true});
+/* Only the checked-in Live2D render assets are public. Never ship PSD/CMO3 sources
+   or proprietary Cubism Core from the output directory. */
+const live2dModel=path.join(root,"assets","live2d","aksara");
+const live2dVendor=path.join(root,"assets","live2d","vendor");
+try {
+ if((await stat(path.join(live2dModel,"aksara.model3.json"))).isFile()){
+  await mkdir(path.join(out,"assets","live2d"),{recursive:true});
+  await cp(live2dModel,path.join(out,"assets","live2d","aksara"),{recursive:true});
+  await mkdir(path.join(out,"assets","live2d","vendor"),{recursive:true});
+  for(const file of ["pixi.min.js","cubism4.min.js"]){
+   await cp(path.join(live2dVendor,file),path.join(out,"assets","live2d","vendor",file));
+  }
+  if((await stat(path.join(out,"assets","live2d","aksara","aksara.model3.json"))).size<500)
+   throw Error("Incomplete Cubism model3 manifest");
+  // Separate optional Cubism experiment, never replace the working v0.5 model.
+  const cohesiveModel=path.join(root,"assets","live2d","aksara-v06");
+  try{
+   if((await stat(path.join(cohesiveModel,"aksara.model3.json"))).isFile()){
+    await cp(cohesiveModel,path.join(out,"assets","live2d","aksara-v06"),{recursive:true});
+    console.log("AKSARA v0.6 cohesive rig copied");
+   }
+  }catch(error){if(error.code!=="ENOENT")throw error;}
+  console.log("AKSARA experimental Live2D assets copied (proprietary Cubism Core excluded)");
+ }
+}catch(error){if(error.code!=="ENOENT")throw error;}
+
 await cp(path.join(here,"turnstile-client.js"),path.join(out,"aksara-turnstile-client.js"));
 const reader=path.join(out,"assets","novel","pembaca.html");
 let readerHtml=await readFile(reader,"utf8");

@@ -42,7 +42,7 @@ test("3D avatar and original voice engine remain in place",()=>{
  const html=read("bilik-antara.html");
  const avatar=read("bilik-antara-avatar.js");
  const voice=read("bilik-antara-voice.js");
- assert.match(html,/import\("\.\/bilik-antara-avatar\.js\?v=15"\)/);
+ assert.match(html,/anime2D\?"\.\/bilik-antara-avatar-2d\.js\?v=2":"\.\/bilik-antara-avatar\.js\?v=15"/);
  assert.match(avatar,/brunette\.glb/);
  assert.match(avatar,/voiceAvatarStage/);
  assert.match(voice,/const LIVE_LOCKED_VOICE="Aoede"/);
@@ -160,7 +160,8 @@ test("UI preview click is connected to the real Voice Chat entry without a Live 
  assert.match(s,/event\.stopImmediatePropagation\(\)/);
  assert.match(s,/panel\.hidden=false/);
  assert.match(s,/liveText\.textContent="PRATONTON UI"/);
- assert.match(s,/previewStatus="Pratonton reka bentuk sahaja/);
+ assert.match(s,/previewStatus=genuineLive2D\?/);
+ assert.match(s,/Pratonton reka bentuk sahaja/);
  assert.match(s,/stop\.addEventListener\("click"/);
  assert.match(s,/panel\.hidden=true/);
  assert.match(s,/voice-preview"\)==="1"/);
