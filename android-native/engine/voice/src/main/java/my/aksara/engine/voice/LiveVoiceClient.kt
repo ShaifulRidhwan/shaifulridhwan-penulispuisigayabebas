@@ -193,7 +193,7 @@ class LiveVoiceClient(
                     override fun onMessage(webSocket: WebSocket, bytes: okio.ByteString) { consume(bytes.utf8(), id) }
                     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                         val status = response?.code
-                        if (isExtended && !preferStandardModel && status in setOf(400, 404)) {
+                        if (isExtended && !preferStandardModel && (status == 400 || status == 404)) {
                             preferStandardModel = true
                             resumptionHandle = ""
                             recover(id, "Deep Thinking tidak tersedia; cuba Voice standard…", true)
