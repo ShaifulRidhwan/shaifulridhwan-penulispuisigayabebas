@@ -13,8 +13,8 @@ test("AI terminal modules parse and stay behind sandbox runtime",()=>{
   "Project Memory","aitPatchBox","window.AksaraDialog.confirm(","core.zip(files)","storage(\"delete\")"]){
   assert.ok(ui.includes(token),"Missing AI Terminal feature "+token);
  }
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=8"));
- assert.ok(html.includes("bilik-antara-terminal-core.js?v=3"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=9"));
+ assert.ok(html.includes("bilik-antara-terminal-core.js?v=4"));
  assert.ok(html.includes("codeContext")&&html.includes("CODE_GUIDANCE"));
 });
 test("terminal command grammar rejects shell and wrong runtime",()=>{
@@ -25,6 +25,11 @@ test("terminal command grammar rejects shell and wrong runtime",()=>{
   assert.equal(core.command(s).type,"invalid",s);
  }
  assert.equal(core.command("ls").type,"ls");
+ assert.deepEqual(core.command("touch demo.py"),{type:"touch",name:"demo.py"});
+ assert.deepEqual(core.command("nano demo.py"),{type:"edit",name:"demo.py"});
+ assert.deepEqual(core.command("echo hello > demo.py"),{type:"write",name:"demo.py",text:"hello"});
+ assert.deepEqual(core.command("rm demo.py"),{type:"rm",name:"demo.py"});
+ assert.equal(core.command("touch ../secret.py").type,"invalid");
 });
 test("project filename and duplicate safety",()=>{
  const valid=[{name:"main.py",language:"python",code:"print(42)"},{name:"query.sql",language:"sql",code:"SELECT 1;"}];
@@ -254,7 +259,7 @@ test("Terminal header and dialog use the concise name without losing AI modes",(
   assert.ok(ui.includes(s),"Original AI modes missing: "+s);
  }
  const html=read("bilik-antara.html");
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=8"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=9"));
  assert.ok(html.includes("bilik-antara-code-brain.js?v=5"));
 });
 test("Terminal Liquid Glass groups editor, runtime and project tools while keeping readable output",()=>{
