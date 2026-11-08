@@ -14,7 +14,7 @@ Scope: rebuild/aksara-android-native-v1, PR #271. This document records implemen
 | JS, SQLite, Android shell | bilik-antara-code-runtime.js, terminal-core.js | engine/runtime/RuntimeService.kt | Isolated engine execution tests (emulator); no Linux equivalence |
 | Public knowledge/tools | knowledge-hub.js, safe tools | feature/tools/NativeToolsContent.kt | Live retrieval, deterministic calculation, passive headers |
 | Library/novel | karya-index.json, novel content | feature/library/LibraryContent.kt | Launch, read and offline asset test |
-| Python/TS/C++/HTML preview | Browser-side code runtimes/preview | No equivalent native engine yet | Investigate safe isolated native/embedded/backend alternatives before claiming completion |
+| Python/TS/C++ web runtimes | bilik-antara-code-runtime.js, code-engine.html | Scoped WebView with bundled web runtime scripts, CDN-loaded toolchains | Native WebView actual JS execution smoke + device tests for Python/TS/C++ still required |
 | Linux userland | Experimental web terminal paths | Android isolated shell only | Linux is NOT integrated/verified |
 
 The existing Android UI, navigation and visual assets were not redesigned as part of this bridge checkpoint. This is an intermediate engineering checkpoint, not a parity certification.

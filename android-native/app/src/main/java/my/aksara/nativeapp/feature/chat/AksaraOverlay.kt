@@ -91,7 +91,7 @@ import my.aksara.nativeapp.feature.tools.*
                             }
                             Spacer(Modifier.weight(1f));AksaraButton("Refresh Status",onRefresh,Modifier.fillMaxWidth(),height=49.dp)
                         }
-                        "code" -> RuntimeHealthContent(onNavigate)
+                        "code" -> CodeEngineContent(onNavigate)
                         "terminal" -> TerminalContent()
                         "studio" -> StudioContent()
                         "library" -> LibraryContent(onNavigate)

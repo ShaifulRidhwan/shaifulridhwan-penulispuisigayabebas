@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ms" data-theme="dark">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>AKSARA CODE ENGINE · Eksperimen</title>
+<link rel="icon" type="image/svg+xml" href="favicon-aksara-ai.svg">
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,"DM Sans",sans-serif;color:#e8e6e2;background:#080d18}
+*{box-sizing:border-box}body{min-height:100vh;margin:0;background:radial-gradient(circle at 0 0,rgba(93,122,157,.18),transparent 38%),radial-gradient(circle at 95% 95%,rgba(193,154,107,.11),transparent 45%),#080d18}
+main{width:min(980px,calc(100% - 32px));margin:32px auto 60px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}a{color:#dec194;text-decoration:none}a:hover{text-decoration:underline}h1{font-size:clamp(1.4rem,4vw,2.3rem);letter-spacing:.1em;margin:28px 0 8px}p{color:#b7c2ce;line-height:1.6}.glass{background:rgba(28,36,51,.55);border:1px solid rgba(209,195,164,.22);border-radius:5px 24px 5px 24px;backdrop-filter:blur(10px);padding:clamp(16px,3vw,28px);box-shadow:0 18px 65px rgba(0,0,0,.16)}.row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.tag{border:1px solid rgba(127,204,177,.35);border-radius:999px;padding:7px 12px;font-size:.78rem;color:#a9d9c7}.tag.off{color:#edada8;border-color:#c2766a}.field{display:grid;gap:8px;margin:18px 0 12px}label{font-size:.85rem;color:#d9cfbc}select,textarea,pre,button{font:inherit}select,textarea,pre{color:#e8edf4;background:rgba(4,9,19,.69);border:1px solid rgba(196,207,222,.21);border-radius:12px}select{padding:11px 14px;max-width:100%}textarea{resize:vertical;width:100%;min-height:220px;line-height:1.6;font:14px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;padding:18px;tab-size:2}textarea:focus,select:focus{outline:1px solid #cbb183}button{border:1px solid rgba(221,201,158,.5);background:linear-gradient(130deg,rgba(203,170,115,.24),rgba(95,135,166,.14));border-radius:999px;color:#f8e6c7;padding:11px 22px;cursor:pointer}button:disabled{opacity:.5;cursor:default}button.secondary{background:transparent}.results{min-height:100px;white-space:pre-wrap;overflow-wrap:anywhere;padding:16px;margin:0;font:13px/1.6 ui-monospace,Consolas,monospace}h2{font-size:1rem;margin:24px 0 12px}.targets{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px;margin-top:12px}.target{padding:10px 12px;border:1px solid rgba(207,196,174,.18);border-radius:12px;font-size:.8rem;color:#aeb9c9}.target small{display:block;color:#d1ad78;margin-top:3px}.foot{font-size:.8rem;color:#aeb8c6}@media(max-width:500px){main{margin:12px auto 32px}.glass{padding:16px}textarea{min-height:260px}}
+</style>
+</head>
+<body>
+<main>
+ <div class="top"><a href="bilik-antara.html">← Bilik Antara</a><span class="tag" id="engineStatus" role="status" aria-live="polite">CODE ENGINE · CHECKING</span></div>
+ <h1>AKSARA CODE ENGINE</h1>
+ <p>Eksperimen pelaksanaan kod bebas daripada AI. Runtime dijalankan dalam iframe sandbox terasing. Kod tidak dihantar kepada penyedia AI atau backend AKSARA.</p>
+ <section class="glass" aria-label="Editor pelaksanaan kod">
+  <div class="row"><label for="language">Bahasa pengaturcaraan</label><select id="language"><option value="javascript">JavaScript · Browser Sandbox</option><option value="python">Python · Pyodide WebAssembly</option><option value="typescript">TypeScript · Browser Transpiler</option><option value="sql">SQL · SQLite WebAssembly</option><option value="cpp">C++20 · Clang WebAssembly (muat turun ~29 MB)</option></select></div>
+  <div class="field"><label for="editor">Kod</label><textarea id="editor" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Editor kod JavaScript, Python, TypeScript, SQL atau C++">console.log("Salam dari AKSARA Code Engine!");
+console.log(6 * 7);</textarea></div>
+  <div class="row"><button type="button" id="run">▶ Run Code</button><button type="button" id="stop" class="secondary" disabled>■ Henti</button><span id="progress" class="foot" aria-live="polite">Belum dijalankan.</span></div>
+  <h2>OUTPUT CONSOLE</h2>
+  <pre id="output" class="results" role="log" aria-live="polite">Output akan muncul di sini.</pre>
+ </section>
+ <h2>Lima runtime pelaksanaan</h2>
+ <p class="foot">JavaScript, Python, TypeScript, SQL dan C++20 disokong. Compiler C++ menggunakan Clang 22 melalui WebAssembly, dimuatkan hanya apabila digunakan; output teks dipaparkan di console.</p>
+ <p class="foot">Python dan C++ memerlukan Internet untuk memuatkan runtime daripada CDN. C++ memerlukan sekitar 29 MB muat turun pada kali pertama, tanpa API AI dan tanpa server compiler. Tiada preview grafik C++ dalam v0.3. Sandbox ini prototaip; belum diaudit sebagai persekitaran kod tidak dipercayai untuk pengguna awam.</p>
+</main>
+<script src="bilik-antara-code-runtime.js?v=5"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id),engine=window.AksaraCodeRuntime;
+const samples={javascript:'console.log("Salam dari AKSARA Code Engine!");\nconsole.log(6 * 7);',python:'print("Salam dari Python!")\nprint(6 * 7)',typescript:'const value: number = 6 * 7;\nconsole.log(value);',sql:'CREATE TABLE numbers (n INTEGER);\nINSERT INTO numbers VALUES (6), (7);\nSELECT SUM(n) AS total FROM numbers;',cpp:'#include <iostream>\nint main(){\n  std::cout << (6 * 7) << std::endl;\n  return 0;\n}'};
+let controller=null;
+$("language").addEventListener("change",()=>{$("editor").value=samples[$("language").value];$("output").textContent="Output akan muncul di sini.";});
+function running(on){$("run").disabled=on;$("stop").disabled=!on;}
+$("stop").addEventListener("click",()=>controller?.abort());
+$("run").addEventListener("click",async()=>{
+ if(controller)return;
+ controller=new AbortController();running(true);
+ $("output").textContent="";$("progress").textContent="Melaksanakan kod…";
+ const start=performance.now();
+ try{
+  const result=await engine.run($("language").value,$("editor").value,{signal:controller.signal,onProgress:s=>$("progress").textContent=s});
+  $("output").textContent=(result.output||"")+(result.error?"\nERROR: "+result.error:"");
+  $("progress").textContent=(result.ok?"Berjaya":"Kod mengembalikan ralat")+" · "+Math.round(performance.now()-start)+" ms";
+ }catch(e){$("output").textContent=String(e.message||e);$("progress").textContent="Runtime dihentikan atau gagal.";}
+ finally{controller=null;running(false);}
+});
+engine.probe().then(ok=>{
+ const badge=$("engineStatus");
+ badge.textContent=ok?"CODE ENGINE · READY (JS verified)":"CODE ENGINE · UNAVAILABLE";
+ badge.classList.toggle("off",!ok);
+});
+})();
+</script>
+</body></html>

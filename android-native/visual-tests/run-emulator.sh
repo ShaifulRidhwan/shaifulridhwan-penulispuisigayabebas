@@ -18,6 +18,9 @@ adb install -r android-native/build-artifact/outputs/apk/androidTest/debug/app-d
 failures=0
 adb shell am instrument -w -r -e class my.aksara.nativeapp.NativeEngineTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/native-engine-tests.txt" || failures=$((failures+1))
 cat "$out/android/native-engine-tests.txt"
+adb shell am instrument -w -r -e class my.aksara.nativeapp.NativeCodeWebViewTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/browser-code-tests.txt" || failures=$((failures+1))
+cat "$out/android/browser-code-tests.txt"
+if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/browser-code-tests.txt"; then failures=$((failures+1)); fi
 if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/native-engine-tests.txt"; then failures=$((failures+1)); fi
 for spec in '360 800' '390 844' '412 915'; do
   read -r width height <<< "$spec"
