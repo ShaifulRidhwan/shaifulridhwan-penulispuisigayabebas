@@ -21,10 +21,11 @@ menu.className="multi-ai-dialog code-engine-dialog";
 menu.setAttribute("aria-labelledby","codeEngineMenuTitle");
 menu.setAttribute("aria-describedby","codeEngineMenuDescription");
 menu.innerHTML=[
- '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Runtime Health</strong><p id="codeEngineMenuDescription">Lima runtime untuk menjalankan kod termasuk C++20. Linux VM untuk pembangunan setempat, dimuatkan hanya atas permintaan. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.</p><p id="codeHealthCheckedAt" class="code-health-freshness" role="status">Not checked yet</p></div><button type="button" id="codeMenuClose" aria-label="Close Code Engine">×</button></div>',
+ '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Runtime Health</strong><p id="codeEngineMenuDescription">Lima runtime kod termasuk C++20. Developer Shell menggunakan sandbox browser sedia ada. Linux VM ialah eksperimen berasingan, boot atas permintaan dan belum disahkan. HTML/CSS menggunakan pratonton terasing. Runtime lain hanya disahkan selepas kod berjaya dijalankan.</p><p id="codeHealthCheckedAt" class="code-health-freshness" role="status">Not checked yet</p></div><button type="button" id="codeMenuClose" aria-label="Close Code Engine">×</button></div>',
  '<div id="codeEngineActivity" class="code-health-activity" role="status" aria-live="polite" hidden></div>',
  '<div class="multi-ai-list" id="codeRuntimeList" aria-label="Runtime availability and verified execution status">',
-  '<button type="button" class="multi-ai-row code-menu-language" id="codeLinuxOpen"><span class="multi-ai-provider">🐧 Linux · Developer Sandbox</span><span class="multi-ai-state is-muted" id="codeLinuxState">On Demand · VM</span></button>',
+  '<button type="button" class="multi-ai-row code-menu-language" id="codeDeveloperShellOpen"><span class="multi-ai-provider">Developer Shell · Terminal</span><span class="multi-ai-state is-ready">Browser Sandbox</span></button>',
+  '<button type="button" class="multi-ai-row code-menu-language" id="codeLinuxOpen"><span class="multi-ai-provider">Linux VM · Experimental</span><span class="multi-ai-state is-muted" id="codeLinuxState">Belum diuji · VM</span></button>',
   '<button type="button" class="multi-ai-row code-menu-language" id="codeHtmlPreview"><span class="multi-ai-provider">HTML · CSS</span><span class="multi-ai-state is-ready" id="codeHtmlState">Available</span></button>',
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="javascript"><span class="multi-ai-provider">JavaScript</span><span class="multi-ai-state is-muted" id="codeJavaScriptState">Checking…</span></button>',
   '<button type="button" class="multi-ai-row code-menu-language" data-code-language="python"><span class="multi-ai-provider">Python · Pyodide</span><span class="multi-ai-state is-muted" id="codePythonState">Not Tested · On Demand</span></button>',
@@ -97,6 +98,7 @@ pill.addEventListener("click",()=>{
 menu.querySelector("#codeMenuClose").addEventListener("click",()=>{closeMenu();pill.focus();});
 menu.addEventListener("click",event=>{if(event.target===menu)closeMenu();});
 // Refresh invokes the explicit five-runtime test; initial lightweight JavaScript probe stays separate.
+menu.querySelector("#codeDeveloperShellOpen").addEventListener("click",()=>{closeMenu();window.dispatchEvent(new Event("aksara:code-developer-shell-open"));});
 menu.querySelector("#codeLinuxOpen").addEventListener("click",()=>{closeMenu();window.dispatchEvent(new Event("aksara:code-linux-open"));});
 menu.querySelector("#codeWorkspaceOpen").addEventListener("click",()=>{closeMenu();window.dispatchEvent(new Event("aksara:code-workspace-open"));});
 menu.querySelector("#codeHtmlPreview").addEventListener("click",()=>{closeMenu();window.dispatchEvent(new CustomEvent("aksara:code-workspace-open",{detail:{language:"html"}}));});
