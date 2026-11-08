@@ -8,7 +8,8 @@ on:
       - "bilik-antara*.js"
       - "security-lab.*"
       - "package*.json"
-      - "tests/aksara-security-lab.test.cjs"
+      - "scripts/aksara-security-summary.cjs"
+      - "tests/aksara-security-*.test.cjs"
   push:
     branches: [main]
     paths:
@@ -17,6 +18,7 @@ on:
       - "bilik-antara*.js"
       - "security-lab.*"
       - "package*.json"
+      - "scripts/aksara-security-summary.cjs"
 permissions:
   contents: read
 concurrency:
@@ -35,11 +37,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Verify passive endpoint and scope controls
+      - name: Verify scope, UI and report parser
         run: |
           node --check netlify/functions/aksara-security-audit.js
           node --check security-lab.js
-          node --test tests/aksara-security-lab.test.cjs
+          node --check security-ci.js
+          node --check scripts/aksara-security-summary.cjs
+          node --test tests/aksara-security-lab.test.cjs tests/aksara-security-summary.test.cjs
       - name: Scan owned repository with Trivy
         uses: aquasecurity/trivy-action@v0.36.0
         continue-on-error: true
@@ -49,7 +53,7 @@ jobs:
           scanners: vuln,misconfig
           format: json
           output: trivy-report.json
-          severity: HIGH,CRITICAL
+          severity: LOW,MEDIUM,HIGH,CRITICAL
           exit-code: "0"
       - name: Install Semgrep Community Edition
         run: |
@@ -62,7 +66,10 @@ jobs:
         run: |
           /tmp/aksara-security-semgrep/bin/semgrep scan --config p/default --json --output semgrep-report.json \
             --exclude node_modules --exclude package-lock.json --exclude assets .
-      - name: Upload security reports
+      - name: Generate sanitized CI result
+        if: always()
+        run: node scripts/aksara-security-summary.cjs
+      - name: Upload full results and safe summary
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -70,5 +77,40 @@ jobs:
           path: |
             trivy-report.json
             semgrep-report.json
+            security-ci-summary.json
           if-no-files-found: warn
           retention-days: 14
+  publish-summary:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: owned-repo-security
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout for restricted report publication
+        uses: actions/checkout@v4
+      - name: Download sanitized report only
+        uses: actions/download-artifact@v4
+        with:
+          name: aksara-security-lab-${{ github.run_number }}
+          path: ./security-summary-upload
+      - name: Publish aggregate counts without findings details
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp ./security-summary-upload/security-ci-summary.json "$RUNNER_TEMP/latest-security-summary.json"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin security-reports >/dev/null 2>&1; then
+            git fetch origin security-reports
+            git switch -C security-reports FETCH_HEAD
+          else
+            git switch --orphan security-reports
+            git rm -r -f . >/dev/null 2>&1 || true
+          fi
+          cp "$RUNNER_TEMP/latest-security-summary.json" latest.json
+          git add latest.json
+          if ! git diff --cached --quiet; then
+            git commit -m "ci: update sanitized security summary [skip ci]"
+            git push origin HEAD:security-reports
+          fi
