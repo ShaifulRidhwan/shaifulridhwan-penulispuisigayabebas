@@ -22,12 +22,12 @@ test("five executable runtimes preserve v0.2 menu and HTML preview",()=>{
  assert.ok(!status.includes("codeEngineProbeAll"),"Old manual probe button must remain removed");
  assert.ok(status.includes('id="codeHtmlPreview"'));
  const list=status.slice(status.indexOf('id="codeRuntimeList"'));
- const markers=['id="codeLinuxOpen"','id="codeHtmlPreview"','data-code-language="javascript"',
+ const markers=['id="codeDeveloperShellOpen"','id="codeLinuxOpen"','id="codeHtmlPreview"','data-code-language="javascript"',
    'data-code-language="python"','data-code-language="typescript"',
    'data-code-language="sql"','data-code-language="cpp"'];
  const positions=markers.map(m=>list.indexOf(m));
  assert.ok(positions.every((p,i)=>p>=0&&(i===0||p>positions[i-1])),
-  "Linux developer VM must be the first entry; existing runtime order must remain unchanged");
+  "Developer Shell must be first, experimental Linux second, and code runtimes unchanged");
  assert.ok(status.includes('data-code-language="cpp"'));
  assert.ok(runtime.includes('const LANGUAGES=Object.freeze(["javascript","python","typescript","sql","cpp"]);'));
  assert.ok(workspace.includes('sandbox=""')&&workspace.includes("script-src 'none'"));
@@ -35,7 +35,10 @@ test("five executable runtimes preserve v0.2 menu and HTML preview",()=>{
 });
 test("Linux Developer Sandbox is isolated, lazy and integrated into Code Engine, not Security Lab",()=>{
  const menu=read("bilik-antara-code-status.js"),html=read("bilik-antara.html"),linux=read("bilik-antara-code-linux.js");
+ assert.ok(menu.indexOf('id="codeDeveloperShellOpen"') < menu.indexOf('id="codeLinuxOpen"'));
  assert.ok(menu.indexOf('id="codeLinuxOpen"') < menu.indexOf('id="codeHtmlPreview"'));
+ assert.ok(!menu.includes("🐧"));
+ assert.match(menu,/aksara:code-developer-shell-open/);
  assert.match(menu,/aksara:code-linux-open/);
  assert.match(html,/bilik-antara-code-linux\.js\?v=1/);
  assert.match(html,/bilik-antara-code-linux\.css\?v=1/);
