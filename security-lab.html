@@ -2,58 +2,85 @@
 <html lang="ms" data-theme="dark">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#080c15"><meta name="robots" content="noindex,follow">
-<title>AKSARA Security Lab | Bilik Antara</title>
+<meta name="theme-color" content="#070911"><meta name="robots" content="noindex,follow">
+<meta name="description" content="AKSARA Security Lab: audit defensif laman, analisis kod setempat dan laporan keselamatan.">
+<title>Security Lab | AKSARA A.I.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
-<style>
-:root{color-scheme:dark;font-family:"DM Sans",system-ui,sans-serif;background:#080c15;color:#edf0f9}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse 65% 45% at 20% 0%,#263d5633,transparent),radial-gradient(ellipse 48% 58% at 90% 80%,#553c7630,transparent),#080c15}
-a{color:#c4dcff}a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid #b0d7f4;outline-offset:3px}
-header,main,footer{width:min(900px,calc(100% - 32px));margin:auto}
-header{padding:24px 0;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.brand{font:700 17px "Space Grotesk",sans-serif;letter-spacing:.09em}
-.back{font-size:13px;text-decoration:none;border:1px solid #ffffff25;border-radius:100px;padding:10px 15px;background:#ffffff0b}
-main{padding:22px 0 55px}
-h1,h2,h3{font-family:"Space Grotesk",sans-serif}h1{font-size:clamp(28px,5vw,45px);line-height:1.15;margin:10px 0 12px}h2{font-size:18px;margin:0 0 10px}h3{font-size:14px;margin:0 0 6px}
-.muted{color:#b6c3d7;line-height:1.65}.eyebrow{font-size:11px;font-weight:700;letter-spacing:.18em;color:#b3d3f7}
-.glass{background:linear-gradient(130deg,#ffffff10,#ffffff04);border:1px solid #ffffff25;box-shadow:0 15px 65px #0006,inset 0 1px #ffffff18;backdrop-filter:blur(19px);border-radius:22px;padding:22px;margin-top:18px}
-.hero{padding-bottom:9px}.hero p{max-width:690px}
-.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.module{border:1px solid #ffffff1c;border-radius:16px;padding:17px;background:#07142191}
-.module p{font-size:13px;line-height:1.55;color:#bcc8d8;margin:0}
-.tag{font-size:11px;border:1px solid #a8caff50;color:#c3e4f8;border-radius:20px;padding:4px 9px;white-space:nowrap}
-.line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-button,select{font:600 14px "DM Sans",sans-serif;border-radius:11px;padding:11px 14px;border:1px solid #aac9f850;color:#edf3ff;background:#20364b}
-button{cursor:pointer;background:linear-gradient(140deg,#456f96,#2d506a)}
-button:hover:not(:disabled){filter:brightness(1.13)}button:disabled{opacity:.55;cursor:wait}
-select{max-width:100%}.results{display:grid;gap:10px;margin-top:16px}
-.check{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;border:1px solid #ffffff1a;border-radius:12px;padding:11px 13px;background:#ffffff08}
-.mark{font-size:15px;line-height:1.4}.pass{color:#95e4c3}.warn{color:#f1ca92}
-.check strong{display:block;font-size:13px}.check small{display:block;color:#afbdcb;font-size:12px;margin-top:3px}
-#summary{min-height:24px;color:#d4dfef;font-size:13px}
-.resources{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}.resources a{font-size:13px;text-decoration:none;border:1px solid #ffffff2d;padding:10px 12px;border-radius:10px;background:#ffffff09}
-footer{padding:0 0 35px;color:#8ca0b9;font-size:12px}
-@media(max-width:650px){.grid{grid-template-columns:1fr}.glass{padding:16px}header{padding:17px 0}}
-</style>
-<script defer src="/security-lab.js?v=1"></script>
-</head><body>
-<header><div class="brand">AKSARA <span style="color:#b2d6ef">SECURITY LAB</span></div><a class="back" href="/bilik-antara.html">← Bilik Antara</a></header>
-<main>
-<section class="hero"><div class="eyebrow">CAHAYA / GELAP · DEFENSIVE SECURITY</div><h1>Kenal pasti risiko.<br>Betulkan sebelum terlambat.</h1><p class="muted">Makmal audit keselamatan untuk laman dan kod projek AKSARA. Semakan dijalankan pada aset projek sendiri sahaja, bukan imbasan rangkaian umum. Tidak mengubah chat, Voice Chat atau Code Engine.</p></section>
-<section class="glass" aria-labelledby="auditTitle"><div class="line"><h2 id="auditTitle">HTTP Security Auditor</h2><span class="tag">Passive · Owned pages</span></div>
-<p class="muted">Satu permintaan bagi setiap audit. Semak HTTPS, HSTS, CSP, framing dan header keselamatan sebenar pada laman AKSARA.</p>
-<div class="controls"><label for="page">Halaman</label><select id="page"><option value="/bilik-antara.html">Bilik Antara</option><option value="/studio-antara.html">Studio Antara</option><option value="/antara-cahaya-dan-gelap.html">Antara Cahaya dan Gelap</option><option value="/">Laman Utama</option></select><button id="runAudit" type="button">Jalankan audit</button></div>
-<p id="summary" role="status" aria-live="polite">Belum diuji. Pilih halaman dan mulakan audit.</p><div class="results" id="results" aria-live="polite"></div>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/security-lab.css?v=2">
+<script defer src="/security-lab.js?v=2"></script>
+</head>
+<body>
+<div class="ak-world" aria-hidden="true"><div class="ak-world-image"></div><div class="ak-world-haze"></div></div>
+<header class="ak-header ak-glass">
+  <a class="ak-brand" href="/bilik-antara.html" aria-label="Kembali ke Bilik Antara">
+    <span class="ak-symbol" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5.4 3.6 9.4 8 11 4.4-1.6 8-5.6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+    <span><strong>AKSARA</strong><small>SECURITY LAB</small></span>
+  </a>
+  <div class="ak-header-right"><span class="ak-live-tag"><span class="ak-live-dot" aria-hidden="true"></span> DEFENSIVE LAB</span><a class="ak-return" href="/bilik-antara.html">Bilik Antara <span aria-hidden="true">↗</span></a></div>
+</header>
+<main class="ak-main">
+<section class="ak-hero">
+  <div class="ak-kicker"><span class="ak-kicker-line"></span> BILIK ANTARA / SECURITY ENGINE</div>
+  <h1>Di antara <em>cahaya</em> dan <span>ancaman.</span></h1>
+  <p>Kenal pasti titik lemah sebelum ia menjadi masalah. Analisis HTTP sebenar, semak corak kod secara setempat dan pantau audit repositori dalam satu ruang.</p>
+  <div class="ak-hero-tags"><span>OWNED ORIGIN</span><span>ZERO LICENSE COST</span><span>READ-ONLY AUDIT</span></div>
 </section>
-<section class="glass" aria-labelledby="ciTitle"><div class="line"><h2 id="ciTitle">Security CI · Open-source</h2><span class="tag">Code & Dependency</span></div>
-<div class="grid">
-<article class="module"><h3>Trivy</h3><p>Audit dependency, konfigurasi dan isu keselamatan dalam repositori.</p></article>
-<article class="module"><h3>Semgrep</h3><p>Analisis statik untuk mencari corak kod berisiko. Tiada kod projek dihantar kepada Aksara A.I. secara automatik.</p></article>
-</div>
-<div class="resources"><a href="https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/actions/workflows/aksara-security-lab.yml" target="_blank" rel="noopener noreferrer">Lihat audit GitHub Actions</a><a href="https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/security" target="_blank" rel="noopener noreferrer">Security overview</a></div>
-<p class="muted">Laporan CI boleh dimuat turun daripada run yang telah selesai. Statusnya tidak dipalsukan sebagai keputusan audit langsung.</p>
+<section class="ak-metrics" aria-label="Ringkasan Security Lab">
+  <div class="ak-metric ak-glass"><small>SKOP AKTIF</small><strong>04 <span>halaman</span></strong><p>Hanya aset AKSARA</p></div>
+  <div class="ak-metric ak-glass"><small>WEB POSTURE</small><strong id="metricScore">--<span>/ 100</span></strong><p id="metricScoreLabel">Belum diaudit</p></div>
+  <div class="ak-metric ak-glass"><small>PENEMUAN</small><strong id="metricIssues">--</strong><p id="metricIssuesLabel">Audit belum dijalankan</p></div>
+  <div class="ak-metric ak-glass"><small>ENGINE</small><strong>03 <span>modul</span></strong><p>Web · Kod · CI</p></div>
+</section>
+<nav class="ak-tabs ak-glass" aria-label="Mod Security Lab">
+  <button type="button" class="ak-tab is-active" data-tab="overview" aria-controls="panel-overview" aria-selected="true"><span class="ak-tab-glyph" aria-hidden="true">◈</span> Overview</button>
+  <button type="button" class="ak-tab" data-tab="web" aria-controls="panel-web" aria-selected="false"><span class="ak-tab-glyph" aria-hidden="true">◎</span> Web Audit</button>
+  <button type="button" class="ak-tab" data-tab="code" aria-controls="panel-code" aria-selected="false"><span class="ak-tab-glyph" aria-hidden="true">⌘</span> Code Audit</button>
+  <button type="button" class="ak-tab" data-tab="reports" aria-controls="panel-reports" aria-selected="false"><span class="ak-tab-glyph" aria-hidden="true">▤</span> Reports</button>
+</nav>
+<section class="ak-panel" id="panel-overview" data-panel="overview">
+  <div class="ak-heading"><div><span class="ak-section-index">01 / SYSTEM OVERVIEW</span><h2>Security Intelligence</h2><p>Satu pusat kawalan. Tiga jenis audit, hasil yang boleh diperiksa.</p></div><span class="ak-pill">AKSARA v2</span></div>
+  <div class="ak-feature-grid">
+    <article class="ak-feature ak-glass"><div class="ak-feature-top"><span class="ak-feature-icon" aria-hidden="true">◎</span><span class="ak-feature-index">01</span></div><h3>Web Security</h3><p>11 pemeriksaan header: HSTS, CSP, framing, privasi dan pendedahan. Sokong audit empat halaman milik projek.</p><button type="button" class="ak-inline-action" data-goto="web">Buka Web Auditor <span>↗</span></button></article>
+    <article class="ak-feature ak-glass"><div class="ak-feature-top"><span class="ak-feature-icon" aria-hidden="true">⌘</span><span class="ak-feature-index">02</span></div><h3>Code Inspection</h3><p>Analisis corak berisiko dalam teks atau fail kod setempat. Data kod tidak dihantar ke pelayan.</p><button type="button" class="ak-inline-action" data-goto="code">Buka Code Inspector <span>↗</span></button></article>
+    <article class="ak-feature ak-glass"><div class="ak-feature-top"><span class="ak-feature-icon" aria-hidden="true">▦</span><span class="ak-feature-index">03</span></div><h3>Repository CI</h3><p>Trivy + Semgrep mengimbas fail repositori dalam GitHub Actions. Keputusan sebenar tersedia pada run masing-masing.</p><button type="button" class="ak-inline-action" data-goto="reports">Lihat Security CI <span>↗</span></button></article>
+    <article class="ak-feature ak-glass"><div class="ak-feature-top"><span class="ak-feature-icon" aria-hidden="true">▤</span><span class="ak-feature-index">04</span></div><h3>Evidence & Reports</h3><p>Perbandingan halaman, butiran pemeriksaan dan eksport JSON. Semua keputusan berlabel masa dan skop.</p><button type="button" class="ak-inline-action" data-goto="reports">Buka Laporan <span>↗</span></button></article>
+  </div>
+  <div class="ak-scope ak-glass"><div class="ak-scope-icon" aria-hidden="true">◇</div><div><strong>SECURITY BY DESIGN</strong><p>Pengujian hanya untuk aset sendiri atau makmal berizin. Tiada imbasan IP rawak, brute force atau eksploitasi automatik. Laporan header bukan jaminan bahawa aplikasi bebas kelemahan.</p></div></div>
+</section>
+<section class="ak-panel" id="panel-web" data-panel="web" hidden>
+  <div class="ak-heading"><div><span class="ak-section-index">02 / WEB SECURITY</span><h2>HTTP Security Auditor</h2><p>Periksa header keselamatan sebenar. Pilih satu halaman atau semak keempat-empatnya.</p></div><span class="ak-pill">LIVE · PASSIVE</span></div>
+  <div class="ak-auditor ak-glass">
+    <div class="ak-controls"><label for="page">HALAMAN PROJEK<select id="page"><option value="/bilik-antara.html">Bilik Antara</option><option value="/studio-antara.html">Studio Antara</option><option value="/antara-cahaya-dan-gelap.html">Novel · Cahaya dan Gelap</option><option value="/">Laman Utama</option></select></label><button type="button" class="ak-button ak-primary" id="runAudit">Jalankan Audit</button><button type="button" class="ak-button ak-secondary" id="runAll">Audit Semua (4)</button></div>
+    <p class="ak-status" id="summary" role="status" aria-live="polite">Belum diuji. Pilih halaman dan jalankan audit.</p>
+    <div id="auditOutput" hidden>
+      <div class="ak-audit-summary"><div class="ak-score-ring" id="scoreRing"><div><strong id="scoreText">--</strong><small>/100</small></div></div><div class="ak-score-text"><span class="ak-section-index">HTTP SECURITY POSTURE</span><h3 id="auditPageTitle">Laman</h3><p id="auditMeta">Belum tersedia.</p><span class="ak-score-note">Skor indikator HTTP, bukan markah pentest menyeluruh.</span></div></div>
+      <div class="ak-subheading"><h3>Penemuan Audit</h3><span id="checksCount">0 semakan</span></div>
+      <div class="ak-results" id="results"></div>
+      <details class="ak-details"><summary>Maklumat tambahan · Cookie / Cache / Isolation</summary><div class="ak-observations" id="observations"></div></details>
+      <details class="ak-details"><summary>Ringkasan Content Security Policy</summary><p class="ak-policy" id="policySummary">Belum diperiksa.</p></details>
+    </div>
+  </div>
+  <div class="ak-panel-section ak-glass" id="comparisonSection" hidden><div class="ak-subheading"><h3>Perbandingan 4 Halaman</h3><span>Same-origin</span></div><div id="comparison" class="ak-comparison"></div></div>
+</section>
+<section class="ak-panel" id="panel-code" data-panel="code" hidden>
+  <div class="ak-heading"><div><span class="ak-section-index">03 / SOURCE INTELLIGENCE</span><h2>Local Code Inspector</h2><p>Semakan statik pantas untuk corak risiko biasa. Kod diproses dalam browser sahaja.</p></div><span class="ak-pill">ON-DEVICE</span></div>
+  <div class="ak-glass ak-code">
+    <div class="ak-code-top"><label for="codeInput">SUMBER KOD</label><label class="ak-upload" for="codeFile">+ Pilih Fail<input type="file" id="codeFile" accept=".js,.mjs,.cjs,.ts,.tsx,.jsx,.html,.css,.json,.py,.txt" hidden></label></div>
+    <textarea id="codeInput" rows="11" spellcheck="false" maxlength="120000" placeholder="// Tampal kod JS, HTML atau Python di sini...&#10;// atau import fail teks melalui Pilih Fail."></textarea>
+    <div class="ak-code-bottom"><p id="codeHint">Tiada kod dihantar ke pelayan. Maksimum 120,000 aksara.</p><button type="button" id="scanCode" class="ak-button ak-primary">Analisis Kod</button></div>
+    <div id="codeOutput" hidden><div class="ak-subheading"><h3>Penemuan Kod</h3><span id="codeSummary"></span></div><div class="ak-results" id="codeResults"></div><p class="ak-disclaimer">Analisis heuristik. Penemuan memerlukan semakan manusia dan tidak membuktikan eksploitasi.</p></div>
+  </div>
+</section>
+<section class="ak-panel" id="panel-reports" data-panel="reports" hidden>
+  <div class="ak-heading"><div><span class="ak-section-index">04 / EVIDENCE & CONTINUOUS INTEGRATION</span><h2>Security Reports</h2><p>Sumber, penemuan dan rekod audit. Tiada keputusan rekaan.</p></div><span class="ak-pill">TRACEABLE</span></div>
+  <div class="ak-feature-grid ak-report-grid">
+    <article class="ak-feature ak-glass"><div class="ak-feature-top"><span class="ak-feature-icon" aria-hidden="true">↓</span><span class="ak-feature-index">LOCAL</span></div><h3>Eksport Audit JSON</h3><p>Muat turun hasil audit HTTP dan penemuan kod dalam sesi ini tanpa memasukkan kandungan kod asal.</p><button class="ak-inline-action" type="button" id="exportReport">Eksport Laporan <span>↗</span></button><p id="reportStatus" role="status" aria-live="polite" class="ak-report-status">Belum ada hasil audit.</p></article>
+    <article class="ak-feature ak-glass"><div class="ak-feature-top"><span class="ak-feature-icon" aria-hidden="true">▦</span><span class="ak-feature-index">GITHUB</span></div><h3>Trivy · Semgrep</h3><p>Pengimbasan dependency, misconfiguration dan kod dijalankan melalui workflow GitHub Actions projek.</p><a class="ak-inline-action" href="https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/actions/workflows/aksara-security-lab.yml" target="_blank" rel="noopener noreferrer">Buka Hasil GitHub Actions <span>↗</span></a></article>
+  </div>
+  <div class="ak-glass ak-history"><div class="ak-subheading"><h3>Aktiviti Sesi</h3><span>Memory only</span></div><div id="activityList"><p class="ak-empty">Belum ada audit dijalankan dalam sesi ini.</p></div></div>
 </section>
 </main>
-<footer>AKSARA A.I. · Alat audit defensif, makmal ujian terkawal dan laporan yang boleh disemak.</footer>
+<footer class="ak-footer"><span>AKSARA A.I. · OLEH SHAIFUL RIDHWAN</span><span>CAHAYA × GELAP · SECURITY LAB</span></footer>
 </body></html>
