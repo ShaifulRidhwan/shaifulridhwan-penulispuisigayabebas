@@ -14,7 +14,7 @@ a{color:inherit}
 .ak-world{z-index:-2;overflow:hidden;background:linear-gradient(120deg,#100a08,#080b12 53%,#091625)}
 .ak-world-image{background:linear-gradient(90deg,rgba(18,10,8,.2),rgba(5,8,18,.12)),url("/aksara-cinematic-desktop.webp?v=1") center 39%/cover no-repeat;filter:saturate(.94) brightness(.72);opacity:.69;transform:scale(1.02)}
 .ak-world-haze{background:radial-gradient(ellipse at 7% 17%,rgba(227,173,94,.13),transparent 38%),radial-gradient(ellipse at 86% 42%,rgba(86,145,208,.18),transparent 46%),linear-gradient(180deg,rgba(5,7,14,.46),rgba(5,7,14,.42) 45%,rgba(5,7,14,.85))}
-.ak-glass{position:relative;isolation:isolate;overflow:hidden;background:linear-gradient(128deg,rgba(18,24,34,.29) 0%,rgba(9,14,26,.22) 48%,rgba(9,13,25,.34) 100%);border:1px solid rgba(239,218,185,.27);border-radius:22px;box-shadow:0 18px 65px rgba(0,0,0,.15),inset 0 1px rgba(255,255,255,.1),inset 1px 0 rgba(192,208,230,.06);-webkit-backdrop-filter:blur(24px) saturate(1.24);backdrop-filter:blur(24px) saturate(1.24)}
+.ak-glass{position:relative;isolation:isolate;overflow:hidden;background:var(--aksara-glass-surface);border:1px solid var(--aksara-glass-border);border-radius:var(--aksara-glass-radius);box-shadow:var(--aksara-glass-soft-shadow);-webkit-backdrop-filter:blur(24px) saturate(1.24);backdrop-filter:blur(24px) saturate(1.24)}
 .ak-glass:before{content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(245,213,159,.045),transparent 48%,rgba(118,169,221,.032))}
 .ak-header,.ak-main,.ak-footer{width:min(1100px,calc(100% - 36px));margin-inline:auto}
 .ak-header{margin-top:15px;display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 18px;border-radius:17px;min-height:65px}
@@ -149,3 +149,55 @@ a{color:inherit}
  .ak-footer{flex-direction:column;align-items:flex-start}
 }
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.ak-panel{animation:none}}
+
+/* Security intelligence and report surfaces */
+.ak-ci-dashboard{padding:20px 22px;margin:0 0 15px;border-radius:19px}
+.ak-ci-head{margin-top:0}
+.ak-ci-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0 10px}
+.ak-ci-stat{min-width:0;background:rgba(255,255,255,.035);border:1px solid rgba(239,211,176,.19);border-radius:12px;padding:13px 10px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.ak-ci-stat strong{font:600 24px "Space Grotesk",sans-serif;color:#f7e8d4;font-variant-numeric:tabular-nums}
+.ak-ci-stat small{font:600 10px "Space Grotesk",sans-serif;letter-spacing:.07em;color:#cbbdac}
+.ak-evidence{font:400 12px/1.6 "DM Sans",sans-serif;color:#ded5ca;margin:10px 0}
+.ak-ci-dashboard .ak-inline-action{display:inline-flex;margin-top:8px;padding:10px 0;border-top:0}
+#ciStatus{border-left:3px solid rgba(190,211,222,.58);padding:8px 10px;background:rgba(255,255,255,.025);border-radius:5px 10px 10px 5px}
+#ciStatus[data-state="findings_detected"]{border-left-color:#e7bf81}
+#ciStatus[data-state="incomplete"],#ciStatus[data-state="unavailable"]{border-left-color:#dc948c}
+#ciStatus[data-state="no_findings_in_scoped_scans"]{border-left-color:#9edac0}
+.ak-file-label{display:inline-flex;align-items:center;margin:4px 0}
+.ak-import-list,.ak-analyst-results{display:grid;gap:8px;margin:13px 0}
+.ak-import-item,.ak-analyst-item{background:rgba(10,16,27,.2);border:1px solid rgba(233,207,172,.19);border-radius:13px;padding:13px}
+.ak-import-item strong,.ak-analyst-item strong{font:600 12px/1.55 "Space Grotesk",sans-serif;color:#efd6b4;display:block}
+.ak-import-item small{display:block;color:#cfc9c2;font:400 11px/1.65 "DM Sans",sans-serif;margin-top:4px;overflow-wrap:anywhere}
+.ak-analyst-item p{font:400 12px/1.7 "DM Sans",sans-serif;color:#d8d5d1;margin:5px 0 0}
+.ak-history-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0}
+.ak-history-controls label{display:flex;align-items:center;gap:8px;font-size:11px;color:#e5d4c0}
+.ak-history-controls input{accent-color:#cda973}
+@media(max-width:560px){
+  .ak-hero{padding-top:12px}
+  .ak-tabs{position:sticky;top:6px;z-index:9;background:rgba(10,15,24,.56)}
+  .ak-ci-dashboard{padding:15px}
+  .ak-ci-stats{gap:5px}
+  .ak-ci-stat{padding:10px 5px}
+  .ak-ci-stat strong{font-size:19px}
+  .ak-ci-stat small{font-size:9px}
+  .ak-ci-head{align-items:center}
+  .ak-ci-head .ak-button{padding:9px 10px;min-height:38px}
+}
+@media print{
+  :root{color-scheme:light}
+  html,body{background:white!important;color:#111!important}
+  .ak-world,.ak-header,.ak-hero,.ak-metrics,.ak-tabs,.ak-footer,.ak-history-controls,
+  .ak-button,.ak-upload,.ak-inline-action{display:none!important}
+  .ak-main{padding:0!important;width:100%!important}
+  .ak-panel:not(#panel-reports){display:none!important}
+  .ak-glass{background:white!important;color:#111!important;border:1px solid #bbb!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;break-inside:avoid}
+  .ak-glass:before{display:none!important}
+  .ak-heading h2,.ak-heading p,.ak-subheading h3,.ak-feature h3,.ak-feature p,
+  .ak-evidence,.ak-status,.ak-ci-stat strong,.ak-ci-stat small,.ak-import-item strong,
+  .ak-import-item small,.ak-analyst-item strong,.ak-analyst-item p,.ak-activity,.ak-activity time{color:#111!important}
+  #panel-reports{display:block!important}
+  .ak-feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ak-feature{min-height:0}
+  .ak-ci-dashboard{margin-bottom:12px}
+  @page{size:A4;margin:15mm}
+}

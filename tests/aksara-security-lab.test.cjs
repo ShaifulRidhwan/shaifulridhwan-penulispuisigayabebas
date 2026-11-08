@@ -83,3 +83,48 @@ test("Aksara v2 UI uses existing scenic assets and actual translucent glass",()=
   assert.match(js,/URL\.createObjectURL/);
   assert.doesNotMatch(js,/eval\s*\(\s*source\s*\)/);
 });
+
+test("HTTP indicator weighting does not treat high and low risks equally",()=>{
+  const checks=[
+    {passed:true,weight:5},{passed:false,weight:1}
+  ];
+  assert.equal(lab._internal.score(checks),83);
+  assert.equal(lab._internal.score(checks.map(x=>({...x,passed:false}))),0);
+  assert.equal(lab._internal.score([]),0);
+});
+test("Public HTTP audit v3 includes model disclaimer and weighted checks",async()=>{
+  const previous=global.fetch;
+  global.fetch=async()=>({status:200,headers:new Headers({
+    "strict-transport-security":"max-age=31536000",
+    "content-security-policy":"default-src 'self'; frame-ancestors *; object-src 'none'; base-uri 'self'",
+    "x-content-type-options":"nosniff"
+  }),body:null});
+  try{
+    const r=await run({httpMethod:"GET",queryStringParameters:{path:"/"}}),data=parse(r);
+    assert.equal(data.schemaVersion,3);
+    assert.match(data.scoreModel,/not-penetration-test/);
+    assert.equal(data.checks.find(x=>x.id==="framing").passed,false);
+    assert.ok(data.checks.find(x=>x.id==="hsts").weight>data.checks.find(x=>x.id==="permissions").weight);
+    assert.equal(data.score,lab._internal.score(data.checks));
+  }finally{global.fetch=previous;}
+});
+test("Security CI is accessible, glass tokens shared and history defaults off",()=>{
+  const fs=require("node:fs"),path=require("node:path");
+  const root=path.join(__dirname,"..");
+  const html=fs.readFileSync(path.join(root,"security-lab.html"),"utf8");
+  const bilik=fs.readFileSync(path.join(root,"bilik-antara.html"),"utf8");
+  const ci=fs.readFileSync(path.join(root,"security-ci.js"),"utf8");
+  const tokens=fs.readFileSync(path.join(root,"aksara-glass-tokens.css"),"utf8");
+  assert.match(html,/id="ciStatus"/);
+  assert.match(html,/id="importFindings"/);
+  assert.match(html,/id="analyzeSecurity"/);
+  assert.match(html,/role="tablist"/);
+  assert.match(html,/id="saveAuditHistory"/);
+  assert.doesNotMatch(html,/id="saveAuditHistory"[^>]+checked/);
+  assert.match(html,/aksara-glass-tokens\.css/);
+  assert.match(bilik,/aksara-glass-tokens\.css/);
+  assert.match(tokens,/--aksara-glass-surface:/);
+  assert.match(ci,/security-reports\/latest\.json/);
+  assert.match(ci,/document\.createElement/);
+  assert.doesNotMatch(ci,/\beval\s*\(/);
+});
