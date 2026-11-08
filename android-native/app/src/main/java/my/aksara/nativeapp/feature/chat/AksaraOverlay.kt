@@ -54,7 +54,7 @@ import my.aksara.engine.voice.VoiceState
                     val title=when(kind){"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Ciri & Fungsi";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";else->kind}
                     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
-                            AksaraText(title,size=16f,line=20.8f,weight=700)
+                            AksaraText(title,size=16f,line=20.8f,weight=700,tracking=.4f)
                             val subtitle=when(kind){"connection"->"Empat penyedia AI teks termasuk empat sambungan Gemini. Status Sedia tidak bermaksud sambungan telah disahkan.";"code"->"Lima runtime untuk menjalankan kod termasuk C++20. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.";"terminal"->"Terminal native dalam proses berasingan. Shell Android, bukan shell server.";"thinking"->"Pilih cara Aksara A.I. berfikir dan menjawab.";"attachments"->"Pilih bahan untuk analisis atau buka kod dalam Workspace. Fail kekal dalam tab ini sehingga dihantar.";else->""}
                             if(subtitle.isNotEmpty()){Spacer(Modifier.height(8.dp));AksaraText(subtitle,size=if(kind=="code")11.5f else 12f,line=18.6f,color=Color(0xffc4bfba))}
                         }

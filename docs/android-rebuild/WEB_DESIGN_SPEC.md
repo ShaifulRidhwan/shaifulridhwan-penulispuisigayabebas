@@ -207,3 +207,10 @@ Fonts are DM Sans variable (UI/body) and Space Grotesk (selected labels/headings
 ## Audit boundaries
 
 This first capture covers seven overlays and initial/chat/loading/focused composer at three sizes. The browser does not create a real Android IME; `composer-focused` is NOT evidence of keyboard parity. Voice permission preflight was captured without enabling a microphone. Active voice, nested preferences, Code Workspace, Evaluation Lab, sessions, knowledge, Studio, library, Security Lab and Linux/Game require additional audit before parity can be accepted. Those screens cannot be marked passed from this baseline. All comparison claims require native captures.
+
+
+## Verified font instancing detail (recovery audit)
+
+Google Fonts' Latin DM Sans v17 WOFF2 (`https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K4.woff2`) is version4.004, matching the bundled original TTF. However the web file has only the wght variable axis: opsz is already instantiated at14. The bundled full TTF defaults to opsz9. FontTools instancing at14 reproduces the web hmtx advances (A664, a544, S580, d627, space266, i240, s502 units at wght400); the TTF default has a551, S586, d621, space269. HarfBuzz shaping of the Thinking Mode subtitle at12px is237.432px for both the web font and native opsz14, versus239.928px at native opsz9. This is an asset-metric finding, not a screenshot similarity score.
+
+Use explicit supported axes wght + opsz14 for DM Sans and only wght for Space Grotesk. Native linear/subpixel text placement is being checked against the browser rather than relying on static integer glyph hinting. Measured dialog title tracking is0.4px. The54px status row already includes its bottom border; a second external1px separator shifts all messages down incorrectly.

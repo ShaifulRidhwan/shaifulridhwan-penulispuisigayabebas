@@ -104,8 +104,11 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                     AksaraGlassSurface(Modifier.fillMaxSize().testTagCompat("conversation"),radius=18.dp,blur=3.dp,saturation=1.06f,
                         brush=Brush.linearGradient(listOf(Color(15,17,25,51),Color(10,14,25,33),Color(7,10,18,56))),border=Color(253,214,150,145)) {
                         Column(Modifier.fillMaxSize().padding(1.dp)) {
-                            BoxWithConstraints(Modifier.fillMaxWidth().height(54.dp).testTagCompat("conversation-head").background(Brush.horizontalGradient(listOf(Color(20,18,21,64),Color(5,8,17,56))))) {
+                            BoxWithConstraints(Modifier.fillMaxWidth().height(54.dp).testTagCompat("conversation-head")) {
                                 val compact=maxWidth<390.dp
+                                val headerPaint=remember{HazeState()}
+                                Box(Modifier.matchParentSize().hazeSource(headerPaint).background(Brush.horizontalGradient(listOf(Color(20,18,21,64),Color(5,8,17,56)))))
+                                CompositionLocalProvider(LocalBackdropPaints provides listOf(headerPaint)) {
                                 Row(Modifier.fillMaxSize().padding(horizontal=if(compact)5.dp else 8.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(if(compact)3.dp else 4.dp)) {
                                     AksaraButton("Voice Chat",{open("voice-permission")},Modifier.width(if(compact)82.328.dp else 93.484.dp),icon="voice",size=if(compact)9f else 10f,height=37.dp,radius=999.dp)
                                     AksaraButton("",{open("code")},Modifier.width(38.dp).semantics {contentDescription="Code Engine"},icon="code",height=37.dp,radius=999.dp)
@@ -119,8 +122,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                         }
                                     }
                                 }
+                                }
+                                Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(1.dp).background(Color(235,215,185,35)))
                             }
-                            Box(Modifier.fillMaxWidth().height(1.dp).background(Color(235,215,185,35)))
                             if(state.busy) Box(Modifier.fillMaxWidth().height(42.1875.dp).background(Color(15,18,26,40)).padding(horizontal=21.dp,vertical=11.dp)){AksaraText("Generating Response",size=12f,line=19.2f,color=Color(0xffd9c8b0))}
                             LaunchedEffect(state.messages.lastOrNull()?.text) { if(state.messages.isNotEmpty() && (list.layoutInfo.totalItemsCount<3 || list.canScrollForward.not())) list.animateScrollToItem(state.messages.size) }
                             LazyColumn(Modifier.weight(1f).fillMaxWidth().testTagCompat("messages"),state=list,contentPadding=PaddingValues(start=if(state.messages.isEmpty())17.dp else 12.dp,end=if(state.messages.isEmpty())17.dp else 12.dp,top=if(state.messages.isEmpty())14.dp else 13.dp,bottom=13.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
@@ -129,10 +133,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 items(state.messages,key={it.id}) { message -> AksaraChatBubble(message,fixedTimestamp=fixedTimestamp) }
                             }
                             if(state.messages.isEmpty()) Row(Modifier.fillMaxWidth().height(49.dp).padding(start=12.dp,end=12.dp,top=4.dp,bottom=8.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                                AksaraButton("↗  Siapa Aku",{onJourney("Siapa Aku")},Modifier.width(91.969.dp),size=11.5f,height=37.dp,radius=999.dp)
-                                AksaraButton("↗  The Coder Poet",{onJourney("The Coder Poet")},Modifier.width(122.609.dp),size=11.5f,height=37.dp,radius=999.dp)
+                                AksaraButton("Siapa Aku",{onJourney("Siapa Aku")},Modifier.width(91.969.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
+                                AksaraButton("The Coder Poet",{onJourney("The Coder Poet")},Modifier.width(122.609.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
                             }
-                            if(state.nextJourney!=null) AksaraButton("↗  "+state.nextJourney,{onJourney(state.nextJourney)},Modifier.padding(horizontal=12.dp,vertical=4.dp),size=11.5f,height=37.dp,radius=999.dp)
+                            if(state.nextJourney!=null) AksaraButton(state.nextJourney,{onJourney(state.nextJourney)},Modifier.padding(horizontal=12.dp,vertical=4.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
                             if(state.error!=null) Row(Modifier.fillMaxWidth().clickable(onClick=onDismissError).padding(8.dp)) { AksaraText(state.error,size=11f,color=Color(0xffe7a08e)) }
                             if(attachmentName!=null) AksaraText("📎 $attachmentName",Modifier.padding(horizontal=12.dp),size=11f)
                             Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(6,9,15,8),Color(6,8,14,71)))).padding(start=9.dp,end=9.dp,top=8.dp,bottom=10.dp)) {
@@ -197,8 +201,9 @@ private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
     val renderer=remember {Markwon.builder(context).usePlugin(TablePlugin.create(context)).build()}
     AndroidView(modifier=modifier,factory={ ctx -> android.widget.TextView(ctx).apply {
         setTextColor(android.graphics.Color.rgb(255,244,228));textSize=15f
-        typeface=ctx.resources.getFont(R.font.dm_sans);includeFontPadding=false
-        setLineSpacing(0f,1.59f);letterSpacing=-.008f;setPadding(0,0,0,0)
+        typeface=ctx.resources.getFont(R.font.dm_sans);fontVariationSettings="'opsz' 14, 'wght' 400";includeFontPadding=false
+        paint.isLinearText=true;paint.isSubpixelText=true
+        setLineHeight((23.85f*resources.displayMetrics.scaledDensity).toInt());letterSpacing=-.008f;setPadding(0,0,0,0)
         setTextIsSelectable(true);setLinkTextColor(android.graphics.Color.rgb(230,197,139))
         movementMethod=android.text.method.LinkMovementMethod.getInstance()
     }},update={renderer.setMarkdown(it,value)})

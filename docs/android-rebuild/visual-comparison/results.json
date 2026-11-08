@@ -38,48 +38,48 @@
   {
     "screen": "360-attachments",
     "status": "MISMATCH",
-    "ssim_percent": 63.454,
-    "mae": 14.657877314814815,
+    "ssim_percent": 66.172,
+    "mae": 13.33646875,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 90.149
+        "ssim_percent": 94.356
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 69.24
+        "ssim_percent": 88.05
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 82.812
+        "ssim_percent": 89.803
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 86.247
+        "ssim_percent": 90.761
       },
       {
         "component": "connection",
-        "ssim_percent": 83.562
+        "ssim_percent": 90.139
       },
       {
         "component": "attachmentDialog",
-        "ssim_percent": 51.238
+        "ssim_percent": 52.061
       },
       {
         "component": "bubble",
-        "ssim_percent": 63.294
+        "ssim_percent": 64.322
       },
       {
         "component": "composer",
-        "ssim_percent": 88.603
+        "ssim_percent": 93.893
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 95.213
+        "ssim_percent": 97.441
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 88.551
+        "ssim_percent": 93.028
       }
     ],
     "geometry": [
@@ -133,52 +133,52 @@
   {
     "screen": "360-chat",
     "status": "MISMATCH",
-    "ssim_percent": 72.01,
-    "mae": 12.46160763888889,
+    "ssim_percent": 73.063,
+    "mae": 10.637298611111111,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 76.709
+        "ssim_percent": 76.614
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 39.638
+        "ssim_percent": 51.918
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 51.779
+        "ssim_percent": 59.301
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 56.823
+        "ssim_percent": 60.39
       },
       {
         "component": "connection",
-        "ssim_percent": 64.765
+        "ssim_percent": 71.466
       },
       {
         "component": "bubble",
-        "ssim_percent": 47.261
+        "ssim_percent": 47.851
       },
       {
         "component": "bubble",
-        "ssim_percent": 40.594
+        "ssim_percent": 41.526
       },
       {
         "component": "bubble",
-        "ssim_percent": 41.002
+        "ssim_percent": 41.204
       },
       {
         "component": "composer",
-        "ssim_percent": 88.689
+        "ssim_percent": 92.779
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 68.835
+        "ssim_percent": 69.68
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 87.099
+        "ssim_percent": 89.955
       }
     ],
     "geometry": [
@@ -232,48 +232,48 @@
   {
     "screen": "360-code",
     "status": "MISMATCH",
-    "ssim_percent": 67.784,
-    "mae": 15.224260416666667,
+    "ssim_percent": 70.26,
+    "mae": 13.69986574074074,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 79.842
+        "ssim_percent": 84.598
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 51.677
+        "ssim_percent": 55.599
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 39.422
+        "ssim_percent": 40.501
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 30.474
+        "ssim_percent": 30.925
       },
       {
         "component": "connection",
-        "ssim_percent": 57.692
+        "ssim_percent": 59.932
       },
       {
         "component": "bubble",
-        "ssim_percent": 61.66
+        "ssim_percent": 64.107
       },
       {
         "component": "composer",
-        "ssim_percent": 88.427
+        "ssim_percent": 93.703
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 94.517
+        "ssim_percent": 96.777
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 93.227
+        "ssim_percent": 95.441
       },
       {
         "component": "codeEngineMenu",
-        "ssim_percent": 63.649
+        "ssim_percent": 65.3
       }
     ],
     "geometry": [
@@ -327,44 +327,44 @@
   {
     "screen": "360-composer-focused",
     "status": "MISMATCH",
-    "ssim_percent": 78.847,
-    "mae": 9.141898148148147,
+    "ssim_percent": 81.185,
+    "mae": 7.444313657407408,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 76.709
+        "ssim_percent": 76.614
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 28.78
+        "ssim_percent": 38.491
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 51.747
+        "ssim_percent": 59.292
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 56.823
+        "ssim_percent": 60.39
       },
       {
         "component": "connection",
-        "ssim_percent": 64.765
+        "ssim_percent": 71.466
       },
       {
         "component": "bubble",
-        "ssim_percent": 51.703
+        "ssim_percent": 52.415
       },
       {
         "component": "composer",
-        "ssim_percent": 73.995
+        "ssim_percent": 78.313
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 68.668
+        "ssim_percent": 69.546
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 87.285
+        "ssim_percent": 87.888
       }
     ],
     "geometry": [
@@ -399,18 +399,18 @@
         "component": "composer-form",
         "delta_px": {
           "x": 0,
-          "y": 2,
+          "y": 0,
           "width": 0,
-          "height": -2
+          "height": 0
         }
       },
       {
         "component": "input",
         "delta_px": {
           "x": 3,
-          "y": 12,
+          "y": 10,
           "width": -6,
-          "height": -22
+          "height": -20
         }
       }
     ]
@@ -418,48 +418,48 @@
   {
     "screen": "360-connection",
     "status": "MISMATCH",
-    "ssim_percent": 75.447,
-    "mae": 12.858309027777779,
+    "ssim_percent": 78.268,
+    "mae": 11.804640046296296,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 90.149
+        "ssim_percent": 94.356
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 72.205
+        "ssim_percent": 91.276
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 84.678
+        "ssim_percent": 92.538
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 88.286
+        "ssim_percent": 93.579
       },
       {
         "component": "connection",
-        "ssim_percent": 85.412
+        "ssim_percent": 92.644
       },
       {
         "component": "multiAiDialog",
-        "ssim_percent": 59.062
+        "ssim_percent": 59.855
       },
       {
         "component": "bubble",
-        "ssim_percent": 71.913
+        "ssim_percent": 74.782
       },
       {
         "component": "composer",
-        "ssim_percent": 89.423
+        "ssim_percent": 94.555
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 95.583
+        "ssim_percent": 97.742
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 89.15
+        "ssim_percent": 93.51
       }
     ],
     "geometry": [
@@ -528,48 +528,48 @@
   {
     "screen": "360-portal",
     "status": "MISMATCH",
-    "ssim_percent": 63.77,
-    "mae": 19.23888310185185,
+    "ssim_percent": 65.493,
+    "mae": 19.050052083333334,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 89.706
+        "ssim_percent": 90.621
       },
       {
         "component": "portalCard",
-        "ssim_percent": 56.998
+        "ssim_percent": 58.568
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 43.936
+        "ssim_percent": 59.267
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 55.148
+        "ssim_percent": 62.478
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 60.18
+        "ssim_percent": 65.922
       },
       {
         "component": "connection",
-        "ssim_percent": 54.593
+        "ssim_percent": 61.515
       },
       {
         "component": "bubble",
-        "ssim_percent": 53.933
+        "ssim_percent": 57.411
       },
       {
         "component": "composer",
-        "ssim_percent": 67.179
+        "ssim_percent": 73.582
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 77.587
+        "ssim_percent": 81.998
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 68.678
+        "ssim_percent": 74.685
       }
     ],
     "geometry": [
@@ -628,52 +628,52 @@
   {
     "screen": "360-streaming",
     "status": "MISMATCH",
-    "ssim_percent": 78.441,
-    "mae": 9.385190972222222,
+    "ssim_percent": 79.434,
+    "mae": 7.842958333333334,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 76.709
+        "ssim_percent": 76.614
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 39.638
+        "ssim_percent": 51.918
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 51.779
+        "ssim_percent": 59.301
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 56.823
+        "ssim_percent": 60.39
       },
       {
         "component": "connection",
-        "ssim_percent": 64.765
+        "ssim_percent": 71.466
       },
       {
         "component": "bubble",
-        "ssim_percent": 46.722
+        "ssim_percent": 47.241
       },
       {
         "component": "bubble",
-        "ssim_percent": 41.534
+        "ssim_percent": 42.141
       },
       {
         "component": "bubble",
-        "ssim_percent": 62.732
+        "ssim_percent": 63.039
       },
       {
         "component": "composer",
-        "ssim_percent": 86.639
+        "ssim_percent": 90.408
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 68.835
+        "ssim_percent": 69.68
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 87.099
+        "ssim_percent": 89.955
       }
     ],
     "geometry": [
@@ -732,48 +732,48 @@
   {
     "screen": "360-terminal",
     "status": "MISMATCH",
-    "ssim_percent": 63.226,
-    "mae": 15.63515162037037,
+    "ssim_percent": 65.401,
+    "mae": 14.613082175925927,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 90.343
+        "ssim_percent": 94.234
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 41.886
+        "ssim_percent": 64.429
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 40.603
+        "ssim_percent": 37.681
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 39.529
+        "ssim_percent": 43.013
       },
       {
         "component": "connection",
-        "ssim_percent": 75.224
+        "ssim_percent": 79.631
       },
       {
         "component": "bubble",
-        "ssim_percent": 42.447
+        "ssim_percent": 42.955
       },
       {
         "component": "composer",
-        "ssim_percent": 85.906
+        "ssim_percent": 91.664
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 93.621
+        "ssim_percent": 96.237
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 85.727
+        "ssim_percent": 90.654
       },
       {
         "component": "aksaraAITerminal",
-        "ssim_percent": 54.465
+        "ssim_percent": 55.5
       }
     ],
     "geometry": [
@@ -827,48 +827,48 @@
   {
     "screen": "360-thinking",
     "status": "MISMATCH",
-    "ssim_percent": 72.349,
-    "mae": 14.082400462962964,
+    "ssim_percent": 74.904,
+    "mae": 13.383050925925925,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 90.149
+        "ssim_percent": 94.356
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 72.204
+        "ssim_percent": 91.277
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 84.68
+        "ssim_percent": 92.538
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 88.286
+        "ssim_percent": 93.579
       },
       {
         "component": "connection",
-        "ssim_percent": 85.412
+        "ssim_percent": 92.644
       },
       {
         "component": "thoughtModeDialog",
-        "ssim_percent": 55.314
+        "ssim_percent": 55.593
       },
       {
         "component": "bubble",
-        "ssim_percent": 59.551
+        "ssim_percent": 60.032
       },
       {
         "component": "composer",
-        "ssim_percent": 89.423
+        "ssim_percent": 94.555
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 95.583
+        "ssim_percent": 97.742
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 89.15
+        "ssim_percent": 93.51
       }
     ],
     "geometry": [
@@ -922,48 +922,48 @@
   {
     "screen": "360-voice-permission",
     "status": "MISMATCH",
-    "ssim_percent": 84.95,
-    "mae": 10.437653935185185,
+    "ssim_percent": 88.348,
+    "mae": 8.122069444444444,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 92.727
+        "ssim_percent": 98.322
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 77.604
+        "ssim_percent": 96.461
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 90.58
+        "ssim_percent": 97.097
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 93.761
+        "ssim_percent": 97.671
       },
       {
         "component": "connection",
-        "ssim_percent": 91.681
+        "ssim_percent": 97.458
       },
       {
         "component": "bubble",
-        "ssim_percent": 97.304
+        "ssim_percent": 98.356
       },
       {
         "component": "composer",
-        "ssim_percent": 94.502
+        "ssim_percent": 98.124
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 98.405
+        "ssim_percent": 99.126
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 94.791
+        "ssim_percent": 97.778
       },
       {
         "component": "aksaraMicPermission",
-        "ssim_percent": 68.471
+        "ssim_percent": 69.565
       }
     ],
     "geometry": [
@@ -1017,44 +1017,44 @@
   {
     "screen": "360-voice",
     "status": "MISMATCH",
-    "ssim_percent": 71.804,
-    "mae": 15.366561342592593,
+    "ssim_percent": 73.024,
+    "mae": 14.242380787037037,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 60.78
+        "ssim_percent": 61.035
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 92.949
+        "ssim_percent": 97.319
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 97.466
+        "ssim_percent": 98.488
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 98.363
+        "ssim_percent": 98.818
       },
       {
         "component": "connection",
-        "ssim_percent": 96.303
+        "ssim_percent": 97.207
       },
       {
         "component": "bubble",
-        "ssim_percent": 68.465
+        "ssim_percent": 68.043
       },
       {
         "component": "composer",
-        "ssim_percent": 83.815
+        "ssim_percent": 85.311
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 54.352
+        "ssim_percent": 55.663
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 96.887
+        "ssim_percent": 96.694
       }
     ],
     "geometry": [
@@ -1108,44 +1108,44 @@
   {
     "screen": "360-welcome",
     "status": "MISMATCH",
-    "ssim_percent": 81.758,
-    "mae": 8.394175925925927,
+    "ssim_percent": 82.706,
+    "mae": 6.821574074074074,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 76.709
+        "ssim_percent": 76.614
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 39.638
+        "ssim_percent": 51.918
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 51.642
+        "ssim_percent": 59.301
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 56.823
+        "ssim_percent": 60.39
       },
       {
         "component": "connection",
-        "ssim_percent": 64.765
+        "ssim_percent": 71.466
       },
       {
         "component": "bubble",
-        "ssim_percent": 51.703
+        "ssim_percent": 52.415
       },
       {
         "component": "composer",
-        "ssim_percent": 88.634
+        "ssim_percent": 92.644
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 68.819
+        "ssim_percent": 69.678
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 87.157
+        "ssim_percent": 89.948
       }
     ],
     "geometry": [
@@ -1199,48 +1199,48 @@
   {
     "screen": "390-attachments",
     "status": "MISMATCH",
-    "ssim_percent": 65.875,
-    "mae": 14.104982379389963,
+    "ssim_percent": 68.441,
+    "mae": 12.727329161096934,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 90.516
+        "ssim_percent": 94.293
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 72.545
+        "ssim_percent": 91.04
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 82.442
+        "ssim_percent": 91.789
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 87.159
+        "ssim_percent": 93.179
       },
       {
         "component": "connection",
-        "ssim_percent": 84.654
+        "ssim_percent": 92.492
       },
       {
         "component": "attachmentDialog",
-        "ssim_percent": 52.884
+        "ssim_percent": 53.619
       },
       {
         "component": "bubble",
-        "ssim_percent": 64.565
+        "ssim_percent": 65.445
       },
       {
         "component": "composer",
-        "ssim_percent": 89.38
+        "ssim_percent": 94.51
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 95.577
+        "ssim_percent": 97.718
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 89.567
+        "ssim_percent": 93.596
       }
     ],
     "geometry": [
@@ -1294,52 +1294,52 @@
   {
     "screen": "390-chat",
     "status": "MISMATCH",
-    "ssim_percent": 74.719,
-    "mae": 11.32745068254547,
+    "ssim_percent": 75.752,
+    "mae": 9.571022197917932,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 78.143
+        "ssim_percent": 78.073
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 38.196
+        "ssim_percent": 51.584
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 50.057
+        "ssim_percent": 60.919
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 56.178
+        "ssim_percent": 61.085
       },
       {
         "component": "connection",
-        "ssim_percent": 68.568
+        "ssim_percent": 75.736
       },
       {
         "component": "bubble",
-        "ssim_percent": 46.746
+        "ssim_percent": 47.386
       },
       {
         "component": "bubble",
-        "ssim_percent": 42.112
+        "ssim_percent": 42.865
       },
       {
         "component": "bubble",
-        "ssim_percent": 46.731
+        "ssim_percent": 46.931
       },
       {
         "component": "composer",
-        "ssim_percent": 88.967
+        "ssim_percent": 93.015
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 68.929
+        "ssim_percent": 69.607
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 87.367
+        "ssim_percent": 89.971
       }
     ],
     "geometry": [
@@ -1393,48 +1393,48 @@
   {
     "screen": "390-code",
     "status": "MISMATCH",
-    "ssim_percent": 70.782,
-    "mae": 14.172901729655283,
+    "ssim_percent": 73.223,
+    "mae": 12.585606797099688,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 89.918
+        "ssim_percent": 92.125
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 66.247
+        "ssim_percent": 76.736
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 49.923
+        "ssim_percent": 52.989
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 50.978
+        "ssim_percent": 58.551
       },
       {
         "component": "connection",
-        "ssim_percent": 66.597
+        "ssim_percent": 69.21
       },
       {
         "component": "bubble",
-        "ssim_percent": 66.277
+        "ssim_percent": 69.045
       },
       {
         "component": "composer",
-        "ssim_percent": 88.255
+        "ssim_percent": 92.569
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 93.331
+        "ssim_percent": 95.821
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 88.027
+        "ssim_percent": 91.584
       },
       {
         "component": "codeEngineMenu",
-        "ssim_percent": 66.191
+        "ssim_percent": 67.785
       }
     ],
     "geometry": [
@@ -1488,44 +1488,44 @@
   {
     "screen": "390-composer-focused",
     "status": "MISMATCH",
-    "ssim_percent": 81.991,
-    "mae": 8.339183578401588,
+    "ssim_percent": 82.703,
+    "mae": 6.9214596751326605,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 78.143
+        "ssim_percent": 78.073
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 27.491
+        "ssim_percent": 38.289
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 50.054
+        "ssim_percent": 60.91
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 56.178
+        "ssim_percent": 61.085
       },
       {
         "component": "connection",
-        "ssim_percent": 68.568
+        "ssim_percent": 75.736
       },
       {
         "component": "bubble",
-        "ssim_percent": 53.997
+        "ssim_percent": 54.76
       },
       {
         "component": "composer",
-        "ssim_percent": 77.201
+        "ssim_percent": 79.767
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 68.801
+        "ssim_percent": 69.534
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 88.888
+        "ssim_percent": 87.879
       }
     ],
     "geometry": [
@@ -1579,48 +1579,48 @@
   {
     "screen": "390-connection",
     "status": "MISMATCH",
-    "ssim_percent": 76.985,
-    "mae": 12.506519625713938,
+    "ssim_percent": 79.597,
+    "mae": 11.393213027099282,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 90.516
+        "ssim_percent": 94.293
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 72.636
+        "ssim_percent": 91.243
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 82.556
+        "ssim_percent": 91.982
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 87.384
+        "ssim_percent": 93.412
       },
       {
         "component": "connection",
-        "ssim_percent": 84.985
+        "ssim_percent": 92.8
       },
       {
         "component": "multiAiDialog",
-        "ssim_percent": 60.478
+        "ssim_percent": 61.228
       },
       {
         "component": "bubble",
-        "ssim_percent": 81.504
+        "ssim_percent": 84.573
       },
       {
         "component": "composer",
-        "ssim_percent": 89.38
+        "ssim_percent": 94.51
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 95.577
+        "ssim_percent": 97.718
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 89.567
+        "ssim_percent": 93.596
       }
     ],
     "geometry": [
@@ -1689,48 +1689,48 @@
   {
     "screen": "390-portal",
     "status": "MISMATCH",
-    "ssim_percent": 64.645,
-    "mae": 19.229321100174182,
+    "ssim_percent": 66.378,
+    "mae": 18.877139790172965,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 89.884
+        "ssim_percent": 90.551
       },
       {
         "component": "portalCard",
-        "ssim_percent": 58.142
+        "ssim_percent": 59.68
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 44.191
+        "ssim_percent": 58.666
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 50.177
+        "ssim_percent": 58.65
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 55.816
+        "ssim_percent": 62.716
       },
       {
         "component": "connection",
-        "ssim_percent": 50.607
+        "ssim_percent": 58.25
       },
       {
         "component": "bubble",
-        "ssim_percent": 59.877
+        "ssim_percent": 62.572
       },
       {
         "component": "composer",
-        "ssim_percent": 68.631
+        "ssim_percent": 75.022
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 77.981
+        "ssim_percent": 82.351
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 71.156
+        "ssim_percent": 76.696
       }
     ],
     "geometry": [
@@ -1789,52 +1789,52 @@
   {
     "screen": "390-streaming",
     "status": "MISMATCH",
-    "ssim_percent": 80.436,
-    "mae": 8.654370721432333,
+    "ssim_percent": 81.417,
+    "mae": 7.18596022197918,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 78.143
+        "ssim_percent": 78.073
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 38.196
+        "ssim_percent": 51.584
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 50.057
+        "ssim_percent": 60.919
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 56.178
+        "ssim_percent": 61.085
       },
       {
         "component": "connection",
-        "ssim_percent": 68.568
+        "ssim_percent": 75.736
       },
       {
         "component": "bubble",
-        "ssim_percent": 47.424
+        "ssim_percent": 47.956
       },
       {
         "component": "bubble",
-        "ssim_percent": 40.563
+        "ssim_percent": 41.293
       },
       {
         "component": "bubble",
-        "ssim_percent": 62.639
+        "ssim_percent": 63.209
       },
       {
         "component": "composer",
-        "ssim_percent": 87.106
+        "ssim_percent": 90.841
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 68.929
+        "ssim_percent": 69.607
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 87.367
+        "ssim_percent": 89.971
       }
     ],
     "geometry": [
@@ -1893,48 +1893,48 @@
   {
     "screen": "390-terminal",
     "status": "MISMATCH",
-    "ssim_percent": 62.567,
-    "mae": 15.710336411876696,
+    "ssim_percent": 64.912,
+    "mae": 14.64520496617653,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 90.516
+        "ssim_percent": 94.293
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 60.99
+        "ssim_percent": 77.135
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 73.642
+        "ssim_percent": 81.11
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 79.733
+        "ssim_percent": 84.488
       },
       {
         "component": "connection",
-        "ssim_percent": 79.311
+        "ssim_percent": 85.486
       },
       {
         "component": "bubble",
-        "ssim_percent": 52.999
+        "ssim_percent": 53.745
       },
       {
         "component": "composer",
-        "ssim_percent": 88.169
+        "ssim_percent": 93.516
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 95.082
+        "ssim_percent": 97.338
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 88.533
+        "ssim_percent": 92.751
       },
       {
         "component": "aksaraAITerminal",
-        "ssim_percent": 52.051
+        "ssim_percent": 52.873
       }
     ],
     "geometry": [
@@ -1988,48 +1988,48 @@
   {
     "screen": "390-thinking",
     "status": "MISMATCH",
-    "ssim_percent": 85.644,
-    "mae": 11.262925831409243,
+    "ssim_percent": 88.265,
+    "mae": 10.27993275813181,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 90.516
+        "ssim_percent": 94.293
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 72.636
+        "ssim_percent": 91.243
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 82.556
+        "ssim_percent": 91.982
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 87.384
+        "ssim_percent": 93.412
       },
       {
         "component": "connection",
-        "ssim_percent": 84.985
+        "ssim_percent": 92.8
       },
       {
         "component": "thoughtModeDialog",
-        "ssim_percent": 79.252
+        "ssim_percent": 80.015
       },
       {
         "component": "bubble",
-        "ssim_percent": 86.977
+        "ssim_percent": 88.241
       },
       {
         "component": "composer",
-        "ssim_percent": 89.38
+        "ssim_percent": 94.51
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 95.577
+        "ssim_percent": 97.718
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 89.567
+        "ssim_percent": 93.596
       }
     ],
     "geometry": [
@@ -2083,48 +2083,48 @@
   {
     "screen": "390-voice-permission",
     "status": "MISMATCH",
-    "ssim_percent": 86.355,
-    "mae": 9.765022076396484,
+    "ssim_percent": 89.606,
+    "mae": 7.583216875278486,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 93.065
+        "ssim_percent": 98.255
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 78.236
+        "ssim_percent": 96.426
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 88.776
+        "ssim_percent": 96.874
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 93.122
+        "ssim_percent": 97.662
       },
       {
         "component": "connection",
-        "ssim_percent": 91.282
+        "ssim_percent": 97.562
       },
       {
         "component": "bubble",
-        "ssim_percent": 96.348
+        "ssim_percent": 97.263
       },
       {
         "component": "composer",
-        "ssim_percent": 94.457
+        "ssim_percent": 98.1
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 98.408
+        "ssim_percent": 99.139
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 95.057
+        "ssim_percent": 97.808
       },
       {
         "component": "aksaraMicPermission",
-        "ssim_percent": 70.913
+        "ssim_percent": 72.519
       }
     ],
     "geometry": [
@@ -2178,44 +2178,44 @@
   {
     "screen": "390-voice",
     "status": "MISMATCH",
-    "ssim_percent": 76.847,
-    "mae": 15.872041965406895,
+    "ssim_percent": 78.096,
+    "mae": 14.74441406408231,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 73.319
+        "ssim_percent": 72.566
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 92.234
+        "ssim_percent": 96.806
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 96.119
+        "ssim_percent": 97.762
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 97.702
+        "ssim_percent": 98.448
       },
       {
         "component": "connection",
-        "ssim_percent": 95.404
+        "ssim_percent": 96.717
       },
       {
         "component": "bubble",
-        "ssim_percent": 76.871
+        "ssim_percent": 75.587
       },
       {
         "component": "composer",
-        "ssim_percent": 85.054
+        "ssim_percent": 86.454
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 83.198
+        "ssim_percent": 84.461
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 97.08
+        "ssim_percent": 96.839
       }
     ],
     "geometry": [
@@ -2269,44 +2269,44 @@
   {
     "screen": "390-welcome",
     "status": "MISMATCH",
-    "ssim_percent": 83.13,
-    "mae": 7.878736784542472,
+    "ssim_percent": 84.067,
+    "mae": 6.364787134929315,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 78.143
+        "ssim_percent": 78.073
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 38.196
+        "ssim_percent": 51.584
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 50.057
+        "ssim_percent": 60.919
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 56.178
+        "ssim_percent": 61.085
       },
       {
         "component": "connection",
-        "ssim_percent": 68.568
+        "ssim_percent": 75.736
       },
       {
         "component": "bubble",
-        "ssim_percent": 53.997
+        "ssim_percent": 54.76
       },
       {
         "component": "composer",
-        "ssim_percent": 88.918
+        "ssim_percent": 92.915
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 68.927
+        "ssim_percent": 69.626
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 87.425
+        "ssim_percent": 89.977
       }
     ],
     "geometry": [
@@ -2360,48 +2360,48 @@
   {
     "screen": "412-attachments",
     "status": "MISMATCH",
-    "ssim_percent": 64.134,
-    "mae": 14.477820220347676,
+    "ssim_percent": 66.373,
+    "mae": 13.40336711054521,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 91.196
+        "ssim_percent": 94.532
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 73.47
+        "ssim_percent": 90.779
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 85.146
+        "ssim_percent": 93.324
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 88.729
+        "ssim_percent": 93.87
       },
       {
         "component": "connection",
-        "ssim_percent": 85.12
+        "ssim_percent": 93.077
       },
       {
         "component": "attachmentDialog",
-        "ssim_percent": 48.544
+        "ssim_percent": 49.012
       },
       {
         "component": "bubble",
-        "ssim_percent": 40.079
+        "ssim_percent": 39.911
       },
       {
         "component": "composer",
-        "ssim_percent": 89.327
+        "ssim_percent": 94.387
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 95.655
+        "ssim_percent": 97.741
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 89.869
+        "ssim_percent": 93.608
       }
     ],
     "geometry": [
@@ -2455,52 +2455,52 @@
   {
     "screen": "412-chat",
     "status": "MISMATCH",
-    "ssim_percent": 76.579,
-    "mae": 10.292979291562771,
+    "ssim_percent": 77.552,
+    "mae": 8.747851344898933,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 66.228
+        "ssim_percent": 67.543
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 29.191
+        "ssim_percent": 38.398
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 40.927
+        "ssim_percent": 49.052
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 41.833
+        "ssim_percent": 44.589
       },
       {
         "component": "connection",
-        "ssim_percent": 64.948
+        "ssim_percent": 72.428
       },
       {
         "component": "bubble",
-        "ssim_percent": 46.631
+        "ssim_percent": 47.254
       },
       {
         "component": "bubble",
-        "ssim_percent": 42.238
+        "ssim_percent": 43.012
       },
       {
         "component": "bubble",
-        "ssim_percent": 36.823
+        "ssim_percent": 37.058
       },
       {
         "component": "composer",
-        "ssim_percent": 89.199
+        "ssim_percent": 93.28
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 68.948
+        "ssim_percent": 69.558
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 87.586
+        "ssim_percent": 90.013
       }
     ],
     "geometry": [
@@ -2554,48 +2554,48 @@
   {
     "screen": "412-code",
     "status": "MISMATCH",
-    "ssim_percent": 67.604,
-    "mae": 14.02697225316993,
+    "ssim_percent": 70.056,
+    "mae": 12.798756786390083,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 91.196
+        "ssim_percent": 94.532
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 66.604
+        "ssim_percent": 83.063
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 71.574
+        "ssim_percent": 78.571
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 72.979
+        "ssim_percent": 78.329
       },
       {
         "component": "connection",
-        "ssim_percent": 80.118
+        "ssim_percent": 85.622
       },
       {
         "component": "bubble",
-        "ssim_percent": 58.748
+        "ssim_percent": 59.815
       },
       {
         "component": "composer",
-        "ssim_percent": 87.188
+        "ssim_percent": 92.613
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 94.71
+        "ssim_percent": 97.032
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 88.037
+        "ssim_percent": 92.069
       },
       {
         "component": "codeEngineMenu",
-        "ssim_percent": 60.239
+        "ssim_percent": 61.387
       }
     ],
     "geometry": [
@@ -2649,44 +2649,44 @@
   {
     "screen": "412-composer-focused",
     "status": "MISMATCH",
-    "ssim_percent": 82.99,
-    "mae": 7.7369197304896815,
+    "ssim_percent": 83.654,
+    "mae": 6.465694024439847,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 66.228
+        "ssim_percent": 67.543
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 22.134
+        "ssim_percent": 29.853
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 40.918
+        "ssim_percent": 49.035
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 41.833
+        "ssim_percent": 44.589
       },
       {
         "component": "connection",
-        "ssim_percent": 64.948
+        "ssim_percent": 72.428
       },
       {
         "component": "bubble",
-        "ssim_percent": 59.21
+        "ssim_percent": 59.943
       },
       {
         "component": "composer",
-        "ssim_percent": 77.986
+        "ssim_percent": 80.01
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 68.836
+        "ssim_percent": 69.47
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 88.959
+        "ssim_percent": 86.039
       }
     ],
     "geometry": [
@@ -2740,48 +2740,48 @@
   {
     "screen": "412-connection",
     "status": "MISMATCH",
-    "ssim_percent": 76.768,
-    "mae": 12.446887544874176,
+    "ssim_percent": 79.266,
+    "mae": 11.36400604806621,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 91.196
+        "ssim_percent": 94.532
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 73.47
+        "ssim_percent": 90.779
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 85.146
+        "ssim_percent": 93.324
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 88.729
+        "ssim_percent": 93.87
       },
       {
         "component": "connection",
-        "ssim_percent": 85.12
+        "ssim_percent": 93.077
       },
       {
         "component": "multiAiDialog",
-        "ssim_percent": 58.609
+        "ssim_percent": 59.331
       },
       {
         "component": "bubble",
-        "ssim_percent": 91.379
+        "ssim_percent": 93.538
       },
       {
         "component": "composer",
-        "ssim_percent": 89.327
+        "ssim_percent": 94.387
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 95.655
+        "ssim_percent": 97.741
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 89.869
+        "ssim_percent": 93.608
       }
     ],
     "geometry": [
@@ -2850,48 +2850,48 @@
   {
     "screen": "412-portal",
     "status": "MISMATCH",
-    "ssim_percent": 65.63,
-    "mae": 19.018284789644014,
+    "ssim_percent": 67.361,
+    "mae": 18.733152068191064,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 90.599
+        "ssim_percent": 91.121
       },
       {
         "component": "portalCard",
-        "ssim_percent": 59.864
+        "ssim_percent": 61.687
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 44.647
+        "ssim_percent": 58.593
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 54.189
+        "ssim_percent": 62.304
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 58.659
+        "ssim_percent": 65.128
       },
       {
         "component": "connection",
-        "ssim_percent": 51.987
+        "ssim_percent": 59.585
       },
       {
         "component": "bubble",
-        "ssim_percent": 64.664
+        "ssim_percent": 66.101
       },
       {
         "component": "composer",
-        "ssim_percent": 68.705
+        "ssim_percent": 74.964
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 78.205
+        "ssim_percent": 82.512
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 72.331
+        "ssim_percent": 77.486
       }
     ],
     "geometry": [
@@ -2950,52 +2950,52 @@
   {
     "screen": "412-streaming",
     "status": "MISMATCH",
-    "ssim_percent": 81.588,
-    "mae": 8.01567722425593,
+    "ssim_percent": 82.529,
+    "mae": 6.698314676286983,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 66.228
+        "ssim_percent": 67.543
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 29.191
+        "ssim_percent": 38.398
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 40.927
+        "ssim_percent": 49.052
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 41.833
+        "ssim_percent": 44.589
       },
       {
         "component": "connection",
-        "ssim_percent": 64.948
+        "ssim_percent": 72.428
       },
       {
         "component": "bubble",
-        "ssim_percent": 46.763
+        "ssim_percent": 47.518
       },
       {
         "component": "bubble",
-        "ssim_percent": 41.15
+        "ssim_percent": 41.926
       },
       {
         "component": "bubble",
-        "ssim_percent": 63.127
+        "ssim_percent": 63.733
       },
       {
         "component": "composer",
-        "ssim_percent": 87.45
+        "ssim_percent": 91.21
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 68.948
+        "ssim_percent": 69.558
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 87.586
+        "ssim_percent": 90.013
       }
     ],
     "geometry": [
@@ -3054,48 +3054,48 @@
   {
     "screen": "412-terminal",
     "status": "MISMATCH",
-    "ssim_percent": 65.27,
-    "mae": 15.379364068827702,
+    "ssim_percent": 67.574,
+    "mae": 14.26842980175783,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 91.196
+        "ssim_percent": 94.532
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 73.629
+        "ssim_percent": 90.765
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 85.244
+        "ssim_percent": 93.309
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 88.782
+        "ssim_percent": 93.848
       },
       {
         "component": "connection",
-        "ssim_percent": 85.151
+        "ssim_percent": 93.047
       },
       {
         "component": "bubble",
-        "ssim_percent": 59.239
+        "ssim_percent": 60.239
       },
       {
         "component": "composer",
-        "ssim_percent": 89.327
+        "ssim_percent": 94.387
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 95.655
+        "ssim_percent": 97.741
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 89.869
+        "ssim_percent": 93.608
       },
       {
         "component": "aksaraAITerminal",
-        "ssim_percent": 52.813
+        "ssim_percent": 53.554
       }
     ],
     "geometry": [
@@ -3149,48 +3149,48 @@
   {
     "screen": "412-thinking",
     "status": "MISMATCH",
-    "ssim_percent": 82.413,
-    "mae": 11.855767768405043,
+    "ssim_percent": 84.916,
+    "mae": 10.917226378057192,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 91.196
+        "ssim_percent": 94.532
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 73.47
+        "ssim_percent": 90.779
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 85.146
+        "ssim_percent": 93.324
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 88.729
+        "ssim_percent": 93.87
       },
       {
         "component": "connection",
-        "ssim_percent": 85.12
+        "ssim_percent": 93.077
       },
       {
         "component": "thoughtModeDialog",
-        "ssim_percent": 71.646
+        "ssim_percent": 72.368
       },
       {
         "component": "bubble",
-        "ssim_percent": 91.3
+        "ssim_percent": 93.495
       },
       {
         "component": "composer",
-        "ssim_percent": 89.327
+        "ssim_percent": 94.387
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 95.655
+        "ssim_percent": 97.741
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 89.869
+        "ssim_percent": 93.608
       }
     ],
     "geometry": [
@@ -3244,48 +3244,48 @@
   {
     "screen": "412-voice-permission",
     "status": "MISMATCH",
-    "ssim_percent": 89.23,
-    "mae": 8.768821511309177,
+    "ssim_percent": 92.144,
+    "mae": 6.782566714414558,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 93.465
+        "ssim_percent": 98.122
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 79.624
+        "ssim_percent": 96.292
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 90.989
+        "ssim_percent": 97.724
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 94.079
+        "ssim_percent": 97.87
       },
       {
         "component": "connection",
-        "ssim_percent": 91.17
+        "ssim_percent": 97.586
       },
       {
         "component": "bubble",
-        "ssim_percent": 97.526
+        "ssim_percent": 98.504
       },
       {
         "component": "composer",
-        "ssim_percent": 94.427
+        "ssim_percent": 98.047
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 98.397
+        "ssim_percent": 99.088
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 95.223
+        "ssim_percent": 97.736
       },
       {
         "component": "aksaraMicPermission",
-        "ssim_percent": 75.291
+        "ssim_percent": 76.298
       }
     ],
     "geometry": [
@@ -3339,44 +3339,44 @@
   {
     "screen": "412-voice",
     "status": "MISMATCH",
-    "ssim_percent": 77.253,
-    "mae": 14.633403186729623,
+    "ssim_percent": 77.965,
+    "mae": 14.954909190584823,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 75.093
+        "ssim_percent": 74.271
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 92.099
+        "ssim_percent": 96.478
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 97.103
+        "ssim_percent": 98.23
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 98.33
+        "ssim_percent": 98.705
       },
       {
         "component": "connection",
-        "ssim_percent": 95.287
+        "ssim_percent": 96.563
       },
       {
         "component": "bubble",
-        "ssim_percent": 72.309
+        "ssim_percent": 77.597
       },
       {
         "component": "composer",
-        "ssim_percent": 85.771
+        "ssim_percent": 87.136
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 94.335
+        "ssim_percent": 95.21
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 96.862
+        "ssim_percent": 96.738
       }
     ],
     "geometry": [
@@ -3430,44 +3430,44 @@
   {
     "screen": "412-welcome",
     "status": "MISMATCH",
-    "ssim_percent": 84.006,
-    "mae": 7.328814083859444,
+    "ssim_percent": 84.906,
+    "mae": 5.965186482041488,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 66.228
+        "ssim_percent": 67.543
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 29.191
+        "ssim_percent": 38.398
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 40.927
+        "ssim_percent": 49.052
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 41.833
+        "ssim_percent": 44.589
       },
       {
         "component": "connection",
-        "ssim_percent": 64.948
+        "ssim_percent": 72.428
       },
       {
         "component": "bubble",
-        "ssim_percent": 59.21
+        "ssim_percent": 59.943
       },
       {
         "component": "composer",
-        "ssim_percent": 89.066
+        "ssim_percent": 93.089
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 68.945
+        "ssim_percent": 69.558
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 87.637
+        "ssim_percent": 90.003
       }
     ],
     "geometry": [

@@ -46,3 +46,31 @@ The primary frame geometry retains a ~0.203px vertical rounding difference. Nati
 A subsequent source change tests explicit supported font weight axes and CSS backdrop-root isolation: parent filtered imagery remains outside the source recording used by descendant glass. The full underlying scene is recorded for modal backdrops. These are renderer corrections under test; the scores above are specifically dbe92de and must not be assigned to later source without another real capture. Original source/assets and the dbe92de implementation remain recoverable in Git history.
 
 Advanced feature integration and Google Play work remain deferred. Developer visual approval is still required.
+
+
+## Second completed iteration: 88f5a7a
+
+Source `88f5a7a8c7272d5030008bc9447fbbb23c2a1cf2`; tested PR merge `a827f8be85547f26e9581f6c858705392ecb7e3e` against unchanged web baseline f482b8e. [Run42467779463](https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/actions/runs/42467779463): build, eight unit tests and web audit passed; five native-engine tests and all three navigation/capture tests passed. All36 pairs remain visual MISMATCH. Three web Security Lab references are blocked,15 secondary native references are absent and three keyboard web references remain absent. Crash log is empty.
+
+[APK13612502362](https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/actions/runs/42467779463/artifacts/13612502362), [web13612487280](https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/actions/runs/42467779463/artifacts/13612487280), [visual/performance13612711678](https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/actions/runs/42467779463/artifacts/13612711678). APK65,759,220bytes, verified debug signature, SHA256 `8d0150d2eed0e02c655cc76b2b88fec4f23d856634aad63a5f7ff64f370820a4`.
+
+| State |360dp|390dp|412dp|
+|---|---:|---:|---:|
+|welcome|82.706%|84.067%|84.906%|
+|chat|73.063%|75.752%|77.552%|
+|streaming|79.434%|81.417%|82.529%|
+|composer-focused|81.185%|82.703%|83.654%|
+|connection|78.268%|79.597%|79.266%|
+|code|70.260%|73.223%|70.056%|
+|terminal|65.401%|64.912%|67.574%|
+|portal|65.493%|66.378%|67.361%|
+|thinking|74.904%|88.265%|84.916%|
+|attachments|66.172%|68.441%|66.373%|
+|voice-permission|88.348%|89.606%|92.144%|
+|voice|73.024%|78.096%|77.965%|
+
+The source correction raised every paired score versus dbe92de. Explicit weight axes visibly restore bold text; descendant backdrop paint reduces excess brightness. 360dp status-row SSIM increased55.862%→64.291% and MAE decreased30.135→17.357. The middle wallpaper ROI remains98.962%, confirming that foreground errors still dominate. These numbers do not establish visual acceptance.
+
+Latest single-sample debug-emulator observations: cold launch2,441ms; PSS76,927KiB; RSS177,264KiB; measured code directory64,208KiB plus private data56KiB. Repeated trials and physical-device measurements remain unavailable; do not infer a startup regression or improvement from one emulator observation.
+
+The next source iteration uses the verified web opsz14 instance, linear/subpixel text placement, exact0.4px dialog-title tracking, separate starter-arrow color/spacing, and removes the duplicate header separator. Intermediate header paint is supplied to child glass so the CSS backdrop-root material can include the real status-row tint. It must be captured independently before receiving a score.
