@@ -45,15 +45,15 @@ internal object StudioGateway {
         .readTimeout(80,TimeUnit.SECONDS).callTimeout(85,TimeUnit.SECONDS).build()
     private val endpoint get() = BackendRoutes.configuredOrigin + BackendRoutes.STUDIO_IMAGE
     data class Result(val bitmap:Bitmap,val model:String,val elapsed:Long,val width:Int,val height:Int)
-    suspend fun generate(prompt:String,model:String,style:String,quality:String,ratio:String):Result = withContext(Dispatchers.IO) {
+    suspend fun generate(prompt:String,model:String,style:String,quality:String,ratio:String,seed:Long?=null):Result = withContext(Dispatchers.IO) {
         require(prompt.trim().length in 4..1200) {"Prompt mesti 4 hingga 1200 aksara."}
         require(model in setOf("schnell","klein","ovh")) {"Model tidak disokong."}
         require(style in setOf("none","antara","sastera","langit","falsafah","cinta","futuristik","realistic","illustration","minimal","fantasy")) {"Preset tidak disokong."}
         require(quality in setOf("fast","balanced","detail")) {"Kualiti tidak disokong."}
         require(ratio in setOf("1:1","4:5","9:16","16:9","3:2")) {"Nisbah tidak disokong."}
-        if(model!="klein")require(ratio=="1:1") {"Schnell dan OVH hanya menyokong 1:1."}
+        StudioRules.cloud(model,ratio,quality,seed)
         val body=JSONObject().put("prompt",prompt.trim()).put("model",model)
-            .put("style",style).put("quality",quality).put("ratio",ratio)
+            .put("style",style).put("quality",quality).put("ratio",ratio).apply { if(seed!=null) put("seed",seed) }
         val request=Request.Builder().url(endpoint).post(body.toString().toRequestBody("application/json".toMediaType()))
             .header("Accept","application/json").header("Origin",BackendRoutes.configuredOrigin).build()
         val response=try{client.newCall(request).execute()}catch(e:IOException){throw BackendNetworkErrors.translate(e,BackendRoutes.configuredOrigin)}
@@ -72,6 +72,20 @@ internal object StudioGateway {
             val bitmap=BitmapFactory.decodeByteArray(bytes,0,bytes.size)
                 ?: throw IOException("Imej Studio tidak dapat dibaca.")
             Result(bitmap,json.optString("modelName",model),json.optLong("durationMs"),bounds.outWidth,bounds.outHeight)
+        }
+    }
+    suspend fun enhance(prompt:String):String = withContext(Dispatchers.IO) {
+        val clean=StudioRules.prompt(prompt)
+        require(clean.length<=850) {"Perkemas A.I. menerima prompt maksimum 850 aksara."}
+        val req=Request.Builder().url(BackendRoutes.configuredOrigin + BackendRoutes.STUDIO_ENHANCE)
+            .post(JSONObject().put("prompt",clean).toString().toRequestBody("application/json".toMediaType()))
+            .header("Accept","application/json").build()
+        client.newCall(req).execute().use { response ->
+            val json=JSONObject(response.body?.string() ?: "{}")
+            if(!response.isSuccessful)throw IOException(json.optString("error","Perkemas A.I. gagal."))
+            val enhanced=json.optString("prompt")
+            require(enhanced.length in 4..1200) {"Draf A.I. tidak sah."}
+            enhanced
         }
     }
     suspend fun save(context:Context,bitmap:Bitmap):String = withContext(Dispatchers.IO) {
@@ -95,7 +109,7 @@ internal object StudioGateway {
     }
 }
 
-@Composable fun StudioContent() {
+@Composable internal fun LegacyStudioContent() {
     val context=androidx.compose.ui.platform.LocalContext.current
     val scope=rememberCoroutineScope()
     var prompt by rememberSaveable{mutableStateOf("")}
