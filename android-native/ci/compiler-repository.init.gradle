@@ -1,0 +1,19 @@
+// CI-only transport fallback. Dependencies and compiler version are unchanged.
+// Both official files are SHA-256 checked by the workflow before Gradle starts.
+def repositoryPath = System.getenv("AKSARA_CI_COMPILER_REPOSITORY")
+if (repositoryPath) {
+    settingsEvaluated { settings ->
+        settings.dependencyResolutionManagement.repositories {
+            exclusiveContent {
+                forRepository {
+                    maven {
+                        name = "VerifiedKotlinCompilerTransport"
+                        url = uri(repositoryPath)
+                        metadataSources { mavenPom(); artifact() }
+                    }
+                }
+                filter { includeModule("org.jetbrains.kotlin", "kotlin-compiler-embeddable") }
+            }
+        }
+    }
+}
