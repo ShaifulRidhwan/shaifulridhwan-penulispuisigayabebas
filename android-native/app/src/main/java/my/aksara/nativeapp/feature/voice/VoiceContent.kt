@@ -20,9 +20,9 @@ import my.aksara.nativeapp.core.design.*
 import my.aksara.engine.voice.LiveVoiceClient
 import kotlinx.coroutines.delay
 
-@Composable fun VoiceContent(onClose:()->Unit) {
+@Composable fun VoiceContent(onClose:()->Unit,mode:String="cahaya",onMode:(String)->Unit={}) {
     val context=LocalContext.current
-    val client=remember {LiveVoiceClient(context,BuildConfig.API_ORIGIN,context.assets.open("voice-identity.txt").bufferedReader().use{it.readText()})}
+    val client=remember(mode) {LiveVoiceClient(context,BuildConfig.API_ORIGIN,context.assets.open("voice-identity.txt").bufferedReader().use{it.readText()}+"\nMod aktif: $mode. "+if(mode=="gelap")"Kritikal, mendalam dan sinis secara beralasan." else "Santai, jelas dan responsif.")}
     val state by client.state.collectAsStateWithLifecycle()
     var permissionError by remember {mutableStateOf<String?>(null)}
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {granted -> if(granted)client.start() else permissionError="Izin mikrofon ditolak. Tiada audio dihantar."}
@@ -32,6 +32,6 @@ import kotlinx.coroutines.delay
         owner.lifecycle.addObserver(observer)
         onDispose{owner.lifecycle.removeObserver(observer);client.close()}
     }
-    LaunchedEffect(Unit){if(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED)client.start() else permission.launch(Manifest.permission.RECORD_AUDIO)}
-    VoiceScreen(state.copy(message=permissionError?:state.message),onClose={client.close();onClose()},onMic={client.setMic(!state.mic)},onSpeaker={client.setSpeaker(!state.speaker)},onVolume=client::setVolume)
+    LaunchedEffect(client){if(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED)client.start() else permission.launch(Manifest.permission.RECORD_AUDIO)}
+    VoiceScreen(state.copy(message=permissionError?:state.message),onClose={client.close();onClose()},onMic={client.setMic(!state.mic)},onSpeaker={client.setSpeaker(!state.speaker)},onVolume=client::setVolume,mode=mode,onMode=onMode)
 }

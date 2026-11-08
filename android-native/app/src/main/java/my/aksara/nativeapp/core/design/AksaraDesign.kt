@@ -42,14 +42,14 @@ val LocalBackdrop = staticCompositionLocalOf<HazeState> { error("Backdrop source
 val GlassGradient: Brush get() = Brush.linearGradient(listOf(Color(255,247,224,9), Color(125,167,205,5)))
 val DialogGradient: Brush get() = Brush.linearGradient(listOf(Color(23,31,45,92), Color(9,14,24,110)))
 @Composable fun AksaraGlassSurface(modifier: Modifier = Modifier, radius: Dp = 13.dp, blur: Dp = 2.dp,
-    brush: Brush = GlassGradient, border: Color = AksaraColors.border, content: @Composable BoxScope.() -> Unit) {
+    brush: Brush = GlassGradient, border: Color = AksaraColors.border, shape: Shape = RoundedCornerShape(radius), content: @Composable BoxScope.() -> Unit) {
     val haze = LocalBackdrop.current
-    Box(modifier.clip(RoundedCornerShape(radius)).hazeEffect(haze, HazeStyle(tints=emptyList(), backgroundColor = Color(0xff070911), blurRadius = blur, noiseFactor = 0f))
-        .background(brush).border(1.dp, border, RoundedCornerShape(radius)), content = content)
+    Box(modifier.clip(shape).hazeEffect(haze, HazeStyle(tints=emptyList(), backgroundColor = Color(0xff070911), blurRadius = blur, noiseFactor = 0f))
+        .background(brush).border(1.dp, border, shape), content = content)
 }
 @Composable fun AksaraButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: String? = null,
     size: Float = 12f, height: Dp = 44.dp, radius: Dp = 13.dp, enabled: Boolean = true, contentColor: Color = AksaraColors.text) {
-    AksaraGlassSurface(modifier.height(height).clip(RoundedCornerShape(radius)).clickable(enabled = enabled, onClick = onClick), radius) {
+    AksaraGlassSurface(modifier.graphicsLayer { alpha=if(enabled)1f else .6f }.height(height).clip(RoundedCornerShape(radius)).clickable(enabled = enabled, onClick = onClick), radius) {
         Row(Modifier.align(Alignment.Center).padding(horizontal = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
             if (icon != null) AksaraIcon(icon, Modifier.size(if(size<10) 15.dp else 18.dp), contentColor)
             if (label.isNotEmpty()) AksaraText(label, size = size, line = size*1.4f, weight = 500, color = contentColor)

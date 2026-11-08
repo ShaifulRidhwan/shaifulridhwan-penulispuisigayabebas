@@ -14,6 +14,7 @@ class VoiceAvatarView(context:Context):TextureView(context),Choreographer.FrameC
     companion object {init {Utils.init()}}
     private var viewer:ModelViewer?=null
     private var lastFrame=0L
+    private var fillLight:IndirectLight?=null
     init {isOpaque=false}
     override fun onAttachedToWindow(){
         super.onAttachedToWindow()
@@ -35,7 +36,8 @@ class VoiceAvatarView(context:Context):TextureView(context),Choreographer.FrameC
         val light=model.engine.lightManager;val instance=light.getInstance(model.light)
         light.setDirection(instance,.6f,-.5f,-.65f);light.setColor(instance,.918f,.773f,.553f);light.setIntensity(instance,100000f)
         // Low order irradiance supplies the web's hemisphere fill; no duplicate HDR asset.
-        model.scene.indirectLight=IndirectLight.Builder().irradiance(1,floatArrayOf(.8f,.78f,.9f)).intensity(25000f).build(model.engine)
+        fillLight=IndirectLight.Builder().irradiance(1,floatArrayOf(.8f,.78f,.9f)).intensity(25000f).build(model.engine)
+        model.scene.indirectLight=fillLight
         Choreographer.getInstance().postFrameCallback(this)
     }
     override fun doFrame(frameTimeNanos:Long){
@@ -49,5 +51,5 @@ class VoiceAvatarView(context:Context):TextureView(context),Choreographer.FrameC
         }
     }
     override fun onWindowVisibilityChanged(visibility:Int){super.onWindowVisibilityChanged(visibility);if(visibility==View.VISIBLE&&viewer!=null){Choreographer.getInstance().removeFrameCallback(this);Choreographer.getInstance().postFrameCallback(this)}}
-    override fun onDetachedFromWindow(){Choreographer.getInstance().removeFrameCallback(this);viewer=null;super.onDetachedFromWindow()}
+    override fun onDetachedFromWindow(){Choreographer.getInstance().removeFrameCallback(this);fillLight?.let{light->viewer?.engine?.destroyIndirectLight(light)};fillLight=null;viewer=null;super.onDetachedFromWindow()}
 }

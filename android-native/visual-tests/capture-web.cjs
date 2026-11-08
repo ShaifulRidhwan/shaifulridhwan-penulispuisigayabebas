@@ -48,7 +48,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   await page.locator('#voiceLive').click();await sleep(1000);await capture('voice');
   fs.writeFileSync(path.join(out,`${width}-voice-dom.txt`),await page.locator('#voicePanel').innerText());
   for(const [name,pathname] of [['studio','studio-antara.html'],['library','perpustakaan-aksara.html'],['security','security-lab.html']]){
-   const response=await page.goto(origin+'/'+pathname,{waitUntil:'networkidle',timeout:90000});await sleep(500);await capture(name);fs.writeFileSync(path.join(out,`${width}-${name}-http.txt`),String(response.status()));
+   try{const response=await page.goto(origin+'/'+pathname,{waitUntil:'networkidle',timeout:45000});if(!response.ok())throw Error('HTTP '+response.status());await sleep(500);await capture(name);fs.writeFileSync(path.join(out,`${width}-${name}-http.txt`),String(response.status()));}catch(e){fs.writeFileSync(path.join(out,`${width}-${name}-blocked.json`),JSON.stringify({screen:name,status:'BLOCKED_WEB_REFERENCE',error:e.message}));}
   }
   await context.close();
  }

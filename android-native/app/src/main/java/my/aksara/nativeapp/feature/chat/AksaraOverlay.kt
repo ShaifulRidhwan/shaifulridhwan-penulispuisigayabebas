@@ -20,7 +20,7 @@ import my.aksara.engine.voice.VoiceState
 
 @Composable fun AksaraOverlay(kind:String,state:ChatState,onClose:()->Unit,onNavigate:(String)->Unit,onRefresh:()->Unit,
     onMode:(String)->Unit,onRestore:()->Unit,onClear:()->Unit,onPickAttachment:()->Unit) {
-    if(kind=="voice"){VoiceContent(onClose);return}
+    if(kind=="voice"){VoiceContent(onClose,state.mode,onMode);return}
     if(kind=="voice-fixture"){VoiceScreen(VoiceState(phase="preview"),onClose,preview=true);return}
     val haze=LocalBackdrop.current
     var notice by remember(kind) {mutableStateOf<String?>(null)}
@@ -147,7 +147,7 @@ import my.aksara.engine.voice.VoiceState
         AksaraButton("■ Stop",{activeJob?.cancel();output="Proses dihentikan."},Modifier.weight(1f))
     }
     Spacer(Modifier.height(16.dp));AksaraText("TERMINAL",size=12f,weight=600)
-    AksaraText(output,Modifier.fillMaxWidth().heightIn(min=100.dp).verticalScroll(rememberScrollState()).padding(vertical=10.dp),size=11f,color=AksaraColors.muted)
+    AksaraText(output,Modifier.fillMaxWidth().height(100.dp).verticalScroll(rememberScrollState()).padding(vertical=10.dp),size=11f,color=AksaraColors.muted)
     AksaraGlassSurface(Modifier.fillMaxWidth().height(44.dp)) {BasicTextField(command,{command=it},Modifier.fillMaxWidth().padding(10.dp),textStyle=AksaraTypography.style(12f))}
     Spacer(Modifier.height(8.dp));AksaraButton("Enter",{run("shell",command)},Modifier.fillMaxWidth())
 }

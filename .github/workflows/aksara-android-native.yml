@@ -67,6 +67,10 @@ jobs:
         with:
           name: web-design-reference
           path: docs/android-rebuild/visual-comparison/web
+      - uses: actions/download-artifact@v4
+        with:
+          name: aksara-native-debug
+          path: android-native/build-artifact
       - uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35

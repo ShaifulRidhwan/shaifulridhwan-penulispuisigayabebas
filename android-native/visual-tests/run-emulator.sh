@@ -2,14 +2,19 @@
 set -euo pipefail
 out=docs/android-rebuild/visual-comparison
 mkdir -p "$out/android" "$out/performance"
+trap 'adb pull /sdcard/Android/data/my.aksara.nativeapp/files/visual/. "$out/android/" >/dev/null 2>&1 || true' EXIT
 adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
 adb shell settings put global animator_duration_scale 0
+adb install -r android-native/build-artifact/outputs/apk/debug/app-debug.apk
+adb install -r android-native/build-artifact/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 for spec in '360 800' '390 844' '412 915'; do
   read -r width height <<< "$spec"
   adb shell wm size "${width}x${height}"
   adb shell wm density 160
-  (cd android-native && ./gradlew --no-daemon connectedDebugAndroidTest)
+  adb shell am instrument -w -r my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/test-${width}.txt"
+  cat "$out/android/test-${width}.txt"
+  grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/test-${width}.txt"
   adb pull /sdcard/Android/data/my.aksara.nativeapp/files/visual/. "$out/android/"
 done
 adb shell wm size 390x844
@@ -22,6 +27,6 @@ apk_path=$(adb shell pm path my.aksara.nativeapp | head -1 | tr -d "\r" | cut -d
 code_dir=${apk_path%/*}
 adb shell run-as my.aksara.nativeapp du -sk "$code_dir" . > "$out/performance/installed-size.txt"
 adb logcat -d -b crash > "$out/performance/crashes.txt"
-stat -c %s android-native/app/build/outputs/apk/debug/app-debug.apk > "$out/performance/apk-bytes.txt"
+stat -c %s android-native/build-artifact/outputs/apk/debug/app-debug.apk > "$out/performance/apk-bytes.txt"
 python -m pip install pillow numpy scikit-image
 python android-native/visual-tests/compare.py
