@@ -12,6 +12,9 @@ function command(raw){
  const s=String(raw||"").trim();if(!s||s.length>200)return {type:"invalid",message:"Arahan kosong atau terlalu panjang."};
  const [verb,...args]=s.split(/\s+/),name=args.join(" "),cmd=verb.toLowerCase();
  if(["help","ls","pwd","history","clear","status","tests","repl","reset","exit"].includes(cmd)&&!name)return {type:cmd};
+ const echo=/^echo\s+(.{1,150}?)\s*>\s*([a-z0-9][a-z0-9_.-]{0,69})$/i.exec(s);
+ if(echo&&filename(echo[2]))return {type:"write",name:echo[2],text:echo[1].replace(/^([\x22\x27])([\s\S]*)\1$/,"$2")};
+ if(["touch","rm","edit","nano"].includes(cmd)&&filename(name))return {type:cmd==="nano"?"edit":cmd,name};
  if(cmd==="cat"&&filename(name))return {type:"cat",name};
  if(cmd==="run"&&filename(name))return {type:"run",name,language:language(name)};
  if(Object.hasOwn(RUN,cmd)&&filename(name))return RUN[cmd]===language(name)?{type:"run",name,language:language(name)}:{type:"invalid",message:"Bahasa dan fail tak sepadan."};
