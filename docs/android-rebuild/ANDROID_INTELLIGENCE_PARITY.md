@@ -96,3 +96,9 @@ Revalidate CI at the exact resulting commit SHA. A successful build is NOT compl
 - LiveVoiceClient synchronizes audio creation with close() and binds creation to the active WebSocket epoch so an old socket cannot reinitialize the recorder after cleanup. UI, Aoede and API key broker remain unchanged.
 - Added unit tests for stream/JSON quota handling; emulator instrumentation tests verify actual Android Keystore encrypted session and opt-in memory settings survive creation of a fresh store instance.
 - The separate visual regression threshold is not relaxed and remains an unresolved quality gate. Functional emulator tests and visual checks are documented separately.
+
+## Novel asset failure recovery
+
+- `NovelContent()` previously rendered an error but then attempted `sections[safe]` when the asset was empty/unreadable, causing an IndexOutOfBoundsException. It now exits safely while retaining the error text and existing UI.
+- `NovelRecoveryTest` covers empty data and stale bookmark indices. `NativeLibraryAssetsTest` is explicitly run on the emulator to validate the packaged poetry catalogue and the eight novel sections, beyond visual screen opening.
+- No production web or Android design files were modified.

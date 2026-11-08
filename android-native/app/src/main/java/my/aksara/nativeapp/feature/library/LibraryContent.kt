@@ -18,6 +18,10 @@ import my.aksara.nativeapp.core.design.*
 import org.json.JSONArray
 import org.json.JSONObject
 
+/** Avoid indexing an empty novel after a failed asset load or while loading. */
+internal fun novelIndexOrNull(requested:Int,sectionCount:Int):Int? =
+    if(sectionCount<=0) null else requested.coerceIn(0,sectionCount-1)
+
 private data class Poem(val id:Int,val title:String,val lines:List<String>)
 private data class Section(val title:String,val paragraphs:List<String>)
 
@@ -99,8 +103,12 @@ private data class Section(val title:String,val paragraphs:List<String>)
     AksaraText("Prosa falsafah · Shaiful Ridhwan · Bacaan offline",size=11f,color=AksaraColors.muted)
     Spacer(Modifier.height(12.dp))
     if(error!=null)AksaraText(error.orEmpty(),size=12f,color=Color(0xffffaa9d))
-    if(sections.isEmpty()&&error==null){AksaraText("Memuatkan naskhah asal…",size=12f);return}
-    val safe=index.coerceIn(0,sections.lastIndex)
+    if(sections.isEmpty()){
+        if(error==null)AksaraText("Memuatkan naskhah asal…",size=12f)
+        // An unreadable or missing novel asset is an error, not a valid empty chapter.
+        return
+    }
+    val safe=novelIndexOrNull(index,sections.size)?:return
     val chapter=sections[safe]
     AksaraText("Bahagian "+(safe+1)+"/"+sections.size+" · "+chapter.title,size=13f,weight=600)
     Spacer(Modifier.height(8.dp))

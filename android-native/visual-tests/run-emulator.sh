@@ -20,6 +20,9 @@ adb shell am instrument -w -r -e class my.aksara.nativeapp.NativeEngineTest my.a
 cat "$out/android/native-engine-tests.txt"
 adb shell am instrument -w -r -e class my.aksara.nativeapp.NativeSessionPersistenceTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/session-persistence-tests.txt" || failures=$((failures+1))
 cat "$out/android/session-persistence-tests.txt"
+adb shell am instrument -w -r -e class my.aksara.nativeapp.NativeLibraryAssetsTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/library-assets-tests.txt" || failures=$((failures+1))
+cat "$out/android/library-assets-tests.txt"
+if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/library-assets-tests.txt"; then failures=$((failures+1)); fi
 if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/session-persistence-tests.txt"; then failures=$((failures+1)); fi
 adb shell am instrument -w -r -e class my.aksara.nativeapp.NativeCodeWebViewTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/browser-code-tests.txt" || failures=$((failures+1))
 cat "$out/android/browser-code-tests.txt"
