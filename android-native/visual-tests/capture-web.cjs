@@ -7,8 +7,8 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_BIN||undefined,args:['--no-sandbox']});
  fs.mkdirSync(out,{recursive:true});
- for(const width of (process.env.WIDTHS||'360,390,412').split(',').map(Number)){
-  const height={360:800,390:844,412:915}[width]||844;
+ for(const width of (process.env.WIDTHS||'360,390,393,412').split(',').map(Number)){
+  const height={360:800,390:844,393:852,412:915}[width]||844;
   const context=await browser.newContext({viewport:{width,height},deviceScaleFactor:1,isMobile:true,hasTouch:true,reducedMotion:'reduce',locale:'ms-MY',timezoneId:'Asia/Kuala_Lumpur'});
   await context.addInitScript(()=>{Date.now=()=>1794117600000;});
   const page=await context.newPage();let streaming=false;
