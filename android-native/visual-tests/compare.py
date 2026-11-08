@@ -1,5 +1,5 @@
 """Evidence-only comparison. No absent screenshot may pass. Controls have separate ROIs."""
-import json,pathlib,sys
+import json,pathlib,sys,subprocess
 import numpy as np
 from PIL import Image,ImageChops
 from skimage.metrics import structural_similarity
@@ -20,6 +20,11 @@ for web in sorted((root/'web').glob('*.png')):
   rows.append(dict(screen=web.stem,status='CORRUPT_CAPTURE',similarity=None,reason=str(error)));continue
  if a.size!=b.size:
   rows.append(dict(screen=web.stem,status='VIEWPORT_MISMATCH',web=a.size,android=b.size));continue
+ metadata=native.with_name(native.stem+'.capture.json')
+ if not metadata.exists():
+  rows.append(dict(screen=web.stem,status='UNVERIFIED_CAPTURE',similarity=None,reason='Missing system obstruction check metadata.'));continue
+ if json.loads(metadata.read_text()).get('systemEducationVisible') is not False:
+  rows.append(dict(screen=web.stem,status='CAPTURE_OBSTRUCTED',similarity=None));continue
  x=np.asarray(a);y=np.asarray(b)
  score=structural_similarity(x,y,channel_axis=2,data_range=255)*100
  # Component ROIs are derived from measured web geometry, not chosen after seeing a score.
@@ -44,6 +49,8 @@ for web in sorted((root/'web').glob('*.png')):
  pair=Image.new('RGB',(a.width*2,a.height));pair.paste(a);pair.paste(b,(a.width,0));pair.save(out/(web.stem+'-pair.png'))
  delta=np.abs(x.astype(float)-y).mean(axis=2);heat=np.zeros_like(x);heat[:,:,0]=np.minimum(delta*5,255).astype('uint8');Image.fromarray(heat).save(out/(web.stem+'-heat.png'))
 (root/'results.json').write_text(json.dumps(rows,indent=2))
-(root/'REPORT.md').write_text('# Native versus web visual comparison\n\nSSIM is measured image similarity, not acceptance proof. Every control ROI must also meet 98%. Manual geometry, typography and glass inspection remains required.\n\n| Screen | SSIM % | Result |\n|---|---|---|\n'+'\n'.join(f"| {r['screen']} | {r.get('ssim_percent','—')} | {r['status']} |" for r in rows))
+source=subprocess.check_output(['git','rev-parse','HEAD'],cwd=root).decode().strip()
+(root/'provenance.json').write_text(json.dumps(dict(source_commit=source,screen_capture='SurfaceFlinger, system education dismissed before capture',screenshot_processing='None before SSIM; original RGB pixels compared at matching size'),indent=2))
+(root/'REPORT.md').write_text('# Native versus web visual comparison\n\nSource: `'+source+'`.\n\nSSIM is measured image similarity, not acceptance proof. Every control ROI must also meet 98%. Manual geometry, typography and glass inspection remains required.\n\n| Screen | SSIM % | Result |\n|---|---|---|\n'+'\n'.join(f"| {r['screen']} | {r.get('ssim_percent','—')} | {r['status']} |" for r in rows))
 print(json.dumps(rows,indent=2))
 if not rows or any(r['status']!='PASSED' for r in rows):sys.exit(1)

@@ -12,6 +12,7 @@ adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
 adb shell settings put global animator_duration_scale 0
 adb shell settings put system font_scale 1.0
+adb shell settings put secure immersive_mode_confirmations confirmed
 adb install -r android-native/build-artifact/outputs/apk/debug/app-debug.apk
 adb install -r android-native/build-artifact/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 failures=0

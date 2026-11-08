@@ -32,6 +32,13 @@ class VisualParityTest {
                 AksaraScreen(fixture,initialOverlay=(if(screen=="voice")"voice-fixture" else screen).takeIf{it !in listOf("welcome","chat","streaming","composer-focused")},fixedTimestamp=timestamp)
             }
         }
+        val device=androidx.test.uiautomator.UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+        fun dismissSystemEducation(){
+            val button=device.findObject(androidx.test.uiautomator.By.text("Got it"))
+            if(button!=null){button.click();device.wait(androidx.test.uiautomator.Until.gone(androidx.test.uiautomator.By.text("Viewing full screen")),3000)}
+            check(!device.hasObject(androidx.test.uiautomator.By.text("Viewing full screen"))){"CAPTURE_OBSTRUCTED: Android immersive education is still visible"}
+        }
+        device.waitForIdle();dismissSystemEducation()
         compose.onNodeWithContentDescription("Tulis mesej untuk Aksara A.I.").assertIsNotFocused()
         compose.onNodeWithContentDescription("Code Engine").performClick()
         compose.onNodeWithText("Code Engine · Runtime Health").assertIsDisplayed()
@@ -39,7 +46,7 @@ class VisualParityTest {
         compose.onNodeWithText("Code Engine · Runtime Health").assertDoesNotExist()
         val context=InstrumentationRegistry.getInstrumentation().targetContext
         val out=File(context.getExternalFilesDir(null),"visual").apply{mkdirs()}
-        for(name in listOf("welcome","connection","code","terminal","portal","thinking","attachments","voice-permission","streaming","chat","voice","composer-focused")) {
+        for(name in listOf("welcome","connection","code","terminal","portal","thinking","attachments","voice-permission","streaming","chat","composer-focused","voice")) {
             compose.runOnIdle {screen=name}
             compose.waitForIdle()
             if(name=="composer-focused") {
@@ -48,11 +55,12 @@ class VisualParityTest {
             }
             // Haze draws source/effect in separate render frames.
             Thread.sleep(1000)
-            val device=androidx.test.uiautomator.UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+            dismissSystemEducation()
             val width=(device.displayWidth/context.resources.displayMetrics.density).toInt()
             val screenshot=File(out,"$width-$name.png")
             assertTrue("SurfaceFlinger screenshot failed: $name",device.takeScreenshot(screenshot))
             assertTrue("Empty screenshot: $name",screenshot.length()>0)
+            File(out,"$width-$name.capture.json").writeText(JSONObject().put("method","UiDevice.takeScreenshot / SurfaceFlinger").put("systemEducationVisible",false).put("density",context.resources.displayMetrics.density).put("width",device.displayWidth).put("height",device.displayHeight).toString(2))
             val nodes=JSONArray()
             fun visit(node:SemanticsNode){
                 val r=node.boundsInRoot

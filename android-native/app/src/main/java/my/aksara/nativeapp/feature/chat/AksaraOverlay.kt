@@ -35,7 +35,7 @@ import my.aksara.engine.voice.VoiceState
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).fillMaxWidth().heightIn(max=h-28.dp).height(height).clickable(enabled=false){},
             radius=if(kind=="voice-permission")24.dp else 19.dp,blur=if(kind=="voice-permission")27.dp else 4.dp,
             brush=if(kind=="voice-permission")Brush.linearGradient(listOf(Color(29,39,53,97),Color(10,17,30,77),Color(25,38,54,102))) else DialogGradient,border=Color(244,217,176,94)) {
-            Column(Modifier.fillMaxSize().padding(if(kind=="voice-permission")17.dp else 15.dp).verticalScroll(scroll)) {
+            Column(Modifier.fillMaxSize().padding(if(kind=="voice-permission")18.dp else if(kind=="terminal")15.dp else 16.dp).verticalScroll(scroll)) {
                 if(kind=="voice-permission") {
                     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(13.dp)) {
                         AksaraGlassSurface(Modifier.size(44.dp),radius=999.dp) { AksaraIcon("mic",Modifier.align(Alignment.Center).size(22.dp)) }
@@ -55,8 +55,8 @@ import my.aksara.engine.voice.VoiceState
                     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
                             AksaraText(title,size=16f,line=20.8f,weight=700)
-                            val subtitle=when(kind){"connection"->"Empat penyedia AI teks termasuk empat sambungan Gemini. Status Sedia tidak bermaksud sambungan telah disahkan.";"code"->"Lima runtime untuk menjalankan kod termasuk C++20. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.";"terminal"->"Terminal native dalam proses berasingan. Shell Android, bukan shell server.";"thinking"->"Pilih cara Aksara A.I. berfikir dan menjawab.";"attachments"->"Lampirkan fail untuk Aksara baca dan analisis.";else->""}
-                            if(subtitle.isNotEmpty()){Spacer(Modifier.height(8.dp));AksaraText(subtitle,size=11f,line=18.59f,color=Color(0xffc4bfba))}
+                            val subtitle=when(kind){"connection"->"Empat penyedia AI teks termasuk empat sambungan Gemini. Status Sedia tidak bermaksud sambungan telah disahkan.";"code"->"Lima runtime untuk menjalankan kod termasuk C++20. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.";"terminal"->"Terminal native dalam proses berasingan. Shell Android, bukan shell server.";"thinking"->"Pilih cara Aksara A.I. berfikir dan menjawab.";"attachments"->"Pilih bahan untuk analisis atau buka kod dalam Workspace. Fail kekal dalam tab ini sehingga dihantar.";else->""}
+                            if(subtitle.isNotEmpty()){Spacer(Modifier.height(8.dp));AksaraText(subtitle,size=if(kind=="code")11.5f else 12f,line=18.6f,color=Color(0xffc4bfba))}
                         }
                         AksaraButton("×",onClose,Modifier.width(36.dp),size=22f,height=37.dp,radius=10.dp)
                     }
@@ -93,9 +93,28 @@ import my.aksara.engine.voice.VoiceState
                             Spacer(Modifier.height(7.dp));MenuRow("Privasi & Tetapan","›",height=57.594.dp){onNavigate("privacy")}
                         }
                         "thinking" -> {
-                            Spacer(Modifier.height(20.dp))
-                            FeatureRow("Cahaya","Gaya Aksara asal. Santai, jelas dan responsif.","brain",height=130.dp){onMode("cahaya");onClose()}
-                            Spacer(Modifier.height(12.dp));FeatureRow("Gelap","Falsafah moden. Mendalam, kritis dan sinis.","brain",height=130.dp){onMode("gelap");onClose()}
+                            Spacer(Modifier.height(14.dp))
+                            Box(Modifier.fillMaxWidth().height(157.609.dp).clip(RoundedCornerShape(12.dp)).background(Color(5,10,18,66)).border(1.dp,Color(225,207,179,48),RoundedCornerShape(12.dp))){
+                                Column(Modifier.padding(11.dp),verticalArrangement=Arrangement.spacedBy(7.dp)){
+                                    AksaraText("STATUS MOD",size=11f,line=14.3f,weight=700,color=Color(0xffe4d2b2))
+                                    listOf("Mod dipilih" to if(state.mode=="gelap")"Gelap" else "Cahaya","Permintaan semasa" to if(state.busy)"Generating Response" else "Tiada permintaan aktif","Permintaan terakhir" to if(state.messages.isEmpty())"Belum ada dalam tab ini" else if(state.messages.last().incomplete)"Belum lengkap" else "Selesai").forEach{(label,value)->
+                                        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){AksaraText(label,size=10.5f,line=14.7f,color=Color(0xffd0c2b2));AksaraText(value,size=10.5f,line=14.7f,weight=600)}
+                                    }
+                                    AksaraText("Cahaya/Gelap mengubah pendekatan jawapan. Tahap penaakulan model ditentukan secara adaptif oleh sistem; paparan ini bukan bukti tahap tersebut.",size=10.5f,line=15.75f,color=Color(0xffbab4ab))
+                                }
+                            }
+                            Spacer(Modifier.height(12.dp))
+                            listOf(Triple("Cahaya","Gaya Aksara asal. Santai, jelas dan responsif.","sun"),Triple("Gelap","Falsafah moden. Mendalam, kritis dan sinis.","moon")).forEachIndexed{index,(name,description,icon)->
+                                val selected=state.mode==name.lowercase()
+                                AksaraGlassSurface(Modifier.fillMaxWidth().height(73.dp).clickable{onMode(name.lowercase());onClose()},radius=13.dp,border=if(selected)Color(239,203,145,190) else AksaraColors.border){
+                                    Row(Modifier.fillMaxSize().padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)){
+                                        AksaraIcon(icon,Modifier.size(24.dp),if(index==0)AksaraColors.gold else Color(0xffadc7e5))
+                                        Column(Modifier.weight(1f)){AksaraText(name,size=14f,line=18.2f,weight=700);Spacer(Modifier.height(3.dp));AksaraText(description,size=10.5f,line=15.75f,color=Color(0xffc2b8aa))}
+                                        if(selected)AksaraText("✓",size=17f,color=AksaraColors.gold)
+                                    }
+                                }
+                                if(index==0)Spacer(Modifier.height(10.dp))
+                            }
                         }
                         "attachments" -> {
                             Spacer(Modifier.height(16.dp))

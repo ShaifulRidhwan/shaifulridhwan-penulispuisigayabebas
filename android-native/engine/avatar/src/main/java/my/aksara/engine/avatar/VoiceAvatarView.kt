@@ -1,6 +1,8 @@
 package my.aksara.engine.avatar
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.util.Log
 import android.view.Choreographer
 import android.view.TextureView
 import android.view.View
@@ -23,7 +25,11 @@ class VoiceAvatarView(context:Context):TextureView(context),Choreographer.FrameC
         val distance=(visibleHeight/(2*Math.tan(Math.toRadians(17.0)))*1.07).toFloat()
         val manipulator=Manipulator.Builder().targetPosition(0f,targetY,.0354368f).orbitHomePosition(0f,targetY,.0354368f+distance).build(Manipulator.Mode.ORBIT)
         val ui=UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK).apply {isOpaque=false}
-        val model=ModelViewer(textureView=this,uiHelper=ui,manipulator=manipulator)
+        // The skinned web model exceeds the emulator GLES 256-vector limit.
+        // Use the real Vulkan backend on devices that advertise Vulkan support.
+        val backend=if(context.packageManager.hasSystemFeature(PackageManager.FEATURE_VULKAN_HARDWARE_LEVEL)) Engine.Backend.VULKAN else Engine.Backend.OPENGL
+        Log.i("AksaraAvatar","Filament backend=$backend")
+        val model=ModelViewer(textureView=this,engine=Engine.create(backend),uiHelper=ui,manipulator=manipulator)
         viewer=model
         model.view.blendMode=com.google.android.filament.View.BlendMode.TRANSLUCENT
         model.renderer.clearOptions=Renderer.ClearOptions().apply{clear=true;clearColor=floatArrayOf(0f,0f,0f,0f)}
