@@ -47,7 +47,7 @@ function renderAudit(data){
   $("auditPageTitle").textContent=PAGES[data.path]||data.path;
   $("auditMeta").textContent=data.warnings+" semakan perlu perhatian · "+data.mode;
   $("checksCount").textContent=data.checks.length+" pemeriksaan";
-  const ring=$("scoreRing");ring.style.setProperty("--score",String(data.score));
+  const ring=$("scoreRing");ring.style.setProperty("--score",String(data.score)+"%");
   ring.style.setProperty("--scoreColor",data.score>=85?"#a4dfbf":data.score>=65?"#e9ca91":"#e1a38f");
   $("scoreText").textContent=data.score;
   const checks=$("results");checks.replaceChildren();
@@ -127,6 +127,7 @@ function inspectCode(source){
   if(typeof source!=="string"||source.length>120000)throw Error("Kod melebihi 120,000 aksara.");
   const findings=[],lines=source.split(/\r?\n/);
   lines.forEach((line,index)=>{
+    if(findings.length>=75)return;
     if(line.trim().startsWith("//")||line.trim().startsWith("#"))return;
     for(const rule of PATTERNS){
       if(rule.regex.test(line)){findings.push({id:rule.id,title:rule.title,risk:rule.risk,line:index+1,message:rule.message});
