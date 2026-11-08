@@ -59,7 +59,7 @@ class VisualParityTest {
             if(name=="voice") {
                 val capsule=compose.onNodeWithTag("voice-status-pill").getUnclippedBoundsInRoot()
                 val end=compose.onNodeWithTag("voice-end-session").getUnclippedBoundsInRoot()
-                assertTrue("LIVE timer clipped below 110dp: $capsule",(capsule.right-capsule.left)>=110.dp)
+                assertTrue("LIVE timer clipped below 110dp: $capsule",(capsule.right.value - capsule.left.value) >= 110f)
                 assertTrue("LIVE capsule overlaps End Session",capsule.right<=end.left)
                 compose.onNodeWithText("00:00").assertExists()
             }
