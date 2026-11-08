@@ -8,6 +8,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.*
@@ -40,24 +41,38 @@ object AksaraSpacing { val shellSide = 7.dp; val shellBottom = 7.dp; val headerT
     BasicText(text, modifier, style = AksaraTypography.style(size, line, weight, color).copy(letterSpacing = tracking.sp))
 }
 val LocalBackdrop = staticCompositionLocalOf<HazeState> { error("Backdrop source missing") }
-val GlassGradient: Brush get() = Brush.linearGradient(listOf(Color(255,247,224,9), Color(125,167,205,5)))
-val DialogGradient: Brush get() = Brush.linearGradient(listOf(Color(23,31,45,92), Color(9,14,24,110)))
+/** CSS gradient angles use physical viewport geometry, rather than corner-to-corner offsets. */
+fun cssGradient(degrees:Float,colors:List<Color>):Brush=object:ShaderBrush(){
+    override fun createShader(size:androidx.compose.ui.geometry.Size):Shader{
+        val angle=Math.toRadians(degrees.toDouble())
+        val dx=kotlin.math.sin(angle).toFloat();val dy=-kotlin.math.cos(angle).toFloat()
+        val half=(kotlin.math.abs(size.width*dx)+kotlin.math.abs(size.height*dy))/2f
+        val center=Offset(size.width/2f,size.height/2f)
+        return LinearGradientShader(center-Offset(dx*half,dy*half),center+Offset(dx*half,dy*half),colors)
+    }
+}
+val GlassGradient: Brush get() = cssGradient(145f,listOf(Color(255,247,224,9), Color(125,167,205,5)))
+val DialogGradient: Brush get() = cssGradient(150f,listOf(Color(23,31,45,92), Color(9,14,24,110)))
 @Composable fun AksaraGlassSurface(modifier: Modifier = Modifier, radius: Dp = 13.dp, blur: Dp = 2.dp,
-    brush: Brush = GlassGradient, border: Color = AksaraColors.border, shape: Shape = RoundedCornerShape(radius), content: @Composable BoxScope.() -> Unit) {
+    brush: Brush = GlassGradient, border: Color = AksaraColors.border, shape: Shape = RoundedCornerShape(radius), saturation:Float=1.1f, content: @Composable BoxScope.() -> Unit) {
     val haze = LocalBackdrop.current
     val surfaceBackdrop=remember {HazeState()}
+    val saturationEffect=remember(saturation){android.graphics.RenderEffect.createColorFilterEffect(android.graphics.ColorMatrixColorFilter(android.graphics.ColorMatrix().apply{setSaturation(saturation)})).asComposeRenderEffect()}
     Box(modifier.clip(shape).border(1.dp,border,shape)) {
         // Record only this surface's processed background; foreground children never
         // feed back into their own blur input. Nested glass samples this layer.
         Box(Modifier.matchParentSize().hazeSource(surfaceBackdrop)
-            .hazeEffect(haze,HazeStyle(tints=emptyList(),backgroundColor=Color(0xff070911),blurRadius=blur*1.75f,noiseFactor=0f))
+            .graphicsLayer{renderEffect=saturationEffect}.hazeEffect(haze,HazeStyle(tints=emptyList(),backgroundColor=Color(0xff070911),blurRadius=blur*1.75f,noiseFactor=0f))
             .background(brush))
         CompositionLocalProvider(LocalBackdrop provides surfaceBackdrop){content()}
     }
 }
 @Composable fun AksaraButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: String? = null,
     size: Float = 12f, height: Dp = 44.dp, radius: Dp = 13.dp, enabled: Boolean = true, contentColor: Color = AksaraColors.text) {
-    AksaraGlassSurface(modifier.graphicsLayer { alpha=if(enabled)1f else .6f }.height(height).clip(RoundedCornerShape(radius)).clickable(enabled = enabled, onClick = onClick), radius) {
+    val engine=icon=="code"||icon=="terminal"
+    val material=when{engine->cssGradient(180f,listOf(Color(255,255,255,11),Color(5,8,16,41)));icon=="brain"->cssGradient(145f,listOf(Color(238,201,140,22),Color(19,31,49,31)));icon=="send"->cssGradient(145f,listOf(Color(244,216,171,14),Color(64,87,112,9)));else->GlassGradient}
+    val edge=when{engine->Color(233,205,158,87);icon=="brain"->Color(245,208,157,110);icon=="send"->Color(244,213,166,77);else->AksaraColors.border}
+    AksaraGlassSurface(modifier.graphicsLayer { alpha=if(enabled)1f else .6f }.height(height).clip(RoundedCornerShape(radius)).clickable(enabled = enabled, onClick = onClick), radius,blur=if(engine)8.dp else 2.dp,brush=material,border=edge,saturation=if(engine)1.12f else if(icon=="brain"||icon=="send")1f else 1.1f) {
         Row(Modifier.align(Alignment.Center).padding(horizontal = if(size<10f)6.dp else 10.dp), horizontalArrangement = Arrangement.spacedBy(if(size<10f)4.dp else 6.dp), verticalAlignment = Alignment.CenterVertically) {
             if (icon != null) AksaraIcon(icon, Modifier.size(if(icon=="code")15.dp else if(icon=="terminal")17.dp else if(icon=="brain")23.dp else if(icon=="send")19.dp else if(icon=="voice"&&size<10)12.dp else if(size<10)15.dp else 18.dp), contentColor)
             if (label.isNotEmpty()) AksaraText(label, size = size, line = size*1.4f, weight = 500, color = contentColor)

@@ -81,7 +81,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             Column(Modifier.fillMaxSize().hazeSource(scene)) {
                 Spacer(Modifier.height(10.dp))
                 AksaraGlassSurface(Modifier.fillMaxWidth().height(50.dp).testTagCompat("topbar"), radius=17.dp, blur=12.dp,
-                    brush=Brush.linearGradient(listOf(Color(8,14,24,102),Color(17,26,40,51))), border=Color(247,226,196,64)) {
+                    brush=cssGradient(115f,listOf(Color(8,14,24,102),Color(17,26,40,51))),saturation=1.15f, border=Color(247,226,196,64)) {
                     Row(Modifier.fillMaxSize().padding(horizontal=10.dp), verticalAlignment=Alignment.CenterVertically) {
                         AksaraGlassSurface(Modifier.height(31.dp), radius=13.dp) {
                             Row(Modifier.align(Alignment.Center).padding(horizontal=7.dp), verticalAlignment=Alignment.Bottom, horizontalArrangement=Arrangement.spacedBy(3.dp)) {
@@ -100,7 +100,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                     }
                 }
                 Box(Modifier.weight(1f).padding(start=7.dp,end=7.dp,top=viewportHeight*.011f,bottom=7.dp)) {
-                    AksaraGlassSurface(Modifier.fillMaxSize().testTagCompat("conversation"),radius=18.dp,blur=3.dp,
+                    AksaraGlassSurface(Modifier.fillMaxSize().testTagCompat("conversation"),radius=18.dp,blur=3.dp,saturation=1.06f,
                         brush=Brush.linearGradient(listOf(Color(15,17,25,51),Color(10,14,25,33),Color(7,10,18,56))),border=Color(253,214,150,145)) {
                         Column(Modifier.fillMaxSize().padding(1.dp)) {
                             BoxWithConstraints(Modifier.fillMaxWidth().height(54.dp).testTagCompat("conversation-head").background(Brush.horizontalGradient(listOf(Color(20,18,21,64),Color(5,8,17,56))))) {
@@ -175,7 +175,7 @@ private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
                 Spacer(Modifier.height(if(initial)6.dp else 8.dp))
                 AksaraGlassSurface(Modifier.width(bubbleWidth).testTagCompat("bubble"),radius=13.dp,
                     shape=if(ai)RoundedCornerShape(13.dp,13.dp,13.dp,4.dp) else RoundedCornerShape(17.dp,17.dp,5.dp,17.dp),
-                    brush=Brush.linearGradient(listOf(Color(243,226,198,12),Color(125,165,203,6))),border=Color(240,211,164,87)) {
+                    brush=cssGradient(145f,listOf(Color(243,226,198,12),Color(125,165,203,6))),border=Color(240,211,164,87),saturation=1.07f) {
                     val pad=Modifier.padding(horizontal=if(ai)13.dp else 12.dp,vertical=if(initial)12.dp else if(ai)11.dp else 10.dp)
                     if(message.text.isEmpty()) AksaraText("•••",pad,size=15f,line=23f,color=AksaraColors.gold)
                     else if(message.id.startsWith("welcome")||message.text.none {it in "*#`|["}) AksaraText(message.text,pad,size=15f,line=23.85f,tracking=-.12f)
