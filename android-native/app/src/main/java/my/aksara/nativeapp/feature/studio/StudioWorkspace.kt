@@ -226,6 +226,7 @@ fun StudioContent() {
                     StudioGateway.generate(clean,selectedModel,selectedStyle,selectedQuality,selectedRatio,effectiveSeed)
                 else {
                     val path=models.modelPath() ?: error("Model belum dipasang.")
+                    check(models.verify()) { "Fail model rosak atau integriti SHA-256 gagal." }
                     val bitmap=localRuntime.generate(path,clean,effectiveSeed!!)
                     StudioGateway.Result(bitmap,"SD-Turbo",0L,bitmap.width,bitmap.height)
                 }

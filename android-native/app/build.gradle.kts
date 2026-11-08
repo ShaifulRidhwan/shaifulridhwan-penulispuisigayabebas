@@ -19,7 +19,7 @@ android {
     compileSdk = 35
     defaultConfig {
         if (enableSdTurboNative) {
-            ndk { abiFilters.addAll(listOf("arm64-v8a", "x86_64")) }
+            ndk { abiFilters.add("arm64-v8a") }
         }
         applicationId = "my.aksara.nativeapp"
         minSdk = 31
