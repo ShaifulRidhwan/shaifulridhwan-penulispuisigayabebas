@@ -49,7 +49,8 @@ private data class StudioPreview(
     val elapsed: Long,
     val ratio: String,
     val quality: String,
-    val seed: Long?
+    val seed: Long?,
+    val style: String
 )
 
 private fun newStudioSeed(): Long = SecureRandom().nextInt(Int.MAX_VALUE).toLong()
@@ -185,19 +186,28 @@ fun StudioContent() {
     }
     DisposableEffect(Unit){onDispose{job?.cancel();downloadJob?.cancel();enhancementJob?.cancel()}}
 
-    fun generate(variation:Boolean=false) {
+    fun generate(variation:Boolean=false,replay:StudioPreview?=null) {
         if(job?.isActive==true) return
-        val clean=try { StudioRules.prompt(prompt) } catch(e:Exception) { message=e.message.orEmpty();return }
-        val selectedModel=model
-        val selectedRatio=if(engine==StudioEngine.LOCAL || selectedModel!="klein")"1:1" else ratio
-        val selectedQuality=quality
-        val selectedStyle=style
+        val selectedEngine=replay?.engine ?: engine
+        val clean=try { StudioRules.prompt(replay?.prompt ?: prompt) } catch(e:Exception) { message=e.message.orEmpty();return }
+        val selectedModel=if(replay?.engine==StudioEngine.CLOUD) {
+            when {
+                replay.model.contains("Klein",ignoreCase=true)->"klein"
+                replay.model.contains("Schnell",ignoreCase=true)->"schnell"
+                replay.model.contains("OVH",ignoreCase=true)->"ovh"
+                else->{message="Model Cloud dalam sejarah tidak dikenali.";return}
+            }
+        } else model
+        val selectedRatio=if(selectedEngine==StudioEngine.LOCAL || selectedModel!="klein")"1:1" else (replay?.ratio?:ratio)
+        val selectedQuality=replay?.quality ?: quality
+        val selectedStyle=replay?.style ?: style
         val selectedSeed=try {
             if(variation) newStudioSeed()
-            else if(engine==StudioEngine.LOCAL || selectedModel=="klein") StudioRules.seed(seedDraft)
+            else if(replay!=null)replay.seed
+            else if(selectedEngine==StudioEngine.LOCAL || selectedModel=="klein") StudioRules.seed(seedDraft)
             else null
         } catch(e:Exception){message=e.message.orEmpty();return}
-        if(engine==StudioEngine.CLOUD) {
+        if(selectedEngine==StudioEngine.CLOUD) {
             try{StudioRules.cloud(selectedModel,selectedRatio,selectedQuality,selectedSeed)}
             catch(e:Exception){message=e.message.orEmpty();return}
         } else {
@@ -206,7 +216,6 @@ fun StudioContent() {
             val warning=models.deviceWarning()
             if(warning!=null){message=warning;return}
         }
-        val selectedEngine=engine
         job=scope.launch {
             runningEngine=selectedEngine
             val began=SystemClock.elapsedRealtime()
@@ -222,12 +231,12 @@ fun StudioContent() {
                 }
                 val elapsed=SystemClock.elapsedRealtime()-began
                 val result=StudioPreview(generated.bitmap,selectedEngine,generated.model,clean,
-                    elapsed,selectedRatio,selectedQuality,effectiveSeed)
+                    elapsed,selectedRatio,selectedQuality,effectiveSeed,selectedStyle)
                 preview=result
                 page=StudioPage.GENERATE.name
                 try {
                     currentRecord.value=historyStore.save(result.bitmap,selectedEngine.name,result.model,
-                        clean,elapsed,effectiveSeed,selectedRatio,selectedQuality)
+                        clean,elapsed,effectiveSeed,selectedRatio,selectedQuality,selectedStyle)
                     records=historyStore.list()
                     message="Imej siap dan disimpan dalam sejarah Studio."
                 } catch(e:Exception) {
@@ -255,7 +264,7 @@ fun StudioContent() {
             val bitmap=historyStore.bitmap(record)
             if(bitmap==null){message="Imej sejarah tidak dapat dibaca.";return@launch}
             preview=StudioPreview(bitmap,StudioEngine.valueOf(record.engine),record.model,
-                record.prompt,record.durationMs,record.ratio,record.quality,record.seed)
+                record.prompt,record.durationMs,record.ratio,record.quality,record.seed,record.style)
             currentRecord.value=record
             showViewer=true
         }
@@ -472,10 +481,10 @@ fun StudioContent() {
             }
             Spacer(Modifier.height(6.dp))
             Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
-                AksaraButton("Jana semula",{generate()},Modifier.weight(1f),height=37.dp,
+                AksaraButton("Jana semula",{generate(replay=item)},Modifier.weight(1f),height=37.dp,
                     enabled=job?.isActive!=true)
-                AksaraButton("Variasi seed",{generate(true)},Modifier.weight(1f),height=37.dp,
-                    enabled=job?.isActive!=true && (engine==StudioEngine.LOCAL || model=="klein"))
+                AksaraButton("Variasi seed",{generate(variation=true,replay=item)},Modifier.weight(1f),height=37.dp,
+                    enabled=job?.isActive!=true && (item.engine==StudioEngine.LOCAL || item.model.contains("Klein",ignoreCase=true)))
             }
         } ?: AksaraGlassSurface(Modifier.fillMaxWidth().height(110.dp),radius=19.dp,blur=5.dp) {
             AksaraText("Hasil imej akan muncul di sini.",Modifier.align(Alignment.Center),
@@ -522,7 +531,7 @@ fun StudioContent() {
                         AksaraButton("Guna prompt",{
                             prompt=record.prompt;engineName=record.engine
                             if(record.model in StudioRules.cloudModels)model=record.model
-                            seedDraft=record.seed?.toString().orEmpty();page=StudioPage.GENERATE.name
+                            seedDraft=record.seed?.toString().orEmpty();style=record.style;ratio=record.ratio;quality=record.quality;page=StudioPage.GENERATE.name
                         },Modifier.weight(1f),size=9f,height=33.dp)
                         AksaraButton("Padam",{confirmDelete=record.id},Modifier.weight(1f),size=10f,height=33.dp)
                     }
