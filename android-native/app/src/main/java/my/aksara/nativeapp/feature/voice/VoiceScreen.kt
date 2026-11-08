@@ -32,11 +32,11 @@ import my.aksara.engine.avatar.VoiceAvatarView
         val side=if(compact)8.dp else 11.dp
         Column(Modifier.fillMaxSize()){
             AksaraGlassSurface(Modifier.fillMaxWidth().height(68.dp),radius=0.dp,blur=13.dp,brush=Brush.linearGradient(listOf(Color(240,204,159,23),Color(135,181,211,14),Color(13,22,37,10))),border=Color(244,217,176,30)){
-                Row(Modifier.fillMaxSize().padding(horizontal=13.dp),verticalAlignment=Alignment.CenterVertically){
-                    AksaraGlassSurface(Modifier.width(84.484.dp).height(44.dp),radius=17.dp,blur=16.dp){Column(Modifier.align(Alignment.Center),horizontalAlignment=Alignment.CenterHorizontally){AksaraText("AKSARA",size=13f,line=14.95f,weight=650,tracking=1.17f,family=AksaraTypography.heading);AksaraText("VOICE CHAT",size=7f,line=10.5f,tracking=1f,color=AksaraColors.gold)}}
+                Row(Modifier.fillMaxSize().padding(start=10.dp,end=12.dp),verticalAlignment=Alignment.CenterVertically){
+                    AksaraGlassSurface(Modifier.width(73.dp).height(40.dp),radius=17.dp,blur=16.dp,brush=cssGradient(137f,listOf(Color(249,224,186,32),Color(128,173,218,18))),border=Color(245,217,173,69),saturation=1.16f){Column(Modifier.align(Alignment.Center),horizontalAlignment=Alignment.CenterHorizontally){AksaraText("AKSARA",size=13f,line=14.95f,weight=650,tracking=1.17f,family=AksaraTypography.heading);AksaraText("VOICE CHAT",size=7f,line=10.5f,tracking=1f,color=AksaraColors.gold)}}
                     Spacer(Modifier.weight(1f));AksaraText("•  "+if(preview)"PRATONTON UI" else if(state.startedAt!=null)"LIVE" else state.phase.uppercase(),Modifier.widthIn(max=80.dp),size=9f,line=10.8f,weight=600,color=AksaraColors.muted,tracking=.315f,family=AksaraTypography.heading)
                     Spacer(Modifier.width(5.dp));AksaraText("%02d:%02d".format(seconds/60,seconds%60),size=11f,line=13.2f,color=AksaraColors.muted)
-                    Spacer(Modifier.width(8.dp));AksaraButton("",onClose,Modifier.width(40.dp).semantics{contentDescription="Tamatkan sesi Voice Chat"},icon="close",height=40.dp,radius=999.dp)
+                    Spacer(Modifier.width(8.dp));AksaraGlassSurface(Modifier.size(38.dp).clickable(onClick=onClose).semantics{contentDescription="Tamatkan sesi Voice Chat"},radius=999.dp,blur=16.dp,brush=cssGradient(137f,listOf(Color(249,224,186,32),Color(128,173,218,18))),border=Color(246,215,179,97)){AksaraIcon("close",Modifier.align(Alignment.Center).size(18.dp),AksaraColors.text)}
                 }
             }
             Box(Modifier.fillMaxWidth().weight(1f)){
