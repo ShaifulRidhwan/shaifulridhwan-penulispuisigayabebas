@@ -58,10 +58,12 @@ Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative(
     image_params.sample_params.guidance.txt_cfg = 1.0f;
     image_params.sample_params.sample_method = EULER_A_SAMPLE_METHOD;
 
-    sd_image_t* result = generate_image(ctx, &image_params);
-    if (!result || !result->data || result->width != 512 || result->height != 512 || result->channel < 3) {
+    sd_image_t* result = nullptr;
+    int output_count = 0;
+    const bool generated = generate_image(ctx, &image_params, &result, &output_count);
+    if (!generated || !result || output_count < 1 || !result[0].data || result[0].width != 512 || result[0].height != 512 || result[0].channel < 3) {
         if (result) {
-            free(result->data);
+            free(result[0].data);
             free(result);
         }
         free_sd_ctx(ctx);
@@ -73,16 +75,16 @@ Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative(
     if (output) {
         jint* pixels = env->GetIntArrayElements(output, nullptr);
         if (pixels) {
-            const int channels = result->channel;
+            const int channels = result[0].channel;
             for (int i = 0; i < count; ++i) {
-                const uint8_t* p = result->data + i * channels;
+                const uint8_t* p = result[0].data + i * channels;
                 const uint32_t a = channels == 4 ? p[3] : 255;
                 pixels[i] = static_cast<jint>((a << 24) | (p[0] << 16) | (p[1] << 8) | p[2]);
             }
             env->ReleaseIntArrayElements(output, pixels, 0);
         }
     }
-    free(result->data);
+    free(result[0].data);
     free(result);
     free_sd_ctx(ctx);
     return output;
