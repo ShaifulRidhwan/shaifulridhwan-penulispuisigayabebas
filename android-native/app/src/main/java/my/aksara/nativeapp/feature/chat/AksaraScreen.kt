@@ -6,6 +6,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -72,6 +74,35 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val margins = aksaraDeviceMargins()
     val focus = LocalFocusManager.current
     val list = rememberLazyListState()
+    var autoFollow by remember { mutableStateOf(true) }
+    // Only user drags suspend follow mode, never programmatic scrolling.
+    LaunchedEffect(list) {
+        list.interactionSource.interactions.collect { interaction ->
+            when (interaction) {
+                is DragInteraction.Start -> autoFollow = false
+                is DragInteraction.Stop, is DragInteraction.Cancel -> autoFollow = !list.canScrollForward
+            }
+        }
+    }
+    // Start following again when the user sends a fresh prompt.
+    LaunchedEffect(state.messages.size) {
+        if (state.busy && state.messages.isNotEmpty()) autoFollow = true
+        if (autoFollow && state.messages.isNotEmpty()) {
+            withFrameNanos { }
+            val lastItem = list.layoutInfo.totalItemsCount - 1
+            if (lastItem >= 0) {
+                list.scrollToItem(lastItem)
+                list.scrollBy(100_000f)
+            }
+        }
+    }
+    // Streaming can grow a single message beyond the screen height.
+    LaunchedEffect(state.messages.lastOrNull()?.text?.length, state.busy, autoFollow) {
+        if (autoFollow && state.messages.isNotEmpty()) {
+            withFrameNanos { }
+            list.scrollBy(100_000f)
+        }
+    }
     val keyboard = LocalSoftwareKeyboardController.current
     fun open(value: String) { focus.clearFocus(); keyboard?.hide(); overlay = value }
     BackHandler(overlay != null) { overlay = null }
