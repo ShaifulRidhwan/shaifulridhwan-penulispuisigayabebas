@@ -81,3 +81,10 @@ Revalidate CI at the exact resulting commit SHA. A successful build is NOT compl
 - NDJSON 429 error frames retain the backend Retry-After period for user-visible diagnostics; status remains a failure, never reported as provider success.
 - Android staged attachments now remain selected after a send, matching the web follow-up behavior, with an explicit user-initiated Remove Attachments control. A failed request does not silently erase the local file selection.
 - These transport and UI changes require tests at the final commit; the live-provider and physical-device caveats above remain in force.
+
+## Voice lifecycle recovery checkpoint
+
+- Found a concrete failure: LiveVoiceClient.close() permanently cancelled the same SupervisorJob and audio Channel that start() reused. Background ON_STOP followed by ON_START could therefore leave Voice unable to stream audio.
+- Voice engine now creates a fresh scope/audio queue for each restarted session, obtains a new ephemeral Live token, and uses a session epoch to reject stale socket events from a previous connection.
+- VoiceContent starts a fresh connection on lifecycle ON_START with microphone permission; ON_STOP still closes and releases recorder, playback, audio focus, and the socket. No avatar or Liquid Glass UI changes.
+- This is reconnect lifecycle engineering, not verified Gemini Live server session resumption. Full-duplex speech, Aoede audio routing, dialect accuracy, and physical-device interruptions still require real-device validation.

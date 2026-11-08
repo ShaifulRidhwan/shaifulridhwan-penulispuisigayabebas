@@ -52,7 +52,13 @@ private fun voiceStyleInstruction(style:String):String=when(style){
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {granted -> if(granted)client.start() else permissionError="Izin mikrofon ditolak. Tiada audio dihantar."}
     val owner=LocalLifecycleOwner.current
     DisposableEffect(owner,client){
-        val observer=LifecycleEventObserver{_,event->if(event==Lifecycle.Event.ON_STOP)client.close()}
+        val observer=LifecycleEventObserver{_,event->
+            when(event){
+                Lifecycle.Event.ON_STOP -> client.close()
+                Lifecycle.Event.ON_START -> if(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED)client.start()
+                else -> Unit
+            }
+        }
         owner.lifecycle.addObserver(observer)
         onDispose{owner.lifecycle.removeObserver(observer);client.close()}
     }

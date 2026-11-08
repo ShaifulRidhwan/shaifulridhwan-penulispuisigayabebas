@@ -17,35 +17,47 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 /** Same ephemeral-token broker, Gemini Live constrained socket and Aoede as the web. */
 data class VoiceState(val phase:String="idle",val message:String="Belum connect lagi.",val startedAt:Long?=null,val mic:Boolean=true,val speaker:Boolean=true,val volume:Float=1f)
 class LiveVoiceClient(private val context:Context,private val origin:String,private val identity:String):AutoCloseable {
-    private val job=SupervisorJob();private val scope=CoroutineScope(job+Dispatchers.IO)
+    private var job=SupervisorJob();private var scope=CoroutineScope(job+Dispatchers.IO)
     private val client=OkHttpClient.Builder().connectTimeout(20,TimeUnit.SECONDS).readTimeout(0,TimeUnit.SECONDS).build()
     private val mutable=MutableStateFlow(VoiceState());val state=mutable.asStateFlow()
     private val running=AtomicBoolean(false)
     private var socket:WebSocket?=null;private var recorder:AudioRecord?=null;private var track:AudioTrack?=null
     private var echo:AcousticEchoCanceler?=null;private var noise:NoiseSuppressor?=null
     private var tokenCall:Call?=null;private var micJob:Job?=null
-    private val audio=Channel<Pair<Int,ByteArray>>(128)
-    private var generation=0
+    private var audio=Channel<Pair<Int,ByteArray>>(128)
+    private val sessionEpoch=AtomicInteger(0)
+    @Volatile private var generation=0
+    private fun active(epoch:Int)=running.get()&&sessionEpoch.get()==epoch
     private val manager=context.getSystemService(AudioManager::class.java)
     private var focus:AudioFocusRequest?=null
     private var previousAudioMode:Int?=null
-    fun start(){
+    @Synchronized fun start(){
         if(!running.compareAndSet(false,true))return
+        // After ON_STOP/end/failure the previous Job and audio channel are terminal.
+        // A new Gemini token, scope, and queue are required for every new connection.
+        if(!job.isActive){
+            job=SupervisorJob()
+            scope=CoroutineScope(job+Dispatchers.IO)
+            audio=Channel(128)
+            generation=0
+        }
+        val epoch=sessionEpoch.incrementAndGet()
         if(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){fail("Izin mikrofon diperlukan.");return}
-        mutable.value=mutable.value.copy(phase="connecting",message="Menyambung Gemini Live…")
+        mutable.value=mutable.value.copy(phase="connecting",message="Menyambung Gemini Live…",startedAt=null)
         scope.launch {
             try {
                 val call=client.newCall(Request.Builder().url(origin+"/.netlify/functions/bilik-antara-live-token").header("Origin",origin).post("{}".toRequestBody("application/json".toMediaType())).build());tokenCall=call
                 val data=call.execute().use { response -> val body=JSONObject(response.body?.string().orEmpty());if(!response.isSuccessful)error(body.optString("error","HTTP ${response.code}"));body }
-                if(!running.get())return@launch
+                if(!active(epoch))return@launch
                 val token=data.getString("token");val model=data.getString("model")
                 socket=client.newWebSocket(Request.Builder().url("wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContentConstrained?access_token="+java.net.URLEncoder.encode(token,"UTF-8")).build(),object:WebSocketListener(){
                     override fun onOpen(ws:WebSocket,response:Response){
-                        if(!running.get()){ws.close(1000,"Stopped");return}
+                        if(!active(epoch)){ws.close(1000,"Stopped");return}
                         val setup=JSONObject().put("model","models/$model").put("generationConfig",JSONObject().put("responseModalities",JSONArray().put("AUDIO")).put("speechConfig",JSONObject().put("voiceConfig",JSONObject().put("prebuiltVoiceConfig",JSONObject().put("voiceName","Aoede")))))
                             .put("systemInstruction",JSONObject().put("parts",JSONArray().put(JSONObject().put("text",identity))))
                             .put("realtimeInputConfig",JSONObject().put("automaticActivityDetection",JSONObject().put("startOfSpeechSensitivity","START_SENSITIVITY_HIGH").put("endOfSpeechSensitivity","END_SENSITIVITY_LOW").put("prefixPaddingMs",100).put("silenceDurationMs",1450)))
@@ -53,22 +65,29 @@ class LiveVoiceClient(private val context:Context,private val origin:String,priv
                             .put("sessionResumption",JSONObject())
                         ws.send(JSONObject().put("setup",setup).toString())
                     }
-                    override fun onMessage(ws:WebSocket,text:String){consume(text)}
-                    override fun onMessage(ws:WebSocket,bytes:okio.ByteString){consume(bytes.utf8())}
-                    override fun onFailure(ws:WebSocket,t:Throwable,response:Response?){if(running.get())fail("Sambungan Voice terputus. Cuba sambung semula.")}
-                    override fun onClosed(ws:WebSocket,code:Int,reason:String){if(running.get())fail("Sesi Gemini Live tamat ($code).")}
+                    override fun onMessage(ws:WebSocket,text:String){if(active(epoch))consume(text,epoch)}
+                    override fun onMessage(ws:WebSocket,bytes:okio.ByteString){if(active(epoch))consume(bytes.utf8(),epoch)}
+                    override fun onFailure(ws:WebSocket,t:Throwable,response:Response?){if(active(epoch))fail("Sambungan Voice terputus. Cuba sambung semula.")}
+                    override fun onClosed(ws:WebSocket,code:Int,reason:String){if(active(epoch))fail("Sesi Gemini Live tamat ($code).")}
                 })
                 delay(25_000)
-                if(state.value.phase=="connecting")fail("Google belum confirm connection Voice.")
-            }catch(e:Exception){if(running.get())fail(e.message?:"Voice gagal disambungkan.")}
+                if(active(epoch)&&state.value.phase=="connecting")fail("Google belum confirm connection Voice.")
+            }catch(e:Exception){if(active(epoch))fail(e.message?:"Voice gagal disambungkan.")}
         }
     }
-    private fun consume(text:String){
+    private fun consume(text:String,epoch:Int){
+        if(!active(epoch))return
         try {
             val data=JSONObject(text)
             if(data.has("error")){fail(data.getJSONObject("error").optString("message","Gemini Live gagal."));return}
             if(data.has("setupComplete")){
-                scope.launch {try{startAudio();mutable.value=mutable.value.copy(phase="listening",message="Aku dengar. Kau boleh cakap.",startedAt=System.currentTimeMillis())}catch(e:Exception){fail(e.message?:"Audio gagal.")}}
+                scope.launch {
+                    if(!active(epoch))return@launch
+                    try{
+                        startAudio()
+                        if(active(epoch))mutable.value=mutable.value.copy(phase="listening",message="Aku dengar. Kau boleh cakap.",startedAt=System.currentTimeMillis())
+                    }catch(e:Exception){if(active(epoch))fail(e.message?:"Audio gagal.")}
+                }
             }
             if(data.has("goAway")){fail("Google meminta sesi diperbaharui. Sambung semula untuk teruskan.");return}
             val content=data.optJSONObject("serverContent")?:return
@@ -136,8 +155,12 @@ class LiveVoiceClient(private val context:Context,private val origin:String,priv
     fun setSpeaker(enabled:Boolean){mutable.value=mutable.value.copy(speaker=enabled);if(!enabled){generation++;track?.pause();track?.flush();track?.play()};track?.setVolume(if(enabled)state.value.volume else 0f)}
     fun setVolume(volume:Float){mutable.value=mutable.value.copy(volume=volume.coerceIn(0f,1f));if(state.value.speaker)track?.setVolume(state.value.volume)}
     private fun fail(message:String){close();mutable.value=mutable.value.copy(phase="error",message=message,startedAt=null)}
-    override fun close(){
-        running.set(false);tokenCall?.cancel();socket?.close(1000,"Sesi ditamatkan");socket=null
+    @Synchronized override fun close(){
+        // Invalidate callbacks BEFORE closing the socket: delayed old socket errors
+        // must not terminate the next connection.
+        sessionEpoch.incrementAndGet()
+        running.set(false);tokenCall?.cancel();tokenCall=null
+        socket?.close(1000,"Sesi ditamatkan");socket=null
         micJob?.cancel();runCatching{recorder?.stop()};recorder?.release();recorder=null
         runCatching{track?.stop()};track?.release();track=null
         echo?.release();noise?.release();echo=null;noise=null
