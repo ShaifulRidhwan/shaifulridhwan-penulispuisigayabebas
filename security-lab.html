@@ -10,10 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/aksara-glass-tokens.css?v=1">
 <link rel="stylesheet" href="/security-lab.css?v=3">
-<link rel="stylesheet" href="/linux-sandbox.css?v=1">
 <script defer src="/security-lab.js?v=3"></script>
 <script defer src="/security-ci.js?v=3"></script>
-<script defer src="/linux-sandbox.js?v=1"></script>
 </head>
 <body>
 <div class="ak-world" aria-hidden="true"><div class="ak-world-image"></div><div class="ak-world-haze"></div></div>
@@ -42,7 +40,6 @@
   <button type="button" class="ak-tab" id="tab-web" role="tab" data-tab="web" aria-controls="panel-web" aria-selected="false"><span class="ak-tab-glyph" aria-hidden="true">◎</span> Web Audit</button>
   <button type="button" class="ak-tab" id="tab-code" role="tab" data-tab="code" aria-controls="panel-code" aria-selected="false"><span class="ak-tab-glyph" aria-hidden="true">⌘</span> Code Audit</button>
   <button type="button" class="ak-tab" id="tab-reports" role="tab" data-tab="reports" aria-controls="panel-reports" aria-selected="false"><span class="ak-tab-glyph" aria-hidden="true">▤</span> Reports</button>
-  <button type="button" class="ak-tab" id="tab-linux" role="tab" data-tab="linux" aria-controls="panel-linux" aria-selected="false"><span class="ak-tab-glyph" aria-hidden="true">⌁</span> Linux</button>
 </nav>
 <section class="ak-panel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview" data-panel="overview">
   <div class="ak-heading"><div><span class="ak-section-index">01 / SYSTEM OVERVIEW</span><h2>Security Intelligence</h2><p>Satu pusat kawalan. Tiga jenis audit, hasil yang boleh diperiksa.</p></div><span class="ak-pill">AKSARA v2</span></div>
@@ -117,22 +114,5 @@
   <div class="ak-glass ak-history"><div class="ak-subheading"><h3>Aktiviti Sesi</h3><span>Memory only</span></div><div class="ak-history-controls"><label><input type="checkbox" id="saveAuditHistory"> Simpan ringkasan audit pada peranti (OFF asal)</label><button type="button" class="ak-button ak-secondary" id="clearAuditHistory">Padam Sejarah</button></div><div id="activityList"><p class="ak-empty">Belum ada audit dijalankan dalam sesi ini.</p></div></div>
 </section>
 </main>
-<section class="ak-panel" id="panel-linux" role="tabpanel" aria-labelledby="tab-linux" data-panel="linux" hidden>
-  <div class="ak-heading"><div><span class="ak-section-index">05 / LOCAL LINUX</span><h2>Linux Sandbox</h2><p>Terminal Linux sebenar dalam browser melalui v86, menggunakan kernel Buildroot ringan. Bukan terminal simulasi.</p></div><span class="ak-pill">EXPERIMENTAL · OFFLINE GUEST</span></div>
-  <div class="ak-linux-card ak-glass">
-    <div class="ak-linux-toolbar">
-      <span class="ak-linux-badge">LINUX · 32-BIT · 64 MB RAM</span>
-      <div class="ak-linux-actions">
-        <button type="button" class="ak-button ak-primary" id="linuxBoot">Boot / Sambung</button>
-        <button type="button" class="ak-button ak-secondary" id="linuxReset" disabled>Restart</button>
-        <button type="button" class="ak-button ak-secondary" id="linuxPower" disabled>Power Off</button>
-      </div>
-    </div>
-    <p class="ak-linux-status" id="linuxStatus" role="status" aria-live="polite">Belum dimulakan. Klik Boot untuk memuatkan Linux apabila diperlukan.</p>
-    <textarea class="ak-linux-terminal" id="linuxTerminal" aria-label="Terminal Linux setempat" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="AKSARA Linux Sandbox&#10;Boot VM untuk menggunakan shell Linux sebenar."></textarea>
-    <p class="ak-linux-note">Sesi Linux berjalan dalam tab browser, dengan rangkaian virtual dimatikan. Kernel dan emulator dimuat turun daripada sumber luar pada kali pertama. Fail VM tidak kekal selepas Power Off. Jangan masukkan kata laluan atau rahsia. Jika emulator gagal dimuatkan pada peranti, <a href="https://copy.sh/v86/?profile=buildroot" target="_blank" rel="noopener noreferrer">buka demo Linux rasmi</a>.</p>
-  </div>
-</section>
-
 <footer class="ak-footer"><span>AKSARA A.I. · OLEH SHAIFUL RIDHWAN</span><span>CAHAYA × GELAP · SECURITY LAB</span></footer>
 </body></html>
