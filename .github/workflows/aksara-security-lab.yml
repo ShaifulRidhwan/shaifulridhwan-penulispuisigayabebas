@@ -52,13 +52,15 @@ jobs:
           severity: HIGH,CRITICAL
           exit-code: "0"
       - name: Install Semgrep Community Edition
-        run: python3 -m pip install --user semgrep
+        run: |
+          python3 -m venv /tmp/aksara-security-semgrep
+          /tmp/aksara-security-semgrep/bin/pip install --disable-pip-version-check semgrep
       - name: Static analysis with Semgrep
         continue-on-error: true
         env:
           SEMGREP_SEND_METRICS: "off"
         run: |
-          ~/.local/bin/semgrep scan --config p/default --json --output semgrep-report.json \
+          /tmp/aksara-security-semgrep/bin/semgrep scan --config p/default --json --output semgrep-report.json \
             --exclude node_modules --exclude package-lock.json --exclude assets .
       - name: Upload security reports
         if: always()
