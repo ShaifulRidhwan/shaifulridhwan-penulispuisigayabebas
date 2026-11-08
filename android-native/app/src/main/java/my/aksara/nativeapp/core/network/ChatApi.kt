@@ -56,6 +56,10 @@ object Ndjson {
         }
     }
 }
+private fun retryAfter(response: Response, payload: JSONObject): String? =
+    payload.optInt("retryAfterSeconds", 0).takeIf { it > 0 }?.toString()
+        ?: response.header("Retry-After")
+
 class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClient.Builder()
     .connectTimeout(20, TimeUnit.SECONDS).readTimeout(165, TimeUnit.SECONDS).callTimeout(170, TimeUnit.SECONDS).build()) {
     private fun request(path: String, payload: JSONObject) = Request.Builder().url(origin + path)
@@ -69,7 +73,7 @@ class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClien
             override fun onResponse(call:Call,response:Response){
                 val result=runCatching {response.use { res ->
                     val data=try{JSONObject(res.body?.string().orEmpty())}catch(_:Exception){JSONObject()}
-                    if(!res.isSuccessful)throw ApiFailure(res.code,data.optString("error","HTTP ${res.code}"),res.header("Retry-After"))
+                    if(!res.isSuccessful)throw ApiFailure(res.code,data.optString("error","HTTP ${res.code}"),retryAfter(res,data))
                     data
                 }}
                 if(continuation.isActive)continuation.resumeWith(result)
@@ -100,7 +104,7 @@ class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClien
                     }
                     if (!res.isSuccessful) {
                         val body = runCatching { JSONObject(res.body?.string().orEmpty()) }.getOrDefault(JSONObject())
-                        throw ApiFailure(res.code, body.optString("error", "HTTP ${res.code}"), res.header("Retry-After"))
+                        throw ApiFailure(res.code, body.optString("error", "HTTP ${res.code}"), retryAfter(res,body))
                     }
                     val source = res.body?.source() ?: throw IOException("Aliran respons kosong.")
                     var done = false; var chars = 0

@@ -31,6 +31,34 @@ class ChatApiTest {
             assertEquals("200 JSON must not trigger second call",1,server.requestCount)
         }
     }
+    @Test fun jsonRateLimitReturnsBackendRetryAfterWithoutAnotherRequest()=runBlocking {
+        MockWebServer().use { server ->
+            server.enqueue(MockResponse().setResponseCode(429).setHeader("Content-Type","application/json")
+                .setBody("""{"error":"Semua provider sibuk","retryAfterSeconds":47}"""))
+            server.start()
+            val api=ChatApi(server.url("/").toString().removeSuffix("/"))
+            val failure=runCatching {
+                api.post("/.netlify/functions/bilik-antara", JSONObject().put("question","x"))
+            }.exceptionOrNull()
+            assertTrue(failure is ApiFailure)
+            assertEquals(429,(failure as ApiFailure).status)
+            assertEquals("47",failure.retryAfter)
+            assertEquals(1,server.requestCount)
+        }
+    }
+    @Test fun streamRateLimitDoesNotTriggerDuplicateFallback()=runBlocking {
+        MockWebServer().use { server ->
+            server.enqueue(MockResponse().setResponseCode(429).setHeader("Content-Type","application/json")
+                .setBody("""{"error":"Sila cuba semula","retryAfterSeconds":21}"""))
+            server.start()
+            val failure=runCatching {
+                ChatApi(server.url("/").toString().removeSuffix("/")).chat(JSONObject().put("question","x")).toList()
+            }.exceptionOrNull()
+            assertTrue(failure is ApiFailure)
+            assertEquals("21",(failure as ApiFailure).retryAfter)
+            assertEquals(1,server.requestCount)
+        }
+    }
     @Test fun interruptedNdjsonErrorRetainsRetryAfter() {
         val error=assertThrows(ApiFailure::class.java) {
             Ndjson.parse("""{"type":"error","status":429,"retryAfterSeconds":33,"error":"Provider rate-limited"}""")

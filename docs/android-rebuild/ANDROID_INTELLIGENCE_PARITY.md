@@ -88,3 +88,11 @@ Revalidate CI at the exact resulting commit SHA. A successful build is NOT compl
 - Voice engine now creates a fresh scope/audio queue for each restarted session, obtains a new ephemeral Live token, and uses a session epoch to reject stale socket events from a previous connection.
 - VoiceContent starts a fresh connection on lifecycle ON_START with microphone permission; ON_STOP still closes and releases recorder, playback, audio focus, and the socket. No avatar or Liquid Glass UI changes.
 - This is reconnect lifecycle engineering, not verified Gemini Live server session resumption. Full-duplex speech, Aoede audio routing, dialect accuracy, and physical-device interruptions still require real-device validation.
+
+## Post-integration deep audit: durable chat and session recovery
+
+- Existing ChatViewModel staged the user turn only in memory until its remote summarization/chat request finished. Stop, process termination or a long upstream request could therefore lose a newly written prompt. The chat job now starts undispatched and persists the pending user and assistant message in the preflight stage, before any network call. The final archive replaces incomplete response bubbles by stable ID.
+- ChatApi now retains retryAfterSeconds from JSON error payloads, including HTTP 429, not just the Retry-After header. A quota error cannot silently trigger a second inference attempt.
+- LiveVoiceClient synchronizes audio creation with close() and binds creation to the active WebSocket epoch so an old socket cannot reinitialize the recorder after cleanup. UI, Aoede and API key broker remain unchanged.
+- Added unit tests for stream/JSON quota handling; emulator instrumentation tests verify actual Android Keystore encrypted session and opt-in memory settings survive creation of a fresh store instance.
+- The separate visual regression threshold is not relaxed and remains an unresolved quality gate. Functional emulator tests and visual checks are documented separately.

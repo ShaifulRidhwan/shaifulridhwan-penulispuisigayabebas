@@ -84,7 +84,7 @@ class LiveVoiceClient(private val context:Context,private val origin:String,priv
                 scope.launch {
                     if(!active(epoch))return@launch
                     try{
-                        startAudio()
+                        startAudio(epoch)
                         if(active(epoch))mutable.value=mutable.value.copy(phase="listening",message="Aku dengar. Kau boleh cakap.",startedAt=System.currentTimeMillis())
                     }catch(e:Exception){if(active(epoch))fail(e.message?:"Audio gagal.")}
                 }
@@ -105,8 +105,9 @@ class LiveVoiceClient(private val context:Context,private val origin:String,priv
             if(content.optBoolean("turnComplete"))mutable.value=mutable.value.copy(phase="listening",message="Aku dengar.")
         }catch(e:Exception){fail("Respons Voice tidak boleh dibaca.")}
     }
-    @Suppress("MissingPermission") private fun startAudio(){
-        if(!running.get()||recorder!=null)return
+    @Suppress("MissingPermission") @Synchronized private fun startAudio(epoch:Int){
+        // Serialize device setup against close(), and never recreate audio for a stale WebSocket.
+        if(!active(epoch)||recorder!=null)return
         val attrs=AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
         focus=AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT).setAudioAttributes(attrs).setOnAudioFocusChangeListener { change -> if(change==AudioManager.AUDIOFOCUS_LOSS||change==AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)fail("Audio dijeda oleh Android.") }.build()
         check(manager.requestAudioFocus(focus!!)==AudioManager.AUDIOFOCUS_REQUEST_GRANTED){"Audio focus tidak diberikan."}
