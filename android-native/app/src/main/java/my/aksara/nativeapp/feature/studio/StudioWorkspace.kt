@@ -379,14 +379,14 @@ fun StudioContent() {
             color=AksaraColors.muted)
         Spacer(Modifier.height(7.dp))
         Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-            AksaraButton("Perkemas A.I.",{
+            AksaraButton(if(engine==StudioEngine.LOCAL)"Perkemas Offline" else "Perkemas A.I.",{
                 if(enhancementJob?.isActive!=true) enhancementJob=scope.launch {
                     try {
                         enhancedDraft=if(engine==StudioEngine.LOCAL) StudioRules.lightEnhance(StudioRules.prompt(prompt))
                             else StudioGateway.enhance(prompt)
                         message=if(engine==StudioEngine.LOCAL)"Draf diperkemas tanpa internet." else "Draf A.I. tersedia. Semak dahulu."
                     }
-                    catch(e:Exception){message="Perkemas A.I. memerlukan sambungan: "+(e.message ?: "tidak tersedia")}
+                    catch(e:Exception){message=if(engine==StudioEngine.LOCAL)(e.message ?: "Prompt tempatan tidak sah.") else "Perkemas A.I. memerlukan sambungan: "+(e.message ?: "tidak tersedia")}
                 }
             },Modifier.weight(1f),size=10f,height=38.dp,enabled=enhancementJob?.isActive!=true)
             AksaraButton("Idea Prompt",{showIdeas=true},Modifier.weight(1f),size=10f,height=38.dp)
