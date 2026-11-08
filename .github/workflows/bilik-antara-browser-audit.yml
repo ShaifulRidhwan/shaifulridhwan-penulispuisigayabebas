@@ -12,6 +12,10 @@ on:
       - "bilik-antara-bg-*.webp"
       - "aksara-celestial-static.webp"
       - "scripts/test-bilik-antara-browser.cjs"
+      - "scripts/test-security-lab-browser.cjs"
+      - "security-lab.*"
+      - "security-ci.js"
+      - "aksara-glass-tokens.css"
       - "scripts/test-aksara-voice-v4-browser.cjs"
       - "scripts/test-aksara-voice-v4-live-controls-browser.cjs"
       - "scripts/test-bilik-antara-background.cjs"
@@ -28,6 +32,10 @@ on:
       - "bilik-antara-bg-*.webp"
       - "aksara-celestial-static.webp"
       - "scripts/test-bilik-antara-browser.cjs"
+      - "scripts/test-security-lab-browser.cjs"
+      - "security-lab.*"
+      - "security-ci.js"
+      - "aksara-glass-tokens.css"
       - "scripts/test-bilik-antara-background.cjs"
       - ".github/workflows/bilik-antara-browser-audit.yml"
 permissions:
@@ -73,6 +81,7 @@ jobs:
           node scripts/test-attachments-browser.cjs
           node scripts/test-multi-ai-status-browser.cjs
           node scripts/test-bilik-antara-background.cjs
+          node scripts/test-security-lab-browser.cjs
       - name: Create and test standalone Code Engine HTML
         if: always()
         run: |
