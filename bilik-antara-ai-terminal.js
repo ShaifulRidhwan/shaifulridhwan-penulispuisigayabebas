@@ -384,6 +384,8 @@ function openTerminal(){
  dialog.focus({preventScroll:true});
 }
 trigger.addEventListener("click",openTerminal);
+// Same working terminal exposed as Code Engine Developer Shell, never a fake Linux VM.
+window.addEventListener("aksara:code-developer-shell-open",openTerminal);
 $("aitClose").addEventListener("click",()=>dialog.close());
 dialog.addEventListener("click",e=>{if(e.target===dialog)dialog.close();});
 dialog.addEventListener("close",()=>{trigger.setAttribute("aria-expanded","false");trigger.focus({preventScroll:true});});
