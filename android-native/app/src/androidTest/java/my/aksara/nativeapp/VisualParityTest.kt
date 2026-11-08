@@ -53,7 +53,7 @@ class VisualParityTest {
             assertTrue("$"+"tag right edge clipped: $"+"bounds",bounds.right <= screenWidth-8.dp)
         }
         val out=File(context.getExternalFilesDir(null),"visual").apply{mkdirs()}
-        for(name in listOf("welcome","connection","portal","thinking","attachments","voice-permission","streaming","chat","composer-focused","voice")) {
+        for(name in listOf("welcome","connection","portal","thinking","attachments","voice-permission","streaming","chat","composer-focused","voice","studio")) {
             compose.runOnIdle {screen=name}
             compose.waitForIdle()
             if(name=="voice") {
