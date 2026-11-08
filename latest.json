@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "source": "github-actions",
+  "generatedAt": "2026-11-08T05:00:39.368Z",
+  "commit": "f482b8ed393fe0eb4277ae3eaf3938f1593489c4",
+  "runId": "42448981231",
+  "scanners": {
+    "trivy": {
+      "state": "complete",
+      "counts": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "total": 0
+      }
+    },
+    "semgrep": {
+      "state": "partial",
+      "counts": {
+        "critical": 0,
+        "high": 0,
+        "medium": 112,
+        "low": 1,
+        "total": 113
+      }
+    }
+  },
+  "aggregate": {
+    "critical": 0,
+    "high": 0,
+    "medium": 112,
+    "low": 1,
+    "total": 113
+  },
+  "status": "incomplete",
+  "note": "Workflow berjaya tidak membuktikan aplikasi selamat. Ringkasan awam tidak mendedahkan butiran penemuan; laporan penuh kekal dalam artifact CI."
+}
