@@ -1,6 +1,7 @@
 package my.aksara.nativeapp.feature.voice
 
 import androidx.compose.foundation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
@@ -19,13 +20,19 @@ import my.aksara.nativeapp.core.design.*
 import my.aksara.engine.voice.VoiceState
 import my.aksara.engine.avatar.VoiceAvatarView
 
-@Composable fun VoiceScreen(state:VoiceState,onClose:()->Unit,onMic:()->Unit={},onSpeaker:()->Unit={},onVolume:(Float)->Unit={},mode:String="cahaya",onMode:(String)->Unit={},preview:Boolean=false){
+@Composable fun VoiceScreen(state:VoiceState,onClose:()->Unit,onMic:()->Unit={},onSpeaker:()->Unit={},onVolume:(Float)->Unit={},mode:String="cahaya",onMode:(String)->Unit={},style:String="Bahasa Santai",onStyle:(String)->Unit={},preview:Boolean=false){
     val margins=aksaraDeviceMargins()
     val haze=LocalBackdrop.current
     val voiceBackdrop=remember{HazeState()}
     var modePicker by remember{mutableStateOf(false)};var stylePicker by remember{mutableStateOf(false)}
     var seconds by remember{mutableIntStateOf(0)}
-    LaunchedEffect(state.startedAt){while(state.startedAt!=null){seconds=((System.currentTimeMillis()-state.startedAt!!)/1000).toInt();kotlinx.coroutines.delay(1000)}}
+    val live = !preview && state.startedAt != null && (state.phase=="listening" || state.phase=="speaking")
+    val pulse = rememberInfiniteTransition(label="voice-live")
+    val liveGlow by pulse.animateFloat(initialValue=.35f,targetValue=1f,animationSpec=infiniteRepeatable(animation=tween(900),repeatMode=RepeatMode.Reverse),label="live-glow")
+    LaunchedEffect(state.startedAt){
+        if(state.startedAt==null){seconds=0;return@LaunchedEffect}
+        while(state.startedAt!=null){seconds=((System.currentTimeMillis()-state.startedAt!!)/1000).toInt();kotlinx.coroutines.delay(1000)}
+    }
     BoxWithConstraints(Modifier.fillMaxSize()){
         Box(Modifier.fillMaxSize().hazeSource(voiceBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(),backgroundColor=Color(0xff070911),blurRadius=29.75.dp,noiseFactor=0f)).background(Color(9,16,28,145)))
         CompositionLocalProvider(LocalBackdrop provides voiceBackdrop){
@@ -35,9 +42,22 @@ import my.aksara.engine.avatar.VoiceAvatarView
             AksaraGlassSurface(Modifier.padding(horizontal=margins.horizontal).fillMaxWidth().height(68.dp),radius=21.dp,blur=13.dp,brush=Brush.linearGradient(listOf(Color(240,204,159,23),Color(135,181,211,14),Color(13,22,37,10))),border=Color(244,217,176,30)){
                 Row(Modifier.fillMaxSize().padding(start=10.dp,end=12.dp),verticalAlignment=Alignment.CenterVertically){
                     AksaraGlassSurface(Modifier.width(73.dp).height(40.dp),radius=17.dp,blur=16.dp,brush=cssGradient(137f,listOf(Color(249,224,186,32),Color(128,173,218,18))),border=Color(245,217,173,69),saturation=1.16f){Column(Modifier.align(Alignment.Center),horizontalAlignment=Alignment.CenterHorizontally){AksaraText("AKSARA",size=13f,line=14.95f,weight=650,tracking=1.17f,family=AksaraTypography.heading);AksaraText("VOICE CHAT",size=7f,line=10.5f,tracking=1f,color=AksaraColors.gold)}}
-                    Spacer(Modifier.weight(1f));AksaraText("•  "+if(preview)"PRATONTON UI" else if(state.startedAt!=null)"LIVE" else state.phase.uppercase(),Modifier.widthIn(max=80.dp),size=9f,line=10.8f,weight=600,color=AksaraColors.muted,tracking=.315f,family=AksaraTypography.heading)
-                    Spacer(Modifier.width(5.dp));AksaraText("%02d:%02d".format(seconds/60,seconds%60),size=11f,line=13.2f,color=AksaraColors.muted)
-                    Spacer(Modifier.width(8.dp));AksaraGlassSurface(Modifier.size(38.dp).clickable(onClick=onClose).semantics{contentDescription="Tamatkan sesi Voice Chat"},radius=999.dp,blur=16.dp,brush=cssGradient(137f,listOf(Color(249,224,186,32),Color(128,173,218,18))),border=Color(246,215,179,97)){AksaraIcon("close",Modifier.align(Alignment.Center).size(18.dp),AksaraColors.text)}
+                    Spacer(Modifier.weight(1f))
+                    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(4.dp)){
+                        Canvas(Modifier.size(10.dp)){
+                            if(live)drawCircle(Color(0xffff425b).copy(alpha=liveGlow*.35f),radius=size.minDimension/2)
+                            drawCircle(if(live)Color(0xffff5365) else Color(0xff9da0a4),radius=size.minDimension*(if(live) .29f else .23f))
+                        }
+                        AksaraText(if(preview)"PRATONTON" else if(live)"LIVE" else if(state.phase=="connecting")"CONNECTING" else state.phase.uppercase(),size=9f,line=10.8f,weight=650,color=if(live)Color(0xffff7583) else AksaraColors.muted,family=AksaraTypography.heading)
+                    }
+                    Spacer(Modifier.width(5.dp));AksaraText("%02d:%02d".format(seconds/60,seconds%60),size=10f,line=13.2f,color=AksaraColors.muted)
+                    Spacer(Modifier.width(6.dp))
+                    AksaraGlassSurface(Modifier.width(105.dp).height(38.dp).clickable(onClick=onClose).semantics{contentDescription="End Session: Tamatkan Voice Chat"},radius=999.dp,blur=18.dp,brush=cssGradient(137f,listOf(Color(174,68,80,72),Color(80,38,57,36))),border=Color(250,169,173,130)){
+                        Row(Modifier.align(Alignment.Center),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(5.dp)){
+                            AksaraIcon("end",Modifier.size(14.dp),Color(0xffffb9b7))
+                            AksaraText("End Session",size=9.5f,line=13f,weight=600,color=Color(0xffffd9d5))
+                        }
+                    }
                 }
             }
             Box(Modifier.fillMaxWidth().weight(1f)){
@@ -49,10 +69,10 @@ import my.aksara.engine.avatar.VoiceAvatarView
                 }
             }
             Spacer(Modifier.height(5.dp))
-            AksaraGlassSurface(Modifier.padding(horizontal=side).fillMaxWidth().height(if(compact)150.dp else 155.dp),radius=20.dp,blur=12.dp,brush=Brush.linearGradient(listOf(Color(250,228,196,21),Color(111,163,211,15),Color(15,25,39,29)))){
+            AksaraGlassSurface(Modifier.padding(horizontal=side).fillMaxWidth().height(if(compact)150.dp else 155.dp),radius=20.dp,blur=22.dp,brush=Brush.linearGradient(listOf(Color(250,228,196,15),Color(111,163,211,9),Color(15,25,39,18))),border=Color(245,217,176,65),saturation=1.15f){
                 Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=12.dp)){
                     Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){
-                        Column(Modifier.weight(1f)){AksaraText("Gaya bahasa",size=10f,line=14.5f,color=Color(0xffd3c3ab));Spacer(Modifier.height(4.dp));AksaraButton("Bahasa Santai  ﹀",{stylePicker=true},Modifier.fillMaxWidth(),size=11f,height=42.dp,radius=17.dp)}
+                        Column(Modifier.weight(1f)){AksaraText("Gaya bahasa",size=10f,line=14.5f,color=Color(0xffd3c3ab));Spacer(Modifier.height(4.dp));AksaraButton(style+"  ﹀",{stylePicker=true},Modifier.fillMaxWidth(),size=if(style.length>16)9.5f else 11f,height=42.dp,radius=17.dp)}
                         Column(Modifier.weight(1f)){AksaraText("Thinking Mode",size=10f,line=14.5f,color=Color(0xffd3c3ab));Spacer(Modifier.height(4.dp));AksaraButton(if(mode=="gelap")"Gelap" else "Cahaya",{modePicker=true},Modifier.fillMaxWidth(),icon="brain",size=11f,height=42.dp,radius=17.dp)}
                     }
                     Spacer(Modifier.height(8.dp));AksaraText("Volume",size=10f,line=14.5f,color=Color(0xffd3c3ab));Spacer(Modifier.height(4.dp))
@@ -67,7 +87,7 @@ import my.aksara.engine.avatar.VoiceAvatarView
                 }
             }
             Spacer(Modifier.height(10.dp))
-            AksaraGlassSurface(Modifier.padding(horizontal=side).fillMaxWidth().height(76.dp),radius=20.dp,blur=12.dp,brush=Brush.linearGradient(listOf(Color(250,228,196,21),Color(111,163,211,15),Color(15,25,39,29)))){
+            AksaraGlassSurface(Modifier.padding(horizontal=side).fillMaxWidth().height(76.dp),radius=20.dp,blur=22.dp,brush=Brush.linearGradient(listOf(Color(250,228,196,15),Color(111,163,211,9),Color(15,25,39,18))),border=Color(245,217,176,65),saturation=1.15f){
                 Row(Modifier.align(Alignment.Center),horizontalArrangement=Arrangement.spacedBy(22.dp)){
                     AksaraButton("",onMic,Modifier.width(56.dp).semantics{contentDescription=if(state.mic)"Tutup mikrofon" else "Buka mikrofon"},icon="mic",height=56.dp,radius=999.dp,iconSize=24.dp)
                     AksaraGlassSurface(Modifier.size(56.dp).clickable(onClick=onClose).semantics{contentDescription="Tamatkan sesi"},radius=999.dp,brush=Brush.linearGradient(listOf(Color(189,75,84,214),Color(105,33,52,214))),border=Color(250,170,170,190)){AksaraIcon("end",Modifier.align(Alignment.Center).size(24.dp),Color(0xffffeadb))}
@@ -77,11 +97,20 @@ import my.aksara.engine.avatar.VoiceAvatarView
             Spacer(Modifier.height(9.dp))
         }
         if(modePicker||stylePicker)Box(Modifier.fillMaxSize().background(Color(0,0,0,80)).clickable{modePicker=false;stylePicker=false},contentAlignment=Alignment.Center){
-            AksaraGlassSurface(Modifier.padding(24.dp).fillMaxWidth(),radius=24.dp,blur=27.dp,brush=DialogGradient){Column(Modifier.padding(18.dp)){
-                AksaraText(if(modePicker)"Thinking Mode" else "Gaya bahasa",size=17f,weight=600)
-                Spacer(Modifier.height(16.dp))
-                (if(modePicker)listOf("Cahaya","Gelap") else listOf("Bahasa Santai")).forEach{choice->AksaraButton(choice,{if(modePicker)onMode(choice.lowercase());modePicker=false;stylePicker=false},Modifier.fillMaxWidth());Spacer(Modifier.height(8.dp))}
-            }}
+            AksaraGlassSurface(Modifier.padding(24.dp).fillMaxWidth().heightIn(max=540.dp),radius=24.dp,blur=29.dp,brush=DialogGradient,border=Color(245,217,176,108),saturation=1.14f){
+                Column(Modifier.padding(18.dp).verticalScroll(rememberScrollState())){
+                    AksaraText(if(modePicker)"Thinking Mode" else "Gaya bahasa",size=17f,weight=600)
+                    if(stylePicker){Spacer(Modifier.height(5.dp));AksaraText("Pilih Bahasa Santai atau loghat. Menukar gaya akan sambung semula sesi Live.",size=10f,line=15f,color=AksaraColors.muted)}
+                    Spacer(Modifier.height(16.dp))
+                    (if(modePicker)listOf("Cahaya","Gelap") else VoiceLanguageStyles).forEach{choice->
+                        AksaraButton((if(stylePicker&&choice==style)"✓  " else "")+choice,{
+                            if(modePicker)onMode(choice.lowercase()) else onStyle(choice)
+                            modePicker=false;stylePicker=false
+                        },Modifier.fillMaxWidth(),height=42.dp,radius=16.dp)
+                        Spacer(Modifier.height(8.dp))
+                    }
+                }
+            }
         }
         }
     }
