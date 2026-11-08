@@ -312,6 +312,9 @@ fun StudioContent() {
             if(models.modelPath()==null) {
                 AksaraText("Model GGUF Q4 · "+String.format(Locale.US,"%.2f",SDTurboSpec.sizeBytes/1e9)+" GB",
                     size=11f,color=AksaraColors.muted)
+                Spacer(Modifier.height(5.dp))
+                AksaraText("Sumber: samoudi/sd-turbo-gguf · Stability AI Community License. Sila semak syarat lesen sebelum muat turun.",
+                    size=10f,color=AksaraColors.muted)
                 Spacer(Modifier.height(7.dp))
                 Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){
                     AksaraButton("Pasang model",{
@@ -501,7 +504,7 @@ fun StudioContent() {
                 items.forEach { record ->
                     AksaraGlassSurface(Modifier.weight(1f),radius=15.dp,blur=6.dp) {
                         Column(Modifier.fillMaxWidth().padding(8.dp)) {
-                            val thumb by produceState<Bitmap?>(null,record.id) {value=historyStore.bitmap(record)}
+                            val thumb by produceState<Bitmap?>(null,record.id) {value=historyStore.thumbnail(record)}
                             if(thumb!=null)Image(thumb!!.asImageBitmap(),"Galeri "+record.model,
                                 Modifier.fillMaxWidth().height(114.dp),contentScale=ContentScale.Crop)
                             else Spacer(Modifier.fillMaxWidth().height(114.dp))
