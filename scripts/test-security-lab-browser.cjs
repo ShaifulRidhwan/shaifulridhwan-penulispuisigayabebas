@@ -21,7 +21,7 @@ async function visit(browser,label,viewport){
   const context=await browser.newContext({viewport,deviceScaleFactor:1});
   const page=await context.newPage(),errors=[];
   page.on("pageerror",e=>errors.push(e.message));
-  await page.route("**/raw.githubusercontent.com/**/security-reports/latest.json",r=>r.fulfill({
+  await page.route(/raw\.githubusercontent\.com\/.*\/security-reports\/latest\.json/,r=>r.fulfill({
     status:200,contentType:"application/json",headers:{"access-control-allow-origin":"*"},
     body:JSON.stringify(fakeCI)}));
   await page.route("**/.netlify/functions/aksara-security-audit?*",r=>r.fulfill({
@@ -44,14 +44,14 @@ async function visit(browser,label,viewport){
     await page.keyboard.press("ArrowRight");
     assert.equal(await page.locator("#panel-web").isVisible(),true,label+" keyboard tab");
     await page.locator("#runAudit").click();
-    await page.locator("#scoreText").getByText("62").waitFor();
+    await page.waitForFunction(()=>document.querySelector("#scoreText")?.textContent==="62");
     assert.match(await page.locator("#auditMeta").innerText(),/perlu perhatian/);
     await page.locator("#tab-code").click();
     await page.locator("#codeInput").fill("eval(userInput)");
     await page.locator("#scanCode").click();
     assert.match(await page.locator("#codeSummary").innerText(),/1 penemuan/);
     await page.locator("#tab-reports").click();
-    await page.locator("#ciStatus").getByText(/Penemuan keselamatan dikesan/).waitFor({timeout:6000});
+    await page.waitForFunction(()=>document.querySelector("#ciStatus")?.textContent?.includes("Penemuan keselamatan dikesan"),{timeout:6000});
     assert.equal(await page.locator(".ak-ci-stat").count(),4);
     assert.equal(await page.locator("#saveAuditHistory").isChecked(),false);
     await page.locator("#analyzeSecurity").click();
