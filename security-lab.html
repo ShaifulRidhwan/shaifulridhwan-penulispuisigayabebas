@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ms" data-theme="dark">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#080c15"><meta name="robots" content="noindex,follow">
+<title>AKSARA Security Lab | Bilik Antara</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
+<style>
+:root{color-scheme:dark;font-family:"DM Sans",system-ui,sans-serif;background:#080c15;color:#edf0f9}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse 65% 45% at 20% 0%,#263d5633,transparent),radial-gradient(ellipse 48% 58% at 90% 80%,#553c7630,transparent),#080c15}
+a{color:#c4dcff}a:focus-visible,button:focus-visible,select:focus-visible{outline:2px solid #b0d7f4;outline-offset:3px}
+header,main,footer{width:min(900px,calc(100% - 32px));margin:auto}
+header{padding:24px 0;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font:700 17px "Space Grotesk",sans-serif;letter-spacing:.09em}
+.back{font-size:13px;text-decoration:none;border:1px solid #ffffff25;border-radius:100px;padding:10px 15px;background:#ffffff0b}
+main{padding:22px 0 55px}
+h1,h2,h3{font-family:"Space Grotesk",sans-serif}h1{font-size:clamp(28px,5vw,45px);line-height:1.15;margin:10px 0 12px}h2{font-size:18px;margin:0 0 10px}h3{font-size:14px;margin:0 0 6px}
+.muted{color:#b6c3d7;line-height:1.65}.eyebrow{font-size:11px;font-weight:700;letter-spacing:.18em;color:#b3d3f7}
+.glass{background:linear-gradient(130deg,#ffffff10,#ffffff04);border:1px solid #ffffff25;box-shadow:0 15px 65px #0006,inset 0 1px #ffffff18;backdrop-filter:blur(19px);border-radius:22px;padding:22px;margin-top:18px}
+.hero{padding-bottom:9px}.hero p{max-width:690px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.module{border:1px solid #ffffff1c;border-radius:16px;padding:17px;background:#07142191}
+.module p{font-size:13px;line-height:1.55;color:#bcc8d8;margin:0}
+.tag{font-size:11px;border:1px solid #a8caff50;color:#c3e4f8;border-radius:20px;padding:4px 9px;white-space:nowrap}
+.line{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button,select{font:600 14px "DM Sans",sans-serif;border-radius:11px;padding:11px 14px;border:1px solid #aac9f850;color:#edf3ff;background:#20364b}
+button{cursor:pointer;background:linear-gradient(140deg,#456f96,#2d506a)}
+button:hover:not(:disabled){filter:brightness(1.13)}button:disabled{opacity:.55;cursor:wait}
+select{max-width:100%}.results{display:grid;gap:10px;margin-top:16px}
+.check{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;border:1px solid #ffffff1a;border-radius:12px;padding:11px 13px;background:#ffffff08}
+.mark{font-size:15px;line-height:1.4}.pass{color:#95e4c3}.warn{color:#f1ca92}
+.check strong{display:block;font-size:13px}.check small{display:block;color:#afbdcb;font-size:12px;margin-top:3px}
+#summary{min-height:24px;color:#d4dfef;font-size:13px}
+.resources{display:flex;gap:9px;flex-wrap:wrap;margin-top:13px}.resources a{font-size:13px;text-decoration:none;border:1px solid #ffffff2d;padding:10px 12px;border-radius:10px;background:#ffffff09}
+footer{padding:0 0 35px;color:#8ca0b9;font-size:12px}
+@media(max-width:650px){.grid{grid-template-columns:1fr}.glass{padding:16px}header{padding:17px 0}}
+</style>
+<script defer src="/security-lab.js?v=1"></script>
+</head><body>
+<header><div class="brand">AKSARA <span style="color:#b2d6ef">SECURITY LAB</span></div><a class="back" href="/bilik-antara.html">← Bilik Antara</a></header>
+<main>
+<section class="hero"><div class="eyebrow">CAHAYA / GELAP · DEFENSIVE SECURITY</div><h1>Kenal pasti risiko.<br>Betulkan sebelum terlambat.</h1><p class="muted">Makmal audit keselamatan untuk laman dan kod projek AKSARA. Semakan dijalankan pada aset projek sendiri sahaja, bukan imbasan rangkaian umum. Tidak mengubah chat, Voice Chat atau Code Engine.</p></section>
+<section class="glass" aria-labelledby="auditTitle"><div class="line"><h2 id="auditTitle">HTTP Security Auditor</h2><span class="tag">Passive · Owned pages</span></div>
+<p class="muted">Satu permintaan bagi setiap audit. Semak HTTPS, HSTS, CSP, framing dan header keselamatan sebenar pada laman AKSARA.</p>
+<div class="controls"><label for="page">Halaman</label><select id="page"><option value="/bilik-antara.html">Bilik Antara</option><option value="/studio-antara.html">Studio Antara</option><option value="/antara-cahaya-dan-gelap.html">Antara Cahaya dan Gelap</option><option value="/">Laman Utama</option></select><button id="runAudit" type="button">Jalankan audit</button></div>
+<p id="summary" role="status" aria-live="polite">Belum diuji. Pilih halaman dan mulakan audit.</p><div class="results" id="results" aria-live="polite"></div>
+</section>
+<section class="glass" aria-labelledby="ciTitle"><div class="line"><h2 id="ciTitle">Security CI · Open-source</h2><span class="tag">Code & Dependency</span></div>
+<div class="grid">
+<article class="module"><h3>Trivy</h3><p>Audit dependency, konfigurasi dan isu keselamatan dalam repositori.</p></article>
+<article class="module"><h3>Semgrep</h3><p>Analisis statik untuk mencari corak kod berisiko. Tiada kod projek dihantar kepada Aksara A.I. secara automatik.</p></article>
+</div>
+<div class="resources"><a href="https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/actions/workflows/aksara-security-lab.yml" target="_blank" rel="noopener noreferrer">Lihat audit GitHub Actions</a><a href="https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/security" target="_blank" rel="noopener noreferrer">Security overview</a></div>
+<p class="muted">Laporan CI boleh dimuat turun daripada run yang telah selesai. Statusnya tidak dipalsukan sebagai keputusan audit langsung.</p>
+</section>
+</main>
+<footer>AKSARA A.I. · Alat audit defensif, makmal ujian terkawal dan laporan yang boleh disemak.</footer>
+</body></html>

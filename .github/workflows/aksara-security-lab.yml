@@ -1,0 +1,74 @@
+name: AKSARA Security Lab
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/aksara-security-lab.yml"
+      - "netlify/functions/**"
+      - "bilik-antara*.js"
+      - "security-lab.*"
+      - "package*.json"
+      - "tests/aksara-security-lab.test.cjs"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/aksara-security-lab.yml"
+      - "netlify/functions/**"
+      - "bilik-antara*.js"
+      - "security-lab.*"
+      - "package*.json"
+permissions:
+  contents: read
+concurrency:
+  group: security-lab-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  owned-repo-security:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify passive endpoint and scope controls
+        run: |
+          node --check netlify/functions/aksara-security-audit.js
+          node --check security-lab.js
+          node --test tests/aksara-security-lab.test.cjs
+      - name: Scan owned repository with Trivy
+        uses: aquasecurity/trivy-action@v0.36.0
+        continue-on-error: true
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig
+          format: json
+          output: trivy-report.json
+          severity: HIGH,CRITICAL
+          exit-code: "0"
+      - name: Install Semgrep Community Edition
+        run: |
+          python3 -m venv /tmp/aksara-security-semgrep
+          /tmp/aksara-security-semgrep/bin/pip install --disable-pip-version-check semgrep
+      - name: Static analysis with Semgrep
+        continue-on-error: true
+        env:
+          SEMGREP_SEND_METRICS: "off"
+        run: |
+          /tmp/aksara-security-semgrep/bin/semgrep scan --config p/default --json --output semgrep-report.json \
+            --exclude node_modules --exclude package-lock.json --exclude assets .
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aksara-security-lab-${{ github.run_number }}
+          path: |
+            trivy-report.json
+            semgrep-report.json
+          if-no-files-found: warn
+          retention-days: 14
