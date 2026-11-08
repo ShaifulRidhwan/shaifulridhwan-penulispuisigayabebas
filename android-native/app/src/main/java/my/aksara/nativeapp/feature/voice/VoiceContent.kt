@@ -7,6 +7,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -20,9 +21,32 @@ import my.aksara.nativeapp.core.design.*
 import my.aksara.engine.voice.LiveVoiceClient
 import kotlinx.coroutines.delay
 
+internal val VoiceLanguageStyles=listOf(
+    "Bahasa Santai","Loghat Utara","Loghat Kelantan","Loghat Terengganu",
+    "Loghat Negeri Sembilan","Loghat Perak","Loghat Johor","Loghat Sabah","Loghat Sarawak"
+)
+private fun voiceStyleInstruction(style:String):String=when(style){
+    "Loghat Utara"->"Bercakap dalam loghat Utara Malaysia yang semula jadi, dengan kosa kata dan rentak Kedah, Perlis atau Pulau Pinang apabila sesuai."
+    "Loghat Kelantan"->"Bercakap menggunakan loghat Kelantan yang semula jadi, bukan sekadar menukar satu dua perkataan."
+    "Loghat Terengganu"->"Bercakap menggunakan loghat Terengganu yang semula jadi dan mudah difahami."
+    "Loghat Negeri Sembilan"->"Bercakap menggunakan loghat Negeri Sembilan yang semula jadi dan tidak dibuat-buat."
+    "Loghat Perak"->"Bercakap menggunakan loghat Perak yang semula jadi dan mudah difahami."
+    "Loghat Johor"->"Bercakap menggunakan gaya pertuturan Johor yang santai dan tidak dipaksa."
+    "Loghat Sabah"->"Bercakap menggunakan loghat Sabah yang santai, semula jadi dan hormat kepada kepelbagaian setempat."
+    "Loghat Sarawak"->"Bercakap menggunakan loghat Melayu Sarawak yang santai dan semula jadi."
+    else->"Gunakan Bahasa Melayu Malaysia santai, tidak perlu loghat negeri tertentu."
+}
 @Composable fun VoiceContent(onClose:()->Unit,mode:String="cahaya",onMode:(String)->Unit={}) {
     val context=LocalContext.current
-    val client=remember(mode) {LiveVoiceClient(context,BuildConfig.API_ORIGIN,context.assets.open("voice-identity.txt").bufferedReader().use{it.readText()}+"\nMod aktif: $mode. "+if(mode=="gelap")"Kritikal, mendalam dan sinis secara beralasan." else "Santai, jelas dan responsif.")}
+    val preferences=remember(context){context.getSharedPreferences("aksara_voice",android.content.Context.MODE_PRIVATE)}
+    var style by rememberSaveable {mutableStateOf(preferences.getString("language_style","Bahasa Santai")?.takeIf{it in VoiceLanguageStyles}?:"Bahasa Santai")}
+    // A Gemini Live system instruction is fixed for the socket lifetime.
+    // Reconnect cleanly after a style / Thinking Mode change.
+    val client=remember(mode,style) {
+        val identity=context.assets.open("voice-identity.txt").bufferedReader().use{it.readText()}
+        val modePrompt=if(mode=="gelap")"Kritikal, mendalam dan sinis secara beralasan." else "Santai, jelas dan responsif."
+        LiveVoiceClient(context,BuildConfig.API_ORIGIN,identity+"\nMod aktif: $mode. "+modePrompt+"\nGaya bahasa suara: "+voiceStyleInstruction(style))
+    }
     val state by client.state.collectAsStateWithLifecycle()
     var permissionError by remember {mutableStateOf<String?>(null)}
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {granted -> if(granted)client.start() else permissionError="Izin mikrofon ditolak. Tiada audio dihantar."}
@@ -33,5 +57,5 @@ import kotlinx.coroutines.delay
         onDispose{owner.lifecycle.removeObserver(observer);client.close()}
     }
     LaunchedEffect(client){if(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED)client.start() else permission.launch(Manifest.permission.RECORD_AUDIO)}
-    VoiceScreen(state.copy(message=permissionError?:state.message),onClose={client.close();onClose()},onMic={client.setMic(!state.mic)},onSpeaker={client.setSpeaker(!state.speaker)},onVolume=client::setVolume,mode=mode,onMode=onMode)
+    VoiceScreen(state.copy(message=permissionError?:state.message),onClose={client.close();onClose()},onMic={client.setMic(!state.mic)},onSpeaker={client.setSpeaker(!state.speaker)},onVolume=client::setVolume,mode=mode,onMode=onMode,style=style,onStyle={next->if(next in VoiceLanguageStyles){style=next;preferences.edit().putString("language_style",next).apply()}})
 }
