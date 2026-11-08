@@ -28,15 +28,25 @@ document.querySelectorAll("[data-tab]").forEach(el=>{
 });
 document.querySelectorAll("[data-goto]").forEach(el=>el.addEventListener("click",()=>show(el.dataset.goto)));
 const text=(tag,content,cls)=>{const node=document.createElement(tag);if(cls)node.className=cls;node.textContent=String(content);return node;};
-function record(type,message){
-  activity.unshift({type,message,time:new Date().toISOString()});
-  if(activity.length>30)activity.pop();
+const HISTORY_KEY="aksara-security-session-summary-v1";
+function storeHistory(){
+  if(!$("saveAuditHistory")?.checked)return;
+  try{localStorage.setItem(HISTORY_KEY,JSON.stringify(activity.slice(0,30)));}
+  catch(_){$("analystStatus").textContent="Penyimpanan peranti tidak tersedia. Sejarah kekal dalam sesi ini sahaja.";}
+}
+function renderHistory(){
   const list=$("activityList");list.replaceChildren();
+  if(!activity.length){list.append(text("p","Belum ada audit dalam sesi ini.","ak-empty"));return;}
   for(const entry of activity){
     const row=text("div","","ak-activity");
     row.append(text("span",entry.message),text("time",new Date(entry.time).toLocaleString("ms-MY")));
     list.append(row);
   }
+}
+function record(type,message){
+  activity.unshift({type,message:String(message).slice(0,110),time:new Date().toISOString()});
+  if(activity.length>30)activity.pop();
+  renderHistory();storeHistory();
 }
 function checkCard({id,passed,advice,risk,group}){
   const card=text("div","","ak-check"+(passed?"":" is-warning"));
@@ -237,4 +247,27 @@ $("printReport")?.addEventListener("click",()=>{
   $("analystStatus").textContent="Pilih Save as PDF dalam dialog cetak browser.";
   window.print();
 });
+$("saveAuditHistory")?.addEventListener("change",function(){
+  if(this.checked){
+    try{
+      const saved=JSON.parse(localStorage.getItem(HISTORY_KEY)||"[]");
+      if(Array.isArray(saved)){
+        for(const entry of saved.slice(0,30)){
+          if(typeof entry.message==="string"&&Number.isFinite(Date.parse(entry.time))&&["web","code","report","error"].includes(entry.type))
+            activity.push({type:entry.type,message:entry.message.slice(0,110),time:entry.time});
+        }
+        activity.splice(30);renderHistory();storeHistory();
+      }
+    }catch(_){$("analystStatus").textContent="Sejarah tersimpan tidak dapat dibaca.";}
+  }else{
+    try{localStorage.removeItem(HISTORY_KEY);}catch(_){}
+    $("analystStatus").textContent="Penyimpanan sejarah dimatikan dan data lama pada peranti dikosongkan.";
+  }
+});
+$("clearAuditHistory")?.addEventListener("click",()=>{
+  activity.length=0;renderHistory();
+  try{localStorage.removeItem(HISTORY_KEY);}catch(_){}
+  $("analystStatus").textContent="Sejarah audit dikosongkan.";
+});
+show("overview");
 })();
