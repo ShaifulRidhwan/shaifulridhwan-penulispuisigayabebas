@@ -71,23 +71,6 @@ Platform ini dibangunkan menggunakan:
 - GitHub & GitHub Actions
 - AI routing, context management & fallback systems
 
-**Nota pembangunan:** README ini menjadi rujukan konsep, identiti dan skop projek. Status API dan kemampuan sebenar hendaklah disemak pada konfigurasi serta kod semasa. Sebarang perubahan penting pada Aksara, Studio atau teknologi laman patut diselaraskan di sini supaya dokumentasi tidak ketinggalan.
-
-## 📜 SEJARAH PEMBANGUNAN AKSARA
-
-Catatan keputusan dan pengajaran pembangunan, termasuk [kisah garis kuning 1px yang terlepas daripada dua pemerhati](docs/sejarah-pembangunan-aksara.md). Sejarah ini disimpan sebagai dokumentasi projek, bukan ciri pada UI pengguna.
-
-## 🌐 EXPLORE
-
-- [Gaya Bebas | Laman Utama](https://shaifulridhwan-penulispuisigayabebas.netlify.app/)
-- [Bilik Antara A.I.](https://shaifulridhwan-penulispuisigayabebas.netlify.app/bilik-antara.html)
-- [Studio Antara](https://shaifulridhwan-penulispuisigayabebas.netlify.app/studio-antara.html)
-- [Antara Cahaya dan Gelap](https://shaifulridhwan-penulispuisigayabebas.netlify.app/antara-cahaya-dan-gelap.html)
-- [Perpustakaan AKSARA](https://shaifulridhwan-penulispuisigayabebas.netlify.app/perpustakaan-aksara.html)
-- [Blog Penulisan](https://shaifulridhwanpuisigayabebas.blogspot.com/)
-
----
-
 ## MANIFESTO
 
 Puisi gaya bebas bukan bermaksud menulis tanpa pertimbangan.
