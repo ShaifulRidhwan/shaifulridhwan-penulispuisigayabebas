@@ -32,7 +32,7 @@ class SessionStore(context: Context) {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, bytes.copyOfRange(1, 13)))
         val rows = JSONArray(String(cipher.doFinal(bytes.copyOfRange(13, bytes.size)), Charsets.UTF_8))
-        (0 until rows.length()).map { rows.getJSONObject(it) }.map { Message(it.getString("id"), it.getString("role"), it.getString("text"), it.getLong("at"), it.optBoolean("incomplete"), it.optString("provider").takeIf { id -> id.isNotBlank() }) }
+        (0 until rows.length()).map { rows.getJSONObject(it) }.map { Message(it.getString("id"), it.getString("role"), it.getString("text"), it.getLong("at"), it.optBoolean("incomplete"), it.optString("provider").takeIf { id -> !it.isNull("provider") && id.isNotBlank() && id != "null" }) }
     }
     suspend fun save(messages: List<Message>) = withContext(Dispatchers.IO) {
         val data = JSONArray().apply { messages.takeLast(200).forEach { put(JSONObject().put("id", it.id).put("role", it.role).put("text", it.text.take(40000)).put("at", it.at).put("incomplete", it.incomplete).put("provider", it.provider ?: JSONObject.NULL)) } }

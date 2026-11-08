@@ -399,7 +399,7 @@ class LiveVoiceClient(
                 delay(5000)
                 // Silence/listening and normal output buffering must NEVER trigger recovery.
                 // Only an acknowledged but abandoned model turn is suspect.
-                if (active(id) && state.value.phase == "thinking" && thinkingSince > 0L &&
+                if (active(id) && state.value.phase in setOf("thinking", "speaking") && thinkingSince > 0L &&
                     queuedPackets.get() == 0 && System.currentTimeMillis() - thinkingSince > 95_000 &&
                     System.currentTimeMillis() - lastServerEventAt > 95_000) {
                     recover(id, "Giliran Gemini Live tidak selesai selepas sambungan senyap.", true)
@@ -437,7 +437,7 @@ class LiveVoiceClient(
         tokenCall?.cancel(); tokenCall = null
         connectJob?.cancel(); connectJob = null
         watchdogJob?.cancel(); watchdogJob = null
-        socket?.close(1000, "Transport renewed"); socket = null
+        socket?.cancel(); socket = null
         microphoneJob?.cancel(); microphoneJob = null
         runCatching { recorder?.stop() }; recorder?.release(); recorder = null
         echo?.release(); echo = null

@@ -99,12 +99,19 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     // A single collector owns programmatic scrolling. Dragging suspends following,
     // while composer focus or returning to the bottom explicitly resumes it.
     LaunchedEffect(list) {
-        list.interactionSource.interactions.collect { interaction ->
-            when (interaction) {
-                is DragInteraction.Start -> autoFollow = false
-                is DragInteraction.Stop, is DragInteraction.Cancel -> {
-                    if (!list.canScrollForward) autoFollow = true
+        launch {
+            list.interactionSource.interactions.collect { interaction ->
+                when (interaction) {
+                    is DragInteraction.Start -> autoFollow = false
+                    is DragInteraction.Stop, is DragInteraction.Cancel -> {
+                        if (!list.canScrollForward) autoFollow = true
+                    }
                 }
+            }
+        }
+        launch {
+            snapshotFlow { !list.canScrollForward }.collect { atBottom ->
+                if (atBottom) autoFollow = true
             }
         }
     }
@@ -234,7 +241,9 @@ private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
                         AksaraText("·",size=11f,color=AksaraColors.muted)
                         val provider=ProviderIdentity.of(message.provider)
                         if(provider!=null) {
-                            AksaraIcon(provider.icon,Modifier.size(13.dp),Color(0xffb5cce2))
+                            AksaraIcon(provider.icon,Modifier.size(13.dp).semantics {
+                                contentDescription = provider.name + " AI provider"
+                            },Color(0xffb5cce2))
                             AksaraText(provider.name,size=10f,line=14f,color=AksaraColors.muted)
                         } else AksaraText("Belum disahkan",size=9f,line=13f,color=AksaraColors.muted)
                     }
