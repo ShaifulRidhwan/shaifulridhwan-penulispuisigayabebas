@@ -29,7 +29,7 @@ import my.aksara.nativeapp.feature.tools.*
     onMode:(String)->Unit,onRestore:()->Unit,onClear:()->Unit,onPickAttachment:()->Unit,onAsk:(String)->Unit,onMemory:(Boolean,String)->Unit={_,_->}) {
     // Android Lite: preserve the engines on disk, but expose no inactive entry points.
     if(kind=="code" || kind=="terminal" || kind=="engines") return
-    if(kind=="voice"){VoiceContent(onClose,state.mode,onMode);return}
+    if(kind=="voice"){VoiceContent(onClose,state.mode,onMode,state.messages,state.memoryEnabled,state.memoryNotes);return}
     if(kind=="voice-fixture"){VoiceScreen(VoiceState(phase="preview"),onClose,preview=true);return}
     val margins=aksaraDeviceMargins()
     val haze=LocalBackdrop.current
