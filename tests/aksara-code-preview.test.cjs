@@ -11,7 +11,7 @@ require("./aksara-terminal-core.test.cjs");
 test("Code Engine v0.3 modules parse",()=>{
  for(const name of ["bilik-antara-code-runtime.js","bilik-antara-code-health.js","bilik-antara-code-status.js",
    "bilik-antara-code-workspace.js","bilik-antara-code-chat.js",
-   "bilik-antara-code-agent.js","bilik-antara-code-bridge.js",
+   "bilik-antara-code-agent.js","bilik-antara-code-bridge.js","bilik-antara-code-linux.js",
    "bilik-antara-code-execution.js"]){
   assert.doesNotThrow(()=>new vm.Script(read(name),{filename:name}));
  }
@@ -22,16 +22,30 @@ test("five executable runtimes preserve v0.2 menu and HTML preview",()=>{
  assert.ok(!status.includes("codeEngineProbeAll"),"Old manual probe button must remain removed");
  assert.ok(status.includes('id="codeHtmlPreview"'));
  const list=status.slice(status.indexOf('id="codeRuntimeList"'));
- const markers=['id="codeHtmlPreview"','data-code-language="javascript"',
+ const markers=['id="codeLinuxOpen"','id="codeHtmlPreview"','data-code-language="javascript"',
    'data-code-language="python"','data-code-language="typescript"',
    'data-code-language="sql"','data-code-language="cpp"'];
  const positions=markers.map(m=>list.indexOf(m));
  assert.ok(positions.every((p,i)=>p>=0&&(i===0||p>positions[i-1])),
-  "HTML/CSS preview must be first; runtime order stays unchanged");
+  "Linux developer VM must be the first entry; existing runtime order must remain unchanged");
  assert.ok(status.includes('data-code-language="cpp"'));
  assert.ok(runtime.includes('const LANGUAGES=Object.freeze(["javascript","python","typescript","sql","cpp"]);'));
  assert.ok(workspace.includes('sandbox=""')&&workspace.includes("script-src 'none'"));
  assert.ok(workspace.includes("ensureWebStarter()"));
+});
+test("Linux Developer Sandbox is isolated, lazy and integrated into Code Engine, not Security Lab",()=>{
+ const menu=read("bilik-antara-code-status.js"),html=read("bilik-antara.html"),linux=read("bilik-antara-code-linux.js");
+ assert.ok(menu.indexOf('id="codeLinuxOpen"') < menu.indexOf('id="codeHtmlPreview"'));
+ assert.match(menu,/aksara:code-linux-open/);
+ assert.match(html,/bilik-antara-code-linux\.js\?v=1/);
+ assert.match(html,/bilik-antara-code-linux\.css\?v=1/);
+ assert.ok(!read("security-lab.html").includes('id="tab-linux"'));
+ assert.ok(linux.includes("new V86("));
+ assert.ok(linux.includes('"serial0-output-byte"') && linux.includes('vm.serial0_send(input + "\\n")'));
+ assert.ok(linux.includes('VM_LIBRARY') && linux.includes('function getLibrary()'));
+ assert.doesNotMatch(linux,/network_relay_url\s*:|net_device\s*:/);
+ assert.ok(linux.includes("save_state()") && linux.includes("restore_state(data)"));
+ assert.ok(linux.includes("get_instruction_counter"));
 });
 test("real C++20 Clang WASM on-demand execution stays sandboxed",()=>{
  const runtime=read("bilik-antara-code-runtime.js");
