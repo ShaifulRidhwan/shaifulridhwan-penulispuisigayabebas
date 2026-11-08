@@ -172,6 +172,7 @@ fun StudioContent() {
     var enhancedDraft by remember{mutableStateOf<String?>(null)}
     var enhancementJob by remember{mutableStateOf<Job?>(null)}
     var showIdeas by remember{mutableStateOf(false)}
+    var showAdvanced by rememberSaveable{mutableStateOf(false)}
     var requirementsVisible by remember{mutableStateOf(false)}
     var showViewer by remember{mutableStateOf(false)}
     var confirmDelete by remember{mutableStateOf<String?>(null)}
@@ -211,8 +212,8 @@ fun StudioContent() {
             try{StudioRules.cloud(selectedModel,selectedRatio,selectedQuality,selectedSeed)}
             catch(e:Exception){message=e.message.orEmpty();return}
         } else {
+            if(!localRuntime.available()) {message="APK ini tidak mempunyai enjin JNI SD-Turbo. Gunakan binaan Native SD-Turbo.";return}
             if(models.modelPath()==null) { message="Model belum dipasang dan disahkan.";return }
-            if(!localRuntime.available()) {message="Runtime SD-Turbo JNI tidak terdapat dalam APK ini.";return}
             val warning=models.deviceWarning()
             if(warning!=null){message=warning;return}
         }
@@ -297,7 +298,7 @@ fun StudioContent() {
     Spacer(Modifier.height(14.dp))
 
     if(page==StudioPage.GENERATE.name) {
-        StudioSectionHeader("Enjin Penjanaan","Antara Cloud dan peranti. Prompt serta hasil tidak berubah bila bertukar.")
+        StudioSectionHeader("Enjin Penjanaan","Cloud untuk jana online · Local untuk jana pada peranti")
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
             AksaraButton((if(engine==StudioEngine.CLOUD)"✓ " else "")+"Cloud Engine",
                 {engineName=StudioEngine.CLOUD.name},Modifier.weight(1f),size=11f,
@@ -309,8 +310,10 @@ fun StudioContent() {
         Spacer(Modifier.height(12.dp))
         if(engine==StudioEngine.LOCAL) {
             StudioSectionHeader("SD-Turbo · Local Engine",
-                if(models.modelPath()!=null)"Model dipasang · CPU native · ujian inference diperlukan" else "SD-Turbo belum dipasang")
-            if(models.modelPath()==null) {
+                if(!localRuntime.available())"Runtime Local tidak dipakejkan dalam APK ini" else if(models.modelPath()!=null)"Model dipasang · ujian inferens diperlukan" else "SD-Turbo belum dipasang")
+            if(!localRuntime.available()) {
+                AksaraText("Enjin Local tidak tersedia dalam APK ini. Versi Cloud masih boleh digunakan; untuk Local, gunakan APK Native SD-Turbo.",size=11f,color=AksaraColors.muted)
+            } else if(models.modelPath()==null) {
                 AksaraText("Model GGUF Q4 · "+String.format(Locale.US,"%.2f",SDTurboSpec.sizeBytes/1e9)+" GB",
                     size=11f,color=AksaraColors.muted)
                 Spacer(Modifier.height(5.dp))
@@ -357,12 +360,12 @@ fun StudioContent() {
                     size=11f,color=AksaraColors.muted)
             }
             Spacer(Modifier.height(12.dp))
-        } else {
-            StudioSectionHeader("Model Cloud","Kontrak production Netlify · tiada token pembekal dalam APK")
+        } else if(showAdvanced) {
+            StudioSectionHeader("Model Cloud","Model pilihan untuk penjanaan Cloud")
             Row(horizontalArrangement=Arrangement.spacedBy(5.dp)) {
                 listOf("klein" to "Klein","schnell" to "Schnell","ovh" to "OVH Beta").forEach{(id,label)->
                     AksaraButton((if(model==id)"✓ " else "")+label,{
-                        model=id;prefs.edit().putString("model",id).apply()
+                        model=id;if(id!="klein")ratio="1:1";prefs.edit().putString("model",id).apply()
                     },Modifier.weight(1f),size=10.5f,height=37.dp)
                 }
             }
@@ -376,18 +379,16 @@ fun StudioContent() {
             color=AksaraColors.muted)
         Spacer(Modifier.height(7.dp))
         Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-            AksaraButton("Perkemas A.I.",{
+            AksaraButton(if(engine==StudioEngine.LOCAL)"Perkemas Offline" else "Perkemas A.I.",{
                 if(enhancementJob?.isActive!=true) enhancementJob=scope.launch {
-                    if(engine==StudioEngine.LOCAL && models.modelPath()!=null)
-                        message="Perkemas A.I. memerlukan internet dan pelayan Studio. Mod ringan berfungsi offline."
-                    try {enhancedDraft=StudioGateway.enhance(prompt);message="Draf A.I. tersedia. Semak dahulu."}
-                    catch(e:Exception){message="Perkemas A.I. memerlukan sambungan: "+(e.message ?: "tidak tersedia")}
+                    try {
+                        enhancedDraft=if(engine==StudioEngine.LOCAL) StudioRules.lightEnhance(StudioRules.prompt(prompt))
+                            else StudioGateway.enhance(prompt)
+                        message=if(engine==StudioEngine.LOCAL)"Draf diperkemas tanpa internet." else "Draf A.I. tersedia. Semak dahulu."
+                    }
+                    catch(e:Exception){message=if(engine==StudioEngine.LOCAL)(e.message ?: "Prompt tempatan tidak sah.") else "Perkemas A.I. memerlukan sambungan: "+(e.message ?: "tidak tersedia")}
                 }
             },Modifier.weight(1f),size=10f,height=38.dp,enabled=enhancementJob?.isActive!=true)
-            AksaraButton("Mod ringan",{
-                try{enhancedDraft=StudioRules.lightEnhance(StudioRules.prompt(prompt));message="Draf ringan tempatan, bukan A.I. pelayan."}
-                catch(e:Exception){message=e.message.orEmpty()}
-            },Modifier.weight(1f),size=10f,height=38.dp)
             AksaraButton("Idea Prompt",{showIdeas=true},Modifier.weight(1f),size=10f,height=38.dp)
         }
         if(enhancedDraft!=null) {
@@ -405,6 +406,9 @@ fun StudioContent() {
             }
         }
         Spacer(Modifier.height(12.dp))
+        AksaraButton(if(showAdvanced)"Sembunyi Tetapan Lanjutan" else "Tetapan Lanjutan",
+            {showAdvanced=!showAdvanced},Modifier.fillMaxWidth(),size=10.5f,height=36.dp)
+        Spacer(Modifier.height(9.dp))
         if(engine==StudioEngine.CLOUD) {
             StudioSectionHeader("Nisbah",if(model=="klein")"Nisbah natif FLUX.2 Klein" else "Model ini hanya menyokong 1:1")
             Row(horizontalArrangement=Arrangement.spacedBy(4.dp)){
@@ -415,6 +419,7 @@ fun StudioContent() {
                 }
             }
             Spacer(Modifier.height(10.dp))
+            if(showAdvanced) {
             StudioSectionHeader("Kualiti","Tahap penjanaan yang disokong pelayan")
             Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){
                 listOf("fast" to "Pantas","balanced" to "Seimbang","detail" to "Terperinci").forEach{(id,label)->
@@ -433,11 +438,12 @@ fun StudioContent() {
                 }
                 Spacer(Modifier.height(5.dp))
             }
+            }
         } else {
             StudioSectionHeader("Tetapan Local","512×512 · 1 langkah · CFG natif 1.0 (tanpa guidance)")
         }
         Spacer(Modifier.height(8.dp))
-        if(engine==StudioEngine.LOCAL || model=="klein") {
+        if(showAdvanced && (engine==StudioEngine.LOCAL || model=="klein")) {
             StudioSectionHeader("Seed","Kosongkan untuk rawak, atau masukkan 0–2147483647")
             StudioInput(seedDraft,{if(it.length<=10 && it.all(Char::isDigit))seedDraft=it},
                 "Seed automatik",46.dp)

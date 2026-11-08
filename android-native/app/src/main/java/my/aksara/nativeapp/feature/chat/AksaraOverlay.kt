@@ -49,7 +49,7 @@ import my.aksara.nativeapp.feature.tools.*
         val attachmentSummary="Pilih bahan untuk analisis atau buka kod dalam Workspace. Fail kekal dalam tab ini sehingga dihantar."
         val attachmentLines=measurer.measure(AnnotatedString(attachmentSummary),AksaraTypography.style(12f,18.6f),constraints=Constraints(maxWidth=with(density){(maxWidth-114.dp).roundToPx().coerceAtLeast(1)})).lineCount
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(Color(2,6,13,64)).clickable(onClick=onClose))
-        val height=when(kind){"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->589.594.dp;"thinking"->273.594.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->593.547.dp+(18.59375f*(attachmentLines-3)).dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
+        val height=when(kind){"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->414.dp;"thinking"->273.594.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->593.547.dp+(18.59375f*(attachmentLines-3)).dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal","portal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).clickable(enabled=false){},
@@ -105,10 +105,10 @@ import my.aksara.nativeapp.feature.tools.*
                         "engines" -> AdvancedEnginesContent()
                         "portal" -> {
                             Spacer(Modifier.height(29.dp))
-                            listOf(Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","library"),Triple("Security Lab","Audit laman · Kod · Dependency","security"),Triple("Prestasi A.I","Respons, provider dan kesihatan storan","metrics"),Triple("Sesi & Sejarah","Perbualan, carian dan arkib JSON","sessions"),Triple("Pengetahuan & Rujukan","Karya · Wikipedia · URL · pengiraan","knowledge")).forEach { (name,desc,route) ->
-                                FeatureRow(name,desc,if(route=="security")"shield" else "book") {onNavigate(route)};Spacer(Modifier.height(9.dp))
+                            listOf(Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","library"),Triple("Prestasi A.I","Respons, provider dan kesihatan storan","metrics"),Triple("Sesi & Sejarah","Perbualan, carian dan arkib JSON","sessions")).forEach { (name,desc,route) ->
+                                FeatureRow(name,desc,"book") {onNavigate(route)};Spacer(Modifier.height(9.dp))
                             }
-                            Spacer(Modifier.height(7.dp));MenuRow("Privasi & Tetapan","›",height=57.594.dp){onNavigate("privacy")}
+                            
                         }
                         "thinking" -> {
                             Spacer(Modifier.height(14.dp))
