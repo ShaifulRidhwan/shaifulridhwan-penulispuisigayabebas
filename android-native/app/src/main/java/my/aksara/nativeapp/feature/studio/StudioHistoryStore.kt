@@ -92,6 +92,21 @@ internal class StudioHistoryStore(context: Context) {
     suspend fun bitmap(record: StudioRecord): Bitmap? = withContext(Dispatchers.IO) {
         if (!record.id.matches(Regex("[a-f0-9-]{36}"))) null else BitmapFactory.decodeFile(file(record.id).path)
     }
+    /** Decode persistent originals at thumbnail scale to avoid loading many full images into gallery RAM. */
+    suspend fun thumbnail(record: StudioRecord, maxEdge: Int = 320): Bitmap? = withContext(Dispatchers.IO) {
+        if (!record.id.matches(Regex("[a-f0-9-]{36}"))) return@withContext null
+        val path=file(record.id).path
+        val bounds=BitmapFactory.Options().apply { inJustDecodeBounds=true }
+        BitmapFactory.decodeFile(path,bounds)
+        if (bounds.outWidth<=0 || bounds.outHeight<=0) return@withContext null
+        var sample=1
+        while (bounds.outWidth/sample>maxEdge*2 || bounds.outHeight/sample>maxEdge*2) sample*=2
+        val opts=BitmapFactory.Options().apply {
+            inSampleSize=sample
+            inPreferredConfig=Bitmap.Config.RGB_565
+        }
+        BitmapFactory.decodeFile(path,opts)
+    }
     suspend fun delete(id: String) = withContext(Dispatchers.IO) {
         mutex.withLock {
             if (!id.matches(Regex("[a-f0-9-]{36}"))) return@withLock
