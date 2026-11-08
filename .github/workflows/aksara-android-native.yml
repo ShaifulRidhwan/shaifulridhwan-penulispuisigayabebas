@@ -26,7 +26,7 @@ jobs:
           name: web-design-reference
           path: docs/android-rebuild/visual-comparison/web/
   backend-smoke:
-    if: github.event_name == 'push'
+    # PR and push share a cancel-in-progress group; test in the surviving run.
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
