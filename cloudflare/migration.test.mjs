@@ -30,9 +30,9 @@ test("Security Lab and Linux sandbox ship as complete static preview assets", ()
  }
  const html=text("dist/security-lab.html");
  assert.match(html,/data-tab="linux"/);
- assert.match(html,/src="\\/linux-sandbox\\.js\\?v=1"/);
- assert.match(text("dist/linux-sandbox.js"),/buildroot-bzimage68\\.bin/);
- assert.doesNotMatch(text("dist/linux-sandbox.js"),/network_relay_url\\s*:/);
+ assert.match(html,/src="\/linux-sandbox\.js\?v=1"/);
+ assert.match(text("dist/linux-sandbox.js"),/buildroot-bzimage68\.bin/);
+ assert.doesNotMatch(text("dist/linux-sandbox.js"),/network_relay_url\s*:/);
 });
 
 test("Shared wallpaper stays in Studio/Perpustakaan, while Bilik ships the two selected cinematic WebP files",()=>{
