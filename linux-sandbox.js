@@ -67,7 +67,7 @@
       const V86 = await getLibrary();
       const bootId = ++activeBoot;
       terminal.value = "";
-      // Deliberately omit network_relay_url: v86 creates no virtual network card.
+      // Networking intentionally disabled for the sandbox guest.
       const instance = new V86({
         wasm_path: assets.wasm,
         memory_size: 64 * 1024 * 1024,
