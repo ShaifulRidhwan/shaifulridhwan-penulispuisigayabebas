@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <mutex>
+#include <atomic>
 #include <string>
 #include <android/log.h>
 #include "stable-diffusion.h"
@@ -9,6 +10,9 @@
 // Native CPU-only SD-Turbo inference. No networking, shell commands, or WebView.
 namespace {
 std::mutex inference_mutex;
+std::mutex context_mutex;
+std::atomic<bool> cancel_requested{false};
+sd_ctx_t* active_context = nullptr;
 void throw_java(JNIEnv* env, const char* message) {
     jclass cls = env->FindClass("java/io/IOException");
     if (cls) env->ThrowNew(cls, message);
@@ -19,6 +23,7 @@ extern "C" JNIEXPORT jintArray JNICALL
 Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative(
     JNIEnv* env, jobject /*thiz*/, jstring modelPath, jstring prompt, jlong seed, jint threads) {
     std::lock_guard<std::mutex> lock(inference_mutex);
+    cancel_requested.store(false, std::memory_order_release);
     if (!modelPath || !prompt || threads < 1 || threads > 8) {
         throw_java(env, "Parameter native SD-Turbo tidak sah.");
         return nullptr;
@@ -46,6 +51,15 @@ Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative(
         throw_java(env, "Gagal memuat model SD-Turbo dalam native runtime.");
         return nullptr;
     }
+    if (cancel_requested.load(std::memory_order_acquire)) {
+        free_sd_ctx(ctx);
+        throw_java(env, "Penjanaan tempatan dibatalkan semasa memuat model.");
+        return nullptr;
+    }
+    {
+        std::lock_guard<std::mutex> context_lock(context_mutex);
+        active_context = ctx;
+    }
     sd_img_gen_params_t image_params;
     sd_img_gen_params_init(&image_params);
     image_params.prompt = text.c_str();
@@ -61,13 +75,18 @@ Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative(
     sd_image_t* result = nullptr;
     int output_count = 0;
     const bool generated = generate_image(ctx, &image_params, &result, &output_count);
-    if (!generated || !result || output_count < 1 || !result[0].data || result[0].width != 512 || result[0].height != 512 || result[0].channel < 3) {
+    {
+        std::lock_guard<std::mutex> context_lock(context_mutex);
+        active_context = nullptr;
+    }
+    const bool interrupted = cancel_requested.load(std::memory_order_acquire);
+    if (interrupted || !generated || !result || output_count < 1 || !result[0].data || result[0].width != 512 || result[0].height != 512 || result[0].channel < 3) {
         if (result) {
             free(result[0].data);
             free(result);
         }
         free_sd_ctx(ctx);
-        throw_java(env, "SD-Turbo tidak memulangkan imej 512x512 yang sah.");
+        throw_java(env, interrupted ? "Penjanaan tempatan dibatalkan." : "SD-Turbo tidak memulangkan imej 512x512 yang sah.");
         return nullptr;
     }
     const int count = 512 * 512;
@@ -88,4 +107,12 @@ Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative(
     free(result);
     free_sd_ctx(ctx);
     return output;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_cancelNative(
+    JNIEnv* /*env*/, jobject /*thiz*/) {
+    cancel_requested.store(true, std::memory_order_release);
+    std::lock_guard<std::mutex> context_lock(context_mutex);
+    if (active_context) sd_cancel_generation(active_context, SD_CANCEL_ALL);
 }
