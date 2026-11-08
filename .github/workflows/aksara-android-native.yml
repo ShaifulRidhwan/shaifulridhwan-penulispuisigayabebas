@@ -43,6 +43,14 @@ jobs:
           printf '%s  %s\n' '20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78' "$RUNNER_TEMP/aksara-gradle.zip" | sha256sum --check
           unzip -q "$RUNNER_TEMP/aksara-gradle.zip" -d "$RUNNER_TEMP/aksara-gradle"
           echo "$RUNNER_TEMP/aksara-gradle/gradle-8.13/bin" >> "$GITHUB_PATH"
+      - name: Seed verified Kotlin compiler cache (official release asset)
+        run: |
+          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/JetBrains/kotlin/releases/assets/598630357' -o "$RUNNER_TEMP/kotlin-compiler-embeddable-2.1.21.jar"
+          printf '%s  %s\n' '67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49' "$RUNNER_TEMP/kotlin-compiler-embeddable-2.1.21.jar" | sha256sum --check
+          compiler_hash=$(sha1sum "$RUNNER_TEMP/kotlin-compiler-embeddable-2.1.21.jar" | cut -d' ' -f1)
+          compiler_cache="$HOME/.gradle/caches/modules-2/files-2.1/org.jetbrains.kotlin/kotlin-compiler-embeddable/2.1.21/$compiler_hash"
+          mkdir -p "$compiler_cache"
+          cp "$RUNNER_TEMP/kotlin-compiler-embeddable-2.1.21.jar" "$compiler_cache/"
       - run: gradle --no-daemon testDebugUnitTest :engine:runtime:testDebugUnitTest assembleDebug assembleDebugAndroidTest
         working-directory: android-native
       - uses: actions/upload-artifact@v4
