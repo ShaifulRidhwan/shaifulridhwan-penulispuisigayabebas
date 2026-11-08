@@ -34,7 +34,13 @@ adb shell am instrument -w -r -e class my.aksara.nativeapp.NativeCodeWebViewTest
 cat "$out/android/browser-code-tests.txt"
 if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/browser-code-tests.txt"; then failures=$((failures+1)); fi
 if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/native-engine-tests.txt"; then failures=$((failures+1)); fi
-for spec in '360 800' '390 844' '412 915'; do
+adb shell am instrument -w -r -e class my.aksara.nativeapp.StudioV2UiTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/studio-ui-tests.txt" || failures=$((failures+1))
+cat "$out/android/studio-ui-tests.txt"
+if ! grep -Eq '^OK \\([0-9]+ tests?\\)' "$out/android/studio-ui-tests.txt"; then failures=$((failures+1)); fi
+adb shell am instrument -w -r -e class my.aksara.nativeapp.StudioHistoryAndroidTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/studio-history-tests.txt" || failures=$((failures+1))
+cat "$out/android/studio-history-tests.txt"
+if ! grep -Eq '^OK \\([0-9]+ tests?\\)' "$out/android/studio-history-tests.txt"; then failures=$((failures+1)); fi
+for spec in '360 800' '390 844' '393 852' '412 915'; do
   read -r width height <<< "$spec"
   adb shell wm size "${width}x${height}"
   adb shell wm density 160
