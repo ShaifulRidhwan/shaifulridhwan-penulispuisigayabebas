@@ -39,6 +39,7 @@ import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.platform.Attachment
 import my.aksara.nativeapp.core.platform.AttachmentReader
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.collect
 import java.time.*
 import java.time.format.DateTimeFormatter
 
