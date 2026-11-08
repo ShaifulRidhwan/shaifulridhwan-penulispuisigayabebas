@@ -1,0 +1,89 @@
+name: AKSARA SD-Turbo arm64 native (experimental)
+on:
+  workflow_dispatch:
+  push:
+    branches: ['rebuild/aksara-android-native-v1']
+    paths:
+      - '.github/workflows/aksara-sdturbo-native.yml'
+      - 'android-native/app/src/main/cpp/**'
+      - 'android-native/app/build.gradle.kts'
+      - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/studio/**'
+permissions:
+  contents: read
+concurrency:
+  group: aksara-sdturbo-native-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-arm64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      AKSARA_CI_COMPILER_REPOSITORY: /tmp/aksara-compiler-repository
+      CMAKE_BUILD_PARALLEL_LEVEL: '2'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;27.2.12479018 cmake;3.22.1'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Fetch and verify pinned stable-diffusion.cpp and ggml source
+        shell: bash
+        run: |
+          set -euo pipefail
+          dest='android-native/app/src/main/cpp/third_party/stable-diffusion.cpp'
+          mkdir -p "$(dirname "$dest")"
+          git clone --depth=1 --branch master-955-b7a74e6 https://github.com/leejet/stable-diffusion.cpp.git "$dest"
+          test "$(git -C "$dest" rev-parse HEAD)" = 'b7a74e68d7409924f57fb52d3d721772d1084853'
+          git -C "$dest" submodule update --init --depth=1 ggml
+          test "$(git -C "$dest/ggml" rev-parse HEAD)" = 'd25b121ce1d6ae0c7e62ad080460d9fc1e46dd93'
+          test -f "$dest/include/stable-diffusion.h"
+          test -f "$dest/ggml/CMakeLists.txt"
+      - name: Bootstrap checksum-verified Gradle
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/gradle/gradle-distributions/releases/assets/232373824' -o "$RUNNER_TEMP/aksara-gradle.zip"
+          printf '%s  %s\n' '20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78' "$RUNNER_TEMP/aksara-gradle.zip" | sha256sum --check
+          unzip -q "$RUNNER_TEMP/aksara-gradle.zip" -d "$RUNNER_TEMP/aksara-gradle"
+          echo "$RUNNER_TEMP/aksara-gradle/gradle-8.13/bin" >> "$GITHUB_PATH"
+      - name: Prepare checksum-verified Kotlin compiler repository
+        shell: bash
+        run: |
+          set -euo pipefail
+          compiler_dir="$AKSARA_CI_COMPILER_REPOSITORY/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21"
+          mkdir -p "$compiler_dir"
+          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/JetBrains/kotlin/releases/assets/598630357' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar"
+          curl --fail --location --retry 3 'https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21/kotlin-compiler-embeddable-2.1.21.pom' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom"
+          printf '%s  %s\n' '67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar" 'dbbf8ac2550d5b1ae2a627f204f28b16f9271e36c44d8994aa3b139cbf70e45a' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom" | sha256sum --check
+      - name: Build native arm64 APK and unit tests
+        working-directory: android-native
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle --no-daemon --init-script ci/compiler-repository.init.gradle -PenableSdTurboNative=true -Pandroid.injected.build.abi=arm64-v8a :app:assembleDebug :app:testDebugUnitTest
+      - name: Verify JNI symbols and produce binary evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          apk=android-native/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$apk"
+          mkdir -p android-native/native-evidence
+          unzip -Z1 "$apk" | grep -Fx 'lib/arm64-v8a/libaksara_sdturbo.so'
+          unzip -p "$apk" 'lib/arm64-v8a/libaksara_sdturbo.so' > "$RUNNER_TEMP/libaksara_sdturbo.so"
+          readelf -Ws "$RUNNER_TEMP/libaksara_sdturbo.so" | grep 'Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative'
+          readelf -Ws "$RUNNER_TEMP/libaksara_sdturbo.so" | grep 'Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_cancelNative'
+          sha256sum "$apk" > android-native/native-evidence/apk.sha256
+          printf 'Pin: stable-diffusion.cpp b7a74e68d7409924f57fb52d3d721772d1084853\nggml d25b121ce1d6ae0c7e62ad080460d9fc1e46dd93\nABI: arm64-v8a\nInference benchmark: NOT EXECUTED (requires compatible physical device + verified 1.85 GB model)\nOffline mode: NOT VERIFIED\n' > android-native/native-evidence/build-proof.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: aksara-sdturbo-native-arm64-experimental
+          path: |
+            android-native/app/build/outputs/apk/debug/app-debug.apk
+            android-native/native-evidence/
+            android-native/app/build/reports/tests/
+          if-no-files-found: warn
