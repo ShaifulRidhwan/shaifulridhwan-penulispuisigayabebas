@@ -21,7 +21,7 @@ menu.className="multi-ai-dialog code-engine-dialog";
 menu.setAttribute("aria-labelledby","codeEngineMenuTitle");
 menu.setAttribute("aria-describedby","codeEngineMenuDescription");
 menu.innerHTML=[
- '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Runtime Health</strong><p id="codeEngineMenuDescription">Lima runtime kod serta Linux VM untuk pembangunan setempat, dimuatkan hanya atas permintaan. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.</p><p id="codeHealthCheckedAt" class="code-health-freshness" role="status">Not checked yet</p></div><button type="button" id="codeMenuClose" aria-label="Close Code Engine">×</button></div>',
+ '<div class="multi-ai-head"><div><strong id="codeEngineMenuTitle">Code Engine · Runtime Health</strong><p id="codeEngineMenuDescription">Lima runtime untuk menjalankan kod termasuk C++20. Linux VM untuk pembangunan setempat, dimuatkan hanya atas permintaan. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.</p><p id="codeHealthCheckedAt" class="code-health-freshness" role="status">Not checked yet</p></div><button type="button" id="codeMenuClose" aria-label="Close Code Engine">×</button></div>',
  '<div id="codeEngineActivity" class="code-health-activity" role="status" aria-live="polite" hidden></div>',
  '<div class="multi-ai-list" id="codeRuntimeList" aria-label="Runtime availability and verified execution status">',
   '<button type="button" class="multi-ai-row code-menu-language" id="codeLinuxOpen"><span class="multi-ai-provider">🐧 Linux · Developer Sandbox</span><span class="multi-ai-state is-muted" id="codeLinuxState">On Demand · VM</span></button>',
