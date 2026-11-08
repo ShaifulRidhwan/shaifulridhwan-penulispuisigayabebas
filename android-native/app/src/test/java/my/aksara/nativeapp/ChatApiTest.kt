@@ -33,7 +33,10 @@ class ChatApiTest {
         }
     }
     @Test fun dnsFailureReportsBackendUnreachableNotGeminiOffline()=runBlocking{
-        val deadDns=OkHttpClient.Builder().dns { throw java.net.UnknownHostException("No A/AAAA") }.build()
+        val deadDns=OkHttpClient.Builder().dns(object:okhttp3.Dns{
+            override fun lookup(hostname:String):List<java.net.InetAddress> =
+                throw java.net.UnknownHostException("No A/AAAA")
+        }).build()
         val e=runCatching{
             ChatApi(BackendRoutes.PRODUCTION,deadDns).post(BackendRoutes.CHAT,JSONObject().put("providerStatus",true))
         }.exceptionOrNull()
