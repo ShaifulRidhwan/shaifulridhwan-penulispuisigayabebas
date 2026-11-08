@@ -16,7 +16,9 @@ import java.util.concurrent.TimeUnit
 
 sealed interface ChatEvent {
     data class Delta(val text: String) : ChatEvent
-    data class Done(val reply: String, val provider: String, val sources: List<Pair<String, String>>) : ChatEvent
+    data class Done(val reply: String, val provider: String, val sources: List<Pair<String, String>>,
+        val model: String = "", val researchStatus: String = "", val toolsUsed: List<String> = emptyList(),
+        val evidenceLevel: String = "no_external_evidence", val outputFormat: String = "") : ChatEvent
 }
 class ApiFailure(val status: Int, message: String, val retryAfter: String? = null) : IOException(message)
 object Ndjson {
@@ -28,9 +30,25 @@ object Ndjson {
             "done" -> {
                 val reply = item.optString("reply").ifBlank { throw IOException("Jawapan pelayan kosong.") }
                 val refs = item.optJSONArray("sources") ?: JSONArray()
-                ChatEvent.Done(reply, item.optString("provider"), (0 until refs.length()).mapNotNull { i ->
-                    refs.optJSONObject(i)?.let { s -> s.optString("url").takeIf { it.startsWith("https://") }?.let { s.optString("title", it) to it } }
-                })
+                val urls = (0 until refs.length()).mapNotNull { i ->
+                    refs.optJSONObject(i)?.let { s -> s.optString("url").takeIf { uri ->
+                        runCatching {
+                            val u = java.net.URI(uri)
+                            u.scheme == "https" && u.host != null && u.userInfo == null
+                        }.getOrDefault(false)
+                    }?.let { link -> s.optString("title", link).take(180) to link } }
+                }
+                val tools = item.optJSONArray("toolsUsed") ?: JSONArray()
+                ChatEvent.Done(reply, item.optString("provider").take(64), urls,
+                    model = item.optString("model").take(100),
+                    researchStatus = item.optString("researchStatus").take(65),
+                    toolsUsed = (0 until tools.length()).mapNotNull { index ->
+                        tools.optString(index).takeIf { it.isNotBlank() }?.take(70)
+                    },
+                    evidenceLevel = item.optJSONObject("evidenceProfile")?.optString("level")?.take(60)
+                        ?: "no_external_evidence",
+                    outputFormat = item.optString("outputFormat").take(30)
+                )
             }
             "error" -> throw ApiFailure(item.optInt("status", 502), item.optString("error", "Permintaan gagal."))
             else -> null // forward-compatible heartbeat / metadata frames

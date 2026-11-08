@@ -1,0 +1,70 @@
+package my.aksara.nativeapp.feature.chat
+
+import my.aksara.nativeapp.core.storage.Message
+import java.util.Locale
+
+/**
+ * Request-local adapter of the web Context Manager 3.0 selection contract.
+ * The server remains authoritative for reasoning, retrieval and provider routing.
+ */
+object ContextPolicy {
+    private val stop=setOf("yang","dan","atau","untuk","dalam","adalah","dengan","saya",
+        "aku","kau","kamu","awak","pada","dari","tentang","apa","bagaimana","kenapa","itu","ini")
+    private val correction=Regex("maksud aku|bukan begitu|bukan macam tu|sebenarnya|pembetulan|jangan ubah|jangan usik|aku pilih|keputusan akhir|kekalkan|yang aku nak",RegexOption.IGNORE_CASE)
+    private val universal=Regex("bahasa|gaya|format|panggil|sentiasa|kekalkan|jangan|elakkan|pilihan|aku suka|aku tak suka|aku nak",RegexOption.IGNORE_CASE)
+    private fun tokens(text:String):Set<String> = Regex("[\\p{L}\\p{N}]{3,}").findAll(text.lowercase(Locale.forLanguageTag("ms-MY")))
+        .map { it.value }.filter { it !in stop }.take(72).toSet()
+    fun selectHistory(messages:List<Message>,question:String,maxChars:Int=28_000):List<Message> {
+        val rows=messages.filter { !it.incomplete && it.text.isNotBlank() && it.role in setOf("user","assistant") }.takeLast(70)
+        if(rows.isEmpty())return emptyList()
+        val chosen=mutableSetOf<Int>()
+        var remaining=maxChars.coerceIn(1000,60_000)
+        fun include(i:Int):Boolean {
+            if(rows[i].text.length > remaining || chosen.contains(i))return false
+            chosen.add(i);remaining -= rows[i].text.length
+            return true
+        }
+        val recentStart=(rows.size-7).coerceAtLeast(0)
+        for(i in rows.lastIndex downTo recentStart)include(i)
+        val query=tokens(question)
+        val followUp=Regex("^(lagi|teruskan|sambung|yang tadi|yang tu|itu|dia|kenapa|bukan tu|pastu|lepas tu|jadi|macam mana|okay|ya)\\b",RegexOption.IGNORE_CASE)
+            .containsMatchIn(question.trim())
+        val candidates=(0 until recentStart).mapNotNull { i ->
+            val row=rows[i]
+            val overlap=tokens(row.text).count { it in query }
+            val correctionHit=row.role=="user"&&correction.containsMatchIn(row.text)
+            if(overlap==0&&!correctionHit)null else
+                i to (overlap*6+(if(correctionHit)if(followUp)12 else 5 else 0)+i.toDouble()/rows.size)
+        }.sortedWith(compareByDescending<Pair<Int,Double>> { it.second }.thenByDescending { it.first })
+        for((i,_) in candidates.take(9))include(i)
+        // Backend boundedHistory allows 24 messages at most; don't send a larger false context.
+        return rows.filterIndexed { i,_ -> i in chosen }.takeLast(24)
+    }
+    fun summaryWindow(size:Int,summarizedThrough:Int):IntRange? {
+        val start=summarizedThrough.coerceIn(0,size)
+        if(size<20 || size-start<12)return null
+        val end=minOf(size-12,start+18)
+        if(end-start<4)return null
+        return start until end
+    }
+    fun selectMemory(notes:String,question:String):String {
+        val raw=notes.trim().take(8000)
+        if(raw.length<=1400)return raw
+        val target=tokens(question)
+        val pieces=raw.split(Regex("\\n+")).map { it.trim() }.filter { it.isNotEmpty() }.take(80)
+        val ranked=pieces.mapIndexed { i,item ->
+            val overlap=tokens(item).count { it in target }
+            val global=universal.containsMatchIn(item)
+            Triple(i,item,overlap*8+(if(global)4 else 0))
+        }.filter { it.third>0 }.sortedWith(compareByDescending<Triple<Int,String,Int>> { it.third }.thenBy { it.first })
+        var left=2800
+        val selection=mutableListOf<Pair<Int,String>>()
+        for((i,item,_) in ranked) {
+            if(item.length>left)continue
+            selection.add(i to item)
+            left -= item.length+2
+            if(selection.size>=8||left<80)break
+        }
+        return selection.sortedBy { it.first }.joinToString("\n\n") { it.second }
+    }
+}

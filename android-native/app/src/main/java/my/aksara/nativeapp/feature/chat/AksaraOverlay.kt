@@ -26,7 +26,7 @@ import my.aksara.nativeapp.feature.library.NovelContent
 import my.aksara.nativeapp.feature.tools.*
 
 @Composable fun AksaraOverlay(kind:String,state:ChatState,onClose:()->Unit,onNavigate:(String)->Unit,onRefresh:()->Unit,
-    onMode:(String)->Unit,onRestore:()->Unit,onClear:()->Unit,onPickAttachment:()->Unit,onAsk:(String)->Unit) {
+    onMode:(String)->Unit,onRestore:()->Unit,onClear:()->Unit,onPickAttachment:()->Unit,onAsk:(String)->Unit,onMemory:(Boolean,String)->Unit={_,_->}) {
     if(kind=="voice"){VoiceContent(onClose,state.mode,onMode);return}
     if(kind=="voice-fixture"){VoiceScreen(VoiceState(phase="preview"),onClose,preview=true);return}
     val margins=aksaraDeviceMargins()
@@ -137,6 +137,27 @@ import my.aksara.nativeapp.feature.tools.*
                             Spacer(Modifier.height(16.dp))
                             listOf("Foto & Kamera" to "JPG, PNG, WebP, GIF · 64 MB","Video" to "MP4, WebM · 128 MB","Dokumen" to "PDF, DOCX, TXT, MD, CSV, JSON","Audio" to "MP3, M4A, WAV, OGG, WebM","Kod" to "HTML, CSS, JS, TS, Python, SQL, C++").forEach { (name,desc) -> FeatureRow(name,desc,"attach"){onPickAttachment();onClose()};Spacer(Modifier.height(8.dp)) }
                             AksaraText("Dokumen teks sehingga 100 KB. Imej, PDF, audio dan video inline sehingga 3.6 MB; format serta had backend tetap terpakai.",size=10f,color=AksaraColors.muted)
+                        }
+                        "privacy" -> {
+                            var draft by remember(state.memoryNotes) { mutableStateOf(state.memoryNotes) }
+                            Spacer(Modifier.height(12.dp))
+                            AksaraText("Memori pilihan: "+if(state.memoryEnabled)"AKTIF" else "DIMATIKAN",size=12f,weight=600)
+                            Spacer(Modifier.height(7.dp))
+                            AksaraText("Nota hanya dipilih untuk dihantar jika memori diaktifkan. Sesi chat tersimpan ialah fungsi berasingan.",size=11f,color=AksaraColors.muted)
+                            Spacer(Modifier.height(10.dp))
+                            AksaraGlassSurface(Modifier.fillMaxWidth().height(160.dp),radius=13.dp){
+                                BasicTextField(draft,{if(it.length<=8000)draft=it},Modifier.fillMaxSize().padding(12.dp),
+                                    textStyle=AksaraTypography.style(12f,18f))
+                            }
+                            Spacer(Modifier.height(10.dp))
+                            AksaraButton(if(state.memoryEnabled)"Matikan memori" else "Aktifkan memori",
+                                {onMemory(!state.memoryEnabled,draft)},Modifier.fillMaxWidth())
+                            Spacer(Modifier.height(8.dp))
+                            AksaraButton("Simpan nota pilihan",{onMemory(state.memoryEnabled,draft)},Modifier.fillMaxWidth())
+                            Spacer(Modifier.height(8.dp))
+                            AksaraButton("Padam nota memori",{draft="";onMemory(false,"")},Modifier.fillMaxWidth())
+                            Spacer(Modifier.height(10.dp))
+                            AksaraText("Memori OFF secara lalai dan disulitkan dalam Android Keystore. Tiada penyegerakan silang peranti.",size=10f,color=AksaraColors.muted)
                         }
                         "sessions" -> {
                             Spacer(Modifier.height(20.dp));AksaraText("${state.archive.size} mesej tersimpan setempat dan disulitkan.",size=12f)

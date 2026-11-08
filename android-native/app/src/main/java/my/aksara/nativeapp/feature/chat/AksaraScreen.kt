@@ -38,6 +38,7 @@ import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.platform.Attachment
 import my.aksara.nativeapp.core.platform.AttachmentReader
+import org.json.JSONArray
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collect
 import java.time.*
@@ -47,26 +48,42 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
 @Composable fun AksaraApp(vm: ChatViewModel = viewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var attachment by remember { mutableStateOf<Attachment?>(null) }
+    var attachments by remember { mutableStateOf<List<Attachment>>(emptyList()) }
     var attachmentError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if(uri != null) scope.launch {
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isNotEmpty()) scope.launch {
             try {
-                attachment = AttachmentReader.read(context,uri)
-            } catch(e: Exception) { attachmentError = e.message }
+                require(uris.size <= 4 && attachments.size + uris.size <= 4) { "Maksimum 4 lampiran bagi satu mesej." }
+                val fresh = uris.map { AttachmentReader.read(context, it) }
+                val selected = attachments + fresh
+                val encoded = selected.sumOf { it.media?.optString("data")?.length ?: 0 }
+                val textSize = selected.sumOf { it.text.length }
+                require(encoded <= 5_000_000 && textSize <= 250_000) {
+                    "Gabungan lampiran terlalu besar. Had payload backend mesti dipatuhi."
+                }
+                attachments = selected
+                attachmentError = null
+            } catch (e: Exception) { attachmentError = e.message ?: "Lampiran gagal dibaca." }
         }
     }
-    AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q -> vm.send(q, attachment?.text.orEmpty(), attachment?.name.orEmpty(), attachment?.media); attachment = null },
-        onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
-        onRestore = vm::restore, onClear = vm::clearScreen, attachmentName = attachment?.name,
+    AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
+        val textDocs = attachments.filter { it.text.isNotBlank() }
+        val text = textDocs.joinToString("\n\n") { "[DOKUMEN: " + it.name + "]\n" + it.text + "\n[TAMAT DOKUMEN]" }
+        val name = textDocs.joinToString(", ") { it.name }.take(100)
+        val media = JSONArray().apply { attachments.mapNotNull { it.media }.forEach { put(it) } }
+        if(vm.send(q, text, name, media)) attachments = emptyList()
+    }, onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
+        onMemory = vm::setMemory,
+        onRestore = vm::restore, onClear = vm::clearScreen,
+        attachmentName = attachments.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name }?.take(150),
         onPickAttachment = { picker.launch(arrayOf("text/*", "application/json", "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/octet-stream", "image/*", "audio/*", "video/*")) },
         onDismissError = { attachmentError = null; vm.dismissError() })
 }
 
 @Composable fun AksaraScreen(state: ChatState, onSend: (String)->Unit = {}, onStop: ()->Unit = {}, onRefresh: ()->Unit = {},
     onJourney: (String)->Unit = onSend, onMode: (String)->Unit = {}, onRestore: ()->Unit = {}, onClear: ()->Unit = {}, attachmentName: String? = null,
-    onPickAttachment: ()->Unit = {}, onDismissError: ()->Unit = {}, initialOverlay: String? = null,
+    onPickAttachment: ()->Unit = {}, onDismissError: ()->Unit = {}, onMemory: (Boolean,String)->Unit = {_,_->}, initialOverlay: String? = null,
     fixedTimestamp: Long? = null) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
@@ -191,7 +208,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
             }
             if(overlay!=null) CompositionLocalProvider(LocalBackdrop provides scene) {
-                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onClear=onClear,onPickAttachment=onPickAttachment,onAsk={question->overlay=null;onSend(question)})
+                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question)})
             }
         }
     }

@@ -112,6 +112,18 @@ import java.util.concurrent.TimeUnit
             AksaraText(value,size=11f,color=AksaraColors.gold)
         }
     };Spacer(Modifier.height(7.dp))}
+    AksaraText("Kontrak kecerdasan backend",size=12f,weight=600)
+    listOf(
+        "Ringkasan sesi" to state.summaryStatus,
+        "Memori pilihan" to if(state.memoryEnabled)"Aktif" else "Dimatikan",
+        "Provider respons terakhir" to state.lastProvider.ifBlank { "Belum disahkan" },
+        "Status penyelidikan" to state.lastResearchStatus.ifBlank { "Belum diuji" },
+        "Tahap bukti (laporan backend)" to state.lastEvidenceLevel,
+        "Tool dilaporkan digunakan" to state.lastToolsUsed.joinToString(", ").ifBlank { "Tiada yang dilaporkan" }
+    ).forEach { (name,value) ->
+        AksaraText(name+": "+value,size=10.5f,color=AksaraColors.muted)
+        Spacer(Modifier.height(5.dp))
+    }
     AksaraText("Penyedia backend",size=12f,weight=600)
     state.providers.forEach{(id,status)->AksaraText(id+" · "+status,size=11f,color=AksaraColors.muted)}
     Spacer(Modifier.height(10.dp))
