@@ -27,6 +27,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlinx.coroutines.withContext
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.core.network.BackendRoutes
@@ -43,6 +46,19 @@ import java.util.concurrent.TimeUnit
 internal object StudioGateway {
     private val client = OkHttpClient.Builder().connectTimeout(15,TimeUnit.SECONDS)
         .readTimeout(80,TimeUnit.SECONDS).callTimeout(85,TimeUnit.SECONDS).build()
+    private suspend fun awaitResponse(request:Request):okhttp3.Response = suspendCancellableCoroutine { continuation ->
+        val call=client.newCall(request)
+        continuation.invokeOnCancellation { call.cancel() }
+        call.enqueue(object:okhttp3.Callback {
+            override fun onFailure(call:okhttp3.Call, error:IOException) {
+                if(continuation.isActive)continuation.resumeWithException(error)
+            }
+            override fun onResponse(call:okhttp3.Call,response:okhttp3.Response) {
+                if(continuation.isActive)continuation.resume(response)
+                else response.close()
+            }
+        })
+    }
     private val endpoint get() = BackendRoutes.configuredOrigin + BackendRoutes.STUDIO_IMAGE
     data class Result(val bitmap:Bitmap,val model:String,val elapsed:Long,val width:Int,val height:Int)
     suspend fun generate(prompt:String,model:String,style:String,quality:String,ratio:String,seed:Long?=null):Result = withContext(Dispatchers.IO) {
@@ -56,7 +72,7 @@ internal object StudioGateway {
             .put("style",style).put("quality",quality).put("ratio",ratio).apply { if(seed!=null) put("seed",seed) }
         val request=Request.Builder().url(endpoint).post(body.toString().toRequestBody("application/json".toMediaType()))
             .header("Accept","application/json").header("Origin",BackendRoutes.configuredOrigin).build()
-        val response=try{client.newCall(request).execute()}catch(e:IOException){throw BackendNetworkErrors.translate(e,BackendRoutes.configuredOrigin)}
+        val response=try{awaitResponse(request)}catch(e:IOException){throw BackendNetworkErrors.translate(e,BackendRoutes.configuredOrigin)}
         response.use{ response ->
             val raw=response.body?.string()?.takeIf{it.length<=7_000_000}
                 ?: throw IOException("Respons Studio kosong atau terlalu besar.")
@@ -80,7 +96,7 @@ internal object StudioGateway {
         val req=Request.Builder().url(BackendRoutes.configuredOrigin + BackendRoutes.STUDIO_ENHANCE)
             .post(JSONObject().put("prompt",clean).toString().toRequestBody("application/json".toMediaType()))
             .header("Accept","application/json").build()
-        client.newCall(req).execute().use { response ->
+        awaitResponse(req).use { response ->
             val json=JSONObject(response.body?.string() ?: "{}")
             if(!response.isSuccessful)throw IOException(json.optString("error","Perkemas A.I. gagal."))
             val enhanced=json.optString("prompt")
