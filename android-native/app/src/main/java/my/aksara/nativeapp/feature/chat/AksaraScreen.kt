@@ -60,7 +60,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q -> vm.send(q, attachment?.text.orEmpty(), attachment?.name.orEmpty(), attachment?.media); attachment = null },
         onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
         onRestore = vm::restore, onClear = vm::clearScreen, attachmentName = attachment?.name,
-        onPickAttachment = { picker.launch(arrayOf("text/*", "application/json", "application/pdf", "image/*", "audio/*", "video/*")) },
+        onPickAttachment = { picker.launch(arrayOf("text/*", "application/json", "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/octet-stream", "image/*", "audio/*", "video/*")) },
         onDismissError = { attachmentError = null; vm.dismissError() })
 }
 

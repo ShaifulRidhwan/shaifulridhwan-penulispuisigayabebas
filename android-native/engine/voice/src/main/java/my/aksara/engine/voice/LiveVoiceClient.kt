@@ -98,7 +98,10 @@ class LiveVoiceClient(private val context:Context,private val origin:String,priv
         check(input.state==AudioRecord.STATE_INITIALIZED){"AudioRecord tidak bersedia."};recorder=input
         if(AcousticEchoCanceler.isAvailable())echo=AcousticEchoCanceler.create(input.audioSessionId)?.apply{enabled=true}
         if(NoiseSuppressor.isAvailable())noise=NoiseSuppressor.create(input.audioSessionId)?.apply{enabled=true}
-        val output=AudioTrack.Builder().setAudioAttributes(attrs).setAudioFormat(AudioFormat.Builder().setSampleRate(24000).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build()).setBufferSizeInBytes(maxOf(4800,AudioTrack.getMinBufferSize(24000,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT)*2)).setTransferMode(AudioTrack.MODE_STREAM).build()
+        // Gemini's output must follow the Android media volume slider, not the often-quiet call-volume stream.
+        // Keep VOICE_COMMUNICATION for microphone/AEC and retain the full-duplex route.
+        val playbackAttrs=AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
+        val output=AudioTrack.Builder().setAudioAttributes(playbackAttrs).setAudioFormat(AudioFormat.Builder().setSampleRate(24000).setChannelMask(AudioFormat.CHANNEL_OUT_MONO).setEncoding(AudioFormat.ENCODING_PCM_16BIT).build()).setBufferSizeInBytes(maxOf(4800,AudioTrack.getMinBufferSize(24000,AudioFormat.CHANNEL_OUT_MONO,AudioFormat.ENCODING_PCM_16BIT)*2)).setTransferMode(AudioTrack.MODE_STREAM).build()
         track=output;output.setVolume(state.value.volume);output.play()
         scope.launch {for((epoch,bytes) in audio){if(!running.get())break;if(epoch==generation&&state.value.speaker)output.write(bytes,0,bytes.size,AudioTrack.WRITE_BLOCKING)}}
         input.startRecording()

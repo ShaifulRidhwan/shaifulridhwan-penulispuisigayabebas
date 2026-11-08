@@ -41,7 +41,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         } catch (e: Exception) { if (e !is CancellationException) mutable.update { it.copy(providers = listOf("Connection" to "unavailable")) } }
     }
     fun journey(question: String) {
-        if(state.value.busy)return
+        if(state.value.busy || !state.value.loaded)return
         viewModelScope.launch {
             val rows = withContext(Dispatchers.IO) { JSONArray(getApplication<Application>().assets.open("journey.json").bufferedReader().use {it.readText()}) }
             val normal: (String)->String = {it.lowercase().replace(Regex("[^a-z0-9]"),"")}
@@ -49,7 +49,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             val row=rows.getJSONObject(i)
             val messages=state.value.messages+Message(UUID.randomUUID().toString(),"user",row.getString("question"))+Message(UUID.randomUUID().toString(),"assistant",row.getString("answer"))
             mutable.update {it.copy(messages=messages,nextJourney=rows.optJSONObject(i+1)?.optString("question"))}
-            if(storageReadable)try{store.save(messages);mutable.update{it.copy(archive=messages)}}catch(_:Exception){mutable.update{it.copy(error="Sesi belum berjaya disimpan.")}}
+            if(storageReadable)try{val combined=mergeSessionArchive(state.value.archive,messages);store.save(combined);mutable.update{it.copy(archive=combined)}}catch(_:Exception){mutable.update{it.copy(error="Sesi belum berjaya disimpan.")}}
         }
     }
     fun send(question: String, documentText: String = "", documentName: String = "", media: JSONObject? = null) {
@@ -76,7 +76,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             finally {
                 mutable.update { it.copy(busy = false) }
                 withContext(NonCancellable) {
-                    try { check(storageReadable) {"Fail sesi asal belum dapat dibaca."}; store.save(state.value.messages); mutable.update { it.copy(archive = it.messages) } }
+                    try { check(storageReadable) {"Fail sesi asal belum dapat dibaca."}; val combined=mergeSessionArchive(state.value.archive,state.value.messages); store.save(combined); mutable.update { it.copy(archive = combined) } }
                     catch (_: Exception) { mutable.update { it.copy(error = "Jawapan ada di skrin tetapi sesi belum berjaya disimpan.") } }
                 }
             }
