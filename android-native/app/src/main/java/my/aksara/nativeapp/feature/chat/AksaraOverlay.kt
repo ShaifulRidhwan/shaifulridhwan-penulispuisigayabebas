@@ -25,6 +25,7 @@ import my.aksara.engine.voice.VoiceState
     onMode:(String)->Unit,onRestore:()->Unit,onClear:()->Unit,onPickAttachment:()->Unit) {
     if(kind=="voice"){VoiceContent(onClose,state.mode,onMode);return}
     if(kind=="voice-fixture"){VoiceScreen(VoiceState(phase="preview"),onClose,preview=true);return}
+    val margins=aksaraDeviceMargins()
     val haze=LocalBackdrop.current
     val modalBackdrop=remember{HazeState()}
     var notice by remember(kind) {mutableStateOf<String?>(null)}
@@ -43,9 +44,9 @@ import my.aksara.engine.voice.VoiceState
         val attachmentLines=measurer.measure(AnnotatedString(attachmentSummary),AksaraTypography.style(12f,18.6f),constraints=Constraints(maxWidth=with(density){(maxWidth-114.dp).roundToPx().coerceAtLeast(1)})).lineCount
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(Color(2,6,13,64)).clickable(onClick=onClose))
         val height=when(kind){"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->589.594.dp;"thinking"->273.594.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->593.547.dp+(18.59375f*(attachmentLines-3)).dp;"voice-permission"->280.594.dp;else->minOf(650.dp,h-60.dp)}
-        val side=when(kind){"terminal","portal"->14.dp;"voice-permission"->15.dp;else->17.dp}
+        val side=when(kind){"terminal","portal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
-        AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).fillMaxWidth().heightIn(max=h-28.dp).height(height).clickable(enabled=false){},
+        AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).clickable(enabled=false){},
             radius=if(kind=="voice-permission")24.dp else 19.dp,blur=if(kind=="voice-permission")27.dp else 4.dp,
             brush=if(kind=="voice-permission")Brush.linearGradient(listOf(Color(29,39,53,97),Color(10,17,30,77),Color(25,38,54,102))) else DialogGradient,border=Color(244,217,176,94)) {
             Column(Modifier.fillMaxSize().padding(if(kind=="voice-permission")18.dp else if(kind=="terminal")15.dp else 16.dp).then(if(kind=="code")Modifier else Modifier.verticalScroll(scroll))) {

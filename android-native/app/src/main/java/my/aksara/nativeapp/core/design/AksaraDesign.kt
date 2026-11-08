@@ -23,6 +23,37 @@ import androidx.compose.ui.layout.ContentScale
 import dev.chrisbanes.haze.*
 import my.aksara.nativeapp.R
 
+
+/**
+ * Safe glass-frame gutters for immersive Android screens.
+ *
+ * Compose safeDrawing handles cutouts and visible system bars; these additional
+ * bounded gutters protect border strokes from the *physical* rounded display
+ * corners, which safeDrawing does not describe. Background art remains edge-to-edge.
+ */
+data class AksaraDeviceMargins(val horizontal: Dp, val top: Dp, val bottom: Dp)
+@Composable fun aksaraDeviceMargins(): AksaraDeviceMargins {
+    val view = androidx.compose.ui.platform.LocalView.current
+    val density = androidx.compose.ui.platform.LocalDensity.current.density
+    val insets = if (android.os.Build.VERSION.SDK_INT >= 31) view.rootWindowInsets else null
+    val topRadiusPx = if (android.os.Build.VERSION.SDK_INT >= 31) maxOf(
+        insets?.getRoundedCorner(android.view.RoundedCorner.POSITION_TOP_LEFT)?.radius ?: 0,
+        insets?.getRoundedCorner(android.view.RoundedCorner.POSITION_TOP_RIGHT)?.radius ?: 0
+    ) else 0
+    val bottomRadiusPx = if (android.os.Build.VERSION.SDK_INT >= 31) maxOf(
+        insets?.getRoundedCorner(android.view.RoundedCorner.POSITION_BOTTOM_LEFT)?.radius ?: 0,
+        insets?.getRoundedCorner(android.view.RoundedCorner.POSITION_BOTTOM_RIGHT)?.radius ?: 0
+    ) else 0
+    val topRadiusDp = topRadiusPx / density
+    val bottomRadiusDp = bottomRadiusPx / density
+    val widestRadiusDp = maxOf(topRadiusDp, bottomRadiusDp)
+    return AksaraDeviceMargins(
+        horizontal = maxOf(12f, minOf(20f, widestRadiusDp * .35f)).dp,
+        top = maxOf(6f, minOf(13f, topRadiusDp * .25f)).dp,
+        bottom = maxOf(12f, minOf(20f, bottomRadiusDp * .36f)).dp
+    )
+}
+
 object AksaraColors {
     val text = Color(0xfffff4e4)
     val gold = Color(0xffe6c58b)

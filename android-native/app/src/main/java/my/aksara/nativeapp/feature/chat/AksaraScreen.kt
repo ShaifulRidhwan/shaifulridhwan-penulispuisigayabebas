@@ -69,6 +69,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
     var draft by rememberSaveable { mutableStateOf("") }
     val context = LocalContext.current
+    val margins = aksaraDeviceMargins()
     val focus = LocalFocusManager.current
     val list = rememberLazyListState()
     val keyboard = LocalSoftwareKeyboardController.current
@@ -79,9 +80,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             val viewportHeight = maxHeight
             Box(Modifier.fillMaxSize().hazeSource(scene)) {
             AksaraBackground(Modifier.fillMaxSize().hazeSource(backdrop))
-            Column(Modifier.fillMaxSize()) {
-                Spacer(Modifier.height(10.dp))
-                AksaraGlassSurface(Modifier.fillMaxWidth().height(50.dp).testTagCompat("topbar"), radius=17.dp, blur=12.dp,
+            Column(Modifier.fillMaxSize().safeDrawingPadding().padding(start=margins.horizontal,end=margins.horizontal,top=margins.top,bottom=margins.bottom)) {
+                Spacer(Modifier.height(5.dp))
+                AksaraGlassSurface(Modifier.fillMaxWidth().height(50.dp).testTagCompat("topbar"), radius=20.dp, blur=12.dp,
                     brush=cssGradient(115f,listOf(Color(8,14,24,102),Color(17,26,40,51))),saturation=1.15f, border=Color(247,226,196,64)) {
                     Row(Modifier.fillMaxSize().padding(horizontal=10.dp), verticalAlignment=Alignment.CenterVertically) {
                         AksaraGlassSurface(Modifier.height(31.dp), radius=13.dp) {
@@ -100,8 +101,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         }
                     }
                 }
-                Box(Modifier.weight(1f).padding(start=7.dp,end=7.dp,top=viewportHeight*.011f,bottom=7.dp)) {
-                    AksaraGlassSurface(Modifier.fillMaxSize().testTagCompat("conversation"),radius=18.dp,blur=3.dp,saturation=1.06f,
+                Box(Modifier.weight(1f).padding(top=viewportHeight*.011f)) {
+                    AksaraGlassSurface(Modifier.fillMaxSize().testTagCompat("conversation"),radius=22.dp,blur=3.dp,saturation=1.06f,
                         brush=Brush.linearGradient(listOf(Color(15,17,25,51),Color(10,14,25,33),Color(7,10,18,56))),border=Color(253,214,150,145)) {
                         Column(Modifier.fillMaxSize().padding(1.dp)) {
                             BoxWithConstraints(Modifier.fillMaxWidth().height(54.dp).testTagCompat("conversation-head")) {
@@ -140,7 +141,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             if(state.error!=null) Row(Modifier.fillMaxWidth().clickable(onClick=onDismissError).padding(8.dp)) { AksaraText(state.error,size=11f,color=Color(0xffe7a08e)) }
                             if(attachmentName!=null) AksaraText("📎 $attachmentName",Modifier.padding(horizontal=12.dp),size=11f)
                             Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(6,9,15,8),Color(6,8,14,71)))).padding(start=9.dp,end=9.dp,top=8.dp,bottom=10.dp)) {
-                                AksaraGlassSurface(Modifier.fillMaxWidth().heightIn(min=if(state.messages.isEmpty())58.dp else 60.dp).testTagCompat("composer-form"),radius=16.dp,
+                                AksaraGlassSurface(Modifier.fillMaxWidth().heightIn(min=if(state.messages.isEmpty())58.dp else 60.dp).testTagCompat("composer-form"),radius=18.dp,
                                     brush=Brush.linearGradient(listOf(Color(25,35,49,17),Color(8,15,28,11))),border=Color(245,217,176,82)) {
                                     Row(Modifier.fillMaxWidth().padding(horizontal=8.dp,vertical=7.dp),verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(5.dp)) {
                                         Box(Modifier.size(42.dp).clip(RoundedCornerShape(13.dp)).clickable {open("attachments")}.semantics {contentDescription="Lampir fail"},contentAlignment=Alignment.Center) {AksaraIcon("attach",Modifier.size(21.dp))}

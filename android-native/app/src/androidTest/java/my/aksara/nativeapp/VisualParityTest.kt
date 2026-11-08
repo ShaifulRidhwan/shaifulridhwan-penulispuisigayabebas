@@ -16,6 +16,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.Assert.*
 import java.io.File
+import androidx.compose.ui.unit.dp
 
 class VisualParityTest {
     @get:Rule val compose = createAndroidComposeRule<VisualTestActivity>()
@@ -45,6 +46,14 @@ class VisualParityTest {
         compose.onNodeWithText("×").performClick()
         compose.onNodeWithText("Code Engine · Runtime Health").assertDoesNotExist()
         val context=InstrumentationRegistry.getInstrumentation().targetContext
+        // Critical chrome must not be clipped by immersive rounded Android corners.
+        // Keep background full-bleed while checking the interactive glass geometry.
+        val screenWidth=(device.displayWidth/context.resources.displayMetrics.density).dp
+        for(tag in listOf("topbar","conversation","composer-form")) {
+            val bounds=compose.onNodeWithTag(tag).getUnclippedBoundsInRoot()
+            assertTrue("$"+"tag left edge clipped: $"+"bounds",bounds.left >= 8.dp)
+            assertTrue("$"+"tag right edge clipped: $"+"bounds",bounds.right <= screenWidth-8.dp)
+        }
         val out=File(context.getExternalFilesDir(null),"visual").apply{mkdirs()}
         for(name in listOf("welcome","connection","code","terminal","portal","thinking","attachments","voice-permission","streaming","chat","composer-focused","voice")) {
             compose.runOnIdle {screen=name}

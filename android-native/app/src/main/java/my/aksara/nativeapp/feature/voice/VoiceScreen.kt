@@ -20,6 +20,7 @@ import my.aksara.engine.voice.VoiceState
 import my.aksara.engine.avatar.VoiceAvatarView
 
 @Composable fun VoiceScreen(state:VoiceState,onClose:()->Unit,onMic:()->Unit={},onSpeaker:()->Unit={},onVolume:(Float)->Unit={},mode:String="cahaya",onMode:(String)->Unit={},preview:Boolean=false){
+    val margins=aksaraDeviceMargins()
     val haze=LocalBackdrop.current
     val voiceBackdrop=remember{HazeState()}
     var modePicker by remember{mutableStateOf(false)};var stylePicker by remember{mutableStateOf(false)}
@@ -29,9 +30,9 @@ import my.aksara.engine.avatar.VoiceAvatarView
         Box(Modifier.fillMaxSize().hazeSource(voiceBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(),backgroundColor=Color(0xff070911),blurRadius=29.75.dp,noiseFactor=0f)).background(Color(9,16,28,145)))
         CompositionLocalProvider(LocalBackdrop provides voiceBackdrop){
         val compact=maxWidth<=360.dp
-        val side=if(compact)8.dp else 11.dp
-        Column(Modifier.fillMaxSize()){
-            AksaraGlassSurface(Modifier.fillMaxWidth().height(68.dp),radius=0.dp,blur=13.dp,brush=Brush.linearGradient(listOf(Color(240,204,159,23),Color(135,181,211,14),Color(13,22,37,10))),border=Color(244,217,176,30)){
+        val side=maxOf(if(compact)8.dp else 11.dp,margins.horizontal)
+        Column(Modifier.fillMaxSize().safeDrawingPadding().padding(top=margins.top,bottom=margins.bottom)){
+            AksaraGlassSurface(Modifier.padding(horizontal=margins.horizontal).fillMaxWidth().height(68.dp),radius=21.dp,blur=13.dp,brush=Brush.linearGradient(listOf(Color(240,204,159,23),Color(135,181,211,14),Color(13,22,37,10))),border=Color(244,217,176,30)){
                 Row(Modifier.fillMaxSize().padding(start=10.dp,end=12.dp),verticalAlignment=Alignment.CenterVertically){
                     AksaraGlassSurface(Modifier.width(73.dp).height(40.dp),radius=17.dp,blur=16.dp,brush=cssGradient(137f,listOf(Color(249,224,186,32),Color(128,173,218,18))),border=Color(245,217,173,69),saturation=1.16f){Column(Modifier.align(Alignment.Center),horizontalAlignment=Alignment.CenterHorizontally){AksaraText("AKSARA",size=13f,line=14.95f,weight=650,tracking=1.17f,family=AksaraTypography.heading);AksaraText("VOICE CHAT",size=7f,line=10.5f,tracking=1f,color=AksaraColors.gold)}}
                     Spacer(Modifier.weight(1f));AksaraText("•  "+if(preview)"PRATONTON UI" else if(state.startedAt!=null)"LIVE" else state.phase.uppercase(),Modifier.widthIn(max=80.dp),size=9f,line=10.8f,weight=600,color=AksaraColors.muted,tracking=.315f,family=AksaraTypography.heading)
