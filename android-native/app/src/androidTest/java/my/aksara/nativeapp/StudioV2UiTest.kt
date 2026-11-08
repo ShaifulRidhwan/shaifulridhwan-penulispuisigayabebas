@@ -30,8 +30,8 @@ class StudioV2UiTest {
         compose.setContent { AksaraScreen(ChatState(loaded=true),initialOverlay="studio") }
         compose.onNodeWithText("Idea Prompt").performScrollTo().performClick()
         compose.onNodeWithText("1. A cinematic mountain valley",substring=true).performClick()
-        compose.onNodeWithContentDescription("Apa yang kau nak lihat?").assertTextContains("A cinematic mountain valley")
+        compose.onNodeWithContentDescription("Apa yang kau nak lihat?").assertTextContains("A cinematic mountain valley", substring = true)
         compose.onNodeWithContentDescription("Apa yang kau nak lihat?").performTextInput(" at night")
-        compose.onNodeWithContentDescription("Apa yang kau nak lihat?").assertTextContains("at night")
+        compose.onNodeWithContentDescription("Apa yang kau nak lihat?").assertTextContains("at night", substring = true)
     }
 }
