@@ -3,10 +3,24 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+// Keep default Cloud APK build reproducible; enable heavy native runtime with -PenableSdTurboNative=true.
+val enableSdTurboNative = providers.gradleProperty("enableSdTurboNative").orNull == "true"
 android {
+    if (enableSdTurboNative) {
+        ndkVersion = "27.2.12479018"
+        externalNativeBuild {
+            cmake {
+                path = file("src/main/cpp/CMakeLists.txt")
+                version = "3.22.1"
+            }
+        }
+    }
     namespace = "my.aksara.nativeapp"
     compileSdk = 35
     defaultConfig {
+        if (enableSdTurboNative) {
+            ndk { abiFilters.addAll(listOf("arm64-v8a", "x86_64")) }
+        }
         applicationId = "my.aksara.nativeapp"
         minSdk = 31
         targetSdk = 35
