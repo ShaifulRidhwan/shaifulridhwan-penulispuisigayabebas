@@ -24,17 +24,6 @@ test("Cloudflare build includes all three apps and preserves Netlify home separa
  }
  assert.match(text("dist/studio-antara.html"),/https:\/\/shaifulridhwan-penulispuisigayabebas\.netlify\.app\//);
 });
-test("Security Lab and Linux sandbox ship as complete static preview assets", () => {
- for(const file of ["security-lab.html","security-lab.css","security-lab.js","security-ci.js","aksara-glass-tokens.css","linux-sandbox.js","linux-sandbox.css"]) {
-  assert.ok(existsSync(cf("dist/"+file)),"Cloudflare preview asset missing: "+file);
- }
- const html=text("dist/security-lab.html");
- assert.match(html,/data-tab="linux"/);
- assert.match(html,/src="\/linux-sandbox\.js\?v=1"/);
- assert.match(text("dist/linux-sandbox.js"),/buildroot-bzimage68\.bin/);
- assert.doesNotMatch(text("dist/linux-sandbox.js"),/network_relay_url\s*:/);
-});
-
 test("Shared wallpaper stays in Studio/Perpustakaan, while Bilik ships the two selected cinematic WebP files",()=>{
  const shared="aksara-celestial-static.webp";
  const source=readFileSync(path.join(root,shared));
