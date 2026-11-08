@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.os.StatFs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -60,6 +61,9 @@ internal class LocalModelManager(private val context: Context) {
         if (info.totalMem < SDTurboSpec.minPublishedRam)
             return "RAM peranti di bawah saranan 4 GB untuk model Q4."
         if (info.lowMemory) return "Android mengesan tekanan memori. Cuba lagi selepas menutup aplikasi berat."
+        val power=context.getSystemService(Context.POWER_SERVICE) as PowerManager
+        if (power.currentThermalStatus >= PowerManager.THERMAL_STATUS_SEVERE)
+            return "Peranti terlalu panas untuk inferens SD-Turbo. Sejukkan peranti dahulu."
         return null
     }
 
