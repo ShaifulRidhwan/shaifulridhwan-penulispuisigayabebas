@@ -26,11 +26,23 @@ class AttributionAndLiteUiTest {
         compose.onNodeWithContentDescription("Terminal").assertDoesNotExist()
     }
 
+    @Test fun onlySiapaAkuIsShownAsTheWelcomeStarter() {
+        compose.setContent { AksaraScreen(ChatState(loaded=true)) }
+        compose.onNodeWithText("Siapa Aku").assertExists()
+        compose.onNodeWithText("The Coder Poet").assertDoesNotExist()
+    }
+
     @Test fun composerRemainsFocusableAndPortalHidesExperimentalEngines() {
         compose.setContent { AksaraScreen(ChatState(loaded = true)) }
         compose.onNodeWithContentDescription("Tulis mesej untuk Aksara A.I.").performClick().assertIsFocused()
         compose.onNodeWithText("PORTAL").performClick()
         compose.onNodeWithText("Game · Linux · SD-Turbo").assertDoesNotExist()
         compose.onNodeWithText("Studio · Jana Imej").assertExists()
+        compose.onNodeWithText("Novel · Perpustakaan AKSARA").assertExists()
+        compose.onNodeWithText("Prestasi A.I").assertExists()
+        compose.onNodeWithText("Sesi & Sejarah").assertExists()
+        compose.onNodeWithText("Security Lab").assertDoesNotExist()
+        compose.onNodeWithText("Pengetahuan & Rujukan").assertDoesNotExist()
+        compose.onNodeWithText("Privasi & Tetapan").assertDoesNotExist()
     }
 }

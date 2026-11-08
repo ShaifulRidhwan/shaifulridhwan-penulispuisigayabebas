@@ -14,7 +14,7 @@ class StudioV2UiTest {
         compose.setContent { AksaraScreen(ChatState(loaded=true),initialOverlay="studio") }
         compose.onNodeWithText("STUDIO ANTARA  V2").assertExists()
         compose.onNodeWithText("Local · SD-Turbo",substring=true).performClick()
-        compose.onNodeWithText("SD-Turbo belum dipasang").assertExists()
+        compose.onNodeWithText("Runtime Local tidak dipakejkan dalam APK ini").assertExists()
         compose.onNodeWithText("Cloud Engine",substring=true).performClick()
         compose.onNodeWithText("Galeri").performClick()
         compose.onNodeWithText("Galeri Studio").assertExists()
@@ -24,6 +24,9 @@ class StudioV2UiTest {
         compose.onNodeWithText("Backend Cloud:",substring=true).assertExists()
         compose.onNodeWithText("Jana Imej").performClick()
         compose.onNodeWithText("Enjin Penjanaan").assertExists()
+        compose.onNodeWithText("Tetapan Lanjutan").performScrollTo().performClick()
+        compose.onNodeWithText("Model Cloud").assertExists()
+        compose.onNodeWithText("Sembunyi Tetapan Lanjutan").performScrollTo().performClick()
     }
 
     @Test fun ideaPromptIsExplicitlySelectableAndEditable() {
