@@ -1,0 +1,15 @@
+/* AKSARA Linux Sandbox: shared glass tokens with isolated selectors */
+.ak-tabs{grid-template-columns:repeat(5,minmax(0,1fr))}
+.ak-linux-card{border-radius:22px;padding:22px;background:linear-gradient(140deg,rgba(17,24,36,.48),rgba(10,15,26,.36));backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(219,231,255,.16);box-shadow:inset 0 1px rgba(255,255,255,.07),0 20px 50px rgba(0,0,0,.13)}
+.ak-linux-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.ak-linux-actions{display:flex;gap:8px;flex-wrap:wrap}
+.ak-linux-badge{font:600 11px "Space Grotesk",sans-serif;letter-spacing:.08em;color:#c6e7d1}
+.ak-linux-status{font-size:13px;color:#c7d3df;margin:0 0 12px;min-height:22px}
+.ak-linux-status[data-state=ready]{color:#b6e8bf}
+.ak-linux-status[data-state=error]{color:#ffb9b9}
+.ak-linux-terminal{display:block;box-sizing:border-box;width:100%;min-height:345px;max-height:65vh;resize:vertical;padding:18px;border:1px solid rgba(183,203,226,.24);border-radius:18px;outline:none;background:rgba(2,7,12,.86);color:#d4f0d3;font:13px/1.48 ui-monospace,SFMono-Regular,Consolas,monospace;caret-color:#cbecc7;white-space:pre;overflow:auto;tab-size:4}
+.ak-linux-terminal:focus{border-color:rgba(230,211,162,.65);box-shadow:0 0 0 2px rgba(226,205,151,.12)}
+.ak-linux-note{font-size:12px;color:#b5bfcc;margin:13px 0 0;line-height:1.65}
+.ak-linux-note a{color:#f4d9a7}
+@media(max-width:720px){.ak-tabs{grid-template-columns:repeat(5,minmax(0,1fr))}.ak-tab{font-size:9px;padding:11px 2px}.ak-linux-card{padding:12px;border-radius:18px}.ak-linux-terminal{min-height:310px;font-size:12px;padding:12px}.ak-linux-actions .ak-button{padding:10px 9px;font-size:11px}}
+@media print{#panel-linux{display:none!important}}
