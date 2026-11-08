@@ -44,7 +44,7 @@
  function controlsSync() {
   const alive = Boolean(vm && emulatorReady);
   controls.boot.disabled = starting || (Boolean(vm) && !paused);
-  controls.boot.textContent = paused ? "▶ Sambung" : "▶ Boot Linux";
+  controls.boot.textContent = starting ? "Memuatkan…" : paused ? "▶ Sambung" : vm ? (shellReady ? "Linux aktif" : "Boot sedang berjalan…") : "▶ Boot Linux";
   controls.pause.disabled = starting || !alive || paused;
   controls.restart.disabled = starting || !alive;
   controls.stop.disabled = starting || !vm;
@@ -144,6 +144,7 @@
   session++;
   const epoch = session;
   controls.console.value = "";
+  controls.console.placeholder = "Boot Linux sedang disediakan. Output sebenar akan muncul di sini selepas kernel bermula.";
   lastPrompt = "";
   controlsSync();
   display("Memuatkan emulator · BIOS · kernel Linux…", "loading");
@@ -223,7 +224,7 @@
   catch(error) { display("Gagal melepaskan sumber VM: " + error.message, "error"); }
   finally {
    vm=null; emulatorReady=false; emulatorStarted=false; shellReady=false; paused=false; starting=false; bootAt=0;
-   clearTimers(); controls.command.value=""; controlsSync();
+   clearTimers(); controls.command.value=""; controls.console.placeholder="Linux belum dimulakan. Tekan Boot Linux untuk bermula."; controlsSync();
   }
  }
  async function save() {
