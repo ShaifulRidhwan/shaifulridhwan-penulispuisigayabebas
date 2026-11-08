@@ -27,6 +27,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -64,7 +66,7 @@ private fun StudioInput(value: String, onValueChange: (String) -> Unit, hint: St
     AksaraGlassSurface(Modifier.fillMaxWidth().height(height), radius=17.dp, blur=7.dp,
         border=Color(177,190,213,67)) {
         BasicTextField(value, onValueChange,
-            modifier=Modifier.fillMaxSize().padding(12.dp),
+            modifier=Modifier.fillMaxSize().padding(12.dp).semantics { contentDescription=hint },
             textStyle=AksaraTypography.style(13f, 19f),
             cursorBrush=SolidColor(AksaraColors.gold),
             decorationBox={ inner ->
