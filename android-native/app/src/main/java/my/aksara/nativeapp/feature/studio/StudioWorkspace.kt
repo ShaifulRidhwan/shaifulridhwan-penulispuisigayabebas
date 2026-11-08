@@ -164,6 +164,7 @@ fun StudioContent() {
     var records by remember{mutableStateOf<List<StudioRecord>>(emptyList())}
     var message by remember{mutableStateOf("Tulis arahan dan pilih enjin untuk menjana imej.")}
     var job by remember{mutableStateOf<Job?>(null)}
+    var runningEngine by remember{mutableStateOf<StudioEngine?>(null)}
     var downloadJob by remember{mutableStateOf<Job?>(null)}
     var downloaded by remember{mutableLongStateOf(0L)}
     var downloadState by remember{mutableStateOf("")}
@@ -207,6 +208,7 @@ fun StudioContent() {
         }
         val selectedEngine=engine
         job=scope.launch {
+            runningEngine=selectedEngine
             val began=SystemClock.elapsedRealtime()
             message=if(selectedEngine==StudioEngine.CLOUD)"Menghubungi Studio Cloud…" else "SD-Turbo sedang menjana secara tempatan…"
             try {
@@ -233,6 +235,7 @@ fun StudioContent() {
                 }
             } catch(_:CancellationException) { message="Permintaan dihentikan. Prompt dan hasil terdahulu dikekalkan." }
             catch(e:Exception) { message=e.message ?: "Gagal menjana imej. Hasil terdahulu dikekalkan." }
+            finally { runningEngine=null }
         }
     }
 
@@ -435,10 +438,13 @@ fun StudioContent() {
             enabled=job?.isActive!=true && prompt.trim().length>=4)
         if(job?.isActive==true) {
             Spacer(Modifier.height(6.dp))
-            if(engine==StudioEngine.CLOUD)
+            if(runningEngine==StudioEngine.CLOUD)
                 AksaraButton("Henti permintaan", {job?.cancel()},Modifier.fillMaxWidth(),height=37.dp,size=11f)
-            else AksaraText("Penjanaan native belum menyokong hentian selamat semasa inferens.",
-                size=10f,color=AksaraColors.muted)
+            else AksaraButton("Henti Local", {
+                localRuntime.cancel()
+                job?.cancel()
+                message="Pembatalan SD-Turbo telah diminta kepada native runtime."
+            },Modifier.fillMaxWidth(),height=37.dp,size=11f)
         }
         Spacer(Modifier.height(10.dp))
         AksaraText(message,size=11f,color=AksaraColors.muted)
