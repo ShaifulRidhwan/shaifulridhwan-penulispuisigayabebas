@@ -197,7 +197,7 @@ test("AI Terminal is a dedicated glass header chip next to Code Engine, not nest
  assert.ok(ui.includes('trigger.id="codeAITerminalOpen"'));
  assert.ok(!ui.includes('menu.querySelector(".multi-ai-actions")?.append(trigger)'));
  assert.ok(!codeStatus.includes('codeAITerminalOpen'));
- assert.match(page,/bilik-antara-ai-terminal\.js\?v=8/);
+ assert.match(page,/bilik-antara-ai-terminal\.js\?v=9/);
  assert.match(page,/bilik-antara-code-brain\.js\?v=5/);
 });
 test("terminal's new glass header entry is iconed, accessible, responsive and in sync with runtime",()=>{
