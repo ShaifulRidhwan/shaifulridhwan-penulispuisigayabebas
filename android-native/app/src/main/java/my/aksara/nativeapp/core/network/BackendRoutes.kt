@@ -14,6 +14,7 @@ object BackendRoutes {
     const val STREAM = "/.netlify/functions/bilik-antara-stream"
     const val LIVE_TOKEN = "/.netlify/functions/bilik-antara-live-token"
     const val STUDIO_IMAGE = "/.netlify/functions/studio-image"
+    const val STUDIO_ENHANCE = "/.netlify/functions/studio-enhance"
     val configuredOrigin: String get() = BuildConfig.API_ORIGIN
 }
 object BackendNetworkErrors {
