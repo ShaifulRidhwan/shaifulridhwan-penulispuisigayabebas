@@ -1,0 +1,91 @@
+package my.aksara.nativeapp.core.network
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOn
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.IOException
+import java.util.concurrent.TimeUnit
+
+sealed interface ChatEvent {
+    data class Delta(val text: String) : ChatEvent
+    data class Done(val reply: String, val provider: String, val sources: List<Pair<String, String>>) : ChatEvent
+}
+class ApiFailure(val status: Int, message: String, val retryAfter: String? = null) : IOException(message)
+object Ndjson {
+    fun parse(line: String): ChatEvent? {
+        if (line.isBlank()) return null
+        val item = try { JSONObject(line) } catch (e: Exception) { throw IOException("Aliran respons tidak lengkap.", e) }
+        return when (item.optString("type")) {
+            "delta" -> ChatEvent.Delta(item.getString("text"))
+            "done" -> {
+                val reply = item.optString("reply").ifBlank { throw IOException("Jawapan pelayan kosong.") }
+                val refs = item.optJSONArray("sources") ?: JSONArray()
+                ChatEvent.Done(reply, item.optString("provider"), (0 until refs.length()).mapNotNull { i ->
+                    refs.optJSONObject(i)?.let { s -> s.optString("url").takeIf { it.startsWith("https://") }?.let { s.optString("title", it) to it } }
+                })
+            }
+            "error" -> throw ApiFailure(item.optInt("status", 502), item.optString("error", "Permintaan gagal."))
+            else -> null // forward-compatible heartbeat / metadata frames
+        }
+    }
+}
+class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClient.Builder()
+    .connectTimeout(20, TimeUnit.SECONDS).readTimeout(165, TimeUnit.SECONDS).callTimeout(170, TimeUnit.SECONDS).build()) {
+    private fun request(path: String, payload: JSONObject) = Request.Builder().url(origin + path)
+        .header("Origin", origin).header("Accept", "application/x-ndjson, application/json")
+        .post(payload.toString().toRequestBody("application/json".toMediaType())).build()
+    suspend fun post(path: String, payload: JSONObject): JSONObject = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        val call = client.newCall(request(path, payload))
+        val handle = kotlinx.coroutines.currentCoroutineContext()[kotlinx.coroutines.Job]?.invokeOnCompletion { call.cancel() }
+        try { call.execute().use { response ->
+            val data = try { JSONObject(response.body?.string().orEmpty()) } catch (_: Exception) { JSONObject() }
+            if (!response.isSuccessful) throw ApiFailure(response.code, data.optString("error", "HTTP ${response.code}"), response.header("Retry-After"))
+            data
+        } } finally { handle?.dispose() }
+    }
+    fun chat(payload: JSONObject): Flow<ChatEvent> = callbackFlow {
+        var call: Call? = null
+        val work = kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launchSafely(
+            onError = { close(it) },
+            block = {
+                call = client.newCall(request("/.netlify/functions/bilik-antara-stream", payload))
+                val response = call!!.execute()
+                response.use { res ->
+                    if (res.code in listOf(404, 405, 409, 501) || (res.isSuccessful && !res.header("Content-Type").orEmpty().contains("application/x-ndjson"))) {
+                        // Fallback is only before accepting any streaming text.
+                        val result = post("/.netlify/functions/bilik-antara", payload)
+                        val done = JSONObject(result.toString()).put("type", "done")
+                        send(Ndjson.parse(done.toString())!!); close(); return@launchSafely
+                    }
+                    if (!res.isSuccessful) {
+                        val body = runCatching { JSONObject(res.body?.string().orEmpty()) }.getOrDefault(JSONObject())
+                        throw ApiFailure(res.code, body.optString("error", "HTTP ${res.code}"), res.header("Retry-After"))
+                    }
+                    val source = res.body?.source() ?: throw IOException("Aliran respons kosong.")
+                    var done = false; var chars = 0
+                    while (!source.exhausted()) {
+                        // readUtf8LineStrict bounds a malformed or unbounded frame.
+                        val line = source.readUtf8LineStrict(500_000)
+                        val event = Ndjson.parse(line)
+                        if (event is ChatEvent.Delta) { chars += event.text.length; if (chars > 40_000) throw IOException("Jawapan melebihi had.") }
+                        if (event != null) send(event)
+                        if (event is ChatEvent.Done) { done = true; break }
+                    }
+                    if (!done) throw IOException("Jawapan terputus sebelum habis.")
+                    close()
+                }
+            }
+        )
+        awaitClose { call?.cancel(); work.cancel() }
+    }.flowOn(Dispatchers.IO)
+}
+private fun kotlinx.coroutines.CoroutineScope.launchSafely(onError: (Throwable) -> Unit, block: suspend () -> Unit) =
+    launch(context = coroutineContext) { try { block() } catch (e: Throwable) { onError(e) } }
