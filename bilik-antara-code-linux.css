@@ -1,0 +1,56 @@
+/* Code Engine Linux overlay. Matches Bilik Antara glass design; never alters Voice/AI layouts. */
+.code-linux-dialog{
+ box-sizing:border-box;width:min(1000px,calc(100vw - 20px));max-width:none;
+ max-height:min(96dvh,940px);padding:clamp(14px,2.5vw,25px);
+ border:1px solid rgba(230,211,176,.3);border-radius:27px;
+ color:#eee5d7;background:linear-gradient(135deg,rgba(18,25,40,.83),rgba(8,16,30,.9) 55%,rgba(26,23,30,.83));
+ box-shadow:0 32px 110px rgba(0,0,0,.65),inset 0 1px rgba(255,255,255,.1);
+ backdrop-filter:blur(32px) saturate(1.25);-webkit-backdrop-filter:blur(32px) saturate(1.25);
+ overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;
+}
+.code-linux-dialog::backdrop{background:rgba(2,5,13,.68);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.code-linux-dialog[open]{display:block}
+.code-engine-dialog #codeLinuxOpen{border:1px solid rgba(232,198,139,.34);border-radius:13px;background:linear-gradient(108deg,rgba(233,192,119,.15),rgba(69,126,174,.12));margin-bottom:8px}
+.code-engine-dialog #codeLinuxOpen:focus-visible{outline:2px solid #e8d3ab;outline-offset:3px}
+.code-linux-dialog :is(button,input,select,textarea){font:inherit}
+.code-linux-dialog button{cursor:pointer;border:1px solid rgba(221,204,179,.27);border-radius:11px;padding:9px 12px;min-height:37px;background:rgba(222,239,255,.055);color:#e9ddc9;transition:background .16s,border-color .16s}
+.code-linux-dialog button:hover:not(:disabled){background:rgba(228,205,164,.17);border-color:rgba(228,205,164,.5)}
+.code-linux-dialog :is(button,input,select):focus-visible{outline:2px solid rgba(234,209,155,.85);outline-offset:2px}
+.code-linux-dialog button:disabled{opacity:.47;cursor:not-allowed}
+.code-linux-dialog .cl-primary{background:linear-gradient(100deg,rgba(221,172,98,.25),rgba(74,135,166,.2));border-color:rgba(235,209,157,.6)}
+.code-linux-dialog .multi-ai-head{position:relative;display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
+.code-linux-dialog .multi-ai-head strong{color:#f5e5c8}
+.code-linux-dialog .multi-ai-head p{margin:5px 0 12px;line-height:1.5;font-size:12px;color:#bac9d6;max-width:65ch}
+.code-linux-dialog #clClose{min-width:36px;border-radius:50%;font-size:20px;line-height:18px}
+.code-linux-dialog .cl-statusbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;margin:7px 0 12px;border:1px solid rgba(206,223,244,.14);border-radius:14px;background:rgba(8,19,30,.28);font:600 12px/1.45 "DM Sans",sans-serif;color:#d2dddf}
+.code-linux-dialog .cl-light{width:9px;height:9px;flex:0 0 9px;border-radius:50%;background:#91a0b2;box-shadow:0 0 12px #96a3b244}
+.code-linux-dialog[data-state=ready] .cl-light{background:#87dba5;box-shadow:0 0 14px #87dba577}
+.code-linux-dialog[data-state=loading] .cl-light{background:#edc27b;box-shadow:0 0 14px #edc27b77}
+.code-linux-dialog[data-state=error] .cl-light{background:#ee8c8c}
+.code-linux-dialog #clUptime{margin-left:auto;color:#99b9c7;font-size:11px}
+.code-linux-dialog .cl-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.code-linux-dialog .cl-actions label{display:flex;align-items:center;gap:8px;font-size:12px;color:#e3cda7;margin-right:auto}
+.code-linux-dialog select{color:#eee9df;background:#152333;border:1px solid rgba(225,211,185,.32);padding:8px;border-radius:9px}
+.code-linux-dialog .cl-metrics{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 9px}
+.code-linux-dialog .cl-metrics span{padding:5px 10px;border-radius:999px;background:rgba(143,172,207,.11);border:1px solid rgba(143,172,207,.17);font:500 11px "Space Grotesk",sans-serif;color:#c0d4df}
+.code-linux-dialog .cl-console-label{display:flex;justify-content:space-between;gap:10px;font:700 10px "Space Grotesk",sans-serif;letter-spacing:.1em;color:#e4cea6;padding:3px 2px 8px}
+.code-linux-dialog .cl-console-label span{color:#8faabc;letter-spacing:0;font-weight:500}
+.code-linux-dialog .cl-console{box-sizing:border-box;width:100%;height:clamp(240px,40dvh,500px);resize:vertical;display:block;padding:15px;border:1px solid rgba(204,222,243,.19);border-radius:15px;color:#d1eed7;background:rgba(3,10,17,.8);font:12px/1.5 ui-monospace,"SFMono-Regular",Consolas,monospace;outline:none;white-space:pre;overflow:auto}
+.code-linux-dialog .cl-command{display:flex;align-items:center;gap:8px;margin:8px 0 10px;border:1px solid rgba(219,208,186,.26);border-radius:12px;padding:7px 8px;background:rgba(10,21,32,.44)}
+.code-linux-dialog .cl-command label{font:600 11px ui-monospace,Consolas,monospace;color:#a5d4bd;white-space:nowrap}
+.code-linux-dialog .cl-command input{flex:1 1 120px;min-width:0;border:0;outline:none;background:transparent;color:#f2f1ed;font:12px/1.6 ui-monospace,Consolas,monospace}
+.code-linux-dialog .cl-command input:disabled{opacity:.48}
+.code-linux-dialog .cl-shortcuts,.code-linux-dialog .cl-secondary{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.code-linux-dialog .cl-shortcuts button{font-size:11px;padding:7px 11px;border-radius:999px;color:#d3e4d8}
+.code-linux-dialog .cl-secondary button,.code-linux-dialog .cl-import{font-size:11px;padding:8px 10px}
+.code-linux-dialog .cl-import{display:inline-flex;align-items:center;border:1px solid rgba(221,204,179,.27);border-radius:11px;background:rgba(222,239,255,.055);color:#e9ddc9;cursor:pointer}
+.code-linux-dialog .cl-import:has(input:disabled){opacity:.47;cursor:not-allowed}
+.code-linux-dialog .cl-note{font:500 11px/1.55 "DM Sans",sans-serif;color:#aebbca;margin:13px 0 0}
+@media(max-width:620px){
+ .code-linux-dialog{padding:13px;max-height:calc(100dvh - 12px);width:calc(100vw - 12px);border-radius:22px}
+ .code-linux-dialog .cl-actions label{width:100%;margin:0}
+ .code-linux-dialog .cl-actions button{flex:1 1 calc(50% - 8px)}
+ .code-linux-dialog .cl-console{height:36dvh;min-height:215px}
+ .code-linux-dialog .cl-command label{font-size:10px}
+ .code-linux-dialog .cl-secondary button{flex:1 1 30%}
+}
