@@ -7,12 +7,16 @@ import {fileURLToPath} from "node:url";
 const here=path.dirname(fileURLToPath(import.meta.url));
 const root=path.resolve(here,".."),out=path.join(here,"dist");
 const home="https://shaifulridhwan-penulispuisigayabebas.netlify.app";
-const prefix=/^(?:bilik-antara(?:[.-])|studio-antara(?:[.-])|antara-cahaya-dan-gelap(?:[.-])|perpustakaan-aksara(?:[.-])|favicon-aksara-ai(?:[.-])|favicon-antara-cahaya-dan-gelap(?:[.-])|aksara-header\.css$|aksara-background-cahaya-gelap\.webp$|aksara-celestial-static\.webp$|aksara-cinematic-(?:desktop|mobile)\.webp$)/;
+const prefix=/^(?:bilik-antara(?:[.-])|studio-antara(?:[.-])|antara-cahaya-dan-gelap(?:[.-])|perpustakaan-aksara(?:[.-])|favicon-aksara-ai(?:[.-])|favicon-antara-cahaya-dan-gelap(?:[.-])|security-lab(?:[.-])|security-ci\\.js$|linux-sandbox(?:[.-])|aksara-glass-tokens\\.css$|aksara-header\.css$|aksara-background-cahaya-gelap\.webp$|aksara-celestial-static\.webp$|aksara-cinematic-(?:desktop|mobile)\.webp$)/;
 function safe(pathname){return pathname&&!pathname.includes("..")&&!pathname.startsWith(".")&&!pathname.includes("\\");}
 await rm(out,{recursive:true,force:true});await mkdir(out,{recursive:true});
 const listed=(await readdir(root,{withFileTypes:true})).filter(x=>x.isFile()&&prefix.test(x.name)).map(x=>x.name);
 if(!listed.includes("bilik-antara.html")||!listed.includes("studio-antara.html")||!listed.includes("perpustakaan-aksara.html")||!listed.includes("antara-cahaya-dan-gelap.html"))
  throw Error("Required application HTML missing");
+// Bundle these as an atomic preview feature; otherwise the page or its terminal returns 404.
+for(const file of ["security-lab.html","security-lab.css","security-lab.js","security-ci.js","aksara-glass-tokens.css","linux-sandbox.js","linux-sandbox.css"]) {
+ if(!listed.includes(file))throw Error("Missing Security Lab preview asset: "+file);
+}
 for(const file of listed){
  if(!safe(file))throw Error("Unsafe asset path");
  const source=path.join(root,file),dest=path.join(out,file);
