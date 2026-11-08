@@ -126,13 +126,21 @@ const BASE=process.env.AUDIT_BASE||"http://127.0.0.1:4177";
   const codeGlass=await visualSignature("#codeEngineMenu");
   assert.deepEqual(codeGlass,multiGlass,"Code Engine modal must reuse Multi AI glass layout and backdrop");
   assert.equal(await page.locator("#codeEngineMenu .multi-ai-head").count(),1);
-  assert.equal(await page.locator("#codeEngineMenu .multi-ai-row").count(),6,"Five runtime languages plus HTML/CSS preview should appear");
-  assert.equal(await page.locator("#codeRuntimeList > .multi-ai-row").first().getAttribute("id"),"codeHtmlPreview","HTML/CSS Live Preview must be first in Code Engine");
+  assert.equal(await page.locator("#codeEngineMenu .multi-ai-row").count(),8,"Five executable runtimes, HTML/CSS, Developer Shell and experimental Linux VM should appear");
+  assert.equal(await page.locator("#codeRuntimeList > .multi-ai-row").first().getAttribute("id"),"codeDeveloperShellOpen","Developer Shell must be first in Code Engine");
+  assert.equal(await page.locator("#codeRuntimeList > .multi-ai-row").nth(1).getAttribute("id"),"codeLinuxOpen","Linux VM is second and experimental");
   const codeFooter=await page.locator("#codeEngineRefresh").evaluate(el=>{
    const s=getComputedStyle(el);
    return {borderRadius:s.borderRadius,minHeight:s.minHeight,padding:s.padding,font:s.font,backgroundImage:s.backgroundImage};
   });
   assert.deepEqual(codeFooter,multiFooter,"Code Engine footer must match Multi AI refresh styling");
+  await page.locator("#codeDeveloperShellOpen").click();
+  assert.equal(await page.locator("#aksaraAITerminal").isVisible(),true,"Developer Shell launches existing working terminal");
+  await page.locator("#aitCommand").fill("pwd");
+  await page.locator("#aitCommandForm").evaluate(form=>form.requestSubmit());
+  assert.match(await page.locator("#aitOutput").innerText(),/\/aksara\/project/,"Developer Shell executes workspace pwd");
+  await page.locator("#aitClose").click();
+  await page.locator("#codeEngineStatus").click();
   assert.equal(await page.locator("#codeEngineVerifyAll").count(),0,
    "Full runtime verification must be inside the single Refresh button");
   let nativePrompt=false;
