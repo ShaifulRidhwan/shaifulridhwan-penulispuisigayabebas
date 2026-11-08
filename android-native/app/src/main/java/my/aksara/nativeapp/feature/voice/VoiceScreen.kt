@@ -33,8 +33,8 @@ import my.aksara.engine.avatar.VoiceAvatarView
         Column(Modifier.fillMaxSize()){
             AksaraGlassSurface(Modifier.fillMaxWidth().height(68.dp),radius=0.dp,blur=13.dp,brush=Brush.linearGradient(listOf(Color(240,204,159,23),Color(135,181,211,14),Color(13,22,37,10))),border=Color(244,217,176,30)){
                 Row(Modifier.fillMaxSize().padding(horizontal=13.dp),verticalAlignment=Alignment.CenterVertically){
-                    AksaraGlassSurface(Modifier.width(84.484.dp).height(44.dp),radius=17.dp,blur=16.dp){Column(Modifier.align(Alignment.Center),horizontalAlignment=Alignment.CenterHorizontally){AksaraText("AKSARA",size=14f,line=16.8f,weight=700,tracking=1f);AksaraText("VOICE CHAT",size=7f,line=10.5f,tracking=1f,color=AksaraColors.gold)}}
-                    Spacer(Modifier.weight(1f));AksaraText("•  "+if(preview)"PRATONTON UI" else if(state.startedAt!=null)"LIVE" else state.phase.uppercase(),Modifier.widthIn(max=80.dp),size=9f,line=10.8f,weight=600,color=AksaraColors.muted)
+                    AksaraGlassSurface(Modifier.width(84.484.dp).height(44.dp),radius=17.dp,blur=16.dp){Column(Modifier.align(Alignment.Center),horizontalAlignment=Alignment.CenterHorizontally){AksaraText("AKSARA",size=13f,line=14.95f,weight=650,tracking=1.17f,family=AksaraTypography.heading);AksaraText("VOICE CHAT",size=7f,line=10.5f,tracking=1f,color=AksaraColors.gold)}}
+                    Spacer(Modifier.weight(1f));AksaraText("•  "+if(preview)"PRATONTON UI" else if(state.startedAt!=null)"LIVE" else state.phase.uppercase(),Modifier.widthIn(max=80.dp),size=9f,line=10.8f,weight=600,color=AksaraColors.muted,tracking=.315f,family=AksaraTypography.heading)
                     Spacer(Modifier.width(5.dp));AksaraText("%02d:%02d".format(seconds/60,seconds%60),size=11f,line=13.2f,color=AksaraColors.muted)
                     Spacer(Modifier.width(8.dp));AksaraButton("",onClose,Modifier.width(40.dp).semantics{contentDescription="Tamatkan sesi Voice Chat"},icon="close",height=40.dp,radius=999.dp)
                 }
@@ -43,7 +43,7 @@ import my.aksara.engine.avatar.VoiceAvatarView
                 AndroidView(factory={VoiceAvatarView(it)},modifier=Modifier.fillMaxSize())
                 Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Transparent,Color(8,13,23,61),Color(7,13,24,179)))).padding(start=12.dp,end=12.dp,bottom=13.dp,top=26.dp),horizontalAlignment=Alignment.CenterHorizontally){
                     AksaraIcon("voice",Modifier.size(width=102.dp,height=15.dp),Color(230,197,139,150))
-                    Spacer(Modifier.height(5.dp));AksaraText(if(preview)"Pratonton" else when(state.phase){"listening"->"Mendengar";"speaking"->"Menjawab";"connecting"->"Menyambung";else->"Sedia"},size=16f,line=20.8f,weight=600)
+                    Spacer(Modifier.height(5.dp));AksaraText(if(preview)"Pratonton" else when(state.phase){"listening"->"Mendengar";"speaking"->"Menjawab";"connecting"->"Menyambung";else->"Sedia"},size=16f,line=20.8f,weight=600,tracking=.4f,family=AksaraTypography.heading)
                     Spacer(Modifier.height(3.dp));androidx.compose.foundation.text.BasicText(if(preview)"Pratonton reka bentuk sahaja. Mikrofon dan Gemini Live tidak diaktifkan." else state.message,style=AksaraTypography.style(12f,17.4f,color=Color(0xffc7c3ba)).copy(textAlign=TextAlign.Center))
                 }
             }
@@ -68,9 +68,9 @@ import my.aksara.engine.avatar.VoiceAvatarView
             Spacer(Modifier.height(10.dp))
             AksaraGlassSurface(Modifier.padding(horizontal=side).fillMaxWidth().height(76.dp),radius=20.dp,blur=12.dp,brush=Brush.linearGradient(listOf(Color(250,228,196,21),Color(111,163,211,15),Color(15,25,39,29)))){
                 Row(Modifier.align(Alignment.Center),horizontalArrangement=Arrangement.spacedBy(22.dp)){
-                    AksaraButton("",onMic,Modifier.width(56.dp).semantics{contentDescription=if(state.mic)"Tutup mikrofon" else "Buka mikrofon"},icon="mic",height=56.dp,radius=999.dp)
+                    AksaraButton("",onMic,Modifier.width(56.dp).semantics{contentDescription=if(state.mic)"Tutup mikrofon" else "Buka mikrofon"},icon="mic",height=56.dp,radius=999.dp,iconSize=24.dp)
                     AksaraGlassSurface(Modifier.size(56.dp).clickable(onClick=onClose).semantics{contentDescription="Tamatkan sesi"},radius=999.dp,brush=Brush.linearGradient(listOf(Color(189,75,84,214),Color(105,33,52,214))),border=Color(250,170,170,190)){AksaraIcon("end",Modifier.align(Alignment.Center).size(24.dp),Color(0xffffeadb))}
-                    AksaraButton("",onSpeaker,Modifier.width(56.dp).semantics{contentDescription=if(state.speaker)"Senyapkan suara" else "Buka suara"},icon="speaker",height=56.dp,radius=999.dp)
+                    AksaraButton("",onSpeaker,Modifier.width(56.dp).semantics{contentDescription=if(state.speaker)"Senyapkan suara" else "Buka suara"},icon="speaker",height=56.dp,radius=999.dp,iconSize=24.dp)
                 }
             }
             Spacer(Modifier.height(9.dp))

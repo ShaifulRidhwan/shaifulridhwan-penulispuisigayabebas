@@ -34,15 +34,15 @@ object AksaraTypography {
     // Explicit supported axes avoid relying on platform synthesis or an absent 'ital' axis.
     private fun variable(id:Int,weight:Int)=Font(id,weight=FontWeight(weight),variationSettings=if(id==R.font.dm_sans)FontVariation.Settings(FontVariation.weight(weight),FontVariation.opticalSizing(14.sp)) else FontVariation.Settings(FontVariation.weight(weight)))
     val body = FontFamily(listOf(400,450,500,600,650,700).map{variable(R.font.dm_sans,it)})
-    val heading = FontFamily(listOf(400,500,600,700).map{variable(R.font.space_grotesk,it)})
+    val heading = FontFamily(listOf(400,500,600,650,700).map{variable(R.font.space_grotesk,it)})
     fun style(size: Float = 14f, line: Float = size * 1.6f, weight: Int = 400, color: Color = AksaraColors.text) = TextStyle(
         color = color, fontFamily = body, fontSize = size.sp, lineHeight = line.sp, fontWeight = FontWeight(weight), textMotion=TextMotion.Animated,
         platformStyle = PlatformTextStyle(includeFontPadding = false),lineHeightStyle=LineHeightStyle(LineHeightStyle.Alignment.Center,LineHeightStyle.Trim.None))
 }
 object AksaraSpacing { val shellSide = 7.dp; val shellBottom = 7.dp; val headerTop = 10.dp; val dialogPadding = 15.dp }
 @Composable fun AksaraText(text: String, modifier: Modifier = Modifier, size: Float = 14f, line: Float = size * 1.6f,
-    weight: Int = 400, color: Color = AksaraColors.text, tracking: Float = 0f) {
-    BasicText(text, modifier, style = AksaraTypography.style(size, line, weight, color).copy(letterSpacing = tracking.sp))
+    weight: Int = 400, color: Color = AksaraColors.text, tracking: Float = 0f, family:FontFamily=AksaraTypography.body) {
+    BasicText(text, modifier, style = AksaraTypography.style(size, line, weight, color).copy(letterSpacing = tracking.sp,fontFamily=family))
 }
 val LocalBackdrop = staticCompositionLocalOf<HazeState> { error("Backdrop source missing") }
 // Paint between the nearest backdrop root and a descendant filter, e.g. the status bar tint.
@@ -78,14 +78,14 @@ val DialogGradient: Brush get() = cssGradient(150f,listOf(Color(23,31,45,92), Co
     }
 }
 @Composable fun AksaraButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: String? = null,
-    size: Float = 12f, height: Dp = 44.dp, radius: Dp = 13.dp, enabled: Boolean = true, contentColor: Color = AksaraColors.text, leadingText:String?=null) {
+    size: Float = 12f, height: Dp = 44.dp, radius: Dp = 13.dp, enabled: Boolean = true, contentColor: Color = AksaraColors.text, leadingText:String?=null,iconSize:Dp?=null) {
     val engine=icon=="code"||icon=="terminal"
     val material=when{engine->cssGradient(180f,listOf(Color(255,255,255,11),Color(5,8,16,41)));icon=="brain"->cssGradient(145f,listOf(Color(238,201,140,22),Color(19,31,49,31)));icon=="send"->cssGradient(145f,listOf(Color(244,216,171,14),Color(64,87,112,9)));else->GlassGradient}
     val edge=when{engine->Color(233,205,158,87);icon=="brain"->Color(245,208,157,110);icon=="send"->Color(244,213,166,77);else->AksaraColors.border}
     AksaraGlassSurface(modifier.graphicsLayer { alpha=if(enabled)1f else .6f }.height(height).clip(RoundedCornerShape(radius)).clickable(enabled = enabled, onClick = onClick), radius,blur=if(engine)8.dp else 2.dp,brush=material,border=edge,saturation=if(engine)1.12f else if(icon=="brain"||icon=="send")1f else 1.1f) {
         Row(Modifier.align(Alignment.Center).padding(horizontal = if(leadingText!=null)11.dp else if(size<10f)6.dp else 10.dp), horizontalArrangement = Arrangement.spacedBy(if(leadingText!=null)7.dp else if(size<10f)4.dp else 6.dp), verticalAlignment = Alignment.CenterVertically) {
             if(leadingText!=null)AksaraText(leadingText,size=size,line=size*1.4f,weight=500,color=AksaraColors.gold)
-            if (icon != null) AksaraIcon(icon, Modifier.size(if(icon=="code")15.dp else if(icon=="terminal")17.dp else if(icon=="brain")23.dp else if(icon=="send")19.dp else if(icon=="voice"&&size<10)12.dp else if(size<10)15.dp else 18.dp), contentColor)
+            if (icon != null) AksaraIcon(icon, Modifier.size(iconSize?:if(icon=="code")15.dp else if(icon=="terminal")17.dp else if(icon=="brain")23.dp else if(icon=="send")19.dp else if(icon=="voice"&&size<10)12.dp else if(size<10)15.dp else 18.dp), contentColor)
             if (label.isNotEmpty()) AksaraText(label, size = size, line = size*1.4f, weight = 500, color = contentColor)
         }
     }
