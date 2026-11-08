@@ -25,7 +25,8 @@ internal data class StudioRecord(
     val durationMs: Long,
     val seed: Long?,
     val ratio: String,
-    val quality: String
+    val quality: String,
+    val style: String = "none"
 )
 
 internal class StudioHistoryStore(context: Context) {
@@ -43,7 +44,8 @@ internal class StudioHistoryStore(context: Context) {
                 obj.getString("model"), obj.getString("prompt"), obj.getInt("width"),
                 obj.getInt("height"), obj.getLong("durationMs"),
                 if (obj.isNull("seed")) null else obj.getLong("seed"),
-                obj.optString("ratio", "1:1"), obj.optString("quality", "balanced")
+                obj.optString("ratio", "1:1"), obj.optString("quality", "balanced"),
+                obj.optString("style", "none")
             )
         }
     }
@@ -54,7 +56,7 @@ internal class StudioHistoryStore(context: Context) {
                 .put("engine", item.engine).put("model", item.model).put("prompt", item.prompt)
                 .put("width", item.width).put("height", item.height)
                 .put("durationMs", item.durationMs).put("seed", item.seed ?: JSONObject.NULL)
-                .put("ratio", item.ratio).put("quality", item.quality))
+                .put("ratio", item.ratio).put("quality", item.quality).put("style",item.style))
         }
         val temp = File(root, "history.json.tmp")
         temp.writeText(array.toString())
@@ -65,12 +67,12 @@ internal class StudioHistoryStore(context: Context) {
     }
     suspend fun save(
         bitmap: Bitmap, engine: String, model: String, prompt: String, elapsed: Long,
-        seed: Long?, ratio: String, quality: String
+        seed: Long?, ratio: String, quality: String, style: String = "none"
     ): StudioRecord = withContext(Dispatchers.IO) {
         mutex.withLock {
             val id = UUID.randomUUID().toString()
             val record = StudioRecord(id, System.currentTimeMillis(), engine, model, prompt,
-                bitmap.width, bitmap.height, elapsed, seed, ratio, quality)
+                bitmap.width, bitmap.height, elapsed, seed, ratio, quality, style)
             val temp = File(root, "$id.tmp")
             try {
                 FileOutputStream(temp).use { output ->
