@@ -193,14 +193,28 @@ class LiveVoiceClient(
                     override fun onMessage(webSocket: WebSocket, bytes: okio.ByteString) { consume(bytes.utf8(), id) }
                     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                         val status = response?.code
-                        if (status == 401 || status == 403 || status == 400) {
+                        if (isExtended && !preferStandardModel && status in setOf(400, 404)) {
+                            preferStandardModel = true
+                            resumptionHandle = ""
+                            recover(id, "Deep Thinking tidak tersedia; cuba Voice standard…", true)
+                        } else if (status == 401 || status == 403 || status == 400) {
                             recover(id, "Gemini Live menolak akses atau model (HTTP " + status + ").", false)
                         } else recover(id, "Sambungan Voice terputus: " + (t.message ?: "transport"), true,
                             if (status == 429) VoiceRecoveryPolicy.retryAfterSeconds(response?.header("Retry-After"), 0L) else 0L)
                     }
                     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                         if (code == 1000 && !active(id)) return
-                        recover(id, "Gemini Live menutup sambungan (" + code + ").", code != 1008)
+                        val unsupportedExtended = isExtended && !preferStandardModel &&
+                            !state.value.ready && code in setOf(1003, 1006, 1008, 1011)
+                        if (unsupportedExtended) {
+                            preferStandardModel = true
+                            resumptionHandle = ""
+                            recover(id, "Deep Thinking tidak tersedia; cuba Voice standard…", true)
+                        } else {
+                            val staleHandle = code == 1008 && resumptionHandle.isNotBlank()
+                            if (staleHandle) resumptionHandle = ""
+                            recover(id, "Gemini Live menutup sambungan (" + code + ").", code != 1008 || staleHandle)
+                        }
                     }
                 })
                 synchronized(this@LiveVoiceClient) {
@@ -277,9 +291,14 @@ class LiveVoiceClient(
                 mutable.value = mutable.value.copy(phase = "listening", message = "Aku dengar.")
             }
             val transcript = content.optJSONObject("inputTranscription")?.optString("text").orEmpty()
-            if (transcript.contains(Regex("(?i)\\b(?:sepanyol|spanish|español|terjemah|translate)\\b")))
-                foreignLanguageRequested = true
+            if (transcript.isNotBlank()) {
+                incomingTranscript = VoiceContextSync.mergeTranscript(incomingTranscript, transcript)
+                if (transcript.contains(Regex("(?i)\\b(?:sepanyol|spanish|español|terjemah|translate)\\b")))
+                    foreignLanguageRequested = true
+            }
             val spoken = content.optJSONObject("outputTranscription")?.optString("text").orEmpty()
+            if (spoken.isNotBlank())
+                outgoingTranscript = VoiceContextSync.mergeTranscript(outgoingTranscript, spoken)
             if (!foreignLanguageRequested && spoken.isNotBlank() && suspectSpanish(spoken)) languageDrift = true
             val turn = content.optJSONObject("modelTurn")
             if (turn != null) {
@@ -303,6 +322,15 @@ class LiveVoiceClient(
             if (content.optBoolean("turnComplete")) {
                 completedTurn = true
                 thinkingSince = 0L
+                synchronized(this@LiveVoiceClient) {
+                    if (incomingTranscript.isNotBlank())
+                        recentVoiceTurns.addLast(VoiceContextTurn("user", incomingTranscript.takeLast(2800)))
+                    if (!languageDrift && outgoingTranscript.isNotBlank())
+                        recentVoiceTurns.addLast(VoiceContextTurn("assistant", outgoingTranscript.takeLast(2800)))
+                    while (recentVoiceTurns.size > 16) recentVoiceTurns.removeFirst()
+                    incomingTranscript = ""
+                    outgoingTranscript = ""
+                }
                 if (languageDrift) {
                     languageDrift = false
                     foreignLanguageRequested = false
@@ -518,6 +546,10 @@ class LiveVoiceClient(
         resumptionHandle = ""
         languageDrift = false
         foreignLanguageRequested = false
+        recentVoiceTurns.clear()
+        incomingTranscript = ""
+        outgoingTranscript = ""
+        preferStandardModel = false
         mutable.value = mutable.value.copy(phase = "idle", message = "Sesi ditamatkan.",
             startedAt = null, ready = false, reconnectAttempt = 0)
     }
