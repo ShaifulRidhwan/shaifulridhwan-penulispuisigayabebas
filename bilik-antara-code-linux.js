@@ -243,6 +243,7 @@
  });
  $("clSave").addEventListener("click",save);
  $("clRestore").addEventListener("change",event=>restore(event.target.files?.[0]));
+ dialog.addEventListener("close",()=>{ if(vm && !paused && !starting) pause(); });
  controls.ram.addEventListener("change",controlsSync);
  window.addEventListener("aksara:code-linux-open",()=>{
   if(!dialog.open)dialog.showModal();
