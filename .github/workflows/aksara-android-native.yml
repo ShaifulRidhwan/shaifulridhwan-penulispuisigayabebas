@@ -25,6 +25,22 @@ jobs:
         with:
           name: web-design-reference
           path: docs/android-rebuild/visual-comparison/web/
+  backend-smoke:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Real production DNS, Chat stream, provider health and Live token
+        run: node android-native/ci/live-backend-smoke.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-backend-contract-evidence
+          path: docs/android-rebuild/backend-contract/live-check.json
   build:
     runs-on: ubuntu-latest
     outputs:

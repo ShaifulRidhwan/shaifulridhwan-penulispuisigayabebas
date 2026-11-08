@@ -10,6 +10,48 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ChatApiTest {
+    @Test fun productionRoutesCannotUseWorkerFallback(){
+        assertEquals(BackendRoutes.PRODUCTION,my.aksara.nativeapp.BuildConfig.API_ORIGIN)
+        assertEquals("https://shaifulridhwan-penulispuisigayabebas.netlify.app",BackendRoutes.configuredOrigin)
+        assertFalse(BackendRoutes.configuredOrigin.contains("workers.dev"))
+        assertEquals("/.netlify/functions/bilik-antara",BackendRoutes.CHAT)
+        assertEquals("/.netlify/functions/bilik-antara-stream",BackendRoutes.STREAM)
+        assertEquals("/.netlify/functions/bilik-antara-live-token",BackendRoutes.LIVE_TOKEN)
+    }
+    @Test fun providerHealthCallsExactEndpointAndOrigin()=runBlocking {
+        MockWebServer().use{server->
+            server.enqueue(MockResponse().setBody("""{"ok":true,"providers":[{"id":"gemini","status":"ready"}]}"""))
+            server.start()
+            val origin=server.url("/").toString().removeSuffix("/")
+            val json=ChatApi(origin).post(BackendRoutes.CHAT,JSONObject().put("providerStatus",true))
+            assertEquals("gemini",json.getJSONArray("providers").getJSONObject(0).getString("id"))
+            val request=server.takeRequest()
+            assertEquals("POST",request.method)
+            assertEquals(BackendRoutes.CHAT,request.path)
+            assertEquals(origin,request.getHeader("Origin"))
+            assertEquals(1,server.requestCount)
+        }
+    }
+    @Test fun dnsFailureReportsBackendUnreachableNotGeminiOffline()=runBlocking{
+        val deadDns=OkHttpClient.Builder().dns { throw java.net.UnknownHostException("No A/AAAA") }.build()
+        val e=runCatching{
+            ChatApi(BackendRoutes.PRODUCTION,deadDns).post(BackendRoutes.CHAT,JSONObject().put("providerStatus",true))
+        }.exceptionOrNull()
+        assertNotNull(e)
+        assertTrue(e!!.message.orEmpty().startsWith("Backend unreachable"))
+        assertFalse(e.message.orEmpty().contains("Gemini Offline"))
+        val streamError=runCatching{
+            ChatApi(BackendRoutes.PRODUCTION,deadDns).chat(JSONObject().put("question","uji")).toList()
+        }.exceptionOrNull()
+        assertNotNull(streamError)
+        assertTrue(streamError!!.message.orEmpty().startsWith("Backend unreachable"))
+    }
+    @Test fun quotaIsNotMistakenForDnsFailure(){
+        assertFalse(BackendNetworkErrors.transportFailed(ApiFailure(429,"Groq 429")))
+        assertEquals("Groq 429",BackendNetworkErrors.translate(ApiFailure(429,"Groq 429"),BackendRoutes.PRODUCTION).message)
+        assertTrue(my.aksara.engine.voice.VoiceBackendFailure.message(java.net.UnknownHostException("no host"),
+            BackendRoutes.PRODUCTION).startsWith("Backend unreachable"))
+    }
     @Test fun evidenceMetadataIsNotInferredFromConfiguredTools() {
         val event=Ndjson.parse("""{"type":"done","reply":"Jawapan","provider":"groq","model":"safe-model","researchStatus":"search-snippets","toolsUsed":["browser_search"],"evidenceProfile":{"level":"search_excerpt"},"sources":[{"title":"Portal","url":"https://example.org/article"},{"title":"Bukan HTTPS","url":"http://not-safe.example"}]}""") as ChatEvent.Done
         assertEquals("groq",event.provider)

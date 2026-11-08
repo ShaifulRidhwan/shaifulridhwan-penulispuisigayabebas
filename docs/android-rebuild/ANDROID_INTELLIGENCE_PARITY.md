@@ -102,3 +102,11 @@ Revalidate CI at the exact resulting commit SHA. A successful build is NOT compl
 - `NovelContent()` previously rendered an error but then attempted `sections[safe]` when the asset was empty/unreadable, causing an IndexOutOfBoundsException. It now exits safely while retaining the error text and existing UI.
 - `NovelRecoveryTest` covers empty data and stale bookmark indices. `NativeLibraryAssetsTest` is explicitly run on the emulator to validate the packaged poetry catalogue and the eight novel sections, beyond visual screen opening.
 - No production web or Android design files were modified.
+
+## Netlify backend routing and live validation (2026-11-08)
+
+- **Correction:** Android Gradle `BuildConfig.API_ORIGIN` used an experimental Workers.dev hostname. It now uses the user-approved production Netlify origin for JSON Chat, NDJSON stream, provider health, context summarization and the Gemini Live token broker. Cloudflare is **not** an automatic fallback.
+- **Contract:** Native Studio already used Netlify but omitted the mandatory same-origin `Origin` header defined by `netlify/functions/lib/studio-http.js`; this is now present. No source UI visual redesign.
+- **Errors:** Native DNS/connection/timeouts now say `Backend unreachable` and identify the exact host, not `Gemini Offline`. Provider HTTP 429/401/403 remain distinct. Gemini WebSocket reachability is distinguished from the Netlify token broker.
+- **Regression:** Android unit tests cover configured origin and POST/Origin contract, simulated DNS failures, no alternate-host retry and HTTP error separation. Emulator `NativeBackendNetworkTest` makes genuine Android-side DNS, provider health and token broker calls. GitHub `backend-smoke` runs real external DNS + Chat NDJSON + health + one-use token tests and uploads a redacted JSON report; no returned token is logged or written.
+- **Environment note:** Interactive sandbox DNS failed to resolve both Netlify and Workers.dev. This does **not** establish production Netlify outage. Real GitHub runner results and physical phone remain the deciding evidence.
