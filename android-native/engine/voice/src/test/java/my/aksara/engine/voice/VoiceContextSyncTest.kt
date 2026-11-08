@@ -28,13 +28,13 @@ class VoiceContextSyncTest {
 
     @Test fun allOutputRemainsBoundedCompleteJsonWithEscapedContent() {
         val rows = (0 until 50).map { index ->
-            VoiceContextTurn(if(index % 2 == 0)"user" else "assistant", "Petikan: \\"quote\\" \\\\ slash " + "x".repeat(800))
+            VoiceContextTurn(if(index % 2 == 0)"user" else "assistant", "Petikan: \"quote\" \\ slash " + "x".repeat(800))
         }
         val snapshot = VoiceContextSync.snapshot(rows, limit = 12, maxChars = 4600)
         assertTrue(snapshot.length <= 4600)
         assertTrue(snapshot.endsWith("]"))
         assertTrue(snapshot.startsWith("["))
-        assertTrue(snapshot.contains("\\\\\\"quote\\\\\\""))
+        assertTrue(snapshot.contains("\\\"quote\\\""))
         assertFalse(snapshot.contains("system"))
     }
 
