@@ -68,7 +68,7 @@ test("Status v2 uses English and keeps Core Engine, Voice, AI routing and sandbo
  assert.doesNotThrow(()=>new vm.Script(status));
  assert.doesNotThrow(()=>new vm.Script(runtime));
  assert.ok(html.includes("bilik-antara-code-health.js?v=2"));
- assert.ok(html.includes("bilik-antara-code-status.js?v=22"));
+ assert.ok(html.includes("bilik-antara-code-status.js?v=23"));
  assert.ok(html.includes("bilik-antara-code-runtime.js?v=8"));
  assert.ok(Buffer.byteLength(html,"utf8")<100000,"Bilik Antara primary HTML budget");
  assert.ok(status.includes("Code Engine · Runtime Health"));
@@ -95,5 +95,5 @@ test("Runtime refresh has a single label and never invokes a native white browse
  assert.ok(status.includes('engine.probeLanguage(language,{signal:controller.signal})'));
  assert.ok(!status.includes("Refresh Status · Uji Runtime"));
  assert.ok(!status.includes("window.confirm("));
- assert.ok(html.includes("bilik-antara-code-status.js?v=22"));
+ assert.ok(html.includes("bilik-antara-code-status.js?v=23"));
 });
