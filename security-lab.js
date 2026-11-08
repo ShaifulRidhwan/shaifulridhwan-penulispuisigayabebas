@@ -12,9 +12,20 @@ function show(tab){
   for(const el of document.querySelectorAll("[data-tab]")){
     const active=el.dataset.tab===tab;el.classList.toggle("is-active",active);
     el.setAttribute("aria-selected",String(active));
+    el.setAttribute("tabindex",active?"0":"-1");
   }
 }
-document.querySelectorAll("[data-tab]").forEach(el=>el.addEventListener("click",()=>show(el.dataset.tab)));
+document.querySelectorAll("[data-tab]").forEach(el=>{
+  el.addEventListener("click",()=>show(el.dataset.tab));
+  el.addEventListener("keydown",(event)=>{
+    if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
+    const tabs=[...document.querySelectorAll("[data-tab]")];
+    const index=tabs.indexOf(el);
+    const next=event.key==="Home"?0:event.key==="End"?tabs.length-1:
+      (index+(event.key==="ArrowRight"?1:-1)+tabs.length)%tabs.length;
+    event.preventDefault();show(tabs[next].dataset.tab);tabs[next].focus();
+  });
+});
 document.querySelectorAll("[data-goto]").forEach(el=>el.addEventListener("click",()=>show(el.dataset.goto)));
 const text=(tag,content,cls)=>{const node=document.createElement(tag);if(cls)node.className=cls;node.textContent=String(content);return node;};
 function record(type,message){
@@ -172,12 +183,58 @@ $("exportReport").addEventListener("click",()=>{
   if(!Object.keys(audits).length&&!codeFindings){$("reportStatus").textContent="Jalankan audit terlebih dahulu.";return;}
   const report={title:"AKSARA Security Lab",generatedAt:new Date().toISOString(),scope:"owned-origin-and-local-code",
     note:"Laporan indikator defensif. Bukan penilaian keselamatan menyeluruh.",
-    webAudits:Object.values(audits),codeInspection:codeFindings,activity};
+    webAudits:Object.values(audits),codeInspection:codeFindings,
+    ciSummary:window.AksaraSecurityCI?.publicSummary()||null,
+    localImportedCounts:window.AksaraSecurityCI?.localSummary()||null,activity};
   const blob=new Blob([JSON.stringify(report,null,2)],{type:"application/json"});
   const url=URL.createObjectURL(blob),link=document.createElement("a");
   link.href=url;link.download="aksara-security-report.json";document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
   $("reportStatus").textContent="Laporan JSON dijana pada peranti.";
   record("report","Eksport laporan JSON");
+});
+
+function analyzeEvidence(){
+  const output=$("analystResults");output.replaceChildren();
+  const web=Object.values(audits),ci=window.AksaraSecurityCI?.publicSummary()||null;
+  const local=window.AksaraSecurityCI?.localSummary()||null;
+  const changes=[];
+  const missing=web.flatMap(page=>page.checks.filter(x=>!x.passed).map(x=>({...x,path:page.path})));
+  const highMissing=missing.filter(x=>x.risk==="tinggi");
+  if(highMissing.length){
+    changes.push({title:"Utamakan polisi keselamatan HTTP",body:highMissing.length+" indikator berisiko tinggi memerlukan perhatian merentasi audit halaman. Semak CSP, HSTS dan framing. Uji perubahan di staging dahulu supaya Chat dan Voice tidak rosak."});
+  }
+  if(missing.some(x=>x.id==="csp"))changes.push({title:"Sediakan polisi CSP secara berperingkat",body:"Mulakan dengan CSP Report-Only di staging, lihat laporan pelanggaran, kemudian kuatkuasakan polisi selepas sumber asal dibenarkan."});
+  if(missing.some(x=>x.id==="hsts"))changes.push({title:"Semak HSTS",body:"Pastikan semua halaman dan subdomain yang berkaitan konsisten dengan HTTPS sebelum melanjutkan tempoh max-age."});
+  if(ci?.status==="incomplete")changes.push({title:"Sahkan pengimbas CI",body:"Sekurang-kurangnya satu pengimbas tidak menghasilkan keputusan lengkap. Jangan tafsir ketiadaan penemuan sebagai selamat."});
+  if(ci?.status==="findings_detected")changes.push({title:"Semak hasil Trivy dan Semgrep",body:"Ringkasan CI menunjukkan "+ci.counts.total+" penemuan. Semak artifact GitHub yang lengkap, mula dengan tahap kritikal dan tinggi, dan sahkan positif palsu."});
+  if(local?.count>0)changes.push({title:"Triage laporan yang diimport",body:local.count+" penemuan diimport secara setempat. Kumpulkan mengikut punca, semak fail berkaitan dan sahkan pembaikan melalui imbasan semula."});
+  if(codeFindings?.findings?.length)changes.push({title:"Semak keputusan Code Inspector",body:codeFindings.findings.length+" padanan heuristik ditemui. Ia bukan pengesahan eksploitasi. Semak aliran data input serta konteks sebenar kod."});
+  if(!web.length&&!ci&&!local?.count&&!codeFindings){
+    $("analystStatus").textContent="Belum ada bukti audit. Jalankan Web Audit, Code Audit atau muatkan laporan dahulu.";
+    return null;
+  }
+  if(!changes.length)changes.push({title:"Tiada isu dikenal pasti dalam skop semakan yang ada",body:"Keputusan ini tidak membuktikan sistem selamat. Teruskan audit dependency, semakan manual dan pemantauan konfigurasi."});
+  for(const finding of changes.slice(0,8)){
+    const card=text("div","","ak-analyst-item");
+    card.append(text("strong",finding.title),text("p",finding.body));output.append(card);
+  }
+  const summary=changes.map((c,i)=>(i+1)+". "+c.title+": "+c.body).join("\n");
+  $("analystStatus").textContent=changes.length+" cadangan berasaskan laporan semasa. Tiada AI luar dipanggil.";
+  return summary;
+}
+let lastAnalystText="";
+$("analyzeSecurity")?.addEventListener("click",()=>{lastAnalystText=analyzeEvidence()||"";});
+$("copySummary")?.addEventListener("click",async()=>{
+  if(!lastAnalystText)lastAnalystText=analyzeEvidence()||"";
+  if(!lastAnalystText)return;
+  try{await navigator.clipboard.writeText("AKSARA Security Lab · Ringkasan defensif\n"+lastAnalystText);
+    $("analystStatus").textContent="Ringkasan disalin. Tampal ke Aksara A.I. jika mahu analisis lanjut.";
+  }catch(_){$("analystStatus").textContent="Clipboard tidak tersedia. Gunakan eksport JSON sebagai alternatif.";}
+});
+$("printReport")?.addEventListener("click",()=>{
+  show("reports");
+  $("analystStatus").textContent="Pilih Save as PDF dalam dialog cetak browser.";
+  window.print();
 });
 })();
