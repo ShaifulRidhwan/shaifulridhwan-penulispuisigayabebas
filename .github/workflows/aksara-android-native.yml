@@ -39,7 +39,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Bootstrap checksum-pinned Gradle using curl
         run: |
-          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 'https://github.com/gradle/gradle-distributions/releases/download/v8.13.0/gradle-8.13-bin.zip?download=1' -o "$RUNNER_TEMP/aksara-gradle.zip"
+          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/gradle/gradle-distributions/releases/assets/232373824' -o "$RUNNER_TEMP/aksara-gradle.zip"
           printf '%s  %s\n' '20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78' "$RUNNER_TEMP/aksara-gradle.zip" | sha256sum --check
           unzip -q "$RUNNER_TEMP/aksara-gradle.zip" -d "$RUNNER_TEMP/aksara-gradle"
           echo "$RUNNER_TEMP/aksara-gradle/gradle-8.13/bin" >> "$GITHUB_PATH"
