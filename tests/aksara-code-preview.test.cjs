@@ -40,8 +40,8 @@ test("Linux Developer Sandbox is isolated, lazy and integrated into Code Engine,
  assert.ok(!menu.includes("🐧"));
  assert.match(menu,/aksara:code-developer-shell-open/);
  assert.match(menu,/aksara:code-linux-open/);
- assert.match(html,/bilik-antara-code-linux\.js\?v=1/);
- assert.match(html,/bilik-antara-code-linux\.css\?v=1/);
+ assert.match(html,/bilik-antara-code-linux\.js\?v=2/);
+ assert.match(html,/bilik-antara-code-linux\.css\?v=2/);
  assert.ok(!read("security-lab.html").includes('id="tab-linux"'));
  assert.ok(linux.includes("new V86("));
  assert.ok(linux.includes('"serial0-output-byte"') && linux.includes('vm.serial0_send(input + "\\n")'));
