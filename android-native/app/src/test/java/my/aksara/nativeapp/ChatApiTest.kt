@@ -20,6 +20,24 @@ class ChatApiTest {
         assertEquals("no_external_evidence",noEvidence.evidenceLevel)
         assertTrue(noEvidence.toolsUsed.isEmpty())
     }
+    @Test fun successfulJsonResponseNeverDuplicatesInference()=runBlocking {
+        MockWebServer().use { server ->
+            server.enqueue(MockResponse().setResponseCode(200)
+                .setHeader("Content-Type","application/json")
+                .setBody("""{"reply":"Dijawab sekali","provider":"local","sources":[]}"""))
+            server.start()
+            val events=ChatApi(server.url("/").toString().removeSuffix("/")).chat(JSONObject().put("question","test")).toList()
+            assertEquals("Dijawab sekali",(events.last() as ChatEvent.Done).reply)
+            assertEquals("200 JSON must not trigger second call",1,server.requestCount)
+        }
+    }
+    @Test fun interruptedNdjsonErrorRetainsRetryAfter() {
+        val error=assertThrows(ApiFailure::class.java) {
+            Ndjson.parse("""{"type":"error","status":429,"retryAfterSeconds":33,"error":"Provider rate-limited"}""")
+        }
+        assertEquals(429,error.status)
+        assertEquals("33",error.retryAfter)
+    }
     @Test fun ndjsonRejectsTruncatedJson() { assertThrows(java.io.IOException::class.java){Ndjson.parse("{broken") } }
     @Test fun errorFrameIsNeverSuccess() { assertThrows(ApiFailure::class.java){Ndjson.parse("{\"type\":\"error\",\"error\":\"rate limited\",\"status\":429}")} }
     @Test fun preservesUnicodeAndHistoryThroughRealHttpStream()=runBlocking {

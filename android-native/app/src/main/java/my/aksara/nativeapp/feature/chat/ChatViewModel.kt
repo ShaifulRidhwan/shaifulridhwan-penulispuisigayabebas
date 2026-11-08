@@ -19,7 +19,7 @@ import java.util.UUID
 data class ChatState(val messages: List<Message> = emptyList(), val archive: List<Message> = emptyList(), val busy: Boolean = false,
     val error: String? = null, val providers: List<Pair<String, String>> = emptyList(), val mode: String = "cahaya", val loaded: Boolean = false, val nextJourney: String? = null,
     val memoryEnabled: Boolean = false, val memoryNotes: String = "", val summaryStatus: String = "not_requested",
-    val lastProvider: String = "", val lastResearchStatus: String = "", val lastToolsUsed: List<String> = emptyList(),
+    val lastProvider: String = "", val lastModel: String = "", val lastResearchStatus: String = "", val lastToolsUsed: List<String> = emptyList(),
     val lastEvidenceLevel: String = "not_checked")
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
     private val api = ChatApi(BuildConfig.API_ORIGIN)
@@ -147,6 +147,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                                 "\n\n" + event.sources.joinToString("\n") { "[" + it.first + "](" + it.second + ")" }, incomplete = false)
                         }
                     }, lastProvider = if(event is ChatEvent.Done) event.provider else value.lastProvider,
+                        lastModel = if(event is ChatEvent.Done) event.model else value.lastModel,
                         lastResearchStatus = if(event is ChatEvent.Done) event.researchStatus else value.lastResearchStatus,
                         lastToolsUsed = if(event is ChatEvent.Done) event.toolsUsed else value.lastToolsUsed,
                         lastEvidenceLevel = if(event is ChatEvent.Done) event.evidenceLevel else value.lastEvidenceLevel) }
@@ -154,7 +155,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             } catch (e: CancellationException) {
                 mutable.update { it.copy(error = "Penjanaan dihentikan. Teks separa dikekalkan.") }
             } catch (e: Exception) {
-                mutable.update { it.copy(error = e.message ?: "Sambungan gagal. Cuba lagi.") }
+                val retry = (e as? ApiFailure)?.retryAfter?.toIntOrNull()
+                val message = (e.message ?: "Sambungan gagal. Cuba lagi.") +
+                    if(retry != null && retry > 0) " Cuba semula selepas "+retry+" saat." else ""
+                mutable.update { it.copy(error = message) }
             } finally {
                 mutable.update { it.copy(busy = false) }
                 withContext(NonCancellable) {

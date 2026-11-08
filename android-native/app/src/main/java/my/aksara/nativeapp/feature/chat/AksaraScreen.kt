@@ -72,9 +72,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         val text = textDocs.joinToString("\n\n") { "[DOKUMEN: " + it.name + "]\n" + it.text + "\n[TAMAT DOKUMEN]" }
         val name = textDocs.joinToString(", ") { it.name }.take(100)
         val media = JSONArray().apply { attachments.mapNotNull { it.media }.forEach { put(it) } }
-        if(vm.send(q, text, name, media)) attachments = emptyList()
+        vm.send(q, text, name, media)
+        Unit
     }, onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
-        onMemory = vm::setMemory,
+        onMemory = vm::setMemory, onClearAttachment = { attachments = emptyList() },
         onRestore = vm::restore, onClear = vm::clearScreen,
         attachmentName = attachments.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name }?.take(150),
         onPickAttachment = { picker.launch(arrayOf("text/*", "application/json", "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/octet-stream", "image/*", "audio/*", "video/*")) },
@@ -83,7 +84,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
 
 @Composable fun AksaraScreen(state: ChatState, onSend: (String)->Unit = {}, onStop: ()->Unit = {}, onRefresh: ()->Unit = {},
     onJourney: (String)->Unit = onSend, onMode: (String)->Unit = {}, onRestore: ()->Unit = {}, onClear: ()->Unit = {}, attachmentName: String? = null,
-    onPickAttachment: ()->Unit = {}, onDismissError: ()->Unit = {}, onMemory: (Boolean,String)->Unit = {_,_->}, initialOverlay: String? = null,
+    onPickAttachment: ()->Unit = {}, onDismissError: ()->Unit = {}, onMemory: (Boolean,String)->Unit = {_,_->}, onClearAttachment: ()->Unit = {}, initialOverlay: String? = null,
     fixedTimestamp: Long? = null) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
@@ -188,7 +189,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             }
                             if(state.nextJourney!=null) AksaraButton(state.nextJourney,{onJourney(state.nextJourney)},Modifier.padding(horizontal=12.dp,vertical=4.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
                             if(state.error!=null) Row(Modifier.fillMaxWidth().clickable(onClick=onDismissError).padding(8.dp)) { AksaraText(state.error,size=11f,color=Color(0xffe7a08e)) }
-                            if(attachmentName!=null) AksaraText("📎 $attachmentName",Modifier.padding(horizontal=12.dp),size=11f)
+                            if(attachmentName!=null) Row(Modifier.fillMaxWidth().padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically){
+                                AksaraText("📎 "+attachmentName,Modifier.weight(1f),size=11f)
+                                AksaraButton("Buang lampiran",onClearAttachment,size=9f,height=31.dp,radius=12.dp)
+                            }
                             Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(6,9,15,8),Color(6,8,14,71)))).padding(start=9.dp,end=9.dp,top=8.dp,bottom=10.dp)) {
                                 AksaraGlassSurface(Modifier.fillMaxWidth().heightIn(min=if(state.messages.isEmpty())58.dp else 60.dp).testTagCompat("composer-form"),radius=18.dp,
                                     brush=Brush.linearGradient(listOf(Color(25,35,49,17),Color(8,15,28,11))),border=Color(245,217,176,82)) {

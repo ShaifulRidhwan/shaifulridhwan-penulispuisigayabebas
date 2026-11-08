@@ -50,7 +50,8 @@ object Ndjson {
                     outputFormat = item.optString("outputFormat").take(30)
                 )
             }
-            "error" -> throw ApiFailure(item.optInt("status", 502), item.optString("error", "Permintaan gagal."))
+            "error" -> throw ApiFailure(item.optInt("status", 502), item.optString("error", "Permintaan gagal."),
+                item.optInt("retryAfterSeconds",0).takeIf { it>0 }?.toString())
             else -> null // forward-compatible heartbeat / metadata frames
         }
     }
@@ -83,11 +84,19 @@ class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClien
                 call = client.newCall(request("/.netlify/functions/bilik-antara-stream", payload))
                 val response = call!!.execute()
                 response.use { res ->
-                    if (res.code in listOf(404, 405, 409, 501) || (res.isSuccessful && !res.header("Content-Type").orEmpty().contains("application/x-ndjson"))) {
-                        // Fallback is only before accepting any streaming text.
+                    if (res.code in listOf(404, 405, 501)) {
+                        // An explicit unsupported route can safely fall back before inference.
                         val result = post("/.netlify/functions/bilik-antara", payload)
-                        val done = JSONObject(result.toString()).put("type", "done")
-                        send(Ndjson.parse(done.toString())!!); close(); return@launchSafely
+                        send(Ndjson.parse(JSONObject(result.toString()).put("type","done").toString())!!)
+                        close(); return@launchSafely
+                    }
+                    if (res.isSuccessful && !res.header("Content-Type").orEmpty().contains("application/x-ndjson",ignoreCase=true)) {
+                        // A successful JSON response may ALREADY have run the model. Never replay it.
+                        val data=runCatching { JSONObject(res.body?.string().orEmpty()) }
+                            .getOrElse { throw IOException("Pelayan tidak memulangkan NDJSON atau JSON yang sah.") }
+                        if(data.optString("reply").isBlank())throw IOException("Pelayan memulangkan respons tanpa jawapan.")
+                        send(Ndjson.parse(data.put("type","done").toString())!!)
+                        close(); return@launchSafely
                     }
                     if (!res.isSuccessful) {
                         val body = runCatching { JSONObject(res.body?.string().orEmpty()) }.getOrDefault(JSONObject())

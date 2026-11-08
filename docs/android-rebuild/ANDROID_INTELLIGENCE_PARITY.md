@@ -74,3 +74,10 @@ Android implementation:
 | Exclusions | SD-Turbo and unfinished Game Engine | Not modified |
 
 Revalidate CI at the exact resulting commit SHA. A successful build is NOT complete operational parity. PR must remain Draft and unmerged; production web must not be modified.
+
+## Final transport hardening checkpoint
+
+- Successful JSON replies on the streaming endpoint are parsed **in place**; the client must not resend the same inference request merely because the Content-Type is not NDJSON. Explicit 404/405/501 unsupported routes retain pre-inference fallback.
+- NDJSON 429 error frames retain the backend Retry-After period for user-visible diagnostics; status remains a failure, never reported as provider success.
+- Android staged attachments now remain selected after a send, matching the web follow-up behavior, with an explicit user-initiated Remove Attachments control. A failed request does not silently erase the local file selection.
+- These transport and UI changes require tests at the final commit; the live-provider and physical-device caveats above remain in force.

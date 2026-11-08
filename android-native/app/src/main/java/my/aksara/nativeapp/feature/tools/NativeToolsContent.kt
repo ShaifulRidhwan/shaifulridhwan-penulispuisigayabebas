@@ -117,6 +117,7 @@ import java.util.concurrent.TimeUnit
         "Ringkasan sesi" to state.summaryStatus,
         "Memori pilihan" to if(state.memoryEnabled)"Aktif" else "Dimatikan",
         "Provider respons terakhir" to state.lastProvider.ifBlank { "Belum disahkan" },
+        "Model respons terakhir" to state.lastModel.ifBlank { "Belum disahkan" },
         "Status penyelidikan" to state.lastResearchStatus.ifBlank { "Belum diuji" },
         "Tahap bukti (laporan backend)" to state.lastEvidenceLevel,
         "Tool dilaporkan digunakan" to state.lastToolsUsed.joinToString(", ").ifBlank { "Tiada yang dilaporkan" }
