@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.*
 import my.aksara.nativeapp.core.design.*
 import dev.chrisbanes.haze.*
 import kotlinx.coroutines.launch
+import my.aksara.engine.runtime.RuntimeClient
 
 @Composable fun AksaraOverlay(kind:String,state:ChatState,onClose:()->Unit,onNavigate:(String)->Unit,onRefresh:()->Unit,
     onMode:(String)->Unit,onRestore:()->Unit,onClear:()->Unit,onPickAttachment:()->Unit) {
@@ -126,18 +127,24 @@ import kotlinx.coroutines.launch
     var code by rememberSaveableCompat {mutableStateOf("console.log('Aksara native');")}
     var command by remember {mutableStateOf("")};var output by remember {mutableStateOf("Belum diuji")}
     val context=LocalContext.current;val scope=rememberCoroutineScope()
+    val runtime=remember {RuntimeClient(context)}
+    var activeJob by remember {mutableStateOf<kotlinx.coroutines.Job?>(null)}
+    var language by remember {mutableStateOf("javascript")}
+    DisposableEffect(Unit){onDispose{activeJob?.cancel()}}
+    fun run(lang:String,text:String){if(activeJob?.isActive==true)return;output="Menjalankan $lang…";activeJob=scope.launch{try{output=runtime.execute(lang,text)}catch(e:Exception){output=e.message?:"Runtime gagal."}}}
     Spacer(Modifier.height(14.dp));AksaraText("Code Intelligence",size=13f,weight=600)
+    Spacer(Modifier.height(8.dp));Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){listOf("javascript","sql","shell").forEach {lang-> AksaraButton(lang,{language=lang},Modifier.weight(1f),size=10f,height=32.dp)}}
     Spacer(Modifier.height(12.dp));AksaraGlassSurface(Modifier.fillMaxWidth().height(160.dp)) {
         BasicTextField(code,{code=it},Modifier.fillMaxSize().padding(12.dp),textStyle=AksaraTypography.style(12f,18f).copy(fontFamily=androidx.compose.ui.text.font.FontFamily.Monospace))
     }
     Spacer(Modifier.height(10.dp));Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-        AksaraButton("▶ Run",{output="Engine native belum disahkan. Kod tidak dijalankan."},Modifier.weight(1f))
-        AksaraButton("■ Stop",{output="Tiada proses aktif."},Modifier.weight(1f))
+        AksaraButton("▶ Run",{run(language,code)},Modifier.weight(1f))
+        AksaraButton("■ Stop",{activeJob?.cancel();output="Proses dihentikan."},Modifier.weight(1f))
     }
     Spacer(Modifier.height(16.dp));AksaraText("TERMINAL",size=12f,weight=600)
     AksaraText(output,Modifier.fillMaxWidth().heightIn(min=100.dp).verticalScroll(rememberScrollState()).padding(vertical=10.dp),size=11f,color=AksaraColors.muted)
     AksaraGlassSurface(Modifier.fillMaxWidth().height(44.dp)) {BasicTextField(command,{command=it},Modifier.fillMaxWidth().padding(10.dp),textStyle=AksaraTypography.style(12f))}
-    Spacer(Modifier.height(8.dp));AksaraButton("Enter",{output="Shell native belum disahkan. Tiada arahan dihantar."},Modifier.fillMaxWidth())
+    Spacer(Modifier.height(8.dp));AksaraButton("Enter",{run("shell",command)},Modifier.fillMaxWidth())
 }
 @Composable private fun <T> rememberSaveableCompat(calculation:()->T):T = remember(calculation=calculation)
 @Composable private fun VoiceContent(onClose:()->Unit) { AksaraText("Voice native belum disahkan. Mikrofon belum dibuka.",Modifier.padding(top=20.dp),size=13f);Spacer(Modifier.height(16.dp));AksaraButton("Tamatkan sesi",onClose,Modifier.fillMaxWidth()) }

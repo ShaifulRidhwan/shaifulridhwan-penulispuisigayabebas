@@ -23,6 +23,7 @@ android {
     packaging { resources.excludes += setOf("META-INF/LICENSE*", "META-INF/NOTICE*") }
 }
 dependencies {
+    implementation(project(":engine:runtime"))
     val composeBom = platform("androidx.compose:compose-bom:2025.06.01")
     implementation(composeBom); androidTestImplementation(composeBom)
     implementation("androidx.activity:activity-compose:1.10.1")
@@ -37,7 +38,6 @@ dependencies {
     implementation("dev.chrisbanes.haze:haze:1.5.4")
     implementation("io.noties.markwon:core:4.6.2")
     implementation("io.noties.markwon:ext-tables:4.6.2")
-    implementation("org.mozilla:rhino:1.8.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     testImplementation("org.json:json:20250517")
