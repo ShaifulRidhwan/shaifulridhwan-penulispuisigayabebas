@@ -37,6 +37,14 @@ jobs:
         with:
           packages: "platform-tools platforms;android-35 build-tools;35.0.0"
       - uses: gradle/actions/setup-gradle@v4
+      - name: Prepare Gradle distribution (retry download only)
+        working-directory: android-native
+        run: |
+          for attempt in 1 2 3; do
+            if ./gradlew --version; then exit 0; fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            sleep 5
+          done
       - run: ./gradlew --no-daemon testDebugUnitTest :engine:runtime:testDebugUnitTest assembleDebug assembleDebugAndroidTest
         working-directory: android-native
       - uses: actions/upload-artifact@v4

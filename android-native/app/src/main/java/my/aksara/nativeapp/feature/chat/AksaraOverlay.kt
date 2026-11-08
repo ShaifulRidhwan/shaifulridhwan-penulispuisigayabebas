@@ -29,13 +29,13 @@ import my.aksara.engine.voice.VoiceState
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val h=maxHeight
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(Color(2,6,13,64)).clickable(onClick=onClose))
-        val height=when(kind){"connection"->425.766.dp;"code"->minOf(740.dp,h-104.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->589.594.dp;"thinking"->419.594.dp;"attachments"->593.547.dp;"voice-permission"->280.594.dp;else->minOf(650.dp,h-60.dp)}
+        val height=when(kind){"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->589.594.dp;"thinking"->419.594.dp;"attachments"->593.547.dp;"voice-permission"->280.594.dp;else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal","portal"->14.dp;"voice-permission"->15.dp;else->17.dp}
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).fillMaxWidth().heightIn(max=h-28.dp).height(height).clickable(enabled=false){},
             radius=if(kind=="voice-permission")24.dp else 19.dp,blur=if(kind=="voice-permission")27.dp else 4.dp,
             brush=if(kind=="voice-permission")Brush.linearGradient(listOf(Color(29,39,53,97),Color(10,17,30,77),Color(25,38,54,102))) else DialogGradient,border=Color(244,217,176,94)) {
-            Column(Modifier.fillMaxSize().padding(if(kind=="voice-permission")18.dp else if(kind=="terminal")15.dp else 16.dp).verticalScroll(scroll)) {
+            Column(Modifier.fillMaxSize().padding(if(kind=="voice-permission")18.dp else if(kind=="terminal")15.dp else 16.dp).then(if(kind=="code")Modifier else Modifier.verticalScroll(scroll))) {
                 if(kind=="voice-permission") {
                     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(13.dp)) {
                         AksaraGlassSurface(Modifier.size(44.dp),radius=999.dp) { AksaraIcon("mic",Modifier.align(Alignment.Center).size(22.dp)) }
@@ -74,13 +74,25 @@ import my.aksara.engine.voice.VoiceState
                             Spacer(Modifier.weight(1f));AksaraButton("Refresh Status",onRefresh,Modifier.fillMaxWidth(),height=49.dp)
                         }
                         "code" -> {
-                            Spacer(Modifier.height(12.dp));AksaraText("Native runtimes · Not tested",size=10f,line=14.5f,color=AksaraColors.muted);Spacer(Modifier.height(8.dp))
-                            listOf("HTML · CSS","JavaScript","Python · Pyodide","TypeScript","SQL · SQLite WASM","C++ · Clang WASM").forEach {
-                                MenuRow(it,"Not Tested",height=57.dp) {notice="$it: engine native belum disahkan. Runtime web tidak dibungkus sebagai aplikasi native."}
-                                Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(14.dp))
+                            AksaraText("Not checked yet",Modifier.padding(end=48.dp),size=10f,line=14.5f,color=AksaraColors.muted)
+                            Spacer(Modifier.height(9.dp))
+                            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
+                                listOf("HTML · CSS","JavaScript","Python · Pyodide","TypeScript","SQL · SQLite WASM","C++ · Clang WASM").forEach { language ->
+                                    MenuRow(language,"Not Tested",height=57.dp) {notice="$language: status native belum diuji dalam sesi ini. Runtime web tidak dibungkus sebagai aplikasi native."}
+                                }
                             }
-                            Spacer(Modifier.height(12.dp));AksaraText("A.I. Code Execution · OFF",size=10f,line=14f,color=AksaraColors.muted)
-                            Spacer(Modifier.height(12.dp));AksaraButton("Refresh Status",{notice="Ujian runtime native tersedia melalui Terminal selepas integrasi engine."},Modifier.fillMaxWidth(),height=49.dp)
+                            Spacer(Modifier.height(8.dp))
+                            AksaraText("Runtime native diuji secara berasingan. Bahasa dan had muat turun web tidak membuktikan sokongan native.",size=10f,line=14.5f,color=AksaraColors.muted)
+                            Spacer(Modifier.height(14.dp))
+                            Box(Modifier.fillMaxWidth().height(1.dp).background(Color(228,198,155,51)))
+                            Spacer(Modifier.height(12.dp))
+                            Row(Modifier.fillMaxWidth().clickable{notice="Pelaksanaan automatik A.I. native belum tersedia."},verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){
+                                Box(Modifier.padding(start=4.dp).size(17.dp).border(1.dp,Color(0xffa4a4a4)))
+                                AksaraText("Benarkan A.I. jalankan kod dalam sandbox",Modifier.weight(1f),size=12f,line=17.4f,weight=600,color=Color(0xfff0ddbd))
+                            }
+                            Spacer(Modifier.height(8.dp));AksaraText("A.I. Code Execution · OFF",size=11f,line=14f,weight=600,color=Color(0xffe4c99b))
+                            Spacer(Modifier.height(13.dp));AksaraButton("Refresh Status",{notice="Semakan pelbagai runtime native belum diintegrasikan dalam panel ini."},Modifier.fillMaxWidth(),height=49.dp)
                             Spacer(Modifier.height(8.dp));AksaraButton("Code Workspace",{onNavigate("terminal")},Modifier.fillMaxWidth())
                             Spacer(Modifier.height(8.dp));AksaraButton("Evaluation Lab",{notice="Evaluation Lab native belum tersedia."},Modifier.fillMaxWidth())
                         }
