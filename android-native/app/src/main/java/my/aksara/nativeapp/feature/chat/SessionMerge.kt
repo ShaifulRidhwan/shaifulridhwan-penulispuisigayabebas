@@ -9,5 +9,5 @@ import my.aksara.nativeapp.core.storage.Message
 fun mergeSessionArchive(archive:List<Message>,current:List<Message>):List<Message> {
     val byId=LinkedHashMap<String,Message>()
     (archive+current).forEach { message -> byId[message.id]=message }
-    return byId.values.takeLast(200)
+    return byId.values.toList().takeLast(200)
 }
