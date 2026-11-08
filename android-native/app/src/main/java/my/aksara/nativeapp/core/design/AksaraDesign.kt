@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.drawscope.*
 import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.*
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.layout.ContentScale
@@ -31,7 +32,7 @@ object AksaraTypography {
     val heading = FontFamily(Font(R.font.space_grotesk, weight = FontWeight.Normal), Font(R.font.space_grotesk, weight = FontWeight.SemiBold))
     fun style(size: Float = 14f, line: Float = size * 1.6f, weight: Int = 400, color: Color = AksaraColors.text) = TextStyle(
         color = color, fontFamily = body, fontSize = size.sp, lineHeight = line.sp, fontWeight = FontWeight(weight),
-        platformStyle = PlatformTextStyle(includeFontPadding = false))
+        platformStyle = PlatformTextStyle(includeFontPadding = false),lineHeightStyle=LineHeightStyle(LineHeightStyle.Alignment.Center,LineHeightStyle.Trim.None))
 }
 object AksaraSpacing { val shellSide = 7.dp; val shellBottom = 7.dp; val headerTop = 10.dp; val dialogPadding = 15.dp }
 @Composable fun AksaraText(text: String, modifier: Modifier = Modifier, size: Float = 14f, line: Float = size * 1.6f,
@@ -44,14 +45,21 @@ val DialogGradient: Brush get() = Brush.linearGradient(listOf(Color(23,31,45,92)
 @Composable fun AksaraGlassSurface(modifier: Modifier = Modifier, radius: Dp = 13.dp, blur: Dp = 2.dp,
     brush: Brush = GlassGradient, border: Color = AksaraColors.border, shape: Shape = RoundedCornerShape(radius), content: @Composable BoxScope.() -> Unit) {
     val haze = LocalBackdrop.current
-    Box(modifier.clip(shape).hazeEffect(haze, HazeStyle(tints=emptyList(), backgroundColor = Color(0xff070911), blurRadius = blur, noiseFactor = 0f))
-        .background(brush).border(1.dp, border, shape), content = content)
+    val surfaceBackdrop=remember {HazeState()}
+    Box(modifier.clip(shape).border(1.dp,border,shape)) {
+        // Record only this surface's processed background; foreground children never
+        // feed back into their own blur input. Nested glass samples this layer.
+        Box(Modifier.matchParentSize().hazeSource(surfaceBackdrop)
+            .hazeEffect(haze,HazeStyle(tints=emptyList(),backgroundColor=Color(0xff070911),blurRadius=blur*1.75f,noiseFactor=0f))
+            .background(brush))
+        CompositionLocalProvider(LocalBackdrop provides surfaceBackdrop){content()}
+    }
 }
 @Composable fun AksaraButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: String? = null,
     size: Float = 12f, height: Dp = 44.dp, radius: Dp = 13.dp, enabled: Boolean = true, contentColor: Color = AksaraColors.text) {
     AksaraGlassSurface(modifier.graphicsLayer { alpha=if(enabled)1f else .6f }.height(height).clip(RoundedCornerShape(radius)).clickable(enabled = enabled, onClick = onClick), radius) {
-        Row(Modifier.align(Alignment.Center).padding(horizontal = 10.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-            if (icon != null) AksaraIcon(icon, Modifier.size(if(size<10) 15.dp else 18.dp), contentColor)
+        Row(Modifier.align(Alignment.Center).padding(horizontal = if(size<10f)6.dp else 10.dp), horizontalArrangement = Arrangement.spacedBy(if(size<10f)4.dp else 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) AksaraIcon(icon, Modifier.size(if(icon=="code")15.dp else if(icon=="terminal")17.dp else if(icon=="brain")23.dp else if(icon=="send")19.dp else if(icon=="voice"&&size<10)12.dp else if(size<10)15.dp else 18.dp), contentColor)
             if (label.isNotEmpty()) AksaraText(label, size = size, line = size*1.4f, weight = 500, color = contentColor)
         }
     }
@@ -67,8 +75,8 @@ private val iconPaths = mapOf(
     "send" to listOf("m5 12 14-9-3.6 18L11 13l-6-1Z", "m11 13 8-10"),
     "attach" to listOf("m21.4 11.6-8.9 9a6.4 6.4 0 0 1-9.1-9.1L13 1.9a4.3 4.3 0 0 1 6.1 6.1l-9.5 9.5a2.2 2.2 0 0 1-3.1-3.1l8.6-8.6"),
     "brain" to listOf("M12 20V5a3 3 0 0 0-5.8-.9A3.7 3.7 0 0 0 3.5 9a3.4 3.4 0 0 0 .1 5.4A3.6 3.6 0 0 0 6.8 19 3 3 0 0 0 12 20Zm0 0V5a3 3 0 0 1 5.8-.9A3.7 3.7 0 0 1 20.5 9a3.4 3.4 0 0 1-.1 5.4A3.6 3.6 0 0 1 17.2 19 3 3 0 0 1 12 20Z", "M5.5 9h3l2 2.1v3.2M18.5 9h-3l-2 2.1v3.2M6.2 15.5h2.6m6.4 0h2.6"),
-    "terminal" to listOf("M5 5H19Q21 5 21 7V17Q21 19 19 19H5Q3 19 3 17V7Q3 5 5 5Z", "m7 9 3 3-3 3m6 0h4"),
-    "code" to listOf("M7 7h10v10H7ZM10 10h4v4h-4ZM9 3v4m6-4v4M9 17v4m6-4v4M3 9h4m-4 6h4m10-6h4m-4 6h4"),
+    "terminal" to listOf("M5.3 4.2h13.4a2.8 2.8 0 0 1 2.8 2.8v10a2.8 2.8 0 0 1-2.8 2.8H5.3a2.8 2.8 0 0 1-2.8-2.8V7a2.8 2.8 0 0 1 2.8-2.8Z", "m7 9 3.7 3-3.7 3m6.2.4h4.2"),
+    "code" to listOf("M8 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z", "M10 9h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z", "M9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4"),
     "network" to listOf("M5 5.5 12 12l7-7M12 12l7.3 7M12 12 4.8 18.5", "m12 7.2 1.25 3.55L16.8 12l-3.55 1.25L12 16.8l-1.25-3.55L7.2 12l3.55-1.25Z"),
     "grid" to listOf("M4 4h6v6H4ZM14 4h6v6h-6ZM4 14h6v6H4ZM14 14h6v6h-6Z"),
     "voice" to listOf("M3 10v4m4-7v10m5-13v16m5-13v10m4-7v4"),
@@ -81,5 +89,5 @@ private val iconPaths = mapOf(
 )
 @Composable fun AksaraIcon(name: String, modifier: Modifier = Modifier.size(20.dp), color: Color = AksaraColors.gold) {
     val paths = remember(name) { iconPaths[name].orEmpty().map { PathParser().parsePathString(it).toPath() } }
-    Canvas(modifier) { scale(size.width/24f, size.height/24f, pivot = Offset.Zero) { paths.forEach { drawPath(it, color, style = Stroke(1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)) } } }
+    Canvas(modifier) { scale(size.width/24f, size.height/24f, pivot = Offset.Zero) { paths.forEach { drawPath(it, color, style = Stroke(1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)) }; if(name=="network")listOf(Offset(5f,5.5f),Offset(19f,5f),Offset(19.3f,19f),Offset(4.8f,18.5f)).forEach{drawCircle(color,1.55f,it)} } }
 }

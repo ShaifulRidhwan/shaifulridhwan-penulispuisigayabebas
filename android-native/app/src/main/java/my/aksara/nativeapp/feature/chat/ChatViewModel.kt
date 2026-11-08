@@ -64,6 +64,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 val payload = JSONObject().put("question", question).put("history", history).put("thoughtMode", state.value.mode)
                     .put("contextFallback", true).put("mediaFallback", false).put("summary", "").put("memoryNotes", "")
                     .put("documentText", documentText).put("documentName", documentName).put("media",if(media!=null)JSONArray().put(media) else JSONObject.NULL)
+                require(payload.toString().toByteArray(Charsets.UTF_8).size<=5_350_000) {"Jumlah mesej, sejarah dan lampiran melebihi had API 5.35 MB."}
                 api.chat(payload).collect { event ->
                     mutable.update { value -> value.copy(messages = value.messages.map { m -> if (m.id != assistant.id) m else when (event) {
                         is ChatEvent.Delta -> m.copy(text = m.text + event.text)

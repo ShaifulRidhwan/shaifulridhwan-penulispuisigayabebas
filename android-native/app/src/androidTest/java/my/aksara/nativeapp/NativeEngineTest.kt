@@ -10,11 +10,14 @@ import org.junit.Test
 
 class NativeEngineTest {
     private val context=InstrumentationRegistry.getInstrumentation().targetContext
-    @Test fun javascriptShellAndSqlActuallyExecute()=runBlocking {
-        val client=RuntimeClient(context)
-        assertEquals("42",withTimeout(10000){client.execute("javascript","console.log(6*7)")}.trim())
-        assertTrue(withTimeout(10000){client.execute("shell","printf 'native-shell-ok'")}.contains("native-shell-ok"))
-        assertTrue(withTimeout(10000){client.execute("sql","SELECT 6*7 AS result")}.contains("42"))
+    @Test fun javascriptActuallyExecutes()=runBlocking {
+        assertEquals("42",withTimeout(10000){RuntimeClient(context).execute("javascript","console.log(6*7)")}.trim())
+    }
+    @Test fun shellActuallyExecutes()=runBlocking {
+        assertTrue(withTimeout(10000){RuntimeClient(context).execute("shell","printf 'native-shell-ok'")}.contains("native-shell-ok"))
+    }
+    @Test fun sqliteActuallyExecutes()=runBlocking {
+        assertTrue(withTimeout(10000){RuntimeClient(context).execute("sql","SELECT 6*7 AS result")}.contains("42"))
     }
     @Test fun isolatedShellCannotReadApplicationPrivateData()=runBlocking {
         val file=java.io.File(context.filesDir,"isolation-test.txt").apply{writeText("PRIVATE_SENTINEL_8593")}

@@ -21,10 +21,13 @@ import my.aksara.engine.avatar.VoiceAvatarView
 
 @Composable fun VoiceScreen(state:VoiceState,onClose:()->Unit,onMic:()->Unit={},onSpeaker:()->Unit={},onVolume:(Float)->Unit={},mode:String="cahaya",onMode:(String)->Unit={},preview:Boolean=false){
     val haze=LocalBackdrop.current
+    val voiceBackdrop=remember{HazeState()}
     var modePicker by remember{mutableStateOf(false)};var stylePicker by remember{mutableStateOf(false)}
     var seconds by remember{mutableIntStateOf(0)}
     LaunchedEffect(state.startedAt){while(state.startedAt!=null){seconds=((System.currentTimeMillis()-state.startedAt!!)/1000).toInt();kotlinx.coroutines.delay(1000)}}
-    BoxWithConstraints(Modifier.fillMaxSize().hazeEffect(haze,HazeStyle(tints=emptyList(),backgroundColor=Color(0xff070911),blurRadius=17.dp,noiseFactor=0f)).background(Color(9,16,28,145))){
+    BoxWithConstraints(Modifier.fillMaxSize()){
+        Box(Modifier.fillMaxSize().hazeSource(voiceBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(),backgroundColor=Color(0xff070911),blurRadius=29.75.dp,noiseFactor=0f)).background(Color(9,16,28,145)))
+        CompositionLocalProvider(LocalBackdrop provides voiceBackdrop){
         val compact=maxWidth<=360.dp
         val side=if(compact)8.dp else 11.dp
         Column(Modifier.fillMaxSize()){
@@ -78,6 +81,7 @@ import my.aksara.engine.avatar.VoiceAvatarView
                 Spacer(Modifier.height(16.dp))
                 (if(modePicker)listOf("Cahaya","Gelap") else listOf("Bahasa Santai")).forEach{choice->AksaraButton(choice,{if(modePicker)onMode(choice.lowercase());modePicker=false;stylePicker=false},Modifier.fillMaxWidth());Spacer(Modifier.height(8.dp))}
             }}
+        }
         }
     }
 }

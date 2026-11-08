@@ -2,7 +2,7 @@ package my.aksara.engine.runtime
 
 import android.app.Service
 import android.content.Intent
-import android.database.sqlite.SQLiteDatabase
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import android.os.*
 import java.util.concurrent.Executors
 
@@ -29,16 +29,20 @@ class RuntimeService:Service() {
                         require(bytes.size<=80_000){"Output melebihi 80 KB."}
                         child.waitFor();String(bytes)+"\n[exit ${child.exitValue()}]"
                     }
-                    "sql" -> SQLiteDatabase.create(null).use{db ->
-                        db.rawQuery(code,null).use{cursor -> buildString {
-                            appendLine(cursor.columnNames.joinToString(" | "));var rows=0
-                            while(cursor.moveToNext()&&rows++<1000){appendLine((0 until cursor.columnCount).joinToString(" | "){cursor.getString(it)?:"NULL"});if(length>80_000)throw IllegalArgumentException("Output melebihi 80 KB.")}
+                    "sql" -> BundledSQLiteDriver().open(":memory:").use {db ->
+                        db.prepare(code).use {statement ->buildString {
+                            appendLine((0 until statement.getColumnCount()).joinToString(" | "){statement.getColumnName(it)})
+                            var rows=0
+                            while(statement.step()&&rows++<1000){
+                                appendLine((0 until statement.getColumnCount()).joinToString(" | "){if(statement.isNull(it))"NULL" else statement.getText(it)})
+                                require(length<=80_000){"Output melebihi 80 KB."}
+                            }
                         }}
                     }
                     else -> error("Runtime $language belum tersedia secara native.")
                 }
                 data.putString("output",output)
-            }catch(e:Throwable){data.putString("error",e.message?:e.javaClass.simpleName)}
+            }catch(e:Throwable){data.putString("error","$language: ${e.message?:e.javaClass.simpleName}")}
             finally{process?.destroyForcibly();process=null;main.removeCallbacks(timeout)}
             runCatching{reply.send(Message.obtain(null,1,id,0).apply{this.data=data})}
             stopSelf()

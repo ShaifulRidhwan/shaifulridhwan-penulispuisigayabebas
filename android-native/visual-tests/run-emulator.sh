@@ -2,19 +2,29 @@
 set -euo pipefail
 out=docs/android-rebuild/visual-comparison
 mkdir -p "$out/android" "$out/performance"
-trap 'adb pull /sdcard/Android/data/my.aksara.nativeapp/files/visual/. "$out/android/" >/dev/null 2>&1 || true' EXIT
+finish_evidence() {
+  adb pull /sdcard/Android/data/my.aksara.nativeapp/files/visual/. "$out/android/" >/dev/null 2>&1 || true
+  adb logcat -d -b crash > "$out/performance/crashes.txt" || true
+  adb logcat -d -s AndroidRuntime SQLiteLog Filament > "$out/performance/runtime-errors.txt" || true
+}
+trap finish_evidence EXIT
 adb shell settings put global window_animation_scale 0
 adb shell settings put global transition_animation_scale 0
 adb shell settings put global animator_duration_scale 0
+adb shell settings put system font_scale 1.0
 adb install -r android-native/build-artifact/outputs/apk/debug/app-debug.apk
 adb install -r android-native/build-artifact/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+failures=0
+adb shell am instrument -w -r -e class my.aksara.nativeapp.NativeEngineTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/native-engine-tests.txt" || failures=$((failures+1))
+cat "$out/android/native-engine-tests.txt"
+if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/native-engine-tests.txt"; then failures=$((failures+1)); fi
 for spec in '360 800' '390 844' '412 915'; do
   read -r width height <<< "$spec"
   adb shell wm size "${width}x${height}"
   adb shell wm density 160
-  adb shell am instrument -w -r my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/test-${width}.txt"
+  adb shell am instrument -w -r -e class my.aksara.nativeapp.VisualParityTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/test-${width}.txt" || failures=$((failures+1))
   cat "$out/android/test-${width}.txt"
-  grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/test-${width}.txt"
+  if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/test-${width}.txt"; then failures=$((failures+1)); fi
   adb pull /sdcard/Android/data/my.aksara.nativeapp/files/visual/. "$out/android/"
 done
 adb shell wm size 390x844
@@ -29,4 +39,6 @@ adb shell run-as my.aksara.nativeapp du -sk "$code_dir" . > "$out/performance/in
 adb logcat -d -b crash > "$out/performance/crashes.txt"
 stat -c %s android-native/build-artifact/outputs/apk/debug/app-debug.apk > "$out/performance/apk-bytes.txt"
 python -m pip install pillow numpy scikit-image
-python android-native/visual-tests/compare.py
+comparison_status=0
+python android-native/visual-tests/compare.py || comparison_status=$?
+if [ "$failures" -ne 0 ] || [ "$comparison_status" -ne 0 ]; then exit 1; fi

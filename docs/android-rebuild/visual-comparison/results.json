@@ -1,0 +1,1180 @@
+[
+  {
+    "screen": "360-security",
+    "status": "BLOCKED_WEB_REFERENCE",
+    "similarity": null,
+    "reason": "page.goto: net::ERR_HTTP_RESPONSE_CODE_FAILURE at https://aksara-apps.mshaifulridhwan.workers.dev/security-lab.html\nCall log:\n  - navigating to \"https://aksara-apps.mshaifulridhwan.workers.dev/security-lab.html\", waiting until \"networkidle\"\n"
+  },
+  {
+    "screen": "390-security",
+    "status": "BLOCKED_WEB_REFERENCE",
+    "similarity": null,
+    "reason": "page.goto: net::ERR_HTTP_RESPONSE_CODE_FAILURE at https://aksara-apps.mshaifulridhwan.workers.dev/security-lab.html\nCall log:\n  - navigating to \"https://aksara-apps.mshaifulridhwan.workers.dev/security-lab.html\", waiting until \"networkidle\"\n"
+  },
+  {
+    "screen": "412-security",
+    "status": "BLOCKED_WEB_REFERENCE",
+    "similarity": null,
+    "reason": "page.goto: net::ERR_HTTP_RESPONSE_CODE_FAILURE at https://aksara-apps.mshaifulridhwan.workers.dev/security-lab.html\nCall log:\n  - navigating to \"https://aksara-apps.mshaifulridhwan.workers.dev/security-lab.html\", waiting until \"networkidle\"\n"
+  },
+  {
+    "screen": "360-attachments",
+    "status": "MISMATCH",
+    "ssim_percent": 54.372,
+    "mae": 23.873180555555557,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 80.683
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 55.382
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 61.442
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 72.091
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 73.311
+      },
+      {
+        "component": "attachmentDialog",
+        "ssim_percent": 40.871
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 20.207
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 84.092
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 92.429
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 82.319
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": -0.203
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
+  },
+  {
+    "screen": "360-chat",
+    "status": "MISMATCH",
+    "ssim_percent": 69.794,
+    "mae": 14.772412037037038,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 66.15
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 20.828
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 28.737
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 39.742
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 60.474
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 73.538
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 25.543
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 25.769
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 80.966
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 46.586
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 74.266
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": -0.203
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
+  },
+  {
+    "screen": "360-code",
+    "status": "MISMATCH",
+    "ssim_percent": 44.742,
+    "mae": 26.882597222222223,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 55.059
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 31.023
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 18.692
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 23.455
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 33.406
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 31.796
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 44.513
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 43.557
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 41.809
+      },
+      {
+        "component": "codeEngineMenu",
+        "ssim_percent": 38.525
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": -0.203
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
+  },
+  {
+    "screen": "360-composer-focused",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "360-connection",
+    "status": "MISMATCH",
+    "ssim_percent": 66.759,
+    "mae": 19.76575462962963,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 80.683
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 55.453
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 59.634
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 71.356
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 74.249
+      },
+      {
+        "component": "multiAiDialog",
+        "ssim_percent": 47.019
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 51.286
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 84.946
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 92.522
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 82.92
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": -0.203
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
+  },
+  {
+    "screen": "360-knowledge",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "360-library",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "360-metrics",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "360-portal",
+    "status": "MISMATCH",
+    "ssim_percent": 51.074,
+    "mae": 29.160246527777776,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 79.84
+      },
+      {
+        "component": "portalCard",
+        "ssim_percent": 41.552
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 33.183
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 38.716
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 47.004
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 46.369
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 28.751
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 62.513
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 72.742
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 62.056
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": -0.203
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
+  },
+  {
+    "screen": "360-sessions",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "360-streaming",
+    "status": "MISMATCH",
+    "ssim_percent": 78.131,
+    "mae": 10.633766203703704,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 66.15
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 20.828
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 28.737
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 39.742
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 60.474
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 72.324
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 24.328
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 44.073
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 79.469
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 46.586
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 74.266
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": -0.203
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6.312,
+          "height": -20
+        }
+      }
+    ]
+  },
+  {
+    "screen": "360-studio",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "360-terminal",
+    "status": "MISMATCH",
+    "ssim_percent": 54.548,
+    "mae": 24.31325462962963,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 80.933
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 26.398
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 27.141
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 28.427
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 52.972
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 25.354
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 81.278
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 90.669
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 79.303
+      },
+      {
+        "component": "aksaraAITerminal",
+        "ssim_percent": 45.147
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": -0.203
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
+  },
+  {
+    "screen": "360-thinking",
+    "status": "MISMATCH",
+    "ssim_percent": 64.151,
+    "mae": 20.748796296296295,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 80.683
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 55.453
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 59.634
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 71.356
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 74.249
+      },
+      {
+        "component": "thoughtModeDialog",
+        "ssim_percent": 44.349
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 47.626
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 84.946
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 92.522
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 82.92
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": -0.203
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
+  },
+  {
+    "screen": "360-voice-permission",
+    "status": "MISMATCH",
+    "ssim_percent": 78.765,
+    "mae": 14.283478009259259,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 84.064
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 61.253
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 64.925
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 77.311
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 80.929
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 86.249
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 90.397
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 94.861
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 88.702
+      },
+      {
+        "component": "aksaraMicPermission",
+        "ssim_percent": 59.815
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": -0.203
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
+  },
+  {
+    "screen": "360-voice",
+    "status": "CORRUPT_CAPTURE",
+    "similarity": null,
+    "reason": "image file is truncated"
+  },
+  {
+    "screen": "360-welcome",
+    "status": "MISMATCH",
+    "ssim_percent": 81.767,
+    "mae": 9.765425925925927,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 66.15
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 20.828
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 28.737
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 39.742
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 60.474
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 68.91
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 80.922
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 46.519
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 74.335
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": -0.203
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
+  },
+  {
+    "screen": "390-attachments",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-chat",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-code",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-composer-focused",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-connection",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-knowledge",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-library",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-metrics",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-portal",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-sessions",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-streaming",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-studio",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-terminal",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-thinking",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-voice-permission",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-voice",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "390-welcome",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-attachments",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-chat",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-code",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-composer-focused",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-connection",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-knowledge",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-library",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-metrics",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-portal",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-sessions",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-streaming",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-studio",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-terminal",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-thinking",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-voice-permission",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-voice",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  },
+  {
+    "screen": "412-welcome",
+    "status": "MISSING_NATIVE",
+    "similarity": null
+  }
+]

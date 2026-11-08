@@ -138,7 +138,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 AksaraGlassSurface(Modifier.fillMaxWidth().heightIn(min=if(state.messages.isEmpty())58.dp else 60.dp).testTagCompat("composer-form"),radius=16.dp,
                                     brush=Brush.linearGradient(listOf(Color(25,35,49,17),Color(8,15,28,11))),border=Color(245,217,176,82)) {
                                     Row(Modifier.fillMaxWidth().padding(horizontal=8.dp,vertical=7.dp),verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(5.dp)) {
-                                        Box(Modifier.size(42.dp).clip(RoundedCornerShape(13.dp)).clickable {open("attachments")}.semantics {contentDescription="Lampir fail"},contentAlignment=Alignment.Center) {AksaraIcon("attach",Modifier.size(23.dp))}
+                                        Box(Modifier.size(42.dp).clip(RoundedCornerShape(13.dp)).clickable {open("attachments")}.semantics {contentDescription="Lampir fail"},contentAlignment=Alignment.Center) {AksaraIcon("attach",Modifier.size(21.dp))}
                                         BasicTextField(draft,{draft=it},Modifier.weight(1f).heightIn(min=if(state.messages.isEmpty())44.dp else 46.dp,max=140.dp).padding(horizontal=3.dp,vertical=10.dp).semantics {contentDescription="Tulis mesej untuk Aksara A.I."}.testTagCompat("input"),
                                             textStyle=AksaraTypography.style(16f,24f),cursorBrush=SolidColor(AksaraColors.gold))
                                         if(state.busy) AksaraButton("Henti",onStop,Modifier.width(56.6875.dp).semantics {contentDescription="Hentikan respons"},size=12f,height=40.dp,radius=7.dp)

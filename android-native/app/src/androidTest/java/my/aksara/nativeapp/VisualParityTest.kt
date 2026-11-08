@@ -48,9 +48,11 @@ class VisualParityTest {
             }
             // Haze draws source/effect in separate render frames.
             Thread.sleep(1000)
-            val bitmap=compose.onRoot().captureToImage().asAndroidBitmap()
-            val width=(bitmap.width/context.resources.displayMetrics.density).toInt()
-            File(out,"$width-$name.png").outputStream().use{bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)}
+            val device=androidx.test.uiautomator.UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
+            val width=(device.displayWidth/context.resources.displayMetrics.density).toInt()
+            val screenshot=File(out,"$width-$name.png")
+            assertTrue("SurfaceFlinger screenshot failed: $name",device.takeScreenshot(screenshot))
+            assertTrue("Empty screenshot: $name",screenshot.length()>0)
             val nodes=JSONArray()
             fun visit(node:SemanticsNode){
                 val r=node.boundsInRoot
@@ -62,7 +64,6 @@ class VisualParityTest {
             if(name=="composer-focused") {
                 compose.runOnIdle {androidx.core.view.WindowCompat.getInsetsController(compose.activity.window,compose.activity.window.decorView).show(androidx.core.view.WindowInsetsCompat.Type.ime())}
                 Thread.sleep(600)
-                val device=androidx.test.uiautomator.UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
                 device.takeScreenshot(File(out,"$width-keyboard.png"));device.pressBack()
             }
         }
