@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.media.*
+import android.os.Build
 import android.media.audiofx.*
 import android.util.Base64
 import kotlinx.coroutines.*
@@ -18,7 +19,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** Same ephemeral-token broker, Gemini Live constrained socket and Aoede as the web. */
-data class VoiceState(val phase:String="idle",val message:String="Belum connect lagi.",val startedAt:Long?=null,val mic:Boolean=true,val speaker:Boolean=true,val volume:Float=.5f)
+data class VoiceState(val phase:String="idle",val message:String="Belum connect lagi.",val startedAt:Long?=null,val mic:Boolean=true,val speaker:Boolean=true,val volume:Float=1f)
 class LiveVoiceClient(private val context:Context,private val origin:String,private val identity:String):AutoCloseable {
     private val job=SupervisorJob();private val scope=CoroutineScope(job+Dispatchers.IO)
     private val client=OkHttpClient.Builder().connectTimeout(20,TimeUnit.SECONDS).readTimeout(0,TimeUnit.SECONDS).build()
@@ -31,6 +32,7 @@ class LiveVoiceClient(private val context:Context,private val origin:String,priv
     private var generation=0
     private val manager=context.getSystemService(AudioManager::class.java)
     private var focus:AudioFocusRequest?=null
+    private var previousAudioMode:Int?=null
     fun start(){
         if(!running.compareAndSet(false,true))return
         if(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED){fail("Izin mikrofon diperlukan.");return}
@@ -89,7 +91,9 @@ class LiveVoiceClient(private val context:Context,private val origin:String,priv
         val attrs=AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
         focus=AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT).setAudioAttributes(attrs).setOnAudioFocusChangeListener { change -> if(change==AudioManager.AUDIOFOCUS_LOSS||change==AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)fail("Audio dijeda oleh Android.") }.build()
         check(manager.requestAudioFocus(focus!!)==AudioManager.AUDIOFOCUS_REQUEST_GRANTED){"Audio focus tidak diberikan."}
+        previousAudioMode=manager.mode
         manager.mode=AudioManager.MODE_IN_COMMUNICATION
+        routeVoiceToLoudspeaker()
         val input=AudioRecord.Builder().setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION).setAudioFormat(AudioFormat.Builder().setSampleRate(16000).setEncoding(AudioFormat.ENCODING_PCM_16BIT).setChannelMask(AudioFormat.CHANNEL_IN_MONO).build()).setBufferSizeInBytes(maxOf(3200,AudioRecord.getMinBufferSize(16000,AudioFormat.CHANNEL_IN_MONO,AudioFormat.ENCODING_PCM_16BIT)*2)).build()
         check(input.state==AudioRecord.STATE_INITIALIZED){"AudioRecord tidak bersedia."};recorder=input
         if(AcousticEchoCanceler.isAvailable())echo=AcousticEchoCanceler.create(input.audioSessionId)?.apply{enabled=true}
@@ -107,6 +111,24 @@ class LiveVoiceClient(private val context:Context,private val origin:String,priv
             }
         }
     }
+    // Voice communication uses a different volume stream from Android media.
+    // Explicit routing avoids inaudible earpiece playback on many handsets.
+    @Suppress("DEPRECATION")
+    private fun routeVoiceToLoudspeaker(){
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.S){
+            val builtIn=manager.availableCommunicationDevices.firstOrNull{it.type==AudioDeviceInfo.TYPE_BUILTIN_SPEAKER}
+            if(builtIn!=null&&manager.setCommunicationDevice(builtIn))return
+        }
+        manager.isSpeakerphoneOn=true
+    }
+    @Suppress("DEPRECATION")
+    private fun restoreAudioRouting(){
+        val original=previousAudioMode?:return
+        if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.S)manager.clearCommunicationDevice()
+        else manager.isSpeakerphoneOn=false
+        manager.mode=original
+        previousAudioMode=null
+    }
     fun setMic(enabled:Boolean){mutable.value=mutable.value.copy(mic=enabled);if(!enabled)socket?.send("{\"realtimeInput\":{\"audioStreamEnd\":true}}")}
     fun setSpeaker(enabled:Boolean){mutable.value=mutable.value.copy(speaker=enabled);if(!enabled){generation++;track?.pause();track?.flush();track?.play()};track?.setVolume(if(enabled)state.value.volume else 0f)}
     fun setVolume(volume:Float){mutable.value=mutable.value.copy(volume=volume.coerceIn(0f,1f));if(state.value.speaker)track?.setVolume(state.value.volume)}
@@ -116,7 +138,7 @@ class LiveVoiceClient(private val context:Context,private val origin:String,priv
         micJob?.cancel();runCatching{recorder?.stop()};recorder?.release();recorder=null
         runCatching{track?.stop()};track?.release();track=null
         echo?.release();noise?.release();echo=null;noise=null
-        focus?.let {manager.abandonAudioFocusRequest(it)};focus=null;manager.mode=AudioManager.MODE_NORMAL
+        focus?.let {manager.abandonAudioFocusRequest(it)};focus=null;restoreAudioRouting()
         audio.close();job.cancel()
         if(state.value.phase!="error")mutable.value=mutable.value.copy(phase="idle",message="Sesi ditamatkan.",startedAt=null)
     }
