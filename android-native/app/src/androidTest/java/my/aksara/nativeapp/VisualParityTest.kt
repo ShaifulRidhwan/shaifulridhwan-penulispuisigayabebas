@@ -56,6 +56,13 @@ class VisualParityTest {
         for(name in listOf("welcome","connection","portal","thinking","attachments","voice-permission","streaming","chat","composer-focused","voice")) {
             compose.runOnIdle {screen=name}
             compose.waitForIdle()
+            if(name=="voice") {
+                val capsule=compose.onNodeWithTag("voice-status-pill").getUnclippedBoundsInRoot()
+                val end=compose.onNodeWithTag("voice-end-session").getUnclippedBoundsInRoot()
+                assertTrue("LIVE timer clipped below 110dp: $capsule",capsule.width>=110.dp)
+                assertTrue("LIVE capsule overlaps End Session",capsule.right<=end.left)
+                compose.onNodeWithText("00:00").assertExists()
+            }
             if(name=="composer-focused") {
                 compose.onNodeWithContentDescription("Tulis mesej untuk Aksara A.I.").performTextInput("Terangkan relativiti.")
                 compose.runOnIdle {androidx.core.view.WindowCompat.getInsetsController(compose.activity.window,compose.activity.window.decorView).hide(androidx.core.view.WindowInsetsCompat.Type.ime())}
