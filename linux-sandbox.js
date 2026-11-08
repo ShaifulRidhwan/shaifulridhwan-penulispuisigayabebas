@@ -14,7 +14,7 @@
     wasm: "https://cdn.jsdelivr.net/npm/v86@0.5.472/build/v86.wasm",
     bios: "https://cdn.jsdelivr.net/gh/copy/v86@master/bios/seabios.bin",
     vga: "https://cdn.jsdelivr.net/gh/copy/v86@master/bios/vgabios.bin",
-    kernel: "https://static.simonwillison.net/static/cors-allow/2026/buildroot-bzimage68.bin"
+    kernel: "https://i.copy.sh/buildroot-bzimage68.bin"
   });
   let vm = null;
   let busy = false;
