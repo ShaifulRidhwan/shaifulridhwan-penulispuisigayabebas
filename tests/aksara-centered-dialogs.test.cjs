@@ -36,7 +36,7 @@ test("Sensitive terminal actions use a shared dark dialog, never native browser 
 test("Portal remains in the same details element but uses viewport top layer",()=>{
  const html=read("bilik-antara.html"),css=read("bilik-antara.css");
  assert.match(html,/bilik-antara\.css\?v=\d+/);
- assert.ok(html.includes("bilik-antara-ai-terminal.js?v=8"));
+ assert.ok(html.includes("bilik-antara-ai-terminal.js?v=9"));
  assert.match(html,/id="settingsPanel"/);
  assert.match(html,/id="portalCard" popover="manual"/);
  assert.match(html,/function syncPortalPopover\(\)/);
@@ -57,7 +57,7 @@ test("AKSARA brand is static, independent Laman utama remains navigable",()=>{
 test("Terminal and Portal match Connection glass material without altering controls",()=>{
  const html=read("bilik-antara.html"),portal=read("bilik-antara.css"),terminal=read("bilik-antara-ai-terminal.js");
  assert.match(html,/bilik-antara\.css\?v=108/);
- assert.match(html,/bilik-antara-ai-terminal\.js\?v=8/);
+ assert.match(html,/bilik-antara-ai-terminal\.js\?v=9/);
  for(const sheet of [portal,terminal]){
   assert.ok(sheet.includes("rgba(23,31,45,.36)"));
   assert.ok(sheet.includes("rgba(9,14,24,.43)"));
