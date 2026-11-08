@@ -41,10 +41,8 @@ class VisualParityTest {
         }
         device.waitForIdle();dismissSystemEducation()
         compose.onNodeWithContentDescription("Tulis mesej untuk Aksara A.I.").assertIsNotFocused()
-        compose.onNodeWithContentDescription("Code Engine").performClick()
-        compose.onNodeWithText("Code Engine · Runtime Health").assertIsDisplayed()
-        compose.onNodeWithText("×").performClick()
-        compose.onNodeWithText("Code Engine · Runtime Health").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Code Engine").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Terminal").assertDoesNotExist()
         val context=InstrumentationRegistry.getInstrumentation().targetContext
         // Critical chrome must not be clipped by immersive rounded Android corners.
         // Keep background full-bleed while checking the interactive glass geometry.
@@ -55,7 +53,7 @@ class VisualParityTest {
             assertTrue("$"+"tag right edge clipped: $"+"bounds",bounds.right <= screenWidth-8.dp)
         }
         val out=File(context.getExternalFilesDir(null),"visual").apply{mkdirs()}
-        for(name in listOf("welcome","connection","code","terminal","portal","thinking","attachments","voice-permission","streaming","chat","composer-focused","voice")) {
+        for(name in listOf("welcome","connection","portal","thinking","attachments","voice-permission","streaming","chat","composer-focused","voice")) {
             compose.runOnIdle {screen=name}
             compose.waitForIdle()
             if(name=="composer-focused") {

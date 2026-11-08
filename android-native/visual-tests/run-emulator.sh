@@ -27,6 +27,9 @@ cat "$out/android/live-backend-tests.txt"
 if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/live-backend-tests.txt"; then failures=$((failures+1)); fi
 if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/library-assets-tests.txt"; then failures=$((failures+1)); fi
 if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/session-persistence-tests.txt"; then failures=$((failures+1)); fi
+adb shell am instrument -w -r -e class my.aksara.nativeapp.AttributionAndLiteUiTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/attribution-lite-tests.txt" || failures=$((failures+1))
+cat "$out/android/attribution-lite-tests.txt"
+if ! grep -Eq '^OK \\([0-9]+ tests?\\)' "$out/android/attribution-lite-tests.txt"; then failures=$((failures+1)); fi
 adb shell am instrument -w -r -e class my.aksara.nativeapp.NativeCodeWebViewTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/browser-code-tests.txt" || failures=$((failures+1))
 cat "$out/android/browser-code-tests.txt"
 if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/browser-code-tests.txt"; then failures=$((failures+1)); fi

@@ -134,8 +134,8 @@ class LiveVoiceClient(
                 val tokenResult = call.execute().use { response ->
                     val body = runCatching { JSONObject(response.body?.string().orEmpty()) }.getOrDefault(JSONObject())
                     if (!response.isSuccessful) {
-                        val seconds = response.header("Retry-After")?.toLongOrNull()
-                            ?: body.optLong("retryAfterSeconds", 0L)
+                        val seconds = VoiceRecoveryPolicy.retryAfterSeconds(
+                            response.header("Retry-After"), body.optLong("retryAfterSeconds", 0L))
                         throw TokenFailure(response.code, body.optString("error", "HTTP " + response.code), seconds)
                     }
                     body
@@ -176,7 +176,8 @@ class LiveVoiceClient(
                         val status = response?.code
                         if (status == 401 || status == 403 || status == 400) {
                             recover(id, "Gemini Live menolak akses atau model (HTTP " + status + ").", false)
-                        } else recover(id, "Sambungan Voice terputus: " + (t.message ?: "transport"), true)
+                        } else recover(id, "Sambungan Voice terputus: " + (t.message ?: "transport"), true,
+                            if (status == 429) VoiceRecoveryPolicy.retryAfterSeconds(response?.header("Retry-After"), 0L) else 0L)
                     }
                     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
                         if (code == 1000 && !active(id)) return
@@ -299,8 +300,7 @@ class LiveVoiceClient(
     }
 
     private fun suspectSpanish(text: String): Boolean {
-        val words = Regex("(?i)\\b(?:gracias|estoy|puedes|nosotros|ustedes|entiendo|español|hablando|quieres|también|siguiente)\\b")
-        return words.findAll(text).map { it.value.lowercase() }.distinct().count() >= 2
+        return VoiceRecoveryPolicy.suspectSpanish(text)
     }
 
     private fun finishPlaybackIfReady(id: Int) {
@@ -418,7 +418,7 @@ class LiveVoiceClient(
         val invalidated = epoch.incrementAndGet()
         tearDownTransport()
         mutable.value = mutable.value.copy(phase = "reconnecting", message = why, ready = false, reconnectAttempt = next)
-        val base = (800L shl (next - 1)) + Random.nextLong(0, 250)
+        val base = VoiceRecoveryPolicy.backoffMs(next, Random.nextLong(0, 250))
         // Honor server Retry-After; never switch credentials to bypass quota.
         val delayMs = maxOf(base, retryAfterSeconds.coerceAtLeast(0L).coerceAtMost(86_400L) * 1000L)
         retryJob?.cancel()
@@ -452,6 +452,8 @@ class LiveVoiceClient(
         restoreRouting()
         completedTurn = false
         thinkingSince = 0L
+        languageDrift = false
+        foreignLanguageRequested = false
     }
 
     @Suppress("DEPRECATION") private fun routeToSpeaker() {

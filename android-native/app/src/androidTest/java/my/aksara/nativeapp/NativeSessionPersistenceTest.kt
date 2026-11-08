@@ -20,11 +20,12 @@ class NativeSessionPersistenceTest {
         val token="PRIVATE_ANDROID_TEST_"+UUID.randomUUID()
         try {
             val user=Message("pending-chat","user",token)
-            val unfinished=Message("pending-reply","assistant","partial",incomplete=true)
+            val unfinished=Message("pending-reply","assistant","partial",incomplete=true,provider="groq")
             store.save(mergeSessionArchive(original,listOf(user,unfinished)))
             val loaded=SessionStore(context).load()
             assertEquals(token,loaded.single{it.id=="pending-chat"}.text)
             assertTrue(loaded.single{it.id=="pending-reply"}.incomplete)
+            assertEquals("groq",loaded.single{it.id=="pending-reply"}.provider)
             val bytes=File(context.noBackupFilesDir,"conversation.enc").readBytes()
             assertFalse("Encrypted storage must not contain plaintext",String(bytes,Charsets.ISO_8859_1).contains(token))
         }finally{store.save(original)}
