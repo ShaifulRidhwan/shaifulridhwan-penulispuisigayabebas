@@ -10,7 +10,7 @@ const safeInt=(n)=>Number.isSafeInteger(Number(n))&&Number(n)>=0?Number(n):0;
 const levels=["critical","high","medium","low"];
 let publicSummary=null,imported=[];
 function make(tag,content,cls){
-  const node=document.createElement(tag);node.textContent=String(content||"");if(cls)node.className=cls;return node;
+  const node=document.createElement(tag);node.textContent=String(content??"");if(cls)node.className=cls;return node;
 }
 function validate(summary){
   if(!summary||summary.schemaVersion!==1||summary.source!=="github-actions"||!summary.aggregate||!summary.scanners)return false;
