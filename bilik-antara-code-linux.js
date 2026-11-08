@@ -14,7 +14,7 @@
  dialog.className = "multi-ai-dialog code-linux-dialog";
  dialog.setAttribute("aria-labelledby", "clTitle");
  dialog.innerHTML = [
-  '<header class="multi-ai-head"><div><strong id="clTitle">Linux · Developer Sandbox</strong><p>Buildroot Linux x86 sebenar melalui WebAssembly. Boot atas permintaan, tanpa sambungan rangkaian guest.</p></div><button type="button" id="clClose" aria-label="Tutup Linux">×</button></header>',
+  '<header class="multi-ai-head"><div><strong id="clTitle">Linux VM · Experimental</strong><p>Eksperimen Buildroot x86 melalui WebAssembly. Boot sebenar mesti disahkan sebelum shell boleh digunakan; tiada rangkaian guest.</p></div><button type="button" id="clClose" aria-label="Tutup Linux">×</button></header>',
   '<div class="cl-statusbar"><span class="cl-light" id="clLight" aria-hidden="true"></span><span id="clStatus" role="status" aria-live="polite">VM OFF · Belum dimulakan</span><span id="clUptime">Uptime: 00:00</span></div>',
   '<div class="cl-actions"><label>RAM <select id="clRam"><option value="64">64 MB · Ringan</option><option value="128" selected>128 MB · Standard</option><option value="256">256 MB · Tinggi</option></select></label><button type="button" id="clBoot" class="cl-primary">▶ Boot Linux</button><button type="button" id="clPause" disabled>Jeda</button><button type="button" id="clRestart" disabled>Restart</button><button type="button" id="clStop" disabled>Power Off</button></div>',
   '<div class="cl-metrics" aria-label="Metrik VM"><span id="clCpu">CPU: x86 Virtual</span><span id="clRamInfo">RAM: 128 MB</span><span id="clInstructions">Instructions: —</span></div>',
@@ -29,6 +29,7 @@
  const $ = id => dialog.querySelector("#" + id);
  const controls = {boot:$("clBoot"),pause:$("clPause"),restart:$("clRestart"),stop:$("clStop"),send:$("clSend"),command:$("clCommand"),ram:$("clRam"),save:$("clSave"),restore:$("clRestore"),console:$("clConsole")};
  let vm = null, session = 0, starting = false, stopped = false, paused = false, shellReady = false, loading = null;
+ let emulatorReady = false, emulatorStarted = false;
  let bootAt = 0, ticker = null, watchdog = null, lastPrompt = "", commandHistory = [], historyIndex = 0;
  let lastCounter = 0, lastCounterAt = 0;
  const display = (message, kind = "idle") => {
@@ -41,13 +42,13 @@
   }
  };
  function controlsSync() {
-  const alive = Boolean(vm);
-  controls.boot.disabled = starting || (alive && !paused);
+  const alive = Boolean(vm && emulatorReady);
+  controls.boot.disabled = starting || (Boolean(vm) && !paused);
   controls.boot.textContent = paused ? "▶ Sambung" : "▶ Boot Linux";
   controls.pause.disabled = starting || !alive || paused;
   controls.restart.disabled = starting || !alive;
-  controls.stop.disabled = starting || !alive;
-  controls.ram.disabled = starting || alive;
+  controls.stop.disabled = starting || !vm;
+  controls.ram.disabled = starting || Boolean(vm);
   controls.command.disabled = !shellReady || starting || paused;
   controls.send.disabled = controls.command.disabled;
   controls.save.disabled = starting || !alive;
@@ -62,7 +63,8 @@
   lastPrompt = (lastPrompt + data).slice(-300);
   if (!shellReady && /(?:~% |(?:^|\n)[^\n]{0,100}[#$] )$/.test(lastPrompt)) {
    shellReady = true;
-   display("Linux shell siap · ttyS0", "ready");
+   if (watchdog !== null) { clearTimeout(watchdog); watchdog = null; }
+   display("Linux shell disahkan · ttyS0", "ready");
    controlsSync();
   }
  }
@@ -73,7 +75,7 @@
  }
  function pad(value) { return String(Math.floor(value)).padStart(2,"0"); }
  function stats() {
-  if (!vm || !bootAt) return;
+  if (!vm || !bootAt || !emulatorStarted) return;
   const seconds = Math.floor((Date.now() - bootAt)/1000);
   $("clUptime").textContent = "Sesi: " + pad(seconds / 60) + ":" + pad(seconds % 60);
   if (typeof vm.get_instruction_counter === "function") {
@@ -98,6 +100,35 @@
   }).catch(error => { loading = null; throw error; });
   return loading;
  }
+ async function failBoot(instance, epoch, explanation) {
+  if (vm !== instance || session !== epoch || shellReady) return;
+  session++;
+  vm = null;
+  emulatorReady = false; emulatorStarted = false;
+  shellReady = false; paused = false; stopped = true; starting = false; bootAt = 0;
+  clearTimers();
+  append("\n[VM ERROR] " + explanation + "\n[DIAGNOSIS] Periksa console browser, sambungan CDN, CORS/CSP dan RAM. Tiada shell tersedia.\n");
+  display("Boot gagal · " + explanation, "error");
+  controlsSync();
+  try { await instance.stop(); } catch (_) {}
+  try { await instance.destroy(); } catch (_) {}
+ }
+ function armBootTimeout(instance, epoch) {
+  if (watchdog !== null) clearTimeout(watchdog);
+  watchdog = setTimeout(() => {
+   if (instance !== vm || session !== epoch || shellReady) return;
+   let instructions = 0;
+   try { instructions = Number(instance.get_instruction_counter?.() || 0); } catch (_) {}
+   const explanation = !emulatorReady
+    ? "Emulator tidak siap. Aset BIOS, WASM atau kernel mungkin gagal dimuat."
+    : instructions <= 0
+     ? "Emulator tidak menjalankan instruksi (0M). Semak penyekat browser atau kegagalan WASM."
+     : controls.console.value.trim()
+      ? "Kernel mengeluarkan log, tetapi prompt shell tidak muncul."
+      : "Emulator berjalan tanpa output ttyS0. Semak imej Linux.";
+   void failBoot(instance, epoch, explanation);
+  }, 75000);
+ }
  async function boot() {
   if (starting) return;
   if (vm && paused) {
@@ -109,6 +140,7 @@
   starting = true;
   stopped = false;
   shellReady = false;
+  emulatorReady = false; emulatorStarted = false; bootAt = 0;
   session++;
   const epoch = session;
   controls.console.value = "";
@@ -133,26 +165,37 @@
     autostart: true
    });
    vm = instance;
-   bootAt = Date.now();
    lastCounterAt = lastCounter = 0;
-   $("clUptime").textContent = "Sesi: 00:00";
-   ticker = setInterval(stats, 2000);
-   watchdog = setTimeout(() => {
-    if (vm === instance && !shellReady) display("Linux belum sampai prompt shell. Semak log serial; mungkin imej gagal boot.", "error");
-   }, 80000);
+   $("clUptime").textContent = "Sesi: —";
+   $("clInstructions").textContent = "Instruksi: —";
+   armBootTimeout(instance, epoch);
    instance.add_listener("serial0-output-byte", byte => {
     if (vm !== instance || session !== epoch) return;
     const ch = String.fromCharCode(byte);
     if (ch !== "\r") append(ch);
    });
-   instance.add_listener("emulator-ready", () => { if (vm === instance) display("VM tersedia · Menunggu shell Linux…", "loading"); });
-   instance.add_listener("emulator-started", () => { if (vm === instance) display("Kernel sedang boot · Menunggu prompt shell…", "loading"); });
+   instance.add_listener("emulator-ready", () => {
+    if (vm !== instance || session !== epoch) return;
+    emulatorReady = true;
+    display("Emulator sedia · menunggu CPU Linux…", "loading");
+    controlsSync();
+   });
+   instance.add_listener("emulator-started", () => {
+    if (vm !== instance || session !== epoch) return;
+    emulatorReady = true; emulatorStarted = true; bootAt = Date.now();
+    if (ticker !== null) clearInterval(ticker);
+    ticker = setInterval(stats, 2000);
+    display("Kernel sedang boot · menunggu prompt ttyS0…", "loading");
+    controlsSync();
+   });
    instance.add_listener("emulator-stopped", () => { if (vm === instance && !stopped) { paused = true; display("VM dihentikan sementara", "idle"); controlsSync(); } });
    controlsSync();
   } catch(error) {
    display("Boot gagal: " + String(error?.message || error), "error");
    vm = null;
+   emulatorReady = false; emulatorStarted = false; bootAt = 0;
    clearTimers();
+   append("\n[BOOT ERROR] " + String(error?.message || error) + "\n");
   } finally { starting = false; controlsSync(); }
  }
  function send(command) {
@@ -179,7 +222,7 @@
   try { await prior.stop(); await prior.destroy(); display("VM OFF · Sesi Linux dimatikan.", "idle"); }
   catch(error) { display("Gagal melepaskan sumber VM: " + error.message, "error"); }
   finally {
-   vm=null; shellReady=false; paused=false; starting=false; bootAt=0;
+   vm=null; emulatorReady=false; emulatorStarted=false; shellReady=false; paused=false; starting=false; bootAt=0;
    clearTimers(); controls.command.value=""; controlsSync();
   }
  }
@@ -222,7 +265,7 @@
  controls.stop.addEventListener("click",shutdown);
  controls.restart.addEventListener("click",()=>{
   if(!vm || starting) return;
-  try { shellReady=false; lastPrompt=""; vm.restart(); display("Linux restart…", "loading"); controlsSync(); }
+  try { shellReady=false; lastPrompt=""; bootAt=0; emulatorStarted=false; vm.restart(); armBootTimeout(vm, session); display("Linux restart…", "loading"); controlsSync(); }
   catch(error){ display("Restart gagal: "+error.message,"error"); }
  });
  $("clCommandForm").addEventListener("submit",event=>{ event.preventDefault(); send(controls.command.value); });
