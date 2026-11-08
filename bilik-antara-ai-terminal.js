@@ -26,7 +26,7 @@ const dialog=document.createElement("dialog");dialog.id="aksaraAITerminal";dialo
 dialog.setAttribute("aria-labelledby","aitTitle");
 dialog.setAttribute("tabindex","-1");
 dialog.innerHTML=[
-'<div class="multi-ai-head"><div><strong id="aitTitle">AKSARA Terminal</strong><p>Terminal maya dalam sandbox browser, bukan shell OS atau server.</p></div><button id="aitClose" type="button" autofocus aria-label="Tutup Terminal">×</button></div>',
+'<div class="multi-ai-head"><div><strong id="aitTitle">AKSARA Terminal</strong><p>Developer Shell ialah terminal projek dengan arahan fail dan runtime sebenar melalui sandbox browser; bukan shell Android atau Linux OS.</p></div><button id="aitClose" type="button" autofocus aria-label="Tutup Terminal">×</button></div>',
 '<div class="ait-shell">',
 '<div class="ait-row"><strong>Code Intelligence</strong><small id="aitRuntimeState">Sandbox · on demand</small></div>',
 '<div class="ait-modes" role="group" aria-label="Mod terminal"><button data-mode="manual" type="button">Manual</button><button data-mode="assist" type="button">AI Assist</button><button data-mode="agent" type="button">AI Agent</button></div>',
@@ -291,8 +291,34 @@ function command(s){
  output("aksara@runtime:~$ "+trimmed);
  if(cmd.type==="invalid"&&candidate?.type==="code"){suggestCode(candidate);return;}
  switch(cmd.type){
- case "help":output("ARAHAN TERMINAL (satu arahan setiap Enter): help, pwd, ls, cat main.py, run main.py, python main.py, node demo_js.js, tsc demo_ts.ts, sqlite demo_sql.sql, clang demo_cpp.cpp, tests, history, status, clear, repl, reset, exit.\nKOD PROGRAM: letak di editor atas atau pilih Contoh Kod → Muat contoh.\nPYTHON REPL: tekan Python REPL, barulah taip x=6 dan print(x*7).\nHTML/CSS: buka Live Preview. Terminal bukan shell OS; pip/npm tidak tersedia.");break;
- case "pwd":output("/aksara/project");break;
+ case "help":output("ARAHAN TERMINAL (satu arahan setiap Enter): help, pwd, ls, touch script.py, nano script.py, edit script.py, echo Hello > notes.js, rm notes.js, cat main.py, run main.py, python main.py, node demo_js.js, tsc demo_ts.ts, sqlite demo_sql.sql, clang demo_cpp.cpp, tests, history, status, clear, repl, reset, exit.\nKOD PROGRAM: letak di editor atas atau pilih Contoh Kod → Muat contoh.\nPYTHON REPL: tekan Python REPL, barulah taip x=6 dan print(x*7).\nHTML/CSS: buka Live Preview. Terminal bukan shell OS; pip/npm tidak tersedia.");break;
+ case "touch":
+   if(files.some(f=>f.name===cmd.name))output("Fail sudah wujud: "+cmd.name);
+   else output(add(cmd.name)?"Fail dibuat: "+cmd.name:"Gagal membuat fail. Had 12 fail atau nama tidak sah.");
+   break;
+  case "edit":{
+   const i=files.findIndex(f=>f.name===cmd.name);
+   if(i<0){output("Fail tidak ditemui: "+cmd.name);break;}
+   saveCurrent();index=i;render();$("aitEditor").focus();output("Editor dibuka: "+cmd.name);break;
+  }
+  case "write":{
+   const i=files.findIndex(f=>f.name===cmd.name);
+   if(i<0){output(add(cmd.name,cmd.text)?"Fail ditulis: "+cmd.name:"Gagal menulis fail: had atau nama tidak sah.");break;}
+   saveCurrent();files[i].code=cmd.text;index=i;render();saveLater();output("Fail ditulis: "+cmd.name+" (overwrite).");break;
+  }
+  case "rm":{
+   if(files.length===1){output("Tidak boleh buang fail terakhir dalam projek.");break;}
+   const target=files.findIndex(f=>f.name===cmd.name);
+   if(target<0){output("Fail tidak ditemui: "+cmd.name);break;}
+   void Promise.resolve(window.AksaraDialog?.confirm?.({title:"Buang fail?",message:"Padam "+cmd.name+" daripada sandbox projek?",confirmText:"Buang"})||false).then(confirmed=>{
+    if(!confirmed)return;
+    const at=files.findIndex(f=>f.name===cmd.name);
+    if(at<0||files.length===1)return;
+    saveCurrent();files.splice(at,1);index=Math.min(index,files.length-1);
+    render();saveLater();output("Fail dibuang: "+cmd.name);
+   });break;
+  }
+  case "pwd":output("/aksara/project");break;
  case "ls":output(files.map(x=>x.name).join("  "));break;
  case "cat":output(files.find(x=>x.name===cmd.name)?.code||"Fail tidak ditemui.");break;
  case "run":void runNamed(cmd.name);break;
