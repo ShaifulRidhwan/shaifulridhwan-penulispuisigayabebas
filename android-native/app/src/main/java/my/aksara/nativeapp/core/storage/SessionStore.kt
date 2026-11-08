@@ -15,7 +15,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-data class Message(val id: String, val role: String, val text: String, val at: Long = System.currentTimeMillis(), val incomplete: Boolean = false)
+data class Message(val id: String, val role: String, val text: String, val at: Long = System.currentTimeMillis(), val incomplete: Boolean = false, val provider: String? = null)
 class SessionStore(context: Context) {
     private val file = AtomicFile(File(context.noBackupFilesDir, "conversation.enc"))
     private fun key(): SecretKey {
@@ -32,10 +32,10 @@ class SessionStore(context: Context) {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, bytes.copyOfRange(1, 13)))
         val rows = JSONArray(String(cipher.doFinal(bytes.copyOfRange(13, bytes.size)), Charsets.UTF_8))
-        (0 until rows.length()).map { rows.getJSONObject(it) }.map { Message(it.getString("id"), it.getString("role"), it.getString("text"), it.getLong("at"), it.optBoolean("incomplete")) }
+        (0 until rows.length()).map { rows.getJSONObject(it) }.map { Message(it.getString("id"), it.getString("role"), it.getString("text"), it.getLong("at"), it.optBoolean("incomplete"), it.optString("provider").takeIf { id -> id.isNotBlank() }) }
     }
     suspend fun save(messages: List<Message>) = withContext(Dispatchers.IO) {
-        val data = JSONArray().apply { messages.takeLast(200).forEach { put(JSONObject().put("id", it.id).put("role", it.role).put("text", it.text.take(40000)).put("at", it.at).put("incomplete", it.incomplete)) } }
+        val data = JSONArray().apply { messages.takeLast(200).forEach { put(JSONObject().put("id", it.id).put("role", it.role).put("text", it.text.take(40000)).put("at", it.at).put("incomplete", it.incomplete).put("provider", it.provider ?: JSONObject.NULL)) } }
         val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply { init(Cipher.ENCRYPT_MODE, key()) }
         val encrypted = byteArrayOf(1) + cipher.iv + cipher.doFinal(data.toString().toByteArray())
         val stream = file.startWrite()

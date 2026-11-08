@@ -90,7 +90,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             val normal: (String)->String = {it.lowercase().replace(Regex("[^a-z0-9]"),"")}
             val i=(0 until rows.length()).firstOrNull {normal(rows.getJSONObject(it).getString("question"))==normal(question)}?:return@launch
             val row=rows.getJSONObject(i)
-            val messages=state.value.messages+Message(UUID.randomUUID().toString(),"user",row.getString("question"))+Message(UUID.randomUUID().toString(),"assistant",row.getString("answer"))
+            val messages=state.value.messages+Message(UUID.randomUUID().toString(),"user",row.getString("question"))+Message(UUID.randomUUID().toString(),"assistant",row.getString("answer"),provider="aksara_local")
             mutable.update {it.copy(messages=messages,nextJourney=rows.optJSONObject(i+1)?.optString("question"))}
             if(storageReadable)try{val combined=mergeSessionArchive(state.value.archive,messages);store.save(combined);mutable.update{it.copy(archive=combined)}}catch(_:Exception){mutable.update{it.copy(error="Sesi belum berjaya disimpan.")}}
         }
@@ -161,7 +161,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         if (m.id != assistant.id) m else when (event) {
                             is ChatEvent.Delta -> m.copy(text = m.text + event.text)
                             is ChatEvent.Done -> m.copy(text = event.reply + if(event.sources.isEmpty()) "" else
-                                "\n\n" + event.sources.joinToString("\n") { "[" + it.first + "](" + it.second + ")" }, incomplete = false)
+                                "\n\n" + event.sources.joinToString("\n") { "[" + it.first + "](" + it.second + ")" }, incomplete = false, provider = ProviderIdentity.normalize(event.provider))
                         }
                     }, lastProvider = if(event is ChatEvent.Done) event.provider else value.lastProvider,
                         lastModel = if(event is ChatEvent.Done) event.model else value.lastModel,

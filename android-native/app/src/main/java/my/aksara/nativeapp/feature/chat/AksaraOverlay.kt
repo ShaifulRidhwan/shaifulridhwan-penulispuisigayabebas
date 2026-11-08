@@ -27,6 +27,8 @@ import my.aksara.nativeapp.feature.tools.*
 
 @Composable fun AksaraOverlay(kind:String,state:ChatState,onClose:()->Unit,onNavigate:(String)->Unit,onRefresh:()->Unit,
     onMode:(String)->Unit,onRestore:()->Unit,onClear:()->Unit,onPickAttachment:()->Unit,onAsk:(String)->Unit,onMemory:(Boolean,String)->Unit={_,_->}) {
+    // Android Lite: preserve the engines on disk, but expose no inactive entry points.
+    if(kind=="code" || kind=="terminal" || kind=="engines") return
     if(kind=="voice"){VoiceContent(onClose,state.mode,onMode);return}
     if(kind=="voice-fixture"){VoiceScreen(VoiceState(phase="preview"),onClose,preview=true);return}
     val margins=aksaraDeviceMargins()
@@ -103,7 +105,7 @@ import my.aksara.nativeapp.feature.tools.*
                         "engines" -> AdvancedEnginesContent()
                         "portal" -> {
                             Spacer(Modifier.height(29.dp))
-                            listOf(Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","library"),Triple("Security Lab","Audit laman · Kod · Dependency","security"),Triple("Prestasi A.I","Respons, provider dan kesihatan storan","metrics"),Triple("Sesi & Sejarah","Perbualan, carian dan arkib JSON","sessions"),Triple("Pengetahuan & Rujukan","Karya · Wikipedia · URL · pengiraan","knowledge"),Triple("Game · Linux · SD-Turbo","Inventori enjin Android dan status integrasi","engines")).forEach { (name,desc,route) ->
+                            listOf(Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","library"),Triple("Security Lab","Audit laman · Kod · Dependency","security"),Triple("Prestasi A.I","Respons, provider dan kesihatan storan","metrics"),Triple("Sesi & Sejarah","Perbualan, carian dan arkib JSON","sessions"),Triple("Pengetahuan & Rujukan","Karya · Wikipedia · URL · pengiraan","knowledge")).forEach { (name,desc,route) ->
                                 FeatureRow(name,desc,if(route=="security")"shield" else "book") {onNavigate(route)};Spacer(Modifier.height(9.dp))
                             }
                             Spacer(Modifier.height(7.dp));MenuRow("Privasi & Tetapan","›",height=57.594.dp){onNavigate("privacy")}

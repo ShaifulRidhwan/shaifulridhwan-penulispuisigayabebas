@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.*
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
@@ -94,32 +95,30 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val focus = LocalFocusManager.current
     val list = rememberLazyListState()
     var autoFollow by remember { mutableStateOf(true) }
-    // Only user drags suspend follow mode, never programmatic scrolling.
+    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+    // A single collector owns programmatic scrolling. Dragging suspends following,
+    // while composer focus or returning to the bottom explicitly resumes it.
     LaunchedEffect(list) {
         list.interactionSource.interactions.collect { interaction ->
             when (interaction) {
                 is DragInteraction.Start -> autoFollow = false
-                is DragInteraction.Stop, is DragInteraction.Cancel -> autoFollow = !list.canScrollForward
+                is DragInteraction.Stop, is DragInteraction.Cancel -> {
+                    if (!list.canScrollForward) autoFollow = true
+                }
             }
         }
     }
-    // Start following again when the user sends a fresh prompt.
-    LaunchedEffect(state.messages.size) {
-        if (state.busy && state.messages.isNotEmpty()) autoFollow = true
+    LaunchedEffect(state.messages.size, state.messages.lastOrNull()?.text?.length,
+        state.busy, imeBottom, autoFollow) {
         if (autoFollow && state.messages.isNotEmpty()) {
             withFrameNanos { }
-            val lastItem = list.layoutInfo.totalItemsCount - 1
-            if (lastItem >= 0) {
-                list.scrollToItem(lastItem)
+            val last = list.layoutInfo.totalItemsCount - 1
+            if (last >= 0) {
+                if (state.messages.size > 1 && list.firstVisibleItemIndex < last - 3) {
+                    list.scrollToItem(last)
+                }
                 list.scrollBy(100_000f)
             }
-        }
-    }
-    // Streaming can grow a single message beyond the screen height.
-    LaunchedEffect(state.messages.lastOrNull()?.text?.length, state.busy, autoFollow) {
-        if (autoFollow && state.messages.isNotEmpty()) {
-            withFrameNanos { }
-            list.scrollBy(100_000f)
         }
     }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -162,8 +161,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 CompositionLocalProvider(LocalBackdropPaints provides listOf(headerPaint)) {
                                 Row(Modifier.fillMaxSize().padding(horizontal=if(compact)5.dp else 8.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(if(compact)3.dp else 4.dp)) {
                                     AksaraButton("Voice Chat",{open("voice-permission")},Modifier.width(if(compact)82.328.dp else 93.484.dp),icon="voice",size=if(compact)9f else 10f,height=37.dp,radius=999.dp)
-                                    AksaraButton("",{open("code")},Modifier.width(38.dp).semantics {contentDescription="Code Engine"},icon="code",height=37.dp,radius=999.dp)
-                                    AksaraButton("",{open("terminal")},Modifier.width(38.dp).semantics {contentDescription="Terminal"},icon="terminal",height=37.dp,radius=999.dp)
                                     AksaraGlassSurface(Modifier.weight(1f).height(37.dp).clickable {open("connection")}.semantics {contentDescription="Connection"},radius=999.dp,blur=9.dp) {
                                         Row(Modifier.fillMaxSize().padding(horizontal=4.dp),verticalAlignment=Alignment.CenterVertically) {
                                             AksaraIcon("network",Modifier.size(15.dp),Color(0xffc1b393))
@@ -178,7 +175,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(1.dp).background(Color(235,215,185,35)))
                             }
                             if(state.busy) Box(Modifier.fillMaxWidth().height(42.1875.dp).background(Color(15,18,26,40)).padding(horizontal=21.dp,vertical=11.dp)){AksaraText("Generating Response",size=12f,line=19.2f,color=Color(0xffd9c8b0))}
-                            LaunchedEffect(state.messages.lastOrNull()?.text) { if(state.messages.isNotEmpty() && (list.layoutInfo.totalItemsCount<3 || list.canScrollForward.not())) list.animateScrollToItem(state.messages.size) }
                             LazyColumn(Modifier.weight(1f).fillMaxWidth().testTagCompat("messages"),state=list,contentPadding=PaddingValues(start=if(state.messages.isEmpty())17.dp else 12.dp,end=if(state.messages.isEmpty())17.dp else 12.dp,top=if(state.messages.isEmpty())14.dp else 13.dp,bottom=13.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
                                 if(state.messages.isEmpty()) item { AksaraChatBubble(Message("welcome","assistant",WelcomeText,fixedTimestamp?:System.currentTimeMillis()),fixedTimestamp=fixedTimestamp,initial=true) }
                                 if(state.messages.isNotEmpty()) item { AksaraChatBubble(Message("welcome-expanded","assistant","Antara aksara dan code,\nGAYA yang bebas,\nBEBAS dalam bentuk,\nLUAS dalam pemikiran.",fixedTimestamp?:state.messages.first().at),fixedTimestamp=fixedTimestamp) }
@@ -199,7 +195,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                     brush=Brush.linearGradient(listOf(Color(25,35,49,17),Color(8,15,28,11))),border=Color(245,217,176,82)) {
                                     Row(Modifier.fillMaxWidth().padding(horizontal=8.dp,vertical=7.dp),verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(5.dp)) {
                                         Box(Modifier.size(42.dp).clip(RoundedCornerShape(13.dp)).clickable {open("attachments")}.semantics {contentDescription="Lampir fail"},contentAlignment=Alignment.Center) {AksaraIcon("attach",Modifier.size(21.dp))}
-                                        BasicTextField(draft,{draft=it},Modifier.weight(1f).heightIn(min=if(state.messages.isEmpty())44.dp else 46.dp,max=140.dp).padding(horizontal=3.dp,vertical=10.dp).semantics {contentDescription="Tulis mesej untuk Aksara A.I."}.testTagCompat("input"),
+                                        BasicTextField(draft,{draft=it},Modifier.weight(1f).heightIn(min=if(state.messages.isEmpty())44.dp else 46.dp,max=140.dp).padding(horizontal=3.dp,vertical=10.dp).onFocusChanged { if(it.isFocused) autoFollow = true }.semantics {contentDescription="Tulis mesej untuk Aksara A.I."}.testTagCompat("input"),
                                             textStyle=AksaraTypography.style(16f,24f),cursorBrush=SolidColor(AksaraColors.gold))
                                         if(state.busy) AksaraButton("Henti",onStop,Modifier.width(56.6875.dp).semantics {contentDescription="Hentikan respons"},size=12f,height=40.dp,radius=7.dp)
                                         AksaraButton("",{open("thinking")},Modifier.width(40.dp).semantics {contentDescription="Thinking Mode"},icon="brain",height=42.dp,radius=13.dp,contentColor=AksaraColors.gold)
@@ -231,7 +227,18 @@ private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
             if(ai) Image(painterResource(R.drawable.aksara_portrait),"Aksara A.I.",Modifier.padding(top=1.dp).size(29.dp).clip(RoundedCornerShape(999.dp)).border(1.dp,Color(244,205,137,135),RoundedCornerShape(999.dp)),contentScale=ContentScale.Crop)
             Column(Modifier.weight(1f),horizontalAlignment=if(ai)Alignment.Start else Alignment.End) {
-                if(ai) AksaraText("AKSARA A.I.",size=12f,line=16.2f,weight=600,color=Color(0xfff2c979),tracking=1.68f)
+                if(ai) Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(5.dp)) {
+                    AksaraIcon("aksara",Modifier.size(14.dp),AksaraColors.gold)
+                    AksaraText("Aksara A.I.",size=11f,line=15f,weight=650,color=Color(0xfff2c979))
+                    if(!initial && message.id!="welcome-expanded") {
+                        AksaraText("·",size=11f,color=AksaraColors.muted)
+                        val provider=ProviderIdentity.of(message.provider)
+                        if(provider!=null) {
+                            AksaraIcon(provider.icon,Modifier.size(13.dp),Color(0xffb5cce2))
+                            AksaraText(provider.name,size=10f,line=14f,color=AksaraColors.muted)
+                        } else AksaraText("Belum disahkan",size=9f,line=13f,color=AksaraColors.muted)
+                    }
+                }
                 else Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(9.dp)){Box(Modifier.width(18.dp).height(1.dp).background(AksaraColors.gold));AksaraText("KAU",size=10f,line=13f,weight=700,color=Color(0xfff2c979),tracking=1.4f)}
                 Spacer(Modifier.height(if(initial)6.dp else 8.dp))
                 AksaraGlassSurface(Modifier.width(bubbleWidth).testTagCompat("bubble"),radius=13.dp,
