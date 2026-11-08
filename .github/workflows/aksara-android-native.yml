@@ -70,6 +70,8 @@ jobs:
           curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/JetBrains/kotlin/releases/assets/598630357' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar"
           curl --fail --location --retry 3 'https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21/kotlin-compiler-embeddable-2.1.21.pom' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom"
           printf '%s  %s\n' '67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar" 'dbbf8ac2550d5b1ae2a627f204f28b16f9271e36c44d8994aa3b139cbf70e45a' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom" | sha256sum --check
+      - name: Verify Android Voice Brain equals web source of truth
+        run: node scripts/sync-android-voice-brain.cjs --check
       - name: Compile installable APKs
         id: compile
         working-directory: android-native
@@ -80,7 +82,7 @@ jobs:
         id: unit
         continue-on-error: true
         working-directory: android-native
-        run: gradle --no-daemon --init-script ci/compiler-repository.init.gradle testDebugUnitTest :engine:runtime:testDebugUnitTest
+        run: gradle --no-daemon --init-script ci/compiler-repository.init.gradle testDebugUnitTest :engine:runtime:testDebugUnitTest :engine:voice:testDebugUnitTest
       - uses: actions/upload-artifact@v4
         if: always()
         with:
