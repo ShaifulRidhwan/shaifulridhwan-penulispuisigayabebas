@@ -168,7 +168,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                         Row(Modifier.fillMaxSize().padding(horizontal=4.dp),verticalAlignment=Alignment.CenterVertically) {
                                             AksaraIcon("network",Modifier.size(15.dp),Color(0xffc1b393))
                                             val online=state.providers.count { it.second=="online" }
-                                            val text=if(state.providers.isEmpty()) "Unverified" else if(online==4) "Connected" else if(online>0) "Degraded" else "Unverified"
+                                            val unreachable=state.providers.any { it.first=="backend" && it.second=="Backend unreachable" }
+                                            val text=if(unreachable) "Backend unreachable" else if(state.providers.isEmpty()) "Unverified" else if(online==4) "Connected" else if(online>0) "Degraded" else "Unverified"
                                             Box(Modifier.weight(1f),contentAlignment=Alignment.Center) {AksaraText(text,size=9f,line=11.25f,weight=600)}
                                         }
                                     }

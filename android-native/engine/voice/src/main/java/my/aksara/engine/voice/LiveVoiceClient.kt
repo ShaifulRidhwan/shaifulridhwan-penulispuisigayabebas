@@ -67,12 +67,12 @@ class LiveVoiceClient(private val context:Context,private val origin:String,priv
                     }
                     override fun onMessage(ws:WebSocket,text:String){if(active(epoch))consume(text,epoch)}
                     override fun onMessage(ws:WebSocket,bytes:okio.ByteString){if(active(epoch))consume(bytes.utf8(),epoch)}
-                    override fun onFailure(ws:WebSocket,t:Throwable,response:Response?){if(active(epoch))fail("Sambungan Voice terputus. Cuba sambung semula.")}
+                    override fun onFailure(ws:WebSocket,t:Throwable,response:Response?){if(active(epoch))fail(if(t is java.net.UnknownHostException || t is java.net.ConnectException) "Gemini Live transport unreachable. Semak internet/DNS." else "Sambungan Voice terputus. Cuba sambung semula.")}
                     override fun onClosed(ws:WebSocket,code:Int,reason:String){if(active(epoch))fail("Sesi Gemini Live tamat ($code).")}
                 })
                 delay(25_000)
                 if(active(epoch)&&state.value.phase=="connecting")fail("Google belum confirm connection Voice.")
-            }catch(e:Exception){if(active(epoch))fail(e.message?:"Voice gagal disambungkan.")}
+            }catch(e:Exception){if(active(epoch))fail(VoiceBackendFailure.message(e,origin))}
         }
     }
     private fun consume(text:String,epoch:Int){

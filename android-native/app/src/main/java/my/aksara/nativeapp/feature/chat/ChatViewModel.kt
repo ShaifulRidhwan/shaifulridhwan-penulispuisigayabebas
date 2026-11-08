@@ -75,9 +75,13 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     } }
     fun refreshProviders() = viewModelScope.launch {
         try {
-            val rows = api.post("/.netlify/functions/bilik-antara", JSONObject().put("providerStatus", true)).optJSONArray("providers") ?: JSONArray()
+            val rows = api.post(BackendRoutes.CHAT, JSONObject().put("providerStatus", true)).optJSONArray("providers") ?: throw java.io.IOException("Provider health returned invalid JSON.")
             mutable.update { it.copy(providers = (0 until rows.length()).map { i -> rows.getJSONObject(i).let { p -> p.optString("id") to p.optString("status", "unknown") } }) }
-        } catch (e: Exception) { if (e !is CancellationException) mutable.update { it.copy(providers = listOf("Connection" to "unavailable")) } }
+        } catch (e: Exception) { if (e !is CancellationException) mutable.update {
+            val reason = if(e.message?.startsWith("Backend unreachable") == true) "Backend unreachable"
+                else "Backend error: " + (e.message ?: "unavailable").take(90)
+            it.copy(providers = listOf("backend" to reason))
+        } }
     }
     fun journey(question: String) {
         if(state.value.busy || !state.value.loaded)return
@@ -126,7 +130,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                                 .put("history", JSONArray().apply { segment.forEach {
                                     put(JSONObject().put("role", it.role).put("content", it.text))
                                 } })
-                            val response = withTimeout(28_000) { api.post("/.netlify/functions/bilik-antara", body) }
+                            val response = withTimeout(28_000) { api.post(BackendRoutes.CHAT, body) }
                             val next = response.optString("summary").trim().take(4000)
                             if (next.isNotBlank()) {
                                 savedContext = savedContext.copy(summary = next, summarizedThrough = window.last + 1)

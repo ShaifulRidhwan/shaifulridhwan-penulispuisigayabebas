@@ -69,7 +69,7 @@ class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClien
         val call=client.newCall(request(path,payload))
         continuation.invokeOnCancellation { call.cancel() }
         call.enqueue(object:Callback {
-            override fun onFailure(call:Call,e:IOException){if(continuation.isActive)continuation.resumeWith(Result.failure(e))}
+            override fun onFailure(call:Call,e:IOException){if(continuation.isActive)continuation.resumeWith(Result.failure(BackendNetworkErrors.translate(e,origin)))}
             override fun onResponse(call:Call,response:Response){
                 val result=runCatching {response.use { res ->
                     val data=try{JSONObject(res.body?.string().orEmpty())}catch(_:Exception){JSONObject()}
@@ -83,14 +83,14 @@ class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClien
     fun chat(payload: JSONObject): Flow<ChatEvent> = callbackFlow {
         var call: Call? = null
         val work = kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launchSafely(
-            onError = { close(it) },
+            onError = { close(BackendNetworkErrors.translate(it,origin)) },
             block = {
-                call = client.newCall(request("/.netlify/functions/bilik-antara-stream", payload))
+                call = client.newCall(request(BackendRoutes.STREAM, payload))
                 val response = call!!.execute()
                 response.use { res ->
                     if (res.code in listOf(404, 405, 501)) {
                         // An explicit unsupported route can safely fall back before inference.
-                        val result = post("/.netlify/functions/bilik-antara", payload)
+                        val result = post(BackendRoutes.CHAT, payload)
                         send(Ndjson.parse(JSONObject(result.toString()).put("type","done").toString())!!)
                         close(); return@launchSafely
                     }

@@ -29,6 +29,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import my.aksara.nativeapp.core.design.*
+import my.aksara.nativeapp.core.network.BackendRoutes
+import my.aksara.nativeapp.core.network.BackendNetworkErrors
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -41,7 +43,7 @@ import java.util.concurrent.TimeUnit
 internal object StudioGateway {
     private val client = OkHttpClient.Builder().connectTimeout(15,TimeUnit.SECONDS)
         .readTimeout(80,TimeUnit.SECONDS).callTimeout(85,TimeUnit.SECONDS).build()
-    private const val endpoint = "https://shaifulridhwan-penulispuisigayabebas.netlify.app/.netlify/functions/studio-image"
+    private val endpoint get() = BackendRoutes.configuredOrigin + BackendRoutes.STUDIO_IMAGE
     data class Result(val bitmap:Bitmap,val model:String,val elapsed:Long,val width:Int,val height:Int)
     suspend fun generate(prompt:String,model:String,style:String,quality:String,ratio:String):Result = withContext(Dispatchers.IO) {
         require(prompt.trim().length in 4..1200) {"Prompt mesti 4 hingga 1200 aksara."}
@@ -53,8 +55,9 @@ internal object StudioGateway {
         val body=JSONObject().put("prompt",prompt.trim()).put("model",model)
             .put("style",style).put("quality",quality).put("ratio",ratio)
         val request=Request.Builder().url(endpoint).post(body.toString().toRequestBody("application/json".toMediaType()))
-            .header("Accept","application/json").build()
-        client.newCall(request).execute().use{ response ->
+            .header("Accept","application/json").header("Origin",BackendRoutes.configuredOrigin).build()
+        val response=try{client.newCall(request).execute()}catch(e:IOException){throw BackendNetworkErrors.translate(e,BackendRoutes.configuredOrigin)}
+        response.use{ response ->
             val raw=response.body?.string()?.takeIf{it.length<=7_000_000}
                 ?: throw IOException("Respons Studio kosong atau terlalu besar.")
             val json=try{JSONObject(raw)}catch(_:Exception){throw IOException("Studio memulangkan respons yang tidak sah (HTTP "+response.code+").")}

@@ -13,7 +13,7 @@ android {
         versionCode = 1
         versionName = "0.1.0-rebuild"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        buildConfigField("String", "API_ORIGIN", "\"https://aksara-apps.mshaifulridhwan.workers.dev\"")
+        buildConfigField("String", "API_ORIGIN", "\"https://shaifulridhwan-penulispuisigayabebas.netlify.app\"")
         buildConfigField("String", "WEB_REFERENCE_COMMIT", "\"f482b8ed393fe0eb4277ae3eaf3938f1593489c4\"")
     }
     buildFeatures { compose = true; buildConfig = true }

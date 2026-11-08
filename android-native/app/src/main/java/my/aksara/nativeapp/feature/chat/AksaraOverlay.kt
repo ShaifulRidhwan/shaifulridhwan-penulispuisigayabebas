@@ -80,12 +80,13 @@ import my.aksara.nativeapp.feature.tools.*
                     }
                     when(kind) {
                         "connection" -> {
-                            Spacer(Modifier.height(10.dp));AksaraText("${state.providers.count{it.second=="online"}}/4 Connected · "+if(state.providers.isEmpty())"Not checked yet" else "Checked",size=9.5f,line=13.3f,color=AksaraColors.muted)
+                            val backendUnreachable=state.providers.any{it.first=="backend" && it.second=="Backend unreachable"}
+                            Spacer(Modifier.height(10.dp));AksaraText("${state.providers.count{it.second=="online"}}/4 Connected · "+if(backendUnreachable)"Backend unreachable" else if(state.providers.isEmpty())"Not checked yet" else "Checked",size=9.5f,line=13.3f,color=AksaraColors.muted)
                             Spacer(Modifier.height(10.dp))
                             val providers=listOf("gemini" to "Google Gemini","groq" to "Groq","workers_ai" to "Cloudflare Workers AI","openrouter" to "OpenRouter")
                             providers.forEach { (id,name) ->
                                 var expanded by remember {mutableStateOf(false)}
-                                MenuRow(name,state.providers.find{it.first==id}?.second?:"Unverified",height=43.dp) {expanded=!expanded}
+                                MenuRow(name,state.providers.find{it.first==id}?.second?:(if(backendUnreachable)"Backend unreachable" else "Unverified"),height=43.dp) {expanded=!expanded}
                                 if(expanded) AksaraText(if(id=="gemini")"Gemini 1 / 2 / 3 / 4 · status setiap slot belum dipaparkan" else "Status dilaporkan oleh backend. Sedia bukan bukti ujian inferens.",Modifier.padding(8.dp),size=10f,color=AksaraColors.muted)
                                 Spacer(Modifier.height(8.dp))
                             }

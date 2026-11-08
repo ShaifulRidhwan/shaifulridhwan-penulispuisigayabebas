@@ -1,7 +1,7 @@
 // Deterministic web references. Inference is intercepted ONLY in this test harness.
 const {chromium}=require('playwright');
 const fs=require('fs'),path=require('path');
-const origin=process.env.AKSARA_WEB_ORIGIN||'https://aksara-apps.mshaifulridhwan.workers.dev';
+const origin=process.env.AKSARA_WEB_ORIGIN||'https://shaifulridhwan-penulispuisigayabebas.netlify.app';
 const out=path.resolve(__dirname,'../../docs/android-rebuild/visual-comparison/web');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 (async()=>{
