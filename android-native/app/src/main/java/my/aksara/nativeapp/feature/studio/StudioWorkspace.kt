@@ -118,6 +118,30 @@ private fun StudioConfirm(title: String, onConfirm: () -> Unit, onCancel: () -> 
 }
 
 @Composable
+private fun StudioIdeas(onPick:(String)->Unit,onClose:()->Unit) {
+    val ideas=listOf(
+        "A cinematic mountain valley at sunrise, low mist and a winding river, natural colors",
+        "A modern literary desk in soft afternoon light, open notebook and quiet atmosphere",
+        "A futuristic library with intricate architecture and subtle blue lighting",
+        "A photorealistic tropical forest after rain, dramatic cloud cover"
+    )
+    Dialog(onDismissRequest=onClose) {
+        AksaraGlassSurface(Modifier.fillMaxWidth(),radius=22.dp,blur=15.dp,
+            brush=DialogGradient,border=Color(218,192,149,95)) {
+            Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                AksaraText("Idea Prompt",size=15f,weight=650)
+                AksaraText("Pilih cadangan. Semua boleh diedit selepas dipilih.",size=11f,color=AksaraColors.muted)
+                ideas.forEachIndexed { index,idea ->
+                    AksaraButton((index+1).toString()+". "+idea.take(33)+"…",
+                        {onPick(idea)},Modifier.fillMaxWidth(),size=10.5f,height=47.dp)
+                }
+                AksaraButton("Tutup",onClose,Modifier.fillMaxWidth(),height=37.dp)
+            }
+        }
+    }
+}
+
+@Composable
 fun StudioContent() {
     val context=LocalContext.current
     val scope=rememberCoroutineScope()
@@ -527,15 +551,11 @@ fun StudioContent() {
             size=10.5f,color=AksaraColors.muted)
     }
 
-    if(showIdeas) StudioConfirm("Pilih idea prompt dalam dialog selepas ini.",{
+    if(showIdeas) StudioIdeas({idea->
+        prompt=idea
         showIdeas=false
-        prompt=listOf(
-            "A cinematic mountain valley at sunrise, low mist and a winding river, natural colors",
-            "A modern literary desk in soft afternoon light, open notebook and quiet atmosphere",
-            "A futuristic library with intricate architecture and subtle blue lighting",
-            "A photorealistic tropical forest after rain, dramatic cloud cover"
-        ).random()
-        message="Idea prompt boleh diedit sebelum penjanaan."
+        page=StudioPage.GENERATE.name
+        message="Idea prompt dipilih. Edit sebelum menjana."
     },{showIdeas=false})
     if(confirmDelete!=null)StudioConfirm("Padam imej ini daripada sejarah Studio?",{
         val id=confirmDelete!!
