@@ -42,11 +42,19 @@ private fun voiceStyleInstruction(style:String):String=when(style){
     var style by rememberSaveable {mutableStateOf(preferences.getString("language_style","Bahasa Santai")?.takeIf{it in VoiceLanguageStyles}?:"Bahasa Santai")}
     // A Gemini Live system instruction is fixed for the socket lifetime.
     // Reconnect cleanly after a style / Thinking Mode change.
-    val client=remember(mode,style) {
-        val identity=context.assets.open("voice-identity.txt").bufferedReader().use{it.readText()}
-        val modePrompt=if(mode=="gelap")"Kritikal, mendalam dan sinis secara beralasan." else "Santai, jelas dan responsif."
-        LiveVoiceClient(context,BuildConfig.API_ORIGIN,identity+"\nMod aktif: $mode. "+modePrompt+"\nGaya bahasa suara: "+voiceStyleInstruction(style))
-    }
+    val identity=remember(context){context.assets.open("voice-identity.txt").bufferedReader().use{it.readText()}}
+    val modePrompt=if(mode=="gelap")"Kritikal, mendalam dan sinis secara beralasan." else "Santai, jelas dan responsif."
+    val lock="UTAMAKAN Bahasa Melayu Malaysia (ms-MY) sepanjang perbualan. " +
+        "Jangan tiba-tiba bertukar ke bahasa Sepanyol, Inggeris atau bahasa lain. " +
+        "Permintaan terjemahan atau petikan asing hanya untuk giliran yang diminta; " +
+        "kembali ke bahasa pilihan selepas itu. Jangan tukar loghat tanpa arahan pengguna. " +
+        "Jika tidak pasti sebutan negeri, gunakan Bahasa Melayu santai, jangan reka loghat."
+    val policy=identity+"\n"+lock+"\nMod aktif: "+mode+". "+modePrompt+
+        "\nGaya bahasa suara yang dipilih: "+style+". "+voiceStyleInstruction(style)
+    // Keep one client (and its timer/preferences) while an intentional mode/style
+    // change causes a fresh Gemini setup. Automatic reconnect uses this same policy.
+    val client=remember(context){LiveVoiceClient(context,BuildConfig.API_ORIGIN,policy)}
+    LaunchedEffect(client,policy){client.updateIdentity(policy)}
     val state by client.state.collectAsStateWithLifecycle()
     var permissionError by remember {mutableStateOf<String?>(null)}
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {granted -> if(granted)client.start() else permissionError="Izin mikrofon ditolak. Tiada audio dihantar."}

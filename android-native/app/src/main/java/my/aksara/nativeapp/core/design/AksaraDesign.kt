@@ -129,6 +129,7 @@ val DialogGradient: Brush get() = cssGradient(150f,listOf(Color(23,31,45,92), Co
     }
 }
 private val iconPaths = mapOf(
+    "clock" to listOf("M12 3a9 9 0 1 1 0 18a9 9 0 1 1 0-18Z","M12 7v5l3 2"),
     "aksara" to listOf("M12 2.5 14.5 9.5 21.5 12 14.5 14.5 12 21.5 9.5 14.5 2.5 12 9.5 9.5Z"),
     "gemini" to listOf("M12 2c1 5.3 4.7 9 10 10-5.3 1-9 4.7-10 10-1-5.3-4.7-9-10-10 5.3-1 9-4.7 10-10Z"),
     "groq" to listOf("M5 7a2 2 0 1 1 4 0a2 2 0 1 1-4 0ZM15 17a2 2 0 1 1 4 0a2 2 0 1 1-4 0ZM8 8l8 8M17 6l-8 12"),
