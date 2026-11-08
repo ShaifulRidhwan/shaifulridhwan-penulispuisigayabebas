@@ -5,6 +5,7 @@ on:
     branches: ['rebuild/aksara-android-native-v1']
     paths:
       - 'android-native/app/src/main/cpp/**'
+      - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/studio/**'
       - 'android-native/app/build.gradle.kts'
       - '.github/workflows/aksara-android-sdturbo-native.yml'
 permissions:
