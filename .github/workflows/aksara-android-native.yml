@@ -4,6 +4,9 @@ on:
     paths: ['android-native/**', 'docs/android-rebuild/**', '.github/workflows/aksara-android-native.yml']
   push:
     branches: ['rebuild/aksara-android-native-v1']
+concurrency:
+  group: aksara-android-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:

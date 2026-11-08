@@ -52,7 +52,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             if(storageReadable)try{store.save(messages);mutable.update{it.copy(archive=messages)}}catch(_:Exception){mutable.update{it.copy(error="Sesi belum berjaya disimpan.")}}
         }
     }
-    fun send(question: String, documentText: String = "", documentName: String = "") {
+    fun send(question: String, documentText: String = "", documentName: String = "", media: JSONObject? = null) {
         if (question.isBlank() || state.value.busy || !state.value.loaded) return
         val previous = state.value.messages
         val user = Message(UUID.randomUUID().toString(), "user", question)
@@ -63,7 +63,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 val history = JSONArray().apply { previous.filter { !it.incomplete }.takeLast(24).forEach { put(JSONObject().put("role", it.role).put("content", it.text)) } }
                 val payload = JSONObject().put("question", question).put("history", history).put("thoughtMode", state.value.mode)
                     .put("contextFallback", true).put("mediaFallback", false).put("summary", "").put("memoryNotes", "")
-                    .put("documentText", documentText).put("documentName", documentName)
+                    .put("documentText", documentText).put("documentName", documentName).put("media",if(media!=null)JSONArray().put(media) else JSONObject.NULL)
                 api.chat(payload).collect { event ->
                     mutable.update { value -> value.copy(messages = value.messages.map { m -> if (m.id != assistant.id) m else when (event) {
                         is ChatEvent.Delta -> m.copy(text = m.text + event.text)

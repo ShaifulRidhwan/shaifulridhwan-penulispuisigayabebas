@@ -25,7 +25,7 @@ class RuntimeService:Service() {
                     "javascript" -> JavaScriptEngine.execute(code)
                     "shell" -> {
                         val child=ProcessBuilder("/system/bin/sh","-c",code).redirectErrorStream(true).start();process=child
-                        val bytes=child.inputStream.use{it.readNBytes(80_001)}
+                        val bytes=child.inputStream.use{it.readBounded(80_001)}
                         require(bytes.size<=80_000){"Output melebihi 80 KB."}
                         child.waitFor();String(bytes)+"\n[exit ${child.exitValue()}]"
                     }
@@ -46,4 +46,10 @@ class RuntimeService:Service() {
     })
     override fun onBind(intent:Intent):IBinder=messenger.binder
     override fun onDestroy(){process?.destroyForcibly();worker.shutdownNow();super.onDestroy()}
+}
+
+private fun java.io.InputStream.readBounded(limit:Int):ByteArray {
+    val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(8192)
+    while(out.size()<limit){val n=read(buffer,0,minOf(buffer.size,limit-out.size()));if(n<0)break;if(n>0)out.write(buffer,0,n)}
+    return out.toByteArray()
 }

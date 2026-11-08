@@ -47,6 +47,9 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   await page.goto(origin+'/bilik-antara.html?voice-preview=1',{waitUntil:'networkidle',timeout:90000});
   await page.locator('#voiceLive').click();await sleep(1000);await capture('voice');
   fs.writeFileSync(path.join(out,`${width}-voice-dom.txt`),await page.locator('#voicePanel').innerText());
+  for(const [name,pathname] of [['studio','studio-antara.html'],['library','perpustakaan-aksara.html'],['security','security-lab.html']]){
+   const response=await page.goto(origin+'/'+pathname,{waitUntil:'networkidle',timeout:90000});await sleep(500);await capture(name);fs.writeFileSync(path.join(out,`${width}-${name}-http.txt`),String(response.status()));
+  }
   await context.close();
  }
  await browser.close();

@@ -18,7 +18,9 @@ adb shell am start -W -n my.aksara.nativeapp/.MainActivity > "$out/performance/c
 sleep 3
 adb shell dumpsys meminfo my.aksara.nativeapp > "$out/performance/meminfo.txt"
 adb shell dumpsys package my.aksara.nativeapp > "$out/performance/package.txt"
-adb shell du -sk /data/app > "$out/performance/installed-size.txt" || true
+apk_path=$(adb shell pm path my.aksara.nativeapp | head -1 | tr -d "\r" | cut -d: -f2)
+code_dir=${apk_path%/*}
+adb shell run-as my.aksara.nativeapp du -sk "$code_dir" . > "$out/performance/installed-size.txt"
 adb logcat -d -b crash > "$out/performance/crashes.txt"
 stat -c %s android-native/app/build/outputs/apk/debug/app-debug.apk > "$out/performance/apk-bytes.txt"
 python -m pip install pillow numpy scikit-image

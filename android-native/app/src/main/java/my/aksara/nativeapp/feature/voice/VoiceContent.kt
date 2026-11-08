@@ -33,25 +33,5 @@ import kotlinx.coroutines.delay
         onDispose{owner.lifecycle.removeObserver(observer);client.close()}
     }
     LaunchedEffect(Unit){if(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED)client.start() else permission.launch(Manifest.permission.RECORD_AUDIO)}
-    var seconds by remember{mutableIntStateOf(0)}
-    LaunchedEffect(state.startedAt){while(state.startedAt!=null){seconds=((System.currentTimeMillis()-state.startedAt!!)/1000).toInt();delay(1000)}}
-    Spacer(Modifier.height(12.dp))
-    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){AksaraText("AKSARA VOICE CHAT",size=12f,weight=600);AksaraText("%02d:%02d".format(seconds/60,seconds%60),size=12f,color=AksaraColors.muted)}
-    Spacer(Modifier.height(16.dp))
-    AksaraGlassSurface(Modifier.fillMaxWidth().height(230.dp),radius=24.dp,blur=8.dp){
-        Column(Modifier.align(Alignment.Center).padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally){
-            AksaraIcon("voice",Modifier.size(46.dp));Spacer(Modifier.height(18.dp));AksaraText(permissionError?:state.message,size=13f)
-            Spacer(Modifier.height(12.dp));AksaraText("Avatar 3D native belum diintegrasi.",size=10f,color=AksaraColors.muted)
-        }
-    }
-    Spacer(Modifier.height(14.dp));AksaraText("Bahasa Santai · Aoede",size=12f,weight=600)
-    Spacer(Modifier.height(12.dp));AksaraText("Volume ${(state.volume*100).toInt()}%",size=11f)
-    Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {AksaraButton("−",{client.setVolume(state.volume-.1f)},Modifier.weight(1f));AksaraButton("+",{client.setVolume(state.volume+.1f)},Modifier.weight(1f))}
-    Spacer(Modifier.height(20.dp))
-    Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-        AksaraButton(if(state.mic)"Mute" else "Buka mic",{client.setMic(!state.mic)},Modifier.weight(1f),icon="mic",size=10f)
-        AksaraButton("Tamat",{client.close();onClose()},Modifier.weight(1f),size=10f)
-        AksaraButton(if(state.speaker)"Speaker" else "Senyap",{client.setSpeaker(!state.speaker)},Modifier.weight(1f),icon="speaker",size=10f)
-    }
-    if(state.phase=="error") {Spacer(Modifier.height(14.dp));AksaraText("Sesi belum disahkan di peranti sebenar. Tutup dan buka semula untuk cuba lagi.",size=11f,color=AksaraColors.muted)}
+    VoiceScreen(state.copy(message=permissionError?:state.message),onClose={client.close();onClose()},onMic={client.setMic(!state.mic)},onSpeaker={client.setSpeaker(!state.speaker)},onVolume=client::setVolume)
 }

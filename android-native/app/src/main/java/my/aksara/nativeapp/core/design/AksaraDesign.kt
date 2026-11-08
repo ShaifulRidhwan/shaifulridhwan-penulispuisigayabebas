@@ -76,6 +76,7 @@ private val iconPaths = mapOf(
     "close" to listOf("m6 6 12 12M6 18 18 6"),
     "book" to listOf("M4 5.5c3-1.5 5.5-1.5 8 .2 2.5-1.7 5-1.7 8-.2V19c-3-1.5-5.5-1.5-8 .2-2.5-1.7-5-1.7-8-.2zM12 5.7v13.5"),
     "shield" to listOf("M12 2 4 5v6c0 5.4 3.6 9.4 8 11 4.4-1.6 8-5.6 8-11V5l-8-3Z", "m9 12 2 2 4-4"),
+    "end" to listOf("M4 8q8-7 16 0v6h-4v-4q-4-2-8 0v4H4Z"),
     "speaker" to listOf("M4 9h4l5-4v14l-5-4H4ZM17 8a6 6 0 0 1 0 8M20 5a10 10 0 0 1 0 14")
 )
 @Composable fun AksaraIcon(name: String, modifier: Modifier = Modifier.size(20.dp), color: Color = AksaraColors.gold) {

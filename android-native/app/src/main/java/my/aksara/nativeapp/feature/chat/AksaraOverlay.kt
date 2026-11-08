@@ -15,9 +15,13 @@ import dev.chrisbanes.haze.*
 import kotlinx.coroutines.launch
 import my.aksara.engine.runtime.RuntimeClient
 import my.aksara.nativeapp.feature.voice.VoiceContent
+import my.aksara.nativeapp.feature.voice.VoiceScreen
+import my.aksara.engine.voice.VoiceState
 
 @Composable fun AksaraOverlay(kind:String,state:ChatState,onClose:()->Unit,onNavigate:(String)->Unit,onRefresh:()->Unit,
     onMode:(String)->Unit,onRestore:()->Unit,onClear:()->Unit,onPickAttachment:()->Unit) {
+    if(kind=="voice"){VoiceContent(onClose);return}
+    if(kind=="voice-fixture"){VoiceScreen(VoiceState(phase="preview"),onClose,preview=true);return}
     val haze=LocalBackdrop.current
     var notice by remember(kind) {mutableStateOf<String?>(null)}
     val scroll=rememberScrollState()
@@ -94,7 +98,7 @@ import my.aksara.nativeapp.feature.voice.VoiceContent
                         "attachments" -> {
                             Spacer(Modifier.height(16.dp))
                             listOf("Foto & Kamera" to "JPG, PNG, WebP, GIF · 64 MB","Video" to "MP4, WebM · 128 MB","Dokumen" to "PDF, DOCX, TXT, MD, CSV, JSON","Audio" to "MP3, M4A, WAV, OGG, WebM","Kod" to "HTML, CSS, JS, TS, Python, SQL, C++").forEach { (name,desc) -> FeatureRow(name,desc,"attach"){onPickAttachment();onClose()};Spacer(Modifier.height(8.dp)) }
-                            AksaraText("Pembaca native semasa: dokumen teks sehingga 100 KB. Media binari belum disokong.",size=10f,color=AksaraColors.muted)
+                            AksaraText("Dokumen teks sehingga 100 KB. Imej, PDF, audio dan video inline sehingga 3.6 MB; format serta had backend tetap terpakai.",size=10f,color=AksaraColors.muted)
                         }
                         "sessions" -> {
                             Spacer(Modifier.height(20.dp));AksaraText("${state.archive.size} mesej tersimpan setempat dan disulitkan.",size=12f)

@@ -3,7 +3,7 @@ package my.aksara.nativeapp
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.test.platform.app.InstrumentationRegistry
 import my.aksara.nativeapp.feature.chat.*
 import my.aksara.nativeapp.core.storage.Message
@@ -13,7 +13,7 @@ import org.junit.Assert.*
 import java.io.File
 
 class VisualParityTest {
-    @get:Rule val compose = createComposeRule()
+    @get:Rule val compose = createAndroidComposeRule<VisualTestActivity>()
     @Test fun captureMatrixAndNavigation() {
         var screen by mutableStateOf("welcome")
         val timestamp=1794117600000L
@@ -24,7 +24,7 @@ class VisualParityTest {
                     "streaming" -> ChatState(messages=listOf(Message("u","user","Terangkan relativiti.",timestamp),Message("a","assistant","",timestamp,true)),busy=true,loaded=true)
                     else -> ChatState(loaded=true)
                 }
-                AksaraScreen(fixture,initialOverlay=screen.takeIf{it !in listOf("welcome","chat","streaming","composer-focused")},fixedTimestamp=timestamp)
+                AksaraScreen(fixture,initialOverlay=(if(screen=="voice")"voice-fixture" else screen).takeIf{it !in listOf("welcome","chat","streaming","composer-focused")},fixedTimestamp=timestamp)
             }
         }
         compose.onNodeWithContentDescription("Tulis mesej untuk Aksara A.I.").assertIsNotFocused()
@@ -34,7 +34,7 @@ class VisualParityTest {
         compose.onNodeWithText("Code Engine · Runtime Health").assertDoesNotExist()
         val context=InstrumentationRegistry.getInstrumentation().targetContext
         val out=File(context.getExternalFilesDir(null),"visual").apply{mkdirs()}
-        for(name in listOf("welcome","connection","code","terminal","portal","thinking","attachments","voice-permission","streaming","chat","composer-focused")) {
+        for(name in listOf("welcome","connection","code","terminal","portal","thinking","attachments","voice-permission","streaming","chat","voice","composer-focused")) {
             compose.runOnIdle {screen=name}
             compose.waitForIdle()
             if(name=="composer-focused") compose.onNodeWithContentDescription("Tulis mesej untuk Aksara A.I.").performTextInput("Terangkan relativiti.")

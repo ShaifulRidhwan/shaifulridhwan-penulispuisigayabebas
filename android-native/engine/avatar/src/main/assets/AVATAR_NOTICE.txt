@@ -1,0 +1,7 @@
+The bundled brunette.glb model is the exact TalkingHead example model used by the web baseline.
+Source: https://github.com/met4citizen/TalkingHead/tree/166b443a445eeb63a4ea02270aa9e7d6ba8b4d88/avatars
+TalkingHead by met4citizen; example avatar by Ready Player Me.
+The web baseline identifies this example model as CC BY-NC 4.0 (non-commercial).
+License: https://creativecommons.org/licenses/by-nc/4.0/
+This is not a character created by AKSARA. Native rendering/lighting and animation differ and require separate visual acceptance.
+Filament is provided by Google under Apache License 2.0.

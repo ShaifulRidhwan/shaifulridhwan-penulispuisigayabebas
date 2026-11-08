@@ -32,6 +32,8 @@ import io.noties.markwon.ext.tables.TablePlugin
 import my.aksara.nativeapp.R
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.core.storage.Message
+import my.aksara.nativeapp.core.platform.Attachment
+import my.aksara.nativeapp.core.platform.AttachmentReader
 import kotlinx.coroutines.launch
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -40,22 +42,19 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
 @Composable fun AksaraApp(vm: ChatViewModel = viewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    var attachment by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var attachment by remember { mutableStateOf<Attachment?>(null) }
     var attachmentError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if(uri != null) scope.launch {
             try {
-                val bytes = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { context.contentResolver.openInputStream(uri)!!.use { it.readNBytes(100_001) } }
-                require(bytes.size<=100_000) { "Dokumen teks melebihi had 100 KB." }
-                require(!bytes.contains(0)) { "Pembaca fail binari ini belum diintegrasi. Pilih TXT, MD, CSV, JSON atau kod teks." }
-                attachment = (uri.lastPathSegment?.substringAfterLast('/') ?: "dokumen.txt") to bytes.toString(Charsets.UTF_8)
+                attachment = AttachmentReader.read(context,uri)
             } catch(e: Exception) { attachmentError = e.message }
         }
     }
-    AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q -> vm.send(q, attachment?.second.orEmpty(), attachment?.first.orEmpty()); attachment = null },
+    AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q -> vm.send(q, attachment?.text.orEmpty(), attachment?.name.orEmpty(), attachment?.media); attachment = null },
         onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
-        onRestore = vm::restore, onClear = vm::clearScreen, attachmentName = attachment?.first,
+        onRestore = vm::restore, onClear = vm::clearScreen, attachmentName = attachment?.name,
         onPickAttachment = { picker.launch(arrayOf("text/*", "application/json", "application/pdf", "image/*", "audio/*", "video/*")) },
         onDismissError = { attachmentError = null; vm.dismissError() })
 }
