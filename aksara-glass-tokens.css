@@ -1,0 +1,10 @@
+/* Shared named design tokens for Bilik Antara and Security Lab.
+ * Namespaced to avoid altering existing theme and Voice layout. */
+:root{
+  --aksara-glass-surface:linear-gradient(128deg,rgba(18,24,34,.29) 0%,rgba(9,14,26,.22) 48%,rgba(9,13,25,.34) 100%);
+  --aksara-glass-border:rgba(239,218,185,.27);
+  --aksara-glass-radius:22px;
+  --aksara-glass-light:#e6c58b;
+  --aksara-glass-dark:#a2c8e5;
+  --aksara-glass-soft-shadow:0 18px 65px rgba(0,0,0,.15),inset 0 1px rgba(255,255,255,.1),inset 1px 0 rgba(192,208,230,.06);
+}
