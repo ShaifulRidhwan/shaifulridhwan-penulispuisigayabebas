@@ -28,9 +28,12 @@ object AksaraColors {
     val muted = Color(0xffb9c1cd)
     val border = Color(244, 225, 192, 79)
 }
+@OptIn(ExperimentalTextApi::class)
 object AksaraTypography {
-    val body = FontFamily(Font(R.font.dm_sans, weight = FontWeight.Normal), Font(R.font.dm_sans, weight = FontWeight.Medium), Font(R.font.dm_sans, weight = FontWeight.SemiBold), Font(R.font.dm_sans, weight = FontWeight.Bold))
-    val heading = FontFamily(Font(R.font.space_grotesk, weight = FontWeight.Normal), Font(R.font.space_grotesk, weight = FontWeight.SemiBold))
+    // Explicit supported axes avoid relying on platform synthesis or an absent 'ital' axis.
+    private fun variable(id:Int,weight:Int)=Font(id,weight=FontWeight(weight),variationSettings=FontVariation.Settings(FontVariation.weight(weight)))
+    val body = FontFamily(listOf(400,450,500,600,650,700).map{variable(R.font.dm_sans,it)})
+    val heading = FontFamily(listOf(400,500,600,700).map{variable(R.font.space_grotesk,it)})
     fun style(size: Float = 14f, line: Float = size * 1.6f, weight: Int = 400, color: Color = AksaraColors.text) = TextStyle(
         color = color, fontFamily = body, fontSize = size.sp, lineHeight = line.sp, fontWeight = FontWeight(weight),
         platformStyle = PlatformTextStyle(includeFontPadding = false),lineHeightStyle=LineHeightStyle(LineHeightStyle.Alignment.Center,LineHeightStyle.Trim.None))
@@ -59,11 +62,12 @@ val DialogGradient: Brush get() = cssGradient(150f,listOf(Color(23,31,45,92), Co
     val surfaceBackdrop=remember {HazeState()}
     val saturationEffect=remember(saturation){android.graphics.RenderEffect.createColorFilterEffect(android.graphics.ColorMatrixColorFilter(android.graphics.ColorMatrix().apply{setSaturation(saturation)})).asComposeRenderEffect()}
     Box(modifier.clip(shape).border(1.dp,border,shape)) {
-        // Record only this surface's processed background; foreground children never
-        // feed back into their own blur input. Nested glass samples this layer.
-        Box(Modifier.matchParentSize().hazeSource(surfaceBackdrop)
-            .graphicsLayer{renderEffect=saturationEffect}.hazeEffect(haze,HazeStyle(tints=emptyList(),backgroundColor=Color(0xff070911),blurRadius=blur*1.75f,noiseFactor=0f))
-            .background(brush))
+        // CSS backdrop-filter establishes a backdrop root. Descendant filters sample
+        // this surface's translucent paint, while the parent backdrop stays behind it.
+        // Keep the incoming filtered image outside the descendant source recording.
+        Box(Modifier.matchParentSize()
+            .graphicsLayer{renderEffect=saturationEffect}.hazeEffect(haze,HazeStyle(tints=emptyList(),backgroundColor=Color.Transparent,blurRadius=blur*1.75f,noiseFactor=0f))
+            .hazeSource(surfaceBackdrop).background(brush))
         CompositionLocalProvider(LocalBackdrop provides surfaceBackdrop){content()}
     }
 }

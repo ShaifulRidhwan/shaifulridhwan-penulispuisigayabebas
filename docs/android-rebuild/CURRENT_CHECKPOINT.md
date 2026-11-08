@@ -23,3 +23,12 @@ Run https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/actio
 The three-size screenshots from this run are **obstructed by Android SystemUI's first-time immersive education panel** and are invalid for app similarity. Their raw 55–59% welcome scores must not replace the earlier valid 81.767% baseline. The voice crash is now traced to Filament GLES shader compilation exceeding SwiftShader's 256 vertex uniform-vector limit, followed by native SIGABRT. This is not a verified voice rendering result.
 
 Recovery changes dismiss SystemUI education through the real UI before capture, fail obstructed captures, record capture provenance, capture the keyboard before the independent 3D scene, use current SwiftShader emulation and select Filament Vulkan where advertised by the device. Thinking Mode's measured status card/options and shared dialog border/padding are being corrected. These changes require a fresh CI build and real captures before any new similarity claim.
+
+
+## Latest completed recovery capture: dbe92de
+
+Read `visual-comparison/RECOVERY_REPORT.md` for complete measured evidence. Source `dbe92decfa5f63139dc1615b9e04124996c0f139`, run 42466403177: build, eight unit tests and web audit passed; all five native engine tests and all three dimension-specific navigation/capture tests passed. The visual comparison correctly failed. All 36 paired captures are real and unobstructed, including native Filament voice preview. Crash log is empty; no live voice-session claim follows from a preview fixture.
+
+Welcome SSIM is 81.758% at360dp, 83.130% at390dp and 84.006% at412dp. The 360dp opening-screen score has not improved over the original 81.767% baseline. Some dialog structures improved; no screen meets acceptance. Artifact 13612146110 contains the signed 65,759,220-byte debug APK. Artifact 13611268976 contains pairs, heatmaps, original images, component geometry and performance logs. Three missing web keyboard references, three blocked Security Lab web references and fifteen missing native secondary-screen references remain explicit.
+
+The next renderer iteration changes descendant backdrop-root sampling and explicitly supported font weight axes, and records the complete scene beneath modals. Its measurements must be collected independently before replacing the dbe92de scores. Native architecture, original assets and all existing runtime/voice integrations remain preserved. Advanced integration remains deferred pending visual approval.

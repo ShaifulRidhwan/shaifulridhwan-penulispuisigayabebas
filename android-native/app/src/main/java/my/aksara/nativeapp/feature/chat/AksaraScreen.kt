@@ -77,8 +77,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     CompositionLocalProvider(LocalBackdrop provides backdrop) {
         BoxWithConstraints(Modifier.fillMaxSize().imePadding().testTagCompat("app")) {
             val viewportHeight = maxHeight
+            Box(Modifier.fillMaxSize().hazeSource(scene)) {
             AksaraBackground(Modifier.fillMaxSize().hazeSource(backdrop))
-            Column(Modifier.fillMaxSize().hazeSource(scene)) {
+            Column(Modifier.fillMaxSize()) {
                 Spacer(Modifier.height(10.dp))
                 AksaraGlassSurface(Modifier.fillMaxWidth().height(50.dp).testTagCompat("topbar"), radius=17.dp, blur=12.dp,
                     brush=cssGradient(115f,listOf(Color(8,14,24,102),Color(17,26,40,51))),saturation=1.15f, border=Color(247,226,196,64)) {
@@ -150,6 +151,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         }
                     }
                 }
+            }
             }
             if(overlay!=null) CompositionLocalProvider(LocalBackdrop provides scene) {
                 AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onClear=onClear,onPickAttachment=onPickAttachment)

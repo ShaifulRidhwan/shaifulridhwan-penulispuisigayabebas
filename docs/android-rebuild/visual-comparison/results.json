@@ -18,50 +18,68 @@
     "reason": "page.goto: net::ERR_HTTP_RESPONSE_CODE_FAILURE at https://aksara-apps.mshaifulridhwan.workers.dev/security-lab.html\nCall log:\n  - navigating to \"https://aksara-apps.mshaifulridhwan.workers.dev/security-lab.html\", waiting until \"networkidle\"\n"
   },
   {
+    "screen": "360-keyboard",
+    "status": "MISSING_WEB_REFERENCE",
+    "similarity": null,
+    "reason": "Real Android IME captured; headless browser has no equivalent software keyboard."
+  },
+  {
+    "screen": "390-keyboard",
+    "status": "MISSING_WEB_REFERENCE",
+    "similarity": null,
+    "reason": "Real Android IME captured; headless browser has no equivalent software keyboard."
+  },
+  {
+    "screen": "412-keyboard",
+    "status": "MISSING_WEB_REFERENCE",
+    "similarity": null,
+    "reason": "Real Android IME captured; headless browser has no equivalent software keyboard."
+  },
+  {
     "screen": "360-attachments",
     "status": "MISMATCH",
-    "ssim_percent": 54.372,
-    "mae": 23.873180555555557,
+    "ssim_percent": 63.454,
+    "mae": 14.657877314814815,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 80.683
+        "ssim_percent": 90.149
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 55.382
+        "ssim_percent": 69.24
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 61.442
+        "ssim_percent": 82.812
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 72.091
+        "ssim_percent": 86.247
       },
       {
         "component": "connection",
-        "ssim_percent": 73.311
+        "ssim_percent": 83.562
       },
       {
         "component": "attachmentDialog",
-        "ssim_percent": 40.871
+        "ssim_percent": 51.238
       },
       {
         "component": "bubble",
-        "ssim_percent": 20.207
+        "ssim_percent": 63.294
       },
       {
         "component": "composer",
-        "ssim_percent": 84.092
+        "ssim_percent": 88.603
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 92.429
+        "ssim_percent": 95.213
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 82.319
+        "ssim_percent": 88.551
       }
     ],
     "geometry": [
@@ -115,52 +133,52 @@
   {
     "screen": "360-chat",
     "status": "MISMATCH",
-    "ssim_percent": 69.794,
-    "mae": 14.772412037037038,
+    "ssim_percent": 72.01,
+    "mae": 12.46160763888889,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 66.15
+        "ssim_percent": 76.709
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 20.828
+        "ssim_percent": 39.638
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 28.737
+        "ssim_percent": 51.779
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 39.742
+        "ssim_percent": 56.823
       },
       {
         "component": "connection",
-        "ssim_percent": 60.474
+        "ssim_percent": 64.765
       },
       {
         "component": "bubble",
-        "ssim_percent": 73.538
+        "ssim_percent": 47.261
       },
       {
         "component": "bubble",
-        "ssim_percent": 25.543
+        "ssim_percent": 40.594
       },
       {
         "component": "bubble",
-        "ssim_percent": 25.769
+        "ssim_percent": 41.002
       },
       {
         "component": "composer",
-        "ssim_percent": 80.966
+        "ssim_percent": 88.689
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 46.586
+        "ssim_percent": 68.835
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 74.266
+        "ssim_percent": 87.099
       }
     ],
     "geometry": [
@@ -214,48 +232,48 @@
   {
     "screen": "360-code",
     "status": "MISMATCH",
-    "ssim_percent": 44.742,
-    "mae": 26.882597222222223,
+    "ssim_percent": 67.784,
+    "mae": 15.224260416666667,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 55.059
+        "ssim_percent": 79.842
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 31.023
+        "ssim_percent": 51.677
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 18.692
+        "ssim_percent": 39.422
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 23.455
+        "ssim_percent": 30.474
       },
       {
         "component": "connection",
-        "ssim_percent": 33.406
+        "ssim_percent": 57.692
       },
       {
         "component": "bubble",
-        "ssim_percent": 31.796
+        "ssim_percent": 61.66
       },
       {
         "component": "composer",
-        "ssim_percent": 44.513
+        "ssim_percent": 88.427
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 43.557
+        "ssim_percent": 94.517
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 41.809
+        "ssim_percent": 93.227
       },
       {
         "component": "codeEngineMenu",
-        "ssim_percent": 38.525
+        "ssim_percent": 63.649
       }
     ],
     "geometry": [
@@ -308,54 +326,140 @@
   },
   {
     "screen": "360-composer-focused",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 78.847,
+    "mae": 9.141898148148147,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 76.709
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 28.78
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 51.747
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 56.823
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 64.765
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 51.703
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 73.995
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 68.668
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 87.285
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": -0.203
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 2,
+          "width": 0,
+          "height": -2
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 12,
+          "width": -6,
+          "height": -22
+        }
+      }
+    ]
   },
   {
     "screen": "360-connection",
     "status": "MISMATCH",
-    "ssim_percent": 66.759,
-    "mae": 19.76575462962963,
+    "ssim_percent": 75.447,
+    "mae": 12.858309027777779,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 80.683
+        "ssim_percent": 90.149
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 55.453
+        "ssim_percent": 72.205
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 59.634
+        "ssim_percent": 84.678
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 71.356
+        "ssim_percent": 88.286
       },
       {
         "component": "connection",
-        "ssim_percent": 74.249
+        "ssim_percent": 85.412
       },
       {
         "component": "multiAiDialog",
-        "ssim_percent": 47.019
+        "ssim_percent": 59.062
       },
       {
         "component": "bubble",
-        "ssim_percent": 51.286
+        "ssim_percent": 71.913
       },
       {
         "component": "composer",
-        "ssim_percent": 84.946
+        "ssim_percent": 89.423
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 92.522
+        "ssim_percent": 95.583
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 82.92
+        "ssim_percent": 89.15
       }
     ],
     "geometry": [
@@ -424,48 +528,48 @@
   {
     "screen": "360-portal",
     "status": "MISMATCH",
-    "ssim_percent": 51.074,
-    "mae": 29.160246527777776,
+    "ssim_percent": 63.77,
+    "mae": 19.23888310185185,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 79.84
+        "ssim_percent": 89.706
       },
       {
         "component": "portalCard",
-        "ssim_percent": 41.552
+        "ssim_percent": 56.998
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 33.183
+        "ssim_percent": 43.936
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 38.716
+        "ssim_percent": 55.148
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 47.004
+        "ssim_percent": 60.18
       },
       {
         "component": "connection",
-        "ssim_percent": 46.369
+        "ssim_percent": 54.593
       },
       {
         "component": "bubble",
-        "ssim_percent": 28.751
+        "ssim_percent": 53.933
       },
       {
         "component": "composer",
-        "ssim_percent": 62.513
+        "ssim_percent": 67.179
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 72.742
+        "ssim_percent": 77.587
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 62.056
+        "ssim_percent": 68.678
       }
     ],
     "geometry": [
@@ -524,52 +628,52 @@
   {
     "screen": "360-streaming",
     "status": "MISMATCH",
-    "ssim_percent": 78.131,
-    "mae": 10.633766203703704,
+    "ssim_percent": 78.441,
+    "mae": 9.385190972222222,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 66.15
+        "ssim_percent": 76.709
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 20.828
+        "ssim_percent": 39.638
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 28.737
+        "ssim_percent": 51.779
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 39.742
+        "ssim_percent": 56.823
       },
       {
         "component": "connection",
-        "ssim_percent": 60.474
+        "ssim_percent": 64.765
       },
       {
         "component": "bubble",
-        "ssim_percent": 72.324
+        "ssim_percent": 46.722
       },
       {
         "component": "bubble",
-        "ssim_percent": 24.328
+        "ssim_percent": 41.534
       },
       {
         "component": "bubble",
-        "ssim_percent": 44.073
+        "ssim_percent": 62.732
       },
       {
         "component": "composer",
-        "ssim_percent": 79.469
+        "ssim_percent": 86.639
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 46.586
+        "ssim_percent": 68.835
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 74.266
+        "ssim_percent": 87.099
       }
     ],
     "geometry": [
@@ -628,48 +732,48 @@
   {
     "screen": "360-terminal",
     "status": "MISMATCH",
-    "ssim_percent": 54.548,
-    "mae": 24.31325462962963,
+    "ssim_percent": 63.226,
+    "mae": 15.63515162037037,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 80.933
+        "ssim_percent": 90.343
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 26.398
+        "ssim_percent": 41.886
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 27.141
+        "ssim_percent": 40.603
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 28.427
+        "ssim_percent": 39.529
       },
       {
         "component": "connection",
-        "ssim_percent": 52.972
+        "ssim_percent": 75.224
       },
       {
         "component": "bubble",
-        "ssim_percent": 25.354
+        "ssim_percent": 42.447
       },
       {
         "component": "composer",
-        "ssim_percent": 81.278
+        "ssim_percent": 85.906
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 90.669
+        "ssim_percent": 93.621
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 79.303
+        "ssim_percent": 85.727
       },
       {
         "component": "aksaraAITerminal",
-        "ssim_percent": 45.147
+        "ssim_percent": 54.465
       }
     ],
     "geometry": [
@@ -723,48 +827,48 @@
   {
     "screen": "360-thinking",
     "status": "MISMATCH",
-    "ssim_percent": 64.151,
-    "mae": 20.748796296296295,
+    "ssim_percent": 72.349,
+    "mae": 14.082400462962964,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 80.683
+        "ssim_percent": 90.149
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 55.453
+        "ssim_percent": 72.204
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 59.634
+        "ssim_percent": 84.68
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 71.356
+        "ssim_percent": 88.286
       },
       {
         "component": "connection",
-        "ssim_percent": 74.249
+        "ssim_percent": 85.412
       },
       {
         "component": "thoughtModeDialog",
-        "ssim_percent": 44.349
+        "ssim_percent": 55.314
       },
       {
         "component": "bubble",
-        "ssim_percent": 47.626
+        "ssim_percent": 59.551
       },
       {
         "component": "composer",
-        "ssim_percent": 84.946
+        "ssim_percent": 89.423
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 92.522
+        "ssim_percent": 95.583
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 82.92
+        "ssim_percent": 89.15
       }
     ],
     "geometry": [
@@ -818,48 +922,48 @@
   {
     "screen": "360-voice-permission",
     "status": "MISMATCH",
-    "ssim_percent": 78.765,
-    "mae": 14.283478009259259,
+    "ssim_percent": 84.95,
+    "mae": 10.437653935185185,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 84.064
+        "ssim_percent": 92.727
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 61.253
+        "ssim_percent": 77.604
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 64.925
+        "ssim_percent": 90.58
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 77.311
+        "ssim_percent": 93.761
       },
       {
         "component": "connection",
-        "ssim_percent": 80.929
+        "ssim_percent": 91.681
       },
       {
         "component": "bubble",
-        "ssim_percent": 86.249
+        "ssim_percent": 97.304
       },
       {
         "component": "composer",
-        "ssim_percent": 90.397
+        "ssim_percent": 94.502
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 94.861
+        "ssim_percent": 98.405
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 88.702
+        "ssim_percent": 94.791
       },
       {
         "component": "aksaraMicPermission",
-        "ssim_percent": 59.815
+        "ssim_percent": 68.471
       }
     ],
     "geometry": [
@@ -912,51 +1016,136 @@
   },
   {
     "screen": "360-voice",
-    "status": "CORRUPT_CAPTURE",
-    "similarity": null,
-    "reason": "image file is truncated"
+    "status": "MISMATCH",
+    "ssim_percent": 71.804,
+    "mae": 15.366561342592593,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 60.78
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 92.949
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 97.466
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 98.363
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 96.303
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 68.465
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 83.815
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 54.352
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 96.887
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": -0.203
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": 0.203,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "360-welcome",
     "status": "MISMATCH",
-    "ssim_percent": 81.767,
-    "mae": 9.765425925925927,
+    "ssim_percent": 81.758,
+    "mae": 8.394175925925927,
     "components": [
       {
         "component": "topbar aksara-header",
-        "ssim_percent": 66.15
+        "ssim_percent": 76.709
       },
       {
         "component": "voiceLive",
-        "ssim_percent": 20.828
+        "ssim_percent": 39.638
       },
       {
         "component": "codeEngineStatus",
-        "ssim_percent": 28.737
+        "ssim_percent": 51.642
       },
       {
         "component": "codeAITerminalOpen",
-        "ssim_percent": 39.742
+        "ssim_percent": 56.823
       },
       {
         "component": "connection",
-        "ssim_percent": 60.474
+        "ssim_percent": 64.765
       },
       {
         "component": "bubble",
-        "ssim_percent": 68.91
+        "ssim_percent": 51.703
       },
       {
         "component": "composer",
-        "ssim_percent": 80.922
+        "ssim_percent": 88.634
       },
       {
         "component": "thoughtMode",
-        "ssim_percent": 46.519
+        "ssim_percent": 68.819
       },
       {
         "component": "sendBtn",
-        "ssim_percent": 74.335
+        "ssim_percent": 87.157
       }
     ],
     "geometry": [
@@ -1009,28 +1198,478 @@
   },
   {
     "screen": "390-attachments",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 65.875,
+    "mae": 14.104982379389963,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 90.516
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 72.545
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 82.442
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 87.159
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 84.654
+      },
+      {
+        "component": "attachmentDialog",
+        "ssim_percent": 52.884
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 64.565
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 89.38
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 95.577
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 89.567
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0.281
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "390-chat",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 74.719,
+    "mae": 11.32745068254547,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 78.143
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 38.196
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 50.057
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 56.178
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 68.568
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 46.746
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 42.112
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 46.731
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 88.967
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 68.929
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 87.367
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0.281
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "390-code",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 70.782,
+    "mae": 14.172901729655283,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 89.918
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 66.247
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 49.923
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 50.978
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 66.597
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 66.277
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 88.255
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 93.331
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 88.027
+      },
+      {
+        "component": "codeEngineMenu",
+        "ssim_percent": 66.191
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0.281
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "390-composer-focused",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 81.991,
+    "mae": 8.339183578401588,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 78.143
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 27.491
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 50.054
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 56.178
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 68.568
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 53.997
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 77.201
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 68.801
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 88.888
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0.281
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "390-connection",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 76.985,
+    "mae": 12.506519625713938,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 90.516
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 72.636
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 82.556
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 87.384
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 84.985
+      },
+      {
+        "component": "multiAiDialog",
+        "ssim_percent": 60.478
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 81.504
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 89.38
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 95.577
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 89.567
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0.281
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "390-knowledge",
@@ -1049,8 +1688,98 @@
   },
   {
     "screen": "390-portal",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 64.645,
+    "mae": 19.229321100174182,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 89.884
+      },
+      {
+        "component": "portalCard",
+        "ssim_percent": 58.142
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 44.191
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 50.177
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 55.816
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 50.607
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 59.877
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 68.631
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 77.981
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 71.156
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0.281
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "390-sessions",
@@ -1059,8 +1788,102 @@
   },
   {
     "screen": "390-streaming",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 80.436,
+    "mae": 8.654370721432333,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 78.143
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 38.196
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 50.057
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 56.178
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 68.568
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 47.424
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 40.563
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 62.639
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 87.106
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 68.929
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 87.367
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0.281
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6.312,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "390-studio",
@@ -1069,53 +1892,945 @@
   },
   {
     "screen": "390-terminal",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 62.567,
+    "mae": 15.710336411876696,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 90.516
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 60.99
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 73.642
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 79.733
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 79.311
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 52.999
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 88.169
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 95.082
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 88.533
+      },
+      {
+        "component": "aksaraAITerminal",
+        "ssim_percent": 52.051
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0.281
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "390-thinking",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 85.644,
+    "mae": 11.262925831409243,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 90.516
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 72.636
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 82.556
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 87.384
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 84.985
+      },
+      {
+        "component": "thoughtModeDialog",
+        "ssim_percent": 79.252
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 86.977
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 89.38
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 95.577
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 89.567
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0.281
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "390-voice-permission",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 86.355,
+    "mae": 9.765022076396484,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 93.065
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 78.236
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 88.776
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 93.122
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 91.282
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 96.348
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 94.457
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 98.408
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 95.057
+      },
+      {
+        "component": "aksaraMicPermission",
+        "ssim_percent": 70.913
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0.281
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "390-voice",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 76.847,
+    "mae": 15.872041965406895,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 73.319
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 92.234
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 96.119
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 97.702
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 95.404
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 76.871
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 85.054
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 83.198
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 97.08
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0.281
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "390-welcome",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 83.13,
+    "mae": 7.878736784542472,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 78.143
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 38.196
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 50.057
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 56.178
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 68.568
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 53.997
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 88.918
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 68.927
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 87.425
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0.281
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.281,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "412-attachments",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 64.134,
+    "mae": 14.477820220347676,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 91.196
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 73.47
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 85.146
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 88.729
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 85.12
+      },
+      {
+        "component": "attachmentDialog",
+        "ssim_percent": 48.544
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 40.079
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 89.327
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 95.655
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 89.869
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0.062
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "412-chat",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 76.579,
+    "mae": 10.292979291562771,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 66.228
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 29.191
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 40.927
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 41.833
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 64.948
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 46.631
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 42.238
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 36.823
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 89.199
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 68.948
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 87.586
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0.062
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "412-code",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 67.604,
+    "mae": 14.02697225316993,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 91.196
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 66.604
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 71.574
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 72.979
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 80.118
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 58.748
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 87.188
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 94.71
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 88.037
+      },
+      {
+        "component": "codeEngineMenu",
+        "ssim_percent": 60.239
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0.062
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "412-composer-focused",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 82.99,
+    "mae": 7.7369197304896815,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 66.228
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 22.134
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 40.918
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 41.833
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 64.948
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 59.21
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 77.986
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 68.836
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 88.959
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0.062
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "412-connection",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 76.768,
+    "mae": 12.446887544874176,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 91.196
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 73.47
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 85.146
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 88.729
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 85.12
+      },
+      {
+        "component": "multiAiDialog",
+        "ssim_percent": 58.609
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 91.379
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 89.327
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 95.655
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 89.869
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0.062
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "412-knowledge",
@@ -1134,8 +2849,98 @@
   },
   {
     "screen": "412-portal",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 65.63,
+    "mae": 19.018284789644014,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 90.599
+      },
+      {
+        "component": "portalCard",
+        "ssim_percent": 59.864
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 44.647
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 54.189
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 58.659
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 51.987
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 64.664
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 68.705
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 78.205
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 72.331
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0.062
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "412-sessions",
@@ -1144,8 +2949,102 @@
   },
   {
     "screen": "412-streaming",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 81.588,
+    "mae": 8.01567722425593,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 66.228
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 29.191
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 40.927
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 41.833
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 64.948
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 46.763
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 41.15
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 63.127
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 87.45
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 68.948
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 87.586
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0.062
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6.312,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "412-studio",
@@ -1154,27 +3053,469 @@
   },
   {
     "screen": "412-terminal",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 65.27,
+    "mae": 15.379364068827702,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 91.196
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 73.629
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 85.244
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 88.782
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 85.151
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 59.239
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 89.327
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 95.655
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 89.869
+      },
+      {
+        "component": "aksaraAITerminal",
+        "ssim_percent": 52.813
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0.062
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "412-thinking",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 82.413,
+    "mae": 11.855767768405043,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 91.196
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 73.47
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 85.146
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 88.729
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 85.12
+      },
+      {
+        "component": "thoughtModeDialog",
+        "ssim_percent": 71.646
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 91.3
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 89.327
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 95.655
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 89.869
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0.062
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "412-voice-permission",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 89.23,
+    "mae": 8.768821511309177,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 93.465
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 79.624
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 90.989
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 94.079
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 91.17
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 97.526
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 94.427
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 98.397
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 95.223
+      },
+      {
+        "component": "aksaraMicPermission",
+        "ssim_percent": 75.291
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0.062
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "412-voice",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 77.253,
+    "mae": 14.633403186729623,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 75.093
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 92.099
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 97.103
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 98.33
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 95.287
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 72.309
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 85.771
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 94.335
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 96.862
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0.062
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   },
   {
     "screen": "412-welcome",
-    "status": "MISSING_NATIVE",
-    "similarity": null
+    "status": "MISMATCH",
+    "ssim_percent": 84.006,
+    "mae": 7.328814083859444,
+    "components": [
+      {
+        "component": "topbar aksara-header",
+        "ssim_percent": 66.228
+      },
+      {
+        "component": "voiceLive",
+        "ssim_percent": 29.191
+      },
+      {
+        "component": "codeEngineStatus",
+        "ssim_percent": 40.927
+      },
+      {
+        "component": "codeAITerminalOpen",
+        "ssim_percent": 41.833
+      },
+      {
+        "component": "connection",
+        "ssim_percent": 64.948
+      },
+      {
+        "component": "bubble",
+        "ssim_percent": 59.21
+      },
+      {
+        "component": "composer",
+        "ssim_percent": 89.066
+      },
+      {
+        "component": "thoughtMode",
+        "ssim_percent": 68.945
+      },
+      {
+        "component": "sendBtn",
+        "ssim_percent": 87.637
+      }
+    ],
+    "geometry": [
+      {
+        "component": "topbar",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "conversation",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0.062
+        }
+      },
+      {
+        "component": "conversation-head",
+        "delta_px": {
+          "x": 0,
+          "y": -0.062,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "composer-form",
+        "delta_px": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        }
+      },
+      {
+        "component": "input",
+        "delta_px": {
+          "x": 3,
+          "y": 10,
+          "width": -6,
+          "height": -20
+        }
+      }
+    ]
   }
 ]
