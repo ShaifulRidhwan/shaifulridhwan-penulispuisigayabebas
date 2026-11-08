@@ -30,7 +30,7 @@ jobs:
     outputs:
       apk_ready: ${{ steps.compile.outputs.apk_ready }}
     env:
-      AKSARA_CI_COMPILER_REPOSITORY: ${{ runner.temp }}/aksara-compiler-repository
+      AKSARA_CI_COMPILER_REPOSITORY: /tmp/aksara-compiler-repository
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
