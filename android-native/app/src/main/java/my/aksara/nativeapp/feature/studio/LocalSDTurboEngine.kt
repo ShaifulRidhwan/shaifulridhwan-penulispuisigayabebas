@@ -187,6 +187,8 @@ internal class LocalSDTurboEngine {
     }
     fun available(): Boolean = libraryLoaded
     private external fun generateNative(modelPath: String, prompt: String, seed: Long, threads: Int): IntArray?
+    private external fun cancelNative()
+    fun cancel() { if (available()) cancelNative() }
 
     suspend fun generate(modelPath: String, prompt: String, seed: Long): Bitmap =
         withContext(Dispatchers.Default) {
