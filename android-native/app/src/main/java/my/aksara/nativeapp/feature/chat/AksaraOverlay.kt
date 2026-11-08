@@ -14,6 +14,7 @@ import my.aksara.nativeapp.core.design.*
 import dev.chrisbanes.haze.*
 import kotlinx.coroutines.launch
 import my.aksara.engine.runtime.RuntimeClient
+import my.aksara.nativeapp.feature.voice.VoiceContent
 
 @Composable fun AksaraOverlay(kind:String,state:ChatState,onClose:()->Unit,onNavigate:(String)->Unit,onRefresh:()->Unit,
     onMode:(String)->Unit,onRestore:()->Unit,onClear:()->Unit,onPickAttachment:()->Unit) {
@@ -22,7 +23,7 @@ import my.aksara.engine.runtime.RuntimeClient
     val scroll=rememberScrollState()
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val h=maxHeight
-        Box(Modifier.fillMaxSize().hazeEffect(haze,HazeStyle(backgroundColor=Color(0xff070911),blurRadius=8.dp,noiseFactor=0f)).background(Color(2,6,13,64)).clickable(onClick=onClose))
+        Box(Modifier.fillMaxSize().hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=8.dp,noiseFactor=0f)).background(Color(2,6,13,64)).clickable(onClick=onClose))
         val height=when(kind){"connection"->425.766.dp;"code"->minOf(740.dp,h-104.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->589.594.dp;"thinking"->419.594.dp;"attachments"->593.547.dp;"voice-permission"->280.594.dp;else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal","portal"->14.dp;"voice-permission"->15.dp;else->17.dp}
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).fillMaxWidth().heightIn(max=h-28.dp).height(height).clickable(enabled=false){},
@@ -147,4 +148,3 @@ import my.aksara.engine.runtime.RuntimeClient
     Spacer(Modifier.height(8.dp));AksaraButton("Enter",{run("shell",command)},Modifier.fillMaxWidth())
 }
 @Composable private fun <T> rememberSaveableCompat(calculation:()->T):T = remember(calculation=calculation)
-@Composable private fun VoiceContent(onClose:()->Unit) { AksaraText("Voice native belum disahkan. Mikrofon belum dibuka.",Modifier.padding(top=20.dp),size=13f);Spacer(Modifier.height(16.dp));AksaraButton("Tamatkan sesi",onClose,Modifier.fillMaxWidth()) }

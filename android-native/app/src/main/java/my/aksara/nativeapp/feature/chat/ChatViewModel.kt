@@ -15,17 +15,18 @@ import org.json.JSONObject
 import java.util.UUID
 
 data class ChatState(val messages: List<Message> = emptyList(), val archive: List<Message> = emptyList(), val busy: Boolean = false,
-    val error: String? = null, val providers: List<Pair<String, String>> = emptyList(), val mode: String = "cahaya", val loaded: Boolean = false)
+    val error: String? = null, val providers: List<Pair<String, String>> = emptyList(), val mode: String = "cahaya", val loaded: Boolean = false, val nextJourney: String? = null)
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
     private val api = ChatApi(BuildConfig.API_ORIGIN)
     private val store = SessionStore(app)
     private val mutable = MutableStateFlow(ChatState())
     val state = mutable.asStateFlow()
     private var requestJob: Job? = null
+    private var storageReadable = true
     init {
         viewModelScope.launch {
             try { mutable.update { it.copy(archive = store.load(), loaded = true) } }
-            catch (_: Exception) { mutable.update { it.copy(error = "Sesi tersimpan belum dapat dibaca. Fail asal dikekalkan.", loaded = true) } }
+            catch (_: Exception) { storageReadable = false; mutable.update { it.copy(error = "Sesi tersimpan belum dapat dibaca. Fail asal dikekalkan.", loaded = true) } }
         }
         refreshProviders()
     }
@@ -39,12 +40,24 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             mutable.update { it.copy(providers = (0 until rows.length()).map { i -> rows.getJSONObject(i).let { p -> p.optString("id") to p.optString("status", "unknown") } }) }
         } catch (e: Exception) { if (e !is CancellationException) mutable.update { it.copy(providers = listOf("Connection" to "unavailable")) } }
     }
+    fun journey(question: String) {
+        if(state.value.busy)return
+        viewModelScope.launch {
+            val rows = withContext(Dispatchers.IO) { JSONArray(getApplication<Application>().assets.open("journey.json").bufferedReader().use {it.readText()}) }
+            val normal: (String)->String = {it.lowercase().replace(Regex("[^a-z0-9]"),"")}
+            val i=(0 until rows.length()).firstOrNull {normal(rows.getJSONObject(it).getString("question"))==normal(question)}?:return@launch
+            val row=rows.getJSONObject(i)
+            val messages=state.value.messages+Message(UUID.randomUUID().toString(),"user",row.getString("question"))+Message(UUID.randomUUID().toString(),"assistant",row.getString("answer"))
+            mutable.update {it.copy(messages=messages,nextJourney=rows.optJSONObject(i+1)?.optString("question"))}
+            if(storageReadable)try{store.save(messages);mutable.update{it.copy(archive=messages)}}catch(_:Exception){mutable.update{it.copy(error="Sesi belum berjaya disimpan.")}}
+        }
+    }
     fun send(question: String, documentText: String = "", documentName: String = "") {
         if (question.isBlank() || state.value.busy || !state.value.loaded) return
         val previous = state.value.messages
         val user = Message(UUID.randomUUID().toString(), "user", question)
         val assistant = Message(UUID.randomUUID().toString(), "assistant", "", incomplete = true)
-        mutable.update { it.copy(messages = previous + user + assistant, busy = true, error = null) }
+        mutable.update { it.copy(messages = previous + user + assistant, busy = true, error = null, nextJourney = null) }
         requestJob = viewModelScope.launch {
             try {
                 val history = JSONArray().apply { previous.filter { !it.incomplete }.takeLast(24).forEach { put(JSONObject().put("role", it.role).put("content", it.text)) } }
@@ -54,7 +67,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 api.chat(payload).collect { event ->
                     mutable.update { value -> value.copy(messages = value.messages.map { m -> if (m.id != assistant.id) m else when (event) {
                         is ChatEvent.Delta -> m.copy(text = m.text + event.text)
-                        is ChatEvent.Done -> m.copy(text = event.reply, incomplete = false)
+                        is ChatEvent.Done -> m.copy(text = event.reply + if(event.sources.isEmpty()) "" else "\n\n"+event.sources.joinToString("\n"){"[${it.first}](${it.second})"}, incomplete = false)
                     } }) }
                 }
             } catch (e: CancellationException) { /* preserve partial text and mark interruption */ }
@@ -62,7 +75,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             finally {
                 mutable.update { it.copy(busy = false) }
                 withContext(NonCancellable) {
-                    try { store.save(state.value.messages); mutable.update { it.copy(archive = it.messages) } }
+                    try { check(storageReadable) {"Fail sesi asal belum dapat dibaca."}; store.save(state.value.messages); mutable.update { it.copy(archive = it.messages) } }
                     catch (_: Exception) { mutable.update { it.copy(error = "Jawapan ada di skrin tetapi sesi belum berjaya disimpan.") } }
                 }
             }

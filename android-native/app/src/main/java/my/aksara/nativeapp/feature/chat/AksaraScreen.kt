@@ -54,14 +54,14 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         }
     }
     AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q -> vm.send(q, attachment?.second.orEmpty(), attachment?.first.orEmpty()); attachment = null },
-        onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
+        onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
         onRestore = vm::restore, onClear = vm::clearScreen, attachmentName = attachment?.first,
         onPickAttachment = { picker.launch(arrayOf("text/*", "application/json", "application/pdf", "image/*", "audio/*", "video/*")) },
         onDismissError = { attachmentError = null; vm.dismissError() })
 }
 
 @Composable fun AksaraScreen(state: ChatState, onSend: (String)->Unit = {}, onStop: ()->Unit = {}, onRefresh: ()->Unit = {},
-    onMode: (String)->Unit = {}, onRestore: ()->Unit = {}, onClear: ()->Unit = {}, attachmentName: String? = null,
+    onJourney: (String)->Unit = onSend, onMode: (String)->Unit = {}, onRestore: ()->Unit = {}, onClear: ()->Unit = {}, attachmentName: String? = null,
     onPickAttachment: ()->Unit = {}, onDismissError: ()->Unit = {}, initialOverlay: String? = null,
     fixedTimestamp: Long? = null) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
@@ -125,9 +125,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 items(state.messages,key={it.id}) { message -> AksaraChatBubble(message,fixedTimestamp=fixedTimestamp) }
                             }
                             if(state.messages.isEmpty()) Row(Modifier.fillMaxWidth().height(49.dp).padding(start=12.dp,end=12.dp,top=4.dp,bottom=8.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                                AksaraButton("↗  Siapa Aku",{onSend("Siapa Aku")},Modifier.width(91.969.dp),size=11.5f,height=37.dp,radius=999.dp)
-                                AksaraButton("↗  The Coder Poet",{onSend("The Coder Poet")},Modifier.width(122.609.dp),size=11.5f,height=37.dp,radius=999.dp)
+                                AksaraButton("↗  Siapa Aku",{onJourney("Siapa Aku")},Modifier.width(91.969.dp),size=11.5f,height=37.dp,radius=999.dp)
+                                AksaraButton("↗  The Coder Poet",{onJourney("The Coder Poet")},Modifier.width(122.609.dp),size=11.5f,height=37.dp,radius=999.dp)
                             }
+                            if(state.nextJourney!=null) AksaraButton("↗  "+state.nextJourney,{onJourney(state.nextJourney)},Modifier.padding(horizontal=12.dp,vertical=4.dp),size=11.5f,height=37.dp,radius=999.dp)
                             if(state.error!=null) Row(Modifier.fillMaxWidth().clickable(onClick=onDismissError).padding(8.dp)) { AksaraText(state.error,size=11f,color=Color(0xffe7a08e)) }
                             if(attachmentName!=null) AksaraText("📎 $attachmentName",Modifier.padding(horizontal=12.dp),size=11f)
                             Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(6,9,15,8),Color(6,8,14,71)))).padding(start=9.dp,end=9.dp,top=8.dp,bottom=10.dp)) {

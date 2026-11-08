@@ -4,3 +4,4 @@ rootProject.name = "AksaraNative"
 include(":app")
 
 include(":engine:runtime")
+include(":engine:voice")

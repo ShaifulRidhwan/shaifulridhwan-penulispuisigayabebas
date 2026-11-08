@@ -44,7 +44,7 @@ val DialogGradient: Brush get() = Brush.linearGradient(listOf(Color(23,31,45,92)
 @Composable fun AksaraGlassSurface(modifier: Modifier = Modifier, radius: Dp = 13.dp, blur: Dp = 2.dp,
     brush: Brush = GlassGradient, border: Color = AksaraColors.border, content: @Composable BoxScope.() -> Unit) {
     val haze = LocalBackdrop.current
-    Box(modifier.clip(RoundedCornerShape(radius)).hazeEffect(haze, HazeStyle(backgroundColor = Color(0xff070911), blurRadius = blur, noiseFactor = 0f))
+    Box(modifier.clip(RoundedCornerShape(radius)).hazeEffect(haze, HazeStyle(tints=emptyList(), backgroundColor = Color(0xff070911), blurRadius = blur, noiseFactor = 0f))
         .background(brush).border(1.dp, border, RoundedCornerShape(radius)), content = content)
 }
 @Composable fun AksaraButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: String? = null,

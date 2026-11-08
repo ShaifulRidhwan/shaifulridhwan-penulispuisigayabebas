@@ -42,14 +42,20 @@ class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClien
     private fun request(path: String, payload: JSONObject) = Request.Builder().url(origin + path)
         .header("Origin", origin).header("Accept", "application/x-ndjson, application/json")
         .post(payload.toString().toRequestBody("application/json".toMediaType())).build()
-    suspend fun post(path: String, payload: JSONObject): JSONObject = kotlinx.coroutines.withContext(Dispatchers.IO) {
-        val call = client.newCall(request(path, payload))
-        val handle = kotlinx.coroutines.currentCoroutineContext()[kotlinx.coroutines.Job]?.invokeOnCompletion { call.cancel() }
-        try { call.execute().use { response ->
-            val data = try { JSONObject(response.body?.string().orEmpty()) } catch (_: Exception) { JSONObject() }
-            if (!response.isSuccessful) throw ApiFailure(response.code, data.optString("error", "HTTP ${response.code}"), response.header("Retry-After"))
-            data
-        } } finally { handle?.dispose() }
+    suspend fun post(path: String, payload: JSONObject): JSONObject = kotlinx.coroutines.suspendCancellableCoroutine { continuation ->
+        val call=client.newCall(request(path,payload))
+        continuation.invokeOnCancellation { call.cancel() }
+        call.enqueue(object:Callback {
+            override fun onFailure(call:Call,e:IOException){if(continuation.isActive)continuation.resumeWith(Result.failure(e))}
+            override fun onResponse(call:Call,response:Response){
+                val result=runCatching {response.use { res ->
+                    val data=try{JSONObject(res.body?.string().orEmpty())}catch(_:Exception){JSONObject()}
+                    if(!res.isSuccessful)throw ApiFailure(res.code,data.optString("error","HTTP ${res.code}"),res.header("Retry-After"))
+                    data
+                }}
+                if(continuation.isActive)continuation.resumeWith(result)
+            }
+        })
     }
     fun chat(payload: JSONObject): Flow<ChatEvent> = callbackFlow {
         var call: Call? = null
@@ -73,7 +79,9 @@ class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClien
                     var done = false; var chars = 0
                     while (!source.exhausted()) {
                         // readUtf8LineStrict bounds a malformed or unbounded frame.
-                        val line = source.readUtf8LineStrict(500_000)
+                        val line = try { source.readUtf8LineStrict(500_000) } catch(e: java.io.EOFException) {
+                            if(source.buffer.size in 1..500_000) source.buffer.readUtf8() else throw e
+                        }
                         val event = Ndjson.parse(line)
                         if (event is ChatEvent.Delta) { chars += event.text.length; if (chars > 40_000) throw IOException("Jawapan melebihi had.") }
                         if (event != null) send(event)

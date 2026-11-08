@@ -24,6 +24,7 @@ android {
 }
 dependencies {
     implementation(project(":engine:runtime"))
+    implementation(project(":engine:voice"))
     val composeBom = platform("androidx.compose:compose-bom:2025.06.01")
     implementation(composeBom); androidTestImplementation(composeBom)
     implementation("androidx.activity:activity-compose:1.10.1")

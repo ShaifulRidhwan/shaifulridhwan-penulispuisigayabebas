@@ -40,6 +40,13 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   streaming=true;await page.locator('#sendBtn').click();await sleep(300);await capture('streaming');
   await sleep(5500);await capture('chat');
   fs.writeFileSync(path.join(out,`${width}-inventory.json`),JSON.stringify(await page.evaluate(()=>({dialogs:[...document.querySelectorAll('dialog,[role=dialog]')].map(x=>({id:x.id,cls:x.className,text:x.textContent?.trim()})),buttons:[...document.querySelectorAll('button,summary')].map(x=>({id:x.id,cls:x.className,label:x.getAttribute('aria-label'),text:x.textContent?.trim()})),breakpoints:[...document.styleSheets].flatMap(s=>{try{return [...s.cssRules].filter(x=>x.conditionText).map(x=>x.conditionText)}catch{return []}})})),null,2));
+  // Additional reachable application states. They remain unaccepted until native equivalents exist.
+  for(const [name,trigger] of [['sessions','#featureSessions'],['metrics','#featureMetrics'],['knowledge','#featureKnowledge']]){
+   try{await page.locator('.portal-trigger').click();await page.locator(trigger).click();await sleep(300);await capture(name);await page.keyboard.press('Escape');}catch(e){fs.appendFileSync(path.join(out,'capture-errors.txt'),`${width} ${name}: ${e.message}\n`);}
+  }
+  await page.goto(origin+'/bilik-antara.html?voice-preview=1',{waitUntil:'networkidle',timeout:90000});
+  await page.locator('#voiceLive').click();await sleep(1000);await capture('voice');
+  fs.writeFileSync(path.join(out,`${width}-voice-dom.txt`),await page.locator('#voicePanel').innerText());
   await context.close();
  }
  await browser.close();
