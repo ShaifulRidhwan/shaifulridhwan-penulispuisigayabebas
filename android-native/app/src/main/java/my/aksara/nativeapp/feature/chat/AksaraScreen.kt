@@ -159,7 +159,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
             }
             if(overlay!=null) CompositionLocalProvider(LocalBackdrop provides scene) {
-                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onClear=onClear,onPickAttachment=onPickAttachment)
+                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onClear=onClear,onPickAttachment=onPickAttachment,onAsk={question->overlay=null;onSend(question)})
             }
         }
     }

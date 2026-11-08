@@ -20,9 +20,13 @@ import my.aksara.engine.runtime.RuntimeClient
 import my.aksara.nativeapp.feature.voice.VoiceContent
 import my.aksara.nativeapp.feature.voice.VoiceScreen
 import my.aksara.engine.voice.VoiceState
+import my.aksara.nativeapp.feature.studio.StudioContent
+import my.aksara.nativeapp.feature.library.LibraryContent
+import my.aksara.nativeapp.feature.library.NovelContent
+import my.aksara.nativeapp.feature.tools.*
 
 @Composable fun AksaraOverlay(kind:String,state:ChatState,onClose:()->Unit,onNavigate:(String)->Unit,onRefresh:()->Unit,
-    onMode:(String)->Unit,onRestore:()->Unit,onClear:()->Unit,onPickAttachment:()->Unit) {
+    onMode:(String)->Unit,onRestore:()->Unit,onClear:()->Unit,onPickAttachment:()->Unit,onAsk:(String)->Unit) {
     if(kind=="voice"){VoiceContent(onClose,state.mode,onMode);return}
     if(kind=="voice-fixture"){VoiceScreen(VoiceState(phase="preview"),onClose,preview=true);return}
     val margins=aksaraDeviceMargins()
@@ -43,7 +47,7 @@ import my.aksara.engine.voice.VoiceState
         val attachmentSummary="Pilih bahan untuk analisis atau buka kod dalam Workspace. Fail kekal dalam tab ini sehingga dihantar."
         val attachmentLines=measurer.measure(AnnotatedString(attachmentSummary),AksaraTypography.style(12f,18.6f),constraints=Constraints(maxWidth=with(density){(maxWidth-114.dp).roundToPx().coerceAtLeast(1)})).lineCount
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(Color(2,6,13,64)).clickable(onClick=onClose))
-        val height=when(kind){"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->589.594.dp;"thinking"->273.594.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->593.547.dp+(18.59375f*(attachmentLines-3)).dp;"voice-permission"->280.594.dp;else->minOf(650.dp,h-60.dp)}
+        val height=when(kind){"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->589.594.dp;"thinking"->273.594.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->593.547.dp+(18.59375f*(attachmentLines-3)).dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal","portal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).clickable(enabled=false){},
@@ -65,7 +69,7 @@ import my.aksara.engine.voice.VoiceState
                         AksaraButton("Aktifkan Mikrofon",{onNavigate("voice")},Modifier.weight(.63f))
                     }
                 } else {
-                    val title=when(kind){"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Ciri & Fungsi";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";else->kind}
+                    val title=when(kind){"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Ciri & Fungsi";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";"studio"->"Studio Antara";"library"->"Perpustakaan AKSARA";"novel"->"Baca Novel";"security"->"Security Lab";"metrics"->"Prestasi A.I."; "engines"->"Native Engines";else->kind}
                     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
                             AksaraText(title,size=16f,line=20.8f,weight=700,tracking=.4f)
@@ -87,33 +91,18 @@ import my.aksara.engine.voice.VoiceState
                             }
                             Spacer(Modifier.weight(1f));AksaraButton("Refresh Status",onRefresh,Modifier.fillMaxWidth(),height=49.dp)
                         }
-                        "code" -> {
-                            Spacer(Modifier.height(14.dp))
-                            AksaraText("Not checked yet",Modifier.padding(end=48.dp),size=10f,line=14.5f,color=AksaraColors.muted)
-                            Spacer(Modifier.height(9.dp))
-                            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(8.dp)) {
-                                listOf("HTML · CSS","JavaScript","Python · Pyodide","TypeScript","SQL · SQLite WASM","C++ · Clang WASM").forEach { language ->
-                                    MenuRow(language,"Not Tested",height=57.dp) {notice="$language: status native belum diuji dalam sesi ini. Runtime web tidak dibungkus sebagai aplikasi native."}
-                                }
-                            }
-                            Spacer(Modifier.height(8.dp))
-                            AksaraText("Runtime native diuji secara berasingan. Bahasa dan had muat turun web tidak membuktikan sokongan native.",size=10f,line=14.5f,color=AksaraColors.muted)
-                            Spacer(Modifier.height(14.dp))
-                            Box(Modifier.fillMaxWidth().height(1.dp).background(Color(228,198,155,51)))
-                            Spacer(Modifier.height(12.dp))
-                            Row(Modifier.fillMaxWidth().clickable{notice="Pelaksanaan automatik A.I. native belum tersedia."},verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){
-                                Box(Modifier.padding(start=4.dp).size(17.dp).border(1.dp,Color(0xffa4a4a4)))
-                                AksaraText("Benarkan A.I. jalankan kod dalam sandbox",Modifier.weight(1f),size=12f,line=17.4f,weight=600,color=Color(0xfff0ddbd))
-                            }
-                            Spacer(Modifier.height(8.dp));AksaraText("A.I. Code Execution · OFF",size=11f,line=14f,weight=600,color=Color(0xffe4c99b))
-                            Spacer(Modifier.height(13.dp));AksaraButton("Refresh Status",{notice="Semakan pelbagai runtime native belum diintegrasikan dalam panel ini."},Modifier.fillMaxWidth(),height=49.dp)
-                            Spacer(Modifier.height(8.dp));AksaraButton("Code Workspace",{onNavigate("terminal")},Modifier.fillMaxWidth())
-                            Spacer(Modifier.height(8.dp));AksaraButton("Evaluation Lab",{notice="Evaluation Lab native belum tersedia."},Modifier.fillMaxWidth())
-                        }
+                        "code" -> RuntimeHealthContent(onNavigate)
                         "terminal" -> TerminalContent()
+                        "studio" -> StudioContent()
+                        "library" -> LibraryContent(onNavigate)
+                        "novel" -> NovelContent()
+                        "knowledge" -> KnowledgeContent(onAsk)
+                        "metrics" -> MetricsContent(state,onRefresh)
+                        "security" -> SecurityContent()
+                        "engines" -> AdvancedEnginesContent()
                         "portal" -> {
                             Spacer(Modifier.height(29.dp))
-                            listOf(Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","library"),Triple("Security Lab","Audit laman · Kod · Dependency","security"),Triple("Prestasi A.I","Respons, provider dan kesihatan storan","metrics"),Triple("Sesi & Sejarah","Perbualan, carian dan arkib JSON","sessions"),Triple("Pengetahuan & Rujukan","Karya · Wikipedia · URL · pengiraan","knowledge")).forEach { (name,desc,route) ->
+                            listOf(Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","library"),Triple("Security Lab","Audit laman · Kod · Dependency","security"),Triple("Prestasi A.I","Respons, provider dan kesihatan storan","metrics"),Triple("Sesi & Sejarah","Perbualan, carian dan arkib JSON","sessions"),Triple("Pengetahuan & Rujukan","Karya · Wikipedia · URL · pengiraan","knowledge"),Triple("Game · Linux · SD-Turbo","Inventori enjin Android dan status integrasi","engines")).forEach { (name,desc,route) ->
                                 FeatureRow(name,desc,if(route=="security")"shield" else "book") {onNavigate(route)};Spacer(Modifier.height(9.dp))
                             }
                             Spacer(Modifier.height(7.dp));MenuRow("Privasi & Tetapan","›",height=57.594.dp){onNavigate("privacy")}
