@@ -182,8 +182,7 @@ internal fun AksaraSettings(
                                         Modifier.fillMaxWidth(),height=37.dp,size=10.5f)
                                     Spacer(Modifier.height(9.dp))
                                     SettingsLabel("Gaya bahasa")
-                                    listOf("Bahasa Santai","Loghat Utara","Loghat Kelantan",
-                                        "Loghat Terengganu","Loghat Sabah","Loghat Sarawak").forEach { item ->
+                                    VoiceLanguageStyles.forEach { item ->
                                         AksaraButton((if(style==item)"✓  " else "")+item,{
                                             style=item
                                             preferences.edit().putString("language_style",item).apply()

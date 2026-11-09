@@ -29,11 +29,22 @@ import my.aksara.nativeapp.feature.tools.*
 @Composable fun AksaraOverlay(kind:String,state:ChatState,onClose:()->Unit,onNavigate:(String)->Unit,onRefresh:()->Unit,
     onMode:(String)->Unit,onRestore:()->Unit,onRestoreSession:(String)->Unit = {},onClear:()->Unit,onPickAttachment:(String)->Unit,onAsk:(String)->Unit,onMemory:(Boolean,String)->Unit={_,_->},
     onVoiceTurns:(List<VoiceContextTurn>)->Unit={},
-    onExportSessions:()->Unit={},onImportSessions:()->Unit={}) {
+    onExportSessions:()->Unit={},onImportSessions:()->Unit={},
+    composerDraft:String="",
+    onSaveDraft:suspend(String)->Boolean={false},
+    onRemoveDraft:suspend(String)->Boolean={false},
+    onUseDraft:(String)->Unit={},
+    onEraseLocal:suspend()->Boolean={false}) {
     // Android Lite: preserve the engines on disk, but expose no inactive entry points.
     if(kind=="code" || kind=="terminal" || kind=="engines") return
     if(kind=="voice"){VoiceContent(onClose,state.mode,onMode,state.messages,state.memoryEnabled,state.memoryNotes,onVoiceTurns);return}
     if(kind=="voice-fixture"){VoiceScreen(VoiceState(phase="preview"),onClose,preview=true);return}
+    if(kind=="settings"){
+        AksaraSettings(state,composerDraft,onClose,onRefresh,onMode,onMemory,
+            onExportSessions,onImportSessions,onSaveDraft,onRemoveDraft,onUseDraft,
+            onEraseLocal,onVoice={onNavigate("voice-permission")})
+        return
+    }
     val margins=aksaraDeviceMargins()
     val haze=LocalBackdrop.current
     val modalBackdrop=remember{HazeState()}
@@ -50,7 +61,7 @@ import my.aksara.nativeapp.feature.tools.*
             maxOf(73.dp,(24f+18.2f+4f+15.75f*lines).dp)
         }
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(Color(2,6,13,64)).clickable(onClick=onClose))
-        val height=when(kind){"response-details"->375.dp;"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->414.dp;"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
+        val height=when(kind){"response-details"->375.dp;"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(530.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal","portal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).clickable(enabled=false){},
@@ -132,7 +143,8 @@ import my.aksara.nativeapp.feature.tools.*
                         "engines" -> AdvancedEnginesContent()
                         "portal" -> {
                             Spacer(Modifier.height(29.dp))
-                            listOf(Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","library"),Triple("Prestasi A.I","Respons, provider dan kesihatan storan","metrics"),Triple("Sesi & Sejarah","Perbualan, carian dan arkib JSON","sessions")).forEach { (name,desc,route) ->
+                            listOf(Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","library"),Triple("Prestasi A.I","Respons, provider dan kesihatan storan","metrics"),Triple("Sesi & Sejarah","Perbualan, carian dan arkib JSON","sessions"),
+                                Triple("Tetapan Aksara A.I.","Kecerdasan, Voice, privasi dan diagnostik","settings")).forEach { (name,desc,route) ->
                                 FeatureRow(name,desc,"book") {onNavigate(route)};Spacer(Modifier.height(9.dp))
                             }
                             

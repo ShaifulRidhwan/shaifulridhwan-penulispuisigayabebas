@@ -163,6 +163,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         onExportSessions = { exportPicker.launch("aksara-sesi.json") },
         onImportSessions = { importPicker.launch(arrayOf("application/json","text/plain")) },
         onEditAndSend = vm::forkAndSendFrom, onBranch = vm::forkFrom, onRegenerate = vm::regenerateFrom,
+        onSaveDraft = vm::saveOfflineDraft, onRemoveDraft = vm::removeOfflineDraft,
+        onEraseLocal = vm::eraseLocalData,
         onMemory = vm::setMemory, onVoiceTurns = vm::acceptVoiceTurns, onClearAttachment = {
             val selected=attachments
             attachments=emptyList()
@@ -187,6 +189,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     onEditAndSend: (String,String)->Boolean = {_,_->false},
     onBranch: (String)->Boolean = {false}, onRegenerate: (String)->Boolean = {false},
     onExportSessions: ()->Unit = {}, onImportSessions: ()->Unit = {},
+    onSaveDraft: suspend(String)->Boolean = { false },
+    onRemoveDraft: suspend(String)->Boolean = { false },
+    onEraseLocal: suspend()->Boolean = { false },
     fixedTimestamp: Long? = null, onVoiceTurns:(List<my.aksara.engine.voice.VoiceContextTurn>)->Unit = {}) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
@@ -421,7 +426,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
             if(overlay!=null) CompositionLocalProvider(LocalBackdrop provides scene) {
                 AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question);Unit},onVoiceTurns=onVoiceTurns,
-                    onExportSessions=onExportSessions,onImportSessions=onImportSessions)
+                    onExportSessions=onExportSessions,onImportSessions=onImportSessions,
+                    composerDraft=draft,onSaveDraft=onSaveDraft,onRemoveDraft=onRemoveDraft,
+                    onUseDraft={pending->draft=pending;editingId=null;overlay=null;autoFollow=true},
+                    onEraseLocal=onEraseLocal)
             }
         }
     }

@@ -9,7 +9,7 @@ import java.util.Locale
  * inference, planning, tool execution, second-model review and answer verification.
  * Never present this deterministic preview as an executed agent plan.
  */
-internal object P3Intelligence {
+object P3Intelligence {
     data class PlanStep(val label:String,val executed:Boolean=false)
     data class TopicEdge(val first:String,val second:String,val mentions:Int)
     data class Capability(val provider:String,val name:String,val configured:Boolean)
