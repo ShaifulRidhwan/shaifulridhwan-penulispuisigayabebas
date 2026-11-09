@@ -49,26 +49,18 @@ internal fun AksaraSearchHub(
                 .map { message -> session to message }
         }.take(100)
     }
-    Box(
-        Modifier.fillMaxSize().background(Color(0, 0, 0, 172)),
-        contentAlignment = Alignment.Center
-    ) {
-        AksaraGlassSurface(
-            Modifier.fillMaxWidth().fillMaxHeight(.93f)
-                .padding(horizontal = 11.dp, vertical = 5.dp),
-            radius = 23.dp, blur = 18.dp, border = Color(244, 217, 176, 95)
-        ) {
-            Column(Modifier.fillMaxSize().padding(horizontal = 13.dp, vertical = 14.dp)) {
+    AksaraGlassModal(onClose = onClose, preferredHeight = 580.dp) {
+        Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     AksaraIcon("search", Modifier.size(23.dp))
                     Spacer(Modifier.width(9.dp))
                     Column(Modifier.weight(1f)) {
-                        AksaraText("Carian & Sejarah", size = 17f, weight = 700,
+                        AksaraText("Carian & Sejarah", size = 16f, weight = 700,
                             family = AksaraTypography.heading)
                         AksaraText("Cari dalam perbualan setempat yang disulitkan",
                             size = 10f, color = AksaraColors.muted)
                     }
-                    AksaraButton("×", onClose, Modifier.width(38.dp), height = 36.dp, size = 20f)
+                    AksaraButton("×", onClose, Modifier.width(36.dp), height = 37.dp, size = 22f, radius = 10.dp)
                 }
                 Spacer(Modifier.height(14.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -211,7 +203,6 @@ internal fun AksaraSearchHub(
                     }
                 }
             }
-        }
     }
 }
 
