@@ -88,6 +88,26 @@ class NativeGameActivityTest {
         send(MotionEvent.ACTION_CANCEL,listOf(0),true)
         js(a,"document.querySelector('#start').click()")
     }
+    @Test fun fullscreenAspectRatioMatrix() {
+        val device=UiDevice.getInstance(instrument)
+        try {
+            for(spec in listOf("640x360","844x390","1080x486","1280x800")) {
+                device.executeShellCommand("wm size $spec")
+                device.executeShellCommand("wm density 160")
+                ActivityScenario.launch<GameActivity>(Intent(instrument.targetContext,GameActivity::class.java)).use { scenario ->
+                    lateinit var activity:GameActivity
+                    scenario.onActivity{activity=it}
+                    waitJs(activity,"!!window.gameDiagnostics && gameDiagnostics.ready")
+                    waitJs(activity,"(()=>{const r=game.canvas.getBoundingClientRect();return Math.abs(r.width-innerWidth)<2&&Math.abs(r.height-innerHeight)<2&&Math.abs(r.x)<2&&Math.abs(r.y)<2})()")
+                    assertEquals("true",js(activity,"[...document.querySelectorAll('#actions button')].every(b=>{const r=b.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&r.width>=44&&r.height>=44})"))
+                    js(activity,"document.querySelector('#mode').value='training';document.querySelector('#start').click()")
+                    waitJs(activity,"match.roundState==='FIGHT'")
+                    heldJoystickMovement(activity)
+                    device.takeScreenshot(java.io.File(instrument.targetContext.getExternalFilesDir(null),"game-matrix-$spec.png"))
+                }
+            }
+        } finally {device.executeShellCommand("wm size reset");device.executeShellCommand("wm density reset")}
+    }
     @Test fun recreationRestoresPreferencesAndClearsInterruptedInput(){
         ActivityScenario.launch(MainActivity::class.java).use { main ->
             fun openMonitor()=instrument.addMonitor(GameActivity::class.java.name,null,false)
