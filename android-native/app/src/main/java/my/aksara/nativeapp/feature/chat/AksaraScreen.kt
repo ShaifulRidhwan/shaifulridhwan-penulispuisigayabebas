@@ -236,6 +236,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     fixedTimestamp: Long? = null, onVoiceTurns:(List<my.aksara.engine.voice.VoiceContextTurn>)->Unit = {}) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
+    var voiceIndicator by remember { mutableStateOf(VoiceLinkState.IDLE) }
     var draft by rememberSaveable { mutableStateOf("") }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingJumpId by remember { mutableStateOf<String?>(null) }
@@ -296,8 +297,15 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         }
     }
     val keyboard = LocalSoftwareKeyboardController.current
-    fun open(value: String) { focus.clearFocus(); keyboard?.hide(); overlay = value }
-    BackHandler(overlay != null) { overlay = null }
+    fun open(value: String) {
+        focus.clearFocus(); keyboard?.hide()
+        if(value=="voice") voiceIndicator=VoiceLinkState.CONNECTING
+        overlay = value
+    }
+    BackHandler(overlay != null) {
+        if(overlay=="voice") voiceIndicator=VoiceLinkState.IDLE
+        overlay = null
+    }
     CompositionLocalProvider(LocalBackdrop provides backdrop) {
         BoxWithConstraints(Modifier.fillMaxSize().imePadding().testTagCompat("app")) {
             val viewportHeight = maxHeight
@@ -338,7 +346,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 Box(Modifier.matchParentSize().hazeSource(headerPaint).background(Brush.horizontalGradient(listOf(Color(20,18,21,64),Color(5,8,17,56)))))
                                 CompositionLocalProvider(LocalBackdropPaints provides listOf(headerPaint)) {
                                 Row(Modifier.fillMaxSize().padding(horizontal=if(compact)5.dp else 8.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(if(compact)3.dp else 4.dp)) {
-                                    AksaraButton("Voice Chat",{open("voice-permission")},Modifier.width(if(compact)82.328.dp else 93.484.dp),icon="voice",size=if(compact)9f else 10f,height=AksaraGlassTokens.capsuleHeight,radius=AksaraGlassTokens.capsuleRadius)
+                                    ReactiveVoiceChip(voiceIndicator,compact) {open("voice-permission")}
                                     Spacer(Modifier.weight(1f))
                                     AksaraGlassSurface(Modifier.width(if(compact)151.dp else 167.dp).height(AksaraGlassTokens.capsuleHeight).clickable {open("connection")}.semantics {contentDescription="Connection"},radius=999.dp,blur=9.dp) {
                                         val connectionStatus = ProviderConnectionStatus.label(state.providers)
@@ -441,44 +449,29 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             cursorBrush=SolidColor(AksaraColors.gold))
                         if(state.busy) AksaraButton("Henti",onStop,Modifier.width(56.dp)
                             .semantics {contentDescription="Hentikan respons"},size=12f,height=40.dp,radius=12.dp)
-                        // Same Liquid Glass outline and dimensions as Send; only the brain glows.
-                        AksaraGlassSurface(
-                            Modifier.size(44.dp).clickable {open("thinking")}
-                                .semantics {
-                                    contentDescription="Thinking Mode"
-                                    stateDescription=if(state.mode=="gelap")"Gelap" else "Cahaya"
-                                    testTag="thinking-glass-button"
-                                },
-                            radius=13.dp,blur=2.dp,
-                            brush=cssGradient(145f,listOf(Color(244,216,171,14),Color(64,87,112,9))),
-                            border=Color(244,213,166,77),saturation=1f
-                        ) {
-                            Box(Modifier.align(Alignment.Center).size(31.dp)
-                                .background(Brush.radialGradient(
-                                    listOf(AksaraColors.gold.copy(alpha=.19f),Color.Transparent)
-                                ),RoundedCornerShape(999.dp)))
-                            AksaraIcon("brain",Modifier.align(Alignment.Center).size(23.dp),
-                                AksaraColors.gold)
+                        ReactiveThinkingButton(
+                            processing=ThinkingActivity.awaitingFirstReply(state),
+                            mode=state.mode,onClick={open("thinking")})
+                        ReactiveSendButton(enabled=canSubmit) {
+                            val text=AttachmentSendPolicy.submissionText(draft,hasAttachments)
+                            val accepted=editingId?.let {onEditAndSend(it,text)} ?: onSend(text)
+                            if(accepted) {draft="";editingId=null;autoFollow=true}
                         }
-                        AksaraButton("",{
-                            if(canSubmit) {
-                                val text=AttachmentSendPolicy.submissionText(draft,hasAttachments)
-                                val accepted = editingId?.let { onEditAndSend(it,text) } ?: onSend(text)
-                                if(accepted) { draft="";editingId=null;autoFollow=true }
-                            }
-                        },Modifier.width(42.dp).semantics {contentDescription="Hantar soalan"},
-                            icon="send",height=42.dp,radius=13.dp,enabled=canSubmit)
                     }
                 }
             }
             }
             if(overlay!=null) CompositionLocalProvider(LocalBackdrop provides scene) {
-                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question);Unit},onVoiceTurns=onVoiceTurns,
+                AksaraOverlay(overlay!!, state, onClose={
+                    if(overlay=="voice") voiceIndicator=VoiceLinkState.IDLE
+                    overlay=null
+                }, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question);Unit},onVoiceTurns=onVoiceTurns,
                     onExportSessions=onExportSessions,onImportSessions=onImportSessions,
                     composerDraft=draft,onSaveDraft=onSaveDraft,onRemoveDraft=onRemoveDraft,
                     onUseDraft={pending->draft=pending;editingId=null;overlay=null;autoFollow=true},
                     onEraseLocal=onEraseLocal,
-                    onJumpToMessage={id->pendingJumpId=id})
+                    onJumpToMessage={id->pendingJumpId=id},
+                    onVoiceState={phase,ready->voiceIndicator=VoiceLinkState.from(phase,ready)})
             }
         }
     }
@@ -503,12 +496,19 @@ private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
                     AksaraIcon("aksara",Modifier.size(14.dp),AksaraColors.gold)
                     AksaraText("Aksara A.I.",size=11f,line=15f,weight=650,color=Color(0xfff2c979))
                     if(!initial && message.id!="welcome-expanded") {
-                        AksaraText("·",size=11f,color=AksaraColors.muted)
+                        AksaraText("→",size=12f,color=AksaraColors.gold)
                         val provider=ProviderIdentity.of(message.provider)
                         if(provider!=null) {
-                            AksaraIcon(provider.icon,Modifier.size(13.dp).semantics {
-                                contentDescription = provider.name + " AI provider"
-                            },Color(0xffb5cce2))
+                            val providerColor=when(provider.id) {
+                                "gemini"->Color(0xff96baff)
+                                "groq"->Color(0xfff5b97e)
+                                "workers_ai"->Color(0xffffb57c)
+                                "openrouter"->Color(0xffc3acf4)
+                                else->Color(0xffd5d9e3)
+                            }
+                            AksaraIcon(provider.icon,Modifier.size(15.dp).semantics {
+                                contentDescription = "Melalui "+provider.name+" AI provider"
+                            },providerColor)
                             AksaraText(provider.name,size=10f,line=14f,color=AksaraColors.muted)
                         } else AksaraText("Belum disahkan",size=9f,line=13f,color=AksaraColors.muted)
                     }
