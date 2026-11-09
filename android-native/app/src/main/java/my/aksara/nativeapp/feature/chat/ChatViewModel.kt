@@ -211,11 +211,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     val segment = completed.slice(window)
                     if (segment.size >= 4) {
                         try {
-                            val body = JSONObject().put("summarize", true).put("summary", savedContext.summary)
-                                .put("contextFallback", false)
-                                .put("history", JSONArray().apply { segment.forEach {
-                                    put(JSONObject().put("role", it.role).put("content", it.text))
-                                } })
+                            val body = WebBrainBridge.summaryPayload(segment, savedContext.summary)
                             val response = withTimeout(28_000) { api.post(BackendRoutes.CHAT, body) }
                             val next = response.optString("summary").trim().take(4000)
                             if (next.isNotBlank()) {
@@ -227,27 +223,15 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         catch (_: Exception) { mutable.update { it.copy(summaryStatus = "unavailable") } }
                     }
                 }
-                val history = JSONArray().apply {
-                    ContextPolicy.selectHistory(completed, question).forEach {
-                        put(JSONObject().put("role", it.role).put("content", it.text))
-                    }
-                }
-                val notes = if (savedContext.memoryEnabled) ContextPolicy.selectMemory(savedContext.memoryNotes, question) else ""
-                val payload = JSONObject().put("question", question).put("history", history)
-                    // Web requires explicit consent before private notes/documents
-                    // can be sent to a fallback provider. Android has no consent UI.
-                    .put("thoughtMode", state.value.mode).put("contextFallback", false)
-                    .put("mediaFallback", false).put("summary", savedContext.summary)
-                    .put("memoryNotes", notes).put("thoughtLedger", JSONArray().apply {
-                        savedContext.thoughtLedger.takeLast(8).forEach { put(JSONObject().put("idea",it.idea).put("status",it.status)) }
-                    })
-                    .put("documentText", effective?.documentText ?: documentText)
-                    .put("documentName", effective?.documentName ?: documentName)
-                    .put("media", effective?.let { JSONArray(it.mediaJson).takeIf { arr -> arr.length()>0 } } ?: JSONObject.NULL)
-                    .put("fileUploads", effective?.let { JSONArray(it.receiptsJson).takeIf { arr -> arr.length()>0 } } ?: JSONObject.NULL)
-                require(payload.toString().toByteArray(Charsets.UTF_8).size <= 5_350_000) {
-                    "Jumlah mesej, sejarah dan lampiran melebihi had API 5.35 MB."
-                }
+                val payload = WebBrainBridge.chatPayload(
+                    question = question, completed = completed, thoughtMode = state.value.mode,
+                    summary = savedContext.summary, memoryEnabled = savedContext.memoryEnabled,
+                    memoryNotes = savedContext.memoryNotes, thoughtLedger = savedContext.thoughtLedger,
+                    documentText = effective?.documentText ?: documentText,
+                    documentName = effective?.documentName ?: documentName,
+                    media = effective?.let { JSONArray(it.mediaJson) },
+                    fileUploads = effective?.let { JSONArray(it.receiptsJson) }
+                )
                 api.chat(payload).collect { event ->
                     if(event is ChatEvent.Done && event.thoughtLedger.isNotEmpty()) {
                         savedContext = savedContext.copy(thoughtLedger = ContextPolicy.mergeThoughtLedger(savedContext.thoughtLedger,event.thoughtLedger))
