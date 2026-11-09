@@ -49,7 +49,14 @@ internal fun AksaraSearchHub(
                 .map { message -> session to message }
         }.take(100)
     }
-    AksaraGlassModal(onClose = onClose, preferredHeight = 580.dp) {
+    // Compact for empty states, expands only as results require more room.
+    val panelHeight = when (tab) {
+        0 -> if (terms.isBlank()) 280.dp else
+            (335 + messageResults.size.coerceAtMost(6) * 65).dp
+        1 -> (405 + sessions.size.coerceAtMost(5) * 47).dp
+        else -> if (state.memoryEnabled && state.memoryNotes.isNotBlank()) 400.dp else 270.dp
+    }
+    AksaraGlassModal(onClose = onClose, preferredHeight = panelHeight) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     AksaraIcon("search", Modifier.size(23.dp))
