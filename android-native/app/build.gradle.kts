@@ -37,6 +37,7 @@ android {
     packaging { resources.excludes += setOf("META-INF/LICENSE*", "META-INF/NOTICE*") }
 }
 dependencies {
+    implementation("androidx.webkit:webkit:1.12.1")
     implementation(project(":engine:runtime"))
     implementation(project(":engine:voice"))
     implementation(project(":engine:avatar"))

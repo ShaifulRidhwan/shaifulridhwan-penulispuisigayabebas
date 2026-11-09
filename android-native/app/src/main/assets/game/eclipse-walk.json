@@ -1,0 +1,396 @@
+{
+  "frames": {
+    "cahaya-walk-0": {
+      "frame": {
+        "x": 4,
+        "y": 5,
+        "w": 264,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 264,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 264,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9484240687679083
+      }
+    },
+    "cahaya-walk-1": {
+      "frame": {
+        "x": 276,
+        "y": 5,
+        "w": 263,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 263,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 263,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9484240687679083
+      }
+    },
+    "cahaya-walk-2": {
+      "frame": {
+        "x": 547,
+        "y": 5,
+        "w": 263,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 263,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 263,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9512893982808023
+      }
+    },
+    "cahaya-walk-3": {
+      "frame": {
+        "x": 818,
+        "y": 5,
+        "w": 264,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 264,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 264,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9484240687679083
+      }
+    },
+    "cahaya-walk-4": {
+      "frame": {
+        "x": 1090,
+        "y": 5,
+        "w": 264,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 264,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 264,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9484240687679083
+      }
+    },
+    "cahaya-walk-5": {
+      "frame": {
+        "x": 1362,
+        "y": 5,
+        "w": 263,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 263,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 263,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9484240687679083
+      }
+    },
+    "cahaya-walk-6": {
+      "frame": {
+        "x": 1633,
+        "y": 5,
+        "w": 263,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 263,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 263,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9484240687679083
+      }
+    },
+    "cahaya-walk-7": {
+      "frame": {
+        "x": 1904,
+        "y": 5,
+        "w": 264,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 264,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 264,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9484240687679083
+      }
+    },
+    "gelap-walk-0": {
+      "frame": {
+        "x": 4,
+        "y": 367,
+        "w": 264,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 264,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 264,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9484240687679083
+      }
+    },
+    "gelap-walk-1": {
+      "frame": {
+        "x": 276,
+        "y": 367,
+        "w": 263,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 263,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 263,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9512893982808023
+      }
+    },
+    "gelap-walk-2": {
+      "frame": {
+        "x": 547,
+        "y": 367,
+        "w": 263,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 263,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 263,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9484240687679083
+      }
+    },
+    "gelap-walk-3": {
+      "frame": {
+        "x": 818,
+        "y": 367,
+        "w": 264,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 264,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 264,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9484240687679083
+      }
+    },
+    "gelap-walk-4": {
+      "frame": {
+        "x": 1090,
+        "y": 367,
+        "w": 264,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 264,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 264,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9484240687679083
+      }
+    },
+    "gelap-walk-5": {
+      "frame": {
+        "x": 1362,
+        "y": 367,
+        "w": 263,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 263,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 263,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9484240687679083
+      }
+    },
+    "gelap-walk-6": {
+      "frame": {
+        "x": 1633,
+        "y": 367,
+        "w": 263,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 263,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 263,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9512893982808023
+      }
+    },
+    "gelap-walk-7": {
+      "frame": {
+        "x": 1904,
+        "y": 367,
+        "w": 264,
+        "h": 349
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 264,
+        "h": 349
+      },
+      "sourceSize": {
+        "w": 264,
+        "h": 349
+      },
+      "pivot": {
+        "x": 0.53,
+        "y": 0.9512893982808023
+      }
+    }
+  },
+  "meta": {
+    "image": "eclipse-walk.png",
+    "size": {
+      "w": 2172,
+      "h": 724
+    },
+    "scale": "1"
+  }
+}

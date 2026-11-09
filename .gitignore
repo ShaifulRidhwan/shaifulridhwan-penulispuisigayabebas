@@ -27,3 +27,5 @@ npm-debug.log*
 audit-*.png
 audit-lighthouse-*.json
 audit-production-*.json
+
+/docs/android-rebuild/game/browser-evidence/

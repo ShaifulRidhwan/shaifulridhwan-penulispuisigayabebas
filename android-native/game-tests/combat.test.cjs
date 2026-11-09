@@ -1,0 +1,10 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');
+const {Combat}=require('../app/src/main/assets/game/combat.js');
+const tick=(g,n,input={},ai=false)=>{for(let i=0;i<n;i++)g.step(1/60,input,ai)};
+test('movement, jump and landing',()=>{const g=new Combat();tick(g,10,{axis:1,jump:true});assert(g.fighters[0].x>260);assert(g.fighters[0].y<430);tick(g,100);assert.equal(g.fighters[0].y,430)});
+test('out of range attacks miss',()=>{const g=new Combat();tick(g,60,{attack:'light'});assert.equal(g.fighters[1].hp,100)});
+test('hit active frame causes one damage event and knockback',()=>{const g=new Combat();g.fighters[1].x=330;tick(g,18,{attack:'light'});assert.equal(g.fighters[1].hp,91);assert(g.fighters[1].x>330)});
+test('special cooldown prevents repeated special',()=>{const g=new Combat();g.fighters[1].x=500;tick(g,60,{attack:'special'});assert.equal(g.fighters[1].hp,76);assert(g.fighters[0].cooldown>3)});
+test('death and results stop simulation',()=>{const g=new Combat();g.fighters[1].x=330;g.fighters[1].hp=5;tick(g,60,{attack:'light'});assert.equal(g.result,'MENANG');assert.equal(g.fighters[1].state,'death');const t=g.time;tick(g,60);assert.equal(g.time,t)});
+test('each AI difficulty completes a real fight',()=>{for(let d=0;d<3;d++){const g=new Combat('cahaya',d);tick(g,5500,{},true);assert.equal(g.result,'KALAH');assert.equal(g.fighters[0].hp,0)}});
+test('timer ends a draw',()=>{const g=new Combat();tick(g,5500);assert.equal(g.result,'SERI')});

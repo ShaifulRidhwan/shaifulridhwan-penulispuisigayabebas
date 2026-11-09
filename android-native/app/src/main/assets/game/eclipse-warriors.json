@@ -1,0 +1,782 @@
+{
+  "frames": {
+    "cahaya-0": {
+      "frame": {
+        "x": 1,
+        "y": 1,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.9504504504504504
+      }
+    },
+    "cahaya-1": {
+      "frame": {
+        "x": 223,
+        "y": 1,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.9504504504504504
+      }
+    },
+    "cahaya-2": {
+      "frame": {
+        "x": 445,
+        "y": 1,
+        "w": 219,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 219,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 219,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.9459459459459459
+      }
+    },
+    "cahaya-3": {
+      "frame": {
+        "x": 666,
+        "y": 1,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.9414414414414415
+      }
+    },
+    "cahaya-4": {
+      "frame": {
+        "x": 888,
+        "y": 1,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.9414414414414415
+      }
+    },
+    "cahaya-5": {
+      "frame": {
+        "x": 1110,
+        "y": 1,
+        "w": 219,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 219,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 219,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8693693693693694
+      }
+    },
+    "cahaya-6": {
+      "frame": {
+        "x": 1331,
+        "y": 1,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8018018018018018
+      }
+    },
+    "cahaya-7": {
+      "frame": {
+        "x": 1553,
+        "y": 1,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.954954954954955
+      }
+    },
+    "cahaya-8": {
+      "frame": {
+        "x": 1,
+        "y": 223,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.8333333333333334
+      }
+    },
+    "cahaya-9": {
+      "frame": {
+        "x": 223,
+        "y": 223,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.8378378378378378
+      }
+    },
+    "cahaya-10": {
+      "frame": {
+        "x": 445,
+        "y": 223,
+        "w": 219,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 219,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 219,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8333333333333334
+      }
+    },
+    "cahaya-11": {
+      "frame": {
+        "x": 666,
+        "y": 223,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8333333333333334
+      }
+    },
+    "cahaya-12": {
+      "frame": {
+        "x": 888,
+        "y": 223,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.8378378378378378
+      }
+    },
+    "cahaya-13": {
+      "frame": {
+        "x": 1110,
+        "y": 223,
+        "w": 219,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 219,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 219,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.99
+      }
+    },
+    "cahaya-14": {
+      "frame": {
+        "x": 1331,
+        "y": 223,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.99
+      }
+    },
+    "cahaya-15": {
+      "frame": {
+        "x": 1553,
+        "y": 223,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.8423423423423423
+      }
+    },
+    "gelap-0": {
+      "frame": {
+        "x": 1,
+        "y": 445,
+        "w": 220,
+        "h": 219
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 219
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 219
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.918552036199095
+      }
+    },
+    "gelap-1": {
+      "frame": {
+        "x": 223,
+        "y": 445,
+        "w": 220,
+        "h": 219
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 219
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 219
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.9230769230769231
+      }
+    },
+    "gelap-2": {
+      "frame": {
+        "x": 445,
+        "y": 445,
+        "w": 219,
+        "h": 219
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 219,
+        "h": 219
+      },
+      "sourceSize": {
+        "w": 219,
+        "h": 219
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.918552036199095
+      }
+    },
+    "gelap-3": {
+      "frame": {
+        "x": 666,
+        "y": 445,
+        "w": 220,
+        "h": 219
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 219
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 219
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.918552036199095
+      }
+    },
+    "gelap-4": {
+      "frame": {
+        "x": 888,
+        "y": 445,
+        "w": 220,
+        "h": 219
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 219
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 219
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.9140271493212669
+      }
+    },
+    "gelap-5": {
+      "frame": {
+        "x": 1110,
+        "y": 445,
+        "w": 219,
+        "h": 219
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 219,
+        "h": 219
+      },
+      "sourceSize": {
+        "w": 219,
+        "h": 219
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8190045248868778
+      }
+    },
+    "gelap-6": {
+      "frame": {
+        "x": 1331,
+        "y": 445,
+        "w": 220,
+        "h": 219
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 219
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 219
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.7963800904977375
+      }
+    },
+    "gelap-7": {
+      "frame": {
+        "x": 1553,
+        "y": 445,
+        "w": 220,
+        "h": 219
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 219
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 219
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.9276018099547512
+      }
+    },
+    "gelap-8": {
+      "frame": {
+        "x": 1,
+        "y": 666,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.8828828828828829
+      }
+    },
+    "gelap-9": {
+      "frame": {
+        "x": 223,
+        "y": 666,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.8828828828828829
+      }
+    },
+    "gelap-10": {
+      "frame": {
+        "x": 445,
+        "y": 666,
+        "w": 219,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 219,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 219,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8873873873873874
+      }
+    },
+    "gelap-11": {
+      "frame": {
+        "x": 666,
+        "y": 666,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8828828828828829
+      }
+    },
+    "gelap-12": {
+      "frame": {
+        "x": 888,
+        "y": 666,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.8873873873873874
+      }
+    },
+    "gelap-13": {
+      "frame": {
+        "x": 1110,
+        "y": 666,
+        "w": 219,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 219,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 219,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8828828828828829
+      }
+    },
+    "gelap-14": {
+      "frame": {
+        "x": 1331,
+        "y": 666,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.8828828828828829
+      }
+    },
+    "gelap-15": {
+      "frame": {
+        "x": 1553,
+        "y": 666,
+        "w": 220,
+        "h": 220
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 220,
+        "h": 220
+      },
+      "sourceSize": {
+        "w": 220,
+        "h": 220
+      },
+      "pivot": {
+        "x": 0.55,
+        "y": 0.8873873873873874
+      }
+    }
+  },
+  "meta": {
+    "image": "eclipse-warriors.png",
+    "size": {
+      "w": 1774,
+      "h": 887
+    },
+    "scale": "1",
+    "app": "AKSARA Eclipse Arena",
+    "description": "Original generated 8x4 atlas. Source retained; engine rectangle extraction with one-pixel inset and per-frame foot anchors."
+  }
+}
