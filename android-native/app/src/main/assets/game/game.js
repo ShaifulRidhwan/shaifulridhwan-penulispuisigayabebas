@@ -3,11 +3,26 @@ function sound(){try{audio??=new (window.AudioContext||window.webkitAudioContext
 function pause(){paused=true;if(typeof controls!=='undefined'){controls.suspend();drawStick();}input.axis=0;input.jump=false;input.attack=null;document.querySelector('#menu').style.display='grid';document.querySelector('#message').textContent='Dijeda · sambung atau mula semula';document.querySelector('#start').textContent=started?'Sambung':'Mula pertarungan';audio?.suspend().catch(()=>{});}
 window.aksaraPause=pause;document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});window.addEventListener('blur',pause);
 document.querySelector('#pause').onclick=pause;document.querySelector('#restart').onclick=()=>{started=false;match=new AksaraCombat.Combat(document.querySelector('#hero').value,+document.querySelector('#difficulty').value);document.querySelector('#start').textContent='Mula pertarungan';};document.querySelector('#start').onclick=()=>{if(!window.gameDiagnostics.ready)return;started=true;controls.resume();drawStick();if(!match||match.result||document.querySelector('#start').textContent!=='Sambung'){match=new AksaraCombat.Combat(document.querySelector('#hero').value,+document.querySelector('#difficulty').value);}paused=false;document.querySelector('#menu').style.display='none';sound();};
-class Arena extends Phaser.Scene{create(){console.info('AKSARA scene create');scene=this;this.game.canvas.addEventListener('webglcontextlost',()=>window.gameFailure('WebGL terhenti'));this.g=this.add.graphics();this.hud=this.add.text(30,18,'',{fontSize:'20px',color:'#ffe4ab'});this.stateText=this.add.text(30,54,'',{fontSize:'13px',color:'#acb8ce'});this.input.addPointer(5);}update(t,ms){if(!match)return;if(!paused){Object.assign(input,controls.sample(match.fighters[0]));match.step(ms/1000,input);}const g=this.g;g.clear();g.fillStyle(0x080e20);g.fillRect(0,0,960,540);g.fillStyle(0xb9aa74,.35);g.fillCircle(740,120,52);for(let layer=0;layer<3;layer++){g.fillStyle([0x121b31,0x1a2940,0x253449][layer]);for(let i=0;i<10;i++){const x=i*130-60+(match.fighters[0].x-480)*(.02+layer*.03);g.fillTriangle(x,440,x+65,200+layer*65+(i%3)*22,x+130,440);}}g.fillStyle(0x101725);g.fillRect(0,430,960,110);g.lineStyle(2,0xc5a45b,.5);g.lineBetween(0,432,960,432);
-match.fighters.forEach((f,i)=>{const color=f.id==='cahaya'?0xf8ca62:0x638cfa;g.fillStyle(0x000000,.35);g.fillEllipse(f.x,436,72,16);g.fillStyle(color,f.state==='hit'?.4:1);const bob=f.state==='walk'?Math.sin(t/65)*8:Math.sin(t/250)*2;g.fillCircle(f.x,f.y-100+bob,13);g.fillTriangle(f.x,f.y-84+bob,f.x-23,f.y-30,f.x+23,f.y-30);g.lineStyle(10,color);const stride=f.state==='walk'?Math.sin(t/70)*14:10;g.lineBetween(f.x-8,f.y-33,f.x-stride,f.y);g.lineBetween(f.x+8,f.y-33,f.x+stride,f.y);const m=AksaraCombat.moves[f.state],reach=m?48:22;g.lineBetween(f.x,f.y-65,f.x+f.facing*reach,f.y-65);if(m&&f.phase>=m.wind&&f.phase<m.wind+m.active){g.lineStyle(5,color,.7);g.strokeCircle(f.x+f.facing*(f.state==='special'?160:55),f.y-65,f.state==='special'?70:28);}g.fillStyle(0x333747);g.fillRect(i?540:30,80,390,14);g.fillStyle(color);g.fillRect(i?930-390*f.hp/100:30,80,390*f.hp/100,14);});
-for(const e of match.events){if(!paused){sound();this.cameras.main.shake(90,.004);}}match.events=[];
-this.hud.setText('CAHAYA / GELAP                         '+Math.ceil(match.time));this.stateText.setText(match.fighters.map(f=>f.id.toUpperCase()+' · '+f.state+' · S '+f.cooldown.toFixed(1)+'s').join('                    '));
-if(match.result&&!paused){paused=true;document.querySelector('#menu').style.display='grid';document.querySelector('#message').textContent=match.result+' · '+match.fighters[0].id.toUpperCase();document.querySelector('#start').textContent='Main semula';}}
+class Arena extends Phaser.Scene {
+ preload(){
+  this.load.atlas('warriors','eclipse-warriors.png','eclipse-warriors.json');
+  this.load.atlas('walkers','eclipse-walk.png','eclipse-walk.json');
+  this.load.image('eclipse-arena','eclipse-arena.png');
+  this.load.on('loaderror',file=>window.gameFailure('Aset gagal: '+file.key));
+ }
+ create(){
+  console.info('AKSARA scene create');scene=this;
+  this.game.canvas.addEventListener('webglcontextlost',()=>window.gameFailure('WebGL terhenti'));
+  this.presentation=new EclipsePresentation(this);this.input.addPointer(5);
+ }
+ update(t,ms){
+  if(!match)return;
+  if(!paused){Object.assign(input,controls.sample(match.fighters[0]));match.step(ms/1000,input);}
+  this.presentation.update(match,ms/1000,!paused);
+  if(!paused)for(const e of match.events){sound();this.cameras.main.shake(e.kind==='heavy'?100:65,e.kind==='heavy'?.003:.0015);}
+  match.events=[];
+  if(match.result&&!paused){paused=true;controls.suspend();drawStick();document.querySelector('#menu').style.display='grid';document.querySelector('#message').textContent=match.result+' · '+match.fighters[0].id.toUpperCase();document.querySelector('#start').textContent='Main semula';}
+ }
 }
 const renderer=new URLSearchParams(location.search).get('renderer');
 const game=new Phaser.Game({type:renderer==='canvas'?Phaser.CANVAS:Phaser.AUTO,parent:'game',width:960,height:540,backgroundColor:'#080c19',scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},scene:Arena,audio:{noAudio:true},fps:{target:60}});

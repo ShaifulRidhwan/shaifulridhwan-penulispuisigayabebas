@@ -16,7 +16,7 @@ window.addEventListener('lostpointercapture',e=>{controls.up(e.pointerId);drawSt
 window.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','z','x','c','Escape'].includes(e.key))e.preventDefault();if(e.key==='Escape')pause();else controls.key(e.key,true);});
 window.addEventListener('keyup',e=>controls.key(e.key,false));
 const settingsPanel=document.querySelector('#settings');
-for(const field of settingsPanel.querySelectorAll('[name]')){field[field.type==='checkbox'?'checked':'value']=controlSettings[field.name];field.addEventListener('input',()=>{controlSettings=AksaraInput.normalize({...controlSettings,[field.name]:field.type==='checkbox'?field.checked:field.value});saveControls();controls.reset();drawStick();});}
+for(const field of settingsPanel.querySelectorAll('[name]')){field[field.type==='checkbox'?'checked':'value']=controlSettings[field.name];field.addEventListener('input',()=>{controlSettings=AksaraInput.normalize({...controlSettings,[field.name]:field.type==='checkbox'?field.checked:field.value});saveControls();if(field.name==='graphics'&&typeof scene!=='undefined'&&scene?.presentation){scene.presentation.adaptLow=false;scene.presentation.lowWindows=0;}controls.reset();drawStick();});}
 document.querySelector('#settings-open').onclick=()=>{pause();settingsPanel.hidden=false;document.querySelector('#menu').style.display='none';};
 document.querySelector('#settings-close').onclick=()=>{settingsPanel.hidden=true;document.querySelector('#menu').style.display='grid';};
 document.querySelector('#settings-reset').onclick=()=>{controlSettings=AksaraInput.normalize();saveControls();for(const f of settingsPanel.querySelectorAll('[name]'))f[f.type==='checkbox'?'checked':'value']=controlSettings[f.name];};

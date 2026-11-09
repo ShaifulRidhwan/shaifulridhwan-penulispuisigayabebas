@@ -45,8 +45,20 @@ cat "$out/android/game-activity-tests.txt"
 if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/game-activity-tests.txt"; then failures=$((failures+1)); fi
 adb pull /sdcard/Android/data/my.aksara.nativeapp/files/game-auto.png "$out/android/" || true
 adb pull /sdcard/Android/data/my.aksara.nativeapp/files/game-canvas.png "$out/android/" || true
+adb pull /sdcard/Android/data/my.aksara.nativeapp/files/game-auto-touch.png "$out/android/" || true
+adb pull /sdcard/Android/data/my.aksara.nativeapp/files/game-canvas-touch.png "$out/android/" || true
 adb logcat -d -s AksaraGame > "$out/android/game-logcat.txt"
 cat "$out/android/game-logcat.txt"
+python3 - <<'PYSHOT'
+import base64,json,pathlib
+root=pathlib.Path("docs/android-rebuild/visual-comparison/android")
+for name in ("game-auto.png","game-canvas.png","game-auto-touch.png","game-canvas-touch.png"):
+ p=root/name
+ if p.exists():
+  encoded=base64.b64encode(p.read_bytes()).decode()
+  for part,start in enumerate(range(0,len(encoded),16000)):
+   print("AKSARA_GAME_SCREENSHOT "+json.dumps({"name":name,"part":part,"data":encoded[start:start+16000]}))
+PYSHOT
 for spec in '360 800' '390 844' '393 852' '412 915'; do
   read -r width height <<< "$spec"
   adb shell wm size "${width}x${height}"

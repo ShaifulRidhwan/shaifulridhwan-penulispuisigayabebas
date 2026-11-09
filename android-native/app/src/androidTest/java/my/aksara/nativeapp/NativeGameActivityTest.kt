@@ -4,6 +4,8 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.SystemClock
+import android.view.MotionEvent
+import android.view.InputDevice
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -26,6 +28,45 @@ class NativeGameActivityTest {
         val until=SystemClock.uptimeMillis()+30000
         while(SystemClock.uptimeMillis()<until){if(js(a,code)=="true")return;SystemClock.sleep(150)}
         fail("Timed out: $code; diagnostics="+js(a,"JSON.stringify(window.gameDiagnostics)"))
+    }
+    private fun nativeMultitouch(a:GameActivity,canvas:Boolean){
+        fun center(selector:String):Pair<Float,Float>{
+            val values=js(a,"(()=>{const r=document.querySelector('$selector').getBoundingClientRect();return [r.x+r.width/2,r.y+r.height/2,innerWidth,innerHeight].join(',')})()").trim('"').split(',').map{it.toFloat()}
+            val loc=IntArray(2);instrument.runOnMainSync{a.gameWebView.getLocationOnScreen(loc)}
+            return Pair(loc[0]+values[0]/values[2]*a.gameWebView.width,loc[1]+values[1]/values[3]*a.gameWebView.height)
+        }
+        val pts=listOf(center("#stick-zone"),center("[data-action=jump]"),center("[data-action=light]"),center("[data-action=heavy]"))
+        val down=SystemClock.uptimeMillis()
+        fun send(action:Int,indices:List<Int>,move:Boolean=false){
+            val props=indices.map{n->MotionEvent.PointerProperties().apply{id=n+3;toolType=MotionEvent.TOOL_TYPE_FINGER}}.toTypedArray()
+            val coords=indices.map{n->MotionEvent.PointerCoords().apply{x=pts[n].first+if(n==0&&move)45*a.resources.displayMetrics.density else 0f;y=pts[n].second;pressure=1f;size=1f}}.toTypedArray()
+            val event=MotionEvent.obtain(down,SystemClock.uptimeMillis(),action,indices.size,props,coords,0,0,1f,1f,0,0,InputDevice.SOURCE_TOUCHSCREEN,0)
+            instrument.sendPointerSync(event);event.recycle()
+        }
+        send(MotionEvent.ACTION_DOWN,listOf(0))
+        for(n in 1..3)send(MotionEvent.ACTION_POINTER_DOWN or (n shl MotionEvent.ACTION_POINTER_INDEX_SHIFT),(0..n).toList())
+        send(MotionEvent.ACTION_MOVE,listOf(0,1,2,3),true)
+        waitJs(a,"controls.pointers.size===4 && controls.sample().jump && controls.sample().axis===1")
+        UiDevice.getInstance(instrument).takeScreenshot(java.io.File(instrument.targetContext.getExternalFilesDir(null),"game-${if(canvas)"canvas" else "auto"}-touch.png"))
+        send(MotionEvent.ACTION_POINTER_UP or (2 shl MotionEvent.ACTION_POINTER_INDEX_SHIFT),listOf(0,1,2,3),true)
+        waitJs(a,"controls.pointers.size===3")
+        send(MotionEvent.ACTION_CANCEL,listOf(0,1,3),true)
+        waitJs(a,"controls.pointers.size===0 && controls.sample().axis===0")
+        send(MotionEvent.ACTION_DOWN,listOf(0))
+        send(MotionEvent.ACTION_MOVE,listOf(0),true)
+        js(a,"window.aksaraPause()")
+        send(MotionEvent.ACTION_CANCEL,listOf(0),true)
+        waitJs(a,"paused && controls.pointers.size===0 && controls.sample().axis===0")
+        js(a,"document.querySelector('#start').click()")
+        // Window background/foreground must clear live input and require explicit resume.
+        send(MotionEvent.ACTION_DOWN,listOf(0))
+        send(MotionEvent.ACTION_MOVE,listOf(0),true)
+        instrument.runOnMainSync{a.moveTaskToBack(true)}
+        waitJs(a,"paused && controls.pointers.size===0")
+        instrument.runOnMainSync{a.startActivity(Intent(a,GameActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT))}
+        instrument.waitForIdleSync()
+        send(MotionEvent.ACTION_CANCEL,listOf(0),true)
+        js(a,"document.querySelector('#start').click()")
     }
     @Test fun realPortalLaunchReturnsToUnchangedChatDraft(){
         val device=UiDevice.getInstance(instrument)
@@ -66,17 +107,20 @@ class NativeGameActivityTest {
                     assertEquals(Configuration.ORIENTATION_LANDSCAPE,a.resources.configuration.orientation)
                     if(canvas){
                         assertEquals("\"canvas\"",js(a,"gameDiagnostics.renderer"))
-                        assertEquals("true",js(a,"game.canvas.getContext('2d').getImageData(260,330,1,1).data[0]>100"))
+                        assertEquals("true",js(a,"scene.presentation.sprites.every(s=>s.texture.key==='warriors'&&s.visible) && game.canvas.getContext('2d').getImageData(200,280,200,150).data.some(v=>v>0)"))
                     }
                     js(a,"document.querySelector('#start').click()")
                     waitJs(a,"!paused && match.elapsed>0.1 && document.querySelector('#menu').style.display==='none'")
                     val x0=js(a,"match.fighters[0].x").toDouble()
                     // Coordinates are derived from the real WebView/CSS viewport.
-                    val xy=js(a,"(()=>{const r=document.querySelector('[data-axis=\"1\"]').getBoundingClientRect();return [r.x+r.width/2,r.y+r.height/2,innerWidth,innerHeight].join(',')})()").trim('"').split(',').map{it.toDouble()}
+                    val xy=js(a,"(()=>{const r=document.querySelector('#stick-zone').getBoundingClientRect();return [r.x+70,r.y+r.height/2,innerWidth,innerHeight].join(',')})()").trim('"').split(',').map{it.toDouble()}
                     val loc=IntArray(2);instrument.runOnMainSync{a.gameWebView.getLocationOnScreen(loc)}
                     val sx=loc[0]+xy[0]/xy[2]*a.gameWebView.width;val sy=loc[1]+xy[1]/xy[3]*a.gameWebView.height
-                    device.swipe(sx.toInt(),sy.toInt(),sx.toInt(),sy.toInt(),35)
+                    device.swipe(sx.toInt(),sy.toInt(),(sx+55*a.resources.displayMetrics.density).toInt(),sy.toInt(),35)
                     assertTrue("Touch must move fighter",js(a,"match.fighters[0].x").toDouble()>x0)
+                    nativeMultitouch(a,canvas)
+                    waitJs(a,"!!gameDiagnostics.performance")
+                    println("ECLIPSE_METRICS "+js(a,"JSON.stringify(gameDiagnostics.performance)")+" appPssKiB="+android.os.Debug.getPss())
                     val frames=js(a,"gameDiagnostics.frames").toInt()
                     instrument.runOnMainSync{a.requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE}
                     waitJs(a,"gameDiagnostics.frames>${frames+2}")

@@ -12,6 +12,7 @@ import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import android.view.HapticFeedbackConstants
 import android.os.SystemClock
+import android.graphics.Rect
 import java.io.ByteArrayInputStream
 
 /** Isolated landscape host. MainActivity and its ViewModel remain on the back stack. */
@@ -32,6 +33,11 @@ class GameActivity : ComponentActivity() {
         root=FrameLayout(this)
         root.setBackgroundColor(android.graphics.Color.rgb(8,12,25))
         setContentView(root)
+        ViewCompat.setOnApplyWindowInsetsListener(root) { view,insets ->
+            val safe=insets.getInsets(WindowInsetsCompat.Type.displayCutout() or WindowInsetsCompat.Type.mandatorySystemGestures())
+            view.setPadding(safe.left,safe.top,safe.right,safe.bottom)
+            insets
+        }
         loadGame(intent.getBooleanExtra("forceCanvas",false))
     }
     private fun loadGame(canvas:Boolean) {
@@ -74,7 +80,12 @@ class GameActivity : ComponentActivity() {
                     return true
                 }
             }
-            addOnLayoutChangeListener{_,l,t,r,b,_,_,_,_->Log.i("AksaraGame","viewport ${r-l}x${b-t}")}
+            addOnLayoutChangeListener{view,l,t,r,b,_,_,_,_->
+                val w=r-l;val h=b-t
+                val edgeHeight=minOf(h/2,(180*resources.displayMetrics.density).toInt())
+                view.systemGestureExclusionRects=listOf(Rect(0,h-edgeHeight,w*2/5,h),Rect(w*3/5,h-edgeHeight,w,h))
+                Log.i("AksaraGame","viewport ${w}x${h}")
+            }
         }
         if(WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
             WebViewCompat.addWebMessageListener(gameWebView,"AksaraHaptics",setOf("https://appassets.androidplatform.net")) { view,message,_,isMainFrame,_ ->
