@@ -23,3 +23,5 @@ document.querySelector('#settings-close').onclick=()=>{settingsPanel.hidden=true
 document.querySelector('#settings-reset').onclick=()=>{controlSettings=AksaraInput.normalize();saveControls();if(typeof scene!=='undefined'&&scene?.presentation){scene.presentation.adaptLow=false;scene.presentation.lowWindows=0;}for(const f of settingsPanel.querySelectorAll('[name]'))f[f.type==='checkbox'?'checked':'value']=controlSettings[f.name];};
 
 window.addEventListener('resize',()=>{controls.reset();applyControls();drawStick();});
+
+const compatibility=document.querySelector('#compatibility');compatibility.disabled=new URLSearchParams(location.search).get('renderer')==='canvas';if(compatibility.disabled)compatibility.textContent='Mod keserasian aktif';compatibility.onclick=()=>{pause();location.href=location.pathname+'?renderer=canvas';};

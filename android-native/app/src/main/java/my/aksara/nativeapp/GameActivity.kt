@@ -70,8 +70,11 @@ class GameActivity : ComponentActivity() {
             }
             webViewClient=object:WebViewClient(){
                 override fun shouldOverrideUrlLoading(view:WebView,request:WebResourceRequest):Boolean {
-                    if(request.url.toString()=="https://appassets.androidplatform.net/exit")finish()
-                    return true
+                    val url=request.url.toString()
+                    if(url=="https://appassets.androidplatform.net/exit"){finish();return true}
+                    // Only the bundled game page may reload for Canvas recovery.
+                    val gameUrl="https://appassets.androidplatform.net/assets/game/index.html"
+                    return url!=gameUrl&&url!=gameUrl+"?renderer=canvas"
                 }
                 override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest):WebResourceResponse =
                     loader.shouldInterceptRequest(request.url)?:WebResourceResponse("text/plain","UTF-8",ByteArrayInputStream(ByteArray(0)))

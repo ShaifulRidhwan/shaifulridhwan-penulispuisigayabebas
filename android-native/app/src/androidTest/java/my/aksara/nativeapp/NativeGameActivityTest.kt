@@ -155,8 +155,9 @@ class NativeGameActivityTest {
                     waitJs(a,"!paused && match.elapsed>0.1 && document.querySelector('#menu').style.display==='none'")
                     heldJoystickMovement(a)
                     nativeMultitouch(a,canvas)
+                    js(a,"gameDiagnostics.performance=null")
                     waitJs(a,"!!gameDiagnostics.performance")
-                    println("ECLIPSE_METRICS "+js(a,"JSON.stringify(gameDiagnostics.performance)")+" appPssKiB="+android.os.Debug.getPss())
+                    android.util.Log.i("AksaraGame","ECLIPSE_METRICS "+js(a,"JSON.stringify(gameDiagnostics)")+" appPssKiB="+android.os.Debug.getPss())
                     val frames=js(a,"gameDiagnostics.frames").toInt()
                     instrument.runOnMainSync{a.requestedOrientation=ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE}
                     waitJs(a,"gameDiagnostics.frames>${frames+2}")
@@ -164,6 +165,12 @@ class NativeGameActivityTest {
                     device.takeScreenshot(java.io.File(instrument.targetContext.getExternalFilesDir(null),"game-${if(canvas)"canvas" else "auto"}.png"))
                     js(a,"window.aksaraPause()")
                     assertEquals("true",js(a,"paused"))
+                    if(!canvas){
+                        js(a,"window.gameFailure('Ujian pemulihan runtime')")
+                        assertEquals("true",js(a,"paused && controls.pointers.size===0 && !gameDiagnostics.ready"))
+                        js(a,"document.querySelector('#start').click()")
+                        waitJs(a,"!!window.gameDiagnostics && gameDiagnostics.ready && gameDiagnostics.renderer==='canvas' && location.search==='?renderer=canvas'")
+                    }
                     device.pressBack()
                 } finally {
                     instrument.runOnMainSync{if(!a.isFinishing&&!a.isDestroyed)a.finish()}

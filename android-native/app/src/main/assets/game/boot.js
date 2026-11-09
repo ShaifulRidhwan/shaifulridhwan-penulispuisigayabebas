@@ -1,5 +1,6 @@
 window.gameDiagnostics={ready:false,frames:0,renderer:'pending',width:0,height:0,error:null};
 window.gameFailure=function(reason){
+ try{window.aksaraPause?.();}catch{}
  const d=window.gameDiagnostics;d.error=String(reason);d.ready=false;
  console.error('AKSARA runtime failure: '+reason);
  const menu=document.querySelector('#menu');menu.style.display='grid';
