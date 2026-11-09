@@ -20,15 +20,18 @@ internal object AttachmentContinuity {
     private val audio = Regex("""(?i)\b(?:audio|lagu|lirik|musik|muzik|melodi|nyanyian|transkrip|transkripsi|chorus|korus|lyrics|song|melankolik)\b""")
     private val image = Regex("""(?i)\b(?:gambar|foto|imej|photo|picture|image|visual|poster|potret)\b""")
     private val video = Regex("""(?i)\b(?:video|klip|rakaman|scene|adegan)\b""")
+    private val timecode = Regex("""(?i)\b(?:minit|saat|detik|timestamp|timecode)\s*(?:ke[- ]?)?\d{1,3}\b|\b\d{1,2}:\d{2}\b""")
     private val document = Regex("""(?i)\b(?:dokumen|pdf|docx|word|csv|json|teks|buku|halaman|perenggan|jadual|document|spreadsheet)\b""")
     fun references(question: String, names: List<String>): Boolean {
         val text = question.trim()
         if (text.isBlank()) return false
         if (generic.containsMatchIn(text)) return true
         val extensions = names.map { it.substringAfterLast('.', "").lowercase(Locale.ROOT) }
-        return (extensions.any { it in setOf("mp3","m4a","wav","ogg","flac","aac") } && audio.containsMatchIn(text)) ||
+        return (extensions.any { it in setOf("mp3","m4a","wav","ogg","flac","aac") } &&
+            (audio.containsMatchIn(text) || timecode.containsMatchIn(text))) ||
             (extensions.any { it in setOf("jpg","jpeg","png","webp","heic","heif","gif") } && image.containsMatchIn(text)) ||
-            (extensions.any { it in setOf("mp4","webm","mov") } && video.containsMatchIn(text)) ||
+            (extensions.any { it in setOf("mp4","webm","mov") } &&
+                (video.containsMatchIn(text) || timecode.containsMatchIn(text))) ||
             (extensions.any { it in setOf("pdf","docx","txt","md","csv","json","xml","html","kt","py") } && document.containsMatchIn(text))
     }
     fun receiptValid(context: ActiveAttachment, nowMs: Long): Boolean =

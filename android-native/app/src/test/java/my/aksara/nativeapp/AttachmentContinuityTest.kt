@@ -11,8 +11,10 @@ class AttachmentContinuityTest {
 
     @Test fun relatedFollowupsReferenceTheirActualModality() {
         assertTrue(AttachmentContinuity.references("bagi full lirik",listOf("lagu.mp3")))
-        assertTrue(AttachmentContinuity.references("Apa berlaku pada minit 2?",listOf("clip.webm")).not().not() ||
-            AttachmentContinuity.references("Tengok video tu semula",listOf("clip.webm")))
+        assertTrue(AttachmentContinuity.references("Apa berlaku pada minit 2?",listOf("clip.webm")))
+        assertTrue(AttachmentContinuity.references("Terangkan 01:30",listOf("clip.webm")))
+        assertTrue(AttachmentContinuity.references("Bunyi pada saat 8?",listOf("lagu.mp3")))
+        assertFalse(AttachmentContinuity.references("Apa berlaku pada minit 2?",listOf("doc.pdf")))
         assertTrue(AttachmentContinuity.references("Terangkan gambar itu",listOf("photo.jpg")))
         assertTrue(AttachmentContinuity.references("Rumuskan pdf ni",listOf("doc.pdf")))
         assertTrue(AttachmentContinuity.references("Apa kandungan fail tadi?",listOf("lain-lain.bin")))
