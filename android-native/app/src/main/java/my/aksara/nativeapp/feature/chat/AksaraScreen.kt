@@ -394,8 +394,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 verticalAlignment=Alignment.CenterVertically) {
                                 AksaraButton("Siapa Aku",{onJourney("Siapa Aku")},
                                     Modifier.width(103.dp),size=11.5f,height=44.dp,radius=999.dp,leadingText="↗")
-                                AksaraText("Tanya atau lampirkan fail",
-                                    Modifier.weight(1f),size=10.5f,color=AksaraColors.muted)
                             }
                             if(state.nextJourney!=null) AksaraButton(state.nextJourney,{onJourney(state.nextJourney)},Modifier.padding(horizontal=12.dp,vertical=4.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
                             if(state.error!=null) Row(Modifier.fillMaxWidth().clickable(onClick=onDismissError).padding(8.dp)) { AksaraText(state.error,size=11f,color=Color(0xffe7a08e)) }
@@ -443,12 +441,24 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             cursorBrush=SolidColor(AksaraColors.gold))
                         if(state.busy) AksaraButton("Henti",onStop,Modifier.width(56.dp)
                             .semantics {contentDescription="Hentikan respons"},size=12f,height=40.dp,radius=12.dp)
-                        Box(Modifier.size(44.dp).clickable {open("thinking")}.semantics {
-                                contentDescription="Thinking Mode"
-                                stateDescription=if(state.mode=="gelap")"Gelap" else "Cahaya"
-                            },contentAlignment=Alignment.Center) {
-                            // Neutral, borderless brain control; mode remains discoverable in its dialog.
-                            AksaraIcon("brain",Modifier.size(23.dp),AksaraColors.text)
+                        // Same Liquid Glass outline and dimensions as Send; only the brain glows.
+                        AksaraGlassSurface(
+                            Modifier.size(44.dp).clickable {open("thinking")}
+                                .semantics {
+                                    contentDescription="Thinking Mode"
+                                    stateDescription=if(state.mode=="gelap")"Gelap" else "Cahaya"
+                                    testTag="thinking-glass-button"
+                                },
+                            radius=13.dp,blur=2.dp,
+                            brush=cssGradient(145f,listOf(Color(244,216,171,14),Color(64,87,112,9))),
+                            border=Color(244,213,166,77),saturation=1f
+                        ) {
+                            Box(Modifier.align(Alignment.Center).size(31.dp)
+                                .background(Brush.radialGradient(
+                                    listOf(AksaraColors.gold.copy(alpha=.19f),Color.Transparent)
+                                ),RoundedCornerShape(999.dp)))
+                            AksaraIcon("brain",Modifier.align(Alignment.Center).size(23.dp),
+                                AksaraColors.gold)
                         }
                         AksaraButton("",{
                             if(canSubmit) {
