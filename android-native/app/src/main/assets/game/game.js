@@ -43,8 +43,8 @@ class Arena extends Phaser.Scene {
   console.info('AKSARA scene create');scene=this;
   this.game.canvas.addEventListener('webglcontextlost',()=>window.gameFailure('WebGL terhenti'));
   this.presentation=new EclipsePresentation(this);this.input.addPointer(5);
-  const fit=()=>{const w=this.scale.width,h=this.scale.height,z=Math.min(w/960,h/540);
-   this.cameras.main.setZoom(z).setScroll(480-w/(2*z),270-h/(2*z));
+  const fit=()=>{const w=this.scale.width,h=this.scale.height,z=Math.min(w/1080,h/600);
+   this.cameras.main.setZoom(z).centerOn(480,270);
    const cover=Math.max(w/z/1672,h/z/941)*1.04;
    this.presentation.bg.setDisplaySize(1672*cover,941*cover);
   };this.scale.on('resize',fit);fit();

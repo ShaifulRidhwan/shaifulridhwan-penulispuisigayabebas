@@ -3,6 +3,8 @@ const {chromium,evidence,baseURL}=require('./test-env.cjs');const fs=require('no
 for(const [w,h,renderer] of [[640,360,'canvas'],[844,390,'webgl'],[1080,486,'webgl'],[1280,800,'canvas']]){
  const p=await b.newPage({viewport:{width:w,height:h},hasTouch:true});const errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto(baseURL+(renderer==='canvas'?'?renderer=canvas':''));await p.waitForFunction(()=>window.gameDiagnostics?.ready);await p.selectOption('#mode','training');await p.click('#start');await p.waitForFunction(()=>match.roundState==='FIGHT');
  const rect=await p.locator('canvas').boundingBox();assert(Math.abs(rect.width-w)<2&&Math.abs(rect.height-h)<2);assert.equal(rect.x,0);assert.equal(rect.y,0);
+ assert(await p.evaluate(()=>{const camera=scene.cameras.main,bg=scene.presentation.bg.getBounds();return [[0,0],[innerWidth,0],[0,innerHeight],[innerWidth,innerHeight]].every(([x,y])=>{const world=camera.getWorldPoint(x,y);return bg.contains(world.x,world.y)})}),'Arena image must cover all camera corners, not merely canvas bounds');
+ assert(await p.evaluate(()=>{const c=scene.cameras.main;return Math.abs(c.midPoint.x-480)<1&&Math.abs(c.midPoint.y-270)<1}),'Camera must remain centered after uniform zoom');
  // Real key input, simulation and rendered frames; no HP injection.
  await p.keyboard.down('ArrowRight');await p.waitForFunction(()=>Math.abs(match.fighters[0].x-match.fighters[1].x)<80);await p.keyboard.up('ArrowRight');
  for(const key of ['z','z','x']){await p.keyboard.press(key);await p.waitForTimeout(600);}
