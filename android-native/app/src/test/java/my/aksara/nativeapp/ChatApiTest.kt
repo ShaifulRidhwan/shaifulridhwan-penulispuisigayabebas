@@ -72,6 +72,21 @@ class ChatApiTest {
         assertEquals("no_external_evidence",noEvidence.evidenceLevel)
         assertTrue(noEvidence.toolsUsed.isEmpty())
     }
+    @Test fun evidenceClaimsCannotExceedObservedToolsAndSourceLinks() {
+        val fabricated=Ndjson.parse("""{"type":"done","reply":"Cuba semak","evidenceProfile":{"level":"page_text"},"sources":[{"title":"Rujukan","url":"https://example.org/a"}]}""") as ChatEvent.Done
+        assertEquals("links_only",fabricated.evidenceLevel)
+        val noLinks=Ndjson.parse("""{"type":"done","reply":"Cuba semak","toolsUsed":["google_search"],"evidenceProfile":{"level":"grounded_search"}}""") as ChatEvent.Done
+        assertEquals("no_external_evidence",noLinks.evidenceLevel)
+        val page=Ndjson.parse("""{"type":"done","reply":"Dirujuk","toolsUsed":["tavily_extract"],"evidenceProfile":{"level":"page_text"},"sources":[{"title":"Dokumen","url":"https://example.org"}]}""") as ChatEvent.Done
+        assertEquals("page_text",page.evidenceLevel)
+    }
+    @Test fun sourceTitlesCannotInjectMarkdownLinks() {
+        val markdown=EvidenceIntegrity.formatSources(
+            listOf("Sumber](https://evil.example)" to "https://example.org/a(b)"),"links_only")
+        assertFalse(markdown.contains("](https://evil.example)"))
+        assertTrue(markdown.contains("https://example.org/a%28b%29"))
+        assertTrue(markdown.contains("Kandungan laman belum disahkan"))
+    }
     @Test fun signedFileReceiptsAreSentToBackendWithoutUploadingFileBytes()=runBlocking {
         MockWebServer().use { server ->
             server.enqueue(MockResponse().setHeader("Content-Type","application/json")

@@ -41,14 +41,16 @@ object Ndjson {
                     }?.let { link -> s.optString("title", link).take(180) to link } }
                 }
                 val tools = item.optJSONArray("toolsUsed") ?: JSONArray()
+                val toolNames=(0 until tools.length()).mapNotNull { index ->
+                    tools.optString(index).takeIf { it.isNotBlank() }?.take(70)
+                }
                 ChatEvent.Done(reply, item.optString("provider").take(64), urls,
                     model = item.optString("model").take(100),
                     researchStatus = item.optString("researchStatus").take(65),
-                    toolsUsed = (0 until tools.length()).mapNotNull { index ->
-                        tools.optString(index).takeIf { it.isNotBlank() }?.take(70)
-                    },
-                    evidenceLevel = item.optJSONObject("evidenceProfile")?.optString("level")?.take(60)
-                        ?: "no_external_evidence",
+                    toolsUsed = toolNames,
+                    evidenceLevel = EvidenceIntegrity.normalizeLevel(
+                        item.optJSONObject("evidenceProfile")?.optString("level").orEmpty(),
+                        toolNames,urls.size),
                     outputFormat = item.optString("outputFormat").take(30),
                     thoughtLedger = (item.optJSONArray("thoughtLedger") ?: JSONArray()).let { ideas ->
                         (0 until minOf(ideas.length(),6)).mapNotNull { i -> ideas.optJSONObject(i)?.let { entry ->

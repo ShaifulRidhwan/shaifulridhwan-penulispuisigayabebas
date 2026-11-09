@@ -23,6 +23,21 @@ class VoiceAudioRouteTest {
             VoiceAudioRoute.chooseType(listOf(AudioDeviceInfo.TYPE_BUILTIN_SPEAKER),null))
         assertNull(VoiceAudioRoute.chooseType(emptyList(),null))
     }
+    @Test fun bluetoothDuplexUsesItsRealInputWhenOffered() {
+        val bt=AudioDeviceInfo.TYPE_BLUETOOTH_SCO
+        assertEquals(bt, VoiceAudioRoute.preferredMicrophoneType(bt,
+            listOf(AudioDeviceInfo.TYPE_BUILTIN_MIC,bt)))
+        assertNull(VoiceAudioRoute.preferredMicrophoneType(bt,
+            listOf(AudioDeviceInfo.TYPE_BUILTIN_MIC)))
+    }
+    @Test fun mediaOnlyHeadphonesNeverHijackCaptureDevice() {
+        assertNull(VoiceAudioRoute.preferredMicrophoneType(
+            AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+            listOf(AudioDeviceInfo.TYPE_BUILTIN_MIC)))
+        assertEquals(AudioDeviceInfo.TYPE_WIRED_HEADSET,
+            VoiceAudioRoute.preferredMicrophoneType(AudioDeviceInfo.TYPE_WIRED_HEADSET,
+                listOf(AudioDeviceInfo.TYPE_WIRED_HEADSET,AudioDeviceInfo.TYPE_BUILTIN_MIC)))
+    }
     @Test fun unmatchedBluetoothMicrophoneRaisesTruthfulWarning() {
         assertTrue(VoiceAudioRoute.mismatch(AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
             AudioDeviceInfo.TYPE_BUILTIN_MIC))

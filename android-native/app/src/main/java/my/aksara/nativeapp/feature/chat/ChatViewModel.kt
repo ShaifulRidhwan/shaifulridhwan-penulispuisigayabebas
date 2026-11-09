@@ -255,8 +255,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     mutable.update { value -> value.copy(messages = value.messages.map { m ->
                         if (m.id != assistant.id) m else when (event) {
                             is ChatEvent.Delta -> m.copy(text = m.text + event.text)
-                            is ChatEvent.Done -> m.copy(text = event.reply + if(event.sources.isEmpty()) "" else
-                                "\n\n" + event.sources.joinToString("\n") { "[" + it.first + "](" + it.second + ")" }, incomplete = false, provider = ProviderIdentity.normalize(event.provider))
+                            is ChatEvent.Done -> m.copy(text = event.reply +
+                                my.aksara.nativeapp.core.network.EvidenceIntegrity.formatSources(
+                                    event.sources,event.evidenceLevel),
+                                incomplete = false, provider = ProviderIdentity.normalize(event.provider))
                         }
                     }, lastProvider = if(event is ChatEvent.Done) event.provider else value.lastProvider,
                         lastModel = if(event is ChatEvent.Done) event.model else value.lastModel,

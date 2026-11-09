@@ -25,6 +25,14 @@ object VoiceAudioRoute {
             ?: available.firstOrNull { it == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE }
     }
 
+    /** Request the microphone of the chosen duplex accessory, never a random media-only output. */
+    fun preferredMicrophoneType(outputType: Int?, inputTypes: List<Int>): Int? {
+        val duplex = outputType != null && (wireless(outputType) ||
+            outputType == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+            outputType == AudioDeviceInfo.TYPE_USB_HEADSET)
+        return outputType?.takeIf { duplex && it in inputTypes }
+    }
+
     fun label(type: Int): String = when(type) {
         AudioDeviceInfo.TYPE_BLUETOOTH_SCO -> "Bluetooth Hands-Free"
         AudioDeviceInfo.TYPE_BLE_HEADSET -> "Bluetooth LE"

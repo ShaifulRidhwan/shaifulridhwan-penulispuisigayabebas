@@ -438,6 +438,7 @@ class LiveVoiceClient(
             .setBufferSizeInBytes(maxOf(3200, minInput * 2)).build()
         check(input.state == AudioRecord.STATE_INITIALIZED) { "AudioRecord gagal." }
         recorder = input
+        preferMatchedMicrophone()
         if (AcousticEchoCanceler.isAvailable()) echo = AcousticEchoCanceler.create(input.audioSessionId)?.apply { enabled = true }
         if (NoiseSuppressor.isAvailable()) noise = NoiseSuppressor.create(input.audioSessionId)?.apply { enabled = true }
         val minOutput = AudioTrack.getMinBufferSize(24000, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
@@ -605,6 +606,24 @@ class LiveVoiceClient(
         }
     }
 
+    /**
+     * setCommunicationDevice requests a duplex route; AudioRecord's real routedDevice
+     * is still authoritative. Prefer the accessory input explicitly where Android
+     * exposes one, especially for Bluetooth HFP/LE after a route change.
+     */
+    private fun preferMatchedMicrophone() {
+        val capture = recorder ?: return
+        val outputType = runCatching { manager.communicationDevice?.type }.getOrNull()
+        val inputs = runCatching {
+            manager.getDevices(AudioManager.GET_DEVICES_INPUTS).toList()
+        }.getOrDefault(emptyList())
+        val micType = VoiceAudioRoute.preferredMicrophoneType(outputType, inputs.map { it.type })
+        val microphone = inputs.firstOrNull { it.type == micType } ?: return
+        if (!capture.setPreferredDevice(microphone)) {
+            routeError = "Android menolak mikrofon aksesori. Semak MIC sebenar di bawah."
+        }
+    }
+
     private fun deviceLabel(device: AudioDeviceInfo?): String {
         if (device == null) return "Belum disahkan"
         val typeLabel = VoiceAudioRoute.label(device.type)
@@ -658,6 +677,7 @@ class LiveVoiceClient(
             delay(350)
             if (!active(id)) return@launch
             selectCommunicationRoute()
+            preferMatchedMicrophone()
             delay(450)
             if (active(id)) updateObservedRoute(id)
         }

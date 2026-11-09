@@ -22,6 +22,14 @@ class ContextParityTest {
         assertTrue(selected.any { it.id=="1" })
         assertTrue(selected.size<=24)
     }
+    @Test fun olderNumberedOptionSurvivesAnEllipticalFollowUp() {
+        val old=row("options","assistant","1) Audio Bluetooth.\n2) Kesinambungan Voice.\n3) Studio.")
+        val rest=(1..19).map { row("other$it",if(it%2==0)"assistant" else "user",
+            "Perbualan yang tidak menyebut pilihan itu nombor $it") }
+        val selected=ContextPolicy.selectHistory(listOf(old)+rest,"Buat pilihan kedua dulu")
+        assertTrue("Older option was lost",selected.any { it.id=="options" })
+        assertTrue(selected.size<=24)
+    }
     @Test fun summarizesOnlyWhenEnoughUncompactedMessages() {
         assertNull(ContextPolicy.summaryWindow(19,0))
         assertEquals(0..7,ContextPolicy.summaryWindow(20,0))

@@ -22,6 +22,18 @@ object ContextPolicy {
         "aku","kau","kamu","awak","pada","dari","tentang","apa","bagaimana","kenapa","itu","ini")
     private val correction=Regex("maksud aku|bukan begitu|bukan macam tu|sebenarnya|pembetulan|jangan ubah|jangan usik|aku pilih|keputusan akhir|kekalkan|yang aku nak",RegexOption.IGNORE_CASE)
     private val universal=Regex("bahasa|gaya|format|panggil|sentiasa|kekalkan|jangan|elakkan|pilihan|aku suka|aku tak suka|aku nak",RegexOption.IGNORE_CASE)
+    private val ordinalWords=listOf("pertama","kedua","ketiga","keempat","kelima","keenam")
+    private fun requestedOrdinal(question:String):Int {
+        val choice=Regex("""\b(?:yang|pilihan|opsyen|cadangan|nombor|no\.?|item)\s*(pertama|kedua|ketiga|keempat|kelima|keenam|[1-6])\b""",
+            RegexOption.IGNORE_CASE).find(question)?.groupValues?.get(1)?.lowercase(Locale.forLanguageTag("ms-MY")) ?: return 0
+        return choice.toIntOrNull() ?: (ordinalWords.indexOf(choice)+1).coerceAtLeast(0)
+    }
+    private fun ordinalMention(text:String,index:Int):Boolean {
+        if(index !in 1..6)return false
+        val word=ordinalWords[index-1]
+        return Regex("""(?:\b$word\b|(?:^|\n)\s*$index\s*[).:]|\b(?:pilihan|opsyen|cadangan|nombor)\s*$index\b)""",
+            RegexOption.IGNORE_CASE).containsMatchIn(text)
+    }
     private fun tokens(text:String):Set<String> = Regex("[\\p{L}\\p{N}]{3,}").findAll(text.lowercase(Locale.forLanguageTag("ms-MY")))
         .map { it.value }.filter { it !in stop }.take(72).toSet()
     fun selectHistory(messages:List<Message>,question:String,maxChars:Int=28_000):List<Message> {
@@ -48,14 +60,17 @@ object ContextPolicy {
             if(index!=null) include(index)
         }
         val query=tokens(question)
+        val ordinal=requestedOrdinal(question)
         val followUp=Regex("^(lagi|teruskan|sambung|yang tadi|yang tu|itu|dia|kenapa|bukan tu|pastu|lepas tu|jadi|macam mana|okay|ya)\\b",RegexOption.IGNORE_CASE)
             .containsMatchIn(question.trim())
         val candidates=(0 until recentStart).mapNotNull { i ->
             val row=rows[i]
             val overlap=tokens(row.text).count { it in query }
             val correctionHit=row.role=="user"&&correction.containsMatchIn(row.text)
-            if(overlap==0&&!correctionHit)null else
-                i to (overlap*6+(if(correctionHit)if(followUp)12 else 5 else 0)+i.toDouble()/rows.size)
+            val ordinalHit=ordinalMention(row.text,ordinal)
+            if(overlap==0&&!correctionHit&&!ordinalHit)null else
+                i to (overlap*6+(if(ordinalHit)19 else 0)+
+                    (if(correctionHit)if(followUp)12 else 5 else 0)+i.toDouble()/rows.size)
         }.sortedWith(compareByDescending<Pair<Int,Double>> { it.second }.thenByDescending { it.first })
         for((i,_) in candidates.take(9))include(i)
         // Backend boundedHistory allows 24 messages at most; don't send a larger false context.
