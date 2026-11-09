@@ -139,6 +139,16 @@ val DialogGradient: Brush get() = cssGradient(150f,listOf(Color(23,31,45,92), Co
 }
 private val iconPaths = mapOf(
     "search" to listOf("M10.5 3.5a7 7 0 1 0 0 14a7 7 0 1 0 0-14Z", "m16 16 5 5"),
+    // Unique semantic identities, shared 24dp stroke treatment with all native icons.
+    "settings" to listOf("M9.5 3h5l.5 2.4 1.7 1 2.3-.8 2.5 4.3-1.8 1.6v2l1.8 1.6-2.5 4.3-2.3-.8-1.7 1-.5 2.4h-5L9 19.6l-1.7-1-2.3.8-2.5-4.3 1.8-1.6v-2L2.5 9.9 5 5.6l2.3.8 1.7-1Z", "M15 12a3 3 0 1 1-6 0a3 3 0 1 1 6 0Z"),
+    "home" to listOf("m3 10 9-7 9 7", "M5 9v12h14V9", "M9 21v-8h6v8"),
+    "image" to listOf("M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z", "M8 9a1.5 1.5 0 1 0 0-3a1.5 1.5 0 1 0 0 3Z", "m3 18 6-6 4 4 3-3 5 5"),
+    "novel" to listOf("M3 5c3-1.6 6-1.6 9 .1 3-1.7 6-1.7 9-.1v14c-3-1.6-6-1.6-9 .1-3-1.7-6-1.7-9-.1Z", "M12 5v14", "M6 9h3m6 0h3M6 13h3m6 0h3"),
+    "chat" to listOf("M4 4h13a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H9l-5 4v-4a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z", "M6 9h9M6 13h6"),
+    "research" to listOf("M5 3h10l4 4v4M15 3v4h4M5 3v18h10", "M14.5 17a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0Z", "m21 20 2 2"),
+    "activity" to listOf("M3 20h18", "M5 17 9 12l3 3 6-9", "m15 6h3v3"),
+    "external" to listOf("M13 4h7v7M20 4l-9 9", "M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"),
+
     "clock" to listOf("M12 3a9 9 0 1 1 0 18a9 9 0 1 1 0-18Z","M12 7v5l3 2"),
     "aksara" to listOf("M12 2.5 14.5 9.5 21.5 12 14.5 14.5 12 21.5 9.5 14.5 2.5 12 9.5 9.5Z"),
     "gemini" to listOf("M12 2c1 5.3 4.7 9 10 10-5.3 1-9 4.7-10 10-1-5.3-4.7-9-10-10 5.3-1 9-4.7 10-10Z"),
@@ -162,6 +172,9 @@ private val iconPaths = mapOf(
     "end" to listOf("M4 8q8-7 16 0v6h-4v-4q-4-2-8 0v4H4Z"),
     "speaker" to listOf("M4 9h4l5-4v14l-5-4H4ZM17 8a6 6 0 0 1 0 8M20 5a10 10 0 0 1 0 14")
 )
+/** Accessible to regression tests so an unknown icon cannot silently render blank. */
+internal fun isKnownAksaraIcon(name: String): Boolean = iconPaths.containsKey(name)
+
 @Composable fun AksaraIcon(name: String, modifier: Modifier = Modifier.size(20.dp), color: Color = AksaraColors.gold) {
     val paths = remember(name) { iconPaths[name].orEmpty().map { PathParser().parsePathString(it).toPath() } }
     Canvas(modifier) { scale(size.width/24f, size.height/24f, pivot = Offset.Zero) { paths.forEach { drawPath(it, color, style = Stroke(1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)) }; if(name=="network")listOf(Offset(5f,5.5f),Offset(19f,5f),Offset(19.3f,19f),Offset(4.8f,18.5f)).forEach{drawCircle(color,1.55f,it)} } }

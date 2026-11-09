@@ -23,6 +23,19 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.feature.voice.VoiceLanguageStyles
+import my.aksara.nativeapp.feature.tools.MetricsContent
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+
+/** Every category has a distinct, present icon. Do not duplicate semantic identities. */
+internal val SettingsCategoryIcons = mapOf(
+    "Kecerdasan & Model" to "brain",
+    "Chat & Lampiran" to "chat",
+    "Voice & Audio" to "voice",
+    "Memori & Privasi" to "shield",
+    "Tools & Research" to "research",
+    "Sistem & Diagnostik" to "activity"
+)
 
 /** P3 + P4 user-facing settings. Controls here are wired to real storage/backend metadata. */
 @Composable
@@ -53,12 +66,12 @@ internal fun AksaraSettings(
     var captions by rememberSaveable { mutableStateOf(preferences.getBoolean("captions_visible",true)) }
     var pushToTalk by rememberSaveable { mutableStateOf(preferences.getBoolean("push_to_talk",false)) }
     val tabs=listOf(
-        Triple("Kecerdasan & Model","Auto-routing, Thinking, verifikasi dan penggunaan model","brain"),
-        Triple("Chat & Lampiran","Konteks, fail, sejarah dan paparan jawapan","chat"),
-        Triple("Voice & Audio","Mikrofon, output, bahasa dan pemulihan sesi","voice"),
-        Triple("Memori & Privasi","Kawalan data peribadi dan penyimpanan","shield"),
-        Triple("Tools & Research","Kebenaran alat dan penggunaan sumber","code"),
-        Triple("Sistem & Diagnostik","Kesihatan penyedia, prestasi dan ralat","network")
+        Triple("Kecerdasan & Model","Auto-routing, Thinking, verifikasi dan penggunaan model",SettingsCategoryIcons.getValue("Kecerdasan & Model")),
+        Triple("Chat & Lampiran","Konteks, fail, sejarah dan paparan jawapan",SettingsCategoryIcons.getValue("Chat & Lampiran")),
+        Triple("Voice & Audio","Mikrofon, output, bahasa dan pemulihan sesi",SettingsCategoryIcons.getValue("Voice & Audio")),
+        Triple("Memori & Privasi","Kawalan data peribadi dan penyimpanan",SettingsCategoryIcons.getValue("Memori & Privasi")),
+        Triple("Tools & Research","Kebenaran alat dan penggunaan sumber",SettingsCategoryIcons.getValue("Tools & Research")),
+        Triple("Sistem & Diagnostik","Kesihatan penyedia, prestasi dan ralat",SettingsCategoryIcons.getValue("Sistem & Diagnostik"))
     )
 
     Box(Modifier.fillMaxSize().background(Color(0,0,0,175)),contentAlignment=Alignment.Center) {
@@ -71,7 +84,7 @@ internal fun AksaraSettings(
                     Column(Modifier.weight(1f)){
                         AksaraText("Tetapan Aksara A.I.",size=17f,weight=700,
                             family=AksaraTypography.heading)
-                        AksaraText("Kawalan Android · P3 + P4",size=10f,color=AksaraColors.muted)
+                        AksaraText("Kawalan aplikasi dan diagnostik",size=10f,color=AksaraColors.muted)
                     }
                     AksaraButton("×",onClose,Modifier.width(38.dp),height=36.dp,size=20f)
                 }
@@ -280,6 +293,12 @@ internal fun AksaraSettings(
                                     SettingsFact("Ralat request (sesi aplikasi)",state.failedRequests.toString())
                                     SettingsFact("Penyedia disahkan Online",state.providers.count{it.second=="online"}.toString())
                                     state.providers.forEach{ (name,status)->SettingsFact(name,status)}
+                                    Spacer(Modifier.height(10.dp))
+                                    var showPerformance by remember { mutableStateOf(false) }
+                                    AksaraButton(if (showPerformance) "Tutup Prestasi A.I." else "Prestasi A.I.",
+                                        { showPerformance = !showPerformance },
+                                        Modifier.fillMaxWidth(),height=37.dp,size=11f)
+                                    if (showPerformance) MetricsContent(state,onRefresh)
                                     Spacer(Modifier.height(8.dp))
                                     SettingsLabel("Permission Manager")
                                     val micGranted=context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED
@@ -333,7 +352,7 @@ private fun SettingsGroup(name:String,description:String,icon:String,open:Boolea
         Column(Modifier.fillMaxWidth().padding(11.dp)) {
             Row(Modifier.fillMaxWidth().clickable(onClick=toggle).padding(vertical=5.dp),
                 horizontalArrangement=Arrangement.spacedBy(9.dp),verticalAlignment=Alignment.CenterVertically) {
-                AksaraIcon(icon,Modifier.size(19.dp),AksaraColors.gold)
+                AksaraIcon(icon,Modifier.size(19.dp).semantics { contentDescription = "Ikon " + name },AksaraColors.gold)
                 Column(Modifier.weight(1f)) {
                     AksaraText(name,size=13f,weight=650)
                     Spacer(Modifier.height(4.dp))
