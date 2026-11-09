@@ -293,7 +293,8 @@ fun StudioContent() {
         Column(Modifier.weight(1f)) {
             AksaraText("STUDIO ANTARA  V2",size=13f,weight=700,tracking=.5f,
                 family=AksaraTypography.heading)
-            AksaraText("Satu studio · dua enjin",size=10.5f,color=AksaraColors.muted)
+            AksaraText(if(localRuntimeReady)"Cloud & Local · runtime tersedia"
+                else "Cloud FLUX aktif · Local belum tersedia",size=10.5f,color=AksaraColors.muted)
         }
         AksaraText("NATIVE",size=10f,color=AksaraColors.gold)
     }
