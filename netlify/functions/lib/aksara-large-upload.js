@@ -41,7 +41,7 @@ function verify(token,kind,env=process.env){
 }
 function validatedFile(file){
   if(!file||typeof file!=="object"||!FILE_NAME.test(file.name||""))throw Error("Invalid Gemini file name");
-  const url=new URL(String(file.uri||""));
+  const url=new URL(String(file.uri||file.fileUri||""));
   if(url.protocol!=="https:"||url.hostname!=="generativelanguage.googleapis.com"||
      url.username||url.password||url.hash||url.search||
      url.pathname!=="/v1beta/"+file.name)throw Error("Invalid Gemini file URI");
