@@ -148,7 +148,9 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 val notes = if (savedContext.memoryEnabled) ContextPolicy.selectMemory(savedContext.memoryNotes, question) else ""
                 val payload = JSONObject().put("question", question).put("history", history)
-                    .put("thoughtMode", state.value.mode).put("contextFallback", true)
+                    // Web requires explicit consent before private notes/documents
+                    // can be sent to a fallback provider. Android has no consent UI.
+                    .put("thoughtMode", state.value.mode).put("contextFallback", false)
                     .put("mediaFallback", false).put("summary", savedContext.summary)
                     .put("memoryNotes", notes).put("thoughtLedger", JSONArray())
                     .put("documentText", documentText).put("documentName", documentName)
