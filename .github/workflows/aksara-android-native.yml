@@ -101,6 +101,11 @@ jobs:
         run: |
           gradle --no-daemon --init-script ci/compiler-repository.init.gradle assembleDebug assembleDebugAndroidTest
           echo "apk_ready=true" >> "$GITHUB_OUTPUT"
+      - name: Identify exact installable game APK
+        working-directory: android-native
+        run: |
+          sha256sum app/build/outputs/apk/debug/app-debug.apk | tee app/build/outputs/apk/debug/SHA256SUMS
+          printf 'source_commit=%s\nbuild_run=%s\n' '${{ github.event.pull_request.head.sha || github.sha }}' '${{ github.run_id }}' | tee app/build/outputs/apk/debug/BUILD.txt
       - name: Unit tests
         id: unit
         continue-on-error: true

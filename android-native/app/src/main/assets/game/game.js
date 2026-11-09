@@ -1,8 +1,8 @@
-const input={axis:0};let scene,match=new AksaraCombat.Combat(),paused=true,audio,started=false;
+const input={axis:0};let scene,match=new AksaraCombat.Combat(),paused=true,audio,started=false,audioAllowed=!window.AksaraAudio;
 let progress=AksaraCampaign.read(localStorage),chapterIndex=0,dialogueIndex=0,noteUntil=0,saveClock=0,accumulator=0;
 const $=id=>document.getElementById(id);
 function sound(kind='light'){
- if(typeof controlSettings!=='undefined'&&!controlSettings.sound)return;
+ if(!audioAllowed||typeof controlSettings!=='undefined'&&!controlSettings.sound)return;
  try{audio??=new (window.AudioContext||window.webkitAudioContext)();audio.resume().catch(()=>{});
  const frequencies={light:260,heavy:100,special:440,block:710,break:80,perfect:880,jump:150,round:523,victory:660,finisher:65,phase:110,step:70,defeat:85};
  const duration=['special','round','victory','phase'].includes(kind)?.5:.13;
@@ -19,7 +19,7 @@ function pause(){paused=true;audio?.suspend().catch(()=>{});window.AksaraAudio?.
  $('menu').style.display='grid';$('message').textContent='Dijeda · sambung atau mula semula';$('start').textContent=started?'Sambung':'Mula pertarungan';audio?.suspend().catch(()=>{});persist();}
 window.aksaraPause=pause;document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});window.addEventListener('blur',pause);
 $('pause').onclick=pause;
-function beginFight(){ accumulator=0;window.AksaraAudio?.postMessage('start'); $('cinematic').hidden=true;started=true;controls.resume();drawStick();scene?.presentation?.resetTiming();paused=false;$('menu').style.display='none';sound('round');persist();}
+function beginFight(){ accumulator=0;if(window.AksaraAudio)audioAllowed=false;window.AksaraAudio?.postMessage('start'); $('cinematic').hidden=true;started=true;controls.resume();drawStick();scene?.presentation?.resetTiming();paused=false;$('menu').style.display='none';sound('round');persist();}
 function dialogue(){const ch=AksaraCampaign.chapters[chapterIndex],line=ch.lines[dialogueIndex];$('chapter-title').textContent=ch.title;$('speaker').textContent=line[0];$('dialogue').textContent=line[1];scene?.tweens.add({targets:scene.presentation.sprites[dialogueIndex%2],alpha:{from:.4,to:1},duration:450});}
 $('dialogue-next').onclick=()=>{if(++dialogueIndex>=AksaraCampaign.chapters[chapterIndex].lines.length)beginFight();else dialogue();};$('dialogue-skip').onclick=beginFight;
 function newMatch(){const mode=$('mode').value;chapterIndex=+$('chapter').value;const ch=AksaraCampaign.chapters[chapterIndex];match=new AksaraCombat.Combat(mode==='story'?ch.hero:$('hero').value,+$('difficulty').value,{mode,drill:$('drill').value,boss:mode==='story'&&!!ch.boss,abilities:AksaraCampaign.unlocks.filter(u=>progress.xp>=u.xp).map(u=>u.id)});started=true;
@@ -80,4 +80,4 @@ game.events.on('contextlost',()=>window.gameFailure('Konteks grafik hilang'));
 
 window.aksaraInsets=(l,t,r,b)=>{for(const [key,value] of Object.entries({left:l,top:t,right:r,bottom:b}))document.documentElement.style.setProperty(`--safe-${key}`,value+"px");};
 
-if(window.AksaraAudio)window.AksaraAudio.onmessage=e=>{if(e.data==='denied')audio?.suspend().catch(()=>{});};
+if(window.AksaraAudio)window.AksaraAudio.onmessage=e=>{audioAllowed=e.data==='granted';if(!audioAllowed)audio?.suspend().catch(()=>{});};
