@@ -4,6 +4,10 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import my.aksara.nativeapp.feature.chat.*
 import my.aksara.nativeapp.core.storage.Message
+import my.aksara.nativeapp.core.platform.AttachmentReader
+import android.graphics.Bitmap
+import android.graphics.Color
+import java.io.ByteArrayOutputStream
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -35,6 +39,27 @@ class AttributionAndLiteUiTest {
         }
         compose.onNodeWithContentDescription("Hantar soalan").assertIsEnabled().performClick()
         compose.runOnIdle { assertEquals("Sila analisis kandungan lampiran ini.",submitted) }
+    }
+
+    @Test fun oversizedCameraImageIsCompressedForActualInlineUpload() {
+        val bitmap=Bitmap.createBitmap(1600,1600,Bitmap.Config.ARGB_8888)
+        val pixels=IntArray(1600*1600)
+        var seed=0x12345678
+        for (i in pixels.indices) {
+            seed=seed xor (seed shl 13)
+            seed=seed xor (seed ushr 17)
+            seed=seed xor (seed shl 5)
+            pixels[i]=Color.rgb(seed and 255,(seed ushr 8) and 255,(seed ushr 16) and 255)
+        }
+        bitmap.setPixels(pixels,0,1600,0,0,1600,1600)
+        val raw=ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG,100,raw)
+        bitmap.recycle()
+        org.junit.Assert.assertTrue(raw.size()>3_600_000)
+        val (mime,compressed)=AttachmentReader.prepareImage(raw.toByteArray(),"image/png")
+        assertEquals("image/jpeg",mime)
+        org.junit.Assert.assertTrue(compressed.size <= 3_600_000)
+        org.junit.Assert.assertNotNull(android.graphics.BitmapFactory.decodeByteArray(compressed,0,compressed.size))
     }
 
     @Test fun pickerIsNotShownAsCodeTool() {
