@@ -150,13 +150,13 @@ import my.aksara.nativeapp.feature.tools.*
                         "connection" -> {
                             val backendUnreachable=state.providers.any{it.first=="backend" && it.second=="Backend unreachable"}
                             Spacer(Modifier.height(10.dp));AksaraText(ProviderConnectionStatus.label(state.providers)+" · "+
-                                state.providers.count{it.second=="online"}+" online · "+state.providers.count{it.second=="ready"}+" ready",
+                                ProviderStatusPalette.summary(state.providers),
                                 size=9.5f,line=13.3f,color=AksaraColors.muted)
                             Spacer(Modifier.height(10.dp))
                             val providers=listOf("gemini" to "Google Gemini","groq" to "Groq","workers_ai" to "Cloudflare Workers AI","openrouter" to "OpenRouter")
                             providers.forEach { (id,name) ->
                                 var expanded by remember {mutableStateOf(false)}
-                                MenuRow(name,state.providers.find{it.first==id}?.second?:(if(backendUnreachable)"Backend unreachable" else "Unverified"),height=43.dp) {expanded=!expanded}
+                                MenuRow(name,state.providers.find{it.first==id}?.second?:(if(backendUnreachable)"Backend unreachable" else "Unverified"),height=48.dp) {expanded=!expanded}
                                 if(expanded) AksaraText(state.providerDetails[id]?.takeIf{it.isNotBlank()} ?: "Ready belum membuktikan inferens berjaya. Refresh untuk status terkini.",Modifier.padding(8.dp),size=10f,color=AksaraColors.muted)
                                 Spacer(Modifier.height(8.dp))
                             }
@@ -211,7 +211,7 @@ import my.aksara.nativeapp.feature.tools.*
                         }
                         "attachments" -> {
                             Spacer(Modifier.height(16.dp))
-                            listOf("Foto" to "JPG, PNG, WebP","Video" to "MP4, WebM","Dokumen" to "PDF, DOCX, TXT, MD, CSV, JSON","Audio" to "MP3, M4A, WAV, OGG, WebM").forEach { (name,desc) -> FeatureRow(name,desc,"attach"){onPickAttachment(name);onClose()};Spacer(Modifier.height(8.dp)) }
+                            listOf(Triple("Foto","JPG, PNG, WebP","image"),Triple("Video","MP4, WebM","video"),Triple("Dokumen","PDF, DOCX, TXT, MD, CSV, JSON","file-text"),Triple("Audio","MP3, M4A, WAV, OGG, WebM","audio")).forEach { (name,desc,icon) -> FeatureRow(name,desc,icon){onPickAttachment(name);onClose()};Spacer(Modifier.height(8.dp)) }
                         }
                         "privacy" -> {
                             var draft by remember(state.memoryNotes) { mutableStateOf(state.memoryNotes) }
@@ -298,7 +298,13 @@ import my.aksara.nativeapp.feature.tools.*
 }
 @Composable private fun MenuRow(name:String,status:String,height:Dp=49.dp,onClick:()->Unit) {
     AksaraGlassSurface(Modifier.fillMaxWidth().height(height).clickable(onClick=onClick),radius=13.dp) {
-        Row(Modifier.fillMaxSize().padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically) {AksaraText(name,Modifier.weight(1f),size=12f,weight=600);AksaraText(status,size=10f,line=14f,color=AksaraColors.muted)}
+        Row(Modifier.fillMaxSize().padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically) {
+            AksaraText(name,Modifier.weight(1f),size=12f,weight=600)
+            val tone=ProviderStatusPalette.color(status)
+            Box(Modifier.size(8.dp).clip(RoundedCornerShape(999.dp)).background(tone))
+            Spacer(Modifier.width(7.dp))
+            AksaraText(status,size=10.5f,line=14f,color=tone,weight=600)
+        }
     }
 }
 @Composable private fun FeatureRow(name:String,desc:String,icon:String,height:Dp=62.dp,onClick:()->Unit) {
