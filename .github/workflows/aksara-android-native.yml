@@ -27,6 +27,21 @@ jobs:
           node-version: '22'
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
+      - name: Eclipse game controls, full fights and browser screenshots
+        run: |
+          python3 -m http.server 8765 --directory android-native/app/src/main/assets/game > "$RUNNER_TEMP/eclipse-server.log" 2>&1 &
+          game_server_pid=$!
+          trap 'kill "$game_server_pid"' EXIT
+          for attempt in {1..30}; do
+            if curl -fsS http://127.0.0.1:8765 > /dev/null; then break; fi
+            sleep 0.2
+          done
+          node android-native/game-tests/browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eclipse-browser-gameplay
+          path: docs/android-rebuild/game/browser-evidence/
       - run: node android-native/visual-tests/capture-web.cjs
       - uses: actions/upload-artifact@v4
         if: always()

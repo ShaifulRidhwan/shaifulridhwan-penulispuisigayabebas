@@ -27,7 +27,26 @@ class NativeGameActivityTest {
     private fun waitJs(a:GameActivity,code:String){
         val until=SystemClock.uptimeMillis()+30000
         while(SystemClock.uptimeMillis()<until){if(js(a,code)=="true")return;SystemClock.sleep(150)}
-        fail("Timed out: $code; diagnostics="+js(a,"JSON.stringify(window.gameDiagnostics)"))
+        fail("Timed out: $code; diagnostics="+js(a,"JSON.stringify({runtime:window.gameDiagnostics,paused:typeof paused!=='undefined'?paused:null,input:typeof controls!=='undefined'?controls.sample():null,pointers:typeof controls!=='undefined'?controls.pointers.size:null})"))
+    }
+    private fun heldJoystickMovement(a:GameActivity){
+        val x0=js(a,"match.fighters[0].x").toDouble()
+        val rect=js(a,"(()=>{const r=document.querySelector('#stick-zone').getBoundingClientRect();return [r.x+70,r.y+r.height/2,innerWidth,innerHeight].join(',')})()").trim('"').split(',').map{it.toFloat()}
+        val loc=IntArray(2);instrument.runOnMainSync{a.gameWebView.getLocationOnScreen(loc)}
+        val scaleX=a.gameWebView.width/rect[2];val scaleY=a.gameWebView.height/rect[3]
+        val down=SystemClock.uptimeMillis()
+        fun send(action:Int,dx:Float){
+            val p=MotionEvent.PointerProperties().apply{id=0;toolType=MotionEvent.TOOL_TYPE_FINGER}
+            val c=MotionEvent.PointerCoords().apply{x=loc[0]+(rect[0]+dx)*scaleX;y=loc[1]+rect[1]*scaleY;pressure=1f;size=1f}
+            val e=MotionEvent.obtain(down,SystemClock.uptimeMillis(),action,1,arrayOf(p),arrayOf(c),0,0,1f,1f,0,0,InputDevice.SOURCE_TOUCHSCREEN,0)
+            instrument.sendPointerSync(e);e.recycle()
+        }
+        send(MotionEvent.ACTION_DOWN,0f);send(MotionEvent.ACTION_MOVE,45f)
+        try {
+            waitJs(a,"controls.sample().axis===1")
+            waitJs(a,"match.fighters[0].x>${x0+5}")
+        } finally {send(MotionEvent.ACTION_UP,45f)}
+        waitJs(a,"controls.pointers.size===0 && controls.sample().axis===0")
     }
     private fun nativeMultitouch(a:GameActivity,canvas:Boolean){
         fun center(selector:String):Pair<Float,Float>{
@@ -36,10 +55,11 @@ class NativeGameActivityTest {
             return Pair(loc[0]+values[0]/values[2]*a.gameWebView.width,loc[1]+values[1]/values[3]*a.gameWebView.height)
         }
         val pts=listOf(center("#stick-zone"),center("[data-action=jump]"),center("[data-action=light]"),center("[data-action=heavy]"))
+        val scale=a.gameWebView.width/js(a,"innerWidth").toFloat()
         val down=SystemClock.uptimeMillis()
         fun send(action:Int,indices:List<Int>,move:Boolean=false){
             val props=indices.map{n->MotionEvent.PointerProperties().apply{id=n+3;toolType=MotionEvent.TOOL_TYPE_FINGER}}.toTypedArray()
-            val coords=indices.map{n->MotionEvent.PointerCoords().apply{x=pts[n].first+if(n==0&&move)45*a.resources.displayMetrics.density else 0f;y=pts[n].second;pressure=1f;size=1f}}.toTypedArray()
+            val coords=indices.map{n->MotionEvent.PointerCoords().apply{x=pts[n].first+if(n==0&&move)45*scale else 0f;y=pts[n].second;pressure=1f;size=1f}}.toTypedArray()
             val event=MotionEvent.obtain(down,SystemClock.uptimeMillis(),action,indices.size,props,coords,0,0,1f,1f,0,0,InputDevice.SOURCE_TOUCHSCREEN,0)
             instrument.sendPointerSync(event);event.recycle()
         }
@@ -133,13 +153,7 @@ class NativeGameActivityTest {
                     }
                     js(a,"document.querySelector('#start').click()")
                     waitJs(a,"!paused && match.elapsed>0.1 && document.querySelector('#menu').style.display==='none'")
-                    val x0=js(a,"match.fighters[0].x").toDouble()
-                    // Coordinates are derived from the real WebView/CSS viewport.
-                    val xy=js(a,"(()=>{const r=document.querySelector('#stick-zone').getBoundingClientRect();return [r.x+70,r.y+r.height/2,innerWidth,innerHeight].join(',')})()").trim('"').split(',').map{it.toDouble()}
-                    val loc=IntArray(2);instrument.runOnMainSync{a.gameWebView.getLocationOnScreen(loc)}
-                    val sx=loc[0]+xy[0]/xy[2]*a.gameWebView.width;val sy=loc[1]+xy[1]/xy[3]*a.gameWebView.height
-                    device.swipe(sx.toInt(),sy.toInt(),(sx+55*a.resources.displayMetrics.density).toInt(),sy.toInt(),35)
-                    assertTrue("Touch must move fighter",js(a,"match.fighters[0].x").toDouble()>x0)
+                    heldJoystickMovement(a)
                     nativeMultitouch(a,canvas)
                     waitJs(a,"!!gameDiagnostics.performance")
                     println("ECLIPSE_METRICS "+js(a,"JSON.stringify(gameDiagnostics.performance)")+" appPssKiB="+android.os.Debug.getPss())

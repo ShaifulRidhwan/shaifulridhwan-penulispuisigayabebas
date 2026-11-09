@@ -11,6 +11,7 @@ import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewCompat
 import androidx.webkit.WebViewFeature
 import android.view.HapticFeedbackConstants
+import android.view.MotionEvent
 import android.os.SystemClock
 import android.graphics.Rect
 import java.io.ByteArrayInputStream
@@ -49,6 +50,13 @@ class GameActivity : ComponentActivity() {
         val loader=WebViewAssetLoader.Builder().addPathHandler("/assets/",WebViewAssetLoader.AssetsPathHandler(this)).build()
         gameWebView=WebView(this).apply {
             id=android.view.View.generateViewId()
+            setOnTouchListener { _,event ->
+                if(BuildConfig.DEBUG&&event.actionMasked!=MotionEvent.ACTION_MOVE) {
+                    val ids=(0 until event.pointerCount).joinToString{event.getPointerId(it).toString()}
+                    Log.d("AksaraGame","touch action=${event.actionMasked} index=${event.actionIndex} ids=$ids x=${event.x} y=${event.y}")
+                }
+                false // WebView retains ownership and maps native IDs to Pointer Events.
+            }
             settings.javaScriptEnabled=true
             settings.allowFileAccess=false
             settings.allowContentAccess=false
@@ -97,7 +105,11 @@ class GameActivity : ComponentActivity() {
                         "special"->HapticFeedbackConstants.CONFIRM
                         else->null
                     }
-                    if(effect!=null){lastHaptic=SystemClock.uptimeMillis();view.performHapticFeedback(effect)}
+                    if(effect!=null){
+                        lastHaptic=SystemClock.uptimeMillis()
+                        val accepted=view.performHapticFeedback(effect)
+                        Log.i("AksaraGame","haptic ${message.data} nativeAccepted=$accepted")
+                    }
                 }
             }
         }
