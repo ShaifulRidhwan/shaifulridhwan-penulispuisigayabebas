@@ -127,6 +127,16 @@ class AttributionAndLiteUiTest {
         compose.onNodeWithTag("aksara-glass-modal").assertExists()
     }
 
+    @Test fun voicePreviewKeepsThreePrimaryActionsWithoutPttOrCcButtons() {
+        compose.setContent {
+            AksaraScreen(ChatState(loaded=true),initialOverlay="voice-fixture")
+        }
+        compose.onNodeWithContentDescription("Tamatkan sesi").assertExists()
+        compose.onNodeWithText("PTT").assertDoesNotExist()
+        compose.onNodeWithText("PTT ON").assertDoesNotExist()
+        compose.onNodeWithText("CC").assertDoesNotExist()
+    }
+
     @Test fun searchHubContainsMessagesSessionsAndMemory() {
         compose.setContent { AksaraScreen(ChatState(loaded = true)) }
         compose.onNodeWithContentDescription("Carian, sesi dan memori").performClick()
