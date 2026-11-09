@@ -40,6 +40,12 @@ if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/studio-ui-tests.txt"; then f
 adb shell am instrument -w -r -e class my.aksara.nativeapp.StudioHistoryAndroidTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/studio-history-tests.txt" || failures=$((failures+1))
 cat "$out/android/studio-history-tests.txt"
 if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/studio-history-tests.txt"; then failures=$((failures+1)); fi
+adb shell am instrument -w -r -e class my.aksara.nativeapp.NativeGameActivityTest,my.aksara.nativeapp.PortalLayoutTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/game-activity-tests.txt" || failures=$((failures+1))
+cat "$out/android/game-activity-tests.txt"
+if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/game-activity-tests.txt"; then failures=$((failures+1)); fi
+adb pull /sdcard/Android/data/my.aksara.nativeapp/files/game-auto.png "$out/android/" || true
+adb pull /sdcard/Android/data/my.aksara.nativeapp/files/game-canvas.png "$out/android/" || true
+adb logcat -d -s AksaraGame chromium > "$out/android/game-logcat.txt"
 for spec in '360 800' '390 844' '393 852' '412 915'; do
   read -r width height <<< "$spec"
   adb shell wm size "${width}x${height}"
