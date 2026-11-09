@@ -89,6 +89,7 @@ class AttributionAndLiteUiTest {
         compose.setContent { AksaraScreen(ChatState(loaded=true)) }
         compose.onNodeWithText("Siapa Aku").assertExists()
         compose.onNodeWithText("The Coder Poet").assertDoesNotExist()
+        compose.onNodeWithText("Tanya atau lampirkan fail").assertDoesNotExist()
     }
 
 
@@ -98,6 +99,7 @@ class AttributionAndLiteUiTest {
             AksaraScreen(ChatState(loaded=true,mode=selected.value),
                 onMode={ selected.value=it })
         }
+        compose.onNodeWithTag("thinking-glass-button").assertExists()
         compose.onNodeWithContentDescription("Thinking Mode").assert(
             androidx.compose.ui.test.SemanticsMatcher.expectValue(
                 androidx.compose.ui.semantics.SemanticsProperties.StateDescription, "Cahaya"))
@@ -163,6 +165,7 @@ class AttributionAndLiteUiTest {
         compose.setContent { AksaraScreen(ChatState(loaded = true)) }
         compose.onNodeWithContentDescription("Tulis mesej untuk Aksara A.I.").performClick().assertIsFocused()
         compose.onNodeWithContentDescription("Ciri & Fungsi").performClick()
+        compose.onNodeWithText("Pilih ruang yang kau mahu teroka dalam ekosistem Aksara.").assertExists()
         compose.onNodeWithText("Game · Linux · SD-Turbo").assertDoesNotExist()
         compose.onNodeWithText("Laman Utama").assertExists()
         compose.onNodeWithText("Studio · Jana Imej").assertExists()
