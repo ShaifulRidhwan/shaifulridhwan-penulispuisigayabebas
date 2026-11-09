@@ -4,6 +4,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import my.aksara.nativeapp.feature.chat.*
 import my.aksara.nativeapp.core.storage.Message
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
@@ -24,6 +25,26 @@ class AttributionAndLiteUiTest {
         compose.onNodeWithText("Belum disahkan").assertExists()
         compose.onNodeWithContentDescription("Code Engine").assertDoesNotExist()
         compose.onNodeWithContentDescription("Terminal").assertDoesNotExist()
+    }
+
+    @Test fun attachmentAloneEnablesSubmitAndGeneratesRealRequest() {
+        var submitted = ""
+        compose.setContent {
+            AksaraScreen(ChatState(loaded = true),attachmentName = "gambar.jpg",
+                onSend = { submitted = it })
+        }
+        compose.onNodeWithContentDescription("Hantar soalan").assertIsEnabled().performClick()
+        compose.runOnIdle { assertEquals("Sila analisis kandungan lampiran ini.",submitted) }
+    }
+
+    @Test fun pickerIsNotShownAsCodeTool() {
+        compose.setContent { AksaraScreen(ChatState(loaded = true),initialOverlay = "attachments") }
+        compose.onNodeWithText("Foto").assertExists()
+        compose.onNodeWithText("Video").assertExists()
+        compose.onNodeWithText("Dokumen").assertExists()
+        compose.onNodeWithText("Audio").assertExists()
+        compose.onNodeWithText("Kod").assertDoesNotExist()
+        compose.onNodeWithText("Dokumen teks sehingga 100 KB", substring = true).assertDoesNotExist()
     }
 
     @Test fun onlySiapaAkuIsShownAsTheWelcomeStarter() {

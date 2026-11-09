@@ -54,9 +54,11 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val context = LocalContext.current
     var attachments by remember { mutableStateOf<List<Attachment>>(emptyList()) }
     var attachmentError by remember { mutableStateOf<String?>(null) }
+    var attachmentLoading by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if (uris.isNotEmpty()) scope.launch {
+            attachmentLoading = true
             try {
                 require(uris.size <= 4 && attachments.size + uris.size <= 4) { "Maksimum 4 lampiran bagi satu mesej." }
                 val fresh = uris.map { AttachmentReader.read(context, it) }
@@ -69,6 +71,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                 attachments = selected
                 attachmentError = null
             } catch (e: Exception) { attachmentError = e.message ?: "Lampiran gagal dibaca." }
+            finally { attachmentLoading = false }
         }
     }
     AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
@@ -76,19 +79,28 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         val text = textDocs.joinToString("\n\n") { "[DOKUMEN: " + it.name + "]\n" + it.text + "\n[TAMAT DOKUMEN]" }
         val name = textDocs.joinToString(", ") { it.name }.take(100)
         val media = JSONArray().apply { attachments.mapNotNull { it.media }.forEach { put(it) } }
-        vm.send(q, text, name, media)
+        if (vm.send(q, text, name, media)) {
+            // The ViewModel has accepted the pending turn and will persist it before inference.
+            // Do not carry sent media into the next message or discard it on a rejected turn.
+            attachments = emptyList()
+            attachmentError = null
+        } else {
+            attachmentError = "Mesej belum dihantar. Cuba lagi selepas sambungan sedia."
+        }
         Unit
     }, onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
         onMemory = vm::setMemory, onVoiceTurns = vm::acceptVoiceTurns, onClearAttachment = { attachments = emptyList() },
         onRestore = vm::restore, onClear = vm::clearScreen,
         attachmentName = attachments.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name }?.take(150),
-        onPickAttachment = { picker.launch(arrayOf("text/*", "application/json", "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/octet-stream", "image/*", "audio/*", "video/*")) },
+        attachmentLoading = attachmentLoading,
+        onPickAttachment = { category -> picker.launch(AttachmentSendPolicy.mimeTypes(category)) },
         onDismissError = { attachmentError = null; vm.dismissError() })
 }
 
 @Composable fun AksaraScreen(state: ChatState, onSend: (String)->Unit = {}, onStop: ()->Unit = {}, onRefresh: ()->Unit = {},
     onJourney: (String)->Unit = onSend, onMode: (String)->Unit = {}, onRestore: ()->Unit = {}, onClear: ()->Unit = {}, attachmentName: String? = null,
-    onPickAttachment: ()->Unit = {}, onDismissError: ()->Unit = {}, onMemory: (Boolean,String)->Unit = {_,_->}, onClearAttachment: ()->Unit = {}, initialOverlay: String? = null,
+    onPickAttachment: (String)->Unit = {}, onDismissError: ()->Unit = {}, onMemory: (Boolean,String)->Unit = {_,_->}, onClearAttachment: ()->Unit = {}, initialOverlay: String? = null,
+    attachmentLoading: Boolean = false,
     fixedTimestamp: Long? = null, onVoiceTurns:(List<my.aksara.engine.voice.VoiceContextTurn>)->Unit = {}) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
@@ -239,10 +251,13 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             }
                             if(state.nextJourney!=null) AksaraButton(state.nextJourney,{onJourney(state.nextJourney)},Modifier.padding(horizontal=12.dp,vertical=4.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
                             if(state.error!=null) Row(Modifier.fillMaxWidth().clickable(onClick=onDismissError).padding(8.dp)) { AksaraText(state.error,size=11f,color=Color(0xffe7a08e)) }
+                            if (attachmentLoading) AksaraText("Membaca lampiran...",Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=4.dp),size=11f,color=AksaraColors.muted)
                             if(attachmentName!=null) Row(Modifier.fillMaxWidth().padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically){
                                 AksaraText("📎 "+attachmentName,Modifier.weight(1f),size=11f)
                                 AksaraButton("Buang lampiran",onClearAttachment,size=9f,height=31.dp,radius=12.dp)
                             }
+                            val hasAttachments = !attachmentName.isNullOrBlank()
+                            val canSubmit = state.loaded && !state.busy && !attachmentLoading && (draft.isNotBlank() || hasAttachments)
                             Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(6,9,15,8),Color(6,8,14,71)))).padding(start=9.dp,end=9.dp,top=8.dp,bottom=10.dp)) {
                                 AksaraGlassSurface(Modifier.fillMaxWidth().heightIn(min=if(state.messages.isEmpty())58.dp else 60.dp).testTagCompat("composer-form"),radius=18.dp,
                                     brush=Brush.linearGradient(listOf(Color(25,35,49,17),Color(8,15,28,11))),border=Color(245,217,176,82)) {
@@ -252,7 +267,12 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                             textStyle=AksaraTypography.style(16f,24f),cursorBrush=SolidColor(AksaraColors.gold))
                                         if(state.busy) AksaraButton("Henti",onStop,Modifier.width(56.6875.dp).semantics {contentDescription="Hentikan respons"},size=12f,height=40.dp,radius=7.dp)
                                         AksaraButton("",{open("thinking")},Modifier.width(40.dp).semantics {contentDescription="Thinking Mode"},icon="brain",height=42.dp,radius=13.dp,contentColor=AksaraColors.gold)
-                                        AksaraButton("",{if(!state.busy&&draft.isNotBlank()){onSend(draft.trim());draft=""}},Modifier.width(42.dp).semantics {contentDescription="Hantar soalan"},icon="send",height=42.dp,radius=13.dp,enabled=!state.busy&&draft.isNotBlank())
+                                        AksaraButton("",{
+                                            if(canSubmit) {
+                                                onSend(AttachmentSendPolicy.submissionText(draft,hasAttachments))
+                                                draft=""
+                                            }
+                                        },Modifier.width(42.dp).semantics {contentDescription="Hantar soalan"},icon="send",height=42.dp,radius=13.dp,enabled=canSubmit)
                                     }
                                 }
                             }
