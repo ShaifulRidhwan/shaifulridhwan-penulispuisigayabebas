@@ -111,6 +111,22 @@ class AttributionAndLiteUiTest {
         compose.onAllNodesWithText("Gelap",substring=false).assertCountEquals(2)
     }
 
+    @Test fun nativeMenusUseSharedLiquidGlassModalChrome() {
+        compose.setContent { AksaraScreen(ChatState(loaded = true)) }
+        compose.onNodeWithContentDescription("Carian, sesi dan memori").performClick()
+        compose.onNodeWithTag("aksara-glass-modal").assertExists()
+        compose.onNodeWithText("×").performClick()
+        compose.onNodeWithContentDescription("Tetapan Aksara").performClick()
+        compose.onNodeWithTag("aksara-glass-modal").assertExists()
+        compose.onNodeWithText("Buka Voice & pilih peranti").assertDoesNotExist()
+        compose.onNodeWithText("×").performClick()
+        compose.onNodeWithContentDescription("Ciri & Fungsi").performClick()
+        compose.onNodeWithTag("aksara-glass-modal").assertExists()
+        compose.onNodeWithText("×").performClick()
+        compose.onNodeWithContentDescription("Connection").performClick()
+        compose.onNodeWithTag("aksara-glass-modal").assertExists()
+    }
+
     @Test fun searchHubContainsMessagesSessionsAndMemory() {
         compose.setContent { AksaraScreen(ChatState(loaded = true)) }
         compose.onNodeWithContentDescription("Carian, sesi dan memori").performClick()
