@@ -22,6 +22,15 @@ class ContextParityTest {
         assertTrue(selected.any { it.id=="1" })
         assertTrue(selected.size<=24)
     }
+    @Test fun olderAssistantAnswerKeepsItsInitiatingQuestion() {
+        val history=listOf(row("question","user","Terangkan kalibrasi mikrofon Bluetooth."),
+            row("answer","assistant","Kalibrasi mikrofon Bluetooth melibatkan AudioRecord dan route sebenar.")) +
+            (1..19).map { row("other$it",if(it%2==0)"assistant" else "user",
+                "Sembang mengenai topik lain "+it) }
+        val selected=ContextPolicy.selectHistory(history,"Sambung kalibrasi Bluetooth tadi")
+        assertTrue(selected.any { it.id=="answer" })
+        assertTrue(selected.any { it.id=="question" })
+    }
     @Test fun olderNumberedOptionSurvivesAnEllipticalFollowUp() {
         val old=row("options","assistant","1) Audio Bluetooth.\n2) Kesinambungan Voice.\n3) Studio.")
         val rest=(1..19).map { row("other$it",if(it%2==0)"assistant" else "user",

@@ -42,7 +42,7 @@ object ContextPolicy {
         val chosen=mutableSetOf<Int>()
         var remaining=maxChars.coerceIn(1000,60_000)
         fun include(i:Int):Boolean {
-            if(rows[i].text.length > remaining || chosen.contains(i))return false
+            if(rows[i].text.length > remaining || chosen.contains(i) || chosen.size>=24)return false
             chosen.add(i);remaining -= rows[i].text.length
             return true
         }
@@ -72,9 +72,17 @@ object ContextPolicy {
                 i to (overlap*6+(if(ordinalHit)19 else 0)+
                     (if(correctionHit)if(followUp)12 else 5 else 0)+i.toDouble()/rows.size)
         }.sortedWith(compareByDescending<Pair<Int,Double>> { it.second }.thenByDescending { it.first })
-        for((i,_) in candidates.take(9))include(i)
-        // Backend boundedHistory allows 24 messages at most; don't send a larger false context.
-        return rows.filterIndexed { i,_ -> i in chosen }.takeLast(24)
+        for((i,_) in candidates.take(9)) {
+            // Preserve the adjacent turn that introduced an older retrieved answer.
+            // A disconnected assistant response can otherwise imply the wrong subject.
+            if(rows[i].role=="assistant" && i>0 && rows[i-1].role=="user" && i-1<recentStart)
+                include(i-1)
+            include(i)
+            if(rows[i].role=="user" && i+1<recentStart && rows[i+1].role=="assistant")
+                include(i+1)
+        }
+        // Backend boundedHistory allows 24 messages at most.
+        return rows.filterIndexed { i,_ -> i in chosen }
     }
     fun summaryWindow(size:Int,summarizedThrough:Int):IntRange? {
         val start=summarizedThrough.coerceIn(0,size)
