@@ -93,10 +93,10 @@ class AttributionAndLiteUiTest {
 
 
     @Test fun thinkingModeIconFollowsChosenMode() {
-        var selected by androidx.compose.runtime.mutableStateOf("cahaya")
+        val selected = androidx.compose.runtime.mutableStateOf("cahaya")
         compose.setContent {
-            AksaraScreen(ChatState(loaded=true,mode=selected),
-                onMode={ selected=it })
+            AksaraScreen(ChatState(loaded=true,mode=selected.value),
+                onMode={ selected.value=it })
         }
         compose.onNodeWithContentDescription("Thinking Mode").assert(
             androidx.compose.ui.test.SemanticsMatcher.expectValue(
@@ -108,7 +108,7 @@ class AttributionAndLiteUiTest {
                 androidx.compose.ui.semantics.SemanticsProperties.StateDescription, "Gelap"))
         compose.onNodeWithContentDescription("Thinking Mode").performClick()
         compose.onNodeWithText("Mod dipilih").assertExists()
-        compose.onNodeWithText("Gelap",substring=false).assertExists()
+        compose.onAllNodesWithText("Gelap",substring=false).assertCountEquals(2)
     }
 
     @Test fun composerRemainsFocusableAndPortalHidesExperimentalEngines() {
