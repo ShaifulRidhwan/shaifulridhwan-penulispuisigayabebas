@@ -66,6 +66,11 @@ test("PDF text reader and compact composer protect user consent",()=>{
  assert.ok(reader.includes('isEvalSupported:false'));
  assert.ok(reader.includes('await page.getTextContent('));
  assert.ok(css.includes('#docStatus[data-state="ready"]'));
- assert.ok(backend.includes('const textOnly=media.length===0'));
+ // Inline media and signed Gemini Files are both private multimodal data.
+ // No untrusted text fallback may claim to have read either attachment.
+ assert.ok(backend.includes('const textOnly=!hasMedia'));
+ assert.ok(backend.includes('LargeUpload.parseReceipts(payload.fileUploads)'));
+ assert.ok(backend.includes('if(fileParts.length)return null'));
+
  assert.ok(backend.includes('payload.contextFallback===true'));
 });

@@ -50,5 +50,7 @@ test("chapter buttons do not use submit, retries, quota or API calls",()=>{
 
 test("normal free typing cannot accidentally trigger the static server journey",()=>{
  const server=fs.readFileSync(path.join(__dirname,"../netlify/functions/bilik-antara.js"),"utf8");
- assert.ok(server.includes("payload.journeyStep===true&&!media.length&&!documentText"));
+ // Inline and signed Gemini Files must both exclude prewritten journey replies.
+ assert.ok(server.includes("payload.journeyStep===true&&!hasMedia&&!documentText"));
+ assert.ok(server.includes("const hasMedia=media.length>0||fileParts.length>0;"));
 });

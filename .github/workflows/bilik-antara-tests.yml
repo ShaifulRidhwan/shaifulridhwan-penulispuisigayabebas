@@ -65,6 +65,9 @@ jobs:
           node --check netlify/functions/aksara-provider-router.js
           node --check netlify/functions/lib/aksara-transport.js
           node --check netlify/functions/bilik-antara.js
+          node --check netlify/functions/aksara-large-upload.js
+          node --check netlify/functions/lib/aksara-large-upload.js
+          node --test tests/aksara-large-upload.test.cjs
           node --check netlify/functions/bilik-antara-live-token.js
           node --check bilik-antara-voice.js
           node --check bilik-antara-video.js
