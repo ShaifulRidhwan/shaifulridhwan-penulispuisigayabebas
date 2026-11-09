@@ -6,6 +6,7 @@ import my.aksara.nativeapp.core.network.*
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.*
 import org.json.JSONObject
+import org.json.JSONArray
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -71,6 +72,36 @@ class ChatApiTest {
         assertEquals("no_external_evidence",noEvidence.evidenceLevel)
         assertTrue(noEvidence.toolsUsed.isEmpty())
     }
+    @Test fun actualImageVideoAndAudioAttachmentsReachChatBackend()=runBlocking {
+        MockWebServer().use { server ->
+            server.enqueue(MockResponse().setResponseCode(200)
+                .setHeader("Content-Type","application/json")
+                .setBody("""{"reply":"Lampiran diterima","provider":"gemini","sources":[]}"""))
+            server.start()
+            val media=JSONArray()
+                .put(JSONObject().put("name","foto.jpg").put("mimeType","image/jpeg").put("data","AQID"))
+                .put(JSONObject().put("name","klip.mp4").put("mimeType","video/mp4").put("data","BAUG"))
+                .put(JSONObject().put("name","suara.mp3").put("mimeType","audio/mpeg").put("data","BwgJ"))
+            val request=JSONObject()
+                .put("question","Sila analisis kandungan lampiran ini.")
+                .put("media",media)
+            val events=ChatApi(server.url("/").toString().removeSuffix("/")).chat(request).toList()
+            assertEquals("Lampiran diterima",(events.last() as ChatEvent.Done).reply)
+            assertEquals(1,server.requestCount)
+            val received=server.takeRequest()
+            assertEquals(BackendRoutes.STREAM,received.path)
+            val body=JSONObject(received.body.readUtf8())
+            assertEquals("Sila analisis kandungan lampiran ini.",body.getString("question"))
+            val sent=body.getJSONArray("media")
+            assertEquals(3,sent.length())
+            assertEquals("image/jpeg",sent.getJSONObject(0).getString("mimeType"))
+            assertEquals("AQID",sent.getJSONObject(0).getString("data"))
+            assertEquals("video/mp4",sent.getJSONObject(1).getString("mimeType"))
+            assertEquals("BAUG",sent.getJSONObject(1).getString("data"))
+            assertEquals("audio/mpeg",sent.getJSONObject(2).getString("mimeType"))
+        }
+    }
+
     @Test fun successfulJsonResponseNeverDuplicatesInference()=runBlocking {
         MockWebServer().use { server ->
             server.enqueue(MockResponse().setResponseCode(200)
