@@ -22,3 +22,9 @@ Android `ChatViewModel.send` constructs its own history and summary via `Context
 | Provider transparency | handler returns provider/model/tools | `ChatApi`, `ChatViewModel` | Provider and metadata parsed; persistence and display across history require further review |
 
 The privacy change limits the main Chat request's `contextFallback` flag only. A mocked backend regression `node --test --test-name-pattern='private context without consent' scripts/test-aksara-reliability.cjs` passes against the existing backend contract; it is not an Android, live-provider, or summarization-path test. Real device, real tool invocation, voice audio, side-by-side intelligence evaluation and the complete capability audit remain open.
+
+## Follow-up checkpoint
+
+- `ContextPolicy.selectHistory` now attempts to retain the latest user URL for explicit URL follow-ups within the backend's 18-turn window. The full turn must fit the existing history budget; the JVM regression is pending CI and is not a live research test.
+- Android now explicitly denies summary fallback, and the branch's backend handler respects an explicit denial while preserving legacy behavior when omitted. Mocked tests cover both paths. **The Android app uses the production Netlify backend, which does not receive this branch change until separately deployed; the summary privacy fix is not effective in production yet.** Do not infer that no conversation history can be sent to another provider.
+- The experimental native image CI path filter no longer watches Chat, Voice, or brain assets. It still runs for native source, Studio and Gradle changes or manual dispatch. A workflow configuration change alone no longer triggers that job; use manual dispatch to validate it.

@@ -51,6 +51,21 @@ test("private context without consent and unsupported media never silently go to
  }
  assert.equal(backups,0);
 });
+test("summary fallback honors an explicit denial while legacy clients retain existing behavior",async t=>{
+ const handler=setup(t);let backups=0;
+ global.fetch=async url=>{
+  if(url.includes("googleapis"))return new Response("",{status:503});
+  backups++;return reply("Ringkasan ujian.");
+ };
+ const history=["satu","dua","tiga","empat"].map((content,i)=>({role:i%2?"assistant":"user",content}));
+ const denied=await handler(event({summarize:true,contextFallback:false,history}));
+ assert.equal(denied.statusCode,502);
+ assert.equal(backups,0);
+ const legacy=await handler(event({summarize:true,history}));
+ assert.equal(legacy.statusCode,200);
+ assert.equal(JSON.parse(legacy.body).summary,"Ringkasan ujian.");
+ assert.equal(backups,1);
+});
 test("probe distinguishes configuration from a successful model call",async t=>{
  const handler=setup(t);global.fetch=()=>{throw Error("Probe must not make an inference call");};
  const r=JSON.parse((await handler(event({probe:true}))).body);assert.equal(r.connectionState,"configured");assert.equal(r.geminiVerified,false);

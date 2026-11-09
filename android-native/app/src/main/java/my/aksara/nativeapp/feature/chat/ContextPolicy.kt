@@ -26,6 +26,17 @@ object ContextPolicy {
         }
         val recentStart=(rows.size-7).coerceAtLeast(0)
         for(i in rows.lastIndex downTo recentStart)include(i)
+        // The backend resolves URL follow-ups from recent user turns. Preserve the
+        // referenced turn when relevance scoring would otherwise drop it.
+        val followUpUrl=Regex("(?:\\b(?:buka|baca|lawat|layari|melayari|masuk|tengok|lihat|review|semak|audit|periksa|analisis|check)\\b.{0,55}\\b(?:web|website|laman|link|pautan|url)\\b|\\b(?:web|website|laman|link|pautan|url)\\b.{0,35}\\b(?:tadi|itu|tu|tersebut)\\b|^(?:review|audit|buka|baca|masuk|semak|tengok|lihat)\\s+(?:yang\\s+)?(?:tadi|tu|itu)\\b)",RegexOption.IGNORE_CASE)
+        val denied=Regex("\\b(?:jangan|tak\\s+(?:nak|perlu)|tidak\\s+(?:mahu|perlu)|don't|never)\\b",RegexOption.IGNORE_CASE)
+        val url=Regex("https?://[^\\s<>\"']+",RegexOption.IGNORE_CASE)
+        val q=question.trim()
+        if(q.length in 3..180 && !denied.containsMatchIn(q) && !url.containsMatchIn(q) && followUpUrl.containsMatchIn(q)) {
+            val index=(rows.lastIndex downTo (rows.size-18).coerceAtLeast(0))
+                .firstOrNull { rows[it].role=="user" && url.containsMatchIn(rows[it].text) }
+            if(index!=null) include(index)
+        }
         val query=tokens(question)
         val followUp=Regex("^(lagi|teruskan|sambung|yang tadi|yang tu|itu|dia|kenapa|bukan tu|pastu|lepas tu|jadi|macam mana|okay|ya)\\b",RegexOption.IGNORE_CASE)
             .containsMatchIn(question.trim())

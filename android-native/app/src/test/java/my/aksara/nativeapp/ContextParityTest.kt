@@ -20,6 +20,13 @@ class ContextParityTest {
         assertNull(ContextPolicy.summaryWindow(26,18))
         assertEquals(18..25,ContextPolicy.summaryWindow(38,18))
     }
+    @Test fun preservesTheRecentUserUrlForAWebFollowUp() {
+        val history=listOf(row("url","user","Ini rujukan https://example.org/page")) +
+            (1..12).map { row("$it",if(it%2==0)"assistant" else "user","Perbualan lain nombor $it") }
+        assertTrue(ContextPolicy.selectHistory(history,"Buka link tadi").any { it.id=="url" })
+        assertFalse(ContextPolicy.selectHistory(history,"Jangan buka link tadi").any { it.id=="url" })
+        assertFalse(ContextPolicy.selectHistory(history,"Terangkan perkara lain").any { it.id=="url" })
+    }
     @Test fun memorySelectionRemainsEmptyWhenNoSavedNotes() {
         assertEquals("",ContextPolicy.selectMemory("","apa itu"))
         val long=(1..100).joinToString("\n") { if(it==50)"Kekalkan Bahasa Melayu Malaysia santai." else "Nota topik tertentu "+it }

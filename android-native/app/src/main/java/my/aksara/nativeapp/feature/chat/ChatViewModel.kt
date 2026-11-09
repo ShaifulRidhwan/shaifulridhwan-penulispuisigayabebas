@@ -127,6 +127,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     if (segment.size >= 4) {
                         try {
                             val body = JSONObject().put("summarize", true).put("summary", savedContext.summary)
+                                .put("contextFallback", false)
                                 .put("history", JSONArray().apply { segment.forEach {
                                     put(JSONObject().put("role", it.role).put("content", it.text))
                                 } })
