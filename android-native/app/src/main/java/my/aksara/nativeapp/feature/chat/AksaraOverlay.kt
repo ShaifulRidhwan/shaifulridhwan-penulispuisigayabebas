@@ -1,5 +1,8 @@
 package my.aksara.nativeapp.feature.chat
 
+import android.content.Intent
+import android.net.Uri
+
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,11 +37,19 @@ import my.aksara.nativeapp.feature.tools.*
     onSaveDraft:suspend(String)->Boolean={false},
     onRemoveDraft:suspend(String)->Boolean={false},
     onUseDraft:(String)->Unit={},
-    onEraseLocal:suspend()->Boolean={false}) {
+    onEraseLocal:suspend()->Boolean={false},
+    onJumpToMessage:(String)->Unit={}) {
     // Android Lite: preserve the engines on disk, but expose no inactive entry points.
     if(kind=="code" || kind=="terminal" || kind=="engines") return
     if(kind=="voice"){VoiceContent(onClose,state.mode,onMode,state.messages,state.memoryEnabled,state.memoryNotes,onVoiceTurns);return}
     if(kind=="voice-fixture"){VoiceScreen(VoiceState(phase="preview"),onClose,preview=true);return}
+    if(kind=="search-hub") {
+        AksaraSearchHub(state,onClose,onSettings={onNavigate("settings")},
+            onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,
+            onJumpToMessage=onJumpToMessage,onExportSessions=onExportSessions,
+            onImportSessions=onImportSessions)
+        return
+    }
     if(kind=="settings"){
         AksaraSettings(state,composerDraft,onClose,onRefresh,onMode,onMemory,
             onExportSessions,onImportSessions,onSaveDraft,onRemoveDraft,onUseDraft,
@@ -61,7 +72,7 @@ import my.aksara.nativeapp.feature.tools.*
             maxOf(73.dp,(24f+18.2f+4f+15.75f*lines).dp)
         }
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(Color(2,6,13,64)).clickable(onClick=onClose))
-        val height=when(kind){"response-details"->375.dp;"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(530.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
+        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(530.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal","portal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).clickable(enabled=false){},
@@ -83,7 +94,7 @@ import my.aksara.nativeapp.feature.tools.*
                         AksaraButton("Aktifkan Mikrofon",{onNavigate("voice")},Modifier.weight(.63f))
                     }
                 } else {
-                    val title=when(kind){"response-details"->"Butiran Jawapan";"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Ciri & Fungsi";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";"studio"->"Studio Antara";"library"->"Perpustakaan AKSARA";"novel"->"Baca Novel";"security"->"Security Lab";"metrics"->"Prestasi A.I."; "engines"->"Native Engines";else->kind}
+                    val title=when(kind){"external-home"->"Buka Laman Utama?";"response-details"->"Butiran Jawapan";"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Ciri & Fungsi";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";"studio"->"Studio Antara";"library"->"Perpustakaan AKSARA";"novel"->"Baca Novel";"security"->"Security Lab";"metrics"->"Prestasi A.I."; "engines"->"Native Engines";else->kind}
                     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
                             AksaraText(title,size=16f,line=20.8f,weight=700,tracking=.4f)
@@ -93,6 +104,24 @@ import my.aksara.nativeapp.feature.tools.*
                         AksaraButton("×",onClose,Modifier.width(36.dp),size=22f,height=37.dp,radius=10.dp)
                     }
                     when(kind) {
+                        "external-home" -> {
+                            val context=LocalContext.current
+                            Spacer(Modifier.height(15.dp))
+                            AksaraText("Anda akan dibawa keluar dari aplikasi Aksara A.I. ke laman web utama Shaiful Ridhwan.",
+                                size=13f,line=20f,color=AksaraColors.text)
+                            Spacer(Modifier.height(18.dp))
+                            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+                                AksaraButton("Batal",onClose,Modifier.weight(1f),height=42.dp)
+                                AksaraButton("Buka Laman",{
+                                    runCatching {
+                                        context.startActivity(Intent(Intent.ACTION_VIEW,
+                                            Uri.parse("https://shaifulridhwan-penulispuisigayabebas.netlify.app/")))
+                                    }.onSuccess { onClose() }.onFailure {
+                                        notice="Pelayar tidak tersedia pada peranti."
+                                    }
+                                },Modifier.weight(1f),height=42.dp)
+                            }
+                        }
                         "response-details" -> {
                             Spacer(Modifier.height(14.dp))
                             AksaraText("Metadata yang dilaporkan backend untuk jawapan terakhir dalam sesi aktif. Ini bukan bukti ketepatan setiap dakwaan.",size=11.5f,line=18f,color=AksaraColors.muted)
@@ -143,9 +172,14 @@ import my.aksara.nativeapp.feature.tools.*
                         "engines" -> AdvancedEnginesContent()
                         "portal" -> {
                             Spacer(Modifier.height(29.dp))
-                            listOf(Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","library"),Triple("Prestasi A.I","Respons, provider dan kesihatan storan","metrics"),Triple("Sesi & Sejarah","Perbualan, carian dan arkib JSON","sessions"),
-                                Triple("Tetapan Aksara A.I.","Kecerdasan, Voice, privasi dan diagnostik","settings")).forEach { (name,desc,route) ->
-                                FeatureRow(name,desc,"book") {onNavigate(route)};Spacer(Modifier.height(9.dp))
+                            listOf(
+                                Triple("Laman Utama","Laman web rasmi Shaiful Ridhwan","external-home"),
+                                Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),
+                                Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","library")
+                            ).forEach { (name,desc,route) ->
+                                val icon=when(route) {"external-home"->"home";"studio"->"image";else->"novel"}
+                                FeatureRow(name,desc,icon) {onNavigate(route)}
+                                Spacer(Modifier.height(9.dp))
                             }
                             
                         }
