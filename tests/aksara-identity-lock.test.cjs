@@ -63,7 +63,8 @@ test("P0–P2 extend task handling without replacing existing provider personali
  assert.ok(source.includes("systemPrefix:personality"),"Fallback receives identical personality prefix");
  assert.ok(source.includes("const baseSystem=personality+"),"Primary model receives identity personality");
  assert.ok(source.includes('const voiceSystemBase=Brain.CORE+'),"Voice keeps shared identity");
- assert.ok(source.includes('const identityReply=(!media.length&&!documentText)?Identity.answerIdentity(question):null'));
+ assert.ok(source.includes('const identityReply=(!hasMedia&&!documentText)?Identity.answerIdentity(question):null'));
+ assert.ok(source.includes('const hasMedia=media.length>0||fileParts.length>0;'));
  assert.ok(source.includes('if(identityReply&&thoughtMode!=="gelap")'));
  assert.ok(source.includes("const darkIdentity=thoughtMode==="));
  assert.ok(source.includes('outputFormat:Structured.wantsJson(question)?"json":undefined'));
