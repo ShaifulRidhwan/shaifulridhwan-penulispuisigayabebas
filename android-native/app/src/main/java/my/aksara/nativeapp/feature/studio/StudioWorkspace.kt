@@ -167,6 +167,8 @@ fun StudioContent() {
     var job by remember{mutableStateOf<Job?>(null)}
     var runningEngine by remember{mutableStateOf<StudioEngine?>(null)}
     var downloadJob by remember{mutableStateOf<Job?>(null)}
+    var probeJob by remember{mutableStateOf<Job?>(null)}
+    var loadVerified by remember{mutableStateOf(false)}
     var downloaded by remember{mutableLongStateOf(0L)}
     var downloadState by remember{mutableStateOf("")}
     var enhancedDraft by remember{mutableStateOf<String?>(null)}
@@ -187,7 +189,7 @@ fun StudioContent() {
     }
     DisposableEffect(Unit){onDispose{
         if (runningEngine == StudioEngine.LOCAL) localRuntime.cancel()
-        job?.cancel();downloadJob?.cancel();enhancementJob?.cancel()
+        job?.cancel();downloadJob?.cancel();enhancementJob?.cancel();probeJob?.cancel()
     }}
 
     fun generate(variation:Boolean=false,replay:StudioPreview?=null) {
@@ -259,6 +261,7 @@ fun StudioContent() {
             try{
                 models.import(uri){done,_->downloaded=done}
                 localVerified=false
+                loadVerified=false
                 downloadState="Model sah dipasang. Sahkan runtime sebelum menjana."
             }catch(e:Exception){downloadState=e.message ?: "Import gagal."}
         }
@@ -327,7 +330,7 @@ fun StudioContent() {
                     AksaraButton("Pasang model",{
                         if(downloadJob?.isActive!=true) downloadJob=scope.launch {
                             downloadState="Sedang memuat turun…"
-                            try {models.download {done,_->downloaded=done};downloadState="Model disahkan dan dipasang."}
+                            try {models.download {done,_->downloaded=done};localVerified=false;loadVerified=false;downloadState="Model disahkan dan dipasang."}
                             catch(_:CancellationException){downloadState="Muat turun dihentikan. Fail separa boleh disambung."}
                             catch(e:Exception){downloadState=e.message ?: "Muat turun gagal."}
                         }
@@ -352,7 +355,26 @@ fun StudioContent() {
                     },Modifier.weight(1f),size=10f,height=38.dp)
                     AksaraButton("Buang model",{confirmRemoveModel=true},Modifier.weight(1f),size=10f,height=38.dp)
                 }
-                if(localVerified)AksaraText("Integriti disahkan. Inference masih memerlukan ujian sebenar.",
+                Spacer(Modifier.height(6.dp))
+                AksaraButton(if(probeJob?.isActive==true)"Menguji pemuatan tensor…" else "Uji pemuatan model sebenar", {
+                    if(probeJob?.isActive!=true && job?.isActive!=true) probeJob=scope.launch {
+                        message="Menyemak SHA-256 dan memuat model sebenar melalui JNI…"
+                        loadVerified=false
+                        try {
+                            check(models.verify()) { "SDT_MODEL_CHECKSUM: Fail model tidak sah." }
+                            val path=models.modelPath() ?: error("Model tidak tersedia.")
+                            val version=localRuntime.probe(path)
+                            localVerified=true
+                            loadVerified=true
+                            message="Native model initialization lulus ($version). Inferens imej offline BELUM disahkan."
+                        } catch(_:CancellationException) { message="Ujian pemuatan dibatalkan." }
+                        catch(e:Exception) { message=e.message ?: "Gagal memuat model native." }
+                    }
+                },Modifier.fillMaxWidth(),size=10.5f,height=39.dp,
+                    enabled=probeJob?.isActive!=true && job?.isActive!=true)
+                if(localVerified)AksaraText(
+                    if(loadVerified)"Tensor berjaya dimuat; penjanaan imej masih perlu diuji."
+                    else "SHA-256 sah; pemuatan tensor dan inferens belum disahkan.",
                     size=10f,color=AksaraColors.muted)
             }
             AksaraButton("Lihat keperluan peranti",{requirementsVisible=!requirementsVisible},
@@ -457,7 +479,7 @@ fun StudioContent() {
         Spacer(Modifier.height(12.dp))
         AksaraButton(if(job?.isActive==true)"Sedang menjana…" else "Jana Imej",
             {generate()},Modifier.fillMaxWidth(),height=47.dp,size=13f,
-            enabled=job?.isActive!=true && prompt.trim().length>=4)
+            enabled=job?.isActive!=true && probeJob?.isActive!=true && prompt.trim().length>=4)
         if(job?.isActive==true) {
             Spacer(Modifier.height(6.dp))
             if(runningEngine==StudioEngine.CLOUD)
@@ -598,7 +620,7 @@ fun StudioContent() {
     },{confirmClear=false})
     if(confirmRemoveModel)StudioConfirm("Buang hanya model SD-Turbo dalam storan aplikasi?",{
         confirmRemoveModel=false
-        scope.launch{models.remove();localVerified=false;message="Model tempatan dibuang. Sejarah dikekalkan."}
+        scope.launch{models.remove();localVerified=false;loadVerified=false;message="Model tempatan dibuang. Sejarah dikekalkan."}
     },{confirmRemoveModel=false})
     if(showViewer)preview?.let{StudioViewer(it.bitmap){showViewer=false}}
     Spacer(Modifier.height(14.dp))
