@@ -35,7 +35,7 @@ class AttributionAndLiteUiTest {
         var submitted = ""
         compose.setContent {
             AksaraScreen(ChatState(loaded = true),attachmentName = "gambar.jpg",
-                onSend = { submitted = it })
+                onSend = { submitted = it; true })
         }
         compose.onNodeWithContentDescription("Hantar soalan").assertIsEnabled().performClick()
         compose.runOnIdle { assertEquals("Sila analisis kandungan lampiran ini.",submitted) }
