@@ -313,7 +313,7 @@ fun StudioContent() {
         StudioSectionHeader("Enjin Penjanaan",
             "Cloud FLUX tersedia · Local hanya jika runtime dipasang")
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-            AksaraButton("✓ Cloud FLUX",
+            AksaraButton((if(engine==StudioEngine.CLOUD)"✓ " else "")+"Cloud FLUX",
                 {engineName=StudioEngine.CLOUD.name},Modifier.weight(1f),size=11f,height=44.dp,
                 contentColor=if(engine==StudioEngine.CLOUD)AksaraColors.gold else AksaraColors.text)
             AksaraButton(if(localRuntimeReady)"Local · SD-Turbo" else "Local · Tiada runtime",
