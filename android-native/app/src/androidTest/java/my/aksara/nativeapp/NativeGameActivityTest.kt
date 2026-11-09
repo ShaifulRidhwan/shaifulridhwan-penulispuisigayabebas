@@ -88,6 +88,27 @@ class NativeGameActivityTest {
         send(MotionEvent.ACTION_CANCEL,listOf(0),true)
         js(a,"document.querySelector('#start').click()")
     }
+    @Test fun audioFocusInterruptionPausesWithoutLosingMatch() {
+        ActivityScenario.launch<GameActivity>(Intent(instrument.targetContext,GameActivity::class.java)).use { scenario ->
+            lateinit var activity:GameActivity
+            scenario.onActivity{activity=it}
+            waitJs(activity,"!!window.gameDiagnostics && gameDiagnostics.ready")
+            js(activity,"document.querySelector('#start').click()")
+            waitJs(activity,"!paused && audioAllowed")
+            val before=js(activity,"match.round").toInt()
+            val manager=activity.getSystemService(android.media.AudioManager::class.java)
+            val interruption=android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                .setAudioAttributes(android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_MEDIA).build())
+                .setOnAudioFocusChangeListener { }.build()
+            instrument.runOnMainSync{assertEquals(android.media.AudioManager.AUDIOFOCUS_REQUEST_GRANTED,manager.requestAudioFocus(interruption))}
+            try {
+                waitJs(activity,"paused && controls.pointers.size===0 && (!audio || audio.state==='suspended')")
+                assertEquals(before,js(activity,"match.round").toInt())
+            } finally {manager.abandonAudioFocusRequest(interruption)}
+            js(activity,"document.querySelector('#start').click()")
+            waitJs(activity,"!paused && audioAllowed")
+        }
+    }
     @Test fun fullscreenAspectRatioMatrix() {
         val device=UiDevice.getInstance(instrument)
         val overlays=device.executeShellCommand("cmd overlay list --user 0")
