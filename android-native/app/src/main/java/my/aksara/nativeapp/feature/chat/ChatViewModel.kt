@@ -21,6 +21,7 @@ import java.util.UUID
 data class ChatState(val messages: List<Message> = emptyList(), val archive: List<Message> = emptyList(), val busy: Boolean = false,
     val error: String? = null, val providers: List<Pair<String, String>> = emptyList(), val providerDetails: Map<String, String> = emptyMap(), val sessionStarts: List<String> = emptyList(), val mode: String = "cahaya", val loaded: Boolean = false, val nextJourney: String? = null,
     val memoryEnabled: Boolean = false, val memoryNotes: String = "", val summaryStatus: String = "not_requested",
+    val resumedFromHistory: Boolean = false,
     val lastProvider: String = "", val lastModel: String = "", val lastResearchStatus: String = "", val lastToolsUsed: List<String> = emptyList(),
     val lastEvidenceLevel: String = "not_checked")
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
@@ -74,7 +75,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             if (messages.isEmpty()) return@launch
             state.first { it.loaded }
             mutable.update { it.copy(messages = it.messages + messages,
-                sessionStarts = if (it.messages.isEmpty()) (it.sessionStarts + messages.first().id).distinct() else it.sessionStarts) }
+                sessionStarts = if (it.messages.isEmpty() || it.resumedFromHistory) (it.sessionStarts + messages.first().id).distinct() else it.sessionStarts,
+                resumedFromHistory = false) }
             try { withContext(NonCancellable) { persistArchive() } }
             catch (_: Exception) { mutable.update { it.copy(error = "Transkrip suara belum berjaya disimpan. Teks kekal di skrin.") } }
         }
@@ -92,16 +94,16 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
     fun dismissError() { mutable.update { it.copy(error = null) } }
-    fun restore() { if (!state.value.busy) mutable.update { it.copy(messages = it.archive) } }
+    fun restore() { if (!state.value.busy) mutable.update { it.copy(messages = it.archive, resumedFromHistory = false) } }
     fun restoreSession(startId: String) {
         if (state.value.busy) return
         val selected = groupSessions(state.value.archive, state.value.sessionStarts)
             .firstOrNull { it.startId == startId } ?: return
-        mutable.update { it.copy(messages = selected.messages, nextJourney = null, error = null) }
+        mutable.update { it.copy(messages = selected.messages, nextJourney = null, error = null, resumedFromHistory = true) }
     }
     fun clearScreen() { if (!state.value.busy) {
         savedContext = savedContext.copy(sessionFirstId = "", summary = "", summarizedThrough = 0, thoughtLedger = emptyList())
-        mutable.update { it.copy(messages = emptyList(), summaryStatus = "not_requested") }
+        mutable.update { it.copy(messages = emptyList(), summaryStatus = "not_requested", resumedFromHistory = false) }
         viewModelScope.launch { runCatching { persistContext() } }
     } }
     fun refreshProviders() = viewModelScope.launch {
@@ -140,7 +142,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             val user=Message(UUID.randomUUID().toString(),"user",row.getString("question"))
             val messages=prior+user+Message(UUID.randomUUID().toString(),"assistant",row.getString("answer"),provider="aksara_local")
             mutable.update {it.copy(messages=messages,
-                sessionStarts=if(prior.isEmpty()) (it.sessionStarts+user.id).distinct() else it.sessionStarts,
+                sessionStarts=if(prior.isEmpty() || it.resumedFromHistory) (it.sessionStarts+user.id).distinct() else it.sessionStarts,
+                resumedFromHistory=false,
                 nextJourney=rows.optJSONObject(i+1)?.optString("question"))}
             if(storageReadable)try{persistArchive()}catch(_:Exception){mutable.update{it.copy(error="Sesi belum berjaya disimpan.")}}
         }
@@ -152,8 +155,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         val user = Message(UUID.randomUUID().toString(), "user", question)
         val assistant = Message(UUID.randomUUID().toString(), "assistant", "", incomplete = true)
         mutable.update { it.copy(messages = previous + user + assistant,
-            sessionStarts = if (previous.isEmpty()) (it.sessionStarts + user.id).distinct() else it.sessionStarts,
-            busy = true, error = null, nextJourney = null) }
+            sessionStarts = if (previous.isEmpty() || it.resumedFromHistory) (it.sessionStarts + user.id).distinct() else it.sessionStarts,
+            resumedFromHistory = false, busy = true, error = null, nextJourney = null) }
         requestJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
                 // Persist the user's prompt before any summarization or inference.
