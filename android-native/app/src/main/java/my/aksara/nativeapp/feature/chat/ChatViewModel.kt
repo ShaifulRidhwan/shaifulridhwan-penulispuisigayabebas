@@ -325,5 +325,27 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** The user explicitly exports plain JSON; never include encrypted memory or tokens. */
+    fun exportSessions(): String {
+        check(state.value.loaded && !state.value.busy && storageReadable) { "Arkib belum tersedia." }
+        return SessionTransferCodec.encode(
+            mergeSessionArchive(state.value.archive,state.value.messages),state.value.sessionStarts)
+    }
+
+    /** Validate before modifying any encrypted file; preserve original archive on failure. */
+    suspend fun importSessions(content: String): Int = withContext(Dispatchers.Main.immediate) {
+        check(state.value.loaded && !state.value.busy && storageReadable) { "Arkib belum tersedia." }
+        val incoming=withContext(Dispatchers.Default) { SessionTransferCodec.decode(content) }
+        archiveMutex.withLock {
+            val current=state.value
+            check(!current.busy && storageReadable) { "Tunggu sehingga respons tamat." }
+            val combined=mergeSessionArchive(current.archive,current.messages)+incoming.messages
+            val starts=(current.sessionStarts+incoming.sessionStarts).distinct()
+            store.save(combined,starts)
+            mutable.update { it.copy(archive=combined,sessionStarts=starts,error=null) }
+        }
+        incoming.sessionStarts.size
+    }
+
     fun stop() { requestJob?.cancel() }
 }

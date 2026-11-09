@@ -32,10 +32,10 @@ class ChatBranchingTest {
             m("3","user","Analisis\n\n[Lampiran: foto.jpg]"),
             m("4","assistant","Analisis gambar."))
         assertEquals("1",ChatBranching.questionForRegeneration(source,"2")?.id)
-        assertEquals("1",ChatBranching.questionForRegeneration(source,"4")?.id)
+        assertNull(ChatBranching.questionForRegeneration(source,"4"))
         assertFalse(ChatBranching.editable(source[2]))
         assertNull(ChatBranching.questionForRegeneration(source,"3"))
-        assertNull(ChatBranching.questionForRegeneration(source+"".let{ listOf(m("5","assistant","Separuh",true)) },"5"))
+        assertNull(ChatBranching.questionForRegeneration(source + m("5","assistant","Separuh",true),"5"))
     }
 
     @Test fun forkRejectsStaleIdsAndPendingResponses() {

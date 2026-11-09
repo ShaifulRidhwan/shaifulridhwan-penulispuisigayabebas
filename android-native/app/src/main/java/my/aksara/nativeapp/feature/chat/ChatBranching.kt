@@ -30,6 +30,7 @@ internal object ChatBranching {
         if (answerIndex <= 0) return null
         val answer = conversation[answerIndex]
         if (answer.role != "assistant" || answer.incomplete) return null
-        return conversation.subList(0, answerIndex).lastOrNull { editable(it) }
+        val prompt = conversation.subList(0, answerIndex).lastOrNull { it.role == "user" }
+        return prompt?.takeIf(::editable)
     }
 }

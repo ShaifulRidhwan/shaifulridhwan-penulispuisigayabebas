@@ -62,6 +62,36 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var uploadJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
     val uploader = remember(context) { LargeUploadClient() }
+    val exportPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(SessionTransferCodec.MIME)) { uri ->
+        if(uri!=null) scope.launch {
+            try {
+                val plain=vm.exportSessions()
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    context.contentResolver.openOutputStream(uri,"wt")?.use {
+                        it.write(plain.toByteArray(Charsets.UTF_8))
+                    } ?: error("Fail eksport tidak boleh dibuka.")
+                }
+                android.widget.Toast.makeText(context,"Arkib JSON dieksport. Simpan fail ini secara peribadi.",android.widget.Toast.LENGTH_LONG).show()
+            } catch(e:Exception) { attachmentError="Eksport gagal: "+(e.message?:"cuba lagi") }
+        }
+    }
+    val importPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()) { uri ->
+        if(uri!=null) scope.launch {
+            try {
+                val data=kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        val bytes=stream.readNBytes(SessionTransferCodec.MAX_BYTES+1)
+                        require(bytes.size<=SessionTransferCodec.MAX_BYTES) { "Fail import melebihi 12 MB." }
+                        String(bytes,Charsets.UTF_8)
+                    } ?: error("Fail import tidak boleh dibuka.")
+                }
+                val count=vm.importSessions(data)
+                android.widget.Toast.makeText(context,"$count sesi berjaya diimport. Buka Arkib Sesi.",android.widget.Toast.LENGTH_LONG).show()
+            } catch(e:Exception) { attachmentError="Import gagal: "+(e.message?:"format tidak sah") }
+        }
+    }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if(uris.isNotEmpty()&&!attachmentLoading) {
             uploadJob=scope.launch {
@@ -122,6 +152,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         }
         accepted
     }, onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
+        onExportSessions = { exportPicker.launch("aksara-sesi.json") },
+        onImportSessions = { importPicker.launch(arrayOf("application/json","text/plain")) },
         onEditAndSend = vm::forkAndSendFrom, onBranch = vm::forkFrom, onRegenerate = vm::regenerateFrom,
         onMemory = vm::setMemory, onVoiceTurns = vm::acceptVoiceTurns, onClearAttachment = {
             val selected=attachments
@@ -146,6 +178,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     uploadStatus: String? = null, onCancelUpload: ()->Unit = {},
     onEditAndSend: (String,String)->Boolean = {_,_->false},
     onBranch: (String)->Boolean = {false}, onRegenerate: (String)->Boolean = {false},
+    onExportSessions: ()->Unit = {}, onImportSessions: ()->Unit = {},
     fixedTimestamp: Long? = null, onVoiceTurns:(List<my.aksara.engine.voice.VoiceContextTurn>)->Unit = {}) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
@@ -293,7 +326,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                             val clipboard=context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                             clipboard.setPrimaryClip(ClipData.newPlainText("Aksara A.I.",message.text))
                                         },
-                                        onReuse={draft=it;editingId=null;autoFollow=true},
+                                        onReuse={draft=it.substringBefore("\n\n[Lampiran: ");editingId=null;autoFollow=true},
                                         onEdit=if(message.role=="user" && !message.incomplete &&
                                             !message.text.contains("[Lampiran: ") && !state.busy) ({
                                             editingId=message.id;draft=message.text;autoFollow=true
@@ -374,7 +407,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
             }
             if(overlay!=null) CompositionLocalProvider(LocalBackdrop provides scene) {
-                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question);Unit},onVoiceTurns=onVoiceTurns)
+                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question);Unit},onVoiceTurns=onVoiceTurns,
+                    onExportSessions=onExportSessions,onImportSessions=onImportSessions)
             }
         }
     }

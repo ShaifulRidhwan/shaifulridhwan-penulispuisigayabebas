@@ -28,7 +28,8 @@ import my.aksara.nativeapp.feature.tools.*
 
 @Composable fun AksaraOverlay(kind:String,state:ChatState,onClose:()->Unit,onNavigate:(String)->Unit,onRefresh:()->Unit,
     onMode:(String)->Unit,onRestore:()->Unit,onRestoreSession:(String)->Unit = {},onClear:()->Unit,onPickAttachment:(String)->Unit,onAsk:(String)->Unit,onMemory:(Boolean,String)->Unit={_,_->},
-    onVoiceTurns:(List<VoiceContextTurn>)->Unit={}) {
+    onVoiceTurns:(List<VoiceContextTurn>)->Unit={},
+    onExportSessions:()->Unit={},onImportSessions:()->Unit={}) {
     // Android Lite: preserve the engines on disk, but expose no inactive entry points.
     if(kind=="code" || kind=="terminal" || kind=="engines") return
     if(kind=="voice"){VoiceContent(onClose,state.mode,onMode,state.messages,state.memoryEnabled,state.memoryNotes,onVoiceTurns);return}
@@ -169,6 +170,13 @@ import my.aksara.nativeapp.feature.tools.*
                             var search by remember(kind) { mutableStateOf("") }
                             Spacer(Modifier.height(14.dp))
                             AksaraText(sessions.size.toString()+" sesi · "+state.archive.size+" mesej disulitkan pada peranti.",size=12f)
+                            Spacer(Modifier.height(8.dp))
+                            AksaraText("Import/eksport JSON mengandungi teks perbualan tanpa penyulitan. Simpan secara peribadi; lampiran asal dan memori tidak termasuk.",size=10f,color=AksaraColors.muted)
+                            Spacer(Modifier.height(8.dp))
+                            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                                AksaraButton("Eksport JSON",onExportSessions,Modifier.weight(1f),height=37.dp,size=10f)
+                                AksaraButton("Import JSON",onImportSessions,Modifier.weight(1f),height=37.dp,size=10f)
+                            }
                             Spacer(Modifier.height(12.dp))
                             AksaraGlassSurface(Modifier.fillMaxWidth().height(42.dp),radius=13.dp) {
                                 BasicTextField(search,{search=it.take(120)},Modifier.fillMaxSize().padding(11.dp),
