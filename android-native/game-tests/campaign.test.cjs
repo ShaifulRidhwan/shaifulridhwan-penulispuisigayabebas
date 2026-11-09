@@ -1,0 +1,4 @@
+const {test}=require('node:test'),assert=require('node:assert/strict');const C=require('../app/src/main/assets/game/campaign.js');
+test('save survives a fresh read and rejects corrupt JSON',()=>{const items=new Map(),storage={getItem:k=>items.get(k),setItem:(k,v)=>items.set(k,v)};const p=C.read(storage);p.xp=180;p.completed=[0,1];assert(C.write(storage,p));assert.deepEqual(C.read(storage),p);items.set('aksara-eclipse-v3','bad');assert.equal(C.read(storage).xp,0)});
+test('storage failure is reported, not claimed successful',()=>assert.equal(C.write({setItem(){throw Error('full')}},{}),false));
+test('three chapters include different viewpoints and final boss',()=>{assert.equal(C.chapters.length,3);assert.equal(C.chapters[1].hero,'gelap');assert(C.chapters[2].boss);for(const c of C.chapters){assert(c.lines.length>=3);assert(c.ending)}});
