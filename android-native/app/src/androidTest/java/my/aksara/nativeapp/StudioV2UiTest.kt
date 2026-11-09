@@ -22,7 +22,7 @@ class StudioV2UiTest {
             compose.onNodeWithText("Local · SD-Turbo").performClick()
             compose.onNodeWithText("SD-Turbo · Local Engine").assertExists()
         }
-        compose.onNodeWithText("✓ Cloud FLUX").performClick()
+        compose.onNodeWithText(if(unavailable)"✓ Cloud FLUX" else "Cloud FLUX").performClick()
         compose.onNodeWithText("Galeri").performClick()
         compose.onNodeWithText("Galeri Studio").assertExists()
         compose.onNodeWithText("Sejarah").performClick()
