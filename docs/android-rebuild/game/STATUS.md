@@ -15,3 +15,7 @@ Playwright Chromium: renderer, keyboard movement, simultaneous movement/attack t
 Voice brain source contract check passes. Existing Chat/Voice/Studio source code is preserved except for adding the game portal route. Android regression, instrumentation, performance and final-art identity checks remain required. Cloud executor has no `/dev/kvm`; no emulator pass is claimed. Do not merge this development PR until required validation and final assets are complete.
 
 Phaser license is bundled alongside the runtime. Runtime SHA256: e92ddef111ba42e92d316979c732311757093688ea1810591cb7aa2858eba7a7.
+
+## Local Android build result
+
+Recovered missing JDK compiler with a full JDK 17, used explicit Java proxy settings and the Cloud system CA trust store. `assembleDebug testDebugUnitTest` succeeded (3m11s). All 94 Android JVM unit tests passed, zero failures/errors/skips, including existing Chat, Voice and Studio contract tests. This is not a UI regression pass. Debug APK signature verification passed; ZIP inspection confirms all five game runtime/license files bundled. APK SHA256: `a324e7d847dc463ec018671e86d9ee613c3e9374460e153519d9d0b3f2cb43c8`. Session deliverable: `/workspace/deliverables/aksara-game-development-debug.apk`.
