@@ -7,8 +7,8 @@ class VoiceContextSyncTest {
     @Test fun onlyCompletedNonDriftedTurnsAreExported() {
         assertEquals(listOf(VoiceContextTurn("user", "Hai"), VoiceContextTurn("assistant", "Hai juga")),
             VoiceContextSync.completedTurns(" Hai ", "Hai juga", false))
-        assertEquals(listOf(VoiceContextTurn("user", "Sambung")),
-            VoiceContextSync.completedTurns("Sambung", "hola", true))
+        // Do not retain a malformed user turn after output-language drift.
+        assertTrue(VoiceContextSync.completedTurns("Sambung", "hola", true).isEmpty())
         assertTrue(VoiceContextSync.completedTurns("", "", false).isEmpty())
     }
     @Test fun overlappingFragmentsDoNotRepeatWords() {
