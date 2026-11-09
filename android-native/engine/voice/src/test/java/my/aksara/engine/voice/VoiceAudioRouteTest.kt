@@ -38,6 +38,23 @@ class VoiceAudioRouteTest {
             VoiceAudioRoute.preferredMicrophoneType(AudioDeviceInfo.TYPE_WIRED_HEADSET,
                 listOf(AudioDeviceInfo.TYPE_WIRED_HEADSET,AudioDeviceInfo.TYPE_BUILTIN_MIC)))
     }
+    @Test fun bluetoothMediaOutputCannotPassAsDuplex() {
+        val a2dp=AudioDeviceInfo.TYPE_BLUETOOTH_A2DP
+        val phone=AudioDeviceInfo.TYPE_BUILTIN_MIC
+        assertTrue(VoiceAudioRoute.mismatch(a2dp,phone))
+        assertNotNull(VoiceAudioRoute.observedWarning(null,phone,a2dp))
+        assertNotNull(VoiceAudioRoute.observedWarning(
+            AudioDeviceInfo.TYPE_BLUETOOTH_SCO,phone,AudioDeviceInfo.TYPE_BUILTIN_SPEAKER))
+        assertNotNull(VoiceAudioRoute.observedWarning(
+            AudioDeviceInfo.TYPE_BLUETOOTH_SCO,null,null))
+        assertNull(VoiceAudioRoute.observedWarning(AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
+            AudioDeviceInfo.TYPE_BLUETOOTH_SCO,AudioDeviceInfo.TYPE_BLUETOOTH_SCO))
+    }
+    @Test fun duplexHeadsetHasPriorityOverMediaOnlyWiredHeadphones() {
+        assertEquals(AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
+            VoiceAudioRoute.chooseType(listOf(AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+                AudioDeviceInfo.TYPE_BLUETOOTH_SCO),null))
+    }
     @Test fun unmatchedBluetoothMicrophoneRaisesTruthfulWarning() {
         assertTrue(VoiceAudioRoute.mismatch(AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
             AudioDeviceInfo.TYPE_BUILTIN_MIC))

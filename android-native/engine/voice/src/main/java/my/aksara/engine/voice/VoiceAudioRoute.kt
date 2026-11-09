@@ -19,8 +19,10 @@ object VoiceAudioRoute {
 
     fun chooseType(available: List<Int>, current: Int?): Int? {
         if (current != null && accessory(current) && current in available) return current
-        return available.firstOrNull { it in wired }
+        return available.firstOrNull { it == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
+                it == AudioDeviceInfo.TYPE_USB_HEADSET }
             ?: available.firstOrNull { it in wireless }
+            ?: available.firstOrNull { it in wired }
             ?: available.firstOrNull { it == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
             ?: available.firstOrNull { it == AudioDeviceInfo.TYPE_BUILTIN_EARPIECE }
     }
@@ -48,8 +50,26 @@ object VoiceAudioRoute {
     }
 
     fun mismatch(outputType: Int?, inputType: Int?): Boolean =
-        outputType != null && wireless(outputType) && inputType != null &&
-            inputType != AudioDeviceInfo.TYPE_BLUETOOTH_SCO &&
-            inputType != AudioDeviceInfo.TYPE_BLE_HEADSET &&
-            inputType != AudioDeviceInfo.TYPE_HEARING_AID
+        outputType != null && (wireless(outputType) ||
+            outputType == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP) && inputType != null &&
+            !wireless(inputType)
+
+    /** Compare observed capture/playback against the chosen communication accessory. */
+    fun observedWarning(selectedType: Int?, inputType: Int?, outputType: Int?): String? {
+        if (selectedType != null && wireless(selectedType)) {
+            if (outputType == null || inputType == null)
+                return "Laluan Bluetooth belum dapat disahkan pada input dan output."
+            if (!wireless(outputType))
+                return "Bluetooth dipilih tetapi suara sebenar masih keluar melalui peranti lain."
+            if (!wireless(inputType))
+                return "Suara melalui Bluetooth, tetapi mikrofon sebenar bukan mikrofon Bluetooth."
+        }
+        if (outputType == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP)
+            return "Bluetooth media digunakan tanpa laluan panggilan dua hala yang disahkan."
+        if (outputType != null && wireless(outputType) && inputType == null)
+            return "Output Bluetooth disahkan; mikrofon sebenar belum disahkan."
+        if (mismatch(outputType,inputType))
+            return "Audio keluar melalui Bluetooth, tetapi mikrofon masih pada peranti lain."
+        return null
+    }
 }
