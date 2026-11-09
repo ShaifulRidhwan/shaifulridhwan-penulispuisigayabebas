@@ -47,6 +47,9 @@ adb pull /sdcard/Android/data/my.aksara.nativeapp/files/game-auto.png "$out/andr
 adb pull /sdcard/Android/data/my.aksara.nativeapp/files/game-canvas.png "$out/android/" || true
 adb pull /sdcard/Android/data/my.aksara.nativeapp/files/game-auto-touch.png "$out/android/" || true
 adb pull /sdcard/Android/data/my.aksara.nativeapp/files/game-canvas-touch.png "$out/android/" || true
+for spec in 640x360 844x390 1080x486 1280x800; do
+  adb pull "/sdcard/Android/data/my.aksara.nativeapp/files/game-matrix-$spec.png" "$out/android/" || true
+done
 adb logcat -d -s AksaraGame > "$out/android/game-logcat.txt"
 cat "$out/android/game-logcat.txt"
 python3 - <<'PYSHOT'

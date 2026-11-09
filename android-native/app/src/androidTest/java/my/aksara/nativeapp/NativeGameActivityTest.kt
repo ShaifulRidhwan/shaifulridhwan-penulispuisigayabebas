@@ -88,6 +88,60 @@ class NativeGameActivityTest {
         send(MotionEvent.ACTION_CANCEL,listOf(0),true)
         js(a,"document.querySelector('#start').click()")
     }
+    @Test fun audioFocusInterruptionPausesWithoutLosingMatch() {
+        ActivityScenario.launch<GameActivity>(Intent(instrument.targetContext,GameActivity::class.java)).use { scenario ->
+            lateinit var activity:GameActivity
+            scenario.onActivity{activity=it}
+            waitJs(activity,"!!window.gameDiagnostics && gameDiagnostics.ready")
+            js(activity,"document.querySelector('#start').click()")
+            waitJs(activity,"!paused && audioAllowed")
+            val before=js(activity,"match.round").toInt()
+            val manager=activity.getSystemService(android.media.AudioManager::class.java)
+            val interruption=android.media.AudioFocusRequest.Builder(android.media.AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+                .setAudioAttributes(android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_MEDIA).build())
+                .setOnAudioFocusChangeListener { }.build()
+            instrument.runOnMainSync{assertEquals(android.media.AudioManager.AUDIOFOCUS_REQUEST_GRANTED,manager.requestAudioFocus(interruption))}
+            try {
+                waitJs(activity,"paused && controls.pointers.size===0 && (!audio || audio.state==='suspended')")
+                assertEquals(before,js(activity,"match.round").toInt())
+            } finally {manager.abandonAudioFocusRequest(interruption)}
+            js(activity,"document.querySelector('#start').click()")
+            waitJs(activity,"!paused && audioAllowed")
+        }
+    }
+    @Test fun fullscreenAspectRatioMatrix() {
+        val device=UiDevice.getInstance(instrument)
+        val overlays=device.executeShellCommand("cmd overlay list --user 0")
+        val cutout="com.android.internal.display.cutout.emulation.tall"
+        val gesture="com.android.internal.systemui.navbar.gestural"
+        val previousNavigation=overlays.lineSequence().firstOrNull{it.startsWith("[x]")&&it.contains("com.android.internal.systemui.navbar.")}?.substringAfter("[x] ")?.trim()
+        val cutoutWasEnabled=overlays.contains("[x] $cutout")
+        try {
+            device.executeShellCommand("cmd overlay enable --user 0 $cutout")
+            device.executeShellCommand("cmd overlay enable-exclusive --user 0 --category $gesture")
+            assertTrue("Cutout emulation must be active",device.executeShellCommand("cmd overlay list --user 0").contains("[x] $cutout"))
+            assertTrue("Gesture navigation must be active",device.executeShellCommand("cmd overlay list --user 0").contains("[x] $gesture"))
+            for(spec in listOf("640x360","844x390","1080x486","1280x800")) {
+                device.executeShellCommand("wm size $spec")
+                device.executeShellCommand("wm density 160")
+                ActivityScenario.launch<GameActivity>(Intent(instrument.targetContext,GameActivity::class.java)).use { scenario ->
+                    lateinit var activity:GameActivity
+                    scenario.onActivity{activity=it}
+                    waitJs(activity,"!!window.gameDiagnostics && gameDiagnostics.ready")
+                    waitJs(activity,"(()=>{const r=game.canvas.getBoundingClientRect();return Math.abs(r.width-innerWidth)<2&&Math.abs(r.height-innerHeight)<2&&Math.abs(r.x)<2&&Math.abs(r.y)<2})()")
+                    assertEquals("true",js(activity,"[...document.querySelectorAll('#actions button')].every(b=>{const r=b.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&r.width>=44&&r.height>=44})"))
+                    js(activity,"document.querySelector('#mode').value='training';document.querySelector('#start').click()")
+                    waitJs(activity,"match.roundState==='FIGHT'")
+                    heldJoystickMovement(activity)
+                    device.takeScreenshot(java.io.File(instrument.targetContext.getExternalFilesDir(null),"game-matrix-$spec.png"))
+                }
+            }
+        } finally {
+            device.executeShellCommand("wm size reset");device.executeShellCommand("wm density reset")
+            if(!cutoutWasEnabled)device.executeShellCommand("cmd overlay disable --user 0 $cutout")
+            if(previousNavigation!=null)device.executeShellCommand("cmd overlay enable-exclusive --user 0 --category $previousNavigation")
+        }
+    }
     @Test fun recreationRestoresPreferencesAndClearsInterruptedInput(){
         ActivityScenario.launch(MainActivity::class.java).use { main ->
             fun openMonitor()=instrument.addMonitor(GameActivity::class.java.name,null,false)
