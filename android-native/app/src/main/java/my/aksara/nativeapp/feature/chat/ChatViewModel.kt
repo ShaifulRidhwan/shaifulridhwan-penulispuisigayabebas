@@ -273,5 +273,57 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
         return true
     }
+    /** Edit creates a fork, never silently rewrites an already encrypted session. */
+    fun forkAndSendFrom(userId: String, revisedQuestion: String): Boolean {
+        val snapshot = state.value
+        val original = snapshot.messages.firstOrNull { it.id == userId } ?: return false
+        if (!snapshot.loaded || snapshot.busy || !storageReadable || !ChatBranching.editable(original)) {
+            mutable.update { it.copy(error = "Mesej ini tidak boleh diedit. Lampiran asal perlu dimuat naik semula.") }
+            return false
+        }
+        val question = revisedQuestion.trim()
+        if (question.isBlank()) return false
+        val prefix = ChatBranching.prefix(snapshot.messages, userId, includeSelected = false) ?: return false
+        openBranch(prefix)
+        return send(question)
+    }
+
+    /** Regeneration creates an independent answer to the original user question. */
+    fun regenerateFrom(answerId: String): Boolean {
+        val question = ChatBranching.questionForRegeneration(state.value.messages, answerId)
+            ?: return false
+        return forkAndSendFrom(question.id, question.text)
+    }
+
+    fun forkFrom(messageId: String): Boolean {
+        val snapshot = state.value
+        if (!snapshot.loaded || snapshot.busy || !storageReadable) return false
+        val copy = ChatBranching.prefix(snapshot.messages, messageId, includeSelected = true)
+            ?: return false
+        if (copy.isEmpty()) return false
+        openBranch(copy)
+        viewModelScope.launch {
+            try {
+                persistArchive()
+                persistContext()
+            } catch (_: Exception) {
+                mutable.update { it.copy(error = "Cabang baharu belum berjaya disimpan; teks masih ada di skrin.") }
+            }
+        }
+        return true
+    }
+
+    private fun openBranch(copied: List<Message>) {
+        activeAttachment = null
+        savedContext = savedContext.copy(sessionFirstId = "", summary = "",
+            summarizedThrough = 0, thoughtLedger = emptyList())
+        mutable.update {
+            it.copy(messages = copied,
+                sessionStarts = (it.sessionStarts + listOfNotNull(copied.firstOrNull()?.id)).distinct(),
+                resumedFromHistory = false, nextJourney = null,
+                summaryStatus = "not_requested", error = null)
+        }
+    }
+
     fun stop() { requestJob?.cancel() }
 }
