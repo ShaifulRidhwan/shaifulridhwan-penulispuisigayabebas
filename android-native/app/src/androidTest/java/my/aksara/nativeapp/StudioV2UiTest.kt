@@ -13,9 +13,16 @@ class StudioV2UiTest {
     @Test fun sharedEngineSwitchAndFourPagesWork() {
         compose.setContent { AksaraScreen(ChatState(loaded=true),initialOverlay="studio") }
         compose.onNodeWithText("STUDIO ANTARA  V2").assertExists()
-        compose.onNodeWithText("Local · SD-Turbo",substring=true).performClick()
-        compose.onNodeWithText("Runtime Local tidak dipakejkan dalam APK ini").assertExists()
-        compose.onNodeWithText("Cloud Engine",substring=true).performClick()
+        val unavailable = compose.onAllNodesWithText("Local · Tiada runtime")
+            .fetchSemanticsNodes().isNotEmpty()
+        if (unavailable) {
+            compose.onNodeWithText("Local · Tiada runtime").assertIsNotEnabled()
+            compose.onNodeWithText("Local belum tersedia",substring=true).assertExists()
+        } else {
+            compose.onNodeWithText("Local · SD-Turbo").performClick()
+            compose.onNodeWithText("SD-Turbo · Local Engine").assertExists()
+        }
+        compose.onNodeWithText("Cloud FLUX",substring=true).performClick()
         compose.onNodeWithText("Galeri").performClick()
         compose.onNodeWithText("Galeri Studio").assertExists()
         compose.onNodeWithText("Sejarah").performClick()
