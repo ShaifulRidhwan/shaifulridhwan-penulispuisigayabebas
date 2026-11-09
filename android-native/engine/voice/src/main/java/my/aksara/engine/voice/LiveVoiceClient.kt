@@ -192,6 +192,8 @@ class LiveVoiceClient(
                     override fun onMessage(webSocket: WebSocket, text: String) { consume(text, id) }
                     override fun onMessage(webSocket: WebSocket, bytes: okio.ByteString) { consume(bytes.utf8(), id) }
                     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                        synchronized(this@LiveVoiceClient) {
+                        if (!active(id)) return
                         val status = response?.code
                         if (isExtended && !preferStandardModel && (status == 400 || status == 404)) {
                             preferStandardModel = true
@@ -201,9 +203,11 @@ class LiveVoiceClient(
                             recover(id, "Gemini Live menolak akses atau model (HTTP " + status + ").", false)
                         } else recover(id, "Sambungan Voice terputus: " + (t.message ?: "transport"), true,
                             if (status == 429) VoiceRecoveryPolicy.retryAfterSeconds(response?.header("Retry-After"), 0L) else 0L)
+                        }
                     }
                     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
-                        if (code == 1000 && !active(id)) return
+                        synchronized(this@LiveVoiceClient) {
+                        if (!active(id)) return
                         val unsupportedExtended = isExtended && !preferStandardModel &&
                             !state.value.ready && code in setOf(1003, 1006, 1008, 1011)
                         if (unsupportedExtended) {
@@ -214,6 +218,7 @@ class LiveVoiceClient(
                             val staleHandle = code == 1008 && resumptionHandle.isNotBlank()
                             if (staleHandle) resumptionHandle = ""
                             recover(id, "Gemini Live menutup sambungan (" + code + ").", code != 1008 || staleHandle)
+                        }
                         }
                     }
                 })
@@ -237,7 +242,7 @@ class LiveVoiceClient(
 
     private data class TokenFailure(val status: Int, override val message: String, val retryAfter: Long) : IOException(message)
 
-    private fun consume(text: String, id: Int) {
+    @Synchronized private fun consume(text: String, id: Int) {
         if (!active(id)) return
         try {
             val data = JSONObject(text)
@@ -299,7 +304,7 @@ class LiveVoiceClient(
             val spoken = content.optJSONObject("outputTranscription")?.optString("text").orEmpty()
             if (spoken.isNotBlank())
                 outgoingTranscript = VoiceContextSync.mergeTranscript(outgoingTranscript, spoken)
-            if (!foreignLanguageRequested && spoken.isNotBlank() && suspectSpanish(spoken)) languageDrift = true
+            if (!foreignLanguageRequested && spoken.isNotBlank() && suspectSpanish(outgoingTranscript)) languageDrift = true
             val turn = content.optJSONObject("modelTurn")
             if (turn != null) {
                 if (thinkingSince == 0L) thinkingSince = System.currentTimeMillis()
@@ -501,6 +506,10 @@ class LiveVoiceClient(
         thinkingSince = 0L
         languageDrift = false
         foreignLanguageRequested = false
+        // Only completed turns belong in reconnect context. Never merge an
+        // interrupted fragment with speech from the replacement socket.
+        incomingTranscript = ""
+        outgoingTranscript = ""
     }
 
     @Suppress("DEPRECATION") private fun routeToSpeaker() {
