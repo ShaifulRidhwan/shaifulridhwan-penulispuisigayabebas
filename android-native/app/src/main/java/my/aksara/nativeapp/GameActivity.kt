@@ -1,6 +1,8 @@
 package my.aksara.nativeapp
 
 import android.os.Bundle
+import android.os.Build
+import android.view.WindowManager
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.*
@@ -26,17 +28,17 @@ class GameActivity : ComponentActivity() {
     private var lastHaptic=0L
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window,false)
-        WindowCompat.getInsetsController(window,window.decorView).apply {
-            hide(WindowInsetsCompat.Type.systemBars())
-            systemBarsBehavior=WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
+        immersive()
         root=FrameLayout(this)
         root.setBackgroundColor(android.graphics.Color.rgb(8,12,25))
         setContentView(root)
         ViewCompat.setOnApplyWindowInsetsListener(root) { view,insets ->
             val safe=insets.getInsets(WindowInsetsCompat.Type.displayCutout() or WindowInsetsCompat.Type.mandatorySystemGestures())
-            view.setPadding(safe.left,safe.top,safe.right,safe.bottom)
+            // Paint behind cutouts; inset controls, never the rendering surface.
+            if(webAlive) {
+                val density=resources.displayMetrics.density
+                gameWebView.evaluateJavascript("window.aksaraInsets?.(${safe.left/density},${safe.top/density},${safe.right/density},${safe.bottom/density})",null)
+            }
             insets
         }
         loadGame(intent.getBooleanExtra("forceCanvas",false))
@@ -69,6 +71,7 @@ class GameActivity : ComponentActivity() {
                 }
             }
             webViewClient=object:WebViewClient(){
+                override fun onPageFinished(view:WebView,url:String){ViewCompat.requestApplyInsets(root)}
                 override fun shouldOverrideUrlLoading(view:WebView,request:WebResourceRequest):Boolean {
                     val url=request.url.toString()
                     if(url=="https://appassets.androidplatform.net/exit"){finish();return true}
@@ -128,7 +131,18 @@ class GameActivity : ComponentActivity() {
         box.addView(Button(this).apply{text="Kembali ke Aksara";setOnClickListener{finish()}})
         root.addView(box,FrameLayout.LayoutParams(-1,-2))
     }
+    private fun immersive() {
+        WindowCompat.setDecorFitsSystemWindows(window,false)
+        if(Build.VERSION.SDK_INT>=28) window.attributes=window.attributes.apply {
+            layoutInDisplayCutoutMode=WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+        }
+        WindowCompat.getInsetsController(window,window.decorView).apply {
+            systemBarsBehavior=WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.systemBars())
+        }
+    }
+    override fun onWindowFocusChanged(hasFocus:Boolean){super.onWindowFocusChanged(hasFocus);if(hasFocus)immersive()}
     override fun onPause(){if(webAlive){gameWebView.evaluateJavascript("window.aksaraPause && window.aksaraPause()",null);gameWebView.onPause()};super.onPause()}
-    override fun onResume(){super.onResume();if(webAlive)gameWebView.onResume()}
+    override fun onResume(){super.onResume();immersive();if(webAlive)gameWebView.onResume()}
     override fun onDestroy(){destroyed=true;if(webAlive){root.removeView(gameWebView);gameWebView.stopLoading();gameWebView.destroy();webAlive=false};super.onDestroy()}
 }

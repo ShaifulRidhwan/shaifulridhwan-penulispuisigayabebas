@@ -14,6 +14,11 @@ class Arena extends Phaser.Scene {
   console.info('AKSARA scene create');scene=this;
   this.game.canvas.addEventListener('webglcontextlost',()=>window.gameFailure('WebGL terhenti'));
   this.presentation=new EclipsePresentation(this);this.input.addPointer(5);
+  const fit=()=>{const w=this.scale.width,h=this.scale.height,z=Math.min(w/960,h/540);
+   this.cameras.main.setZoom(z).setScroll(480-w/(2*z),270-h/(2*z));
+   const cover=Math.max(w/z/1672,h/z/941)*1.04;
+   this.presentation.bg.setDisplaySize(1672*cover,941*cover);
+  };this.scale.on('resize',fit);fit();
  }
  update(t,ms){
   if(!match)return;
@@ -25,7 +30,7 @@ class Arena extends Phaser.Scene {
  }
 }
 const renderer=new URLSearchParams(location.search).get('renderer');
-const game=new Phaser.Game({type:renderer==='canvas'?Phaser.CANVAS:Phaser.AUTO,parent:'game',width:960,height:540,backgroundColor:'#080c19',scale:{mode:Phaser.Scale.FIT,autoCenter:Phaser.Scale.CENTER_BOTH},scene:Arena,audio:{noAudio:true},fps:{target:60}});
+const game=new Phaser.Game({type:renderer==='canvas'?Phaser.CANVAS:Phaser.AUTO,parent:'game',width:960,height:540,backgroundColor:'#080c19',scale:{mode:Phaser.Scale.RESIZE},scene:Arena,audio:{noAudio:true},fps:{target:60}});
 
 const viewport=document.querySelector('#game');
 new ResizeObserver(()=>{if(scene&&game.canvas&&viewport.clientWidth>0&&viewport.clientHeight>0)game.scale.refresh();}).observe(viewport);
@@ -38,3 +43,5 @@ game.events.on(Phaser.Core.Events.POST_RENDER,()=>{
  }
 });
 game.events.on('contextlost',()=>window.gameFailure('Konteks grafik hilang'));
+
+window.aksaraInsets=(l,t,r,b)=>{for(const [key,value] of Object.entries({left:l,top:t,right:r,bottom:b}))document.documentElement.style.setProperty(`--safe-${key}`,value+"px");};
