@@ -172,6 +172,7 @@ fun StudioContent() {
     var enhancedDraft by remember{mutableStateOf<String?>(null)}
     var enhancementJob by remember{mutableStateOf<Job?>(null)}
     var showIdeas by remember{mutableStateOf(false)}
+    var showTemplates by rememberSaveable{mutableStateOf(false)}
     var showAdvanced by rememberSaveable{mutableStateOf(false)}
     var requirementsVisible by remember{mutableStateOf(false)}
     var showViewer by remember{mutableStateOf(false)}
@@ -311,6 +312,28 @@ fun StudioContent() {
                 contentColor=if(engine==StudioEngine.LOCAL)AksaraColors.gold else AksaraColors.text)
         }
         Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+            AksaraButton(if(showTemplates)"Sembunyi Template" else "Template Imej",
+                {showTemplates=!showTemplates},Modifier.weight(1f),size=11f,height=39.dp)
+            AksaraButton("Idea Prompt",{showIdeas=true},Modifier.weight(1f),size=11f,height=39.dp)
+        }
+        if(showTemplates) {
+            Spacer(Modifier.height(12.dp))
+            StudioTemplateGallery { selected ->
+                prompt=selected.prompt
+                style=selected.style
+                if(engine==StudioEngine.CLOUD) {
+                    model="klein"
+                    ratio=selected.ratio
+                    prefs.edit().putString("model","klein").putString("ratio",selected.ratio).apply()
+                } else {
+                    ratio="1:1"
+                }
+                message="Template "+selected.title+" dipilih. Ubah prompt sebelum menjana."
+                showTemplates=false
+            }
+            Spacer(Modifier.height(10.dp))
+        }
         if(engine==StudioEngine.LOCAL) {
             StudioSectionHeader("SD-Turbo · Local Engine",
                 if(!localRuntime.available())"Runtime Local tidak dipakejkan dalam APK ini" else if(models.modelPath()!=null)"Model dipasang · ujian inferens diperlukan" else "SD-Turbo belum dipasang")

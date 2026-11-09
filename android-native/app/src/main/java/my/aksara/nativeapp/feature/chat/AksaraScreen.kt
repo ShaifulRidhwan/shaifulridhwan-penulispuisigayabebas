@@ -290,36 +290,55 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             }
                             if(state.nextJourney!=null) AksaraButton(state.nextJourney,{onJourney(state.nextJourney)},Modifier.padding(horizontal=12.dp,vertical=4.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
                             if(state.error!=null) Row(Modifier.fillMaxWidth().clickable(onClick=onDismissError).padding(8.dp)) { AksaraText(state.error,size=11f,color=Color(0xffe7a08e)) }
-                            if(attachmentLoading) Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=4.dp),
-                                verticalAlignment=Alignment.CenterVertically) {
-                                AksaraText(uploadStatus?:"Membaca lampiran...",Modifier.weight(1f),size=11f,color=AksaraColors.gold)
-                                AksaraButton("Batal",onCancelUpload,size=10f,height=31.dp,radius=13.dp)
-                            }
-                            if(attachmentName!=null) Row(Modifier.fillMaxWidth().padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically){
-                                AksaraText("📎 "+attachmentName,Modifier.weight(1f),size=11f)
-                                AksaraButton("Buang lampiran",onClearAttachment,size=9f,height=31.dp,radius=12.dp)
-                            }
-                            val hasAttachments = !attachmentName.isNullOrBlank()
-                            val canSubmit = state.loaded && !state.busy && !attachmentLoading && (draft.isNotBlank() || hasAttachments)
-                            Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(6,9,15,8),Color(6,8,14,71)))).padding(start=9.dp,end=9.dp,top=8.dp,bottom=10.dp)) {
-                                AksaraGlassSurface(Modifier.fillMaxWidth().heightIn(min=if(state.messages.isEmpty())58.dp else 60.dp).testTagCompat("composer-form"),radius=18.dp,
-                                    brush=Brush.linearGradient(listOf(Color(25,35,49,17),Color(8,15,28,11))),border=Color(245,217,176,82)) {
-                                    Row(Modifier.fillMaxWidth().padding(horizontal=8.dp,vertical=7.dp),verticalAlignment=Alignment.Bottom,horizontalArrangement=Arrangement.spacedBy(5.dp)) {
-                                        Box(Modifier.size(42.dp).clip(RoundedCornerShape(13.dp)).clickable {open("attachments")}.semantics {contentDescription="Lampir fail"},contentAlignment=Alignment.Center) {AksaraIcon("attach",Modifier.size(21.dp))}
-                                        BasicTextField(draft,{draft=it},Modifier.weight(1f).heightIn(min=if(state.messages.isEmpty())44.dp else 46.dp,max=140.dp).padding(horizontal=3.dp,vertical=10.dp).onFocusChanged { if(it.isFocused) autoFollow = true }.semantics {contentDescription="Tulis mesej untuk Aksara A.I."}.testTagCompat("input"),
-                                            textStyle=AksaraTypography.style(16f,24f),cursorBrush=SolidColor(AksaraColors.gold))
-                                        if(state.busy) AksaraButton("Henti",onStop,Modifier.width(56.6875.dp).semantics {contentDescription="Hentikan respons"},size=12f,height=40.dp,radius=7.dp)
-                                        AksaraButton("",{open("thinking")},Modifier.width(40.dp).semantics {contentDescription="Thinking Mode"},icon="brain",height=42.dp,radius=13.dp,contentColor=AksaraColors.gold)
-                                        AksaraButton("",{
-                                            if(canSubmit) {
-                                                onSend(AttachmentSendPolicy.submissionText(draft,hasAttachments))
-                                                draft=""
-                                            }
-                                        },Modifier.width(42.dp).semantics {contentDescription="Hantar soalan"},icon="send",height=42.dp,radius=13.dp,enabled=canSubmit)
-                                    }
-                                }
-                            }
                         }
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+                if(attachmentLoading) Row(Modifier.fillMaxWidth().padding(horizontal=10.dp,vertical=3.dp),
+                    verticalAlignment=Alignment.CenterVertically) {
+                    AksaraText(uploadStatus?:"Membaca lampiran...",Modifier.weight(1f),size=10.5f,color=AksaraColors.gold)
+                    AksaraButton("Batal",onCancelUpload,size=10f,height=31.dp,radius=12.dp)
+                }
+                if(attachmentName!=null) Row(Modifier.fillMaxWidth().padding(horizontal=10.dp,vertical=2.dp),
+                    verticalAlignment=Alignment.CenterVertically) {
+                    AksaraText("📎 "+attachmentName,Modifier.weight(1f),size=10.5f)
+                    AksaraButton("Buang",onClearAttachment,size=9f,height=30.dp,radius=12.dp)
+                }
+                val hasAttachments = !attachmentName.isNullOrBlank()
+                val canSubmit = state.loaded && !state.busy && !attachmentLoading &&
+                    (draft.isNotBlank() || hasAttachments)
+                AksaraGlassSurface(
+                    Modifier.fillMaxWidth().heightIn(min=58.dp,max=164.dp).testTagCompat("composer-form"),
+                    radius=20.dp,blur=12.dp,saturation=1.15f,
+                    brush=cssGradient(115f,listOf(Color(8,14,24,102),Color(17,26,40,51))),
+                    border=Color(247,226,196,90)) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal=8.dp,vertical=7.dp),
+                        verticalAlignment=Alignment.CenterVertically,
+                        horizontalArrangement=Arrangement.spacedBy(5.dp)) {
+                        Box(Modifier.size(42.dp).clip(RoundedCornerShape(13.dp))
+                            .clickable {open("attachments")}
+                            .semantics {contentDescription="Lampir fail"},
+                            contentAlignment=Alignment.Center) {AksaraIcon("attach",Modifier.size(21.dp))}
+                        BasicTextField(draft,{draft=it},Modifier.weight(1f)
+                            .heightIn(min=42.dp,max=140.dp).padding(horizontal=3.dp,vertical=9.dp)
+                            .onFocusChanged { if(it.isFocused) autoFollow=true }
+                            .semantics {contentDescription="Tulis mesej untuk Aksara A.I."}
+                            .testTagCompat("input"),
+                            textStyle=AksaraTypography.style(16f,24f),
+                            cursorBrush=SolidColor(AksaraColors.gold))
+                        if(state.busy) AksaraButton("Henti",onStop,Modifier.width(56.dp)
+                            .semantics {contentDescription="Hentikan respons"},size=12f,height=40.dp,radius=12.dp)
+                        AksaraButton("",{open("thinking")},Modifier.width(40.dp)
+                            .semantics {contentDescription="Thinking Mode"},icon="brain",height=42.dp,
+                            radius=13.dp,contentColor=AksaraColors.gold)
+                        AksaraButton("",{
+                            if(canSubmit) {
+                                val text=AttachmentSendPolicy.submissionText(draft,hasAttachments)
+                                onSend(text)
+                                draft=""
+                            }
+                        },Modifier.width(42.dp).semantics {contentDescription="Hantar soalan"},
+                            icon="send",height=42.dp,radius=13.dp,enabled=canSubmit)
                     }
                 }
             }
