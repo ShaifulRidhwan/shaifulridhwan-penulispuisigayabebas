@@ -10,6 +10,14 @@ concurrency:
 permissions:
   contents: read
 jobs:
+  game-logic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test android-native/game-tests/combat.test.cjs
   web-audit:
     runs-on: ubuntu-latest
     steps:

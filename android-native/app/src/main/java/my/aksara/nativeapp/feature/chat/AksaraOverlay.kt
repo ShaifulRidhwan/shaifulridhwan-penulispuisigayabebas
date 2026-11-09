@@ -43,6 +43,7 @@ import my.aksara.nativeapp.feature.tools.*
     onVoiceState:(String,Boolean)->Unit={_,_->}) {
     // Android Lite: preserve the engines on disk, but expose no inactive entry points.
     if(kind=="code" || kind=="terminal" || kind=="engines") return
+    if(kind=="game"){GameContent(onClose);return}
     if(kind=="voice"){VoiceContent(onClose,state.mode,onMode,state.messages,state.memoryEnabled,state.memoryNotes,onVoiceTurns,onStatus=onVoiceState);return}
     if(kind=="voice-fixture"){VoiceScreen(VoiceState(phase="preview"),onClose,preview=true);return}
     if(kind=="search-hub") {
@@ -177,6 +178,7 @@ import my.aksara.nativeapp.feature.tools.*
                             Spacer(Modifier.height(14.dp))
                             listOf(
                                 Triple("Laman Utama","Laman web rasmi Shaiful Ridhwan","external-home"),
+                                Triple("Game · Cahaya vs Gelap","Arena latihan 2D · seni sementara","game"),
                                 Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),
                                 Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","library")
                             ).forEach { (name,desc,route) ->
