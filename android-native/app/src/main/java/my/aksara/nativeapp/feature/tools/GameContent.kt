@@ -45,7 +45,7 @@ import java.io.ByteArrayInputStream
             else->Unit
         }}
         owner.lifecycle.addObserver(observer)
-        onDispose {owner.lifecycle.removeObserver(observer);if(previous!=null)activity.requestedOrientation=previous;web.stopLoading();web.loadUrl("about:blank");web.removeAllViews();web.destroy()}
+        onDispose {owner.lifecycle.removeObserver(observer);if(previous!=null)activity?.requestedOrientation=previous;web.stopLoading();web.loadUrl("about:blank");web.removeAllViews();web.destroy()}
     }
     Column(Modifier.fillMaxSize().padding(8.dp)){
         AksaraButton("‹ Kembali ke Aksara",onClose,Modifier.height(40.dp))
