@@ -25,6 +25,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
+data class VoiceRouteChoice(val id: Int, val name: String, val type: Int, val selected: Boolean)
+
 data class VoiceState(
     val phase: String = "idle",
     val message: String = "Belum connect lagi.",
@@ -39,7 +41,15 @@ data class VoiceState(
     val transcriptWarning: String = "",
     val microphoneDevice: String = "Belum disahkan",
     val outputDevice: String = "Belum disahkan",
-    val routeWarning: String = ""
+    val routeWarning: String = "",
+    val routes: List<VoiceRouteChoice> = emptyList(),
+    val selectedRouteId: Int? = null,
+    val pushToTalk: Boolean = false,
+    val talkHeld: Boolean = false,
+    val micLevel: Float = 0f,
+    val echoCancellation: Boolean = false,
+    val noiseSuppression: Boolean = false,
+    val captureFrameMs: Int = 40
 )
 
 /**
@@ -99,6 +109,7 @@ class LiveVoiceClient(
     private var audioDeviceCallback: AudioDeviceCallback? = null
     private var communicationListener: AudioManager.OnCommunicationDeviceChangedListener? = null
     private var routeError = ""
+    private var desiredRouteId: Int? = null
 
     private fun active(id: Int) = running.get() && epoch.get() == id
 
@@ -122,7 +133,9 @@ class LiveVoiceClient(
         incomingSuspect = false
         mutable.value = mutable.value.copy(phase = "connecting", message = "Menyambung Gemini Live…", startedAt = null, ready = false,
             lastHeard = "", lastSpoken = "", transcriptWarning = "",
-            microphoneDevice = "Belum disahkan", outputDevice = "Belum disahkan", routeWarning = "")
+            microphoneDevice = "Belum disahkan", outputDevice = "Belum disahkan", routeWarning = "",
+            routes = emptyList(), selectedRouteId = null, talkHeld = false, micLevel = 0f,
+            echoCancellation = false, noiseSuppression = false)
         connect()
     }
 
@@ -439,8 +452,10 @@ class LiveVoiceClient(
         check(input.state == AudioRecord.STATE_INITIALIZED) { "AudioRecord gagal." }
         recorder = input
         preferMatchedMicrophone()
-        if (AcousticEchoCanceler.isAvailable()) echo = AcousticEchoCanceler.create(input.audioSessionId)?.apply { enabled = true }
-        if (NoiseSuppressor.isAvailable()) noise = NoiseSuppressor.create(input.audioSessionId)?.apply { enabled = true }
+        if (AcousticEchoCanceler.isAvailable()) echo = runCatching { AcousticEchoCanceler.create(input.audioSessionId)?.apply { enabled = true } }.getOrNull()
+        if (NoiseSuppressor.isAvailable()) noise = runCatching { NoiseSuppressor.create(input.audioSessionId)?.apply { enabled = true } }.getOrNull()
+        mutable.value = mutable.value.copy(echoCancellation = echo?.enabled == true,
+            noiseSuppression = noise?.enabled == true)
         val minOutput = AudioTrack.getMinBufferSize(24000, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
         check(minOutput > 0) { "PCM 24 kHz tidak disokong." }
         val playbackAttrs = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
@@ -490,17 +505,25 @@ class LiveVoiceClient(
             }
         }
         microphoneJob = scope.launch {
-            val frame = ByteArray(3200)
+            val frame = ByteArray(1920)
             var rejected = 0
             var routeSampled = false
+            var levelAt = 0L
             while (active(id) && isActive) {
-                val n = input.read(frame, 0, frame.size, AudioRecord.READ_BLOCKING)
+                val frameBytes = VoiceAudioPolicy.captureBytes(runCatching { manager.communicationDevice?.type }.getOrNull())
+                val n = input.read(frame, 0, frameBytes, AudioRecord.READ_BLOCKING)
                 if (n < 0) { if (active(id)) recover(id, "AudioRecord read: " + n, true); break }
                 if (n > 0 && !routeSampled) {
                     routeSampled = true
                     updateObservedRoute(id)
                 }
-                if (n > 0 && state.value.mic) {
+                val permitted = VoiceAudioPolicy.captureAllowed(state.value.mic,state.value.pushToTalk,state.value.talkHeld)
+                if (n > 0 && permitted) {
+                    val now = System.currentTimeMillis()
+                    if(now-levelAt>=160){
+                        levelAt=now
+                        mutable.value = mutable.value.copy(micLevel=VoiceAudioPolicy.rms(frame,n), captureFrameMs=frameBytes/32)
+                    }
                     val packet = JSONObject().put("realtimeInput", JSONObject()
                         .put("audio", JSONObject().put("mimeType", "audio/pcm;rate=16000")
                             .put("data", Base64.encodeToString(frame, 0, n, Base64.NO_WRAP)))).toString()
@@ -589,9 +612,14 @@ class LiveVoiceClient(
         routeError = ""
         try {
             val options = manager.availableCommunicationDevices
+            val explicit = desiredRouteId?.let { wanted -> options.firstOrNull { it.id == wanted } }
+            if(desiredRouteId != null && explicit == null){
+                desiredRouteId = null
+                routeError = "Peranti pilihan terputus; Android memilih laluan tersedia."
+            }
             val selectedType = VoiceAudioRoute.chooseType(options.map { it.type },
                 manager.communicationDevice?.type)
-            val selected = selectedType?.let { target ->
+            val selected = explicit ?: selectedType?.let { target ->
                 options.firstOrNull { it.type == target &&
                     it.id == manager.communicationDevice?.id }
                     ?: options.firstOrNull { it.type == target }
@@ -653,8 +681,11 @@ class LiveVoiceClient(
                 VoiceAudioRoute.observedWarning(communication?.type, input?.type, output?.type).orEmpty()
             else -> ""
         }
+        val available=runCatching { manager.availableCommunicationDevices }.getOrDefault(emptyList())
         mutable.value = mutable.value.copy(microphoneDevice=displayInput,
-            outputDevice=displayOutput,routeWarning=warning)
+            outputDevice=displayOutput,routeWarning=warning,selectedRouteId=desiredRouteId,
+            routes=available.map { device -> VoiceRouteChoice(device.id,deviceLabel(device),device.type,
+                communication?.id == device.id) })
     }
 
     private fun registerRouteMonitors(id: Int) {
@@ -710,8 +741,35 @@ class LiveVoiceClient(
         routeError = ""
     }
 
+    @Synchronized fun selectAudioDevice(deviceId: Int?) {
+        desiredRouteId=deviceId
+        if(!running.get() || previousMode==null)return
+        val id=epoch.get()
+        selectCommunicationRoute()
+        preferMatchedMicrophone()
+        scope.launch { delay(400);if(active(id))updateObservedRoute(id) }
+    }
+
+    @Synchronized fun setPushToTalk(enabled: Boolean) {
+        val old=state.value
+        mutable.value=old.copy(pushToTalk=enabled,talkHeld=false,micLevel=0f)
+        if(enabled && old.mic)socket?.send("{\"realtimeInput\":{\"audioStreamEnd\":true}}")
+    }
+
+    @Synchronized fun setTalkHeld(pressed: Boolean) {
+        if(!state.value.pushToTalk)return
+        val was=state.value.talkHeld
+        mutable.value=state.value.copy(talkHeld=pressed,micLevel=if(pressed)state.value.micLevel else 0f)
+        if(was && !pressed)socket?.send("{\"realtimeInput\":{\"audioStreamEnd\":true}}")
+        if(!was && pressed && state.value.mic && state.value.phase=="speaking"){
+            playbackGeneration.incrementAndGet()
+            runCatching { outputTrack?.pause();outputTrack?.flush();outputTrack?.play() }
+            mutable.value=state.value.copy(phase="listening",message="Kau boleh terus bercakap.")
+        }
+    }
+
     fun setMic(enabled: Boolean) {
-        mutable.value = mutable.value.copy(mic = enabled)
+        mutable.value = mutable.value.copy(mic = enabled,micLevel=if(enabled)state.value.micLevel else 0f)
         if (!enabled) socket?.send("{\"realtimeInput\":{\"audioStreamEnd\":true}}")
     }
     fun setSpeaker(enabled: Boolean) {
@@ -741,8 +799,11 @@ class LiveVoiceClient(
         incomingTranscript = ""
         outgoingTranscript = ""
         preferStandardModel = false
+        desiredRouteId = null
         mutable.value = mutable.value.copy(phase = "idle", message = "Sesi ditamatkan.",
             startedAt = null, ready = false, reconnectAttempt = 0,
-            microphoneDevice="Belum disahkan",outputDevice="Belum disahkan",routeWarning="")
+            microphoneDevice="Belum disahkan",outputDevice="Belum disahkan",routeWarning="",
+            routes=emptyList(),selectedRouteId=null,talkHeld=false,micLevel=0f,
+            echoCancellation=false,noiseSuppression=false)
     }
 }
