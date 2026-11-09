@@ -69,6 +69,7 @@ import my.aksara.engine.avatar.VoiceAvatarView
                                 "connecting"->"CONNECTING"
                                 "reconnecting"->if(compact)"RECONNECT" else "RECONNECTING"
                                 "error"->"ERROR"
+                                "paused"->"PAUSED"
                                 "disconnected"->"OFFLINE"
                                 else->"OFFLINE"
                             }
@@ -95,7 +96,7 @@ import my.aksara.engine.avatar.VoiceAvatarView
                 AndroidView(factory={VoiceAvatarView(it)},modifier=Modifier.fillMaxSize())
                 Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Transparent,Color(8,13,23,61),Color(7,13,24,179)))).padding(start=12.dp,end=12.dp,bottom=13.dp,top=26.dp),horizontalAlignment=Alignment.CenterHorizontally){
                     AksaraIcon("voice",Modifier.size(width=102.dp,height=15.dp),Color(230,197,139,150))
-                    Spacer(Modifier.height(5.dp));AksaraText(if(preview)"Pratonton" else when(state.phase){"listening"->"Mendengar";"thinking"->"Memproses";"speaking"->"Menjawab";"connecting"->"Menyambung";"reconnecting"->"Menyambung semula";"error"->"Ralat Voice";else->"Sedia"},size=16f,line=20.8f,weight=600,tracking=.4f,family=AksaraTypography.heading)
+                    Spacer(Modifier.height(5.dp));AksaraText(if(preview)"Pratonton" else when(state.phase){"listening"->"Mendengar";"thinking"->"Memproses";"speaking"->"Menjawab";"connecting"->"Menyambung";"reconnecting"->"Menyambung semula";"paused"->"Audio dijeda";"error"->"Ralat Voice";else->"Sedia"},size=16f,line=20.8f,weight=600,tracking=.4f,family=AksaraTypography.heading)
                     Spacer(Modifier.height(3.dp));androidx.compose.foundation.text.BasicText(if(preview)"Pratonton reka bentuk sahaja. Mikrofon dan Gemini Live tidak diaktifkan." else state.message,style=AksaraTypography.style(12f,17.4f,color=Color(0xffc7c3ba)).copy(textAlign=TextAlign.Center))
                     if(!preview && captionsVisible && (state.lastHeard.isNotBlank() || state.lastSpoken.isNotBlank())) {
                         Spacer(Modifier.height(8.dp))

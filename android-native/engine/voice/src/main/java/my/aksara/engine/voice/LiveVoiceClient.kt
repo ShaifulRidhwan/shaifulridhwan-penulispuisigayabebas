@@ -110,6 +110,7 @@ class LiveVoiceClient(
     private var communicationListener: AudioManager.OnCommunicationDeviceChangedListener? = null
     private var routeError = ""
     private var desiredRouteId: Int? = null
+    @Volatile private var focusSuspended = false
 
     private fun active(id: Int) = running.get() && epoch.get() == id
 
@@ -126,6 +127,7 @@ class LiveVoiceClient(
         }
         attempts = 0
         resumptionHandle = ""
+        focusSuspended = false
         preferStandardModel = false
         recentVoiceTurns.clear()
         incomingTranscript = ""
@@ -434,8 +436,25 @@ class LiveVoiceClient(
             .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
         focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
             .setAudioAttributes(attrs).setOnAudioFocusChangeListener { change ->
-                if (change == AudioManager.AUDIOFOCUS_LOSS) {
-                    recover(id, "Audio focus dibatalkan oleh Android.", false)
+                when(change) {
+                    AudioManager.AUDIOFOCUS_LOSS ->
+                        recover(id, "Audio focus dibatalkan oleh Android.", false)
+                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT,
+                    AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> if(active(id)) {
+                        focusSuspended = true
+                        playbackGeneration.incrementAndGet()
+                        runCatching { outputTrack?.pause(); outputTrack?.flush() }
+                        socket?.send("{\"realtimeInput\":{\"audioStreamEnd\":true}}")
+                        mutable.value = mutable.value.copy(phase="paused",
+                            message="Audio dijeda oleh panggilan atau aplikasi lain.",micLevel=0f)
+                    }
+                    AudioManager.AUDIOFOCUS_GAIN -> if(active(id) && focusSuspended) {
+                        focusSuspended = false
+                        runCatching { outputTrack?.play() }
+                        mutable.value = mutable.value.copy(phase="listening",
+                            message="Audio dipulihkan. Kau boleh bercakap.")
+                        refreshAudioRoute()
+                    }
                 }
             }.build()
         check(manager.requestAudioFocus(focus!!) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) { "Audio focus ditolak." }
@@ -518,7 +537,7 @@ class LiveVoiceClient(
                     updateObservedRoute(id)
                 }
                 val permitted = VoiceAudioPolicy.captureAllowed(state.value.mic,state.value.pushToTalk,state.value.talkHeld)
-                if (n > 0 && permitted) {
+                if (n > 0 && permitted && !focusSuspended) {
                     val now = System.currentTimeMillis()
                     if(now-levelAt>=160){
                         levelAt=now
@@ -594,6 +613,7 @@ class LiveVoiceClient(
         outputTrack?.release(); outputTrack = null
         queuedPackets.set(0)
         focus?.let { manager.abandonAudioFocusRequest(it) }; focus = null
+        focusSuspended = false
         unregisterRouteMonitors()
         restoreRouting()
         completedTurn = false
