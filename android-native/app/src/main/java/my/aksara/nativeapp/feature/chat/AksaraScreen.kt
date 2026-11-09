@@ -388,8 +388,14 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                             ({if(onRegenerate(message.id)){editingId=null;draft="";autoFollow=true};Unit}) else null)
                                 }
                             }
-                            if(state.messages.isEmpty()) Row(Modifier.fillMaxWidth().height(49.dp).padding(start=12.dp,end=12.dp,top=4.dp,bottom=8.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                                AksaraButton("Siapa Aku",{onJourney("Siapa Aku")},Modifier.width(103.dp),size=11.5f,height=42.dp,radius=999.dp,leadingText="↗")
+                            if(state.messages.isEmpty()) Row(
+                                Modifier.fillMaxWidth().height(60.dp).padding(horizontal=12.dp,vertical=4.dp),
+                                horizontalArrangement=Arrangement.spacedBy(9.dp),
+                                verticalAlignment=Alignment.CenterVertically) {
+                                AksaraButton("Siapa Aku",{onJourney("Siapa Aku")},
+                                    Modifier.width(103.dp),size=11.5f,height=44.dp,radius=999.dp,leadingText="↗")
+                                AksaraText("Tanya atau lampirkan fail",
+                                    Modifier.weight(1f),size=10.5f,color=AksaraColors.muted)
                             }
                             if(state.nextJourney!=null) AksaraButton(state.nextJourney,{onJourney(state.nextJourney)},Modifier.padding(horizontal=12.dp,vertical=4.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
                             if(state.error!=null) Row(Modifier.fillMaxWidth().clickable(onClick=onDismissError).padding(8.dp)) { AksaraText(state.error,size=11f,color=Color(0xffe7a08e)) }
