@@ -36,6 +36,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import my.aksara.nativeapp.core.design.*
 import java.security.SecureRandom
@@ -166,6 +167,9 @@ fun StudioContent() {
     var message by remember{mutableStateOf("Tulis arahan dan pilih enjin untuk menjana imej.")}
     var job by remember{mutableStateOf<Job?>(null)}
     var runningEngine by remember{mutableStateOf<StudioEngine?>(null)}
+    var runningSince by remember{mutableLongStateOf(0L)}
+    var runningSeconds by remember{mutableLongStateOf(0L)}
+    var localPhase by remember{mutableStateOf("")}
     var downloadJob by remember{mutableStateOf<Job?>(null)}
     var downloaded by remember{mutableLongStateOf(0L)}
     var downloadState by remember{mutableStateOf("")}
@@ -185,13 +189,21 @@ fun StudioContent() {
         try { records=historyStore.list() }
         catch(e:Exception) { message="Sejarah gagal dibaca: "+(e.message ?: "ralat storan") }
     }
+    LaunchedEffect(runningEngine, runningSince) {
+        if (runningEngine != null && runningSince > 0L) {
+            while (true) {
+                runningSeconds = ((SystemClock.elapsedRealtime() - runningSince) / 1000L).coerceAtLeast(0L)
+                delay(1000)
+            }
+        }
+    }
     DisposableEffect(Unit){onDispose{
         if (runningEngine == StudioEngine.LOCAL) localRuntime.cancel()
         job?.cancel();downloadJob?.cancel();enhancementJob?.cancel()
     }}
 
     fun generate(variation:Boolean=false,replay:StudioPreview?=null) {
-        if(job?.isActive==true) return
+        if(runningEngine != null || localRuntime.isBusy() || job?.isActive==true) return
         val selectedEngine=replay?.engine ?: engine
         val clean=try { StudioRules.prompt(replay?.prompt ?: prompt) } catch(e:Exception) { message=e.message.orEmpty();return }
         val selectedModel=if(replay?.engine==StudioEngine.CLOUD) {
@@ -223,15 +235,29 @@ fun StudioContent() {
         job=scope.launch {
             runningEngine=selectedEngine
             val began=SystemClock.elapsedRealtime()
-            message=if(selectedEngine==StudioEngine.CLOUD)"Menghubungi Studio Cloud…" else "SD-Turbo sedang menjana secara tempatan…"
+            runningSince=began
+            runningSeconds=0L
+            localPhase=if(selectedEngine==StudioEngine.LOCAL)"Menyediakan model yang telah disahkan…" else ""
+            message=if(selectedEngine==StudioEngine.CLOUD)"Menghubungi Studio Cloud…" else "SD-Turbo memulakan penjanaan offline…"
             try {
                 val effectiveSeed=if(selectedEngine==StudioEngine.LOCAL)selectedSeed?:newStudioSeed() else selectedSeed
                 val generated=if(selectedEngine==StudioEngine.CLOUD)
                     StudioGateway.generate(clean,selectedModel,selectedStyle,selectedQuality,selectedRatio,effectiveSeed)
                 else {
                     val path=models.modelPath() ?: error("Model belum dipasang.")
-                    check(models.verify()) { "Fail model rosak atau integriti SHA-256 gagal." }
-                    val bitmap=localRuntime.generate(path,clean,effectiveSeed!!)
+                    // Import/download already performed the complete SHA-256 verification and
+                    // saved its receipt. Avoid hashing 1.85 GB again on every generation.
+                    // The manual "Sahkan model" button still performs a fresh full hash.
+                    val bitmap=localRuntime.generate(path,clean,effectiveSeed!!) { nativeStage ->
+                        scope.launch {
+                            if(runningEngine==StudioEngine.LOCAL) localPhase=when(nativeStage) {
+                                1 -> "Memuat model ke RAM"
+                                2 -> "Inferens CPU dan nyahkod imej"
+                                3 -> "Menyiapkan piksel imej"
+                                else -> "Memproses SD-Turbo"
+                            }
+                        }
+                    }
                     StudioGateway.Result(bitmap,"SD-Turbo",0L,bitmap.width,bitmap.height)
                 }
                 val elapsed=SystemClock.elapsedRealtime()-began
@@ -248,8 +274,9 @@ fun StudioContent() {
                     message="Imej siap, tetapi sejarah tidak dapat disimpan: "+(e.message?:"storan gagal")
                 }
             } catch(_:CancellationException) { message="Permintaan dihentikan. Prompt dan hasil terdahulu dikekalkan." }
+            catch(e:LinkageError) { message="Runtime JNI rosak/tidak serasi: "+(e.message ?: "simbol native gagal dipanggil") }
             catch(e:Exception) { message=e.message ?: "Gagal menjana imej. Hasil terdahulu dikekalkan." }
-            finally { runningEngine=null }
+            finally { runningEngine=null; localPhase="" }
         }
     }
 
@@ -455,18 +482,30 @@ fun StudioContent() {
                 Modifier.fillMaxWidth(),size=10f,height=34.dp)
         }
         Spacer(Modifier.height(12.dp))
-        AksaraButton(if(job?.isActive==true)"Sedang menjana…" else "Jana Imej",
+        val generatingNow = runningEngine != null || localRuntime.isBusy()
+        AksaraButton(if(generatingNow) {
+                if(job?.isActive==false)"Menghentikan proses native…" else "Sedang menjana…"
+            } else "Jana Imej",
             {generate()},Modifier.fillMaxWidth(),height=47.dp,size=13f,
-            enabled=job?.isActive!=true && prompt.trim().length>=4)
-        if(job?.isActive==true) {
+            enabled=!generatingNow && job?.isActive!=true && prompt.trim().length>=4)
+        if(generatingNow) {
             Spacer(Modifier.height(6.dp))
-            if(runningEngine==StudioEngine.CLOUD)
-                AksaraButton("Henti permintaan", {job?.cancel()},Modifier.fillMaxWidth(),height=37.dp,size=11f)
-            else AksaraButton("Henti Local", {
-                localRuntime.cancel()
-                job?.cancel()
-                message="Pembatalan SD-Turbo telah diminta kepada native runtime."
-            },Modifier.fillMaxWidth(),height=37.dp,size=11f)
+            if(runningEngine==StudioEngine.LOCAL || localRuntime.isBusy()) {
+                AksaraText((localPhase.ifBlank { "Menyediakan model" })+
+                    " · "+runningSeconds+" saat",size=11f,color=AksaraColors.muted)
+                if(runningSeconds>=60L) AksaraText(
+                    "Inferens CPU mungkin mengambil beberapa minit. Semak fasa di atas; " +
+                    "tiada imej dihasilkan sehingga native selesai.",
+                    size=10f,color=AksaraColors.muted)
+                Spacer(Modifier.height(6.dp))
+                AksaraButton("Henti Local", {
+                    localRuntime.cancel()
+                    job?.cancel()
+                    message="Pembatalan diminta. Jika model sedang dimuat, JNI mungkin perlu " +
+                        "menamatkan fasa tersebut sebelum berhenti."
+                },Modifier.fillMaxWidth(),height=37.dp,size=11f)
+            } else AksaraButton("Henti permintaan", {job?.cancel()},
+                Modifier.fillMaxWidth(),height=37.dp,size=11f)
         }
         Spacer(Modifier.height(10.dp))
         AksaraText(message,size=11f,color=AksaraColors.muted)
