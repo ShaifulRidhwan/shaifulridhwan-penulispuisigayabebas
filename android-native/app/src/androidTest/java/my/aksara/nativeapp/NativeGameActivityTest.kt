@@ -53,8 +53,15 @@ class NativeGameActivityTest {
             main.onActivity{chat=it}
             for(canvas in listOf(false,true)){
                 val intent=Intent(instrument.targetContext,GameActivity::class.java).putExtra("forceCanvas",canvas)
-                ActivityScenario.launch<GameActivity>(intent).use { game ->
-                    lateinit var a:GameActivity;game.onActivity{a=it}
+                // ActivityScenario.launch(GameActivity) clears the task and destroys Chat.
+                // Launch exactly as the production Portal does, within MainActivity's task.
+                val monitor=instrument.addMonitor(GameActivity::class.java.name,null,false)
+                main.onActivity{it.startActivity(intent)}
+                val launched=instrument.waitForMonitorWithTimeout(monitor,30000)
+                instrument.removeMonitor(monitor)
+                assertNotNull("Game activity launched in Chat task",launched)
+                val a=launched as GameActivity
+                try {
                     waitJs(a,"!!window.gameDiagnostics && gameDiagnostics.ready && gameDiagnostics.frames>3 && gameDiagnostics.width>0 && gameDiagnostics.height>0")
                     assertEquals(Configuration.ORIENTATION_LANDSCAPE,a.resources.configuration.orientation)
                     if(canvas){
@@ -78,6 +85,8 @@ class NativeGameActivityTest {
                     js(a,"window.aksaraPause()")
                     assertEquals("true",js(a,"paused"))
                     device.pressBack()
+                } finally {
+                    instrument.runOnMainSync{if(!a.isFinishing&&!a.isDestroyed)a.finish()}
                 }
                 main.onActivity{assertSame("Chat activity should survive game rotation",chat,it);assertEquals(Configuration.ORIENTATION_PORTRAIT,it.resources.configuration.orientation)}
             }

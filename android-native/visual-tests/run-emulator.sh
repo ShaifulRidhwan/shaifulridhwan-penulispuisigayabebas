@@ -45,7 +45,8 @@ cat "$out/android/game-activity-tests.txt"
 if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/game-activity-tests.txt"; then failures=$((failures+1)); fi
 adb pull /sdcard/Android/data/my.aksara.nativeapp/files/game-auto.png "$out/android/" || true
 adb pull /sdcard/Android/data/my.aksara.nativeapp/files/game-canvas.png "$out/android/" || true
-adb logcat -d -s AksaraGame chromium > "$out/android/game-logcat.txt"
+adb logcat -d -s AksaraGame > "$out/android/game-logcat.txt"
+cat "$out/android/game-logcat.txt"
 for spec in '360 800' '390 844' '393 852' '412 915'; do
   read -r width height <<< "$spec"
   adb shell wm size "${width}x${height}"
