@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "source": "github-actions",
-  "generatedAt": "2026-11-08T05:00:39.368Z",
-  "commit": "f482b8ed393fe0eb4277ae3eaf3938f1593489c4",
-  "runId": "42448981231",
+  "generatedAt": "2026-11-09T08:19:59.906Z",
+  "commit": "9ef6947d99e6c8b6362b80e019a910382910bc34",
+  "runId": "42585036457",
   "scanners": {
     "trivy": {
       "state": "complete",
