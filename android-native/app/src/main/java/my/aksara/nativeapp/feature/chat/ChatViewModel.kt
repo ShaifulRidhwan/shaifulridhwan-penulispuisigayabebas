@@ -297,7 +297,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     /** Regeneration creates an independent answer to the original user question. */
     fun regenerateFrom(answerId: String): Boolean {
         val question = ChatBranching.questionForRegeneration(state.value.messages, answerId)
-            ?: return false
+        if(question==null) {
+            mutable.update { it.copy(error = "Jawapan ini tidak boleh dijana semula tanpa lampiran asal. Muat naik lampiran sekali lagi.") }
+            return false
+        }
         return forkAndSendFrom(question.id, question.text)
     }
 

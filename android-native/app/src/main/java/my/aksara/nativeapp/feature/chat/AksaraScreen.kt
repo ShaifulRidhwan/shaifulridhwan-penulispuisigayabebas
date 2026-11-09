@@ -82,9 +82,17 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             try {
                 val data=kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                     context.contentResolver.openInputStream(uri)?.use { stream ->
-                        val bytes=stream.readNBytes(SessionTransferCodec.MAX_BYTES+1)
-                        require(bytes.size<=SessionTransferCodec.MAX_BYTES) { "Fail import melebihi 12 MB." }
-                        String(bytes,Charsets.UTF_8)
+                        val output=java.io.ByteArrayOutputStream()
+                        val buffer=ByteArray(8192)
+                        while(true) {
+                            val count=stream.read(buffer)
+                            if(count<0)break
+                            require(output.size()+count<=SessionTransferCodec.MAX_BYTES) {
+                                "Fail import melebihi 12 MB."
+                            }
+                            if(count>0)output.write(buffer,0,count)
+                        }
+                        output.toString("UTF-8")
                     } ?: error("Fail import tidak boleh dibuka.")
                 }
                 val count=vm.importSessions(data)
@@ -461,7 +469,8 @@ private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
                 if(message.text.isNotEmpty()) {
                     Spacer(Modifier.height(if(initial)6.dp else 8.dp))
                     val time=Instant.ofEpochMilli(fixedTimestamp?:message.at).atZone(ZoneId.of("Asia/Kuala_Lumpur")).format(DateTimeFormatter.ofPattern("d MMM HH:mm",java.util.Locale.ENGLISH))
-                    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                    FlowRow(horizontalArrangement=Arrangement.spacedBy(9.dp),
+                        verticalArrangement=Arrangement.spacedBy(4.dp)) {
                         AksaraText((if(ai)"Diterima" else "Dihantar")+" · "+time+(if(message.incomplete) " · belum lengkap" else ""),
                             Modifier.padding(horizontal=4.dp),size=10f,line=14f,color=Color(232,215,189,201),tracking=.15f)
                         if(!initial && !message.id.startsWith("welcome") && !message.incomplete) {

@@ -198,7 +198,8 @@ import my.aksara.nativeapp.feature.tools.*
                             AksaraText("Import/eksport JSON mengandungi teks perbualan tanpa penyulitan. Simpan secara peribadi; lampiran asal dan memori tidak termasuk.",size=10f,color=AksaraColors.muted)
                             Spacer(Modifier.height(8.dp))
                             Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                                AksaraButton("Eksport JSON",onExportSessions,Modifier.weight(1f),height=37.dp,size=10f)
+                                AksaraButton("Eksport JSON",onExportSessions,Modifier.weight(1f),height=37.dp,size=10f,
+                                    enabled=state.archive.isNotEmpty() || state.messages.isNotEmpty())
                                 AksaraButton("Import JSON",onImportSessions,Modifier.weight(1f),height=37.dp,size=10f)
                             }
                             Spacer(Modifier.height(12.dp))
