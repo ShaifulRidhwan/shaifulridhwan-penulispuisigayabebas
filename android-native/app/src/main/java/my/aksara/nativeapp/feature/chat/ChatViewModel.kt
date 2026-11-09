@@ -94,22 +94,28 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             catch (_: Exception) { mutable.update { it.copy(error = "Gagal menyimpan nota memori. Cuba lagi.") } }
         }
     }
+    private fun clearAnswerDiagnostics(value: ChatState) = value.copy(
+        lastProvider = "", lastModel = "", lastResearchStatus = "",
+        lastToolsUsed = emptyList(), lastEvidenceLevel = "not_checked"
+    )
     fun dismissError() { mutable.update { it.copy(error = null) } }
     fun restore() { if (!state.value.busy) {
         activeAttachment=null
-        mutable.update { it.copy(messages = it.archive, resumedFromHistory = false) }
+        mutable.update { clearAnswerDiagnostics(it.copy(messages = it.archive, resumedFromHistory = false)) }
     } }
     fun restoreSession(startId: String) {
         if (state.value.busy) return
         activeAttachment=null
         val selected = groupSessions(state.value.archive, state.value.sessionStarts)
             .firstOrNull { it.startId == startId } ?: return
-        mutable.update { it.copy(messages = selected.messages, nextJourney = null, error = null, resumedFromHistory = true) }
+        mutable.update { clearAnswerDiagnostics(it.copy(messages = selected.messages,
+            nextJourney = null, error = null, resumedFromHistory = true)) }
     }
     fun clearScreen() { if (!state.value.busy) {
         activeAttachment=null
         savedContext = savedContext.copy(sessionFirstId = "", summary = "", summarizedThrough = 0, thoughtLedger = emptyList())
-        mutable.update { it.copy(messages = emptyList(), summaryStatus = "not_requested", resumedFromHistory = false) }
+        mutable.update { clearAnswerDiagnostics(it.copy(messages = emptyList(),
+            summaryStatus = "not_requested", resumedFromHistory = false)) }
         viewModelScope.launch { runCatching { persistContext() } }
     } }
     fun refreshProviders() = viewModelScope.launch {
@@ -185,9 +191,9 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         val user = Message(UUID.randomUUID().toString(), "user", question+note)
         val assistant = Message(UUID.randomUUID().toString(), "assistant", "", incomplete = true)
         if (newAttachment) activeAttachment=effective
-        mutable.update { it.copy(messages = previous + user + assistant,
+        mutable.update { clearAnswerDiagnostics(it.copy(messages = previous + user + assistant,
             sessionStarts = if (previous.isEmpty() || it.resumedFromHistory) (it.sessionStarts + user.id).distinct() else it.sessionStarts,
-            resumedFromHistory = false, busy = true, error = null, nextJourney = null) }
+            resumedFromHistory = false, busy = true, error = null, nextJourney = null)) }
         requestJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
                 // Persist the user's prompt before any summarization or inference.
@@ -318,10 +324,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         savedContext = savedContext.copy(sessionFirstId = "", summary = "",
             summarizedThrough = 0, thoughtLedger = emptyList())
         mutable.update {
-            it.copy(messages = copied,
+            clearAnswerDiagnostics(it.copy(messages = copied,
                 sessionStarts = (it.sessionStarts + listOfNotNull(copied.firstOrNull()?.id)).distinct(),
                 resumedFromHistory = false, nextJourney = null,
-                summaryStatus = "not_requested", error = null)
+                summaryStatus = "not_requested", error = null))
         }
     }
 

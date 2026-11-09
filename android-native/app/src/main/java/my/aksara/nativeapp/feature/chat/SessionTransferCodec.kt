@@ -34,7 +34,9 @@ internal object SessionTransferCodec {
         require(text.toByteArray(Charsets.UTF_8).size <= MAX_BYTES) {
             "Fail import melebihi 12 MB."
         }
-        val root=JSONObject(text)
+        val root=try { JSONObject(text) } catch(e: Exception) {
+            throw IllegalArgumentException("Fail bukan JSON arkib AKSARA yang sah.",e)
+        }
         require(root.optString("format")==FORMAT) { "Format arkib bukan AKSARA v1." }
         val sessions=root.getJSONArray("conversations")
         require(sessions.length() in 1..1000) { "Jumlah sesi dalam arkib tidak sah." }

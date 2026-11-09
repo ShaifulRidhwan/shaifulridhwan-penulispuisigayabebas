@@ -331,6 +331,11 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                             !message.text.contains("[Lampiran: ") && !state.busy) ({
                                             editingId=message.id;draft=message.text;autoFollow=true
                                         }) else null,
+                                        onDetails=if(message.role=="assistant" && !state.busy &&
+                                            message.id==state.messages.lastOrNull()?.id &&
+                                            state.lastProvider.isNotBlank()) ({
+                                            open("response-details")
+                                        }) else null,
                                         onBranch=if(!state.busy && !message.incomplete) ({
                                             if(onBranch(message.id)) { editingId=null;draft="";autoFollow=true;searchOpen=false }
                                         }) else null,
@@ -416,7 +421,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
 private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
 @Composable fun AksaraChatBubble(message:Message,fixedTimestamp:Long?=null,initial:Boolean=false,
     onCopy:(()->Unit)?=null,onReuse:((String)->Unit)?=null,
-    onEdit:(()->Unit)?=null,onBranch:(()->Unit)?=null,onRetry:(()->Unit)?=null) {
+    onEdit:(()->Unit)?=null,onBranch:(()->Unit)?=null,
+    onDetails:(()->Unit)?=null,onRetry:(()->Unit)?=null) {
     val ai=message.role!="user"
     val measure=rememberTextMeasurer();val density=LocalDensity.current
     BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -462,6 +468,7 @@ private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
                             if(onCopy!=null) AksaraText("Salin",Modifier.clickable{onCopy()},size=10f,line=14f,color=AksaraColors.gold)
                             if(!ai && onReuse!=null) AksaraText("Guna semula",Modifier.clickable{onReuse(message.text)},size=10f,line=14f,color=AksaraColors.gold)
                             if(onEdit!=null) AksaraText("Edit",Modifier.clickable{onEdit()},size=10f,line=14f,color=AksaraColors.gold)
+                            if(onDetails!=null) AksaraText("Butiran",Modifier.clickable{onDetails()},size=10f,line=14f,color=AksaraColors.gold)
                             if(onBranch!=null) AksaraText("Cabang",Modifier.clickable{onBranch()},size=10f,line=14f,color=AksaraColors.gold)
                             if(ai && onRetry!=null) AksaraText("Jana semula",Modifier.clickable{onRetry()},size=10f,line=14f,color=AksaraColors.gold)
                         }

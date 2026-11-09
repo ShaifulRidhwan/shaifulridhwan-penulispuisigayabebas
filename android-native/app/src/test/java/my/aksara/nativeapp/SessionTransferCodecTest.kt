@@ -30,6 +30,14 @@ class SessionTransferCodecTest {
         assertThrows(IllegalArgumentException::class.java) { SessionTransferCodec.decode(json.toString()) }
     }
 
+    @Test fun providerNamesAreSanitizedDuringImport() {
+        val json=JSONObject(SessionTransferCodec.encode(rows,listOf("a")))
+        json.getJSONArray("conversations").getJSONArray(0).getJSONObject(1)
+            .put("provider","gemini\nunsafe")
+        val snapshot=SessionTransferCodec.decode(json.toString())
+        assertNull(snapshot.messages[1].provider)
+    }
+
     @Test fun limitAndEmptyArchiveCannotBeMistakenForValidBackup() {
         assertThrows(IllegalArgumentException::class.java) { SessionTransferCodec.decode(" ") }
         assertThrows(IllegalArgumentException::class.java) {
