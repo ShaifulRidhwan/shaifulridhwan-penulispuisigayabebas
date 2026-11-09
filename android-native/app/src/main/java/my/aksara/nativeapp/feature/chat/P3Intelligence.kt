@@ -38,7 +38,7 @@ internal object P3Intelligence {
             "Keselamatan" to Regex("""\bprivasi\b|\bsecurity\b|\bpermission\b""",RegexOption.IGNORE_CASE)
         )
         val counts=linkedMapOf<Pair<String,String>,Int>()
-        messages.asSequence().filter{it.role=="user"&&!it.incomplete}.takeLast(300).forEach{turn->
+        messages.takeLast(300).asSequence().filter{it.role=="user"&&!it.incomplete}.forEach{turn->
             val detected=patterns.filter{it.second.containsMatchIn(turn.text.take(2200))}.map{it.first}
             for(i in 0 until detected.size)for(j in i+1 until detected.size){
                 val key=detected[i] to detected[j]
@@ -78,7 +78,7 @@ internal object P3Intelligence {
         }
         return review+" · "+when(evidence){
             "page_text"->"Teks halaman dirujuk, bukan jaminan kebenaran"
-            "grounded_search","search_excerpt"->"Bukti petikan/carían, bukan pembacaan penuh"
+            "grounded_search","search_excerpt"->"Bukti petikan/carian, bukan pembacaan penuh"
             "links_only"->"Pautan sahaja"
             else->"Tiada pengesahan luaran"
         }
