@@ -95,7 +95,14 @@ internal class LocalModelManager(private val context: Context) {
     }
 
     private fun validHeader(file: File): Boolean = file.inputStream().use { input ->
-        SDTurboModelFormat.supportedHeader(input.readNBytes(8))
+        val header = ByteArray(8)
+        var read = 0
+        while (read < header.size) {
+            val n = input.read(header, read, header.size - read)
+            if (n <= 0) return@use false
+            read += n
+        }
+        SDTurboModelFormat.supportedHeader(header)
     }
 
     private fun atomicallyInstall(candidate: File) {
