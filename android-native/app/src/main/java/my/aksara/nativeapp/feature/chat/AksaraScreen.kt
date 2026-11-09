@@ -1,6 +1,9 @@
 package my.aksara.nativeapp.feature.chat
 
 import android.content.Intent
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -90,6 +93,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
     var draft by rememberSaveable { mutableStateOf("") }
+    var searchOpen by rememberSaveable { mutableStateOf(false) }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var searchIndex by rememberSaveable { mutableIntStateOf(0) }
+    val uiScope = rememberCoroutineScope()
     val context = LocalContext.current
     val margins = aksaraDeviceMargins()
     val focus = LocalFocusManager.current
@@ -161,15 +168,16 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                     AksaraGlassSurface(Modifier.fillMaxSize().testTagCompat("conversation"),radius=22.dp,blur=3.dp,saturation=1.06f,
                         brush=Brush.linearGradient(listOf(Color(15,17,25,51),Color(10,14,25,33),Color(7,10,18,56))),border=Color(253,214,150,145)) {
                         Column(Modifier.fillMaxSize().padding(1.dp)) {
-                            BoxWithConstraints(Modifier.fillMaxWidth().height(54.dp).testTagCompat("conversation-head")) {
+                            BoxWithConstraints(Modifier.fillMaxWidth().height(58.dp).testTagCompat("conversation-head")) {
                                 val compact=maxWidth<390.dp
                                 val headerPaint=remember{HazeState()}
                                 Box(Modifier.matchParentSize().hazeSource(headerPaint).background(Brush.horizontalGradient(listOf(Color(20,18,21,64),Color(5,8,17,56)))))
                                 CompositionLocalProvider(LocalBackdropPaints provides listOf(headerPaint)) {
                                 Row(Modifier.fillMaxSize().padding(horizontal=if(compact)5.dp else 8.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(if(compact)3.dp else 4.dp)) {
-                                    AksaraButton("Voice Chat",{open("voice-permission")},Modifier.width(if(compact)82.328.dp else 93.484.dp),icon="voice",size=if(compact)9f else 10f,height=37.dp,radius=999.dp)
+                                    AksaraButton("Voice Chat",{open("voice-permission")},Modifier.width(if(compact)82.328.dp else 93.484.dp),icon="voice",size=if(compact)9f else 10f,height=AksaraGlassTokens.capsuleHeight,radius=AksaraGlassTokens.capsuleRadius)
+                                    AksaraButton("",{searchOpen=!searchOpen;autoFollow=!searchOpen},Modifier.width(40.dp).semantics{contentDescription="Cari mesej dan kongsi perbualan"},icon="search",size=9f,height=AksaraGlassTokens.capsuleHeight,radius=AksaraGlassTokens.capsuleRadius)
                                     Spacer(Modifier.weight(1f))
-                                     AksaraGlassSurface(Modifier.width(if(compact)129.dp else 143.dp).height(37.dp).clickable {open("connection")}.semantics {contentDescription="Connection"},radius=999.dp,blur=9.dp) {
+                                     AksaraGlassSurface(Modifier.width(if(compact)129.dp else 143.dp).height(AksaraGlassTokens.capsuleHeight).clickable {open("connection")}.semantics {contentDescription="Connection"},radius=999.dp,blur=9.dp) {
                                         Row(Modifier.fillMaxSize().padding(horizontal=4.dp),verticalAlignment=Alignment.CenterVertically) {
                                             AksaraIcon("network",Modifier.size(15.dp),Color(0xffc1b393))
                                             val online=state.providers.count { it.second=="online" }
@@ -182,11 +190,49 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 }
                                 Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(1.dp).background(Color(235,215,185,35)))
                             }
+                            if(searchOpen) {
+                                val matches=state.messages.mapIndexedNotNull { index,message ->
+                                    if(searchQuery.isNotBlank() && message.text.contains(searchQuery,ignoreCase=true)) index else null
+                                }
+                                Row(Modifier.fillMaxWidth().height(54.dp).padding(horizontal=9.dp,vertical=6.dp),
+                                    verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(5.dp)) {
+                                    AksaraGlassSurface(Modifier.weight(1f).height(AksaraGlassTokens.capsuleHeight),radius=AksaraGlassTokens.controlRadius,blur=12.dp) {
+                                        if(searchQuery.isBlank()) AksaraText("Cari mesej...",Modifier.align(Alignment.CenterStart).padding(horizontal=10.dp),size=11f,color=AksaraColors.muted)
+                                        BasicTextField(searchQuery,{searchQuery=it;searchIndex=0},Modifier.align(Alignment.CenterStart).fillMaxWidth().padding(horizontal=10.dp),
+                                            singleLine=true,textStyle=AksaraTypography.style(12f,18f),cursorBrush=SolidColor(AksaraColors.gold))
+                                    }
+                                    AksaraButton(if(matches.isEmpty())"0" else "${searchIndex.coerceIn(0,matches.lastIndex)+1}/${matches.size}",{
+                                        if(matches.isNotEmpty()){
+                                            searchIndex=searchIndex.coerceIn(0,matches.lastIndex)
+                                            val target=matches[searchIndex]
+                                            autoFollow=false
+                                            uiScope.launch{list.animateScrollToItem(target+1)}
+                                            searchIndex=(searchIndex+1)%matches.size
+                                        }
+                                    },Modifier.width(47.dp),size=9f,height=AksaraGlassTokens.capsuleHeight,radius=AksaraGlassTokens.capsuleRadius)
+                                    AksaraButton("Kongsi",{
+                                        if(state.messages.isNotEmpty()) {
+                                            val body=state.messages.joinToString("\\n\\n") { (if(it.role=="user")"Kau" else "Aksara")+": "+it.text }
+                                            val share=Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,body)
+                                            context.startActivity(Intent.createChooser(share,"Kongsi perbualan Aksara"))
+                                        }
+                                    },Modifier.width(53.dp),size=9f,height=AksaraGlassTokens.capsuleHeight,radius=AksaraGlassTokens.capsuleRadius)
+                                }
+                            }
                             if(state.busy) Box(Modifier.fillMaxWidth().height(42.1875.dp).background(Color(15,18,26,40)).padding(horizontal=21.dp,vertical=11.dp)){AksaraText("Generating Response",size=12f,line=19.2f,color=Color(0xffd9c8b0))}
                             LazyColumn(Modifier.weight(1f).fillMaxWidth().testTagCompat("messages"),state=list,contentPadding=PaddingValues(start=if(state.messages.isEmpty())17.dp else 12.dp,end=if(state.messages.isEmpty())17.dp else 12.dp,top=if(state.messages.isEmpty())14.dp else 13.dp,bottom=13.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
                                 if(state.messages.isEmpty()) item { AksaraChatBubble(Message("welcome","assistant",WelcomeText,fixedTimestamp?:System.currentTimeMillis()),fixedTimestamp=fixedTimestamp,initial=true) }
                                 if(state.messages.isNotEmpty()) item { AksaraChatBubble(Message("welcome-expanded","assistant","Antara aksara dan code,\nGAYA yang bebas,\nBEBAS dalam bentuk,\nLUAS dalam pemikiran.",fixedTimestamp?:state.messages.first().at),fixedTimestamp=fixedTimestamp) }
-                                items(state.messages,key={it.id}) { message -> AksaraChatBubble(message,fixedTimestamp=fixedTimestamp) }
+                                items(state.messages,key={it.id}) { message ->
+                                    AksaraChatBubble(message,fixedTimestamp=fixedTimestamp,
+                                        onCopy={
+                                            val clipboard=context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                                            clipboard.setPrimaryClip(ClipData.newPlainText("Aksara A.I.",message.text))
+                                        },
+                                        onReuse={draft=it;autoFollow=true},
+                                        onRetry=if(message.role=="assistant" && message.id==state.messages.lastOrNull()?.id && !state.busy)
+                                            ({state.messages.lastOrNull{it.role=="user"}?.text?.let(onSend)}) else null)
+                                }
                             }
                             if(state.messages.isEmpty()) Row(Modifier.fillMaxWidth().height(49.dp).padding(start=12.dp,end=12.dp,top=4.dp,bottom=8.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
                                 AksaraButton("Siapa Aku",{onJourney("Siapa Aku")},Modifier.width(91.969.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
@@ -222,7 +268,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     }
 }
 private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
-@Composable fun AksaraChatBubble(message:Message,fixedTimestamp:Long?=null,initial:Boolean=false) {
+@Composable fun AksaraChatBubble(message:Message,fixedTimestamp:Long?=null,initial:Boolean=false,
+    onCopy:(()->Unit)?=null,onReuse:((String)->Unit)?=null,onRetry:(()->Unit)?=null) {
     val ai=message.role!="user"
     val measure=rememberTextMeasurer();val density=LocalDensity.current
     BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -261,7 +308,15 @@ private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
                 if(message.text.isNotEmpty()) {
                     Spacer(Modifier.height(if(initial)6.dp else 8.dp))
                     val time=Instant.ofEpochMilli(fixedTimestamp?:message.at).atZone(ZoneId.of("Asia/Kuala_Lumpur")).format(DateTimeFormatter.ofPattern("d MMM HH:mm",java.util.Locale.ENGLISH))
-                    AksaraText((if(ai)"Diterima" else "Dihantar")+" · "+time+(if(message.incomplete) " · belum lengkap" else ""),Modifier.padding(horizontal=4.dp),size=10f,line=14f,color=Color(232,215,189,201),tracking=.15f)
+                    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                        AksaraText((if(ai)"Diterima" else "Dihantar")+" · "+time+(if(message.incomplete) " · belum lengkap" else ""),
+                            Modifier.padding(horizontal=4.dp),size=10f,line=14f,color=Color(232,215,189,201),tracking=.15f)
+                        if(!initial && !message.id.startsWith("welcome") && !message.incomplete) {
+                            if(onCopy!=null) AksaraText("Salin",Modifier.clickable{onCopy()},size=10f,line=14f,color=AksaraColors.gold)
+                            if(!ai && onReuse!=null) AksaraText("Guna semula",Modifier.clickable{onReuse(message.text)},size=10f,line=14f,color=AksaraColors.gold)
+                            if(ai && onRetry!=null) AksaraText("Tanya semula",Modifier.clickable{onRetry()},size=10f,line=14f,color=AksaraColors.gold)
+                        }
+                    }
                 }
             }
         }
