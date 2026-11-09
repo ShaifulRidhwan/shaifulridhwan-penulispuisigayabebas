@@ -7,6 +7,8 @@ import android.media.*
 import android.media.audiofx.AcousticEchoCanceler
 import android.media.audiofx.NoiseSuppressor
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.util.Base64
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
@@ -34,7 +36,10 @@ data class VoiceState(
     val reconnectAttempt: Int = 0,
     val lastHeard: String = "",
     val lastSpoken: String = "",
-    val transcriptWarning: String = ""
+    val transcriptWarning: String = "",
+    val microphoneDevice: String = "Belum disahkan",
+    val outputDevice: String = "Belum disahkan",
+    val routeWarning: String = ""
 )
 
 /**
@@ -91,6 +96,9 @@ class LiveVoiceClient(
     private val manager = context.getSystemService(AudioManager::class.java)
     private var focus: AudioFocusRequest? = null
     private var previousMode: Int? = null
+    private var audioDeviceCallback: AudioDeviceCallback? = null
+    private var communicationListener: AudioManager.OnCommunicationDeviceChangedListener? = null
+    private var routeError = ""
 
     private fun active(id: Int) = running.get() && epoch.get() == id
 
@@ -113,7 +121,8 @@ class LiveVoiceClient(
         outgoingTranscript = ""
         incomingSuspect = false
         mutable.value = mutable.value.copy(phase = "connecting", message = "Menyambung Gemini Live…", startedAt = null, ready = false,
-            lastHeard = "", lastSpoken = "", transcriptWarning = "")
+            lastHeard = "", lastSpoken = "", transcriptWarning = "",
+            microphoneDevice = "Belum disahkan", outputDevice = "Belum disahkan", routeWarning = "")
         connect()
     }
 
@@ -307,7 +316,9 @@ class LiveVoiceClient(
             val transcript = content.optJSONObject("inputTranscription")?.optString("text").orEmpty()
             if (transcript.isNotBlank()) {
                 incomingTranscript = VoiceContextSync.mergeTranscript(incomingTranscript, transcript)
-                if (incomingTranscript.contains(Regex("(?i)\\b(?:sepanyol|spanish|español|terjemah|translate)\\b")))
+                // Explicit requests in Malay may quote other languages. A single ASR guess
+                // mentioning "Spanish" must NOT unlock an entire foreign-language session.
+                if (VoiceRecoveryPolicy.explicitForeignLanguageRequest(incomingTranscript))
                     foreignLanguageRequested = true
                 // Transcription is a hypothesis, not proof of what the microphone heard.
                 // Reject high-confidence script/language drift before synchronizing Chat.
@@ -318,8 +329,12 @@ class LiveVoiceClient(
                     outputTrack?.pause(); outputTrack?.flush(); outputTrack?.play()
                     mutable.value = mutable.value.copy(
                         lastHeard = incomingTranscript.takeLast(160),
-                        transcriptWarning = "Transkripsi diragui. Ulang dalam Bahasa Melayu.",
+                        transcriptWarning = "Transkripsi asing dikesan. Memulihkan Bahasa Melayu.",
                         message = "Aku mungkin tersalah dengar. Ulang selepas sambungan dipulihkan.")
+                    // Do not let the model build an answer around corrupted ASR.
+                    resumptionHandle = ""
+                    recover(id, "Transkripsi tersasar. Sambung semula dalam Bahasa Melayu.", true)
+                    return
                 } else {
                     mutable.value = mutable.value.copy(lastHeard = incomingTranscript.takeLast(160), transcriptWarning = "")
                 }
@@ -333,6 +348,11 @@ class LiveVoiceClient(
                 (suspectSpanish(outgoingTranscript) || VoiceRecoveryPolicy.suspectUnsupportedTranscript(outgoingTranscript))) {
                 languageDrift = true
                 mutable.value = mutable.value.copy(transcriptWarning = "Bahasa jawapan tersasar. Memulihkan Bahasa Melayu.")
+                playbackGeneration.incrementAndGet()
+                runCatching { outputTrack?.pause();outputTrack?.flush();outputTrack?.play() }
+                resumptionHandle = ""
+                recover(id, "Bahasa jawapan tersasar. Menyambung semula dalam Bahasa Melayu.", true)
+                return
             }
             val turn = content.optJSONObject("modelTurn")
             if (turn != null) {
@@ -408,7 +428,8 @@ class LiveVoiceClient(
         check(manager.requestAudioFocus(focus!!) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) { "Audio focus ditolak." }
         previousMode = manager.mode
         manager.mode = AudioManager.MODE_IN_COMMUNICATION
-        routeToSpeaker()
+        selectCommunicationRoute()
+        registerRouteMonitors(id)
         val minInput = AudioRecord.getMinBufferSize(16000, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)
         check(minInput > 0) { "Format mikrofon 16 kHz tidak disokong." }
         val input = AudioRecord.Builder().setAudioSource(MediaRecorder.AudioSource.VOICE_COMMUNICATION)
@@ -421,7 +442,7 @@ class LiveVoiceClient(
         if (NoiseSuppressor.isAvailable()) noise = NoiseSuppressor.create(input.audioSessionId)?.apply { enabled = true }
         val minOutput = AudioTrack.getMinBufferSize(24000, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
         check(minOutput > 0) { "PCM 24 kHz tidak disokong." }
-        val playbackAttrs = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
+        val playbackAttrs = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION)
             .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build()
         val playback = AudioTrack.Builder().setAudioAttributes(playbackAttrs)
             .setAudioFormat(AudioFormat.Builder().setSampleRate(24000)
@@ -441,6 +462,7 @@ class LiveVoiceClient(
                             val count = playback.write(bytes, offset, bytes.size - offset, AudioTrack.WRITE_BLOCKING)
                             if (count <= 0) throw IOException("AudioTrack write: " + count)
                             offset += count
+                            if (offset == count) updateObservedRoute(id)
                         }
                     }
                 } catch (e: Exception) {
@@ -453,12 +475,23 @@ class LiveVoiceClient(
             }
         }
         input.startRecording()
+        scope.launch {
+            delay(300)
+            if (active(id)) updateObservedRoute(id)
+            delay(1100) // Bluetooth hands-free negotiation is not instantaneous.
+            if (active(id)) updateObservedRoute(id)
+        }
         microphoneJob = scope.launch {
             val frame = ByteArray(3200)
             var rejected = 0
+            var routeSampled = false
             while (active(id) && isActive) {
                 val n = input.read(frame, 0, frame.size, AudioRecord.READ_BLOCKING)
                 if (n < 0) { if (active(id)) recover(id, "AudioRecord read: " + n, true); break }
+                if (n > 0 && !routeSampled) {
+                    routeSampled = true
+                    updateObservedRoute(id)
+                }
                 if (n > 0 && state.value.mic) {
                     val packet = JSONObject().put("realtimeInput", JSONObject()
                         .put("audio", JSONObject().put("mimeType", "audio/pcm;rate=16000")
@@ -530,6 +563,7 @@ class LiveVoiceClient(
         outputTrack?.release(); outputTrack = null
         queuedPackets.set(0)
         focus?.let { manager.abandonAudioFocusRequest(it) }; focus = null
+        unregisterRouteMonitors()
         restoreRouting()
         completedTurn = false
         thinkingSince = 0L
@@ -542,20 +576,111 @@ class LiveVoiceClient(
         outgoingTranscript = ""
     }
 
-    @Suppress("DEPRECATION") private fun routeToSpeaker() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val builtIn = manager.availableCommunicationDevices
-                .firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
-            if (builtIn != null && manager.setCommunicationDevice(builtIn)) return
+    /** Call-mode route is duplex. Never force speakerphone while Bluetooth is attached. */
+    private fun selectCommunicationRoute() {
+        routeError = ""
+        try {
+            val options = manager.availableCommunicationDevices
+            val selectedType = VoiceAudioRoute.chooseType(options.map { it.type },
+                manager.communicationDevice?.type)
+            val selected = selectedType?.let { target ->
+                options.firstOrNull { it.type == target &&
+                    it.id == manager.communicationDevice?.id }
+                    ?: options.firstOrNull { it.type == target }
+            }
+            if (selected != null && !manager.setCommunicationDevice(selected)) {
+                routeError = "Android menolak laluan audio pilihan. Semak sambungan earphone."
+            }
+            if (selectedType == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER) {
+                val mediaOnlyBluetooth = manager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+                    .any { it.type == AudioDeviceInfo.TYPE_BLUETOOTH_A2DP }
+                if (mediaOnlyBluetooth) {
+                    routeError = "Bluetooth media tersambung, tetapi mod panggilan/mikrofon tidak tersedia."
+                }
+            }
+        } catch (e: SecurityException) {
+            routeError = "Kebenaran Bluetooth diperlukan untuk menggunakan mikrofon earphone."
+        } catch (e: Exception) {
+            routeError = "Android gagal memilih laluan audio: " + (e.message ?: "tidak tersedia").take(75)
         }
-        manager.isSpeakerphoneOn = true
     }
-    @Suppress("DEPRECATION") private fun restoreRouting() {
-        val old = previousMode ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) manager.clearCommunicationDevice()
-        else manager.isSpeakerphoneOn = false
-        manager.mode = old
+
+    private fun deviceLabel(device: AudioDeviceInfo?): String {
+        if (device == null) return "Belum disahkan"
+        val typeLabel = VoiceAudioRoute.label(device.type)
+        val name = runCatching { device.productName?.toString().orEmpty() }.getOrDefault("")
+            .take(28).trim()
+        return if (name.isBlank() || name.equals(typeLabel, true)) typeLabel else typeLabel + " · " + name
+    }
+
+    private fun updateObservedRoute(id: Int) {
+        if (!active(id)) return
+        val input = runCatching { recorder?.routedDevice }.getOrNull()
+        val output = runCatching { outputTrack?.routedDevice }.getOrNull()
+        val communication = runCatching { manager.communicationDevice }.getOrNull()
+        val displayOutput = if (output != null) deviceLabel(output) else
+            communication?.let { deviceLabel(it) + " (belum disahkan)" } ?: "Belum disahkan"
+        val displayInput = deviceLabel(input)
+        val warning = when {
+            routeError.isNotBlank() -> routeError
+            VoiceAudioRoute.mismatch(output?.type ?: communication?.type, input?.type) ->
+                "Audio keluar melalui Bluetooth, tetapi mikrofon masih pada telefon."
+            else -> ""
+        }
+        mutable.value = mutable.value.copy(microphoneDevice=displayInput,
+            outputDevice=displayOutput,routeWarning=warning)
+    }
+
+    private fun registerRouteMonitors(id: Int) {
+        unregisterRouteMonitors()
+        val devices = object : AudioDeviceCallback() {
+            override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) {
+                onChangedAudioDevices(id)
+            }
+            override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>) {
+                onChangedAudioDevices(id)
+            }
+        }
+        val listener = AudioManager.OnCommunicationDeviceChangedListener {
+            scope.launch {
+                delay(250)
+                if (active(id)) updateObservedRoute(id)
+            }
+        }
+        audioDeviceCallback = devices
+        communicationListener = listener
+        manager.registerAudioDeviceCallback(devices,Handler(Looper.getMainLooper()))
+        manager.addOnCommunicationDeviceChangedListener(context.mainExecutor,listener)
+    }
+
+    private fun onChangedAudioDevices(id: Int) {
+        scope.launch {
+            delay(350)
+            if (!active(id)) return@launch
+            selectCommunicationRoute()
+            delay(450)
+            if (active(id)) updateObservedRoute(id)
+        }
+    }
+
+    private fun unregisterRouteMonitors() {
+        audioDeviceCallback?.let { runCatching { manager.unregisterAudioDeviceCallback(it) } }
+        communicationListener?.let { runCatching { manager.removeOnCommunicationDeviceChangedListener(it) } }
+        audioDeviceCallback=null
+        communicationListener=null
+    }
+
+    @Synchronized fun refreshAudioRoute() {
+        if (!running.get() || previousMode == null) return
+        val id=epoch.get()
+        onChangedAudioDevices(id)
+    }
+
+    private fun restoreRouting() {
+        manager.clearCommunicationDevice()
+        previousMode?.let { manager.mode = it }
         previousMode = null
+        routeError = ""
     }
 
     fun setMic(enabled: Boolean) {
@@ -590,6 +715,7 @@ class LiveVoiceClient(
         outgoingTranscript = ""
         preferStandardModel = false
         mutable.value = mutable.value.copy(phase = "idle", message = "Sesi ditamatkan.",
-            startedAt = null, ready = false, reconnectAttempt = 0)
+            startedAt = null, ready = false, reconnectAttempt = 0,
+            microphoneDevice="Belum disahkan",outputDevice="Belum disahkan",routeWarning="")
     }
 }

@@ -105,7 +105,7 @@ import my.aksara.engine.avatar.VoiceAvatarView
                 }
             }
             Spacer(Modifier.height(5.dp))
-            AksaraGlassSurface(Modifier.padding(horizontal=side).fillMaxWidth().height(if(compact)150.dp else 155.dp),radius=20.dp,blur=22.dp,brush=Brush.linearGradient(listOf(Color(250,228,196,15),Color(111,163,211,9),Color(15,25,39,18))),border=Color(245,217,176,65),saturation=1.15f){
+            AksaraGlassSurface(Modifier.padding(horizontal=side).fillMaxWidth().height(if(compact)203.dp else 208.dp),radius=20.dp,blur=22.dp,brush=Brush.linearGradient(listOf(Color(250,228,196,15),Color(111,163,211,9),Color(15,25,39,18))),border=Color(245,217,176,65),saturation=1.15f){
                 Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=12.dp)){
                     Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){
                         Column(Modifier.weight(1f)){AksaraText("Gaya bahasa",size=10f,line=14.5f,color=Color(0xffd3c3ab));Spacer(Modifier.height(4.dp));AksaraButton(style+"  ﹀",{stylePicker=true},Modifier.fillMaxWidth(),size=if(style.length>16)9.5f else 11f,height=42.dp,radius=17.dp)}
@@ -120,6 +120,11 @@ import my.aksara.engine.avatar.VoiceAvatarView
                             AksaraText("${(state.volume*100).toInt()}%",Modifier.width(35.dp),size=12f,line=15.6f)
                         }
                     }
+                    Spacer(Modifier.height(7.dp))
+                    AksaraText("MIC · "+state.microphoneDevice.take(72),size=9.5f,line=12f,color=AksaraColors.muted)
+                    AksaraText("SUARA · "+state.outputDevice.take(72),size=9.5f,line=12f,color=AksaraColors.muted)
+                    if(state.routeWarning.isNotBlank()) AksaraText(state.routeWarning.take(140),
+                        size=9f,line=12f,color=Color(0xffffb49e))
                 }
             }
             Spacer(Modifier.height(10.dp))

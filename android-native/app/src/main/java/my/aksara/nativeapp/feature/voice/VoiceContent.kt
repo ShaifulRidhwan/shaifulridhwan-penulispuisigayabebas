@@ -77,7 +77,15 @@ private fun voiceStyleInstruction(style:String):String=when(style){
     LaunchedEffect(client,policy){client.updateIdentity(policy)}
     val state by client.state.collectAsStateWithLifecycle()
     var permissionError by remember {mutableStateOf<String?>(null)}
-    val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {granted -> if(granted)client.start() else permissionError="Izin mikrofon ditolak. Tiada audio dihantar."}
+    val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
+        if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED) {
+            client.start()
+            client.refreshAudioRoute()
+            if(results[Manifest.permission.BLUETOOTH_CONNECT]==false)
+                permissionError="Kebenaran Bluetooth tidak diberikan. Earphone mungkin tidak boleh digunakan untuk Voice."
+            else permissionError=null
+        } else permissionError="Izin mikrofon ditolak. Tiada audio dihantar."
+    }
     val owner=LocalLifecycleOwner.current
     DisposableEffect(owner,client){
         val observer=LifecycleEventObserver{_,event->
@@ -90,6 +98,14 @@ private fun voiceStyleInstruction(style:String):String=when(style){
         owner.lifecycle.addObserver(observer)
         onDispose{owner.lifecycle.removeObserver(observer);client.close()}
     }
-    LaunchedEffect(client){if(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED)client.start() else permission.launch(Manifest.permission.RECORD_AUDIO)}
+    LaunchedEffect(client){
+        val required=buildList {
+            if(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED)
+                add(Manifest.permission.RECORD_AUDIO)
+            if(context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED)
+                add(Manifest.permission.BLUETOOTH_CONNECT)
+        }
+        if(required.isEmpty())client.start() else permission.launch(required.toTypedArray())
+    }
     VoiceScreen(state.copy(message=permissionError?:state.message),onClose={client.close();onClose()},onMic={client.setMic(!state.mic)},onSpeaker={client.setSpeaker(!state.speaker)},onVolume=client::setVolume,mode=mode,onMode=onMode,style=style,onStyle={next->if(next in VoiceLanguageStyles){style=next;preferences.edit().putString("language_style",next).apply()}})
 }

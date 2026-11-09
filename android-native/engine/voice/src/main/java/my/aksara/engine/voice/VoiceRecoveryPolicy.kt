@@ -30,10 +30,21 @@ object VoiceRecoveryPolicy {
         val lower = text.lowercase(java.util.Locale.ROOT)
         // Explicit Malay framing may quote an otherwise foreign example.
         if (Regex("""\b(?:apa|maksud|terjemah|ayat|bahasa|tolong|boleh|aku|kau|saya|nak|yang|dan)\b""").containsMatchIn(lower)) return false
+        // Strong Portuguese patterns were observed in real ms-MY Gemini Live ASR drift.
+        // "de chinelo" or "eu tô" in a short snippet should not be accepted as Malay.
+        if (Regex("""\b(?:de\s+chinelo|eu\s+t[oô]|ainda\s+a\s+teste|n[aã]o\s+sei|n[aã]o\s+entendo)\b""")
+                .containsMatchIn(lower)) return true
+        val portuguese = Regex("""\b(?:chinelo|ainda|estou|voc[eê]|obrigado|obrigada|muito|tudo|ent[aã]o|tamb[eé]m|deu|t[oô]|n[aã]o|eu)\b""")
+            .findAll(lower).map { it.value }.distinct().count()
+        if (portuguese >= 3) return true
         val spanish = Regex("""\b(?:con|agua|hola|quiero|puedes|estoy|usted|buenos|dias|gracias|español|hablando|entiendo|muchas|por|favor)\b""")
             .findAll(lower).map { it.value }.distinct().count()
         return spanish >= 2
     }
+
+    fun explicitForeignLanguageRequest(text: String): Boolean =
+        Regex("""(?i)\b(?:tolong|sila|cuba|boleh)\b.{0,70}\b(?:cakap|jawab|terjemah|translate)\b.{0,60}\b(?:bahasa|language)\b""")
+            .containsMatchIn(text)
 
     fun suspectSpanish(text: String): Boolean {
         // Conservative fallback. A lone shared word must not trigger a new socket.

@@ -22,6 +22,16 @@ class VoiceRecoveryPolicyTest {
         assertFalse(VoiceRecoveryPolicy.suspectSpanish("Apa khabar, aku sedang menjawab soalan kau."))
         assertFalse(VoiceRecoveryPolicy.suspectSpanish("gracias"))
     }
+    @Test fun detectsMalayVoiceDriftingToPortuguese() {
+        assertTrue(VoiceRecoveryPolicy.suspectUnsupportedTranscript("Asapeca ovas de chinelo"))
+        assertTrue(VoiceRecoveryPolicy.suspectUnsupportedTranscript("Tá. Deu. Tá, eu tô ainda a teste."))
+        assertTrue(VoiceRecoveryPolicy.suspectUnsupportedTranscript("我不读。"))
+        assertFalse(VoiceRecoveryPolicy.suspectUnsupportedTranscript("Tiba-tiba cakap bahasa Cina"))
+        assertFalse(VoiceRecoveryPolicy.suspectUnsupportedTranscript("Aku tengok foto tu tadi"))
+        assertFalse(VoiceRecoveryPolicy.explicitForeignLanguageRequest("Tiba-tiba cakap bahasa Sepanyol"))
+        assertTrue(VoiceRecoveryPolicy.explicitForeignLanguageRequest("Tolong jawab dalam bahasa Sepanyol"))
+    }
+
     @Test fun suspiciousAsrDoesNotPolluteChatContext() {
         assertTrue(VoiceRecoveryPolicy.suspectUnsupportedTranscript("Apple con agua"))
         assertTrue(VoiceRecoveryPolicy.suspectUnsupportedTranscript("うん。しゃっぴさいふ"))
