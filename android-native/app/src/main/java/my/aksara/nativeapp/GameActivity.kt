@@ -90,7 +90,7 @@ class GameActivity : ComponentActivity() {
             }
             addOnLayoutChangeListener{view,l,t,r,b,_,_,_,_->
                 val w=r-l;val h=b-t
-                val edgeHeight=minOf(h/2,(180*resources.displayMetrics.density).toInt())
+                val edgeHeight=minOf(h,(200*resources.displayMetrics.density).toInt())
                 view.systemGestureExclusionRects=listOf(Rect(0,h-edgeHeight,w*2/5,h),Rect(w*3/5,h-edgeHeight,w,h))
                 Log.i("AksaraGame","viewport ${w}x${h}")
             }
