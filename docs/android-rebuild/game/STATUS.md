@@ -10,7 +10,7 @@ The visible procedural figures are temporary development art, **not final charac
 
 `node --test android-native/game-tests/combat.test.cjs`: 7 tests pass, covering movement/jump/landing, misses, active-frame damage/knockback, cooldown, death/result freezing, three AI difficulties and timeout.
 
-Playwright Chromium: renderer, keyboard movement, touch event smoke, collision through victory, restart and pause/resume pass without JavaScript errors. Victory screenshot is in `android-native/game-tests/victory.png`. This uses a low-health fixture to reach victory; AI fights to completion are independently covered in combat tests. This is not Android emulator evidence or a multitouch correctness test.
+Playwright Chromium: renderer, keyboard movement, simultaneous movement/attack touch pointers and release, collision through victory, restart and pause/resume pass without JavaScript errors. Victory screenshot is in `android-native/game-tests/victory.png`. This uses a low-health fixture to reach victory; AI fights to completion are independently covered in combat tests. This is not Android emulator evidence.
 
 Voice brain source contract check passes. Existing Chat/Voice/Studio source code is preserved except for adding the game portal route. Android regression, instrumentation, performance and final-art identity checks remain required. Cloud executor has no `/dev/kvm`; no emulator pass is claimed. Do not merge this development PR until required validation and final assets are complete.
 
