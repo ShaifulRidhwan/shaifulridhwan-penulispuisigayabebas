@@ -193,9 +193,11 @@ internal class LocalModelManager(private val context: Context) {
 }
 
 internal class LocalSDTurboEngine {
-    // A cancelled coroutine cannot pre-empt a synchronous JNI model load.
-    // Keep the runtime occupied until native code really returns.
-    private val running = java.util.concurrent.atomic.AtomicBoolean(false)
+    // All Studio screens use the same native lock. A previous Studio instance
+    // may be disposed while a blocking JNI call is still running.
+    private companion object {
+        val running = java.util.concurrent.atomic.AtomicBoolean(false)
+    }
     private val libraryLoaded: Boolean by lazy {
         runCatching { System.loadLibrary("aksara_sdturbo") }.isSuccess
     }
