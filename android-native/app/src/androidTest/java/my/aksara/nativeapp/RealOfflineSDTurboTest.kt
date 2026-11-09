@@ -67,6 +67,7 @@ class RealOfflineSDTurboTest {
         assertEquals(SDTurboSpec.height, reopened.height)
         assertTrue("Saved pixels must match generated pixels", first.sameAs(reopened))
         Log.i("AksaraSDTurboTest", "offline_two_seed_image_and_gallery_reopen_pass")
+        Unit // JUnit @Test must return void, never the Int returned by Log.i().
     }
 
     private fun isEmulator(): Boolean =
