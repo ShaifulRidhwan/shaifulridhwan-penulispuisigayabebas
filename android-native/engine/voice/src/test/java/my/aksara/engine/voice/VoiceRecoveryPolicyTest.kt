@@ -22,6 +22,14 @@ class VoiceRecoveryPolicyTest {
         assertFalse(VoiceRecoveryPolicy.suspectSpanish("Apa khabar, aku sedang menjawab soalan kau."))
         assertFalse(VoiceRecoveryPolicy.suspectSpanish("gracias"))
     }
+    @Test fun suspiciousAsrDoesNotPolluteChatContext() {
+        assertTrue(VoiceRecoveryPolicy.suspectUnsupportedTranscript("Apple con agua"))
+        assertTrue(VoiceRecoveryPolicy.suspectUnsupportedTranscript("うん。しゃっぴさいふ"))
+        assertFalse(VoiceRecoveryPolicy.suspectUnsupportedTranscript("Aku nak guna Apple untuk coding"))
+        assertFalse(VoiceRecoveryPolicy.suspectUnsupportedTranscript("Apa maksud con agua?"))
+        assertTrue(VoiceContextSync.completedTurns("Apple con agua", "Boleh aku bantu", true).isEmpty())
+        assertEquals(2, VoiceContextSync.completedTurns("Hai", "Apa khabar?", false).size)
+    }
     @Test fun detectsLanguageDriftAcrossTranscriptFragments() {
         val first = VoiceContextSync.mergeTranscript("", "gracias")
         assertFalse(VoiceRecoveryPolicy.suspectSpanish(first))

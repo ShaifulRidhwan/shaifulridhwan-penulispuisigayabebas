@@ -31,7 +31,10 @@ data class VoiceState(
     val speaker: Boolean = true,
     val volume: Float = 1f,
     val ready: Boolean = false,
-    val reconnectAttempt: Int = 0
+    val reconnectAttempt: Int = 0,
+    val lastHeard: String = "",
+    val lastSpoken: String = "",
+    val transcriptWarning: String = ""
 )
 
 /**
@@ -65,6 +68,7 @@ class LiveVoiceClient(
     private var thinkingSince = 0L
     private var completedTurn = false
     private var languageDrift = false
+    private var incomingSuspect = false
     private var foreignLanguageRequested = false
     private var resumptionHandle = ""
     // Reconnect context is ephemeral; completed transcript turns can be handed to the app.
@@ -107,7 +111,9 @@ class LiveVoiceClient(
         recentVoiceTurns.clear()
         incomingTranscript = ""
         outgoingTranscript = ""
-        mutable.value = mutable.value.copy(phase = "connecting", message = "Menyambung Gemini Live…", startedAt = null, ready = false)
+        incomingSuspect = false
+        mutable.value = mutable.value.copy(phase = "connecting", message = "Menyambung Gemini Live…", startedAt = null, ready = false,
+            lastHeard = "", lastSpoken = "", transcriptWarning = "")
         connect()
     }
 
@@ -177,8 +183,8 @@ class LiveVoiceClient(
                             .put("realtimeInputConfig", JSONObject().put("automaticActivityDetection", JSONObject()
                                 .put("startOfSpeechSensitivity", "START_SENSITIVITY_HIGH")
                                 .put("endOfSpeechSensitivity", "END_SENSITIVITY_LOW")
-                                .put("prefixPaddingMs", 100)
-                                .put("silenceDurationMs", 1450)))
+                                .put("prefixPaddingMs", 240)
+                                .put("silenceDurationMs", 1100)))
                             .put("contextWindowCompression", JSONObject().put("slidingWindow", JSONObject()))
                             .put("sessionResumption", if (resumptionHandle.isNotBlank())
                                 JSONObject().put("handle", resumptionHandle) else JSONObject())
@@ -301,13 +307,33 @@ class LiveVoiceClient(
             val transcript = content.optJSONObject("inputTranscription")?.optString("text").orEmpty()
             if (transcript.isNotBlank()) {
                 incomingTranscript = VoiceContextSync.mergeTranscript(incomingTranscript, transcript)
-                if (transcript.contains(Regex("(?i)\\b(?:sepanyol|spanish|español|terjemah|translate)\\b")))
+                if (incomingTranscript.contains(Regex("(?i)\\b(?:sepanyol|spanish|español|terjemah|translate)\\b")))
                     foreignLanguageRequested = true
+                // Transcription is a hypothesis, not proof of what the microphone heard.
+                // Reject high-confidence script/language drift before synchronizing Chat.
+                if (!foreignLanguageRequested && VoiceRecoveryPolicy.suspectUnsupportedTranscript(incomingTranscript)) {
+                    incomingSuspect = true
+                    languageDrift = true
+                    playbackGeneration.incrementAndGet()
+                    outputTrack?.pause(); outputTrack?.flush(); outputTrack?.play()
+                    mutable.value = mutable.value.copy(
+                        lastHeard = incomingTranscript.takeLast(160),
+                        transcriptWarning = "Transkripsi diragui. Ulang dalam Bahasa Melayu.",
+                        message = "Aku mungkin tersalah dengar. Ulang selepas sambungan dipulihkan.")
+                } else {
+                    mutable.value = mutable.value.copy(lastHeard = incomingTranscript.takeLast(160), transcriptWarning = "")
+                }
             }
             val spoken = content.optJSONObject("outputTranscription")?.optString("text").orEmpty()
-            if (spoken.isNotBlank())
+            if (spoken.isNotBlank()) {
                 outgoingTranscript = VoiceContextSync.mergeTranscript(outgoingTranscript, spoken)
-            if (!foreignLanguageRequested && spoken.isNotBlank() && suspectSpanish(outgoingTranscript)) languageDrift = true
+                mutable.value = mutable.value.copy(lastSpoken = outgoingTranscript.takeLast(160))
+            }
+            if (!foreignLanguageRequested && spoken.isNotBlank() &&
+                (suspectSpanish(outgoingTranscript) || VoiceRecoveryPolicy.suspectUnsupportedTranscript(outgoingTranscript))) {
+                languageDrift = true
+                mutable.value = mutable.value.copy(transcriptWarning = "Bahasa jawapan tersasar. Memulihkan Bahasa Melayu.")
+            }
             val turn = content.optJSONObject("modelTurn")
             if (turn != null) {
                 if (thinkingSince == 0L) thinkingSince = System.currentTimeMillis()
@@ -331,15 +357,16 @@ class LiveVoiceClient(
                 completedTurn = true
                 thinkingSince = 0L
                 synchronized(this@LiveVoiceClient) {
-                    val completed = VoiceContextSync.completedTurns(incomingTranscript, outgoingTranscript, languageDrift)
+                    val completed = VoiceContextSync.completedTurns(incomingTranscript, outgoingTranscript, languageDrift || incomingSuspect)
                     completed.forEach { recentVoiceTurns.addLast(it) }
                     while (recentVoiceTurns.size > 16) recentVoiceTurns.removeFirst()
                     incomingTranscript = ""
                     outgoingTranscript = ""
                     if (completed.isNotEmpty()) runCatching { onCompletedTurns(completed) }
                 }
-                if (languageDrift) {
+                if (languageDrift || incomingSuspect) {
                     languageDrift = false
+                    incomingSuspect = false
                     foreignLanguageRequested = false
                     resumptionHandle = "" // Do not restore drifted language context.
                     recover(id, "Bahasa respons tersasar; memulihkan Bahasa Melayu.", true)
@@ -507,6 +534,7 @@ class LiveVoiceClient(
         completedTurn = false
         thinkingSince = 0L
         languageDrift = false
+        incomingSuspect = false
         foreignLanguageRequested = false
         // Only completed turns belong in reconnect context. Never merge an
         // interrupted fragment with speech from the replacement socket.

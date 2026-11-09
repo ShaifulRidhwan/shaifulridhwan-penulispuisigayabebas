@@ -41,15 +41,15 @@ import my.aksara.engine.avatar.VoiceAvatarView
         Column(Modifier.fillMaxSize().safeDrawingPadding().padding(top=margins.top,bottom=margins.bottom)){
             AksaraGlassSurface(Modifier.padding(horizontal=margins.horizontal).fillMaxWidth().height(68.dp),radius=21.dp,blur=13.dp,brush=Brush.linearGradient(listOf(Color(240,204,159,23),Color(135,181,211,14),Color(13,22,37,10))),border=Color(244,217,176,30)){
                 Row(Modifier.fillMaxSize().padding(start=10.dp,end=12.dp),verticalAlignment=Alignment.CenterVertically){
-                    AksaraGlassSurface(Modifier.width(73.dp).height(40.dp),radius=17.dp,blur=16.dp,brush=cssGradient(137f,listOf(Color(249,224,186,32),Color(128,173,218,18))),border=Color(245,217,173,69),saturation=1.16f){Column(Modifier.align(Alignment.Center),horizontalAlignment=Alignment.CenterHorizontally){AksaraText("AKSARA",size=13f,line=14.95f,weight=650,tracking=1.17f,family=AksaraTypography.heading);AksaraText("VOICE CHAT",size=7f,line=10.5f,tracking=1f,color=AksaraColors.gold)}}
+                    AksaraGlassSurface(Modifier.width(73.dp).height(AksaraGlassTokens.capsuleHeight),radius=AksaraGlassTokens.controlRadius,blur=AksaraGlassTokens.capsuleBlur,brush=cssGradient(137f,listOf(Color(249,224,186,32),Color(128,173,218,18))),border=Color(245,217,173,69),saturation=1.16f){Column(Modifier.align(Alignment.Center),horizontalAlignment=Alignment.CenterHorizontally){AksaraText("AKSARA",size=13f,line=14.95f,weight=650,tracking=1.17f,family=AksaraTypography.heading);AksaraText("VOICE CHAT",size=7f,line=10.5f,tracking=1f,color=AksaraColors.gold)}}
                     // Do not give half the available header width to an empty spacer:
                     // the combined status/timer needs the full free width on 360dp.
                     Spacer(Modifier.width(if(compact)4.dp else 6.dp))
-                    AksaraGlassSurface(Modifier.weight(1f).height(35.dp).semantics {
+                    AksaraGlassSurface(Modifier.weight(1f).height(AksaraGlassTokens.capsuleHeight).semantics {
                         testTag = "voice-status-pill"
                         contentDescription = (if(live)"Gemini Live aktif" else state.phase) +
                             ", tempoh " + "%02d:%02d".format(seconds/60,seconds%60)
-                    },radius=999.dp,blur=18.dp,brush=cssGradient(142f,listOf(Color(14,29,45,143),Color(20,34,54,66))),border=Color(241,214,173,78)){
+                    },radius=AksaraGlassTokens.capsuleRadius,blur=AksaraGlassTokens.capsuleBlur,brush=cssGradient(142f,listOf(Color(14,29,45,143),Color(20,34,54,66))),border=Color(241,214,173,78)){
                         Row(Modifier.fillMaxSize().padding(horizontal=if(compact)6.dp else 9.dp),
                             verticalAlignment=Alignment.CenterVertically,
                             horizontalArrangement=Arrangement.spacedBy(if(compact)4.dp else 5.dp)){
@@ -76,7 +76,7 @@ import my.aksara.engine.avatar.VoiceAvatarView
                         }
                     }
                     Spacer(Modifier.width(if(compact)4.dp else 7.dp))
-                    AksaraGlassSurface(Modifier.width(105.dp).height(38.dp).clickable(onClick=onClose).semantics{contentDescription="End Session: Tamatkan Voice Chat"; testTag = "voice-end-session"},radius=999.dp,blur=18.dp,brush=cssGradient(137f,listOf(Color(174,68,80,72),Color(80,38,57,36))),border=Color(250,169,173,130)){
+                    AksaraGlassSurface(Modifier.width(105.dp).height(AksaraGlassTokens.capsuleHeight).clickable(onClick=onClose).semantics{contentDescription="End Session: Tamatkan Voice Chat"; testTag = "voice-end-session"},radius=AksaraGlassTokens.capsuleRadius,blur=AksaraGlassTokens.capsuleBlur,brush=cssGradient(137f,listOf(Color(174,68,80,72),Color(80,38,57,36))),border=Color(250,169,173,130)){
                         Row(Modifier.align(Alignment.Center),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(5.dp)){
                             AksaraIcon("end",Modifier.size(14.dp),Color(0xffffb9b7))
                             AksaraText("End Session",size=9.5f,line=13f,weight=600,color=Color(0xffffd9d5))
@@ -90,6 +90,18 @@ import my.aksara.engine.avatar.VoiceAvatarView
                     AksaraIcon("voice",Modifier.size(width=102.dp,height=15.dp),Color(230,197,139,150))
                     Spacer(Modifier.height(5.dp));AksaraText(if(preview)"Pratonton" else when(state.phase){"listening"->"Mendengar";"thinking"->"Memproses";"speaking"->"Menjawab";"connecting"->"Menyambung";"reconnecting"->"Menyambung semula";"error"->"Ralat Voice";else->"Sedia"},size=16f,line=20.8f,weight=600,tracking=.4f,family=AksaraTypography.heading)
                     Spacer(Modifier.height(3.dp));androidx.compose.foundation.text.BasicText(if(preview)"Pratonton reka bentuk sahaja. Mikrofon dan Gemini Live tidak diaktifkan." else state.message,style=AksaraTypography.style(12f,17.4f,color=Color(0xffc7c3ba)).copy(textAlign=TextAlign.Center))
+                    if(!preview && state.lastHeard.isNotBlank()) {
+                        Spacer(Modifier.height(8.dp))
+                        AksaraGlassSurface(Modifier.fillMaxWidth().heightIn(min=38.dp),radius=AksaraGlassTokens.controlRadius,blur=12.dp) {
+                            Column(Modifier.fillMaxWidth().padding(horizontal=10.dp,vertical=7.dp)) {
+                                AksaraText("Didengar · " + state.lastHeard.takeLast(110),size=10f,line=14f,color=AksaraColors.text)
+                                if(state.transcriptWarning.isNotBlank()) {
+                                    Spacer(Modifier.height(3.dp))
+                                    AksaraText(state.transcriptWarning,size=10f,line=14f,color=Color(0xffffb49e))
+                                }
+                            }
+                        }
+                    }
                 }
             }
             Spacer(Modifier.height(5.dp))

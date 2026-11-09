@@ -54,6 +54,15 @@ data class AksaraDeviceMargins(val horizontal: Dp, val top: Dp, val bottom: Dp)
     )
 }
 
+/** Shared glass dimensions: pill controls stay equal within their respective rows. */
+object AksaraGlassTokens {
+    val capsuleHeight = 40.dp
+    val capsuleBlur = 16.dp
+    val capsuleRadius = 999.dp
+    val controlHeight = 42.dp
+    val controlRadius = 17.dp
+    val panelRadius = 20.dp
+}
 object AksaraColors {
     val text = Color(0xfffff4e4)
     val gold = Color(0xffe6c58b)
@@ -113,7 +122,7 @@ val DialogGradient: Brush get() = cssGradient(150f,listOf(Color(23,31,45,92), Co
     val engine=icon=="code"||icon=="terminal"
     val material=when{engine->cssGradient(180f,listOf(Color(255,255,255,11),Color(5,8,16,41)));icon=="brain"->cssGradient(145f,listOf(Color(238,201,140,22),Color(19,31,49,31)));icon=="send"->cssGradient(145f,listOf(Color(244,216,171,14),Color(64,87,112,9)));else->GlassGradient}
     val edge=when{engine->Color(233,205,158,87);icon=="brain"->Color(245,208,157,110);icon=="send"->Color(244,213,166,77);else->AksaraColors.border}
-    AksaraGlassSurface(modifier.graphicsLayer { alpha=if(enabled)1f else .6f }.height(height).clip(RoundedCornerShape(radius)).clickable(enabled = enabled, onClick = onClick), radius,blur=if(engine)8.dp else 2.dp,brush=material,border=edge,saturation=if(engine)1.12f else if(icon=="brain"||icon=="send")1f else 1.1f) {
+    AksaraGlassSurface(modifier.graphicsLayer { alpha=if(enabled)1f else .6f }.height(height).clip(RoundedCornerShape(radius)).clickable(enabled = enabled, onClick = onClick), radius,blur=if(engine)8.dp else if(radius >= 100.dp) AksaraGlassTokens.capsuleBlur else 2.dp,brush=material,border=edge,saturation=if(engine)1.12f else if(icon=="brain"||icon=="send")1f else 1.1f) {
         Row(Modifier.align(Alignment.Center).padding(horizontal = if(leadingText!=null)11.dp else if(size<10f)6.dp else 10.dp), horizontalArrangement = Arrangement.spacedBy(if(leadingText!=null)7.dp else if(size<10f)4.dp else 6.dp), verticalAlignment = Alignment.CenterVertically) {
             if(leadingText!=null)AksaraText(leadingText,size=size,line=size*1.4f,weight=500,color=AksaraColors.gold)
             if (icon != null) AksaraIcon(icon, Modifier.size(iconSize?:if(icon=="code")15.dp else if(icon=="terminal")17.dp else if(icon=="brain")23.dp else if(icon=="send")19.dp else if(icon=="voice"&&size<10)12.dp else if(size<10)15.dp else 18.dp), contentColor)
