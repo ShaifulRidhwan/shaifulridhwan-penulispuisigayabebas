@@ -8,6 +8,8 @@ import android.os.Build
 import android.os.PowerManager
 import android.os.StatFs
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
@@ -197,6 +199,7 @@ internal class LocalSDTurboEngine {
     // may be disposed while a blocking JNI call is still running.
     private companion object {
         val running = java.util.concurrent.atomic.AtomicBoolean(false)
+        val busy = MutableStateFlow(false)
     }
     private val libraryLoaded: Boolean by lazy {
         runCatching { System.loadLibrary("aksara_sdturbo") }.isSuccess
@@ -204,6 +207,7 @@ internal class LocalSDTurboEngine {
     private fun interface NativeProgress { fun onStage(stage: Int) }
     fun available(): Boolean = libraryLoaded
     fun isBusy(): Boolean = running.get()
+    val busyState: StateFlow<Boolean> get() = busy
     private external fun generateNative(
         modelPath: String, prompt: String, seed: Long, threads: Int, callback: NativeProgress
     ): IntArray?
@@ -219,6 +223,7 @@ internal class LocalSDTurboEngine {
         check(running.compareAndSet(false, true)) {
             "Inferens sebelumnya masih berjalan di JNI. Tunggu ia berhenti sebelum menjana lagi."
         }
+        busy.value = true
         try {
             val threads = Runtime.getRuntime().availableProcessors().coerceIn(1, 4)
             val pixels = generateNative(
@@ -231,6 +236,7 @@ internal class LocalSDTurboEngine {
             Bitmap.createBitmap(pixels, SDTurboSpec.width, SDTurboSpec.height, Bitmap.Config.ARGB_8888)
         } finally {
             running.set(false)
+            busy.value = false
         }
     }
 }
