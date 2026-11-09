@@ -415,7 +415,6 @@ fun StudioContent() {
                     catch(e:Exception){message=if(engine==StudioEngine.LOCAL)(e.message ?: "Prompt tempatan tidak sah.") else "Perkemas A.I. memerlukan sambungan: "+(e.message ?: "tidak tersedia")}
                 }
             },Modifier.weight(1f),size=10f,height=38.dp,enabled=enhancementJob?.isActive!=true)
-            AksaraButton("Idea Prompt",{showIdeas=true},Modifier.weight(1f),size=10f,height=38.dp)
         }
         if(enhancedDraft!=null) {
             Spacer(Modifier.height(8.dp))
