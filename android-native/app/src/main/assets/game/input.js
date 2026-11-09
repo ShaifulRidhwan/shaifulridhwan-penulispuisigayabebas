@@ -17,7 +17,7 @@ class InputState {
   const held=[...this.pointers.values()].map(p=>p.action),r=48*this.settings.joystickSize/100;
   const axis=this.keys.has('ArrowLeft')?-1:this.keys.has('ArrowRight')?1:this.stick&&Math.abs(this.stick.dx)/r>=this.settings.deadZone?Math.sign(this.stick.dx):0;
   this.queue=this.queue.filter(q=>q.until>=now);
-  const ready=!fighter||['idle','walk','jump'].includes(fighter.state);
+  const ready=!fighter||['idle','walk','jump','guard'].includes(fighter.state)||(fighter.state==='light'&&fighter.hit&&fighter.phase>=.26&&this.queue[0]?.action==='special');
   let attack=ready&&this.queue.length?this.queue.shift().action:null;
   const guard=(held.includes('light')||this.keys.has('z'))&&(held.includes('heavy')||this.keys.has('x'));
   const jump=held.includes('jump')||this.keys.has('ArrowUp');

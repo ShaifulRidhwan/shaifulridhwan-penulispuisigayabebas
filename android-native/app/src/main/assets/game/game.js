@@ -12,7 +12,7 @@ function persist(){if(started&&!match.result)progress.resume={match:match.snapsh
 function showProgress(){
  $('progress').textContent=`${progress.xp} cahaya · Pangkat ${progress.best} · `+AksaraCampaign.unlocks.map(u=>`${u.name} (${progress.xp>=u.xp?'dibuka':progress.xp+'/'+u.xp})`).join(' · ');
  [...$('chapter').options].forEach((o,i)=>o.disabled=i>0&&!progress.completed.includes(i-1));
- $('chapter').style.display=$('mode').value==='story'?'block':'none';
+ $('chapter').style.display=$('mode').value==='story'?'block':'none';$('drill').style.display=$('mode').value==='training'?'block':'none';
 }
 function pause(){paused=true;audio?.suspend().catch(()=>{});window.AksaraAudio?.postMessage('stop');if(typeof controls!=='undefined'){controls.suspend();drawStick();}input.axis=0;input.jump=false;input.attack=null;
  if(!$('cinematic').hidden)return;
@@ -22,7 +22,7 @@ $('pause').onclick=pause;
 function beginFight(){ accumulator=0;window.AksaraAudio?.postMessage('start'); $('cinematic').hidden=true;started=true;controls.resume();drawStick();scene?.presentation?.resetTiming();paused=false;$('menu').style.display='none';sound('round');persist();}
 function dialogue(){const ch=AksaraCampaign.chapters[chapterIndex],line=ch.lines[dialogueIndex];$('chapter-title').textContent=ch.title;$('speaker').textContent=line[0];$('dialogue').textContent=line[1];scene?.tweens.add({targets:scene.presentation.sprites[dialogueIndex%2],alpha:{from:.4,to:1},duration:450});}
 $('dialogue-next').onclick=()=>{if(++dialogueIndex>=AksaraCampaign.chapters[chapterIndex].lines.length)beginFight();else dialogue();};$('dialogue-skip').onclick=beginFight;
-function newMatch(){const mode=$('mode').value;chapterIndex=+$('chapter').value;const ch=AksaraCampaign.chapters[chapterIndex];match=new AksaraCombat.Combat(mode==='story'?ch.hero:$('hero').value,+$('difficulty').value,{mode,boss:mode==='story'&&!!ch.boss,abilities:AksaraCampaign.unlocks.filter(u=>progress.xp>=u.xp).map(u=>u.id)});started=true;
+function newMatch(){const mode=$('mode').value;chapterIndex=+$('chapter').value;const ch=AksaraCampaign.chapters[chapterIndex];match=new AksaraCombat.Combat(mode==='story'?ch.hero:$('hero').value,+$('difficulty').value,{mode,drill:$('drill').value,boss:mode==='story'&&!!ch.boss,abilities:AksaraCampaign.unlocks.filter(u=>progress.xp>=u.xp).map(u=>u.id)});started=true;
  if(mode==='story'){paused=true;controls.suspend();$('menu').style.display='none';$('cinematic').hidden=false;dialogueIndex=0;dialogue();}else beginFight();}
 $('restart').onclick=()=>{started=false;newMatch();};
 $('home').onclick=()=>{persist();started=false;paused=true;controls.suspend();$('menu').style.display='grid';$('message').textContent='Pilih mod dan pejuang.';$('start').textContent='Mula pertarungan';showProgress();};
@@ -51,9 +51,10 @@ class Arena extends Phaser.Scene {
  }
  update(t,ms){
   if(!match)return;
-  if(!paused){accumulator=Math.min(.2,accumulator+ms/1000);const events=[];while(accumulator>=1/60){Object.assign(input,controls.sample(match.fighters[0]));match.step(1/60,input,match.options.mode!=='training');events.push(...match.events);accumulator-=1/60;}match.events=events;saveClock+=ms;if(saveClock>2000){persist();saveClock=0;}}
+  if(!paused){accumulator=Math.min(.2,accumulator+ms/1000);const events=[];while(accumulator>=1/60){Object.assign(input,controls.sample(match.hitstop>0?{state:"hit"}:match.fighters[0]));match.step(1/60,input,match.options.mode!=='training'||match.options.drill==='sparring');events.push(...match.events);accumulator-=1/60;}match.events=events;saveClock+=ms;if(saveClock>2000){persist();saveClock=0;}}
   this.presentation.update(match,ms/1000,!paused);
-  if(!paused)for(const e of match.events){sound(e.kind);if(e.damage){this.cameras.main.shake(e.kind==='heavy'||e.kind==='finisher'?85:40,e.kind==='heavy'?.002:.001);haptic(e.kind==='heavy'?'heavy':'light');}
+  if(!paused&&match.fighters.some(f=>f.state==='walk')&&t-(this.lastStep||0)>360){sound('step');this.lastStep=t;}
+  if(!paused)for(const e of match.events){sound(e.kind);if(e.damage){noteUntil=performance.now()+500;$('combat-note').textContent=`−${e.damage} · ${match.fighters[0].combo>1?match.fighters[0].combo+' HIT':''}`;this.cameras.main.shake(e.kind==='heavy'||e.kind==='finisher'?85:40,e.kind==='heavy'?.002:.001);haptic(e.kind==='heavy'?'heavy':'light');}
    if(['perfect','break','finisher','phase'].includes(e.kind)){noteUntil=performance.now()+1200;$('combat-note').textContent={perfect:'PERFECT DODGE · COUNTER',break:'GUARD BREAK',finisher:'FINISHER',phase:'GERHANA · FASA '+match.bossPhase}[e.kind];}
   }
   if(performance.now()>noteUntil)$('combat-note').textContent=match.options.mode==='training'?'TRAINING · LIGHT + LIGHT + HEAVY · Guard: LIGHT + HEAVY · Dodge: undur + JUMP':'';

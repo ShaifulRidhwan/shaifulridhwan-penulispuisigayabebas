@@ -25,7 +25,7 @@ class Combat {
   const chain=f.comboUntil>=this.elapsed?f.chain:0;
   f.finisher=kind==='heavy'&&chain>=2;f.air=f.y<425;f.state=kind;f.phase=0;f.hit=false;
   f.repeats=f.lastAttack===kind?f.repeats+1:0;f.lastAttack=kind;
-  if(kind==='special'){f.energy-=balance.energyCost;f.cooldown=8;}
+  if(kind==='special'){f.protected=false;f.energy-=balance.energyCost;f.cooldown=8;}
   return true;
  }
  decide(){
@@ -106,7 +106,7 @@ class Combat {
   }
  }
  snapshot(){return JSON.parse(JSON.stringify(this));}
- static restore(data){if(!data||data.version&&data.version!==3||!Array.isArray(data.fighters)||data.fighters.length!==2)throw Error('Invalid match save');const c=new Combat(data.hero,data.difficulty,data.options);Object.assign(c,data);c.events=[];c.aiInput={};return c;}
+ static restore(data){if(!data||data.version&&data.version!==3||!Array.isArray(data.fighters)||data.fighters.length!==2)throw Error('Invalid match save');if(!data.fighters.every(f=>['x','y','hp','energy','phase'].every(k=>Number.isFinite(f[k])))||!Array.isArray(data.wins)||!['INTRO','FIGHT','INTERMISSION','RESULT'].includes(data.roundState))throw Error('Corrupt match save');const c=new Combat(data.hero,data.difficulty,data.options);Object.assign(c,data);c.events=[];c.aiInput={};return c;}
 }
 root.AksaraCombat={Combat,moves,balance,difficulties,states};if(typeof module!=='undefined')module.exports=root.AksaraCombat;
 })(typeof window!=='undefined'?window:globalThis);
