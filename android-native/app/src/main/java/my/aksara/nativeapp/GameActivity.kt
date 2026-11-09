@@ -8,6 +8,10 @@ import android.widget.*
 import androidx.activity.ComponentActivity
 import androidx.core.view.*
 import androidx.webkit.WebViewAssetLoader
+import androidx.webkit.WebViewCompat
+import androidx.webkit.WebViewFeature
+import android.view.HapticFeedbackConstants
+import android.os.SystemClock
 import java.io.ByteArrayInputStream
 
 /** Isolated landscape host. MainActivity and its ViewModel remain on the back stack. */
@@ -17,6 +21,7 @@ class GameActivity : ComponentActivity() {
     private lateinit var root: FrameLayout
     private var destroyed=false
     private var webAlive=false
+    private var lastHaptic=0L
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window,false)
@@ -41,7 +46,7 @@ class GameActivity : ComponentActivity() {
             settings.javaScriptEnabled=true
             settings.allowFileAccess=false
             settings.allowContentAccess=false
-            settings.domStorageEnabled=false
+            settings.domStorageEnabled=true // Local game control preferences, isolated appassets origin.
             settings.mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW
             webChromeClient=object:WebChromeClient(){
                 override fun onConsoleMessage(m:ConsoleMessage):Boolean {
@@ -70,6 +75,20 @@ class GameActivity : ComponentActivity() {
                 }
             }
             addOnLayoutChangeListener{_,l,t,r,b,_,_,_,_->Log.i("AksaraGame","viewport ${r-l}x${b-t}")}
+        }
+        if(WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+            WebViewCompat.addWebMessageListener(gameWebView,"AksaraHaptics",setOf("https://appassets.androidplatform.net")) { view,message,_,isMainFrame,_ ->
+                if(isMainFrame&&webAlive&&hasWindowFocus()&&SystemClock.uptimeMillis()-lastHaptic>75) {
+                    val effect=when(message.data){
+                        "light"->HapticFeedbackConstants.KEYBOARD_TAP
+                        "heavy"->HapticFeedbackConstants.CONTEXT_CLICK
+                        "jump"->HapticFeedbackConstants.CLOCK_TICK
+                        "special"->HapticFeedbackConstants.CONFIRM
+                        else->null
+                    }
+                    if(effect!=null){lastHaptic=SystemClock.uptimeMillis();view.performHapticFeedback(effect)}
+                }
+            }
         }
         webAlive=true
         root.addView(gameWebView,FrameLayout.LayoutParams(-1,-1))

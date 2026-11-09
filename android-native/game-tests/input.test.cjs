@@ -1,0 +1,16 @@
+const {test}=require('node:test');const assert=require('node:assert/strict');const {InputState,normalize}=require('../app/src/main/assets/game/input.js');
+const make=()=>{const i=new InputState();i.resume();return i};
+for(const [name,dx,axis] of [['left',-40,-1],['right',40,1]])test('joystick '+name,()=>{const i=make();i.down(8,'stick',100,100);i.move(8,100+dx,100);assert.equal(i.sample().axis,axis)});
+test('release stops and recenters',()=>{const i=make();i.down(1,'stick');i.move(1,70,0);i.up(1);assert.equal(i.sample().axis,0);assert.equal(i.stick,null)});
+test('cancel clears movement and queued attacks',()=>{const i=make();i.down(1,'stick');i.move(1,60,0);i.down(2,'light');i.cancel(1);i.cancel(2);assert.deepEqual(i.sample(),{axis:0,jump:false,attack:null})});
+for(const action of ['light','heavy','jump','special'])test('stick + '+action,()=>{const i=make();i.down(1,'stick');i.move(1,40,0);i.down(2,action);const s=i.sample();assert.equal(s.axis,1);assert.equal(action==='jump'?s.jump:s.attack,action==='jump'?true:action)});
+test('jump plus light',()=>{const i=make();i.down(1,'jump');i.down(2,'light');assert.deepEqual(i.sample(),{axis:0,jump:true,attack:'light'})});
+test('rapid light heavy alternation buffers order',()=>{const i=make();i.down(1,'light');i.up(1);i.down(2,'heavy');i.up(2);assert.equal(i.sample().attack,'light');assert.equal(i.sample().attack,'heavy')});
+for(const count of [2,3,4])test(count+' pointer ownership and independent release',()=>{const i=make();['stick','jump','light','heavy'].slice(0,count).forEach((a,n)=>i.down(10+n,a));assert.equal(i.pointers.size,count);i.up(11);assert.equal(i.pointers.size,count-1);assert(i.pointers.has(10));assert.equal(i.sample().jump,false);i.reset();assert.equal(i.pointers.size,0)});
+test('rapid changes have no ghost actions',()=>{const i=make();for(let n=0;n<100;n++){i.down(n,'stick');i.move(n,-40,10);i.cancel(n)}assert.equal(i.sample().axis,0)});
+for(const reason of ['pause','background','interrupted gesture'])test(reason+' resets every pointer; resume neutral',()=>{const i=make();i.down(4,'stick');i.move(4,40,0);i.down(9,'heavy');i.suspend();assert.deepEqual(i.sample(),{axis:0,jump:false,attack:null});i.resume();assert.deepEqual(i.sample(),{axis:0,jump:false,attack:null})});
+test('secondary joystick cannot steal pointer',()=>{const i=make();assert(i.down(3,'stick'));assert.equal(i.down(4,'stick'),false);i.move(4,80,0);assert.equal(i.sample().axis,0)});
+test('dead zone and radial clamp',()=>{const i=make();i.down(1,'stick');i.move(1,2,2);assert.equal(i.sample().axis,0);i.move(1,999,999);assert(Math.hypot(i.stick.dx,i.stick.dy)<=48.001)});
+test('fixed joystick uses provided center',()=>{const i=make();i.settings.floating=false;i.down(5,'stick',150,100,{x:100,y:100});assert.equal(i.sample().axis,1)});
+test('paused input ignored',()=>{const i=new InputState();assert.equal(i.down(1,'light'),false);assert.equal(i.sample().attack,null)});
+test('settings validate corrupted values',()=>{const s=normalize({buttonSize:999,opacity:-4,deadZone:7,graphics:'unsafe'});assert.equal(s.buttonSize,140);assert.equal(s.opacity,30);assert.equal(s.deadZone,.4);assert.equal(s.graphics,'medium')});
