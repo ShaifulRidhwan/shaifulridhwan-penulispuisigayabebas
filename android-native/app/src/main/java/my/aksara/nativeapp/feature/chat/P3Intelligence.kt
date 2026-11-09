@@ -39,7 +39,8 @@ object P3Intelligence {
             "Keselamatan" to Regex("""\bprivasi\b|\bsecurity\b|\bpermission\b""",RegexOption.IGNORE_CASE)
         )
         val counts=linkedMapOf<Pair<String,String>,Int>()
-        messages.takeLast(300).asSequence().filter{it.role=="user"&&!it.incomplete}.forEach{turn->
+        messages.distinctBy { it.id }.takeLast(300).asSequence()
+            .filter{it.role=="user"&&!it.incomplete}.forEach{turn->
             val detected=patterns.filter{it.second.containsMatchIn(turn.text.take(2200))}.map{it.first}
             for(i in 0 until detected.size)for(j in i+1 until detected.size){
                 val key=detected[i] to detected[j]
