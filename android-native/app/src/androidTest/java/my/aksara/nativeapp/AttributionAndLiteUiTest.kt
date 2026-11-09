@@ -2,6 +2,7 @@ package my.aksara.nativeapp
 
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.unit.dp
 import my.aksara.nativeapp.feature.chat.*
 import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.platform.AttachmentReader
@@ -89,6 +90,8 @@ class AttributionAndLiteUiTest {
         compose.setContent { AksaraScreen(ChatState(loaded=true)) }
         compose.onNodeWithText("Siapa Aku").assertExists()
         compose.onNodeWithText("The Coder Poet").assertDoesNotExist()
+        compose.onNodeWithTag("thinking-glass-button").assertExists()
+        compose.onNodeWithTag("send-glass-button").assertExists()
         compose.onNodeWithText("Tanya atau lampirkan fail").assertDoesNotExist()
     }
 
@@ -102,15 +105,26 @@ class AttributionAndLiteUiTest {
         compose.onNodeWithTag("thinking-glass-button").assertExists()
         compose.onNodeWithContentDescription("Thinking Mode").assert(
             androidx.compose.ui.test.SemanticsMatcher.expectValue(
-                androidx.compose.ui.semantics.SemanticsProperties.StateDescription, "Cahaya"))
+                androidx.compose.ui.semantics.SemanticsProperties.StateDescription, "Cahaya · Sedia"))
         compose.onNodeWithContentDescription("Thinking Mode").performClick()
         compose.onNodeWithText("Gelap",substring=false).performClick()
         compose.onNodeWithContentDescription("Thinking Mode").assert(
             androidx.compose.ui.test.SemanticsMatcher.expectValue(
-                androidx.compose.ui.semantics.SemanticsProperties.StateDescription, "Gelap"))
+                androidx.compose.ui.semantics.SemanticsProperties.StateDescription, "Gelap · Sedia"))
         compose.onNodeWithContentDescription("Thinking Mode").performClick()
         compose.onNodeWithText("Mod dipilih").assertExists()
         compose.onAllNodesWithText("Gelap",substring=false).assertCountEquals(2)
+    }
+
+    @Test fun composerGlassControlsHaveMatchingTargetsAndIdleSendIsDisabled() {
+        compose.setContent { AksaraScreen(ChatState(loaded=true)) }
+        compose.onNodeWithTag("thinking-glass-button")
+            .assertWidthIsEqualTo(44.dp).assertHeightIsEqualTo(44.dp)
+        compose.onNodeWithTag("send-glass-button")
+            .assertWidthIsEqualTo(44.dp).assertHeightIsEqualTo(44.dp)
+            .assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Voice Chat").assertExists()
+        compose.onNodeWithTag("voice-status-chip").assertExists()
     }
 
     @Test fun nativeMenusUseSharedLiquidGlassModalChrome() {
