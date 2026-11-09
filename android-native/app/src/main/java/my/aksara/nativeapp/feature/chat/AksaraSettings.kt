@@ -74,7 +74,8 @@ internal fun AksaraSettings(
         Triple("Sistem & Diagnostik","Kesihatan penyedia, prestasi dan ralat",SettingsCategoryIcons.getValue("Sistem & Diagnostik"))
     )
 
-    AksaraGlassModal(onClose = onClose, preferredHeight = 585.dp) {
+    AksaraGlassModal(onClose = onClose,
+        preferredHeight = if(expanded.isBlank()) 585.dp else 665.dp) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
                     Column(Modifier.weight(1f)){
