@@ -11,6 +11,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import my.aksara.nativeapp.core.storage.ThoughtEntry
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
@@ -18,7 +19,8 @@ sealed interface ChatEvent {
     data class Delta(val text: String) : ChatEvent
     data class Done(val reply: String, val provider: String, val sources: List<Pair<String, String>>,
         val model: String = "", val researchStatus: String = "", val toolsUsed: List<String> = emptyList(),
-        val evidenceLevel: String = "no_external_evidence", val outputFormat: String = "") : ChatEvent
+        val evidenceLevel: String = "no_external_evidence", val outputFormat: String = "",
+        val thoughtLedger: List<ThoughtEntry> = emptyList()) : ChatEvent
 }
 class ApiFailure(val status: Int, message: String, val retryAfter: String? = null) : IOException(message)
 object Ndjson {
@@ -47,7 +49,13 @@ object Ndjson {
                     },
                     evidenceLevel = item.optJSONObject("evidenceProfile")?.optString("level")?.take(60)
                         ?: "no_external_evidence",
-                    outputFormat = item.optString("outputFormat").take(30)
+                    outputFormat = item.optString("outputFormat").take(30),
+                    thoughtLedger = (item.optJSONArray("thoughtLedger") ?: JSONArray()).let { ideas ->
+                        (0 until minOf(ideas.length(),6)).mapNotNull { i -> ideas.optJSONObject(i)?.let { entry ->
+                            (entry.opt("idea") as? String)?.trim()?.take(170)?.takeIf { it.isNotEmpty() }
+                                ?.let { ThoughtEntry(it,entry.optString("status","premis").take(35)) }
+                        } }
+                    }
                 )
             }
             "error" -> throw ApiFailure(item.optInt("status", 502), item.optString("error", "Permintaan gagal."),

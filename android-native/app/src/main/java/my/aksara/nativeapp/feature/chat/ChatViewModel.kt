@@ -92,7 +92,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     fun dismissError() { mutable.update { it.copy(error = null) } }
     fun restore() { if (!state.value.busy) mutable.update { it.copy(messages = it.archive) } }
     fun clearScreen() { if (!state.value.busy) {
-        savedContext = savedContext.copy(sessionFirstId = "", summary = "", summarizedThrough = 0)
+        savedContext = savedContext.copy(sessionFirstId = "", summary = "", summarizedThrough = 0, thoughtLedger = emptyList())
         mutable.update { it.copy(messages = emptyList(), summaryStatus = "not_requested") }
         viewModelScope.launch { runCatching { persistContext() } }
     } }
@@ -139,7 +139,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 }
                 val firstId = previous.firstOrNull()?.id ?: user.id
                 if (savedContext.sessionFirstId != firstId) {
-                    savedContext = savedContext.copy(sessionFirstId = firstId, summary = "", summarizedThrough = 0)
+                    savedContext = savedContext.copy(sessionFirstId = firstId, summary = "", summarizedThrough = 0, thoughtLedger = emptyList())
                 }
                 val completed = previous.filterNot { it.incomplete }
                 val window = ContextPolicy.summaryWindow(completed.size, savedContext.summarizedThrough)
@@ -174,13 +174,18 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     // can be sent to a fallback provider. Android has no consent UI.
                     .put("thoughtMode", state.value.mode).put("contextFallback", false)
                     .put("mediaFallback", false).put("summary", savedContext.summary)
-                    .put("memoryNotes", notes).put("thoughtLedger", JSONArray())
+                    .put("memoryNotes", notes).put("thoughtLedger", JSONArray().apply {
+                        savedContext.thoughtLedger.takeLast(8).forEach { put(JSONObject().put("idea",it.idea).put("status",it.status)) }
+                    })
                     .put("documentText", documentText).put("documentName", documentName)
                     .put("media", if (media != null && media.length() > 0) media else JSONObject.NULL)
                 require(payload.toString().toByteArray(Charsets.UTF_8).size <= 5_350_000) {
                     "Jumlah mesej, sejarah dan lampiran melebihi had API 5.35 MB."
                 }
                 api.chat(payload).collect { event ->
+                    if(event is ChatEvent.Done && event.thoughtLedger.isNotEmpty()) {
+                        savedContext = savedContext.copy(thoughtLedger = ContextPolicy.mergeThoughtLedger(savedContext.thoughtLedger,event.thoughtLedger))
+                    }
                     mutable.update { value -> value.copy(messages = value.messages.map { m ->
                         if (m.id != assistant.id) m else when (event) {
                             is ChatEvent.Delta -> m.copy(text = m.text + event.text)

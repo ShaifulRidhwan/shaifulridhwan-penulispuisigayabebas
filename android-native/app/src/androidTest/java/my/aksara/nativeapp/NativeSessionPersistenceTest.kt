@@ -10,6 +10,7 @@ import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.storage.SessionStore
 import my.aksara.nativeapp.core.storage.SavedConversationContext
 import my.aksara.nativeapp.core.storage.SessionContextStore
+import my.aksara.nativeapp.core.storage.ThoughtEntry
 import my.aksara.nativeapp.feature.chat.mergeSessionArchive
 import my.aksara.nativeapp.feature.chat.ChatViewModel
 import my.aksara.nativeapp.feature.chat.ContextPolicy
@@ -68,11 +69,13 @@ class NativeSessionPersistenceTest {
         val original=store.load()
         val token="PRIVATE_MEMORY_"+UUID.randomUUID()
         try{
-            val disabled=SavedConversationContext(memoryEnabled=false,memoryNotes=token)
+            val disabled=SavedConversationContext(memoryEnabled=false,memoryNotes=token,
+                thoughtLedger=listOf(ThoughtEntry("Idea $token","premis")))
             store.save(disabled)
             val reopened=SessionContextStore(context).load()
             assertFalse(reopened.memoryEnabled)
             assertEquals(token,reopened.memoryNotes)
+            assertEquals(listOf(ThoughtEntry("Idea $token","premis")),reopened.thoughtLedger)
             val bytes=File(context.noBackupFilesDir,"context-v1.enc").readBytes()
             assertFalse(String(bytes,Charsets.ISO_8859_1).contains(token))
         }finally{store.save(original)}

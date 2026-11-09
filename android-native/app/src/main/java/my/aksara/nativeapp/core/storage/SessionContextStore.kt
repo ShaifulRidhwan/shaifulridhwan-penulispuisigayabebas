@@ -7,6 +7,7 @@ import android.util.AtomicFile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import org.json.JSONArray
 import java.io.File
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -15,12 +16,14 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
 /** Separate encrypted session summary and opt-in memory. Old conversation.enc format is untouched. */
+data class ThoughtEntry(val idea:String, val status:String)
 data class SavedConversationContext(
     val sessionFirstId:String="",
     val summary:String="",
     val summarizedThrough:Int=0,
     val memoryEnabled:Boolean=false,
-    val memoryNotes:String=""
+    val memoryNotes:String="",
+    val thoughtLedger:List<ThoughtEntry> = emptyList()
 )
 class SessionContextStore(context:Context) {
     private val file=AtomicFile(File(context.noBackupFilesDir,"context-v1.enc"))
@@ -46,7 +49,13 @@ class SessionContextStore(context:Context) {
             summary=obj.optString("summary").take(4000),
             summarizedThrough=obj.optInt("summarizedThrough",0).coerceAtLeast(0),
             memoryEnabled=obj.optBoolean("memoryEnabled",false),
-            memoryNotes=obj.optString("memoryNotes").take(8000)
+            memoryNotes=obj.optString("memoryNotes").take(8000),
+            thoughtLedger=(obj.optJSONArray("thoughtLedger") ?: JSONArray()).let { rows ->
+                (0 until rows.length()).mapNotNull { i -> rows.optJSONObject(i)?.let { row ->
+                    (row.opt("idea") as? String)?.trim()?.take(170)?.takeIf { it.isNotBlank() }
+                        ?.let { ThoughtEntry(it, row.optString("status", "premis").take(35)) }
+                } }.takeLast(12)
+            }
         )
     }
     suspend fun save(data:SavedConversationContext)=withContext(Dispatchers.IO) {
@@ -55,6 +64,9 @@ class SessionContextStore(context:Context) {
             .put("summarizedThrough",data.summarizedThrough.coerceAtLeast(0))
             .put("memoryEnabled",data.memoryEnabled)
             .put("memoryNotes",data.memoryNotes.take(8000))
+            .put("thoughtLedger",JSONArray().apply { data.thoughtLedger.takeLast(12).forEach {
+                put(JSONObject().put("idea",it.idea.take(170)).put("status",it.status.take(35)))
+            } })
         val cipher=Cipher.getInstance("AES/GCM/NoPadding").apply { init(Cipher.ENCRYPT_MODE,key()) }
         val bytes=byteArrayOf(1)+cipher.iv+cipher.doFinal(obj.toString().toByteArray(Charsets.UTF_8))
         val stream=file.startWrite()

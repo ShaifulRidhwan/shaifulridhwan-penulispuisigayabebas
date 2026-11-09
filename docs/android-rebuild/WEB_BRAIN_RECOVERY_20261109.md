@@ -32,3 +32,7 @@ The privacy change limits the main Chat request's `contextFallback` flag only. A
 ## Voice-to-Chat checkpoint
 
 `LiveVoiceClient` now hands completed nonempty transcript turns to `ChatViewModel`, which appends them to the current Chat and persists them in the encrypted archive. An interrupted model transcript is cleared, and drifted output is not handed to Chat. Archive writes are serialized. Voice setup captures the Chat context at entry, avoiding a fresh socket setup when a completed voice turn updates Chat. Unit tests cover transcript filtering; an emulator instrumentation test checks handoff into selected Chat context and encrypted archive reopening. These are synthetic transcripts, not a physical Live audio or reconnect test. Transcript accumulation remains bounded at 2,800 characters per side, and transcription may be missing; it does not establish complete audio transcript integrity.
+
+## Session thought ledger
+
+The NDJSON adapter now reads the backend's `thoughtLedger` entries, and the request sends the latest eight session ideas like the Web. At most twelve deduplicated entries are stored alongside the encrypted session summary; clearing the current session or changing its first message resets the ledger. This is conversation context, not opt-in personal memory; `memoryEnabled` remains false by default. Real model generation of ledger entries, multi-session isolation and restart behavior remain to be validated beyond unit and encrypted-store tests.

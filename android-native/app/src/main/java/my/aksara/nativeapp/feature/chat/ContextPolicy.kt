@@ -1,6 +1,7 @@
 package my.aksara.nativeapp.feature.chat
 
 import my.aksara.nativeapp.core.storage.Message
+import my.aksara.nativeapp.core.storage.ThoughtEntry
 import java.util.Locale
 
 /**
@@ -8,6 +9,15 @@ import java.util.Locale
  * The server remains authoritative for reasoning, retrieval and provider routing.
  */
 object ContextPolicy {
+    fun mergeThoughtLedger(existing:List<ThoughtEntry>, incoming:List<ThoughtEntry>):List<ThoughtEntry> {
+        val result=existing.toMutableList()
+        incoming.take(6).forEach { item ->
+            val idea=item.idea.trim().take(170)
+            if(idea.isNotEmpty() && result.none { it.idea.equals(idea,ignoreCase=true) })
+                result.add(ThoughtEntry(idea,item.status.take(35)))
+        }
+        return result.takeLast(12)
+    }
     private val stop=setOf("yang","dan","atau","untuk","dalam","adalah","dengan","saya",
         "aku","kau","kamu","awak","pada","dari","tentang","apa","bagaimana","kenapa","itu","ini")
     private val correction=Regex("maksud aku|bukan begitu|bukan macam tu|sebenarnya|pembetulan|jangan ubah|jangan usik|aku pilih|keputusan akhir|kekalkan|yang aku nak",RegexOption.IGNORE_CASE)
