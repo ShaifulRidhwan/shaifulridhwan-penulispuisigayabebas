@@ -481,6 +481,13 @@ class LiveVoiceClient(
             if (active(id)) updateObservedRoute(id)
             delay(1100) // Bluetooth hands-free negotiation is not instantaneous.
             if (active(id)) updateObservedRoute(id)
+            delay(1600)
+            if (active(id)) {
+                // One explicit retry after the accessory finishes call-mode negotiation.
+                selectCommunicationRoute()
+                preferMatchedMicrophone()
+                updateObservedRoute(id)
+            }
         }
         microphoneJob = scope.launch {
             val frame = ByteArray(3200)
@@ -642,8 +649,8 @@ class LiveVoiceClient(
         val displayInput = deviceLabel(input)
         val warning = when {
             routeError.isNotBlank() -> routeError
-            VoiceAudioRoute.mismatch(output?.type ?: communication?.type, input?.type) ->
-                "Audio keluar melalui Bluetooth, tetapi mikrofon masih pada telefon."
+            VoiceAudioRoute.observedWarning(communication?.type, input?.type, output?.type) != null ->
+                VoiceAudioRoute.observedWarning(communication?.type, input?.type, output?.type).orEmpty()
             else -> ""
         }
         mutable.value = mutable.value.copy(microphoneDevice=displayInput,

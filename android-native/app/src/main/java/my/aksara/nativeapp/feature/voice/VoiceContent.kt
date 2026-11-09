@@ -2,6 +2,7 @@ package my.aksara.nativeapp.feature.voice
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
@@ -81,7 +82,8 @@ private fun voiceStyleInstruction(style:String):String=when(style){
         if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED) {
             client.start()
             client.refreshAudioRoute()
-            if(results[Manifest.permission.BLUETOOTH_CONNECT]==false)
+            if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.S &&
+                results[Manifest.permission.BLUETOOTH_CONNECT]==false)
                 permissionError="Kebenaran Bluetooth tidak diberikan. Earphone mungkin tidak boleh digunakan untuk Voice."
             else permissionError=null
         } else permissionError="Izin mikrofon ditolak. Tiada audio dihantar."
@@ -102,7 +104,8 @@ private fun voiceStyleInstruction(style:String):String=when(style){
         val required=buildList {
             if(context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)!=PackageManager.PERMISSION_GRANTED)
                 add(Manifest.permission.RECORD_AUDIO)
-            if(context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED)
+            if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.S &&
+                context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)!=PackageManager.PERMISSION_GRANTED)
                 add(Manifest.permission.BLUETOOTH_CONNECT)
         }
         if(required.isEmpty())client.start() else permission.launch(required.toTypedArray())
