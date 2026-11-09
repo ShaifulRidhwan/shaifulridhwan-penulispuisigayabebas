@@ -6,6 +6,8 @@ import android.content.res.Configuration
 import android.os.SystemClock
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.uiautomator.By
+import androidx.test.uiautomator.Until
 import androidx.test.uiautomator.UiDevice
 import org.junit.Assert.*
 import org.junit.Test
@@ -24,6 +26,25 @@ class NativeGameActivityTest {
         val until=SystemClock.uptimeMillis()+30000
         while(SystemClock.uptimeMillis()<until){if(js(a,code)=="true")return;SystemClock.sleep(150)}
         fail("Timed out: $code; diagnostics="+js(a,"JSON.stringify(window.gameDiagnostics)"))
+    }
+    @Test fun realPortalLaunchReturnsToUnchangedChatDraft(){
+        val device=UiDevice.getInstance(instrument)
+        ActivityScenario.launch(MainActivity::class.java).use { main ->
+            var original:MainActivity?=null;main.onActivity{original=it}
+            val draft="Draf kekal selepas game"
+            val field=device.wait(Until.findObject(By.desc("Tulis mesej untuk Aksara A.I.")),30000)
+            assertNotNull("Chat composer",field)
+            field.text=draft
+            device.wait(Until.findObject(By.desc("Ciri & Fungsi")),10000).click()
+            val entry=device.wait(Until.findObject(By.text("Game · Cahaya vs Gelap")),10000)
+            assertNotNull("Visible game portal entry",entry);entry.click()
+            assertTrue("Fullscreen game WebView must open",device.wait(Until.hasObject(By.clazz("android.webkit.WebView")),30000))
+            assertTrue("Landscape window",device.displayWidth>device.displayHeight)
+            device.pressBack()
+            val returned=device.wait(Until.findObject(By.desc("Tulis mesej untuk Aksara A.I.")),15000)
+            assertNotNull("Return to Chat",returned);assertEquals(draft,returned.text)
+            main.onActivity{assertSame(original,it);assertEquals(Configuration.ORIENTATION_PORTRAIT,it.resources.configuration.orientation)}
+        }
     }
     @Test fun webglAndCanvasRenderCombatTouchRotationAndBackToChat(){
         val device=UiDevice.getInstance(instrument)
