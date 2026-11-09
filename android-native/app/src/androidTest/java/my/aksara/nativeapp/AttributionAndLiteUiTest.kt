@@ -62,6 +62,19 @@ class AttributionAndLiteUiTest {
         org.junit.Assert.assertNotNull(android.graphics.BitmapFactory.decodeByteArray(compressed,0,compressed.size))
     }
 
+    @Test fun uploadProgressDisablesSendAndAllowsCancellation() {
+        var stopped=false
+        compose.setContent {
+            AksaraScreen(ChatState(loaded=true),attachmentName="video.mp4",
+                attachmentLoading=true,uploadStatus="Muat naik video.mp4: 48%",
+                onCancelUpload={stopped=true})
+        }
+        compose.onNodeWithText("Muat naik video.mp4: 48%").assertExists()
+        compose.onNodeWithContentDescription("Hantar soalan").assertIsNotEnabled()
+        compose.onNodeWithText("Batal").performClick()
+        compose.runOnIdle { org.junit.Assert.assertTrue(stopped) }
+    }
+
     @Test fun pickerIsNotShownAsCodeTool() {
         compose.setContent { AksaraScreen(ChatState(loaded = true),initialOverlay = "attachments") }
         compose.onNodeWithText("Foto").assertExists()

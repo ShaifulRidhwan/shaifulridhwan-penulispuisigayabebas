@@ -72,6 +72,23 @@ class ChatApiTest {
         assertEquals("no_external_evidence",noEvidence.evidenceLevel)
         assertTrue(noEvidence.toolsUsed.isEmpty())
     }
+    @Test fun signedFileReceiptsAreSentToBackendWithoutUploadingFileBytes()=runBlocking {
+        MockWebServer().use { server ->
+            server.enqueue(MockResponse().setHeader("Content-Type","application/json")
+                .setBody("""{"reply":"PDF dianalisis","provider":"gemini"}"""))
+            server.start()
+            val receipt="signed.receipt.example"
+            val payload=JSONObject().put("question","Analisis PDF ini")
+                .put("fileUploads",org.json.JSONArray().put(receipt))
+            val events=ChatApi(server.url("/").toString().removeSuffix("/")).chat(payload).toList()
+            assertEquals("PDF dianalisis",(events.last() as ChatEvent.Done).reply)
+            val sent=JSONObject(server.takeRequest().body.readUtf8())
+            assertEquals(receipt,sent.getJSONArray("fileUploads").getString(0))
+            assertFalse(sent.has("fileUri"))
+            assertEquals(1,server.requestCount)
+        }
+    }
+
     @Test fun actualImageVideoAndAudioAttachmentsReachChatBackend()=runBlocking {
         MockWebServer().use { server ->
             server.enqueue(MockResponse().setResponseCode(200)

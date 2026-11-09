@@ -42,8 +42,11 @@ import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.platform.Attachment
 import my.aksara.nativeapp.core.platform.AttachmentReader
+import my.aksara.nativeapp.core.network.LargeUploadClient
 import org.json.JSONArray
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.collect
 import java.time.*
 import java.time.format.DateTimeFormatter
@@ -55,23 +58,51 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var attachments by remember { mutableStateOf<List<Attachment>>(emptyList()) }
     var attachmentError by remember { mutableStateOf<String?>(null) }
     var attachmentLoading by remember { mutableStateOf(false) }
+    var uploadStatus by remember { mutableStateOf<String?>(null) }
+    var uploadJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
+    val uploader = remember(context) { LargeUploadClient() }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
-        if (uris.isNotEmpty()) scope.launch {
-            attachmentLoading = true
-            try {
-                require(uris.size <= 4 && attachments.size + uris.size <= 4) { "Maksimum 4 lampiran bagi satu mesej." }
-                val fresh = uris.map { AttachmentReader.read(context, it) }
-                val selected = attachments + fresh
-                val encoded = selected.sumOf { it.media?.optString("data")?.length ?: 0 }
-                val textSize = selected.sumOf { it.text.length }
-                require(encoded <= 5_000_000 && textSize <= 250_000) {
-                    "Gabungan lampiran terlalu besar. Had payload backend mesti dipatuhi."
+        if(uris.isNotEmpty()&&!attachmentLoading) {
+            uploadJob=scope.launch {
+                attachmentLoading=true
+                attachmentError=null
+                try {
+                    require(uris.size<=4 && attachments.size+uris.size<=4) {
+                        "Maksimum 4 lampiran bagi satu mesej."
+                    }
+                    val fresh=mutableListOf<Attachment>()
+                    for(uri in uris){
+                        val details=AttachmentReader.inspect(context,uri)
+                        val file=if(AttachmentReader.needsLargeUpload(details)){
+                            uploadStatus="Menyediakan upload: ${details.name}"
+                            uploader.upload(context,uri,details){ percent ->
+                                scope.launch { uploadStatus="Muat naik ${details.name}: ${percent}%" }
+                            }.also { uploadStatus="Gemini siap memproses: ${details.name}" }
+                        } else {
+                            uploadStatus="Membaca: ${details.name}"
+                            AttachmentReader.read(context,uri)
+                        }
+                        fresh+=file
+                    }
+                    val selected=attachments+fresh
+                    val encoded=selected.sumOf{it.media?.optString("data")?.length?:0}
+                    val textSize=selected.sumOf{it.text.length}
+                    require(encoded<=5_000_000 && textSize<=250_000) {
+                        "Gabungan lampiran terlalu besar. Had payload backend mesti dipatuhi."
+                    }
+                    attachments=selected
+                    attachmentError=null
+                }catch(_:CancellationException){
+                    attachmentError="Muat naik dibatalkan."
+                }catch(e:Exception){
+                    attachmentError=e.message?:"Lampiran gagal dimuat naik."
+                }finally{
+                    attachmentLoading=false
+                    uploadStatus=null
+                    uploadJob=null
                 }
-                attachments = selected
-                attachmentError = null
-            } catch (e: Exception) { attachmentError = e.message ?: "Lampiran gagal dibaca." }
-            finally { attachmentLoading = false }
+            }
         }
     }
     AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
@@ -79,7 +110,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         val text = textDocs.joinToString("\n\n") { "[DOKUMEN: " + it.name + "]\n" + it.text + "\n[TAMAT DOKUMEN]" }
         val name = textDocs.joinToString(", ") { it.name }.take(100)
         val media = JSONArray().apply { attachments.mapNotNull { it.media }.forEach { put(it) } }
-        if (vm.send(q, text, name, media)) {
+        val uploadedFiles = JSONArray().apply { attachments.mapNotNull { it.receipt }.forEach { put(it) } }
+        if (vm.send(q, text, name, media, uploadedFiles)) {
             // The ViewModel has accepted the pending turn and will persist it before inference.
             // Do not carry sent media into the next message or discard it on a rejected turn.
             attachments = emptyList()
@@ -89,10 +121,18 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         }
         Unit
     }, onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
-        onMemory = vm::setMemory, onVoiceTurns = vm::acceptVoiceTurns, onClearAttachment = { attachments = emptyList() },
+        onMemory = vm::setMemory, onVoiceTurns = vm::acceptVoiceTurns, onClearAttachment = {
+            val selected=attachments
+            attachments=emptyList()
+            selected.mapNotNull { it.receipt }.forEach { receipt ->
+                scope.launch { uploader.delete(receipt) }
+            }
+        },
         onRestore = vm::restore, onClear = vm::clearScreen,
         attachmentName = attachments.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name }?.take(150),
         attachmentLoading = attachmentLoading,
+        uploadStatus = uploadStatus,
+        onCancelUpload = { uploadJob?.cancel() },
         onPickAttachment = { category -> picker.launch(AttachmentSendPolicy.mimeTypes(category)) },
         onDismissError = { attachmentError = null; vm.dismissError() })
 }
@@ -101,6 +141,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     onJourney: (String)->Unit = onSend, onMode: (String)->Unit = {}, onRestore: ()->Unit = {}, onClear: ()->Unit = {}, attachmentName: String? = null,
     onPickAttachment: (String)->Unit = {}, onDismissError: ()->Unit = {}, onMemory: (Boolean,String)->Unit = {_,_->}, onClearAttachment: ()->Unit = {}, initialOverlay: String? = null,
     attachmentLoading: Boolean = false,
+    uploadStatus: String? = null, onCancelUpload: ()->Unit = {},
     fixedTimestamp: Long? = null, onVoiceTurns:(List<my.aksara.engine.voice.VoiceContextTurn>)->Unit = {}) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
@@ -251,7 +292,11 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             }
                             if(state.nextJourney!=null) AksaraButton(state.nextJourney,{onJourney(state.nextJourney)},Modifier.padding(horizontal=12.dp,vertical=4.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
                             if(state.error!=null) Row(Modifier.fillMaxWidth().clickable(onClick=onDismissError).padding(8.dp)) { AksaraText(state.error,size=11f,color=Color(0xffe7a08e)) }
-                            if (attachmentLoading) AksaraText("Membaca lampiran...",Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=4.dp),size=11f,color=AksaraColors.muted)
+                            if(attachmentLoading) Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=4.dp),
+                                verticalAlignment=Alignment.CenterVertically) {
+                                AksaraText(uploadStatus?:"Membaca lampiran...",Modifier.weight(1f),size=11f,color=AksaraColors.gold)
+                                AksaraButton("Batal",onCancelUpload,size=10f,height=31.dp,radius=13.dp)
+                            }
                             if(attachmentName!=null) Row(Modifier.fillMaxWidth().padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically){
                                 AksaraText("📎 "+attachmentName,Modifier.weight(1f),size=11f)
                                 AksaraButton("Buang lampiran",onClearAttachment,size=9f,height=31.dp,radius=12.dp)
