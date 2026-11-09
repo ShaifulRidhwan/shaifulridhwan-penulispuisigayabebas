@@ -200,7 +200,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             Column(Modifier.fillMaxSize().safeDrawingPadding().padding(start=margins.horizontal,end=margins.horizontal,top=margins.top,bottom=margins.bottom)) {
                 Spacer(Modifier.height(5.dp))
                 AksaraGlassSurface(Modifier.fillMaxWidth().height(58.dp).testTagCompat("topbar"), radius=20.dp, blur=12.dp,
-                    brush=cssGradient(115f,listOf(Color(8,14,24,102),Color(17,26,40,51))),saturation=1.15f, border=Color(247,226,196,64)) {
+                    brush=cssGradient(115f,listOf(Color(8,14,24,102),Color(17,26,40,51))),saturation=1.15f, border=Color.Transparent) {
                     Row(Modifier.fillMaxSize().padding(horizontal=10.dp), verticalAlignment=Alignment.CenterVertically) {
                         AksaraGlassSurface(Modifier.height(31.dp), radius=13.dp) {
                             Row(Modifier.align(Alignment.Center).padding(horizontal=7.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(3.dp)) {
@@ -231,13 +231,19 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                     AksaraButton("Voice Chat",{open("voice-permission")},Modifier.width(if(compact)82.328.dp else 93.484.dp),icon="voice",size=if(compact)9f else 10f,height=AksaraGlassTokens.capsuleHeight,radius=AksaraGlassTokens.capsuleRadius)
                                     AksaraButton("",{searchOpen=!searchOpen;autoFollow=!searchOpen},Modifier.width(40.dp).semantics{contentDescription="Cari mesej dan kongsi perbualan"},icon="search",size=9f,height=AksaraGlassTokens.capsuleHeight,radius=AksaraGlassTokens.capsuleRadius)
                                     Spacer(Modifier.weight(1f))
-                                    AksaraGlassSurface(Modifier.width(if(compact)129.dp else 143.dp).height(AksaraGlassTokens.capsuleHeight).clickable {open("connection")}.semantics {contentDescription="Connection"},radius=999.dp,blur=9.dp) {
+                                    AksaraGlassSurface(Modifier.width(if(compact)151.dp else 167.dp).height(AksaraGlassTokens.capsuleHeight).clickable {open("connection")}.semantics {contentDescription="Connection"},radius=999.dp,blur=9.dp) {
                                         val connectionStatus = ProviderConnectionStatus.label(state.providers)
+                                        val compactStatus = when(connectionStatus) {
+                                            "Backend unreachable" -> "Unreachable"
+                                            "Status unavailable" -> "Unavailable"
+                                            else -> connectionStatus
+                                        }
                                         Row(Modifier.align(Alignment.Center),
-                                            horizontalArrangement=Arrangement.spacedBy(6.dp),
+                                            horizontalArrangement=Arrangement.spacedBy(5.dp),
                                             verticalAlignment=Alignment.CenterVertically) {
-                                            AksaraIcon("network",Modifier.size(16.dp),Color(0xffc1b393))
-                                            AksaraText(connectionStatus,size=if(connectionStatus.length>15)8f else 10f,line=12f,weight=600)
+                                            AksaraIcon("network",Modifier.size(15.dp),Color(0xffc1b393))
+                                            AksaraText("Multi A.I",size=9.5f,line=12f,weight=600)
+                                            AksaraText(compactStatus,size=if(compactStatus.length>10)8.5f else 9.5f,line=12f,weight=600)
                                         }
                                     }
                                 }
@@ -314,7 +320,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                     Modifier.fillMaxWidth().heightIn(min=58.dp,max=164.dp).testTagCompat("composer-form"),
                     radius=20.dp,blur=12.dp,saturation=1.15f,
                     brush=cssGradient(115f,listOf(Color(8,14,24,102),Color(17,26,40,51))),
-                    border=Color(247,226,196,90)) {
+                    border=Color.Transparent) {
                     Row(Modifier.fillMaxWidth().padding(horizontal=8.dp,vertical=7.dp),
                         verticalAlignment=Alignment.CenterVertically,
                         horizontalArrangement=Arrangement.spacedBy(5.dp)) {

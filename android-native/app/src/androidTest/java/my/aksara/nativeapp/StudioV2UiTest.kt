@@ -24,9 +24,25 @@ class StudioV2UiTest {
         compose.onNodeWithText("Backend Cloud:",substring=true).assertExists()
         compose.onNodeWithText("Jana Imej").performClick()
         compose.onNodeWithText("Enjin Penjanaan").assertExists()
-        compose.onNodeWithText("Pilihan Penjanaan").performScrollTo().performClick()
+        compose.onNodeWithText("Pilihan Penjanaan").assertDoesNotExist()
+        compose.onNodeWithText("Gaya").assertDoesNotExist()
+        compose.onNodeWithText("Tetapan").performClick()
+        compose.onNodeWithText("Pilihan Penjanaan").assertExists()
         compose.onNodeWithText("Model Cloud").assertExists()
-        compose.onNodeWithText("Sembunyi Pilihan Penjanaan").performScrollTo().performClick()
+        compose.onNodeWithText("Nisbah").performScrollTo().assertExists()
+        compose.onNodeWithText("Kualiti").performScrollTo().assertExists()
+        compose.onNodeWithText("Seed").performScrollTo().assertExists()
+    }
+
+    @Test fun templateStyleIsChosenWithoutDuplicateStylePicker() {
+        compose.setContent { AksaraScreen(ChatState(loaded=true),initialOverlay="studio") }
+        compose.onNodeWithText("Template Imej").performScrollTo().performClick()
+        compose.onNodeWithText("Poster").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Apa yang kau nak lihat?")
+            .assertTextContains("editorial poster",substring=true)
+        compose.onNodeWithText("Tetapan").performClick()
+        compose.onNodeWithText("Pilihan Penjanaan").assertExists()
+        compose.onNodeWithText("Gaya").assertDoesNotExist()
     }
 
     @Test fun ideaPromptIsExplicitlySelectableAndEditable() {

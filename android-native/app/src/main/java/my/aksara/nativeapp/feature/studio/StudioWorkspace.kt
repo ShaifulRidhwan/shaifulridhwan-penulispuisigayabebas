@@ -173,7 +173,6 @@ fun StudioContent() {
     var enhancementJob by remember{mutableStateOf<Job?>(null)}
     var showIdeas by remember{mutableStateOf(false)}
     var showTemplates by rememberSaveable{mutableStateOf(false)}
-    var showAdvanced by rememberSaveable{mutableStateOf(false)}
     var requirementsVisible by remember{mutableStateOf(false)}
     var showViewer by remember{mutableStateOf(false)}
     var confirmDelete by remember{mutableStateOf<String?>(null)}
@@ -386,16 +385,6 @@ fun StudioContent() {
                     size=11f,color=AksaraColors.muted)
             }
             Spacer(Modifier.height(12.dp))
-        } else if(showAdvanced) {
-            StudioSectionHeader("Model Cloud","Model pilihan untuk penjanaan Cloud")
-            Row(horizontalArrangement=Arrangement.spacedBy(5.dp)) {
-                listOf("klein" to "Klein","schnell" to "Schnell","ovh" to "OVH Beta").forEach{(id,label)->
-                    AksaraButton((if(model==id)"✓ " else "")+label,{
-                        model=id;if(id!="klein")ratio="1:1";prefs.edit().putString("model",id).apply()
-                    },Modifier.weight(1f),size=10.5f,height=37.dp)
-                }
-            }
-            Spacer(Modifier.height(12.dp))
         }
         StudioSectionHeader("Prompt","Terangkan imej yang kau mahu. Draf tidak terpadam apabila bertukar enjin.")
         StudioInput(prompt,{if(it.length<=StudioRules.MAX_PROMPT)prompt=it},
@@ -429,52 +418,6 @@ fun StudioContent() {
                     catch(e:Exception){message=e.message.orEmpty()}
                 },Modifier.weight(1f),height=38.dp)
             }
-        }
-        Spacer(Modifier.height(12.dp))
-        AksaraButton(if(showAdvanced)"Sembunyi Pilihan Penjanaan" else "Pilihan Penjanaan",
-            {showAdvanced=!showAdvanced},Modifier.fillMaxWidth(),size=10.5f,height=36.dp)
-        Spacer(Modifier.height(9.dp))
-        if(engine==StudioEngine.CLOUD) {
-            StudioSectionHeader("Nisbah",if(model=="klein")"Nisbah natif FLUX.2 Klein" else "Model ini hanya menyokong 1:1")
-            Row(horizontalArrangement=Arrangement.spacedBy(4.dp)){
-                StudioRules.cloudRatios.sortedBy{listOf("1:1","4:5","9:16","16:9","3:2").indexOf(it)}.forEach {r ->
-                    AksaraButton((if(ratio==r)"✓ " else "")+r,{
-                        ratio=r;prefs.edit().putString("ratio",r).apply()
-                    },Modifier.weight(1f),height=35.dp,size=9.5f,enabled=model=="klein"||r=="1:1")
-                }
-            }
-            Spacer(Modifier.height(10.dp))
-            if(showAdvanced) {
-            StudioSectionHeader("Kualiti","Tahap penjanaan yang disokong pelayan")
-            Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){
-                listOf("fast" to "Pantas","balanced" to "Seimbang","detail" to "Terperinci").forEach{(id,label)->
-                    AksaraButton((if(quality==id)"✓ " else "")+label,{
-                        quality=id;prefs.edit().putString("quality",id).apply()
-                    },Modifier.weight(1f),height=36.dp,size=10f)
-                }
-            }
-            Spacer(Modifier.height(10.dp))
-            StudioSectionHeader("Gaya","Pilihan visual tanpa preset Cahaya/Gelap utama")
-            StudioRules.presets.chunked(3).forEach {row ->
-                Row(horizontalArrangement=Arrangement.spacedBy(5.dp)) {
-                    row.forEach{(id,label)->AksaraButton((if(style==id)"✓ " else "")+label,
-                        {style=id},Modifier.weight(1f),size=9.5f,height=34.dp)}
-                    repeat(3-row.size){Spacer(Modifier.weight(1f))}
-                }
-                Spacer(Modifier.height(5.dp))
-            }
-            }
-        } else {
-            StudioSectionHeader("Spesifikasi Local","512×512 · 1 langkah · CFG natif 1.0 (tanpa guidance)")
-        }
-        Spacer(Modifier.height(8.dp))
-        if(showAdvanced && (engine==StudioEngine.LOCAL || model=="klein")) {
-            StudioSectionHeader("Seed","Kosongkan untuk rawak, atau masukkan 0–2147483647")
-            StudioInput(seedDraft,{if(it.length<=10 && it.all(Char::isDigit))seedDraft=it},
-                "Seed automatik",46.dp)
-            Spacer(Modifier.height(6.dp))
-            AksaraButton("Rawakkan seed",{seedDraft=newStudioSeed().toString()},
-                Modifier.fillMaxWidth(),size=10f,height=34.dp)
         }
         Spacer(Modifier.height(12.dp))
         AksaraButton(if(job?.isActive==true)"Sedang menjana…" else "Jana Imej",
@@ -580,7 +523,52 @@ fun StudioContent() {
             AksaraButton("Kosongkan sejarah",{confirmClear=true},Modifier.weight(1f),height=38.dp,enabled=records.isNotEmpty())
         }
     } else {
-        StudioSectionHeader("Tetapan Studio","Pilihan disimpan dan terpakai dalam satu Studio Native.")
+
+        StudioSectionHeader("Pilihan Penjanaan","Tetapan untuk penjanaan seterusnya. Template kekal sebagai pilihan gaya.")
+        if(engine==StudioEngine.CLOUD) {
+            StudioSectionHeader("Model Cloud","FLUX.2 Klein menyokong pelbagai nisbah dan seed.")
+            Row(horizontalArrangement=Arrangement.spacedBy(5.dp)) {
+                listOf("klein" to "Klein","schnell" to "Schnell","ovh" to "OVH Beta").forEach { (id,label) ->
+                    AksaraButton((if(model==id)"✓ " else "")+label,{
+                        model=id
+                        if(id!="klein"){ratio="1:1";seedDraft=""}
+                        prefs.edit().putString("model",id).putString("ratio",ratio).apply()
+                    },Modifier.weight(1f),size=10.5f,height=37.dp)
+                }
+            }
+            Spacer(Modifier.height(11.dp))
+            StudioSectionHeader("Nisbah",if(model=="klein")"Nisbah natif FLUX.2 Klein" else "Model ini hanya menyokong 1:1")
+            Row(horizontalArrangement=Arrangement.spacedBy(4.dp)){
+                StudioRules.cloudRatios.sortedBy{listOf("1:1","4:5","9:16","16:9","3:2").indexOf(it)}.forEach {r ->
+                    AksaraButton((if(ratio==r)"✓ " else "")+r,{
+                        ratio=r;prefs.edit().putString("ratio",r).apply()
+                    },Modifier.weight(1f),height=35.dp,size=9.5f,enabled=model=="klein"||r=="1:1")
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            StudioSectionHeader("Kualiti","Tahap penjanaan yang disokong pelayan")
+            Row(horizontalArrangement=Arrangement.spacedBy(5.dp)){
+                listOf("fast" to "Pantas","balanced" to "Seimbang","detail" to "Terperinci").forEach{(id,label)->
+                    AksaraButton((if(quality==id)"✓ " else "")+label,{
+                        quality=id;prefs.edit().putString("quality",id).apply()
+                    },Modifier.weight(1f),height=36.dp,size=10f)
+                }
+            }
+        } else {
+            StudioSectionHeader("Spesifikasi Local","512×512 · 1 langkah · CFG natif 1.0")
+        }
+        if(engine==StudioEngine.LOCAL || model=="klein" && engine==StudioEngine.CLOUD) {
+            Spacer(Modifier.height(12.dp))
+            StudioSectionHeader("Seed","Kosongkan untuk rawak, atau masukkan 0–2147483647")
+            StudioInput(seedDraft,{if(it.length<=10 && it.all(Char::isDigit))seedDraft=it},
+                "Seed automatik",46.dp)
+            Spacer(Modifier.height(6.dp))
+            AksaraButton("Rawakkan seed",{seedDraft=newStudioSeed().toString()},
+                Modifier.fillMaxWidth(),size=10f,height=34.dp)
+        }
+        Spacer(Modifier.height(18.dp))
+        StudioSectionHeader("Status Studio","Maklumat sistem dan storan.")
+
         AksaraText("Cloud: "+model+" · "+quality+" · "+ratio,size=11f,color=AksaraColors.muted)
         Spacer(Modifier.height(6.dp))
         AksaraText("Model Local: "+if(models.modelPath()!=null)"Pakej sah dipasang" else "Belum dipasang",
