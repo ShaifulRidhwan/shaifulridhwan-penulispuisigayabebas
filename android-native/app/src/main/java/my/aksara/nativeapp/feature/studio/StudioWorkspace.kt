@@ -153,6 +153,7 @@ fun StudioContent() {
     val historyStore=remember(context){StudioHistoryStore(context)}
     val models=remember(context){LocalModelManager(context)}
     val localRuntime=remember{LocalSDTurboEngine()}
+    val nativeBusy by localRuntime.busyState.collectAsState()
     var page by rememberSaveable{mutableStateOf(StudioPage.GENERATE.name)}
     var engineName by rememberSaveable{mutableStateOf(StudioEngine.CLOUD.name)}
     val engine=StudioEngine.valueOf(engineName)
@@ -482,7 +483,7 @@ fun StudioContent() {
                 Modifier.fillMaxWidth(),size=10f,height=34.dp)
         }
         Spacer(Modifier.height(12.dp))
-        val generatingNow = runningEngine != null || localRuntime.isBusy()
+        val generatingNow = runningEngine != null || nativeBusy
         AksaraButton(if(generatingNow) {
                 if(job?.isActive==false)"Menghentikan proses native…" else "Sedang menjana…"
             } else "Jana Imej",
@@ -490,8 +491,10 @@ fun StudioContent() {
             enabled=!generatingNow && job?.isActive!=true && prompt.trim().length>=4)
         if(generatingNow) {
             Spacer(Modifier.height(6.dp))
-            if(runningEngine==StudioEngine.LOCAL || localRuntime.isBusy()) {
-                AksaraText((localPhase.ifBlank { "Menyediakan model" })+
+            if(runningEngine==StudioEngine.LOCAL || nativeBusy) {
+                AksaraText(if(runningEngine==null && nativeBusy) {
+                    "Inferens sesi sebelumnya masih aktif; tunggu native berhenti."
+                } else (localPhase.ifBlank { "Menyediakan model" })+
                     " · "+runningSeconds+" saat",size=11f,color=AksaraColors.muted)
                 if(runningSeconds>=60L) AksaraText(
                     "Inferens CPU mungkin mengambil beberapa minit. Semak fasa di atas; " +
