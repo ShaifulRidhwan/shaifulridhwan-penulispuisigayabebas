@@ -29,9 +29,12 @@ class StudioV2UiTest {
         compose.onNodeWithText("Tetapan").performClick()
         compose.onNodeWithText("Pilihan Penjanaan").assertExists()
         compose.onNodeWithText("Model Cloud").assertExists()
-        compose.onNodeWithText("Nisbah").performScrollTo().assertExists()
-        compose.onNodeWithText("Kualiti").performScrollTo().assertExists()
-        compose.onNodeWithText("Seed").performScrollTo().assertExists()
+        // These are static headings, not interactable scroll targets. Compose's
+        // performScrollTo requires a Scroll SemanticsAction parent and fails on
+        // some emulator builds even when the settings actually exist.
+        compose.onNodeWithText("Nisbah").assertExists()
+        compose.onNodeWithText("Kualiti").assertExists()
+        compose.onNodeWithText("Seed").assertExists()
     }
 
     @Test fun templateStyleIsChosenWithoutDuplicateStylePicker() {
