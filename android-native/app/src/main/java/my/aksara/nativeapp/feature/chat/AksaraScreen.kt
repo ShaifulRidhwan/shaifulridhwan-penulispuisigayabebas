@@ -62,6 +62,44 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var uploadJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
     val uploader = remember(context) { LargeUploadClient() }
+    val exportPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument(SessionTransferCodec.MIME)) { uri ->
+        if(uri!=null) scope.launch {
+            try {
+                val plain=vm.exportSessions()
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    context.contentResolver.openOutputStream(uri,"wt")?.use {
+                        it.write(plain.toByteArray(Charsets.UTF_8))
+                    } ?: error("Fail eksport tidak boleh dibuka.")
+                }
+                android.widget.Toast.makeText(context,"Arkib JSON dieksport. Simpan fail ini secara peribadi.",android.widget.Toast.LENGTH_LONG).show()
+            } catch(e:Exception) { attachmentError="Eksport gagal: "+(e.message?:"cuba lagi") }
+        }
+    }
+    val importPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()) { uri ->
+        if(uri!=null) scope.launch {
+            try {
+                val data=kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        val output=java.io.ByteArrayOutputStream()
+                        val buffer=ByteArray(8192)
+                        while(true) {
+                            val count=stream.read(buffer)
+                            if(count<0)break
+                            require(output.size()+count<=SessionTransferCodec.MAX_BYTES) {
+                                "Fail import melebihi 12 MB."
+                            }
+                            if(count>0)output.write(buffer,0,count)
+                        }
+                        output.toString("UTF-8")
+                    } ?: error("Fail import tidak boleh dibuka.")
+                }
+                val count=vm.importSessions(data)
+                android.widget.Toast.makeText(context,"$count sesi berjaya diimport. Buka Arkib Sesi.",android.widget.Toast.LENGTH_LONG).show()
+            } catch(e:Exception) { attachmentError="Import gagal: "+(e.message?:"format tidak sah") }
+        }
+    }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if(uris.isNotEmpty()&&!attachmentLoading) {
             uploadJob=scope.launch {
@@ -122,6 +160,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         }
         accepted
     }, onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
+        onExportSessions = { exportPicker.launch("aksara-sesi.json") },
+        onImportSessions = { importPicker.launch(arrayOf("application/json","text/plain")) },
+        onEditAndSend = vm::forkAndSendFrom, onBranch = vm::forkFrom, onRegenerate = vm::regenerateFrom,
         onMemory = vm::setMemory, onVoiceTurns = vm::acceptVoiceTurns, onClearAttachment = {
             val selected=attachments
             attachments=emptyList()
@@ -143,10 +184,14 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     onPickAttachment: (String)->Unit = {}, onDismissError: ()->Unit = {}, onMemory: (Boolean,String)->Unit = {_,_->}, onClearAttachment: ()->Unit = {}, initialOverlay: String? = null,
     attachmentLoading: Boolean = false,
     uploadStatus: String? = null, onCancelUpload: ()->Unit = {},
+    onEditAndSend: (String,String)->Boolean = {_,_->false},
+    onBranch: (String)->Boolean = {false}, onRegenerate: (String)->Boolean = {false},
+    onExportSessions: ()->Unit = {}, onImportSessions: ()->Unit = {},
     fixedTimestamp: Long? = null, onVoiceTurns:(List<my.aksara.engine.voice.VoiceContextTurn>)->Unit = {}) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
     var draft by rememberSaveable { mutableStateOf("") }
+    var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var searchIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -289,9 +334,21 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                             val clipboard=context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                             clipboard.setPrimaryClip(ClipData.newPlainText("Aksara A.I.",message.text))
                                         },
-                                        onReuse={draft=it;autoFollow=true},
+                                        onReuse={draft=it.substringBefore("\n\n[Lampiran: ");editingId=null;autoFollow=true},
+                                        onEdit=if(message.role=="user" && !message.incomplete &&
+                                            !message.text.contains("[Lampiran: ") && !state.busy) ({
+                                            editingId=message.id;draft=message.text;autoFollow=true
+                                        }) else null,
+                                        onDetails=if(message.role=="assistant" && !state.busy &&
+                                            message.id==state.messages.lastOrNull()?.id &&
+                                            state.lastProvider.isNotBlank()) ({
+                                            open("response-details")
+                                        }) else null,
+                                        onBranch=if(!state.busy && !message.incomplete) ({
+                                            if(onBranch(message.id)) { editingId=null;draft="";autoFollow=true;searchOpen=false }
+                                        }) else null,
                                         onRetry=if(message.role=="assistant" && message.id==state.messages.lastOrNull()?.id && !state.busy)
-                                            ({state.messages.lastOrNull{it.role=="user"}?.text?.substringBefore("\n\n[Lampiran: ")?.let { onSend(it) };Unit}) else null)
+                                            ({if(onRegenerate(message.id)){editingId=null;draft="";autoFollow=true;searchOpen=false};Unit}) else null)
                                 }
                             }
                             if(state.messages.isEmpty()) Row(Modifier.fillMaxWidth().height(49.dp).padding(start=12.dp,end=12.dp,top=4.dp,bottom=8.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
@@ -314,8 +371,14 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                     AksaraButton("Buang",onClearAttachment,size=9f,height=30.dp,radius=12.dp)
                 }
                 val hasAttachments = !attachmentName.isNullOrBlank()
+                if(editingId!=null) Row(Modifier.fillMaxWidth().padding(horizontal=9.dp,vertical=4.dp),
+                    verticalAlignment=Alignment.CenterVertically) {
+                    AksaraText("Edit mesej · simpan sebagai cabang baharu",
+                        Modifier.weight(1f),size=10.5f,color=AksaraColors.gold)
+                    AksaraButton("Batal",{editingId=null;draft=""},height=29.dp,size=10f)
+                }
                 val canSubmit = state.loaded && !state.busy && !attachmentLoading &&
-                    (draft.isNotBlank() || hasAttachments)
+                    (draft.isNotBlank() || hasAttachments) && (editingId==null || !hasAttachments)
                 AksaraGlassSurface(
                     Modifier.fillMaxWidth().heightIn(min=58.dp,max=164.dp).testTagCompat("composer-form"),
                     radius=20.dp,blur=12.dp,saturation=1.15f,
@@ -347,7 +410,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         AksaraButton("",{
                             if(canSubmit) {
                                 val text=AttachmentSendPolicy.submissionText(draft,hasAttachments)
-                                if(onSend(text)) draft=""
+                                val accepted = editingId?.let { onEditAndSend(it,text) } ?: onSend(text)
+                                if(accepted) { draft="";editingId=null;autoFollow=true;searchOpen=false }
                             }
                         },Modifier.width(42.dp).semantics {contentDescription="Hantar soalan"},
                             icon="send",height=42.dp,radius=13.dp,enabled=canSubmit)
@@ -356,14 +420,17 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
             }
             if(overlay!=null) CompositionLocalProvider(LocalBackdrop provides scene) {
-                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question);Unit},onVoiceTurns=onVoiceTurns)
+                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question);Unit},onVoiceTurns=onVoiceTurns,
+                    onExportSessions=onExportSessions,onImportSessions=onImportSessions)
             }
         }
     }
 }
 private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
 @Composable fun AksaraChatBubble(message:Message,fixedTimestamp:Long?=null,initial:Boolean=false,
-    onCopy:(()->Unit)?=null,onReuse:((String)->Unit)?=null,onRetry:(()->Unit)?=null) {
+    onCopy:(()->Unit)?=null,onReuse:((String)->Unit)?=null,
+    onEdit:(()->Unit)?=null,onBranch:(()->Unit)?=null,
+    onDetails:(()->Unit)?=null,onRetry:(()->Unit)?=null) {
     val ai=message.role!="user"
     val measure=rememberTextMeasurer();val density=LocalDensity.current
     BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -402,13 +469,17 @@ private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
                 if(message.text.isNotEmpty()) {
                     Spacer(Modifier.height(if(initial)6.dp else 8.dp))
                     val time=Instant.ofEpochMilli(fixedTimestamp?:message.at).atZone(ZoneId.of("Asia/Kuala_Lumpur")).format(DateTimeFormatter.ofPattern("d MMM HH:mm",java.util.Locale.ENGLISH))
-                    Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                    FlowRow(horizontalArrangement=Arrangement.spacedBy(9.dp),
+                        verticalArrangement=Arrangement.spacedBy(4.dp)) {
                         AksaraText((if(ai)"Diterima" else "Dihantar")+" · "+time+(if(message.incomplete) " · belum lengkap" else ""),
                             Modifier.padding(horizontal=4.dp),size=10f,line=14f,color=Color(232,215,189,201),tracking=.15f)
                         if(!initial && !message.id.startsWith("welcome") && !message.incomplete) {
                             if(onCopy!=null) AksaraText("Salin",Modifier.clickable{onCopy()},size=10f,line=14f,color=AksaraColors.gold)
                             if(!ai && onReuse!=null) AksaraText("Guna semula",Modifier.clickable{onReuse(message.text)},size=10f,line=14f,color=AksaraColors.gold)
-                            if(ai && onRetry!=null) AksaraText("Tanya semula",Modifier.clickable{onRetry()},size=10f,line=14f,color=AksaraColors.gold)
+                            if(onEdit!=null) AksaraText("Edit",Modifier.clickable{onEdit()},size=10f,line=14f,color=AksaraColors.gold)
+                            if(onDetails!=null) AksaraText("Butiran",Modifier.clickable{onDetails()},size=10f,line=14f,color=AksaraColors.gold)
+                            if(onBranch!=null) AksaraText("Cabang",Modifier.clickable{onBranch()},size=10f,line=14f,color=AksaraColors.gold)
+                            if(ai && onRetry!=null) AksaraText("Jana semula",Modifier.clickable{onRetry()},size=10f,line=14f,color=AksaraColors.gold)
                         }
                     }
                 }

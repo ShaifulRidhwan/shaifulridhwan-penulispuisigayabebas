@@ -28,7 +28,8 @@ import my.aksara.nativeapp.feature.tools.*
 
 @Composable fun AksaraOverlay(kind:String,state:ChatState,onClose:()->Unit,onNavigate:(String)->Unit,onRefresh:()->Unit,
     onMode:(String)->Unit,onRestore:()->Unit,onRestoreSession:(String)->Unit = {},onClear:()->Unit,onPickAttachment:(String)->Unit,onAsk:(String)->Unit,onMemory:(Boolean,String)->Unit={_,_->},
-    onVoiceTurns:(List<VoiceContextTurn>)->Unit={}) {
+    onVoiceTurns:(List<VoiceContextTurn>)->Unit={},
+    onExportSessions:()->Unit={},onImportSessions:()->Unit={}) {
     // Android Lite: preserve the engines on disk, but expose no inactive entry points.
     if(kind=="code" || kind=="terminal" || kind=="engines") return
     if(kind=="voice"){VoiceContent(onClose,state.mode,onMode,state.messages,state.memoryEnabled,state.memoryNotes,onVoiceTurns);return}
@@ -49,7 +50,7 @@ import my.aksara.nativeapp.feature.tools.*
             maxOf(73.dp,(24f+18.2f+4f+15.75f*lines).dp)
         }
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(Color(2,6,13,64)).clickable(onClick=onClose))
-        val height=when(kind){"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->414.dp;"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
+        val height=when(kind){"response-details"->375.dp;"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->414.dp;"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal","portal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).clickable(enabled=false){},
@@ -71,7 +72,7 @@ import my.aksara.nativeapp.feature.tools.*
                         AksaraButton("Aktifkan Mikrofon",{onNavigate("voice")},Modifier.weight(.63f))
                     }
                 } else {
-                    val title=when(kind){"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Ciri & Fungsi";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";"studio"->"Studio Antara";"library"->"Perpustakaan AKSARA";"novel"->"Baca Novel";"security"->"Security Lab";"metrics"->"Prestasi A.I."; "engines"->"Native Engines";else->kind}
+                    val title=when(kind){"response-details"->"Butiran Jawapan";"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Ciri & Fungsi";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";"studio"->"Studio Antara";"library"->"Perpustakaan AKSARA";"novel"->"Baca Novel";"security"->"Security Lab";"metrics"->"Prestasi A.I."; "engines"->"Native Engines";else->kind}
                     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
                             AksaraText(title,size=16f,line=20.8f,weight=700,tracking=.4f)
@@ -81,6 +82,30 @@ import my.aksara.nativeapp.feature.tools.*
                         AksaraButton("×",onClose,Modifier.width(36.dp),size=22f,height=37.dp,radius=10.dp)
                     }
                     when(kind) {
+                        "response-details" -> {
+                            Spacer(Modifier.height(14.dp))
+                            AksaraText("Metadata yang dilaporkan backend untuk jawapan terakhir dalam sesi aktif. Ini bukan bukti ketepatan setiap dakwaan.",size=11.5f,line=18f,color=AksaraColors.muted)
+                            Spacer(Modifier.height(13.dp))
+                            val entries=listOf(
+                                "Penyedia" to state.lastProvider.ifBlank { "Tidak diketahui" },
+                                "Model" to state.lastModel.ifBlank { "Tidak dilaporkan" },
+                                "Status kajian" to state.lastResearchStatus.ifBlank { "Tidak dilaporkan" },
+                                "Tahap sumber" to when(state.lastEvidenceLevel) {
+                                    "page_text" -> "Teks halaman dirujuk"
+                                    "search_excerpt" -> "Petikan carian sahaja"
+                                    "grounded_search" -> "Carian berasaskan sumber"
+                                    "links_only" -> "Pautan tanpa pengesahan kandungan"
+                                    "no_external_evidence" -> "Tiada bukti luaran"
+                                    else -> "Belum disahkan"
+                                },
+                                "Alat digunakan" to state.lastToolsUsed.take(8).joinToString(", ").ifBlank { "Tiada dilaporkan" }
+                            )
+                            entries.forEach { (label,value) ->
+                                AksaraText(label,size=10f,color=AksaraColors.muted)
+                                AksaraText(value.take(180),size=12f,weight=600)
+                                Spacer(Modifier.height(9.dp))
+                            }
+                        }
                         "connection" -> {
                             val backendUnreachable=state.providers.any{it.first=="backend" && it.second=="Backend unreachable"}
                             Spacer(Modifier.height(10.dp));AksaraText(ProviderConnectionStatus.label(state.providers)+" · "+
@@ -169,6 +194,14 @@ import my.aksara.nativeapp.feature.tools.*
                             var search by remember(kind) { mutableStateOf("") }
                             Spacer(Modifier.height(14.dp))
                             AksaraText(sessions.size.toString()+" sesi · "+state.archive.size+" mesej disulitkan pada peranti.",size=12f)
+                            Spacer(Modifier.height(8.dp))
+                            AksaraText("Import/eksport JSON mengandungi teks perbualan tanpa penyulitan. Simpan secara peribadi; lampiran asal dan memori tidak termasuk.",size=10f,color=AksaraColors.muted)
+                            Spacer(Modifier.height(8.dp))
+                            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                                AksaraButton("Eksport JSON",onExportSessions,Modifier.weight(1f),height=37.dp,size=10f,
+                                    enabled=state.archive.isNotEmpty() || state.messages.isNotEmpty())
+                                AksaraButton("Import JSON",onImportSessions,Modifier.weight(1f),height=37.dp,size=10f)
+                            }
                             Spacer(Modifier.height(12.dp))
                             AksaraGlassSurface(Modifier.fillMaxWidth().height(42.dp),radius=13.dp) {
                                 BasicTextField(search,{search=it.take(120)},Modifier.fillMaxSize().padding(11.dp),

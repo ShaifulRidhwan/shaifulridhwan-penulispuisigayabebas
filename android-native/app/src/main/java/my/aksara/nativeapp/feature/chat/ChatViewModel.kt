@@ -94,22 +94,28 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             catch (_: Exception) { mutable.update { it.copy(error = "Gagal menyimpan nota memori. Cuba lagi.") } }
         }
     }
+    private fun clearAnswerDiagnostics(value: ChatState) = value.copy(
+        lastProvider = "", lastModel = "", lastResearchStatus = "",
+        lastToolsUsed = emptyList(), lastEvidenceLevel = "not_checked"
+    )
     fun dismissError() { mutable.update { it.copy(error = null) } }
     fun restore() { if (!state.value.busy) {
         activeAttachment=null
-        mutable.update { it.copy(messages = it.archive, resumedFromHistory = false) }
+        mutable.update { clearAnswerDiagnostics(it.copy(messages = it.archive, resumedFromHistory = false)) }
     } }
     fun restoreSession(startId: String) {
         if (state.value.busy) return
         activeAttachment=null
         val selected = groupSessions(state.value.archive, state.value.sessionStarts)
             .firstOrNull { it.startId == startId } ?: return
-        mutable.update { it.copy(messages = selected.messages, nextJourney = null, error = null, resumedFromHistory = true) }
+        mutable.update { clearAnswerDiagnostics(it.copy(messages = selected.messages,
+            nextJourney = null, error = null, resumedFromHistory = true)) }
     }
     fun clearScreen() { if (!state.value.busy) {
         activeAttachment=null
         savedContext = savedContext.copy(sessionFirstId = "", summary = "", summarizedThrough = 0, thoughtLedger = emptyList())
-        mutable.update { it.copy(messages = emptyList(), summaryStatus = "not_requested", resumedFromHistory = false) }
+        mutable.update { clearAnswerDiagnostics(it.copy(messages = emptyList(),
+            summaryStatus = "not_requested", resumedFromHistory = false)) }
         viewModelScope.launch { runCatching { persistContext() } }
     } }
     fun refreshProviders() = viewModelScope.launch {
@@ -185,9 +191,9 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         val user = Message(UUID.randomUUID().toString(), "user", question+note)
         val assistant = Message(UUID.randomUUID().toString(), "assistant", "", incomplete = true)
         if (newAttachment) activeAttachment=effective
-        mutable.update { it.copy(messages = previous + user + assistant,
+        mutable.update { clearAnswerDiagnostics(it.copy(messages = previous + user + assistant,
             sessionStarts = if (previous.isEmpty() || it.resumedFromHistory) (it.sessionStarts + user.id).distinct() else it.sessionStarts,
-            resumedFromHistory = false, busy = true, error = null, nextJourney = null) }
+            resumedFromHistory = false, busy = true, error = null, nextJourney = null)) }
         requestJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             try {
                 // Persist the user's prompt before any summarization or inference.
@@ -273,5 +279,82 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
         return true
     }
+    /** Edit creates a fork, never silently rewrites an already encrypted session. */
+    fun forkAndSendFrom(userId: String, revisedQuestion: String): Boolean {
+        val snapshot = state.value
+        val original = snapshot.messages.firstOrNull { it.id == userId } ?: return false
+        if (!snapshot.loaded || snapshot.busy || !storageReadable || !ChatBranching.editable(original)) {
+            mutable.update { it.copy(error = "Mesej ini tidak boleh diedit. Lampiran asal perlu dimuat naik semula.") }
+            return false
+        }
+        val question = revisedQuestion.trim()
+        if (question.isBlank()) return false
+        val prefix = ChatBranching.prefix(snapshot.messages, userId, includeSelected = false) ?: return false
+        openBranch(prefix)
+        return send(question)
+    }
+
+    /** Regeneration creates an independent answer to the original user question. */
+    fun regenerateFrom(answerId: String): Boolean {
+        val question = ChatBranching.questionForRegeneration(state.value.messages, answerId)
+        if(question==null) {
+            mutable.update { it.copy(error = "Jawapan ini tidak boleh dijana semula tanpa lampiran asal. Muat naik lampiran sekali lagi.") }
+            return false
+        }
+        return forkAndSendFrom(question.id, question.text)
+    }
+
+    fun forkFrom(messageId: String): Boolean {
+        val snapshot = state.value
+        if (!snapshot.loaded || snapshot.busy || !storageReadable) return false
+        val copy = ChatBranching.prefix(snapshot.messages, messageId, includeSelected = true)
+            ?: return false
+        if (copy.isEmpty()) return false
+        openBranch(copy)
+        viewModelScope.launch {
+            try {
+                persistArchive()
+                persistContext()
+            } catch (_: Exception) {
+                mutable.update { it.copy(error = "Cabang baharu belum berjaya disimpan; teks masih ada di skrin.") }
+            }
+        }
+        return true
+    }
+
+    private fun openBranch(copied: List<Message>) {
+        activeAttachment = null
+        savedContext = savedContext.copy(sessionFirstId = "", summary = "",
+            summarizedThrough = 0, thoughtLedger = emptyList())
+        mutable.update {
+            clearAnswerDiagnostics(it.copy(messages = copied,
+                sessionStarts = (it.sessionStarts + listOfNotNull(copied.firstOrNull()?.id)).distinct(),
+                resumedFromHistory = false, nextJourney = null,
+                summaryStatus = "not_requested", error = null))
+        }
+    }
+
+    /** The user explicitly exports plain JSON; never include encrypted memory or tokens. */
+    fun exportSessions(): String {
+        check(state.value.loaded && !state.value.busy && storageReadable) { "Arkib belum tersedia." }
+        return SessionTransferCodec.encode(
+            mergeSessionArchive(state.value.archive,state.value.messages),state.value.sessionStarts)
+    }
+
+    /** Validate before modifying any encrypted file; preserve original archive on failure. */
+    suspend fun importSessions(content: String): Int = withContext(Dispatchers.Main.immediate) {
+        check(state.value.loaded && !state.value.busy && storageReadable) { "Arkib belum tersedia." }
+        val incoming=withContext(Dispatchers.Default) { SessionTransferCodec.decode(content) }
+        archiveMutex.withLock {
+            val current=state.value
+            check(!current.busy && storageReadable) { "Tunggu sehingga respons tamat." }
+            val combined=mergeSessionArchive(current.archive,current.messages)+incoming.messages
+            val starts=(current.sessionStarts+incoming.sessionStarts).distinct()
+            store.save(combined,starts)
+            mutable.update { it.copy(archive=combined,sessionStarts=starts,error=null) }
+        }
+        incoming.sessionStarts.size
+    }
+
     fun stop() { requestJob?.cancel() }
 }
