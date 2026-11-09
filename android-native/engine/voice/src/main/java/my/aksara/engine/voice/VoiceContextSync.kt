@@ -7,6 +7,11 @@ package my.aksara.engine.voice
 data class VoiceContextTurn(val role: String, val content: String)
 
 object VoiceContextSync {
+    /** Only completed transcript data can be handed back to the chat session. */
+    fun completedTurns(input: String, output: String, languageDrift: Boolean): List<VoiceContextTurn> = buildList {
+        if (input.isNotBlank()) add(VoiceContextTurn("user", input.trim()))
+        if (!languageDrift && output.isNotBlank()) add(VoiceContextTurn("assistant", output.trim()))
+    }
     private fun clean(value: String): String =
         value.replace(Regex("[\\r\\n\\t]+"), " ").replace(Regex("\\s+"), " ").trim()
 

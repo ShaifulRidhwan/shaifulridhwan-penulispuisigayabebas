@@ -6,10 +6,12 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import my.aksara.nativeapp.BuildConfig
 import my.aksara.nativeapp.core.network.*
 import my.aksara.nativeapp.core.storage.*
+import my.aksara.engine.voice.VoiceContextTurn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
@@ -26,6 +28,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     private val store = SessionStore(app)
     private val contextStore = SessionContextStore(app)
     private val contextMutex = Mutex()
+    private val archiveMutex = Mutex()
     private var savedContext = SavedConversationContext()
     private var contextReadable = true
     private val mutable = MutableStateFlow(ChatState())
@@ -53,6 +56,26 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     fun setMode(mode: String) { if(mode in listOf("cahaya","gelap")) mutable.update { it.copy(mode = mode) } }
     private suspend fun persistContext() {
         if (contextReadable) contextMutex.withLock { contextStore.save(savedContext) }
+    }
+    private suspend fun persistArchive() = archiveMutex.withLock {
+        check(storageReadable) { "Fail sesi asal belum dapat dibaca." }
+        val combined = mergeSessionArchive(state.value.archive, state.value.messages)
+        store.save(combined)
+        mutable.update { it.copy(archive = mergeSessionArchive(it.archive, combined)) }
+    }
+    fun acceptVoiceTurns(turns: List<VoiceContextTurn>) {
+        // Gemini callbacks arrive off the main thread. Never store raw audio or
+        // unfinished fragments; completed transcript turns are ordinary session history.
+        viewModelScope.launch(Dispatchers.Main.immediate) {
+            val messages = turns.filter { it.role in setOf("user", "assistant") && it.content.isNotBlank() }
+                .map { Message(UUID.randomUUID().toString(), it.role, it.content,
+                    provider = if (it.role == "assistant") "gemini" else null) }
+            if (messages.isEmpty()) return@launch
+            state.first { it.loaded }
+            mutable.update { it.copy(messages = it.messages + messages) }
+            try { withContext(NonCancellable) { persistArchive() } }
+            catch (_: Exception) { mutable.update { it.copy(error = "Transkrip suara belum berjaya disimpan. Teks kekal di skrin.") } }
+        }
     }
     fun setMemory(enabled: Boolean, notes: String) {
         if (!state.value.loaded || !contextReadable) {
@@ -92,7 +115,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             val row=rows.getJSONObject(i)
             val messages=state.value.messages+Message(UUID.randomUUID().toString(),"user",row.getString("question"))+Message(UUID.randomUUID().toString(),"assistant",row.getString("answer"),provider="aksara_local")
             mutable.update {it.copy(messages=messages,nextJourney=rows.optJSONObject(i+1)?.optString("question"))}
-            if(storageReadable)try{val combined=mergeSessionArchive(state.value.archive,messages);store.save(combined);mutable.update{it.copy(archive=combined)}}catch(_:Exception){mutable.update{it.copy(error="Sesi belum berjaya disimpan.")}}
+            if(storageReadable)try{persistArchive()}catch(_:Exception){mutable.update{it.copy(error="Sesi belum berjaya disimpan.")}}
         }
     }
     fun send(question: String, documentText: String = "", documentName: String = "", media: JSONArray? = null): Boolean {
@@ -108,9 +131,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 if (!storageReadable) throw java.io.IOException("Sesi asal tidak dapat dibaca. Mesej kekal di skrin; permintaan belum dihantar.")
                 try {
                     withContext(NonCancellable) {
-                        val pending = mergeSessionArchive(state.value.archive, state.value.messages)
-                        store.save(pending)
-                        mutable.update { it.copy(archive = pending) }
+                        persistArchive()
                     }
                 } catch (e: CancellationException) { throw e }
                 catch (e: Exception) {
@@ -184,9 +205,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 withContext(NonCancellable) {
                     try {
                         check(storageReadable) { "Fail sesi asal belum dapat dibaca." }
-                        val combined = mergeSessionArchive(state.value.archive, state.value.messages)
-                        store.save(combined)
-                        mutable.update { it.copy(archive = combined) }
+                        persistArchive()
                         persistContext()
                     } catch (_: Exception) {
                         mutable.update { current -> current.copy(error = current.error

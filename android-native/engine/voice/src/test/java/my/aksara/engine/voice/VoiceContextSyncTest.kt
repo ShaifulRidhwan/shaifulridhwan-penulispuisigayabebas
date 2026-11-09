@@ -4,6 +4,13 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class VoiceContextSyncTest {
+    @Test fun onlyCompletedNonDriftedTurnsAreExported() {
+        assertEquals(listOf(VoiceContextTurn("user", "Hai"), VoiceContextTurn("assistant", "Hai juga")),
+            VoiceContextSync.completedTurns(" Hai ", "Hai juga", false))
+        assertEquals(listOf(VoiceContextTurn("user", "Sambung")),
+            VoiceContextSync.completedTurns("Sambung", "hola", true))
+        assertTrue(VoiceContextSync.completedTurns("", "", false).isEmpty())
+    }
     @Test fun overlappingFragmentsDoNotRepeatWords() {
         assertEquals("Aku nak tahu pasal fizik kuantum",
             VoiceContextSync.mergeTranscript("Aku nak tahu pasal fizik", "fizik kuantum"))

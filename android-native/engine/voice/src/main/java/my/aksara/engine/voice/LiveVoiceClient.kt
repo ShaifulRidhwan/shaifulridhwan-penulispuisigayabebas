@@ -42,7 +42,8 @@ data class VoiceState(
 class LiveVoiceClient(
     private val context: Context,
     private val origin: String,
-    identity: String
+    identity: String,
+    private val onCompletedTurns: (List<VoiceContextTurn>) -> Unit = {}
 ) : AutoCloseable {
     private var instructions = identity
     private var supervisor = SupervisorJob()
@@ -66,7 +67,7 @@ class LiveVoiceClient(
     private var languageDrift = false
     private var foreignLanguageRequested = false
     private var resumptionHandle = ""
-    // Ephemeral Voice Core V3 transcript; no voice transcript is written to disk.
+    // Reconnect context is ephemeral; completed transcript turns can be handed to the app.
     private val recentVoiceTurns = ArrayDeque<VoiceContextTurn>()
     private var incomingTranscript = ""
     private var outgoingTranscript = ""
@@ -291,6 +292,8 @@ class LiveVoiceClient(
             if (content.optBoolean("interrupted")) {
                 playbackGeneration.incrementAndGet()
                 outputTrack?.pause(); outputTrack?.flush(); outputTrack?.play()
+                // The interrupted model output is not a completed answer.
+                outgoingTranscript = ""
                 completedTurn = false
                 thinkingSince = 0
                 mutable.value = mutable.value.copy(phase = "listening", message = "Aku dengar.")
@@ -328,13 +331,12 @@ class LiveVoiceClient(
                 completedTurn = true
                 thinkingSince = 0L
                 synchronized(this@LiveVoiceClient) {
-                    if (incomingTranscript.isNotBlank())
-                        recentVoiceTurns.addLast(VoiceContextTurn("user", incomingTranscript.takeLast(2800)))
-                    if (!languageDrift && outgoingTranscript.isNotBlank())
-                        recentVoiceTurns.addLast(VoiceContextTurn("assistant", outgoingTranscript.takeLast(2800)))
+                    val completed = VoiceContextSync.completedTurns(incomingTranscript, outgoingTranscript, languageDrift)
+                    completed.forEach { recentVoiceTurns.addLast(it) }
                     while (recentVoiceTurns.size > 16) recentVoiceTurns.removeFirst()
                     incomingTranscript = ""
                     outgoingTranscript = ""
+                    if (completed.isNotEmpty()) runCatching { onCompletedTurns(completed) }
                 }
                 if (languageDrift) {
                     languageDrift = false
