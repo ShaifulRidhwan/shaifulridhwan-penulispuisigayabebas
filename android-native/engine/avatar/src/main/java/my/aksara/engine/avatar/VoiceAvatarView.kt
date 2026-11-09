@@ -20,8 +20,10 @@ class VoiceAvatarView(context:Context):TextureView(context),Choreographer.FrameC
     init {isOpaque=false}
     override fun onAttachedToWindow(){
         super.onAttachedToWindow()
-        val targetY=.9987407f-.4387087f*.38f
-        val visibleHeight=.4387087f*2.55f
+        // Calibrated head-and-shoulders portrait: move focus upward and gently zoom.
+        // Does not fake lip-sync or animate an unrigged avatar.
+        val targetY=.9987407f-.4387087f*.20f
+        val visibleHeight=.4387087f*2.30f
         val distance=(visibleHeight/(2*Math.tan(Math.toRadians(17.0)))*1.07).toFloat()
         val manipulator=Manipulator.Builder().targetPosition(0f,targetY,.0354368f).orbitHomePosition(0f,targetY,.0354368f+distance).build(Manipulator.Mode.ORBIT)
         val ui=UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK).apply {isOpaque=false}
