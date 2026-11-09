@@ -1,6 +1,13 @@
 name: AKSARA SD-Turbo arm64 native (experimental)
 on:
   workflow_dispatch:
+  pull_request:
+    branches: ['rebuild/aksara-android-native-v1']
+    paths:
+      - '.github/workflows/aksara-sdturbo-native.yml'
+      - 'android-native/app/src/main/cpp/**'
+      - 'android-native/app/build.gradle.kts'
+      - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/studio/**'
   push:
     branches: ['rebuild/aksara-android-native-v1']
     paths:
@@ -64,7 +71,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gradle --no-daemon --init-script ci/compiler-repository.init.gradle -PenableSdTurboNative=true -Pandroid.injected.build.abi=arm64-v8a :app:assembleDebug :app:testDebugUnitTest
+          gradle --no-daemon --init-script ci/compiler-repository.init.gradle -PenableSdTurboNative=true :app:assembleDebug :app:testDebugUnitTest
       - name: Verify JNI symbols and produce binary evidence
         shell: bash
         run: |
@@ -76,6 +83,7 @@ jobs:
           unzip -p "$apk" 'lib/arm64-v8a/libaksara_sdturbo.so' > "$RUNNER_TEMP/libaksara_sdturbo.so"
           readelf -Ws "$RUNNER_TEMP/libaksara_sdturbo.so" | grep 'Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative'
           readelf -Ws "$RUNNER_TEMP/libaksara_sdturbo.so" | grep 'Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_cancelNative'
+          readelf -Ws "$RUNNER_TEMP/libaksara_sdturbo.so" | grep 'Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_probeNative'
           sha256sum "$apk" > android-native/native-evidence/apk.sha256
           printf 'Pin: stable-diffusion.cpp b7a74e68d7409924f57fb52d3d721772d1084853\nggml d25b121ce1d6ae0c7e62ad080460d9fc1e46dd93\nABI: arm64-v8a\nInference benchmark: NOT EXECUTED (requires compatible physical device + verified 1.85 GB model)\nOffline mode: NOT VERIFIED\n' > android-native/native-evidence/build-proof.txt
       - uses: actions/upload-artifact@v4
