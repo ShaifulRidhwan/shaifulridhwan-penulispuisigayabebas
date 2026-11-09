@@ -97,7 +97,9 @@ import my.aksara.engine.avatar.VoiceAvatarView
                 }
             }
             Box(Modifier.fillMaxWidth().weight(1f)){
-                AndroidView(factory={VoiceAvatarView(it)},modifier=Modifier.fillMaxSize())
+                // Portrait viewport crops the original T-pose arms, while keeping the real GLB.
+                AndroidView(factory={VoiceAvatarView(it)},
+                    modifier=Modifier.align(Alignment.Center).fillMaxWidth(.84f).fillMaxHeight())
                 Column(Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Transparent,Color(8,13,23,61),Color(7,13,24,179)))).padding(start=12.dp,end=12.dp,bottom=13.dp,top=26.dp),horizontalAlignment=Alignment.CenterHorizontally){
                     AksaraIcon("voice",Modifier.size(width=102.dp,height=15.dp),Color(230,197,139,150))
                     Spacer(Modifier.height(5.dp));AksaraText(if(preview)"Pratonton" else when(state.phase){"listening"->"Mendengar";"thinking"->"Memproses";"speaking"->"Menjawab";"connecting"->"Menyambung";"reconnecting"->"Menyambung semula";"paused"->"Audio dijeda";"error"->"Ralat Voice";else->"Sedia"},size=16f,line=20.8f,weight=600,tracking=.4f,family=AksaraTypography.heading)
@@ -159,35 +161,57 @@ import my.aksara.engine.avatar.VoiceAvatarView
                 }
             }
             Spacer(Modifier.height(10.dp))
-            AksaraGlassSurface(Modifier.padding(horizontal=side).fillMaxWidth().height(76.dp),radius=20.dp,blur=22.dp,brush=Brush.linearGradient(listOf(Color(250,228,196,15),Color(111,163,211,9),Color(15,25,39,18))),border=Color(245,217,176,65),saturation=1.15f){
-                Row(Modifier.align(Alignment.Center),horizontalArrangement=Arrangement.spacedBy(8.dp),
-                    verticalAlignment=Alignment.CenterVertically){
-                    AksaraButton("",onMic,Modifier.width(56.dp).semantics{contentDescription=if(state.mic)"Tutup mikrofon" else "Buka mikrofon"},icon="mic",height=56.dp,radius=999.dp,iconSize=24.dp)
-                    AksaraButton(if(state.pushToTalk)"PTT ON" else "PTT",
-                        {onPushToTalk(!state.pushToTalk)},Modifier.width(58.dp),
-                        height=45.dp,radius=14.dp,size=9f,enabled=!preview)
-                    AksaraGlassSurface(Modifier.size(56.dp).clickable(onClick=onClose).semantics{contentDescription="Tamatkan sesi"},radius=999.dp,brush=Brush.linearGradient(listOf(Color(189,75,84,214),Color(105,33,52,214))),border=Color(250,170,170,190)){AksaraIcon("end",Modifier.align(Alignment.Center).size(24.dp),Color(0xffffeadb))}
-                    AksaraButton("CC",{onCaptions(!captionsEnabled)},
-                        Modifier.width(40.dp),height=45.dp,radius=14.dp,size=10f)
-                    AksaraButton("",onSpeaker,Modifier.width(56.dp).semantics{contentDescription=if(state.speaker)"Senyapkan suara" else "Buka suara"},icon="speaker",height=56.dp,radius=999.dp,iconSize=24.dp)
+            // Three primary controls only. PTT and captions remain in Voice & Audio settings.
+            AksaraGlassSurface(Modifier.padding(horizontal=side).fillMaxWidth().height(76.dp),
+                radius=20.dp,blur=22.dp,brush=Brush.linearGradient(listOf(
+                    Color(250,228,196,15),Color(111,163,211,9),Color(15,25,39,18))),
+                border=Color(245,217,176,65),saturation=1.15f) {
+                Row(Modifier.align(Alignment.Center),horizontalArrangement=Arrangement.spacedBy(27.dp),
+                    verticalAlignment=Alignment.CenterVertically) {
+                    if(state.pushToTalk && !preview) {
+                        AksaraGlassSurface(Modifier.size(56.dp)
+                            .pointerInput(state.ready,state.mic,state.pushToTalk) {
+                                detectTapGestures(onTap={ if(!state.mic)onMic() },onPress={
+                                    if(state.ready && state.mic) {
+                                        onTalkHeld(true)
+                                        try { tryAwaitRelease() } finally { onTalkHeld(false) }
+                                    }
+                                })
+                            }
+                            .semantics {
+                                contentDescription=if(state.mic)"Tekan dan tahan untuk bercakap"
+                                    else "Aktifkan mikrofon untuk Push-to-Talk"
+                                testTag="voice-push-to-talk"
+                                onClick(label="Aktifkan mikrofon PTT") {
+                                    if(!state.mic)onMic()
+                                    true
+                                }
+                            },radius=999.dp,blur=12.dp,
+                            border=if(state.talkHeld)AksaraColors.gold else AksaraColors.border) {
+                            AksaraIcon("mic",Modifier.align(Alignment.Center).size(24.dp),
+                                if(state.talkHeld)AksaraColors.gold else AksaraColors.text)
+                        }
+                    } else AksaraButton("",onMic,Modifier.width(56.dp).semantics {
+                        contentDescription=if(state.mic)"Tutup mikrofon" else "Buka mikrofon"
+                    },icon="mic",height=56.dp,radius=999.dp,iconSize=24.dp)
+                    AksaraGlassSurface(Modifier.size(56.dp).clickable(onClick=onClose)
+                        .semantics{contentDescription="Tamatkan sesi"},
+                        radius=999.dp,brush=Brush.linearGradient(listOf(
+                            Color(189,75,84,214),Color(105,33,52,214))),
+                        border=Color(250,170,170,190)) {
+                        AksaraIcon("end",Modifier.align(Alignment.Center).size(24.dp),
+                            Color(0xffffeadb))
+                    }
+                    AksaraButton("",onSpeaker,Modifier.width(56.dp).semantics {
+                        contentDescription=if(state.speaker)"Senyapkan suara" else "Buka suara"
+                    },icon="speaker",height=56.dp,radius=999.dp,iconSize=24.dp)
                 }
             }
             if(state.pushToTalk) {
-                Spacer(Modifier.height(8.dp))
-                AksaraGlassSurface(Modifier.padding(horizontal=side).fillMaxWidth().height(43.dp)
-                    .pointerInput(state.pushToTalk,state.ready,state.mic) {
-                        detectTapGestures(onPress={
-                            if(state.ready && state.mic) {
-                                onTalkHeld(true)
-                                try { tryAwaitRelease() } finally { onTalkHeld(false) }
-                            }
-                        })
-                    }.semantics { contentDescription="Tekan dan tahan untuk bercakap"; testTag="voice-push-to-talk" },
-                    radius=16.dp,blur=12.dp) {
-                    AksaraText(if(!state.mic)"Mikrofon dimatikan" else
-                        if(state.talkHeld)"Mendengar suara kau…" else "Tekan dan tahan untuk bercakap",
-                        Modifier.align(Alignment.Center),size=12f,color=AksaraColors.gold)
-                }
+                AksaraText(if(state.talkHeld)"Mendengar suara kau…" else
+                    "PTT aktif · tahan ikon mikrofon untuk bercakap",
+                    Modifier.fillMaxWidth().padding(top=6.dp),size=10.5f,
+                    color=AksaraColors.muted)
             }
             Spacer(Modifier.height(9.dp))
         }

@@ -311,20 +311,20 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         AksaraGlassSurface(Modifier.height(31.dp), radius=13.dp) {
                             Row(Modifier.align(Alignment.Center).padding(horizontal=7.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(3.dp)) {
                                 AksaraText("AKSARA A.I", size=10f,line=12f,weight=650)
-                                AksaraText("oleh Shaiful Ridhwan",size=7f,line=8.4f,weight=450,color=Color(233,198,141,212))
+                                AksaraText("oleh Shaiful Ridhwan",size=8f,line=8.4f,weight=450,color=Color(233,198,141,212))
                             }
                         }
                         Spacer(Modifier.weight(1f))
                         Row(horizontalArrangement=Arrangement.spacedBy(6.dp),verticalAlignment=Alignment.CenterVertically) {
-                            AksaraButton("",{open("search-hub")},Modifier.width(39.dp)
+                            AksaraButton("",{open("search-hub")},Modifier.width(44.dp)
                                 .semantics {contentDescription="Carian, sesi dan memori"},
-                                icon="search",height=40.dp,radius=13.dp,iconSize=19.dp)
-                            AksaraButton("",{open("portal")},Modifier.width(39.dp)
+                                icon="search",height=44.dp,radius=13.dp,iconSize=19.dp)
+                            AksaraButton("",{open("portal")},Modifier.width(44.dp)
                                 .semantics {contentDescription="Ciri & Fungsi"},
-                                icon="grid",height=40.dp,radius=13.dp,iconSize=19.dp)
-                            AksaraButton("",{open("settings")},Modifier.width(39.dp)
+                                icon="grid",height=44.dp,radius=13.dp,iconSize=19.dp)
+                            AksaraButton("",{open("settings")},Modifier.width(44.dp)
                                 .semantics {contentDescription="Tetapan Aksara"},
-                                icon="settings",height=40.dp,radius=13.dp,iconSize=19.dp)
+                                icon="settings",height=44.dp,radius=13.dp,iconSize=19.dp)
                         }
                     }
                 }
@@ -352,7 +352,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                             verticalAlignment=Alignment.CenterVertically) {
                                             AksaraIcon("network",Modifier.size(15.dp),Color(0xffc1b393))
                                             AksaraText("Multi A.I",size=9.5f,line=12f,weight=600)
-                                            AksaraText(compactStatus,size=if(compactStatus.length>10)8.5f else 9.5f,line=12f,weight=600)
+                                            AksaraText(compactStatus,size=if(compactStatus.length>10)8.5f else 9.5f,line=12f,weight=600,
+                                                color=ProviderStatusPalette.color(connectionStatus))
                                         }
                                     }
                                 }
@@ -387,8 +388,14 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                             ({if(onRegenerate(message.id)){editingId=null;draft="";autoFollow=true};Unit}) else null)
                                 }
                             }
-                            if(state.messages.isEmpty()) Row(Modifier.fillMaxWidth().height(49.dp).padding(start=12.dp,end=12.dp,top=4.dp,bottom=8.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                                AksaraButton("Siapa Aku",{onJourney("Siapa Aku")},Modifier.width(91.969.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
+                            if(state.messages.isEmpty()) Row(
+                                Modifier.fillMaxWidth().height(60.dp).padding(horizontal=12.dp,vertical=4.dp),
+                                horizontalArrangement=Arrangement.spacedBy(9.dp),
+                                verticalAlignment=Alignment.CenterVertically) {
+                                AksaraButton("Siapa Aku",{onJourney("Siapa Aku")},
+                                    Modifier.width(103.dp),size=11.5f,height=44.dp,radius=999.dp,leadingText="↗")
+                                AksaraText("Tanya atau lampirkan fail",
+                                    Modifier.weight(1f),size=10.5f,color=AksaraColors.muted)
                             }
                             if(state.nextJourney!=null) AksaraButton(state.nextJourney,{onJourney(state.nextJourney)},Modifier.padding(horizontal=12.dp,vertical=4.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
                             if(state.error!=null) Row(Modifier.fillMaxWidth().clickable(onClick=onDismissError).padding(8.dp)) { AksaraText(state.error,size=11f,color=Color(0xffe7a08e)) }
@@ -436,13 +443,13 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             cursorBrush=SolidColor(AksaraColors.gold))
                         if(state.busy) AksaraButton("Henti",onStop,Modifier.width(56.dp)
                             .semantics {contentDescription="Hentikan respons"},size=12f,height=40.dp,radius=12.dp)
-                        AksaraButton("",{open("thinking")},Modifier.width(40.dp)
-                            .semantics {
+                        Box(Modifier.size(44.dp).clickable {open("thinking")}.semantics {
                                 contentDescription="Thinking Mode"
                                 stateDescription=if(state.mode=="gelap")"Gelap" else "Cahaya"
-                            },icon=if(state.mode=="gelap")"moon" else "sun",height=42.dp,
-                            radius=13.dp,iconSize=23.dp,
-                            contentColor=if(state.mode=="gelap")Color(0xffb6d3ff) else AksaraColors.gold)
+                            },contentAlignment=Alignment.Center) {
+                            // Neutral, borderless brain control; mode remains discoverable in its dialog.
+                            AksaraIcon("brain",Modifier.size(23.dp),AksaraColors.text)
+                        }
                         AksaraButton("",{
                             if(canSubmit) {
                                 val text=AttachmentSendPolicy.submissionText(draft,hasAttachments)

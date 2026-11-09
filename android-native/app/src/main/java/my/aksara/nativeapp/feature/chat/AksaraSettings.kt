@@ -74,7 +74,8 @@ internal fun AksaraSettings(
         Triple("Sistem & Diagnostik","Kesihatan penyedia, prestasi dan ralat",SettingsCategoryIcons.getValue("Sistem & Diagnostik"))
     )
 
-    AksaraGlassModal(onClose = onClose, preferredHeight = 585.dp) {
+    AksaraGlassModal(onClose = onClose,
+        preferredHeight = if(expanded.isBlank()) 585.dp else 665.dp) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
                     Column(Modifier.weight(1f)){
@@ -82,7 +83,7 @@ internal fun AksaraSettings(
                             family=AksaraTypography.heading)
                         AksaraText("Kawalan aplikasi dan diagnostik",size=10f,color=AksaraColors.muted)
                     }
-                    AksaraButton("×",onClose,Modifier.width(36.dp),height=37.dp,size=22f,radius=10.dp)
+                    AksaraButton("×",onClose,Modifier.width(44.dp),height=44.dp,size=20f,radius=13.dp)
                 }
                 Spacer(Modifier.height(10.dp))
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
@@ -347,11 +348,11 @@ private fun SettingsGroup(name:String,description:String,icon:String,open:Boolea
         Column(Modifier.fillMaxWidth().padding(11.dp)) {
             Row(Modifier.fillMaxWidth().clickable(onClick=toggle).padding(vertical=5.dp),
                 horizontalArrangement=Arrangement.spacedBy(9.dp),verticalAlignment=Alignment.CenterVertically) {
-                AksaraIcon(icon,Modifier.size(19.dp).semantics { contentDescription = "Ikon " + name },AksaraColors.gold)
+                AksaraIcon(icon,Modifier.size(20.dp).semantics { contentDescription = "Ikon " + name },AksaraColors.gold)
                 Column(Modifier.weight(1f)) {
                     AksaraText(name,size=13f,weight=650)
                     Spacer(Modifier.height(4.dp))
-                    AksaraText(description,size=10f,color=AksaraColors.muted)
+                    AksaraText(description,size=10.5f,color=AksaraColors.muted)
                 }
                 AksaraText(if(open)"⌃" else "⌄",size=19f,color=AksaraColors.gold)
             }

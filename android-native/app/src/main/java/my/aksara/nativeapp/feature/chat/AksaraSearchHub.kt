@@ -49,7 +49,14 @@ internal fun AksaraSearchHub(
                 .map { message -> session to message }
         }.take(100)
     }
-    AksaraGlassModal(onClose = onClose, preferredHeight = 580.dp) {
+    // Compact for empty states, expands only as results require more room.
+    val panelHeight = when (tab) {
+        0 -> if (terms.isBlank()) 280.dp else
+            (335 + messageResults.size.coerceAtMost(6) * 65).dp
+        1 -> (405 + sessions.size.coerceAtMost(5) * 47).dp
+        else -> if (state.memoryEnabled && state.memoryNotes.isNotBlank()) 400.dp else 270.dp
+    }
+    AksaraGlassModal(onClose = onClose, preferredHeight = panelHeight) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     AksaraIcon("search", Modifier.size(23.dp))
@@ -60,19 +67,19 @@ internal fun AksaraSearchHub(
                         AksaraText("Cari dalam perbualan setempat yang disulitkan",
                             size = 10f, color = AksaraColors.muted)
                     }
-                    AksaraButton("×", onClose, Modifier.width(36.dp), height = 37.dp, size = 22f, radius = 10.dp)
+                    AksaraButton("×", onClose, Modifier.width(44.dp), height = 44.dp, size = 20f, radius = 13.dp)
                 }
                 Spacer(Modifier.height(14.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     listOf("Cari Mesej", "Sesi & Sejarah", "Memori").forEachIndexed { index, label ->
                         AksaraButton(label, { tab = index; query = "" }, Modifier.weight(1f),
-                            height = 39.dp, size = if (index == 1) 9.4f else 10f,
+                            height = 44.dp, size = if (index == 1) 9.4f else 10f,
                             contentColor = if (tab == index) AksaraColors.gold else AksaraColors.text)
                     }
                 }
                 Spacer(Modifier.height(12.dp))
                 if (tab == 0 || tab == 1 || (tab == 2 && state.memoryEnabled)) {
-                    AksaraGlassSurface(Modifier.fillMaxWidth().height(43.dp), radius = 13.dp) {
+                    AksaraGlassSurface(Modifier.fillMaxWidth().height(48.dp), radius = 13.dp) {
                         BasicTextField(query, { query = it.take(120) },
                             Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 10.dp)
                                 .semantics { contentDescription = "Cari kandungan ${listOf("mesej", "sesi", "memori")[tab]}" },

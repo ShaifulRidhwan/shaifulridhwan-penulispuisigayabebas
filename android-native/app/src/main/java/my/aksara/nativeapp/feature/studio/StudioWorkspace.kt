@@ -152,9 +152,17 @@ fun StudioContent() {
     val historyStore=remember(context){StudioHistoryStore(context)}
     val models=remember(context){LocalModelManager(context)}
     val localRuntime=remember{LocalSDTurboEngine()}
+    val localRuntimeReady=remember(localRuntime){localRuntime.available()}
     var page by rememberSaveable{mutableStateOf(StudioPage.GENERATE.name)}
     var engineName by rememberSaveable{mutableStateOf(StudioEngine.CLOUD.name)}
-    val engine=StudioEngine.valueOf(engineName)
+    // Never show a saved unavailable Local selection as ready or route it to Cloud silently.
+    val engine=if(engineName==StudioEngine.LOCAL.name && !localRuntimeReady)
+        StudioEngine.CLOUD else StudioEngine.valueOf(engineName)
+    LaunchedEffect(localRuntimeReady) {
+        if(!localRuntimeReady && engineName==StudioEngine.LOCAL.name) {
+            engineName=StudioEngine.CLOUD.name
+        }
+    }
     var prompt by rememberSaveable{mutableStateOf("")}
     var model by rememberSaveable{mutableStateOf(prefs.getString("model","klein") ?: "klein")}
     var ratio by rememberSaveable{mutableStateOf(prefs.getString("ratio","1:1") ?: "1:1")}
@@ -285,7 +293,8 @@ fun StudioContent() {
         Column(Modifier.weight(1f)) {
             AksaraText("STUDIO ANTARA  V2",size=13f,weight=700,tracking=.5f,
                 family=AksaraTypography.heading)
-            AksaraText("Satu studio · dua enjin",size=10.5f,color=AksaraColors.muted)
+            AksaraText(if(localRuntimeReady)"Cloud & Local · runtime tersedia"
+                else "Cloud FLUX aktif · Local belum tersedia",size=10.5f,color=AksaraColors.muted)
         }
         AksaraText("NATIVE",size=10f,color=AksaraColors.gold)
     }
@@ -294,45 +303,31 @@ fun StudioContent() {
         listOf(StudioPage.GENERATE to "Jana Imej",StudioPage.GALLERY to "Galeri",
             StudioPage.HISTORY to "Sejarah",StudioPage.SETTINGS to "Tetapan").forEach { (id,title) ->
             AksaraButton((if(page==id.name)"• " else "")+title,{page=id.name},
-                Modifier.weight(1f),size=9.5f,height=37.dp,radius=12.dp,
+                Modifier.weight(1f),size=9.5f,height=44.dp,radius=12.dp,
                 contentColor=if(page==id.name)AksaraColors.gold else AksaraColors.text)
         }
     }
     Spacer(Modifier.height(14.dp))
 
     if(page==StudioPage.GENERATE.name) {
-        StudioSectionHeader("Enjin Penjanaan","Cloud untuk jana online · Local untuk jana pada peranti")
+        StudioSectionHeader("Enjin Penjanaan",
+            "Cloud FLUX tersedia · Local hanya jika runtime dipasang")
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-            AksaraButton((if(engine==StudioEngine.CLOUD)"✓ " else "")+"Cloud Engine",
-                {engineName=StudioEngine.CLOUD.name},Modifier.weight(1f),size=11f,
+            AksaraButton((if(engine==StudioEngine.CLOUD)"✓ " else "")+"Cloud FLUX",
+                {engineName=StudioEngine.CLOUD.name},Modifier.weight(1f),size=11f,height=44.dp,
                 contentColor=if(engine==StudioEngine.CLOUD)AksaraColors.gold else AksaraColors.text)
-            AksaraButton((if(engine==StudioEngine.LOCAL)"✓ " else "")+"Local · SD-Turbo",
-                {engineName=StudioEngine.LOCAL.name},Modifier.weight(1f),size=10.5f,
+            AksaraButton(if(localRuntimeReady)"Local · SD-Turbo" else "Local · Tiada runtime",
+                {engineName=StudioEngine.LOCAL.name},Modifier.weight(1f),
+                size=if(localRuntimeReady)10f else 9.5f,height=44.dp,
+                enabled=localRuntimeReady,
                 contentColor=if(engine==StudioEngine.LOCAL)AksaraColors.gold else AksaraColors.text)
         }
+        if(!localRuntimeReady) {
+            Spacer(Modifier.height(6.dp))
+            AksaraText("Local belum tersedia dalam APK ini. Cloud FLUX boleh digunakan.",
+                size=10.5f,line=15f,color=AksaraColors.muted)
+        }
         Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-            AksaraButton(if(showTemplates)"Sembunyi Template" else "Template Imej",
-                {showTemplates=!showTemplates},Modifier.weight(1f),size=11f,height=39.dp)
-            AksaraButton("Idea Prompt",{showIdeas=true},Modifier.weight(1f),size=11f,height=39.dp)
-        }
-        if(showTemplates) {
-            Spacer(Modifier.height(12.dp))
-            StudioTemplateGallery { selected ->
-                prompt=selected.prompt
-                style=selected.style
-                if(engine==StudioEngine.CLOUD) {
-                    model="klein"
-                    ratio=selected.ratio
-                    prefs.edit().putString("model","klein").putString("ratio",selected.ratio).apply()
-                } else {
-                    ratio="1:1"
-                }
-                message="Template "+selected.title+" dipilih. Ubah prompt sebelum menjana."
-                showTemplates=false
-            }
-            Spacer(Modifier.height(10.dp))
-        }
         if(engine==StudioEngine.LOCAL) {
             StudioSectionHeader("SD-Turbo · Local Engine",
                 if(!localRuntime.available())"Runtime Local tidak dipakejkan dalam APK ini" else if(models.modelPath()!=null)"Model dipasang · ujian inferens diperlukan" else "SD-Turbo belum dipasang")
@@ -388,10 +383,35 @@ fun StudioContent() {
         }
         StudioSectionHeader("Prompt","Terangkan imej yang kau mahu. Draf tidak terpadam apabila bertukar enjin.")
         StudioInput(prompt,{if(it.length<=StudioRules.MAX_PROMPT)prompt=it},
-            "Apa yang kau nak lihat?",124.dp)
+            "Apa yang kau nak lihat?",110.dp)
         Spacer(Modifier.height(5.dp))
         AksaraText(prompt.length.toString()+" / 1200",Modifier.fillMaxWidth(),size=10f,
             color=AksaraColors.muted)
+        Spacer(Modifier.height(12.dp))
+        StudioSectionHeader("Template & Inspirasi","Pilihan tambahan, tidak wajib untuk menjana.")
+        Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+            AksaraButton(if(showTemplates)"Sembunyi Template" else "Template Imej",
+                {showTemplates=!showTemplates},Modifier.weight(1f),size=11f,height=39.dp)
+            AksaraButton("Idea Prompt",{showIdeas=true},Modifier.weight(1f),size=11f,height=39.dp)
+        }
+        if(showTemplates) {
+            Spacer(Modifier.height(12.dp))
+            StudioTemplateGallery { selected ->
+                prompt=selected.prompt
+                style=selected.style
+                if(engine==StudioEngine.CLOUD) {
+                    model="klein"
+                    ratio=selected.ratio
+                    prefs.edit().putString("model","klein").putString("ratio",selected.ratio).apply()
+                } else {
+                    ratio="1:1"
+                }
+                message="Template "+selected.title+" dipilih. Ubah prompt sebelum menjana."
+                showTemplates=false
+            }
+            Spacer(Modifier.height(10.dp))
+        }
+
         Spacer(Modifier.height(7.dp))
         Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
             AksaraButton(if(engine==StudioEngine.LOCAL)"Perkemas Offline" else "Perkemas A.I.",{
@@ -507,7 +527,8 @@ fun StudioContent() {
                     Row(horizontalArrangement=Arrangement.spacedBy(5.dp)) {
                         AksaraButton("Buka",{openRecord(record)},Modifier.weight(1f),size=10f,height=33.dp)
                         AksaraButton("Guna prompt",{
-                            prompt=record.prompt;engineName=record.engine
+                            prompt=record.prompt;engineName=if(record.engine==StudioEngine.LOCAL.name && !localRuntimeReady)
+                                StudioEngine.CLOUD.name else record.engine
                             if(record.model in StudioRules.cloudModels)model=record.model
                             seedDraft=record.seed?.toString().orEmpty();style=record.style;ratio=record.ratio;quality=record.quality;page=StudioPage.GENERATE.name
                         },Modifier.weight(1f),size=9f,height=33.dp)
@@ -580,9 +601,10 @@ fun StudioContent() {
         AksaraText("Backend Cloud: Netlify Production. Local: tanpa remote inference.",
             size=10.5f,color=AksaraColors.muted)
         Spacer(Modifier.height(12.dp))
-        AksaraButton("Semak status Model Local",{engineName=StudioEngine.LOCAL.name;
-            page=StudioPage.GENERATE.name;requirementsVisible=true},
-            Modifier.fillMaxWidth(),height=40.dp)
+        AksaraButton(if(localRuntimeReady)"Semak status Model Local" else "Local SD-Turbo · belum tersedia",
+            {engineName=StudioEngine.LOCAL.name;
+             page=StudioPage.GENERATE.name;requirementsVisible=true},
+            Modifier.fillMaxWidth(),height=42.dp,enabled=localRuntimeReady)
         Spacer(Modifier.height(8.dp))
         AksaraButton("Kosongkan sejarah Studio",{confirmClear=true},Modifier.fillMaxWidth(),height=40.dp,
             enabled=records.isNotEmpty())

@@ -73,10 +73,10 @@ import my.aksara.nativeapp.feature.tools.*
             maxOf(73.dp,(24f+18.2f+4f+15.75f*lines).dp)
         }
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(AksaraModalStyle.scrim).clickable(onClick=onClose))
-        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(340.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
+        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(320.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
-        AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).testTag("aksara-glass-modal").clickable(enabled=false){},
+        AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).widthIn(max=680.dp).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).testTag("aksara-glass-modal").clickable(enabled=false){},
             radius=if(kind=="voice-permission")24.dp else AksaraModalStyle.radius,blur=if(kind=="voice-permission")27.dp else AksaraModalStyle.blur,
             brush=if(kind=="voice-permission")Brush.linearGradient(listOf(Color(29,39,53,97),Color(10,17,30,77),Color(25,38,54,102))) else DialogGradient,border=AksaraModalStyle.border) {
             Column(Modifier.fillMaxSize().padding(if(kind=="voice-permission")18.dp else if(kind=="terminal")15.dp else 16.dp).then(if(kind=="code")Modifier else Modifier.verticalScroll(scroll))) {
@@ -150,13 +150,13 @@ import my.aksara.nativeapp.feature.tools.*
                         "connection" -> {
                             val backendUnreachable=state.providers.any{it.first=="backend" && it.second=="Backend unreachable"}
                             Spacer(Modifier.height(10.dp));AksaraText(ProviderConnectionStatus.label(state.providers)+" · "+
-                                state.providers.count{it.second=="online"}+" online · "+state.providers.count{it.second=="ready"}+" ready",
+                                ProviderStatusPalette.summary(state.providers),
                                 size=9.5f,line=13.3f,color=AksaraColors.muted)
                             Spacer(Modifier.height(10.dp))
                             val providers=listOf("gemini" to "Google Gemini","groq" to "Groq","workers_ai" to "Cloudflare Workers AI","openrouter" to "OpenRouter")
                             providers.forEach { (id,name) ->
                                 var expanded by remember {mutableStateOf(false)}
-                                MenuRow(name,state.providers.find{it.first==id}?.second?:(if(backendUnreachable)"Backend unreachable" else "Unverified"),height=43.dp) {expanded=!expanded}
+                                MenuRow(name,state.providers.find{it.first==id}?.second?:(if(backendUnreachable)"Backend unreachable" else "Unverified"),height=48.dp) {expanded=!expanded}
                                 if(expanded) AksaraText(state.providerDetails[id]?.takeIf{it.isNotBlank()} ?: "Ready belum membuktikan inferens berjaya. Refresh untuk status terkini.",Modifier.padding(8.dp),size=10f,color=AksaraColors.muted)
                                 Spacer(Modifier.height(8.dp))
                             }
@@ -211,7 +211,7 @@ import my.aksara.nativeapp.feature.tools.*
                         }
                         "attachments" -> {
                             Spacer(Modifier.height(16.dp))
-                            listOf("Foto" to "JPG, PNG, WebP","Video" to "MP4, WebM","Dokumen" to "PDF, DOCX, TXT, MD, CSV, JSON","Audio" to "MP3, M4A, WAV, OGG, WebM").forEach { (name,desc) -> FeatureRow(name,desc,"attach"){onPickAttachment(name);onClose()};Spacer(Modifier.height(8.dp)) }
+                            listOf(Triple("Foto","JPG, PNG, WebP","image"),Triple("Video","MP4, WebM","video"),Triple("Dokumen","PDF, DOCX, TXT, MD, CSV, JSON","file-text"),Triple("Audio","MP3, M4A, WAV, OGG, WebM","audio")).forEach { (name,desc,icon) -> FeatureRow(name,desc,icon){onPickAttachment(name);onClose()};Spacer(Modifier.height(8.dp)) }
                         }
                         "privacy" -> {
                             var draft by remember(state.memoryNotes) { mutableStateOf(state.memoryNotes) }
@@ -298,7 +298,13 @@ import my.aksara.nativeapp.feature.tools.*
 }
 @Composable private fun MenuRow(name:String,status:String,height:Dp=49.dp,onClick:()->Unit) {
     AksaraGlassSurface(Modifier.fillMaxWidth().height(height).clickable(onClick=onClick),radius=13.dp) {
-        Row(Modifier.fillMaxSize().padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically) {AksaraText(name,Modifier.weight(1f),size=12f,weight=600);AksaraText(status,size=10f,line=14f,color=AksaraColors.muted)}
+        Row(Modifier.fillMaxSize().padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically) {
+            AksaraText(name,Modifier.weight(1f),size=12f,weight=600)
+            val tone=ProviderStatusPalette.color(status)
+            Box(Modifier.size(8.dp).clip(RoundedCornerShape(999.dp)).background(tone))
+            Spacer(Modifier.width(7.dp))
+            AksaraText(status,size=10.5f,line=14f,color=tone,weight=600)
+        }
     }
 }
 @Composable private fun FeatureRow(name:String,desc:String,icon:String,height:Dp=62.dp,onClick:()->Unit) {
