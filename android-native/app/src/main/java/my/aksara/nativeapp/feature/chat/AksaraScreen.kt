@@ -111,15 +111,16 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         val name = textDocs.joinToString(", ") { it.name }.take(100)
         val media = JSONArray().apply { attachments.mapNotNull { it.media }.forEach { put(it) } }
         val uploadedFiles = JSONArray().apply { attachments.mapNotNull { it.receipt }.forEach { put(it) } }
-        if (vm.send(q, text, name, media, uploadedFiles)) {
+        val accepted=vm.send(q, text, name, media, uploadedFiles,attachments.map { it.name })
+        if (accepted) {
             // The ViewModel has accepted the pending turn and will persist it before inference.
             // Do not carry sent media into the next message or discard it on a rejected turn.
             attachments = emptyList()
             attachmentError = null
         } else {
-            attachmentError = "Mesej belum dihantar. Cuba lagi selepas sambungan sedia."
+            attachmentError = vm.state.value.error ?: "Mesej belum dihantar. Cuba lagi selepas sambungan sedia."
         }
-        Unit
+        accepted
     }, onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
         onMemory = vm::setMemory, onVoiceTurns = vm::acceptVoiceTurns, onClearAttachment = {
             val selected=attachments
@@ -137,8 +138,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         onDismissError = { attachmentError = null; vm.dismissError() })
 }
 
-@Composable fun AksaraScreen(state: ChatState, onSend: (String)->Unit = {}, onStop: ()->Unit = {}, onRefresh: ()->Unit = {},
-    onJourney: (String)->Unit = onSend, onMode: (String)->Unit = {}, onRestore: ()->Unit = {}, onRestoreSession: (String)->Unit = {}, onClear: ()->Unit = {}, attachmentName: String? = null,
+@Composable fun AksaraScreen(state: ChatState, onSend: (String)->Boolean = {true}, onStop: ()->Unit = {}, onRefresh: ()->Unit = {},
+    onJourney: (String)->Unit = { onSend(it); Unit }, onMode: (String)->Unit = {}, onRestore: ()->Unit = {}, onRestoreSession: (String)->Unit = {}, onClear: ()->Unit = {}, attachmentName: String? = null,
     onPickAttachment: (String)->Unit = {}, onDismissError: ()->Unit = {}, onMemory: (Boolean,String)->Unit = {_,_->}, onClearAttachment: ()->Unit = {}, initialOverlay: String? = null,
     attachmentLoading: Boolean = false,
     uploadStatus: String? = null, onCancelUpload: ()->Unit = {},
@@ -282,7 +283,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                         },
                                         onReuse={draft=it;autoFollow=true},
                                         onRetry=if(message.role=="assistant" && message.id==state.messages.lastOrNull()?.id && !state.busy)
-                                            ({state.messages.lastOrNull{it.role=="user"}?.text?.let(onSend)}) else null)
+                                            ({state.messages.lastOrNull{it.role=="user"}?.text?.substringBefore("\n\n[Lampiran: ")?.let { onSend(it) };Unit}) else null)
                                 }
                             }
                             if(state.messages.isEmpty()) Row(Modifier.fillMaxWidth().height(49.dp).padding(start=12.dp,end=12.dp,top=4.dp,bottom=8.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
@@ -334,8 +335,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         AksaraButton("",{
                             if(canSubmit) {
                                 val text=AttachmentSendPolicy.submissionText(draft,hasAttachments)
-                                onSend(text)
-                                draft=""
+                                if(onSend(text)) draft=""
                             }
                         },Modifier.width(42.dp).semantics {contentDescription="Hantar soalan"},
                             icon="send",height=42.dp,radius=13.dp,enabled=canSubmit)
@@ -344,7 +344,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
             }
             if(overlay!=null) CompositionLocalProvider(LocalBackdrop provides scene) {
-                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question)},onVoiceTurns=onVoiceTurns)
+                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question);Unit},onVoiceTurns=onVoiceTurns)
             }
         }
     }

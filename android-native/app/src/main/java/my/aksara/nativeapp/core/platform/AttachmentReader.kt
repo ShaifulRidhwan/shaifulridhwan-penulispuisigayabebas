@@ -46,8 +46,7 @@ object AttachmentReader {
         }.getOrDefault(-1L)
         val extension=name.substringAfterLast(".","").lowercase(Locale.ROOT)
         val reported=resolver.getType(uri).orEmpty().lowercase(Locale.ROOT)
-        val mime=if(reported.isBlank()||reported=="application/octet-stream")
-            extensionMime(extension)?:reported else reported
+        val mime=normalizedMime(extension,reported)
         return UploadCandidate(name,mime,size)
     }
 
@@ -81,6 +80,18 @@ object AttachmentReader {
         "pdf" -> "application/pdf"
         else -> null
     }
+    private fun normalizedMime(extension:String,reported:String):String {
+        val alias=when(reported) {
+            "audio/x-wav","audio/wave","audio/vnd.wave"->"audio/wav"
+            "application/ogg"->"audio/ogg"
+            "audio/x-m4a"->"audio/mp4"
+            "application/x-pdf"->"application/pdf"
+            "image/jpg"->"image/jpeg"
+            else->reported
+        }
+        val known=extensionMime(extension)
+        return if(alias.isBlank()||alias=="application/octet-stream"||alias=="binary/octet-stream") known?:alias else alias
+    }
     private val textExtensions=setOf("txt","md","markdown","csv","json","js","mjs",
         "ts","tsx","jsx","html","htm","css","py","sql","c","cc","cpp","h","hpp","kt","xml","yaml","yml")
     suspend fun read(context:Context,uri:Uri):Attachment=withContext(Dispatchers.IO){
@@ -89,8 +100,7 @@ object AttachmentReader {
             ?.use { cursor -> if(cursor.moveToFirst())cursor.getString(0) else null }?:"lampiran"
         val reportedMime=resolver.getType(uri).orEmpty().lowercase(Locale.ROOT)
         val extension=name.substringAfterLast('.', "").lowercase(Locale.ROOT)
-        val mime=if(reportedMime.isBlank() || reportedMime=="application/octet-stream")
-            extensionMime(extension) ?: reportedMime else reportedMime
+        val mime=normalizedMime(extension,reportedMime)
         val docx=extension=="docx"||mime=="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         val image=mime in supportedImages
         val media=mime in inlineMedia || image

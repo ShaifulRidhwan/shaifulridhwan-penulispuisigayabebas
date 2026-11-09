@@ -36,6 +36,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     val state = mutable.asStateFlow()
     private var requestJob: Job? = null
     private var storageReadable = true
+    private var activeAttachment: ActiveAttachment? = null
     init {
         viewModelScope.launch {
             try {
@@ -94,14 +95,19 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
     fun dismissError() { mutable.update { it.copy(error = null) } }
-    fun restore() { if (!state.value.busy) mutable.update { it.copy(messages = it.archive, resumedFromHistory = false) } }
+    fun restore() { if (!state.value.busy) {
+        activeAttachment=null
+        mutable.update { it.copy(messages = it.archive, resumedFromHistory = false) }
+    } }
     fun restoreSession(startId: String) {
         if (state.value.busy) return
+        activeAttachment=null
         val selected = groupSessions(state.value.archive, state.value.sessionStarts)
             .firstOrNull { it.startId == startId } ?: return
         mutable.update { it.copy(messages = selected.messages, nextJourney = null, error = null, resumedFromHistory = true) }
     }
     fun clearScreen() { if (!state.value.busy) {
+        activeAttachment=null
         savedContext = savedContext.copy(sessionFirstId = "", summary = "", summarizedThrough = 0, thoughtLedger = emptyList())
         mutable.update { it.copy(messages = emptyList(), summaryStatus = "not_requested", resumedFromHistory = false) }
         viewModelScope.launch { runCatching { persistContext() } }
@@ -149,11 +155,36 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
     fun send(question: String, documentText: String = "", documentName: String = "", media: JSONArray? = null,
-             uploadedFiles: JSONArray? = null): Boolean {
+             uploadedFiles: JSONArray? = null, attachmentNames: List<String> = emptyList()): Boolean {
         if (question.isBlank() || state.value.busy || !state.value.loaded) return false
         val previous = state.value.messages
-        val user = Message(UUID.randomUUID().toString(), "user", question)
+        val newAttachment = attachmentNames.isNotEmpty() ||
+            documentText.isNotBlank() || (media?.length() ?: 0)>0 || (uploadedFiles?.length() ?: 0)>0
+        val now = System.currentTimeMillis()
+        val historicalNames = previous.asReversed().firstOrNull { it.role=="user" && it.text.contains("[Lampiran: ") }
+            ?.text?.substringAfter("[Lampiran: ")?.substringBefore("]")?.split(", ") ?: emptyList()
+        val available = activeAttachment
+        val usesOld = !newAttachment &&
+            (available?.let { AttachmentContinuity.references(question,it.names) } == true ||
+                (available==null && historicalNames.isNotEmpty() &&
+                    AttachmentContinuity.references(question,historicalNames)))
+        if (usesOld && available==null) {
+            mutable.update { it.copy(error="Rujukan lampiran terdahulu tidak lagi tersedia selepas sesi dimuat semula. Muat naik fail asal sekali lagi supaya AI dapat membacanya.") }
+            return false
+        }
+        if (usesOld && available!=null && !AttachmentContinuity.receiptValid(available,now)) {
+            activeAttachment=null
+            mutable.update { it.copy(error="Resit Gemini Files sudah menghampiri tamat tempoh. Muat naik semula fail sebelum meneruskan analisis.") }
+            return false
+        }
+        val effective = if(newAttachment) ActiveAttachment(
+            names=attachmentNames,documentText=documentText,documentName=documentName,
+            mediaJson=(media?:JSONArray()).toString(),receiptsJson=(uploadedFiles?:JSONArray()).toString(),
+            sinceMs=now) else if(usesOld) available else null
+        val note = if(newAttachment) "\n\n[Lampiran: "+AttachmentContinuity.manifest(attachmentNames)+"]" else ""
+        val user = Message(UUID.randomUUID().toString(), "user", question+note)
         val assistant = Message(UUID.randomUUID().toString(), "assistant", "", incomplete = true)
+        if (newAttachment) activeAttachment=effective
         mutable.update { it.copy(messages = previous + user + assistant,
             sessionStarts = if (previous.isEmpty() || it.resumedFromHistory) (it.sessionStarts + user.id).distinct() else it.sessionStarts,
             resumedFromHistory = false, busy = true, error = null, nextJourney = null) }
@@ -210,10 +241,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     .put("memoryNotes", notes).put("thoughtLedger", JSONArray().apply {
                         savedContext.thoughtLedger.takeLast(8).forEach { put(JSONObject().put("idea",it.idea).put("status",it.status)) }
                     })
-                    .put("documentText", documentText).put("documentName", documentName)
-                    .put("media", if (media != null && media.length() > 0) media else JSONObject.NULL)
-                    .put("fileUploads", if (uploadedFiles != null && uploadedFiles.length()>0)
-                        uploadedFiles else JSONObject.NULL)
+                    .put("documentText", effective?.documentText ?: documentText)
+                    .put("documentName", effective?.documentName ?: documentName)
+                    .put("media", effective?.let { JSONArray(it.mediaJson).takeIf { arr -> arr.length()>0 } } ?: JSONObject.NULL)
+                    .put("fileUploads", effective?.let { JSONArray(it.receiptsJson).takeIf { arr -> arr.length()>0 } } ?: JSONObject.NULL)
                 require(payload.toString().toByteArray(Charsets.UTF_8).size <= 5_350_000) {
                     "Jumlah mesej, sejarah dan lampiran melebihi had API 5.35 MB."
                 }

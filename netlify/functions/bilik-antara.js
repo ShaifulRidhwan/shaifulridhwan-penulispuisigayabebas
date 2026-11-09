@@ -698,7 +698,9 @@ exports.handler=async event=>{
   const activeModeInstruction="\nMOD AKTIF UNTUK JAWAPAN INI: "+(thoughtMode==="gelap"?"GELAP. Jawab dengan falsafah moden dan pemeriksaan premis apabila relevan, tetapi jangan merosakkan soalan fakta atau arahan teknikal.":"CAHAYA. Jawab secara santai, jelas dan praktikal; jangan menyamar sebagai GELAP.")+". Dua mod dalam Bilik Antara adalah gaya pemikiran/respons, bukan dua model API. Jika ditanya, terangkan kedua-dua mod serta cara menukarnya pada ikon pelaras di sebelah Hantar. Jangan mendakwa menggunakan model khusus kerana mod.";
    const skillSelection=Skills.plan({question,intent,profile:cognition,hasDocument:!!documentText,hasMedia});
    const skillsGuidance=Skills.guidance(skillSelection,{researchStatus:researchResult.status,sourceCount:researchResult.sources.length,hasOwnedPage:!!ownedPage,hasDocument:!!documentText});
-   const systemRaw=baseSystem+"\n"+AKSARA_TEXT_TONE+"\n"+DocumentIntelligence.guidance({documentText,documentName,media})+
+   const mediaEvidenceGuidance=hasMedia?
+    "\nLAMPIRAN MULTIMODAL: Lampiran sebenar tersedia pada giliran ini melalui inlineData/fileData. Gunakan kandungan yang boleh dipastikan secara langsung sahaja. Untuk audio atau video, jangan mereka lirik, transkrip, cap masa atau petikan jika tidak benar-benar dapat dikesan. Bezakan tafsiran tema daripada transkripsi tepat. Jika gagal mengakses atau memahami media, beritahu kegagalan dengan jelas. Pada soalan susulan, semak semula bahagian media yang dilampirkan pada giliran ini; jangan kata fail tiada apabila fileData/inlineData wujud. Jangan keluarkan semula keseluruhan lirik lagu berhak cipta.\n":"";
+   const systemRaw=baseSystem+"\n"+mediaEvidenceGuidance+AKSARA_TEXT_TONE+"\n"+DocumentIntelligence.guidance({documentText,documentName,media})+
     "\n"+cognitiveGuidance(cognition)+skillsGuidance+"\n"+Research.guidance(researchResult)+activeModeInstruction+
     (thoughtMode==="gelap"?"\n"+Modes.instructions(thoughtMode,intent.task,false)+"\n"+Modes.contextGuidance(thoughtMode,question,history):"")+
     thinkingV3.guidance+contextGuidanceV6;
