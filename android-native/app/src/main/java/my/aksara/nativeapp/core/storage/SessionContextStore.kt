@@ -44,7 +44,7 @@ class SessionContextStore(context:Context) {
         SavedConversationContext(
             sessionFirstId=obj.optString("sessionFirstId").take(120),
             summary=obj.optString("summary").take(4000),
-            summarizedThrough=obj.optInt("summarizedThrough",0).coerceIn(0,200),
+            summarizedThrough=obj.optInt("summarizedThrough",0).coerceAtLeast(0),
             memoryEnabled=obj.optBoolean("memoryEnabled",false),
             memoryNotes=obj.optString("memoryNotes").take(8000)
         )
@@ -52,7 +52,7 @@ class SessionContextStore(context:Context) {
     suspend fun save(data:SavedConversationContext)=withContext(Dispatchers.IO) {
         val obj=JSONObject().put("sessionFirstId",data.sessionFirstId.take(120))
             .put("summary",data.summary.take(4000))
-            .put("summarizedThrough",data.summarizedThrough.coerceIn(0,200))
+            .put("summarizedThrough",data.summarizedThrough.coerceAtLeast(0))
             .put("memoryEnabled",data.memoryEnabled)
             .put("memoryNotes",data.memoryNotes.take(8000))
         val cipher=Cipher.getInstance("AES/GCM/NoPadding").apply { init(Cipher.ENCRYPT_MODE,key()) }

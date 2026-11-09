@@ -22,4 +22,10 @@ class VoiceRecoveryPolicyTest {
         assertFalse(VoiceRecoveryPolicy.suspectSpanish("Apa khabar, aku sedang menjawab soalan kau."))
         assertFalse(VoiceRecoveryPolicy.suspectSpanish("gracias"))
     }
+    @Test fun detectsLanguageDriftAcrossTranscriptFragments() {
+        val first = VoiceContextSync.mergeTranscript("", "gracias")
+        assertFalse(VoiceRecoveryPolicy.suspectSpanish(first))
+        val completed = VoiceContextSync.mergeTranscript(first, "estoy hablando contigo")
+        assertTrue(VoiceRecoveryPolicy.suspectSpanish(completed))
+    }
 }

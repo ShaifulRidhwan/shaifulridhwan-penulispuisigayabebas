@@ -14,6 +14,16 @@ import java.util.UUID
 
 class NativeSessionPersistenceTest {
     private val context=InstrumentationRegistry.getInstrumentation().targetContext
+    @Test fun longArchiveAndFullMessageSurviveEncryptedReopen()=runBlocking {
+        val store=SessionStore(context)
+        val original=store.load()
+        try {
+            val messages=(0 until 250).map { Message("long-$it", "user", "message $it", at=it.toLong()) }
+            val longMessage=Message("long-body", "assistant", "x".repeat(45_000))
+            store.save(messages + longMessage)
+            assertEquals(messages + longMessage, SessionStore(context).load())
+        } finally { store.save(original) }
+    }
     @Test fun interruptedChatSurvivesFreshEncryptedStoreInstance()=runBlocking {
         val store=SessionStore(context)
         val original=store.load()

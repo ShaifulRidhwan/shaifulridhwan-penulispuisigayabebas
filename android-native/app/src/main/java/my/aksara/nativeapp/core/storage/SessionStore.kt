@@ -35,7 +35,7 @@ class SessionStore(context: Context) {
         (0 until rows.length()).map { rows.getJSONObject(it) }.map { Message(it.getString("id"), it.getString("role"), it.getString("text"), it.getLong("at"), it.optBoolean("incomplete"), it.optString("provider").takeIf { id -> !it.isNull("provider") && id.isNotBlank() && id != "null" }) }
     }
     suspend fun save(messages: List<Message>) = withContext(Dispatchers.IO) {
-        val data = JSONArray().apply { messages.takeLast(200).forEach { put(JSONObject().put("id", it.id).put("role", it.role).put("text", it.text.take(40000)).put("at", it.at).put("incomplete", it.incomplete).put("provider", it.provider ?: JSONObject.NULL)) } }
+        val data = JSONArray().apply { messages.forEach { put(JSONObject().put("id", it.id).put("role", it.role).put("text", it.text).put("at", it.at).put("incomplete", it.incomplete).put("provider", it.provider ?: JSONObject.NULL)) } }
         val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply { init(Cipher.ENCRYPT_MODE, key()) }
         val encrypted = byteArrayOf(1) + cipher.iv + cipher.doFinal(data.toString().toByteArray())
         val stream = file.startWrite()

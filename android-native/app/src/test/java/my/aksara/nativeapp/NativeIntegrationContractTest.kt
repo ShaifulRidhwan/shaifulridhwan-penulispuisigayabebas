@@ -41,4 +41,13 @@ class NativeIntegrationContractTest {
         assertEquals("hello world",saved.single().text)
         assertFalse(saved.single().incomplete)
     }
+    @Test fun archiveRetainsOlderMessagesBeyondTwoHundred() {
+        val original = (0 until 250).map { Message("id-$it", "user", "message $it", at = it.toLong()) }
+        val updated = original.last().copy(text = "updated")
+        val saved = mergeSessionArchive(original, listOf(updated, Message("next", "user", "next")))
+        assertEquals(251, saved.size)
+        assertEquals("id-0", saved.first().id)
+        assertEquals("updated", saved[249].text)
+        assertEquals("next", saved.last().id)
+    }
 }

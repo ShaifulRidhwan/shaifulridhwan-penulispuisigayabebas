@@ -105,16 +105,16 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 // Persist the user's prompt before any summarization or inference.
                 // Cancellation, process death or upstream failure must not erase this turn.
-                if (storageReadable) {
-                    try {
-                        withContext(NonCancellable) {
-                            val pending = mergeSessionArchive(state.value.archive, state.value.messages)
-                            store.save(pending)
-                            mutable.update { it.copy(archive = pending) }
-                        }
-                    } catch (_: Exception) {
-                        mutable.update { it.copy(error = "Mesej masih di skrin, tetapi simpanan awal gagal.") }
+                if (!storageReadable) throw java.io.IOException("Sesi asal tidak dapat dibaca. Mesej kekal di skrin; permintaan belum dihantar.")
+                try {
+                    withContext(NonCancellable) {
+                        val pending = mergeSessionArchive(state.value.archive, state.value.messages)
+                        store.save(pending)
+                        mutable.update { it.copy(archive = pending) }
                     }
+                } catch (e: CancellationException) { throw e }
+                catch (e: Exception) {
+                    throw java.io.IOException("Simpanan awal gagal. Mesej kekal di skrin; permintaan belum dihantar.", e)
                 }
                 val firstId = previous.firstOrNull()?.id ?: user.id
                 if (savedContext.sessionFirstId != firstId) {
@@ -186,7 +186,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         mutable.update { it.copy(archive = combined) }
                         persistContext()
                     } catch (_: Exception) {
-                        mutable.update { it.copy(error = "Jawapan ada di skrin tetapi sesi belum berjaya disimpan.") }
+                        mutable.update { current -> current.copy(error = current.error
+                            ?: "Sesi belum berjaya disimpan. Mesej kekal di skrin.") }
                     }
                 }
             }

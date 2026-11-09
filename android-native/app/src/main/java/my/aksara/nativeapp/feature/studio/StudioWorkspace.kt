@@ -185,7 +185,10 @@ fun StudioContent() {
         try { records=historyStore.list() }
         catch(e:Exception) { message="Sejarah gagal dibaca: "+(e.message ?: "ralat storan") }
     }
-    DisposableEffect(Unit){onDispose{job?.cancel();downloadJob?.cancel();enhancementJob?.cancel()}}
+    DisposableEffect(Unit){onDispose{
+        if (runningEngine == StudioEngine.LOCAL) localRuntime.cancel()
+        job?.cancel();downloadJob?.cancel();enhancementJob?.cancel()
+    }}
 
     fun generate(variation:Boolean=false,replay:StudioPreview?=null) {
         if(job?.isActive==true) return
