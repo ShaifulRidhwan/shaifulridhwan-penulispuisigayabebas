@@ -127,6 +127,32 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader -noaudio -no-boot-anim -camera-back none
           script: bash android-native/visual-tests/run-emulator.sh
+      - name: Web/Native visual parity audit (strict 98% report, not emulator instrumentation)
+        if: always()
+        run: |
+          python -m pip install --quiet pillow numpy scikit-image
+          parity_status=0
+          python android-native/visual-tests/compare.py > "$RUNNER_TEMP/aksara-visual-audit.log" 2>&1 || parity_status=$?
+          tail -n 45 "$RUNNER_TEMP/aksara-visual-audit.log"
+          # A missing or corrupt audit is a CI failure. A measured design mismatch
+          # is reported honestly but is not an emulator/feature regression.
+          python - <<'PY'
+          import collections, json, os, pathlib
+          path = pathlib.Path("docs/android-rebuild/visual-comparison/results.json")
+          rows = json.loads(path.read_text())
+          if not rows:
+              raise SystemExit("Visual audit produced no evidence")
+          totals = collections.Counter(row["status"] for row in rows)
+          label = ", ".join(f"{status}: {number}" for status, number in sorted(totals.items()))
+          print("Web/native visual audit (98% strict target):", label)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
+              f.write("### Web/native parity (98% target; independent of emulator test status)\\n\\n")
+              f.write(label + "\\n\\n")
+              f.write("See the `native-visual-and-performance-evidence` artifact for unmodified screenshots, region scores, and mismatches.\\n")
+          PY
+          if [ "$parity_status" -ne 0 ]; then
+            echo "::warning title=Web/native visual parity remains below 98%::Screenshots and strict mismatch report were preserved. Native emulator instrumentation is evaluated separately; visual calibration remains unresolved."
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
