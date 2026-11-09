@@ -52,6 +52,7 @@ internal fun AksaraGlassModal(
             AksaraGlassSurface(
                 Modifier.align(Alignment.Center)
                     .padding(horizontal = AksaraModalStyle.side)
+                    .widthIn(max = 600.dp)
                     .fillMaxWidth()
                     .heightIn(max = availableHeight - maxOf(
                         28.dp, margins.top + margins.bottom + 16.dp
