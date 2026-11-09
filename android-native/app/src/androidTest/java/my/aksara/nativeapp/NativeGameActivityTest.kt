@@ -90,7 +90,16 @@ class NativeGameActivityTest {
     }
     @Test fun fullscreenAspectRatioMatrix() {
         val device=UiDevice.getInstance(instrument)
+        val overlays=device.executeShellCommand("cmd overlay list --user 0")
+        val cutout="com.android.internal.display.cutout.emulation.tall"
+        val gesture="com.android.internal.systemui.navbar.gestural"
+        val previousNavigation=overlays.lineSequence().firstOrNull{it.startsWith("[x]")&&it.contains("com.android.internal.systemui.navbar.")}?.substringAfter("[x] ")?.trim()
+        val cutoutWasEnabled=overlays.contains("[x] $cutout")
         try {
+            device.executeShellCommand("cmd overlay enable --user 0 $cutout")
+            device.executeShellCommand("cmd overlay enable-exclusive --user 0 --category $gesture")
+            assertTrue("Cutout emulation must be active",device.executeShellCommand("cmd overlay list --user 0").contains("[x] $cutout"))
+            assertTrue("Gesture navigation must be active",device.executeShellCommand("cmd overlay list --user 0").contains("[x] $gesture"))
             for(spec in listOf("640x360","844x390","1080x486","1280x800")) {
                 device.executeShellCommand("wm size $spec")
                 device.executeShellCommand("wm density 160")
@@ -106,7 +115,11 @@ class NativeGameActivityTest {
                     device.takeScreenshot(java.io.File(instrument.targetContext.getExternalFilesDir(null),"game-matrix-$spec.png"))
                 }
             }
-        } finally {device.executeShellCommand("wm size reset");device.executeShellCommand("wm density reset")}
+        } finally {
+            device.executeShellCommand("wm size reset");device.executeShellCommand("wm density reset")
+            if(!cutoutWasEnabled)device.executeShellCommand("cmd overlay disable --user 0 $cutout")
+            if(previousNavigation!=null)device.executeShellCommand("cmd overlay enable-exclusive --user 0 --category $previousNavigation")
+        }
     }
     @Test fun recreationRestoresPreferencesAndClearsInterruptedInput(){
         ActivityScenario.launch(MainActivity::class.java).use { main ->
