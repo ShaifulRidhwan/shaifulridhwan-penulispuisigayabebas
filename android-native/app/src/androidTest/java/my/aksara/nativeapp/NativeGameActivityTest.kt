@@ -68,6 +68,28 @@ class NativeGameActivityTest {
         send(MotionEvent.ACTION_CANCEL,listOf(0),true)
         js(a,"document.querySelector('#start').click()")
     }
+    @Test fun recreationRestoresPreferencesAndClearsInterruptedInput(){
+        ActivityScenario.launch(MainActivity::class.java).use { main ->
+            fun openMonitor()=instrument.addMonitor(GameActivity::class.java.name,null,false)
+            val first=openMonitor()
+            main.onActivity{it.startActivity(Intent(it,GameActivity::class.java))}
+            val old=instrument.waitForMonitorWithTimeout(first,30000) as GameActivity
+            instrument.removeMonitor(first)
+            waitJs(old,"!!window.gameDiagnostics && gameDiagnostics.ready")
+            js(old,"controlSettings.opacity=62;saveControls();document.querySelector('#start').click();controls.down(91,'stick',100,200);controls.move(91,145,200)")
+            waitJs(old,"controls.pointers.size===1")
+            val next=openMonitor();instrument.runOnMainSync{old.recreate()}
+            val recreated=instrument.waitForMonitorWithTimeout(next,30000) as GameActivity
+            instrument.removeMonitor(next)
+            try {
+                waitJs(recreated,"!!window.gameDiagnostics && gameDiagnostics.ready")
+                assertTrue(old.isDestroyed)
+                assertEquals("true",js(recreated,"paused && controls.pointers.size===0 && controlSettings.opacity===62"))
+                js(recreated,"controlSettings=AksaraInput.normalize();saveControls()")
+            } finally {instrument.runOnMainSync{recreated.finish()}}
+            main.onActivity{assertEquals(Configuration.ORIENTATION_PORTRAIT,it.resources.configuration.orientation)}
+        }
+    }
     @Test fun realPortalLaunchReturnsToUnchangedChatDraft(){
         val device=UiDevice.getInstance(instrument)
         ActivityScenario.launch(MainActivity::class.java).use { main ->
