@@ -19,8 +19,46 @@ import java.nio.ByteBuffer
 import java.nio.charset.CodingErrorAction
 import java.util.Locale
 
-data class Attachment(val name:String,val text:String="",val media:JSONObject?=null)
+data class Attachment(
+    val name:String,
+    val text:String="",
+    val media:JSONObject?=null,
+    val receipt:String?=null,
+    val sizeBytes:Long=0
+)
+data class UploadCandidate(val name:String,val mimeType:String,val sizeBytes:Long)
 object AttachmentReader {
+    fun inspect(context:Context,uri:Uri):UploadCandidate {
+        val resolver=context.contentResolver
+        var name="lampiran"
+        var size=-1L
+        resolver.query(uri,arrayOf(OpenableColumns.DISPLAY_NAME,OpenableColumns.SIZE),
+            null,null,null)?.use { cursor ->
+            if(cursor.moveToFirst()){
+                val nameColumn=cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                val sizeColumn=cursor.getColumnIndex(OpenableColumns.SIZE)
+                if(nameColumn>=0&&!cursor.isNull(nameColumn))name=cursor.getString(nameColumn)
+                if(sizeColumn>=0&&!cursor.isNull(sizeColumn))size=cursor.getLong(sizeColumn)
+            }
+        }
+        if(size<=0)size=runCatching{
+            context.contentResolver.openAssetFileDescriptor(uri,"r")?.use{it.length}?:-1L
+        }.getOrDefault(-1L)
+        val extension=name.substringAfterLast(".","").lowercase(Locale.ROOT)
+        val reported=resolver.getType(uri).orEmpty().lowercase(Locale.ROOT)
+        val mime=if(reported.isBlank()||reported=="application/octet-stream")
+            extensionMime(extension)?:reported else reported
+        return UploadCandidate(name,mime,size)
+    }
+
+    /** Images up to 22 MB use local compression. Larger supported assets use Files API. */
+    fun needsLargeUpload(file:UploadCandidate):Boolean{
+        if(file.sizeBytes<=0)return false
+        val image=file.mimeType in supportedImages
+        val limit=if(image)MAX_IMAGE_INPUT_BYTES.toLong() else MAX_INLINE_BYTES.toLong()
+        return (image||file.mimeType in inlineMedia)&&file.sizeBytes>limit
+    }
+
     private val inlineMedia=setOf("image/jpeg","image/png","image/webp","image/gif",
         "audio/webm","audio/ogg","audio/mp4","audio/mpeg","audio/wav",
         "video/mp4","video/webm","application/pdf")

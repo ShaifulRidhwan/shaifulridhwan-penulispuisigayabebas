@@ -17,7 +17,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okio.BufferedSink
 import org.json.JSONObject
 import java.io.IOException
-import java.net.URL
+import java.net.URI
 import java.util.concurrent.TimeUnit
 
 /**
@@ -55,8 +55,8 @@ class LargeUploadClient(
             .put("name",file.name).put("mimeType",file.mimeType)
             .put("sizeBytes",file.sizeBytes))
         val uploadUrl=start.getString("uploadUrl")
-        val parsed=URL(uploadUrl)
-        require(parsed.protocol=="https"&&parsed.host=="generativelanguage.googleapis.com"&&
+        val parsed=URI(uploadUrl)
+        require(parsed.scheme=="https"&&parsed.host=="generativelanguage.googleapis.com"&&
             parsed.userInfo==null){"URL upload Google tidak sah."}
         val ticket=start.getString("ticket")
         val contextJob=currentCoroutineContext()

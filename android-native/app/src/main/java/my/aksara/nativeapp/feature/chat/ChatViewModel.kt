@@ -118,7 +118,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             if(storageReadable)try{persistArchive()}catch(_:Exception){mutable.update{it.copy(error="Sesi belum berjaya disimpan.")}}
         }
     }
-    fun send(question: String, documentText: String = "", documentName: String = "", media: JSONArray? = null): Boolean {
+    fun send(question: String, documentText: String = "", documentName: String = "", media: JSONArray? = null,
+             uploadedFiles: JSONArray? = null): Boolean {
         if (question.isBlank() || state.value.busy || !state.value.loaded) return false
         val previous = state.value.messages
         val user = Message(UUID.randomUUID().toString(), "user", question)
@@ -179,6 +180,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     })
                     .put("documentText", documentText).put("documentName", documentName)
                     .put("media", if (media != null && media.length() > 0) media else JSONObject.NULL)
+                    .put("fileUploads", if (uploadedFiles != null && uploadedFiles.length()>0)
+                        uploadedFiles else JSONObject.NULL)
                 require(payload.toString().toByteArray(Charsets.UTF_8).size <= 5_350_000) {
                     "Jumlah mesej, sejarah dan lampiran melebihi had API 5.35 MB."
                 }
