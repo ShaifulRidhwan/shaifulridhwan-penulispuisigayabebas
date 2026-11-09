@@ -20,7 +20,8 @@ sealed interface ChatEvent {
     data class Done(val reply: String, val provider: String, val sources: List<Pair<String, String>>,
         val model: String = "", val researchStatus: String = "", val toolsUsed: List<String> = emptyList(),
         val evidenceLevel: String = "no_external_evidence", val outputFormat: String = "",
-        val thoughtLedger: List<ThoughtEntry> = emptyList()) : ChatEvent
+        val thoughtLedger: List<ThoughtEntry> = emptyList(),
+        val reviewApplied: Boolean? = null) : ChatEvent
 }
 class ApiFailure(val status: Int, message: String, val retryAfter: String? = null) : IOException(message)
 object Ndjson {
@@ -52,6 +53,8 @@ object Ndjson {
                         item.optJSONObject("evidenceProfile")?.optString("level").orEmpty(),
                         toolNames,urls.size),
                     outputFormat = item.optString("outputFormat").take(30),
+                    reviewApplied = if(item.has("reviewApplied") && !item.isNull("reviewApplied"))
+                        item.optBoolean("reviewApplied") else null,
                     thoughtLedger = (item.optJSONArray("thoughtLedger") ?: JSONArray()).let { ideas ->
                         (0 until minOf(ideas.length(),6)).mapNotNull { i -> ideas.optJSONObject(i)?.let { entry ->
                             (entry.opt("idea") as? String)?.trim()?.take(170)?.takeIf { it.isNotEmpty() }

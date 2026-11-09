@@ -32,6 +32,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.*
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import dev.chrisbanes.haze.*
@@ -100,7 +101,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             } catch(e:Exception) { attachmentError="Import gagal: "+(e.message?:"format tidak sah") }
         }
     }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+    var pendingRemoteSelection by remember { mutableStateOf<List<Uri>>(emptyList()) }
+    fun beginAttachmentRead(uris:List<Uri>) {
         if(uris.isNotEmpty()&&!attachmentLoading) {
             uploadJob=scope.launch {
                 attachmentLoading=true
@@ -143,6 +145,17 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
         }
     }
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if(uris.isNotEmpty() && !attachmentLoading) {
+            val requiresApproval=uris.any { uri ->
+                runCatching {
+                    AttachmentReader.needsLargeUpload(AttachmentReader.inspect(context,uri))
+                }.getOrDefault(true) // Fail closed when a provider cannot be inspected.
+            }
+            if(requiresApproval) pendingRemoteSelection=uris
+            else beginAttachmentRead(uris)
+        }
+    }
     AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
         val textDocs = attachments.filter { it.text.isNotBlank() }
         val text = textDocs.joinToString("\n\n") { "[DOKUMEN: " + it.name + "]\n" + it.text + "\n[TAMAT DOKUMEN]" }
@@ -163,6 +176,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         onExportSessions = { exportPicker.launch("aksara-sesi.json") },
         onImportSessions = { importPicker.launch(arrayOf("application/json","text/plain")) },
         onEditAndSend = vm::forkAndSendFrom, onBranch = vm::forkFrom, onRegenerate = vm::regenerateFrom,
+        onSaveDraft = vm::saveOfflineDraft, onRemoveDraft = vm::removeOfflineDraft,
+        onEraseLocal = vm::eraseLocalData,
         onMemory = vm::setMemory, onVoiceTurns = vm::acceptVoiceTurns, onClearAttachment = {
             val selected=attachments
             attachments=emptyList()
@@ -177,6 +192,34 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         onCancelUpload = { uploadJob?.cancel() },
         onPickAttachment = { category -> picker.launch(AttachmentSendPolicy.mimeTypes(category)) },
         onDismissError = { attachmentError = null; vm.dismissError() })
+
+    // A document-picker selection is not consent for uploading multi-megabyte
+    // files to a remote provider. Obtain a second explicit approval first.
+    if(pendingRemoteSelection.isNotEmpty()) {
+        Dialog(onDismissRequest={pendingRemoteSelection=emptyList()}) {
+            val localBackdrop=remember{HazeState()}
+            CompositionLocalProvider(LocalBackdrop provides localBackdrop) {
+                AksaraGlassSurface(Modifier.fillMaxWidth(),radius=22.dp,blur=18.dp) {
+                    Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                        AksaraText("Muat naik fail besar",size=17f,weight=650)
+                        Spacer(Modifier.height(8.dp))
+                        AksaraText("Fail yang dipilih mungkin dihantar ke Gemini Files untuk dianalisis. Ia tidak akan dimuat naik sehingga kau benarkan. Jangan pilih dokumen sensitif tanpa keperluan.",
+                            size=12f,line=19f,color=AksaraColors.muted)
+                        Spacer(Modifier.height(13.dp))
+                        Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                            AksaraButton("Batal",{pendingRemoteSelection=emptyList()},
+                                Modifier.weight(1f),height=38.dp,size=11f)
+                            AksaraButton("Benarkan upload",{
+                                val selected=pendingRemoteSelection
+                                pendingRemoteSelection=emptyList()
+                                beginAttachmentRead(selected)
+                            },Modifier.weight(1f),height=38.dp,size=10.5f)
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable fun AksaraScreen(state: ChatState, onSend: (String)->Boolean = {true}, onStop: ()->Unit = {}, onRefresh: ()->Unit = {},
@@ -187,6 +230,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     onEditAndSend: (String,String)->Boolean = {_,_->false},
     onBranch: (String)->Boolean = {false}, onRegenerate: (String)->Boolean = {false},
     onExportSessions: ()->Unit = {}, onImportSessions: ()->Unit = {},
+    onSaveDraft: suspend(String)->Boolean = { false },
+    onRemoveDraft: suspend(String)->Boolean = { false },
+    onEraseLocal: suspend()->Boolean = { false },
     fixedTimestamp: Long? = null, onVoiceTurns:(List<my.aksara.engine.voice.VoiceContextTurn>)->Unit = {}) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
@@ -421,7 +467,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
             if(overlay!=null) CompositionLocalProvider(LocalBackdrop provides scene) {
                 AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question);Unit},onVoiceTurns=onVoiceTurns,
-                    onExportSessions=onExportSessions,onImportSessions=onImportSessions)
+                    onExportSessions=onExportSessions,onImportSessions=onImportSessions,
+                    composerDraft=draft,onSaveDraft=onSaveDraft,onRemoveDraft=onRemoveDraft,
+                    onUseDraft={pending->draft=pending;editingId=null;overlay=null;autoFollow=true},
+                    onEraseLocal=onEraseLocal)
             }
         }
     }

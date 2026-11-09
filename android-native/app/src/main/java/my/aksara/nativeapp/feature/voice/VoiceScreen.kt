@@ -26,13 +26,14 @@ import my.aksara.engine.avatar.VoiceAvatarView
 @Composable fun VoiceScreen(state:VoiceState,onClose:()->Unit,onMic:()->Unit={},onSpeaker:()->Unit={},
     onVolume:(Float)->Unit={},mode:String="cahaya",onMode:(String)->Unit={},style:String="Bahasa Santai",
     onStyle:(String)->Unit={},onAudioRoute:(Int?)->Unit={},onPushToTalk:(Boolean)->Unit={},
-    onTalkHeld:(Boolean)->Unit={},onCorrectCaption:(String)->Boolean={false},preview:Boolean=false){
+    onTalkHeld:(Boolean)->Unit={},onCorrectCaption:(String)->Boolean={false},
+    captionsEnabled:Boolean=true,onCaptions:(Boolean)->Unit={},preview:Boolean=false){
     val margins=aksaraDeviceMargins()
     val haze=LocalBackdrop.current
     val voiceBackdrop=remember{HazeState()}
     var modePicker by remember{mutableStateOf(false)};var stylePicker by remember{mutableStateOf(false)}
     var routePicker by remember{mutableStateOf(false)}
-    var captionsVisible by rememberSaveable { mutableStateOf(true) }
+    val captionsVisible = captionsEnabled
     var captionEditor by remember { mutableStateOf(false) }
     var captionDraft by remember { mutableStateOf("") }
     var seconds by remember{mutableIntStateOf(0)}
@@ -166,7 +167,7 @@ import my.aksara.engine.avatar.VoiceAvatarView
                         {onPushToTalk(!state.pushToTalk)},Modifier.width(58.dp),
                         height=45.dp,radius=14.dp,size=9f,enabled=!preview)
                     AksaraGlassSurface(Modifier.size(56.dp).clickable(onClick=onClose).semantics{contentDescription="Tamatkan sesi"},radius=999.dp,brush=Brush.linearGradient(listOf(Color(189,75,84,214),Color(105,33,52,214))),border=Color(250,170,170,190)){AksaraIcon("end",Modifier.align(Alignment.Center).size(24.dp),Color(0xffffeadb))}
-                    AksaraButton("CC",{captionsVisible=!captionsVisible},
+                    AksaraButton("CC",{onCaptions(!captionsEnabled)},
                         Modifier.width(40.dp),height=45.dp,radius=14.dp,size=10f)
                     AksaraButton("",onSpeaker,Modifier.width(56.dp).semantics{contentDescription=if(state.speaker)"Senyapkan suara" else "Buka suara"},icon="speaker",height=56.dp,radius=999.dp,iconSize=24.dp)
                 }

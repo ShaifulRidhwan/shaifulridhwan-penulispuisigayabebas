@@ -23,11 +23,18 @@ data class ChatState(val messages: List<Message> = emptyList(), val archive: Lis
     val memoryEnabled: Boolean = false, val memoryNotes: String = "", val summaryStatus: String = "not_requested",
     val resumedFromHistory: Boolean = false,
     val lastProvider: String = "", val lastModel: String = "", val lastResearchStatus: String = "", val lastToolsUsed: List<String> = emptyList(),
-    val lastEvidenceLevel: String = "not_checked")
+    val lastEvidenceLevel: String = "not_checked", val lastReviewApplied: Boolean? = null,
+    val capabilities: List<P3Intelligence.Capability> = emptyList(),
+    val modelRegistry: List<P3Intelligence.ModelInfo> = emptyList(),
+    val pendingDrafts: List<PendingDraft> = emptyList(),
+    val completedRequests: Int = 0, val failedRequests: Int = 0)
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
     private val api = ChatApi(BuildConfig.API_ORIGIN)
     private val store = SessionStore(app)
     private val contextStore = SessionContextStore(app)
+    private val pendingStore = PendingDraftStore(app)
+    private val pendingMutex = Mutex()
+    private var pendingReadable = true
     private val contextMutex = Mutex()
     private val archiveMutex = Mutex()
     private var savedContext = SavedConversationContext()
@@ -47,8 +54,14 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     contextReadable = false
                     mutable.update { it.copy(error = "Tetapan konteks tersulit tidak dapat dibaca. Fail asal dikekalkan.") }
                 }
+                val drafts=try { pendingStore.load() } catch(_:Exception) {
+                    pendingReadable=false
+                    mutable.update{it.copy(error="Draf tersulit tidak dapat dibaca. Fail asal dikekalkan.")}
+                    emptyList()
+                }
                 mutable.update { it.copy(archive = archive, sessionStarts = snapshot.sessionStarts, loaded = true,
-                    memoryEnabled = savedContext.memoryEnabled, memoryNotes = savedContext.memoryNotes) }
+                    memoryEnabled = savedContext.memoryEnabled, memoryNotes = savedContext.memoryNotes,
+                    pendingDrafts = drafts) }
             } catch (_: Exception) {
                 storageReadable = false
                 mutable.update { it.copy(error = "Sesi tersimpan belum dapat dibaca. Fail asal dikekalkan.", loaded = true) }
@@ -96,7 +109,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     }
     private fun clearAnswerDiagnostics(value: ChatState) = value.copy(
         lastProvider = "", lastModel = "", lastResearchStatus = "",
-        lastToolsUsed = emptyList(), lastEvidenceLevel = "not_checked"
+        lastToolsUsed = emptyList(), lastEvidenceLevel = "not_checked",
+        lastReviewApplied = null
     )
     fun dismissError() { mutable.update { it.copy(error = null) } }
     fun restore() { if (!state.value.busy) {
@@ -120,8 +134,11 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     } }
     fun refreshProviders() = viewModelScope.launch {
         try {
-            val rows = api.post(BackendRoutes.CHAT, JSONObject().put("providerStatus", true))
-                .optJSONArray("providers") ?: throw java.io.IOException("Provider health returned invalid JSON.")
+            val response = api.post(BackendRoutes.CHAT, JSONObject().put("providerStatus", true))
+            val capabilities = P3Intelligence.inventory(response)
+            val modelRegistry = P3Intelligence.models(response)
+            val rows = response.optJSONArray("providers")
+                ?: throw java.io.IOException("Provider health returned invalid JSON.")
             val entries = (0 until rows.length()).map { rows.getJSONObject(it) }
             val statuses = entries.map { it.optString("id") to it.optString("status", "unknown") }
             val details = entries.associate { provider ->
@@ -134,7 +151,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 } else null
                 provider.optString("id") to listOfNotNull(reason, poolSummary).joinToString(" · ")
             }
-            mutable.update { it.copy(providers = statuses, providerDetails = details) }
+            mutable.update { it.copy(providers = statuses, providerDetails = details,
+                capabilities = capabilities,modelRegistry=modelRegistry) }
         } catch (e: Exception) {
             if (e !is CancellationException) mutable.update {
                 val reason = if (e.message?.startsWith("Backend unreachable") == true) "Backend unreachable"
@@ -254,11 +272,14 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         lastModel = if(event is ChatEvent.Done) event.model else value.lastModel,
                         lastResearchStatus = if(event is ChatEvent.Done) event.researchStatus else value.lastResearchStatus,
                         lastToolsUsed = if(event is ChatEvent.Done) event.toolsUsed else value.lastToolsUsed,
-                        lastEvidenceLevel = if(event is ChatEvent.Done) event.evidenceLevel else value.lastEvidenceLevel) }
+                        lastEvidenceLevel = if(event is ChatEvent.Done) event.evidenceLevel else value.lastEvidenceLevel,
+                        lastReviewApplied = if(event is ChatEvent.Done) event.reviewApplied else value.lastReviewApplied,
+                        completedRequests = if(event is ChatEvent.Done) value.completedRequests+1 else value.completedRequests) }
                 }
             } catch (e: CancellationException) {
                 mutable.update { it.copy(error = "Penjanaan dihentikan. Teks separa dikekalkan.") }
             } catch (e: Exception) {
+                mutable.update { it.copy(failedRequests=it.failedRequests+1) }
                 val retry = (e as? ApiFailure)?.retryAfter?.toIntOrNull()
                 val message = (e.message ?: "Sambungan gagal. Cuba lagi.") +
                     if(retry != null && retry > 0) " Cuba semula selepas "+retry+" saat." else ""
@@ -354,6 +375,67 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             mutable.update { it.copy(archive=combined,sessionStarts=starts,error=null) }
         }
         incoming.sessionStarts.size
+    }
+
+
+    suspend fun saveOfflineDraft(text:String):Boolean = withContext(Dispatchers.Main.immediate) {
+        if(!pendingReadable || !state.value.loaded || state.value.busy)return@withContext false
+        try {
+            pendingMutex.withLock {
+                val next=OfflineDraftPolicy.add(state.value.pendingDrafts,text)
+                pendingStore.save(next)
+                mutable.update{it.copy(pendingDrafts=next,error=null)}
+            }
+            true
+        } catch(e:Exception) {
+            mutable.update{it.copy(error="Draf gagal disulitkan: "+(e.message?:"cuba lagi").take(110))}
+            false
+        }
+    }
+
+    suspend fun removeOfflineDraft(id:String):Boolean = withContext(Dispatchers.Main.immediate) {
+        if(!pendingReadable || state.value.busy)return@withContext false
+        try {
+            pendingMutex.withLock {
+                val next=OfflineDraftPolicy.remove(state.value.pendingDrafts,id)
+                pendingStore.save(next)
+                mutable.update{it.copy(pendingDrafts=next)}
+            }
+            true
+        } catch(e:Exception) {
+            mutable.update{it.copy(error="Draf gagal dipadam: "+(e.message?:"cuba lagi").take(110))}
+            false
+        }
+    }
+
+    /** User-confirmed deletion on this device, not a guarantee of remote erasure. */
+    suspend fun eraseLocalData():Boolean = withContext(Dispatchers.Main.immediate) {
+        if(!state.value.loaded || state.value.busy || !storageReadable ||
+            !contextReadable || !pendingReadable)return@withContext false
+        try {
+            archiveMutex.withLock {
+                contextMutex.withLock {
+                    pendingMutex.withLock {
+                        store.save(emptyList(),emptyList())
+                        contextStore.save(SavedConversationContext())
+                        pendingStore.save(emptyList())
+                        savedContext=SavedConversationContext()
+                        activeAttachment=null
+                        mutable.update { current ->
+                            clearAnswerDiagnostics(current.copy(messages=emptyList(),archive=emptyList(),
+                                sessionStarts=emptyList(),memoryEnabled=false,memoryNotes="",
+                                pendingDrafts=emptyList(),resumedFromHistory=false,
+                                summaryStatus="not_requested",nextJourney=null,error=null))
+                        }
+                    }
+                }
+            }
+            true
+        } catch(e:Exception) {
+            mutable.update { it.copy(error="Padam data tidak lengkap: "+(e.message?:"periksa storan").take(120)+
+                ". Semak arkib dan cuba lagi.") }
+            false
+        }
     }
 
     fun stop() { requestJob?.cancel() }

@@ -46,6 +46,8 @@ private fun voiceStyleInstruction(style:String):String=when(style){
     val context=LocalContext.current
     val preferences=remember(context){context.getSharedPreferences("aksara_voice",android.content.Context.MODE_PRIVATE)}
     var style by rememberSaveable {mutableStateOf(preferences.getString("language_style","Bahasa Santai")?.takeIf{it in VoiceLanguageStyles}?:"Bahasa Santai")}
+    var captionsVisible by rememberSaveable {mutableStateOf(preferences.getBoolean("captions_visible",true))}
+    val startPtt=remember(context) {preferences.getBoolean("push_to_talk",false)}
     // A Gemini Live system instruction is fixed for the socket lifetime.
     // Reconnect cleanly after a style / Thinking Mode change.
     // Generated from the same authoritative Brain + Identity + Voice Core used by Bilik Antara web.
@@ -76,6 +78,7 @@ private fun voiceStyleInstruction(style:String):String=when(style){
     val currentCompletedTurns by rememberUpdatedState(onCompletedTurns)
     val client=remember(context){LiveVoiceClient(context,BuildConfig.API_ORIGIN,policy) { currentCompletedTurns(it) }}
     LaunchedEffect(client,policy){client.updateIdentity(policy)}
+    LaunchedEffect(client){client.setPushToTalk(startPtt)}
     val state by client.state.collectAsStateWithLifecycle()
     var permissionError by remember {mutableStateOf<String?>(null)}
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
@@ -111,6 +114,13 @@ private fun voiceStyleInstruction(style:String):String=when(style){
         if(required.isEmpty())client.start() else permission.launch(required.toTypedArray())
     }
     VoiceScreen(state.copy(message=permissionError?:state.message),onClose={client.close();onClose()},onMic={client.setMic(!state.mic)},onSpeaker={client.setSpeaker(!state.speaker)},onVolume=client::setVolume,onAudioRoute=client::selectAudioDevice,
-        onPushToTalk=client::setPushToTalk,onTalkHeld=client::setTalkHeld,
-        onCorrectCaption=client::sendCaptionCorrection,mode=mode,onMode=onMode,style=style,onStyle={next->if(next in VoiceLanguageStyles){style=next;preferences.edit().putString("language_style",next).apply()}})
+        onPushToTalk={enabled->
+            client.setPushToTalk(enabled)
+            preferences.edit().putBoolean("push_to_talk",enabled).apply()
+        },onTalkHeld=client::setTalkHeld,
+        onCorrectCaption=client::sendCaptionCorrection,
+        captionsEnabled=captionsVisible,onCaptions={ enabled->
+            captionsVisible=enabled
+            preferences.edit().putBoolean("captions_visible",enabled).apply()
+        },mode=mode,onMode=onMode,style=style,onStyle={next->if(next in VoiceLanguageStyles){style=next;preferences.edit().putString("language_style",next).apply()}})
 }
