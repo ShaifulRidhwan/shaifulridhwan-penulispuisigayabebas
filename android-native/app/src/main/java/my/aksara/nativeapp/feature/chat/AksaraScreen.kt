@@ -128,7 +128,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                 scope.launch { uploader.delete(receipt) }
             }
         },
-        onRestore = vm::restore, onClear = vm::clearScreen,
+        onRestore = vm::restore, onRestoreSession = vm::restoreSession, onClear = vm::clearScreen,
         attachmentName = attachments.takeIf { it.isNotEmpty() }?.joinToString(", ") { it.name }?.take(150),
         attachmentLoading = attachmentLoading,
         uploadStatus = uploadStatus,
@@ -138,7 +138,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
 }
 
 @Composable fun AksaraScreen(state: ChatState, onSend: (String)->Unit = {}, onStop: ()->Unit = {}, onRefresh: ()->Unit = {},
-    onJourney: (String)->Unit = onSend, onMode: (String)->Unit = {}, onRestore: ()->Unit = {}, onClear: ()->Unit = {}, attachmentName: String? = null,
+    onJourney: (String)->Unit = onSend, onMode: (String)->Unit = {}, onRestore: ()->Unit = {}, onRestoreSession: (String)->Unit = {}, onClear: ()->Unit = {}, attachmentName: String? = null,
     onPickAttachment: (String)->Unit = {}, onDismissError: ()->Unit = {}, onMemory: (Boolean,String)->Unit = {_,_->}, onClearAttachment: ()->Unit = {}, initialOverlay: String? = null,
     attachmentLoading: Boolean = false,
     uploadStatus: String? = null, onCancelUpload: ()->Unit = {},
@@ -198,11 +198,11 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             AksaraBackground(Modifier.fillMaxSize().hazeSource(backdrop))
             Column(Modifier.fillMaxSize().safeDrawingPadding().padding(start=margins.horizontal,end=margins.horizontal,top=margins.top,bottom=margins.bottom)) {
                 Spacer(Modifier.height(5.dp))
-                AksaraGlassSurface(Modifier.fillMaxWidth().height(50.dp).testTagCompat("topbar"), radius=20.dp, blur=12.dp,
+                AksaraGlassSurface(Modifier.fillMaxWidth().height(58.dp).testTagCompat("topbar"), radius=20.dp, blur=12.dp,
                     brush=cssGradient(115f,listOf(Color(8,14,24,102),Color(17,26,40,51))),saturation=1.15f, border=Color(247,226,196,64)) {
                     Row(Modifier.fillMaxSize().padding(horizontal=10.dp), verticalAlignment=Alignment.CenterVertically) {
                         AksaraGlassSurface(Modifier.height(31.dp), radius=13.dp) {
-                            Row(Modifier.align(Alignment.Center).padding(horizontal=7.dp), verticalAlignment=Alignment.Bottom, horizontalArrangement=Arrangement.spacedBy(3.dp)) {
+                            Row(Modifier.align(Alignment.Center).padding(horizontal=7.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(3.dp)) {
                                 AksaraText("AKSARA A.I", size=10f,line=12f,weight=650)
                                 AksaraText("oleh Shaiful Ridhwan",size=7f,line=8.4f,weight=450,color=Color(233,198,141,212))
                             }
@@ -231,12 +231,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                     AksaraButton("",{searchOpen=!searchOpen;autoFollow=!searchOpen},Modifier.width(40.dp).semantics{contentDescription="Cari mesej dan kongsi perbualan"},icon="search",size=9f,height=AksaraGlassTokens.capsuleHeight,radius=AksaraGlassTokens.capsuleRadius)
                                     Spacer(Modifier.weight(1f))
                                      AksaraGlassSurface(Modifier.width(if(compact)129.dp else 143.dp).height(AksaraGlassTokens.capsuleHeight).clickable {open("connection")}.semantics {contentDescription="Connection"},radius=999.dp,blur=9.dp) {
-                                        Row(Modifier.fillMaxSize().padding(horizontal=4.dp),verticalAlignment=Alignment.CenterVertically) {
+                                        Row(Modifier.fillMaxSize().padding(horizontal=10.dp),verticalAlignment=Alignment.CenterVertically,
+                                            horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                                             AksaraIcon("network",Modifier.size(15.dp),Color(0xffc1b393))
-                                            val online=state.providers.count { it.second=="online" }
-                                            val unreachable=state.providers.any { it.first=="backend" && it.second=="Backend unreachable" }
-                                            val text=if(unreachable) "Backend unreachable" else if(state.providers.isEmpty()) "Unverified" else if(online==4) "Connected" else if(online>0) "Degraded" else "Unverified"
-                                            Box(Modifier.weight(1f),contentAlignment=Alignment.Center) {AksaraText(text,size=9f,line=11.25f,weight=600)}
+                                            AksaraText(ProviderConnectionStatus.label(state.providers),size=9f,line=11.25f,weight=600)
                                         }
                                     }
                                 }
@@ -327,7 +325,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
             }
             if(overlay!=null) CompositionLocalProvider(LocalBackdrop provides scene) {
-                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question)},onVoiceTurns=onVoiceTurns)
+                AksaraOverlay(overlay!!, state, onClose={overlay=null}, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question)},onVoiceTurns=onVoiceTurns)
             }
         }
     }

@@ -36,7 +36,9 @@ private data class Section(val title:String,val paragraphs:List<String>)
             poems=withContext(Dispatchers.IO){
                 val raw=context.assets.open("karya-index.json").bufferedReader().use{it.readText()}
                 val list=JSONArray(raw)
-                (0 until list.length()).map{list.getJSONObject(it)}.map{p->
+                (0 until list.length()).map{list.getJSONObject(it)}.filterNot {
+                    it.optString("title").equals("ANTARA CAHAYA DAN GELAP",ignoreCase=true)
+                }.map{p->
                     val lines=p.optJSONArray("lines")?:JSONArray()
                     Poem(p.optInt("id"),p.getString("title"),(0 until lines.length()).map{lines.optString(it)})
                 }

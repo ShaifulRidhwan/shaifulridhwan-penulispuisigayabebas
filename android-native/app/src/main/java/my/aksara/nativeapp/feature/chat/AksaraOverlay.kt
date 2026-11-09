@@ -27,7 +27,7 @@ import my.aksara.nativeapp.feature.library.NovelContent
 import my.aksara.nativeapp.feature.tools.*
 
 @Composable fun AksaraOverlay(kind:String,state:ChatState,onClose:()->Unit,onNavigate:(String)->Unit,onRefresh:()->Unit,
-    onMode:(String)->Unit,onRestore:()->Unit,onClear:()->Unit,onPickAttachment:(String)->Unit,onAsk:(String)->Unit,onMemory:(Boolean,String)->Unit={_,_->},
+    onMode:(String)->Unit,onRestore:()->Unit,onRestoreSession:(String)->Unit = {},onClear:()->Unit,onPickAttachment:(String)->Unit,onAsk:(String)->Unit,onMemory:(Boolean,String)->Unit={_,_->},
     onVoiceTurns:(List<VoiceContextTurn>)->Unit={}) {
     // Android Lite: preserve the engines on disk, but expose no inactive entry points.
     if(kind=="code" || kind=="terminal" || kind=="engines") return
@@ -49,7 +49,7 @@ import my.aksara.nativeapp.feature.tools.*
             maxOf(73.dp,(24f+18.2f+4f+15.75f*lines).dp)
         }
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(Color(2,6,13,64)).clickable(onClick=onClose))
-        val height=when(kind){"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->414.dp;"thinking"->273.594.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->480.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
+        val height=when(kind){"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->414.dp;"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal","portal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).clickable(enabled=false){},
@@ -83,13 +83,15 @@ import my.aksara.nativeapp.feature.tools.*
                     when(kind) {
                         "connection" -> {
                             val backendUnreachable=state.providers.any{it.first=="backend" && it.second=="Backend unreachable"}
-                            Spacer(Modifier.height(10.dp));AksaraText("${state.providers.count{it.second=="online"}}/4 Connected · "+if(backendUnreachable)"Backend unreachable" else if(state.providers.isEmpty())"Not checked yet" else "Checked",size=9.5f,line=13.3f,color=AksaraColors.muted)
+                            Spacer(Modifier.height(10.dp));AksaraText(ProviderConnectionStatus.label(state.providers)+" · "+
+                                state.providers.count{it.second=="online"}+" online · "+state.providers.count{it.second=="ready"}+" ready",
+                                size=9.5f,line=13.3f,color=AksaraColors.muted)
                             Spacer(Modifier.height(10.dp))
                             val providers=listOf("gemini" to "Google Gemini","groq" to "Groq","workers_ai" to "Cloudflare Workers AI","openrouter" to "OpenRouter")
                             providers.forEach { (id,name) ->
                                 var expanded by remember {mutableStateOf(false)}
                                 MenuRow(name,state.providers.find{it.first==id}?.second?:(if(backendUnreachable)"Backend unreachable" else "Unverified"),height=43.dp) {expanded=!expanded}
-                                if(expanded) AksaraText(if(id=="gemini")"Gemini 1 / 2 / 3 / 4 · status setiap slot belum dipaparkan" else "Status dilaporkan oleh backend. Sedia bukan bukti ujian inferens.",Modifier.padding(8.dp),size=10f,color=AksaraColors.muted)
+                                if(expanded) AksaraText(state.providerDetails[id]?.takeIf{it.isNotBlank()} ?: "Ready belum membuktikan inferens berjaya. Refresh untuk status terkini.",Modifier.padding(8.dp),size=10f,color=AksaraColors.muted)
                                 Spacer(Modifier.height(8.dp))
                             }
                             Spacer(Modifier.weight(1f));AksaraButton("Refresh Status",onRefresh,Modifier.fillMaxWidth(),height=49.dp)
@@ -112,13 +114,12 @@ import my.aksara.nativeapp.feature.tools.*
                         }
                         "thinking" -> {
                             Spacer(Modifier.height(14.dp))
-                            Box(Modifier.fillMaxWidth().height(157.609.dp).clip(RoundedCornerShape(12.dp)).background(Color(5,10,18,66)).border(1.dp,Color(225,207,179,48),RoundedCornerShape(12.dp))){
+                            Box(Modifier.fillMaxWidth().height(111.dp).clip(RoundedCornerShape(12.dp)).background(Color(5,10,18,66)).border(1.dp,Color(225,207,179,48),RoundedCornerShape(12.dp))){
                                 Column(Modifier.padding(11.dp),verticalArrangement=Arrangement.spacedBy(7.dp)){
                                     AksaraText("STATUS MOD",size=11f,line=14.3f,weight=650,color=Color(0xffe4d2b2),tracking=.22f,family=AksaraTypography.heading)
                                     listOf("Mod dipilih" to if(state.mode=="gelap")"Gelap" else "Cahaya","Permintaan semasa" to if(state.busy)"Generating Response" else "Tiada permintaan aktif","Permintaan terakhir" to if(state.messages.isEmpty())"Belum ada dalam tab ini" else if(state.messages.last().incomplete)"Belum lengkap" else "Selesai").forEach{(label,value)->
                                         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){AksaraText(label,size=10.5f,line=14.7f,color=Color(0xffd0c2b2));AksaraText(value,size=10.5f,line=14.7f,weight=600)}
                                     }
-                                    AksaraText("Cahaya/Gelap mengubah pendekatan jawapan. Tahap penaakulan model ditentukan secara adaptif oleh sistem; paparan ini bukan bukti tahap tersebut.",size=10.5f,line=15.75f,color=Color(0xffbab4ab))
                                 }
                             }
                             Spacer(Modifier.height(12.dp))
@@ -162,9 +163,46 @@ import my.aksara.nativeapp.feature.tools.*
                             AksaraText("Memori OFF secara lalai dan disulitkan dalam Android Keystore. Tiada penyegerakan silang peranti.",size=10f,color=AksaraColors.muted)
                         }
                         "sessions" -> {
-                            Spacer(Modifier.height(20.dp));AksaraText("${state.archive.size} mesej tersimpan setempat dan disulitkan.",size=12f)
-                            Spacer(Modifier.height(16.dp));AksaraButton("Buka sesi tersimpan",{onRestore();onClose()},Modifier.fillMaxWidth())
-                            Spacer(Modifier.height(12.dp));AksaraButton("Kosongkan paparan",{onClear();onClose()},Modifier.fillMaxWidth())
+                            val sessions = remember(state.archive,state.sessionStarts) {
+                                groupSessions(state.archive,state.sessionStarts)
+                            }
+                            var search by remember(kind) { mutableStateOf("") }
+                            Spacer(Modifier.height(14.dp))
+                            AksaraText(sessions.size.toString()+" sesi · "+state.archive.size+" mesej disulitkan pada peranti.",size=12f)
+                            Spacer(Modifier.height(12.dp))
+                            AksaraGlassSurface(Modifier.fillMaxWidth().height(42.dp),radius=13.dp) {
+                                BasicTextField(search,{search=it.take(120)},Modifier.fillMaxSize().padding(11.dp),
+                                    singleLine=true,textStyle=AksaraTypography.style(12f,18f),
+                                    cursorBrush=SolidColor(AksaraColors.gold),decorationBox={inner->
+                                        Box { if(search.isBlank()) AksaraText("Cari sesi atau kandungan mesej",size=11f,color=AksaraColors.muted);inner() }
+                                    })
+                            }
+                            Spacer(Modifier.height(12.dp))
+                            val matches = sessions.asReversed().filter { session ->
+                                search.isBlank() || session.messages.any { it.text.contains(search,ignoreCase=true) }
+                            }
+                            if(matches.isEmpty()) AksaraText(if(sessions.isEmpty())
+                                "Belum ada perbualan tersimpan. Mesej baharu akan disimpan secara automatik."
+                                else "Tiada sesi sepadan dengan carian.",size=12f,color=AksaraColors.muted)
+                            matches.forEach { session ->
+                                AksaraGlassSurface(Modifier.fillMaxWidth().clickable {
+                                    onRestoreSession(session.startId);onClose()
+                                },radius=14.dp) {
+                                    Column(Modifier.fillMaxWidth().padding(12.dp)) {
+                                        AksaraText(session.title,size=12f,weight=600)
+                                        Spacer(Modifier.height(5.dp))
+                                        AksaraText(session.messages.size.toString()+" mesej · "+
+                                            java.text.SimpleDateFormat("dd MMM, HH:mm",java.util.Locale("ms","MY"))
+                                                .format(java.util.Date(session.lastAt)),
+                                            size=10f,color=AksaraColors.muted)
+                                    }
+                                }
+                                Spacer(Modifier.height(8.dp))
+                            }
+                            Spacer(Modifier.height(8.dp))
+                            AksaraButton("Buka semua mesej",{onRestore();onClose()},Modifier.fillMaxWidth())
+                            Spacer(Modifier.height(9.dp))
+                            AksaraButton("Sesi baharu · kosongkan paparan",{onClear();onClose()},Modifier.fillMaxWidth())
                         }
                         "voice" -> VoiceContent(onClose)
                         else -> {
