@@ -161,7 +161,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
     fun send(question: String, documentText: String = "", documentName: String = "", media: JSONArray? = null,
-             uploadedFiles: JSONArray? = null, attachmentNames: List<String> = emptyList()): Boolean {
+             uploadedFiles: JSONArray? = null, attachmentNames: List<String> = emptyList(),
+             useArchive: Boolean = false, webResearch: Boolean = false): Boolean {
         if (question.isBlank() || state.value.busy || !state.value.loaded) return false
         val previous = state.value.messages
         val newAttachment = attachmentNames.isNotEmpty() ||
@@ -229,8 +230,11 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         catch (_: Exception) { mutable.update { it.copy(summaryStatus = "unavailable") } }
                     }
                 }
+                val retrieved = if(useArchive) ArchiveRetrieval.excerpts(
+                    state.value.archive, previous, question) else ""
                 val payload = WebBrainBridge.chatPayload(
                     question = question, completed = completed, thoughtMode = state.value.mode,
+                    retrievedContext = retrieved, webResearch = webResearch,
                     summary = savedContext.summary, memoryEnabled = savedContext.memoryEnabled,
                     memoryNotes = savedContext.memoryNotes, thoughtLedger = savedContext.thoughtLedger,
                     documentText = effective?.documentText ?: documentText,

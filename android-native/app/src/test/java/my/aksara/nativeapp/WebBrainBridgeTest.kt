@@ -74,4 +74,20 @@ class WebBrainBridgeTest {
         assertTrue(history.length() <= 24)
         assertTrue(history.toString().contains("Giliran teks 55"))
     }
+    @Test fun archiveAndResearchRequireExplicitOptIn() {
+        val base=WebBrainBridge.chatPayload("Boleh semak?",emptyList(),
+            "cahaya","Sesi aktif",false,"",emptyList())
+        assertEquals("Boleh semak?",base.getString("question"))
+        assertFalse(base.getString("summary").contains("PETIKAN SEJARAH"))
+        val explicit=WebBrainBridge.chatPayload("Boleh semak?",emptyList(),
+            "cahaya","Sesi aktif",false,"",emptyList(),
+            retrievedContext="[PETIKAN SEJARAH PILIHAN PENGGUNA] Petikan arkib",
+            webResearch=true)
+        assertTrue(explicit.getString("question").contains("sumber Web terkini"))
+        assertTrue(explicit.getString("summary").contains("Petikan arkib"))
+        assertFalse(explicit.getBoolean("contextFallback"))
+        assertFalse(explicit.getBoolean("mediaFallback"))
+        assertFalse(explicit.has("provider"))
+    }
+
 }

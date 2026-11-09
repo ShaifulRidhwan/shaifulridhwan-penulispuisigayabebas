@@ -38,17 +38,20 @@ internal object WebBrainBridge {
         documentText: String = "",
         documentName: String = "",
         media: JSONArray? = null,
-        fileUploads: JSONArray? = null
+        fileUploads: JSONArray? = null,
+        retrievedContext: String = "",
+        webResearch: Boolean = false
     ): JSONObject {
         val recent = ContextPolicy.selectHistory(completed, question)
         val notes = if (memoryEnabled) ContextPolicy.selectMemory(memoryNotes, question) else ""
         val result = JSONObject()
-            .put("question", question)
+            .put("question", ResearchRequest.forBackend(question,webResearch))
             .put("history", safeHistory(recent))
             .put("thoughtMode", if (thoughtMode == "gelap") "gelap" else "cahaya")
             .put("contextFallback", false)
             .put("mediaFallback", false)
-            .put("summary", summary.take(4000))
+            .put("summary", if(retrievedContext.isBlank())summary.take(4000)
+                else (summary.take(1100)+"\n\n"+retrievedContext.take(2600)).take(4000))
             .put("memoryNotes", notes)
             .put("thoughtLedger", JSONArray().apply {
                 thoughtLedger.takeLast(8).forEach { entry ->

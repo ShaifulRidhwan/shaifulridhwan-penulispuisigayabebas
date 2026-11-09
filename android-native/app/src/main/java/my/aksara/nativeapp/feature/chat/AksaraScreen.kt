@@ -143,13 +143,14 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
         }
     }
-    AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
+    fun submitQuestion(q: String, useArchive: Boolean, webResearch: Boolean): Boolean {
         val textDocs = attachments.filter { it.text.isNotBlank() }
         val text = textDocs.joinToString("\n\n") { "[DOKUMEN: " + it.name + "]\n" + it.text + "\n[TAMAT DOKUMEN]" }
         val name = textDocs.joinToString(", ") { it.name }.take(100)
         val media = JSONArray().apply { attachments.mapNotNull { it.media }.forEach { put(it) } }
         val uploadedFiles = JSONArray().apply { attachments.mapNotNull { it.receipt }.forEach { put(it) } }
-        val accepted=vm.send(q, text, name, media, uploadedFiles,attachments.map { it.name })
+        val accepted=vm.send(q, text, name, media, uploadedFiles,attachments.map { it.name },
+            useArchive=useArchive, webResearch=webResearch)
         if (accepted) {
             // The ViewModel has accepted the pending turn and will persist it before inference.
             // Do not carry sent media into the next message or discard it on a rejected turn.
@@ -158,8 +159,12 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         } else {
             attachmentError = vm.state.value.error ?: "Mesej belum dihantar. Cuba lagi selepas sambungan sedia."
         }
-        accepted
-    }, onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
+        return accepted
+    }
+    AksaraScreen(state.copy(error = attachmentError ?: state.error),
+        onSend = { q -> submitQuestion(q,false,false) },
+        onSendAdvanced = { q,archive,research -> submitQuestion(q,archive,research) },
+        onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
         onExportSessions = { exportPicker.launch("aksara-sesi.json") },
         onImportSessions = { importPicker.launch(arrayOf("application/json","text/plain")) },
         onEditAndSend = vm::forkAndSendFrom, onBranch = vm::forkFrom, onRegenerate = vm::regenerateFrom,
@@ -179,7 +184,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         onDismissError = { attachmentError = null; vm.dismissError() })
 }
 
-@Composable fun AksaraScreen(state: ChatState, onSend: (String)->Boolean = {true}, onStop: ()->Unit = {}, onRefresh: ()->Unit = {},
+@Composable fun AksaraScreen(state: ChatState, onSend: (String)->Boolean = {true},
+    onSendAdvanced: (String,Boolean,Boolean)->Boolean = { question,_,_ -> onSend(question) },
+    onStop: ()->Unit = {}, onRefresh: ()->Unit = {},
     onJourney: (String)->Unit = { onSend(it); Unit }, onMode: (String)->Unit = {}, onRestore: ()->Unit = {}, onRestoreSession: (String)->Unit = {}, onClear: ()->Unit = {}, attachmentName: String? = null,
     onPickAttachment: (String)->Unit = {}, onDismissError: ()->Unit = {}, onMemory: (Boolean,String)->Unit = {_,_->}, onClearAttachment: ()->Unit = {}, initialOverlay: String? = null,
     attachmentLoading: Boolean = false,
@@ -192,6 +199,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
     var draft by rememberSaveable { mutableStateOf("") }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    var includeArchive by rememberSaveable { mutableStateOf(false) }
+    var deepResearch by rememberSaveable { mutableStateOf(false) }
     var searchOpen by rememberSaveable { mutableStateOf(false) }
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var searchIndex by rememberSaveable { mutableIntStateOf(0) }
@@ -377,6 +386,20 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         Modifier.weight(1f),size=10.5f,color=AksaraColors.gold)
                     AksaraButton("Batal",{editingId=null;draft=""},height=29.dp,size=10f)
                 }
+                if(editingId==null) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal=8.dp,vertical=3.dp),
+                        horizontalArrangement=Arrangement.spacedBy(7.dp),
+                        verticalAlignment=Alignment.CenterVertically) {
+                        AksaraButton(if(includeArchive)"Arkib: ON" else "Rujuk arkib",
+                            { includeArchive=!includeArchive },
+                            Modifier.width(107.dp),height=31.dp,size=9.5f,radius=12.dp)
+                        AksaraButton(if(deepResearch)"Kajian: ON" else "Kajian Web",
+                            { deepResearch=!deepResearch },
+                            Modifier.width(107.dp),height=31.dp,size=9.5f,radius=12.dp)
+                        if(includeArchive) AksaraText("Petikan sejarah dihantar atas pilihan kau.",
+                            Modifier.weight(1f),size=9f,line=12f,color=AksaraColors.muted)
+                    }
+                }
                 val canSubmit = state.loaded && !state.busy && !attachmentLoading &&
                     (draft.isNotBlank() || hasAttachments) && (editingId==null || !hasAttachments)
                 AksaraGlassSurface(
@@ -410,8 +433,12 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         AksaraButton("",{
                             if(canSubmit) {
                                 val text=AttachmentSendPolicy.submissionText(draft,hasAttachments)
-                                val accepted = editingId?.let { onEditAndSend(it,text) } ?: onSend(text)
-                                if(accepted) { draft="";editingId=null;autoFollow=true;searchOpen=false }
+                                val accepted = editingId?.let { onEditAndSend(it,text) }
+                                    ?: onSendAdvanced(text,includeArchive,deepResearch)
+                                if(accepted) {
+                                    draft="";editingId=null;autoFollow=true;searchOpen=false
+                                    includeArchive=false;deepResearch=false
+                                }
                             }
                         },Modifier.width(42.dp).semantics {contentDescription="Hantar soalan"},
                             icon="send",height=42.dp,radius=13.dp,enabled=canSubmit)
