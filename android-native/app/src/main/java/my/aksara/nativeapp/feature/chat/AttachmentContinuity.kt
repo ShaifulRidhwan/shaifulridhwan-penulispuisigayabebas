@@ -35,5 +35,5 @@ internal object AttachmentContinuity {
         !context.hasReceipts || nowMs >= context.sinceMs &&
             nowMs - context.sinceMs < FILE_RECEIPT_SAFE_MS
     fun manifest(names: List<String>): String =
-        names.take(4).joinToString(", ") { it.replace(Regex("""[\r\n\[\]]""")," ").take(100) }
+        names.take(4).joinToString(", ") { it.replace(Regex("""[\[\]]"""),"").replace(Regex("""\s+""")," ").trim().take(100) }
 }
