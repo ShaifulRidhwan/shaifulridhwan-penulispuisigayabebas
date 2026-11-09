@@ -2,6 +2,9 @@ package my.aksara.nativeapp
 
 import android.os.Bundle
 import android.os.Build
+import android.media.AudioManager
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.view.WindowManager
 import android.util.Log
 import android.view.ViewGroup
@@ -26,6 +29,14 @@ class GameActivity : ComponentActivity() {
     private var destroyed=false
     private var webAlive=false
     private var lastHaptic=0L
+    private val audioManager by lazy { getSystemService(AudioManager::class.java) }
+    private val audioFocus by lazy {
+        AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
+            .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
+            .setOnAudioFocusChangeListener { change ->
+                if(change<0&&webAlive)runOnUiThread{gameWebView.evaluateJavascript("window.aksaraPause?.()",null)}
+            }.build()
+    }
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
         immersive()
@@ -102,6 +113,12 @@ class GameActivity : ComponentActivity() {
             }
         }
         if(WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
+            WebViewCompat.addWebMessageListener(gameWebView,"AksaraAudio",setOf("https://appassets.androidplatform.net")) { _,message,_,isMainFrame,reply ->
+                if(isMainFrame&&webAlive) {
+                    if(message.data=="start"&&hasWindowFocus())reply.postMessage(if(audioManager.requestAudioFocus(audioFocus)==AudioManager.AUDIOFOCUS_REQUEST_GRANTED)"granted" else "denied")
+                    else if(message.data=="stop")audioManager.abandonAudioFocusRequest(audioFocus)
+                }
+            }
             WebViewCompat.addWebMessageListener(gameWebView,"AksaraHaptics",setOf("https://appassets.androidplatform.net")) { view,message,_,isMainFrame,_ ->
                 if(isMainFrame&&webAlive&&hasWindowFocus()&&SystemClock.uptimeMillis()-lastHaptic>75) {
                     val effect=when(message.data){
@@ -142,7 +159,7 @@ class GameActivity : ComponentActivity() {
         }
     }
     override fun onWindowFocusChanged(hasFocus:Boolean){super.onWindowFocusChanged(hasFocus);if(hasFocus)immersive()}
-    override fun onPause(){if(webAlive){gameWebView.evaluateJavascript("window.aksaraPause && window.aksaraPause()",null);gameWebView.onPause()};super.onPause()}
+    override fun onPause(){audioManager.abandonAudioFocusRequest(audioFocus);if(webAlive){gameWebView.evaluateJavascript("window.aksaraPause && window.aksaraPause()",null);gameWebView.onPause()};super.onPause()}
     override fun onResume(){super.onResume();immersive();if(webAlive)gameWebView.onResume()}
-    override fun onDestroy(){destroyed=true;if(webAlive){root.removeView(gameWebView);gameWebView.stopLoading();gameWebView.destroy();webAlive=false};super.onDestroy()}
+    override fun onDestroy(){audioManager.abandonAudioFocusRequest(audioFocus);destroyed=true;if(webAlive){root.removeView(gameWebView);gameWebView.stopLoading();gameWebView.destroy();webAlive=false};super.onDestroy()}
 }
