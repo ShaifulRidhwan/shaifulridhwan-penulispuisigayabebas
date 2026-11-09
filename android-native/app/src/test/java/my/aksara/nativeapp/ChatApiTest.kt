@@ -80,6 +80,14 @@ class ChatApiTest {
         val page=Ndjson.parse("""{"type":"done","reply":"Dirujuk","toolsUsed":["tavily_extract"],"evidenceProfile":{"level":"page_text"},"sources":[{"title":"Dokumen","url":"https://example.org"}]}""") as ChatEvent.Done
         assertEquals("page_text",page.evidenceLevel)
     }
+    @Test fun searchExcerptDoesNotPretendEntirePageWasRead() {
+        val preview=EvidenceIntegrity.formatSources(
+            listOf("Hasil" to "https://example.org/a","Duplikasi" to "https://example.org/a"),
+            "search_excerpt")
+        assertTrue(preview.contains("kandungan penuh halaman belum disahkan"))
+        assertEquals(1,Regex("https://example.org/a").findAll(preview).count())
+        assertTrue(EvidenceIntegrity.formatSources(listOf("Palsu" to "javascript:alert(1)"),"page_text").isEmpty())
+    }
     @Test fun sourceTitlesCannotInjectMarkdownLinks() {
         val markdown=EvidenceIntegrity.formatSources(
             listOf("Sumber](https://evil.example)" to "https://example.org/a(b)"),"links_only")
