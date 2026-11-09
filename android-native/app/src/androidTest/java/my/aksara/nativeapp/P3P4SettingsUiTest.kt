@@ -17,6 +17,12 @@ class P3P4SettingsUiTest {
             compose.onNodeWithText(it).assertExists()
         }
         compose.onNodeWithText("Buka Voice & pilih peranti").assertExists()
+        listOf("Kecerdasan & Model","Chat & Lampiran","Voice & Audio",
+            "Memori & Privasi","Tools & Research","Sistem & Diagnostik").forEach {
+            compose.onNodeWithContentDescription("Ikon " + it).assertExists()
+        }
+        compose.onNodeWithText("Sistem & Diagnostik").performClick()
+        compose.onNodeWithText("Prestasi A.I.").assertExists()
         compose.onNodeWithText("Kecerdasan & Model").performClick()
         compose.onNodeWithText("Model Capability Registry").assertExists()
         compose.onNodeWithText("Task Planner · pratonton sahaja").assertExists()
