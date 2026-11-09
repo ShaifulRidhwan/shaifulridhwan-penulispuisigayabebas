@@ -110,6 +110,14 @@ internal class LocalModelManager(private val context: Context) {
             val used = if (download.isFile) download.length() else 0L
             val remaining = SDTurboSpec.sizeBytes - used
             require(remaining > 0L || used == SDTurboSpec.sizeBytes) { "Fail muat turun separa rosak." }
+            // A previous download may have finished before the app was interrupted
+            // during verification. Verify and install it without downloading again.
+            if (used == SDTurboSpec.sizeBytes) {
+                currentCoroutineContext().ensureActive()
+                onProgress(used, SDTurboSpec.sizeBytes)
+                atomicallyInstall(download)
+                return@withLock
+            }
             require(availableBytes() > remaining + 128L * 1024 * 1024) { "Storan tidak mencukupi." }
             val request = Request.Builder().url(SDTurboSpec.source)
                 .apply { if (used > 0 && used < SDTurboSpec.sizeBytes) header("Range", "bytes=$used-") }
