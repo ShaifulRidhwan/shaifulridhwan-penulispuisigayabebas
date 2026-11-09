@@ -111,15 +111,39 @@ class AttributionAndLiteUiTest {
         compose.onAllNodesWithText("Gelap",substring=false).assertCountEquals(2)
     }
 
+    @Test fun searchHubContainsMessagesSessionsAndMemory() {
+        compose.setContent { AksaraScreen(ChatState(loaded = true)) }
+        compose.onNodeWithContentDescription("Carian, sesi dan memori").performClick()
+        compose.onNodeWithText("Cari Mesej").assertExists()
+        compose.onNodeWithText("Sesi & Sejarah").assertExists()
+        compose.onNodeWithText("Memori").assertExists()
+        compose.onNodeWithText("Sesi & Sejarah").performClick()
+        compose.onNodeWithText("Import JSON").assertExists()
+        compose.onNodeWithText("Memori").performClick()
+        compose.onNodeWithText("Urus Memori & Privasi dalam Tetapan").assertExists()
+    }
+
+    @Test fun externalHomeRequiresConfirmationAndCancelStaysInApp() {
+        compose.setContent { AksaraScreen(ChatState(loaded = true)) }
+        compose.onNodeWithContentDescription("Ciri & Fungsi").performClick()
+        compose.onNodeWithText("Laman Utama").performClick()
+        compose.onNodeWithText("Buka Laman Utama?").assertExists()
+        compose.onNodeWithText("Anda akan dibawa keluar", substring = true).assertExists()
+        compose.onNodeWithText("Batal").performClick()
+        compose.onNodeWithText("Buka Laman Utama?").assertDoesNotExist()
+    }
+
     @Test fun composerRemainsFocusableAndPortalHidesExperimentalEngines() {
         compose.setContent { AksaraScreen(ChatState(loaded = true)) }
         compose.onNodeWithContentDescription("Tulis mesej untuk Aksara A.I.").performClick().assertIsFocused()
-        compose.onNodeWithText("PORTAL").performClick()
+        compose.onNodeWithContentDescription("Ciri & Fungsi").performClick()
         compose.onNodeWithText("Game · Linux · SD-Turbo").assertDoesNotExist()
+        compose.onNodeWithText("Laman Utama").assertExists()
         compose.onNodeWithText("Studio · Jana Imej").assertExists()
         compose.onNodeWithText("Novel · Perpustakaan AKSARA").assertExists()
-        compose.onNodeWithText("Prestasi A.I").assertExists()
-        compose.onNodeWithText("Sesi & Sejarah").assertExists()
+        compose.onNodeWithText("Prestasi A.I.").assertDoesNotExist()
+        compose.onNodeWithText("Sesi & Sejarah").assertDoesNotExist()
+        compose.onNodeWithText("Tetapan Aksara A.I.").assertDoesNotExist()
         compose.onNodeWithText("Security Lab").assertDoesNotExist()
         compose.onNodeWithText("Pengetahuan & Rujukan").assertDoesNotExist()
         compose.onNodeWithText("Privasi & Tetapan").assertDoesNotExist()
