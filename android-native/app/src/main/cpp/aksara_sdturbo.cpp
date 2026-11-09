@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <mutex>
 #include <atomic>
+#include <chrono>
 #include <string>
 #include <android/log.h>
 #include "stable-diffusion.h"
@@ -13,6 +14,19 @@ std::mutex inference_mutex;
 std::mutex context_mutex;
 std::atomic<bool> cancel_requested{false};
 sd_ctx_t* active_context = nullptr;
+void report_stage(JNIEnv* env, jobject callback, jint stage) {
+    if (!callback || env->ExceptionCheck()) return;
+    jclass klass = env->GetObjectClass(callback);
+    if (!klass) return;
+    jmethodID method = env->GetMethodID(klass, "onStage", "(I)V");
+    if (method) env->CallVoidMethod(callback, method, stage);
+    env->DeleteLocalRef(klass);
+}
+void release_images(sd_image_t* images, int count) {
+    if (!images) return;
+    for (int i = 0; i < count; ++i) free(images[i].data);
+    free(images);
+}
 void throw_java(JNIEnv* env, const char* message) {
     jclass cls = env->FindClass("java/io/IOException");
     if (cls) env->ThrowNew(cls, message);
@@ -21,7 +35,7 @@ void throw_java(JNIEnv* env, const char* message) {
 
 extern "C" JNIEXPORT jintArray JNICALL
 Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative(
-    JNIEnv* env, jobject /*thiz*/, jstring modelPath, jstring prompt, jlong seed, jint threads) {
+    JNIEnv* env, jobject /*thiz*/, jstring modelPath, jstring prompt, jlong seed, jint threads, jobject callback) {
     std::lock_guard<std::mutex> lock(inference_mutex);
     cancel_requested.store(false, std::memory_order_release);
     if (!modelPath || !prompt || threads < 1 || threads > 8) {
@@ -46,7 +60,12 @@ Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative(
     init_params.n_threads = threads;
     init_params.backend = "cpu";
 
+    const auto load_started = std::chrono::steady_clock::now();
+    report_stage(env, callback, 1);  // Model allocation / tensor loading.
     sd_ctx_t* ctx = new_sd_ctx(&init_params);
+    __android_log_print(ANDROID_LOG_INFO, "AksaraSDTurbo", "model load: %lld ms",
+        static_cast<long long>(std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - load_started).count()));
     if (!ctx) {
         throw_java(env, "Gagal memuat model SD-Turbo dalam native runtime.");
         return nullptr;
@@ -74,21 +93,24 @@ Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative(
 
     sd_image_t* result = nullptr;
     int output_count = 0;
+    const auto generation_started = std::chrono::steady_clock::now();
+    report_stage(env, callback, 2);  // Actual CPU diffusion / VAE decode.
     const bool generated = generate_image(ctx, &image_params, &result, &output_count);
+    __android_log_print(ANDROID_LOG_INFO, "AksaraSDTurbo", "generation: %lld ms; success=%d; count=%d",
+        static_cast<long long>(std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::steady_clock::now() - generation_started).count()), generated, output_count);
     {
         std::lock_guard<std::mutex> context_lock(context_mutex);
         active_context = nullptr;
     }
     const bool interrupted = cancel_requested.load(std::memory_order_acquire);
     if (interrupted || !generated || !result || output_count < 1 || !result[0].data || result[0].width != 512 || result[0].height != 512 || result[0].channel < 3) {
-        if (result) {
-            free(result[0].data);
-            free(result);
-        }
+        release_images(result, output_count > 0 ? output_count : 0);
         free_sd_ctx(ctx);
         throw_java(env, interrupted ? "Penjanaan tempatan dibatalkan." : "SD-Turbo tidak memulangkan imej 512x512 yang sah.");
         return nullptr;
     }
+    report_stage(env, callback, 3);  // Packing generated bitmap.
     const int count = 512 * 512;
     jintArray output = env->NewIntArray(count);
     if (output) {
@@ -103,8 +125,7 @@ Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative(
             env->ReleaseIntArrayElements(output, pixels, 0);
         }
     }
-    free(result[0].data);
-    free(result);
+    release_images(result, output_count);
     free_sd_ctx(ctx);
     return output;
 }
