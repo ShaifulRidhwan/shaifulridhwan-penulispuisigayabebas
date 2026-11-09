@@ -42,7 +42,8 @@ private fun voiceStyleInstruction(style:String):String=when(style){
 }
 @Composable fun VoiceContent(onClose:()->Unit,mode:String="cahaya",onMode:(String)->Unit={},
     chatHistory:List<Message> = emptyList(), memoryEnabled:Boolean=false, memoryNotes:String="",
-    onCompletedTurns:(List<VoiceContextTurn>)->Unit = {}) {
+    onCompletedTurns:(List<VoiceContextTurn>)->Unit = {},
+    onStatus:(String,Boolean)->Unit={_,_->}) {
     val context=LocalContext.current
     val preferences=remember(context){context.getSharedPreferences("aksara_voice",android.content.Context.MODE_PRIVATE)}
     var style by rememberSaveable {mutableStateOf(preferences.getString("language_style","Bahasa Santai")?.takeIf{it in VoiceLanguageStyles}?:"Bahasa Santai")}
@@ -80,6 +81,7 @@ private fun voiceStyleInstruction(style:String):String=when(style){
     LaunchedEffect(client,policy){client.updateIdentity(policy)}
     LaunchedEffect(client){client.setPushToTalk(startPtt)}
     val state by client.state.collectAsStateWithLifecycle()
+    LaunchedEffect(state.phase,state.ready) { onStatus(state.phase,state.ready) }
     var permissionError by remember {mutableStateOf<String?>(null)}
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { results ->
         if (context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED) {

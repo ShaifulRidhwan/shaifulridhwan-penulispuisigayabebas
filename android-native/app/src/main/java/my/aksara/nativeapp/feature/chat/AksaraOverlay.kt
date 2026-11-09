@@ -39,10 +39,11 @@ import my.aksara.nativeapp.feature.tools.*
     onRemoveDraft:suspend(String)->Boolean={false},
     onUseDraft:(String)->Unit={},
     onEraseLocal:suspend()->Boolean={false},
-    onJumpToMessage:(String)->Unit={}) {
+    onJumpToMessage:(String)->Unit={},
+    onVoiceState:(String,Boolean)->Unit={_,_->}) {
     // Android Lite: preserve the engines on disk, but expose no inactive entry points.
     if(kind=="code" || kind=="terminal" || kind=="engines") return
-    if(kind=="voice"){VoiceContent(onClose,state.mode,onMode,state.messages,state.memoryEnabled,state.memoryNotes,onVoiceTurns);return}
+    if(kind=="voice"){VoiceContent(onClose,state.mode,onMode,state.messages,state.memoryEnabled,state.memoryNotes,onVoiceTurns,onStatus=onVoiceState);return}
     if(kind=="voice-fixture"){VoiceScreen(VoiceState(phase="preview"),onClose,preview=true);return}
     if(kind=="search-hub") {
         AksaraSearchHub(state,onClose,onSettings={onNavigate("settings")},
@@ -73,7 +74,7 @@ import my.aksara.nativeapp.feature.tools.*
             maxOf(73.dp,(24f+18.2f+4f+15.75f*lines).dp)
         }
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(AksaraModalStyle.scrim).clickable(onClick=onClose))
-        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->425.766.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(345.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
+        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->453.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(345.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).widthIn(max=680.dp).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).testTag("aksara-glass-modal").clickable(enabled=false){},
@@ -99,7 +100,7 @@ import my.aksara.nativeapp.feature.tools.*
                     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
                             AksaraText(title,size=16f,line=20.8f,weight=700,tracking=.4f)
-                            val subtitle=when(kind){"connection"->"Empat penyedia AI teks termasuk empat sambungan Gemini. Status Sedia tidak bermaksud sambungan telah disahkan.";"code"->"Lima runtime untuk menjalankan kod termasuk C++20. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.";"terminal"->"Terminal native dalam proses berasingan. Shell Android, bukan shell server.";"thinking"->"Pilih cara Aksara A.I. berfikir dan menjawab.";"portal"->"Pilih ruang yang kau mahu teroka dalam ekosistem Aksara.";"attachments"->"Pilih bahan untuk dihantar bersama mesej.";else->""}
+                            val subtitle=when(kind){"connection"->"Routing adaptif Aksara menyelaraskan Gemini, Groq, OpenRouter dan Cloudflare Workers AI, dengan laluan fallback mengikut ketersediaan.";"code"->"Lima runtime untuk menjalankan kod termasuk C++20. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.";"terminal"->"Terminal native dalam proses berasingan. Shell Android, bukan shell server.";"thinking"->"Pilih cara Aksara A.I. berfikir dan menjawab.";"portal"->"Pilih ruang yang kau mahu teroka dalam ekosistem Aksara.";"attachments"->"Pilih bahan untuk dihantar bersama mesej.";else->""}
                             if(subtitle.isNotEmpty()){Spacer(Modifier.height(if(kind=="portal")5.dp else 8.dp));AksaraText(subtitle,size=if(kind=="portal"||kind=="code")11.5f else 12f,line=if(kind=="portal")17f else 18.6f,color=Color(0xffc4bfba))}
                         }
                         AksaraButton("×",onClose,Modifier.width(36.dp),size=22f,height=37.dp,radius=10.dp)
@@ -149,14 +150,15 @@ import my.aksara.nativeapp.feature.tools.*
                         }
                         "connection" -> {
                             val backendUnreachable=state.providers.any{it.first=="backend" && it.second=="Backend unreachable"}
-                            Spacer(Modifier.height(10.dp));AksaraText(ProviderConnectionStatus.label(state.providers)+" · "+
-                                ProviderStatusPalette.summary(state.providers),
-                                size=9.5f,line=13.3f,color=AksaraColors.muted)
+                            Spacer(Modifier.height(10.dp));AksaraText(
+                                if(backendUnreachable) "Backend unreachable · "+ProviderStatusPalette.summary(state.providers)
+                                else ProviderStatusPalette.summary(state.providers),
+                                size=10.5f,line=14f,color=AksaraColors.muted)
                             Spacer(Modifier.height(10.dp))
                             val providers=listOf("gemini" to "Google Gemini","groq" to "Groq","workers_ai" to "Cloudflare Workers AI","openrouter" to "OpenRouter")
                             providers.forEach { (id,name) ->
                                 var expanded by remember {mutableStateOf(false)}
-                                MenuRow(name,state.providers.find{it.first==id}?.second?:(if(backendUnreachable)"Backend unreachable" else "Unverified"),height=48.dp) {expanded=!expanded}
+                                MenuRow(name,state.providers.find{it.first==id}?.second?:(if(backendUnreachable)"Backend unreachable" else "Unverified"),height=48.dp,icon=ProviderIdentity.of(id)?.icon) {expanded=!expanded}
                                 if(expanded) AksaraText(state.providerDetails[id]?.takeIf{it.isNotBlank()} ?: "Ready belum membuktikan inferens berjaya. Refresh untuk status terkini.",Modifier.padding(8.dp),size=10f,color=AksaraColors.muted)
                                 Spacer(Modifier.height(8.dp))
                             }
@@ -296,9 +298,13 @@ import my.aksara.nativeapp.feature.tools.*
         }
     }
 }
-@Composable private fun MenuRow(name:String,status:String,height:Dp=49.dp,onClick:()->Unit) {
+@Composable private fun MenuRow(name:String,status:String,height:Dp=49.dp,icon:String?=null,onClick:()->Unit) {
     AksaraGlassSurface(Modifier.fillMaxWidth().height(height).clickable(onClick=onClick),radius=13.dp) {
         Row(Modifier.fillMaxSize().padding(horizontal=12.dp),verticalAlignment=Alignment.CenterVertically) {
+            if(icon!=null) {
+                AksaraIcon(icon,Modifier.size(16.dp),Color(0xffc1b8a8))
+                Spacer(Modifier.width(8.dp))
+            }
             AksaraText(name,Modifier.weight(1f),size=12f,weight=600)
             val tone=ProviderStatusPalette.color(status)
             Box(Modifier.size(8.dp).clip(RoundedCornerShape(999.dp)).background(tone))
