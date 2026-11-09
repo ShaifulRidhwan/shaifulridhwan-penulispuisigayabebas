@@ -1,5 +1,7 @@
 package my.aksara.nativeapp.feature.chat
 
+import android.content.Intent
+
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,6 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import my.aksara.nativeapp.core.design.*
 
@@ -27,6 +30,7 @@ internal fun AksaraSearchHub(
     onExportSessions: () -> Unit,
     onImportSessions: () -> Unit
 ) {
+    val context = LocalContext.current
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var query by rememberSaveable { mutableStateOf("") }
     val sessions = remember(state.archive, state.sessionStarts, state.messages) {
@@ -166,6 +170,15 @@ internal fun AksaraSearchHub(
                                 AksaraButton("Import JSON", onImportSessions, Modifier.weight(1f),
                                     height = 37.dp, size = 10f, enabled = !state.busy)
                             }
+                            AksaraButton("Kongsi perbualan aktif", {
+                                val body = state.messages.joinToString("\\n\\n") {
+                                    (if (it.role == "user") "Kau" else "Aksara") + ": " + it.text
+                                }
+                                val intent = Intent(Intent.ACTION_SEND).setType("text/plain")
+                                    .putExtra(Intent.EXTRA_TEXT, body)
+                                context.startActivity(Intent.createChooser(intent, "Kongsi perbualan Aksara"))
+                            }, Modifier.fillMaxWidth(), height = 37.dp, size = 10.5f,
+                                enabled = state.messages.isNotEmpty())
                             AksaraText("Fail JSON yang dieksport ialah teks biasa. Lindungi fail tersebut.",
                                 size = 10f, color = AksaraColors.muted)
                             AksaraButton("Buka semua mesej", { onRestore(); onClose() },
