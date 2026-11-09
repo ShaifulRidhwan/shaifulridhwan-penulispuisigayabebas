@@ -193,26 +193,42 @@ internal class LocalModelManager(private val context: Context) {
 }
 
 internal class LocalSDTurboEngine {
-    private val mutex = Mutex()
+    // A cancelled coroutine cannot pre-empt a synchronous JNI model load.
+    // Keep the runtime occupied until native code really returns.
+    private val running = java.util.concurrent.atomic.AtomicBoolean(false)
     private val libraryLoaded: Boolean by lazy {
         runCatching { System.loadLibrary("aksara_sdturbo") }.isSuccess
     }
+    private fun interface NativeProgress { fun onStage(stage: Int) }
     fun available(): Boolean = libraryLoaded
-    private external fun generateNative(modelPath: String, prompt: String, seed: Long, threads: Int): IntArray?
+    fun isBusy(): Boolean = running.get()
+    private external fun generateNative(
+        modelPath: String, prompt: String, seed: Long, threads: Int, callback: NativeProgress
+    ): IntArray?
     private external fun cancelNative()
-    fun cancel() { if (available()) cancelNative() }
+    fun cancel() { if (available() && running.get()) cancelNative() }
 
-    suspend fun generate(modelPath: String, prompt: String, seed: Long): Bitmap =
-        withContext(Dispatchers.Default) {
-            mutex.withLock {
-                check(available()) { "Runtime SD-Turbo JNI tidak tersedia dalam binaan ini." }
-                require(File(modelPath).isFile) { "Model belum dipasang." }
-                StudioRules.local("1:1", SDTurboSpec.steps, SDTurboSpec.nativeCfg)
-                val threads = Runtime.getRuntime().availableProcessors().coerceIn(1, 4)
-                val pixels = generateNative(modelPath, StudioRules.prompt(prompt), seed, threads)
-                    ?: throw IOException("Native SD-Turbo gagal menjana imej.")
-                require(pixels.size == SDTurboSpec.width * SDTurboSpec.height) { "Dimensi output native tidak sah." }
-                Bitmap.createBitmap(pixels, SDTurboSpec.width, SDTurboSpec.height, Bitmap.Config.ARGB_8888)
-            }
+    suspend fun generate(
+        modelPath: String, prompt: String, seed: Long, onStage: (Int) -> Unit = {}
+    ): Bitmap = withContext(Dispatchers.Default) {
+        check(available()) { "Runtime SD-Turbo JNI tidak tersedia dalam binaan ini." }
+        require(File(modelPath).isFile) { "Model belum dipasang." }
+        StudioRules.local("1:1", SDTurboSpec.steps, SDTurboSpec.nativeCfg)
+        check(running.compareAndSet(false, true)) {
+            "Inferens sebelumnya masih berjalan di JNI. Tunggu ia berhenti sebelum menjana lagi."
         }
+        try {
+            val threads = Runtime.getRuntime().availableProcessors().coerceIn(1, 4)
+            val pixels = generateNative(
+                modelPath, StudioRules.prompt(prompt), seed, threads,
+                NativeProgress { stage -> onStage(stage) }
+            ) ?: throw IOException("Native SD-Turbo gagal menjana imej.")
+            require(pixels.size == SDTurboSpec.width * SDTurboSpec.height) {
+                "Dimensi output native tidak sah."
+            }
+            Bitmap.createBitmap(pixels, SDTurboSpec.width, SDTurboSpec.height, Bitmap.Config.ARGB_8888)
+        } finally {
+            running.set(false)
+        }
+    }
 }
