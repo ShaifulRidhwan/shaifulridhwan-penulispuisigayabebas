@@ -16,7 +16,7 @@ class GameActivity : ComponentActivity() {
         private set
     private lateinit var root: FrameLayout
     private var destroyed=false
-    private var canvasFallback=false
+    private var webAlive=false
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window,false)
@@ -30,8 +30,10 @@ class GameActivity : ComponentActivity() {
         loadGame(intent.getBooleanExtra("forceCanvas",false))
     }
     private fun loadGame(canvas:Boolean) {
-        canvasFallback=canvas
-        if(::gameWebView.isInitialized){(gameWebView.parent as? ViewGroup)?.removeView(gameWebView);gameWebView.destroy()}
+        val previousAlive=webAlive
+        webAlive=false
+        if(previousAlive) { (gameWebView.parent as? ViewGroup)?.removeView(gameWebView); gameWebView.destroy() }
+
         root.removeAllViews()
         val loader=WebViewAssetLoader.Builder().addPathHandler("/assets/",WebViewAssetLoader.AssetsPathHandler(this)).build()
         gameWebView=WebView(this).apply {
@@ -60,12 +62,16 @@ class GameActivity : ComponentActivity() {
                 }
                 override fun onRenderProcessGone(view:WebView,detail:RenderProcessGoneDetail):Boolean {
                     Log.e("AksaraGame","Renderer gone, crashed=${detail.didCrash()}")
+                    webAlive=false
+                    root.removeView(view)
+                    view.destroy()
                     runOnUiThread{showRecovery("Renderer terhenti. Cuba Canvas atau kembali ke Aksara.")}
                     return true
                 }
             }
             addOnLayoutChangeListener{_,l,t,r,b,_,_,_,_->Log.i("AksaraGame","viewport ${r-l}x${b-t}")}
         }
+        webAlive=true
         root.addView(gameWebView,FrameLayout.LayoutParams(-1,-1))
         gameWebView.loadUrl("https://appassets.androidplatform.net/assets/game/index.html"+if(canvas)"?renderer=canvas" else "")
     }
@@ -77,7 +83,7 @@ class GameActivity : ComponentActivity() {
         box.addView(Button(this).apply{text="Kembali ke Aksara";setOnClickListener{finish()}})
         root.addView(box,FrameLayout.LayoutParams(-1,-2))
     }
-    override fun onPause(){if(::gameWebView.isInitialized){gameWebView.evaluateJavascript("window.aksaraPause && window.aksaraPause()",null);gameWebView.onPause()};super.onPause()}
-    override fun onResume(){super.onResume();if(::gameWebView.isInitialized)gameWebView.onResume()}
-    override fun onDestroy(){destroyed=true;if(::gameWebView.isInitialized){root.removeView(gameWebView);gameWebView.stopLoading();gameWebView.destroy()};super.onDestroy()}
+    override fun onPause(){if(webAlive){gameWebView.evaluateJavascript("window.aksaraPause && window.aksaraPause()",null);gameWebView.onPause()};super.onPause()}
+    override fun onResume(){super.onResume();if(webAlive)gameWebView.onResume()}
+    override fun onDestroy(){destroyed=true;if(webAlive){root.removeView(gameWebView);gameWebView.stopLoading();gameWebView.destroy();webAlive=false};super.onDestroy()}
 }

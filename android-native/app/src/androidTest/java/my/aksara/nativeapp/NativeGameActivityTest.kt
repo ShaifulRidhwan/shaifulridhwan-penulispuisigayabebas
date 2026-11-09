@@ -36,7 +36,10 @@ class NativeGameActivityTest {
                     lateinit var a:GameActivity;game.onActivity{a=it}
                     waitJs(a,"!!window.gameDiagnostics && gameDiagnostics.ready && gameDiagnostics.frames>3 && gameDiagnostics.width>0 && gameDiagnostics.height>0")
                     assertEquals(Configuration.ORIENTATION_LANDSCAPE,a.resources.configuration.orientation)
-                    if(canvas)assertEquals("\"canvas\"",js(a,"gameDiagnostics.renderer"))
+                    if(canvas){
+                        assertEquals("\"canvas\"",js(a,"gameDiagnostics.renderer"))
+                        assertEquals("true",js(a,"game.canvas.getContext('2d').getImageData(260,330,1,1).data[0]>100"))
+                    }
                     js(a,"document.querySelector('#start').click()")
                     waitJs(a,"!paused && match.elapsed>0.1 && document.querySelector('#menu').style.display==='none'")
                     val x0=js(a,"match.fighters[0].x").toDouble()
