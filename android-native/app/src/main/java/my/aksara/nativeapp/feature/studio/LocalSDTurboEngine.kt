@@ -37,6 +37,20 @@ internal object SDTurboSpec {
     const val nativeCfg = 1.0f
 }
 
+/** GGUF signature and version preflight. This does not imply tensor compatibility or inference. */
+internal object SDTurboModelFormat {
+    fun supportedHeader(bytes: ByteArray): Boolean {
+        if (bytes.size < 8 || bytes[0] != 'G'.code.toByte() ||
+            bytes[1] != 'G'.code.toByte() || bytes[2] != 'U'.code.toByte() ||
+            bytes[3] != 'F'.code.toByte()) return false
+        val version = (bytes[4].toInt() and 255) or
+            ((bytes[5].toInt() and 255) shl 8) or
+            ((bytes[6].toInt() and 255) shl 16) or
+            ((bytes[7].toInt() and 255) shl 24)
+        return version == 2 || version == 3
+    }
+}
+
 internal class LocalModelManager(private val context: Context) {
     private val dir = File(context.filesDir, "studio-models").apply { mkdirs() }
     private val download = File(dir, SDTurboSpec.filename + ".part")
@@ -80,8 +94,13 @@ internal class LocalModelManager(private val context: Context) {
         return md.digest().joinToString("") { "%02x".format(it) }
     }
 
+    private fun validHeader(file: File): Boolean = file.inputStream().use { input ->
+        SDTurboModelFormat.supportedHeader(input.readNBytes(8))
+    }
+
     private fun atomicallyInstall(candidate: File) {
         require(candidate.length() == SDTurboSpec.sizeBytes) { "Saiz model tidak sepadan." }
+        require(validHeader(candidate)) { "SDT_MODEL_HEADER: Header model bukan GGUF disokong." }
         require(digest(candidate) == SDTurboSpec.sha256) { "SHA-256 gagal. Fail tidak dipasang." }
         val destination = File(dir, "sd-turbo-verified.tmp")
         if (destination.exists()) destination.delete()
@@ -99,7 +118,7 @@ internal class LocalModelManager(private val context: Context) {
     suspend fun verify(): Boolean = withContext(Dispatchers.IO) {
         mutex.withLock {
             val path = modelPath() ?: return@withLock false
-            val correct = digest(File(path)) == SDTurboSpec.sha256
+            val correct = validHeader(File(path)) && digest(File(path)) == SDTurboSpec.sha256
             if (!correct) receipt.delete()
             correct
         }
@@ -194,21 +213,36 @@ internal class LocalModelManager(private val context: Context) {
 
 internal class LocalSDTurboEngine {
     private val mutex = Mutex()
-    private val libraryLoaded: Boolean by lazy {
-        runCatching { System.loadLibrary("aksara_sdturbo") }.isSuccess
+    private val libraryLoad: Result<Unit> by lazy {
+        runCatching { System.loadLibrary("aksara_sdturbo") }
     }
-    fun available(): Boolean = libraryLoaded
+    fun available(): Boolean = libraryLoad.isSuccess
+    fun loadProblem(): String? = libraryLoad.exceptionOrNull()?.javaClass?.simpleName
     private external fun generateNative(modelPath: String, prompt: String, seed: Long, threads: Int): IntArray?
+    private external fun probeNative(modelPath: String, threads: Int): String?
     private external fun cancelNative()
-    fun cancel() { if (available()) cancelNative() }
+    // Disposing Studio must not crash even if the JNI symbol is absent in an old APK.
+    fun cancel() { if (available()) runCatching { cancelNative() } }
+
+    /** Loads and frees actual model tensors via the pinned native engine. Not an inference PASS. */
+    suspend fun probe(modelPath: String): String = withContext(Dispatchers.Default) {
+        mutex.withLock {
+            check(available()) { "SDT_JNI_LOAD: " + (loadProblem() ?: "Runtime tidak tersedia.") }
+            require(File(modelPath).isFile) { "SDT_MODEL_MISSING: Model belum dipasang." }
+            currentCoroutineContext().ensureActive()
+            val threads = Runtime.getRuntime().availableProcessors().coerceIn(1, 4)
+            probeNative(modelPath, threads) ?: throw IOException("SDT_MODEL_INIT: Native tidak mengembalikan versi model.")
+        }
+    }
 
     suspend fun generate(modelPath: String, prompt: String, seed: Long): Bitmap =
         withContext(Dispatchers.Default) {
             mutex.withLock {
-                check(available()) { "Runtime SD-Turbo JNI tidak tersedia dalam binaan ini." }
+                check(available()) { "SDT_JNI_LOAD: " + (loadProblem() ?: "Runtime tidak tersedia dalam binaan ini.") }
                 require(File(modelPath).isFile) { "Model belum dipasang." }
                 StudioRules.local("1:1", SDTurboSpec.steps, SDTurboSpec.nativeCfg)
                 val threads = Runtime.getRuntime().availableProcessors().coerceIn(1, 4)
+                currentCoroutineContext().ensureActive()
                 val pixels = generateNative(modelPath, StudioRules.prompt(prompt), seed, threads)
                     ?: throw IOException("Native SD-Turbo gagal menjana imej.")
                 require(pixels.size == SDTurboSpec.width * SDTurboSpec.height) { "Dimensi output native tidak sah." }
