@@ -171,7 +171,7 @@ internal fun AksaraSearchHub(
                                     height = 37.dp, size = 10f, enabled = !state.busy)
                             }
                             AksaraButton("Kongsi perbualan aktif", {
-                                val body = state.messages.joinToString("\\n\\n") {
+                                val body = state.messages.joinToString("\n\n") {
                                     (if (it.role == "user") "Kau" else "Aksara") + ": " + it.text
                                 }
                                 val intent = Intent(Intent.ACTION_SEND).setType("text/plain")
