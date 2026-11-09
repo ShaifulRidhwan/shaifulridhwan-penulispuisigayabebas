@@ -93,6 +93,11 @@ internal fun AksaraSettings(
                                     }
                                     Spacer(Modifier.height(10.dp))
                                     SettingsLabel("Model Capability Registry")
+                                    if(state.modelRegistry.isEmpty())AksaraText("Model aktif belum dilaporkan.",size=10f,color=AksaraColors.muted)
+                                    state.modelRegistry.forEach { info ->
+                                        SettingsFact(info.provider+" · "+info.model,info.status)
+                                    }
+                                    Spacer(Modifier.height(7.dp))
                                     AksaraText("Berdasarkan manifest konfigurasi backend, bukan jaminan model berjaya menjawab.",
                                         size=10f,color=AksaraColors.muted)
                                     Spacer(Modifier.height(5.dp))
@@ -224,8 +229,8 @@ internal fun AksaraSettings(
                                         notes="";onMemory(false,"")
                                     },Modifier.fillMaxWidth(),height=34.dp,size=10f)
                                     Spacer(Modifier.height(12.dp))
-                                    SettingsLabel("Padam semua data setempat")
-                                    AksaraText("Padam sesi, ringkasan, nota dan draf dari storan aplikasi ini. Tidak memadam rekod yang mungkin telah diproses penyedia luar. Eksport dahulu jika mahu salinan.",
+                                    SettingsLabel("Padam data Chat setempat")
+                                    AksaraText("Padam sesi Chat, ringkasan, nota memori dan draf tersulit. Data Studio, model offline dan pilihan Voice tidak termasuk. Ini tidak memadam rekod yang telah diproses penyedia luar. Eksport dulu jika mahu salinan.",
                                         size=10f,line=15f,color=AksaraColors.muted)
                                     Spacer(Modifier.height(7.dp))
                                     if(!confirmErase)AksaraButton("Semak sebelum padam",{

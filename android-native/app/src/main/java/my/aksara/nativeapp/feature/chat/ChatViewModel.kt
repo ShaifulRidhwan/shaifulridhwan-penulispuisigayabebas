@@ -25,6 +25,7 @@ data class ChatState(val messages: List<Message> = emptyList(), val archive: Lis
     val lastProvider: String = "", val lastModel: String = "", val lastResearchStatus: String = "", val lastToolsUsed: List<String> = emptyList(),
     val lastEvidenceLevel: String = "not_checked", val lastReviewApplied: Boolean? = null,
     val capabilities: List<P3Intelligence.Capability> = emptyList(),
+    val modelRegistry: List<P3Intelligence.ModelInfo> = emptyList(),
     val pendingDrafts: List<PendingDraft> = emptyList(),
     val completedRequests: Int = 0, val failedRequests: Int = 0)
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
@@ -135,6 +136,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         try {
             val response = api.post(BackendRoutes.CHAT, JSONObject().put("providerStatus", true))
             val capabilities = P3Intelligence.inventory(response)
+            val modelRegistry = P3Intelligence.models(response)
             val rows = response.optJSONArray("providers")
                 ?: throw java.io.IOException("Provider health returned invalid JSON.")
             val entries = (0 until rows.length()).map { rows.getJSONObject(it) }
@@ -150,7 +152,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 provider.optString("id") to listOfNotNull(reason, poolSummary).joinToString(" · ")
             }
             mutable.update { it.copy(providers = statuses, providerDetails = details,
-                capabilities = capabilities) }
+                capabilities = capabilities,modelRegistry=modelRegistry) }
         } catch (e: Exception) {
             if (e !is CancellationException) mutable.update {
                 val reason = if (e.message?.startsWith("Backend unreachable") == true) "Backend unreachable"

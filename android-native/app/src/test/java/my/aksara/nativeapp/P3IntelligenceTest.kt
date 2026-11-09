@@ -35,5 +35,9 @@ class P3IntelligenceTest {
         assertTrue(rows.any{it.provider=="gemini"&&it.name=="functionCalling"&&it.configured})
         assertTrue(rows.any{it.provider=="gemini"&&it.name=="urlContext"&&!it.configured})
         assertTrue(P3Intelligence.reviewLabel(null,"links_only").contains("tidak dilaporkan"))
+        val withModel=JSONObject().put("providers",org.json.JSONArray().put(
+            JSONObject().put("id","gemini").put("model","gemini-3.5-flash-lite").put("status","online")))
+        assertEquals("gemini-3.5-flash-lite",P3Intelligence.models(withModel)[0].model)
+        assertTrue(P3Intelligence.models(payload).isEmpty())
     }
 }

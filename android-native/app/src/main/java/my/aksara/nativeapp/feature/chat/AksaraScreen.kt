@@ -150,7 +150,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             val requiresApproval=uris.any { uri ->
                 runCatching {
                     AttachmentReader.needsLargeUpload(AttachmentReader.inspect(context,uri))
-                }.getOrDefault(false)
+                }.getOrDefault(true) // Fail closed when a provider cannot be inspected.
             }
             if(requiresApproval) pendingRemoteSelection=uris
             else beginAttachmentRead(uris)

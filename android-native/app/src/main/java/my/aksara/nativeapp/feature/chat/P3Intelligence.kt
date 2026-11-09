@@ -13,6 +13,7 @@ object P3Intelligence {
     data class PlanStep(val label:String,val executed:Boolean=false)
     data class TopicEdge(val first:String,val second:String,val mentions:Int)
     data class Capability(val provider:String,val name:String,val configured:Boolean)
+    data class ModelInfo(val provider:String,val model:String,val status:String)
 
     fun previewPlan(input:String):List<PlanStep> {
         val text=input.trim().take(3000)
@@ -68,6 +69,17 @@ object P3Intelligence {
             }
         }
         return rows.sortedWith(compareBy<Capability>{it.provider}.thenBy{it.name})
+    }
+
+    fun models(data:JSONObject):List<ModelInfo> {
+        val providers=data.optJSONArray("providers") ?: return emptyList()
+        return (0 until minOf(providers.length(),16)).mapNotNull { i ->
+            val row=providers.optJSONObject(i) ?: return@mapNotNull null
+            val id=row.optString("id").take(32)
+            val model=row.optString("model").take(90)
+            val status=row.optString("status").take(24)
+            if(id.isBlank() || model.isBlank())null else ModelInfo(id,model,status)
+        }
     }
 
     fun reviewLabel(reviewApplied:Boolean?,evidence:String):String {
