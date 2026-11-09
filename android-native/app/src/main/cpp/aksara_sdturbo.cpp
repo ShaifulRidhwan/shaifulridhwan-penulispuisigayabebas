@@ -59,6 +59,12 @@ Java_my_aksara_nativeapp_feature_studio_LocalSDTurboEngine_generateNative(
     init_params.model_path = path.c_str();
     init_params.n_threads = threads;
     init_params.backend = "cpu";
+    // The pinned upstream defaults mmap OFF. On Android, loading a 1.85 GB
+    // model into private heap memory can trigger heavy reclaim / OOM.
+    // Map weights from the verified app-private file instead.
+    init_params.enable_mmap = true;
+    init_params.conditioning_cache_size = 0;  // One prompt per context.
+    init_params.diffusion_flash_attn = true;   // Reduce UNet attention scratch.
 
     const auto load_started = std::chrono::steady_clock::now();
     report_stage(env, callback, 1);  // Model allocation / tensor loading.
