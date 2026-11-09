@@ -111,5 +111,6 @@ private fun voiceStyleInstruction(style:String):String=when(style){
         if(required.isEmpty())client.start() else permission.launch(required.toTypedArray())
     }
     VoiceScreen(state.copy(message=permissionError?:state.message),onClose={client.close();onClose()},onMic={client.setMic(!state.mic)},onSpeaker={client.setSpeaker(!state.speaker)},onVolume=client::setVolume,onAudioRoute=client::selectAudioDevice,
-        onPushToTalk=client::setPushToTalk,onTalkHeld=client::setTalkHeld,mode=mode,onMode=onMode,style=style,onStyle={next->if(next in VoiceLanguageStyles){style=next;preferences.edit().putString("language_style",next).apply()}})
+        onPushToTalk=client::setPushToTalk,onTalkHeld=client::setTalkHeld,
+        onCorrectCaption=client::sendCaptionCorrection,mode=mode,onMode=onMode,style=style,onStyle={next->if(next in VoiceLanguageStyles){style=next;preferences.edit().putString("language_style",next).apply()}})
 }

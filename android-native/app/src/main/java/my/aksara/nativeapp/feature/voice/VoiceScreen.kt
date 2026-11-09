@@ -4,6 +4,7 @@ import androidx.compose.foundation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -25,13 +26,15 @@ import my.aksara.engine.avatar.VoiceAvatarView
 @Composable fun VoiceScreen(state:VoiceState,onClose:()->Unit,onMic:()->Unit={},onSpeaker:()->Unit={},
     onVolume:(Float)->Unit={},mode:String="cahaya",onMode:(String)->Unit={},style:String="Bahasa Santai",
     onStyle:(String)->Unit={},onAudioRoute:(Int?)->Unit={},onPushToTalk:(Boolean)->Unit={},
-    onTalkHeld:(Boolean)->Unit={},preview:Boolean=false){
+    onTalkHeld:(Boolean)->Unit={},onCorrectCaption:(String)->Boolean={false},preview:Boolean=false){
     val margins=aksaraDeviceMargins()
     val haze=LocalBackdrop.current
     val voiceBackdrop=remember{HazeState()}
     var modePicker by remember{mutableStateOf(false)};var stylePicker by remember{mutableStateOf(false)}
     var routePicker by remember{mutableStateOf(false)}
     var captionsVisible by rememberSaveable { mutableStateOf(true) }
+    var captionEditor by remember { mutableStateOf(false) }
+    var captionDraft by remember { mutableStateOf("") }
     var seconds by remember{mutableIntStateOf(0)}
     val live = !preview && state.ready && state.phase in setOf("listening","thinking","speaking")
     val pulse = rememberInfiniteTransition(label="voice-live")
@@ -102,8 +105,16 @@ import my.aksara.engine.avatar.VoiceAvatarView
                         Spacer(Modifier.height(8.dp))
                         AksaraGlassSurface(Modifier.fillMaxWidth().heightIn(min=38.dp),radius=AksaraGlassTokens.controlRadius,blur=12.dp) {
                             Column(Modifier.fillMaxWidth().padding(horizontal=10.dp,vertical=7.dp)) {
-                                if(state.lastHeard.isNotBlank())
-                                    AksaraText("Kau · " + state.lastHeard.takeLast(125),size=10f,line=14f,color=AksaraColors.text)
+                                if(state.lastHeard.isNotBlank()) {
+                                    Row(verticalAlignment=Alignment.CenterVertically,
+                                        horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                                        AksaraText("Kau · " + state.lastHeard.takeLast(125),
+                                            Modifier.weight(1f),size=10f,line=14f,color=AksaraColors.text)
+                                        AksaraText("Betulkan",Modifier.clickable {
+                                            captionDraft=state.lastHeard;captionEditor=true
+                                        },size=9.5f,color=AksaraColors.gold)
+                                    }
+                                }
                                 if(state.lastSpoken.isNotBlank()) {
                                     Spacer(Modifier.height(3.dp))
                                     AksaraText("Aksara · " + state.lastSpoken.takeLast(125),size=10f,line=14f,color=AksaraColors.muted)
@@ -179,12 +190,27 @@ import my.aksara.engine.avatar.VoiceAvatarView
             }
             Spacer(Modifier.height(9.dp))
         }
-        if(modePicker||stylePicker||routePicker)Box(Modifier.fillMaxSize().background(Color(0,0,0,80)).clickable{modePicker=false;stylePicker=false;routePicker=false},contentAlignment=Alignment.Center){
+        if(modePicker||stylePicker||routePicker||captionEditor)Box(Modifier.fillMaxSize().background(Color(0,0,0,80)).clickable{modePicker=false;stylePicker=false;routePicker=false;captionEditor=false},contentAlignment=Alignment.Center){
             AksaraGlassSurface(Modifier.padding(24.dp).fillMaxWidth().heightIn(max=540.dp),radius=24.dp,blur=29.dp,brush=DialogGradient,border=Color(245,217,176,108),saturation=1.14f){
                 Column(Modifier.padding(18.dp).verticalScroll(rememberScrollState())){
-                    AksaraText(if(routePicker)"Peranti Audio" else if(modePicker)"Thinking Mode" else "Gaya bahasa",size=17f,weight=600)
+                    AksaraText(if(captionEditor)"Betulkan transkripsi" else if(routePicker)"Peranti Audio" else if(modePicker)"Thinking Mode" else "Gaya bahasa",size=17f,weight=600)
                     if(stylePicker){Spacer(Modifier.height(5.dp));AksaraText("Pilih Bahasa Santai atau loghat. Menukar gaya akan sambung semula sesi Live.",size=10f,line=15f,color=AksaraColors.muted)}
-                    if(routePicker){
+                    if(captionEditor) {
+                        Spacer(Modifier.height(9.dp))
+                        AksaraText("Ini menghantar teks yang kau sahkan sebagai giliran baharu; audio asal tidak diubah.",
+                            size=10f,line=15f,color=AksaraColors.muted)
+                        Spacer(Modifier.height(12.dp))
+                        AksaraGlassSurface(Modifier.fillMaxWidth().heightIn(min=70.dp,max=140.dp),radius=13.dp){
+                            BasicTextField(captionDraft,{captionDraft=it.take(700)},
+                                Modifier.fillMaxWidth().padding(12.dp),
+                                textStyle=AksaraTypography.style(13f,18f),cursorBrush=SolidColor(AksaraColors.gold))
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        AksaraButton("Hantar pembetulan",{
+                            if(onCorrectCaption(captionDraft))captionEditor=false
+                        },Modifier.fillMaxWidth(),height=43.dp,radius=15.dp,
+                            enabled=captionDraft.isNotBlank() && state.ready)
+                    } else if(routePicker){
                         Spacer(Modifier.height(6.dp))
                         AksaraText("Pilih laluan panggilan dua hala. Input dan output sebenar ditunjukkan selepas Android selesai merutekan audio.",
                             size=10f,line=15f,color=AksaraColors.muted)

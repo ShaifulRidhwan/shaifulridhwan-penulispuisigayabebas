@@ -90,6 +90,7 @@ class LiveVoiceClient(
     private val recentVoiceTurns = ArrayDeque<VoiceContextTurn>()
     private var incomingTranscript = ""
     private var outgoingTranscript = ""
+    private var correctionPending = false
     private var preferStandardModel = false
     private var socket: WebSocket? = null
     private var tokenCall: Call? = null
@@ -329,7 +330,7 @@ class LiveVoiceClient(
                 mutable.value = mutable.value.copy(phase = "listening", message = "Aku dengar.")
             }
             val transcript = content.optJSONObject("inputTranscription")?.optString("text").orEmpty()
-            if (transcript.isNotBlank()) {
+            if (transcript.isNotBlank() && !correctionPending) {
                 incomingTranscript = VoiceContextSync.mergeTranscript(incomingTranscript, transcript)
                 // Explicit requests in Malay may quote other languages. A single ASR guess
                 // mentioning "Spanish" must NOT unlock an entire foreign-language session.
@@ -397,6 +398,7 @@ class LiveVoiceClient(
                     while (recentVoiceTurns.size > 16) recentVoiceTurns.removeFirst()
                     incomingTranscript = ""
                     outgoingTranscript = ""
+                    correctionPending = false
                     if (completed.isNotEmpty()) runCatching { onCompletedTurns(completed) }
                 }
                 if (languageDrift || incomingSuspect) {
@@ -537,7 +539,7 @@ class LiveVoiceClient(
                     updateObservedRoute(id)
                 }
                 val permitted = VoiceAudioPolicy.captureAllowed(state.value.mic,state.value.pushToTalk,state.value.talkHeld)
-                if (n > 0 && permitted && !focusSuspended) {
+                if (n > 0 && permitted && !focusSuspended && !correctionPending) {
                     val now = System.currentTimeMillis()
                     if(now-levelAt>=160){
                         levelAt=now
@@ -625,6 +627,7 @@ class LiveVoiceClient(
         // interrupted fragment with speech from the replacement socket.
         incomingTranscript = ""
         outgoingTranscript = ""
+        correctionPending = false
     }
 
     /** Call-mode route is duplex. Never force speakerphone while Bluetooth is attached. */
@@ -759,6 +762,34 @@ class LiveVoiceClient(
         previousMode?.let { manager.mode = it }
         previousMode = null
         routeError = ""
+    }
+
+    /**
+     * Explicit correction is sent as a NEW typed user turn over the existing
+     * socket. Original speech audio is not edited or replayed.
+     */
+    @Synchronized fun sendCaptionCorrection(value: String): Boolean {
+        val corrected=value.trim().take(700)
+        if(corrected.isBlank() || !running.get() || !state.value.ready || correctionPending)return false
+        val ws=socket ?:return false
+        val payload=JSONObject().put("clientContent", JSONObject()
+            .put("turns",JSONArray().put(JSONObject()
+                .put("role","user").put("parts",JSONArray().put(JSONObject().put("text",corrected)))))
+            .put("turnComplete",true)).toString()
+        ws.send("{\"realtimeInput\":{\"audioStreamEnd\":true}}")
+        if(!ws.send(payload))return false
+        correctionPending=true
+        incomingTranscript=corrected
+        outgoingTranscript=""
+        incomingSuspect=false
+        languageDrift=false
+        playbackGeneration.incrementAndGet()
+        runCatching { outputTrack?.pause();outputTrack?.flush();outputTrack?.play() }
+        mutable.value=mutable.value.copy(
+            lastHeard=corrected,lastSpoken="",phase="thinking",
+            message="Pembetulan teks dihantar. Menunggu jawapan Gemini.",
+            transcriptWarning="Pembetulan ialah giliran teks baharu, bukan pengubahan rakaman.")
+        return true
     }
 
     @Synchronized fun selectAudioDevice(deviceId: Int?) {
