@@ -57,7 +57,7 @@ internal fun AksaraSettings(
     val context=LocalContext.current
     val scope=rememberCoroutineScope()
     val preferences=remember(context){context.getSharedPreferences("aksara_voice",android.content.Context.MODE_PRIVATE)}
-    var expanded by rememberSaveable { mutableStateOf("Voice & Audio") }
+    var expanded by rememberSaveable { mutableStateOf("") }
     var confirmErase by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf("") }
     var notes by remember(state.memoryNotes) { mutableStateOf(state.memoryNotes) }
@@ -74,19 +74,15 @@ internal fun AksaraSettings(
         Triple("Sistem & Diagnostik","Kesihatan penyedia, prestasi dan ralat",SettingsCategoryIcons.getValue("Sistem & Diagnostik"))
     )
 
-    Box(Modifier.fillMaxSize().background(Color(0,0,0,175)),contentAlignment=Alignment.Center) {
-        AksaraGlassSurface(
-            Modifier.fillMaxWidth().fillMaxHeight(.94f).padding(horizontal=10.dp,vertical=5.dp),
-            radius=23.dp,blur=18.dp,border=Color(244,217,176,95)
-        ) {
-            Column(Modifier.fillMaxSize().padding(horizontal=13.dp,vertical=14.dp)) {
+    AksaraGlassModal(onClose = onClose, preferredHeight = 585.dp) {
+        Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
                     Column(Modifier.weight(1f)){
-                        AksaraText("Tetapan Aksara A.I.",size=17f,weight=700,
+                        AksaraText("Tetapan Aksara A.I.",size=16f,weight=700,
                             family=AksaraTypography.heading)
                         AksaraText("Kawalan aplikasi dan diagnostik",size=10f,color=AksaraColors.muted)
                     }
-                    AksaraButton("×",onClose,Modifier.width(38.dp),height=36.dp,size=20f)
+                    AksaraButton("×",onClose,Modifier.width(36.dp),height=37.dp,size=22f,radius=10.dp)
                 }
                 Spacer(Modifier.height(10.dp))
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
@@ -325,7 +321,6 @@ internal fun AksaraSettings(
                     Spacer(Modifier.height(12.dp))
                 }
             }
-        }
     }
 }
 
@@ -347,8 +342,8 @@ private fun SettingsFact(name:String,value:String) {
 private fun SettingsGroup(name:String,description:String,icon:String,open:Boolean,
     toggle:()->Unit,content:@Composable ()->Unit
 ) {
-    AksaraGlassSurface(Modifier.fillMaxWidth(),radius=17.dp,blur=10.dp,
-        border=Color(244,217,176,58)) {
+    AksaraGlassSurface(Modifier.fillMaxWidth(),radius=14.dp,blur=4.dp,
+        border=AksaraModalStyle.border) {
         Column(Modifier.fillMaxWidth().padding(11.dp)) {
             Row(Modifier.fillMaxWidth().clickable(onClick=toggle).padding(vertical=5.dp),
                 horizontalArrangement=Arrangement.spacedBy(9.dp),verticalAlignment=Alignment.CenterVertically) {
