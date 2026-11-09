@@ -40,7 +40,8 @@ private fun voiceStyleInstruction(style:String):String=when(style){
     else->"Gunakan Bahasa Melayu Malaysia santai, tidak perlu loghat negeri tertentu."
 }
 @Composable fun VoiceContent(onClose:()->Unit,mode:String="cahaya",onMode:(String)->Unit={},
-    chatHistory:List<Message> = emptyList(), memoryEnabled:Boolean=false, memoryNotes:String="") {
+    chatHistory:List<Message> = emptyList(), memoryEnabled:Boolean=false, memoryNotes:String="",
+    onCompletedTurns:(List<VoiceContextTurn>)->Unit = {}) {
     val context=LocalContext.current
     val preferences=remember(context){context.getSharedPreferences("aksara_voice",android.content.Context.MODE_PRIVATE)}
     var style by rememberSaveable {mutableStateOf(preferences.getString("language_style","Bahasa Santai")?.takeIf{it in VoiceLanguageStyles}?:"Bahasa Santai")}
@@ -53,7 +54,7 @@ private fun voiceStyleInstruction(style:String):String=when(style){
         context.assets.open("voice-web-brain-"+webMode+".txt").bufferedReader().use{it.readText()}
     }
     // Exactly the current chat's completed turns, not the user's entire encrypted archive.
-    val conversation=remember(chatHistory){
+    val conversation=remember {
         VoiceContextSync.snapshot(chatHistory.filterNot{it.incomplete}
             .map{VoiceContextTurn(it.role,it.text)},limit=12,maxChars=4600)
     }
@@ -71,7 +72,8 @@ private fun voiceStyleInstruction(style:String):String=when(style){
             (if(notes.isBlank())"tiada" else org.json.JSONObject.quote(notes))
     // Keep one client (and its timer/preferences) while an intentional mode/style
     // change causes a fresh Gemini setup. Automatic reconnect uses this same policy.
-    val client=remember(context){LiveVoiceClient(context,BuildConfig.API_ORIGIN,policy)}
+    val currentCompletedTurns by rememberUpdatedState(onCompletedTurns)
+    val client=remember(context){LiveVoiceClient(context,BuildConfig.API_ORIGIN,policy) { currentCompletedTurns(it) }}
     LaunchedEffect(client,policy){client.updateIdentity(policy)}
     val state by client.state.collectAsStateWithLifecycle()
     var permissionError by remember {mutableStateOf<String?>(null)}

@@ -7,30 +7,12 @@ on:
       - 'android-native/app/src/main/cpp/**'
       - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/studio/**'
       - 'android-native/app/build.gradle.kts'
-      - 'android-native/app/src/main/assets/voice-web-brain-*.txt'
-      - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/**'
-      - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/voice/**'
-      - 'android-native/engine/voice/**'
-      - 'bilik-antara-brain.js'
-      - 'bilik-antara-identity.js'
-      - 'bilik-antara-voice-core-v3.js'
-      - 'scripts/sync-android-voice-brain.cjs'
-      - '.github/workflows/aksara-android-sdturbo-native.yml'
   push:
     branches: ['rebuild/aksara-android-native-v1']
     paths:
       - 'android-native/app/src/main/cpp/**'
       - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/studio/**'
       - 'android-native/app/build.gradle.kts'
-      - 'android-native/app/src/main/assets/voice-web-brain-*.txt'
-      - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/**'
-      - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/voice/**'
-      - 'android-native/engine/voice/**'
-      - 'bilik-antara-brain.js'
-      - 'bilik-antara-identity.js'
-      - 'bilik-antara-voice-core-v3.js'
-      - 'scripts/sync-android-voice-brain.cjs'
-      - '.github/workflows/aksara-android-sdturbo-native.yml'
 permissions:
   contents: read
 concurrency:

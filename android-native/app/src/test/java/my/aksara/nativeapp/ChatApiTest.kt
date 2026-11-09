@@ -10,6 +10,12 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ChatApiTest {
+    @Test fun responseRetainsActualThoughtLedgerWithoutInventingEntries() {
+        val event=Ndjson.parse("""{"type":"done","reply":"Analisis","provider":"gemini","thoughtLedger":[{"idea":"Premis A","status":"premis"},{"idea":" ","status":"premis"}]}""") as ChatEvent.Done
+        assertEquals(listOf(my.aksara.nativeapp.core.storage.ThoughtEntry("Premis A","premis")),event.thoughtLedger)
+        val empty=Ndjson.parse("""{"type":"done","reply":"Hai"}""") as ChatEvent.Done
+        assertTrue(empty.thoughtLedger.isEmpty())
+    }
     @Test fun productionRoutesCannotUseWorkerFallback(){
         assertEquals(BackendRoutes.PRODUCTION,my.aksara.nativeapp.BuildConfig.API_ORIGIN)
         assertEquals("https://shaifulridhwan-penulispuisigayabebas.netlify.app",BackendRoutes.configuredOrigin)
