@@ -2,14 +2,11 @@ package my.aksara.nativeapp.feature.studio
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import my.aksara.nativeapp.core.design.*
 
@@ -76,8 +73,8 @@ internal fun StudioTemplateGallery(onSelect:(ImageTemplate)->Unit) {
                             AksaraText(template.symbol,size=48f,color=Color.White)
                         }
                         AksaraText(template.title,size=12.5f,weight=700,
-                            maxLines=1,color=Color.White)
-                        AksaraText(template.subtitle,size=9.5f,maxLines=1,
+                            color=Color.White)
+                        AksaraText(template.subtitle,size=9.5f,
                             color=Color(237,234,230,208))
                     }
                 }
