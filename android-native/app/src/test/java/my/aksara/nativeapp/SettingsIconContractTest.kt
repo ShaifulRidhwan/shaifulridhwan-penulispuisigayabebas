@@ -16,5 +16,8 @@ class SettingsIconContractTest {
         assertEquals("chat", SettingsCategoryIcons["Chat & Lampiran"])
         assertTrue(isKnownAksaraIcon("settings"))
         assertTrue(isKnownAksaraIcon("home"))
+        listOf("image","video","file-text","audio").forEach { icon ->
+            assertTrue("Missing attachment icon $icon",isKnownAksaraIcon(icon))
+        }
     }
 }
