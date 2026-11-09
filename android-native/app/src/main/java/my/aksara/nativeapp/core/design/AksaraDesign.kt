@@ -172,6 +172,9 @@ private val iconPaths = mapOf(
     "end" to listOf("M4 8q8-7 16 0v6h-4v-4q-4-2-8 0v4H4Z"),
     "speaker" to listOf("M4 9h4l5-4v14l-5-4H4ZM17 8a6 6 0 0 1 0 8M20 5a10 10 0 0 1 0 14")
 )
+/** Accessible to regression tests so an unknown icon cannot silently render blank. */
+internal fun isKnownAksaraIcon(name: String): Boolean = iconPaths.containsKey(name)
+
 @Composable fun AksaraIcon(name: String, modifier: Modifier = Modifier.size(20.dp), color: Color = AksaraColors.gold) {
     val paths = remember(name) { iconPaths[name].orEmpty().map { PathParser().parsePathString(it).toPath() } }
     Canvas(modifier) { scale(size.width/24f, size.height/24f, pivot = Offset.Zero) { paths.forEach { drawPath(it, color, style = Stroke(1.5f, cap = StrokeCap.Round, join = StrokeJoin.Round)) }; if(name=="network")listOf(Offset(5f,5.5f),Offset(19f,5f),Offset(19.3f,19f),Offset(4.8f,18.5f)).forEach{drawCircle(color,1.55f,it)} } }
