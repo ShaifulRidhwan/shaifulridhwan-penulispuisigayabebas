@@ -125,7 +125,10 @@ test("Request-local architecture is integrated with no Voice Live code edits",()
  assert.match(s,/thinkingV3\.guidance/);
  assert.match(s,/thinkingArchitecture:\{version:4/);
  assert.match(s,/Modes\.instructions\(thoughtMode,"voice",true\)/);
- assert.match(s,/const poolKey=payload\.voiceFallback===true\?null:GeminiTextPool\.pick\(\)/);
+ assert.match(s,/hasFileUploads/);
+ assert.match(s,/GeminiTextPool\\.pick\\(\\)/);
+ assert.match(s,/LargeUpload\\.parseReceipts\\(payload\\.fileUploads\\)/);
+ assert.match(s,/process\\.env\\.GEMINI_API_KEY/);
 });
 test("Paired benchmark offline does not contact an API or grade live truth",()=>{
  const x=Bench.offline();
