@@ -91,6 +91,26 @@ class AttributionAndLiteUiTest {
         compose.onNodeWithText("The Coder Poet").assertDoesNotExist()
     }
 
+
+    @Test fun thinkingModeIconFollowsChosenMode() {
+        var selected by androidx.compose.runtime.mutableStateOf("cahaya")
+        compose.setContent {
+            AksaraScreen(ChatState(loaded=true,mode=selected),
+                onMode={ selected=it })
+        }
+        compose.onNodeWithContentDescription("Thinking Mode").assert(
+            androidx.compose.ui.test.SemanticsMatcher.expectValue(
+                androidx.compose.ui.semantics.SemanticsProperties.StateDescription, "Cahaya"))
+        compose.onNodeWithContentDescription("Thinking Mode").performClick()
+        compose.onNodeWithText("Gelap",substring=false).performClick()
+        compose.onNodeWithContentDescription("Thinking Mode").assert(
+            androidx.compose.ui.test.SemanticsMatcher.expectValue(
+                androidx.compose.ui.semantics.SemanticsProperties.StateDescription, "Gelap"))
+        compose.onNodeWithContentDescription("Thinking Mode").performClick()
+        compose.onNodeWithText("Mod dipilih").assertExists()
+        compose.onNodeWithText("Gelap",substring=false).assertExists()
+    }
+
     @Test fun composerRemainsFocusableAndPortalHidesExperimentalEngines() {
         compose.setContent { AksaraScreen(ChatState(loaded = true)) }
         compose.onNodeWithContentDescription("Tulis mesej untuk Aksara A.I.").performClick().assertIsFocused()

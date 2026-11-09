@@ -431,7 +431,7 @@ fun StudioContent() {
             }
         }
         Spacer(Modifier.height(12.dp))
-        AksaraButton(if(showAdvanced)"Sembunyi Tetapan Lanjutan" else "Tetapan Lanjutan",
+        AksaraButton(if(showAdvanced)"Sembunyi Pilihan Penjanaan" else "Pilihan Penjanaan",
             {showAdvanced=!showAdvanced},Modifier.fillMaxWidth(),size=10.5f,height=36.dp)
         Spacer(Modifier.height(9.dp))
         if(engine==StudioEngine.CLOUD) {
@@ -465,7 +465,7 @@ fun StudioContent() {
             }
             }
         } else {
-            StudioSectionHeader("Tetapan Local","512×512 · 1 langkah · CFG natif 1.0 (tanpa guidance)")
+            StudioSectionHeader("Spesifikasi Local","512×512 · 1 langkah · CFG natif 1.0 (tanpa guidance)")
         }
         Spacer(Modifier.height(8.dp))
         if(showAdvanced && (engine==StudioEngine.LOCAL || model=="klein")) {

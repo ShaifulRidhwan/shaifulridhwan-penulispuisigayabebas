@@ -24,13 +24,14 @@ class StudioV2UiTest {
         compose.onNodeWithText("Backend Cloud:",substring=true).assertExists()
         compose.onNodeWithText("Jana Imej").performClick()
         compose.onNodeWithText("Enjin Penjanaan").assertExists()
-        compose.onNodeWithText("Tetapan Lanjutan").performScrollTo().performClick()
+        compose.onNodeWithText("Pilihan Penjanaan").performScrollTo().performClick()
         compose.onNodeWithText("Model Cloud").assertExists()
-        compose.onNodeWithText("Sembunyi Tetapan Lanjutan").performScrollTo().performClick()
+        compose.onNodeWithText("Sembunyi Pilihan Penjanaan").performScrollTo().performClick()
     }
 
     @Test fun ideaPromptIsExplicitlySelectableAndEditable() {
         compose.setContent { AksaraScreen(ChatState(loaded=true),initialOverlay="studio") }
+        compose.onAllNodesWithText("Idea Prompt").assertCountEquals(1)
         compose.onNodeWithText("Idea Prompt").performScrollTo().performClick()
         compose.onNodeWithText("1. A cinematic mountain valley",substring=true).performClick()
         compose.onNodeWithContentDescription("Apa yang kau nak lihat?").assertTextContains("A cinematic mountain valley", substring = true)

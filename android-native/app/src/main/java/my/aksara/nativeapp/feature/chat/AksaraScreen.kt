@@ -220,7 +220,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                 }
                 Box(Modifier.weight(1f).padding(top=viewportHeight*.011f)) {
                     AksaraGlassSurface(Modifier.fillMaxSize().testTagCompat("conversation"),radius=22.dp,blur=3.dp,saturation=1.06f,
-                        brush=Brush.linearGradient(listOf(Color(15,17,25,51),Color(10,14,25,33),Color(7,10,18,56))),border=Color(253,214,150,145)) {
+                        brush=Brush.linearGradient(listOf(Color(15,17,25,51),Color(10,14,25,33),Color(7,10,18,56))),border=Color.Transparent) {
                         Column(Modifier.fillMaxSize().padding(1.dp)) {
                             BoxWithConstraints(Modifier.fillMaxWidth().height(58.dp).testTagCompat("conversation-head")) {
                                 val compact=maxWidth<390.dp
@@ -231,11 +231,13 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                     AksaraButton("Voice Chat",{open("voice-permission")},Modifier.width(if(compact)82.328.dp else 93.484.dp),icon="voice",size=if(compact)9f else 10f,height=AksaraGlassTokens.capsuleHeight,radius=AksaraGlassTokens.capsuleRadius)
                                     AksaraButton("",{searchOpen=!searchOpen;autoFollow=!searchOpen},Modifier.width(40.dp).semantics{contentDescription="Cari mesej dan kongsi perbualan"},icon="search",size=9f,height=AksaraGlassTokens.capsuleHeight,radius=AksaraGlassTokens.capsuleRadius)
                                     Spacer(Modifier.weight(1f))
-                                     AksaraGlassSurface(Modifier.width(if(compact)129.dp else 143.dp).height(AksaraGlassTokens.capsuleHeight).clickable {open("connection")}.semantics {contentDescription="Connection"},radius=999.dp,blur=9.dp) {
-                                        Row(Modifier.fillMaxSize().padding(horizontal=10.dp),verticalAlignment=Alignment.CenterVertically,
-                                            horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                                            AksaraIcon("network",Modifier.size(15.dp),Color(0xffc1b393))
-                                            AksaraText(ProviderConnectionStatus.label(state.providers),size=9f,line=11.25f,weight=600)
+                                    AksaraGlassSurface(Modifier.width(if(compact)129.dp else 143.dp).height(AksaraGlassTokens.capsuleHeight).clickable {open("connection")}.semantics {contentDescription="Connection"},radius=999.dp,blur=9.dp) {
+                                        val connectionStatus = ProviderConnectionStatus.label(state.providers)
+                                        Row(Modifier.align(Alignment.Center),
+                                            horizontalArrangement=Arrangement.spacedBy(6.dp),
+                                            verticalAlignment=Alignment.CenterVertically) {
+                                            AksaraIcon("network",Modifier.size(16.dp),Color(0xffc1b393))
+                                            AksaraText(connectionStatus,size=if(connectionStatus.length>15)8f else 10f,line=12f,weight=600)
                                         }
                                     }
                                 }
@@ -330,8 +332,12 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         if(state.busy) AksaraButton("Henti",onStop,Modifier.width(56.dp)
                             .semantics {contentDescription="Hentikan respons"},size=12f,height=40.dp,radius=12.dp)
                         AksaraButton("",{open("thinking")},Modifier.width(40.dp)
-                            .semantics {contentDescription="Thinking Mode"},icon="brain",height=42.dp,
-                            radius=13.dp,contentColor=AksaraColors.gold)
+                            .semantics {
+                                contentDescription="Thinking Mode"
+                                stateDescription=if(state.mode=="gelap")"Gelap" else "Cahaya"
+                            },icon=if(state.mode=="gelap")"moon" else "sun",height=42.dp,
+                            radius=13.dp,iconSize=23.dp,
+                            contentColor=if(state.mode=="gelap")Color(0xffb6d3ff) else AksaraColors.gold)
                         AksaraButton("",{
                             if(canSubmit) {
                                 val text=AttachmentSendPolicy.submissionText(draft,hasAttachments)
