@@ -80,14 +80,14 @@ import my.aksara.nativeapp.feature.tools.*
             maxOf(73.dp,(24f+18.2f+4f+15.75f*lines).dp)
         }
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(AksaraModalStyle.scrim).clickable(onClick=onClose))
-        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->453.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(505.dp,h-32.dp);"literary-notice"->minOf(500.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->430.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
+        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->minOf(650.dp,h-36.dp);"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(505.dp,h-32.dp);"literary-notice"->minOf(500.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->430.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).widthIn(max=680.dp).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).testTag("aksara-glass-modal").clickable(enabled=false){},
             radius=if(kind=="voice-permission")24.dp else AksaraModalStyle.radius,blur=if(kind=="voice-permission")27.dp else AksaraModalStyle.blur,
             brush=when(kind){"voice-permission"->Brush.linearGradient(listOf(Color(29,39,53,97),Color(10,17,30,77),Color(25,38,54,102)));else->DialogGradient},
             border=AksaraModalStyle.border) {
-            Column(Modifier.fillMaxSize().padding(if(kind=="voice-permission")18.dp else if(kind=="terminal")15.dp else 16.dp).then(if(kind=="code" || kind=="attachments")Modifier else Modifier.verticalScroll(scroll))) {
+            Column(Modifier.fillMaxSize().padding(if(kind=="voice-permission")18.dp else if(kind=="terminal")15.dp else 16.dp).then(if(kind=="code" || kind=="attachments" || kind=="connection")Modifier else Modifier.verticalScroll(scroll))) {
                 if(kind=="voice-permission") {
                     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(13.dp)) {
                         AksaraGlassSurface(Modifier.size(44.dp),radius=999.dp) { AksaraIcon("mic",Modifier.align(Alignment.Center).size(22.dp)) }
@@ -155,22 +155,7 @@ import my.aksara.nativeapp.feature.tools.*
                                 Spacer(Modifier.height(9.dp))
                             }
                         }
-                        "connection" -> {
-                            val backendUnreachable=state.providers.any{it.first=="backend" && it.second=="Backend unreachable"}
-                            Spacer(Modifier.height(10.dp));AksaraText(
-                                if(backendUnreachable) "Backend unreachable · "+ProviderStatusPalette.summary(state.providers)
-                                else ProviderStatusPalette.summary(state.providers),
-                                size=10.5f,line=14f,color=AksaraColors.muted)
-                            Spacer(Modifier.height(10.dp))
-                            val providers=listOf("gemini" to "Google Gemini","groq" to "Groq","workers_ai" to "Cloudflare Workers AI","openrouter" to "OpenRouter")
-                            providers.forEach { (id,name) ->
-                                var expanded by remember {mutableStateOf(false)}
-                                MenuRow(name,state.providers.find{it.first==id}?.second?:(if(backendUnreachable)"Backend unreachable" else "Unverified"),height=48.dp,icon=ProviderIdentity.of(id)?.icon) {expanded=!expanded}
-                                if(expanded) AksaraText(state.providerDetails[id]?.takeIf{it.isNotBlank()} ?: "Ready belum membuktikan inferens berjaya. Refresh untuk status terkini.",Modifier.padding(8.dp),size=10f,color=AksaraColors.muted)
-                                Spacer(Modifier.height(8.dp))
-                            }
-                            Spacer(Modifier.weight(1f));AksaraButton("Refresh Status",onRefresh,Modifier.fillMaxWidth(),height=49.dp)
-                        }
+                        "connection" -> ProviderHealthContent(state,onRefresh,Modifier.weight(1f))
                         "code" -> CodeEngineContent(onNavigate)
                         "terminal" -> TerminalContent()
                         "studio" -> StudioContent()
