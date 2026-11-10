@@ -140,7 +140,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             val rows = response.optJSONArray("providers")
                 ?: throw java.io.IOException("Provider health returned invalid JSON.")
             val entries = (0 until rows.length()).map { rows.getJSONObject(it) }
-            val statuses = entries.map { it.optString("id") to it.optString("status", "unknown") }
+            val statuses = entries.map { it.optString("id") to ProviderConnectionStatus.state(
+                it.optString("status", "unknown"), it.optInt("http"), it.optString("reason")) }
             val details = entries.associate { provider ->
                 val reason = provider.optString("reason").takeIf { it.isNotBlank() && it != "null" }
                 val pool = provider.optJSONArray("pool")
@@ -243,6 +244,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                                 persistContext()
                                 mutable.update { it.copy(summaryStatus = "saved") }
                             } else mutable.update { it.copy(summaryStatus = "unavailable") }
+                        } catch (_: TimeoutCancellationException) {
+                            mutable.update { it.copy(summaryStatus = "unavailable") }
                         } catch (e: CancellationException) { throw e }
                         catch (_: Exception) { mutable.update { it.copy(summaryStatus = "unavailable") } }
                     }

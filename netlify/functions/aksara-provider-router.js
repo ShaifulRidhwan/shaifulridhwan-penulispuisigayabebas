@@ -61,7 +61,7 @@ function openRouterBody(body,effort="low"){
 }
 const safeMessage=text=>boundedText(text,60000);
 // Cloudflare native binding: share the complete Aksara identity and bounded history.
-async function runWorkersAI(ai,model,body){
+async function runWorkersAI(ai,model,body,signal){
  if(!ai||typeof ai.run!=="function")throw Object.assign(Error("Workers AI binding unavailable"),{status:503});
  // The original fixed 2200-token ceiling slowed short answers: preserve
  // richer budgets for deep tasks, but don't fund long hidden reasoning on greetings.
@@ -73,7 +73,7 @@ async function runWorkersAI(ai,model,body){
   // Cloudflare GLM model schema: enable_thinking, not reasoning_effort,
   // is the authoritative switch. Avoid hidden reasoning on lightweight turns.
   chat_template_kwargs:{enable_thinking:effort==="high",clear_thinking:true},
-  store:false});}
+  store:false},{signal});}
  catch(err){
   // Only a bounded classification, never provider raw errors, prompts or API keys.
   const message=String(err?.message||"").toLowerCase();
@@ -202,7 +202,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
      body.reasoning_effort=simple?"low":["low","medium","high"].includes(reasoningLevel)?reasoningLevel:"medium";
      body.include_reasoning=false;
    }
-   const res=provider.id==="workers_ai"?await runWorkersAI(cloudflareAI,provider.model,{...body,reasoning_effort:simple?"low":reasoningLevel}):await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(body),signal:control.signal});
+   const res=provider.id==="workers_ai"?await runWorkersAI(cloudflareAI,provider.model,{...body,reasoning_effort:simple?"low":reasoningLevel},control.signal):await fetch(provider.url,{method:"POST",headers,body:JSON.stringify(body),signal:control.signal});
    if(!res.ok){
     const e=new Error("Provider HTTP "+res.status);e.status=res.status;
     const details=await res.json().catch(()=>({}));

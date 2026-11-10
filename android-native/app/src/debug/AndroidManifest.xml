@@ -1,1 +1,11 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"><application><activity android:name=".VisualTestActivity" android:exported="false" android:theme="@style/Theme.Aksara" android:windowSoftInputMode="adjustResize" /></application></manifest>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Fixtures are installed by ComposeTestRule, not onCreate. A pending
+             rotation from a preceding test must not recreate this empty host
+             and discard the installed composition. Match the launcher posture. -->
+        <activity android:name=".VisualTestActivity" android:exported="false"
+            android:theme="@style/Theme.Aksara" android:windowSoftInputMode="adjustResize"
+            android:screenOrientation="portrait"
+            android:configChanges="orientation|screenSize|keyboardHidden" />
+    </application>
+</manifest>

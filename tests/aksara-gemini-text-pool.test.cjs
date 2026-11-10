@@ -57,8 +57,37 @@ test("chat pool is isolated from unchanged Live and thinking/model configuration
   const chat=fs.readFileSync(require.resolve("../netlify/functions/bilik-antara"),"utf8");
   const live=fs.readFileSync(require.resolve("../netlify/functions/bilik-antara-live-token"),"utf8");
   assert.match(chat,/GeminiTextPool\.pick\(\)/);
-  assert.match(chat,/payload\.voiceFallback===true\?process\.env\.GEMINI_API_KEY/);
   assert.match(chat,/const googleThinking=adaptiveThinking;/);
   assert.match(chat,/const baseModel=freeModel\(process\.env\.GEMINI_MODEL,DEFAULT_MODEL\)/);
   assert.doesNotMatch(live,/GeminiTextPool/);
+});
+
+test("recorded Voice uses only the primary credential and never selects a chat pool slot",async()=>{
+  const pool=require("../netlify/functions/lib/gemini-text-pool");
+  const {handler}=require("../netlify/functions/bilik-antara");
+  const previous=Object.fromEntries(Object.keys(env).map(name=>[name,process.env[name]]));
+  const oldFetch=global.fetch,oldPick=pool.pick;
+  let calls=0;
+  try{
+    Object.assign(process.env,env);
+    pool.pick=()=>{throw Error("Recorded Voice must not select a chat credential");};
+    global.fetch=async(url,options)=>{
+      calls++;
+      assert.match(String(url),/^https:\/\/generativelanguage\.googleapis\.com\//);
+      assert.equal(options.headers["x-goog-api-key"],env.GEMINI_API_KEY);
+      return Response.json({candidates:[{content:{parts:[{text:"Aku dengar."}]},finishReason:"STOP"}]});
+    };
+    const result=await handler({httpMethod:"POST",headers:{
+      origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+      "x-nf-client-connection-ip":"voice-key-isolation-regression"},
+      body:JSON.stringify({question:"Jawab rakaman ini",voiceFallback:true,
+        media:{mimeType:"audio/webm",data:"QUJDRA=="}})});
+    assert.equal(result.statusCode,200);
+    assert.equal(JSON.parse(result.body).mode,"recorded-voice");
+    assert.equal(calls,1);
+  }finally{
+    global.fetch=oldFetch;pool.pick=oldPick;
+    for(const [name,value] of Object.entries(previous))
+      if(value===undefined)delete process.env[name];else process.env[name]=value;
+  }
 });

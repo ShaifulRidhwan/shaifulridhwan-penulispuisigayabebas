@@ -16,6 +16,9 @@ adb shell settings put secure immersive_mode_confirmations confirmed
 adb install -r android-native/build-artifact/outputs/apk/debug/app-debug.apk
 adb install -r android-native/build-artifact/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 failures=0
+adb shell am instrument -w -r -e class my.aksara.nativeapp.VisualHostLifecycleTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/visual-host-lifecycle-tests.txt" || failures=$((failures+1))
+cat "$out/android/visual-host-lifecycle-tests.txt"
+if ! grep -Eq '^OK \([0-9]+ tests?\)' "$out/android/visual-host-lifecycle-tests.txt"; then failures=$((failures+1)); fi
 adb shell am instrument -w -r -e class my.aksara.nativeapp.NativeEngineTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/native-engine-tests.txt" || failures=$((failures+1))
 cat "$out/android/native-engine-tests.txt"
 adb shell am instrument -w -r -e class my.aksara.nativeapp.NativeSessionPersistenceTest my.aksara.nativeapp.test/androidx.test.runner.AndroidJUnitRunner > "$out/android/session-persistence-tests.txt" || failures=$((failures+1))
