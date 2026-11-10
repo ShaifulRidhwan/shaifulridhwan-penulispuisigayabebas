@@ -25,7 +25,6 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -484,16 +483,14 @@ private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
     val ai=message.role!="user"
     val measure=rememberTextMeasurer();val density=LocalDensity.current
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val contentWidth=if(ai)maxWidth-37.dp else maxWidth
+        val contentWidth=maxWidth
         val padding=if(ai)26.dp else 24.dp
         val style=AksaraTypography.style(15f,23.85f).copy(letterSpacing=(-.12).sp)
         val textSize=measure.measure(AnnotatedString(message.text),style,constraints=Constraints(maxWidth=with(density){(contentWidth-padding).roundToPx()})).size
         val bubbleWidth=when {message.text.isEmpty()->53.dp;!ai||message.id=="welcome-expanded"->minOf(contentWidth,with(density){textSize.width.toDp()}+padding);else->contentWidth}
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-            if(ai) Image(painterResource(R.drawable.aksara_glass_sigil),"Aksara A.I.",Modifier.padding(top=1.dp).size(29.dp),contentScale=ContentScale.Crop)
             Column(Modifier.weight(1f),horizontalAlignment=if(ai)Alignment.Start else Alignment.End) {
                 if(ai) Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(5.dp)) {
-                    AksaraIcon("aksara",Modifier.size(14.dp),AksaraColors.gold)
                     AksaraText("Aksara A.I.",size=11f,line=15f,weight=650,color=Color(0xfff2c979))
                     if(!initial && message.id!="welcome-expanded") {
                         AksaraText("→",size=12f,color=AksaraColors.gold)
