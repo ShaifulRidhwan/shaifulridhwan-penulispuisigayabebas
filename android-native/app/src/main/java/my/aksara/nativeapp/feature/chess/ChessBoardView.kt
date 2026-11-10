@@ -7,17 +7,20 @@ import android.view.View
 import kotlin.math.*
 
 /** Hardware accelerated native board. Rendering never owns or delays a rules transition. */
-class ChessBoardView(context:Context): View(context) {
+open class ChessBoardView(context:Context): View(context) {
     var pieces=Array(64){""}; set(value){field=value; invalidate()}
     var selected=-1; set(value){field=value;invalidate()}
     var legal=emptyList<String>(); set(value){field=value;invalidate()}
     var lastMove=""; set(value){field=value;invalidate()}
+    var checkKing="K"
     var check=false; set(value){field=value;invalidate()}
     var onSquare: (Int)->Unit = {}
     var onDrop: (Int,Int)->Unit = {_,_->}
     var coordinates=true
-    var hasRendered=false; private set
+    var hasRendered=false; protected set
     private val paint=Paint(Paint.ANTI_ALIAS_FLAG)
+    private val pearl=LinearGradient(-30f,-35f,30f,30f,intArrayOf(0xffb69a66.toInt(),0xfffff6dd.toInt(),0xffd7c69d.toInt()),floatArrayOf(0f,.38f,1f),Shader.TileMode.CLAMP)
+    private val abyss=LinearGradient(-30f,-35f,30f,30f,intArrayOf(0xff181b2b.toInt(),0xff756080.toInt(),0xff251c31.toInt()),floatArrayOf(0f,.38f,1f),Shader.TileMode.CLAMP)
     private var cell=1f
     private var left=0f
     private var top=0f
@@ -26,17 +29,19 @@ class ChessBoardView(context:Context): View(context) {
     private var downY=0f
     private var dragged=false
     init { isFocusable=true; contentDescription="Papan catur Cahaya lawan Gelap"; setLayerType(LAYER_TYPE_HARDWARE,null) }
-    fun squareCenter(square:Int):PointF=PointF(left+(square%8+.5f)*cell,top+(7-square/8+.5f)*cell)
-    private fun squareAt(x:Float,y:Float):Int {
+    open fun squareCenter(square:Int):PointF=PointF(left+(square%8+.5f)*cell,top+(7-square/8+.5f)*cell)
+    protected open fun squareAt(x:Float,y:Float):Int {
         val f=floor((x-left)/cell).toInt(); val r=7-floor((y-top)/cell).toInt()
         return if(f in 0..7 && r in 0..7) r*8+f else -1
     }
     override fun onSizeChanged(w:Int,h:Int,oldw:Int,oldh:Int) {
         super.onSizeChanged(w,h,oldw,oldh)
+        if(my.aksara.nativeapp.BuildConfig.DEBUG)android.util.Log.i("AksaraChess","board ${hashCode()} resized ${w}x$h")
         cell=min(w,h)*.92f/8;left=(w-cell*8)/2;top=(h-cell*8)/2;hasRendered=false
     }
     override fun onDraw(c:Canvas) {
         super.onDraw(c)
+        if(!hasRendered && my.aksara.nativeapp.BuildConfig.DEBUG)android.util.Log.i("AksaraChess","board ${hashCode()} first draw ${width}x$height focus=${hasWindowFocus()}")
         hasRendered=true
         paint.color=Color.rgb(8,10,20); c.drawColor(paint.color)
         paint.color=Color.rgb(144,118,72); c.drawRoundRect(left-5,top-5,left+cell*8+5,top+cell*8+5,10f,10f,paint)
@@ -47,7 +52,7 @@ class ChessBoardView(context:Context): View(context) {
             if(s==selected || lastMove.take(2)==ChessModel.uci(s) || lastMove.drop(2).take(2)==ChessModel.uci(s)) {
                 paint.color=if(s==selected) 0x8855ccbb.toInt() else 0x557fae9a; c.drawRect(x,y,x+cell,y+cell,paint)
             }
-            if(check && pieces[s]=="K") { paint.color=0x99c83255.toInt(); c.drawRect(x,y,x+cell,y+cell,paint) }
+            if(check && pieces[s]==checkKing) { paint.color=0x99c83255.toInt(); c.drawRect(x,y,x+cell,y+cell,paint) }
             if(selected>=0 && legal.any{it.startsWith(ChessModel.uci(selected)+ChessModel.uci(s))}) {
                 paint.color=0x99b9ead5.toInt(); c.drawCircle(p.x,p.y,cell*.13f,paint)
             }
@@ -60,10 +65,10 @@ class ChessBoardView(context:Context): View(context) {
             }
         }
     }
-    private fun drawPiece(c:Canvas,x:Float,y:Float,size:Float,ch:Char) {
+    protected fun drawPiece(c:Canvas,x:Float,y:Float,size:Float,ch:Char) {
         val light=ch.isUpperCase(); c.save(); c.translate(x,y); c.scale(size/100,size/100)
         paint.shader=null; paint.color=0x55000000; c.drawOval(-30f,25f,32f,39f,paint)
-        paint.color=if(light) 0xffe7dbc0.toInt() else 0xff50405c.toInt()
+        paint.shader=if(light)pearl else abyss
         paint.style=Paint.Style.FILL
         c.drawRoundRect(-27f,22f,27f,33f,4f,4f,paint)
         val path=Path()
@@ -76,7 +81,7 @@ class ChessBoardView(context:Context): View(context) {
             'K' -> { path.moveTo(-20f,23f);path.lineTo(-8f,-3f);path.cubicTo(-31f,-16f,-13f,-29f,0f,-21f);path.cubicTo(13f,-29f,31f,-16f,8f,-3f);path.lineTo(20f,23f);path.close(); c.drawRect(-4f,-45f,4f,-20f,paint);c.drawRect(-12f,-38f,12f,-31f,paint) }
         }
         c.drawPath(path,paint)
-        paint.style=Paint.Style.STROKE; paint.strokeWidth=1.4f; paint.color=if(light) 0xff947449.toInt() else 0xffbc86cf.toInt();c.drawPath(path,paint)
+        paint.shader=null;paint.style=Paint.Style.STROKE; paint.strokeWidth=1.4f; paint.color=if(light) 0xff947449.toInt() else 0xffbc86cf.toInt();c.drawPath(path,paint)
         if(ch.uppercaseChar()=='B')c.drawLine(1f,-30f,9f,-18f,paint)
         if(ch.uppercaseChar()=='N'){paint.style=Paint.Style.FILL;c.drawCircle(-3f,-25f,2f,paint)}
         paint.style=Paint.Style.FILL; c.restore()

@@ -37,6 +37,11 @@ public final class ChessSession {
         MoveList list=new MoveList(initialFen); list.addAll(moves);
         return Arrays.asList(list.toSanArray());
     }
+    public synchronized List<String> capturedPieces() {
+        return board.getBackup().stream().map(MoveBackup::getCapturedPiece).filter(p -> p!=Piece.NONE)
+            .map(Piece::getFenSymbol).collect(java.util.stream.Collectors.toList());
+    }
+    public String initialFen() { return initialFen; }
     public synchronized String fen() { return board.getFen(); }
     public synchronized long revision() { return revision; }
     public synchronized Side turn() { return board.getSideToMove(); }

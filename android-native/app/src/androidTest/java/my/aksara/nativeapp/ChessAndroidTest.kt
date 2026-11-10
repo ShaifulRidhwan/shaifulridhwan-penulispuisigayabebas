@@ -62,6 +62,7 @@ class ChessAndroidTest {
     @Test fun nativeTouchPlayUndoAndLifecycleRestore() {
         ActivityScenario.launch(ChessActivity::class.java).use { scenario ->
             scenario.onActivity { it.chess.restart() }
+            try {
             var ready=false
             waitFor { scenario.onActivity { ready=boardReady(it) };ready }
             fun click(square:Int) {
@@ -93,6 +94,17 @@ class ChessAndroidTest {
             scenario.onActivity { assertEquals(saved,it.chess.session.save());it.chess.undo();assertEquals(ChessSession.START,it.chess.session.fen()) }
             device.takeScreenshot(File(instrumentation.targetContext.getExternalFilesDir(null),"chess-android.png"))
             scenario.onActivity { it.chess.resign();assertEquals("0-1",it.chess.session.result());it.chess.restart() }
+            } finally {
+                val dir=instrumentation.targetContext.getExternalFilesDir(null)
+                device.takeScreenshot(File(dir,"chess-window-final.png"))
+                scenario.onActivity { a ->
+                    val report=runCatching {"size=${a.board.width}x${a.board.height} rendered=${a.board.hasRendered} focus=${a.board.hasWindowFocus()} shown=${a.board.isShown} window=${a.board.windowVisibility} engine=${a.chess.engineStatus} error=${a.chess.error} history=${a.chess.session.history()} selected=${a.chess.selected}"}.getOrElse{it.toString()}
+                    android.util.Log.i("AksaraChessTest",report)
+                    File(dir,"chess-ui-state.txt").writeText(report)
+                }
+                File(dir,"chess-gfxinfo.txt").writeText(device.executeShellCommand("dumpsys gfxinfo my.aksara.nativeapp framestats"))
+                File(dir,"chess-meminfo.txt").writeText(device.executeShellCommand("dumpsys meminfo my.aksara.nativeapp"))
+            }
         }
     }
     private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.board.hasRendered && a.board.hasWindowFocus() && a.chess.engineStatus.contains("sedia")}.getOrDefault(false)

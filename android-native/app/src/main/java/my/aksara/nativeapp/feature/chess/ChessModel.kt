@@ -19,6 +19,11 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
     var session: ChessSession = runCatching { ChessSession.restore(prefs.getString("session",null)!!) }.getOrElse { ChessSession() }
         private set
     var version by mutableIntStateOf(0); private set
+    var openingAnnounced=false
+    var replay by mutableStateOf<ChessSession?>(null); private set
+    var replayIndex by mutableIntStateOf(-1); private set
+    var analysisNote by mutableStateOf(""); private set
+    var analyzing by mutableStateOf(false); private set
     var thinking by mutableStateOf(false); private set
     var paused by mutableStateOf(false); private set
     var error by mutableStateOf(""); private set
@@ -34,10 +39,11 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
     private var engine: UciEngine?=null
     private var starting=false
     private var epoch=0L
-    val pieces: Array<String> get() { version; return session.pieces() }
+    val display get()=replay?:session
+    val pieces: Array<String> get() { version; return display.pieces() }
     val legal: List<String> get() { version; return session.legalMoves() }
     fun enter() { active=true; ensureEngine() }
-    fun leave() { active=false; epoch++; engine?.cancel(); thinking=false; save(); onEvent?.invoke("stop",null) }
+    fun leave() { active=false; analyzing=false; epoch++; engine?.cancel(); thinking=false; save(); onEvent?.invoke("stop",null) }
     private fun ensureEngine() {
         if(!active || starting) return
         if(engine!=null) { maybeThink(); return }
@@ -58,7 +64,7 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
     }
     fun retry() { engine?.close(); engine=null; error=""; ensureEngine() }
     fun select(square: Int) {
-        if(!active || paused || thinking || session.turn()!=Side.WHITE || session.end()!=ChessSession.End.PLAYING) return
+        if(replayIndex>=0 || !active || paused || thinking || session.turn()!=Side.WHITE || session.end()!=ChessSession.End.PLAYING) return
         val from=selected
         val options=if(from>=0) legal.filter { it.startsWith(uci(from)+uci(square)) } else emptyList()
         if(options.isNotEmpty()) {
@@ -80,7 +86,7 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
             session.end()!=ChessSession.End.PLAYING -> if(session.end()==ChessSession.End.CHECKMATE) "mate" else "draw"
             session.inCheck() -> "check"
             move.length==5 -> "promotion"
-            before[index(move.substring(2,4))].isNotBlank() -> "capture"
+            (before[index(move.substring(2,4))].isNotBlank() || (before[index(move.take(2))].uppercase()=="P" && move[0]!=move[2])) -> "capture"
             else -> "quiet"
         }
         onEvent?.invoke(event,analysis)
@@ -106,14 +112,14 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
             }.onFailure { error="Hasil enjin ditolak: ${it.message}" }
         } }
     }
-    fun pause() { paused=!paused; epoch++; engine?.cancel(); thinking=false; onEvent?.invoke("stop",null); if(!paused) maybeThink(); save() }
+    fun pause() { analyzing=false; paused=!paused; epoch++; engine?.cancel(); thinking=false; onEvent?.invoke("stop",null); if(!paused) maybeThink(); save() }
     fun undo() {
-        epoch++; engine?.cancel(); thinking=false
+        epoch++; engine?.cancel(); thinking=false;analyzing=false;replay=null;replayIndex=-1;animationId++
         if(session.undo() && session.turn()==Side.BLACK) session.undo()
         selected=-1; promotions=emptyList(); previousPieces=null; lastMove=session.history().lastOrNull().orEmpty(); lastAnalysis=null; update(); onEvent?.invoke("stop",null)
     }
     fun restart() {
-        epoch++; engine?.cancel(); thinking=false; session=ChessSession(); paused=false; selected=-1; promotions=emptyList(); previousPieces=null; lastMove=""; lastAnalysis=null; update(); onEvent?.invoke("opening",null)
+        epoch++; engine?.cancel(); thinking=false;analyzing=false;replay=null;replayIndex=-1;animationId++; openingAnnounced=true; session=ChessSession(); paused=false; selected=-1; promotions=emptyList(); previousPieces=null; lastMove=""; lastAnalysis=null; update(); onEvent?.invoke("opening",null)
     }
     fun resign() { if(session.end()==ChessSession.End.PLAYING) { epoch++; engine?.cancel(); thinking=false; session.resign(Side.WHITE); update(); onEvent?.invoke("mate",null) } }
     fun claimDraw() { if(session.canClaimDraw()) { epoch++; engine?.cancel(); thinking=false; session.claimDraw(null); update(); onEvent?.invoke("draw",null) } }
@@ -123,6 +129,34 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
         if(accepted) claimDraw() else onEvent?.invoke("declineDraw",null)
         return accepted
     }
+    fun analyze(onResult:(UciEngine.Analysis,Side,String)->Unit) {
+        val current=engine?:return
+        if(!active || thinking || analyzing || replayIndex>=0 || session.end()!=ChessSession.End.PLAYING)return
+        analyzing=true;analysisNote="Menganalisis kedudukan semasa…"
+        val fen=session.fen();val rev=session.revision();val side=session.turn()
+        current.search(session,1500).whenComplete {answer,failure -> main.post {
+            analyzing=false
+            if(session.revision()!=rev || session.fen()!=fen || !active)return@post
+            if(failure!=null) {analysisNote="Analisis dibatalkan atau tidak tersedia.";return@post}
+            val suggested=runCatching {ChessSession.restore(session.save()).apply{play(answer.move())}.sanHistory().last()}.getOrDefault(answer.move())
+            val a=answer.analysis()
+            analysisNote="Depth ${a.depth()} · calon $suggested · "+(a.mate()?.let{"mate $it"}?:a.centipawns()?.let{"${it} cp untuk ${if(side==Side.WHITE)"Putih" else "Hitam"}"}?:"skor tidak tersedia")
+            onResult(a,side,suggested)
+        }}
+    }
+    fun replayStep(target:Int) {
+        if(session.end()==ChessSession.End.PLAYING)return
+        val moves=session.history();val index=target.coerceIn(0,moves.size)
+        val fen=session.initialFen();val rev=session.revision();val old=display.pieces();val previous=replayIndex
+        viewModelScope.launch {
+            val position=withContext(Dispatchers.Default) {ChessSession(fen).apply{moves.take(index).forEach{play(it)}}}
+            if(session.revision()!=rev)return@launch
+            replay=position;replayIndex=index
+            previousPieces=if(previous>=0 && index==previous+1)old else null
+            lastMove=if(index==0)"" else moves[index-1];animationId++;version++
+        }
+    }
+    fun exitReplay() {replay=null;replayIndex=-1;previousPieces=null;lastMove=session.history().lastOrNull().orEmpty();animationId++;version++}
     private fun update() { version++; save() }
     fun save() { prefs.edit().putString("session",session.save()).apply() }
     fun loadForTest(fen:String) { check(my.aksara.nativeapp.BuildConfig.DEBUG); epoch++; engine?.cancel(); thinking=false; session=ChessSession(fen); selected=-1; update(); maybeThink() }
