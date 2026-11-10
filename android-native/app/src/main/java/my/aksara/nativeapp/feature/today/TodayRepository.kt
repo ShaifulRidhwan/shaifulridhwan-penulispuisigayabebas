@@ -25,7 +25,10 @@ internal data class TodayFeed<T>(val value:T?,val fromCache:Boolean,val updatedA
 internal data class TodayWeather(val celsius:Double,val code:Int,val windKmh:Double,val rainChance:Int?)
 internal data class TodayPrayer(val zone:String,val hijri:String,val times:List<Pair<String,String>>)
 internal data class TodayCoin(val symbol:String,val usd:Double,val change24h:Double,val updatedAt:String)
-internal data class TodayCommit(val sha:String,val message:String,val date:String,val url:String,val ci:String,val ciUrl:String?)
+internal data class TodayCommit(
+    val sha:String,val message:String,val date:String,val url:String,val ci:String,val ciUrl:String?,
+    val author:String?,val pushedBy:String?,val pushCount:Int?,val pushedAt:String?
+)
 
 internal object TodayParsers {
     fun weather(text:String):TodayWeather {
@@ -96,7 +99,30 @@ internal object TodayParsers {
             ciUrl=run.optString("html_url").takeIf { it.startsWith("https://github.com/") }
             break
         }
-        return TodayCommit(sha,message,date,commit.optString("html_url"),ci,ciUrl)
+        // A GitHub commit author is NOT necessarily the person who pushed it.
+        val author=details.optJSONObject("author")?.optString("name")?.takeIf { it.isNotBlank() }
+            ?: commit.optJSONObject("author")?.optString("login")?.takeIf { it.isNotBlank() }
+        var pushedBy:String?=null
+        var pushCount:Int?=null
+        var pushedAt:String?=null
+        val events=root.optJSONArray("events") ?: JSONArray()
+        for(index in 0 until events.length()) {
+            val event=events.optJSONObject(index) ?: continue
+            if(event.optString("type")!="PushEvent")continue
+            val payload=event.optJSONObject("payload") ?: continue
+            if(payload.optString("ref")!="refs/heads/rebuild/aksara-android-native-v1")continue
+            // Only attribute a push when its head matches the displayed branch commit.
+            val head=payload.optString("head").ifBlank { payload.optString("after") }
+            if(head!=sha)continue
+            val login=event.optJSONObject("actor")?.optString("login").orEmpty()
+            if(login.isBlank())continue
+            pushedBy=login
+            pushCount=payload.optInt("size",-1).takeIf { it>0 }
+            pushedAt=event.optString("created_at").takeIf { it.isNotBlank() }
+            break
+        }
+        return TodayCommit(sha,message,date,commit.optString("html_url"),ci,ciUrl,
+            author,pushedBy,pushCount,pushedAt)
     }
 }
 
@@ -205,6 +231,11 @@ internal class TodayRepository(context:Context) {
                 JSONObject(request(base+"/actions/runs?branch=rebuild%2Faksara-android-native-v1&per_page=10"))
                     .optJSONArray("workflow_runs") ?: JSONArray()
             }.getOrDefault(JSONArray())
-            JSONObject().put("commits",commits).put("workflow_runs",runs).toString()
+            // Public events are optional: rate limits must not hide a confirmed commit.
+            val events=runCatching {
+                JSONArray(request(base+"/events?per_page=30"))
+            }.getOrDefault(JSONArray())
+            JSONObject().put("commits",commits).put("workflow_runs",runs)
+                .put("events",events).toString()
         }
 }
