@@ -23,6 +23,7 @@ import com.github.bhlangonijr.chesslib.Side
     listening:Boolean,interactionStatus:String,
     speed:Float,coordinates:Boolean
 ) {
+    var showDetails by remember { mutableStateOf(false) }
     val tick=chess.version
     var arena by remember {mutableStateOf<ArenaBoardView?>(null)}
     val game=chess.display
@@ -54,12 +55,12 @@ import com.github.bhlangonijr.chesslib.Side
             })
         }
         @Composable fun Panel(modifier:Modifier) {
-            Column(modifier.padding(10.dp).background(Brush.linearGradient(listOf(Color(0x553d3349),Color(0x77303a47),Color(0x44232c3e))),RoundedCornerShape(24.dp)).border(1.dp,Color(0x447c718f),RoundedCornerShape(24.dp)).padding(14.dp).verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(9.dp)) {
+            Column(modifier.padding(6.dp).background(Brush.linearGradient(listOf(Color(0x553d3349),Color(0x77303a47),Color(0x44232c3e))),RoundedCornerShape(24.dp)).border(1.dp,Color(0x447c718f),RoundedCornerShape(24.dp)).padding(10.dp).then(if(showDetails)Modifier.verticalScroll(rememberScrollState()) else Modifier),verticalArrangement=Arrangement.spacedBy(6.dp)) {
                 Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                    AndroidView(factory={QueenPortraitView(it)},modifier=Modifier.size(64.dp),update={it.speaking=voice.speaking})
+                    AndroidView(factory={QueenPortraitView(it)},modifier=Modifier.size(40.dp),update={it.speaking=voice.speaking})
                     Column {
                         AksaraText("AKSARA A.I.",size=10f,tracking=2f,color=Color(0xffbba2c9),family=AksaraTypography.heading)
-                        AksaraText("Ratu Gelap",size=24f,weight=600,color=Color(0xffeee0cc),family=AksaraTypography.heading)
+                        AksaraText("Ratu Gelap",size=17f,weight=600,color=Color(0xffeee0cc),family=AksaraTypography.heading)
                         AksaraText("ABSOLUTE DARKNESS",size=9f,tracking=1.1f,color=Color(0xffceac73))
                     }
                 }
@@ -68,7 +69,9 @@ import com.github.bhlangonijr.chesslib.Side
                     Chip(if(chess.paused)"Sambung" else "Jeda",chess::pause)
                     Chip("Undo"){voice.stop();chess.undo()}
                     Chip("Menu",onMenu)
+                    Chip(if(showDetails)"Ringkas" else "Butiran"){showDetails=!showDetails}
                 }
+                if(showDetails) {
                 if(voice.visibleSubtitle.isNotEmpty()) {
                     Column(Modifier.fillMaxWidth().background(Color(0x443e2d51),RoundedCornerShape(16.dp)).border(1.dp,Color(0x337e6e90),RoundedCornerShape(16.dp)).padding(12.dp)) {
                         AksaraText(if(voice.speaking)"RATU GELAP · BERSUARA" else "RATU GELAP",size=9f,tracking=1.2f,color=Color(0xffc6a3d2))
@@ -107,6 +110,7 @@ import com.github.bhlangonijr.chesslib.Side
                 }
                 fun fallen(white:Boolean)=captures.filter{it[0].isUpperCase()==white}.groupingBy{it.uppercase()}.eachCount().entries.joinToString(" · "){"${it.key} ×${it.value}"}.ifEmpty{"—"}
                 AksaraText("Gugur · Cahaya: ${fallen(true)}\nGugur · Gelap: ${fallen(false)}",size=11f,color=Color(0xffaaa3b6))
+                }
                 if(ended) {
                     Chip(if(chess.reviewing)"Batal analisis" else "Analisis selepas permainan"){if(chess.reviewing)chess.cancelReview() else chess.reviewGame()}
                     if(chess.reviewNote.isNotBlank())AksaraText(chess.reviewNote,size=11f,color=Color(0xffc2d1c9))
@@ -116,6 +120,6 @@ import com.github.bhlangonijr.chesslib.Side
             }
         }
         if(wide)Row(Modifier.fillMaxSize()){Board(Modifier.weight(1f).fillMaxHeight());Panel(Modifier.width(panelWidth).fillMaxHeight())}
-        else Column(Modifier.fillMaxSize()){Board(Modifier.fillMaxWidth().weight(1f));Panel(Modifier.fillMaxWidth().heightIn(max=350.dp))}
+        else Column(Modifier.fillMaxSize()){Board(Modifier.fillMaxWidth().weight(1f));Panel(Modifier.fillMaxWidth().heightIn(max=if(showDetails)350.dp else 160.dp))}
     }
 }
