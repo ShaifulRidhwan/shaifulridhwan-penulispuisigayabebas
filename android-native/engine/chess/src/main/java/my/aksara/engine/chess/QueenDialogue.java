@@ -7,6 +7,7 @@ public final class QueenDialogue {
     private int variation;
     private int lastPriority;
     private String previous="";
+    private final java.util.ArrayDeque<String> recent=new java.util.ArrayDeque<>();
     public Line plan(ChessSession game,String event,UciEngine.Analysis analysis,long now) {
         int priority=switch(event) {case "mate","draw" -> 5;case "check","double_check","promotion" -> 4;case "opening" -> 3;default -> 1;};
         if(priority<4 && now-lastSpoken<18000) return null;
@@ -34,9 +35,9 @@ public final class QueenDialogue {
                 if(text==null && event.equals("capture"))text=pick("Satu buah telah gugur. Papan masih menyimpan banyak kemungkinan.","Pertukaran itu telah berlaku. Pertimbangkan langkah seterusnya dengan tenang.");
             }
         }
-        if(text==null || text.equals(previous)) return null;
-        lastSpoken=now;lastPriority=priority;previous=text;return new Line(text,priority,specific);
+        if(text==null || text.equals(previous) || recent.contains(text)) return null;
+        lastSpoken=now;lastPriority=priority;previous=text;recent.addLast(text);if(recent.size()>6)recent.removeFirst();return new Line(text,priority,specific);
     }
-    public void reset() {lastSpoken=-60000;previous="";}
+    public void reset() {lastSpoken=-60000;previous="";recent.clear();}
     private String pick(String a,String b) {return variation++%2==0?a:b;}
 }

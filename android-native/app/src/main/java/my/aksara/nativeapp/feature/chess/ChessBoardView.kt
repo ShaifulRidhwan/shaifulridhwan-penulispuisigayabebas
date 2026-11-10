@@ -15,7 +15,7 @@ open class ChessBoardView(context:Context): View(context) {
     protected var lastFrom=-1
     protected var lastTo=-1
     protected val targets=BooleanArray(64)
-    var disableShapeCacheForBenchmark=false;set(value){check(my.aksara.nativeapp.BuildConfig.DEBUG);field=value}
+    var disableRenderCachesForBenchmark=false;set(value){check(my.aksara.nativeapp.BuildConfig.DEBUG);field=value}
     private val silhouettes=mutableMapOf<Char,Path>()
     private fun updateTargets() {
         targets.fill(false)
@@ -83,7 +83,7 @@ open class ChessBoardView(context:Context): View(context) {
         paint.style=Paint.Style.FILL
         c.drawRoundRect(-27f,22f,27f,33f,4f,4f,paint)
         val kind=ch.uppercaseChar()
-        val path=if(disableShapeCacheForBenchmark)Path() else silhouettes.getOrPut(kind){Path()}
+        val path=if(disableRenderCachesForBenchmark)Path() else silhouettes.getOrPut(kind){Path()}
         if(kind=='P')c.drawCircle(0f,-20f,12f,paint)
         if(kind=='K'){c.drawRect(-4f,-45f,4f,-20f,paint);c.drawRect(-12f,-38f,12f,-31f,paint)}
         if(path.isEmpty)when(kind) {

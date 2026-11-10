@@ -47,7 +47,7 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
     private var epoch=0L
     private var replayRequest=0L
     private var desiredReplay=-1
-    val engineReady get()=engine!=null && error.isEmpty()
+    val engineReady get()=engine?.isAlive()==true && error.isEmpty()
     val display get()=replay?:session
     val pieces: Array<String> get() { version; return display.pieces() }
     val legal: List<String> get() { version; return session.legalMoves() }
@@ -55,6 +55,7 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
     fun leave() { active=false; analyzing=false;if(reviewing)reviewNote="Analisis dihentikan apabila aplikasi tidak aktif.";reviewing=false;replayRequest++;desiredReplay=replayIndex; epoch++; engine?.cancel(); thinking=false; save(); onEvent?.invoke("stop",null) }
     private fun ensureEngine() {
         if(!active || starting) return
+        if(engine!=null && !engine!!.isAlive()){engine!!.close();engine=null}
         if(engine!=null) { maybeThink(); return }
         starting=true
         viewModelScope.launch {
@@ -239,6 +240,7 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
     private fun update() { version++; save() }
     fun save() { prefs.edit().putString("session",session.save()).putString("game_id",gameId).apply() }
     fun loadForTest(fen:String) {check(my.aksara.nativeapp.BuildConfig.DEBUG);epoch++;engine?.cancel();thinking=false;analyzing=false;reviewing=false;replay=null;replayIndex=-1;session=ChessSession(fen);selected=-1;intendedClaim=null;promotions=emptyList();previousPieces=null;lastMove="";lastAnalysis=null;animationId++;update();maybeThink()}
+    fun stopEngineForTest(){check(my.aksara.nativeapp.BuildConfig.DEBUG);engine?.close()}
     override fun onCleared() { active=false; epoch++; engine?.close(); super.onCleared() }
     companion object {
         private val names=Array(64){"${('a'.code+it%8).toChar()}${it/8+1}"}

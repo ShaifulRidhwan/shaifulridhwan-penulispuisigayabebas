@@ -93,6 +93,7 @@ class ChessAndroidTest {
                 assertEquals(Side.WHITE,a.chess.session.turn());assertTrue(a.chess.error.isEmpty())
             }
             var saved="";scenario.onActivity{saved=it.chess.session.save()}
+            scenario.onActivity{it.chess.stopEngineForTest()}
             scenario.recreate()
             scenario.onActivity { it.requestedOrientation=android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
             waitFor {var landscape=false;scenario.onActivity{landscape=runCatching{it.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE && it.board.hasRendered && it.board.height==it.window.decorView.height}.getOrDefault(false)};landscape}
@@ -103,6 +104,8 @@ class ChessAndroidTest {
             scenario.onActivity { assertEquals(saved,it.chess.session.save());it.chess.undo();assertEquals(ChessSession.START,it.chess.session.fen()) }
             device.waitForIdle(3000)
             device.takeScreenshot(File(instrumentation.targetContext.getExternalFilesDir(null),"chess-android.png"))
+            click(12);click(28)
+            waitFor {scenario.onActivity{count=it.chess.session.history().size};count==2}
             scenario.onActivity { it.chess.resign();assertEquals("0-1",it.chess.session.result());it.chess.restart() }
             } finally {
                 val dir=instrumentation.targetContext.getExternalFilesDir(null)
@@ -154,9 +157,14 @@ class ChessAndroidTest {
                 SystemClock.sleep(250)
                 device.takeScreenshot(File(instrumentation.targetContext.getExternalFilesDir(null),"chess-dark-queen-mate.png"))
                 scenario.onActivity{it.chess.restart()}
-                ready();move(1,18) // Native knight animation must not block Undo.
+                ready()
+                val undo=device.findObject(androidx.test.uiautomator.By.text("Undo"));assertNotNull(undo)
+                val undoCenter=undo.visibleCenter
+                move(1,18) // Native knight animation must not block Undo.
                 var moved=false;waitFor{scenario.onActivity{moved=it.chess.session.history().isNotEmpty()};moved}
-                val undo=device.findObject(androidx.test.uiautomator.By.text("Undo"));assertNotNull(undo);undo.click()
+                var animating=false
+                waitFor(3000){scenario.onActivity{animating=(it.board as my.aksara.nativeapp.feature.chess.ArenaBoardView).isAnimating};animating}
+                device.click(undoCenter.x,undoCenter.y)
                 var restored=false;waitFor{scenario.onActivity{restored=it.chess.session.fen()==ChessSession.START};restored}
                 SystemClock.sleep(3000)
                 scenario.onActivity{assertEquals("Stale engine result after Undo",ChessSession.START,it.chess.session.fen());assertTrue(it.chess.error.isEmpty())}
@@ -181,7 +189,7 @@ class ChessAndroidTest {
             val dir=instrumentation.targetContext.getExternalFilesDir(null)
             for(disabled in listOf(true,false)) {
                 val position=ChessSession()
-                scenario.onActivity{arena!!.disableShapeCacheForBenchmark=disabled;arena!!.pieces=position.pieces();arena!!.skipAnimation()}
+                scenario.onActivity{arena!!.disableRenderCachesForBenchmark=disabled;arena!!.pieces=position.pieces();arena!!.skipAnimation()}
                 SystemClock.sleep(600)
                 device.executeShellCommand("dumpsys gfxinfo my.aksara.nativeapp reset")
                 for((index,move) in fixture.withIndex()) {
@@ -198,7 +206,15 @@ class ChessAndroidTest {
                 File(dir,"chess-renderer-$label-memory.txt").writeText(device.executeShellCommand("dumpsys meminfo my.aksara.nativeapp"))
                 device.takeScreenshot(File(dir,"chess-renderer-$label.png"))
             }
-            File(dir,"chess-renderer-benchmark-method.txt").writeText("Android ${android.os.Build.VERSION.SDK_INT}. ${android.os.Build.SUPPORTED_ABIS.joinToString()}. Same original materials, silhouettes, animations and legal 16-ply replay in both passes. Only path cache allocation changes. Debug-only benchmark, not AI move selection or a physical-device FPS guarantee.")
+            scenario.onActivity {a ->
+                val evidence=a.voiceDebugState();File(dir,"chess-voice-playback.txt").writeText(evidence)
+                if(evidence.contains("available=true")) {
+                    val started=Regex("started=(\\d+)").find(evidence)?.groupValues?.get(1)?.toInt()?:0
+                    val done=Regex("completed=(\\d+)").find(evidence)?.groupValues?.get(1)?.toInt()?:0
+                    assertTrue("Real Malay TTS must start",started>0);assertTrue("Real Malay TTS must complete",done>0)
+                }
+            }
+            File(dir,"chess-renderer-benchmark-method.txt").writeText("Android ${android.os.Build.VERSION.SDK_INT}. ${android.os.Build.SUPPORTED_ABIS.joinToString()}. Same original materials, silhouettes, animations and legal 16-ply replay in both passes. Only static board-plane batching and path caches change. The cached plane is 1024 pixels; original textures and vector pieces retain their quality. Debug-only benchmark, not AI move selection or a physical-device FPS guarantee.")
         }
     }
     private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.board.hasRendered && a.board.hasWindowFocus() && a.chess.engineReady}.getOrDefault(false)

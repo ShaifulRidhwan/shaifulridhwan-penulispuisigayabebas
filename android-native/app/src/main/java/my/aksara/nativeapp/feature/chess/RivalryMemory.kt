@@ -26,6 +26,16 @@ class RivalryMemory(context:Context) {
         val old=records();val next=JSONArray();for(i in 0 until old.length())if(old.getJSONObject(i).optString("id")!=id)next.put(old.getJSONObject(i))
         prefs.edit().putString("records",next.toString()).apply();refresh()
     }
+    fun previousResultFact():String? {
+        if(!enabled)return null
+        val data=records();if(data.length()==0)return null
+        return when(data.optJSONObject(data.length()-1)?.optString("result")) {
+            "1-0"->"Dalam rekod sebelum permainan ini, pertemuan terakhir dimenangi Cahaya."
+            "0-1"->"Dalam rekod sebelum permainan ini, pertemuan terakhir dimenangi Gelap."
+            "1/2-1/2"->"Dalam rekod sebelum permainan ini, pertemuan terakhir berakhir seri."
+            else->null
+        }
+    }
     fun clear(){prefs.edit().remove("records").apply();refresh()}
     private fun refresh() {
         if(!enabled){summary="Memori rivalry dimatikan · permainan tidak dihantar ke awan";return}

@@ -57,15 +57,15 @@ class ChessActivity:ComponentActivity() {
                 if(chess.session.end()!=ChessSession.End.PLAYING)memory.record(chess.gameId,chess.session)
                 else if(event=="stop")memory.remove(chess.gameId)
                 if(event=="stop" && ::board.isInitialized)(board as? ArenaBoardView)?.skipAnimation()
-                queen.event(chess.session,event,analysis)
+                queen.event(chess.session,event,analysis,if(event=="opening")memory.previousResultFact() else null)
             }
             setContent {PremiumContent();DrawClaimChooser()}
         } else setContent { Screen();DrawClaimChooser() }
     }
     override fun onStart() {
-        super.onStart();chess.enter()
+        super.onStart();chess.enter();if(::queen.isInitialized)queen.refreshVoiceAvailability()
         if(premiumEnabled && !chess.openingAnnounced && chess.session.history().isEmpty()) {
-            chess.openingAnnounced=true;queen.event(chess.session,"opening",null)
+            chess.openingAnnounced=true;queen.event(chess.session,"opening",null,memory.previousResultFact())
         }
     }
     override fun onStop() {recognizer?.cancel();listening=false;chess.leave();if(::queen.isInitialized)queen.stop();super.onStop()}
@@ -122,7 +122,7 @@ class ChessActivity:ComponentActivity() {
         queen.stop();listening=true;interactionStatus="Mendengar Bahasa Melayu · pemprosesan pada peranti"
         runCatching{recognizer?.startListening(Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE,"ms-MY").putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM).putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS,false))}.onFailure{listening=false;interactionStatus="Mikrofon tidak dapat dimulakan."}
     }
-    fun voiceDebugState():String=if(::queen.isInitialized)"status=${queen.status}; speaking=${queen.speaking}; mode=${queen.mode}; subtitle=${queen.subtitle}" else "not_initialized"
+    fun voiceDebugState():String=if(::queen.isInitialized)queen.softwareEvidence() else "not_initialized"
     private fun explainLast() {
         val analysis=chess.lastAnalysis
         if(analysis==null || chess.session.turn()!=Side.WHITE){queen.notice("Tiada analisis langkah terakhir yang disahkan dalam sesi ini. Aku boleh menilai kedudukan semasa.");return}

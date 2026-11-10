@@ -8,7 +8,7 @@ import kotlin.math.*
 /** Original procedural 2.5D arena. Standard rules coordinates survive every camera transform. */
 class ArenaBoardView(context:Context):ChessBoardView(context) {
     var animationSpeed=1f
-    private val ink=Paint(Paint.ANTI_ALIAS_FLAG)
+    private val ink=Paint(Paint.ANTI_ALIAS_FLAG).apply{isFilterBitmap=true}
     private val boardMatrix=Matrix()
     private val inverse=Matrix()
     private val quad=Path()
@@ -22,6 +22,8 @@ class ArenaBoardView(context:Context):ChessBoardView(context) {
     private val lightShader=BitmapShader(marble,Shader.TileMode.REPEAT,Shader.TileMode.REPEAT)
     private val darkShader=BitmapShader(obsidian,Shader.TileMode.REPEAT,Shader.TileMode.REPEAT)
     private val textureMatrix=Matrix().apply{setScale(8f/512,8f/512)}
+    private val planeBounds=RectF(0f,0f,8f,8f)
+    private val boardPlane by lazy{bakeBoardPlane()}
     private var aura:Shader?=null
     private var cell=1f
     private var started=0L
@@ -59,6 +61,7 @@ class ArenaBoardView(context:Context):ChessBoardView(context) {
         duration=((if(mate)1100 else if(captured>=0)780 else 480)/animationSpeed.coerceIn(.5f,2f)).toLong()
         started=if(committedAt>0)committedAt else SystemClock.uptimeMillis();active=true;checkmate=mate;statusPulse=started;invalidate()
     }
+    val isAnimating get()=active && SystemClock.uptimeMillis()-started<duration
     fun skipAnimation() {active=false;statusPulse=0L;geometry(0f);invalidate()}
     override fun onSizeChanged(w:Int,h:Int,oldw:Int,oldh:Int) {
         super.onSizeChanged(w,h,oldw,oldh)
@@ -103,11 +106,14 @@ class ArenaBoardView(context:Context):ChessBoardView(context) {
         ink.style=Paint.Style.STROKE;ink.strokeWidth=2f;ink.color=0xffac8e5b.toInt();c.drawPath(quad,ink);ink.style=Paint.Style.FILL
         c.save();c.concat(boardMatrix)
         ink.color=0xffb8a17b.toInt();c.drawRoundRect(-.11f,-.11f,8.11f,8.11f,.10f,.10f,ink)
+        if(!disableRenderCachesForBenchmark){ink.shader=null;ink.alpha=255;c.drawBitmap(boardPlane,null,planeBounds,ink)}
         for(s in 0..63) {
             val file=(s%8).toFloat();val row=(7-s/8).toFloat()
+            if(disableRenderCachesForBenchmark) {
             ink.alpha=255;ink.shader=if((s%8+s/8)%2==1)lightShader else darkShader
             c.drawRect(file,row,file+1,row+1,ink);ink.shader=null
             ink.style=Paint.Style.STROKE;ink.strokeWidth=.012f;ink.color=0x225b5270;c.drawRect(file,row,file+1,row+1,ink);ink.style=Paint.Style.FILL
+            }
             if(s==selected || s==lastFrom || s==lastTo) {
                 ink.color=if(s==selected)0x6666bba6 else 0x447da292;c.drawRect(file+.025f,row+.025f,file+.975f,row+.975f,ink)
             }
@@ -149,7 +155,15 @@ class ArenaBoardView(context:Context):ChessBoardView(context) {
             ink.alpha=255
             drawPiece(c,px,py,size,if(t>.85f && lastMove.length==5)lastMove[4].let{if(actor.isUpperCase())it.uppercaseChar() else it} else actor)
             if(rookFrom>=0)drawPiece(c,centers[rookFrom*2]+(centers[rookTo*2]-centers[rookFrom*2])*u,centers[rookFrom*2+1]+(centers[rookTo*2+1]-centers[rookFrom*2+1])*u,cell*.85f,if(actor.isUpperCase())'R' else 'r')
-            if(t>.72f && (captured>=0 || actor.uppercaseChar() in "NRQ")) {
+            if(actor.uppercaseChar()=='B') {
+                ink.color=if(actor.isUpperCase())0x88e8d9a8.toInt() else 0x889e72c4.toInt();ink.strokeWidth=cell*.025f
+                c.drawLine(centers[from*2],centers[from*2+1],px,py,ink)
+            }
+            if(actor.uppercaseChar()=='Q' || actor.uppercaseChar()=='K') {
+                ink.style=Paint.Style.STROKE;ink.strokeWidth=cell*.018f;ink.color=if(actor.isUpperCase())0xaaddca94.toInt() else 0xaaad70cf.toInt()
+                c.drawArc(px-cell*.28f,py-cell*.35f,px+cell*.28f,py+cell*.20f,t*360f,if(actor.uppercaseChar()=='K')300f else 170f,false,ink);ink.style=Paint.Style.FILL
+            }
+            if(t>.72f && (captured>=0 || actor.uppercaseChar() in "NRQ" || lastMove.length==5)) {
                 val burst=((t-.72f)/.28f).coerceIn(0f,1f)
                 for(i in 0..23) {
                     ink.color=if(actor.isUpperCase())0xffeed193.toInt() else 0xffb78acc.toInt();ink.alpha=(190*(1-burst)).toInt()
@@ -167,6 +181,18 @@ class ArenaBoardView(context:Context):ChessBoardView(context) {
         if(active && isAttachedToWindow && hasWindowFocus())postInvalidateOnAnimation()
     }
     private fun piece(c:Canvas,s:Int,ch:Char) {drawPiece(c,centers[s*2],centers[s*2+1],cell*(.80f+(7-s/8)*.014f),ch)}
+    private fun bakeBoardPlane():Bitmap {
+        val image=Bitmap.createBitmap(1024,1024,Bitmap.Config.ARGB_8888)
+        val canvas=Canvas(image);val p=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+        canvas.scale(128f,128f)
+        for(square in 0..63) {
+            val x=(square%8).toFloat();val y=(7-square/8).toFloat()
+            p.alpha=255;p.shader=if((square%8+square/8)%2==1)lightShader else darkShader
+            canvas.drawRect(x,y,x+1,y+1,p);p.shader=null
+            p.style=Paint.Style.STROKE;p.strokeWidth=.012f;p.color=0x225b5270;canvas.drawRect(x,y,x+1,y+1,p);p.style=Paint.Style.FILL
+        }
+        return image
+    }
     private fun material(light:Boolean):Bitmap {
         val bitmap=Bitmap.createBitmap(512,512,Bitmap.Config.ARGB_8888)
         val c=Canvas(bitmap);val p=Paint(Paint.ANTI_ALIAS_FLAG);val path=Path()

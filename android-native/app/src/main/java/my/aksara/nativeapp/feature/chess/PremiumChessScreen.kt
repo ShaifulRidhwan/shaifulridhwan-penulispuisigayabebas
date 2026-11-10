@@ -69,6 +69,13 @@ import com.github.bhlangonijr.chesslib.Side
                     Chip("Undo"){voice.stop();chess.undo()}
                     Chip("Menu",onMenu)
                 }
+                if(voice.visibleSubtitle.isNotEmpty()) {
+                    Column(Modifier.fillMaxWidth().background(Color(0x443e2d51),RoundedCornerShape(16.dp)).border(1.dp,Color(0x337e6e90),RoundedCornerShape(16.dp)).padding(12.dp)) {
+                        AksaraText(if(voice.speaking)"RATU GELAP · BERSUARA" else "RATU GELAP",size=9f,tracking=1.2f,color=Color(0xffc6a3d2))
+                        AksaraText(voice.visibleSubtitle,size=13f,color=Color(0xffe2d6df))
+                    }
+                }
+                AksaraText(voice.status,size=10f,color=Color(0xff9d95ab))
                 Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
                     if(!ended)Chip(if(chess.analyzing)"Menganalisis…" else "Analisis"){analyze()}
                     else Chip("Replay"){voice.stop();chess.replayStep(0)}
@@ -84,13 +91,6 @@ import com.github.bhlangonijr.chesslib.Side
                     Chip("→"){chess.shiftReplay(1)}
                     Chip("Keluar replay",chess::exitReplay)
                 }
-                if(voice.visibleSubtitle.isNotEmpty()) {
-                    Column(Modifier.fillMaxWidth().background(Color(0x443e2d51),RoundedCornerShape(16.dp)).border(1.dp,Color(0x337e6e90),RoundedCornerShape(16.dp)).padding(12.dp)) {
-                        AksaraText(if(voice.speaking)"RATU GELAP · BERSUARA" else "RATU GELAP",size=9f,tracking=1.2f,color=Color(0xffc6a3d2))
-                        AksaraText(voice.visibleSubtitle,size=13f,color=Color(0xffe2d6df))
-                    }
-                }
-                AksaraText(voice.status,size=10f,color=Color(0xff9d95ab))
                 Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.defaultMinSize(minHeight=48.dp).background(Color(0x44382f4b),RoundedCornerShape(13.dp)).pointerInput(Unit){detectTapGestures(onPress={onMicrophoneDown();tryAwaitRelease();onMicrophoneUp()})}.padding(horizontal=12.dp,vertical=12.dp)) {
                         AksaraText(if(listening)"Mendengar…" else "Tahan untuk tanya",size=11f)

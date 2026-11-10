@@ -120,6 +120,7 @@ public final class UciEngine implements AutoCloseable {
         if(token!=generation.get()) throw new CancellationException();
         send("position fen "+fen); send("go movetime "+milliseconds);
     }
+    public boolean isAlive() { return !closed && process.isAlive(); }
     public synchronized void cancel() {
         generation.incrementAndGet();
         try { send("stop"); } catch(IOException ignored) { }
