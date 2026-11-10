@@ -8,4 +8,11 @@
         <item name="android:windowBackground">#070911</item>
         <item name="android:windowNoTitle">true</item>
     </style>
+    <!-- Android 12+ system-owned starting window: prevents the default white flash. -->
+    <style name="Theme.Aksara.Launch" parent="Theme.Aksara">
+        <item name="android:windowSplashScreenBackground">#070911</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/aksara_splash_mark</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">#070911</item>
+        <item name="android:windowBackground">#070911</item>
+    </style>
 </resources>
