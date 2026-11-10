@@ -8,6 +8,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import my.aksara.nativeapp.feature.chat.AksaraApp
+import my.aksara.nativeapp.feature.splash.AksaraLaunchGate
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -17,6 +18,6 @@ class MainActivity : ComponentActivity() {
             hide(WindowInsetsCompat.Type.systemBars())
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
-        setContent { AksaraApp() }
+        setContent { AksaraLaunchGate(initialIntro = savedInstanceState == null) { AksaraApp() } }
     }
 }
