@@ -160,11 +160,15 @@ class ChessAndroidTest {
                 ready()
                 val undo=device.findObject(androidx.test.uiautomator.By.text("Undo"));assertNotNull(undo)
                 val undoCenter=undo.visibleCenter
-                move(1,18) // Native knight animation must not block Undo.
-                var moved=false;waitFor{scenario.onActivity{moved=it.chess.session.history().isNotEmpty()};moved}
+                var arena:my.aksara.nativeapp.feature.chess.ArenaBoardView?=null
+                var from=PointF();var to=PointF();val offset=IntArray(2)
+                scenario.onActivity {a->arena=a.board as my.aksara.nativeapp.feature.chess.ArenaBoardView;from=a.board.squareCenter(1);to=a.board.squareCenter(18);a.board.getLocationOnScreen(offset)}
+                // UiDevice's idle wait can consume the entire 480ms animation.
+                // Inject real touchscreen events without that implicit idle barrier.
+                rawTap(from.x+offset[0],from.y+offset[1]);rawTap(to.x+offset[0],to.y+offset[1])
                 var animating=false
-                waitFor(3000){scenario.onActivity{animating=(it.board as my.aksara.nativeapp.feature.chess.ArenaBoardView).isAnimating};animating}
-                device.click(undoCenter.x,undoCenter.y)
+                waitFor(3000){instrumentation.runOnMainSync{animating=arena!!.isAnimating};animating}
+                rawTap(undoCenter.x.toFloat(),undoCenter.y.toFloat())
                 var restored=false;waitFor{scenario.onActivity{restored=it.chess.session.fen()==ChessSession.START};restored}
                 SystemClock.sleep(3000)
                 scenario.onActivity{assertEquals("Stale engine result after Undo",ChessSession.START,it.chess.session.fen());assertTrue(it.chess.error.isEmpty())}
@@ -214,7 +218,7 @@ class ChessAndroidTest {
                     assertTrue("Real Malay TTS must start",started>0);assertTrue("Real Malay TTS must complete",done>0)
                 }
             }
-            File(dir,"chess-renderer-benchmark-method.txt").writeText("Android ${android.os.Build.VERSION.SDK_INT}. ${android.os.Build.SUPPORTED_ABIS.joinToString()}. Same original materials, silhouettes, animations and legal 16-ply replay in both passes. Only static board-plane batching and path caches change. The cached plane is 1024 pixels; original textures and vector pieces retain their quality. Debug-only benchmark, not AI move selection or a physical-device FPS guarantee.")
+            File(dir,"chess-renderer-benchmark-method.txt").writeText("Android ${android.os.Build.VERSION.SDK_INT}. ${android.os.Build.SUPPORTED_ABIS.joinToString()}. Same original materials, silhouettes, animations and legal 16-ply replay in both passes. Static board-plane batching, paths and 512px original-piece texture caches change. The cached plane is 1024 pixels. No piece geometry, gradient, shadow or effect is removed. Fixed uncached-then-cached order, one paired trial; TTS initialization and emulator load may confound timings. Debug-only benchmark, not AI move selection or a physical-device FPS guarantee.")
         }
     }
     @Test fun leavingChessReleasesNativeProcesses() {
@@ -223,6 +227,14 @@ class ChessAndroidTest {
         waitFor(15000){device.executeShellCommand("pidof libstockfish.so").isBlank()}
         File(instrumentation.targetContext.getExternalFilesDir(null),"chess-process-cleanup.txt")
             .writeText("Three immediate Activity exits; Android pidof libstockfish.so reports no remaining native engine processes.")
+    }
+    private fun rawTap(x:Float,y:Float) {
+        val down=SystemClock.uptimeMillis()
+        for(action in listOf(android.view.MotionEvent.ACTION_DOWN,android.view.MotionEvent.ACTION_UP)) {
+            val event=android.view.MotionEvent.obtain(down,SystemClock.uptimeMillis(),action,x,y,0).apply{source=android.view.InputDevice.SOURCE_TOUCHSCREEN}
+            try{assertTrue("Android touchscreen injection",instrumentation.uiAutomation.injectInputEvent(event,true))}finally{event.recycle()}
+            if(action==android.view.MotionEvent.ACTION_DOWN)SystemClock.sleep(20)
+        }
     }
     private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.board.hasRendered && a.board.hasWindowFocus() && a.chess.engineReady}.getOrDefault(false)
 }

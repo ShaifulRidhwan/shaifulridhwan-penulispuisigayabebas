@@ -17,6 +17,9 @@ open class ChessBoardView(context:Context): View(context) {
     protected val targets=BooleanArray(64)
     var disableRenderCachesForBenchmark=false;set(value){check(my.aksara.nativeapp.BuildConfig.DEBUG);field=value}
     private val silhouettes=mutableMapOf<Char,Path>()
+    private val pieceImages=mutableMapOf<Char,Bitmap>()
+    private val spritePaint=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val spriteBounds=RectF()
     private fun updateTargets() {
         targets.fill(false)
         if(selected<0)return
@@ -77,6 +80,17 @@ open class ChessBoardView(context:Context): View(context) {
         }
     }
     protected fun drawPiece(c:Canvas,x:Float,y:Float,size:Float,ch:Char) {
+        if(!disableRenderCachesForBenchmark) {
+            // Bake the same original vectors at 512px, well above their on-screen size.
+            // Gradients, silhouettes and shadows are retained; animation reuses GPU textures.
+            val image=pieceImages.getOrPut(ch){Bitmap.createBitmap(512,512,Bitmap.Config.ARGB_8888).also{drawPieceVector(Canvas(it),256f,256f,512f,ch)}}
+            spriteBounds.set(x-size/2,y-size/2,x+size/2,y+size/2)
+            c.drawBitmap(image,null,spriteBounds,spritePaint)
+            return
+        }
+        drawPieceVector(c,x,y,size,ch)
+    }
+    private fun drawPieceVector(c:Canvas,x:Float,y:Float,size:Float,ch:Char) {
         val light=ch.isUpperCase(); c.save(); c.translate(x,y); c.scale(size/100,size/100)
         paint.shader=null; paint.color=0x55000000; c.drawOval(-30f,25f,32f,39f,paint)
         paint.alpha=255;paint.shader=if(light)pearl else abyss
