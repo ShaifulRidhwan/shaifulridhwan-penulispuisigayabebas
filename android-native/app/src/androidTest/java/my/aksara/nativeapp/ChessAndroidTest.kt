@@ -65,7 +65,7 @@ class ChessAndroidTest {
             try {
             var ready=false
             waitFor {
-                device.findObject(androidx.test.uiautomator.By.text("Got it"))?.click()
+                dismissSystemEducation()
                 scenario.onActivity { ready=boardReady(it) };ready
             }
             fun click(square:Int) {
@@ -124,7 +124,7 @@ class ChessAndroidTest {
     }
     @Test fun specialRulesReplayAndUndoDuringAnimation() {
         ActivityScenario.launch(ChessActivity::class.java).use { scenario ->
-            fun ready() {var ok=false;waitFor{device.findObject(androidx.test.uiautomator.By.text("Got it"))?.click();scenario.onActivity{ok=boardReady(it)};ok}}
+            fun ready() {var ok=false;waitFor{dismissSystemEducation();scenario.onActivity{ok=boardReady(it)};ok}}
             fun load(fen:String){scenario.onActivity{it.chess.loadForTest(fen)};instrumentation.waitForIdleSync();ready()}
             fun click(square:Int){var p=PointF();val offset=IntArray(2);scenario.onActivity{p=it.board.squareCenter(square);it.board.getLocationOnScreen(offset)};device.click((p.x+offset[0]).toInt(),(p.y+offset[1]).toInt())}
             fun move(from:Int,to:Int){click(from);var selected=-1;waitFor{scenario.onActivity{selected=it.chess.selected};selected==from};click(to)}
@@ -187,7 +187,7 @@ class ChessAndroidTest {
                 arena=my.aksara.nativeapp.feature.chess.ArenaBoardView(a)
                 a.setContentView(arena)
             }
-            waitFor {device.findObject(androidx.test.uiautomator.By.text("Got it"))?.click();var ready=false;scenario.onActivity{ready=arena?.hasRendered==true && arena?.hasWindowFocus()==true};ready}
+            waitFor {dismissSystemEducation();var ready=false;scenario.onActivity{ready=arena?.hasRendered==true && arena?.hasWindowFocus()==true};ready}
             // This is a renderer replay fixture, never a substitute for the real-engine match.
             val fixture=listOf("e2e4","e7e5","g1f3","b8c6","f1c4","g8f6","d2d3","f8c5","e1g1","e8g8","b1c3","d7d6","c1g5","h7h6","g5h4","g7g5")
             val dir=instrumentation.targetContext.getExternalFilesDir(null)
@@ -227,6 +227,10 @@ class ChessAndroidTest {
         waitFor(15000){device.executeShellCommand("pidof libstockfish.so").isBlank()}
         File(instrumentation.targetContext.getExternalFilesDir(null),"chess-process-cleanup.txt")
             .writeText("Three immediate Activity exits; Android pidof libstockfish.so reports no remaining native engine processes.")
+    }
+    private fun dismissSystemEducation() {
+        try {device.findObject(androidx.test.uiautomator.By.text("Got it"))?.click()}
+        catch(_:androidx.test.uiautomator.StaleObjectException) { /* System removed its transient overlay. Board focus is still required. */ }
     }
     private fun rawTap(x:Float,y:Float) {
         val down=SystemClock.uptimeMillis()
