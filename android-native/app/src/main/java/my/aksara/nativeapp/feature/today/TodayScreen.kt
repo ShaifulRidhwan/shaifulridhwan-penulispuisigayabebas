@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.provider.CalendarContract
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -109,6 +110,7 @@ private fun nextPrayer(prayer:TodayPrayer?,now:LocalTime):Pair<String,String>? {
 }
 
 @Composable internal fun TodayScreen(active:Boolean,onBack:()->Unit) {
+    BackHandler(enabled=active) { onBack() }
     val context=LocalContext.current
     val repo=remember(context) { TodayRepository(context) }
     var permissionLocation by remember { mutableStateOf(hasTodayLocationPermission(context)) }
@@ -146,6 +148,8 @@ private fun nextPrayer(prayer:TodayPrayer?,now:LocalTime):Pair<String,String>? {
             locating=false
             locationReady=found!=null
             if(found!=null) {
+                weather=null
+                prayer=null
                 launch { weather=repo.weather(found,force=epoch>0) }
                 launch { prayer=repo.prayer(found,force=epoch>0) }
             }
