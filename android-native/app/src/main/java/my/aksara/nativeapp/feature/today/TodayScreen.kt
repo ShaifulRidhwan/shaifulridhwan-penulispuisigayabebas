@@ -242,9 +242,6 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                                     AksaraText(item.title,Modifier.weight(1f),size=11f)
                                 }
                             }
-                        } else {
-                            AksaraText("Tiada acara dalam tujuh hari akan datang.",
-                                size=10.5f,color=todayMuted)
                         }
                     }
                 }
@@ -347,7 +344,8 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                         if(url!=null) AksaraButton("Buka commit di GitHub",{
                             context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url)))
                         },height=38.dp,size=11f)
-                        TodayFreshness(github)
+                        AksaraText("Sync GitHub • "+updatedLabel(github?.updatedAt,
+                            github?.fromCache==true),size=10.5f,color=todayMuted)
                     }
                 }
             }
