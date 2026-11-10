@@ -2,6 +2,7 @@ package my.aksara.nativeapp
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
@@ -47,9 +48,17 @@ class AttributionAndLiteUiTest {
         org.junit.Assert.assertTrue(theme.resolveAttribute(android.R.attr.windowSplashScreenBackground,color,true))
         assertEquals(0xFF03040C.toInt(),color.data)
         val out = java.io.File(context.getExternalFilesDir(null),"visual").apply { mkdirs() }
-        val device = androidx.test.uiautomator.UiDevice.getInstance(androidx.test.platform.app.InstrumentationRegistry.getInstrumentation())
         compose.waitForIdle()
-        org.junit.Assert.assertTrue(device.takeScreenshot(java.io.File(out,"ui-polish-v2-splash.png")))
+        // Capture this rendered Compose surface, rather than the previous SurfaceFlinger frame.
+        val bitmap = compose.onNodeWithTag("aksara-splash-screen").captureToImage().asAndroidBitmap()
+        val colors = mutableSetOf<Int>()
+        for (y in 0 until bitmap.height step 8) for (x in 0 until bitmap.width step 8) {
+            colors.add(bitmap.getPixel(x,y))
+        }
+        org.junit.Assert.assertTrue("Splash evidence must contain rendered artwork",colors.size > 16)
+        java.io.File(out,"ui-polish-v2-splash.png").outputStream().use {
+            org.junit.Assert.assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG,100,it))
+        }
     }
 
     @Test fun actualProviderIsAttachedToIndividualMessage() {
