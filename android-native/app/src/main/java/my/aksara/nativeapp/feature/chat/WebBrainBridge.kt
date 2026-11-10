@@ -43,7 +43,8 @@ internal object WebBrainBridge {
         val recent = ContextPolicy.selectHistory(completed, question)
         val notes = if (memoryEnabled) ContextPolicy.selectMemory(memoryNotes, question) else ""
         val result = JSONObject()
-            .put("question", question)
+            // Preserve the on-screen user turn; opt-in writing stages affect only inference.
+            .put("question", WritingWorkflow.forInference(question))
             .put("history", safeHistory(recent))
             .put("thoughtMode", if (thoughtMode == "gelap") "gelap" else "cahaya")
             .put("contextFallback", false)
