@@ -24,19 +24,21 @@ android {
         applicationId = "my.aksara.nativeapp"
         minSdk = 31
         targetSdk = 35
-        versionCode = 3
-        versionName = "0.1.0-eclipse-v3"
+        versionCode = 4
+        versionName = "0.2.0-chess-darkness"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "API_ORIGIN", "\"https://shaifulridhwan-penulispuisigayabebas.netlify.app\"")
         buildConfigField("String", "WEB_REFERENCE_COMMIT", "\"f482b8ed393fe0eb4277ae3eaf3938f1593489c4\"")
     }
     buildFeatures { compose = true; buildConfig = true }
-    compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
+    compileOptions { isCoreLibraryDesugaringEnabled = true; sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
     testOptions { animationsDisabled = true }
-    packaging { resources.excludes += setOf("META-INF/LICENSE*", "META-INF/NOTICE*") }
+    packaging { jniLibs.useLegacyPackaging = true; jniLibs.keepDebugSymbols += "**/libstockfish.so"; resources.excludes += setOf("META-INF/LICENSE*", "META-INF/NOTICE*") }
 }
 dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    implementation(project(":engine:chess"))
     implementation("androidx.webkit:webkit:1.12.1")
     implementation(project(":engine:runtime"))
     implementation(project(":engine:voice"))

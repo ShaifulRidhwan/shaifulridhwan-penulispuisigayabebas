@@ -1,0 +1,8 @@
+11-10 00:42:02.331   595  3255 E ActivityManager: ANR in com.android.phone
+11-10 00:43:18.672   595  3369 E ActivityManager: ANR in com.android.phone
+11-10 00:43:51.660  3240  3311 E TestRunner: failed: nativeTouchPlayUndoAndLifecycleRestore(my.aksara.nativeapp.ChessAndroidTest)
+11-10 00:44:09.885  3240  3311 E TestRunner: failed: stockfish19NnueCompleteLegalMatchAndCancellation(my.aksara.nativeapp.ChessAndroidTest)
+11-10 00:44:10.059  3240  3311 E TestRunner: java.util.concurrent.ExecutionException: java.util.concurrent.TimeoutException: UCI response deadline
+11-10 00:44:10.059  3240  3311 E TestRunner: Caused by: java.util.concurrent.TimeoutException: UCI response deadline
+11-10 00:44:20.098   595  3481 E ActivityManager: ANR in com.android.phone
+11-10 00:45:06.609   595  3566 E ActivityManager: ANR in com.android.phone

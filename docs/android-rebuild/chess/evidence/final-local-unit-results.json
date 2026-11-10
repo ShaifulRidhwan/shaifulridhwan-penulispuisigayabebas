@@ -1,0 +1,35 @@
+{
+  "source_commit": "ff00c941ee36a4c093b2d2f577c61c731c3c73b6",
+  "host_stockfish": "official Stockfish 19, real executable",
+  "host_chess_tests": {
+    "passed": 22,
+    "log": "premium-host-tests.txt"
+  },
+  "gradle": {
+    "app": {
+      "tests": 69,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "engine/chess": {
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 1
+    },
+    "engine/runtime": {
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "engine/voice": {
+      "tests": 22,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "note": "Gradle skips the optional host executable test without its environment variable. The separate host invocation ran all 22 successfully. Android runtime verification is delivered separately through CI evidence."
+}

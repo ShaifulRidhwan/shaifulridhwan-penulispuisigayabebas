@@ -1,0 +1,2 @@
+b34e45a32296b335685e765b972e3da3ae19330f5d4f5d29bd8ca08b9be52cde  android-native/app/build/outputs/apk/debug/app-debug.apk
+5de1ba4a03804abdd82ee45e18f831e2277112bcf137129bdc17907512b890c0  android-native/chess-native/build/stockfish-19-corresponding-source.tar.gz

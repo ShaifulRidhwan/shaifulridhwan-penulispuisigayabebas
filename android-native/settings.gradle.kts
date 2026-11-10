@@ -6,3 +6,5 @@ include(":app")
 include(":engine:runtime")
 include(":engine:voice")
 include(":engine:avatar")
+
+include(":engine:chess")

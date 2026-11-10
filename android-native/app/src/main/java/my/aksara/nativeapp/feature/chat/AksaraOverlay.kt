@@ -43,6 +43,11 @@ import my.aksara.nativeapp.feature.tools.*
     onVoiceState:(String,Boolean)->Unit={_,_->}) {
     // Android Lite: preserve the engines on disk, but expose no inactive entry points.
     if(kind=="code" || kind=="terminal" || kind=="engines") return
+    if(kind=="chess"){
+        val context=LocalContext.current
+        LaunchedEffect(Unit){context.startActivity(Intent(context,my.aksara.nativeapp.ChessActivity::class.java));onClose()}
+        return
+    }
     if(kind=="game"){GameContent(onClose);return}
     if(kind=="voice"){VoiceContent(onClose,state.mode,onMode,state.messages,state.memoryEnabled,state.memoryNotes,onVoiceTurns,onStatus=onVoiceState);return}
     if(kind=="voice-fixture"){VoiceScreen(VoiceState(phase="preview"),onClose,preview=true);return}
@@ -75,7 +80,7 @@ import my.aksara.nativeapp.feature.tools.*
             maxOf(73.dp,(24f+18.2f+4f+15.75f*lines).dp)
         }
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(AksaraModalStyle.scrim).clickable(onClick=onClose))
-        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->453.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(470.dp,h-32.dp);"literary-notice"->minOf(500.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
+        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->453.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(550.dp,h-32.dp);"literary-notice"->minOf(500.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).widthIn(max=680.dp).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).testTag("aksara-glass-modal").clickable(enabled=false){},
@@ -203,6 +208,7 @@ import my.aksara.nativeapp.feature.tools.*
                             Spacer(Modifier.height(14.dp))
                             listOf(
                                 Triple("Laman Utama","Laman web rasmi Shaiful Ridhwan","external-home"),
+                                Triple("Chess · Absolute Darkness","Cahaya melawan Ratu Gelap · Stockfish 19","chess"),
                                 Triple("Game · Cahaya vs Gelap","Arena latihan 2D · seni sementara","game"),
                                 Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),
                                 Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","literary-notice")

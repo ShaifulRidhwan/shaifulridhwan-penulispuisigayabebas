@@ -1,0 +1,1 @@
+Three immediate Activity exits; Android pidof libstockfish.so reports no remaining native engine processes.

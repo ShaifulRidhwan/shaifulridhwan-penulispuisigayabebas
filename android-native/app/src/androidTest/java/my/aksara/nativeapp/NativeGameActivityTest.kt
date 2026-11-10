@@ -203,7 +203,10 @@ class NativeGameActivityTest {
                     assertEquals(Configuration.ORIENTATION_LANDSCAPE,a.resources.configuration.orientation)
                     if(canvas){
                         assertEquals("\"canvas\"",js(a,"gameDiagnostics.renderer"))
-                        assertEquals("true",js(a,"scene.presentation.sprites.every(s=>s.texture.key==='warriors'&&s.visible) && game.canvas.getContext('2d').getImageData(200,280,200,150).data.some(v=>v>0)"))
+                        // A restored walking fighter legitimately uses the separate walk atlas.
+                        // Verify the atlas matches its frame, rather than requiring idle artwork.
+                        assertEquals("Canvas fighter frames must use their correct loaded atlas", "true",js(a,"scene.presentation.sprites.every(s=>s.visible && s.frame.name!=='__MISSING' && s.texture.key===(s.frame.name.includes('-walk-')?'walkers':'warriors'))"))
+                        assertEquals("Canvas must contain rendered pixels", "true",js(a,"game.canvas.getContext('2d').getImageData(200,280,200,150).data.some(v=>v>0)"))
                     }
                     js(a,"document.querySelector('#start').click()")
                     waitJs(a,"!paused && match.elapsed>0.1 && document.querySelector('#menu').style.display==='none'")
