@@ -1,0 +1,104 @@
+{
+  "method": "API35 debug emulator, animations 1x; 10 launches per mode; 3 UI rendering trials. Software GPU; no physical-device/battery/voice-quality inference.",
+  "cold": {
+    "totalTimeMs": [
+      2259,
+      2262,
+      2190,
+      2191,
+      2207,
+      2104,
+      2270,
+      2179,
+      2071,
+      2170
+    ],
+    "medianMs": 2190.5,
+    "note": "Missing TotalTime is not treated as zero. Verify warm PID continuity from raw files."
+  },
+  "warm": {
+    "totalTimeMs": [
+      423,
+      862,
+      1047,
+      471,
+      430,
+      444,
+      442,
+      478,
+      427,
+      426
+    ],
+    "medianMs": 443.0,
+    "note": "Missing TotalTime is not treated as zero. Verify warm PID continuity from raw files."
+  },
+  "hot": {
+    "totalTimeMs": [
+      365,
+      null,
+      null,
+      null,
+      350,
+      641,
+      null,
+      397,
+      380,
+      388
+    ],
+    "medianMs": 384.0,
+    "note": "Missing TotalTime is not treated as zero. Verify warm PID continuity from raw files."
+  },
+  "streaming": [
+    {
+      "trial": 1,
+      "frames": 179,
+      "medianMs": 216.870051,
+      "p95Ms": 285.081941,
+      "gpuMedianMs": 72.028034,
+      "runtimeCounterDeltas": {
+        "art.gc.gc-count": 8,
+        "art.gc.gc-time": 863,
+        "art.gc.bytes-allocated": 51990528,
+        "art.gc.bytes-freed": 55826448
+      },
+      "nativeHeapBytes": 29219632,
+      "javaHeapUsedBytes": 12558112
+    },
+    {
+      "trial": 2,
+      "frames": 178,
+      "medianMs": 230.981605,
+      "p95Ms": 300.212779,
+      "gpuMedianMs": 74.629823,
+      "runtimeCounterDeltas": {
+        "art.gc.gc-count": 9,
+        "art.gc.gc-time": 791,
+        "art.gc.bytes-allocated": 52379648,
+        "art.gc.bytes-freed": 62326800
+      },
+      "nativeHeapBytes": 27285408,
+      "javaHeapUsedBytes": 6545184
+    },
+    {
+      "trial": 3,
+      "frames": 178,
+      "medianMs": 249.244474,
+      "p95Ms": 316.898887,
+      "gpuMedianMs": 73.1954405,
+      "runtimeCounterDeltas": {
+        "art.gc.gc-count": 8,
+        "art.gc.gc-time": 816,
+        "art.gc.bytes-allocated": 52191232,
+        "art.gc.bytes-freed": 54798352
+      },
+      "nativeHeapBytes": 29260288,
+      "javaHeapUsedBytes": 12193568
+    }
+  ],
+  "idleMemoryRawTotals": [
+    "TOTAL    90225    43176    29528      212   197908    47697    34207     9488",
+    "TOTAL PSS:    90225            TOTAL RSS:   197908       TOTAL SWAP PSS:      212"
+  ],
+  "apkBytes": 224510233,
+  "apkSha256": "66fa0f88b0a2ed6021b5fb7ed3e9d4522e84d7ce7fc69db5454a6faf6334ec28"
+}

@@ -1,0 +1,79 @@
+{
+  "method": "Cloud executor HTTPS proxy, not Android device latency",
+  "trials": [
+    {
+      "trial": 1,
+      "status": 200,
+      "elapsedMs": 845.18,
+      "ok": true,
+      "providers": [
+        {
+          "id": "gemini",
+          "status": "online"
+        },
+        {
+          "id": "groq",
+          "status": "online"
+        },
+        {
+          "id": "workers_ai",
+          "status": "ready"
+        },
+        {
+          "id": "openrouter",
+          "status": "ready"
+        }
+      ]
+    },
+    {
+      "trial": 2,
+      "status": 200,
+      "elapsedMs": 827.01,
+      "ok": true,
+      "providers": [
+        {
+          "id": "gemini",
+          "status": "online"
+        },
+        {
+          "id": "groq",
+          "status": "online"
+        },
+        {
+          "id": "workers_ai",
+          "status": "ready"
+        },
+        {
+          "id": "openrouter",
+          "status": "ready"
+        }
+      ]
+    },
+    {
+      "trial": 3,
+      "status": 200,
+      "elapsedMs": 662.86,
+      "ok": true,
+      "providers": [
+        {
+          "id": "gemini",
+          "status": "online"
+        },
+        {
+          "id": "groq",
+          "status": "online"
+        },
+        {
+          "id": "workers_ai",
+          "status": "ready"
+        },
+        {
+          "id": "openrouter",
+          "status": "ready"
+        }
+      ]
+    }
+  ],
+  "sourceCommit": "a4898c51f15ac92184ade7cf15c7c352cb423ff5",
+  "observedDateUTC": "2026-11-10"
+}

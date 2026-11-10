@@ -11,6 +11,40 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ChatApiTest {
+    @Test fun cancellationWaitsForBlockedHttpCallToRelease()=runBlocking {
+        MockWebServer().use { server ->
+            server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
+            server.start()
+            val client=OkHttpClient()
+            val job=launch(Dispatchers.Default) {
+                ChatApi(server.url("/").toString().removeSuffix("/"),client).chat(JSONObject()).collect {}
+            }
+            assertNotNull(server.takeRequest(5,java.util.concurrent.TimeUnit.SECONDS))
+            withTimeout(3000) { job.cancelAndJoin() }
+            assertEquals("Cancellation must release the active HTTP call",0,client.dispatcher.runningCallsCount())
+        }
+    }
+
+    @Test fun cancellationDuringStreamingRetainsBoundedCleanup()=runBlocking {
+        MockWebServer().use { server ->
+            server.enqueue(MockResponse().setHeader("Content-Type","application/x-ndjson")
+                .setChunkedBody("{\"type\":\"delta\",\"text\":\"separa\"}\n"+" ".repeat(1024),64)
+                .throttleBody(64,1,java.util.concurrent.TimeUnit.SECONDS))
+            server.start()
+            val client=OkHttpClient()
+            val first=CompletableDeferred<Unit>()
+            val job=launch(Dispatchers.Default) {
+                ChatApi(server.url("/").toString().removeSuffix("/"),client).chat(JSONObject()).collect {
+                    if(it is ChatEvent.Delta)first.complete(Unit)
+                }
+            }
+            withTimeout(5000) { first.await() }
+            withTimeout(3000) { job.cancelAndJoin() }
+            assertEquals(0,client.dispatcher.runningCallsCount())
+            assertEquals("Cancellation must not replay inference",1,server.requestCount)
+        }
+    }
+
     @Test fun responseRetainsActualThoughtLedgerWithoutInventingEntries() {
         val event=Ndjson.parse("""{"type":"done","reply":"Analisis","provider":"gemini","thoughtLedger":[{"idea":"Premis A","status":"premis"},{"idea":" ","status":"premis"}]}""") as ChatEvent.Done
         assertEquals(listOf(my.aksara.nativeapp.core.storage.ThoughtEntry("Premis A","premis")),event.thoughtLedger)

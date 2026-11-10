@@ -9,6 +9,7 @@ concurrency:
   cancel-in-progress: true
 permissions:
   contents: read
+  actions: read
 jobs:
   game-logic:
     runs-on: ubuntu-latest
@@ -113,8 +114,17 @@ jobs:
       - name: Identify exact installable game APK
         working-directory: android-native
         run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk > app/build/outputs/apk/debug/BADGING.txt
+          stat -c 'apk_bytes=%s' app/build/outputs/apk/debug/app-debug.apk
           sha256sum app/build/outputs/apk/debug/app-debug.apk | tee app/build/outputs/apk/debug/SHA256SUMS
           printf 'source_commit=%s\nbuild_run=%s\n' '${{ github.event.pull_request.head.sha || github.sha }}' '${{ github.run_id }}' | tee app/build/outputs/apk/debug/BUILD.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aksara-native-installable-apk
+          path: android-native/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          compression-level: 0
       - name: Unit tests
         id: unit
         continue-on-error: true
@@ -156,6 +166,20 @@ jobs:
         with:
           name: aksara-native-debug
           path: android-native/build-artifact
+      - uses: actions/download-artifact@v4
+        if: github.event_name == 'pull_request'
+        with:
+          name: aksara-native-debug
+          run-id: 42798190575
+          github-token: ${{ github.token }}
+          path: android-native/baseline-artifact
+      - uses: actions/download-artifact@v4
+        if: github.event_name == 'pull_request'
+        with:
+          name: native-visual-and-performance-evidence
+          run-id: 42798190575
+          github-token: ${{ github.token }}
+          path: android-native/baseline-evidence
       - uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -163,7 +187,7 @@ jobs:
           target: google_apis
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader -noaudio -no-boot-anim -camera-back none
-          script: bash android-native/visual-tests/run-emulator.sh
+          script: bash android-native/ci/run-validation.sh '${{ github.event_name }}'
       - name: Web/Native visual parity audit (strict 98% report, not emulator instrumentation)
         if: always()
         run: |
@@ -190,6 +214,9 @@ jobs:
           if [ "$parity_status" -ne 0 ]; then
             echo "::warning title=Web/native visual parity remains below 98%::Screenshots and strict mismatch report were preserved. Native emulator instrumentation is evaluated separately; visual calibration remains unresolved."
           fi
+      - name: Preserve approved native visuals at four sizes
+        if: always() && github.event_name == 'pull_request'
+        run: python android-native/visual-tests/compare-native-preservation.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:

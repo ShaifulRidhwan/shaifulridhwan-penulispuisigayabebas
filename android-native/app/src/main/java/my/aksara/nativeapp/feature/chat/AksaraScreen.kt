@@ -278,7 +278,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
         }
     }
-    LaunchedEffect(pendingJumpId, state.messages.map { it.id }) {
+    LaunchedEffect(pendingJumpId, if(pendingJumpId==null) null else state.messages.map { it.id }) {
         val id = pendingJumpId ?: return@LaunchedEffect
         val target = state.messages.indexOfFirst { it.id == id }
         if (target >= 0) {
@@ -476,18 +476,28 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     }
 }
 private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
+private val ChatTimestampFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm",java.util.Locale.ENGLISH)
+    .withZone(ZoneId.of("Asia/Kuala_Lumpur"))
 @Composable fun AksaraChatBubble(message:Message,fixedTimestamp:Long?=null,initial:Boolean=false,highlighted:Boolean=false,
     onCopy:(()->Unit)?=null,onReuse:((String)->Unit)?=null,
     onEdit:(()->Unit)?=null,onBranch:(()->Unit)?=null,
     onDetails:(()->Unit)?=null,onRetry:(()->Unit)?=null) {
     val ai=message.role!="user"
-    val measure=rememberTextMeasurer();val density=LocalDensity.current
     BoxWithConstraints(Modifier.fillMaxWidth()) {
         val contentWidth=maxWidth
-        val padding=if(ai)26.dp else 24.dp
-        val style=AksaraTypography.style(15f,23.85f).copy(letterSpacing=(-.12).sp)
-        val textSize=measure.measure(AnnotatedString(message.text),style,constraints=Constraints(maxWidth=with(density){(contentWidth-padding).roundToPx()})).size
-        val bubbleWidth=when {message.text.isEmpty()->53.dp;!ai||message.id=="welcome-expanded"->minOf(contentWidth,with(density){textSize.width.toDp()}+padding);else->contentWidth}
+        val bubbleWidth=when {
+            message.text.isEmpty()->53.dp
+            !ai||message.id=="welcome-expanded"->{
+                // Only content-sized bubbles need this additional width measurement.
+                // Ordinary assistant bubbles already occupy the available width.
+                val measure=rememberTextMeasurer();val density=LocalDensity.current
+                val padding=if(ai)26.dp else 24.dp
+                val style=AksaraTypography.style(15f,23.85f).copy(letterSpacing=(-.12).sp)
+                val textSize=measure.measure(AnnotatedString(message.text),style,constraints=Constraints(maxWidth=with(density){(contentWidth-padding).roundToPx()})).size
+                minOf(contentWidth,with(density){textSize.width.toDp()}+padding)
+            }
+            else->contentWidth
+        }
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
             Column(Modifier.weight(1f),horizontalAlignment=if(ai)Alignment.Start else Alignment.End) {
                 if(ai) Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(5.dp)) {
@@ -522,7 +532,9 @@ private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
                 }
                 if(message.text.isNotEmpty()) {
                     Spacer(Modifier.height(if(initial)6.dp else 8.dp))
-                    val time=Instant.ofEpochMilli(fixedTimestamp?:message.at).atZone(ZoneId.of("Asia/Kuala_Lumpur")).format(DateTimeFormatter.ofPattern("d MMM HH:mm",java.util.Locale.ENGLISH))
+                    val time=remember(fixedTimestamp,message.at) {
+                        ChatTimestampFormatter.format(Instant.ofEpochMilli(fixedTimestamp?:message.at))
+                    }
                     FlowRow(horizontalArrangement=Arrangement.spacedBy(9.dp),
                         verticalArrangement=Arrangement.spacedBy(4.dp)) {
                         AksaraText((if(ai)"Diterima" else "Dihantar")+" · "+time+(if(message.incomplete) " · belum lengkap" else ""),
