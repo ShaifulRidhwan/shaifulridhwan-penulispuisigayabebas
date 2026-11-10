@@ -2,6 +2,7 @@ package my.aksara.nativeapp
 
 import my.aksara.nativeapp.feature.chat.ProviderHealthParser
 import org.json.JSONObject
+import org.json.JSONArray
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -50,5 +51,25 @@ class ProviderHealthSnapshotTest {
         assertThrows(IllegalArgumentException::class.java) {
             ProviderHealthParser.parse(JSONObject("""{"ok":true}"""))
         }
+    }
+
+    @Test fun listsThirteenOpenRouterModelsWithoutInflatingProviderCounts() {
+        val models = JSONArray().apply {
+            repeat(13) { index ->
+                put(JSONObject().put("name", "OpenRouter Model ${index + 1}")
+                    .put("id", "catalog/model-${index + 1}:free"))
+            }
+        }
+        val payload = JSONObject()
+            .put("providers", JSONArray().put(JSONObject().put("id", "openrouter").put("status", "ready")))
+            .put("freeModels", JSONObject().put("status", "ready")
+                .put("total", 13).put("models", models))
+        val snapshot = ProviderHealthParser.parse(payload)
+        assertEquals(13, snapshot.catalogTotal)
+        assertEquals(13, snapshot.catalogModels.size)
+        assertEquals("OpenRouter Model 13", snapshot.catalogModels.last())
+        assertEquals(0, snapshot.connectedCount)
+        assertEquals(1, snapshot.readyCount)
+        assertEquals(0, snapshot.remainingCount)
     }
 }
