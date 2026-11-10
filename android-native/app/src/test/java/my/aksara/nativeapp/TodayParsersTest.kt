@@ -117,7 +117,7 @@ class TodayParsersTest {
             "Subuh" to "05:48","Zohor" to "13:00","Asar" to "16:21",
             "Maghrib" to "18:58","Isyak" to "20:10"))
         assertEquals("Subuh" to "7 jam 48 minit",nextPrayer(prayer,LocalTime.of(22,0)))
-        assertEquals("Zohor" to "1 jam 0 minit",nextPrayer(prayer,LocalTime.of(12,0)))
+        assertEquals("Zohor" to "1 jam",nextPrayer(prayer,LocalTime.of(12,0)))
         assertEquals("Zohor" to "15 minit",nextPrayer(prayer,LocalTime.of(12,45)))
     }
 
