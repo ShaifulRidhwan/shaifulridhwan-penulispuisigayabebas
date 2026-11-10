@@ -64,7 +64,10 @@ class ChessAndroidTest {
             scenario.onActivity { it.chess.restart() }
             try {
             var ready=false
-            waitFor { scenario.onActivity { ready=boardReady(it) };ready }
+            waitFor {
+                device.findObject(androidx.test.uiautomator.By.text("Got it"))?.click()
+                scenario.onActivity { ready=boardReady(it) };ready
+            }
             fun click(square:Int) {
                 var p=PointF(); val offset=IntArray(2)
                 scenario.onActivity { a->p=a.board.squareCenter(square);a.board.getLocationOnScreen(offset) }

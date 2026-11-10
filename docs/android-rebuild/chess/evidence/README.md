@@ -14,3 +14,11 @@
 CI 42729088110 produced APK/source but failed the touch test before first frame.
 Do not call this CI run a pass. The follow-up waits for an actual first frame and
 computes hit-test geometry on size changes. Runtime rerun required.
+
+CI 42732815269 diagnostic established the main blocker precisely: the Android
+immersive education dialog "Viewing full screen / Got it" covered the board.
+The View state was 320x330, rendered=true, shown=true, focus=false, engine ready,
+no engine error, and no moves entered. See immersive-education.png and its state
+file. The first-frame hypothesis alone did not fix the test. The next test uses
+the same explicit system-education dismissal already used by VisualParityTest;
+real touch selection and AI reply assertions remain required.
