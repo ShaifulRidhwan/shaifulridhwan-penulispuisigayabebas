@@ -20,7 +20,7 @@ function readiness(env=process.env){
  if(!/^[0-9a-f]{32}$/i.test(String(env.CLOUDFLARE_ACCOUNT_ID||"").trim()))
   return {enabled:false,reason:"missing_or_invalid_account"};
  const token=String(env.CLOUDFLARE_WORKERS_AI_TOKEN||env.CLOUDFLARE_API_TOKEN||env.CLOUDFLARE_AUTH_TOKEN||"").trim();
- if(token.length<12||/\\s/.test(token))return {enabled:false,reason:"missing_or_invalid_token"};
+ if(token.length<12||/\s/.test(token))return {enabled:false,reason:"missing_or_invalid_token"};
  return {enabled:true,reason:"adapter_configured"};
 }
 async function probe(ai,{signal,timeoutMs=7500}={}){

@@ -87,6 +87,33 @@ test("Cloudflare diagnostic identifies missing configuration without leaking cre
  assert.equal(Rest.readiness({...configured,CLOUDFLARE_ACCOUNT_ID:"invalid"}).reason,"missing_or_invalid_account");
  assert.equal(Rest.readiness({...configured,CLOUDFLARE_API_TOKEN:""}).reason,"missing_or_invalid_token");
  assert.deepEqual(Rest.readiness(configured),{enabled:true,reason:"adapter_configured"});
+ for(const token of ["invalid token with spaces", "invalid\ttoken-long", "invalid\\secret-token"]){
+  const env={...configured,CLOUDFLARE_API_TOKEN:token};
+  assert.equal(Rest.readiness(env).enabled,Rest.create({env})!==null);
+ }
+});
+test("Router cancellation reaches the Workers AI REST request without another inference",async()=>{
+ const previous=process.env.AKSARA_FREE_FALLBACKS;
+ process.env.AKSARA_FREE_FALLBACKS="true";
+ const parent=new AbortController();
+ let calls=0,observed;
+ const ai=Rest.create({env:configured,fetchFn:async(_url,options)=>{
+  calls++;observed=options.signal;
+  return await new Promise((_resolve,reject)=>{
+   options.signal.addEventListener("abort",()=>reject(options.signal.reason),{once:true});
+   parent.abort();
+  });
+ }});
+ try{
+  await assert.rejects(Router.complete({cloudflareAI:ai,only:["workers_ai"],
+   system:"Aksara",history:[],question:"Ujian batal",signal:parent.signal,
+   deadline:Date.now()+2000}));
+  assert.equal(observed.aborted,true);
+  assert.equal(calls,1);
+ }finally{
+  if(previous===undefined)delete process.env.AKSARA_FREE_FALLBACKS;
+  else process.env.AKSARA_FREE_FALLBACKS=previous;
+ }
 });
 test("Explicit Workers AI inference probe uses a synthetic request and verifies output",async()=>{
  let called=0;

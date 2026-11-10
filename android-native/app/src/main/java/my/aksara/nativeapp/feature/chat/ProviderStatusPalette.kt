@@ -11,8 +11,8 @@ internal object ProviderStatusPalette {
 
     fun color(status: String): Color = when (status.trim().lowercase()) {
         "online", "connected" -> online
-        "ready" -> ready
-        "offline", "off", "error", "degraded", "backend unreachable" -> offline
+        "ready", "rate limited" -> ready
+        "offline", "off", "error", "degraded", "unavailable", "misconfigured", "backend unreachable" -> offline
         else -> unknown
     }
 

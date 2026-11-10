@@ -223,6 +223,11 @@ class LiveVoiceClient(
                     }
                     override fun onMessage(webSocket: WebSocket, text: String) { consume(text, id) }
                     override fun onMessage(webSocket: WebSocket, bytes: okio.ByteString) { consume(bytes.utf8(), id) }
+                    override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
+                        // Acknowledge the peer close so OkHttp reaches onClosed and
+                        // the existing epoch-guarded recovery can renew this socket.
+                        webSocket.close(code, null)
+                    }
                     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                         synchronized(this@LiveVoiceClient) {
                         if (!active(id)) return

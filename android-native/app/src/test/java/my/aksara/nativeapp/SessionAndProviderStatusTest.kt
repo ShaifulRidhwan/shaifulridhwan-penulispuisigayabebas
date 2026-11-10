@@ -8,6 +8,19 @@ import org.junit.Test
 
 class SessionAndProviderStatusTest {
     private val ids = ProviderConnectionStatus.expected
+    @Test fun providerEvidenceDistinguishesQuotaConfigurationAndAvailability() {
+        assertEquals("rate limited", ProviderConnectionStatus.state("offline",429,"quota"))
+        assertEquals("rate limited", ProviderConnectionStatus.state("offline",402,"free_quota_exhausted"))
+        assertEquals("misconfigured", ProviderConnectionStatus.state("offline",403,"authorization_or_access"))
+        assertEquals("misconfigured", ProviderConnectionStatus.state("off",0,"missing_or_invalid_token"))
+        assertEquals("unavailable", ProviderConnectionStatus.state("offline",503))
+        assertEquals("ready", ProviderConnectionStatus.state("ready"))
+        assertEquals("online", ProviderConnectionStatus.state("online",429,"quota"))
+        assertEquals("Rate Limited",ProviderConnectionStatus.label(ids.map { it to "rate limited" }))
+        assertEquals("Misconfigured",ProviderConnectionStatus.label(ids.map { it to "misconfigured" }))
+        assertEquals("Degraded",ProviderConnectionStatus.label(ids.mapIndexed { i,id ->
+            id to if(i==0) "rate limited" else "online" }))
+    }
     @Test fun readyIsNotARealOutageOrFakeConnection() {
         assertEquals("Connected",ProviderConnectionStatus.label(ids.map { it to "online" }))
         assertEquals("Ready",ProviderConnectionStatus.label(ids.mapIndexed { i,id -> id to if(i==0)"online" else "ready" }))
