@@ -217,5 +217,12 @@ class ChessAndroidTest {
             File(dir,"chess-renderer-benchmark-method.txt").writeText("Android ${android.os.Build.VERSION.SDK_INT}. ${android.os.Build.SUPPORTED_ABIS.joinToString()}. Same original materials, silhouettes, animations and legal 16-ply replay in both passes. Only static board-plane batching and path caches change. The cached plane is 1024 pixels; original textures and vector pieces retain their quality. Debug-only benchmark, not AI move selection or a physical-device FPS guarantee.")
         }
     }
+    @Test fun leavingChessReleasesNativeProcesses() {
+        repeat(3) {ActivityScenario.launch(ChessActivity::class.java).use { /* Close immediately, including during process startup. */ }}
+        val device=UiDevice.getInstance(instrumentation)
+        waitFor(15000){device.executeShellCommand("pidof libstockfish.so").isBlank()}
+        File(instrumentation.targetContext.getExternalFilesDir(null),"chess-process-cleanup.txt")
+            .writeText("Three immediate Activity exits; Android pidof libstockfish.so reports no remaining native engine processes.")
+    }
     private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.board.hasRendered && a.board.hasWindowFocus() && a.chess.engineReady}.getOrDefault(false)
 }

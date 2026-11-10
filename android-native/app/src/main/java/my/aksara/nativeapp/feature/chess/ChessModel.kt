@@ -43,6 +43,8 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
     var onEvent: ((String,UciEngine.Analysis?)->Unit)? = null
     private var active=false
     private var engine: UciEngine?=null
+    private val initializingEngine=java.util.concurrent.atomic.AtomicReference<UciEngine?>()
+    @Volatile private var cleared=false
     private var starting=false
     private var epoch=0L
     private var replayRequest=0L
@@ -64,11 +66,14 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
                     val binary=File(getApplication<Application>().applicationInfo.nativeLibraryDir,"libstockfish.so")
                     check(binary.isFile && binary.canExecute()) { "Stockfish native tidak tersedia untuk ABI peranti ini." }
                     val process=ProcessBuilder(binary.absolutePath).redirectErrorStream(true).start()
-                    UciEngine(process,Runtime.getRuntime().availableProcessors(),Runtime.getRuntime().maxMemory()/1024/1024)
+                    val driver=try {UciEngine(process,Runtime.getRuntime().availableProcessors(),Runtime.getRuntime().maxMemory()/1024/1024)} catch(failure:Throwable){process.destroy();throw failure}
+                    initializingEngine.set(driver)
+                    if(cleared){initializingEngine.getAndSet(null)?.close();throw CancellationException("Chess owner destroyed")}
+                    driver
                 }
             }
             starting=false
-            created.onSuccess { engine=it; error=""; engineStatus="Stockfish 19 · sedia"; maybeThink() }
+            created.onSuccess { initializingEngine.compareAndSet(it,null);engine=it; error=""; engineStatus="Stockfish 19 · sedia"; maybeThink() }
                 .onFailure { error=it.message?:"Enjin gagal dimulakan"; engineStatus="Enjin tidak tersedia" }
         }
     }
@@ -241,7 +246,7 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
     fun save() { prefs.edit().putString("session",session.save()).putString("game_id",gameId).apply() }
     fun loadForTest(fen:String) {check(my.aksara.nativeapp.BuildConfig.DEBUG);epoch++;engine?.cancel();thinking=false;analyzing=false;reviewing=false;replay=null;replayIndex=-1;session=ChessSession(fen);selected=-1;intendedClaim=null;promotions=emptyList();previousPieces=null;lastMove="";lastAnalysis=null;animationId++;update();maybeThink()}
     fun stopEngineForTest(){check(my.aksara.nativeapp.BuildConfig.DEBUG);engine?.close()}
-    override fun onCleared() { active=false; epoch++; engine?.close(); super.onCleared() }
+    override fun onCleared() { cleared=true;active=false; epoch++; initializingEngine.getAndSet(null)?.close();engine?.close(); super.onCleared() }
     companion object {
         private val names=Array(64){"${('a'.code+it%8).toChar()}${it/8+1}"}
         fun uci(square:Int)=names[square]
