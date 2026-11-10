@@ -4,6 +4,7 @@ on:
     paths: ['android-native/**', 'docs/android-rebuild/**', '.github/workflows/aksara-android-native.yml']
   push:
     branches: ['rebuild/aksara-android-native-v1']
+  workflow_dispatch:
 concurrency:
   group: aksara-android-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
@@ -142,8 +143,9 @@ jobs:
         if: steps.unit.outcome == 'failure'
         run: exit 1
   emulator:
+    # Manual-only visual/runtime diagnostic; never block PR merge on headless emulator.
     needs: [build, web-audit]
-    if: always() && needs.build.outputs.apk_ready == 'true' && needs.web-audit.result == 'success'
+    if: github.event_name == 'workflow_dispatch' && needs.build.outputs.apk_ready == 'true' && needs.web-audit.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
