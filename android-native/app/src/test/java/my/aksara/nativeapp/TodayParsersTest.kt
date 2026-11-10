@@ -3,6 +3,7 @@ package my.aksara.nativeapp
 import my.aksara.nativeapp.feature.today.TodayParsers
 import my.aksara.nativeapp.feature.today.TodayPrayer
 import my.aksara.nativeapp.feature.today.nextPrayer
+import my.aksara.nativeapp.feature.today.shouldShowTodayLocationIntro
 import java.time.LocalTime
 import org.junit.Assert.*
 import org.junit.Test
@@ -119,6 +120,14 @@ class TodayParsersTest {
         assertEquals("Subuh" to "7 jam 48 minit",nextPrayer(prayer,LocalTime.of(22,0)))
         assertEquals("Zohor" to "1 jam",nextPrayer(prayer,LocalTime.of(12,0)))
         assertEquals("Zohor" to "15 minit",nextPrayer(prayer,LocalTime.of(12,45)))
+    }
+
+    @Test fun todayLocationDisclosureOnlyAutoAppearsOnFirstEligibleEntry() {
+        assertFalse(shouldShowTodayLocationIntro(false,false,false))
+        assertTrue(shouldShowTodayLocationIntro(true,false,false))
+        assertFalse(shouldShowTodayLocationIntro(true,false,true))
+        assertFalse(shouldShowTodayLocationIntro(true,true,false))
+        assertFalse(shouldShowTodayLocationIntro(false,true,false))
     }
 
 }
