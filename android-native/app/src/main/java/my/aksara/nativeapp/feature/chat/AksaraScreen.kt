@@ -160,17 +160,18 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     }
     val pagerState = rememberPagerState(initialPage=0,pageCount={2})
     var overlayVisible by remember { mutableStateOf(false) }
+    var todayDialogVisible by remember { mutableStateOf(false) }
     val keyboardOpen=WindowInsets.ime.getBottom(LocalDensity.current)>0
     HorizontalPager(
         state=pagerState,
         modifier=Modifier.fillMaxSize(),
         beyondViewportPageCount=1,
-        userScrollEnabled=!overlayVisible && !keyboardOpen
+        userScrollEnabled=!overlayVisible && !todayDialogVisible && !keyboardOpen
     ) { page ->
       if(page==1) {
         TodayScreen(active=pagerState.currentPage==1,onBack={
             scope.launch { pagerState.animateScrollToPage(0) }
-        })
+        },onDialogVisibilityChange={todayDialogVisible=it})
       } else {
         AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
         val textDocs = attachments.filter { it.text.isNotBlank() }
