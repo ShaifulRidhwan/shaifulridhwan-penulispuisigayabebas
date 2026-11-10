@@ -20,7 +20,9 @@ const protectedFiles=Object.freeze({
  "bilik-antara-modes.js":"30e8ebb88cee73529c7493a637986c5155357e51",
  "bilik-antara-chat-style.js":"9fc607daf19e2e838d29b7905fce63a2da1ecf78",
  "bilik-antara-voice.js":"ef59b236d994433054f3c6e8ac06055e64f5a7ad",
- "netlify/functions/aksara-provider-router.js":"f364a7ac8c0d896a4c39987c24af036b3bbb3428",
+ // V5.1: reviewed only request abort propagation to Workers AI; prompts,
+ // provider policy and creator identity unchanged. Covered by REST abort regression.
+ "netlify/functions/aksara-provider-router.js":"4655729bf14b2995ba12cfdb47519eda2024c1d9",
  "bilik-antara-code-chat.js":"0f6a9190a619092b3bca6156348b8134e60676e9"
 });
 function gitBlob(bytes){
