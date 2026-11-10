@@ -18,6 +18,10 @@ class LiveVoiceLifecycleTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         assertEquals("CI must explicitly grant the microphone permission", PackageManager.PERMISSION_GRANTED,
             context.checkSelfPermission(Manifest.permission.RECORD_AUDIO))
+        val declaredPermissions = context.packageManager.getPackageInfo(
+            context.packageName, PackageManager.GET_PERMISSIONS).requestedPermissions.orEmpty().toList()
+        assertTrue("Voice routing requires MODIFY_AUDIO_SETTINGS in AndroidManifest",
+            Manifest.permission.MODIFY_AUDIO_SETTINGS in declaredPermissions)
         val manager = context.getSystemService(AudioManager::class.java)
         val initialMode = manager.mode
         val before = manager.activeRecordingConfigurations.size
