@@ -94,12 +94,13 @@ class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClien
         })
     }
     fun chat(payload: JSONObject): Flow<ChatEvent> = callbackFlow {
-        var call: Call? = null
-        val work = kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launchSafely(
+        // The call exists before the worker starts, so cancellation cannot race
+        // with publishing its reference. The worker belongs to this flow's scope.
+        val call = client.newCall(request(BackendRoutes.STREAM, payload))
+        val work = launchSafely(
             onError = { close(BackendNetworkErrors.translate(it,origin)) },
             block = {
-                call = client.newCall(request(BackendRoutes.STREAM, payload))
-                val response = call!!.execute()
+                val response = call.execute()
                 response.use { res ->
                     if (res.code in listOf(404, 405, 501)) {
                         // An explicit unsupported route can safely fall back before inference.
@@ -136,7 +137,7 @@ class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClien
                 }
             }
         )
-        awaitClose { call?.cancel(); work.cancel() }
+        awaitClose { call.cancel(); work.cancel() }
     }.flowOn(Dispatchers.IO)
 }
 private fun kotlinx.coroutines.CoroutineScope.launchSafely(onError: (Throwable) -> Unit, block: suspend () -> Unit) =
