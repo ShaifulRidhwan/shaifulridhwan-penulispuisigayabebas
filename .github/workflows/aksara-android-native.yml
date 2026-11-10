@@ -187,14 +187,7 @@ jobs:
           target: google_apis
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader -noaudio -no-boot-anim -camera-back none
-          script: |
-            bash android-native/visual-tests/run-emulator.sh
-            validation_failed=0
-            bash android-native/ci/validate-extra.sh || validation_failed=1
-            if [ '${{ github.event_name }}' = 'pull_request' ]; then
-              bash android-native/ci/measure-paired.sh || validation_failed=1
-            fi
-            exit "$validation_failed"
+          script: bash android-native/ci/run-validation.sh '${{ github.event_name }}'
       - name: Web/Native visual parity audit (strict 98% report, not emulator instrumentation)
         if: always()
         run: |
