@@ -74,9 +74,22 @@ class ChessAndroidTest {
                 device.click((p.x+offset[0]).toInt(),(p.y+offset[1]).toInt())
             }
             instrumentation.waitForIdleSync()
-            click(12)
+            // The headless emulator can consume the first tap while its system overlay
+            // is dismissing. Retry real screen taps, but never bypass the view or model.
             var selected=-1
-            waitFor { scenario.onActivity {selected=it.chess.selected};selected==12 }
+            var selectedByTouch=false
+            repeat(3) { attempt ->
+                if(!selectedByTouch) {
+                    dismissSystemEducation()
+                    instrumentation.waitForIdleSync()
+                    click(12)
+                    device.waitForIdle(500)
+                    scenario.onActivity { selected=it.chess.selected }
+                    selectedByTouch=selected==12
+                    if(!selectedByTouch) android.util.Log.w("AksaraChessTest","e2 tap attempt ${attempt+1} ignored; selected=$selected")
+                }
+            }
+            assertTrue("Real touchscreen must select e2 after system overlays settle; selected=$selected",selectedByTouch)
             click(28) // e2-e4, through actual Android touchscreen events.
             var count=0
             try {
