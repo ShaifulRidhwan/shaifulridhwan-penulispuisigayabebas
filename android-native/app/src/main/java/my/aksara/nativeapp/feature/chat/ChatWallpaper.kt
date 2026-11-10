@@ -18,10 +18,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import my.aksara.nativeapp.R
 
-/** Immersive chat artwork: blurred full-bleed underlay removes Fit letterboxing, while the locked foreground preserves both celestial bodies and the full gown. */
+/** Restore the original cinematic Chat background, retaining full-bleed feathering and text contrast. */
 @Composable internal fun ChatWallpaper(modifier: Modifier = Modifier) {
-    val wallpaper = painterResource(R.drawable.aksara_chat_wallpaper)
-    Box(modifier.background(Color(0xFF080C17))) {
+    BoxWithConstraints(modifier.background(Color(0xFF080C17))) {
+        val wallpaper = painterResource(if (maxWidth > 760.dp) R.drawable.aksara_cinematic_desktop else R.drawable.aksara_cinematic_mobile)
         // Fill tall/rounded device edges without cropping the approved original composition.
         Image(wallpaper, null,
             Modifier.fillMaxSize().blur(24.dp), alignment = Alignment.Center, contentScale = ContentScale.Crop)
