@@ -2,7 +2,7 @@
 
 Unmodified upstream source: official-stockfish/Stockfish, sf_19,
 `edb0d9db6731067ec50ce619ff372b463bc4dd5d`. GPL-3.0, full notices in stockfish/.
-Build with Linux, make, curl, ripgrep and Android NDK 27.2.12479018:
+Build with Linux, make, curl, tar, sha256sum and Android NDK 27.2.12479018:
 
     ANDROID_HOME=/path/to/sdk bash android-native/chess-native/build.sh
 
@@ -16,7 +16,9 @@ The PIE executable is named libstockfish.so only to have Android PackageManager
 extract it into the executable, read-only nativeLibraryDir. It must NOT be loaded
 with System.loadLibrary. Legacy packaging and extractNativeLibs are required;
 executing downloaded files from writable app filesDir is deliberately avoided.
-The C++ runtime is statically linked. ELF LOAD alignment is 16 KiB.
+The C++ runtime is statically linked. Its LLVM/libc++ notices are preserved in
+stockfish/LLVM-libcxx-LICENSE.txt and in the app's chess license assets.
+ELF LOAD alignment is 16 KiB.
 
 `build/stockfish-19-corresponding-source.tar.gz` contains source, NNUE, licenses,
 this documentation and build script. Ship it beside every APK artifact, preserve

@@ -1,7 +1,10 @@
 # AKSARA chess foundation
 
 Pure Java module, isolated from Chat, Voice, Studio and the existing Phaser game.
-Not yet wired into the application: Checkpoint A needs Android runtime proof.
+Integrated into the existing native app through Portal → AKSARA Chess.
+API35 instrumentation verifies touchscreen play against the real packaged
+Stockfish process, special rules, lifecycle recovery and a complete legal game.
+Acceptance evidence is recorded in docs/android-rebuild/chess/STATUS.md.
 
 `ChessSession` validates UCI against generated legal moves, exports SAN PGN,
 tracks claims separately from automatic draws, preserves history in versioned
@@ -25,5 +28,6 @@ is still required and cannot be replaced by this host test.
 Known gaps: arbitrary dead positions involving blocked pawns are not adjudicated;
 FEN validation is currently structural plus king count, not complete reachability
 validation; restored local saves are trusted for declared claim/agreement results;
-no clock, Android packaging, UI, voice or app dependency is included yet. API 31
-compatibility/desugaring of the Java 17 API surface must be checked at integration.
+timed chess is not implemented. Android packaging, UI, voice and persistence live
+in the application module. Java 17 APIs are core-library-desugared for API31+;
+the instrumented acceptance runtime is API35, not a physical-device matrix.
