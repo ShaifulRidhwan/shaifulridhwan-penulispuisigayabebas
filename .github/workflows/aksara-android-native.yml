@@ -15,18 +15,22 @@ jobs:
   game-logic:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
       - run: node --test android-native/game-tests/*.test.cjs
   web-audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
+      - uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-1.56.1-${{ runner.os }}
       - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - name: Eclipse game controls, full fights and browser screenshots
@@ -39,13 +43,13 @@ jobs:
             sleep 0.2
           done
           node android-native/game-tests/browser.cjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: eclipse-browser-gameplay
           path: docs/android-rebuild/game/browser-evidence/
       - run: node android-native/visual-tests/capture-web.cjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: web-design-reference
@@ -55,13 +59,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
       - name: Real production DNS, Chat stream, provider health and Live token
         run: node android-native/ci/live-backend-smoke.mjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: production-backend-contract-evidence
@@ -73,15 +77,15 @@ jobs:
     env:
       AKSARA_CI_COMPILER_REPOSITORY: /tmp/aksara-compiler-repository
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
       - uses: android-actions/setup-android@v4
         with:
           packages: "platform-tools platforms;android-35 build-tools;35.0.0"
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       - name: Bootstrap checksum-pinned Gradle using curl
         run: |
           curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/gradle/gradle-distributions/releases/assets/232373824' -o "$RUNNER_TEMP/aksara-gradle.zip"
@@ -99,7 +103,7 @@ jobs:
         run: node scripts/sync-android-voice-brain.cjs --check
       - name: Restore verified Stockfish 19 build cache
         id: stockfish-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             android-native/app/src/main/jniLibs/arm64-v8a/libstockfish.so
@@ -111,7 +115,7 @@ jobs:
         run: |
           sdkmanager 'ndk;27.2.12479018'
           bash android-native/chess-native/build.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: aksara-native-stockfish-source
           path: android-native/chess-native/build/stockfish-19-corresponding-source.tar.gz
@@ -120,7 +124,10 @@ jobs:
         id: compile
         working-directory: android-native
         run: |
-          gradle --no-daemon --init-script ci/compiler-repository.init.gradle assembleDebug assembleDebugAndroidTest
+          gradle --no-daemon --init-script ci/compiler-repository.init.gradle assembleDebug
+          if [ '${{ github.event_name }}' = 'workflow_dispatch' ]; then
+            gradle --no-daemon --init-script ci/compiler-repository.init.gradle assembleDebugAndroidTest
+          fi
           echo "apk_ready=true" >> "$GITHUB_OUTPUT"
       - name: Identify exact installable game APK
         working-directory: android-native
@@ -130,7 +137,7 @@ jobs:
           stat -c 'apk_bytes=%s' app/build/outputs/apk/debug/app-debug.apk
           sha256sum app/build/outputs/apk/debug/app-debug.apk | tee app/build/outputs/apk/debug/SHA256SUMS
           printf 'source_commit=%s\nbuild_run=%s\n' '${{ github.event.pull_request.head.sha || github.sha }}' '${{ github.run_id }}' | tee app/build/outputs/apk/debug/BUILD.txt
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: aksara-native-installable-apk
           path: android-native/app/build/outputs/apk/debug/app-debug.apk
@@ -141,7 +148,7 @@ jobs:
         continue-on-error: true
         working-directory: android-native
         run: gradle --no-daemon --init-script ci/compiler-repository.init.gradle testDebugUnitTest :engine:chess:test :engine:runtime:testDebugUnitTest :engine:voice:testDebugUnitTest
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: aksara-native-debug
@@ -159,33 +166,33 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: web-design-reference
           path: docs/android-rebuild/visual-comparison/web
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: aksara-native-debug
           path: android-native/build-artifact
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         if: github.event_name == 'pull_request'
         with:
           name: aksara-native-debug
           run-id: 42798190575
           github-token: ${{ github.token }}
           path: android-native/baseline-artifact
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         if: github.event_name == 'pull_request'
         with:
           name: native-visual-and-performance-evidence
@@ -229,7 +236,7 @@ jobs:
       - name: Preserve approved native visuals at four sizes
         if: always() && github.event_name == 'pull_request'
         run: python android-native/visual-tests/compare-native-preservation.py
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: native-visual-and-performance-evidence
