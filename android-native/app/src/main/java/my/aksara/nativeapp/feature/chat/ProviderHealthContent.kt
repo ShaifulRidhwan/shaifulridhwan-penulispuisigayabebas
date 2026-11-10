@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,11 +17,12 @@ import java.util.Date
 @Composable internal fun ProviderHealthContent(
     state: ChatState,
     onRefresh: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    expandedId: String,
+    onExpandedChange: (String) -> Unit
 ) {
     val snapshot = state.providerHealth
     val backendFailure = state.providers.firstOrNull { it.first == "backend" }?.second
-    var expandedId by rememberSaveable { mutableStateOf("gemini") }
     val checked = snapshot?.checkedAt?.let {
         DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(Date(it))
     } ?: "Belum disahkan"
@@ -35,7 +35,10 @@ import java.util.Date
             Row(horizontalArrangement=Arrangement.spacedBy(11.dp)) {
                 HealthCount(snapshot.connectedCount.toString(),"Connected",ProviderStatusPalette.online,Modifier.weight(1f))
                 HealthCount(snapshot.readyCount.toString(),"Ready",ProviderStatusPalette.ready,Modifier.weight(1f))
-                HealthCount(snapshot.remainingCount.toString(),"Lain-lain",ProviderStatusPalette.unknown,Modifier.weight(1f))
+                HealthCount(snapshot.catalogTotal.toString(),"Model OpenRouter",ProviderStatusPalette.unknown,
+                    Modifier.weight(1f).clickable(enabled=snapshot.catalogTotal>0) {
+                        onExpandedChange(if(expandedId=="openrouter") "" else "openrouter")
+                    })
             }
             Spacer(Modifier.height(8.dp))
             AksaraText("Disemak: $checked · Ready/Listed bukan bukti inferens berjaya.",
@@ -56,7 +59,7 @@ import java.util.Date
                 item(key="provider-$id") {
                     AksaraGlassSurface(
                         Modifier.fillMaxWidth().height(49.dp).clickable {
-                            expandedId=if(expandedId==id) "" else id
+                            onExpandedChange(if(expandedId==id) "" else id)
                         },radius=15.dp,blur=8.dp) {
                         Row(Modifier.fillMaxSize().padding(horizontal=11.dp),
                             verticalAlignment=Alignment.CenterVertically,
@@ -66,7 +69,7 @@ import java.util.Date
                             AksaraText(name,Modifier.weight(1f),size=11f,line=15f,weight=600)
                             AksaraText(healthLabel(normalized),size=10f,line=14f,
                                 weight=600,color=ProviderStatusPalette.color(normalized))
-                            AksaraText(if(expandedId==id)"⌃" else "⌄",size=14f,color=AksaraColors.muted)
+                            AksaraText("›",size=19f,color=AksaraColors.gold)
                         }
                     }
                 }
