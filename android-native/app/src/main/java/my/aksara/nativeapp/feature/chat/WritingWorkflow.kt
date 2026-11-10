@@ -8,7 +8,7 @@ package my.aksara.nativeapp.feature.chat
 internal object WritingWorkflow {
     enum class Stage { RESEARCH, RAW, POLISH, BEDAH, TAJAM, LOCK }
 
-    private val command = Regex("""^\\s*\\[?(RESEARCH|RAW|POLISH|BEDAH|TAJAM|LOCK)\\]?(?:\\s*[:：\\-—]\\s*|\\s*\\n|\\s*$)""",RegexOption.IGNORE_CASE)
+    private val command = Regex("""^\s*\[?(RESEARCH|RAW|POLISH|BEDAH|TAJAM|LOCK)\]?(?:\s*[:：\-—]\s*|\s*\n|\s*$)""",RegexOption.IGNORE_CASE)
     fun stage(question:String):Stage? {
         val match=command.find(question)?:return null
         return runCatching { Stage.valueOf(match.groupValues[1].uppercase(java.util.Locale.ROOT)) }.getOrNull()
@@ -24,7 +24,7 @@ internal object WritingWorkflow {
             Stage.TAJAM -> "Edit hanya baris yang benar-benar lemah. Beri sebelum/selepas bagi perubahan terpilih dan alasan ringkas. Jangan menggantikan keseluruhan karya atau menukar makna asal tanpa izin."
             Stage.LOCK -> "Ini arahan memuktamadkan versi yang diluluskan dalam perbualan aktif. Jangan ubah satu pun aksara karya yang dibekalkan, dan jangan menyatakan bahawa fail, sandaran atau versi kekal sudah disimpan jika tiada tindakan sebenar. Nyatakan bahawa sebarang pengubahsuaian seterusnya memerlukan izin jelas penulis."
         }
-        return "[AKSARA WRITING WORKFLOW · ${mode.name}; arahan eksplisit penulis]\\n"+
-            guidance+"\\n[PERMINTAAN PENULIS ASAL]\\n"+question
+        return "[AKSARA WRITING WORKFLOW · ${mode.name}; arahan eksplisit penulis]\n"+
+            guidance+"\n[PERMINTAAN PENULIS ASAL]\n"+question
     }
 }
