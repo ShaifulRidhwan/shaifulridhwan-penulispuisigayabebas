@@ -66,13 +66,14 @@ import my.aksara.nativeapp.core.design.AksaraTypography
             drawCircle(Brush.radialGradient(listOf(Color(0xFFFFE9BE).copy(alpha=impact*.55f),Color.Transparent),center,radius*.4f),radius*.4f,center)
         }
         BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            val sigilSize = minOf(156.dp,maxHeight*.32f)
             Column(Modifier.padding(24.dp).graphicsLayer {
                 alpha = identity
                 val scale = if(reducedMotion) 1f else .94f+.06f*identity
                 scaleX = scale; scaleY = scale
             }, horizontalAlignment = Alignment.CenterHorizontally) {
                 Image(painterResource(R.drawable.aksara_glass_sigil),"Official Aksara Glass Sigil",
-                    Modifier.size(minOf(156.dp,maxHeight*.32f)))
+                    Modifier.size(sigilSize))
                 Spacer(Modifier.height(20.dp))
                 AksaraText("AKSARA A.I.",size=28f,line=36f,weight=700,family=AksaraTypography.heading)
                 Spacer(Modifier.height(8.dp))
