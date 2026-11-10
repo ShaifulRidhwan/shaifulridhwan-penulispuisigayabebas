@@ -13,5 +13,5 @@ adb pull /sdcard/Android/data/my.aksara.nativeapp/files/ chess-evidence/runtime-
 adb shell dumpsys meminfo my.aksara.nativeapp > chess-evidence/meminfo.txt
 adb shell dumpsys gfxinfo my.aksara.nativeapp framestats > chess-evidence/framestats.txt
 adb shell dumpsys thermalservice > chess-evidence/thermal.txt
-rg 'OK \([0-9]+ tests?\)' chess-evidence/instrumentation.txt
-if rg -n 'FAILURES|INSTRUMENTATION_FAILED|Process crashed' chess-evidence/instrumentation.txt; then exit 1; fi
+grep -E 'OK \([0-9]+ tests?\)' chess-evidence/instrumentation.txt
+if grep -En 'FAILURES|INSTRUMENTATION_FAILED|Process crashed' chess-evidence/instrumentation.txt; then exit 1; fi

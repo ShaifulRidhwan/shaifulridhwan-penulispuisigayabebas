@@ -6,10 +6,13 @@ on:
   pull_request:
     paths: ['android-native/**', '.github/workflows/aksara-chess-android.yml']
   workflow_dispatch:
+defaults:
+  run:
+    shell: bash
 permissions:
   contents: read
 concurrency:
-  group: chess-android-${{ github.head_ref || github.ref }}
+  group: chess-android-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 jobs:
   build:

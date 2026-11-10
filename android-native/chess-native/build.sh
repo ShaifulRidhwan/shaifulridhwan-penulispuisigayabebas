@@ -21,7 +21,7 @@ for abi in ${AKSARA_CHESS_ABIS:-arm64-v8a x86_64}; do
  make -C "$work/$abi" -j2 build ARCH="$arch" COMP=ndk EXTRALDFLAGS='-Wl,-z,max-page-size=16384'
  llvm-strip "$work/$abi/stockfish"
  cp "$work/$abi/stockfish" "$base/../app/src/main/jniLibs/$abi/libstockfish.so"
- llvm-readelf -l "$base/../app/src/main/jniLibs/$abi/libstockfish.so" | rg 'INTERP|LOAD'
+ llvm-readelf -l "$base/../app/src/main/jniLibs/$abi/libstockfish.so" | awk '/INTERP|LOAD/'
  sha256sum "$base/../app/src/main/jniLibs/$abi/libstockfish.so"
 done
 # Corresponding Source includes the exact network, source and build instructions.
