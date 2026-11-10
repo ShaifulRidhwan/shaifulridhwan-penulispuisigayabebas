@@ -27,7 +27,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - uses: actions/cache@v4\n        with:\n          path: ~/.cache/ms-playwright\n          key: playwright-chromium-1.56.1-${{ runner.os }}\n      - run: npm install --no-save playwright@1.56.1
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-1.56.1-${{ runner.os }}
+      - run: npm install --no-save playwright@1.56.1
       - run: npx playwright install --with-deps chromium
       - name: Eclipse game controls, full fights and browser screenshots
         run: |
@@ -85,7 +89,8 @@ jobs:
       - name: Bootstrap checksum-pinned Gradle using curl
         run: |
           curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/gradle/gradle-distributions/releases/assets/232373824' -o "$RUNNER_TEMP/aksara-gradle.zip"
-          printf '%s  %s\n' '20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78' "$RUNNER_TEMP/aksara-gradle.zip" | sha256sum --check
+          printf '%s  %s
+' '20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78' "$RUNNER_TEMP/aksara-gradle.zip" | sha256sum --check
           unzip -q "$RUNNER_TEMP/aksara-gradle.zip" -d "$RUNNER_TEMP/aksara-gradle"
           echo "$RUNNER_TEMP/aksara-gradle/gradle-8.13/bin" >> "$GITHUB_PATH"
       - name: Prepare verified local compiler repository (official files)
@@ -94,7 +99,8 @@ jobs:
           mkdir -p "$compiler_dir"
           curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/JetBrains/kotlin/releases/assets/598630357' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar"
           curl --fail --location --retry 3 'https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21/kotlin-compiler-embeddable-2.1.21.pom' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom"
-          printf '%s  %s\n' '67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar" 'dbbf8ac2550d5b1ae2a627f204f28b16f9271e36c44d8994aa3b139cbf70e45a' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom" | sha256sum --check
+          printf '%s  %s
+' '67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar" 'dbbf8ac2550d5b1ae2a627f204f28b16f9271e36c44d8994aa3b139cbf70e45a' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom" | sha256sum --check
       - name: Verify Android Voice Brain equals web source of truth
         run: node scripts/sync-android-voice-brain.cjs --check
       - name: Restore verified Stockfish 19 build cache
@@ -120,7 +126,10 @@ jobs:
         id: compile
         working-directory: android-native
         run: |
-          gradle --no-daemon --init-script ci/compiler-repository.init.gradle assembleDebug\n          if [ '${{ github.event_name }}' = 'workflow_dispatch' ]; then\n            gradle --no-daemon --init-script ci/compiler-repository.init.gradle assembleDebugAndroidTest\n          fi
+          gradle --no-daemon --init-script ci/compiler-repository.init.gradle assembleDebug
+          if [ '${{ github.event_name }}' = 'workflow_dispatch' ]; then
+            gradle --no-daemon --init-script ci/compiler-repository.init.gradle assembleDebugAndroidTest
+          fi
           echo "apk_ready=true" >> "$GITHUB_OUTPUT"
       - name: Identify exact installable game APK
         working-directory: android-native
@@ -129,7 +138,9 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk > app/build/outputs/apk/debug/BADGING.txt
           stat -c 'apk_bytes=%s' app/build/outputs/apk/debug/app-debug.apk
           sha256sum app/build/outputs/apk/debug/app-debug.apk | tee app/build/outputs/apk/debug/SHA256SUMS
-          printf 'source_commit=%s\nbuild_run=%s\n' '${{ github.event.pull_request.head.sha || github.sha }}' '${{ github.run_id }}' | tee app/build/outputs/apk/debug/BUILD.txt
+          printf 'source_commit=%s
+build_run=%s
+' '${{ github.event.pull_request.head.sha || github.sha }}' '${{ github.run_id }}' | tee app/build/outputs/apk/debug/BUILD.txt
       - uses: actions/upload-artifact@v4
         with:
           name: aksara-native-installable-apk
@@ -219,9 +230,14 @@ jobs:
           label = ", ".join(f"{status}: {number}" for status, number in sorted(totals.items()))
           print("Web/native visual audit (98% strict target):", label)
           with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as f:
-              f.write("### Web/native parity (98% target; independent of emulator test status)\\n\\n")
-              f.write(label + "\\n\\n")
-              f.write("See the `native-visual-and-performance-evidence` artifact for unmodified screenshots, region scores, and mismatches.\\n")
+              f.write("### Web/native parity (98% target; independent of emulator test status)\
+\
+")
+              f.write(label + "\
+\
+")
+              f.write("See the `native-visual-and-performance-evidence` artifact for unmodified screenshots, region scores, and mismatches.\
+")
           PY
           if [ "$parity_status" -ne 0 ]; then
             echo "::warning title=Web/native visual parity remains below 98%::Screenshots and strict mismatch report were preserved. Native emulator instrumentation is evaluated separately; visual calibration remains unresolved."
