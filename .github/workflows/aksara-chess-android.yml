@@ -95,3 +95,4 @@ jobs:
         with:
           name: aksara-chess-android-evidence
           path: chess-evidence/
+          overwrite: true

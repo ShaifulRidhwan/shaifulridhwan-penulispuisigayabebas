@@ -1,25 +1,28 @@
-# Activated premium candidate
+# Native premium components
 
-Checkpoint A passed on API35 in GitHub run 42734184090 at source 8f5f0b8.
-The premium renderer, portrait, narration, analysis, replay and opt-in memory are
-now activated in ChessActivity. Their own Android regression remains required.
+Activated in the existing app and verified on API35 x86_64 in run 42745809439,
+implementation ff00c941ee36a4c093b2d2f577c61c731c3c73b6. See STATUS.md for limits.
 
 Arena materials, piece silhouettes and Queen portrait are original procedural
-vectors/textures. No temporary sprites or downloaded artwork are used. Sound
-effects are original PCM synthesis, reproducible with chess-audio/generate.py.
-Piece paths, shaders, textures, board coordinates and legal targets are reused.
-Animations consume committed immutable snapshots; they cannot authorize moves.
+vectors/textures. No temporary sprites or external artwork are used. Sound effects
+are original PCM synthesis, reproducible with chess-audio/generate.py. The renderer
+reuses a 1024px board plane, 512px original-piece textures, paths, shaders and hit-test
+buffers. Every original gradient, silhouette, shadow and effect is retained.
+Animations consume committed snapshots and cannot authorize or delay chess moves.
 
-QueenVoice uses only offline Malay Android TTS voices. Missing voices produce
-clear status/subtitle fallback. It owns transient audio focus, effects, utterance
-cancellation and shutdown; it never borrows Gemini Live. Gender/naturalness depend
-on the installed voice. Aoede narrative TTS is not implemented. Push-to-talk uses
-on-device SpeechRecognizer only, with explicit runtime permission on user input.
-There is no cloud game-history, narration or microphone endpoint in this module.
+QueenVoice uses offline Malay Android TTS. Actual start/completion callbacks are
+recorded in evidence/chess-voice-playback.txt. Missing voices have explicit status
+and subtitle fallback; that unavailable-device path is not independently verified
+by the successful-voice emulator test. It owns audio focus, effects, cancellation
+and shutdown, without borrowing Gemini Live. Physical audio routing and voice
+naturalness are unverified. Aoede narration is not implemented. Push-to-talk uses
+on-device SpeechRecognizer only and requests permission on explicit user action;
+physical Malay recognition remains unverified.
 
-Replay never changes the authoritative session. Post-game analysis re-searches
-actual positions and reports centipawn loss only if both completed searches have
-depth >=14; no made-up accuracy percentage or unsupported brilliant label is used.
-The analysis is resource bounded, cancellable and stops for severe thermal state.
-RivalryMemory defaults to disabled and keeps at most 50 local game records if
-enabled. It does not claim remembered encounters or secretly weaken the engine.
+Replay leaves the authoritative session intact. Post-game review re-searches actual
+positions and reports centipawn loss only when both searches reach depth >=14;
+it does not fabricate accuracy percentages or brilliant labels. Search is bounded,
+cancellable and stops for severe thermal state. Opt-in RivalryMemory keeps at most
+50 local game records and can reference their actual results, without cloud upload
+or a hidden change to engine strength. Comprehensive behavioral profiling remains
+outside the delivered basic memory implementation.

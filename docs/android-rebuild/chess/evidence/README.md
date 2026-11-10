@@ -22,3 +22,12 @@ no engine error, and no moves entered. See immersive-education.png and its state
 file. The first-frame hypothesis alone did not fix the test. The next test uses
 the same explicit system-education dismissal already used by VisualParityTest;
 real touch selection and AI reply assertions remain required.
+
+Final implementation ff00c941ee36a4c093b2d2f577c61c731c3c73b6:
+`premium-android-pass.txt` records five actual API35 tests passing in 65.179 s.
+The portrait, landscape, Dark Queen mate, PGN, TTS callback, process cleanup and
+paired renderer reports are copied from successful run 42745809439 attempt 2.
+`verified-delivery-build.txt` identifies source and PR merge commits, and the
+SHA256 file identifies the exact APK and source archive. Main Android regression
+run 42745809361 passed all 42 tests. See ../DELIVERY.md for immutable artifact links
+and ../PERFORMANCE.md for measured limitations, including cross-run variability.

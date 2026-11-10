@@ -1,0 +1,1 @@
+available=true; requested=2; started=2; completed=2; status=Suara Melayu peranti · ms-my-x-mse-local; speaking=false; mode=FULL; subtitle=Papan telah tersedia. Bawa Cahayamu. Aku menanti langkah pertamamu.
