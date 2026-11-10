@@ -189,10 +189,12 @@ jobs:
           emulator-options: -no-window -gpu swiftshader -noaudio -no-boot-anim -camera-back none
           script: |
             bash android-native/visual-tests/run-emulator.sh
-            bash android-native/ci/validate-extra.sh
+            validation_failed=0
+            bash android-native/ci/validate-extra.sh || validation_failed=1
             if [ '${{ github.event_name }}' = 'pull_request' ]; then
-              bash android-native/ci/measure-paired.sh
+              bash android-native/ci/measure-paired.sh || validation_failed=1
             fi
+            exit "$validation_failed"
       - name: Web/Native visual parity audit (strict 98% report, not emulator instrumentation)
         if: always()
         run: |
@@ -220,7 +222,7 @@ jobs:
             echo "::warning title=Web/native visual parity remains below 98%::Screenshots and strict mismatch report were preserved. Native emulator instrumentation is evaluated separately; visual calibration remains unresolved."
           fi
       - name: Preserve approved native visuals at four sizes
-        if: github.event_name == 'pull_request' && success()
+        if: always() && github.event_name == 'pull_request'
         run: python android-native/visual-tests/compare-native-preservation.py
       - uses: actions/upload-artifact@v4
         if: always()

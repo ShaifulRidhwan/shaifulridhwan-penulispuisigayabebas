@@ -9,14 +9,19 @@ run_suite() {
   cat "$result"
   grep -Eq '^OK \([0-9]+ tests?\)' "$result"
 }
-run_suite P3P4SettingsUiTest
-run_suite P4EncryptedDraftStoreAndroidTest
-run_suite NativeGameAssetsTest
-adb shell pm grant my.aksara.nativeapp android.permission.RECORD_AUDIO
-run_suite LiveVoiceLifecycleTest
-adb pull /sdcard/Android/data/my.aksara.nativeapp/files/live-audio-lifecycle.json "$out/"
+failures=0
+run_suite P3P4SettingsUiTest || failures=$((failures+1))
+run_suite P4EncryptedDraftStoreAndroidTest || failures=$((failures+1))
+run_suite NativeGameAssetsTest || failures=$((failures+1))
+adb shell pm grant my.aksara.nativeapp android.permission.RECORD_AUDIO || failures=$((failures+1))
+run_suite LiveVoiceLifecycleTest || failures=$((failures+1))
+adb pull /sdcard/Android/data/my.aksara.nativeapp/files/live-audio-lifecycle.json "$out/" || failures=$((failures+1))
 # Revoke only after instrumentation exits: revoking an in-use permission can
 # kill the app process and must not masquerade as an instrumentation crash.
 adb shell pm revoke my.aksara.nativeapp android.permission.RECORD_AUDIO
 adb shell am start -W -n my.aksara.nativeapp/.MainActivity > "$out/final-launch.txt"
 adb logcat -d -b crash > "$out/crashes.txt"
+if [ "$failures" -ne 0 ]; then
+  echo "::error::$failures additional validation gate(s) failed; see preserved test results."
+  exit 1
+fi
