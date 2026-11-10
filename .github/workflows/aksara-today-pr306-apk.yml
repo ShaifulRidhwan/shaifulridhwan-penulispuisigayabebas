@@ -49,3 +49,10 @@ jobs:
               --notes "Experimental Android APK built from PR #306 source $EXPECTED_SHA. All standard GitHub CI checks passed. Not merged. Manual device validation required."
           fi
           gh release view "$TAG" -R "${{ github.repository }}" --json url,assets
+      - name: Verify direct release asset and record link in PR
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" -R "${{ github.repository }}" --json assets \
+            --jq '.assets[].name' | grep -Fx 'AKSARA-TODAY-V1-PR306.apk'
+          gh api "repos/${{ github.repository }}/issues/306/comments" \
+            -f body="CI verified preview APK: https://github.com/${{ github.repository }}/releases/download/$TAG/AKSARA-TODAY-V1-PR306.apk (built from $EXPECTED_SHA, run $VERIFIED_RUN, direct APK not ZIP)."
