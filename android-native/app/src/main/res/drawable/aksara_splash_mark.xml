@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Same AKSARA symbol as AksaraDesign.kt's "aksara" vector icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="30"
+    android:viewportHeight="30">
+    <group android:translateX="3" android:translateY="3">
+        <path
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="#E6C58B"
+            android:strokeWidth="1.5"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M12,2.5 L20.5,7.2 V16.8 L12,21.5 L3.5,16.8 V7.2 Z" />
+        <path
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="#E6C58B"
+            android:strokeWidth="1.5"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M7.6,17.3 L12,6.3 L16.4,17.3" />
+        <path
+            android:fillColor="@android:color/transparent"
+            android:strokeColor="#E6C58B"
+            android:strokeWidth="1.5"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:pathData="M9.4,13.2 H14.6" />
+    </group>
+</vector>
