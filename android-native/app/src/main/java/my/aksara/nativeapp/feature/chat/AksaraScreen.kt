@@ -325,13 +325,13 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         Row(horizontalArrangement=Arrangement.spacedBy(6.dp),verticalAlignment=Alignment.CenterVertically) {
                             AksaraButton("",{open("search-hub")},Modifier.width(44.dp)
                                 .semantics {contentDescription="Carian, sesi dan memori"},
-                                icon="search",height=44.dp,radius=13.dp,iconSize=19.dp)
+                                icon="search",height=44.dp,radius=13.dp,iconSize=19.dp,contentColor=AksaraColors.gold)
                             AksaraButton("",{open("portal")},Modifier.width(44.dp)
                                 .semantics {contentDescription="Explore"},
-                                icon="grid",height=44.dp,radius=13.dp,iconSize=19.dp)
+                                icon="grid",height=44.dp,radius=13.dp,iconSize=19.dp,contentColor=AksaraColors.gold)
                             AksaraButton("",{open("settings")},Modifier.width(44.dp)
                                 .semantics {contentDescription="Settings"},
-                                icon="settings",height=44.dp,radius=13.dp,iconSize=19.dp)
+                                icon="settings",height=44.dp,radius=13.dp,iconSize=19.dp,contentColor=AksaraColors.gold)
                         }
                     }
                 }
@@ -403,7 +403,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                     Modifier.width(103.dp).height(44.dp).clickable { onJourney("Siapa Aku") },
                                     radius=999.dp,blur=9.dp,
                                     brush=cssGradient(145f,listOf(Color(244,216,171,9),Color(12,20,35,16))),
-                                    border=Color.Transparent
+                                    border=AksaraColors.border
                                 ) {
                                     Row(Modifier.align(Alignment.Center),verticalAlignment=Alignment.CenterVertically,
                                         horizontalArrangement=Arrangement.spacedBy(6.dp)) {
