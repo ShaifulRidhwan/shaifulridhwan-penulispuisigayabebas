@@ -402,7 +402,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 AksaraGlassSurface(
                                     Modifier.width(103.dp).height(44.dp).clickable { onJourney("Siapa Aku") },
                                     radius=999.dp,blur=9.dp,
-                                    brush=cssGradient(145f,listOf(Color(244,216,171,18),Color(12,20,35,35))),
+                                    brush=cssGradient(145f,listOf(Color(244,216,171,9),Color(12,20,35,16))),
                                     border=Color.Transparent
                                 ) {
                                     Row(Modifier.align(Alignment.Center),verticalAlignment=Alignment.CenterVertically,
