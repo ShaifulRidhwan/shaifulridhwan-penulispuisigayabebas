@@ -1,0 +1,57 @@
+{
+  "method": "Cloud executor HTTPS proxy; not Android device, microphone, or UI latency",
+  "trials": [
+    {
+      "test": "chat",
+      "trial": 1,
+      "status": 200,
+      "firstDeltaMs": 2781.39,
+      "elapsedMs": 2855.31,
+      "frames": 4,
+      "completed": true,
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite"
+    },
+    {
+      "test": "chat",
+      "trial": 2,
+      "status": 200,
+      "firstDeltaMs": 772.23,
+      "elapsedMs": 930.49,
+      "frames": 5,
+      "completed": true,
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite"
+    },
+    {
+      "test": "chat",
+      "trial": 3,
+      "status": 200,
+      "firstDeltaMs": 2318.18,
+      "elapsedMs": 2403.86,
+      "frames": 5,
+      "completed": true,
+      "provider": "gemini",
+      "model": "gemini-3.5-flash-lite"
+    },
+    {
+      "test": "studio",
+      "status": 200,
+      "elapsedMs": 7441.13,
+      "bytes": 294577,
+      "model": "FLUX.2 Klein 4B",
+      "serverDurationMs": 6287,
+      "width": 768,
+      "height": 768
+    },
+    {
+      "test": "live-broker",
+      "status": 200,
+      "elapsedMs": 466.73,
+      "validTokenShape": true,
+      "model": "gemini-3.8-live"
+    }
+  ],
+  "sourceCommit": "a4898c51f15ac92184ade7cf15c7c352cb423ff5",
+  "observedDateUTC": "2026-11-10"
+}

@@ -9,6 +9,7 @@ concurrency:
   cancel-in-progress: true
 permissions:
   contents: read
+  actions: read
 jobs:
   game-logic:
     runs-on: ubuntu-latest
@@ -165,6 +166,20 @@ jobs:
         with:
           name: aksara-native-debug
           path: android-native/build-artifact
+      - uses: actions/download-artifact@v4
+        if: github.event_name == 'pull_request'
+        with:
+          name: aksara-native-debug
+          run-id: 42798190575
+          github-token: ${{ github.token }}
+          path: android-native/baseline-artifact
+      - uses: actions/download-artifact@v4
+        if: github.event_name == 'pull_request'
+        with:
+          name: native-visual-and-performance-evidence
+          run-id: 42798190575
+          github-token: ${{ github.token }}
+          path: android-native/baseline-evidence
       - uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -174,7 +189,10 @@ jobs:
           emulator-options: -no-window -gpu swiftshader -noaudio -no-boot-anim -camera-back none
           script: |
             bash android-native/visual-tests/run-emulator.sh
-            APK_PATH=android-native/build-artifact/outputs/apk/debug/app-debug.apk bash android-native/ci/measure-performance.sh docs/android-rebuild/visual-comparison/performance/measured
+            bash android-native/ci/validate-extra.sh
+            if [ '${{ github.event_name }}' = 'pull_request' ]; then
+              bash android-native/ci/measure-paired.sh
+            fi
       - name: Web/Native visual parity audit (strict 98% report, not emulator instrumentation)
         if: always()
         run: |
@@ -201,6 +219,9 @@ jobs:
           if [ "$parity_status" -ne 0 ]; then
             echo "::warning title=Web/native visual parity remains below 98%::Screenshots and strict mismatch report were preserved. Native emulator instrumentation is evaluated separately; visual calibration remains unresolved."
           fi
+      - name: Preserve approved native visuals at four sizes
+        if: github.event_name == 'pull_request' && success()
+        run: python android-native/visual-tests/compare-native-preservation.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
