@@ -42,6 +42,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     private val mutable = MutableStateFlow(ChatState())
     val state = mutable.asStateFlow()
     private var requestJob: Job? = null
+    private val providerRefreshGate = LatestRefreshGate()
+    private var providerRefreshJob: Job? = null
     private var storageReadable = true
     private var activeAttachment: ActiveAttachment? = null
     init {
@@ -132,7 +134,12 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             summaryStatus = "not_requested", resumedFromHistory = false)) }
         viewModelScope.launch { runCatching { persistContext() } }
     } }
-    fun refreshProviders() = viewModelScope.launch {
+    fun refreshProviders(): Job {
+        // Only the latest health refresh may publish status; a late older request
+        // must never undo a newer verified result or outage report.
+        val requestId = providerRefreshGate.begin()
+        providerRefreshJob?.cancel()
+        return viewModelScope.launch {
         try {
             val response = api.post(BackendRoutes.CHAT, JSONObject().put("providerStatus", true))
             val capabilities = P3Intelligence.inventory(response)
@@ -152,15 +159,19 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 } else null
                 provider.optString("id") to listOfNotNull(reason, poolSummary).joinToString(" · ")
             }
-            mutable.update { it.copy(providers = statuses, providerDetails = details,
-                capabilities = capabilities,modelRegistry=modelRegistry) }
+            if (providerRefreshGate.isCurrent(requestId)) mutable.update { it.copy(
+                providers = statuses, providerDetails = details,
+                capabilities = capabilities, modelRegistry = modelRegistry) }
         } catch (e: Exception) {
-            if (e !is CancellationException) mutable.update {
+            if (e !is CancellationException && providerRefreshGate.isCurrent(requestId)) mutable.update {
                 val reason = if (e.message?.startsWith("Backend unreachable") == true) "Backend unreachable"
                     else "Backend error: " + (e.message ?: "unavailable").take(90)
-                it.copy(providers = listOf("backend" to reason), providerDetails = mapOf("backend" to reason))
+                // Do not retain old model/capability metadata beside an unreachable backend.
+                it.copy(providers = listOf("backend" to reason), providerDetails = mapOf("backend" to reason),
+                    capabilities = emptyList(), modelRegistry = emptyList())
             }
         }
+        }.also { providerRefreshJob = it }
     }
     fun journey(question: String) {
         if(state.value.busy || !state.value.loaded)return
