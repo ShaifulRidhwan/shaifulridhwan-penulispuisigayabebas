@@ -148,6 +148,9 @@ private val iconPaths = mapOf(
     "audio" to listOf("M10 5v11a4 4 0 1 1-2-3.5V7l12-3v10a4 4 0 1 1-2-3.5V4"),
 
     "novel" to listOf("M3 5c3-1.6 6-1.6 9 .1 3-1.7 6-1.7 9-.1v14c-3-1.6-6-1.6-9 .1-3-1.7-6-1.7-9-.1Z", "M12 5v14", "M6 9h3m6 0h3M6 13h3m6 0h3"),
+    // Same 24dp single-stroke language as Home, Studio and Library. No separate icon tiles.
+    "chess-knight" to listOf("M6 21h13", "M7.5 18.5h10l-.8-4.1 2.1-2.4-1.5-3.6-4-4.2-1.4 3.1-4.2 2.6-1.6 5 2.4 1.4Z", "M10.8 10.6h.2"),
+    "crossed-swords" to listOf("M4 4l3.5 1 10.5 10.5M20 20l-5-5", "M20 4l-3.5 1L6 15.5M4 20l5-5", "M3.5 17.5l3 3M17.5 17.5l3 3"),
     "chat" to listOf("M4 4h13a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H9l-5 4v-4a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3Z", "M6 9h9M6 13h6"),
     "research" to listOf("M5 3h10l4 4v4M15 3v4h4M5 3v18h10", "M14.5 17a3.5 3.5 0 1 0 7 0a3.5 3.5 0 1 0-7 0Z", "m21 20 2 2"),
     "activity" to listOf("M3 20h18", "M5 17 9 12l3 3 6-9", "m15 6h3v3"),
