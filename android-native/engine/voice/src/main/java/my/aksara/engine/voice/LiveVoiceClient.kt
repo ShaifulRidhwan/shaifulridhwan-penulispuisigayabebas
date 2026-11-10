@@ -765,8 +765,11 @@ class LiveVoiceClient(
     }
 
     private fun restoreRouting() {
-        manager.clearCommunicationDevice()
-        previousMode?.let { manager.mode = it }
+        // Bluetooth permission or audio service state may change while Voice is active.
+        // A failed device-clear must not skip restoration of the previous audio mode,
+        // or crash the Activity when Android invokes ON_STOP / disposal cleanup.
+        runCatching { manager.clearCommunicationDevice() }
+        previousMode?.let { oldMode -> runCatching { manager.mode = oldMode } }
         previousMode = null
         routeError = ""
     }

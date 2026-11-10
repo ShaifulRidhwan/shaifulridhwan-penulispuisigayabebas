@@ -18,9 +18,14 @@ object VoiceAudioRoute {
     fun wireless(type: Int): Boolean = type in wireless
 
     fun chooseType(available: List<Int>, current: Int?): Int? {
-        if (current != null && accessory(current) && current in available) return current
-        return available.firstOrNull { it == AudioDeviceInfo.TYPE_WIRED_HEADSET ||
-                it == AudioDeviceInfo.TYPE_USB_HEADSET }
+        // Keep the current route only if it can support bidirectional voice.
+        // Wired HEADPHONES or generic USB media outputs may have no microphone,
+        // and must not outrank an available Bluetooth / wired call headset.
+        val duplexWired = setOf(AudioDeviceInfo.TYPE_WIRED_HEADSET,
+            AudioDeviceInfo.TYPE_USB_HEADSET)
+        if (current != null && current in available &&
+            (current in duplexWired || wireless(current))) return current
+        return available.firstOrNull { it in duplexWired }
             ?: available.firstOrNull { it in wireless }
             ?: available.firstOrNull { it in wired }
             ?: available.firstOrNull { it == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }

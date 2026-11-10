@@ -33,3 +33,9 @@ object ProviderConnectionStatus {
         return "Unverified"
     }
 }
+/** Monotonic guard for overlapping manual and automatic backend-health refreshes. */
+internal class LatestRefreshGate {
+    private val latest = java.util.concurrent.atomic.AtomicLong(0L)
+    fun begin(): Long = latest.incrementAndGet()
+    fun isCurrent(requestId: Long): Boolean = requestId == latest.get()
+}
