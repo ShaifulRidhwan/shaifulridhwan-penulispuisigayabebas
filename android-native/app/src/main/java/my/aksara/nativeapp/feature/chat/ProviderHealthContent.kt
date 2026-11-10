@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +22,11 @@ import java.util.Date
     expandedId: String,
     onExpandedChange: (String) -> Unit
 ) {
+    val listState = rememberLazyListState()
+    LaunchedEffect(expandedId) {
+        if(expandedId=="openrouter") listState.animateScrollToItem(3)
+        else listState.scrollToItem(0)
+    }
     val snapshot = state.providerHealth
     val backendFailure = state.providers.firstOrNull { it.first == "backend" }?.second
     val checked = snapshot?.checkedAt?.let {
@@ -45,7 +51,7 @@ import java.util.Date
                 size=10f,line=14f,color=AksaraColors.muted)
         }
         Spacer(Modifier.height(10.dp))
-        LazyColumn(Modifier.fillMaxWidth().weight(1f),
+        LazyColumn(Modifier.fillMaxWidth().weight(1f),state=listState,
             contentPadding=PaddingValues(bottom=8.dp),
             verticalArrangement=Arrangement.spacedBy(7.dp)) {
             ProviderConnectionStatus.expected.forEach { id ->
