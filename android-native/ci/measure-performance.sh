@@ -43,6 +43,9 @@ adb shell dumpsys batterystats "$package" > "$out/batterystats.txt"
 adb shell dumpsys thermalservice > "$out/thermal-after.txt"
 adb shell dumpsys package "$package" > "$out/package.txt"
 adb shell run-as "$package" du -sk . > "$out/app-private-footprint.txt"
+apk_path=$(adb shell pm path "$package" | head -1 | tr -d '\r' | cut -d: -f2)
+code_dir=${apk_path%/*}
+adb shell run-as "$package" du -sk "$code_dir" . > "$out/installed-code-and-private.txt"
 if [ -n "${APK_PATH:-}" ]; then
   stat -c %s "$APK_PATH" > "$out/apk-bytes.txt"
   sha256sum "$APK_PATH" > "$out/apk-sha256.txt"
@@ -57,6 +60,7 @@ for repetition in 1 2 3; do
   cat "$result"
   grep -Eq '^OK \([0-9]+ tests?\)' "$result"
   adb pull "/sdcard/Android/data/$package/files/streaming-render-fixture.json" "$out/streaming-$repetition.json"
+  adb shell dumpsys gfxinfo "$package" framestats > "$out/streaming-framestats-$repetition.txt"
 done
 adb logcat -d -b crash > "$out/crashes.txt"
 python3 - "$out" <<'PY'
@@ -93,6 +97,9 @@ for i in range(1, 4):
         'nativeHeapBytes': trial['nativeHeapBytes'], 'javaHeapUsedBytes': trial['javaHeapUsedBytes']})
 memory = (root / 'meminfo.txt').read_text()
 report['idleMemoryRawTotals'] = [line.strip() for line in memory.splitlines() if 'TOTAL' in line]
+footprint = (root / 'installed-code-and-private.txt').read_text().splitlines()
+report['installedFootprintKiB'] = {'codeDirectory':int(footprint[0].split()[0]), 'appPrivate':int(footprint[1].split()[0]), 'note':'du code directory plus app-private data; excludes shared OS caches'}
+report['startupFrameSummary'] = [line.strip() for line in (root / 'startup-framestats.txt').read_text().splitlines() if 'Total frames rendered:' in line or 'Janky frames:' in line]
 if (root / 'apk-bytes.txt').exists():
     report['apkBytes'] = int((root / 'apk-bytes.txt').read_text())
     report['apkSha256'] = (root / 'apk-sha256.txt').read_text().split()[0]
