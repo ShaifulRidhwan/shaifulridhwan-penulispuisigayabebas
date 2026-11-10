@@ -5,13 +5,10 @@ import android.content.Context
 import android.content.Intent
 import android.location.Geocoder
 import android.location.Location
-import android.content.pm.PackageManager
 import android.net.Uri
-import android.provider.CalendarContract
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -24,7 +21,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import kotlinx.coroutines.Dispatchers
@@ -47,29 +43,6 @@ private val todayMuted=Color(0xFFD2DCEB)
 private val todayGold=Color(0xFFE5C388)
 private val malay=Locale("ms","MY")
 private val malaysiaZone=ZoneId.of("Asia/Kuala_Lumpur")
-internal data class TodayAgendaItem(val title:String,val start:Long)
-private fun hasCalendarPermission(context:Context)=
-    ContextCompat.checkSelfPermission(context,Manifest.permission.READ_CALENDAR)==PackageManager.PERMISSION_GRANTED
-
-private fun readTodayAgenda(context:Context):List<TodayAgendaItem> {
-    if(!hasCalendarPermission(context)) return emptyList()
-    val now=System.currentTimeMillis()
-    val end=now+7L*24L*60L*60L*1000L
-    val columns=arrayOf(CalendarContract.Instances.TITLE,CalendarContract.Instances.BEGIN)
-    return runCatching {
-        val entries=mutableListOf<TodayAgendaItem>()
-        CalendarContract.Instances.query(context.contentResolver,columns,now,end)?.use { cursor ->
-            val titleIndex=cursor.getColumnIndexOrThrow(CalendarContract.Instances.TITLE)
-            val timeIndex=cursor.getColumnIndexOrThrow(CalendarContract.Instances.BEGIN)
-            while(cursor.moveToNext() && entries.size<3) {
-                val title=cursor.getString(titleIndex).orEmpty().trim()
-                if(title.isNotBlank())entries+=TodayAgendaItem(title.take(110),cursor.getLong(timeIndex))
-            }
-        }
-        entries
-    }.getOrDefault(emptyList())
-}
-
 private fun todayCondition(code:Int)=when(code) {
     0 -> "Cerah"
     1,2 -> "Sebahagiannya berawan"
@@ -93,8 +66,10 @@ internal fun nextPrayer(prayer:TodayPrayer?,now:LocalTime):Pair<String,String>? 
     } ?: prayer.times.firstOrNull() ?: return null // Next day's Subuh after Isyak.
     val minutes=Duration.between(now,LocalTime.parse(next.second)).toMinutes()
     val remaining=if(minutes<0)minutes+24L*60L else minutes
-    return next.first to (remaining/60L).toString().padStart(2,'0')+":"+
-        (remaining%60L).toString().padStart(2,'0')
+    val hours=remaining/60L
+    val mins=remaining%60L
+    val duration=if(hours>0) "$hours jam $mins minit" else "$mins minit"
+    return next.first to duration
 }
 
 @Suppress("DEPRECATION")
@@ -133,17 +108,11 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
 @Composable private fun TodayPending(message:String) {
     AksaraText(message,size=11.5f,line=17f,color=todayMuted)
 }
-@Composable private fun TodayFreshness(feed:TodayFeed<*>?) {
-    if(feed!=null) AksaraText(updatedLabel(feed.updatedAt,feed.fromCache),
-        size=10.5f,color=todayMuted)
-}
-
 @Composable internal fun TodayScreen(active:Boolean,onBack:()->Unit) {
     BackHandler(enabled=active) { onBack() }
     val context=LocalContext.current
     val repo=remember(context) { TodayRepository(context) }
     var permissionLocation by remember { mutableStateOf(hasTodayLocationPermission(context)) }
-    var permissionCalendar by remember { mutableStateOf(hasCalendarPermission(context)) }
     var epoch by remember { mutableIntStateOf(0) }
     var locating by remember { mutableStateOf(false) }
     var locationReady by remember { mutableStateOf(false) }
@@ -152,21 +121,15 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
     var prayer by remember { mutableStateOf<TodayFeed<TodayPrayer>?>(null) }
     var crypto by remember { mutableStateOf<TodayFeed<List<TodayCoin>>?>(null) }
     var github by remember { mutableStateOf<TodayFeed<TodayCommit>?>(null) }
-    var agenda by remember { mutableStateOf<List<TodayAgendaItem>>(emptyList()) }
     var clock by remember { mutableStateOf(ZonedDateTime.now()) }
     val locationPrompt=rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()) { granted -> permissionLocation=granted; epoch++ }
-    val calendarPrompt=rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()) { granted -> permissionCalendar=granted; epoch++ }
 
     LaunchedEffect(active) {
         while(active) {
             clock=ZonedDateTime.now()
             delay(30_000L)
         }
-    }
-    LaunchedEffect(active,epoch,permissionCalendar) {
-        if(active && permissionCalendar) agenda=withContext(Dispatchers.IO) { readTodayAgenda(context) }
     }
     LaunchedEffect(active,epoch,permissionLocation) {
         if(!active)return@LaunchedEffect
@@ -190,6 +153,8 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
     val dateLabel=clock.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy",malay))
     val prayerNow=LocalTime.now(malaysiaZone)
     val countdown=nextPrayer(prayer?.value,prayerNow)
+    val latestUpdate=listOfNotNull(weather?.updatedAt,prayer?.updatedAt,crypto?.updatedAt,github?.updatedAt).maxOrNull()
+    val anyCached=listOfNotNull(weather,prayer,crypto,github).any { it.fromCache }
     val wallpaperBackdrop=remember { HazeState() }
 
     CompositionLocalProvider(LocalBackdrop provides wallpaperBackdrop) {
@@ -206,7 +171,14 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                         AksaraText("AKSARA TODAY",size=15f,weight=700,color=todayGold)
                         AksaraText("Ruang Hari Ini",size=10f,color=todayMuted)
                     }
-                    AksaraButton("Segar semula",{ epoch++ },height=40.dp,size=10f,radius=13.dp)
+                    Column(horizontalAlignment=Alignment.End,verticalArrangement=Arrangement.spacedBy(4.dp)) {
+                        AksaraButton("Refresh",{ epoch++ },height=40.dp,size=10f,radius=13.dp)
+                        AksaraText(when {
+                            latestUpdate==null -> "Belum dikemas kini"
+                            anyCached -> "Sebahagian data cache • "+updatedLabel(latestUpdate,false)
+                            else -> updatedLabel(latestUpdate,false)
+                        },size=9.5f,line=13f,color=todayMuted)
+                    }
                 }
                 AksaraGlassSurface(Modifier.fillMaxWidth(),radius=20.dp,blur=12.dp) {
                     Column(Modifier.fillMaxWidth().padding(vertical=14.dp,horizontal=16.dp),
@@ -214,35 +186,6 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                         AksaraText(clock.format(DateTimeFormatter.ofPattern("HH:mm")),
                             size=37f,weight=650)
                         AksaraText(dateLabel,size=11f,color=todayMuted)
-                        Spacer(Modifier.height(12.dp))
-                        Box(Modifier.fillMaxWidth().height(1.dp)
-                            .background(Color.White.copy(alpha=0.17f)))
-                        Spacer(Modifier.height(9.dp))
-                        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,
-                            horizontalArrangement=Arrangement.SpaceBetween) {
-                            AksaraText("Agenda",size=12f,weight=700,color=todayGold)
-                            if(permissionCalendar && agenda.isEmpty())
-                                AksaraText("Tiada acara",size=11f,color=todayMuted)
-                        }
-                        if(!permissionCalendar) {
-                            TodayPending("Benarkan akses untuk melihat agenda peranti.")
-                            Spacer(Modifier.height(5.dp))
-                            AksaraButton("Aktifkan agenda",
-                                { calendarPrompt.launch(Manifest.permission.READ_CALENDAR) },
-                                height=32.dp,size=10.5f)
-                        } else if(agenda.isNotEmpty()) {
-                            Spacer(Modifier.height(4.dp))
-                            agenda.forEach { item ->
-                                Row(Modifier.fillMaxWidth(),
-                                    horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                                    AksaraText(Instant.ofEpochMilli(item.start)
-                                        .atZone(ZoneId.systemDefault())
-                                        .format(DateTimeFormatter.ofPattern("dd MMM HH:mm",malay)),
-                                        size=10.5f,color=todayGold)
-                                    AksaraText(item.title,Modifier.weight(1f),size=11f)
-                                }
-                            }
-                        }
                     }
                 }
                 TodayCard("Cuaca & Lokasi") {
@@ -266,7 +209,6 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                                 ?: "Ramalan hujan tidak tersedia",size=11f,color=todayMuted)
                             AksaraText("Ramalan cuaca, bukan amaran rasmi METMalaysia.",
                                 size=9.5f,color=todayMuted)
-                            TodayFreshness(weather)
                         }
                     }
                 }
@@ -288,7 +230,6 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                             }
                             AksaraText(countdown?.let { "Seterusnya: "+it.first+" • "+it.second+" lagi" }
                                 ?: "Waktu seterusnya tidak tersedia.",size=12f,weight=700,color=todayGold)
-                            TodayFreshness(prayer)
                         }
                     }
                 }
@@ -306,46 +247,34 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                             }
                         }
                         AksaraText("Perubahan harga 24 jam • CoinPaprika",size=9.5f,color=todayMuted)
-                        TodayFreshness(crypto)
                     }
                 }
                 TodayCard("Aktiviti Pembangunan • GitHub") {
                     val commit=github?.value
-                    if(commit==null)TodayPending("Aktiviti GitHub tidak tersedia. Cuba segar semula.")
+                    if(commit==null) TodayPending("Aktiviti GitHub tidak tersedia. Cuba Refresh.")
                     else {
-                        AksaraText("Android • rebuild/aksara-android-native-v1",
-                            size=10.5f,color=todayMuted)
                         val actor=commit.pushedBy?.let {
-                            if(it.equals("ShaifulRidhwan",ignoreCase=true))"Shaiful Ridhwan" else it
-                        }
-                        if(actor!=null) {
-                            val count=commit.pushCount?.let { " • "+it+" commit" }.orEmpty()
-                            AksaraText(actor+" • Push"+count,size=12f,weight=700)
-                            commit.pushedAt?.let {
-                                AksaraText("Push: "+(localIsoTime(it) ?: "masa tidak tersedia"),
-                                    size=10.5f,color=todayMuted)
-                            }
-                        } else {
-                            TodayPending("Push terkini belum dapat disahkan daripada aktiviti GitHub.")
+                            if(it.equals("ShaifulRidhwan",ignoreCase=true)) "Shaiful Ridhwan" else it
                         }
                         val author=commit.author?.let {
-                            if(it.equals("ShaifulRidhwan",ignoreCase=true))"Shaiful Ridhwan" else it
-                        } ?: "Tidak tersedia"
-                        AksaraText("Commit oleh "+author,size=10.5f,color=todayMuted)
-                        AksaraText(commit.message,size=12f,weight=650,line=19f)
-                        AksaraText(commit.sha.take(7)+" • "+(localIsoTime(commit.date) ?: "tarikh tidak tersedia"),
-                            size=10.5f,color=todayGold)
+                            if(it.equals("ShaifulRidhwan",ignoreCase=true)) "Shaiful Ridhwan" else it
+                        }
+                        AksaraText("Android • "+commit.sha.take(7)+" • "+
+                            (localIsoTime(commit.date) ?: "masa tidak tersedia"),
+                            size=10.5f,color=todayMuted)
+                        AksaraText(commit.message.take(105),size=12f,weight=650,line=18f)
+                        AksaraText(when {
+                            actor!=null -> "Push oleh $actor"+(commit.pushCount?.let { " • $it commit" } ?: "")
+                            author!=null -> "Commit oleh $author"
+                            else -> "Pelaku push belum disahkan"
+                        },size=10.5f,color=todayMuted)
                         AksaraText("CI: "+commit.ci,size=11f,
                             color=if(commit.ci=="Lulus")Color(0xFF9EE1B5) else todayMuted)
-                        AksaraText("APK: pengesahan release berasingan diperlukan",
-                            size=10f,color=todayMuted)
                         val url=commit.url.takeIf { it.startsWith(
                             "https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/commit/") }
                         if(url!=null) AksaraButton("Buka commit di GitHub",{
                             context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url)))
-                        },height=38.dp,size=11f)
-                        AksaraText("Sync GitHub • "+updatedLabel(github?.updatedAt,
-                            github?.fromCache==true),size=10.5f,color=todayMuted)
+                        },height=36.dp,size=10.5f)
                     }
                 }
             }
