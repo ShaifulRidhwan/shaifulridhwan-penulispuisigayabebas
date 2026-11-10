@@ -211,8 +211,8 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                     }
                     Column(horizontalAlignment=Alignment.End,verticalArrangement=Arrangement.spacedBy(4.dp)) {
                         AksaraButton("Refresh",{
+                            epoch++
                             if(!permissionLocation) explainLocation()
-                            else epoch++
                         },height=40.dp,size=10f,radius=13.dp)
                         AksaraText(when {
                             latestUpdate==null -> "Belum dikemas kini"
@@ -314,7 +314,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                 }
             }
             if(showLocationDialog && active) {
-                AksaraGlassModal(onClose={ showLocationDialog=false },preferredHeight=310.dp) {
+                AksaraGlassModal(onClose={ showLocationDialog=false },preferredHeight=335.dp) {
                     Column(Modifier.fillMaxSize().padding(18.dp),
                         verticalArrangement=Arrangement.spacedBy(11.dp)) {
                         Row(verticalAlignment=Alignment.CenterVertically,
@@ -330,7 +330,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                         }
                         AksaraText("Aksara perlukan lokasi anggaran untuk menunjukkan cuaca setempat, zon waktu solat dan kiraan waktu solat seterusnya.",
                             size=12.5f,line=19f)
-                        AksaraText("Lokasi digunakan ketika ruang TODAY dibuka. Jika tidak dibenarkan, jam, pasaran kripto dan aktiviti GitHub masih boleh dipaparkan.",
+                        AksaraText("Android hanya meminta izin selepas kau tekan Benarkan lokasi. Jika ditolak, jam, kripto dan GitHub masih berfungsi. Data ramalan mungkin disimpan sementara dalam cache peranti.",
                             size=10.5f,line=17f,color=todayMuted)
                         Spacer(Modifier.weight(1f))
                         Row(Modifier.fillMaxWidth(),
