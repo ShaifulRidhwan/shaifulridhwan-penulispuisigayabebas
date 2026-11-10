@@ -10,6 +10,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,6 +40,7 @@ import dev.chrisbanes.haze.*
 import io.noties.markwon.Markwon
 import io.noties.markwon.ext.tables.TablePlugin
 import my.aksara.nativeapp.R
+import my.aksara.nativeapp.feature.today.TodayScreen
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.platform.Attachment
@@ -155,7 +158,21 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             else beginAttachmentRead(uris)
         }
     }
-    AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
+    val pagerState = rememberPagerState(initialPage=0,pageCount={2})
+    var overlayVisible by remember { mutableStateOf(false) }
+    val keyboardOpen=WindowInsets.ime.getBottom(LocalDensity.current)>0
+    HorizontalPager(
+        state=pagerState,
+        modifier=Modifier.fillMaxSize(),
+        beyondViewportPageCount=1,
+        userScrollEnabled=!overlayVisible && !keyboardOpen
+    ) { page ->
+      if(page==1) {
+        TodayScreen(active=pagerState.currentPage==1,onBack={
+            scope.launch { pagerState.animateScrollToPage(0) }
+        })
+      } else {
+        AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
         val textDocs = attachments.filter { it.text.isNotBlank() }
         val text = textDocs.joinToString("\n\n") { "[DOKUMEN: " + it.name + "]\n" + it.text + "\n[TAMAT DOKUMEN]" }
         val name = textDocs.joinToString(", ") { it.name }.take(100)
@@ -190,7 +207,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         uploadStatus = uploadStatus,
         onCancelUpload = { uploadJob?.cancel() },
         onPickAttachment = { category -> picker.launch(AttachmentSendPolicy.mimeTypes(category)) },
-        onDismissError = { attachmentError = null; vm.dismissError() })
+        onDismissError = { attachmentError = null; vm.dismissError() },
+        onOverlayVisibilityChange = { overlayVisible=it })
+      }
+    }
 
     // A document-picker selection is not consent for uploading multi-megabyte
     // files to a remote provider. Obtain a second explicit approval first.
@@ -232,9 +252,11 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     onSaveDraft: suspend(String)->Boolean = { false },
     onRemoveDraft: suspend(String)->Boolean = { false },
     onEraseLocal: suspend()->Boolean = { false },
-    fixedTimestamp: Long? = null, onVoiceTurns:(List<my.aksara.engine.voice.VoiceContextTurn>)->Unit = {}) {
+    fixedTimestamp: Long? = null, onVoiceTurns:(List<my.aksara.engine.voice.VoiceContextTurn>)->Unit = {},
+    onOverlayVisibilityChange:(Boolean)->Unit = {}) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
+    LaunchedEffect(overlay) { onOverlayVisibilityChange(overlay!=null) }
     var voiceIndicator by remember { mutableStateOf(VoiceLinkState.IDLE) }
     var draft by rememberSaveable { mutableStateOf("") }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }

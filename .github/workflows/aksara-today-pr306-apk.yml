@@ -1,0 +1,58 @@
+name: AKSARA TODAY V1 preview APK (PR 306 only)
+
+on:
+  push:
+    branches:
+      - feature/aksara-today-v1-liquid-glass
+    paths:
+      - .github/workflows/aksara-today-pr306-apk.yml
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  deliver-pr306:
+    if: github.ref_name == 'feature/aksara-today-v1-liquid-glass'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      EXPECTED_SHA: '61f7d48990260175062623bb4f3cebbbe49238ee'
+      VERIFIED_RUN: '42875369544'
+      TAG: 'aksara-today-v1-pr306-r2'
+    steps:
+      - name: Verify that source APK is from validated PR head
+        run: |
+          set -euo pipefail
+          test "$(gh api "repos/${{ github.repository }}/actions/runs/$VERIFIED_RUN" --jq '.head_sha')" = "$EXPECTED_SHA"
+          test "$(gh api "repos/${{ github.repository }}/actions/runs/$VERIFIED_RUN" --jq '.conclusion')" = "success"
+      - name: Recover exact installable APK (not the artifact ZIP)
+        run: |
+          set -euo pipefail
+          mkdir -p preview
+          gh run download "$VERIFIED_RUN" -R "${{ github.repository }}" -n aksara-native-installable-apk -D preview
+          test -s preview/app-debug.apk
+          mv preview/app-debug.apk preview/AKSARA-TODAY-V1-PR306-R2.apk
+          sha256sum preview/AKSARA-TODAY-V1-PR306-R2.apk | tee preview/SHA256SUMS
+      - name: Publish isolated prerelease with direct APK
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" -R "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "Existing prerelease tag: $TAG"
+            gh release upload "$TAG" preview/AKSARA-TODAY-V1-PR306-R2.apk preview/SHA256SUMS -R "${{ github.repository }}" --clobber
+          else
+            gh release create "$TAG" preview/AKSARA-TODAY-V1-PR306-R2.apk preview/SHA256SUMS \
+              -R "${{ github.repository }}" \
+              --target "$EXPECTED_SHA" --prerelease \
+              --title "AKSARA TODAY V1 · PR #306 Revised Test APK" \
+              --notes "Revised AKSARA TODAY Android APK built from PR #306 source $EXPECTED_SHA. Build, unit tests, backend, web audit and game logic CI passed; emulator skipped. Not merged. Manual device validation required."
+          fi
+          gh release view "$TAG" -R "${{ github.repository }}" --json url,assets
+      - name: Verify direct release asset and record link in PR
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" -R "${{ github.repository }}" --json assets \
+            --jq '.assets[].name' | grep -Fx 'AKSARA-TODAY-V1-PR306-R2.apk'
+          gh api "repos/${{ github.repository }}/issues/306/comments" \
+            -f body="CI verified preview APK: https://github.com/${{ github.repository }}/releases/download/$TAG/AKSARA-TODAY-V1-PR306-R2.apk (built from $EXPECTED_SHA, run $VERIFIED_RUN, direct APK not ZIP)."
