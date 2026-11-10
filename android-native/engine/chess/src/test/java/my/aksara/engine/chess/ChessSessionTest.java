@@ -11,6 +11,13 @@ public class ChessSessionTest {
         for(Move m:b.legalMoves()) { assertTrue(b.doMove(m,true)); nodes+=perft(b,depth-1); b.undoMove(); }
         return nodes;
     }
+    @Test public void androidBoardSnapshotHasNoGhostPieces() {
+        ChessSession s=new ChessSession();
+        assertEquals("R",s.pieces()[0]); assertEquals("r",s.pieces()[56]);
+        assertEquals("",s.pieces()[28]);
+        s.play("e2e4"); assertEquals("P",s.pieces()[28]); assertEquals("",s.pieces()[12]);
+        assertEquals(java.util.List.of("e4"),s.sanHistory());
+    }
     @Test public void startingPositionPerft() {
         Board b=new Board();
         assertEquals(20,perft(b,1)); assertEquals(400,perft(b,2));

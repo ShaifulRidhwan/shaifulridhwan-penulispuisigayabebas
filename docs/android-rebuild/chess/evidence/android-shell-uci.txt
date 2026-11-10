@@ -1,0 +1,36 @@
+Stockfish 19 by the Stockfish developers (see AUTHORS file)
+id name Stockfish 19
+id author the Stockfish developers (see AUTHORS file)
+
+option name Debug Log File type string default <empty>
+option name NumaPolicy type string default auto
+option name Threads type spin default 1 min 1 max 1024
+option name Hash type spin default 16 min 1 max 33554432
+option name Clear Hash type button
+option name Ponder type check default false
+option name MultiPV type spin default 1 min 1 max 256
+option name Skill Level type spin default 20 min 0 max 20
+option name Move Overhead type spin default 10 min 0 max 5000
+option name nodestime type spin default 0 min 0 max 10000
+option name UCI_Chess960 type check default false
+option name UCI_LimitStrength type check default false
+option name UCI_Elo type spin default 1320 min 1320 max 3190
+option name UCI_ShowWDL type check default false
+option name SyzygyPath type string default <empty>
+option name SyzygyProbeDepth type spin default 1 min 1 max 100
+option name Syzygy50MoveRule type check default true
+option name SyzygyProbeLimit type spin default 7 min 0 max 7
+option name EvalFile type string default nn-1a298aa575a0.nnue
+uciok
+readyok
+info string Using 1 thread
+info string Available processors: 0-1
+info string Using 1 thread
+info string NNUE evaluation using nn-1a298aa575a0.nnue (109MiB, (86896, 1024, 32, 32, 1))
+info string Network replica 1: Local memory. Shared memory not supported by the OS. Local allocation fallback.
+info depth 1 seldepth 2 multipv 1 score cp -12 nodes 22 nps 131 hashfull 0 tbhits 0 time 167 pv e7e5
+info depth 2 seldepth 3 multipv 1 score cp -2 nodes 48 nps 218 hashfull 0 tbhits 0 time 220 pv e7e5
+info depth 3 seldepth 5 multipv 1 score cp -18 nodes 585 nps 949 hashfull 0 tbhits 0 time 616 pv c7c5 g1f3 b8c6 f1c4
+info depth 4 seldepth 5 multipv 1 score cp -18 nodes 702 nps 1062 hashfull 0 tbhits 0 time 661 pv c7c5 g1f3 b8c6 f1c4
+info depth 5 seldepth 5 multipv 1 score cp -18 nodes 704 nps 1063 hashfull 0 tbhits 0 time 662 pv c7c5 g1f3 b8c6 f1c4
+bestmove c7c5 ponder g1f3

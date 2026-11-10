@@ -69,9 +69,21 @@ class ChessAndroidTest {
                 scenario.onActivity { a->p=a.board.squareCenter(square);a.board.getLocationOnScreen(offset) }
                 device.click((p.x+offset[0]).toInt(),(p.y+offset[1]).toInt())
             }
-            click(12);click(28) // e2-e4, through actual Android touchscreen events.
+            instrumentation.waitForIdleSync()
+            click(12)
+            var selected=-1
+            waitFor { scenario.onActivity {selected=it.chess.selected};selected==12 }
+            click(28) // e2-e4, through actual Android touchscreen events.
             var count=0
-            waitFor { scenario.onActivity { count=it.chess.session.history().size };count>=2 }
+            try {
+                waitFor { scenario.onActivity {
+                    count=it.chess.session.history().size
+                    assertTrue("Engine failure: ${it.chess.error}",it.chess.error.isEmpty())
+                };count>=2 }
+            } finally {
+                device.takeScreenshot(File(instrumentation.targetContext.getExternalFilesDir(null),"chess-after-tap.png"))
+                scenario.onActivity { android.util.Log.i("AksaraChessTest","history=${it.chess.session.history()} selected=${it.chess.selected} activeThinking=${it.chess.thinking} error=${it.chess.error}") }
+            }
             scenario.onActivity { a ->
                 assertEquals("e2e4",a.chess.session.history().first())
                 assertEquals(Side.WHITE,a.chess.session.turn());assertTrue(a.chess.error.isEmpty())
@@ -83,5 +95,5 @@ class ChessAndroidTest {
             scenario.onActivity { it.chess.resign();assertEquals("0-1",it.chess.session.result());it.chess.restart() }
         }
     }
-    private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.chess.engineStatus.contains("sedia")}.getOrDefault(false)
+    private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.board.hasRendered && a.board.hasWindowFocus() && a.chess.engineStatus.contains("sedia")}.getOrDefault(false)
 }

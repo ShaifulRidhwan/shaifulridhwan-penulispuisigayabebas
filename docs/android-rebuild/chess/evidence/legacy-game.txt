@@ -1,0 +1,13 @@
+✔ android-native/game-tests/animation.test.cjs (385.544427ms)
+✔ android-native/game-tests/assets.test.cjs (193.7387ms)
+✔ android-native/game-tests/campaign.test.cjs (205.126924ms)
+✔ android-native/game-tests/combat.test.cjs (1071.181976ms)
+✔ android-native/game-tests/input.test.cjs (236.787508ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2131.616027

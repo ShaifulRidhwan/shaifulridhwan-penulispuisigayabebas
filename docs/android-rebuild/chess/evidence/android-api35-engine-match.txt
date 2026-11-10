@@ -1,0 +1,11 @@
+Android 35 x86_64, arm64-v8a
+White f2f3
+Black e7e5 depth=15 cp=59 mate=null
+White g2g4
+Black d8h4 depth=245 cp=null mate=1
+termination=CHECKMATE result=0-1
+[White "Cahaya"]
+[Black "AKSARA A.I. - Queen of Darkness"]
+[Result "0-1"]
+
+1. f3 e5 2. g4 Qh4#  0-1

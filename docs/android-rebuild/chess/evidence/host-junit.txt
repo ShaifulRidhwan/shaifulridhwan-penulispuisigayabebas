@@ -1,0 +1,10 @@
+/tmp/aksara-chess-deps/ecj.jar: OK
+/tmp/aksara-chess-deps/commons.jar: OK
+/tmp/aksara-chess-deps/junit.jar: OK
+/tmp/aksara-chess-deps/hamcrest.jar: OK
+JUnit version 4.13.2
+................
+Time: 3.509
+
+OK (16 tests)
+

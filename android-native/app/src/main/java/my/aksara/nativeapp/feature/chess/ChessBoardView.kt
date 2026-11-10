@@ -16,6 +16,7 @@ class ChessBoardView(context:Context): View(context) {
     var onSquare: (Int)->Unit = {}
     var onDrop: (Int,Int)->Unit = {_,_->}
     var coordinates=true
+    var hasRendered=false; private set
     private val paint=Paint(Paint.ANTI_ALIAS_FLAG)
     private var cell=1f
     private var left=0f
@@ -30,9 +31,13 @@ class ChessBoardView(context:Context): View(context) {
         val f=floor((x-left)/cell).toInt(); val r=7-floor((y-top)/cell).toInt()
         return if(f in 0..7 && r in 0..7) r*8+f else -1
     }
+    override fun onSizeChanged(w:Int,h:Int,oldw:Int,oldh:Int) {
+        super.onSizeChanged(w,h,oldw,oldh)
+        cell=min(w,h)*.92f/8;left=(w-cell*8)/2;top=(h-cell*8)/2;hasRendered=false
+    }
     override fun onDraw(c:Canvas) {
         super.onDraw(c)
-        cell=min(width,height)*.92f/8; left=(width-cell*8)/2; top=(height-cell*8)/2
+        hasRendered=true
         paint.color=Color.rgb(8,10,20); c.drawColor(paint.color)
         paint.color=Color.rgb(144,118,72); c.drawRoundRect(left-5,top-5,left+cell*8+5,top+cell*8+5,10f,10f,paint)
         for(s in 0..63) {
@@ -81,7 +86,7 @@ class ChessBoardView(context:Context): View(context) {
         when(e.actionMasked) {
             MotionEvent.ACTION_DOWN -> { down=square;downX=e.x;downY=e.y;dragged=false;parent?.requestDisallowInterceptTouchEvent(true);return true }
             MotionEvent.ACTION_MOVE -> { if(hypot(e.x-downX,e.y-downY)>cell*.15f)dragged=true;return true }
-            MotionEvent.ACTION_UP -> { if(square>=0 && down>=0) { if(dragged && square!=down)onDrop(down,square) else onSquare(square) };performClick();down=-1;return true }
+            MotionEvent.ACTION_UP -> { if(my.aksara.nativeapp.BuildConfig.DEBUG)android.util.Log.d("AksaraChess","touch square=$square from=$down selected=$selected"); if(square>=0 && down>=0) { if(dragged && square!=down)onDrop(down,square) else onSquare(square) };performClick();down=-1;return true }
             MotionEvent.ACTION_CANCEL -> {down=-1;return true}
         }
         return true
