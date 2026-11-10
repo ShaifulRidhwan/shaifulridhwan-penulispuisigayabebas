@@ -11,6 +11,23 @@ import org.junit.Test
 
 class PortalLayoutTest {
     @get:Rule val compose=createAndroidComposeRule<VisualTestActivity>()
+    @Test fun literaryNoticeAppearsBeforeLibraryAndKeepsReadingAccessible(){
+        compose.setContent { AksaraScreen(ChatState(loaded=true),initialOverlay="portal") }
+        compose.onNodeWithText("Novel · Perpustakaan AKSARA").performScrollTo().performClick()
+        compose.onNodeWithText("AMARAN: KAWASAN SASTERA DILINDUNGI").assertExists()
+        compose.onNodeWithText("PERMANENT READ-ONLY · ACCESS DENIED").assertExists()
+        compose.onNodeWithText("Saya Faham · Masuk Perpustakaan").performScrollTo().performClick()
+        compose.onNodeWithText("Perpustakaan AKSARA · Native").assertExists()
+        compose.onNodeWithText("Baca novel · Antara Cahaya dan Gelap").assertExists()
+    }
+
+    @Test fun literaryNoticeCanBeClosedWithoutEnteringLibrary(){
+        compose.setContent { AksaraScreen(ChatState(loaded=true),initialOverlay="portal") }
+        compose.onNodeWithText("Novel · Perpustakaan AKSARA").performScrollTo().performClick()
+        compose.onNodeWithText("Kembali").performScrollTo().performClick()
+        compose.onNodeWithText("Perpustakaan AKSARA · Native").assertDoesNotExist()
+    }
+
     @Test fun fourPortalItemsRemainReachableOnShortScreen(){
         compose.setContent { Box(Modifier.fillMaxWidth().height(360.dp)) {
             AksaraScreen(ChatState(loaded=true),initialOverlay="portal")
