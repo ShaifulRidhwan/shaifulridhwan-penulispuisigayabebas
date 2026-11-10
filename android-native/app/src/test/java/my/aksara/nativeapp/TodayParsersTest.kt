@@ -1,6 +1,9 @@
 package my.aksara.nativeapp
 
 import my.aksara.nativeapp.feature.today.TodayParsers
+import my.aksara.nativeapp.feature.today.TodayPrayer
+import my.aksara.nativeapp.feature.today.nextPrayer
+import java.time.LocalTime
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -71,4 +74,50 @@ class TodayParsersTest {
         }""")
         assertEquals("Belum disahkan",result.ci)
     }
+    @Test fun latestPushRequiresExactBranchAndHead() {
+        val result=TodayParsers.commit("""{
+            "commits":[{"sha":"abcdef123456789","html_url":"https://github.com/example/commit/abcdef123456789",
+              "commit":{"message":"Fix Android","author":{"name":"Another Author"},
+                "committer":{"date":"2026-11-10T17:00:00Z"}}}],
+            "workflow_runs":[],
+            "events":[
+              {"type":"PushEvent","actor":{"login":"WrongUser"},"payload":{
+                "ref":"refs/heads/main","head":"abcdef123456789","size":4}},
+              {"type":"PushEvent","actor":{"login":"OldUser"},"payload":{
+                "ref":"refs/heads/rebuild/aksara-android-native-v1","head":"oldsha","size":9}},
+              {"type":"PushEvent","actor":{"login":"ShaifulRidhwan"},
+                "created_at":"2026-11-10T18:00:00Z",
+                "payload":{"ref":"refs/heads/rebuild/aksara-android-native-v1",
+                  "head":"abcdef123456789","size":2}}
+            ]
+        }""")
+        assertEquals("Another Author",result.author)
+        assertEquals("ShaifulRidhwan",result.pushedBy)
+        assertEquals(2,result.pushCount)
+        assertEquals("2026-11-10T18:00:00Z",result.pushedAt)
+    }
+
+    @Test fun missingMatchingPushMustNotInventActor() {
+        val result=TodayParsers.commit("""{
+            "commits":[{"sha":"abcdef123456789",
+              "commit":{"message":"Fix Android","author":{"name":"Shaiful"},
+                "committer":{"date":"2026-11-10T17:00:00Z"}}}],
+            "workflow_runs":[],
+            "events":[{"type":"PushEvent","actor":{"login":"OtherUser"},
+                "payload":{"ref":"refs/heads/rebuild/aksara-android-native-v1",
+                  "head":"oldsha","size":3}}]
+        }""")
+        assertNull(result.pushedBy)
+        assertNull(result.pushCount)
+        assertEquals("Shaiful",result.author)
+    }
+
+    @Test fun prayerCountdownWrapsToTomorrowAfterIsyak() {
+        val prayer=TodayPrayer("SGR01","1448-05-01",listOf(
+            "Subuh" to "05:48","Zohor" to "13:00","Asar" to "16:21",
+            "Maghrib" to "18:58","Isyak" to "20:10"))
+        assertEquals("Subuh" to "07:48",nextPrayer(prayer,LocalTime.of(22,0)))
+        assertEquals("Zohor" to "01:00",nextPrayer(prayer,LocalTime.of(12,0)))
+    }
+
 }
