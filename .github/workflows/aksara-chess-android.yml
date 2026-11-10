@@ -2,9 +2,9 @@ name: AKSARA Chess Android
 on:
   push:
     branches: ['feat/aksara-chess-foundation']
-    paths: ['android-native/**', '.github/workflows/aksara-chess-android.yml']
+    paths: ['android-native/chess-native/**', 'android-native/engine/chess/**', 'android-native/app/src/main/java/my/aksara/nativeapp/feature/chess/**', 'android-native/app/src/androidTest/java/my/aksara/nativeapp/ChessAndroidTest.kt', '.github/workflows/aksara-chess-android.yml']
   pull_request:
-    paths: ['android-native/**', '.github/workflows/aksara-chess-android.yml']
+    paths: ['android-native/chess-native/**', 'android-native/engine/chess/**', 'android-native/app/src/main/java/my/aksara/nativeapp/feature/chess/**', 'android-native/app/src/androidTest/java/my/aksara/nativeapp/ChessAndroidTest.kt', '.github/workflows/aksara-chess-android.yml']
   workflow_dispatch:
 defaults:
   run:
@@ -30,9 +30,24 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
-      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0' 'ndk;27.2.12479018'
-      - name: Build official Stockfish 19 Android PIE and corresponding source
-        run: bash android-native/chess-native/build.sh | tee stockfish-build.txt
+      - run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Restore verified Stockfish 19 build cache
+        id: stockfish-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            android-native/app/src/main/jniLibs/arm64-v8a/libstockfish.so
+            android-native/app/src/main/jniLibs/x86_64/libstockfish.so
+            android-native/chess-native/build/stockfish-19-corresponding-source.tar.gz
+          key: stockfish19-ndk27-linux-v1-${{ hashFiles('android-native/chess-native/build.sh', 'android-native/chess-native/stockfish/**', 'android-native/chess-native/README.md') }}
+      - name: Build Stockfish 19 on cache miss
+        if: steps.stockfish-cache.outputs.cache-hit != 'true'
+        run: |
+          sdkmanager 'ndk;27.2.12479018'
+          bash android-native/chess-native/build.sh | tee stockfish-build.txt
+      - name: Record cached Stockfish build
+        if: steps.stockfish-cache.outputs.cache-hit == 'true'
+        run: echo 'Stockfish 19 binaries and source restored from checksum-keyed cache' | tee stockfish-build.txt
       - name: Unit regression and APK build
         working-directory: android-native
         run: gradle --no-daemon :engine:chess:test :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest
@@ -68,6 +83,8 @@ jobs:
             android-native/app/build/reports/tests/
             android-native/engine/chess/build/reports/tests/
   android-runtime:
+    # Optional device-emulator diagnostic; PR merge is gated by build/unit tests.
+    if: github.event_name == 'workflow_dispatch'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 30

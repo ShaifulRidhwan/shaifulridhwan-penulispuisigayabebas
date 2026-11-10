@@ -74,9 +74,22 @@ class ChessAndroidTest {
                 device.click((p.x+offset[0]).toInt(),(p.y+offset[1]).toInt())
             }
             instrumentation.waitForIdleSync()
-            click(12)
+            // The headless emulator can consume the first tap while its system overlay
+            // is dismissing. Retry real screen taps, but never bypass the view or model.
             var selected=-1
-            waitFor { scenario.onActivity {selected=it.chess.selected};selected==12 }
+            var selectedByTouch=false
+            repeat(3) { attempt ->
+                if(!selectedByTouch) {
+                    dismissSystemEducation()
+                    instrumentation.waitForIdleSync()
+                    click(12)
+                    device.waitForIdle(500)
+                    scenario.onActivity { selected=it.chess.selected }
+                    selectedByTouch=selected==12
+                    if(!selectedByTouch) android.util.Log.w("AksaraChessTest","e2 tap attempt ${attempt+1} ignored; selected=$selected")
+                }
+            }
+            assertTrue("Real touchscreen must select e2 after system overlays settle; selected=$selected",selectedByTouch)
             click(28) // e2-e4, through actual Android touchscreen events.
             var count=0
             try {
@@ -187,7 +200,7 @@ class ChessAndroidTest {
                 arena=my.aksara.nativeapp.feature.chess.ArenaBoardView(a)
                 a.setContentView(arena)
             }
-            waitFor {dismissSystemEducation();var ready=false;scenario.onActivity{ready=arena?.hasRendered==true && arena?.hasWindowFocus()==true};ready}
+            waitFor {dismissSystemEducation();var ready=false;scenario.onActivity{ready=arena?.hasRendered==true && arena?.isShown==true && (arena?.width ?: 0)>0 && (arena?.height ?: 0)>0};ready}
             // This is a renderer replay fixture, never a substitute for the real-engine match.
             val fixture=listOf("e2e4","e7e5","g1f3","b8c6","f1c4","g8f6","d2d3","f8c5","e1g1","e8g8","b1c3","d7d6","c1g5","h7h6","g5h4","g7g5")
             val dir=instrumentation.targetContext.getExternalFilesDir(null)
@@ -240,5 +253,5 @@ class ChessAndroidTest {
             if(action==android.view.MotionEvent.ACTION_DOWN)SystemClock.sleep(20)
         }
     }
-    private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.board.hasRendered && a.board.hasWindowFocus() && a.chess.engineReady}.getOrDefault(false)
+    private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.board.isShown && a.board.hasRendered && a.chess.engineReady}.getOrDefault(false)
 }

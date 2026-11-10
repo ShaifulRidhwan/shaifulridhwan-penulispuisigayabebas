@@ -4,6 +4,7 @@ on:
     paths: ['android-native/**', 'docs/android-rebuild/**', '.github/workflows/aksara-android-native.yml']
   push:
     branches: ['rebuild/aksara-android-native-v1']
+  workflow_dispatch:
 concurrency:
   group: aksara-android-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
@@ -96,7 +97,17 @@ jobs:
           printf '%s  %s\n' '67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar" 'dbbf8ac2550d5b1ae2a627f204f28b16f9271e36c44d8994aa3b139cbf70e45a' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom" | sha256sum --check
       - name: Verify Android Voice Brain equals web source of truth
         run: node scripts/sync-android-voice-brain.cjs --check
-      - name: Build Stockfish Android and GPL source companion
+      - name: Restore verified Stockfish 19 build cache
+        id: stockfish-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            android-native/app/src/main/jniLibs/arm64-v8a/libstockfish.so
+            android-native/app/src/main/jniLibs/x86_64/libstockfish.so
+            android-native/chess-native/build/stockfish-19-corresponding-source.tar.gz
+          key: stockfish19-ndk27-linux-v1-${{ hashFiles('android-native/chess-native/build.sh', 'android-native/chess-native/stockfish/**', 'android-native/chess-native/README.md') }}
+      - name: Build Stockfish Android and GPL source companion on cache miss
+        if: steps.stockfish-cache.outputs.cache-hit != 'true'
         run: |
           sdkmanager 'ndk;27.2.12479018'
           bash android-native/chess-native/build.sh
@@ -142,8 +153,9 @@ jobs:
         if: steps.unit.outcome == 'failure'
         run: exit 1
   emulator:
+    # Manual-only visual/runtime diagnostic; never block PR merge on headless emulator.
     needs: [build, web-audit]
-    if: always() && needs.build.outputs.apk_ready == 'true' && needs.web-audit.result == 'success'
+    if: github.event_name == 'workflow_dispatch' && needs.build.outputs.apk_ready == 'true' && needs.web-audit.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:

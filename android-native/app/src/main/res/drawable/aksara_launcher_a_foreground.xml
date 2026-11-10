@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Adaptive-icon foreground: monogram kept within the 66dp safe center. -->
+    <path android:pathData="M31,78 L48.2,30 Q50,26 54,26 Q58,26 59.8,30 L77,78"
+        android:strokeWidth="11" android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent" android:strokeColor="#302012"/>
+    <path android:pathData="M31,78 L48.2,30 Q50,26 54,26 Q58,26 59.8,30 L77,78"
+        android:strokeWidth="8.5" android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:fillColor="@android:color/transparent">
+        <aapt:attr name="android:strokeColor">
+            <gradient android:type="linear" android:startX="30" android:startY="30"
+                android:endX="78" android:endY="80">
+                <item android:offset="0" android:color="#F0D6A5"/>
+                <item android:offset="0.46" android:color="#D9B77E"/>
+                <item android:offset="1" android:color="#8B693F"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M40,63 L68,63"
+        android:strokeColor="#382719" android:strokeWidth="10"
+        android:strokeLineCap="round"/>
+    <path android:pathData="M40,63 L68,63"
+        android:strokeColor="#E3C58D" android:strokeWidth="7"
+        android:strokeLineCap="round"/>
+    <path android:pathData="M35,76 L50,34"
+        android:strokeColor="#66FFF2D8" android:strokeWidth="1.4"
+        android:strokeLineCap="round"/>
+</vector>

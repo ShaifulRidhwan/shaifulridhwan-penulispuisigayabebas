@@ -79,15 +79,15 @@ import my.aksara.nativeapp.feature.tools.*
             val lines=measurer.measure(AnnotatedString(description),AksaraTypography.style(10.5f,15.75f),constraints=Constraints(maxWidth=modeTextWidth)).lineCount
             maxOf(73.dp,(24f+18.2f+4f+15.75f*lines).dp)
         }
-        Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=if(kind=="portal")28.dp else 14.dp,noiseFactor=0f)).background(if(kind=="portal")Color(5,7,14,132) else AksaraModalStyle.scrim).clickable(onClick=onClose))
-        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->453.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(510.dp,h-32.dp);"literary-notice"->minOf(500.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
+        Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=if(kind=="portal")28.dp else 14.dp,noiseFactor=0f)).background(if(kind=="portal")Color(5,7,14,80) else AksaraModalStyle.scrim).clickable(onClick=onClose))
+        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->453.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(550.dp,h-32.dp);"literary-notice"->minOf(500.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->430.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).widthIn(max=680.dp).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).testTag("aksara-glass-modal").clickable(enabled=false){},
             radius=if(kind=="voice-permission")24.dp else AksaraModalStyle.radius,blur=if(kind=="voice-permission")27.dp else if(kind=="portal")26.dp else AksaraModalStyle.blur,
-            brush=when(kind){"voice-permission"->Brush.linearGradient(listOf(Color(29,39,53,97),Color(10,17,30,77),Color(25,38,54,102)));"portal"->Brush.linearGradient(listOf(Color(21,28,45,172),Color(9,15,29,177),Color(20,27,44,162)));else->DialogGradient},
+            brush=when(kind){"voice-permission"->Brush.linearGradient(listOf(Color(29,39,53,97),Color(10,17,30,77),Color(25,38,54,102)));"portal"->Brush.linearGradient(listOf(Color(21,28,45,94),Color(9,15,29,100),Color(20,27,44,90)));else->DialogGradient},
             border=if(kind=="portal")Color(233,206,163,112) else AksaraModalStyle.border) {
-            Column(Modifier.fillMaxSize().padding(if(kind=="voice-permission")18.dp else if(kind=="terminal")15.dp else 16.dp).then(if(kind=="code")Modifier else Modifier.verticalScroll(scroll))) {
+            Column(Modifier.fillMaxSize().padding(if(kind=="voice-permission")18.dp else if(kind=="terminal")15.dp else 16.dp).then(if(kind=="code" || kind=="attachments")Modifier else Modifier.verticalScroll(scroll))) {
                 if(kind=="voice-permission") {
                     Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(13.dp)) {
                         AksaraGlassSurface(Modifier.size(44.dp),radius=999.dp) { AksaraIcon("mic",Modifier.align(Alignment.Center).size(22.dp)) }
@@ -107,7 +107,7 @@ import my.aksara.nativeapp.feature.tools.*
                     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
                             AksaraText(title,size=16f,line=20.8f,weight=700,tracking=.4f)
-                            val subtitle=when(kind){"connection"->"Routing adaptif Aksara menyelaraskan Gemini, Groq, OpenRouter dan Cloudflare Workers AI, dengan laluan fallback mengikut ketersediaan.";"code"->"Lima runtime untuk menjalankan kod termasuk C++20. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.";"terminal"->"Terminal native dalam proses berasingan. Shell Android, bukan shell server.";"thinking"->"Pilih cara Aksara A.I. berfikir dan menjawab.";"attachments"->"Pilih bahan untuk dihantar bersama mesej.";else->""}
+                            val subtitle=when(kind){"connection"->"Routing adaptif Aksara menyelaraskan Gemini, Groq, OpenRouter dan Cloudflare Workers AI, dengan laluan fallback mengikut ketersediaan.";"code"->"Lima runtime untuk menjalankan kod termasuk C++20. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.";"terminal"->"Terminal native dalam proses berasingan. Shell Android, bukan shell server.";"thinking"->"Pilih cara Aksara A.I. berfikir dan menjawab.";"attachments"->"Pilih bahan untuk dihantar bersama mesej.";"portal"->"Teroka ekosistem Aksara: sastera, kreativiti, kecerdasan A.I. dan dunia permainan.";else->""}
                             if(subtitle.isNotEmpty()){Spacer(Modifier.height(if(kind=="portal")5.dp else 8.dp));AksaraText(subtitle,size=if(kind=="portal"||kind=="code")11.5f else 12f,line=if(kind=="portal")17f else 18.6f,color=Color(0xffc4bfba))}
                         }
                         AksaraButton("×",onClose,Modifier.width(36.dp),size=22f,height=37.dp,radius=10.dp)
@@ -218,12 +218,6 @@ import my.aksara.nativeapp.feature.tools.*
                                 FeatureRow(name,desc,icon) {onNavigate(route)}
                                 Spacer(Modifier.height(9.dp))
                             }
-                            Spacer(Modifier.height(8.dp))
-                            AksaraText(
-                                "Teroka ekosistem Aksara: sastera, kreativiti, kecerdasan A.I. dan dunia permainan.",
-                                Modifier.fillMaxWidth().testTag("explore-ecosystem-footer"),
-                                size=11f,line=17f,color=AksaraColors.muted
-                            )
                         }
                         "thinking" -> {
                             Spacer(Modifier.height(14.dp))
@@ -251,8 +245,8 @@ import my.aksara.nativeapp.feature.tools.*
                             }
                         }
                         "attachments" -> {
-                            Spacer(Modifier.height(16.dp))
-                            listOf(Triple("Foto","JPG, PNG, WebP","image"),Triple("Video","MP4, WebM","video"),Triple("Dokumen","PDF, DOCX, TXT, MD, CSV, JSON","file-text"),Triple("Audio","MP3, M4A, WAV, OGG, WebM","audio")).forEach { (name,desc,icon) -> FeatureRow(name,desc,icon){onPickAttachment(name);onClose()};Spacer(Modifier.height(8.dp)) }
+                            Spacer(Modifier.height(12.dp))
+                            listOf(Triple("Foto","JPG, PNG, WebP","image"),Triple("Video","MP4, WebM","video"),Triple("Dokumen","PDF, DOCX, TXT, MD, CSV, JSON","file-text"),Triple("Audio","MP3, M4A, WAV, OGG, WebM","audio")).forEach { (name,desc,icon) -> FeatureRow(name,desc,icon,height=68.dp){onPickAttachment(name);onClose()};Spacer(Modifier.height(6.dp)) }
                         }
                         "privacy" -> {
                             var draft by remember(state.memoryNotes) { mutableStateOf(state.memoryNotes) }

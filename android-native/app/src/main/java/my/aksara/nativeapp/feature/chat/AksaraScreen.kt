@@ -399,8 +399,18 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 Modifier.fillMaxWidth().height(60.dp).padding(horizontal=12.dp,vertical=4.dp),
                                 horizontalArrangement=Arrangement.spacedBy(9.dp),
                                 verticalAlignment=Alignment.CenterVertically) {
-                                AksaraButton("Siapa Aku",{onJourney("Siapa Aku")},
-                                    Modifier.width(103.dp),size=11.5f,height=44.dp,radius=999.dp,leadingText="↗")
+                                AksaraGlassSurface(
+                                    Modifier.width(103.dp).height(44.dp).clickable { onJourney("Siapa Aku") },
+                                    radius=999.dp,blur=9.dp,
+                                    brush=cssGradient(145f,listOf(Color(244,216,171,18),Color(12,20,35,35))),
+                                    border=Color.Transparent
+                                ) {
+                                    Row(Modifier.align(Alignment.Center),verticalAlignment=Alignment.CenterVertically,
+                                        horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                                        AksaraText("↗",size=12f,color=AksaraColors.gold)
+                                        AksaraText("Siapa Aku",size=11.5f)
+                                    }
+                                }
                             }
                             if(state.nextJourney!=null) AksaraButton(state.nextJourney,{onJourney(state.nextJourney)},Modifier.padding(horizontal=12.dp,vertical=4.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
                             if(state.error!=null) Row(Modifier.fillMaxWidth().clickable(onClick=onDismissError).padding(8.dp)) { AksaraText(state.error,size=11f,color=Color(0xffe7a08e)) }
