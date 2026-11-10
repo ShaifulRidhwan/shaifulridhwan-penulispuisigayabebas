@@ -6,3 +6,4 @@ local.properties
 *.keystore
 build-artifact/
 .kotlin/
+/app/src/main/jniLibs/

@@ -25,6 +25,18 @@ public final class ChessSession {
             throw new IllegalArgumentException("One king per side required");
         initialFen = board.getFen(); keys.add(key()); updateEnd();
     }
+    public synchronized String[] pieces() {
+        String[] result=new String[64];
+        for(int i=0;i<64;i++) result[i]=board.getPiece(Square.squareAt(i))==Piece.NONE ? "" : board.getPiece(Square.squareAt(i)).getFenSymbol();
+        return result;
+    }
+    public synchronized List<String> history() {
+        return moves.stream().map(Move::toString).collect(java.util.stream.Collectors.toList());
+    }
+    public synchronized List<String> sanHistory() {
+        MoveList list=new MoveList(initialFen); list.addAll(moves);
+        return Arrays.asList(list.toSanArray());
+    }
     public synchronized String fen() { return board.getFen(); }
     public synchronized long revision() { return revision; }
     public synchronized Side turn() { return board.getSideToMove(); }
@@ -32,7 +44,7 @@ public final class ChessSession {
     public synchronized boolean inCheck() { return board.isKingAttacked(); }
     public synchronized List<String> legalMoves() {
         if (end != End.PLAYING) return List.of();
-        return board.legalMoves().stream().map(Move::toString).toList();
+        return board.legalMoves().stream().map(Move::toString).collect(java.util.stream.Collectors.toList());
     }
     public synchronized void play(String uci) {
         if (end != End.PLAYING) throw new IllegalStateException("Game ended");
@@ -105,7 +117,7 @@ public final class ChessSession {
     }
     /** Versioned local format preserves the move history required for repetition. */
     public synchronized String save() {
-        return "AKSARA_CHESS_1\n"+initialFen+"\n"+String.join(" ", moves.stream().map(Move::toString).toList())+"\n"+end+"\n"+(resigned==null?"-":resigned)+"\n"+(drawOffer==null?"-":drawOffer);
+        return "AKSARA_CHESS_1\n"+initialFen+"\n"+String.join(" ", moves.stream().map(Move::toString).collect(java.util.stream.Collectors.toList()))+"\n"+end+"\n"+(resigned==null?"-":resigned)+"\n"+(drawOffer==null?"-":drawOffer);
     }
     public static ChessSession restore(String saved) {
         String[] lines=saved.split("\n",-1);

@@ -95,6 +95,15 @@ jobs:
           printf '%s  %s\n' '67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar" 'dbbf8ac2550d5b1ae2a627f204f28b16f9271e36c44d8994aa3b139cbf70e45a' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom" | sha256sum --check
       - name: Verify Android Voice Brain equals web source of truth
         run: node scripts/sync-android-voice-brain.cjs --check
+      - name: Build Stockfish Android and GPL source companion
+        run: |
+          sdkmanager 'ndk;27.2.12479018'
+          bash android-native/chess-native/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aksara-native-stockfish-source
+          path: android-native/chess-native/build/stockfish-19-corresponding-source.tar.gz
+          if-no-files-found: error
       - name: Compile installable APKs
         id: compile
         working-directory: android-native
@@ -110,7 +119,7 @@ jobs:
         id: unit
         continue-on-error: true
         working-directory: android-native
-        run: gradle --no-daemon --init-script ci/compiler-repository.init.gradle testDebugUnitTest :engine:runtime:testDebugUnitTest :engine:voice:testDebugUnitTest
+        run: gradle --no-daemon --init-script ci/compiler-repository.init.gradle testDebugUnitTest :engine:chess:test :engine:runtime:testDebugUnitTest :engine:voice:testDebugUnitTest
       - uses: actions/upload-artifact@v4
         if: always()
         with:

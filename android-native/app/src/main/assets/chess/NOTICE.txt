@@ -1,0 +1,12 @@
+AKSARA Chess
+Stockfish 19 — Copyright (C) 2004-2026 the Stockfish developers.
+Separate executable distributed under GNU GPL version 3.
+Source: official-stockfish/Stockfish tag sf_19, edb0d9db6731067ec50ce619ff372b463bc4dd5d.
+Corresponding Source (including NNUE and build scripts) accompanies the APK in
+GitHub Actions artifact aksara-chess-corresponding-source.
+https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/actions
+
+Chesslib — Copyright 2015-2026 B. H. Langoni Jr. and contributors, Apache-2.0.
+Source: bhlangonijr/chesslib at 12dac82e072696c209143f3b10a440044da9531b.
+Apache Commons Lang — Copyright The Apache Software Foundation, Apache-2.0.
+Original chess piece silhouettes and arena rendering: AKSARA project.
