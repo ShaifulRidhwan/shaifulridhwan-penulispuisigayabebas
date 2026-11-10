@@ -80,7 +80,7 @@ import my.aksara.nativeapp.feature.tools.*
             maxOf(73.dp,(24f+18.2f+4f+15.75f*lines).dp)
         }
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(AksaraModalStyle.scrim).clickable(onClick=onClose))
-        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->453.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(550.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
+        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->453.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(550.dp,h-32.dp);"literary-notice"->minOf(500.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->384.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).widthIn(max=680.dp).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).testTag("aksara-glass-modal").clickable(enabled=false){},
@@ -102,7 +102,7 @@ import my.aksara.nativeapp.feature.tools.*
                         AksaraButton("Aktifkan Mikrofon",{onNavigate("voice")},Modifier.weight(.63f))
                     }
                 } else {
-                    val title=when(kind){"external-home"->"Buka Laman Utama?";"response-details"->"Butiran Jawapan";"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Ciri & Fungsi";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";"studio"->"Studio Antara";"library"->"Perpustakaan AKSARA";"novel"->"Baca Novel";"security"->"Security Lab";"metrics"->"Prestasi A.I."; "engines"->"Native Engines";else->kind}
+                    val title=when(kind){"external-home"->"Buka Laman Utama?";"response-details"->"Butiran Jawapan";"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Ciri & Fungsi";"literary-notice"->"AMARAN: KAWASAN SASTERA DILINDUNGI";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";"studio"->"Studio Antara";"library"->"Perpustakaan AKSARA";"novel"->"Baca Novel";"security"->"Security Lab";"metrics"->"Prestasi A.I."; "engines"->"Native Engines";else->kind}
                     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
                             AksaraText(title,size=16f,line=20.8f,weight=700,tracking=.4f)
@@ -173,6 +173,31 @@ import my.aksara.nativeapp.feature.tools.*
                         "code" -> CodeEngineContent(onNavigate)
                         "terminal" -> TerminalContent()
                         "studio" -> StudioContent()
+                        "literary-notice" -> {
+                            Spacer(Modifier.height(18.dp))
+                            Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
+                                AksaraIcon("shield",Modifier.size(29.dp),Color(0xffffa29c))
+                                AksaraText("KHAZANAH SASTERA AKSARA",size=12f,weight=700,color=AksaraColors.gold,tracking=.5f)
+                            }
+                            Spacer(Modifier.height(16.dp))
+                            AksaraText("Ini adalah kawasan karya penulisan dan khazanah sastera Aksara.",size=13f,line=20f,weight=600)
+                            Spacer(Modifier.height(16.dp))
+                            AksaraGlassSurface(Modifier.fillMaxWidth(),radius=13.dp) {
+                                Column(Modifier.fillMaxWidth().padding(13.dp)) {
+                                    AksaraText("Sebarang akses pengubahsuaian oleh Agentic A.I. adalah DISEKAT SEPENUHNYA, termasuk oleh Shaiful Ridhwan sendiri.",size=12.5f,line=20f,weight=650,color=Color(0xffffb1a8))
+                                    Spacer(Modifier.height(11.dp))
+                                    AksaraText("Kandungan penulisan, susunan karya, reka bentuk dan struktur perpustakaan tidak boleh diubah, dipadam, diganti atau dioptimumkan.",size=11.5f,line=18f)
+                                }
+                            }
+                            Spacer(Modifier.height(13.dp))
+                            AksaraText("PERMANENT READ-ONLY · ACCESS DENIED",size=10.5f,line=16f,weight=700,color=AksaraColors.gold,tracking=.3f)
+                            Spacer(Modifier.height(10.dp))
+                            AksaraText("Perlindungan ini tidak menyekat akses membaca. Pembaca tetap dialu-alukan.",size=11f,line=18f,color=AksaraColors.muted)
+                            Spacer(Modifier.height(22.dp))
+                            AksaraButton("Saya Faham · Masuk Perpustakaan",{onNavigate("library")},Modifier.fillMaxWidth(),height=48.dp)
+                            Spacer(Modifier.height(8.dp))
+                            AksaraButton("Kembali",onClose,Modifier.fillMaxWidth(),height=42.dp)
+                        }
                         "library" -> LibraryContent(onNavigate)
                         "novel" -> NovelContent()
                         "knowledge" -> KnowledgeContent(onAsk)
@@ -186,7 +211,7 @@ import my.aksara.nativeapp.feature.tools.*
                                 Triple("Chess · Absolute Darkness","Cahaya melawan Ratu Gelap · Stockfish 19","chess"),
                                 Triple("Game · Cahaya vs Gelap","Arena latihan 2D · seni sementara","game"),
                                 Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),
-                                Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","library")
+                                Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","literary-notice")
                             ).forEach { (name,desc,route) ->
                                 val icon=when(route) {"external-home"->"home";"studio"->"image";else->"novel"}
                                 FeatureRow(name,desc,icon) {onNavigate(route)}
