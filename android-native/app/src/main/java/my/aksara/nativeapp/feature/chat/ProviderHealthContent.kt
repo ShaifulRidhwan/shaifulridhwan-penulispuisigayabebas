@@ -66,8 +66,7 @@ import java.util.Date
                             AksaraText(name,Modifier.weight(1f),size=11f,line=15f,weight=600)
                             AksaraText(healthLabel(normalized),size=10f,line=14f,
                                 weight=600,color=ProviderStatusPalette.color(normalized))
-                            AksaraIcon(if(expandedId==id)"chevron-up" else "chevron-down",
-                                Modifier.size(13.dp),AksaraColors.muted)
+                            AksaraText(if(expandedId==id)"⌃" else "⌄",size=14f,color=AksaraColors.muted)
                         }
                     }
                 }
@@ -80,7 +79,7 @@ import java.util.Date
                         }
                     } else {
                         item(key="detail-$id") {
-                            Column(Modifier.fillMaxWidth().padding(horizontal=11.dp),gap=5.dp) {
+                            Column(Modifier.fillMaxWidth().padding(horizontal=11.dp),verticalArrangement=Arrangement.spacedBy(5.dp)) {
                                 if(detail.model.isNotBlank()) HealthDetailLine("Model",detail.model)
                                 if(detail.http!=null) HealthDetailLine("HTTP",detail.http.toString())
                                 if(detail.latencyMs!=null) HealthDetailLine("Respons", "${detail.latencyMs} ms")
