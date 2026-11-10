@@ -108,6 +108,11 @@ private fun resolveCity(context:Context,location:Location):String? {
     }.getOrNull()
 }
 
+private fun localIsoTime(iso:String):String?=runCatching {
+    Instant.parse(iso).atZone(malaysiaZone)
+        .format(DateTimeFormatter.ofPattern("dd MMM, HH:mm",malay))
+}.getOrNull()
+
 private fun updatedLabel(at:Long?,cached:Boolean):String {
     val time=at?.let {
         Instant.ofEpochMilli(it).atZone(malaysiaZone)
@@ -317,10 +322,10 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                             if(it.equals("ShaifulRidhwan",ignoreCase=true))"Shaiful Ridhwan" else it
                         }
                         if(actor!=null) {
-                            val count=commit.pushCount?.let { " • $"+ "{it} commit" }.orEmpty()
+                            val count=commit.pushCount?.let { " • "+it+" commit" }.orEmpty()
                             AksaraText(actor+" • Push"+count,size=12f,weight=700)
                             commit.pushedAt?.let {
-                                AksaraText("Push: "+it.take(16).replace('T',' '),
+                                AksaraText("Push: "+(localIsoTime(it) ?: "masa tidak tersedia"),
                                     size=10.5f,color=todayMuted)
                             }
                         } else {
@@ -331,7 +336,7 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                         } ?: "Tidak tersedia"
                         AksaraText("Commit oleh "+author,size=10.5f,color=todayMuted)
                         AksaraText(commit.message,size=12f,weight=650,line=19f)
-                        AksaraText(commit.sha.take(7)+" • "+commit.date.take(10),
+                        AksaraText(commit.sha.take(7)+" • "+(localIsoTime(commit.date) ?: "tarikh tidak tersedia"),
                             size=10.5f,color=todayGold)
                         AksaraText("CI: "+commit.ci,size=11f,
                             color=if(commit.ci=="Lulus")Color(0xFF9EE1B5) else todayMuted)
