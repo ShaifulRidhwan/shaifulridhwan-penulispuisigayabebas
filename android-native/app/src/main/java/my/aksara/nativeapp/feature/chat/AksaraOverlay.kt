@@ -79,13 +79,13 @@ import my.aksara.nativeapp.feature.tools.*
             val lines=measurer.measure(AnnotatedString(description),AksaraTypography.style(10.5f,15.75f),constraints=Constraints(maxWidth=modeTextWidth)).lineCount
             maxOf(73.dp,(24f+18.2f+4f+15.75f*lines).dp)
         }
-        Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=if(kind=="portal")28.dp else 14.dp,noiseFactor=0f)).background(if(kind=="portal")Color(5,7,14,132) else AksaraModalStyle.scrim).clickable(onClick=onClose))
+        Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=if(kind=="portal")28.dp else 14.dp,noiseFactor=0f)).background(if(kind=="portal")Color(5,7,14,80) else AksaraModalStyle.scrim).clickable(onClick=onClose))
         val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->453.dp;"code"->minOf(740.dp,h-28.dp);"terminal"->minOf(650.dp,h*.82f);"portal"->minOf(550.dp,h-32.dp);"literary-notice"->minOf(500.dp,h-32.dp);"thinking"->226.dp+modeHeights.fold(0.dp){total,item->total+item};"attachments"->430.dp;"voice-permission"->280.594.dp;"studio"->minOf(730.dp,h-32.dp);"library"->minOf(710.dp,h-32.dp);"novel"->minOf(750.dp,h-32.dp);"knowledge"->minOf(550.dp,h-36.dp);"metrics"->minOf(640.dp,h-36.dp);"security"->minOf(540.dp,h-36.dp);"engines"->minOf(520.dp,h-36.dp);else->minOf(650.dp,h-60.dp)}
         val side=when(kind){"terminal"->14.dp;"voice-permission"->15.dp;else->17.dp}+4.dp
         CompositionLocalProvider(LocalBackdrop provides modalBackdrop) {
         AksaraGlassSurface(Modifier.align(Alignment.Center).padding(horizontal=side).widthIn(max=680.dp).fillMaxWidth().heightIn(max=h-maxOf(28.dp,margins.top+margins.bottom+16.dp)).height(height).testTag("aksara-glass-modal").clickable(enabled=false){},
             radius=if(kind=="voice-permission")24.dp else AksaraModalStyle.radius,blur=if(kind=="voice-permission")27.dp else if(kind=="portal")26.dp else AksaraModalStyle.blur,
-            brush=when(kind){"voice-permission"->Brush.linearGradient(listOf(Color(29,39,53,97),Color(10,17,30,77),Color(25,38,54,102)));"portal"->Brush.linearGradient(listOf(Color(21,28,45,172),Color(9,15,29,177),Color(20,27,44,162)));else->DialogGradient},
+            brush=when(kind){"voice-permission"->Brush.linearGradient(listOf(Color(29,39,53,97),Color(10,17,30,77),Color(25,38,54,102)));"portal"->Brush.linearGradient(listOf(Color(21,28,45,94),Color(9,15,29,100),Color(20,27,44,90)));else->DialogGradient},
             border=if(kind=="portal")Color(233,206,163,112) else AksaraModalStyle.border) {
             Column(Modifier.fillMaxSize().padding(if(kind=="voice-permission")18.dp else if(kind=="terminal")15.dp else 16.dp).then(if(kind=="code" || kind=="attachments")Modifier else Modifier.verticalScroll(scroll))) {
                 if(kind=="voice-permission") {
