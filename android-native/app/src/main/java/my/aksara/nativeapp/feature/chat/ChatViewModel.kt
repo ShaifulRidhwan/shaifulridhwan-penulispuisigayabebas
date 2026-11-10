@@ -19,7 +19,7 @@ import org.json.JSONObject
 import java.util.UUID
 
 data class ChatState(val messages: List<Message> = emptyList(), val archive: List<Message> = emptyList(), val busy: Boolean = false,
-    val error: String? = null, val providers: List<Pair<String, String>> = emptyList(), val providerDetails: Map<String, String> = emptyMap(), val sessionStarts: List<String> = emptyList(), val mode: String = "cahaya", val loaded: Boolean = false, val nextJourney: String? = null,
+    val error: String? = null, val providers: List<Pair<String, String>> = emptyList(), val providerDetails: Map<String, String> = emptyMap(), val providerHealth: ProviderHealthSnapshot? = null, val sessionStarts: List<String> = emptyList(), val mode: String = "cahaya", val loaded: Boolean = false, val nextJourney: String? = null,
     val memoryEnabled: Boolean = false, val memoryNotes: String = "", val summaryStatus: String = "not_requested",
     val resumedFromHistory: Boolean = false,
     val lastProvider: String = "", val lastModel: String = "", val lastResearchStatus: String = "", val lastToolsUsed: List<String> = emptyList(),
@@ -144,6 +144,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             val response = api.post(BackendRoutes.CHAT, JSONObject().put("providerStatus", true))
             val capabilities = P3Intelligence.inventory(response)
             val modelRegistry = P3Intelligence.models(response)
+            val providerHealth = ProviderHealthParser.parse(response)
             val rows = response.optJSONArray("providers")
                 ?: throw java.io.IOException("Provider health returned invalid JSON.")
             val entries = (0 until rows.length()).map { rows.getJSONObject(it) }
@@ -161,14 +162,15 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             }
             if (providerRefreshGate.isCurrent(requestId)) mutable.update { it.copy(
                 providers = statuses, providerDetails = details,
-                capabilities = capabilities, modelRegistry = modelRegistry) }
+                capabilities = capabilities, modelRegistry = modelRegistry,
+                providerHealth = providerHealth) }
         } catch (e: Exception) {
             if (e !is CancellationException && providerRefreshGate.isCurrent(requestId)) mutable.update {
                 val reason = if (e.message?.startsWith("Backend unreachable") == true) "Backend unreachable"
                     else "Backend error: " + (e.message ?: "unavailable").take(90)
                 // Do not retain old model/capability metadata beside an unreachable backend.
                 it.copy(providers = listOf("backend" to reason), providerDetails = mapOf("backend" to reason),
-                    capabilities = emptyList(), modelRegistry = emptyList())
+                    capabilities = emptyList(), modelRegistry = emptyList(), providerHealth = null)
             }
         }
         }.also { providerRefreshJob = it }
