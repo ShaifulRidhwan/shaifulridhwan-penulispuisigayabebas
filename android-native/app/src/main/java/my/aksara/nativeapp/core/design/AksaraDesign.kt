@@ -156,6 +156,10 @@ private val iconPaths = mapOf(
     "activity" to listOf("M3 20h18", "M5 17 9 12l3 3 6-9", "m15 6h3v3"),
     "external" to listOf("M13 4h7v7M20 4l-9 9", "M19 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"),
 
+    "location" to listOf(
+        "M12 22s-7.5-6.4-7.5-12a7.5 7.5 0 0 1 15 0C19.5 15.6 12 22 12 22Z",
+        "M12 7.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5Z"
+    ),
     "clock" to listOf("M12 3a9 9 0 1 1 0 18a9 9 0 1 1 0-18Z","M12 7v5l3 2"),
     "aksara" to listOf("M12 2.5 20.5 7.2v9.6L12 21.5l-8.5-4.7V7.2Z", "M7.6 17.3 12 6.3l4.4 11", "M9.4 13.2h5.2"),
     "gemini" to listOf("M12 2c1 5.3 4.7 9 10 10-5.3 1-9 4.7-10 10-1-5.3-4.7-9-10-10 5.3-1 9-4.7 10-10Z"),
