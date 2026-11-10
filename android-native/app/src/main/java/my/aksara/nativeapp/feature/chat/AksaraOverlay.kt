@@ -218,7 +218,12 @@ import my.aksara.nativeapp.feature.tools.*
                                 FeatureRow(name,desc,icon) {onNavigate(route)}
                                 Spacer(Modifier.height(9.dp))
                             }
-                            
+                            Spacer(Modifier.height(8.dp))
+                            AksaraText(
+                                "Teroka ekosistem Aksara: sastera, kreativiti, kecerdasan A.I. dan dunia permainan.",
+                                Modifier.fillMaxWidth().testTag("explore-ecosystem-footer"),
+                                size=11f,line=17f,color=AksaraColors.muted
+                            )
                         }
                         "thinking" -> {
                             Spacer(Modifier.height(14.dp))
