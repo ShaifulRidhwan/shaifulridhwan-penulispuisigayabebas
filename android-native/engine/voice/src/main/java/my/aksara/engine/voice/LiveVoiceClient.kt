@@ -226,7 +226,9 @@ class LiveVoiceClient(
                     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
                         // Acknowledge the peer close so OkHttp reaches onClosed and
                         // the existing epoch-guarded recovery can renew this socket.
-                        webSocket.close(code, null)
+                        // An empty peer close is reported as reserved code 1005,
+                        // which cannot be sent back on the wire.
+                        webSocket.close(1000, null)
                     }
                     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
                         synchronized(this@LiveVoiceClient) {
