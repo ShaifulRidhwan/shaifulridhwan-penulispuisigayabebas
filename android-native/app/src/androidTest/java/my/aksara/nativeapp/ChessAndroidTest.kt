@@ -187,7 +187,7 @@ class ChessAndroidTest {
                 arena=my.aksara.nativeapp.feature.chess.ArenaBoardView(a)
                 a.setContentView(arena)
             }
-            waitFor {dismissSystemEducation();var ready=false;scenario.onActivity{ready=arena?.hasRendered==true && arena?.hasWindowFocus()==true};ready}
+            waitFor {dismissSystemEducation();var ready=false;scenario.onActivity{ready=arena?.hasRendered==true && arena?.isShown==true && (arena?.width ?: 0)>0 && (arena?.height ?: 0)>0};ready}
             // This is a renderer replay fixture, never a substitute for the real-engine match.
             val fixture=listOf("e2e4","e7e5","g1f3","b8c6","f1c4","g8f6","d2d3","f8c5","e1g1","e8g8","b1c3","d7d6","c1g5","h7h6","g5h4","g7g5")
             val dir=instrumentation.targetContext.getExternalFilesDir(null)
@@ -240,5 +240,5 @@ class ChessAndroidTest {
             if(action==android.view.MotionEvent.ACTION_DOWN)SystemClock.sleep(20)
         }
     }
-    private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.board.hasRendered && a.board.hasWindowFocus() && a.chess.engineReady}.getOrDefault(false)
+    private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.board.isShown && a.board.hasRendered && a.chess.engineReady}.getOrDefault(false)
 }
