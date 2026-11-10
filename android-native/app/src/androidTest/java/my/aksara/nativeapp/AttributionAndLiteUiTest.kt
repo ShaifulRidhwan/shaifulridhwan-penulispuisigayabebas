@@ -4,6 +4,9 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
 import my.aksara.nativeapp.feature.chat.*
+import my.aksara.nativeapp.feature.splash.AksaraSplashContent
+import my.aksara.nativeapp.feature.splash.AksaraLaunchGate
+import my.aksara.nativeapp.core.design.AksaraText
 import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.platform.AttachmentReader
 import android.graphics.Bitmap
@@ -15,6 +18,43 @@ import org.junit.Test
 
 class AttributionAndLiteUiTest {
     @get:Rule val compose = createAndroidComposeRule<VisualTestActivity>()
+
+    @Test fun launchSplashUsesExistingAksaraIdentity() {
+        compose.setContent { AksaraSplashContent() }
+        compose.onNodeWithTag("aksara-splash-screen").assertExists()
+        compose.onNodeWithText("AKSARA A.I.").assertExists()
+        compose.onNodeWithText("ANTARA AKSARA DAN CODE").assertExists()
+        compose.onNodeWithText("OLEH SHAIFUL RIDHWAN").assertExists()
+    }
+
+    @Test fun recreatedActivitySkipsTheOptionalInAppSplash() {
+        compose.setContent {
+            AksaraLaunchGate(initialIntro = false) { AksaraText("Chatbox sedia") }
+        }
+        compose.onNodeWithTag("aksara-splash-screen").assertDoesNotExist()
+        compose.onNodeWithText("Chatbox sedia").assertExists()
+    }
+
+    @Test fun launchThemeIsDarkAndUsesTheAksaraMark() {
+        val app = androidx.test.platform.app.InstrumentationRegistry
+            .getInstrumentation().targetContext
+        val info = app.packageManager.getActivityInfo(
+            android.content.ComponentName(app, MainActivity::class.java), 0
+        )
+        val launchTheme = app.resources.newTheme().apply {
+            applyStyle(info.themeResource, true)
+        }
+        val background = android.util.TypedValue()
+        val mark = android.util.TypedValue()
+        org.junit.Assert.assertTrue(
+            launchTheme.resolveAttribute(android.R.attr.windowSplashScreenBackground, background, true)
+        )
+        assertEquals(0xFF070911.toInt(), background.data)
+        org.junit.Assert.assertTrue(
+            launchTheme.resolveAttribute(android.R.attr.windowSplashScreenAnimatedIcon, mark, true)
+        )
+        assertEquals(R.drawable.aksara_splash_mark, mark.resourceId)
+    }
 
     @Test fun actualProviderIsAttachedToIndividualMessage() {
         compose.setContent {
