@@ -354,7 +354,7 @@ private fun SettingsGroup(name:String,description:String,icon:String,open:Boolea
                     Spacer(Modifier.height(4.dp))
                     AksaraText(description,size=10.5f,color=AksaraColors.muted)
                 }
-                AksaraText(if(open)"⌃" else "›",size=19f,color=AksaraColors.gold)
+                AksaraText("›",size=19f,color=AksaraColors.gold)
             }
             if(open) {
                 Spacer(Modifier.height(10.dp))

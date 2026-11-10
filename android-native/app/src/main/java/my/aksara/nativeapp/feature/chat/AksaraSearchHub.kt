@@ -64,7 +64,7 @@ internal fun AksaraSearchHub(
                     Column(Modifier.weight(1f)) {
                         AksaraText("Carian & Sejarah", size = 16f, weight = 700,
                             family = AksaraTypography.heading)
-                        AksaraText("Cari dalam perbualan setempat yang disulitkan",
+                        AksaraText("Masukkan kata carian untuk melihat mesej lama.",
                             size = 10f, color = AksaraColors.muted)
                     }
                     AksaraButton("×", onClose, Modifier.width(44.dp), height = 44.dp, size = 20f, radius = 13.dp)
@@ -104,8 +104,8 @@ internal fun AksaraSearchHub(
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     when (tab) {
                         0 -> {
-                            AksaraText(if (terms.isBlank()) "Masukkan kata carian untuk melihat mesej lama."
-                                else "${messageResults.size} mesej ditemui (maksimum 100).",
+                            if (terms.isNotBlank()) AksaraText(
+                                "${messageResults.size} mesej ditemui (maksimum 100).",
                                 size = 11f, color = AksaraColors.muted)
                             messageResults.forEach { (session, message) ->
                                 AksaraGlassSurface(
