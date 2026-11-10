@@ -28,6 +28,23 @@ class PortalLayoutTest {
         compose.onNodeWithText("Perpustakaan AKSARA · Native").assertDoesNotExist()
     }
 
+    @Test fun exploreHasDescriptionsForAllFiveEntries(){
+        compose.setContent { AksaraScreen(ChatState(loaded=true),initialOverlay="portal") }
+        listOf(
+            "Laman web rasmi Shaiful Ridhwan",
+            "Prosa, klasik dan sastera falsafah",
+            "FLUX · Cloudflare Workers AI",
+            "Catur dengan enjin Stockfish",
+            "Arena aksi 2D · Cahaya dan Gelap"
+        ).forEach { subtitle -> compose.onNodeWithText(subtitle).assertExists() }
+    }
+
+    @Test fun chatMessagesUseTextIdentityWithoutSigilAvatar(){
+        compose.setContent { AksaraScreen(ChatState(loaded=true)) }
+        compose.onNodeWithText("Aksara A.I.").assertExists()
+        compose.onAllNodesWithContentDescription("Aksara A.I.").assertCountEquals(0)
+    }
+
     @Test fun fiveExploreItemsRemainReachableOnShortScreen(){
         compose.setContent { Box(Modifier.fillMaxWidth().height(360.dp)) {
             AksaraScreen(ChatState(loaded=true),initialOverlay="portal")
