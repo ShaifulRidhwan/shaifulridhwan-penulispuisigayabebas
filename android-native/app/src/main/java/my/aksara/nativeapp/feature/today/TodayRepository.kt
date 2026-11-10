@@ -58,7 +58,8 @@ internal object TodayParsers {
         val value=listOf(root.optString("zone"),root.optString("code"),
             nested?.optString("zone").orEmpty(),nested?.optString("code").orEmpty())
             .firstOrNull { it.matches(Regex("[A-Z]{3}0[1-9]")) }
-        return value ?: throw IllegalArgumentException("Zon solat tidak ditemui")
+        return value ?: Regex("[A-Z]{3}0[1-9]").find(text)?.value
+            ?: throw IllegalArgumentException("Zon solat tidak ditemui")
     }
 
     fun coins(text:String):List<TodayCoin> {
