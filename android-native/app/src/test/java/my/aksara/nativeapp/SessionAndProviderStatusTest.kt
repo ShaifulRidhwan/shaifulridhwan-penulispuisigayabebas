@@ -30,6 +30,15 @@ class SessionAndProviderStatusTest {
         assertEquals("Backend unreachable",ProviderConnectionStatus.label(listOf("backend" to "Backend unreachable")))
         assertEquals("Status unavailable",ProviderConnectionStatus.label(listOf("backend" to "Backend error: 429")))
     }
+    @Test fun onlyNewestHealthRefreshCanPublish() {
+        val gate = my.aksara.nativeapp.feature.chat.LatestRefreshGate()
+        val initial = gate.begin()
+        assertTrue(gate.isCurrent(initial))
+        val refreshed = gate.begin()
+        assertFalse("Older health results must not override a newer request",gate.isCurrent(initial))
+        assertTrue(gate.isCurrent(refreshed))
+        assertFalse(gate.isCurrent(0L))
+    }
     @Test fun splitsOnlyAtSavedBoundariesAndKeepsEveryLegacyMessage() {
         val messages=listOf(Message("a","user","Pertama",1), Message("b","assistant","Jawab",2),
             Message("c","user","Kedua",3),Message("d","assistant","Balas",4))
