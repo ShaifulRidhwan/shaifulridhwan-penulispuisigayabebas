@@ -43,11 +43,11 @@ class ArenaBoardView(context:Context):ChessBoardView(context) {
         lightShader.setLocalMatrix(textureMatrix);darkShader.setLocalMatrix(textureMatrix)
         contentDescription="Arena catur Cahaya vs Gelap. Putih di bawah, h1 petak cerah."
     }
-    fun showCommittedMove(before:Array<String>?,move:String,id:Int,mate:Boolean) {
+    fun showCommittedMove(before:Array<String>?,move:String,id:Int,mate:Boolean,committedAt:Long=0L) {
         if(id==packet) return
         packet=id
-        active=false
-        if(before==null || move.length<4) { invalidate();return }
+        active=false;checkmate=mate
+        if(before==null || move.length<4) {statusPulse=0L;invalidate();return}
         from=ChessModel.index(move.take(2));to=ChessModel.index(move.substring(2,4))
         actor=before[from].firstOrNull()?:return
         captured=if(before[to].isNotBlank()) to else if(actor.uppercaseChar()=='P' && from%8!=to%8) from/8*8+to%8 else -1
@@ -57,7 +57,7 @@ class ArenaBoardView(context:Context):ChessBoardView(context) {
             rookFrom=if(to>from)from+3 else from-4;rookTo=if(to>from)from+1 else from-1
         }
         duration=((if(mate)1100 else if(captured>=0)780 else 480)/animationSpeed.coerceIn(.5f,2f)).toLong()
-        started=SystemClock.uptimeMillis();active=true;checkmate=mate;statusPulse=started;invalidate()
+        started=if(committedAt>0)committedAt else SystemClock.uptimeMillis();active=true;checkmate=mate;statusPulse=started;invalidate()
     }
     fun skipAnimation() {active=false;statusPulse=0L;geometry(0f);invalidate()}
     override fun onSizeChanged(w:Int,h:Int,oldw:Int,oldh:Int) {
@@ -93,7 +93,7 @@ class ArenaBoardView(context:Context):ChessBoardView(context) {
         val now=SystemClock.uptimeMillis()
         val t=if(active)((now-started).toFloat()/duration).coerceIn(0f,1f) else 1f
         if(t>=1f) active=false
-        val focus=if(active && captured>=0)sin(t*PI).toFloat() else 0f
+        val focus=if(active && (captured>=0 || check || actor.uppercaseChar()=='Q'))sin(t*PI).toFloat() else 0f
         geometry(focus)
         ink.shader=aura;c.drawPaint(ink);ink.shader=null
         // Board volume, soft floor shadow and bevel are separate from the playing plane.
@@ -108,10 +108,10 @@ class ArenaBoardView(context:Context):ChessBoardView(context) {
             ink.shader=if((s%8+s/8)%2==1)lightShader else darkShader
             c.drawRect(file,row,file+1,row+1,ink);ink.shader=null
             ink.style=Paint.Style.STROKE;ink.strokeWidth=.012f;ink.color=0x225b5270;c.drawRect(file,row,file+1,row+1,ink);ink.style=Paint.Style.FILL
-            if(s==selected || lastMove.take(2)==ChessModel.uci(s) || lastMove.drop(2).take(2)==ChessModel.uci(s)) {
+            if(s==selected || s==lastFrom || s==lastTo) {
                 ink.color=if(s==selected)0x6666bba6 else 0x447da292;c.drawRect(file+.025f,row+.025f,file+.975f,row+.975f,ink)
             }
-            if(selected>=0 && legal.any{it.startsWith(ChessModel.uci(selected)+ChessModel.uci(s))}) {
+            if(selected>=0 && targets[s]) {
                 ink.color=0xff85c0ae.toInt();c.drawCircle(file+.5f,row+.5f,.09f,ink)
             }
             if(check && pieces[s]==checkKing) {

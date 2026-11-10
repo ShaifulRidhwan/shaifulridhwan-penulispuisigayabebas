@@ -8,16 +8,17 @@ public final class QueenDialogue {
     private int lastPriority;
     private String previous="";
     public Line plan(ChessSession game,String event,UciEngine.Analysis analysis,long now) {
-        int priority=switch(event) {case "mate","draw" -> 5;case "check","promotion" -> 4;case "opening" -> 3;default -> 1;};
+        int priority=switch(event) {case "mate","draw" -> 5;case "check","double_check","promotion" -> 4;case "opening" -> 3;default -> 1;};
         if(priority<4 && now-lastSpoken<18000) return null;
         if(priority==4 && lastPriority>=4 && now-lastSpoken<5000) return null;
-        if(event.equals("check") && !game.inCheck()) return null;
+        if((event.equals("check") || event.equals("double_check")) && !game.inCheck()) return null;
         if((event.equals("mate") || event.equals("draw")) && game.end()==ChessSession.End.PLAYING) return null;
         String text=null;boolean specific=true;
         switch(event) {
             case "opening" -> {specific=false;text=pick("Selamat datang ke wilayah Gelap. Mari kita lihat sejauh mana Cahaya mampu bertahan.","Papan telah tersedia. Bawa Cahayamu. Aku menanti langkah pertamamu.");}
             case "mate" -> {specific=false;text=game.result().equals("0-1")?pick("Cahaya telah padam. Tetapi keberanianmu... aku akui.","Pertempuran ini milik Gelap. Kembali apabila kau bersedia."):pick("Kau berjaya menewaskan Gelap. Nikmati kemenangan ini.","Pertahananmu bertahan hingga akhir. Kemenangan ini memang milikmu.");}
             case "draw" -> {specific=false;text=pick("Kali ini, Cahaya dan Gelap berdiri seimbang. Kita akhiri dengan seri.","Tiada yang tumbang hari ini. Pertemuan ini berakhir dengan seri.");}
+            case "double_check" -> text="Dua ancaman serentak menuju raja. Pilih langkah sah dengan cermat.";
             case "check" -> text=game.turn()==com.github.bhlangonijr.chesslib.Side.WHITE?pick("Rajamu dalam ancaman. Pilih pertahananmu dengan teliti.","Check. Ruang untuk rajamu semakin sempit."):pick("Kau mengancam rajaku. Baiklah, mari kita lihat pertahananku.","Check yang menarik. Aku akan mencari jawapannya.");
             case "promotion" -> text=pick("Satu pawn telah mencapai takhtanya. Kini kedudukan ini berubah.","Buah baharu telah lahir. Perhatikan kuasanya di papan.");
             case "declineDraw" -> {specific=false;priority=3;text="Aku menolak tawaran seri itu. Masih ada pertempuran untuk diteruskan.";}

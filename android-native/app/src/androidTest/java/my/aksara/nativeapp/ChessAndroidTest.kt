@@ -94,6 +94,11 @@ class ChessAndroidTest {
             }
             var saved="";scenario.onActivity{saved=it.chess.session.save()}
             scenario.recreate()
+            scenario.onActivity { it.requestedOrientation=android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
+            waitFor {var landscape=false;scenario.onActivity{landscape=runCatching{it.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE && it.board.hasRendered}.getOrDefault(false)};landscape}
+            device.takeScreenshot(File(instrumentation.targetContext.getExternalFilesDir(null),"chess-landscape.png"))
+            scenario.onActivity {assertEquals(saved,it.chess.session.save());it.requestedOrientation=android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT}
+            waitFor {var portrait=false;scenario.onActivity{portrait=runCatching{it.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_PORTRAIT && it.board.hasRendered}.getOrDefault(false)};portrait}
             scenario.onActivity { assertEquals(saved,it.chess.session.save());it.chess.undo();assertEquals(ChessSession.START,it.chess.session.fen()) }
             device.takeScreenshot(File(instrumentation.targetContext.getExternalFilesDir(null),"chess-android.png"))
             scenario.onActivity { it.chess.resign();assertEquals("0-1",it.chess.session.result());it.chess.restart() }
@@ -110,5 +115,45 @@ class ChessAndroidTest {
             }
         }
     }
-    private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.board.hasRendered && a.board.hasWindowFocus() && a.chess.engineStatus.contains("sedia")}.getOrDefault(false)
+    @Test fun specialRulesReplayAndUndoDuringAnimation() {
+        ActivityScenario.launch(ChessActivity::class.java).use { scenario ->
+            fun ready() {var ok=false;waitFor{device.findObject(androidx.test.uiautomator.By.text("Got it"))?.click();scenario.onActivity{ok=boardReady(it)};ok}}
+            fun load(fen:String){scenario.onActivity{it.chess.loadForTest(fen)};instrumentation.waitForIdleSync();ready()}
+            fun click(square:Int){var p=PointF();val offset=IntArray(2);scenario.onActivity{p=it.board.squareCenter(square);it.board.getLocationOnScreen(offset)};device.click((p.x+offset[0]).toInt(),(p.y+offset[1]).toInt())}
+            fun move(from:Int,to:Int){click(from);var selected=-1;waitFor{scenario.onActivity{selected=it.chess.selected};selected==from};click(to)}
+            try {
+                ready()
+                load("r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1")
+                move(4,6)
+                var castled=false
+                waitFor{scenario.onActivity{castled=it.chess.session.pieces()[6]=="K" && it.chess.session.pieces()[5]=="R"};castled}
+                load("k7/8/8/3pP3/8/8/8/4K3 w - d6 0 1")
+                move(36,43)
+                var ep=false;waitFor{scenario.onActivity{ep=it.chess.session.pieces()[43]=="P" && it.chess.session.pieces()[35].isEmpty()};ep}
+                load("7k/P7/8/8/8/8/8/4K3 w - - 0 1")
+                move(48,56)
+                val knight=device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.text("Knight")),10000)
+                assertNotNull("Promotion selector must offer Knight",knight);knight.click()
+                var promoted=false;waitFor{scenario.onActivity{promoted=it.chess.session.pieces()[56]=="N"};promoted}
+                load("7k/6pp/5KQ1/8/8/8/8/8 w - - 0 1")
+                move(46,54)
+                var mate=false;waitFor{scenario.onActivity{mate=it.chess.session.end()==ChessSession.End.CHECKMATE};mate}
+                scenario.onActivity{assertEquals("1-0",it.chess.session.result());it.chess.replayStep(0)}
+                var replay=-1;waitFor{scenario.onActivity{replay=it.chess.replayIndex};replay==0}
+                scenario.onActivity{it.chess.replayStep(1)};waitFor{scenario.onActivity{replay=it.chess.replayIndex};replay==1}
+                scenario.onActivity{assertEquals(ChessSession.End.CHECKMATE,it.chess.session.end());it.chess.exitReplay();it.chess.restart()}
+                ready();move(1,18) // Native knight animation must not block Undo.
+                var moved=false;waitFor{scenario.onActivity{moved=it.chess.session.history().isNotEmpty()};moved}
+                val undo=device.findObject(androidx.test.uiautomator.By.text("Undo"));assertNotNull(undo);undo.click()
+                var restored=false;waitFor{scenario.onActivity{restored=it.chess.session.fen()==ChessSession.START};restored}
+                SystemClock.sleep(3000)
+                scenario.onActivity{assertEquals("Stale engine result after Undo",ChessSession.START,it.chess.session.fen());assertTrue(it.chess.error.isEmpty())}
+            } finally {
+                val dir=instrumentation.targetContext.getExternalFilesDir(null)
+                device.takeScreenshot(File(dir,"chess-premium-special-rules.png"))
+                File(dir,"chess-premium-gfxinfo.txt").writeText(device.executeShellCommand("dumpsys gfxinfo my.aksara.nativeapp framestats"))
+            }
+        }
+    }
+    private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.board.hasRendered && a.board.hasWindowFocus() && a.chess.engineReady}.getOrDefault(false)
 }

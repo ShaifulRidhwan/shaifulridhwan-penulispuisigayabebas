@@ -9,9 +9,19 @@ import kotlin.math.*
 /** Hardware accelerated native board. Rendering never owns or delays a rules transition. */
 open class ChessBoardView(context:Context): View(context) {
     var pieces=Array(64){""}; set(value){field=value; invalidate()}
-    var selected=-1; set(value){field=value;invalidate()}
-    var legal=emptyList<String>(); set(value){field=value;invalidate()}
-    var lastMove=""; set(value){field=value;invalidate()}
+    var selected=-1; set(value){field=value;updateTargets();invalidate()}
+    var legal=emptyList<String>(); set(value){field=value;updateTargets();invalidate()}
+    var lastMove=""; set(value){field=value;lastFrom=if(value.length>=4)ChessModel.index(value.take(2)) else -1;lastTo=if(value.length>=4)ChessModel.index(value.substring(2,4)) else -1;invalidate()}
+    protected var lastFrom=-1
+    protected var lastTo=-1
+    protected val targets=BooleanArray(64)
+    private val silhouettes=mutableMapOf<Char,Path>()
+    private fun updateTargets() {
+        targets.fill(false)
+        if(selected<0)return
+        val prefix=ChessModel.uci(selected)
+        for(move in legal)if(move.startsWith(prefix))targets[ChessModel.index(move.substring(2,4))]=true
+    }
     var checkKing="K"
     var check=false; set(value){field=value;invalidate()}
     var onSquare: (Int)->Unit = {}
@@ -49,11 +59,11 @@ open class ChessBoardView(context:Context): View(context) {
             val p=squareCenter(s); val x=p.x-cell/2; val y=p.y-cell/2
             paint.color=if((s%8+s/8)%2==1) Color.rgb(202,196,173) else Color.rgb(45,40,58)
             c.drawRect(x,y,x+cell,y+cell,paint)
-            if(s==selected || lastMove.take(2)==ChessModel.uci(s) || lastMove.drop(2).take(2)==ChessModel.uci(s)) {
+            if(s==selected || s==lastFrom || s==lastTo) {
                 paint.color=if(s==selected) 0x8855ccbb.toInt() else 0x557fae9a; c.drawRect(x,y,x+cell,y+cell,paint)
             }
             if(check && pieces[s]==checkKing) { paint.color=0x99c83255.toInt(); c.drawRect(x,y,x+cell,y+cell,paint) }
-            if(selected>=0 && legal.any{it.startsWith(ChessModel.uci(selected)+ChessModel.uci(s))}) {
+            if(selected>=0 && targets[s]) {
                 paint.color=0x99b9ead5.toInt(); c.drawCircle(p.x,p.y,cell*.13f,paint)
             }
             val piece=pieces[s]
@@ -71,14 +81,17 @@ open class ChessBoardView(context:Context): View(context) {
         paint.shader=if(light)pearl else abyss
         paint.style=Paint.Style.FILL
         c.drawRoundRect(-27f,22f,27f,33f,4f,4f,paint)
-        val path=Path()
-        when(ch.uppercaseChar()) {
-            'P' -> { c.drawCircle(0f,-20f,12f,paint); path.moveTo(-8f,-8f);path.lineTo(8f,-8f);path.lineTo(19f,23f);path.lineTo(-19f,23f);path.close() }
+        val kind=ch.uppercaseChar()
+        val path=silhouettes.getOrPut(kind){Path()}
+        if(kind=='P')c.drawCircle(0f,-20f,12f,paint)
+        if(kind=='K'){c.drawRect(-4f,-45f,4f,-20f,paint);c.drawRect(-12f,-38f,12f,-31f,paint)}
+        if(path.isEmpty)when(kind) {
+            'P' -> { path.moveTo(-8f,-8f);path.lineTo(8f,-8f);path.lineTo(19f,23f);path.lineTo(-19f,23f);path.close() }
             'R' -> { path.moveTo(-18f,23f);path.lineTo(-14f,-12f);path.lineTo(-22f,-18f);path.lineTo(-22f,-33f);path.lineTo(-12f,-33f);path.lineTo(-12f,-25f);path.lineTo(-5f,-25f);path.lineTo(-5f,-33f);path.lineTo(5f,-33f);path.lineTo(5f,-25f);path.lineTo(12f,-25f);path.lineTo(12f,-33f);path.lineTo(22f,-33f);path.lineTo(22f,-18f);path.lineTo(14f,-12f);path.lineTo(18f,23f);path.close() }
             'N' -> { path.moveTo(-21f,23f);path.cubicTo(-16f,0f,6f,-1f,-1f,-14f);path.lineTo(-20f,-8f);path.lineTo(-25f,-18f);path.lineTo(-10f,-33f);path.lineTo(-4f,-43f);path.lineTo(4f,-34f);path.cubicTo(29f,-29f,25f,9f,20f,23f);path.close() }
             'B' -> { path.moveTo(-20f,23f);path.lineTo(-7f,-1f);path.cubicTo(-32f,-17f,-2f,-36f,0f,-43f);path.cubicTo(3f,-34f,31f,-16f,7f,-1f);path.lineTo(20f,23f);path.close() }
             'Q' -> { path.moveTo(-21f,23f);path.lineTo(-10f,-7f);path.lineTo(-23f,-32f);path.lineTo(-8f,-24f);path.lineTo(0f,-43f);path.lineTo(8f,-24f);path.lineTo(23f,-32f);path.lineTo(10f,-7f);path.lineTo(21f,23f);path.close() }
-            'K' -> { path.moveTo(-20f,23f);path.lineTo(-8f,-3f);path.cubicTo(-31f,-16f,-13f,-29f,0f,-21f);path.cubicTo(13f,-29f,31f,-16f,8f,-3f);path.lineTo(20f,23f);path.close(); c.drawRect(-4f,-45f,4f,-20f,paint);c.drawRect(-12f,-38f,12f,-31f,paint) }
+            'K' -> { path.moveTo(-20f,23f);path.lineTo(-8f,-3f);path.cubicTo(-31f,-16f,-13f,-29f,0f,-21f);path.cubicTo(13f,-29f,31f,-16f,8f,-3f);path.lineTo(20f,23f);path.close() }
         }
         c.drawPath(path,paint)
         paint.shader=null;paint.style=Paint.Style.STROKE; paint.strokeWidth=1.4f; paint.color=if(light) 0xff947449.toInt() else 0xffbc86cf.toInt();c.drawPath(path,paint)

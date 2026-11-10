@@ -68,7 +68,7 @@ class QueenVoice(context:Context):AutoCloseable {
         if(event=="stop") {stop();return}
         if(lastLine?.positionSpecific()==true && revision!=game.revision()) {stop();subtitle=""}
         if(event=="opening")planner.reset()
-        if(event in listOf("quiet","capture","check","promotion","mate"))effect(if(event=="capture" || event=="mate")"capture" else if(game.turn()==com.github.bhlangonijr.chesslib.Side.WHITE)"shadow_step" else "light_step")
+        if(event in listOf("quiet","capture","check","double_check","promotion","mate"))effect(if(event=="capture" || event=="mate")"capture" else if(game.turn()==com.github.bhlangonijr.chesslib.Side.WHITE)"shadow_step" else "light_step")
         val line=planner.plan(game,event,analysis,SystemClock.elapsedRealtime())?:return
         say(line,game.revision())
     }
@@ -84,6 +84,7 @@ class QueenVoice(context:Context):AutoCloseable {
     private fun say(line:QueenDialogue.Line,currentRevision:Long) {
         lastLine=line;revision=currentRevision;subtitle=line.text()
         if(mode==Mode.SILENT || mode==Mode.SUBTITLE || (mode==Mode.IMPORTANT && line.priority()<4))return
+        if(volume<=0f)return
         if(!available){pending=line;return}
         pending=null;currentId="";tts?.stop();speaking=false
         if(audio.mode!=AudioManager.MODE_NORMAL){status="Audio sedang digunakan. Sari kata digunakan.";return}
@@ -93,6 +94,11 @@ class QueenVoice(context:Context):AutoCloseable {
         if(tts?.speak(line.text(),TextToSpeech.QUEUE_FLUSH,params,currentId)!=TextToSpeech.SUCCESS) {
             audio.abandonAudioFocusRequest(focus);status="Ucapan gagal. Sari kata digunakan."
         }
+    }
+    fun notice(text:String) {say(QueenDialogue.Line(text,3,false),-1)}
+    fun explainLast(game:ChessSession,analysis:UciEngine.Analysis,move:String) {
+        val score=analysis.centipawns()?.let{" Skor carian ketika itu ialah $it centipawn untuk Gelap."}.orEmpty()
+        say(QueenDialogue.Line("Untuk kedudukan sebelum langkah terakhir, Stockfish memilih $move pada depth ${analysis.depth()}.$score Aku mengikuti langkah terbaik enjin dalam carian itu.",3,true),game.revision())
     }
     fun replay(game:ChessSession) {
         val line=lastLine?:return

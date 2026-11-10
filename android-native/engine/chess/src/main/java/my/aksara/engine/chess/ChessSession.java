@@ -46,6 +46,9 @@ public final class ChessSession {
     public synchronized long revision() { return revision; }
     public synchronized Side turn() { return board.getSideToMove(); }
     public synchronized End end() { return end; }
+    public synchronized int checkerCount() {
+        return Long.bitCount(board.squareAttackedBy(board.getKingSquare(board.getSideToMove()),board.getSideToMove().flip()));
+    }
     public synchronized boolean inCheck() { return board.isKingAttacked(); }
     public synchronized List<String> legalMoves() {
         if (end != End.PLAYING) return List.of();
@@ -75,9 +78,17 @@ public final class ChessSession {
     }
     /** Includes a declared intended legal move under FIDE 9.2/9.3 without committing it. */
     public synchronized boolean canClaimWith(String uci) {
-        if (end!=End.PLAYING || !legalMoves().contains(uci)) return false;
-        ChessSession trial = restore(save()); trial.play(uci);
-        return trial.repetitions()>=3 || trial.board.getHalfMoveCounter()>=100;
+        if(end!=End.PLAYING) return false;
+        Move candidate=board.legalMoves().stream().filter(m->m.toString().equals(uci)).findFirst().orElse(null);
+        if(candidate==null || !board.doMove(candidate,true)) return false;
+        try {
+            String target=key();
+            return keys.stream().filter(target::equals).count()+1>=3 || board.getHalfMoveCounter()>=100;
+        } finally {
+            // Probe under the session lock and restore all castling/EP/history state.
+            // Never replay the complete game on the touch/UI thread to check a claim.
+            board.undoMove();
+        }
     }
     public synchronized void claimDraw(String intendedMove) {
         if (!(intendedMove==null ? canClaimDraw() : canClaimWith(intendedMove))) throw new IllegalStateException("No valid draw claim");

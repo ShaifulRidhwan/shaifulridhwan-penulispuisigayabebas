@@ -1,66 +1,68 @@
-# AKSARA Chess — implementation status
+# AKSARA Chess — current acceptance status
 
-Checkpoint A is **incomplete**. B–E have not started. This is foundational source,
-not a delivered playable Android chess experience. No chess APK exists yet.
+## Checkpoint A: passed on Android
 
-## Recovery audit
+Base preserved: `16de29dcfd0a3fab7e27b5a9a5955a86068eb61f` on
+`feat/aksara-chess-foundation`, successfully pushed to the verified origin.
+The draft PR is https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/pull/290
+and targets `rebuild/aksara-android-native-v1`; no merge has been performed.
 
-Base Android branch: `rebuild/aksara-android-native-v1`, clean at
-`3c1601bb27d7872c2c07115b1f24b0dfa7a5ef3b` (merged PR #289, Eclipse Arena V3).
-Working branch: `feat/aksara-chess-foundation`.
+Source `8f5f0b8c95b5f7c5f5afeb8f382ec0b9d71f1e28` passed build and Android API35
+runtime in GitHub run 42734184090. Both instrumentation tests passed, including
+actual touchscreen e2-e4, Stockfish response, Undo, Activity recreation, search
+cancellation, legal bestmove and a complete engine match to checkmate. See
+`evidence/checkpoint-a-pass.txt`, screenshot and Android PGN. This is Android proof,
+not merely host engine proof or Gradle build success.
 
-- Gradle app plus runtime, voice and avatar modules; Compose UI, Haze glass,
-  native custom avatar drawing. Existing game uses bundled Phaser in WebView.
-- `GameContent` launches non-exported landscape `GameActivity`; MainActivity
-  remains on the back stack. Keep immersive insets, audio focus, renderer recovery
-  and Canvas fallback. Prior verification is documented in game/FULLSCREEN_FIX.md;
-  it must not be confused with verification of new chess code.
-- Portal dispatches game, Studio and library independently. Code/Terminal/engines
-  are explicitly rejected by the overlay. No navigation has been changed.
-- Live voice obtains a backend session token and configures Aoede on a Gemini
-  live socket. This is not a verified narrative TTS API. No Live session is reused
-  for chess and no production backend request was made by this task.
-- CI already builds app/instrumentation APKs, runs JVM tests, browser tests,
-  backend smoke and Android emulator tests. This change has not been pushed or
-  run in CI. Existing workflow artifacts are not evidence for chess.
+Stockfish 19 is a separate NDK-built PIE process extracted by PackageManager from
+libstockfish.so, never loaded as a JNI DSO. ARM64 and x86_64 binaries include the
+hash-verified official NNUE. API35 CI executes x86_64; physical ARM64 execution is
+not yet independently verified. Absolute Darkness disables UCI_LimitStrength,
+sets Skill Level 20 and MultiPV 1, bounds resources, and validates all bestmoves.
 
-## Implemented and verified on Linux host
+## Premium candidate: activated, Android regression pending
 
-- Vendored pinned Apache-2.0 chesslib source and isolated Java Gradle module.
-- Legal move validation, castling, en passant, four promotions, FEN, SAN/PGN,
-  mate/stalemate, conservative dead-material detection, repetition, distinct
-  claim/automatic draw rules, resignation/agreement, undo and history restore.
-- Asynchronous Stockfish 19 UCI process controller, full-strength options,
-  bounded threads/hash/search budget, cancellation and stale-result guards.
-- Fifteen JUnit tests pass with real official Stockfish 19. The integration test
-  waits for an active search before cancelling, then searches a new position.
-- Perft: start depths 1–4 = 20/400/8902/197281; Kiwipete depths 1–3 =
-  48/2039/97862; rook/en-passant reference depths 1–4 = 14/191/2812/43238.
-- Full Fool's Mate game terminates correctly and exports checkmate SAN/PGN.
+Current source activates native perspective arena, procedural marble/obsidian,
+original vector portrait, cached piece geometry/shaders, move/capture particles,
+knight jumps, castling rook movement, promotion animation, camera focus/reset,
+skip and animation speed controls. The existing Phaser game remains independent.
 
-Host build: official sf_19 commit `edb0d9db6731067ec50ce619ff372b463bc4dd5d`,
-`make -j2 build ARCH=x86-64 COMP=gcc`, GCC, embedded NNUE
-`nn-1a298aa575a0.nnue` (SHA256
-`1a298aa575a085434d29027978dc36867fe9c5bcea9376654b7a8eba1e52dfc2`).
-Host executable SHA256:
-`f281e3e09f40e23ed7570589fb58eb9a25ebfb42022ff526810b9da9a5ae7b3c`.
-It is not an Android artifact and is not committed/distributed.
+It also adds offline Malay TTS with explicit subtitle fallback, transient audio
+focus, original effects, four voice modes, replay/volume controls and cleanup;
+on-device-only push-to-talk requires an explicit user permission action. The
+existing Gemini Live Voice service and production backend are not used or changed.
 
-Reproduce host tests with `engine/chess/host-test.sh`; set
-`AKSARA_STOCKFISH_HOST` to the host executable to run the real-engine test.
-Without it that test is skipped. ECJ compilation was used because only a JRE
-was installed; the package helper could not run because sudo was absent.
+Post-game analysis re-searches actual positions with bounded time, cancellation
+and thermal checks. It exposes depth and centipawn changes, not fabricated
+accuracy. Replay preserves the authoritative session. Rivalry storage defaults
+to disabled and is bounded to 50 local records, with deletion controls.
 
-## Acceptance gaps
+The premium app and instrumentation APK compile locally and JVM regression
+passes. New Android tests cover perspective touch, both orientations, castling,
+en passant, Knight underpromotion, checkmate, replay and Undo during animation.
+Their CI result and final visual/performance assessment are still pending.
+Do not mark B–E or the full project complete until those gates pass.
 
-Android SDK, NDK, adb and emulator were not present in this workspace audit.
-No Android engine process packaging/JNI, ARM ABI validation, Android NNUE search,
-clock, lifecycle integration or APK build was completed. Java API desugaring still
-needs checking on minSdk 31. Arbitrary blocked dead positions and full imported
-FEN validation remain incomplete. See module README for exact API limits.
+## Evidence and limitations
 
-No 2.5D arena, animation/VFX, voice, microphone interaction, rivalry memory,
-post-game analysis UI or Portal chess entry has been implemented. No hardware
-audio, Bluetooth, thermal, frame-time or Android screen evidence is available.
-Do not mark any of these as passed. GPL distribution review remains open;
-see LICENSING.md. No PR created, no merge, no remote push, no Netlify deployment.
+- Existing app/runtime/voice JVM regression: 94 tests passed before premium
+  activation. Chess tests include canonical perft, special rules, history,
+  repetition/claim distinctions and sustained legal games. Final totals are in XML.
+- Earlier local software API31 run failed UI tests with System UI/Phone ANRs;
+  its native Stockfish/NNUE shell test passed. Failure evidence is retained.
+- CI's initial touch failures were diagnosed to Android's first-use immersive
+  education overlay, not hidden: a screenshot showed the blocking dialog. Tests
+  now dismiss that system education exactly as the pre-existing game tests do.
+- No physical Bluetooth/wired/speaker/microphone/thermal test is claimed. Actual
+  offline Malay voice availability, gender and naturalness depend on installed
+  device voices. Aoede narration is not implemented; Gemini Live is not a TTS API.
+- Generic blocked-pawn dead-position reachability and complete imported-FEN
+  reachability validation remain unsupported; proven dead-material classes are
+  detected conservatively. Imported saves are local, not a multiplayer authority.
+- Untimed practice is the implemented mode. No rated/competitive mode or timed
+  chess clock is advertised. ARMv7 is not bundled or runtime verified.
+- GPL engineering review and Corresponding Source delivery are documented in
+  LICENSING.md and chess-native/README.md. CI publishes matching source with APK.
+
+No production website or Netlify configuration files have been modified. New
+commits use [skip netlify]. No deployment or force-merge action is authorized here.
