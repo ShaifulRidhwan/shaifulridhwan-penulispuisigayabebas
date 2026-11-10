@@ -311,7 +311,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                         Row(verticalAlignment=Alignment.CenterVertically,
                             horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                             AksaraGlassSurface(Modifier.size(44.dp),radius=999.dp) {
-                                AksaraIcon("globe",Modifier.align(Alignment.Center).size(23.dp),todayGold)
+                                AksaraIcon("location",Modifier.align(Alignment.Center).size(23.dp),todayGold)
                             }
                             Column(Modifier.weight(1f)) {
                                 AksaraText("Benarkan lokasi",size=17f,weight=700)
