@@ -116,7 +116,10 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
 internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boolean,introShown:Boolean):Boolean =
     active && !permissionGranted && !introShown
 
-@Composable internal fun TodayScreen(active:Boolean,onBack:()->Unit) {
+@Composable internal fun TodayScreen(
+    active:Boolean,onBack:()->Unit,
+    onDialogVisibilityChange:(Boolean)->Unit={}
+) {
     val context=LocalContext.current
     val repo=remember(context) { TodayRepository(context) }
     val permissionPrefs=remember(context) {
@@ -125,6 +128,12 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
     var permissionLocation by remember { mutableStateOf(hasTodayLocationPermission(context)) }
     var introShown by remember { mutableStateOf(permissionPrefs.getBoolean("location_intro_shown",false)) }
     var showLocationDialog by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(active,showLocationDialog) {
+        onDialogVisibilityChange(active && showLocationDialog)
+    }
+    DisposableEffect(Unit) {
+        onDispose { onDialogVisibilityChange(false) }
+    }
     fun explainLocation() {
         introShown=true
         permissionPrefs.edit().putBoolean("location_intro_shown",true).apply()
