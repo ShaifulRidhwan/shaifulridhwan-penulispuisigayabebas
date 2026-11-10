@@ -50,6 +50,8 @@ was decoded, verified and inspected locally without resampling.
   Content-sized user/welcome bubbles retain their original measurement.
 - An immutable formatter and timestamp-keyed remembered strings avoid repeated
   date formatting during streaming.
+- When no message jump is pending, the no-op jump effect no longer rebuilds
+  the complete message-ID list. Pending jumps still observe all ID changes.
 - Archive merging iterates both lists without concatenating them first.
   Stable-ID overwrite order, history capacity and encryption are unchanged.
 - Each stream creates its HTTP call before its scoped worker starts.

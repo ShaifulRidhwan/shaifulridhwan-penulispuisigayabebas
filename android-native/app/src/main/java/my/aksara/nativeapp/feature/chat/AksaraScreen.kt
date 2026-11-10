@@ -278,7 +278,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
         }
     }
-    LaunchedEffect(pendingJumpId, state.messages.map { it.id }) {
+    LaunchedEffect(pendingJumpId, if(pendingJumpId==null) null else state.messages.map { it.id }) {
         val id = pendingJumpId ?: return@LaunchedEffect
         val target = state.messages.indexOfFirst { it.id == id }
         if (target >= 0) {
