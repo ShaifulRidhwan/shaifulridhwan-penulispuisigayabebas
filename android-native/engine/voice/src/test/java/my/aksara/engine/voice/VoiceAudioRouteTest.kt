@@ -18,6 +18,16 @@ class VoiceAudioRouteTest {
         assertEquals(bt,VoiceAudioRoute.chooseType(listOf(wired,bt),bt))
         assertEquals(wired,VoiceAudioRoute.chooseType(listOf(wired,bt),wired))
     }
+    @Test fun mediaOnlyCurrentRouteDoesNotBlockDuplexBluetoothHeadset() {
+        val headphones = AudioDeviceInfo.TYPE_WIRED_HEADPHONES
+        val bluetooth = AudioDeviceInfo.TYPE_BLUETOOTH_SCO
+        assertEquals(bluetooth,
+            VoiceAudioRoute.chooseType(listOf(headphones,bluetooth),headphones))
+        val usbMedia = AudioDeviceInfo.TYPE_USB_DEVICE
+        assertEquals(bluetooth,
+            VoiceAudioRoute.chooseType(listOf(usbMedia,bluetooth),usbMedia))
+        assertEquals(headphones, VoiceAudioRoute.chooseType(listOf(headphones),headphones))
+    }
     @Test fun unavailableBluetoothFallsBackToDevice() {
         assertEquals(AudioDeviceInfo.TYPE_BUILTIN_SPEAKER,
             VoiceAudioRoute.chooseType(listOf(AudioDeviceInfo.TYPE_BUILTIN_SPEAKER),null))
