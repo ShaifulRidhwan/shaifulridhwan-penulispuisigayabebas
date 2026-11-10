@@ -1,0 +1,90 @@
+name: AKSARA PR304 Merged Direct APK
+on:
+  push:
+    branches: ['rebuild/aksara-android-native-v1']
+    paths: ['.github/workflows/aksara-pr304-merged-apk-release.yml']
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: aksara-pr304-merged-apk-release
+  cancel-in-progress: false
+jobs:
+  publish-merged-pr304-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      SOURCE_SHA: '79f22dcadfade99f29d3d7f688a7455663925c2a'
+      VERIFIED_RUN_ID: '42857341488'
+      RELEASE_TAG: 'aksara-android-pr304-merged-20261110'
+      APK_NAME: 'AKSARA-Android-PR304-MERGED.apk'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Verify exact build run and required test jobs
+        run: |
+          set -euo pipefail
+          run="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${VERIFIED_RUN_ID}")"
+          test "$(jq -r '.head_sha' <<< "$run")" = "$SOURCE_SHA"
+          test "$(jq -r '.conclusion' <<< "$run")" = success
+          jobs="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${VERIFIED_RUN_ID}/jobs?per_page=100")"
+          for job in build game-logic web-audit backend-smoke; do
+            jq -e --arg job "$job" '[.jobs[] | select(.name == $job and .conclusion == "success")] | length == 1' <<< "$jobs" >/dev/null
+          done
+      - name: Recover APK from validated GitHub Actions build
+        uses: actions/download-artifact@v5
+        with:
+          name: aksara-native-installable-apk
+          run-id: 42857341488
+          github-token: ${{ github.token }}
+          path: delivery
+      - name: Install independent APK verification tools
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools build-tools;35.0.0'
+      - name: Check installable APK, identity, signature, file size and SHA-256
+        run: |
+          set -euo pipefail
+          test -s delivery/app-debug.apk
+          test "$(find delivery -type f -name '*.apk' | wc -l)" -eq 1
+          mkdir -p release
+          cp delivery/app-debug.apk "release/$APK_NAME"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "release/$APK_NAME" | tee release-signing.txt
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "release/$APK_NAME" | tee release-badging.txt
+          grep -F "package: name='my.aksara.nativeapp' versionCode='4' versionName='0.2.0-chess-darkness'" release-badging.txt
+          test "$(stat -c%s "release/$APK_NAME")" -gt 1000000
+          sha256sum "release/$APK_NAME" | tee release-sha256.txt
+          test "$(cut -d' ' -f1 release-sha256.txt)" = '7f694529acf1e242bc6eec27d03de95f18698f83d81d9496210c2e6fc3c8ec83'
+          stat -c%s "release/$APK_NAME" > release-bytes.txt
+          printf 'Package: my.aksara.nativeapp\nVersion: 0.2.0-chess-darkness (4)\nSource: %s\nCI run: %s\nBytes: %s\nSHA-256: %s\nSigning: verified by Android apksigner, development debug signature\nTests: Gradle assembleDebug, Android unit tests, game logic, web audit and backend smoke passed. Emulator skipped by design.\nWarning: PR #304 is merged. Real-device Bluetooth and writing-quality checks remain open. The debug signing identity can differ between CI builds, so updating an older installed APK may fail. Export local conversations before uninstalling any old installation.\n' "$SOURCE_SHA" "$VERIFIED_RUN_ID" "$(cat release-bytes.txt)" "$(cut -d' ' -f1 release-sha256.txt)" > release-notes.txt
+      - name: Publish one standalone merged APK as GitHub Release asset
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo 'Release already exists; refusing to overwrite the APK.'
+            gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[].name' | grep -Fx "$APK_NAME"
+          else
+            gh release create "$RELEASE_TAG" "release/$APK_NAME" \
+              --repo "$GITHUB_REPOSITORY" --target "$SOURCE_SHA" \
+              --title 'AKSARA Android PR #304 - Merged P0+P1+P3' \
+              --notes-file release-notes.txt --prerelease
+          fi
+      - name: Verify downloadable Release asset byte-for-byte
+        run: |
+          set -euo pipefail
+          mkdir -p remote-verification
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --pattern "$APK_NAME" --dir remote-verification
+          test -s "remote-verification/$APK_NAME"
+          cmp "release/$APK_NAME" "remote-verification/$APK_NAME"
+          test "$(sha256sum "remote-verification/$APK_NAME" | cut -d' ' -f1)" = "$(cut -d' ' -f1 release-sha256.txt)"
+          asset_size="$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json assets --jq '.assets[] | select(.name == env.APK_NAME) | .size')"
+          test "$asset_size" = "$(cat release-bytes.txt)"
+          {
+            echo '## AKSARA PR #304 merged APK published and verified'
+            echo
+            echo "- Download: https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/${APK_NAME}"
+            echo "- Source: ${SOURCE_SHA}"
+            echo "- Bytes: $(cat release-bytes.txt)"
+            echo "- SHA-256: $(cut -d' ' -f1 release-sha256.txt)"
+            echo '- Signing: Android apksigner passed'
+            echo '- Uploaded APK re-downloaded and byte-for-byte verified'
+          } >> "$GITHUB_STEP_SUMMARY"
