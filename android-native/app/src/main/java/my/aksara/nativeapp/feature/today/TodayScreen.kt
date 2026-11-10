@@ -2,10 +2,8 @@ package my.aksara.nativeapp.feature.today
 
 import android.Manifest
 import android.content.Context
-import android.content.Intent
 import android.location.Geocoder
 import android.location.Location
-import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,6 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,6 +29,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.feature.chat.ChatWallpaper
+import my.aksara.nativeapp.feature.chat.AksaraGlassModal
 import java.text.NumberFormat
 import java.time.Duration
 import java.time.Instant
@@ -112,11 +112,36 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
 @Composable private fun TodayPending(message:String) {
     AksaraText(message,size=11.5f,line=17f,color=todayMuted)
 }
-@Composable internal fun TodayScreen(active:Boolean,onBack:()->Unit) {
-    BackHandler(enabled=active) { onBack() }
+/** The location education sheet is displayed on first entry, never as a surprise OS prompt. */
+internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boolean,introShown:Boolean):Boolean =
+    active && !permissionGranted && !introShown
+
+@Composable internal fun TodayScreen(
+    active:Boolean,onBack:()->Unit,
+    onDialogVisibilityChange:(Boolean)->Unit={}
+) {
     val context=LocalContext.current
     val repo=remember(context) { TodayRepository(context) }
+    val permissionPrefs=remember(context) {
+        context.getSharedPreferences("aksara_today_v1_permissions",Context.MODE_PRIVATE)
+    }
     var permissionLocation by remember { mutableStateOf(hasTodayLocationPermission(context)) }
+    var introShown by remember { mutableStateOf(permissionPrefs.getBoolean("location_intro_shown",false)) }
+    var showLocationDialog by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(active,showLocationDialog) {
+        onDialogVisibilityChange(active && showLocationDialog)
+    }
+    DisposableEffect(Unit) {
+        onDispose { onDialogVisibilityChange(false) }
+    }
+    fun explainLocation() {
+        introShown=true
+        permissionPrefs.edit().putBoolean("location_intro_shown",true).apply()
+        showLocationDialog=true
+    }
+    BackHandler(enabled=active) {
+        if(showLocationDialog) showLocationDialog=false else onBack()
+    }
     var epoch by remember { mutableIntStateOf(0) }
     var locating by remember { mutableStateOf(false) }
     var locationReady by remember { mutableStateOf(false) }
@@ -127,7 +152,16 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
     var github by remember { mutableStateOf<TodayFeed<TodayCommit>?>(null) }
     var clock by remember { mutableStateOf(ZonedDateTime.now()) }
     val locationPrompt=rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()) { granted -> permissionLocation=granted; epoch++ }
+        ActivityResultContracts.RequestPermission()) { granted ->
+        permissionLocation=granted || hasTodayLocationPermission(context)
+        epoch++
+    }
+    LaunchedEffect(active) {
+        if(active) {
+            permissionLocation=hasTodayLocationPermission(context)
+            if(shouldShowTodayLocationIntro(active,permissionLocation,introShown)) explainLocation()
+        }
+    }
 
     LaunchedEffect(active) {
         while(active) {
@@ -176,7 +210,10 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                         AksaraText("Ruang Hari Ini",size=10f,color=todayMuted)
                     }
                     Column(horizontalAlignment=Alignment.End,verticalArrangement=Arrangement.spacedBy(4.dp)) {
-                        AksaraButton("Refresh",{ epoch++ },height=40.dp,size=10f,radius=13.dp)
+                        AksaraButton("Refresh",{
+                            epoch++
+                            if(!permissionLocation) explainLocation()
+                        },height=40.dp,size=10f,radius=13.dp)
                         AksaraText(when {
                             latestUpdate==null -> "Belum dikemas kini"
                             anyCached -> "Cache • "+updatedLabel(latestUpdate,false)
@@ -197,8 +234,7 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                     when {
                         !permissionLocation -> {
                             TodayPending("Benarkan lokasi untuk suhu, ramalan hujan dan zon solat yang tepat.")
-                            AksaraButton("Aktifkan lokasi",
-                                { locationPrompt.launch(Manifest.permission.ACCESS_COARSE_LOCATION) },
+                            AksaraButton("Aktifkan lokasi", { explainLocation() },
                                 height=38.dp,size=11f)
                         }
                         locating -> TodayPending("Mengesan lokasi peranti…")
@@ -274,11 +310,38 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                         },size=10.5f,color=todayMuted)
                         AksaraText("CI: "+commit.ci,size=11f,
                             color=if(commit.ci=="Lulus")Color(0xFF9EE1B5) else todayMuted)
-                        val url=commit.url.takeIf { it.startsWith(
-                            "https://github.com/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas/commit/") }
-                        if(url!=null) AksaraButton("Buka commit di GitHub",{
-                            context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(url)))
-                        },height=36.dp,size=10.5f)
+                    }
+                }
+            }
+            if(showLocationDialog && active) {
+                AksaraGlassModal(onClose={ showLocationDialog=false },preferredHeight=335.dp) {
+                    Column(Modifier.fillMaxSize().padding(18.dp),
+                        verticalArrangement=Arrangement.spacedBy(11.dp)) {
+                        Row(verticalAlignment=Alignment.CenterVertically,
+                            horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+                            AksaraGlassSurface(Modifier.size(44.dp),radius=999.dp) {
+                                AksaraIcon("location",Modifier.align(Alignment.Center).size(23.dp),todayGold)
+                            }
+                            Column(Modifier.weight(1f)) {
+                                AksaraText("Benarkan lokasi",size=17f,weight=700)
+                                AksaraText("AKSARA TODAY • KEBENARAN PERANTI",
+                                    size=9.5f,color=todayGold)
+                            }
+                        }
+                        AksaraText("Aksara perlukan lokasi anggaran untuk menunjukkan cuaca setempat, zon waktu solat dan kiraan waktu solat seterusnya.",
+                            size=12.5f,line=19f)
+                        AksaraText("Android hanya meminta izin selepas kau tekan Benarkan lokasi. Jika ditolak, jam, kripto dan GitHub masih berfungsi. Data ramalan mungkin disimpan sementara dalam cache peranti.",
+                            size=10.5f,line=17f,color=todayMuted)
+                        Spacer(Modifier.weight(1f))
+                        Row(Modifier.fillMaxWidth(),
+                            horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+                            AksaraButton("Bukan sekarang",{showLocationDialog=false},
+                                Modifier.weight(1f),height=42.dp,size=10.5f)
+                            AksaraButton("Benarkan lokasi",{
+                                showLocationDialog=false
+                                locationPrompt.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+                            },Modifier.weight(1f),height=42.dp,size=10.5f)
+                        }
                     }
                 }
             }
