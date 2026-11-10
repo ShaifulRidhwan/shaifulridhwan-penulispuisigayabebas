@@ -45,6 +45,13 @@ class PortalLayoutTest {
         compose.onNodeWithText("Teroka ekosistem Aksara: sastera, kreativiti, kecerdasan A.I. dan dunia permainan.").assertExists()
     }
 
+    @Test fun attachmentChoicesFitWithoutScrollingOnStandardScreen(){
+        compose.setContent { AksaraScreen(ChatState(loaded=true),initialOverlay="attachments") }
+        listOf("Foto","Video","Dokumen","Audio").forEach { label ->
+            compose.onNodeWithText(label).assertIsDisplayed()
+        }
+    }
+
     @Test fun chatMessagesUseTextIdentityWithoutSigilAvatar(){
         compose.setContent { AksaraScreen(ChatState(loaded=true)) }
         compose.onNodeWithText("Aksara A.I.").assertExists()
