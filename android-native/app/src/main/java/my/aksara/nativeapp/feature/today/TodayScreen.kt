@@ -68,7 +68,11 @@ internal fun nextPrayer(prayer:TodayPrayer?,now:LocalTime):Pair<String,String>? 
     val remaining=if(minutes<0)minutes+24L*60L else minutes
     val hours=remaining/60L
     val mins=remaining%60L
-    val duration=if(hours>0) "$hours jam $mins minit" else "$mins minit"
+    val duration=when {
+        hours>0 && mins>0 -> "$hours jam $mins minit"
+        hours>0 -> "$hours jam"
+        else -> "$mins minit"
+    }
     return next.first to duration
 }
 
@@ -175,7 +179,7 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                         AksaraButton("Refresh",{ epoch++ },height=40.dp,size=10f,radius=13.dp)
                         AksaraText(when {
                             latestUpdate==null -> "Belum dikemas kini"
-                            anyCached -> "Sebahagian data cache • "+updatedLabel(latestUpdate,false)
+                            anyCached -> "Cache • "+updatedLabel(latestUpdate,false)
                             else -> updatedLabel(latestUpdate,false)
                         },size=9.5f,line=13f,color=todayMuted)
                     }
@@ -198,7 +202,7 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                                 height=38.dp,size=11f)
                         }
                         locating -> TodayPending("Mengesan lokasi peranti…")
-                        !locationReady -> TodayPending("Lokasi belum tersedia. Semak GPS/rangkaian dan segar semula.")
+                        !locationReady -> TodayPending("Lokasi belum tersedia. Semak GPS/rangkaian dan Refresh.")
                         value==null -> TodayPending("Cuaca belum tersedia. Semak sambungan internet.")
                         else -> {
                             AksaraText(String.format(Locale.US,"%.1f°C",value.celsius)+"  •  "+
@@ -235,7 +239,7 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
                 }
                 TodayCard("Pasaran Kripto • USD") {
                     val coins=crypto?.value
-                    if(coins.isNullOrEmpty())TodayPending("Harga kripto tidak tersedia. Cuba segar semula.")
+                    if(coins.isNullOrEmpty())TodayPending("Harga kripto tidak tersedia. Cuba Refresh.")
                     else {
                         coins.forEach { coin ->
                             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,
