@@ -13,6 +13,7 @@ The PR description carries final CI, merge and APK links; this document records 
 - Classify provider HTTP/reason evidence into rate limited, misconfigured and unavailable states. Keep Ready distinct from Online and backend DNS/transport failure distinct from provider failure.
 - Acknowledge Gemini Live peer close frames so OkHttp completes the handshake and invokes existing epoch-guarded reconnect recovery. Preserve Aoede, Malay instructions, token broker, audio routes and reconnect limits.
 - Review the exact router fingerprint after the cancellation-only change. Replace an obsolete source-syntax assertion with an actual recorded-Voice request verifying primary-key use, zero chat-pool selection and exactly one inference. No identity/personality lock is removed.
+- Final emulator recovery: the empty debug fixture host now handles orientation/size changes without recreation and starts in portrait. A late rotation after landscape tests could otherwise discard test-installed Compose content before the Portal test's first click. A dedicated lifecycle regression rotates the host both ways and checks the original Activity and visible fixture. Production Activity, splash and protected literary UI are unchanged.
 
 ## Reused architecture and boundaries
 
@@ -31,6 +32,34 @@ Local targeted Cloudflare REST/router, four-provider, Intelligence V5 and privac
 A single production health request returned Gemini and Groq Online, Workers AI Ready/configured and OpenRouter Ready/key-verified. This verifies the public status contract, not private secret values, account billing, all four key slots, or Workers/OpenRouter inference. No image-generation benchmark was run. Physical microphone, Aoede playback, Bluetooth/headset routing, device switching and real barge-in require a physical Android phone. Mock tests and an emulator cannot certify hardware behavior or language accuracy.
 
 ## NETLIFY & CLOUDFLARE SETUP REQUIRED
+
+No new environment variables or Cloudflare resources are required for V5.1 or the
+emulator recovery. Existing credentials and model choices are preserved. To make
+the server repairs effective, manually deploy the reviewed
+`netlify/functions/aksara-provider-router.js` and
+`netlify/functions/aksara-cloudflare-rest.js` with their existing function entry
+points/dependencies (`bilik-antara` and `bilik-antara-stream`). The debug-host repair
+requires only the new APK, not a server deployment.
+
+Manual deployment checklist for the owner:
+
+1. Keep Netlify automatic builds/deploy previews disabled; use the existing site,
+   not a new paid site or a workers.dev destination.
+2. Review the integrated commit and retain the currently published static web
+   assets. Do not publish an older Android branch's web root over a newer site.
+3. In that site's Functions runtime environment, retain the settings below. Add
+   nothing when the existing adapter is already configured. If configuration is
+   missing, supply it in the dashboard and verify account entitlement first.
+4. Through the site's existing permitted manual CLI/API deployment process, bundle
+   the reviewed Functions with esbuild and the existing `@netlify/blobs` dependency;
+   deploy them together with the preserved current static publish directory. Do not
+   enable automatic or preview deployments. No Cloudflare Worker deployment,
+   binding change, paid plan or recharge is needed for the Netlify REST path.
+5. Confirm one `providerStatus` POST to `/.netlify/functions/bilik-antara`, one short
+   NDJSON Chat request to `/.netlify/functions/bilik-antara-stream`, and token shape
+   from `/.netlify/functions/bilik-antara-live-token` without logging the token.
+   Test Workers AI inference only after its cost entitlement is confirmed. Retain
+   the prior deployment for rollback if these checks fail.
 
 All names below exist in source. Configure secrets only in the owning service dashboard, never chat, Git, Android BuildConfig or assets. Status reflects public evidence, not administrative inspection. Existing production values were not read or changed. No paid plan, recharge, infrastructure, Netlify automatic deploy or preview deploy was enabled.
 

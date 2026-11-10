@@ -32,3 +32,19 @@ PR #290 and #291 merged; splash #292 open and excluded. One implementation branc
 - Live backend contracts/configuration: pending; no provider secrets configured locally.
 - Commit/push/PR/merge/APK: pending; release remains gated on verified results.
 - Physical Bluetooth, microphone/playback, device switching: requires physical phone.
+
+## Final recovery
+
+- Source `26ac837` built and installed; unit/security/backend and relevant emulator
+  integration passed. The sole shared emulator failure was the first Portal fixture:
+  no Compose root before the literary entry was clicked.
+- Debug `VisualTestActivity` is empty in `onCreate`, with its composition installed
+  only by the test rule. It had no orientation/configuration handling after preceding
+  landscape tests. Configuration recreation discards that fixture. Production
+  `MainActivity` installs its own content in `onCreate` and is portrait-locked.
+- Debug-only manifest now matches portrait posture and handles orientation/size
+  changes without discarding the installed test composition. Regression explicitly
+  rotates landscape then portrait and checks Activity identity and visible content.
+- No production Activity, splash, game, literary content/UI or assertion was changed.
+- One final CI run will execute the rotation regression and unchanged failing Portal
+  test. Existing shared checks remain enabled. No optional test campaign is added.
