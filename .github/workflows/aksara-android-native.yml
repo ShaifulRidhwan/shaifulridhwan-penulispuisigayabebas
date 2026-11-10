@@ -113,8 +113,17 @@ jobs:
       - name: Identify exact installable game APK
         working-directory: android-native
         run: |
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk > app/build/outputs/apk/debug/BADGING.txt
+          stat -c 'apk_bytes=%s' app/build/outputs/apk/debug/app-debug.apk
           sha256sum app/build/outputs/apk/debug/app-debug.apk | tee app/build/outputs/apk/debug/SHA256SUMS
           printf 'source_commit=%s\nbuild_run=%s\n' '${{ github.event.pull_request.head.sha || github.sha }}' '${{ github.run_id }}' | tee app/build/outputs/apk/debug/BUILD.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: aksara-native-installable-apk
+          path: android-native/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          compression-level: 0
       - name: Unit tests
         id: unit
         continue-on-error: true
@@ -163,7 +172,9 @@ jobs:
           target: google_apis
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader -noaudio -no-boot-anim -camera-back none
-          script: bash android-native/visual-tests/run-emulator.sh
+          script: |
+            bash android-native/visual-tests/run-emulator.sh
+            APK_PATH=android-native/build-artifact/outputs/apk/debug/app-debug.apk bash android-native/ci/measure-performance.sh docs/android-rebuild/visual-comparison/performance/measured
       - name: Web/Native visual parity audit (strict 98% report, not emulator instrumentation)
         if: always()
         run: |
