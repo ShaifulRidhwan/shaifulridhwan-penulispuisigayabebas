@@ -39,6 +39,12 @@ class PortalLayoutTest {
         ).forEach { subtitle -> compose.onNodeWithText(subtitle).assertExists() }
     }
 
+    @Test fun exploreEcosystemFooterIsRestored(){
+        compose.setContent { AksaraScreen(ChatState(loaded=true),initialOverlay="portal") }
+        compose.onNodeWithTag("explore-ecosystem-footer").performScrollTo().assertExists()
+        compose.onNodeWithText("Teroka ekosistem Aksara: sastera, kreativiti, kecerdasan A.I. dan dunia permainan.").assertExists()
+    }
+
     @Test fun chatMessagesUseTextIdentityWithoutSigilAvatar(){
         compose.setContent { AksaraScreen(ChatState(loaded=true)) }
         compose.onNodeWithText("Aksara A.I.").assertExists()
