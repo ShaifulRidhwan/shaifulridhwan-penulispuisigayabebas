@@ -14,7 +14,7 @@ class NativeGameAssetsTest {
         Regex("""https?://[^'"\s<>]+""").findAll(html).forEach {
             assertEquals("Unexpected remote game dependency", "https://appassets.androidplatform.net/exit", it.value)
         }
-        Regex("""(?:src|href)\s*=\s*['"]([^'"]+)['"]""").findAll(html).forEach {
+        Regex("""\s(?:src|href)\s*=\s*['"]([^'"]+)['"]""").findAll(html).forEach {
             val path=it.groupValues[1]
             assertFalse("Resource must be a bundled relative path: $path",java.net.URI(path).isAbsolute || path.startsWith("//"))
             assertTrue("Missing bundled resource: $path",assets.open("game/$path").use { input -> input.read()>=0 })
