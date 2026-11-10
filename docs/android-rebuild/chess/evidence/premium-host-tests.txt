@@ -4,7 +4,7 @@
 /tmp/aksara-chess-deps/hamcrest.jar: OK
 JUnit version 4.13.2
 ......................
-Time: 2.296
+Time: 2.019
 
 OK (22 tests)
 

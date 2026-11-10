@@ -36,6 +36,16 @@ public class ChessSessionTest {
         for(String m:new String[]{"f2f3","e7e5","g2g4","d8h4"}) s.play(m);
         assertEquals(ChessSession.End.CHECKMATE,s.end()); assertEquals("0-1",s.result());
         assertTrue(s.pgn().contains("Qh4#")); assertEquals(s.save(),ChessSession.restore(s.save()).save());
+        var imported=new com.github.bhlangonijr.chesslib.pgn.PgnHolder();imported.loadPgn(s.pgn());
+        assertEquals(1,imported.getGames().size());
+        var parsed=imported.getGames().get(0);
+        assertEquals("AKSARA Chess",parsed.getRound().getEvent().getName());
+        assertEquals("0-1",parsed.getResult().getDescription());
+        assertEquals(4,parsed.getHalfMoves().size());assertEquals("d8h4",parsed.getHalfMoves().get(3).toString());
+        var promotion=new ChessSession("7k/P7/8/8/8/8/8/4K3 w - - 0 1");promotion.play("a7a8n");
+        imported=new com.github.bhlangonijr.chesslib.pgn.PgnHolder();imported.loadPgn(promotion.pgn());
+        assertEquals(promotion.initialFen(),imported.getGames().get(0).getFen());
+        assertEquals("a7a8n",imported.getGames().get(0).getHalfMoves().get(0).toString());
         assertTrue(s.undo()); assertEquals(ChessSession.End.PLAYING,s.end());
     }
     @Test public void repetitionClaimAndAutomaticDraw() {

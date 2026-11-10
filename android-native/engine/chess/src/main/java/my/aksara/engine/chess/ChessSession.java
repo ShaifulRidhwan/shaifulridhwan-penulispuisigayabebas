@@ -129,7 +129,8 @@ public final class ChessSession {
     public synchronized String pgn() {
         MoveList list=new MoveList(initialFen); list.addAll(moves);
         String setup=initialFen.equals(START)?"":"[SetUp \"1\"]\n[FEN \""+initialFen+"\"]\n";
-        return "[White \"Cahaya\"]\n[Black \"AKSARA A.I. - Queen of Darkness\"]\n[Result \""+result()+"\"]\n"+setup+"\n"+list.toSanWithMoveNumbers()+" "+result();
+        // PGN export's Seven Tag Roster; unknown metadata stays explicitly unknown.
+        return "[Event \"AKSARA Chess\"]\n[Site \"?\"]\n[Date \"????.??.??\"]\n[Round \"?\"]\n[White \"Cahaya\"]\n[Black \"AKSARA A.I. - Queen of Darkness\"]\n[Result \""+result()+"\"]\n"+setup+"\n"+list.toSanWithMoveNumbers()+" "+result();
     }
     /** Versioned local format preserves the move history required for repetition. */
     public synchronized String save() {
