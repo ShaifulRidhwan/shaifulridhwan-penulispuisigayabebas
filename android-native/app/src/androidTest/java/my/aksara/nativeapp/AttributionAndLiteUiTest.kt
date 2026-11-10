@@ -1,5 +1,8 @@
 package my.aksara.nativeapp
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.unit.dp
@@ -15,6 +18,48 @@ import org.junit.Test
 
 class AttributionAndLiteUiTest {
     @get:Rule val compose = createAndroidComposeRule<VisualTestActivity>()
+
+    @Test fun cinematicSplashFinishesAndRestoredLaunchSkipsIt() {
+        compose.mainClock.autoAdvance = false
+        var restored by androidx.compose.runtime.mutableStateOf(false)
+        compose.setContent {
+            androidx.compose.runtime.key(restored) {
+                my.aksara.nativeapp.feature.splash.AksaraLaunchGate(
+                    initialIntro = !restored, reducedMotion = false
+                ) { my.aksara.nativeapp.core.design.AksaraText("Chatbox sedia") }
+            }
+        }
+        compose.onNodeWithTag("aksara-splash-screen").assertExists()
+        compose.mainClock.advanceTimeBy(2400)
+        compose.onNodeWithTag("aksara-splash-screen").assertDoesNotExist()
+        compose.onNodeWithText("Chatbox sedia").assertIsDisplayed()
+        compose.runOnIdle { restored = true }
+        compose.mainClock.advanceTimeByFrame()
+        compose.onNodeWithTag("aksara-splash-screen").assertDoesNotExist()
+    }
+
+    @Test fun lockedSplashIdentityAndDarkLaunchResources() {
+        compose.setContent { my.aksara.nativeapp.feature.splash.AksaraSplashContent() }
+        compose.onNodeWithText("AKSARA A.I.").assertIsDisplayed()
+        compose.onNodeWithText("ANTARA AKSARA DAN CODE").assertIsDisplayed()
+        val context = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+        val theme = context.resources.newTheme().apply { applyStyle(R.style.Theme_Aksara_Launch,true) }
+        val color = android.util.TypedValue()
+        org.junit.Assert.assertTrue(theme.resolveAttribute(android.R.attr.windowSplashScreenBackground,color,true))
+        assertEquals(0xFF03040C.toInt(),color.data)
+        val out = java.io.File(context.getExternalFilesDir(null),"visual").apply { mkdirs() }
+        compose.waitForIdle()
+        // Capture this rendered Compose surface, rather than the previous SurfaceFlinger frame.
+        val bitmap = compose.onNodeWithTag("aksara-splash-screen").captureToImage().asAndroidBitmap()
+        val colors = mutableSetOf<Int>()
+        for (y in 0 until bitmap.height step 8) for (x in 0 until bitmap.width step 8) {
+            colors.add(bitmap.getPixel(x,y))
+        }
+        org.junit.Assert.assertTrue("Splash evidence must contain rendered artwork",colors.size > 16)
+        java.io.File(out,"ui-polish-v2-splash.png").outputStream().use {
+            org.junit.Assert.assertTrue(bitmap.compress(Bitmap.CompressFormat.PNG,100,it))
+        }
+    }
 
     @Test fun actualProviderIsAttachedToIndividualMessage() {
         compose.setContent {
@@ -132,11 +177,11 @@ class AttributionAndLiteUiTest {
         compose.onNodeWithContentDescription("Carian, sesi dan memori").performClick()
         compose.onNodeWithTag("aksara-glass-modal").assertExists()
         compose.onNodeWithText("×").performClick()
-        compose.onNodeWithContentDescription("Tetapan Aksara").performClick()
+        compose.onNodeWithContentDescription("Settings").performClick()
         compose.onNodeWithTag("aksara-glass-modal").assertExists()
         compose.onNodeWithText("Buka Voice & pilih peranti").assertDoesNotExist()
         compose.onNodeWithText("×").performClick()
-        compose.onNodeWithContentDescription("Ciri & Fungsi").performClick()
+        compose.onNodeWithContentDescription("Explore").performClick()
         compose.onNodeWithTag("aksara-glass-modal").assertExists()
         compose.onNodeWithText("×").performClick()
         compose.onNodeWithContentDescription("Connection").performClick()
@@ -167,7 +212,7 @@ class AttributionAndLiteUiTest {
 
     @Test fun externalHomeRequiresConfirmationAndCancelStaysInApp() {
         compose.setContent { AksaraScreen(ChatState(loaded = true)) }
-        compose.onNodeWithContentDescription("Ciri & Fungsi").performClick()
+        compose.onNodeWithContentDescription("Explore").performClick()
         compose.onNodeWithText("Laman Utama").performClick()
         compose.onNodeWithText("Buka Laman Utama?").assertExists()
         compose.onNodeWithText("Anda akan dibawa keluar", substring = true).assertExists()
@@ -178,15 +223,15 @@ class AttributionAndLiteUiTest {
     @Test fun composerRemainsFocusableAndPortalHidesExperimentalEngines() {
         compose.setContent { AksaraScreen(ChatState(loaded = true)) }
         compose.onNodeWithContentDescription("Tulis mesej untuk Aksara A.I.").performClick().assertIsFocused()
-        compose.onNodeWithContentDescription("Ciri & Fungsi").performClick()
-        compose.onNodeWithText("Pilih ruang yang kau mahu teroka dalam ekosistem Aksara.").assertExists()
+        compose.onNodeWithContentDescription("Explore").performClick()
+        compose.onNodeWithText("Explore").assertExists()
         compose.onNodeWithText("Game · Linux · SD-Turbo").assertDoesNotExist()
         compose.onNodeWithText("Laman Utama").assertExists()
-        compose.onNodeWithText("Studio · Jana Imej").assertExists()
-        compose.onNodeWithText("Novel · Perpustakaan AKSARA").assertExists()
+        compose.onNodeWithText("Studio • Jana Imej").assertExists()
+        compose.onNodeWithText("Novel • Perpustakaan").assertExists()
         compose.onNodeWithText("Prestasi A.I.").assertDoesNotExist()
         compose.onNodeWithText("Sesi & Sejarah").assertDoesNotExist()
-        compose.onNodeWithText("Tetapan Aksara A.I.").assertDoesNotExist()
+        compose.onNodeWithText("Settings").assertDoesNotExist()
         compose.onNodeWithText("Security Lab").assertDoesNotExist()
         compose.onNodeWithText("Pengetahuan & Rujukan").assertDoesNotExist()
         compose.onNodeWithText("Privasi & Tetapan").assertDoesNotExist()

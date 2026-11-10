@@ -79,7 +79,7 @@ internal fun AksaraSettings(
         Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
                     Column(Modifier.weight(1f)){
-                        AksaraText("Tetapan Aksara A.I.",size=16f,weight=700,
+                        AksaraText("Settings",size=16f,weight=700,
                             family=AksaraTypography.heading)
                         AksaraText("Kawalan aplikasi dan diagnostik",size=10f,color=AksaraColors.muted)
                     }

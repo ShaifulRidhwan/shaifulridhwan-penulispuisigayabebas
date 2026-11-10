@@ -310,7 +310,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         BoxWithConstraints(Modifier.fillMaxSize().imePadding().testTagCompat("app")) {
             val viewportHeight = maxHeight
             Box(Modifier.fillMaxSize().hazeSource(scene)) {
-            AksaraBackground(Modifier.fillMaxSize().hazeSource(backdrop))
+            ChatWallpaper(Modifier.fillMaxSize().hazeSource(backdrop))
             Column(Modifier.fillMaxSize().safeDrawingPadding().padding(start=margins.horizontal,end=margins.horizontal,top=margins.top,bottom=margins.bottom)) {
                 Spacer(Modifier.height(5.dp))
                 AksaraGlassSurface(Modifier.fillMaxWidth().height(58.dp).testTagCompat("topbar"), radius=20.dp, blur=12.dp,
@@ -328,16 +328,16 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 .semantics {contentDescription="Carian, sesi dan memori"},
                                 icon="search",height=44.dp,radius=13.dp,iconSize=19.dp)
                             AksaraButton("",{open("portal")},Modifier.width(44.dp)
-                                .semantics {contentDescription="Ciri & Fungsi"},
+                                .semantics {contentDescription="Explore"},
                                 icon="grid",height=44.dp,radius=13.dp,iconSize=19.dp)
                             AksaraButton("",{open("settings")},Modifier.width(44.dp)
-                                .semantics {contentDescription="Tetapan Aksara"},
+                                .semantics {contentDescription="Settings"},
                                 icon="settings",height=44.dp,radius=13.dp,iconSize=19.dp)
                         }
                     }
                 }
                 Box(Modifier.weight(1f).padding(top=viewportHeight*.011f)) {
-                    AksaraGlassSurface(Modifier.fillMaxSize().testTagCompat("conversation"),radius=22.dp,blur=3.dp,saturation=1.06f,
+                    AksaraGlassSurface(Modifier.fillMaxSize().testTagCompat("conversation"),radius=22.dp,blur=.5.dp,saturation=1.06f,
                         brush=Brush.linearGradient(listOf(Color(15,17,25,51),Color(10,14,25,33),Color(7,10,18,56))),border=Color.Transparent) {
                         Column(Modifier.fillMaxSize().padding(1.dp)) {
                             BoxWithConstraints(Modifier.fillMaxWidth().height(58.dp).testTagCompat("conversation-head")) {
@@ -490,7 +490,7 @@ private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
         val textSize=measure.measure(AnnotatedString(message.text),style,constraints=Constraints(maxWidth=with(density){(contentWidth-padding).roundToPx()})).size
         val bubbleWidth=when {message.text.isEmpty()->53.dp;!ai||message.id=="welcome-expanded"->minOf(contentWidth,with(density){textSize.width.toDp()}+padding);else->contentWidth}
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-            if(ai) Image(painterResource(R.drawable.aksara_portrait),"Aksara A.I.",Modifier.padding(top=1.dp).size(29.dp).clip(RoundedCornerShape(999.dp)).border(1.dp,Color(244,205,137,135),RoundedCornerShape(999.dp)),contentScale=ContentScale.Crop)
+            if(ai) Image(painterResource(R.drawable.aksara_glass_sigil),"Aksara A.I.",Modifier.padding(top=1.dp).size(29.dp),contentScale=ContentScale.Crop)
             Column(Modifier.weight(1f),horizontalAlignment=if(ai)Alignment.Start else Alignment.End) {
                 if(ai) Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(5.dp)) {
                     AksaraIcon("aksara",Modifier.size(14.dp),AksaraColors.gold)

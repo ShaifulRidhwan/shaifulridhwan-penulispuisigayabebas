@@ -102,11 +102,11 @@ import my.aksara.nativeapp.feature.tools.*
                         AksaraButton("Aktifkan Mikrofon",{onNavigate("voice")},Modifier.weight(.63f))
                     }
                 } else {
-                    val title=when(kind){"external-home"->"Buka Laman Utama?";"response-details"->"Butiran Jawapan";"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Ciri & Fungsi";"literary-notice"->"AMARAN: KAWASAN SASTERA DILINDUNGI";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";"studio"->"Studio Antara";"library"->"Perpustakaan AKSARA";"novel"->"Baca Novel";"security"->"Security Lab";"metrics"->"Prestasi A.I."; "engines"->"Native Engines";else->kind}
+                    val title=when(kind){"external-home"->"Buka Laman Utama?";"response-details"->"Butiran Jawapan";"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Explore";"literary-notice"->"AMARAN: KAWASAN SASTERA DILINDUNGI";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";"studio"->"Studio Antara";"library"->"Perpustakaan AKSARA";"novel"->"Baca Novel";"security"->"Security Lab";"metrics"->"Prestasi A.I."; "engines"->"Native Engines";else->kind}
                     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
                             AksaraText(title,size=16f,line=20.8f,weight=700,tracking=.4f)
-                            val subtitle=when(kind){"connection"->"Routing adaptif Aksara menyelaraskan Gemini, Groq, OpenRouter dan Cloudflare Workers AI, dengan laluan fallback mengikut ketersediaan.";"code"->"Lima runtime untuk menjalankan kod termasuk C++20. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.";"terminal"->"Terminal native dalam proses berasingan. Shell Android, bukan shell server.";"thinking"->"Pilih cara Aksara A.I. berfikir dan menjawab.";"portal"->"Pilih ruang yang kau mahu teroka dalam ekosistem Aksara.";"attachments"->"Pilih bahan untuk dihantar bersama mesej.";else->""}
+                            val subtitle=when(kind){"connection"->"Routing adaptif Aksara menyelaraskan Gemini, Groq, OpenRouter dan Cloudflare Workers AI, dengan laluan fallback mengikut ketersediaan.";"code"->"Lima runtime untuk menjalankan kod termasuk C++20. Pratonton HTML/CSS diasingkan dalam sandbox. Runtime lain hanya disahkan selepas kod berjaya dijalankan.";"terminal"->"Terminal native dalam proses berasingan. Shell Android, bukan shell server.";"thinking"->"Pilih cara Aksara A.I. berfikir dan menjawab.";"attachments"->"Pilih bahan untuk dihantar bersama mesej.";else->""}
                             if(subtitle.isNotEmpty()){Spacer(Modifier.height(if(kind=="portal")5.dp else 8.dp));AksaraText(subtitle,size=if(kind=="portal"||kind=="code")11.5f else 12f,line=if(kind=="portal")17f else 18.6f,color=Color(0xffc4bfba))}
                         }
                         AksaraButton("×",onClose,Modifier.width(36.dp),size=22f,height=37.dp,radius=10.dp)
@@ -207,13 +207,13 @@ import my.aksara.nativeapp.feature.tools.*
                         "portal" -> {
                             Spacer(Modifier.height(14.dp))
                             listOf(
-                                Triple("Laman Utama","Laman web rasmi Shaiful Ridhwan","external-home"),
-                                Triple("Chess · Absolute Darkness","Cahaya melawan Ratu Gelap · Stockfish 19","chess"),
-                                Triple("Game · Cahaya vs Gelap","Arena latihan 2D · seni sementara","game"),
-                                Triple("Studio · Jana Imej","FLUX · Cloudflare Workers AI","studio"),
-                                Triple("Novel · Perpustakaan AKSARA","Prosa, klasik dan sastera falsafah","literary-notice")
+                                Triple("Laman Utama","","external-home"),
+                                Triple("Novel • Perpustakaan","","literary-notice"),
+                                Triple("Studio • Jana Imej","","studio"),
+                                Triple("Game • Chess","","chess"),
+                                Triple("Game • Cahaya vs Gelap","","game")
                             ).forEach { (name,desc,route) ->
-                                val icon=when(route) {"external-home"->"home";"studio"->"image";else->"novel"}
+                                val icon=when(route) {"external-home"->"home";"studio"->"image";"chess"->"explore-knight";"game"->"explore-swords";else->"novel"}
                                 FeatureRow(name,desc,icon) {onNavigate(route)}
                                 Spacer(Modifier.height(9.dp))
                             }
@@ -349,7 +349,16 @@ import my.aksara.nativeapp.feature.tools.*
 @Composable private fun FeatureRow(name:String,desc:String,icon:String,height:Dp=62.dp,onClick:()->Unit) {
     AksaraGlassSurface(Modifier.fillMaxWidth().height(height).clickable(onClick=onClick),radius=14.dp) {
         Row(Modifier.fillMaxSize().padding(horizontal=11.dp),horizontalArrangement=Arrangement.spacedBy(12.dp),verticalAlignment=Alignment.CenterVertically) {
-            AksaraIcon(icon,Modifier.size(20.dp));Column(Modifier.weight(1f)){AksaraText(name,size=12.5f,line=16.25f,weight=600);Spacer(Modifier.height(3.dp));AksaraText(desc,size=10.5f,line=15.75f,color=AksaraColors.muted)};AksaraText("›",size=19f,color=AksaraColors.gold)
+            if(icon.startsWith("explore-")) ExploreGameIcon(icon,Modifier.size(28.dp))
+            else AksaraIcon(icon,Modifier.size(28.dp))
+            Column(Modifier.weight(1f)) {
+                AksaraText(name,size=12.5f,line=16.25f,weight=600)
+                if(desc.isNotEmpty()) {
+                    Spacer(Modifier.height(3.dp))
+                    AksaraText(desc,size=10.5f,line=15.75f,color=AksaraColors.muted)
+                }
+            }
+            AksaraText("›",size=19f,color=AksaraColors.gold)
         }
     }
 }

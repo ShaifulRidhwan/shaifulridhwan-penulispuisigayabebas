@@ -13,7 +13,7 @@ class PortalLayoutTest {
     @get:Rule val compose=createAndroidComposeRule<VisualTestActivity>()
     @Test fun literaryNoticeAppearsBeforeLibraryAndKeepsReadingAccessible(){
         compose.setContent { AksaraScreen(ChatState(loaded=true),initialOverlay="portal") }
-        compose.onNodeWithText("Novel · Perpustakaan AKSARA").performScrollTo().performClick()
+        compose.onNodeWithText("Novel • Perpustakaan").performScrollTo().performClick()
         compose.onNodeWithText("AMARAN: KAWASAN SASTERA DILINDUNGI").assertExists()
         compose.onNodeWithText("PERMANENT READ-ONLY · ACCESS DENIED").assertExists()
         compose.onNodeWithText("Saya Faham · Masuk Perpustakaan").performScrollTo().performClick()
@@ -23,16 +23,16 @@ class PortalLayoutTest {
 
     @Test fun literaryNoticeCanBeClosedWithoutEnteringLibrary(){
         compose.setContent { AksaraScreen(ChatState(loaded=true),initialOverlay="portal") }
-        compose.onNodeWithText("Novel · Perpustakaan AKSARA").performScrollTo().performClick()
+        compose.onNodeWithText("Novel • Perpustakaan").performScrollTo().performClick()
         compose.onNodeWithText("Kembali").performScrollTo().performClick()
         compose.onNodeWithText("Perpustakaan AKSARA · Native").assertDoesNotExist()
     }
 
-    @Test fun fourPortalItemsRemainReachableOnShortScreen(){
+    @Test fun fiveExploreItemsRemainReachableOnShortScreen(){
         compose.setContent { Box(Modifier.fillMaxWidth().height(360.dp)) {
             AksaraScreen(ChatState(loaded=true),initialOverlay="portal")
         }}
-        for(label in listOf("Laman Utama","Game · Cahaya vs Gelap","Studio · Jana Imej","Novel · Perpustakaan AKSARA")) {
+        for(label in listOf("Laman Utama","Novel • Perpustakaan","Studio • Jana Imej","Game • Chess","Game • Cahaya vs Gelap")) {
             compose.onNodeWithText(label).performScrollTo().assertIsDisplayed()
         }
     }

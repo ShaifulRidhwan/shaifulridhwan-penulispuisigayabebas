@@ -172,8 +172,8 @@ class NativeGameActivityTest {
             val field=device.wait(Until.findObject(By.desc("Tulis mesej untuk Aksara A.I.")),30000)
             assertNotNull("Chat composer",field)
             field.text=draft
-            device.wait(Until.findObject(By.desc("Ciri & Fungsi")),10000).click()
-            val entry=device.wait(Until.findObject(By.text("Game · Cahaya vs Gelap")),10000)
+            device.wait(Until.findObject(By.desc("Explore")),10000).click()
+            val entry=device.wait(Until.findObject(By.text("Game • Cahaya vs Gelap")),10000)
             assertNotNull("Visible game portal entry",entry);entry.click()
             assertTrue("Fullscreen game WebView must open",device.wait(Until.hasObject(By.clazz("android.webkit.WebView")),30000))
             assertTrue("Landscape window",device.displayWidth>device.displayHeight)
