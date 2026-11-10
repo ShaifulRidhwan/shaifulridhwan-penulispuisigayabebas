@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Brush
@@ -20,31 +21,23 @@ import my.aksara.nativeapp.R
 
 /** Immersive chat artwork: blurred full-bleed underlay removes Fit letterboxing, while the locked foreground preserves both celestial bodies and the full gown. */
 @Composable internal fun ChatWallpaper(modifier: Modifier = Modifier) {
+    val wallpaper = painterResource(R.drawable.aksara_chat_wallpaper)
+    val feather = remember { Brush.verticalGradient(0f to Color.Transparent, .10f to Color.Transparent, .25f to Color.White, .75f to Color.White, .90f to Color.Transparent, 1f to Color.Transparent) }
+    val ambientShade = remember { Brush.verticalGradient(0f to Color(0xA0040810), .18f to Color(0x33040810), .55f to Color(0x17040810), .86f to Color(0x47040810), 1f to Color(0xA0040810)) }
     Box(modifier.background(Color(0xFF080C17))) {
         // Fill tall/rounded device edges without cropping the approved original composition.
-        Image(painterResource(R.drawable.aksara_chat_wallpaper), null,
-            Modifier.fillMaxSize().blur(28.dp), alignment = Alignment.Center, contentScale = ContentScale.Crop)
+        Image(wallpaper, null,
+            Modifier.fillMaxSize().blur(24.dp), alignment = Alignment.Center, contentScale = ContentScale.Crop)
         Box(Modifier.fillMaxSize().background(Color(5,8,16,48)))
-        Image(painterResource(R.drawable.aksara_chat_wallpaper), null,
-            Modifier.fillMaxSize()
+        Image(wallpaper, null,
+            Modifier.fillMaxSize().blur(3.dp)
                 .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
                 .drawWithContent {
                     drawContent()
                     // Feather the fitted original into its blurred full-bleed extension.
-                    drawRect(
-                        Brush.verticalGradient(
-                            0f to Color.Transparent,
-                            .10f to Color.Transparent,
-                            .25f to Color.White,
-                            .75f to Color.White,
-                            .90f to Color.Transparent,
-                            1f to Color.Transparent
-                        ),
-                        blendMode = BlendMode.DstIn
-                    )
+                    drawRect(feather, blendMode = BlendMode.DstIn)
                 },
             alignment = Alignment.Center, contentScale = ContentScale.Fit)
-        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-            0f to Color(0xA0040810), .18f to Color(0x33040810), .55f to Color(0x17040810), .86f to Color(0x47040810), 1f to Color(0xA0040810))))
+        Box(Modifier.fillMaxSize().background(ambientShade))
     }
 }
