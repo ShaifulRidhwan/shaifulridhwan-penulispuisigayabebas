@@ -56,7 +56,7 @@ class QueenVoice(context:Context):AutoCloseable {
                 synth.setOnUtteranceProgressListener(object:UtteranceProgressListener(){
                     override fun onStart(id:String?) {handler.post{if(id==currentId)speaking=true}}
                     override fun onDone(id:String?) {handler.post{if(id==currentId){speaking=false;currentId="";audio.abandonAudioFocusRequest(focus)}}}
-                    @Deprecated("Platform callback") override fun onError(id:String?) {handler.post{if(id==currentId){speaking=false;status="Ucapan gagal. Sari kata kekal tersedia.";audio.abandonAudioFocusRequest(focus)}}}
+                    @Deprecated("Platform callback") override fun onError(id:String?) {handler.post{if(id==currentId){speaking=false;currentId="";status="Ucapan gagal. Sari kata kekal tersedia.";audio.abandonAudioFocusRequest(focus)}}}
                 })
                 val waiting=pending;pending=null
                 if(waiting!=null)say(waiting,revision)
@@ -92,7 +92,7 @@ class QueenVoice(context:Context):AutoCloseable {
         currentId="aksara_queen_${++utterance}"
         val params=Bundle().apply{putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME,volume.coerceIn(0f,1f))}
         if(tts?.speak(line.text(),TextToSpeech.QUEUE_FLUSH,params,currentId)!=TextToSpeech.SUCCESS) {
-            audio.abandonAudioFocusRequest(focus);status="Ucapan gagal. Sari kata digunakan."
+            currentId="";audio.abandonAudioFocusRequest(focus);status="Ucapan gagal. Sari kata digunakan."
         }
     }
     fun notice(text:String) {say(QueenDialogue.Line(text,3,false),-1)}
@@ -116,6 +116,6 @@ class QueenVoice(context:Context):AutoCloseable {
         effects.autoResume();effects.play(id,.35f,.35f,1,0,1f)
         handler.postDelayed({if(!speaking && currentId.isEmpty())audio.abandonAudioFocusRequest(focus)},500)
     }
-    fun stop() {pending=null;currentId="";tts?.stop();effects.autoPause();speaking=false;currentId="";audio.abandonAudioFocusRequest(focus)}
+    fun stop() {pending=null;currentId="";tts?.stop();effects.autoPause();speaking=false;audio.abandonAudioFocusRequest(focus)}
     override fun close() {if(closed)return;closed=true;stop();tts?.shutdown();tts=null;effects.release();handler.removeCallbacksAndMessages(null)}
 }

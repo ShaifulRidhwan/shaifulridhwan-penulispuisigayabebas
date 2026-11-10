@@ -17,4 +17,4 @@ fetch junit/junit/4.13.2/junit-4.13.2.jar junit.jar 8e495b634469d64fb8acfa3495a0
 fetch org/hamcrest/hamcrest-core/1.3/hamcrest-core-1.3.jar hamcrest.jar 66fdef91e9739348df7a096aa384a5685f4e875584cce89386a7a47251c4d8e9
 mapfile -t sources < <(rg --files "$module_dir/src" -g '*.java')
 java -jar "$cache_dir/ecj.jar" -17 -nowarn -cp "$cache_dir/commons.jar:$cache_dir/junit.jar:$cache_dir/hamcrest.jar" -d "$cache_dir/classes" "${sources[@]}"
-java -cp "$cache_dir/classes:$cache_dir/*" org.junit.runner.JUnitCore my.aksara.engine.chess.ChessSessionTest my.aksara.engine.chess.UciEngineTest
+java -cp "$cache_dir/classes:$cache_dir/*" org.junit.runner.JUnitCore my.aksara.engine.chess.ChessSessionTest my.aksara.engine.chess.UciEngineTest my.aksara.engine.chess.QueenDialogueTest

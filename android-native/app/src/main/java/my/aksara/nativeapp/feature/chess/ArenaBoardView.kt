@@ -95,7 +95,7 @@ class ArenaBoardView(context:Context):ChessBoardView(context) {
         if(t>=1f) active=false
         val focus=if(active && (captured>=0 || check || actor.uppercaseChar()=='Q'))sin(t*PI).toFloat() else 0f
         geometry(focus)
-        ink.shader=aura;c.drawPaint(ink);ink.shader=null
+        ink.alpha=255;ink.shader=aura;c.drawPaint(ink);ink.shader=null
         // Board volume, soft floor shadow and bevel are separate from the playing plane.
         ink.color=0x33000000;c.drawOval(width*.06f,height*.43f,width*.96f,height*.98f,ink)
         quad.rewind();quad.moveTo(destination[6],destination[7]);quad.lineTo(destination[4],destination[5]);quad.lineTo(destination[4],destination[5]+cell*.25f);quad.lineTo(destination[6],destination[7]+cell*.25f);quad.close()
@@ -105,7 +105,7 @@ class ArenaBoardView(context:Context):ChessBoardView(context) {
         ink.color=0xffb8a17b.toInt();c.drawRoundRect(-.11f,-.11f,8.11f,8.11f,.10f,.10f,ink)
         for(s in 0..63) {
             val file=(s%8).toFloat();val row=(7-s/8).toFloat()
-            ink.shader=if((s%8+s/8)%2==1)lightShader else darkShader
+            ink.alpha=255;ink.shader=if((s%8+s/8)%2==1)lightShader else darkShader
             c.drawRect(file,row,file+1,row+1,ink);ink.shader=null
             ink.style=Paint.Style.STROKE;ink.strokeWidth=.012f;ink.color=0x225b5270;c.drawRect(file,row,file+1,row+1,ink);ink.style=Paint.Style.FILL
             if(s==selected || s==lastFrom || s==lastTo) {

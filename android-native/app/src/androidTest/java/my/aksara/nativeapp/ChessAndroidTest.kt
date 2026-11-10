@@ -95,11 +95,13 @@ class ChessAndroidTest {
             var saved="";scenario.onActivity{saved=it.chess.session.save()}
             scenario.recreate()
             scenario.onActivity { it.requestedOrientation=android.content.pm.ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
-            waitFor {var landscape=false;scenario.onActivity{landscape=runCatching{it.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE && it.board.hasRendered}.getOrDefault(false)};landscape}
+            waitFor {var landscape=false;scenario.onActivity{landscape=runCatching{it.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE && it.board.hasRendered && it.board.height==it.window.decorView.height}.getOrDefault(false)};landscape}
+            device.waitForIdle(3000)
             device.takeScreenshot(File(instrumentation.targetContext.getExternalFilesDir(null),"chess-landscape.png"))
             scenario.onActivity {assertEquals(saved,it.chess.session.save());it.requestedOrientation=android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT}
-            waitFor {var portrait=false;scenario.onActivity{portrait=runCatching{it.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_PORTRAIT && it.board.hasRendered}.getOrDefault(false)};portrait}
+            waitFor {var portrait=false;scenario.onActivity{portrait=runCatching{it.resources.configuration.orientation==android.content.res.Configuration.ORIENTATION_PORTRAIT && it.board.hasRendered && it.board.width==it.window.decorView.width}.getOrDefault(false)};portrait}
             scenario.onActivity { assertEquals(saved,it.chess.session.save());it.chess.undo();assertEquals(ChessSession.START,it.chess.session.fen()) }
+            device.waitForIdle(3000)
             device.takeScreenshot(File(instrumentation.targetContext.getExternalFilesDir(null),"chess-android.png"))
             scenario.onActivity { it.chess.resign();assertEquals("0-1",it.chess.session.result());it.chess.restart() }
             } finally {
@@ -109,9 +111,11 @@ class ChessAndroidTest {
                     val report=runCatching {"size=${a.board.width}x${a.board.height} rendered=${a.board.hasRendered} focus=${a.board.hasWindowFocus()} shown=${a.board.isShown} window=${a.board.windowVisibility} engine=${a.chess.engineStatus} error=${a.chess.error} history=${a.chess.session.history()} selected=${a.chess.selected}"}.getOrElse{it.toString()}
                     android.util.Log.i("AksaraChessTest",report)
                     File(dir,"chess-ui-state.txt").writeText(report)
+                    File(dir,"chess-voice-status.txt").writeText(a.voiceDebugState())
                 }
                 File(dir,"chess-gfxinfo.txt").writeText(device.executeShellCommand("dumpsys gfxinfo my.aksara.nativeapp framestats"))
                 File(dir,"chess-meminfo.txt").writeText(device.executeShellCommand("dumpsys meminfo my.aksara.nativeapp"))
+                File(dir,"chess-processes.txt").writeText(device.executeShellCommand("ps -A -o PID,PPID,RSS,NAME"))
             }
         }
     }
@@ -141,7 +145,15 @@ class ChessAndroidTest {
                 scenario.onActivity{assertEquals("1-0",it.chess.session.result());it.chess.replayStep(0)}
                 var replay=-1;waitFor{scenario.onActivity{replay=it.chess.replayIndex};replay==0}
                 scenario.onActivity{it.chess.replayStep(1)};waitFor{scenario.onActivity{replay=it.chess.replayIndex};replay==1}
-                scenario.onActivity{assertEquals(ChessSession.End.CHECKMATE,it.chess.session.end());it.chess.exitReplay();it.chess.restart()}
+                scenario.onActivity{assertEquals(ChessSession.End.CHECKMATE,it.chess.session.end());it.chess.replayStep(0);it.chess.exitReplay()}
+                SystemClock.sleep(300)
+                scenario.onActivity{assertEquals("Pending replay must not resurrect after exit",-1,it.chess.replayIndex);it.chess.restart()}
+                load("rnbqkbnr/pppp1ppp/8/4p3/6P1/5P2/PPPPP2P/RNBQKBNR b KQkq g3 0 2")
+                waitFor{scenario.onActivity{mate=it.chess.session.end()==ChessSession.End.CHECKMATE};mate}
+                scenario.onActivity{assertEquals("0-1",it.chess.session.result());assertEquals("d8h4",it.chess.session.history().last())}
+                SystemClock.sleep(250)
+                device.takeScreenshot(File(instrumentation.targetContext.getExternalFilesDir(null),"chess-dark-queen-mate.png"))
+                scenario.onActivity{it.chess.restart()}
                 ready();move(1,18) // Native knight animation must not block Undo.
                 var moved=false;waitFor{scenario.onActivity{moved=it.chess.session.history().isNotEmpty()};moved}
                 val undo=device.findObject(androidx.test.uiautomator.By.text("Undo"));assertNotNull(undo);undo.click()
@@ -153,6 +165,40 @@ class ChessAndroidTest {
                 device.takeScreenshot(File(dir,"chess-premium-special-rules.png"))
                 File(dir,"chess-premium-gfxinfo.txt").writeText(device.executeShellCommand("dumpsys gfxinfo my.aksara.nativeapp framestats"))
             }
+        }
+    }
+    @Test fun rendererCacheBenchmarkUsesActualAndroidFrames() {
+        ActivityScenario.launch(ChessActivity::class.java).use { scenario ->
+            var arena:my.aksara.nativeapp.feature.chess.ArenaBoardView?=null
+            scenario.onActivity { a ->
+                a.chess.restart()
+                arena=my.aksara.nativeapp.feature.chess.ArenaBoardView(a)
+                a.setContentView(arena)
+            }
+            waitFor {device.findObject(androidx.test.uiautomator.By.text("Got it"))?.click();var ready=false;scenario.onActivity{ready=arena?.hasRendered==true && arena?.hasWindowFocus()==true};ready}
+            // This is a renderer replay fixture, never a substitute for the real-engine match.
+            val fixture=listOf("e2e4","e7e5","g1f3","b8c6","f1c4","g8f6","d2d3","f8c5","e1g1","e8g8","b1c3","d7d6","c1g5","h7h6","g5h4","g7g5")
+            val dir=instrumentation.targetContext.getExternalFilesDir(null)
+            for(disabled in listOf(true,false)) {
+                val position=ChessSession()
+                scenario.onActivity{arena!!.disableShapeCacheForBenchmark=disabled;arena!!.pieces=position.pieces();arena!!.skipAnimation()}
+                SystemClock.sleep(600)
+                device.executeShellCommand("dumpsys gfxinfo my.aksara.nativeapp reset")
+                for((index,move) in fixture.withIndex()) {
+                    val before=position.pieces();position.play(move)
+                    scenario.onActivity {
+                        arena!!.pieces=position.pieces();arena!!.lastMove=move
+                        arena!!.check=position.inCheck();arena!!.checkKing=if(position.turn()==Side.WHITE)"K" else "k"
+                        arena!!.showCommittedMove(before,move,if(disabled)1000+index else 2000+index,false)
+                    }
+                    SystemClock.sleep(560)
+                }
+                val label=if(disabled)"uncached" else "cached"
+                File(dir,"chess-renderer-$label-frames.txt").writeText(device.executeShellCommand("dumpsys gfxinfo my.aksara.nativeapp framestats"))
+                File(dir,"chess-renderer-$label-memory.txt").writeText(device.executeShellCommand("dumpsys meminfo my.aksara.nativeapp"))
+                device.takeScreenshot(File(dir,"chess-renderer-$label.png"))
+            }
+            File(dir,"chess-renderer-benchmark-method.txt").writeText("Android ${android.os.Build.VERSION.SDK_INT}. ${android.os.Build.SUPPORTED_ABIS.joinToString()}. Same original materials, silhouettes, animations and legal 16-ply replay in both passes. Only path cache allocation changes. Debug-only benchmark, not AI move selection or a physical-device FPS guarantee.")
         }
     }
     private fun boardReady(a:ChessActivity)=runCatching{a.board.width>0 && a.board.height>0 && a.board.hasRendered && a.board.hasWindowFocus() && a.chess.engineReady}.getOrDefault(false)

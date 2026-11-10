@@ -40,6 +40,7 @@ import com.github.bhlangonijr.chesslib.Side
     fun analyze() {chess.analyze{a,side,move->voice.explain(chess.session,a,side,move)}}
     BoxWithConstraints(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xff24192f),Color(0xff0d1422),Color(0xff080b13)))).safeDrawingPadding()) {
         val wide=maxWidth>maxHeight
+        val panelWidth=minOf(310.dp,maxWidth*.44f)
         @Composable fun Chip(text:String,action:()->Unit) {
             Box(Modifier.defaultMinSize(minHeight=48.dp).background(Brush.verticalGradient(listOf(Color(0x553e3651),Color(0x33202534))),RoundedCornerShape(14.dp)).border(1.dp,Color(0x446f6284),RoundedCornerShape(14.dp)).clickable(onClick=action).padding(horizontal=13.dp,vertical=10.dp),contentAlignment=Alignment.Center) {AksaraText(text,size=12f,color=Color(0xffeadfc8))}
         }
@@ -63,12 +64,12 @@ import com.github.bhlangonijr.chesslib.Side
                     }
                 }
                 AksaraText(status,Modifier.testTag("chess-status"),size=13f,weight=600,color=Color(0xffd8c6a2))
-                Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
                     Chip(if(chess.paused)"Sambung" else "Jeda",chess::pause)
                     Chip("Undo"){voice.stop();chess.undo()}
                     Chip("Menu",onMenu)
                 }
-                Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
                     if(!ended)Chip(if(chess.analyzing)"Menganalisis…" else "Analisis"){analyze()}
                     else Chip("Replay"){voice.stop();chess.replayStep(0)}
                     Chip("Langkau"){arena?.skipAnimation()}
@@ -78,9 +79,9 @@ import com.github.bhlangonijr.chesslib.Side
                 AksaraText(chess.engineStatus,Modifier.testTag("chess-engine"),size=10f,color=Color(0xffa8bdb8))
                 if(chess.error.isNotBlank()) {AksaraText(chess.error,size=12f,color=Color(0xffffa1ab));Chip("Cuba enjin semula",chess::retry)}
                 if(chess.session.canClaimDraw() && chess.session.turn()==Side.WHITE)Chip("Tuntut seri",chess::claimDraw)
-                if(chess.replayIndex>=0)Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                    Chip("←"){chess.replayStep(chess.replayIndex-1)}
-                    Chip("→"){chess.replayStep(chess.replayIndex+1)}
+                if(chess.replayIndex>=0)Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                    Chip("←"){chess.shiftReplay(-1)}
+                    Chip("→"){chess.shiftReplay(1)}
                     Chip("Keluar replay",chess::exitReplay)
                 }
                 if(voice.visibleSubtitle.isNotEmpty()) {
@@ -114,7 +115,7 @@ import com.github.bhlangonijr.chesslib.Side
                 AksaraText(memory.summary,size=10f,color=Color(0xff968da4))
             }
         }
-        if(wide)Row(Modifier.fillMaxSize()){Board(Modifier.weight(1f).fillMaxHeight());Panel(Modifier.width(310.dp).fillMaxHeight())}
+        if(wide)Row(Modifier.fillMaxSize()){Board(Modifier.weight(1f).fillMaxHeight());Panel(Modifier.width(panelWidth).fillMaxHeight())}
         else Column(Modifier.fillMaxSize()){Board(Modifier.fillMaxWidth().weight(1f));Panel(Modifier.fillMaxWidth().heightIn(max=350.dp))}
     }
 }

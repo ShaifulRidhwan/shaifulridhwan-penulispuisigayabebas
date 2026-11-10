@@ -77,7 +77,7 @@ public final class UciEngine implements AutoCloseable {
         long token=generation.incrementAndGet();
         // Stop any older search before queuing the next position. Its bestmove is drained first.
         try { send("stop"); } catch(IOException e) { return CompletableFuture.failedFuture(e); }
-        return CompletableFuture.supplyAsync(() -> {
+        try { return CompletableFuture.supplyAsync(() -> {
             try {
                 if(token!=generation.get()) throw new CancellationException();
                 init();
@@ -98,7 +98,7 @@ public final class UciEngine implements AutoCloseable {
                 }
             } catch(CancellationException e) { throw e; }
             catch(Exception e) { close(); throw new CompletionException(e); }
-        },worker);
+        },worker); } catch(RejectedExecutionException e) { return CompletableFuture.failedFuture(e); }
     }
     static Analysis parseInfo(String line,Analysis old) {
         String[] p=line.split("\\s+"); int depth=old.depth(); Integer cp=null,mate=null;

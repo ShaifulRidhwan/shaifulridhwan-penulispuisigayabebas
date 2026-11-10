@@ -45,12 +45,14 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
     private var engine: UciEngine?=null
     private var starting=false
     private var epoch=0L
+    private var replayRequest=0L
+    private var desiredReplay=-1
     val engineReady get()=engine!=null && error.isEmpty()
     val display get()=replay?:session
     val pieces: Array<String> get() { version; return display.pieces() }
     val legal: List<String> get() { version; return session.legalMoves() }
     fun enter() { active=true; ensureEngine() }
-    fun leave() { active=false; analyzing=false;reviewing=false; epoch++; engine?.cancel(); thinking=false; save(); onEvent?.invoke("stop",null) }
+    fun leave() { active=false; analyzing=false;if(reviewing)reviewNote="Analisis dihentikan apabila aplikasi tidak aktif.";reviewing=false;replayRequest++;desiredReplay=replayIndex; epoch++; engine?.cancel(); thinking=false; save(); onEvent?.invoke("stop",null) }
     private fun ensureEngine() {
         if(!active || starting) return
         if(engine!=null) { maybeThink(); return }
@@ -129,12 +131,12 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
     }
     fun pause() { analyzing=false; paused=!paused; epoch++; engine?.cancel(); thinking=false; onEvent?.invoke("stop",null); if(!paused) maybeThink(); save() }
     fun undo() {
-        epoch++; engine?.cancel(); thinking=false;analyzing=false;reviewing=false;reviewNote="";reviewLines.clear();analysisNote="";replay=null;replayIndex=-1;animationId++
+        epoch++; engine?.cancel(); thinking=false;analyzing=false;reviewing=false;reviewNote="";reviewLines.clear();analysisNote="";replay=null;replayIndex=-1;replayRequest++;desiredReplay=-1;animationId++
         if(session.undo() && session.turn()==Side.BLACK) session.undo()
         selected=-1; intendedClaim=null; promotions=emptyList(); previousPieces=null; lastMove=session.history().lastOrNull().orEmpty(); lastAnalysis=null; update(); onEvent?.invoke("stop",null)
     }
     fun restart() {
-        epoch++; engine?.cancel(); thinking=false;analyzing=false;reviewing=false;reviewNote="";reviewLines.clear();analysisNote="";replay=null;replayIndex=-1;animationId++; openingAnnounced=true;gameId=java.util.UUID.randomUUID().toString(); session=ChessSession(); paused=false; selected=-1; intendedClaim=null; promotions=emptyList(); previousPieces=null; lastMove=""; lastAnalysis=null; update(); onEvent?.invoke("opening",null)
+        epoch++; engine?.cancel(); thinking=false;analyzing=false;reviewing=false;reviewNote="";reviewLines.clear();analysisNote="";replay=null;replayIndex=-1;replayRequest++;desiredReplay=-1;animationId++; openingAnnounced=true;gameId=java.util.UUID.randomUUID().toString(); session=ChessSession(); paused=false; selected=-1; intendedClaim=null; promotions=emptyList(); previousPieces=null; lastMove=""; lastAnalysis=null; update(); onEvent?.invoke("opening",null)
     }
     fun resign() { if(session.end()==ChessSession.End.PLAYING) { epoch++; engine?.cancel(); thinking=false; session.resign(Side.WHITE); update(); onEvent?.invoke("mate",null) } }
     fun claimDraw() { if(session.turn()==Side.WHITE && session.canClaimDraw()) { epoch++; engine?.cancel(); thinking=false; session.claimDraw(null); update(); onEvent?.invoke("draw",null) } }
@@ -222,16 +224,18 @@ class ChessModel(app: Application) : AndroidViewModel(app) {
         if(session.end()==ChessSession.End.PLAYING)return
         selected=-1
         val moves=session.history();val index=target.coerceIn(0,moves.size)
+        val request=++replayRequest;desiredReplay=index
         val fen=session.initialFen();val rev=session.revision();val old=display.pieces();val previous=replayIndex
         viewModelScope.launch {
-            val position=withContext(Dispatchers.Default) {ChessSession(fen).apply{moves.take(index).forEach{play(it)}}}
-            if(session.revision()!=rev)return@launch
+            val position=withContext(Dispatchers.Default) {ChessSession(fen).apply{moves.take(index).forEach{ensureActive();play(it)}}}
+            if(session.revision()!=rev || request!=replayRequest)return@launch
             replay=position;replayIndex=index
             previousPieces=if(previous>=0 && index==previous+1)old else null
             lastMove=if(index==0)"" else moves[index-1];animationStartedAt=android.os.SystemClock.uptimeMillis();animationId++;version++
         }
     }
-    fun exitReplay() {replay=null;replayIndex=-1;previousPieces=null;lastMove=session.history().lastOrNull().orEmpty();animationId++;version++}
+    fun shiftReplay(delta:Int){replayStep((if(desiredReplay>=0)desiredReplay else maxOf(0,replayIndex))+delta)}
+    fun exitReplay() {replayRequest++;desiredReplay=-1;replay=null;replayIndex=-1;previousPieces=null;lastMove=session.history().lastOrNull().orEmpty();animationId++;version++}
     private fun update() { version++; save() }
     fun save() { prefs.edit().putString("session",session.save()).putString("game_id",gameId).apply() }
     fun loadForTest(fen:String) {check(my.aksara.nativeapp.BuildConfig.DEBUG);epoch++;engine?.cancel();thinking=false;analyzing=false;reviewing=false;replay=null;replayIndex=-1;session=ChessSession(fen);selected=-1;intendedClaim=null;promotions=emptyList();previousPieces=null;lastMove="";lastAnalysis=null;animationId++;update();maybeThink()}

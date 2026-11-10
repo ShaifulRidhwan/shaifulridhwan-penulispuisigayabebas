@@ -43,6 +43,7 @@ class ChessActivity:ComponentActivity() {
     lateinit var board:ChessBoardView; private set
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
+        volumeControlStream=android.media.AudioManager.STREAM_MUSIC
         window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         WindowCompat.setDecorFitsSystemWindows(window,false)
         WindowInsetsControllerCompat(window,window.decorView).apply {
@@ -121,6 +122,7 @@ class ChessActivity:ComponentActivity() {
         queen.stop();listening=true;interactionStatus="Mendengar Bahasa Melayu · pemprosesan pada peranti"
         runCatching{recognizer?.startListening(Intent(android.speech.RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE,"ms-MY").putExtra(android.speech.RecognizerIntent.EXTRA_LANGUAGE_MODEL,android.speech.RecognizerIntent.LANGUAGE_MODEL_FREE_FORM).putExtra(android.speech.RecognizerIntent.EXTRA_PARTIAL_RESULTS,false))}.onFailure{listening=false;interactionStatus="Mikrofon tidak dapat dimulakan."}
     }
+    fun voiceDebugState():String=if(::queen.isInitialized)"status=${queen.status}; speaking=${queen.speaking}; mode=${queen.mode}; subtitle=${queen.subtitle}" else "not_initialized"
     private fun explainLast() {
         val analysis=chess.lastAnalysis
         if(analysis==null || chess.session.turn()!=Side.WHITE){queen.notice("Tiada analisis langkah terakhir yang disahkan dalam sesi ini. Aku boleh menilai kedudukan semasa.");return}
