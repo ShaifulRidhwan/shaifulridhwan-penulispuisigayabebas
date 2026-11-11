@@ -17,12 +17,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.delay
 import my.aksara.nativeapp.core.design.*
 import org.maplibre.android.MapLibre
 import org.maplibre.android.annotations.MarkerOptions
@@ -50,12 +53,12 @@ internal object TodayMapConfig {
  * No request happens until location has been granted and its page becomes active.
  */
 @Composable internal fun TodayMiniMap(
-    location:Location?,city:String?,active:Boolean,modifier:Modifier,onClick:()->Unit
+    location:Location?,city:String?,active:Boolean,retryNonce:Int,modifier:Modifier,onClick:()->Unit
 ) {
     val context=LocalContext.current
-    var bitmap by remember(location?.latitude,location?.longitude) { mutableStateOf<Bitmap?>(null) }
-    var failed by remember(location?.latitude,location?.longitude) { mutableStateOf(false) }
-    DisposableEffect(location?.latitude,location?.longitude,active) {
+    var bitmap by remember(location?.latitude,location?.longitude,retryNonce) { mutableStateOf<Bitmap?>(null) }
+    var failed by remember(location?.latitude,location?.longitude,retryNonce) { mutableStateOf(false) }
+    DisposableEffect(location?.latitude,location?.longitude,active,retryNonce) {
         if(!active || location==null) return@DisposableEffect onDispose {}
         val snap=runCatching {
             MapLibre.getInstance(context.applicationContext)
@@ -71,7 +74,8 @@ internal object TodayMapConfig {
         else snap.start({ result -> bitmap=result.bitmap },{ _ -> failed=true })
         onDispose { snap?.cancel() }
     }
-    Box(modifier.clip(RoundedCornerShape(16.dp)).clickable(onClick=onClick)) {
+    Box(modifier.clip(RoundedCornerShape(16.dp))
+        .semantics { contentDescription="Buka peta lokasi" }.clickable(onClick=onClick)) {
         if(bitmap!=null)Image(bitmap!!.asImageBitmap(),contentDescription="Pratonton peta setempat",
             modifier=Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
         else Box(Modifier.fillMaxSize().background(Color(0xFF152535)),
@@ -158,6 +162,10 @@ internal object TodayMapConfig {
             }
         }
     }
+    LaunchedEffect(mapView) {
+        delay(12_000L)
+        if(!mapReady)error="Peta tidak dapat dimuatkan. Periksa sambungan dan cuba buka semula."
+    }
     LaunchedEffect(focus) {
         focus?.let { point ->
             mapView.getMapAsync { map ->
@@ -189,12 +197,13 @@ internal object TodayMapConfig {
                         focus=LatLng(location.latitude,location.longitude)
                     },Modifier.weight(1f),height=38.dp,size=10.5f)
                     AksaraButton("Navigasi luar",{
-                        val point=destination ?: LatLng(location.latitude,location.longitude)
+                        val point=destination ?: return@AksaraButton
                         runCatching {
                             context.startActivity(Intent(Intent.ACTION_VIEW,
                                 TodayMapConfig.navigationUri(point.latitude,point.longitude)))
                         }.onFailure { error="Tiada aplikasi/pelayar navigasi tersedia." }
-                    },Modifier.weight(1f),height=38.dp,size=10.5f)
+                    },Modifier.weight(1f),height=38.dp,size=10.5f,
+                        enabled=destination!=null)
                 }
                 AksaraText("Navigasi dibuka melalui aplikasi luar. Laluan/ETA dan trafik langsung tidak disediakan oleh Aksara.",
                     size=9.5f,line=14f,color=AksaraColors.muted)
