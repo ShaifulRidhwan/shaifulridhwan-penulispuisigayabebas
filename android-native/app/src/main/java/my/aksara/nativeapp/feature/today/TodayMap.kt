@@ -15,6 +15,7 @@ import android.graphics.Bitmap
 import android.location.Location
 import android.net.Uri
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -358,7 +359,7 @@ internal object TodayMapConfig {
                     AksaraGlassSurface(Modifier.fillMaxWidth().height(39.dp),radius=12.dp) {
                         BasicTextField(trafficKey,{trafficKey=it.take(128)},
                             Modifier.fillMaxSize().padding(horizontal=10.dp,vertical=9.dp),
-                            singleLine=true,textStyle=AksaraTypography.style(11f,16f),
+                            singleLine=true,visualTransformation=PasswordVisualTransformation(),textStyle=AksaraTypography.style(11f,16f),
                             cursorBrush=SolidColor(AksaraColors.gold),
                             decorationBox={inner->Box {
                                 if(trafficKey.isBlank())AksaraText("Masukkan TomTom API key (tidak disimpan)",
