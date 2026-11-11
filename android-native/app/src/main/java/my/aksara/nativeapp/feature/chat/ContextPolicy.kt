@@ -81,8 +81,11 @@ object ContextPolicy {
             if(rows[i].role=="user" && i+1<recentStart && rows[i+1].role=="assistant")
                 include(i+1)
         }
-        // Backend boundedHistory allows 24 messages at most.
-        return rows.filterIndexed { i,_ -> i in chosen }
+        // Never send an orphan assistant response as the first history turn.
+        // This can happen when the character budget drops its paired user prompt.
+        val selected = rows.filterIndexed { i,_ -> i in chosen }
+        val firstUser = selected.indexOfFirst { it.role == "user" }
+        return if (firstUser < 0) emptyList() else selected.drop(firstUser)
     }
     fun summaryWindow(size:Int,summarizedThrough:Int):IntRange? {
         val start=summarizedThrough.coerceIn(0,size)
