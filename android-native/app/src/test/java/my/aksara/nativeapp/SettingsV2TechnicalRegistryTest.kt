@@ -1,6 +1,7 @@
 package my.aksara.nativeapp
 
 import my.aksara.nativeapp.feature.chat.AksaraTechRegistry
+import my.aksara.nativeapp.feature.chat.SettingsCategoryIcons
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -21,7 +22,15 @@ class SettingsV2TechnicalRegistryTest {
             assertTrue("Missing caveat: "+m.id,m.caveat.isNotBlank())
         }
     }
-    @Test fun usesLockedEnglishNavigationHeadings() {
+    @Test fun diagnosticsExistsOnlyInsideAdvancedCatalogue() {
+        assertFalse(SettingsCategoryIcons.containsKey("Sistem & Diagnostik"))
+        assertEquals(5, SettingsCategoryIcons.size)
+        assertTrue(AksaraTechRegistry.groups.any { it.first == AksaraTechRegistry.DIAGNOSTICS })
+        assertTrue(AksaraTechRegistry.modules.any {
+            it.group == AksaraTechRegistry.DIAGNOSTICS && it.id == "metrics"
+        })
+    }
+        @Test fun usesLockedEnglishNavigationHeadings() {
         assertEquals(listOf(
             "System Architecture",
             "Capabilities & Integrations",
