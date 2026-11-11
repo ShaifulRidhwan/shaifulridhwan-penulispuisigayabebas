@@ -81,11 +81,10 @@ object ContextPolicy {
             if(rows[i].role=="user" && i+1<recentStart && rows[i+1].role=="assistant")
                 include(i+1)
         }
-        // Never send an orphan assistant response as the first history turn.
-        // This can happen when the character budget drops its paired user prompt.
-        val selected = rows.filterIndexed { i,_ -> i in chosen }
-        val firstUser = selected.indexOfFirst { it.role == "user" }
-        return if (firstUser < 0) emptyList() else selected.drop(firstUser)
+        // Keep retrieved older assistant option lists even when the initiating user
+        // turn falls outside the bounded history. Dropping everything before the
+        // first selected user silently loses the numbered choice being referenced.
+        return rows.filterIndexed { i,_ -> i in chosen }
     }
     fun summaryWindow(size:Int,summarizedThrough:Int):IntRange? {
         val start=summarizedThrough.coerceIn(0,size)
