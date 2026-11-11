@@ -439,7 +439,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                     }
                 }
                 Box(Modifier.weight(1f).padding(top=viewportHeight*.011f)) {
-                    AksaraGlassSurface(Modifier.fillMaxSize().testTagCompat("conversation"),radius=22.dp,blur=18.dp,saturation=1.06f,
+                    AksaraGlassSurface(Modifier.fillMaxSize().testTagCompat("conversation"),radius=22.dp,blur=.5.dp,saturation=1.06f,
                         brush=Brush.linearGradient(listOf(Color(15,17,25,51),Color(10,14,25,33),Color(7,10,18,56))),border=Color.Transparent) {
                         Column(Modifier.fillMaxSize().padding(1.dp)) {
                             BoxWithConstraints(Modifier.fillMaxWidth().height(58.dp).testTagCompat("conversation-head")) {
