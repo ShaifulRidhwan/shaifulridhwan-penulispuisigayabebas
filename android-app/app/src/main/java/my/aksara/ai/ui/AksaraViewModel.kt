@@ -337,7 +337,9 @@ class AksaraViewModel(application: Application) : AndroidViewModel(application) 
             else messages.lastIndex
         if (lastUserIndex < 0 || messages[lastUserIndex].role != "user") return false
         val question = messages[lastUserIndex].content
-        // Keep the original user turn if a retry cannot be submitted.
+        // The existing user turn remains visible until a new request is accepted.
+        // Retry is only possible while the request lifecycle is idle.
+        if (question.isBlank() || question.length > 12_000) return false
         if (lastUserIndex != messages.lastIndex) messages.removeAt(messages.lastIndex)
         messages.removeAt(messages.lastIndex)
         updateCurrent()
