@@ -1,5 +1,13 @@
 package my.aksara.nativeapp.feature.chat
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.BatteryManager
+import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,9 +16,11 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import my.aksara.nativeapp.core.design.*
+import my.aksara.nativeapp.feature.tools.MetricsContent
 
 /**
  * Settings V2: a source-grounded reference catalogue, never a hidden switch panel.
@@ -90,7 +100,7 @@ internal object AksaraTechRegistry {
         AksaraTechModule("metrics", DIAGNOSTICS, "Performance & Diagnostics", "Heap, battery, request counts",
             "Paparan proses Android, status rangkaian dan metrik aplikasi setempat.",
             listOf("Runtime", "Metrics snapshot", "UI report"),
-            listOf("feature/chat/AksaraSettings.kt", "feature/tools/NativeToolsContent.kt"),
+            listOf("feature/chat/AksaraAdvancedSettings.kt", "feature/tools/NativeToolsContent.kt"),
             "Heap bukan jumlah RAM. Ujian thermal, bateri dan Bluetooth perlu peranti sebenar.")
     )
 }
@@ -98,6 +108,8 @@ internal object AksaraTechRegistry {
 @Composable internal fun AksaraAdvancedSettings(state: ChatState, onBack: () -> Unit, onRefresh: () -> Unit) {
     var group by rememberSaveable { mutableStateOf("") }
     var moduleId by rememberSaveable { mutableStateOf("") }
+    var showPerformance by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
     val selected = AksaraTechRegistry.modules.firstOrNull { it.id == moduleId }
     BackHandler {
         when {
@@ -147,12 +159,39 @@ internal object AksaraTechRegistry {
                     AdvancedCard("brain",module.title,module.subtitle){moduleId=module.id}
                 }
                 if(group==AksaraTechRegistry.DIAGNOSTICS) {
+                    // Single owner for the former Settings > Sistem & Diagnostik tools.
+                    // These are real local metrics, not a claimed live provider test.
+                    val runtime = Runtime.getRuntime()
+                    val usedHeapMb = (runtime.totalMemory()-runtime.freeMemory())/1048576L
+                    val battery = remember(context) { context.getSystemService(BatteryManager::class.java) }
+                    val power = remember(context) { context.getSystemService(PowerManager::class.java) }
+                    val batteryLevel = battery?.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                        ?.takeIf { it in 0..100 }?.let { it.toString()+"%" } ?: "Tidak tersedia"
                     AdvancedHeading("Current Runtime Snapshot")
                     AdvancedFact("Context",state.summaryStatus)
-                    AdvancedFact("Completed",state.completedRequests.toString())
-                    AdvancedFact("Errors",state.failedRequests.toString())
+                    AdvancedFact("RAM heap digunakan",usedHeapMb.toString()+" MB")
+                    AdvancedFact("Bateri",batteryLevel)
+                    AdvancedFact("Penjimatan kuasa",if(power?.isPowerSaveMode==true)"Aktif" else "OFF")
+                    AdvancedFact("Respons berjaya (sesi aplikasi)",state.completedRequests.toString())
+                    AdvancedFact("Ralat request (sesi aplikasi)",state.failedRequests.toString())
+                    AdvancedFact("Penyedia disahkan Online",state.providers.count{it.second=="online"}.toString())
                     state.providers.forEach { (provider,status) -> AdvancedFact(provider,status) }
                     AksaraText("Snapshot terakhir, bukan pemeriksaan live untuk setiap model.",
+                        size=10f,line=15f,color=AksaraColors.muted)
+                    AksaraButton(if(showPerformance)"Tutup Prestasi A.I." else "Prestasi A.I.",
+                        {showPerformance=!showPerformance},Modifier.fillMaxWidth(),height=37.dp,size=11f)
+                    if(showPerformance) MetricsContent(state,onRefresh)
+                    AdvancedHeading("Permission Manager")
+                    val micGranted = context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED
+                    val bluetoothGranted = Build.VERSION.SDK_INT<Build.VERSION_CODES.S ||
+                        context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)==PackageManager.PERMISSION_GRANTED
+                    AdvancedFact("Mikrofon",if(micGranted)"Dibenarkan" else "Belum dibenarkan")
+                    AdvancedFact("Bluetooth",if(bluetoothGranted)"Dibenarkan / tidak perlu" else "Belum dibenarkan")
+                    AksaraButton("Buka kebenaran Android",{
+                        context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                            .setData(Uri.parse("package:"+context.packageName)))
+                    },Modifier.fillMaxWidth(),height=36.dp,size=10.5f)
+                    AksaraText("Log ringkas hanya bilangan dan status, bukan teks prompt. Ujian model sebenar, bateri, haba dan Bluetooth fizikal perlu QA pada peranti.",
                         size=10f,line=15f,color=AksaraColors.muted)
                     AksaraButton("Refresh Provider Health",onRefresh,Modifier.fillMaxWidth(),
                         height=35.dp,size=10.5f)
