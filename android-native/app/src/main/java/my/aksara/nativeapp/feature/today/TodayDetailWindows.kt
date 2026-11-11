@@ -96,7 +96,8 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
     kind:String,onClose:()->Unit,clock:java.time.ZonedDateTime,
     weather:TodayFeed<TodayWeather>?,prayer:TodayFeed<TodayPrayer>?,
     coins:TodayFeed<List<TodayCoin>>?,github:TodayFeed<TodayCommit>?,
-    location:Location?,city:String?,detailRepo:TodayDetailRepository
+    location:Location?,city:String?,detailRepo:TodayDetailRepository,
+    onNavigate:(String)->Unit={}
 ) {
     var forecast by remember(kind,location?.latitude,location?.longitude) {
         mutableStateOf<TodayFeed<TodayForecast>?>(null)
@@ -146,7 +147,8 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
                     verticalArrangement=Arrangement.spacedBy(10.dp)) {
                     when(kind) {
                         "clock" -> ClockCalendarDetail(clock,prayer?.value?.hijri,location)
-                        "weather" -> WeatherDetail(weather,forecast,city,location!=null)
+                        "weather" -> WeatherDetail(weather,forecast,city,location!=null,
+                            onOpenMap={ onNavigate("map") })
                         "prayer" -> PrayerDetail(prayer,monthly)
                         "crypto" -> CryptoDetail(coins,market)
                         "development" -> DevelopmentDetail(github,dev)
@@ -304,7 +306,7 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
 
 @Composable private fun WeatherDetail(
     current:TodayFeed<TodayWeather>?,forecast:TodayFeed<TodayForecast>?,
-    city:String?,hasLocation:Boolean
+    city:String?,hasLocation:Boolean,onOpenMap:()->Unit
 ) {
     GlassSection("Cuaca setempat") {
         AksaraText(city ?: "Nama kawasan tidak tersedia",size=13f,weight=650)
@@ -314,6 +316,10 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
             current.value.rainChance?.let { WindowLine("Potensi hujan",it.toString()+"%") }
         } else DetailNote(if(!hasLocation)"Lokasi belum dibenarkan." else "Bacaan semasa belum tersedia.")
         DetailNote("Sumber: Open-Meteo. Ramalan, bukan amaran rasmi METMalaysia.")
+        if(hasLocation) {
+            AksaraButton("Buka peta & navigasi",onOpenMap,
+                Modifier.fillMaxWidth(),icon="location",height=38.dp,size=11f)
+        }
     }
     val data=forecast?.value
     if(data==null) {
