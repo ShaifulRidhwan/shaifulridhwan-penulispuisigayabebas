@@ -1,0 +1,36 @@
+name: AKSARA P0-P3 Intelligence and Reliability Gate
+on:
+  pull_request:
+    paths:
+      - 'netlify/functions/aksara-context-*'
+      - 'netlify/functions/aksara-provider-router.js'
+      - 'netlify/functions/aksara-circuit-breaker-v7.js'
+      - 'tests/aksara-p0-p3-quality.test.cjs'
+      - 'scripts/aksara-p0-p3-performance-gate.cjs'
+      - 'android-native/**'
+      - 'docs/android-rebuild/**'
+      - '.github/workflows/aksara-p0-p3-quality.yml'
+  push:
+    branches: ['rebuild/aksara-android-native-v1']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: P0-P3 deterministic tests, not live model quality proof
+        run: node --test tests/aksara-p0-p3-quality.test.cjs
+      - name: Existing Web Brain regression suite
+        run: npm run test:aksara-platform
+      - name: Physical performance evidence status
+        run: node scripts/aksara-p0-p3-performance-gate.cjs
+      - name: Android feature preservation contracts
+        run: python3 android-native/ci/performance-contracts.py
