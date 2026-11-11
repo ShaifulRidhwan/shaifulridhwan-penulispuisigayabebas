@@ -243,3 +243,50 @@ jobs:
           path: |
             docs/android-rebuild/visual-comparison/
             android-native/app/build/reports/
+
+  today-v2-preview-apk:
+    # A direct APK, with exact source SHA, for physical-device UI touch-up before merge.
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.number == 308 &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      needs.build.result == 'success' &&
+      needs.backend-smoke.result == 'success' &&
+      needs.game-logic.result == 'success' &&
+      needs.web-audit.result == 'success'
+    needs: [build, backend-smoke, game-logic, web-audit]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: aksara-native-installable-apk
+          path: preview-pr308
+      - name: Publish SHA-locked preview APK (not ZIP)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          test -s preview-pr308/app-debug.apk
+          short="${HEAD_SHA:0:8}"
+          tag="aksara-today-v2-pr308-$short"
+          file="AKSARA-TODAY-V2-PR308-$short.apk"
+          cp preview-pr308/app-debug.apk "preview-pr308/$file"
+          (cd preview-pr308 && sha256sum "$file" > SHA256SUMS)
+          if gh release view "$tag" -R "${{ github.repository }}" >/dev/null 2>&1; then
+            gh release upload "$tag" "preview-pr308/$file" preview-pr308/SHA256SUMS -R "${{ github.repository }}" --clobber
+          else
+            gh release create "$tag" "preview-pr308/$file" preview-pr308/SHA256SUMS \
+              -R "${{ github.repository }}" --target "$HEAD_SHA" --prerelease \
+              --title "AKSARA TODAY V2 PR308 test APK $short" \
+              --notes "Experimental unmerged PR #308 test APK from source $HEAD_SHA. Android compilation, unit tests, backend, game and web-audit workflows passed. Physical-device QA and human approval still required; this is not a stable release."
+          fi
+          url="https://github.com/${{ github.repository }}/releases/download/$tag/$file"
+          gh release view "$tag" -R "${{ github.repository }}" --json assets \
+            --jq '.assets[].name' | grep -Fx "$file"
+          echo "### PR #308 direct test APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "$url" >> "$GITHUB_STEP_SUMMARY"
+          cat preview-pr308/SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
