@@ -1,5 +1,6 @@
 package my.aksara.nativeapp.feature.chat
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -98,6 +99,13 @@ internal object AksaraTechRegistry {
     var group by rememberSaveable { mutableStateOf("") }
     var moduleId by rememberSaveable { mutableStateOf("") }
     val selected = AksaraTechRegistry.modules.firstOrNull { it.id == moduleId }
+    BackHandler {
+        when {
+            selected != null -> moduleId = ""
+            group.isNotBlank() -> group = ""
+            else -> onBack()
+        }
+    }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         AksaraButton("‹  " + when {
             selected != null -> selected.group
