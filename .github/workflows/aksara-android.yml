@@ -2,7 +2,7 @@ name: AKSARA Android Debug APK
 
 on:
   push:
-    branches: [aksara-android]
+    branches: [aksara-android, fix/pr318-chat-engine-reliability]
     paths:
       - 'android-app/**'
       - '.github/workflows/aksara-android.yml'
