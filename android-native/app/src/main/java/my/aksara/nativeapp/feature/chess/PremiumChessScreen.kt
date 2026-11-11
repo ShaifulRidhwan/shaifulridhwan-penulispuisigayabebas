@@ -24,6 +24,7 @@ import com.github.bhlangonijr.chesslib.Side
     speed:Float,coordinates:Boolean
 ) {
     var showDetails by remember { mutableStateOf(false) }
+    var detailTab by remember { mutableStateOf(0) }
     val tick=chess.version
     var arena by remember {mutableStateOf<ArenaBoardView?>(null)}
     val game=chess.display
@@ -36,7 +37,7 @@ import com.github.bhlangonijr.chesslib.Side
         chess.paused -> "Permainan dijeda"
         chess.thinking -> "Gelap sedang berfikir…"
         game.inCheck() -> "CHECK · giliran ${if(game.turn()==Side.WHITE)"Cahaya" else "Gelap"}"
-        else -> "Giliran Cahaya · pilih langkahmu"
+        else -> if(game.turn()==Side.WHITE) "Giliran Cahaya · pilih langkahmu" else "Giliran Gelap · Ratu Gelap berfikir"
     }
     fun analyze() {chess.analyze{a,side,move->voice.explain(chess.session,a,side,move)}}
     BoxWithConstraints(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xff24192f),Color(0xff0d1422),Color(0xff080b13)))).safeDrawingPadding()) {
@@ -66,12 +67,18 @@ import com.github.bhlangonijr.chesslib.Side
                 }
                 AksaraText(status,Modifier.testTag("chess-status"),size=13f,weight=600,color=Color(0xffd8c6a2))
                 Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                    Chip(if(chess.paused)"Sambung" else "Jeda",chess::pause)
+                    Chip(if(chess.paused)"Resume" else "Pause",chess::pause)
                     Chip("Undo"){voice.stop();chess.undo()}
                     Chip("Menu",onMenu)
                     Chip(if(showDetails)"Ringkas" else "Butiran"){showDetails=!showDetails}
                 }
                 if(showDetails) {
+                Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                    Chip(if(detailTab==0)"● Langkah" else "Langkah"){detailTab=0}
+                    Chip(if(detailTab==1)"● Analisis" else "Analisis"){detailTab=1}
+                    Chip(if(detailTab==2)"● Ratu Gelap" else "Ratu Gelap"){detailTab=2}
+                }
+                if(detailTab==2) {
                 if(voice.visibleSubtitle.isNotEmpty()) {
                     Column(Modifier.fillMaxWidth().background(Color(0x443e2d51),RoundedCornerShape(16.dp)).border(1.dp,Color(0x337e6e90),RoundedCornerShape(16.dp)).padding(12.dp)) {
                         AksaraText(if(voice.speaking)"RATU GELAP · BERSUARA" else "RATU GELAP",size=9f,tracking=1.2f,color=Color(0xffc6a3d2))
@@ -79,6 +86,8 @@ import com.github.bhlangonijr.chesslib.Side
                     }
                 }
                 AksaraText(voice.status,size=10f,color=Color(0xff9d95ab))
+                }
+                if(detailTab==1) {
                 Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
                     if(!ended)Chip(if(chess.analyzing)"Menganalisis…" else "Analisis"){analyze()}
                     else Chip("Replay"){voice.stop();chess.replayStep(0)}
@@ -94,6 +103,8 @@ import com.github.bhlangonijr.chesslib.Side
                     Chip("→"){chess.shiftReplay(1)}
                     Chip("Keluar replay",chess::exitReplay)
                 }
+                }
+                if(detailTab==2) {
                 Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.defaultMinSize(minHeight=48.dp).background(Color(0x44382f4b),RoundedCornerShape(13.dp)).pointerInput(Unit){detectTapGestures(onPress={onMicrophoneDown();tryAwaitRelease();onMicrophoneUp()})}.padding(horizontal=12.dp,vertical=12.dp)) {
                         AksaraText(if(listening)"Mendengar…" else "Tahan untuk tanya",size=11f)
@@ -102,6 +113,8 @@ import com.github.bhlangonijr.chesslib.Side
                 }
                 if(interactionStatus.isNotBlank())AksaraText(interactionStatus,size=11f,color=Color(0xffb7a9c6))
                 if(chess.analysisNote.isNotBlank())AksaraText(chess.analysisNote,Modifier.testTag("chess-analysis"),size=11f,color=Color(0xffc4d8d0))
+                }
+                if(detailTab==0) {
                 AksaraText("LANGKAH",size=10f,tracking=1.4f,color=Color(0xffc3a775))
                 val scroll=rememberScrollState()
                 LaunchedEffect(history.size){scroll.animateScrollTo(scroll.maxValue)}
@@ -111,12 +124,13 @@ import com.github.bhlangonijr.chesslib.Side
                 fun fallen(white:Boolean)=captures.filter{it[0].isUpperCase()==white}.groupingBy{it.uppercase()}.eachCount().entries.joinToString(" · "){"${it.key} ×${it.value}"}.ifEmpty{"—"}
                 AksaraText("Gugur · Cahaya: ${fallen(true)}\nGugur · Gelap: ${fallen(false)}",size=11f,color=Color(0xffaaa3b6))
                 }
-                if(ended) {
+                }
+                if(ended && showDetails && detailTab==1) {
                     Chip(if(chess.reviewing)"Batal analisis" else "Analisis selepas permainan"){if(chess.reviewing)chess.cancelReview() else chess.reviewGame()}
                     if(chess.reviewNote.isNotBlank())AksaraText(chess.reviewNote,size=11f,color=Color(0xffc2d1c9))
                     chess.reviewLines.forEach{AksaraText(it,size=10f,color=Color(0xffaaa5b4))}
                 }
-                AksaraText(memory.summary,size=10f,color=Color(0xff968da4))
+                if(showDetails && detailTab==2) AksaraText(memory.summary,size=10f,color=Color(0xff968da4))
             }
         }
         if(wide)Row(Modifier.fillMaxSize()){Board(Modifier.weight(1f).fillMaxHeight());Panel(Modifier.width(panelWidth).fillMaxHeight())}
