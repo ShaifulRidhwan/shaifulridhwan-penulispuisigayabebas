@@ -14,12 +14,12 @@ export default async function(request){
  if(Number(request.headers.get("content-length")||0)>5400000)return fail(413,"Permintaan terlalu besar.");
  const body=await request.text();
  if(new TextEncoder().encode(body).length>5400000)return fail(413,"Permintaan terlalu besar.");
- const abort=new AbortController(),encoder=new TextEncoder();let cancelled=false;
+ const abort=new AbortController(),encoder=new TextEncoder();let cancelled=false,terminal=false;
  const stop=()=>abort.abort();request.signal.addEventListener("abort",stop,{once:true});
  if(request.signal.aborted)stop();
  const stream=new ReadableStream({
   async start(controller){
-   const emit=value=>{if(!cancelled&&!abort.signal.aborted)controller.enqueue(encoder.encode(JSON.stringify(value)+"\n"));};
+   const emit=value=>{if(cancelled||terminal||abort.signal.aborted)return; if(value.type==="done"||value.type==="error")terminal=true; controller.enqueue(encoder.encode(JSON.stringify(value)+"\n"));};
    emit({type:"start",version:1});
    try{
     // Always send a terminal event before the platform's 30-second limit,
