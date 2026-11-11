@@ -104,6 +104,9 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
         mutableStateOf<TodayFeed<List<TodayPrayerDate>>?>(null)
     }
     var dev by remember(kind) { mutableStateOf<TodayDevelopment?>(null) }
+    val marketContext=LocalContext.current
+    val marketRepo=remember(marketContext) { TodayMarketQuotes(marketContext) }
+    var market by remember(kind) { mutableStateOf<TodayMarketResult?>(null) }
     LaunchedEffect(kind,location?.latitude,location?.longitude) {
         if(kind=="weather" && location!=null)
             forecast=detailRepo.forecast(location.latitude,location.longitude)
@@ -114,6 +117,7 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
     }
     LaunchedEffect(kind) {
         if(kind=="development")dev=detailRepo.development()
+        if(kind=="crypto")market=marketRepo.quotes()
     }
     val title=when(kind) {
         "clock"->"Masa & Kalendar"
@@ -143,7 +147,7 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
                         "clock" -> ClockCalendarDetail(clock,prayer?.value?.hijri)
                         "weather" -> WeatherDetail(weather,forecast,city,location!=null)
                         "prayer" -> PrayerDetail(prayer,monthly)
-                        "crypto" -> CryptoDetail(coins)
+                        "crypto" -> CryptoDetail(coins,market)
                         "development" -> DevelopmentDetail(github,dev)
                     }
                 }
@@ -329,7 +333,7 @@ private val reminders=listOf(
     }
 }
 
-@Composable private fun CryptoDetail(coins:TodayFeed<List<TodayCoin>>?) {
+@Composable private fun CryptoDetail(coins:TodayFeed<List<TodayCoin>>?,market:TodayMarketResult?) {
     var search by remember { mutableStateOf("") }
     var onlySc by remember { mutableStateOf(true) }
     GlassSection("Pasaran & semakan Syariah") {
@@ -349,7 +353,7 @@ private val reminders=listOf(
             {onlySc=!onlySc},Modifier.fillMaxWidth(),height=36.dp,size=10.5f)
     }
     val known=TodayShariahReference.listed+TodayShariahReference.unverified
-    // Keep unknown assets explicitly unverified. Only existing three quotes are displayed.
+    // SC status and public market prices are separate independently sourced records.
     val extras=coins?.value.orEmpty().filter { coin -> known.none{it.symbol==coin.symbol} }
         .map { TodayShariahCoin(it.symbol,it.symbol,"") }
     val all=(known+extras).filter {
@@ -359,22 +363,29 @@ private val reminders=listOf(
     GlassSection("Aset digital ("+all.size+")") {
         if(all.isEmpty())DetailNote("Tiada aset sepadan dengan carian.")
         all.forEach { asset ->
-            val quote=coins?.value?.firstOrNull { it.symbol==asset.symbol }
+            val quote=market?.quotes?.get(asset.symbol)
+            val fallback=coins?.value?.firstOrNull { it.symbol==asset.symbol }
+            val usd=quote?.usd ?: fallback?.usd
+            val change=quote?.change24h ?: fallback?.change24h
             Column(verticalArrangement=Arrangement.spacedBy(3.dp)) {
                 Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
                     AksaraText(asset.name+" ("+asset.symbol+")",Modifier.weight(1f),
                         size=11.5f,weight=650)
-                    AksaraText(quote?.let{String.format(Locale.US,"$%.2f",it.usd)}
+                    AksaraText(usd?.let{String.format(Locale.US,
+                        if(it<0.01)"$%.6f" else if(it<1)"$%.4f" else "$%.2f",it)}
                         ?: "Harga tiada",size=10f,color=muted)
                 }
                 DetailNote(TodayShariahReference.status(asset.symbol)+
                     (if(asset.sacDate.isNotBlank())" • SAC "+asset.sacDate else ""))
-                if(quote!=null) DetailNote("24 jam: "+String.format(Locale.US,"%+.2f%%",quote.change24h))
+                if(change!=null) DetailNote("24 jam: "+String.format(Locale.US,"%+.2f%%",change))
+                if(asset.symbol=="MATIC")DetailNote("Token MATIC lama telah beralih kepada POL. Status Syariah POL perlu semakan berasingan; harga POL tidak dipaparkan sebagai MATIC.")
             }
             Spacer(Modifier.height(6.dp))
         }
     }
-    DetailNote("Bukan nasihat pelaburan atau fatwa. Status aset tidak bermakna semua platform, produk leverage atau kaedah dagangan patuh Syariah. Harga hanya bagi aset yang sudah disediakan oleh sumber pasaran sedia ada.")
+    DetailNote("Harga: CoinGecko (berkumpulan), fallback BTC/ETH/SOL: CoinPaprika. "+
+        (if(market?.cached==true)"Paparan data cache; " else "")+
+        "Harga/24j mungkin lewat atau tiada. Bukan nasihat pelaburan atau fatwa. Status aset tidak bermakna semua platform atau produk leverage patuh Syariah.")
 }
 
 @Composable private fun DevelopmentDetail(
