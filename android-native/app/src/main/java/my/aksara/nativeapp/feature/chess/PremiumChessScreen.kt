@@ -45,11 +45,13 @@ import com.github.bhlangonijr.chesslib.Side
     }
     fun analyze() {chess.analyze{a,side,move->voice.explain(chess.session,a,side,move)}}
     BoxWithConstraints(Modifier.fillMaxSize().background(Color(0xff080b13))) {
+        val chessMaxWidth = maxWidth
+        val chessMaxHeight = maxHeight
         Image(painter=painterResource(R.drawable.aksara_duality_v2),contentDescription=null,contentScale=ContentScale.Crop,modifier=Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x66060916),Color(0x99070b19),Color(0xCC080b13)))))
         Column(Modifier.fillMaxSize().safeDrawingPadding()) {
-        val wide=maxWidth>maxHeight
-        val panelWidth=minOf(310.dp,maxWidth*.44f)
+        val wide=chessMaxWidth>chessMaxHeight
+        val panelWidth=minOf(310.dp,chessMaxWidth*.44f)
         @Composable fun Chip(text:String,action:()->Unit) {
             Box(Modifier.defaultMinSize(minHeight=48.dp).background(Brush.verticalGradient(listOf(Color(0x553e3651),Color(0x33202534))),RoundedCornerShape(14.dp)).border(1.dp,Color(0x446f6284),RoundedCornerShape(14.dp)).clickable(onClick=action).padding(horizontal=13.dp,vertical=10.dp),contentAlignment=Alignment.Center) {AksaraText(text,size=12f,color=Color(0xffeadfc8))}
         }
