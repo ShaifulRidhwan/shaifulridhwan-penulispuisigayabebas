@@ -168,8 +168,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var todayDialogVisible by remember { mutableStateOf(false) }
     // Do not recompose the whole pager for each IME animation pixel.
     val imeDensity=LocalDensity.current
-    val keyboardOpen by remember(imeDensity) {
-        derivedStateOf { WindowInsets.ime.getBottom(imeDensity)>0 }
+    // WindowInsets.ime is composable: resolve it before entering derivedStateOf.
+    val pagerImeInsets=WindowInsets.ime
+    val keyboardOpen by remember(imeDensity,pagerImeInsets) {
+        derivedStateOf { pagerImeInsets.getBottom(imeDensity)>0 }
     }
     HorizontalPager(
         state=pagerState,
@@ -287,8 +289,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     // Track only visibility transitions; the keyboard animates its insets every frame.
     // Pixel-by-pixel effect restarts caused expensive repeated LazyColumn scrolling.
     val imeDensity=LocalDensity.current
-    val imeVisible by remember(imeDensity) {
-        derivedStateOf { WindowInsets.ime.getBottom(imeDensity)>0 }
+    val chatImeInsets=WindowInsets.ime
+    val imeVisible by remember(imeDensity,chatImeInsets) {
+        derivedStateOf { chatImeInsets.getBottom(imeDensity)>0 }
     }
     // A single collector owns programmatic scrolling. Dragging suspends following,
     // while composer focus or returning to the bottom explicitly resumes it.
