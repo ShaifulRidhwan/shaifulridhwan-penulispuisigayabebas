@@ -412,19 +412,6 @@ internal object TodayMapConfig {
                         }
                     },Modifier.fillMaxWidth(),height=38.dp,size=11f)
                     if(navigationActive) {
-                            navigationActive=false
-                            navProgress=null
-                        } else if(fineGranted) {
-                            navigationActive=true
-                            liveLocation=null
-                            navigationVoice.speakMalay("Panduan laluan dimulakan.")
-                        } else {
-                            error="Aktifkan lokasi tepat untuk navigasi langsung."
-                            finePrompt.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION,
-                                Manifest.permission.ACCESS_FINE_LOCATION))
-                        }
-                    },Modifier.fillMaxWidth(),height=38.dp,size=11f)
-                    if(navigationActive) {
                         val progress=navProgress
                         AksaraText("GPS langsung • "+(if(session.voiceAvailable)
                             "Suara Melayu aktif" else "Suara Melayu tidak tersedia pada peranti"),
