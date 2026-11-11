@@ -3,6 +3,7 @@ package my.aksara.nativeapp.feature.today
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Looper
@@ -14,6 +15,8 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.location.Location
 import android.net.Uri
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,6 +37,8 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.maplibre.android.annotations.Polyline
@@ -140,6 +145,8 @@ internal object TodayMapConfig {
     var focus by remember { mutableStateOf<LatLng?>(null) }
     var destination by remember { mutableStateOf<LatLng?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var searchTerm by remember { mutableStateOf("") }
+    var searchBusy by remember { mutableStateOf(false) }
     var route by remember { mutableStateOf<TodayRoute?>(null) }
     var routeMode by remember { mutableStateOf("auto") }
     var routeLoading by remember { mutableStateOf(false) }
@@ -317,6 +324,46 @@ internal object TodayMapConfig {
             Column(Modifier.fillMaxWidth().padding(11.dp),
                 verticalArrangement=Arrangement.spacedBy(8.dp)) {
                 AksaraText(city ?: "Lokasi peranti",size=12f,weight=650,color=AksaraColors.gold)
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp),
+                    verticalAlignment=Alignment.CenterVertically) {
+                    AksaraGlassSurface(Modifier.weight(1f).height(41.dp),radius=11.dp) {
+                        BasicTextField(searchTerm,{searchTerm=it.take(90)},
+                            Modifier.fillMaxSize().padding(horizontal=10.dp,vertical=10.dp),
+                            singleLine=true,
+                            textStyle=AksaraTypography.style(11f,16f),
+                            cursorBrush=SolidColor(AksaraColors.gold),
+                            decorationBox={inner->Box {
+                                if(searchTerm.isBlank())AksaraText("Cari tempat atau alamat",
+                                    size=10.5f,color=AksaraColors.muted)
+                                inner()
+                            }})
+                    }
+                    AksaraButton(if(searchBusy)"…" else "Cari",{
+                        val query=searchTerm.trim()
+                        if(query.length>=3 && !searchBusy) {
+                            searchBusy=true
+                            error=null
+                            scope.launch {
+                                val result=withContext(Dispatchers.IO) {
+                                    @Suppress("DEPRECATION")
+                                    runCatching {
+                                        if(!Geocoder.isPresent())null
+                                        else Geocoder(context,Locale("ms","MY"))
+                                            .getFromLocationName(query,1)?.firstOrNull()
+                                    }.getOrNull()
+                                }
+                                if(result==null)error="Tempat tidak ditemui oleh geocoder peranti. Pilih terus pada peta."
+                                else {
+                                    destination=LatLng(result.latitude,result.longitude)
+                                    focus=destination
+                                    route=null
+                                }
+                                searchBusy=false
+                            }
+                        }
+                    },Modifier.width(69.dp),height=41.dp,size=10.5f,
+                        enabled=searchTerm.trim().length>=3 && !searchBusy)
+                }
                 AksaraText(destination?.let{
                     "Destinasi dipilih: "+String.format(Locale.US,"%.5f, %.5f",it.latitude,it.longitude)
                 } ?: "Tekan peta untuk pilih destinasi.",size=10.5f,color=AksaraColors.muted)
