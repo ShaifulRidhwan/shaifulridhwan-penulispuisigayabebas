@@ -160,7 +160,7 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$apk"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" > app/build/outputs/apk/debug/BADGING.txt
           grep -F "native-code:" app/build/outputs/apk/debug/BADGING.txt
-          if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "$GITHUB_HEAD_REF" == feature/aksara-today-* ]]; then
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" && ( "$GITHUB_HEAD_REF" == feature/aksara-today-* || "$GITHUB_HEAD_REF" == feature/pr314-* ) ]]; then
             short="${AKSARA_PREVIEW_HEAD_SHA:0:8}"
             expected="my.aksara.nativeapp.preview.p${AKSARA_PREVIEW_PR_NUMBER}.c${short}"
             grep -F "package: name='$expected'" app/build/outputs/apk/debug/BADGING.txt
