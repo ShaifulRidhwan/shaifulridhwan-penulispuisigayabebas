@@ -55,6 +55,23 @@ data class ChatResponse(
     val disclaimer: String = ""
 )
 
+/**
+ * Shared, deterministic context snapshot for every provider behind the backend router.
+ * A failed assistant turn is never presented to the model as a completed answer.
+ * Keep chronological order and avoid orphan assistant turns at the start of a window.
+ */
+object ConversationContextBuilder {
+    fun select(history: List<ChatTurn>, maxTurns: Int = 20): List<ChatTurn> {
+        val valid = history.filter {
+            it.complete && it.content.isNotBlank() &&
+                (it.role == "user" || it.role == "assistant")
+        }
+        val recent = valid.takeLast(maxTurns.coerceAtLeast(1))
+        val firstUser = recent.indexOfFirst { it.role == "user" }
+        return if (firstUser < 0) emptyList() else recent.drop(firstUser)
+    }
+}
+
 data class ChatMedia(val mimeType: String, val data: String, val name: String)
 data class ChatRequestOptions(
     val summary: String = "",
@@ -176,10 +193,7 @@ class AksaraApi {
         onDelta: suspend (String) -> Unit
     ): ChatResponse = withContext(Dispatchers.IO) {
         val prior = JSONArray()
-        history
-            .filter { it.complete && (it.role == "user" || it.role == "assistant") }
-            .takeLast(20)
-            .forEach { turn ->
+        ConversationContextBuilder.select(history).forEach { turn ->
                 prior.put(
                     JSONObject()
                         .put("role", turn.role)
