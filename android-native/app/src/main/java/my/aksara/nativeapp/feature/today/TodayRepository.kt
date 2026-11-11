@@ -22,7 +22,10 @@ import kotlin.coroutines.resume
 
 // No API credentials, no inference calls, and no app-specific backend changes.
 internal data class TodayFeed<T>(val value:T?,val fromCache:Boolean,val updatedAt:Long?)
-internal data class TodayWeather(val celsius:Double,val code:Int,val windKmh:Double,val rainChance:Int?)
+internal data class TodayWeather(
+    val celsius:Double,val code:Int,val windKmh:Double,val rainChance:Int?,
+    val feelsLike:Double?=null,val humidity:Int?=null
+)
 internal data class TodayPrayer(val zone:String,val hijri:String,val times:List<Pair<String,String>>)
 internal data class TodayCoin(val symbol:String,val usd:Double,val change24h:Double,val updatedAt:String)
 internal data class TodayCommit(
@@ -37,8 +40,12 @@ internal object TodayParsers {
         require(now.has("temperature_2m")) { "Suhu tiada dalam respons cuaca" }
         val rain=root.optJSONObject("daily")?.optJSONArray("precipitation_probability_max")
             ?.takeIf { it.length()>0 && !it.isNull(0) }?.optInt(0)
-        return TodayWeather(now.getDouble("temperature_2m"),now.optInt("weather_code",-1),
-            now.optDouble("wind_speed_10m",0.0),rain)
+        return TodayWeather(
+            now.getDouble("temperature_2m"),now.optInt("weather_code",-1),
+            now.optDouble("wind_speed_10m",0.0),rain,
+            now.optDouble("apparent_temperature",Double.NaN).takeIf { it.isFinite() },
+            now.optInt("relative_humidity_2m",-1).takeIf { it in 0..100 }
+        )
     }
 
     fun prayer(text:String,zone:String):TodayPrayer {
@@ -191,7 +198,7 @@ internal class TodayRepository(context:Context) {
         val lat=String.format(Locale.US,"%.3f",location.latitude)
         val lon=String.format(Locale.US,"%.3f",location.longitude)
         val url="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+
-            "&current=temperature_2m,weather_code,wind_speed_10m"+
+            "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m"+
             "&daily=precipitation_probability_max&timezone=auto&forecast_days=1"
         return cached("weather:"+lat+":"+lon,30L*60_000L,force,TodayParsers::weather) { request(url) }
     }
