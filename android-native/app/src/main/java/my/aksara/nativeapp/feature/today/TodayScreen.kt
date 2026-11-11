@@ -279,7 +279,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                             }
                         }
                         TodayMiniMap(
-                            latestLocation,city,active,
+                            latestLocation,city,active,epoch,
                             Modifier.weight(.40f).fillMaxHeight(),
                             onClick={
                                 if(!permissionLocation) explainLocation()
@@ -357,7 +357,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                 )
             }
             if(showLocationDialog && active) {
-                AksaraGlassModal(onClose={ showLocationDialog=false },preferredHeight=335.dp) {
+                AksaraGlassModal(onClose={ showLocationDialog=false },preferredHeight=365.dp) {
                     Column(Modifier.fillMaxSize().padding(18.dp),
                         verticalArrangement=Arrangement.spacedBy(11.dp)) {
                         Row(verticalAlignment=Alignment.CenterVertically,
@@ -371,9 +371,9 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                                     size=9.5f,color=todayGold)
                             }
                         }
-                        AksaraText("Aksara perlukan lokasi anggaran untuk menunjukkan cuaca setempat, zon waktu solat dan kiraan waktu solat seterusnya.",
+                        AksaraText("Lokasi anggaran diperlukan untuk cuaca, zon solat dan peta. Open-Meteo serta solat.my memproses koordinat untuk data; OpenFreeMap menghantar jubin peta berdasarkan kawasan yang dilihat.",
                             size=12.5f,line=19f)
-                        AksaraText("Android hanya meminta izin selepas kau tekan Benarkan lokasi. Jika ditolak, jam, kripto dan GitHub masih berfungsi. Data ramalan mungkin disimpan sementara dalam cache peranti.",
+                        AksaraText("Android meminta izin hanya selepas kau tekan Benarkan lokasi. Jika ditolak, jam, kripto dan GitHub masih berfungsi. Data mungkin disimpan sementara dalam cache peranti.",
                             size=10.5f,line=17f,color=todayMuted)
                         Spacer(Modifier.weight(1f))
                         Row(Modifier.fillMaxWidth(),
