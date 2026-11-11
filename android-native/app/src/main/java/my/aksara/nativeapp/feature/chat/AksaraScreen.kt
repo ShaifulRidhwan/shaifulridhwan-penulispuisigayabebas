@@ -565,7 +565,10 @@ private val ChatTimestampFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm",j
                 val measure=rememberTextMeasurer();val density=LocalDensity.current
                 val padding=if(ai)26.dp else 24.dp
                 val style=AksaraTypography.style(15f,23.85f).copy(letterSpacing=(-.12).sp)
-                val textSize=measure.measure(AnnotatedString(message.text),style,constraints=Constraints(maxWidth=with(density){(contentWidth-padding).roundToPx()})).size
+                val textSize=remember(message.text,contentWidth,density,style) {
+                    measure.measure(AnnotatedString(message.text),style,
+                        constraints=Constraints(maxWidth=with(density){(contentWidth-padding).roundToPx()})).size
+                }
                 minOf(contentWidth,with(density){textSize.width.toDp()}+padding)
             }
             else->contentWidth

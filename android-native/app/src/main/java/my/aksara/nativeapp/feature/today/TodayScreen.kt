@@ -224,7 +224,10 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
             prayer=null
         }
     }
-    val dateLabel=clock.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy",malay))
+    // Clock ticks should not recreate expensive date/time format patterns.
+    val dateFormatter=remember { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy",malay) }
+    val timeFormatter=remember { DateTimeFormatter.ofPattern("HH:mm") }
+    val dateLabel=remember(clock.toLocalDate()) { clock.format(dateFormatter) }
     val prayerNow=LocalTime.now(malaysiaZone)
     val countdown=nextPrayer(prayer?.value,prayerNow)
     val wallpaperBackdrop=remember { HazeState() }
@@ -263,7 +266,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                     Column(Modifier.fillMaxSize().padding(horizontal=10.dp,vertical=4.dp),
                         horizontalAlignment=Alignment.CenterHorizontally,
                         verticalArrangement=Arrangement.Center) {
-                        AksaraText(clock.format(DateTimeFormatter.ofPattern("HH:mm")),
+                        AksaraText(clock.format(timeFormatter),
                             size=33f,line=37f,weight=650)
                         AksaraText(dateLabel,size=10.5f,line=14f,color=todayMuted)
                     }
