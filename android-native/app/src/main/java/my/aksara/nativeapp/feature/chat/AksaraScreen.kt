@@ -161,7 +161,11 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val pagerState = rememberPagerState(initialPage=0,pageCount={2})
     var overlayVisible by remember { mutableStateOf(false) }
     var todayDialogVisible by remember { mutableStateOf(false) }
-    val keyboardOpen=WindowInsets.ime.getBottom(LocalDensity.current)>0
+    // Do not recompose the whole pager for each IME animation pixel.
+    val imeDensity=LocalDensity.current
+    val keyboardOpen by remember(imeDensity) {
+        derivedStateOf { WindowInsets.ime.getBottom(imeDensity)>0 }
+    }
     HorizontalPager(
         state=pagerState,
         modifier=Modifier.fillMaxSize(),
@@ -170,7 +174,14 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     ) { page ->
       if(page==1) {
         TodayScreen(active=pagerState.currentPage==1,onBack={
-            scope.launch { pagerState.animateScrollToPage(0) }
+            scope.launch {
+                pagerState.animateScrollToPage(
+                    0,animationSpec=androidx.compose.animation.core.spring(
+                        dampingRatio=.85f,
+                        stiffness=androidx.compose.animation.core.Spring.StiffnessMedium
+                    )
+                )
+            }
         },onDialogVisibilityChange={todayDialogVisible=it})
       } else {
         AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
@@ -268,7 +279,12 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val focus = LocalFocusManager.current
     val list = rememberLazyListState()
     var autoFollow by remember { mutableStateOf(true) }
-    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+    // Track only visibility transitions; the keyboard animates its insets every frame.
+    // Pixel-by-pixel effect restarts caused expensive repeated LazyColumn scrolling.
+    val imeDensity=LocalDensity.current
+    val imeVisible by remember(imeDensity) {
+        derivedStateOf { WindowInsets.ime.getBottom(imeDensity)>0 }
+    }
     // A single collector owns programmatic scrolling. Dragging suspends following,
     // while composer focus or returning to the bottom explicitly resumes it.
     LaunchedEffect(list) {
@@ -289,7 +305,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         }
     }
     LaunchedEffect(state.messages.size, state.messages.lastOrNull()?.text?.length,
-        state.busy, imeBottom, autoFollow) {
+        state.busy, imeVisible, autoFollow) {
         if (autoFollow && state.messages.isNotEmpty()) {
             withFrameNanos { }
             val last = list.layoutInfo.totalItemsCount - 1
@@ -329,11 +345,15 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         overlay = null
     }
     CompositionLocalProvider(LocalBackdrop provides backdrop) {
-        BoxWithConstraints(Modifier.fillMaxSize().imePadding().testTagCompat("app")) {
+        // Keep the cinematic wallpaper and backdrop at a stable viewport size.
+        // Only the actual content (and open overlays) follows the keyboard inset.
+        BoxWithConstraints(Modifier.fillMaxSize().testTagCompat("app")) {
             val viewportHeight = maxHeight
             Box(Modifier.fillMaxSize().hazeSource(scene)) {
             ChatWallpaper(Modifier.fillMaxSize().hazeSource(backdrop))
-            Column(Modifier.fillMaxSize().safeDrawingPadding().padding(start=margins.horizontal,end=margins.horizontal,top=margins.top,bottom=margins.bottom)) {
+            Column(Modifier.fillMaxSize().imePadding().safeDrawingPadding()
+                .padding(start=margins.horizontal,end=margins.horizontal,
+                    top=margins.top,bottom=margins.bottom)) {
                 Spacer(Modifier.height(5.dp))
                 AksaraGlassSurface(Modifier.fillMaxWidth().height(58.dp).testTagCompat("topbar"), radius=20.dp, blur=12.dp,
                     brush=cssGradient(115f,listOf(Color(8,14,24,102),Color(17,26,40,51))),saturation=1.15f, border=Color.Transparent) {
@@ -494,6 +514,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
             }
             if(overlay!=null) CompositionLocalProvider(LocalBackdrop provides scene) {
+                Box(Modifier.fillMaxSize().imePadding()) {
                 AksaraOverlay(overlay!!, state, onClose={
                     if(overlay=="voice") voiceIndicator=VoiceLinkState.IDLE
                     overlay=null
@@ -504,6 +525,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                     onEraseLocal=onEraseLocal,
                     onJumpToMessage={id->pendingJumpId=id},
                     onVoiceState={phase,ready->voiceIndicator=VoiceLinkState.from(phase,ready)})
+                }
             }
         }
     }
