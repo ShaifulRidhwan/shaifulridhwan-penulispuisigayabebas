@@ -5,8 +5,11 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- TODAY requests location only when users enter the panel. -->
+    <!-- TODAY requests coarse/fine location + read-only calendar together after consent. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Agenda is optional: read-only and requested from the Clock window with explanation. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
     <queries>
         <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
         <intent><action android:name="android.speech.RecognitionService" /></intent>

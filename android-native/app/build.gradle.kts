@@ -55,6 +55,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("dev.chrisbanes.haze:haze:1.5.4")
+    // Native OpenGL MapLibre for broad Android GPU compatibility; OpenFreeMap needs no paid key.
+    implementation("org.maplibre.gl:android-sdk-opengl:13.7.1")
     implementation("io.noties.markwon:core:4.6.2")
     implementation("io.noties.markwon:ext-tables:4.6.2")
     testImplementation("junit:junit:4.13.2")
