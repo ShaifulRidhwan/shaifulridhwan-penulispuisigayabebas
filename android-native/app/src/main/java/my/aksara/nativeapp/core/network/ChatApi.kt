@@ -27,6 +27,7 @@ class ApiFailure(val status: Int, message: String, val retryAfter: String? = nul
 object Ndjson {
     fun parse(line: String): ChatEvent? {
         if (line.isBlank()) return null
+        if (line.length > 500_000) throw IOException("Bingkai respons terlalu besar.")
         val item = try { JSONObject(line) } catch (e: Exception) { throw IOException("Aliran respons tidak lengkap.", e) }
         return when (item.optString("type")) {
             "delta" -> ChatEvent.Delta(item.getString("text"))
