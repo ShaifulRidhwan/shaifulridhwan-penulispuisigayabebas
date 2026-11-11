@@ -174,10 +174,10 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
         }
     }
 
-    LaunchedEffect(active) {
+    LaunchedEffect(active,detailWindow) {
         while(active) {
             clock=ZonedDateTime.now()
-            delay(30_000L)
+            delay(if(detailWindow=="clock")1_000L else 30_000L)
         }
     }
     LaunchedEffect(active,epoch,permissionLocation) {
@@ -197,7 +197,13 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                 prayer=null
                 launch { weather=repo.weather(found,force=epoch>0) }
                 launch { prayer=repo.prayer(found,force=epoch>0) }
-            } else city=null
+            } else { city=null; weather=null; prayer=null }
+        } else {
+            latestLocation=null
+            locationReady=false
+            city=null
+            weather=null
+            prayer=null
         }
     }
     val dateLabel=clock.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy",malay))
