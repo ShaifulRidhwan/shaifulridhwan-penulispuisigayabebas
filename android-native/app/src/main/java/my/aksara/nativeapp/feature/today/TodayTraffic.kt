@@ -35,6 +35,7 @@ internal class TodayTrafficRepository {
     private var count=0
     private var currentDay=0L
     private var lastFlow:TodayTrafficFlow?=null
+    private var lastQuery:String?=null
 
     /** Explicit BYO TomTom key, no key baked into APK, no billing setup or automatic calls. */
     suspend fun sample(point:RouteCoordinate,key:String):TodayTrafficFlow=
@@ -47,9 +48,11 @@ internal class TodayTrafficRepository {
             }
             val now=System.currentTimeMillis()
             val day=now/86_400_000L
+            val queryId=String.format(Locale.US,"%.5f/%.5f",point.latitude,point.longitude)+":"+key.hashCode()
             synchronized(this@TodayTrafficRepository) {
-                if(day!=currentDay) {currentDay=day;count=0;lastFlow=null}
-                if(now-lastAt<5*60_000L && lastFlow!=null)return@withContext lastFlow!!
+                if(day!=currentDay) {currentDay=day;count=0;lastFlow=null;lastQuery=null}
+                if(now-lastAt<5*60_000L && lastFlow!=null && lastQuery==queryId)
+                    return@withContext lastFlow!!
                 check(count<20) { "Had semakan trafik harian per peranti telah dicapai." }
                 check(now-lastAt>=30_000L) { "Tunggu sebelum semakan trafik seterusnya." }
                 lastAt=now
@@ -67,7 +70,7 @@ internal class TodayTrafficRepository {
                 val text=resp.body?.string() ?: error("Respons trafik kosong")
                 check(text.length<100_000) { "Respons trafik terlalu besar" }
                 val flow=TodayTrafficParser.parse(text)
-                synchronized(this@TodayTrafficRepository) {lastFlow=flow}
+                synchronized(this@TodayTrafficRepository) {lastFlow=flow;lastQuery=queryId}
                 flow
             }
         }
