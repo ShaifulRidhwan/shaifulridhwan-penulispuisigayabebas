@@ -150,96 +150,28 @@ internal object TodayMapConfig {
     var routeMode by remember { mutableStateOf("auto") }
     var routeLoading by remember { mutableStateOf(false) }
     var drawnRoute by remember { mutableStateOf<Polyline?>(null) }
-    var navigationActive by remember { mutableStateOf(false) }
-    var liveLocation by remember { mutableStateOf<Location?>(null) }
-    var navProgress by remember { mutableStateOf<TodayNavProgress?>(null) }
-    var lastIndex by remember { mutableIntStateOf(0) }
-    var lastAnnounced by remember { mutableIntStateOf(-1) }
-    var offRouteSamples by remember { mutableIntStateOf(0) }
-    var lastRerouteAt by remember { mutableLongStateOf(0L) }
-    val navigationVoice=remember(context) { TodayNavigationVoice(context) }
+    val session by TodayNavigationSession.state.collectAsState()
+    val navigationActive=session.active
+    val navProgress=session.progress
+    var savedRouteAvailable by remember { mutableStateOf(TodaySavedRoute.load(context)!=null) }
     val fineGranted=ContextCompat.checkSelfPermission(context,
         Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
     val finePrompt=rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        if(permissions[Manifest.permission.ACCESS_FINE_LOCATION]==true)navigationActive=true
-        else error="Navigasi langsung memerlukan izin lokasi tepat."
+        if(permissions[Manifest.permission.ACCESS_FINE_LOCATION]==true) {
+            runCatching { TodayNavigationService.start(context) }
+                .onFailure { error="Gagal menghidupkan navigasi: "+it.message }
+        } else error="Navigasi skrin terkunci memerlukan lokasi tepat."
     }
-    DisposableEffect(navigationVoice) { onDispose { navigationVoice.stop() } }
-    DisposableEffect(owner,navigationActive) {
-        val observer=LifecycleEventObserver { _,event ->
-            if(event==Lifecycle.Event.ON_STOP)navigationActive=false
-        }
-        owner.lifecycle.addObserver(observer)
-        onDispose { owner.lifecycle.removeObserver(observer) }
-    }
-    LaunchedEffect(route) {
-        lastIndex=0
-        lastAnnounced=-1
-        offRouteSamples=0
-    }
-    DisposableEffect(navigationActive,route) {
-        if(!navigationActive || route==null) return@DisposableEffect onDispose { }
-        val service=context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val listener=object:LocationListener {
-            override fun onLocationChanged(position:Location) {liveLocation=position}
-        }
-        try {
-            var watching=false
-            listOf(LocationManager.GPS_PROVIDER,LocationManager.NETWORK_PROVIDER).forEach { provider ->
-                if(service.isProviderEnabled(provider)) {
-                    service.requestLocationUpdates(provider,1_500L,3f,listener,Looper.getMainLooper())
-                    watching=true
-                }
-            }
-            if(!watching)error="GPS/lokasi peranti belum diaktifkan."
-        } catch(e:SecurityException) {
-            error="Izin lokasi tepat telah ditarik balik."
-            navigationActive=false
-        } catch(e:Exception) {error="Tidak dapat memulakan GPS: "+e.message}
-        onDispose { runCatching { service.removeUpdates(listener) } }
-    }
-    LaunchedEffect(navigationActive,liveLocation,route) {
-        val current=liveLocation
-        val currentRoute=route
-        if(navigationActive && current!=null && currentRoute!=null) {
-            val position=RouteCoordinate(current.latitude,current.longitude)
-            val progress=TodayNavigationMath.progress(currentRoute,position,lastIndex)
-            navProgress=progress
-            lastIndex=progress.nearestIndex
+    LaunchedEffect(session.latitude,session.longitude,navigationActive) {
+        if(navigationActive && session.latitude!=null && session.longitude!=null) {
             mapView.getMapAsync { map ->
                 map.cameraPosition=CameraPosition.Builder()
-                    .target(LatLng(current.latitude,current.longitude))
-                    .zoom(16.2).bearing(current.bearing.toDouble()).tilt(35.0).build()
-            }
-            val upcoming=progress.nextStep
-            if(upcoming!=null && progress.distanceToStepMetres<=140.0 &&
-                upcoming.shapeIndex!=lastAnnounced && progress.offRouteMetres<65.0) {
-                navigationVoice.speakMalay(TodayNavigationMath.malayVoice(upcoming.type))
-                lastAnnounced=upcoming.shapeIndex
-            }
-            if(progress.remainingMetres<35.0 && progress.offRouteMetres<45.0) {
-                navigationVoice.speakMalay("Destinasi sudah tiba.")
-                navigationActive=false
-            } else {
-                offRouteSamples=if(progress.offRouteMetres>120.0)offRouteSamples+1 else 0
-                val now=System.currentTimeMillis()
-                val point=destination
-                if(offRouteSamples>=3 && point!=null && now-lastRerouteAt>60_000L) {
-                    lastRerouteAt=now
-                    offRouteSamples=0
-                    runCatching {
-                        routingRepo.route(current,
-                            RouteCoordinate(point.latitude,point.longitude),routeMode)
-                    }.onSuccess {
-                        route=it
-                        navigationVoice.speakMalay("Laluan telah dikira semula.")
-                    }.onFailure {error="Tidak dapat kira laluan semula: "+it.message}
-                }
+                    .target(LatLng(session.latitude!!,session.longitude!!))
+                    .zoom(16.2).build()
             }
         }
     }
-
     DisposableEffect(mapView,owner) {
         val observer=LifecycleEventObserver { _,event ->
             when(event) {
@@ -375,6 +307,18 @@ internal object TodayMapConfig {
                         },Modifier.weight(1f),height=34.dp,size=9.2f)
                     }
                 }
+                if(route==null && savedRouteAvailable) {
+                    AksaraButton("Buka laluan tersimpan (offline)",{
+                        val saved=TodaySavedRoute.load(context)
+                        if(saved!=null) {
+                            route=saved
+                            routeMode="auto"
+                            val point=saved.points.last()
+                            destination=LatLng(point.latitude,point.longitude)
+                            error=null
+                        } else error="Laluan tersimpan tidak tersedia."
+                    },Modifier.fillMaxWidth(),height=35.dp,size=10f)
+                }
                 AksaraButton(if(routeLoading)"Mengira laluan…" else "Kira laluan",{
                     val point=destination
                     if(point!=null && !routeLoading) {
@@ -384,16 +328,33 @@ internal object TodayMapConfig {
                             runCatching {
                                 routingRepo.route(location,
                                     RouteCoordinate(point.latitude,point.longitude),routeMode)
-                            }.onSuccess { route=it }
-                                .onFailure { error=it.message ?: "Laluan tidak tersedia." }
+                            }.onSuccess {
+                                route=it
+                                savedRouteAvailable=TodaySavedRoute.save(context,it)
+                            }.onFailure { error=it.message ?: "Laluan tidak tersedia." }
                             routeLoading=false
                         }
                     }
                 },Modifier.fillMaxWidth(),height=39.dp,size=11f,
                     enabled=destination!=null && !routeLoading)
                 if(route!=null) {
-                    AksaraButton(if(navigationActive)"Hentikan panduan" else "Mulakan panduan GPS",{
+                    AksaraButton(if(navigationActive)"Hentikan panduan" else "Mulakan panduan • skrin terkunci",{
                         if(navigationActive) {
+                            TodayNavigationService.stop(context)
+                        } else {
+                            val currentRoute=route
+                            if(currentRoute==null || !TodaySavedRoute.save(context,currentRoute)) {
+                                error="Tidak dapat menyimpan laluan untuk navigasi."
+                            } else if(fineGranted) {
+                                runCatching { TodayNavigationService.start(context) }
+                                    .onFailure { error="Gagal memulakan navigasi: "+it.message }
+                            } else {
+                                finePrompt.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION,
+                                    Manifest.permission.ACCESS_FINE_LOCATION))
+                            }
+                        }
+                    },Modifier.fillMaxWidth(),height=38.dp,size=11f)
+                    if(navigationActive) {
                             navigationActive=false
                             navProgress=null
                         } else if(fineGranted) {
@@ -408,7 +369,7 @@ internal object TodayMapConfig {
                     },Modifier.fillMaxWidth(),height=38.dp,size=11f)
                     if(navigationActive) {
                         val progress=navProgress
-                        AksaraText("GPS langsung • "+(if(navigationVoice.isMalayReady())
+                        AksaraText("GPS langsung • "+(if(session.voiceAvailable)
                             "Suara Melayu aktif" else "Suara Melayu tidak tersedia pada peranti"),
                             size=10f,color=AksaraColors.gold)
                         if(progress!=null) {
@@ -446,7 +407,7 @@ internal object TodayMapConfig {
                     },Modifier.weight(1f),height=38.dp,size=10.5f,
                         enabled=destination!=null)
                 }
-                AksaraText("GPS dan arahan suara berfungsi selagi skrin navigasi aktif. Tiada trafik langsung atau navigasi latar. Sentiasa perhatikan keadaan jalan.",
+                AksaraText("Skrin terkunci: GPS dan suara diteruskan dengan notifikasi aktif. Laluan tersimpan boleh diikuti offline, tetapi laluan baharu dan trafik memerlukan internet.",
                     size=9.5f,line=14f,color=AksaraColors.muted)
                 if(error!=null)AksaraText(error!!,size=10.5f,color=Color(0xFFF1A5A1))
             }
