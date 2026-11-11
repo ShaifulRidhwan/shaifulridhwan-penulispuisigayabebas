@@ -19,6 +19,27 @@ class TodayParsersTest {
         assertEquals(87,result.rainChance)
     }
 
+    @Test fun weatherIncludesRealApparentTemperatureAndHumidity() {
+        val result=TodayParsers.weather("""{
+            "current":{"temperature_2m":29.0,"weather_code":53,"wind_speed_10m":11,
+                "apparent_temperature":34.1,"relative_humidity_2m":83},
+            "daily":{"precipitation_probability_max":[94]}
+        }""")
+        assertEquals(34.1,result.feelsLike!!,0.001)
+        assertEquals(83,result.humidity)
+        assertEquals(94,result.rainChance)
+    }
+
+    @Test fun weatherLegacyCacheDoesNotInventMissingReadings() {
+        val result=TodayParsers.weather("""{
+            "current":{"temperature_2m":30.0,"weather_code":3,"wind_speed_10m":9},
+            "daily":{}
+        }""")
+        assertNull(result.feelsLike)
+        assertNull(result.humidity)
+        assertNull(result.rainChance)
+    }
+
     @Test fun jakimTimesRequireFiveActualPrayerFields() {
         val result=TodayParsers.prayer("""{"prayerTime":[{
             "hijri":"1448-05-01","fajr":"05:48:00","dhuhr":"13:00:00",
