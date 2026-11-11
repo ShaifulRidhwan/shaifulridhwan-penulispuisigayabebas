@@ -339,21 +339,21 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
         }
     }
-    // IME changes should not restart the message-arrival scroll coroutine.
-    // Keep keyboard-follow in a separate, viewport-delta-driven collector.
-    LaunchedEffect(list,chatImeInsets,imeDensity) {
-        var previousViewportEnd:Int?=null
-        var previousImeBottom=0
-        snapshotFlow {
-            list.layoutInfo.viewportEndOffset to chatImeInsets.getBottom(imeDensity)
-        }.collect { (viewportEnd,imeBottom) ->
-            val delta=imeViewportFollowDelta(
-                previousViewportEnd,viewportEnd,previousImeBottom,imeBottom,autoFollow
-            )
-            previousViewportEnd=viewportEnd
-            previousImeBottom=imeBottom
-            if(delta!=0) list.scrollBy(delta.toFloat())
-        }
+    // Avoid per-pixel scrollBy during IME animation. Each call forces LazyColumn
+    // measurement while the keyboard is resizing the viewport. Compose's
+    // imePadding already follows the keyboard; settle only after visibility flips.
+    LaunchedEffect(list, chatImeInsets, imeDensity) {
+        snapshotFlow { chatImeInsets.getBottom(imeDensity) > 0 }
+            .distinctUntilChanged()
+            .collect { opening ->
+                if (opening && autoFollow && state.messages.isNotEmpty()) {
+                    withFrameNanos { }
+                    val last = list.layoutInfo.totalItemsCount - 1
+                    if (last >= 0 && list.layoutInfo.visibleItemsInfo.none { it.index == last }) {
+                        list.scrollToItem(last)
+                    }
+                }
+            }
     }
     LaunchedEffect(state.messages.size, state.messages.lastOrNull()?.text?.length,
         state.busy, autoFollow) {
