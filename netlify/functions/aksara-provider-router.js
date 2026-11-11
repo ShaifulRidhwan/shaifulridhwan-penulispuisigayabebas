@@ -7,6 +7,7 @@
  */
 const {boundedHistory,boundedText,requestControl,readSSE}=require("./lib/aksara-transport");
 const Registry=require("./aksara-model-registry");
+const CircuitV7=require("./aksara-circuit-breaker-v7").create();
 const Capabilities=require("./aksara-capabilities");
 const cooldown=new Map();
 const freeQuotaFailures=new Map(); // 402: real upstream free-quota exhaustion, not a 15-second outage.
@@ -147,7 +148,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
   (!Array.isArray(only)||only.includes(p.id)));
  // Explicit image consent is OpenRouter-only; never pass images to provider.
  for(const provider of ordered){
-  if(skip.includes(provider.id)||Date.now()<(cooldown.get(provider.id)||0))continue;
+  if(skip.includes(provider.id)||Date.now()<(cooldown.get(provider.id)||0)||!CircuitV7.canAttempt(provider.id))continue;
   if(signal?.aborted)throw new DOMException("Dihentikan","AbortError");
   const remaining=Math.min(deadline,firstResponseDeadline)-Date.now();if(remaining<500)break;
   // All selected models are reviewed chat models. Stream their visible text
@@ -255,7 +256,7 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    if(!text.trim())throw Object.assign(new Error("Empty response"),{reason:"empty_output",finishReason:data?.choices?.[0]?.finish_reason||"",outputTokens:data?.usage?.completion_tokens});
    validateChatReply(text,data.model||provider.model);
    if(onDelta&&!emitted){emitted=true;onDelta(text);}
-   cooldown.delete(provider.id);preferredProvider=provider.id;
+   cooldown.delete(provider.id);CircuitV7.success(provider.id);preferredProvider=provider.id;
    Registry.observe(provider.id,{ok:true,latencyMs:Date.now()-attemptStarted});
    if(provider.id==="openrouter")recentOpenRouter={model:data.model||provider.model,at:Date.now()};
    if(provider.id==="workers_ai")recentWorkersAI={model:data.model||provider.model,at:Date.now()};
@@ -278,7 +279,9 @@ async function complete({system,history,question,maxTokens=1500,timeoutMs=5500,b
    Registry.observe(provider.id,{ok:false,latencyMs:Date.now()-attemptStarted});
    const status=Number(err.status||0);
    const quotaExhausted=status===402&&err.errorType==="free_quota_exhausted";
-   const wait=quotaExhausted?FREE_QUOTA_RECHECK_MS:(err.retryAfterSeconds?err.retryAfterSeconds*1000:errorToCooldown(status));
+   const circuit=CircuitV7.failure(provider.id,{status,reason:err.reason||err.name});
+    const standardWait=quotaExhausted?FREE_QUOTA_RECHECK_MS:(err.retryAfterSeconds?err.retryAfterSeconds*1000:errorToCooldown(status));
+    const wait=Math.max(standardWait,circuit.retryMs);
    cooldown.set(provider.id,Date.now()+wait);
    if(quotaExhausted)freeQuotaFailures.set(provider.id,Date.now()+wait);
    if(preferredProvider===provider.id)preferredProvider="";

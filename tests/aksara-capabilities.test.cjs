@@ -538,6 +538,11 @@ test("RSS fallback fetches only its fixed publisher feed endpoints",async()=>{
 });
 test("Groq 429 + Google Grounding 404 can return dated publisher RSS links",async t=>{
  setupEvidenceEnvironment(t);
+ // Two days ago stays inside the RSS eight-day acceptance window.
+ // An absolute historical date would make this test expire over time.
+ const twoDaysAgo=new Date(Date.now()-2*86400000);
+ const monthNames=["January","February","March","April","May","June","July","August","September","October","November","December"];
+ const dayLabel=twoDaysAgo.getUTCDate()+" "+monthNames[twoDaysAgo.getUTCMonth()]+" "+twoDaysAgo.getUTCFullYear();
  const old=process.env.AKSARA_PUBLIC_RSS_ENABLED;
  process.env.AKSARA_PUBLIC_RSS_ENABLED="true";
  t.after(()=>old===undefined?delete process.env.AKSARA_PUBLIC_RSS_ENABLED:
@@ -565,7 +570,7 @@ test("Groq 429 + Google Grounding 404 can return dated publisher RSS links",asyn
      u.includes("news.mit.edu")?"https://news.mit.edu/2026/ai-science-1102":
      "https://www.bbc.com/news/technology-123";
    const xml="<rss><channel><item><title>AI published headline</title>"+
-     "<link>"+outlet+"</link><pubDate>Mon, 02 Nov 2026 12:00:00 GMT</pubDate>"+
+     "<link>"+outlet+"</link><pubDate>"+twoDaysAgo.toUTCString()+"</pubDate>"+
      "<description>Artificial intelligence reporting</description></item></channel></rss>";
    return new Response(xml,{headers:{"content-type":"application/rss+xml"}});
   }
@@ -574,7 +579,7 @@ test("Groq 429 + Google Grounding 404 can return dated publisher RSS links",asyn
  const out=await handler({httpMethod:"POST",headers:{
   origin:"https://shaifulridhwan-penulispuisigayabebas.netlify.app",
   "x-nf-client-connection-ip":"qa-groq-google-rss-news"
- },body:JSON.stringify({question:"Cari tiga berita AI terkini pada 2 November 2026 dan sertakan pautan sumber yang disahkan."})});
+ },body:JSON.stringify({question:"Cari tiga berita AI terkini pada "+dayLabel+" dan sertakan pautan sumber yang disahkan."})});
  const data=JSON.parse(out.body);
  assert.equal(out.statusCode,200);
  assert.equal(googleGroundingCalled,1);

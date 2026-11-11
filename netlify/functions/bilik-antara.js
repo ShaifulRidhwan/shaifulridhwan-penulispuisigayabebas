@@ -64,6 +64,7 @@ const GeminiDiagnosis={
  }
 };
 const Research=require("./aksara-research-workflow");
+const AgentToolsV7=require("./aksara-agent-tools-v7");
 const OwnedPage=require("./aksara-owned-page");
 const Data=require("./aksara-data-analysis");
 const Structured=require("./aksara-structured-output");
@@ -966,16 +967,22 @@ exports.handler=async event=>{
     // One bounded local function round; never eval code or fetch arbitrary URLs.
     let localFunctionUsed=false;
     const firstCandidate=data?.candidates?.[0];
-    const functionCall=firstCandidate?.content?.parts?.find(p=>p?.functionCall)?.functionCall;
-    if(functionCall&&functionTools.length&&functionCall.name===Capabilities.FUNCTION_NAME&&remaining()>3500){
-      const outcome=SafeTools.execute({name:Capabilities.FUNCTION_NAME,arguments:functionCall.args||{}},{
-        enabled:true,allowKnowledge:true,knowledgeOptions:{includePublic:true,allowPrivate:false,limit:3}
-      });
-      const toolContents=[...contents,{role:"model",parts:firstCandidate.content.parts},
-        {role:"user",parts:[{functionResponse:{name:Capabilities.FUNCTION_NAME,response:outcome.ok?{results:outcome.results}:{error:outcome.error}}}]}];
-      data=await callGemini({...googleOptions,contents:toolContents,tools:[],
-        timeoutMs:Math.min(8000,remaining()),onDelta:null,json:false,responseJsonSchema:null});
-      localFunctionUsed=outcome.ok;
+    const functionCalls=(firstCandidate?.content?.parts||[])
+      .filter(p=>p?.functionCall?.name===Capabilities.FUNCTION_NAME)
+      .map(p=>p.functionCall).slice(0,2);
+    if(functionCalls.length&&functionTools.length&&remaining()>3500){
+      // One bounded tool-response round, at most two local PUBLIC knowledge
+      // lookups. Private memory, arbitrary tools and extra LLM loops denied.
+      const batch=AgentToolsV7.run(functionCalls);
+      if(batch.responses.length){
+        const toolContents=[...contents,{role:"model",parts:firstCandidate.content.parts},
+          {role:"user",parts:batch.responses.map(item=>({functionResponse:{
+            name:item.name,response:item.response
+          }}))}];
+        data=await callGemini({...googleOptions,contents:toolContents,tools:[],
+          timeoutMs:Math.min(8000,remaining()),onDelta:null,json:false,responseJsonSchema:null});
+        localFunctionUsed=batch.executedCount>0;
+      }
     }
     const candidate=data&&data.candidates&&data.candidates[0];
     const rawAnswer=modelText(candidate);

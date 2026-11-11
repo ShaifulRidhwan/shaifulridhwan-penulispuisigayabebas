@@ -1,6 +1,7 @@
 "use strict";
 /* Context Manager 3.0. Request-local selection only: no stored conversations,
  * embeddings, new remote service, or cross-user memory. */
+const RetrievalV7=require("./aksara-context-retrieval-v7");
 const STOP=new Set("yang dan atau untuk kepada dalam adalah dengan saya aku kau kamu awak pada dari tentang apa bagaimana kenapa itu ini juga kalau maka satu suatu boleh jadi mahu nak the and for from with".split(" "));
 function words(s){return [...new Set(String(s||"").toLocaleLowerCase("ms-MY").match(/[\p{L}\p{N}]{3,}/gu)||[])].filter(w=>!STOP.has(w)).slice(0,72);}
 const CORRECTION=/(?:maksud aku|bukan begitu|bukan macam tu|sebenarnya|pembetulan|jangan ubah|jangan usik|aku pilih|keputusan akhir|kekalkan|tolong ingat|yang aku nak)/i;
@@ -30,6 +31,7 @@ function selectHistory(rows,question,{maxChars=28000,keepRecent=7}={}){
  function include(i){
   const size=history[i].content.length;
   if(size>remaining)return false;
+  if(selected.size>=24||selected.has(i))return false;
   selected.add(i);remaining-=size;return true;
  }
  // Newest exchanges take priority; enforce the cap even if recent replies are huge.
@@ -42,18 +44,21 @@ function selectHistory(rows,question,{maxChars=28000,keepRecent=7}={}){
   const message=history[i],terms=words(message.content);
   const overlap=terms.filter(w=>tokens.has(w)).length;
   const correction=message.role==="user"&&CORRECTION.test(message.content);
+  const semantic=RetrievalV7.relevance(question,message.content);
   const ordinalMatched=continuity&&ordinalMention(message.content,ordinal);
   // Keep explicit decisions useful in short follow-ups, but favour recent
   // corrections over stale ones and avoid blindly copying every old message.
-  const score=overlap*6+(ordinalMatched?19:0)+(correction?(overlap?12:continuity?7:2):0)+
+  const score=overlap*6+semantic.semantic*5+(ordinalMatched?19:0)+(correction?(overlap?12:continuity?7:2):0)+
    (message.role==="user"?1:0)+i/Math.max(1,recentStart);
-  if(overlap||correction||ordinalMatched)candidates.push({i,score});
+  if(overlap||semantic.semantic||correction||ordinalMatched)candidates.push({i,score});
  }
  candidates.sort((a,b)=>b.score-a.score||b.i-a.i);
  let older=0;
  for(const item of candidates){
   if(older>=9||remaining<=0)break;
+  if(history[item.i].role==="assistant"&&item.i>0&&history[item.i-1].role==="user")include(item.i-1);
   if(include(item.i))older++;
+  if(history[item.i].role==="user"&&item.i+1<recentStart&&history[item.i+1].role==="assistant")include(item.i+1);
  }
  return history.filter((_,i)=>selected.has(i));
 }

@@ -8,6 +8,7 @@ import androidx.benchmark.macro.junit4.BaselineProfileRule
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import androidx.test.uiautomator.By
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,6 +43,25 @@ class AksaraMacrobenchmark {
         device.waitForIdle()
         device.swipe(right, y, left, y, 24)
         device.waitForIdle()
+    }
+    // P2: Real-device keyboard open/close frame timing.
+    // Missing composer fails the test, never substitutes synthetic metrics.
+    @Test fun chatKeyboardMotion() = benchmark.measureRepeated(
+        packageName = PACKAGE,
+        metrics = listOf(FrameTimingMetric()),
+        compilationMode = CompilationMode.Partial(),
+        startupMode = StartupMode.WARM,
+        iterations = 6
+    ) {
+        startActivityAndWait()
+        val composer = device.findObject(By.clazz("android.widget.EditText"))
+            ?: throw AssertionError("Chat composer unavailable in UI hierarchy")
+        repeat(10) {
+            composer.click()
+            device.waitForIdle()
+            device.pressBack()
+            device.waitForIdle()
+        }
     }
 }
 
