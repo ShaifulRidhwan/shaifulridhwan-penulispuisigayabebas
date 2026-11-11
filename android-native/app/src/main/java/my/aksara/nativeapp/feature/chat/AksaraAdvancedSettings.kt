@@ -82,7 +82,7 @@ internal object AksaraTechRegistry {
             listOf("core/design/AksaraDesign.kt", "core/design/AksaraMotion.kt", "feature/chat/AksaraGlassModal.kt"),
             "Prestasi dan visual parity memerlukan ujian fizikal."),
         AksaraTechModule("network", DIAGNOSTICS, "Network & Provider Health", "Netlify and provider snapshots",
-            "Konfigurasi laluan backend, status penyedia dan counter request."),
+            "Konfigurasi laluan backend, status penyedia dan counter request.",
             listOf("API origin", "Transport", "Health snapshot", "User diagnostic"),
             listOf("core/network/BackendRoutes.kt", "feature/chat/ProviderHealthContent.kt"),
             "Status mungkin stale dan tidak menjamin request seterusnya berjaya."),
