@@ -58,6 +58,7 @@ internal fun AksaraGlassModal(
                         28.dp, margins.top + margins.bottom + 16.dp
                     ))
                     .height(minOf(preferredHeight, availableHeight - 60.dp))
+                    .aksaraModalEntrance()
                     .testTag("aksara-glass-modal")
                     .clickable(enabled = false) {},
                 radius = AksaraModalStyle.radius,
