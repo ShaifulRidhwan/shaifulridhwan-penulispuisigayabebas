@@ -348,7 +348,7 @@ private val reminders=listOf(
         AksaraButton(if(onlySc)"✓ Hanya disahkan SC" else "Semua aset dalam senarai",
             {onlySc=!onlySc},Modifier.fillMaxWidth(),height=36.dp,size=10.5f)
     }
-    val known=TodayShariahReference.listed
+    val known=TodayShariahReference.listed+TodayShariahReference.unverified
     // Keep unknown assets explicitly unverified. Only existing three quotes are displayed.
     val extras=coins?.value.orEmpty().filter { coin -> known.none{it.symbol==coin.symbol} }
         .map { TodayShariahCoin(it.symbol,it.symbol,"") }
