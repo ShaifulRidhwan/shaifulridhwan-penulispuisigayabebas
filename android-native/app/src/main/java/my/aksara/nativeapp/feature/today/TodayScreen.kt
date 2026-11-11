@@ -57,15 +57,6 @@ private fun todayCondition(code:Int)=when(code) {
     else -> "Keadaan cuaca"
 }
 
-// Real weather-condition glyphs. Never synthesize missing measurements.
-private fun todayWeatherGlyph(code:Int):String=when(code) {
-    0 -> "☀"
-    1,2 -> "⛅"
-    3,45,48 -> "☁"
-    51,53,55,56,57,61,63,65,66,67,80,81,82 -> "☂"
-    95,96,99 -> "⚡"
-    else -> "○"
-}
 private fun todayCoinGlyph(symbol:String):String=when(symbol.uppercase(Locale.US)) {
     "BTC" -> "₿"
     "ETH" -> "Ξ"
@@ -236,8 +227,6 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
     val dateLabel=clock.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy",malay))
     val prayerNow=LocalTime.now(malaysiaZone)
     val countdown=nextPrayer(prayer?.value,prayerNow)
-    val latestUpdate=listOfNotNull(weather?.updatedAt,prayer?.updatedAt,crypto?.updatedAt,github?.updatedAt).maxOrNull()
-    val anyCached=listOfNotNull(weather,prayer,crypto,github).any { it.fromCache }
     val wallpaperBackdrop=remember { HazeState() }
 
     CompositionLocalProvider(LocalBackdrop provides wallpaperBackdrop) {
@@ -266,40 +255,9 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                 verticalArrangement=Arrangement.spacedBy(8.dp)) {
 
 
-                // Classic V1 editorial layout with the V3 icon language and real data.
-                // No parent scrolling, extra rows, or unused map preview space.
-                Row(Modifier.fillMaxWidth().weight(.075f),
-                    verticalAlignment=Alignment.CenterVertically,
-                    horizontalArrangement=Arrangement.spacedBy(9.dp)) {
-                    AksaraGlassSurface(Modifier.size(35.dp).clickable { onBack() },
-                        radius=12.dp,blur=10.dp) {
-                        AksaraText("‹",Modifier.align(Alignment.Center),
-                            size=21f,line=24f,weight=650)
-                    }
-                    Column(Modifier.weight(1f),
-                        verticalArrangement=Arrangement.spacedBy(2.dp)) {
-                        AksaraText("AKSARA TODAY",size=12f,line=15f,
-                            weight=700,color=todayGold)
-                        AksaraText("Ruang Hari Ini",size=9.2f,line=12f,color=todayMuted)
-                    }
-                    Column(horizontalAlignment=Alignment.End,
-                        verticalArrangement=Arrangement.spacedBy(2.dp)) {
-                        AksaraGlassSurface(Modifier.width(69.dp).height(29.dp).clickable {
-                            epoch++
-                            gestureMessage="Menyegarkan data…"
-                        },radius=11.dp,blur=10.dp) {
-                            AksaraText("Refresh",Modifier.align(Alignment.Center),
-                                size=10f,line=14f,weight=600)
-                        }
-                        AksaraText(
-                            latestUpdate?.let {
-                                "Data "+Instant.ofEpochMilli(it).atZone(malaysiaZone)
-                                    .format(DateTimeFormatter.ofPattern("HH:mm",malay))
-                            } ?: "Belum dikemas kini",
-                            size=8.1f,line=10f,color=todayMuted)
-                    }
-                }
-                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.115f).clickable {
+                // Five classic Liquid Glass cards, no top toolbar or dashboard scrolling.
+                // Android Back returns to chat, swipe down refreshes as before.
+                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.13f).clickable {
                     detailWindow="clock"
                 },radius=19.dp,blur=12.dp) {
                     Column(Modifier.fillMaxSize().padding(horizontal=10.dp,vertical=4.dp),
@@ -310,7 +268,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                         AksaraText(dateLabel,size=10.5f,line=14f,color=todayMuted)
                     }
                 }
-                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.195f)
+                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.21f)
                     .clickable { detailWindow="weather" },radius=19.dp,blur=12.dp) {
                     val value=weather?.value
                     Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=8.dp),
@@ -325,8 +283,6 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                                     size=21f,line=26f,weight=650)
                                 AksaraText("·  "+todayCondition(value.code),
                                     Modifier.weight(1f),size=15f,line=19f,weight=500)
-                                AksaraText(todayWeatherGlyph(value.code),
-                                    size=19f,line=22f,color=todayGold)
                             }
                             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,
                                 horizontalArrangement=Arrangement.spacedBy(5.dp)) {
@@ -347,7 +303,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                         }
                     }
                 }
-                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.265f)
+                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.29f)
                     .clickable { detailWindow="prayer" },radius=19.dp,blur=12.dp) {
                     val value=prayer?.value
                     Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=9.dp),
@@ -386,7 +342,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                             else "Waktu solat tidak tersedia.")
                     }
                 }
-                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.17f)
+                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.18f)
                     .clickable { detailWindow="crypto" },radius=19.dp,blur=12.dp) {
                     Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=8.dp),
                         verticalArrangement=Arrangement.SpaceEvenly) {
@@ -416,7 +372,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                             size=8.8f,line=11f,color=todayMuted)
                     }
                 }
-                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.18f)
+                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.19f)
                     .clickable { detailWindow="development" },radius=19.dp,blur=12.dp) {
                     Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=8.dp),
                         verticalArrangement=Arrangement.SpaceEvenly) {
