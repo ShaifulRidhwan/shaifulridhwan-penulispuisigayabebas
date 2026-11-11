@@ -431,7 +431,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             LazyColumn(Modifier.weight(1f).fillMaxWidth().testTagCompat("messages"),state=list,contentPadding=PaddingValues(start=if(state.messages.isEmpty())17.dp else 12.dp,end=if(state.messages.isEmpty())17.dp else 12.dp,top=if(state.messages.isEmpty())14.dp else 13.dp,bottom=13.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
                                 if(state.messages.isEmpty()) item { AksaraChatBubble(Message("welcome","assistant",WelcomeText,fixedTimestamp?:System.currentTimeMillis()),fixedTimestamp=fixedTimestamp,initial=true) }
                                 if(state.messages.isNotEmpty()) item { AksaraChatBubble(Message("welcome-expanded","assistant","Antara aksara dan code,\nGAYA yang bebas,\nBEBAS dalam bentuk,\nLUAS dalam pemikiran.",fixedTimestamp?:state.messages.first().at),fixedTimestamp=fixedTimestamp) }
-                                items(state.messages,key={it.id}) { message ->
+                                items(state.messages,key={it.id},contentType={it.role}) { message ->
                                     AksaraChatBubble(message,fixedTimestamp=fixedTimestamp,
                                         highlighted=highlightedMessageId==message.id,
                                         onCopy={
@@ -635,5 +635,10 @@ private val ChatTimestampFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm",j
         setLineHeight((23.85f*resources.displayMetrics.scaledDensity).toInt());letterSpacing=-.008f;setPadding(0,0,0,0)
         setTextIsSelectable(true);setLinkTextColor(android.graphics.Color.rgb(230,197,139))
         movementMethod=android.text.method.LinkMovementMethod.getInstance()
-    }},update={renderer.setMarkdown(it,value)})
+    }},update={ view ->
+        if (view.tag != value) {
+            renderer.setMarkdown(view,value)
+            view.tag=value
+        }
+    })
 }

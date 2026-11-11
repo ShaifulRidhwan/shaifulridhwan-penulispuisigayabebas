@@ -7,7 +7,11 @@ import android.location.Location
 import android.location.LocationManager
 import android.os.CancellationSignal
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -177,19 +181,20 @@ internal class TodayRepository(context:Context) {
     // Cache first: a failed refresh must not replace a working snapshot with fake data.
     private suspend fun <T> cached(
         key:String, ttlMs:Long, force:Boolean=false, parser:(String)->T, loader:suspend()->String
-    ):TodayFeed<T> {
+    ):TodayFeed<T> = withContext(Dispatchers.IO) {
         val raw=prefs.getString(key,null)
         val updated=prefs.getLong(key+":at",0L)
         val previous=raw?.let { runCatching { parser(it) }.getOrNull() }
         val now=System.currentTimeMillis()
         if(!force && previous!=null && now-updated<ttlMs)
-            return TodayFeed(previous,false,updated)
-        return try {
+            return@withContext TodayFeed(previous,false,updated)
+        try {
             val response=loader()
             val value=parser(response)
             prefs.edit().putString(key,response).putLong(key+":at",System.currentTimeMillis()).apply()
             TodayFeed(value,false,System.currentTimeMillis())
-        } catch (_:Exception) {
+        } catch (e:Exception) {
+            if(e is CancellationException) throw e
             TodayFeed(previous,true,updated.takeIf { it>0L })
         }
     }
@@ -222,8 +227,11 @@ internal class TodayRepository(context:Context) {
     suspend fun crypto(force:Boolean=false):TodayFeed<List<TodayCoin>> =
         cached("crypto",15L*60_000L,force,TodayParsers::coins) {
             val result=JSONArray()
-            for(id in listOf("btc-bitcoin","eth-ethereum","sol-solana")) {
-                result.put(JSONObject(request("https://api.coinpaprika.com/v1/tickers/"+id)))
+            // Independent quotes run in parallel; awaitAll preserves BTC/ETH/SOL order.
+            coroutineScope {
+                listOf("btc-bitcoin","eth-ethereum","sol-solana").map { id ->
+                    async { JSONObject(request("https://api.coinpaprika.com/v1/tickers/"+id)) }
+                }.awaitAll().forEach(result::put)
             }
             result.toString()
         }

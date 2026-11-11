@@ -49,14 +49,14 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch {
             try {
-                val snapshot = store.loadSnapshot()
+                val snapshot = withContext(Dispatchers.IO) { store.loadSnapshot() }
                 val archive = snapshot.messages
-                try { savedContext = contextStore.load() }
+                try { savedContext = withContext(Dispatchers.IO) { contextStore.load() } }
                 catch (_: Exception) {
                     contextReadable = false
                     mutable.update { it.copy(error = "Tetapan konteks tersulit tidak dapat dibaca. Fail asal dikekalkan.") }
                 }
-                val drafts=try { pendingStore.load() } catch(_:Exception) {
+                val drafts=try { withContext(Dispatchers.IO) { pendingStore.load() } } catch(_:Exception) {
                     pendingReadable=false
                     mutable.update{it.copy(error="Draf tersulit tidak dapat dibaca. Fail asal dikekalkan.")}
                     emptyList()

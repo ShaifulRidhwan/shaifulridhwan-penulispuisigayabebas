@@ -1,6 +1,7 @@
 package my.aksara.nativeapp.feature.today
 
 import android.content.Context
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -118,18 +119,21 @@ internal class TodayDetailRepository(context:Context) {
     }
     private suspend fun <T> cached(
         key:String,ttl:Long,parser:(String)->T,request:suspend()->String
-    ):TodayFeed<T> {
+    ):TodayFeed<T> = withContext(Dispatchers.IO) {
         val raw=prefs.getString(key,null)
         val at=prefs.getLong("$key:at",0L)
         val old=raw?.let { runCatching { parser(it) }.getOrNull() }
         val now=System.currentTimeMillis()
-        if(old!=null && now-at<ttl)return TodayFeed(old,false,at)
-        return try {
+        if(old!=null && now-at<ttl)return@withContext TodayFeed(old,false,at)
+        try {
             val text=request()
             val result=parser(text)
             prefs.edit().putString(key,text).putLong("$key:at",now).apply()
             TodayFeed(result,false,now)
-        } catch (_:Exception) { TodayFeed(old,true,at.takeIf { it>0L }) }
+        } catch (e:Exception) {
+            if (e is CancellationException) throw e
+            TodayFeed(old,true,at.takeIf { it>0L })
+        }
     }
     suspend fun forecast(lat:Double,lon:Double):TodayFeed<TodayForecast> {
         val a=String.format(Locale.US,"%.3f",lat)
