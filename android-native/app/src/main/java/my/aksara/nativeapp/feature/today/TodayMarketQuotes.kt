@@ -22,7 +22,10 @@ internal object TodayMarketIds {
         "LTC" to "litecoin", "BCH" to "bitcoin-cash", "SOL" to "solana",
         "ADA" to "cardano", "LINK" to "chainlink", "UNI" to "uniswap",
         "AVAX" to "avalanche-2", "DOT" to "polkadot",
-        "ATOM" to "cosmos", "WLD" to "worldcoin-wld", "XLM" to "stellar"
+        "ATOM" to "cosmos", "WLD" to "worldcoin-wld", "XLM" to "stellar",
+        "SNX" to "havven", "MKR" to "maker", "CRV" to "curve-dao-token",
+        "AAVE" to "aave", "NEAR" to "near", "ALGO" to "algorand",
+        "HBAR" to "hedera-hashgraph", "GRT" to "the-graph"
     )
     // SC's older MATIC determination must not be silently attached to migrated POL.
     const val unsupportedLegacy="MATIC"
