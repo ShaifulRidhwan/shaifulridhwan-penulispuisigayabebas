@@ -324,18 +324,21 @@ class AksaraViewModel(application: Application) : AndroidViewModel(application) 
 
     fun stop() {
         if (!busy) return
-        api.cancelStream()
+        // Cancel the coroutine first so its request-scoped cleanup runs.
         requestJob?.cancel()
+        api.cancelStream()
         status = "Dihentikan"
     }
 
     fun retryLast(): Boolean {
         if (busy || messages.isEmpty()) return false
         val last = messages.last()
-        if (last.role == "assistant" && !last.complete) messages.removeAt(messages.lastIndex)
-        val user = messages.lastOrNull()
-        if (user?.role != "user") return false
-        val question = user.content
+        val lastUserIndex = if (last.role == "assistant" && !last.complete) messages.lastIndex - 1
+            else messages.lastIndex
+        if (lastUserIndex < 0 || messages[lastUserIndex].role != "user") return false
+        val question = messages[lastUserIndex].content
+        // Keep the original user turn if a retry cannot be submitted.
+        if (lastUserIndex != messages.lastIndex) messages.removeAt(messages.lastIndex)
         messages.removeAt(messages.lastIndex)
         updateCurrent()
         return send(question)
