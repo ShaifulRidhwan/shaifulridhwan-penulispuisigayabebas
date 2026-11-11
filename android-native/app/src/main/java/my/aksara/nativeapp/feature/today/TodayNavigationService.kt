@@ -181,7 +181,7 @@ class TodayNavigationService:Service(),LocationListener {
                 lastReroute=now
                 val goal=saved.points.last()
                 navScope.launch {
-                    val revised=runCatching { routeRepository.route(location,goal) }
+                    val revised=runCatching { routeRepository.route(location,goal,saved.costing) }
                     withContext(Dispatchers.Main) {
                         revised.onSuccess { updated ->
                             route=updated
