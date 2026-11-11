@@ -125,6 +125,11 @@ internal object TodayMapConfig {
 ) {
     val context=LocalContext.current
     val routingRepo=remember { TodayRouteRepository() }
+    val trafficRepo=remember { TodayTrafficRepository() }
+    var trafficKey by remember { mutableStateOf("") }
+    var trafficLoading by remember { mutableStateOf(false) }
+    var trafficFlow by remember { mutableStateOf<TodayTrafficFlow?>(null) }
+    var offlineStatus by remember { mutableStateOf("") }
     val scope=rememberCoroutineScope()
     if(location==null) {
         Column(modifier,verticalArrangement=Arrangement.spacedBy(12.dp),
@@ -338,6 +343,58 @@ internal object TodayMapConfig {
                 },Modifier.fillMaxWidth(),height=39.dp,size=11f,
                     enabled=destination!=null && !routeLoading)
                 if(route!=null) {
+                    AksaraButton("Simpan peta kecil untuk offline",{
+                        val current=route
+                        if(current!=null) {
+                            TodayOfflineMaps.downloadSmallArea(context,current) { offlineStatus=it }
+                        }
+                    },Modifier.fillMaxWidth(),height=35.dp,size=10.3f)
+                    if(offlineStatus.isNotBlank())AksaraText(offlineStatus,size=9.6f,
+                        color=AksaraColors.muted)
+                }
+                if(route!=null && routeMode=="auto") {
+                    AksaraText("Trafik langsung • TomTom (pilihan, kunci sendiri)",
+                        size=11f,weight=650,color=AksaraColors.gold)
+                    AksaraGlassSurface(Modifier.fillMaxWidth().height(39.dp),radius=12.dp) {
+                        BasicTextField(trafficKey,{trafficKey=it.take(128)},
+                            Modifier.fillMaxSize().padding(horizontal=10.dp,vertical=9.dp),
+                            singleLine=true,textStyle=AksaraTypography.style(11f,16f),
+                            cursorBrush=SolidColor(AksaraColors.gold),
+                            decorationBox={inner->Box {
+                                if(trafficKey.isBlank())AksaraText("Masukkan TomTom API key (tidak disimpan)",
+                                    size=10.5f,color=AksaraColors.muted)
+                                inner()
+                            }})
+                    }
+                    AksaraButton(if(trafficLoading)"Menyemak…" else "Semak kelajuan trafik langsung",{
+                        val current=route
+                        if(current!=null && !trafficLoading && trafficKey.isNotBlank()) {
+                            trafficLoading=true
+                            error=null
+                            scope.launch {
+                                val midpoint=current.points[current.points.size/2]
+                                runCatching { trafficRepo.sample(midpoint,trafficKey) }
+                                    .onSuccess { trafficFlow=it }
+                                    .onFailure { error="Trafik belum tersedia: "+it.message }
+                                trafficLoading=false
+                            }
+                        }
+                    },Modifier.fillMaxWidth(),height=35.dp,size=10f,
+                        enabled=trafficKey.isNotBlank() && !trafficLoading)
+                    val flow=trafficFlow
+                    if(flow!=null) {
+                        AksaraText("Segmen berhampiran laluan: "+
+                            flow.currentKmh+" km/j (lancar "+flow.freeFlowKmh+" km/j)"+
+                            (if(flow.roadClosed)" • JALAN DITUTUP" else ""),
+                            size=10.5f,color=if(flow.roadClosed)Color(0xFFF1A5A1)
+                            else AksaraColors.gold)
+                        AksaraText("Sampel satu segmen TomTom, bukan ETA trafik seluruh laluan. "+
+                            "Key kekal dalam sesi ini sahaja; tiada bil diaktifkan oleh Aksara.",
+                            size=9.5f,color=AksaraColors.muted)
+                    } else AksaraText("Belum dikonfigurasikan. Tanpa kunci TomTom, hanya ETA "+
+                        "Valhalla biasa digunakan.",size=9.5f,color=AksaraColors.muted)
+                }
+                if(route!=null) {
                     AksaraButton(if(navigationActive)"Hentikan panduan" else "Mulakan panduan • skrin terkunci",{
                         if(navigationActive) {
                             TodayNavigationService.stop(context)
@@ -388,7 +445,7 @@ internal object TodayMapConfig {
                     AksaraText(String.format(Locale.US,"%.1f km • %d minit",
                         result.kilometres,(result.seconds+59)/60),size=12f,
                         weight=700,color=AksaraColors.gold)
-                    AksaraText("Anggaran laluan Valhalla/OSM. Tiada trafik langsung.",
+                    AksaraText("ETA Valhalla tidak mengambil kira trafik. Bacaan TomTom di atas ialah segmen berasingan.",
                         size=9.5f,color=AksaraColors.muted)
                     result.steps.take(3).forEach { step ->
                         AksaraText("• "+step.instruction,size=10f,color=AksaraColors.muted)
