@@ -34,6 +34,7 @@ import my.aksara.nativeapp.feature.tools.*
     onMode:(String)->Unit,onRestore:()->Unit,onRestoreSession:(String)->Unit = {},onClear:()->Unit,onPickAttachment:(String)->Unit,onAsk:(String)->Unit,onMemory:(Boolean,String)->Unit={_,_->},
     onVoiceTurns:(List<VoiceContextTurn>)->Unit={},
     onExportSessions:()->Unit={},onImportSessions:()->Unit={},
+    onExportSession:(String?)->Unit={},onDeleteSession:suspend(String)->Boolean={false},
     composerDraft:String="",
     onSaveDraft:suspend(String)->Boolean={false},
     onRemoveDraft:suspend(String)->Boolean={false},
@@ -55,7 +56,8 @@ import my.aksara.nativeapp.feature.tools.*
         AksaraSearchHub(state,onClose,onSettings={onNavigate("settings")},
             onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,
             onJumpToMessage=onJumpToMessage,onExportSessions=onExportSessions,
-            onImportSessions=onImportSessions)
+            onExportSession=onExportSession,onImportSessions=onImportSessions,
+            onDeleteSession=onDeleteSession)
         return
     }
     if(kind=="settings"){

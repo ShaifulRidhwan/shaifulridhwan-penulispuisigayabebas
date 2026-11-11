@@ -1,6 +1,12 @@
 package my.aksara.nativeapp
 
 import android.os.Bundle
+import android.os.Build
+import android.view.animation.DecelerateInterpolator
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
+import android.view.View
 import androidx.metrics.performance.JankStats
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,9 +18,37 @@ import my.aksara.nativeapp.feature.chat.AksaraApp
 
 class MainActivity : ComponentActivity() {
     private var perfStats: JankStats? = null
+    // One-shot platform splash pulse; never hold the first application frame.
+    private var startupPulse: AnimatorSet? = null
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(R.style.Theme_Aksara)
         super.onCreate(savedInstanceState)
+        // The platform splash remains visible until the first app frame is ready.
+        // Animate its exit, not a second artificial loading screen.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            splashScreen.setOnExitAnimationListener { provider ->
+                val splash = provider
+                val icon = provider.iconView
+                if (icon != null) {
+                    val pulseX = ObjectAnimator.ofFloat(icon, View.SCALE_X, 0.97f, 1.055f, 1.0f)
+                    val pulseY = ObjectAnimator.ofFloat(icon, View.SCALE_Y, 0.94f, 1.10f, 1.0f)
+                    val pulseAlpha = ObjectAnimator.ofFloat(icon, View.ALPHA, 0.86f, 1.0f, 1.0f)
+                    startupPulse = AnimatorSet().apply {
+                        playTogether(pulseX, pulseY, pulseAlpha)
+                        duration = 410L
+                        interpolator = DecelerateInterpolator()
+                        start()
+                    }
+                }
+                splash.animate().alpha(0f).setStartDelay(170L).setDuration(390L)
+                    .setInterpolator(DecelerateInterpolator())
+                    .withEndAction {
+                        startupPulse?.cancel()
+                        startupPulse = null
+                        provider.remove()
+                    }.start()
+            }
+        }
+        setTheme(R.style.Theme_Aksara)
         enableEdgeToEdge()
         WindowCompat.getInsetsController(window, window.decorView).apply {
             hide(WindowInsetsCompat.Type.systemBars())

@@ -16,7 +16,7 @@ chat = read("app/src/main/java/my/aksara/nativeapp/feature/chat/AksaraScreen.kt"
 today = read("app/src/main/java/my/aksara/nativeapp/feature/today/TodayScreen.kt")
 gradle = read("app/build.gradle.kts")
 check("no extra startup delay", "animateTo(1f, tween(2300" not in splash)
-check("blank OS splash icon", "@drawable/aksara_launch_empty" in style)
+check("branded OS splash icon", "@drawable/aksara_icon_transparent" in style and "@drawable/aksara_launch_empty" not in style)
 check("IME on content not wallpaper", "Modifier.fillMaxSize().imePadding().safeDrawingPadding()" in chat)
 check("stable chat content type", "contentType={it.role}" in chat)
 check("spring animations retained", "aksaraBouncyClick" in read("app/src/main/java/my/aksara/nativeapp/feature/chat/ReactiveControls.kt") and "aksaraBouncyClick" in today and (root / "app/src/main/java/my/aksara/nativeapp/core/design/AksaraMotion.kt").exists())

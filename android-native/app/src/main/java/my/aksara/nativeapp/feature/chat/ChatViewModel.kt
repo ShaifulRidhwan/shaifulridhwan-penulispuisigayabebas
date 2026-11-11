@@ -398,10 +398,68 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** The user explicitly exports plain JSON; never include encrypted memory or tokens. */
-    fun exportSessions(): String {
+    fun exportSessions(startId: String? = null): String {
         check(state.value.loaded && !state.value.busy && storageReadable) { "Arkib belum tersedia." }
-        return SessionTransferCodec.encode(
-            mergeSessionArchive(state.value.archive,state.value.messages),state.value.sessionStarts)
+        val current = state.value
+        val combined = mergeSessionArchive(current.archive, current.messages)
+        if (startId == null) return SessionTransferCodec.encode(combined, current.sessionStarts)
+        val selected = groupSessions(combined, current.sessionStarts)
+            .firstOrNull { it.startId == startId }
+            ?: throw IllegalArgumentException("Sesi dipilih tidak lagi wujud.")
+        return SessionTransferCodec.encode(selected.messages, listOf(selected.startId))
+    }
+
+    /**
+     * Delete one chosen conversation only after a successful encrypted disk write.
+     * The active chat clears only when it belongs to the deleted conversation.
+     * OFF-by-default memory and all remaining conversations are left untouched.
+     */
+    suspend fun deleteSession(startId: String): Boolean = withContext(Dispatchers.Main.immediate) {
+        if (!state.value.loaded || state.value.busy || !storageReadable || startId.isBlank()) {
+            return@withContext false
+        }
+        try {
+            archiveMutex.withLock {
+                val current = state.value
+                check(!current.busy && storageReadable) { "Sesi sedang digunakan." }
+                val merged = mergeSessionArchive(current.archive, current.messages)
+                val plan = planSessionRemoval(merged, current.sessionStarts, startId)
+                    ?: return@withLock false
+                store.save(plan.archive, plan.starts)
+                val activeRemoved = current.messages.any { it.id in plan.removedIds }
+                if (activeRemoved) {
+                    activeAttachment = null
+                    savedContext = savedContext.copy(
+                        sessionFirstId = "", summary = "", summarizedThrough = 0,
+                        thoughtLedger = emptyList()
+                    )
+                }
+                mutable.update { value ->
+                    val updated = value.copy(
+                        archive = plan.archive,
+                        sessionStarts = plan.starts,
+                        messages = if (activeRemoved) emptyList() else value.messages,
+                        resumedFromHistory = if (activeRemoved) false else value.resumedFromHistory,
+                        nextJourney = if (activeRemoved) null else value.nextJourney,
+                        summaryStatus = if (activeRemoved) "not_requested" else value.summaryStatus,
+                        error = null
+                    )
+                    if (activeRemoved) clearAnswerDiagnostics(updated) else updated
+                }
+                if (activeRemoved) {
+                    runCatching { persistContext() }.onFailure {
+                        mutable.update { it.copy(error = "Sesi dipadam tetapi ringkasan konteks belum dapat disimpan.") }
+                    }
+                }
+                true
+            }
+        } catch (e: Exception) {
+            mutable.update {
+                it.copy(error = "Sesi tidak dipadam. Arkib asal dikekalkan: " +
+                    (e.message ?: "ralat storan").take(100))
+            }
+            false
+        }
     }
 
     /** Validate before modifying any encrypted file; preserve original archive on failure. */

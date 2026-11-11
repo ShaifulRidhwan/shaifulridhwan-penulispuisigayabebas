@@ -1,13 +1,5 @@
 package my.aksara.nativeapp.feature.chat
 
-import android.Manifest
-import android.content.Intent
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.os.BatteryManager
-import android.os.Build
-import android.os.PowerManager
-import android.provider.Settings
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.feature.voice.VoiceLanguageStyles
-import my.aksara.nativeapp.feature.tools.MetricsContent
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 
@@ -33,8 +24,7 @@ internal val SettingsCategoryIcons = mapOf(
     "Chat & Lampiran" to "chat",
     "Voice & Audio" to "voice",
     "Memori & Privasi" to "shield",
-    "Tools & Research" to "research",
-    "Sistem & Diagnostik" to "activity"
+    "Tools & Research" to "research"
 )
 
 /** P3 + P4 user-facing settings. Controls here are wired to real storage/backend metadata. */
@@ -59,6 +49,7 @@ internal fun AksaraSettings(
     val preferences=remember(context){context.getSharedPreferences("aksara_voice",android.content.Context.MODE_PRIVATE)}
     var expanded by rememberSaveable { mutableStateOf("") }
     var advancedPage by rememberSaveable { mutableStateOf(false) }
+    var privacyPage by rememberSaveable { mutableStateOf(false) }
     var confirmErase by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf("") }
     var notes by remember(state.memoryNotes) { mutableStateOf(state.memoryNotes) }
@@ -71,25 +62,31 @@ internal fun AksaraSettings(
         Triple("Chat & Lampiran","Konteks, fail, sejarah dan paparan jawapan",SettingsCategoryIcons.getValue("Chat & Lampiran")),
         Triple("Voice & Audio","Mikrofon, output, bahasa dan pemulihan sesi",SettingsCategoryIcons.getValue("Voice & Audio")),
         Triple("Memori & Privasi","Kawalan data peribadi dan penyimpanan",SettingsCategoryIcons.getValue("Memori & Privasi")),
-        Triple("Tools & Research","Kebenaran alat dan penggunaan sumber",SettingsCategoryIcons.getValue("Tools & Research")),
-        Triple("Sistem & Diagnostik","Kesihatan penyedia, prestasi dan ralat",SettingsCategoryIcons.getValue("Sistem & Diagnostik"))
+        Triple("Tools & Research","Kebenaran alat dan penggunaan sumber",SettingsCategoryIcons.getValue("Tools & Research"))
     )
 
     AksaraGlassModal(onClose = onClose,
-        preferredHeight = if(expanded.isBlank() && !advancedPage) 585.dp else 665.dp) {
+        preferredHeight = if(expanded.isBlank() && !advancedPage && !privacyPage) 535.dp else 665.dp) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
                     Column(Modifier.weight(1f)){
                         AksaraText("Settings",size=16f,weight=700,
                             family=AksaraTypography.heading)
-                        AksaraText(if(advancedPage)"Di Sebalik Aksara · Technical Architecture" else "Kawalan aplikasi dan diagnostik",size=10f,color=AksaraColors.muted)
+                        AksaraText(if(privacyPage)"Ketelusan data dan kawalan pengguna" else if(advancedPage)"Di Sebalik Aksara · Technical Architecture" else "Kawalan aplikasi dan diagnostik",size=10f,color=AksaraColors.muted)
                     }
                     AksaraButton("×",onClose,Modifier.width(44.dp),height=44.dp,size=20f,radius=13.dp)
                 }
                 Spacer(Modifier.height(10.dp))
-                Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
+                // Keep the main Settings directory fully visible and immovable.
+                // Scrolling is reserved for expanded controls and Advanced module detail pages.
+                Column(Modifier.weight(1f).then(
+                    if(expanded.isNotBlank() || advancedPage || privacyPage) Modifier.verticalScroll(rememberScrollState())
+                    else Modifier
+                ),
                     verticalArrangement=Arrangement.spacedBy(9.dp)) {
-                    if(advancedPage) {
+                    if(privacyPage) {
+                        AksaraPrivacyDataControl(onBack={privacyPage=false},onExport=onExport,onErase=onErase)
+                    } else if(advancedPage) {
                         AksaraAdvancedSettings(state,onBack={advancedPage=false},onRefresh=onRefresh)
                     } else {
                         SettingsGroup("Advanced Settings",
@@ -225,6 +222,10 @@ internal fun AksaraSettings(
                                         size=10f,color=AksaraColors.muted)
                                 }
                                 "Memori & Privasi" -> {
+                                    AksaraButton("Privacy & Data Control ›",{
+                                        expanded=""; privacyPage=true
+                                    },Modifier.fillMaxWidth(),height=38.dp,size=11f)
+                                    Spacer(Modifier.height(8.dp))
                                     SettingsFact("Memori peribadi",if(state.memoryEnabled)"Aktif" else "OFF")
                                     SettingsFact("Storan sesi","Android Keystore · AES-GCM")
                                     Spacer(Modifier.height(8.dp))
@@ -285,41 +286,6 @@ internal fun AksaraSettings(
                                     AksaraButton("Semak status alat backend",onRefresh,
                                         Modifier.fillMaxWidth(),height=36.dp,size=10f)
                                 }
-                                "Sistem & Diagnostik" -> {
-                                    val runtime=Runtime.getRuntime()
-                                    val appMemory=(runtime.totalMemory()-runtime.freeMemory())/1048576L
-                                    val battery=remember{context.getSystemService(BatteryManager::class.java)}
-                                    val power=remember{context.getSystemService(PowerManager::class.java)}
-                                    SettingsFact("RAM heap digunakan",appMemory.toString()+" MB")
-                                    SettingsFact("Bateri",battery.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY).toString()+"%")
-                                    SettingsFact("Penjimatan kuasa",if(power.isPowerSaveMode)"Aktif" else "OFF")
-                                    SettingsFact("Respons berjaya (sesi aplikasi)",state.completedRequests.toString())
-                                    SettingsFact("Ralat request (sesi aplikasi)",state.failedRequests.toString())
-                                    SettingsFact("Penyedia disahkan Online",state.providers.count{it.second=="online"}.toString())
-                                    state.providers.forEach{ (name,status)->SettingsFact(name,status)}
-                                    Spacer(Modifier.height(10.dp))
-                                    var showPerformance by remember { mutableStateOf(false) }
-                                    AksaraButton(if (showPerformance) "Tutup Prestasi A.I." else "Prestasi A.I.",
-                                        { showPerformance = !showPerformance },
-                                        Modifier.fillMaxWidth(),height=37.dp,size=11f)
-                                    if (showPerformance) MetricsContent(state,onRefresh)
-                                    Spacer(Modifier.height(8.dp))
-                                    SettingsLabel("Permission Manager")
-                                    val micGranted=context.checkSelfPermission(Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED
-                                    val bluetoothGranted=Build.VERSION.SDK_INT<Build.VERSION_CODES.S ||
-                                        context.checkSelfPermission(Manifest.permission.BLUETOOTH_CONNECT)==PackageManager.PERMISSION_GRANTED
-                                    SettingsFact("Mikrofon",if(micGranted)"Dibenarkan" else "Belum dibenarkan")
-                                    SettingsFact("Bluetooth",if(bluetoothGranted)"Dibenarkan / tidak perlu" else "Belum dibenarkan")
-                                    AksaraButton("Buka kebenaran Android",{
-                                        context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                                            .setData(Uri.parse("package:"+context.packageName)))
-                                    },Modifier.fillMaxWidth(),height=36.dp,size=10.5f)
-                                    Spacer(Modifier.height(8.dp))
-                                    AksaraText("Log ringkas hanya bilangan dan status, bukan teks prompt. Ujian model sebenar, bateri, haba dan Bluetooth fizikal perlu QA pada peranti.",
-                                        size=10f,color=AksaraColors.muted)
-                                    AksaraButton("Refresh Provider Health",onRefresh,
-                                        Modifier.fillMaxWidth(),height=36.dp,size=10f)
-                                }
                             }
                         }
                         }
@@ -353,8 +319,8 @@ private fun SettingsGroup(name:String,description:String,icon:String,open:Boolea
 ) {
     AksaraGlassSurface(Modifier.fillMaxWidth(),radius=14.dp,blur=4.dp,
         border=AksaraModalStyle.border) {
-        Column(Modifier.fillMaxWidth().padding(11.dp)) {
-            Row(Modifier.fillMaxWidth().clickable(onClick=toggle).padding(vertical=5.dp),
+        Column(Modifier.fillMaxWidth().padding(9.dp)) {
+            Row(Modifier.fillMaxWidth().clickable(onClick=toggle).padding(vertical=4.dp),
                 horizontalArrangement=Arrangement.spacedBy(9.dp),verticalAlignment=Alignment.CenterVertically) {
                 AksaraIcon(icon,Modifier.size(20.dp).semantics { contentDescription = "Ikon " + name },AksaraColors.gold)
                 Column(Modifier.weight(1f)) {
