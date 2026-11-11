@@ -128,7 +128,7 @@ class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClien
                             if(source.buffer.size in 1..500_000) source.buffer.readUtf8() else throw e
                         }
                         val event = Ndjson.parse(line)
-                        if (event is ChatEvent.Delta) { chars += event.text.length; if (chars > 40_000) throw IOException("Jawapan melebihi had.") }
+                        if (event is ChatEvent.Delta) { deltaSeen = true; chars += event.text.length; if (chars > 40_000) throw IOException("Jawapan melebihi had.") }
                         if (event != null) send(event)
                         if (event is ChatEvent.Done) { done = true; break }
                     }
