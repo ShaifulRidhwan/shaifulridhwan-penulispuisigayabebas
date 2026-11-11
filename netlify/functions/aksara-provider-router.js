@@ -7,7 +7,7 @@
  */
 const {boundedHistory,boundedText,requestControl,readSSE}=require("./lib/aksara-transport");
 const Registry=require("./aksara-model-registry");
-const CircuitV7=require("./aksara-circuit-breaker-v7");
+const CircuitV7=require("./aksara-circuit-breaker-v7").create();
 const Capabilities=require("./aksara-capabilities");
 const cooldown=new Map();
 const freeQuotaFailures=new Map(); // 402: real upstream free-quota exhaustion, not a 15-second outage.
