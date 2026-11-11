@@ -5,13 +5,13 @@
         <item name="android:windowLightNavigationBar">false</item>
         <item name="android:windowActionModeOverlay">true</item>
         <item name="android:colorAccent">#e6c58b</item>
-        <item name="android:windowBackground">#070911</item>
+        <item name="android:windowBackground">#050507</item>
         <item name="android:windowNoTitle">true</item>
     </style>
     <style name="Theme.Aksara.Launch" parent="Theme.Aksara">
         <item name="android:windowSplashScreenBackground">@color/aksara_launch_midnight</item>
         <item name="android:windowSplashScreenAnimatedIcon">@drawable/aksara_icon_transparent</item>
-        <item name="android:windowSplashScreenAnimationDuration">450</item>
+        <item name="android:windowSplashScreenAnimationDuration">650</item>
         <item name="android:windowBackground">@color/aksara_launch_midnight</item>
     </style>
 </resources>
