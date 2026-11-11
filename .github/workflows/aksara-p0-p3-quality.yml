@@ -4,8 +4,11 @@ on:
     paths:
       - 'netlify/functions/aksara-context-*'
       - 'netlify/functions/aksara-provider-router.js'
+      - 'netlify/functions/aksara-agent-tools-v7.js'
+      - 'netlify/functions/bilik-antara.js'
       - 'netlify/functions/aksara-circuit-breaker-v7.js'
       - 'tests/aksara-p0-p3-quality.test.cjs'
+      - 'tests/aksara-agent-v7.test.cjs'
       - 'scripts/aksara-p0-p3-performance-gate.cjs'
       - 'android-native/**'
       - 'docs/android-rebuild/**'
@@ -27,7 +30,7 @@ jobs:
           cache: 'npm'
       - run: npm ci --ignore-scripts --no-audit --no-fund
       - name: P0-P3 deterministic tests, not live model quality proof
-        run: node --test tests/aksara-p0-p3-quality.test.cjs
+        run: node --test tests/aksara-p0-p3-quality.test.cjs tests/aksara-agent-v7.test.cjs
       - name: Existing Web Brain regression suite
         run: npm run test:aksara-platform
       - name: Physical performance evidence status
