@@ -5,6 +5,13 @@ plugins {
 }
 // Keep default Cloud APK build reproducible; enable heavy native runtime with -PenableSdTurboNative=true.
 val enableSdTurboNative = providers.gradleProperty("enableSdTurboNative").orNull == "true"
+// PR preview APKs use a SHA-scoped package ID to avoid colliding with an installed
+// Android app signed by a different, ephemeral CI debug keystore.
+// The normal merged/development app retains its original applicationId.
+val aksaraPreviewSuffix = providers.gradleProperty("aksaraPreviewSuffix").orNull
+require(aksaraPreviewSuffix == null || Regex("^\\.preview\\.p[0-9]+\\.c[a-f0-9]{8}$").matches(aksaraPreviewSuffix)) {
+    "Invalid AKSARA preview package suffix"
+}
 android {
     if (enableSdTurboNative) {
         ndkVersion = "27.2.12479018"
@@ -29,6 +36,14 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "API_ORIGIN", "\"https://shaifulridhwan-penulispuisigayabebas.netlify.app\"")
         buildConfigField("String", "WEB_REFERENCE_COMMIT", "\"f482b8ed393fe0eb4277ae3eaf3938f1593489c4\"")
+    }
+    buildTypes {
+        getByName("debug") {
+            if (aksaraPreviewSuffix != null) {
+                applicationIdSuffix = aksaraPreviewSuffix
+                versionNameSuffix = "-preview-" + aksaraPreviewSuffix.removePrefix(".").replace('.', '-')
+            }
+        }
     }
     buildFeatures { compose = true; buildConfig = true }
     compileOptions { isCoreLibraryDesugaringEnabled = true; sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
