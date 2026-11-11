@@ -678,9 +678,7 @@ private val ChatTimestampFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm",j
 /** Restored Aksara identity: a small circular avatar, independent of provider provenance. */
 @Composable private fun AksaraBrandAvatar() {
     val shape=CircleShape
-    Box(Modifier.size(29.dp).clip(shape)
-        .background(Brush.linearGradient(listOf(Color(0xff25190d),Color(0xff06132d),Color(0xff0b3480))))
-        .border(0.8.dp,AksaraColors.border,shape)) {
+    Box(Modifier.size(29.dp).clip(shape)) {
         Image(painter=painterResource(R.drawable.aksara_launcher_dual_foreground),
             contentDescription="Aksara A.I. circular avatar",modifier=Modifier.fillMaxSize(),
             contentScale=ContentScale.FillBounds)
