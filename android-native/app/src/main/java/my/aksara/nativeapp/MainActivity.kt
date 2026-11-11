@@ -1,6 +1,8 @@
 package my.aksara.nativeapp
 
 import android.os.Bundle
+import android.os.Build
+import android.view.animation.DecelerateInterpolator
 import androidx.metrics.performance.JankStats
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,8 +15,21 @@ import my.aksara.nativeapp.feature.chat.AksaraApp
 class MainActivity : ComponentActivity() {
     private var perfStats: JankStats? = null
     override fun onCreate(savedInstanceState: Bundle?) {
-        setTheme(R.style.Theme_Aksara)
         super.onCreate(savedInstanceState)
+        // The platform splash remains visible until the first app frame is ready.
+        // Animate its exit, not a second artificial loading screen.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            splashScreen.setOnExitAnimationListener { provider ->
+                val splash = provider.view
+                val icon = provider.iconView
+                icon?.animate()?.scaleX(1.08f)?.scaleY(1.08f)?.alpha(0.0f)
+                    ?.setDuration(260L)?.setInterpolator(DecelerateInterpolator())?.start()
+                splash.animate().alpha(0f).setDuration(320L)
+                    .setInterpolator(DecelerateInterpolator())
+                    .withEndAction { provider.remove() }.start()
+            }
+        }
+        setTheme(R.style.Theme_Aksara)
         enableEdgeToEdge()
         WindowCompat.getInsetsController(window, window.decorView).apply {
             hide(WindowInsetsCompat.Type.systemBars())
