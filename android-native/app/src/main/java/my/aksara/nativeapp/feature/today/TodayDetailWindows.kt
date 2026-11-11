@@ -265,12 +265,6 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
         }
         return
     }
-    GlassSection("Ramalan 7 hari") {
-        data.days.forEach { item ->
-            WindowLine(item.date,
-                formatNumber(item.low)+"–"+formatNumber(item.high)+"°C • "+item.rain+"% hujan")
-        }
-    }
     GlassSection("Ramalan setiap jam") {
         val now=LocalDateTime.now(kl).toString().take(16)
         val hours=data.hours.filter { it.time.take(16)>=now }.take(18)
@@ -279,6 +273,12 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
             WindowLine(hour.time.replace("T"," • "),
                 formatNumber(hour.celsius)+"°C • "+hour.rain+"% hujan")
             DetailNote("Terasa "+formatNumber(hour.feels)+"°C • Kelembapan "+hour.humidity+"%")
+        }
+    }
+    GlassSection("Ramalan 7 hari") {
+        data.days.forEach { item ->
+            WindowLine(item.date,
+                formatNumber(item.low)+"–"+formatNumber(item.high)+"°C • "+item.rain+"% hujan")
         }
     }
     if(forecast.fromCache)DetailNote("Paparan data cache terakhir; sumber mungkin tidak dapat dihubungi.")
