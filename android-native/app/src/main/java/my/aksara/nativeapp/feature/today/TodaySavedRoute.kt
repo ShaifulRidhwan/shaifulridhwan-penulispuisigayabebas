@@ -14,6 +14,7 @@ internal object TodaySavedRoute {
             put("version",1)
             put("kilometres",route.kilometres)
             put("seconds",route.seconds)
+            put("costing",route.costing)
             put("savedAt",System.currentTimeMillis())
             put("points",JSONArray().apply {
                 route.points.forEach { p ->
@@ -53,8 +54,11 @@ internal object TodaySavedRoute {
                 row.getInt("shapeIndex").coerceIn(0,points.lastIndex),
                 row.getInt("type"))
         }
+        val mode=root.optString("costing","auto").takeIf {
+            it in setOf("auto","pedestrian","bicycle")
+        } ?: "auto"
         return TodayRoute(points,root.getDouble("kilometres"),root.getInt("seconds"),
-            steps,"Laluan tersimpan / offline")
+            steps,"Laluan tersimpan / offline",mode)
     }
     fun save(context:Context,route:TodayRoute):Boolean=runCatching {
         val target=File(context.filesDir,name)
