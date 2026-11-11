@@ -63,12 +63,15 @@ class GameActivity : ComponentActivity() {
         val loader=WebViewAssetLoader.Builder().addPathHandler("/assets/",WebViewAssetLoader.AssetsPathHandler(this)).build()
         gameWebView=WebView(this).apply {
             id=android.view.View.generateViewId()
-            setOnTouchListener { _,event ->
-                if(BuildConfig.DEBUG&&event.actionMasked!=MotionEvent.ACTION_MOVE) {
-                    val ids=(0 until event.pointerCount).joinToString{event.getPointerId(it).toString()}
-                    Log.d("AksaraGame","touch action=${event.actionMasked} index=${event.actionIndex} ids=$ids x=${event.x} y=${event.y}")
+            // Debug-only touch diagnostics; no listener allocation on ordinary gameplay.
+            if (BuildConfig.DEBUG && intent.getBooleanExtra("aksara_game_input_trace", false)) {
+                setOnTouchListener { _, event ->
+                    if (event.actionMasked != MotionEvent.ACTION_MOVE) {
+                        val ids=(0 until event.pointerCount).joinToString { event.getPointerId(it).toString() }
+                        Log.d("AksaraGame","touch action=${event.actionMasked} index=${event.actionIndex} ids=$ids x=${event.x} y=${event.y}")
+                    }
+                    false // WebView keeps native multi-touch pointer ownership.
                 }
-                false // WebView retains ownership and maps native IDs to Pointer Events.
             }
             settings.javaScriptEnabled=true
             settings.allowFileAccess=false
@@ -77,7 +80,12 @@ class GameActivity : ComponentActivity() {
             settings.mixedContentMode=WebSettings.MIXED_CONTENT_NEVER_ALLOW
             webChromeClient=object:WebChromeClient(){
                 override fun onConsoleMessage(m:ConsoleMessage):Boolean {
-                    Log.println(if(m.messageLevel()==ConsoleMessage.MessageLevel.ERROR)Log.ERROR else Log.INFO,"AksaraGame", "${m.sourceId()}:${m.lineNumber()} ${m.message()}")
+                    // Repeated WebGL/game console info lines must not burden normal play.
+                    if (m.messageLevel()==ConsoleMessage.MessageLevel.ERROR ||
+                        (BuildConfig.DEBUG && intent.getBooleanExtra("aksara_game_console_trace", false))) {
+                        Log.println(if(m.messageLevel()==ConsoleMessage.MessageLevel.ERROR)Log.ERROR else Log.INFO,
+                            "AksaraGame","${m.sourceId()}:${m.lineNumber()} ${m.message()}")
+                    }
                     return true
                 }
             }

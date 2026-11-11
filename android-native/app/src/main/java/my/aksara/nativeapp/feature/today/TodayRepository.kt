@@ -231,7 +231,7 @@ internal class TodayRepository(context:Context) {
             coroutineScope {
                 listOf("btc-bitcoin","eth-ethereum","sol-solana").map { id ->
                     async { JSONObject(request("https://api.coinpaprika.com/v1/tickers/"+id)) }
-                }.awaitAll().forEach(result::put)
+                }.awaitAll().forEach { quote -> result.put(quote) }
             }
             result.toString()
         }

@@ -3,6 +3,7 @@ package my.aksara.nativeapp.feature.today
 import android.content.Context
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -154,16 +155,17 @@ internal class TodayDetailRepository(context:Context) {
     }
     suspend fun development():TodayDevelopment=withContext(Dispatchers.IO) {
         val base="https://api.github.com/repos/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas"
-        val android=cached("commits:android",20L*60_000L,TodayDetailParsers::commits) {
+        // Independent feeds load concurrently, retaining individual TTL and stale fallback.
+        val android=async { cached("commits:android",20L*60_000L,TodayDetailParsers::commits) {
             get("$base/commits?sha=rebuild%2Faksara-android-native-v1&per_page=12")
-        }
-        val web=cached("commits:main",60L*60_000L,TodayDetailParsers::commits) {
+        } }
+        val web=async { cached("commits:main",60L*60_000L,TodayDetailParsers::commits) {
             get("$base/commits?sha=main&per_page=10")
-        }
-        val releases=cached("releases",30L*60_000L,TodayDetailParsers::releases) {
+        } }
+        val releases=async { cached("releases",30L*60_000L,TodayDetailParsers::releases) {
             get("$base/releases?per_page=12")
-        }
-        TodayDevelopment(android.value.orEmpty(),web.value.orEmpty(),releases.value.orEmpty())
+        } }
+        TodayDevelopment(android.await().value.orEmpty(),web.await().value.orEmpty(),releases.await().value.orEmpty())
     }
 }
 
