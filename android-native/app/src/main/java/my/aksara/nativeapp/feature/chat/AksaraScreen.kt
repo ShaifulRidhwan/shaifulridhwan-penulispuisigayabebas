@@ -54,6 +54,11 @@ import kotlinx.coroutines.flow.collect
 import java.time.*
 import java.time.format.DateTimeFormatter
 
+/** Only move the chat by the actual overflow, never an arbitrary huge distance. */
+internal fun visibleMessageOverflow(
+    itemOffset:Int,itemHeight:Int,viewportEnd:Int,afterPadding:Int
+):Int=(itemOffset+itemHeight-(viewportEnd-afterPadding)).coerceAtLeast(0)
+
 const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam bentuk, LUAS dalam pemikiran."
 @Composable fun AksaraApp(vm: ChatViewModel = viewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -315,11 +320,12 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                 if (list.layoutInfo.visibleItemsInfo.none { it.index == last }) {
                     list.scrollToItem(last)
                 }
-                val end = list.layoutInfo.viewportEndOffset -
-                    list.layoutInfo.afterContentPadding
                 val visibleLast = list.layoutInfo.visibleItemsInfo.lastOrNull { it.index == last }
                 if (visibleLast != null) {
-                    val overflow = (visibleLast.offset + visibleLast.size - end).coerceAtLeast(0)
+                    val overflow = visibleMessageOverflow(
+                        visibleLast.offset,visibleLast.size,
+                        list.layoutInfo.viewportEndOffset,list.layoutInfo.afterContentPadding
+                    )
                     if (overflow > 0) list.scrollBy(overflow.toFloat())
                 }
             }
