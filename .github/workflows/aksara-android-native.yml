@@ -246,11 +246,11 @@ jobs:
             docs/android-rebuild/visual-comparison/
             android-native/app/build/reports/
 
-  today-v2-preview-apk:
-    # A direct APK, with exact source SHA, for physical-device UI touch-up before merge.
+  today-preview-apk:
+    # A direct, SHA-locked .apk preview for TODAY UI PRs, without artifact ZIPs.
     if: >-
       github.event_name == 'pull_request' &&
-      github.event.pull_request.number == 308 &&
+      startsWith(github.head_ref, 'feature/aksara-today-') &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       needs.build.result == 'success' &&
       needs.backend-smoke.result == 'success' &&
@@ -265,33 +265,35 @@ jobs:
       - uses: actions/download-artifact@v5
         with:
           name: aksara-native-installable-apk
-          path: preview-pr308
-      - name: Publish SHA-locked preview APK (not ZIP)
+          path: preview-today
+      - name: Publish verified single APK (not ZIP)
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        shell: bash
         run: |
           set -euo pipefail
-          test -s preview-pr308/app-debug.apk
+          test -s preview-today/app-debug.apk
           short="${HEAD_SHA:0:8}"
-          tag="aksara-today-v2-pr308-$short"
-          file="AKSARA-TODAY-V2-PR308-$short.apk"
-          cp preview-pr308/app-debug.apk "preview-pr308/$file"
-          (cd preview-pr308 && sha256sum "$file" > SHA256SUMS)
-          if gh release view "$tag" -R "${{ github.repository }}" >/dev/null 2>&1; then
-            gh release upload "$tag" "preview-pr308/$file" preview-pr308/SHA256SUMS -R "${{ github.repository }}" --clobber
+          tag="aksara-today-preview-pr${PR_NUMBER}-${short}"
+          file="AKSARA-TODAY-PR${PR_NUMBER}-${short}.apk"
+          cp preview-today/app-debug.apk "preview-today/$file"
+          (cd preview-today && sha256sum "$file" > SHA256SUMS)
+          if gh release view "$tag" -R "$REPO" >/dev/null 2>&1; then
+            gh release upload "$tag" "preview-today/$file" preview-today/SHA256SUMS -R "$REPO" --clobber
           else
-            gh release create "$tag" "preview-pr308/$file" preview-pr308/SHA256SUMS \
-              -R "${{ github.repository }}" --target "$HEAD_SHA" --prerelease \
-              --title "AKSARA TODAY V2 PR308 test APK $short" \
-              --notes "Experimental unmerged PR #308 test APK from source $HEAD_SHA. Android compilation, unit tests, backend, game and web-audit workflows passed. Physical-device QA and human approval still required; this is not a stable release."
+            gh release create "$tag" "preview-today/$file" preview-today/SHA256SUMS \
+              -R "$REPO" --target "$HEAD_SHA" --prerelease \
+              --title "AKSARA TODAY PR #$PR_NUMBER test APK $short" \
+              --notes "Unmerged UI preview from commit $HEAD_SHA. CI checks passed; device QA is still required."
           fi
-          url="https://github.com/${{ github.repository }}/releases/download/$tag/$file"
-          gh release view "$tag" -R "${{ github.repository }}" --json assets \
+          gh release view "$tag" -R "$REPO" --json assets \
             --jq '.assets[].name' | grep -Fx "$file"
-          echo "### PR #308 direct test APK" >> "$GITHUB_STEP_SUMMARY"
-          echo "$url" >> "$GITHUB_STEP_SUMMARY"
-          cat preview-pr308/SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
+          echo "### PR #$PR_NUMBER single APK" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/$REPO/releases/download/$tag/$file" >> "$GITHUB_STEP_SUMMARY"
+          cat preview-today/SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
 
   merged-single-apk:
     # Publish ONE installable .apk asset, not the ZIP wrapper from Actions artifacts.
