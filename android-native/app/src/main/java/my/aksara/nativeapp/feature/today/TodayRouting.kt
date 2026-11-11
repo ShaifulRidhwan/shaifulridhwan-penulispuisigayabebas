@@ -15,7 +15,8 @@ internal data class RouteCoordinate(val latitude:Double,val longitude:Double)
 internal data class RouteStep(val instruction:String,val shapeIndex:Int,val type:Int)
 internal data class TodayRoute(
     val points:List<RouteCoordinate>,val kilometres:Double,val seconds:Int,
-    val steps:List<RouteStep>,val provider:String="Valhalla / OpenStreetMap"
+    val steps:List<RouteStep>,val provider:String="Valhalla / OpenStreetMap",
+    val costing:String="auto"
 )
 internal object TodayRouteParser {
     /** Valhalla encodes coordinates at 1e-6 precision, unlike Google polyline5. */
@@ -133,7 +134,7 @@ internal class TodayRouteRepository {
                 check(raw.length<750_000) { "Respons laluan terlalu besar" }
                 val result=TodayRouteParser.parse(raw)
                 synchronized(this@TodayRouteRepository) { lastKey=key;lastRoute=result }
-                result
+                result.copy(costing=costing)
             }
         }
 }
