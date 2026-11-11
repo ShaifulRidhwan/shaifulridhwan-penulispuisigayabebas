@@ -65,7 +65,7 @@ internal fun AksaraSettings(
     )
 
     AksaraGlassModal(onClose = onClose,
-        preferredHeight = if(expanded.isBlank() && !advancedPage) 585.dp else 665.dp) {
+        preferredHeight = if(expanded.isBlank() && !advancedPage) 535.dp else 665.dp) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
                     Column(Modifier.weight(1f)){
