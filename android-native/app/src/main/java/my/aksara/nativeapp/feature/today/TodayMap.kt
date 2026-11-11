@@ -172,6 +172,7 @@ internal object TodayMapConfig {
     LaunchedEffect(session.routeEpoch) {
         if(session.routeEpoch>0L)TodaySavedRoute.load(context)?.let {
             route=it
+            routeMode=it.costing
             error=null
         }
     }
@@ -324,7 +325,7 @@ internal object TodayMapConfig {
                         val saved=TodaySavedRoute.load(context)
                         if(saved!=null) {
                             route=saved
-                            routeMode="auto"
+                            routeMode=saved.costing
                             val point=saved.points.last()
                             destination=LatLng(point.latitude,point.longitude)
                             error=null
