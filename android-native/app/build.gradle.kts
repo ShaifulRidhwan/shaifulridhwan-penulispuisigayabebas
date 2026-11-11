@@ -38,6 +38,16 @@ android {
         buildConfigField("String", "WEB_REFERENCE_COMMIT", "\"f482b8ed393fe0eb4277ae3eaf3938f1593489c4\"")
     }
     buildTypes {
+        create("benchmark") {
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
+            signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = false
+            // Capture ART profiles before R8 obfuscates benchmark classes.
+            isMinifyEnabled = providers.gradleProperty("aksaraGenerateBaseline").orNull != "true"
+            isShrinkResources = isMinifyEnabled
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
         getByName("debug") {
             if (aksaraPreviewSuffix != null) {
                 applicationIdSuffix = aksaraPreviewSuffix
@@ -55,6 +65,8 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation(project(":engine:chess"))
     implementation("androidx.webkit:webkit:1.12.1")
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+    implementation("androidx.metrics:metrics-performance:1.0.0")
     implementation(project(":engine:runtime"))
     implementation(project(":engine:voice"))
     implementation(project(":engine:avatar"))
