@@ -188,7 +188,7 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
         }
         Row {
             listOf("Is","Se","Ra","Kh","Ju","Sa","Ah").forEach {
-                AksaraText(it,Modifier.weight(1f),size=10f,color=muted,textAlign=androidx.compose.ui.text.style.TextAlign.Center)
+                AksaraText(it,Modifier.weight(1f),size=10f,color=muted)
             }
         }
         val pad=month.atDay(1).dayOfWeek.value-1
