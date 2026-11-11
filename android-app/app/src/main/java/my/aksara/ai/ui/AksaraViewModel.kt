@@ -432,20 +432,43 @@ class AksaraViewModel(application: Application) : AndroidViewModel(application) 
                     status = "Sedia"
                 }
             } catch (e: CancellationException) {
-                error = "Jawapan dihentikan. Bahagian yang sudah diterima dikekalkan."
-                status = "Dihentikan"
+                if (activeId == sessionId && myRequest == activeRequestId) {
+                    // An interrupted stream must never leave a pending assistant bubble.
+                    // Preserve any received text as an explicitly incomplete answer.
+                    finishInterruptedReply(assistantId)
+                    error = "Jawapan dihentikan. Bahagian yang sudah diterima dikekalkan."
+                    status = "Dihentikan"
+                }
             } catch (e: Exception) {
-                usageEvent("failure", SystemClock.elapsedRealtime() - started, false)
-                error = (e.message ?: "Sambungan terputus. Cuba lagi.").take(260)
-                status = "Gangguan sambungan"
-                statusReady = false
+                if (activeId == sessionId && myRequest == activeRequestId) {
+                    finishInterruptedReply(assistantId)
+                    usageEvent("failure", SystemClock.elapsedRealtime() - started, false)
+                    error = (e.message ?: "Sambungan terputus. Cuba lagi.").take(260)
+                    status = "Gangguan sambungan"
+                    statusReady = false
+                }
             } finally {
-                busy = false
-                requestJob = null
-                updateCurrent()
+                if (myRequest == activeRequestId) {
+                    busy = false
+                    requestJob = null
+                    updateCurrent()
+                }
             }
         }
         return true
+    }
+
+    private fun finishInterruptedReply(assistantId: String?) {
+        if (assistantId == null) return
+        val index = messages.indexOfFirst { it.id == assistantId }
+        if (index < 0) return
+        val turn = messages[index]
+        if (turn.content.isBlank()) {
+            messages.removeAt(index)
+        } else {
+            // Keep partial text and its incomplete marker for retry and history export.
+            messages[index] = turn.copy(complete = false)
+        }
     }
 
     fun canRetry(): Boolean = !busy &&
