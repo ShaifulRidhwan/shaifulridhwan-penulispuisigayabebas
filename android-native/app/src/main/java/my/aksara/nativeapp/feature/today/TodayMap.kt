@@ -169,6 +169,12 @@ internal object TodayMapConfig {
                 .onFailure { error="Gagal menghidupkan navigasi: "+it.message }
         } else error="Navigasi skrin terkunci memerlukan lokasi tepat."
     }
+    LaunchedEffect(session.routeEpoch) {
+        if(session.routeEpoch>0L)TodaySavedRoute.load(context)?.let {
+            route=it
+            error=null
+        }
+    }
     LaunchedEffect(session.latitude,session.longitude,navigationActive) {
         if(navigationActive && session.latitude!=null && session.longitude!=null) {
             mapView.getMapAsync { map ->
