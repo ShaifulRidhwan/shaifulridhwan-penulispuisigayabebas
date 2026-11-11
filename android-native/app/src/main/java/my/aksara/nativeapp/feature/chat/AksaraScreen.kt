@@ -679,7 +679,7 @@ private val ChatTimestampFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm",j
 @Composable private fun AksaraBrandAvatar() {
     val shape=CircleShape
     Box(Modifier.size(29.dp).clip(shape)) {
-        Image(painter=painterResource(R.drawable.aksara_launcher_dual_foreground),
+        Image(painter=painterResource(R.drawable.aksara_icon_transparent),
             contentDescription="Aksara A.I. circular avatar",modifier=Modifier.fillMaxSize(),
             contentScale=ContentScale.FillBounds)
     }
