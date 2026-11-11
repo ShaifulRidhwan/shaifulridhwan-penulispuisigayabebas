@@ -8,6 +8,9 @@
     <!-- TODAY requests coarse/fine location + read-only calendar together after consent. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Agenda is optional: read-only and requested from the Clock window with explanation. -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <queries>
@@ -15,6 +18,7 @@
         <intent><action android:name="android.speech.RecognitionService" /></intent>
     </queries>
     <application android:extractNativeLibs="true" android:label="Aksara A.I." android:theme="@style/Theme.Aksara" android:allowBackup="false" android:usesCleartextTraffic="false" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:supportsRtl="true">
+        <service android:name=".feature.today.TodayNavigationService" android:exported="false" android:foregroundServiceType="location" android:stopWithTask="false" />
         <activity android:name=".ChessActivity" android:launchMode="singleTop" android:exported="false" android:hardwareAccelerated="true" />
         <activity android:name=".GameActivity" android:exported="false" android:screenOrientation="sensorLandscape" android:configChanges="orientation|screenSize|keyboardHidden" android:hardwareAccelerated="true" />
         <activity android:screenOrientation="portrait" android:name=".MainActivity" android:exported="true" android:theme="@style/Theme.Aksara.Launch" android:windowSoftInputMode="adjustResize">
