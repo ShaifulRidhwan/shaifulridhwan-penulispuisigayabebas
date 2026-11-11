@@ -22,26 +22,77 @@ jobs:
       - run: node --test android-native/game-tests/*.test.cjs
   web-audit:
     runs-on: ubuntu-latest
+    # Chromium, fonts, and native libraries are preinstalled in the version-pinned
+    # Playwright image. Avoid flaky runner apt mirrors during browser installation.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-noble
+      options: --ipc=host
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
-      - uses: actions/cache@v5
-        with:
-          path: ~/.cache/ms-playwright
-          key: playwright-chromium-1.56.1-${{ runner.os }}
       - run: npm install --no-save playwright@1.56.1
-      - run: npx playwright install --with-deps chromium
+      - name: Verify bundled Chromium is launchable
+        run: node -e "const { chromium } = require('playwright'); chromium.launch({ headless: true }).then(browser => browser.close()).catch(error => { console.error(error); process.exit(1); });"
       - name: Eclipse game controls, full fights and browser screenshots
+        shell: bash
         run: |
-          python3 -m http.server 8765 --directory android-native/app/src/main/assets/game > "$RUNNER_TEMP/eclipse-server.log" 2>&1 &
+          # Node's built-in HTTP server avoids introducing a Python or apt dependency
+          # into the official Playwright image. Serve only the checked-in game assets.
+          node -e '
+            const http = require("node:http");
+            const fs = require("node:fs");
+            const path = require("node:path");
+            const root = path.resolve("android-native/app/src/main/assets/game");
+            const mime = {
+              ".html": "text/html; charset=utf-8",
+              ".css": "text/css; charset=utf-8",
+              ".js": "text/javascript; charset=utf-8",
+              ".mjs": "text/javascript; charset=utf-8",
+              ".json": "application/json; charset=utf-8",
+              ".png": "image/png",
+              ".jpg": "image/jpeg",
+              ".jpeg": "image/jpeg",
+              ".webp": "image/webp",
+              ".svg": "image/svg+xml",
+              ".wasm": "application/wasm",
+              ".mp3": "audio/mpeg",
+              ".ogg": "audio/ogg"
+            };
+            http.createServer((request, response) => {
+              let file;
+              try {
+                const pathname = decodeURIComponent(new URL(request.url, "http://localhost").pathname);
+                file = path.resolve(root, "." + pathname);
+              } catch {
+                response.writeHead(400).end();
+                return;
+              }
+              if (file !== root && !file.startsWith(root + path.sep)) {
+                response.writeHead(403).end();
+                return;
+              }
+              if (file === root) file = path.join(root, "index.html");
+              fs.stat(file, (error, stat) => {
+                if (error || !stat.isFile()) {
+                  response.writeHead(404).end();
+                  return;
+                }
+                response.setHeader("Content-Type", mime[path.extname(file)] || "application/octet-stream");
+                const stream = fs.createReadStream(file);
+                stream.on("error", () => response.destroy());
+                stream.pipe(response);
+              });
+            }).listen(8765, "127.0.0.1");
+          ' > "$RUNNER_TEMP/eclipse-server.log" 2>&1 &
           game_server_pid=$!
-          trap 'kill "$game_server_pid"' EXIT
+          trap 'kill "$game_server_pid" 2>/dev/null || true' EXIT
           for attempt in {1..30}; do
             if curl -fsS http://127.0.0.1:8765 > /dev/null; then break; fi
             sleep 0.2
           done
+          curl -fsS http://127.0.0.1:8765 > /dev/null
           node android-native/game-tests/browser.cjs
       - uses: actions/upload-artifact@v5
         if: always()
