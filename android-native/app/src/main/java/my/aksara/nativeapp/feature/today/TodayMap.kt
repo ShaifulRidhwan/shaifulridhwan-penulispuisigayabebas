@@ -38,7 +38,7 @@ import java.util.Locale
 
 /** Public tiles, no paid key. Credits MUST remain visible in preview and full map. */
 internal object TodayMapConfig {
-    const val style="https://tiles.openfreemap.org/styles/dark"
+    const val style="https://tiles.openfreemap.org/styles/positron"
     const val credits="© OpenMapTiles © OpenStreetMap"
     fun navigationUri(lat:Double,lon:Double):Uri {
         require(lat in -90.0..90.0 && lon in -180.0..180.0)
@@ -78,7 +78,7 @@ internal object TodayMapConfig {
         .semantics { contentDescription="Buka peta lokasi" }.clickable(onClick=onClick)) {
         if(bitmap!=null)Image(bitmap!!.asImageBitmap(),contentDescription="Pratonton peta setempat",
             modifier=Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
-        else Box(Modifier.fillMaxSize().background(Color(0xFF152535)),
+        else Box(Modifier.fillMaxSize().background(Color(0xB4D5D9DA)),
             contentAlignment=Alignment.Center) {
             AksaraText(when {
                 location==null->"Benarkan lokasi"
@@ -89,7 +89,7 @@ internal object TodayMapConfig {
         if(location!=null)AksaraIcon("location",
             Modifier.align(Alignment.Center).size(29.dp),Color(0xFFE5C388))
         Box(Modifier.fillMaxWidth().align(Alignment.BottomCenter)
-            .background(Color(0xD80B1321)).padding(horizontal=6.dp,vertical=5.dp)) {
+            .background(Color(0xA9324149)).padding(horizontal=6.dp,vertical=5.dp)) {
             Column(verticalArrangement=Arrangement.spacedBy(2.dp)) {
                 AksaraText(city ?: "Lokasi semasa",size=10f,weight=650)
                 AksaraText(TodayMapConfig.credits,size=7.5f,color=Color(0xFFD2DCEB))
@@ -181,7 +181,7 @@ internal object TodayMapConfig {
                 AksaraText("Memuat peta OpenFreeMap…",size=11f,color=AksaraColors.gold)
             }
             Box(Modifier.fillMaxWidth().align(Alignment.BottomCenter)
-                .background(Color(0xE80B1423)).padding(7.dp)) {
+                .background(Color(0xC1324149)).padding(7.dp)) {
                 AksaraText(TodayMapConfig.credits+" • OpenFreeMap",size=9f)
             }
         }
