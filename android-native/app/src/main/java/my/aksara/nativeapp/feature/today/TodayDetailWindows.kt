@@ -7,6 +7,7 @@ import android.provider.CalendarContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -144,7 +145,7 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
                 Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
                     verticalArrangement=Arrangement.spacedBy(10.dp)) {
                     when(kind) {
-                        "clock" -> ClockCalendarDetail(clock,prayer?.value?.hijri)
+                        "clock" -> ClockCalendarDetail(clock,prayer?.value?.hijri,location)
                         "weather" -> WeatherDetail(weather,forecast,city,location!=null)
                         "prayer" -> PrayerDetail(prayer,monthly)
                         "crypto" -> CryptoDetail(coins,market)
@@ -156,7 +157,7 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
     }
 }
 
-@Composable private fun ClockCalendarDetail(clock:java.time.ZonedDateTime,hijri:String?) {
+@Composable private fun ClockCalendarDetail(clock:java.time.ZonedDateTime,hijri:String?,location:Location?) {
     val context=LocalContext.current
     var month by remember { mutableStateOf(YearMonth.from(clock)) }
     var selected by remember { mutableStateOf(clock.toLocalDate()) }
@@ -165,6 +166,18 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
             PackageManager.PERMISSION_GRANTED
     ) }
     var showRationale by remember { mutableStateOf(false) }
+    val holidaysRepo=remember(context) { TodayHolidayRepository(context) }
+    var stateCode by remember { mutableStateOf<String?>(null) }
+    var holidays by remember(month.year,stateCode) {
+        mutableStateOf<TodayHolidayFeed?>(null)
+    }
+    LaunchedEffect(location?.latitude,location?.longitude) {
+        if(stateCode==null)stateCode=holidaysRepo.stateOf(context,location)
+    }
+    LaunchedEffect(month.year,stateCode) {
+        val state=stateCode
+        if(state!=null)holidays=holidaysRepo.fetch(month.year,state)
+    }
     var agenda by remember(month,hasCalendar) { mutableStateOf<List<AgendaEntry>>(emptyList()) }
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         hasCalendar=it
@@ -202,16 +215,57 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
                 (0 until 7).forEach { i ->
                     val day=week.getOrNull(i) ?: 0
                     val date=if(day>0)month.atDay(day) else null
+                    val holiday=date?.let { d -> holidays?.entries?.any {it.date==d} }==true
+                    val deviceEvent=date?.let { d -> agenda.any {
+                        Instant.ofEpochMilli(it.begin).atZone(kl).toLocalDate()==d
+                    } }==true
                     AksaraGlassSurface(Modifier.weight(1f).height(37.dp)
                         .clickable(enabled=date!=null) { if(date!=null)selected=date },
                         radius=10.dp,border=if(date==selected)gold else AksaraColors.border) {
                         if(day>0)AksaraText(day.toString(),Modifier.align(Alignment.Center),
-                            size=11f,color=if(date==selected)gold else AksaraColors.text)
+                            size=11f,color=if(date==selected || holiday)gold
+                                else if(deviceEvent)Color(0xFF91D8C2) else AksaraColors.text)
                     }
                 }
             }
         }
         DetailNote("Dipilih: "+selected.format(DateTimeFormatter.ofPattern("d MMMM yyyy",ms)))
+    }
+    GlassSection("Cuti umum Malaysia • negeri") {
+        DetailNote("Emas = cuti umum, hijau = agenda peranti. Tarikh cuti boleh berubah mengikut pengumuman kerajaan.")
+        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+            MalaysiaHolidayStates.all.forEach { (code,name) ->
+                AksaraButton(if(stateCode==code)"✓ "+name else name,{
+                    stateCode=code
+                },height=33.dp,size=9f)
+            }
+        }
+        val state=stateCode
+        when {
+            state==null -> DetailNote("Pilih negeri untuk memaparkan cuti umum.")
+            holidays==null -> DetailNote("Memuatkan cuti "+(MalaysiaHolidayStates.all[state] ?: state)+"…")
+            holidays!!.entries.isEmpty() -> DetailNote("Tiada data cuti yang diterbitkan untuk tahun dan negeri ini.")
+            else -> {
+                val onDay=holidays!!.entries.filter { it.date==selected }
+                if(onDay.isNotEmpty()) {
+                    onDay.forEach { item ->
+                        AksaraText(item.name+" • "+selected.format(
+                            DateTimeFormatter.ofPattern("d MMMM yyyy",ms)),
+                            size=11f,weight=650,color=gold)
+                        if(item.tentative)DetailNote("Tarikh tertakluk pada perubahan.")
+                    }
+                } else DetailNote("Tiada cuti umum pada tarikh dipilih.")
+                val inMonth=holidays!!.entries.filter { YearMonth.from(it.date)==month }
+                inMonth.take(20).forEach { item ->
+                    WindowLine(item.date.format(DateTimeFormatter.ofPattern("d MMM",ms)),
+                        item.name+(if(item.tentative)" (tentatif)" else ""))
+                }
+            }
+        }
+        DetailNote("Sumber: Malaysia Holiday API, rekod disemak daripada dokumen JPM. "+
+            (if(holidays?.cached==true)"Data cache/luar talian. " else "")+
+            "Sahkan pengumuman rasmi sebelum membuat urusan penting.")
     }
     GlassSection("Agenda peranti") {
         if(!hasCalendar) {
