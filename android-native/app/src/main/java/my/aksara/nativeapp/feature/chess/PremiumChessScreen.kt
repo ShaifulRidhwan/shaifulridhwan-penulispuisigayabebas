@@ -1,6 +1,10 @@
 package my.aksara.nativeapp.feature.chess
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import my.aksara.nativeapp.R
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -40,7 +44,10 @@ import com.github.bhlangonijr.chesslib.Side
         else -> if(game.turn()==Side.WHITE) "Giliran Cahaya · pilih langkahmu" else "Giliran Gelap · Ratu Gelap berfikir"
     }
     fun analyze() {chess.analyze{a,side,move->voice.explain(chess.session,a,side,move)}}
-    BoxWithConstraints(Modifier.fillMaxSize().background(Brush.linearGradient(listOf(Color(0xff24192f),Color(0xff0d1422),Color(0xff080b13)))).safeDrawingPadding()) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(Color(0xff080b13))) {
+        Image(painter=painterResource(R.drawable.aksara_duality_v2),contentDescription=null,contentScale=ContentScale.Crop,modifier=Modifier.fillMaxSize())
+        Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x66060916),Color(0x99070b19),Color(0xCC080b13)))))
+        Column(Modifier.fillMaxSize().safeDrawingPadding()) {
         val wide=maxWidth>maxHeight
         val panelWidth=minOf(310.dp,maxWidth*.44f)
         @Composable fun Chip(text:String,action:()->Unit) {
@@ -135,5 +142,6 @@ import com.github.bhlangonijr.chesslib.Side
         }
         if(wide)Row(Modifier.fillMaxSize()){Board(Modifier.weight(1f).fillMaxHeight());Panel(Modifier.width(panelWidth).fillMaxHeight())}
         else Column(Modifier.fillMaxSize()){Board(Modifier.fillMaxWidth().weight(1f));Panel(Modifier.fillMaxWidth().heightIn(max=if(showDetails)350.dp else 160.dp))}
+        }
     }
 }
