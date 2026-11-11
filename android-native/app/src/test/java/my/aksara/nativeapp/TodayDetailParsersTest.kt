@@ -69,6 +69,7 @@ class TodayDetailParsersTest {
 
     @Test fun scShariahWhitelistIsStrictAndNotAUniversalHalalClaim() {
         assertEquals(15,TodayShariahReference.listed.size)
+        assertEquals(8,TodayShariahReference.unverified.size)
         for(symbol in listOf("BTC","ETH","SOL","ADA","LINK"))
             assertEquals("Patuh Syariah menurut SC",TodayShariahReference.status(symbol))
         for(symbol in listOf("USDT","DOGE","SNX","UNKNOWN"))
