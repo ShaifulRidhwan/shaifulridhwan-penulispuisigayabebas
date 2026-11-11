@@ -310,10 +310,18 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             withFrameNanos { }
             val last = list.layoutInfo.totalItemsCount - 1
             if (last >= 0) {
-                if (state.messages.size > 1 && list.firstVisibleItemIndex < last - 3) {
+                // A 100,000px scroll on every streamed token/IME transition can
+                // force excessive lazy-list measuring. Scroll only the visible delta.
+                if (list.layoutInfo.visibleItemsInfo.none { it.index == last }) {
                     list.scrollToItem(last)
                 }
-                list.scrollBy(100_000f)
+                val end = list.layoutInfo.viewportEndOffset -
+                    list.layoutInfo.afterContentPadding
+                val visibleLast = list.layoutInfo.visibleItemsInfo.lastOrNull { it.index == last }
+                if (visibleLast != null) {
+                    val overflow = (visibleLast.offset + visibleLast.size - end).coerceAtLeast(0)
+                    if (overflow > 0) list.scrollBy(overflow.toFloat())
+                }
             }
         }
     }
