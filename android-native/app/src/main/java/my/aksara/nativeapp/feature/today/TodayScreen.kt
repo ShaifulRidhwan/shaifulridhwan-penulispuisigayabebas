@@ -100,8 +100,12 @@ private fun updatedLabel(at:Long?,cached:Boolean):String {
     return (if(cached) "Data cache • terakhir " else "Dikemas kini ")+time
 }
 
-@Composable private fun TodayCard(title:String,content:@Composable ()->Unit) {
-    AksaraGlassSurface(Modifier.fillMaxWidth(),radius=20.dp,blur=12.dp) {
+@Composable private fun TodayCard(
+    title:String,onClick:(()->Unit)?=null,content:@Composable ()->Unit
+) {
+    AksaraGlassSurface(Modifier.fillMaxWidth().then(
+        if(onClick!=null)Modifier.clickable(onClick=onClick) else Modifier
+    ),radius=20.dp,blur=12.dp) {
         Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(10.dp)) {
             AksaraText(title,size=14f,weight=700,color=todayGold)
             content()
@@ -122,14 +126,16 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
 ) {
     val context=LocalContext.current
     val repo=remember(context) { TodayRepository(context) }
+    val detailRepo=remember(context) { TodayDetailRepository(context) }
     val permissionPrefs=remember(context) {
         context.getSharedPreferences("aksara_today_v1_permissions",Context.MODE_PRIVATE)
     }
     var permissionLocation by remember { mutableStateOf(hasTodayLocationPermission(context)) }
     var introShown by remember { mutableStateOf(permissionPrefs.getBoolean("location_intro_shown",false)) }
     var showLocationDialog by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(active,showLocationDialog) {
-        onDialogVisibilityChange(active && showLocationDialog)
+    var detailWindow by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(active,showLocationDialog,detailWindow) {
+        onDialogVisibilityChange(active && (showLocationDialog || detailWindow!=null))
     }
     DisposableEffect(Unit) {
         onDispose { onDialogVisibilityChange(false) }
@@ -140,12 +146,17 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
         showLocationDialog=true
     }
     BackHandler(enabled=active) {
-        if(showLocationDialog) showLocationDialog=false else onBack()
+        when {
+            detailWindow!=null -> detailWindow=null
+            showLocationDialog -> showLocationDialog=false
+            else -> onBack()
+        }
     }
     var epoch by remember { mutableIntStateOf(0) }
     var locating by remember { mutableStateOf(false) }
     var locationReady by remember { mutableStateOf(false) }
     var city by remember { mutableStateOf<String?>(null) }
+    var latestLocation by remember { mutableStateOf<Location?>(null) }
     var weather by remember { mutableStateOf<TodayFeed<TodayWeather>?>(null) }
     var prayer by remember { mutableStateOf<TodayFeed<TodayPrayer>?>(null) }
     var crypto by remember { mutableStateOf<TodayFeed<List<TodayCoin>>?>(null) }
@@ -178,6 +189,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
             val found=withTimeoutOrNull(12_000L) { todayLocation(context) }
             locating=false
             locationReady=found!=null
+            latestLocation=found
             if(found!=null) {
                 city=null
                 launch { city=withContext(Dispatchers.IO) { resolveCity(context,found) } }
@@ -221,7 +233,9 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                         },size=9.5f,line=13f,color=todayMuted)
                     }
                 }
-                AksaraGlassSurface(Modifier.fillMaxWidth(),radius=20.dp,blur=12.dp) {
+                AksaraGlassSurface(Modifier.fillMaxWidth().clickable {
+                    detailWindow="clock"
+                },radius=20.dp,blur=12.dp) {
                     Column(Modifier.fillMaxWidth().padding(vertical=14.dp,horizontal=16.dp),
                         horizontalAlignment=Alignment.CenterHorizontally) {
                         AksaraText(clock.format(DateTimeFormatter.ofPattern("HH:mm")),
@@ -230,29 +244,45 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                     }
                 }
                 TodayCard("Cuaca & Lokasi") {
-                    val value=weather?.value
-                    when {
-                        !permissionLocation -> {
-                            TodayPending("Benarkan lokasi untuk suhu, ramalan hujan dan zon solat yang tepat.")
-                            AksaraButton("Aktifkan lokasi", { explainLocation() },
-                                height=38.dp,size=11f)
+                    Row(Modifier.fillMaxWidth().height(158.dp),
+                        horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+                        AksaraGlassSurface(
+                            Modifier.weight(.60f).fillMaxHeight().clickable {
+                                detailWindow="weather"
+                            },radius=16.dp,blur=8.dp
+                        ) {
+                            Column(Modifier.fillMaxSize().padding(11.dp),
+                                verticalArrangement=Arrangement.SpaceBetween) {
+                                AksaraText("CUACA",size=9.5f,weight=700,color=todayGold)
+                                val value=weather?.value
+                                if(value!=null) {
+                                    AksaraText(String.format(Locale.US,"%.1f°C",value.celsius),
+                                        size=24f,weight=700)
+                                    AksaraText(todayCondition(value.code),size=11f,weight=600)
+                                    AksaraText("Angin "+
+                                        String.format(Locale.US,"%.0f",value.windKmh)+" km/j",
+                                        size=10f,color=todayMuted)
+                                    AksaraText(value.rainChance?.let{"Hujan "+it+"%"}
+                                        ?: "Hujan: tiada data",size=10f,color=todayMuted)
+                                } else {
+                                    AksaraText(if(!permissionLocation)"Aktifkan lokasi"
+                                        else if(locating)"Mengesan lokasi…"
+                                        else "Cuaca belum tersedia",size=11f,line=17f)
+                                    AksaraText("Tekan untuk butiran",size=9.5f,color=todayMuted)
+                                }
+                            }
                         }
-                        locating -> TodayPending("Mengesan lokasi peranti…")
-                        !locationReady -> TodayPending("Lokasi belum tersedia. Semak GPS/rangkaian dan Refresh.")
-                        value==null -> TodayPending("Cuaca belum tersedia. Semak sambungan internet.")
-                        else -> {
-                            AksaraText(String.format(Locale.US,"%.1f°C",value.celsius)+"  •  "+
-                                todayCondition(value.code),size=20f,weight=650)
-                            AksaraText((city ?: "Nama lokasi tidak tersedia")+" • Angin "+
-                                String.format(Locale.US,"%.0f km/j",value.windKmh),size=11f,color=todayMuted)
-                            AksaraText(value.rainChance?.let { "Potensi hujan hari ini: "+it+"%" }
-                                ?: "Ramalan hujan tidak tersedia",size=11f,color=todayMuted)
-                            AksaraText("Ramalan cuaca, bukan amaran rasmi METMalaysia.",
-                                size=9.5f,color=todayMuted)
-                        }
+                        TodayMiniMap(
+                            latestLocation,city,active,
+                            Modifier.weight(.40f).fillMaxHeight(),
+                            onClick={
+                                if(!permissionLocation) explainLocation()
+                                else detailWindow="map"
+                            }
+                        )
                     }
                 }
-                TodayCard("Waktu Solat & Hijrah") {
+                TodayCard("Waktu Solat & Hijrah",onClick={ detailWindow="prayer" }) {
                     val value=prayer?.value
                     when {
                         !permissionLocation -> TodayPending("Waktu solat memerlukan zon lokasi. Aktifkan di kad Cuaca.")
@@ -273,7 +303,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                         }
                     }
                 }
-                TodayCard("Pasaran Kripto • USD") {
+                TodayCard("Pasaran Kripto • USD",onClick={ detailWindow="crypto" }) {
                     val coins=crypto?.value
                     if(coins.isNullOrEmpty())TodayPending("Harga kripto tidak tersedia. Cuba Refresh.")
                     else {
@@ -289,7 +319,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                         AksaraText("Perubahan harga 24 jam • CoinPaprika",size=9.5f,color=todayMuted)
                     }
                 }
-                TodayCard("Aktiviti Pembangunan • GitHub") {
+                TodayCard("Aktiviti Pembangunan • GitHub",onClick={ detailWindow="development" }) {
                     val commit=github?.value
                     if(commit==null) TodayPending("Aktiviti GitHub tidak tersedia. Cuba Refresh.")
                     else {
@@ -312,6 +342,13 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                             color=if(commit.ci=="Lulus")Color(0xFF9EE1B5) else todayMuted)
                     }
                 }
+            }
+            if(detailWindow!=null && active) {
+                TodayDetailWindow(
+                    kind=detailWindow!!,onClose={detailWindow=null},clock=clock,
+                    weather=weather,prayer=prayer,coins=crypto,github=github,
+                    location=latestLocation,city=city,detailRepo=detailRepo
+                )
             }
             if(showLocationDialog && active) {
                 AksaraGlassModal(onClose={ showLocationDialog=false },preferredHeight=335.dp) {
