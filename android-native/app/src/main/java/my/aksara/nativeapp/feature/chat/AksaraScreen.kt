@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -25,6 +26,7 @@ import androidx.compose.ui.*
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.*
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.semantics.*
@@ -609,6 +611,7 @@ private val ChatTimestampFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm",j
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
             Column(Modifier.weight(1f),horizontalAlignment=if(ai)Alignment.Start else Alignment.End) {
                 if(ai) Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(5.dp)) {
+                    AksaraBrandAvatar()
                     AksaraText("Aksara A.I.",size=11f,line=15f,weight=650,color=Color(0xfff2c979))
                     if(!initial && message.id!="welcome-expanded") {
                         AksaraText("→",size=12f,color=AksaraColors.gold)
@@ -659,6 +662,17 @@ private val ChatTimestampFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm",j
                 }
             }
         }
+    }
+}
+/** Restored Aksara identity: a small circular avatar, independent of provider provenance. */
+@Composable private fun AksaraBrandAvatar() {
+    val shape=CircleShape
+    Box(Modifier.size(29.dp).clip(shape)
+        .background(Brush.linearGradient(listOf(Color(0xff25190d),Color(0xff06132d),Color(0xff0b3480))))
+        .border(0.8.dp,AksaraColors.border,shape)) {
+        Image(painter=painterResource(R.drawable.aksara_launcher_dual_foreground),
+            contentDescription="Aksara A.I. circular avatar",modifier=Modifier.fillMaxSize(),
+            contentScale=ContentScale.FillBounds)
     }
 }
 @Composable private fun NativeMarkdown(value:String,modifier:Modifier) {

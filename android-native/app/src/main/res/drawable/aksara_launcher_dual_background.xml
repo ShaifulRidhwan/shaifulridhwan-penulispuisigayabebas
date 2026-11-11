@@ -1,0 +1,37 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Full-bleed midnight glass. Launcher owns the circle/squircle mask. -->
+    <path android:pathData="M0,0 H108 V108 H0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="21"
+                android:endX="108" android:endY="92">
+                <item android:offset="0" android:color="#2F1A0C"/>
+                <item android:offset="0.37" android:color="#060A14"/>
+                <item android:offset="0.69" android:color="#06142B"/>
+                <item android:offset="1" android:color="#0A3373"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- The two flowing glass ribbons express Cahaya / Gelap, not extra UI chrome. -->
+    <path android:pathData="M-8,40 C15,22 37,5 63,-8 L112,-8 L112,21 C89,13 60,14 35,27 C14,37 0,54 -8,64 Z"
+        android:fillColor="#2EE9D7B7"/>
+    <path android:pathData="M-10,42 C11,18 29,5 51,-5"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#BDEFCB87" android:strokeWidth="1.35"/>
+    <path android:pathData="M-6,39 C25,21 61,5 110,26"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#E0F3CB94" android:strokeWidth="1.1"/>
+    <path android:pathData="M58,11 C82,6 102,9 114,18"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#7C29ADFF" android:strokeWidth="2.5"/>
+    <path android:pathData="M-6,101 C29,78 60,65 111,74 L111,115 L-6,115 Z"
+        android:fillColor="#4A0B377B"/>
+    <path android:pathData="M-4,102 C35,75 70,66 111,76"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#BC2D99FF" android:strokeWidth="1.6"/>
+    <path android:pathData="M50,113 C73,94 85,86 111,82"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#70BCE9FF" android:strokeWidth="1.4"/>
+</vector>

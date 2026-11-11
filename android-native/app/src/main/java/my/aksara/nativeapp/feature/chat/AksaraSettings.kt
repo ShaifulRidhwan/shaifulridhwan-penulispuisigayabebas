@@ -58,6 +58,7 @@ internal fun AksaraSettings(
     val scope=rememberCoroutineScope()
     val preferences=remember(context){context.getSharedPreferences("aksara_voice",android.content.Context.MODE_PRIVATE)}
     var expanded by rememberSaveable { mutableStateOf("") }
+    var advancedPage by rememberSaveable { mutableStateOf(false) }
     var confirmErase by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf("") }
     var notes by remember(state.memoryNotes) { mutableStateOf(state.memoryNotes) }
@@ -75,20 +76,26 @@ internal fun AksaraSettings(
     )
 
     AksaraGlassModal(onClose = onClose,
-        preferredHeight = if(expanded.isBlank()) 585.dp else 665.dp) {
+        preferredHeight = if(expanded.isBlank() && !advancedPage) 585.dp else 665.dp) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
                     Column(Modifier.weight(1f)){
                         AksaraText("Settings",size=16f,weight=700,
                             family=AksaraTypography.heading)
-                        AksaraText("Kawalan aplikasi dan diagnostik",size=10f,color=AksaraColors.muted)
+                        AksaraText(if(advancedPage)"Di Sebalik Aksara · Technical Architecture" else "Kawalan aplikasi dan diagnostik",size=10f,color=AksaraColors.muted)
                     }
                     AksaraButton("×",onClose,Modifier.width(44.dp),height=44.dp,size=20f,radius=13.dp)
                 }
                 Spacer(Modifier.height(10.dp))
                 Column(Modifier.weight(1f).verticalScroll(rememberScrollState()),
                     verticalArrangement=Arrangement.spacedBy(9.dp)) {
-                    tabs.forEach { (name,description,icon) ->
+                    if(advancedPage) {
+                        AksaraAdvancedSettings(state,onBack={advancedPage=false},onRefresh=onRefresh)
+                    } else {
+                        SettingsGroup("Advanced Settings",
+                            "Di Sebalik Aksara · System Architecture, Capabilities & Runtime",
+                            "brain",false,{expanded="";advancedPage=true}) {}
+                        tabs.forEach { (name,description,icon) ->
                         SettingsGroup(name,description,icon,expanded==name,{expanded=if(expanded==name)"" else name}) {
                             when(name) {
                                 "Kecerdasan & Model" -> {
@@ -315,11 +322,12 @@ internal fun AksaraSettings(
                                 }
                             }
                         }
+                        }
                     }
                     if(notice.isNotBlank()) {
                         AksaraText(notice,size=11f,line=16f,color=AksaraColors.gold)
                     }
-                    if(expanded.isNotBlank()) Spacer(Modifier.height(12.dp))
+                    if(expanded.isNotBlank() || advancedPage) Spacer(Modifier.height(12.dp))
                 }
             }
     }

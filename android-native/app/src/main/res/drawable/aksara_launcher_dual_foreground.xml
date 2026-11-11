@@ -1,0 +1,54 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- All essential art is centered within Android adaptive 66dp safe circle. -->
+    <!-- Metallic gold A: preserve Aksara's asymmetric signature. -->
+    <path android:pathData="M24,78 L45.7,32 Q48.2,26.8 50.4,32 L69,78 L60,78 L48,47 L37,70 L44,70 L49,61 L56,61 L45,78 Z"
+        android:strokeColor="#7D4416" android:strokeWidth="1.05">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="28" android:startY="30"
+                android:endX="67" android:endY="79">
+                <item android:offset="0" android:color="#FFF0AB"/>
+                <item android:offset="0.35" android:color="#FFD15B"/>
+                <item android:offset="0.66" android:color="#D8901E"/>
+                <item android:offset="1" android:color="#FFE6A0"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M24.8,77 L47.5,31.6"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FAFFF1C3" android:strokeWidth="0.95"/>
+    <!-- Blue Codex-inspired companion: original Aksara robot, not third-party logo. -->
+    <path android:pathData="M64,48 C65,38 73,36 79,39 C86,41 88,46 86,55 C84,62 78,67 71,65 C65,63 63,55 64,48 Z"
+        android:strokeColor="#9B76CFFF" android:strokeWidth="1.1">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="65" android:startY="39"
+                android:endX="84" android:endY="64">
+                <item android:offset="0" android:color="#A3D3F7"/>
+                <item android:offset="0.33" android:color="#22578F"/>
+                <item android:offset="0.72" android:color="#071529"/>
+                <item android:offset="1" android:color="#7598C3"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M67,48 C69,43 80,43 83,48 Q85,56 78,60 Q70,64 66,57 Z"
+        android:fillColor="#04152B" android:strokeColor="#657CB5DB" android:strokeWidth="0.6"/>
+    <path android:pathData="M69,50 Q71,48 73,51 Q73,54 70,54 Q68,54 69,50 Z"
+        android:fillColor="#63DBFF"/>
+    <path android:pathData="M77,51 Q80,48 82,49 Q81,54 78,54 Q76,54 77,51 Z"
+        android:fillColor="#6BE6FF"/>
+    <path android:pathData="M83,47 C89,45 90,55 86,58"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#46C2FF" android:strokeWidth="2.8"/>
+    <!-- Connection ribbon, kept thin so A and robot remain legible at 48dp. -->
+    <path android:pathData="M29,81 C48,68 63,73 84,59"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#AFDF9B3F" android:strokeWidth="2.7"
+        android:strokeLineCap="round"/>
+    <path android:pathData="M30,80 C48,67 63,72 83,58"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#E5FFF0B1" android:strokeWidth="0.75"/>
+    <path android:pathData="M56,54 L58,51 L60,54 L63,56 L60,57 L58,60 L56,57 L53,56 Z"
+        android:fillColor="#FFD581"/>
+</vector>
