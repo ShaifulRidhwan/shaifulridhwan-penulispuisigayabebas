@@ -186,6 +186,18 @@ internal object TodayShariahReference {
         TodayShariahCoin("WLD","Worldcoin","11 Jun 2024"),
         TodayShariahCoin("XLM","Stellar","10 Dis 2024")
     )
+    // SC's tradeable-assets page also lists these without an explicit compliant status.
+    // Never promote them into the compliant group without an SAC determination.
+    val unverified=listOf(
+        TodayShariahCoin("SNX","Synthetix",""),
+        TodayShariahCoin("MKR","Maker",""),
+        TodayShariahCoin("CRV","Curve DAO",""),
+        TodayShariahCoin("AAVE","Aave",""),
+        TodayShariahCoin("NEAR","Near",""),
+        TodayShariahCoin("ALGO","Algorand",""),
+        TodayShariahCoin("HBAR","Hedera",""),
+        TodayShariahCoin("GRT","The Graph","")
+    )
     fun status(symbol:String):String=if(listed.any { it.symbol.equals(symbol,true) })
         "Patuh Syariah menurut SC" else "Belum disahkan"
 }
