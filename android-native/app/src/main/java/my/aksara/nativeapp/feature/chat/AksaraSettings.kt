@@ -49,6 +49,7 @@ internal fun AksaraSettings(
     val preferences=remember(context){context.getSharedPreferences("aksara_voice",android.content.Context.MODE_PRIVATE)}
     var expanded by rememberSaveable { mutableStateOf("") }
     var advancedPage by rememberSaveable { mutableStateOf(false) }
+    var privacyPage by rememberSaveable { mutableStateOf(false) }
     var confirmErase by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf("") }
     var notes by remember(state.memoryNotes) { mutableStateOf(state.memoryNotes) }
@@ -65,13 +66,13 @@ internal fun AksaraSettings(
     )
 
     AksaraGlassModal(onClose = onClose,
-        preferredHeight = if(expanded.isBlank() && !advancedPage) 535.dp else 665.dp) {
+        preferredHeight = if(expanded.isBlank() && !advancedPage && !privacyPage) 535.dp else 665.dp) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
                 Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
                     Column(Modifier.weight(1f)){
                         AksaraText("Settings",size=16f,weight=700,
                             family=AksaraTypography.heading)
-                        AksaraText(if(advancedPage)"Di Sebalik Aksara · Technical Architecture" else "Kawalan aplikasi dan diagnostik",size=10f,color=AksaraColors.muted)
+                        AksaraText(if(privacyPage)"Ketelusan data dan kawalan pengguna" else if(advancedPage)"Di Sebalik Aksara · Technical Architecture" else "Kawalan aplikasi dan diagnostik",size=10f,color=AksaraColors.muted)
                     }
                     AksaraButton("×",onClose,Modifier.width(44.dp),height=44.dp,size=20f,radius=13.dp)
                 }
@@ -79,11 +80,13 @@ internal fun AksaraSettings(
                 // Keep the main Settings directory fully visible and immovable.
                 // Scrolling is reserved for expanded controls and Advanced module detail pages.
                 Column(Modifier.weight(1f).then(
-                    if(expanded.isNotBlank() || advancedPage) Modifier.verticalScroll(rememberScrollState())
+                    if(expanded.isNotBlank() || advancedPage || privacyPage) Modifier.verticalScroll(rememberScrollState())
                     else Modifier
                 ),
                     verticalArrangement=Arrangement.spacedBy(9.dp)) {
-                    if(advancedPage) {
+                    if(privacyPage) {
+                        AksaraPrivacyDataControl(onBack={privacyPage=false},onExport=onExport,onErase=onErase)
+                    } else if(advancedPage) {
                         AksaraAdvancedSettings(state,onBack={advancedPage=false},onRefresh=onRefresh)
                     } else {
                         SettingsGroup("Advanced Settings",
@@ -219,6 +222,10 @@ internal fun AksaraSettings(
                                         size=10f,color=AksaraColors.muted)
                                 }
                                 "Memori & Privasi" -> {
+                                    AksaraButton("Privacy & Data Control ›",{
+                                        expanded=""; privacyPage=true
+                                    },Modifier.fillMaxWidth(),height=38.dp,size=11f)
+                                    Spacer(Modifier.height(8.dp))
                                     SettingsFact("Memori peribadi",if(state.memoryEnabled)"Aktif" else "OFF")
                                     SettingsFact("Storan sesi","Android Keystore · AES-GCM")
                                     Spacer(Modifier.height(8.dp))
