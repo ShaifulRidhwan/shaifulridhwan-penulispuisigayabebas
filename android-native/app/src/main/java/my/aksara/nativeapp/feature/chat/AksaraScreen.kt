@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.*
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -318,9 +317,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     // Pixel-by-pixel effect restarts caused expensive repeated LazyColumn scrolling.
     val imeDensity=LocalDensity.current
     val chatImeInsets=WindowInsets.ime
-    val imeVisible by remember(imeDensity,chatImeInsets) {
-        derivedStateOf { chatImeInsets.getBottom(imeDensity)>0 }
-    }
     // A single collector owns programmatic scrolling. Dragging suspends following,
     // while composer focus or returning to the bottom explicitly resumes it.
     LaunchedEffect(list) {
@@ -555,7 +551,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             contentAlignment=Alignment.Center) {AksaraIcon("attach",Modifier.size(21.dp))}
                         BasicTextField(draft,{draft=it},Modifier.weight(1f)
                             .heightIn(min=42.dp,max=140.dp).padding(horizontal=3.dp,vertical=9.dp)
-                            .onFocusChanged { if(it.isFocused && !list.canScrollForward) autoFollow=true }
                             .semantics {contentDescription="Tulis mesej untuk Aksara A.I."}
                             .testTagCompat("input"),
                             textStyle=AksaraTypography.style(16f,24f),
