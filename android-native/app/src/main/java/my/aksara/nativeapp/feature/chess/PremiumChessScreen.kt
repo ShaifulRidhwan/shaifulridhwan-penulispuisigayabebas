@@ -56,7 +56,7 @@ import com.github.bhlangonijr.chesslib.Side
             Box(Modifier.defaultMinSize(minHeight=48.dp).background(Brush.verticalGradient(listOf(Color(0x553e3651),Color(0x33202534))),RoundedCornerShape(14.dp)).border(1.dp,Color(0x446f6284),RoundedCornerShape(14.dp)).clickable(onClick=action).padding(horizontal=13.dp,vertical=10.dp),contentAlignment=Alignment.Center) {AksaraText(text,size=12f,color=Color(0xffeadfc8))}
         }
         @Composable fun Board(modifier:Modifier) {
-            AndroidView(factory={ArenaBoardView(it).also{v->arena=v;onBoard(v);v.onSquare=chess::select;v.onDrop=chess::drop}},modifier=modifier.testTag("chess-board"),update={v->
+            AndroidView(factory={ArenaBoardView(it).also{v->v.setBackgroundColor(android.graphics.Color.TRANSPARENT);arena=v;onBoard(v);v.onSquare=chess::select;v.onDrop=chess::drop}},modifier=modifier.testTag("chess-board"),update={v->
                 v.pieces=chess.pieces;v.selected=if(chess.replayIndex>=0)-1 else chess.selected
                 v.legal=if(chess.replayIndex>=0)emptyList() else chess.legal
                 v.check=game.inCheck();v.checkKing=if(game.turn()==Side.WHITE)"K" else "k"
