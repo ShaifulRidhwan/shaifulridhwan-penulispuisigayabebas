@@ -376,9 +376,9 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                                     size=9.5f,color=todayGold)
                             }
                         }
-                        AksaraText("Lokasi anggaran/tepat: cuaca, zon solat, peta dan navigasi. Kalendar: membaca agenda peranti sahaja. Android akan meminta semua izin berkaitan sekali selepas kau memilih Benarkan semua.",
+                        AksaraText("Lokasi: cuaca, solat, peta dan panduan GPS. Kalendar: membaca agenda. Notifikasi: paparan arahan ketika navigasi di latar/skrin terkunci. Benarkan semua melalui dialog Android.",
                             size=12.5f,line=19f)
-                        AksaraText("Tiada akses audio, Bluetooth atau notifikasi diminta oleh dashboard. Penolakan tidak menyekat jam, kripto atau GitHub. Koordinat mungkin dihantar kepada Open-Meteo, solat.my dan penyedia peta/routing apabila fungsi digunakan.",
+                        AksaraText("Izin boleh ditolak. Jam, kripto dan GitHub tetap berfungsi. Tiada mikrofon/Bluetooth diminta oleh TODAY. Lokasi boleh dihantar kepada penyedia cuaca, solat, peta dan routing.",
                             size=10.5f,line=17f,color=todayMuted)
                         Spacer(Modifier.weight(1f))
                         Row(Modifier.fillMaxWidth(),
@@ -391,7 +391,9 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                                     Manifest.permission.ACCESS_COARSE_LOCATION,
                                     Manifest.permission.ACCESS_FINE_LOCATION,
                                     Manifest.permission.READ_CALENDAR
-                                ))
+                                ) + if(android.os.Build.VERSION.SDK_INT>=33)
+                                    arrayOf(Manifest.permission.POST_NOTIFICATIONS)
+                                else emptyArray<String>())
                             },Modifier.weight(1f),height=42.dp,size=10.5f)
                         }
                     }

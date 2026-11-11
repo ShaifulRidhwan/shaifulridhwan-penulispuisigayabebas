@@ -1,12 +1,21 @@
 package my.aksara.nativeapp.feature.today
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.LocationListener
+import android.location.LocationManager
+import android.os.Looper
+import androidx.core.content.ContextCompat
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.graphics.Bitmap
-import android.location.Geocoder
 import android.location.Location
 import android.net.Uri
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -117,6 +126,11 @@ internal object TodayMapConfig {
 ) {
     val context=LocalContext.current
     val routingRepo=remember { TodayRouteRepository() }
+    val trafficRepo=remember { TodayTrafficRepository() }
+    var trafficKey by remember { mutableStateOf("") }
+    var trafficLoading by remember { mutableStateOf(false) }
+    var trafficFlow by remember { mutableStateOf<TodayTrafficFlow?>(null) }
+    var offlineStatus by remember { mutableStateOf("") }
     val scope=rememberCoroutineScope()
     if(location==null) {
         Column(modifier,verticalArrangement=Arrangement.spacedBy(12.dp),
@@ -142,7 +156,35 @@ internal object TodayMapConfig {
     var routeMode by remember { mutableStateOf("auto") }
     var routeLoading by remember { mutableStateOf(false) }
     var drawnRoute by remember { mutableStateOf<Polyline?>(null) }
-
+    val session by TodayNavigationSession.state.collectAsState()
+    val navigationActive=session.active
+    val navProgress=session.progress
+    var savedRouteAvailable by remember { mutableStateOf(TodaySavedRoute.load(context)!=null) }
+    val fineGranted=ContextCompat.checkSelfPermission(context,
+        Manifest.permission.ACCESS_FINE_LOCATION)==PackageManager.PERMISSION_GRANTED
+    val finePrompt=rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        if(permissions[Manifest.permission.ACCESS_FINE_LOCATION]==true) {
+            runCatching { TodayNavigationService.start(context) }
+                .onFailure { error="Gagal menghidupkan navigasi: "+it.message }
+        } else error="Navigasi skrin terkunci memerlukan lokasi tepat."
+    }
+    LaunchedEffect(session.routeEpoch) {
+        if(session.routeEpoch>0L)TodaySavedRoute.load(context)?.let {
+            route=it
+            routeMode=it.costing
+            error=null
+        }
+    }
+    LaunchedEffect(session.latitude,session.longitude,navigationActive) {
+        if(navigationActive && session.latitude!=null && session.longitude!=null) {
+            mapView.getMapAsync { map ->
+                map.cameraPosition=CameraPosition.Builder()
+                    .target(LatLng(session.latitude!!,session.longitude!!))
+                    .zoom(16.2).build()
+            }
+        }
+    }
     DisposableEffect(mapView,owner) {
         val observer=LifecycleEventObserver { _,event ->
             when(event) {
@@ -249,8 +291,8 @@ internal object TodayMapConfig {
                                 val result=withContext(Dispatchers.IO) {
                                     @Suppress("DEPRECATION")
                                     runCatching {
-                                        if(!Geocoder.isPresent())null
-                                        else Geocoder(context,Locale("ms","MY"))
+                                        if(!android.location.Geocoder.isPresent())null
+                                        else android.location.Geocoder(context,Locale("ms","MY"))
                                             .getFromLocationName(query,1)?.firstOrNull()
                                     }.getOrNull()
                                 }
@@ -278,6 +320,18 @@ internal object TodayMapConfig {
                         },Modifier.weight(1f),height=34.dp,size=9.2f)
                     }
                 }
+                if(route==null && savedRouteAvailable) {
+                    AksaraButton("Buka laluan tersimpan (offline)",{
+                        val saved=TodaySavedRoute.load(context)
+                        if(saved!=null) {
+                            route=saved
+                            routeMode=saved.costing
+                            val point=saved.points.last()
+                            destination=LatLng(point.latitude,point.longitude)
+                            error=null
+                        } else error="Laluan tersimpan tidak tersedia."
+                    },Modifier.fillMaxWidth(),height=35.dp,size=10f)
+                }
                 AksaraButton(if(routeLoading)"Mengira laluan…" else "Kira laluan",{
                     val point=destination
                     if(point!=null && !routeLoading) {
@@ -287,19 +341,106 @@ internal object TodayMapConfig {
                             runCatching {
                                 routingRepo.route(location,
                                     RouteCoordinate(point.latitude,point.longitude),routeMode)
-                            }.onSuccess { route=it }
-                                .onFailure { error=it.message ?: "Laluan tidak tersedia." }
+                            }.onSuccess {
+                                route=it
+                                savedRouteAvailable=TodaySavedRoute.save(context,it)
+                            }.onFailure { error=it.message ?: "Laluan tidak tersedia." }
                             routeLoading=false
                         }
                     }
                 },Modifier.fillMaxWidth(),height=39.dp,size=11f,
                     enabled=destination!=null && !routeLoading)
                 if(route!=null) {
+                    AksaraButton("Simpan peta kecil untuk offline",{
+                        val current=route
+                        if(current!=null) {
+                            TodayOfflineMaps.downloadSmallArea(context,current) { offlineStatus=it }
+                        }
+                    },Modifier.fillMaxWidth(),height=35.dp,size=10.3f)
+                    if(offlineStatus.isNotBlank())AksaraText(offlineStatus,size=9.6f,
+                        color=AksaraColors.muted)
+                }
+                if(route!=null && routeMode=="auto") {
+                    AksaraText("Trafik langsung • TomTom (pilihan, kunci sendiri)",
+                        size=11f,weight=650,color=AksaraColors.gold)
+                    AksaraGlassSurface(Modifier.fillMaxWidth().height(39.dp),radius=12.dp) {
+                        BasicTextField(trafficKey,{trafficKey=it.take(128)},
+                            Modifier.fillMaxSize().padding(horizontal=10.dp,vertical=9.dp),
+                            singleLine=true,visualTransformation=PasswordVisualTransformation(),textStyle=AksaraTypography.style(11f,16f),
+                            cursorBrush=SolidColor(AksaraColors.gold),
+                            decorationBox={inner->Box {
+                                if(trafficKey.isBlank())AksaraText("Masukkan TomTom API key (tidak disimpan)",
+                                    size=10.5f,color=AksaraColors.muted)
+                                inner()
+                            }})
+                    }
+                    AksaraButton(if(trafficLoading)"Menyemak…" else "Semak kelajuan trafik langsung",{
+                        val current=route
+                        if(current!=null && !trafficLoading && trafficKey.isNotBlank()) {
+                            trafficLoading=true
+                            error=null
+                            scope.launch {
+                                val midpoint=current.points[current.points.size/2]
+                                runCatching { trafficRepo.sample(midpoint,trafficKey) }
+                                    .onSuccess { trafficFlow=it }
+                                    .onFailure { error="Trafik belum tersedia: "+it.message }
+                                trafficLoading=false
+                            }
+                        }
+                    },Modifier.fillMaxWidth(),height=35.dp,size=10f,
+                        enabled=trafficKey.isNotBlank() && !trafficLoading)
+                    val flow=trafficFlow
+                    if(flow!=null) {
+                        AksaraText("Segmen berhampiran laluan: "+
+                            flow.currentKmh+" km/j (lancar "+flow.freeFlowKmh+" km/j)"+
+                            (if(flow.roadClosed)" • JALAN DITUTUP" else ""),
+                            size=10.5f,color=if(flow.roadClosed)Color(0xFFF1A5A1)
+                            else AksaraColors.gold)
+                        AksaraText("Sampel satu segmen TomTom, bukan ETA trafik seluruh laluan. "+
+                            "Key kekal dalam sesi ini sahaja; tiada bil diaktifkan oleh Aksara.",
+                            size=9.5f,color=AksaraColors.muted)
+                    } else AksaraText("Belum dikonfigurasikan. Tanpa kunci TomTom, hanya ETA "+
+                        "Valhalla biasa digunakan.",size=9.5f,color=AksaraColors.muted)
+                }
+                if(route!=null) {
+                    AksaraButton(if(navigationActive)"Hentikan panduan" else "Mulakan panduan • skrin terkunci",{
+                        if(navigationActive) {
+                            TodayNavigationService.stop(context)
+                        } else {
+                            val currentRoute=route
+                            if(currentRoute==null || !TodaySavedRoute.save(context,currentRoute)) {
+                                error="Tidak dapat menyimpan laluan untuk navigasi."
+                            } else if(fineGranted) {
+                                runCatching { TodayNavigationService.start(context) }
+                                    .onFailure { error="Gagal memulakan navigasi: "+it.message }
+                            } else {
+                                finePrompt.launch(arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION,
+                                    Manifest.permission.ACCESS_FINE_LOCATION))
+                            }
+                        }
+                    },Modifier.fillMaxWidth(),height=38.dp,size=11f)
+                    if(navigationActive) {
+                        val progress=navProgress
+                        AksaraText("GPS langsung • "+(if(session.voiceAvailable)
+                            "Suara Melayu aktif" else "Suara Melayu tidak tersedia pada peranti"),
+                            size=10f,color=AksaraColors.gold)
+                        if(progress!=null) {
+                            AksaraText(String.format(Locale.US,"Baki %.1f km • Jarak ke arahan %.0f m",
+                                progress.remainingMetres/1000.0,
+                                progress.distanceToStepMetres.coerceAtMost(99_999.0)),
+                                size=10f,color=AksaraColors.muted)
+                            AksaraText(progress.nextStep?.let{
+                                TodayNavigationMath.malayVoice(it.type)} ?: "Ikut peta.",
+                                size=11f,weight=650)
+                        }
+                    }
+                }
+                if(route!=null) {
                     val result=route!!
                     AksaraText(String.format(Locale.US,"%.1f km • %d minit",
                         result.kilometres,(result.seconds+59)/60),size=12f,
                         weight=700,color=AksaraColors.gold)
-                    AksaraText("Anggaran laluan Valhalla/OSM. Tiada trafik langsung.",
+                    AksaraText("ETA Valhalla tidak mengambil kira trafik. Bacaan TomTom di atas ialah segmen berasingan.",
                         size=9.5f,color=AksaraColors.muted)
                     result.steps.take(3).forEach { step ->
                         AksaraText("• "+step.instruction,size=10f,color=AksaraColors.muted)
@@ -318,7 +459,7 @@ internal object TodayMapConfig {
                     },Modifier.weight(1f),height=38.dp,size=10.5f,
                         enabled=destination!=null)
                 }
-                AksaraText("Laluan/ETA boleh dikira dalam Aksara; panduan suara langsung belum aktif. Navigasi luar kekal sebagai pilihan.",
+                AksaraText("Skrin terkunci: GPS dan suara diteruskan dengan notifikasi aktif. Laluan tersimpan boleh diikuti offline, tetapi laluan baharu dan trafik memerlukan internet.",
                     size=9.5f,line=14f,color=AksaraColors.muted)
                 if(error!=null)AksaraText(error!!,size=10.5f,color=Color(0xFFF1A5A1))
             }
