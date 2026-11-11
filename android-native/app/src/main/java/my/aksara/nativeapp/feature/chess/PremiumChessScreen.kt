@@ -62,22 +62,34 @@ import com.github.bhlangonijr.chesslib.Side
                 v.showCommittedMove(chess.previousPieces,chess.lastMove,chess.animationId,game.end()==ChessSession.End.CHECKMATE,chess.animationStartedAt)
             })
         }
+        @Composable fun ActionChip(text:String,action:()->Unit,modifier:Modifier=Modifier) {
+            Box(modifier.defaultMinSize(minHeight=44.dp)
+                .background(Brush.verticalGradient(listOf(Color(0x66554b67),Color(0x44222b42))),RoundedCornerShape(14.dp))
+                .border(1.dp,Color(0x887e718f),RoundedCornerShape(14.dp))
+                .clickable(onClick=action).padding(horizontal=4.dp,vertical=9.dp),contentAlignment=Alignment.Center) {
+                AksaraText(text,size=12f,weight=600,color=Color(0xfff1e7d7))
+            }
+        }
         @Composable fun Panel(modifier:Modifier) {
-            Column(modifier.padding(6.dp).background(Brush.linearGradient(listOf(Color(0x553d3349),Color(0x77303a47),Color(0x44232c3e))),RoundedCornerShape(24.dp)).border(1.dp,Color(0x447c718f),RoundedCornerShape(24.dp)).padding(10.dp).then(if(showDetails)Modifier.verticalScroll(rememberScrollState()) else Modifier),verticalArrangement=Arrangement.spacedBy(6.dp)) {
+            Column(modifier.padding(6.dp).background(Brush.linearGradient(listOf(Color(0x773d3349),Color(0x99303a47),Color(0x77232c3e))),RoundedCornerShape(24.dp)).border(1.dp,Color(0x887c718f),RoundedCornerShape(24.dp)).padding(horizontal=12.dp,vertical=10.dp).then(if(showDetails)Modifier.verticalScroll(rememberScrollState()) else Modifier),verticalArrangement=Arrangement.spacedBy(6.dp)) {
                 Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-                    AndroidView(factory={QueenPortraitView(it)},modifier=Modifier.size(40.dp),update={it.speaking=voice.speaking})
-                    Column {
+                    AndroidView(factory={QueenPortraitView(it)},modifier=Modifier.size(50.dp),update={it.speaking=voice.speaking})
+                    Column(Modifier.weight(1f)) {
                         AksaraText("AKSARA A.I.",size=10f,tracking=2f,color=Color(0xffbba2c9),family=AksaraTypography.heading)
                         AksaraText("Ratu Gelap",size=17f,weight=600,color=Color(0xffeee0cc),family=AksaraTypography.heading)
                         AksaraText("ABSOLUTE DARKNESS",size=9f,tracking=1.1f,color=Color(0xffceac73))
                     }
                 }
-                AksaraText(status,Modifier.testTag("chess-status"),size=13f,weight=600,color=Color(0xffd8c6a2))
-                Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                    Chip(if(chess.paused)"Resume" else "Pause",chess::pause)
-                    Chip("Undo"){voice.stop();chess.undo()}
-                    Chip("Menu",onMenu)
-                    Chip(if(showDetails)"Ringkas" else "Butiran"){showDetails=!showDetails}
+                Box(Modifier.fillMaxWidth().background(Color(0x44302640),RoundedCornerShape(12.dp))
+                    .border(1.dp,Color(0x446e6084),RoundedCornerShape(12.dp))
+                    .padding(horizontal=10.dp,vertical=7.dp)) {
+                    AksaraText(status,Modifier.testTag("chess-status"),size=12f,weight=600,color=Color(0xffe6d5b5))
+                }
+                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                    ActionChip(if(chess.paused)"Resume" else "Pause",chess::pause,Modifier.weight(1f))
+                    ActionChip("Undo",{voice.stop();chess.undo()},Modifier.weight(1f))
+                    ActionChip("Menu",onMenu,Modifier.weight(1f))
+                    ActionChip(if(showDetails)"Tutup" else "Butiran",{showDetails=!showDetails},Modifier.weight(1f))
                 }
                 if(showDetails) {
                 Row(Modifier.horizontalScroll(rememberScrollState()),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
@@ -141,7 +153,7 @@ import com.github.bhlangonijr.chesslib.Side
             }
         }
         if(wide)Row(Modifier.fillMaxSize()){Board(Modifier.weight(1f).fillMaxHeight());Panel(Modifier.width(panelWidth).fillMaxHeight())}
-        else Column(Modifier.fillMaxSize()){Board(Modifier.fillMaxWidth().weight(1f));Panel(Modifier.fillMaxWidth().heightIn(max=if(showDetails)350.dp else 160.dp))}
+        else Column(Modifier.fillMaxSize()){Board(Modifier.fillMaxWidth().weight(1f));Panel(Modifier.fillMaxWidth().heightIn(max=if(showDetails)350.dp else 190.dp))}
         }
     }
 }
