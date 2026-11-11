@@ -98,7 +98,9 @@ class ArenaBoardView(context:Context):ChessBoardView(context) {
         if(t>=1f) active=false
         val focus=if(active && (captured>=0 || check || actor.uppercaseChar()=='Q'))sin(t*PI).toFloat() else 0f
         geometry(focus)
-        ink.alpha=255;ink.shader=aura;c.drawPaint(ink);ink.shader=null
+        // Keep the arena canvas transparent so the official Duality wallpaper remains visible.
+        // The board shadow below still provides depth without an opaque full-screen fill.
+        ink.alpha=255;ink.shader=null
         // Board volume, soft floor shadow and bevel are separate from the playing plane.
         ink.color=0x33000000;c.drawOval(width*.06f,height*.43f,width*.96f,height*.98f,ink)
         quad.rewind();quad.moveTo(destination[6],destination[7]);quad.lineTo(destination[4],destination[5]);quad.lineTo(destination[4],destination[5]+cell*.25f);quad.lineTo(destination[6],destination[7]+cell*.25f);quad.close()
