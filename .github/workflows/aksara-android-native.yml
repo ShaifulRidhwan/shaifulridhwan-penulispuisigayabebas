@@ -131,10 +131,10 @@ jobs:
         id: compile
         working-directory: android-native
         run: |
-          # Every unmerged TODAY revision is a separately installable test app.
-          # CI debug signing keys are generated on runners and are not stable across
-          # runs; never reuse the installed production package ID for these previews.
-          if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "$GITHUB_HEAD_REF" == feature/aksara-today-* ]]; then
+          # Unmerged TODAY and PR314 revisions use isolated preview package IDs.
+          # Ephemeral CI debug signing keys cannot update the installed production app.
+          # Never risk overwriting existing sessions or forcing an uninstall just to test.
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" && ( "$GITHUB_HEAD_REF" == feature/aksara-today-* || "$GITHUB_HEAD_REF" == feature/pr314-* ) ]]; then
             test -n "$AKSARA_PREVIEW_PR_NUMBER"
             test -n "$AKSARA_PREVIEW_HEAD_SHA"
             short="${AKSARA_PREVIEW_HEAD_SHA:0:8}"
