@@ -35,7 +35,7 @@ internal object TodayRouteParser {
                 shift+=5
                 if(code<32)break
             }
-            return if(value and 1L!=0L) (value shr 1).inv() else value shr 1
+            return if((value and 1L)!=0L) (value shr 1).inv() else value shr 1
         }
         while(index<encoded.length) {
             latitude+=nextDelta()
