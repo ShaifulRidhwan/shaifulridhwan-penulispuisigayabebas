@@ -22,7 +22,7 @@ const protectedFiles=Object.freeze({
  "bilik-antara-voice.js":"ef59b236d994433054f3c6e8ac06055e64f5a7ad",
  // V7: reviewed additive transient circuit breaker wiring for P1; creator identity,
  // message personality, 3+1/free-only priority, Voice and quota rules unchanged.
- "netlify/functions/aksara-provider-router.js":"57ef88be518fed90d7fef2d7e7c9595326485bc9",
+ "netlify/functions/aksara-provider-router.js":"41920b227b9b3438ba52e3c3aa36b764960538f4",
  "bilik-antara-code-chat.js":"0f6a9190a619092b3bca6156348b8134e60676e9"
 });
 function gitBlob(bytes){
