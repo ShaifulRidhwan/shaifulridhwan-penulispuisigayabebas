@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
         // Animate its exit, not a second artificial loading screen.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             splashScreen.setOnExitAnimationListener { provider ->
-                val splash = provider.view
+                val splash = provider
                 val icon = provider.iconView
                 if (icon != null) {
                     val pulseX = ObjectAnimator.ofFloat(icon, View.SCALE_X, 0.94f, 1.10f, 1.0f)
