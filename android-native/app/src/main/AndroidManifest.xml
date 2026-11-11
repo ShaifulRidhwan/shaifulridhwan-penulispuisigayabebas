@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- TODAY requests location only when users enter the panel. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Agenda is optional: read-only and requested from the Clock window with explanation. -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
     <queries>
         <intent><action android:name="android.intent.action.TTS_SERVICE" /></intent>
         <intent><action android:name="android.speech.RecognitionService" /></intent>
