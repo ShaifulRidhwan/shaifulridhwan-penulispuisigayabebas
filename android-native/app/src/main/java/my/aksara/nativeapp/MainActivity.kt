@@ -18,6 +18,7 @@ import my.aksara.nativeapp.feature.chat.AksaraApp
 
 class MainActivity : ComponentActivity() {
     private var perfStats: JankStats? = null
+    // One-shot platform splash pulse; never hold the first application frame.
     private var startupPulse: AnimatorSet? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
