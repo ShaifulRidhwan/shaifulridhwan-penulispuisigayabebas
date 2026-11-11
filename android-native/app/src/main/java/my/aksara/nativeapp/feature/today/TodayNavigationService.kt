@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -13,6 +15,12 @@ import android.os.Build
 import android.os.IBinder
 import android.os.Looper
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.Locale
 
@@ -23,7 +31,8 @@ internal data class TodayNavigationState(
     val longitude:Double?=null,
     val message:String="",
     val voiceAvailable:Boolean=false,
-    val offline:Boolean=false
+    val offline:Boolean=false,
+    val routeEpoch:Long=0L
 )
 
 /** UI can be destroyed or screen locked; service owns GPS, guidance and notification. */
@@ -58,6 +67,10 @@ class TodayNavigationService:Service(),LocationListener {
     private var lastPosition=0L
     private var offRouteCount=0
     private var isRunning=false
+    private val navScope=CoroutineScope(SupervisorJob()+Dispatchers.IO)
+    private val routeRepository=TodayRouteRepository()
+    private var lastReroute=0L
+    private var rerouting=false
 
     override fun onBind(intent:Intent?):IBinder?=null
 
@@ -155,9 +168,41 @@ class TodayNavigationService:Service(),LocationListener {
             return
         }
         val message=when {
-            offRouteCount>=3->"Tersasar daripada laluan. Sambung semula apabila selamat; rerouting offline tidak tersedia."
+            offRouteCount>=3->"Tersasar daripada laluan. Mencuba laluan semula jika internet tersedia."
             step!=null->TodayNavigationMath.malayVoice(step.type)
             else->"Ikut laluan yang dipaparkan."
+        }
+        if(offRouteCount>=3 && !rerouting && now-lastReroute>90_000L) {
+            val net=getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val available=net.getNetworkCapabilities(net.activeNetwork)
+                ?.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)==true
+            if(available) {
+                rerouting=true
+                lastReroute=now
+                val goal=saved.points.last()
+                navScope.launch {
+                    val revised=runCatching { routeRepository.route(location,goal) }
+                    withContext(Dispatchers.Main) {
+                        revised.onSuccess { updated ->
+                            route=updated
+                            TodaySavedRoute.save(this@TodayNavigationService,updated)
+                            lastIndex=0
+                            lastAnnounced=-1
+                            offRouteCount=0
+                            TodayNavigationSession.state.value=
+                                TodayNavigationSession.state.value.copy(
+                                    message="Laluan dikira semula.",
+                                    routeEpoch=System.currentTimeMillis())
+                            voice?.speakMalay("Laluan telah dikira semula.")
+                        }.onFailure {
+                            TodayNavigationSession.state.value=
+                                TodayNavigationSession.state.value.copy(
+                                    message="Rerouting tidak tersedia. Ikut papan tanda jalan.")
+                        }
+                        rerouting=false
+                    }
+                }
+            }
         }
         val previous=TodayNavigationSession.state.value
         TodayNavigationSession.state.value=previous.copy(
@@ -196,6 +241,7 @@ class TodayNavigationService:Service(),LocationListener {
     }
 
     override fun onDestroy() {
+        navScope.cancel()
         runCatching { locationManager?.removeUpdates(this) }
         voice?.stop()
         voice=null
