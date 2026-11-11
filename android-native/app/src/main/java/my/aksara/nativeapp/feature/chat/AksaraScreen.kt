@@ -28,7 +28,6 @@ import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.platform.*
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -53,6 +52,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
 import java.time.*
 import java.time.format.DateTimeFormatter
 
@@ -317,9 +317,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     // Pixel-by-pixel effect restarts caused expensive repeated LazyColumn scrolling.
     val imeDensity=LocalDensity.current
     val chatImeInsets=WindowInsets.ime
-    val imeVisible by remember(imeDensity,chatImeInsets) {
-        derivedStateOf { chatImeInsets.getBottom(imeDensity)>0 }
-    }
     // A single collector owns programmatic scrolling. Dragging suspends following,
     // while composer focus or returning to the bottom explicitly resumes it.
     LaunchedEffect(list) {
@@ -339,21 +336,21 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
         }
     }
-    // IME changes should not restart the message-arrival scroll coroutine.
-    // Keep keyboard-follow in a separate, viewport-delta-driven collector.
-    LaunchedEffect(list,chatImeInsets,imeDensity) {
-        var previousViewportEnd:Int?=null
-        var previousImeBottom=0
-        snapshotFlow {
-            list.layoutInfo.viewportEndOffset to chatImeInsets.getBottom(imeDensity)
-        }.collect { (viewportEnd,imeBottom) ->
-            val delta=imeViewportFollowDelta(
-                previousViewportEnd,viewportEnd,previousImeBottom,imeBottom,autoFollow
-            )
-            previousViewportEnd=viewportEnd
-            previousImeBottom=imeBottom
-            if(delta!=0) list.scrollBy(delta.toFloat())
-        }
+    // Avoid per-pixel scrollBy during IME animation. Each call forces LazyColumn
+    // measurement while the keyboard is resizing the viewport. Compose's
+    // imePadding already follows the keyboard; settle only after visibility flips.
+    LaunchedEffect(list, chatImeInsets, imeDensity) {
+        snapshotFlow { chatImeInsets.getBottom(imeDensity) > 0 }
+            .distinctUntilChanged()
+            .collect { opening ->
+                if (opening && autoFollow && state.messages.isNotEmpty()) {
+                    withFrameNanos { }
+                    val last = list.layoutInfo.totalItemsCount - 1
+                    if (last >= 0 && list.layoutInfo.visibleItemsInfo.none { it.index == last }) {
+                        list.scrollToItem(last)
+                    }
+                }
+            }
     }
     LaunchedEffect(state.messages.size, state.messages.lastOrNull()?.text?.length,
         state.busy, autoFollow) {
@@ -554,7 +551,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             contentAlignment=Alignment.Center) {AksaraIcon("attach",Modifier.size(21.dp))}
                         BasicTextField(draft,{draft=it},Modifier.weight(1f)
                             .heightIn(min=42.dp,max=140.dp).padding(horizontal=3.dp,vertical=9.dp)
-                            .onFocusChanged { if(it.isFocused && !list.canScrollForward) autoFollow=true }
                             .semantics {contentDescription="Tulis mesej untuk Aksara A.I."}
                             .testTagCompat("input"),
                             textStyle=AksaraTypography.style(16f,24f),

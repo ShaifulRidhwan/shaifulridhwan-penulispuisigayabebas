@@ -29,17 +29,17 @@ class MainActivity : ComponentActivity() {
                 val splash = provider
                 val icon = provider.iconView
                 if (icon != null) {
-                    val pulseX = ObjectAnimator.ofFloat(icon, View.SCALE_X, 0.94f, 1.10f, 1.0f)
+                    val pulseX = ObjectAnimator.ofFloat(icon, View.SCALE_X, 0.97f, 1.055f, 1.0f)
                     val pulseY = ObjectAnimator.ofFloat(icon, View.SCALE_Y, 0.94f, 1.10f, 1.0f)
-                    val pulseAlpha = ObjectAnimator.ofFloat(icon, View.ALPHA, 0.72f, 1.0f, 1.0f)
+                    val pulseAlpha = ObjectAnimator.ofFloat(icon, View.ALPHA, 0.86f, 1.0f, 1.0f)
                     startupPulse = AnimatorSet().apply {
                         playTogether(pulseX, pulseY, pulseAlpha)
-                        duration = 340L
+                        duration = 410L
                         interpolator = DecelerateInterpolator()
                         start()
                     }
                 }
-                splash.animate().alpha(0f).setStartDelay(140L).setDuration(340L)
+                splash.animate().alpha(0f).setStartDelay(170L).setDuration(390L)
                     .setInterpolator(DecelerateInterpolator())
                     .withEndAction {
                         startupPulse?.cancel()
