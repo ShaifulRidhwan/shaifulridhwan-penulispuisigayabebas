@@ -87,11 +87,12 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var uploadJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
     val uploader = remember(context) { LargeUploadClient() }
+    var exportSelectedSessionId by rememberSaveable { mutableStateOf<String?>(null) }
     val exportPicker = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument(SessionTransferCodec.MIME)) { uri ->
         if(uri!=null) scope.launch {
             try {
-                val plain=vm.exportSessions()
+                val plain=vm.exportSessions(exportSelectedSessionId)
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                     context.contentResolver.openOutputStream(uri,"wt")?.use {
                         it.write(plain.toByteArray(Charsets.UTF_8))
@@ -225,7 +226,15 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         }
         accepted
     }, onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
-        onExportSessions = { exportPicker.launch("aksara-sesi.json") },
+        onExportSessions = {
+            exportSelectedSessionId = null
+            exportPicker.launch("aksara-sesi.json")
+        },
+        onExportSession = { startId ->
+            exportSelectedSessionId = startId
+            exportPicker.launch(if (startId == null) "aksara-sesi.json" else "aksara-sesi-pilihan.json")
+        },
+        onDeleteSession = vm::deleteSession,
         onImportSessions = { importPicker.launch(arrayOf("application/json","text/plain")) },
         onEditAndSend = vm::forkAndSendFrom, onBranch = vm::forkFrom, onRegenerate = vm::regenerateFrom,
         onSaveDraft = vm::saveOfflineDraft, onRemoveDraft = vm::removeOfflineDraft,
@@ -285,6 +294,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     onEditAndSend: (String,String)->Boolean = {_,_->false},
     onBranch: (String)->Boolean = {false}, onRegenerate: (String)->Boolean = {false},
     onExportSessions: ()->Unit = {}, onImportSessions: ()->Unit = {},
+    onExportSession: (String?)->Unit = {}, onDeleteSession: suspend (String)->Boolean = { false },
     onSaveDraft: suspend(String)->Boolean = { false },
     onRemoveDraft: suspend(String)->Boolean = { false },
     onEraseLocal: suspend()->Boolean = { false },
@@ -572,6 +582,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                     overlay=null
                 }, onNavigate={open(it)},onRefresh=onRefresh,onMode=onMode,onRestore=onRestore,onRestoreSession=onRestoreSession,onClear=onClear,onPickAttachment=onPickAttachment,onMemory=onMemory,onAsk={question->overlay=null;onSend(question);Unit},onVoiceTurns=onVoiceTurns,
                     onExportSessions=onExportSessions,onImportSessions=onImportSessions,
+                    onExportSession=onExportSession,onDeleteSession=onDeleteSession,
                     composerDraft=draft,onSaveDraft=onSaveDraft,onRemoveDraft=onRemoveDraft,
                     onUseDraft={pending->draft=pending;editingId=null;overlay=null;autoFollow=true},
                     onEraseLocal=onEraseLocal,
