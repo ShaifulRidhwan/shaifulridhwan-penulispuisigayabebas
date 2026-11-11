@@ -3,7 +3,6 @@ package my.aksara.nativeapp.feature.today
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.location.Geocoder
 import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Looper
@@ -347,8 +346,8 @@ internal object TodayMapConfig {
                                 val result=withContext(Dispatchers.IO) {
                                     @Suppress("DEPRECATION")
                                     runCatching {
-                                        if(!Geocoder.isPresent())null
-                                        else Geocoder(context,Locale("ms","MY"))
+                                        if(!android.location.Geocoder.isPresent())null
+                                        else android.location.Geocoder(context,Locale("ms","MY"))
                                             .getFromLocationName(query,1)?.firstOrNull()
                                     }.getOrNull()
                                 }
