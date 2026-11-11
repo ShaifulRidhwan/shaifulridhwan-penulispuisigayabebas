@@ -74,8 +74,11 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       apk_ready: ${{ steps.compile.outputs.apk_ready }}
+      apk_sha256: ${{ steps.apk.outputs.apk_sha256 }}
     env:
       AKSARA_CI_COMPILER_REPOSITORY: /tmp/aksara-compiler-repository
+      AKSARA_PREVIEW_PR_NUMBER: ${{ github.event.pull_request.number || '' }}
+      AKSARA_PREVIEW_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -101,6 +104,8 @@ jobs:
           curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' -H "Authorization: Bearer ${{ github.token }}" 'https://api.github.com/repos/JetBrains/kotlin/releases/assets/598630357' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar"
           curl --fail --location --retry 3 'https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21/kotlin-compiler-embeddable-2.1.21.pom' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom"
           printf '%s  %s\n' '67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar" 'dbbf8ac2550d5b1ae2a627f204f28b16f9271e36c44d8994aa3b139cbf70e45a' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom" | sha256sum --check
+      - name: Verify Android performance feature preservation
+        run: python3 android-native/ci/performance-contracts.py
       - name: Verify Android Voice Brain equals web source of truth
         run: node scripts/sync-android-voice-brain.cjs --check
       - name: Restore verified Stockfish 19 build cache
@@ -126,18 +131,45 @@ jobs:
         id: compile
         working-directory: android-native
         run: |
-          gradle --no-daemon --init-script ci/compiler-repository.init.gradle assembleDebug
+          # Every unmerged TODAY revision is a separately installable test app.
+          # CI debug signing keys are generated on runners and are not stable across
+          # runs; never reuse the installed production package ID for these previews.
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "$GITHUB_HEAD_REF" == feature/aksara-today-* ]]; then
+            test -n "$AKSARA_PREVIEW_PR_NUMBER"
+            test -n "$AKSARA_PREVIEW_HEAD_SHA"
+            short="${AKSARA_PREVIEW_HEAD_SHA:0:8}"
+            preview_suffix=".preview.p${AKSARA_PREVIEW_PR_NUMBER}.c${short}"
+            gradle --no-daemon --init-script ci/compiler-repository.init.gradle assembleDebug "-PaksaraPreviewSuffix=$preview_suffix"
+          else
+            gradle --no-daemon --init-script ci/compiler-repository.init.gradle assembleDebug
+          fi
           if [ '${{ github.event_name }}' = 'workflow_dispatch' ]; then
             gradle --no-daemon --init-script ci/compiler-repository.init.gradle assembleDebugAndroidTest
           fi
           echo "apk_ready=true" >> "$GITHUB_OUTPUT"
-      - name: Identify exact installable game APK
+      - name: Verify APK archive, alignment, signature, ABI and package identity
+        id: apk
         working-directory: android-native
+        shell: bash
         run: |
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose app/build/outputs/apk/debug/app-debug.apk
-          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging app/build/outputs/apk/debug/app-debug.apk > app/build/outputs/apk/debug/BADGING.txt
-          stat -c 'apk_bytes=%s' app/build/outputs/apk/debug/app-debug.apk
-          sha256sum app/build/outputs/apk/debug/app-debug.apk | tee app/build/outputs/apk/debug/SHA256SUMS
+          set -euo pipefail
+          apk="app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$apk"
+          unzip -tq "$apk" >/dev/null
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 "$apk"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$apk"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$apk" > app/build/outputs/apk/debug/BADGING.txt
+          grep -F "native-code:" app/build/outputs/apk/debug/BADGING.txt
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "$GITHUB_HEAD_REF" == feature/aksara-today-* ]]; then
+            short="${AKSARA_PREVIEW_HEAD_SHA:0:8}"
+            expected="my.aksara.nativeapp.preview.p${AKSARA_PREVIEW_PR_NUMBER}.c${short}"
+            grep -F "package: name='$expected'" app/build/outputs/apk/debug/BADGING.txt
+          else
+            grep -F "package: name='my.aksara.nativeapp'" app/build/outputs/apk/debug/BADGING.txt
+          fi
+          stat -c 'apk_bytes=%s' "$apk"
+          sha256sum "$apk" | tee app/build/outputs/apk/debug/SHA256SUMS
+          echo "apk_sha256=$(sha256sum "$apk" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
           printf 'source_commit=%s\nbuild_run=%s\n' '${{ github.event.pull_request.head.sha || github.sha }}' '${{ github.run_id }}' | tee app/build/outputs/apk/debug/BUILD.txt
       - uses: actions/upload-artifact@v5
         with:
@@ -246,11 +278,11 @@ jobs:
             docs/android-rebuild/visual-comparison/
             android-native/app/build/reports/
 
-  today-v2-preview-apk:
-    # A direct APK, with exact source SHA, for physical-device UI touch-up before merge.
+  today-preview-apk:
+    # A direct, SHA-locked .apk preview for TODAY UI PRs, without artifact ZIPs.
     if: >-
       github.event_name == 'pull_request' &&
-      github.event.pull_request.number == 308 &&
+      startsWith(github.head_ref, 'feature/aksara-today-') &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       needs.build.result == 'success' &&
       needs.backend-smoke.result == 'success' &&
@@ -262,36 +294,49 @@ jobs:
       contents: write
       actions: read
     steps:
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0"
       - uses: actions/download-artifact@v5
         with:
           name: aksara-native-installable-apk
-          path: preview-pr308
-      - name: Publish SHA-locked preview APK (not ZIP)
+          path: preview-today
+      - name: Publish verified single APK (not ZIP)
         env:
           GH_TOKEN: ${{ github.token }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        shell: bash
         run: |
           set -euo pipefail
-          test -s preview-pr308/app-debug.apk
+          test -s preview-today/app-debug.apk
+          echo "${{ needs.build.outputs.apk_sha256 }}  preview-today/app-debug.apk" | sha256sum -c -
+          unzip -tq preview-today/app-debug.apk >/dev/null
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose preview-today/app-debug.apk
           short="${HEAD_SHA:0:8}"
-          tag="aksara-today-v2-pr308-$short"
-          file="AKSARA-TODAY-V2-PR308-$short.apk"
-          cp preview-pr308/app-debug.apk "preview-pr308/$file"
-          (cd preview-pr308 && sha256sum "$file" > SHA256SUMS)
-          if gh release view "$tag" -R "${{ github.repository }}" >/dev/null 2>&1; then
-            gh release upload "$tag" "preview-pr308/$file" preview-pr308/SHA256SUMS -R "${{ github.repository }}" --clobber
+          tag="aksara-today-preview-pr${PR_NUMBER}-${short}"
+          file="AKSARA-TODAY-PR${PR_NUMBER}-${short}.apk"
+          cp preview-today/app-debug.apk "preview-today/$file"
+          (cd preview-today && sha256sum "$file" > SHA256SUMS)
+          if gh release view "$tag" -R "$REPO" >/dev/null 2>&1; then
+            gh release upload "$tag" "preview-today/$file" preview-today/SHA256SUMS -R "$REPO" --clobber
           else
-            gh release create "$tag" "preview-pr308/$file" preview-pr308/SHA256SUMS \
-              -R "${{ github.repository }}" --target "$HEAD_SHA" --prerelease \
-              --title "AKSARA TODAY V2 PR308 test APK $short" \
-              --notes "Experimental unmerged PR #308 test APK from source $HEAD_SHA. Android compilation, unit tests, backend, game and web-audit workflows passed. Physical-device QA and human approval still required; this is not a stable release."
+            gh release create "$tag" "preview-today/$file" preview-today/SHA256SUMS \
+              -R "$REPO" --target "$HEAD_SHA" --prerelease \
+              --title "AKSARA TODAY PR #$PR_NUMBER test APK $short" \
+              --notes "Unmerged UI preview from commit $HEAD_SHA. CI checks passed; device QA is still required."
           fi
-          url="https://github.com/${{ github.repository }}/releases/download/$tag/$file"
-          gh release view "$tag" -R "${{ github.repository }}" --json assets \
+          gh release view "$tag" -R "$REPO" --json assets \
             --jq '.assets[].name' | grep -Fx "$file"
-          echo "### PR #308 direct test APK" >> "$GITHUB_STEP_SUMMARY"
-          echo "$url" >> "$GITHUB_STEP_SUMMARY"
-          cat preview-pr308/SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
+          # A success badge is worthless if the actual published file differs.
+          mkdir -p verified-release
+          gh release download "$tag" -R "$REPO" --pattern "$file" --dir verified-release
+          cmp "preview-today/$file" "verified-release/$file"
+          echo "${{ needs.build.outputs.apk_sha256 }}  verified-release/$file" | sha256sum -c -
+          echo "### PR #$PR_NUMBER single APK (release bytes verified)" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/$REPO/releases/download/$tag/$file" >> "$GITHUB_STEP_SUMMARY"
+          cat preview-today/SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
 
   merged-single-apk:
     # Publish ONE installable .apk asset, not the ZIP wrapper from Actions artifacts.

@@ -49,14 +49,14 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch {
             try {
-                val snapshot = store.loadSnapshot()
+                val snapshot = withContext(Dispatchers.IO) { store.loadSnapshot() }
                 val archive = snapshot.messages
-                try { savedContext = contextStore.load() }
+                try { savedContext = withContext(Dispatchers.IO) { contextStore.load() } }
                 catch (_: Exception) {
                     contextReadable = false
                     mutable.update { it.copy(error = "Tetapan konteks tersulit tidak dapat dibaca. Fail asal dikekalkan.") }
                 }
-                val drafts=try { pendingStore.load() } catch(_:Exception) {
+                val drafts=try { withContext(Dispatchers.IO) { pendingStore.load() } } catch(_:Exception) {
                     pendingReadable=false
                     mutable.update{it.copy(error="Draf tersulit tidak dapat dibaca. Fail asal dikekalkan.")}
                     emptyList()
@@ -227,6 +227,18 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             sessionStarts = if (previous.isEmpty() || it.resumedFromHistory) (it.sessionStarts + user.id).distinct() else it.sessionStarts,
             resumedFromHistory = false, busy = true, error = null, nextJourney = null)) }
         requestJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            // Every delta remains recoverable; only UI publishes are batched to frames.
+            val pending = StreamDeltaBuffer { slice ->
+                mutable.update { value ->
+                    val index = value.messages.indexOfLast { it.id == assistant.id }
+                    if (index < 0) value else {
+                        val updated = value.messages.toMutableList()
+                        updated[index] = updated[index].copy(text = updated[index].text + slice)
+                        value.copy(messages = updated)
+                    }
+                }
+            }
+            var renderer: Job? = null
             try {
                 // Persist the user's prompt before any summarization or inference.
                 // Cancellation, process death or upstream failure must not erase this turn.
@@ -272,7 +284,19 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     media = effective?.let { JSONArray(it.mediaJson) },
                     fileUploads = effective?.let { JSONArray(it.receiptsJson) }
                 )
+                renderer = launch {
+                    while (isActive) {
+                        delay(32L)
+                        pending.flush()
+                    }
+                }
                 api.chat(payload).collect { event ->
+                    if (event is ChatEvent.Delta) {
+                        pending.append(event.text)
+                        return@collect
+                    }
+                    pending.flush()
+
                     if(event is ChatEvent.Done && event.thoughtLedger.isNotEmpty()) {
                         savedContext = savedContext.copy(thoughtLedger = ContextPolicy.mergeThoughtLedger(savedContext.thoughtLedger,event.thoughtLedger))
                     }
@@ -301,6 +325,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     if(retry != null && retry > 0) " Cuba semula selepas "+retry+" saat." else ""
                 mutable.update { it.copy(error = message) }
             } finally {
+                renderer?.cancel()
+                pending.flush() // Stop/error must never discard the last streamed token.
                 mutable.update { it.copy(busy = false) }
                 withContext(NonCancellable) {
                     try {

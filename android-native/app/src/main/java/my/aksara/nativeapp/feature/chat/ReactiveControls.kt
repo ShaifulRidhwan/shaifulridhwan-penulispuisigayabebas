@@ -50,7 +50,7 @@ internal fun ReactiveThinkingButton(
         intensity
     } else if (processing) .75f else .25f
     AksaraGlassSurface(
-        Modifier.size(44.dp).clickable(onClick = onClick).semantics {
+        Modifier.size(44.dp).aksaraBouncyClick(onClick = onClick).semantics {
             contentDescription = "Thinking Mode"
             stateDescription = (if (mode == "gelap") "Gelap" else "Cahaya") +
                 if (processing) " · Memproses" else " · Sedia"
@@ -73,7 +73,7 @@ internal fun ReactiveThinkingButton(
 @Composable
 internal fun ReactiveSendButton(enabled: Boolean, onClick: () -> Unit) {
     AksaraGlassSurface(
-        Modifier.size(44.dp).clickable(enabled=enabled, onClick=onClick).semantics {
+        Modifier.size(44.dp).aksaraBouncyClick(enabled=enabled, onClick=onClick).semantics {
             contentDescription = "Hantar soalan"
             testTag = "send-glass-button"
         }, radius = 13.dp, blur = 2.dp, brush = controlBrush,
@@ -97,7 +97,7 @@ internal fun ReactiveVoiceChip(status: VoiceLinkState, compact: Boolean, onClick
     AksaraGlassSurface(
         Modifier.width(if(compact) 82.328.dp else 93.484.dp)
             .height(AksaraGlassTokens.capsuleHeight)
-            .clickable(onClick=onClick).semantics {
+            .aksaraBouncyClick(onClick=onClick).semantics {
                 contentDescription = "Voice Chat"
                 stateDescription = status.description
                 testTag = "voice-status-chip"

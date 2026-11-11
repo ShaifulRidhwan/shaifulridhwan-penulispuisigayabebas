@@ -85,7 +85,13 @@ internal object StudioGateway {
             val bounds=BitmapFactory.Options().apply{inJustDecodeBounds=true}
             BitmapFactory.decodeByteArray(bytes,0,bytes.size,bounds)
             require(bounds.outWidth in 256..1920&&bounds.outHeight in 256..1920) {"Dimensi imej tidak sah."}
-            val bitmap=BitmapFactory.decodeByteArray(bytes,0,bytes.size)
+            // Preserve full ARGB fidelity; never perform density scaling on generated pixels.
+            val decode=BitmapFactory.Options().apply {
+                inPreferredConfig=Bitmap.Config.ARGB_8888
+                inScaled=false
+                inMutable=false
+            }
+            val bitmap=BitmapFactory.decodeByteArray(bytes,0,bytes.size,decode)
                 ?: throw IOException("Imej Studio tidak dapat dibaca.")
             Result(bitmap,json.optString("modelName",model),json.optLong("durationMs"),bounds.outWidth,bounds.outHeight)
         }

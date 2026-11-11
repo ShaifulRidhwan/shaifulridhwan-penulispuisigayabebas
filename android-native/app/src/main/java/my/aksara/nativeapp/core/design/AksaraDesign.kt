@@ -97,15 +97,22 @@ fun cssGradient(degrees:Float,colors:List<Color>):Brush=object:ShaderBrush(){
         return LinearGradientShader(center-Offset(dx*half,dy*half),center+Offset(dx*half,dy*half),colors)
     }
 }
-val GlassGradient: Brush get() = cssGradient(145f,listOf(Color(255,247,224,9), Color(125,167,205,5)))
-val DialogGradient: Brush get() = cssGradient(150f,listOf(Color(23,31,45,92), Color(9,14,24,110)))
+// ShaderBrush is immutable; reuse its instance across streaming and clock recompositions.
+private val SharedGlassGradient: Brush by lazy {
+    cssGradient(145f,listOf(Color(255,247,224,9), Color(125,167,205,5)))
+}
+private val SharedDialogGradient: Brush by lazy {
+    cssGradient(150f,listOf(Color(23,31,45,92), Color(9,14,24,110)))
+}
+val GlassGradient: Brush get() = SharedGlassGradient
+val DialogGradient: Brush get() = SharedDialogGradient
 @Composable fun AksaraGlassSurface(modifier: Modifier = Modifier, radius: Dp = 13.dp, blur: Dp = 2.dp,
     brush: Brush = GlassGradient, border: Color = AksaraColors.border, shape: Shape = RoundedCornerShape(radius), saturation:Float=1.1f, content: @Composable BoxScope.() -> Unit) {
     val haze = LocalBackdrop.current
     val ancestorPaints=LocalBackdropPaints.current
     val surfaceBackdrop=remember {HazeState()}
     val saturationEffect=remember(saturation){android.graphics.RenderEffect.createColorFilterEffect(android.graphics.ColorMatrixColorFilter(android.graphics.ColorMatrix().apply{setSaturation(saturation)})).asComposeRenderEffect()}
-    val effectStyle=HazeStyle(tints=emptyList(),backgroundColor=Color.Transparent,blurRadius=blur*1.75f,noiseFactor=0f)
+    val effectStyle=remember(blur) { HazeStyle(tints=emptyList(),backgroundColor=Color.Transparent,blurRadius=blur*1.75f,noiseFactor=0f) }
     val backdropEffects=ancestorPaints.fold(Modifier.hazeEffect(haze,effectStyle)){m,paint->m.hazeEffect(paint,effectStyle)}
     Box(modifier.clip(shape).border(1.dp,border,shape)) {
         // CSS backdrop-filter establishes a backdrop root. Descendant filters sample
@@ -120,9 +127,9 @@ val DialogGradient: Brush get() = cssGradient(150f,listOf(Color(23,31,45,92), Co
 @Composable fun AksaraButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: String? = null,
     size: Float = 12f, height: Dp = 44.dp, radius: Dp = 13.dp, enabled: Boolean = true, contentColor: Color = AksaraColors.text, leadingText:String?=null,iconSize:Dp?=null) {
     val engine=icon=="code"||icon=="terminal"
-    val material=when{engine->cssGradient(180f,listOf(Color(255,255,255,11),Color(5,8,16,41)));icon=="brain"||icon=="sun"||icon=="moon"->cssGradient(145f,listOf(Color(238,201,140,22),Color(19,31,49,31)));icon=="send"->cssGradient(145f,listOf(Color(244,216,171,14),Color(64,87,112,9)));else->GlassGradient}
+    val material=remember(icon) { when{engine->cssGradient(180f,listOf(Color(255,255,255,11),Color(5,8,16,41)));icon=="brain"||icon=="sun"||icon=="moon"->cssGradient(145f,listOf(Color(238,201,140,22),Color(19,31,49,31)));icon=="send"->cssGradient(145f,listOf(Color(244,216,171,14),Color(64,87,112,9)));else->GlassGradient} }
     val edge=when{engine->Color(233,205,158,87);icon=="brain"||icon=="sun"||icon=="moon"->Color(245,208,157,110);icon=="send"->Color(244,213,166,77);else->AksaraColors.border}
-    AksaraGlassSurface(modifier.graphicsLayer { alpha=if(enabled)1f else .6f }.height(height).clip(RoundedCornerShape(radius)).clickable(enabled = enabled, onClick = onClick), radius,blur=if(engine)8.dp else if(radius >= 100.dp) AksaraGlassTokens.capsuleBlur else 2.dp,brush=material,border=edge,saturation=if(engine)1.12f else if(icon=="brain"||icon=="sun"||icon=="moon"||icon=="send")1f else 1.1f) {
+    AksaraGlassSurface(modifier.graphicsLayer { alpha=if(enabled)1f else .6f }.height(height).clip(RoundedCornerShape(radius)).aksaraBouncyClick(enabled = enabled, onClick = onClick), radius,blur=if(engine)8.dp else if(radius >= 100.dp) AksaraGlassTokens.capsuleBlur else 2.dp,brush=material,border=edge,saturation=if(engine)1.12f else if(icon=="brain"||icon=="sun"||icon=="moon"||icon=="send")1f else 1.1f) {
         Row(Modifier.align(Alignment.Center).padding(horizontal = if(leadingText!=null)11.dp else if(size<10f)6.dp else 10.dp), horizontalArrangement = Arrangement.spacedBy(if(leadingText!=null)7.dp else if(size<10f)4.dp else 6.dp), verticalAlignment = Alignment.CenterVertically) {
             if(leadingText!=null)AksaraText(leadingText,size=size,line=size*1.4f,weight=500,color=AksaraColors.gold)
             if (icon != null) AksaraIcon(icon, Modifier.size(iconSize?:if(icon=="code")15.dp else if(icon=="terminal")17.dp else if(icon=="brain")23.dp else if(icon=="send")19.dp else if(icon=="voice"&&size<10)12.dp else if(size<10)15.dp else 18.dp), contentColor)

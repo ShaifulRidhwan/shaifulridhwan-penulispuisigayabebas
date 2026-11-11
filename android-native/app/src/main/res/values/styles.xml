@@ -10,7 +10,7 @@
     </style>
     <style name="Theme.Aksara.Launch" parent="Theme.Aksara">
         <item name="android:windowSplashScreenBackground">@color/aksara_launch_midnight</item>
-        <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/aksara_launch_empty</item>
         <item name="android:windowSplashScreenAnimationDuration">0</item>
         <item name="android:windowBackground">@color/aksara_launch_midnight</item>
     </style>

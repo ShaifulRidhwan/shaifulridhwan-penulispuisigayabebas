@@ -54,6 +54,26 @@ import kotlinx.coroutines.flow.collect
 import java.time.*
 import java.time.format.DateTimeFormatter
 
+/** Only move the chat by the actual overflow, never an arbitrary huge distance. */
+internal fun visibleMessageOverflow(
+    itemOffset:Int,itemHeight:Int,viewportEnd:Int,afterPadding:Int
+):Int=(itemOffset+itemHeight-(viewportEnd-afterPadding)).coerceAtLeast(0)
+
+// Keep the last visible message in step with the animated IME viewport.
+// Positive deltas scroll up while the keyboard opens; negative deltas
+// scroll down as it closes. Avoid extra scrolling during ordinary relayouts.
+internal fun imeViewportFollowDelta(
+    previousViewportEnd:Int?, viewportEnd:Int,
+    previousImeBottom:Int, imeBottom:Int, following:Boolean
+):Int = if (following && previousViewportEnd!=null &&
+    (previousImeBottom>0 || imeBottom>0)) previousViewportEnd-viewportEnd else 0
+
+// A passive popup must not ride the keyboard's dismissal animation.
+// Editable overlays still use imePadding so search/prompt fields remain visible.
+internal fun overlayNeedsImeSpace(kind:String):Boolean = kind in setOf(
+    "search-hub","settings","studio","library","novel","knowledge","security","code","terminal"
+)
+
 const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam bentuk, LUAS dalam pemikiran."
 @Composable fun AksaraApp(vm: ChatViewModel = viewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -161,7 +181,13 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val pagerState = rememberPagerState(initialPage=0,pageCount={2})
     var overlayVisible by remember { mutableStateOf(false) }
     var todayDialogVisible by remember { mutableStateOf(false) }
-    val keyboardOpen=WindowInsets.ime.getBottom(LocalDensity.current)>0
+    // Do not recompose the whole pager for each IME animation pixel.
+    val imeDensity=LocalDensity.current
+    // WindowInsets.ime is composable: resolve it before entering derivedStateOf.
+    val pagerImeInsets=WindowInsets.ime
+    val keyboardOpen by remember(imeDensity,pagerImeInsets) {
+        derivedStateOf { pagerImeInsets.getBottom(imeDensity)>0 }
+    }
     HorizontalPager(
         state=pagerState,
         modifier=Modifier.fillMaxSize(),
@@ -170,7 +196,14 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     ) { page ->
       if(page==1) {
         TodayScreen(active=pagerState.currentPage==1,onBack={
-            scope.launch { pagerState.animateScrollToPage(0) }
+            scope.launch {
+                pagerState.animateScrollToPage(
+                    0,animationSpec=androidx.compose.animation.core.spring(
+                        dampingRatio=.85f,
+                        stiffness=androidx.compose.animation.core.Spring.StiffnessMedium
+                    )
+                )
+            }
         },onDialogVisibilityChange={todayDialogVisible=it})
       } else {
         AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
@@ -268,7 +301,13 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val focus = LocalFocusManager.current
     val list = rememberLazyListState()
     var autoFollow by remember { mutableStateOf(true) }
-    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+    // Track only visibility transitions; the keyboard animates its insets every frame.
+    // Pixel-by-pixel effect restarts caused expensive repeated LazyColumn scrolling.
+    val imeDensity=LocalDensity.current
+    val chatImeInsets=WindowInsets.ime
+    val imeVisible by remember(imeDensity,chatImeInsets) {
+        derivedStateOf { chatImeInsets.getBottom(imeDensity)>0 }
+    }
     // A single collector owns programmatic scrolling. Dragging suspends following,
     // while composer focus or returning to the bottom explicitly resumes it.
     LaunchedEffect(list) {
@@ -288,16 +327,41 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
         }
     }
+    // IME changes should not restart the message-arrival scroll coroutine.
+    // Keep keyboard-follow in a separate, viewport-delta-driven collector.
+    LaunchedEffect(list,chatImeInsets,imeDensity) {
+        var previousViewportEnd:Int?=null
+        var previousImeBottom=0
+        snapshotFlow {
+            list.layoutInfo.viewportEndOffset to chatImeInsets.getBottom(imeDensity)
+        }.collect { (viewportEnd,imeBottom) ->
+            val delta=imeViewportFollowDelta(
+                previousViewportEnd,viewportEnd,previousImeBottom,imeBottom,autoFollow
+            )
+            previousViewportEnd=viewportEnd
+            previousImeBottom=imeBottom
+            if(delta!=0) list.scrollBy(delta.toFloat())
+        }
+    }
     LaunchedEffect(state.messages.size, state.messages.lastOrNull()?.text?.length,
-        state.busy, imeBottom, autoFollow) {
+        state.busy, autoFollow) {
         if (autoFollow && state.messages.isNotEmpty()) {
             withFrameNanos { }
             val last = list.layoutInfo.totalItemsCount - 1
             if (last >= 0) {
-                if (state.messages.size > 1 && list.firstVisibleItemIndex < last - 3) {
+                // A 100,000px scroll on every streamed token/IME transition can
+                // force excessive lazy-list measuring. Scroll only the visible delta.
+                if (list.layoutInfo.visibleItemsInfo.none { it.index == last }) {
                     list.scrollToItem(last)
                 }
-                list.scrollBy(100_000f)
+                val visibleLast = list.layoutInfo.visibleItemsInfo.lastOrNull { it.index == last }
+                if (visibleLast != null) {
+                    val overflow = visibleMessageOverflow(
+                        visibleLast.offset,visibleLast.size,
+                        list.layoutInfo.viewportEndOffset,list.layoutInfo.afterContentPadding
+                    )
+                    if (overflow > 0) list.scrollBy(overflow.toFloat())
+                }
             }
         }
     }
@@ -329,11 +393,15 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         overlay = null
     }
     CompositionLocalProvider(LocalBackdrop provides backdrop) {
-        BoxWithConstraints(Modifier.fillMaxSize().imePadding().testTagCompat("app")) {
+        // Keep the cinematic wallpaper and backdrop at a stable viewport size.
+        // Only the actual content (and open overlays) follows the keyboard inset.
+        BoxWithConstraints(Modifier.fillMaxSize().testTagCompat("app")) {
             val viewportHeight = maxHeight
             Box(Modifier.fillMaxSize().hazeSource(scene)) {
             ChatWallpaper(Modifier.fillMaxSize().hazeSource(backdrop))
-            Column(Modifier.fillMaxSize().safeDrawingPadding().padding(start=margins.horizontal,end=margins.horizontal,top=margins.top,bottom=margins.bottom)) {
+            Column(Modifier.fillMaxSize().imePadding().safeDrawingPadding()
+                .padding(start=margins.horizontal,end=margins.horizontal,
+                    top=margins.top,bottom=margins.bottom)) {
                 Spacer(Modifier.height(5.dp))
                 AksaraGlassSurface(Modifier.fillMaxWidth().height(58.dp).testTagCompat("topbar"), radius=20.dp, blur=12.dp,
                     brush=cssGradient(115f,listOf(Color(8,14,24,102),Color(17,26,40,51))),saturation=1.15f, border=Color.Transparent) {
@@ -394,7 +462,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             LazyColumn(Modifier.weight(1f).fillMaxWidth().testTagCompat("messages"),state=list,contentPadding=PaddingValues(start=if(state.messages.isEmpty())17.dp else 12.dp,end=if(state.messages.isEmpty())17.dp else 12.dp,top=if(state.messages.isEmpty())14.dp else 13.dp,bottom=13.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
                                 if(state.messages.isEmpty()) item { AksaraChatBubble(Message("welcome","assistant",WelcomeText,fixedTimestamp?:System.currentTimeMillis()),fixedTimestamp=fixedTimestamp,initial=true) }
                                 if(state.messages.isNotEmpty()) item { AksaraChatBubble(Message("welcome-expanded","assistant","Antara aksara dan code,\nGAYA yang bebas,\nBEBAS dalam bentuk,\nLUAS dalam pemikiran.",fixedTimestamp?:state.messages.first().at),fixedTimestamp=fixedTimestamp) }
-                                items(state.messages,key={it.id}) { message ->
+                                items(state.messages,key={it.id},contentType={it.role}) { message ->
                                     AksaraChatBubble(message,fixedTimestamp=fixedTimestamp,
                                         highlighted=highlightedMessageId==message.id,
                                         onCopy={
@@ -474,7 +542,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             contentAlignment=Alignment.Center) {AksaraIcon("attach",Modifier.size(21.dp))}
                         BasicTextField(draft,{draft=it},Modifier.weight(1f)
                             .heightIn(min=42.dp,max=140.dp).padding(horizontal=3.dp,vertical=9.dp)
-                            .onFocusChanged { if(it.isFocused) autoFollow=true }
+                            .onFocusChanged { if(it.isFocused && !list.canScrollForward) autoFollow=true }
                             .semantics {contentDescription="Tulis mesej untuk Aksara A.I."}
                             .testTagCompat("input"),
                             textStyle=AksaraTypography.style(16f,24f),
@@ -494,6 +562,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
             }
             if(overlay!=null) CompositionLocalProvider(LocalBackdrop provides scene) {
+                Box(Modifier.fillMaxSize().then(
+                    if(overlayNeedsImeSpace(overlay!!)) Modifier.imePadding() else Modifier
+                )) {
                 AksaraOverlay(overlay!!, state, onClose={
                     if(overlay=="voice") voiceIndicator=VoiceLinkState.IDLE
                     overlay=null
@@ -504,6 +575,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                     onEraseLocal=onEraseLocal,
                     onJumpToMessage={id->pendingJumpId=id},
                     onVoiceState={phase,ready->voiceIndicator=VoiceLinkState.from(phase,ready)})
+                }
             }
         }
     }
@@ -526,7 +598,10 @@ private val ChatTimestampFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm",j
                 val measure=rememberTextMeasurer();val density=LocalDensity.current
                 val padding=if(ai)26.dp else 24.dp
                 val style=AksaraTypography.style(15f,23.85f).copy(letterSpacing=(-.12).sp)
-                val textSize=measure.measure(AnnotatedString(message.text),style,constraints=Constraints(maxWidth=with(density){(contentWidth-padding).roundToPx()})).size
+                val textSize=remember(message.text,contentWidth,density,style) {
+                    measure.measure(AnnotatedString(message.text),style,
+                        constraints=Constraints(maxWidth=with(density){(contentWidth-padding).roundToPx()})).size
+                }
                 minOf(contentWidth,with(density){textSize.width.toDp()}+padding)
             }
             else->contentWidth
@@ -596,5 +671,10 @@ private val ChatTimestampFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm",j
         setLineHeight((23.85f*resources.displayMetrics.scaledDensity).toInt());letterSpacing=-.008f;setPadding(0,0,0,0)
         setTextIsSelectable(true);setLinkTextColor(android.graphics.Color.rgb(230,197,139))
         movementMethod=android.text.method.LinkMovementMethod.getInstance()
-    }},update={renderer.setMarkdown(it,value)})
+    }},update={ view ->
+        if (view.tag != value) {
+            renderer.setMarkdown(view,value)
+            view.tag=value
+        }
+    })
 }

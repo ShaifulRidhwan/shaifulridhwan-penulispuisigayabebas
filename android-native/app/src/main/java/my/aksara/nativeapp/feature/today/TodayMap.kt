@@ -89,9 +89,16 @@ internal object TodayMapConfig {
                         .zoom(12.5).build())
             )
         }.getOrNull()
+        var disposed=false
         if(snap==null) failed=true
-        else snap.start({ result -> bitmap=result.bitmap },{ _ -> failed=true })
-        onDispose { snap?.cancel() }
+        else snap.start(
+            { result -> if(!disposed) bitmap=result.bitmap },
+            { _ -> if(!disposed) failed=true }
+        )
+        onDispose {
+            disposed=true
+            snap?.cancel()
+        }
     }
     Box(modifier.clip(RoundedCornerShape(16.dp))
         .semantics { contentDescription="Buka peta lokasi" }.clickable(onClick=onClick)) {

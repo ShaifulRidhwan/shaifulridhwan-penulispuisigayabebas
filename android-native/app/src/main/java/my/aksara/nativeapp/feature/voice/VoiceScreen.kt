@@ -38,14 +38,26 @@ import my.aksara.engine.avatar.VoiceAvatarView
     var captionDraft by remember { mutableStateOf("") }
     var seconds by remember{mutableIntStateOf(0)}
     val live = !preview && state.ready && state.phase in setOf("listening","thinking","speaking")
-    val pulse = rememberInfiniteTransition(label="voice-live")
-    val liveGlow by pulse.animateFloat(initialValue=.35f,targetValue=1f,animationSpec=infiniteRepeatable(animation=tween(900),repeatMode=RepeatMode.Reverse),label="live-glow")
+    // Do not run an endless transition when Voice is idle or preview-only.
+    // The existing red LIVE pulse is retained whenever the session is live.
+    val liveGlow = if (live) {
+        val pulse = rememberInfiniteTransition(label="voice-live")
+        val glow by pulse.animateFloat(
+            initialValue=.35f,targetValue=1f,
+            animationSpec=infiniteRepeatable(animation=tween(900),repeatMode=RepeatMode.Reverse),
+            label="live-glow"
+        )
+        glow
+    } else 1f
+    val voiceGlassStyle=remember {
+        HazeStyle(tints=emptyList(),backgroundColor=Color(0xff070911),blurRadius=29.75.dp,noiseFactor=0f)
+    }
     LaunchedEffect(state.startedAt){
         if(state.startedAt==null){seconds=0;return@LaunchedEffect}
         while(state.startedAt!=null){seconds=((System.currentTimeMillis()-state.startedAt!!)/1000).toInt();kotlinx.coroutines.delay(1000)}
     }
     BoxWithConstraints(Modifier.fillMaxSize()){
-        Box(Modifier.fillMaxSize().hazeSource(voiceBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(),backgroundColor=Color(0xff070911),blurRadius=29.75.dp,noiseFactor=0f)).background(Color(9,16,28,145)))
+        Box(Modifier.fillMaxSize().hazeSource(voiceBackdrop).hazeEffect(haze,voiceGlassStyle).background(Color(9,16,28,145)))
         CompositionLocalProvider(LocalBackdrop provides voiceBackdrop){
         val compact=maxWidth<=360.dp
         val side=maxOf(if(compact)8.dp else 11.dp,margins.horizontal)

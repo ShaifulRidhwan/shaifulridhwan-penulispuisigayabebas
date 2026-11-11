@@ -8,3 +8,8 @@ include(":engine:voice")
 include(":engine:avatar")
 
 include(":engine:chess")
+
+// Hardware-only performance benchmarking, excluded from standard cloud preview CI.
+if (providers.gradleProperty("aksaraPerformanceBenchmarks").orNull == "true") {
+    include(":macrobenchmark")
+}

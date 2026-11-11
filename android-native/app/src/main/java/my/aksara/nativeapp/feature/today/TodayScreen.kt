@@ -57,6 +57,13 @@ private fun todayCondition(code:Int)=when(code) {
     else -> "Keadaan cuaca"
 }
 
+private fun todayCoinGlyph(symbol:String):String=when(symbol.uppercase(Locale.US)) {
+    "BTC" -> "₿"
+    "ETH" -> "Ξ"
+    "SOL" -> "◎"
+    else -> "●"
+}
+
 private fun money(value:Double):String=NumberFormat.getCurrencyInstance(Locale.US).apply {
     maximumFractionDigits=if(value<1.0)4 else 2
 }.format(value)
@@ -217,11 +224,12 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
             prayer=null
         }
     }
-    val dateLabel=clock.format(DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy",malay))
+    // Clock ticks should not recreate expensive date/time format patterns.
+    val dateFormatter=remember { DateTimeFormatter.ofPattern("EEEE, d MMMM yyyy",malay) }
+    val timeFormatter=remember { DateTimeFormatter.ofPattern("HH:mm") }
+    val dateLabel=remember(clock.toLocalDate()) { clock.format(dateFormatter) }
     val prayerNow=LocalTime.now(malaysiaZone)
     val countdown=nextPrayer(prayer?.value,prayerNow)
-    val latestUpdate=listOfNotNull(weather?.updatedAt,prayer?.updatedAt,crypto?.updatedAt,github?.updatedAt).maxOrNull()
-    val anyCached=listOfNotNull(weather,prayer,crypto,github).any { it.fromCache }
     val wallpaperBackdrop=remember { HazeState() }
 
     CompositionLocalProvider(LocalBackdrop provides wallpaperBackdrop) {
@@ -248,101 +256,154 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
             Column(Modifier.fillMaxSize().safeDrawingPadding().then(refreshModifier)
                 .padding(horizontal=15.dp,vertical=8.dp),
                 verticalArrangement=Arrangement.spacedBy(8.dp)) {
-                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.155f).clickable {
+
+
+                // Five classic Liquid Glass cards, no top toolbar or dashboard scrolling.
+                // Android Back returns to chat, swipe down refreshes as before.
+                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.13f).aksaraBouncyClick {
                     detailWindow="clock"
                 },radius=19.dp,blur=12.dp) {
-                    Column(Modifier.fillMaxSize().padding(5.dp),
+                    Column(Modifier.fillMaxSize().padding(horizontal=10.dp,vertical=4.dp),
                         horizontalAlignment=Alignment.CenterHorizontally,
                         verticalArrangement=Arrangement.Center) {
-                        AksaraText(clock.format(DateTimeFormatter.ofPattern("HH:mm")),
-                            size=34f,weight=650)
-                        AksaraText(dateLabel,size=10.5f,color=todayMuted)
+                        AksaraText(clock.format(timeFormatter),
+                            size=33f,line=37f,weight=650)
+                        AksaraText(dateLabel,size=10.5f,line=14f,color=todayMuted)
                     }
                 }
-                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.265f),radius=19.dp,blur=12.dp) {
-                    Column(Modifier.fillMaxSize().padding(10.dp),
-                        verticalArrangement=Arrangement.spacedBy(6.dp)) {
-                        AksaraText("Cuaca & Lokasi",size=12.5f,weight=700,color=todayGold)
-                        Row(Modifier.fillMaxWidth().weight(1f),
-                            horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                            AksaraGlassSurface(Modifier.weight(.60f).fillMaxHeight()
-                                .clickable { detailWindow="weather" },radius=14.dp,blur=7.dp) {
-                                Column(Modifier.fillMaxSize().padding(8.dp),
-                                    verticalArrangement=Arrangement.SpaceBetween) {
-                                    val value=weather?.value
-                                    AksaraText("CUACA",size=9f,color=todayGold)
-                                    AksaraText(value?.let{String.format(Locale.US,"%.1f°C",it.celsius)}
-                                        ?: if(!permissionLocation)"Aktifkan lokasi" else "Tiada data",
-                                        size=if(value==null)12f else 22f,weight=650)
-                                    AksaraText(value?.let{todayCondition(it.code)} ?: "Tekan untuk butiran",
-                                        size=10f,color=todayMuted)
-                                    AksaraText(value?.rainChance?.let{"Hujan "+it+"%"} ?: " ",
-                                        size=9.5f,color=todayMuted)
-                                }
+                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.21f)
+                    .aksaraBouncyClick { detailWindow="weather" },radius=19.dp,blur=12.dp) {
+                    val value=weather?.value
+                    Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=8.dp),
+                        verticalArrangement=Arrangement.SpaceEvenly) {
+                        AksaraText("Cuaca & Lokasi",size=12.5f,line=16f,
+                            weight=700,color=todayGold)
+                        if(value!=null) {
+                            Row(Modifier.fillMaxWidth(),
+                                verticalAlignment=Alignment.CenterVertically,
+                                horizontalArrangement=Arrangement.spacedBy(9.dp)) {
+                                AksaraText(String.format(Locale.US,"%.1f°C",value.celsius),
+                                    size=21f,line=26f,weight=650)
+                                AksaraText("·  "+todayCondition(value.code),
+                                    Modifier.weight(1f),size=15f,line=19f,weight=500)
                             }
-                            TodayMiniMap(latestLocation,city,active,epoch,
-                                Modifier.weight(.40f).fillMaxHeight(),onClick={
-                                    if(!permissionLocation)explainLocation()
-                                    else detailWindow="map"
-                                })
+                            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,
+                                horizontalArrangement=Arrangement.spacedBy(5.dp)) {
+                                AksaraIcon("location",Modifier.size(12.dp),todayGold)
+                                AksaraText((city ?: "Lokasi semasa")+
+                                    " · Angin "+String.format(Locale.US,"%.0f km/j",value.windKmh),
+                                    size=10.3f,line=14f,color=todayMuted)
+                            }
+                            AksaraText("Potensi hujan hari ini: "+
+                                (value.rainChance?.let { "$it%" } ?: "tidak tersedia"),
+                                size=10f,line=13f,color=todayMuted)
+                            AksaraText("Ramalan cuaca, bukan amaran rasmi METMalaysia.",
+                                size=8.7f,line=11f,color=todayMuted)
+                        } else {
+                            TodayPending(if(!permissionLocation)"Benarkan lokasi untuk maklumat cuaca."
+                                else if(locating)"Mendapatkan lokasi semasa…"
+                                else "Bacaan cuaca tidak tersedia.")
                         }
                     }
                 }
-                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.235f)
-                    .clickable{detailWindow="prayer"},radius=19.dp,blur=12.dp) {
-                    Column(Modifier.fillMaxSize().padding(horizontal=12.dp,vertical=8.dp),
-                        verticalArrangement=Arrangement.SpaceBetween) {
-                        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
-                            AksaraText("Waktu Solat & Hijrah",size=12.5f,weight=700,color=todayGold)
-                            AksaraText(prayer?.value?.zone ?: "—",size=9f,color=todayMuted)
+                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.29f)
+                    .aksaraBouncyClick { detailWindow="prayer" },radius=19.dp,blur=12.dp) {
+                    val value=prayer?.value
+                    Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=9.dp),
+                        verticalArrangement=Arrangement.SpaceEvenly) {
+                        Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,
+                            horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                            AksaraText("Waktu Solat & Hijrah",Modifier.weight(1f),
+                                size=12.5f,line=16f,weight=700,color=todayGold)
+                            AksaraText(value?.zone ?: "—",size=9f,line=12f,color=todayMuted)
                         }
-                        if(prayer?.value!=null) {
-                            Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(3.dp)) {
-                                prayer!!.value!!.times.forEach { (name,time) ->
-                                    Column(Modifier.weight(1f),horizontalAlignment=Alignment.CenterHorizontally,
-                                        verticalArrangement=Arrangement.spacedBy(4.dp)) {
-                                        AksaraText(name,size=9.2f,color=todayMuted)
-                                        AksaraText(time,size=10.4f,weight=650,color=todayGold)
-                                    }
+                        if(value!=null) {
+                            AksaraText("Zon "+value.zone+
+                                (if(value.hijri.isNotBlank())" · Hijrah "+value.hijri else ""),
+                                size=9.4f,line=12f,color=todayMuted)
+                            value.times.forEach { (name,time) ->
+                                val upcoming=name==countdown?.first
+                                Row(Modifier.fillMaxWidth(),
+                                    verticalAlignment=Alignment.CenterVertically,
+                                    horizontalArrangement=Arrangement.SpaceBetween) {
+                                    AksaraText(name,size=10.4f,line=14f,
+                                        weight=if(upcoming)650 else 450,
+                                        color=if(upcoming)todayGold else AksaraColors.text)
+                                    AksaraText(time,size=10.7f,line=14f,weight=600,
+                                        color=if(upcoming)todayGold else todayMuted)
                                 }
                             }
-                            AksaraText(countdown?.let{"Seterusnya: "+it.first+" • "+it.second+" lagi"}
-                                ?: "Waktu seterusnya tidak tersedia",size=10.3f,color=todayMuted)
+                            Row(verticalAlignment=Alignment.CenterVertically,
+                                horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                                AksaraIcon("clock",Modifier.size(13.dp),todayGold)
+                                AksaraText(countdown?.let {
+                                    "Seterusnya: "+it.first+" · "+it.second+" lagi"
+                                } ?: "Waktu seterusnya tidak tersedia",
+                                    size=10.2f,line=14f,weight=600,color=todayGold)
+                            }
                         } else TodayPending(if(!permissionLocation)"Aktifkan lokasi untuk jadual solat."
                             else "Waktu solat tidak tersedia.")
                     }
                 }
-                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.17f)
-                    .clickable{detailWindow="crypto"},radius=19.dp,blur=12.dp) {
-                    Column(Modifier.fillMaxSize().padding(horizontal=12.dp,vertical=8.dp),
-                        verticalArrangement=Arrangement.SpaceBetween) {
-                        AksaraText("Pasaran Kripto · USD",size=12.5f,weight=700,color=todayGold)
+                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.18f)
+                    .aksaraBouncyClick { detailWindow="crypto" },radius=19.dp,blur=12.dp) {
+                    Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=8.dp),
+                        verticalArrangement=Arrangement.SpaceEvenly) {
+                        AksaraText("Pasaran Kripto · USD",size=12.5f,line=16f,
+                            weight=700,color=todayGold)
                         val coins=crypto?.value.orEmpty()
                         if(coins.isEmpty())TodayPending("Harga belum tersedia.")
-                        else Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(4.dp)) {
-                            coins.take(3).forEach { coin ->
-                                Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(2.dp)) {
-                                    AksaraText(coin.symbol,size=9.5f,color=todayMuted)
-                                    AksaraText(money(coin.usd),size=10.5f,weight=650)
-                                    AksaraText(String.format(Locale.US,"%+.2f%%",coin.change24h),
-                                        size=9f,color=if(coin.change24h>=0)Color(0xFF87D6AD)
-                                        else Color(0xFFF1A5A1))
+                        else coins.take(3).forEach { coin ->
+                            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+                                Row(Modifier.weight(.22f),
+                                    verticalAlignment=Alignment.CenterVertically,
+                                    horizontalArrangement=Arrangement.spacedBy(5.dp)) {
+                                    AksaraText(todayCoinGlyph(coin.symbol),size=13f,
+                                        line=16f,weight=700,color=todayGold)
+                                    AksaraText(coin.symbol,size=10.5f,line=14f,weight=600)
                                 }
+                                AksaraText(money(coin.usd),Modifier.weight(.48f),
+                                    size=11f,line=15f,weight=600)
+                                AksaraText(String.format(Locale.US,"%+.2f%%",coin.change24h),
+                                    Modifier.weight(.30f),size=10.4f,line=14f,
+                                    color=if(coin.change24h>=0)Color(0xFF87D6AD)
+                                        else Color(0xFFF1A5A1),
+                                    weight=600)
                             }
                         }
+                        AksaraText("Perubahan harga 24 jam · CoinPaprika",
+                            size=8.8f,line=11f,color=todayMuted)
                     }
                 }
-                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.175f)
-                    .clickable{detailWindow="development"},radius=19.dp,blur=12.dp) {
-                    Column(Modifier.fillMaxSize().padding(horizontal=12.dp,vertical=8.dp),
-                        verticalArrangement=Arrangement.SpaceBetween) {
-                        AksaraText("Aktiviti Pembangunan · GitHub",size=12.5f,weight=700,color=todayGold)
+                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.19f)
+                    .aksaraBouncyClick { detailWindow="development" },radius=19.dp,blur=12.dp) {
+                    Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=8.dp),
+                        verticalArrangement=Arrangement.SpaceEvenly) {
+                        Row(Modifier.fillMaxWidth(),
+                            verticalAlignment=Alignment.CenterVertically,
+                            horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                            AksaraIcon("activity",Modifier.size(14.dp),todayGold)
+                            AksaraText("Aktiviti Pembangunan · GitHub",
+                                size=12.5f,line=16f,weight=700,color=todayGold)
+                        }
                         if(github?.value!=null) {
                             val commit=github!!.value!!
                             AksaraText("Android · "+commit.sha.take(7)+" · "+
                                 (localIsoTime(commit.date) ?: "masa tiada"),
-                                size=9.5f,color=todayMuted)
-                            AksaraText(commit.message.take(75),size=10.5f,weight=600,line=13f)
+                                size=9.7f,line=13f,color=todayMuted)
+                            AksaraText(commit.message.take(90),
+                                size=10.8f,line=14f,weight=600)
+                            AksaraText(commit.pushedBy?.let { "Push oleh "+it.take(34) }
+                                ?: commit.author?.let { "Commit oleh "+it.take(34) }
+                                ?: "Penyumbang tidak tersedia",
+                                size=9.3f,line=12f,color=todayMuted)
+                            val ciColor=when(commit.ci) {
+                                "Lulus" -> Color(0xFF87D6AD)
+                                "Gagal" -> Color(0xFFF1A5A1)
+                                "Sedang berjalan" -> todayGold
+                                else -> todayMuted
+                            }
+                            AksaraText("CI: "+commit.ci,size=9.8f,line=13f,color=ciColor)
                         } else TodayPending("Aktiviti GitHub belum tersedia.")
                     }
                 }
@@ -358,7 +419,8 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                 TodayDetailWindow(
                     kind=detailWindow!!,onClose={detailWindow=null},clock=clock,
                     weather=weather,prayer=prayer,coins=crypto,github=github,
-                    location=latestLocation,city=city,detailRepo=detailRepo
+                    location=latestLocation,city=city,detailRepo=detailRepo,
+                    onNavigate={ detailWindow=it }
                 )
             }
             if(showLocationDialog && active) {

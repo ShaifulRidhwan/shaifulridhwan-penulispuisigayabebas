@@ -5,6 +5,13 @@ plugins {
 }
 // Keep default Cloud APK build reproducible; enable heavy native runtime with -PenableSdTurboNative=true.
 val enableSdTurboNative = providers.gradleProperty("enableSdTurboNative").orNull == "true"
+// PR preview APKs use a SHA-scoped package ID to avoid colliding with an installed
+// Android app signed by a different, ephemeral CI debug keystore.
+// The normal merged/development app retains its original applicationId.
+val aksaraPreviewSuffix = providers.gradleProperty("aksaraPreviewSuffix").orNull
+require(aksaraPreviewSuffix == null || Regex("^\\.preview\\.p[0-9]+\\.c[a-f0-9]{8}$").matches(aksaraPreviewSuffix)) {
+    "Invalid AKSARA preview package suffix"
+}
 android {
     if (enableSdTurboNative) {
         ndkVersion = "27.2.12479018"
@@ -30,6 +37,24 @@ android {
         buildConfigField("String", "API_ORIGIN", "\"https://shaifulridhwan-penulispuisigayabebas.netlify.app\"")
         buildConfigField("String", "WEB_REFERENCE_COMMIT", "\"f482b8ed393fe0eb4277ae3eaf3938f1593489c4\"")
     }
+    buildTypes {
+        create("benchmark") {
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
+            signingConfig = signingConfigs.getByName("debug")
+            isDebuggable = false
+            // Capture ART profiles before R8 obfuscates benchmark classes.
+            isMinifyEnabled = providers.gradleProperty("aksaraGenerateBaseline").orNull != "true"
+            isShrinkResources = isMinifyEnabled
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        getByName("debug") {
+            if (aksaraPreviewSuffix != null) {
+                applicationIdSuffix = aksaraPreviewSuffix
+                versionNameSuffix = "-preview-" + aksaraPreviewSuffix.removePrefix(".").replace('.', '-')
+            }
+        }
+    }
     buildFeatures { compose = true; buildConfig = true }
     compileOptions { isCoreLibraryDesugaringEnabled = true; sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
@@ -40,6 +65,8 @@ dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation(project(":engine:chess"))
     implementation("androidx.webkit:webkit:1.12.1")
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+    implementation("androidx.metrics:metrics-performance:1.0.0")
     implementation(project(":engine:runtime"))
     implementation(project(":engine:voice"))
     implementation(project(":engine:avatar"))
