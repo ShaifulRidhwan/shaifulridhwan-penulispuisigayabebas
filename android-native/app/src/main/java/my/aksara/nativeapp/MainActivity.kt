@@ -3,6 +3,10 @@ package my.aksara.nativeapp
 import android.os.Bundle
 import android.os.Build
 import android.view.animation.DecelerateInterpolator
+import android.animation.AnimatorSet
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
+import android.view.View
 import androidx.metrics.performance.JankStats
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,6 +18,7 @@ import my.aksara.nativeapp.feature.chat.AksaraApp
 
 class MainActivity : ComponentActivity() {
     private var perfStats: JankStats? = null
+    private var startupPulse: AnimatorSet? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // The platform splash remains visible until the first app frame is ready.
@@ -22,11 +27,24 @@ class MainActivity : ComponentActivity() {
             splashScreen.setOnExitAnimationListener { provider ->
                 val splash = provider.view
                 val icon = provider.iconView
-                icon?.animate()?.scaleX(1.08f)?.scaleY(1.08f)?.alpha(0.0f)
-                    ?.setDuration(260L)?.setInterpolator(DecelerateInterpolator())?.start()
-                splash.animate().alpha(0f).setDuration(320L)
+                if (icon != null) {
+                    val pulseX = ObjectAnimator.ofFloat(icon, View.SCALE_X, 0.94f, 1.10f, 1.0f)
+                    val pulseY = ObjectAnimator.ofFloat(icon, View.SCALE_Y, 0.94f, 1.10f, 1.0f)
+                    val pulseAlpha = ObjectAnimator.ofFloat(icon, View.ALPHA, 0.72f, 1.0f, 1.0f)
+                    startupPulse = AnimatorSet().apply {
+                        playTogether(pulseX, pulseY, pulseAlpha)
+                        duration = 340L
+                        interpolator = DecelerateInterpolator()
+                        start()
+                    }
+                }
+                splash.animate().alpha(0f).setStartDelay(140L).setDuration(340L)
                     .setInterpolator(DecelerateInterpolator())
-                    .withEndAction { provider.remove() }.start()
+                    .withEndAction {
+                        startupPulse?.cancel()
+                        startupPulse = null
+                        provider.remove()
+                    }.start()
             }
         }
         setTheme(R.style.Theme_Aksara)
