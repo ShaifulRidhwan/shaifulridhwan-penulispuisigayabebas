@@ -965,7 +965,9 @@ exports.handler=async event=>{
         timeoutMs:Math.min(10000,remaining()),maxTokens:Math.min(maxTokens,5600)});
     }
     // One bounded local function round; never eval code or fetch arbitrary URLs.
-    let localFunctionUsed=    const functionCalls=(firstCandidate?.content?.parts||[])
+    let localFunctionUsed=false;
+    const firstCandidate=data?.candidates?.[0];
+    const functionCalls=(firstCandidate?.content?.parts||[])
       .filter(p=>p?.functionCall?.name===Capabilities.FUNCTION_NAME)
       .map(p=>p.functionCall).slice(0,2);
     if(functionCalls.length&&functionTools.length&&remaining()>3500){
@@ -981,8 +983,6 @@ exports.handler=async event=>{
           timeoutMs:Math.min(8000,remaining()),onDelta:null,json:false,responseJsonSchema:null});
         localFunctionUsed=batch.executedCount>0;
       }
-    }chema:null});
-      localFunctionUsed=outcome.ok;
     }
     const candidate=data&&data.candidates&&data.candidates[0];
     const rawAnswer=modelText(candidate);
