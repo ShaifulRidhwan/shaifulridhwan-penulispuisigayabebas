@@ -78,6 +78,8 @@ jobs:
       AKSARA_CI_COMPILER_REPOSITORY: /tmp/aksara-compiler-repository
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref == 'rebuild/aksara-android-native-v1' && github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -296,8 +298,11 @@ jobs:
     # Only the merged Android development branch and a fully green CI may publish.
     needs: [build, backend-smoke, game-logic, web-audit]
     if: >-
-      github.event_name == 'push' &&
-      github.ref == 'refs/heads/rebuild/aksara-android-native-v1' &&
+      ((github.event_name == 'push' &&
+       github.ref == 'refs/heads/rebuild/aksara-android-native-v1') ||
+       (github.event_name == 'pull_request' &&
+       github.head_ref == 'rebuild/aksara-android-native-v1' &&
+       github.event.pull_request.head.repo.full_name == github.repository)) &&
       needs.build.result == 'success' &&
       needs.backend-smoke.result == 'success' &&
       needs.game-logic.result == 'success' &&
@@ -314,7 +319,7 @@ jobs:
       - name: Publish direct APK and checksum for PR308 + PR309 + PR310 merged build
         env:
           GH_TOKEN: ${{ github.token }}
-          MERGED_SHA: ${{ github.sha }}
+          MERGED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
           REPO: ${{ github.repository }}
         shell: bash
         run: |
