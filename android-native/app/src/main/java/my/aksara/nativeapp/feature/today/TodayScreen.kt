@@ -257,7 +257,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
 
                 // Five classic Liquid Glass cards, no top toolbar or dashboard scrolling.
                 // Android Back returns to chat, swipe down refreshes as before.
-                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.13f).clickable {
+                AksaraGlassSurface(Modifier.fillMaxWidth().weight(.13f).aksaraBouncyClick {
                     detailWindow="clock"
                 },radius=19.dp,blur=12.dp) {
                     Column(Modifier.fillMaxSize().padding(horizontal=10.dp,vertical=4.dp),
@@ -269,7 +269,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                     }
                 }
                 AksaraGlassSurface(Modifier.fillMaxWidth().weight(.21f)
-                    .clickable { detailWindow="weather" },radius=19.dp,blur=12.dp) {
+                    .aksaraBouncyClick { detailWindow="weather" },radius=19.dp,blur=12.dp) {
                     val value=weather?.value
                     Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=8.dp),
                         verticalArrangement=Arrangement.SpaceEvenly) {
@@ -304,7 +304,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                     }
                 }
                 AksaraGlassSurface(Modifier.fillMaxWidth().weight(.29f)
-                    .clickable { detailWindow="prayer" },radius=19.dp,blur=12.dp) {
+                    .aksaraBouncyClick { detailWindow="prayer" },radius=19.dp,blur=12.dp) {
                     val value=prayer?.value
                     Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=9.dp),
                         verticalArrangement=Arrangement.SpaceEvenly) {
@@ -343,7 +343,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                     }
                 }
                 AksaraGlassSurface(Modifier.fillMaxWidth().weight(.18f)
-                    .clickable { detailWindow="crypto" },radius=19.dp,blur=12.dp) {
+                    .aksaraBouncyClick { detailWindow="crypto" },radius=19.dp,blur=12.dp) {
                     Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=8.dp),
                         verticalArrangement=Arrangement.SpaceEvenly) {
                         AksaraText("Pasaran Kripto · USD",size=12.5f,line=16f,
@@ -373,7 +373,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                     }
                 }
                 AksaraGlassSurface(Modifier.fillMaxWidth().weight(.19f)
-                    .clickable { detailWindow="development" },radius=19.dp,blur=12.dp) {
+                    .aksaraBouncyClick { detailWindow="development" },radius=19.dp,blur=12.dp) {
                     Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=8.dp),
                         verticalArrangement=Arrangement.SpaceEvenly) {
                         Row(Modifier.fillMaxWidth(),
