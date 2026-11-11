@@ -165,7 +165,7 @@ internal fun AksaraSearchHub(
                                 Column(Modifier.weight(1f)) {
                                     AksaraText(
                                         session.title, size = 12f, weight = 650,
-                                        line = 16f, maxLines = 2
+                                        line = 16f
                                     )
                                     Spacer(Modifier.height(3.dp))
                                     AksaraText(
@@ -173,7 +173,7 @@ internal fun AksaraSearchHub(
                                             session.messages.lastOrNull()?.text.orEmpty()
                                                 .replace("\n", " ").take(65),
                                         size = 10f, line = 14f,
-                                        color = AksaraColors.muted, maxLines = 2
+                                        color = AksaraColors.muted
                                     )
                                 }
                                 AksaraButton(
@@ -225,7 +225,7 @@ internal fun AksaraSearchHub(
                                     AksaraText(
                                         (if (message.role == "user") "Kau: " else "Aksara: ") +
                                             matchingExcerpt(message.text, terms),
-                                        size = 11.5f, line = 17f, maxLines = 3
+                                        size = 11.5f, line = 17f
                                     )
                                     Spacer(Modifier.height(3.dp))
                                     AksaraText(
@@ -296,7 +296,7 @@ internal fun AksaraSearchHub(
                             Column(Modifier.weight(1f)) {
                                 AksaraText(
                                     selected?.title ?: "Pilih sesi untuk diurus",
-                                    size = 12f, weight = 600, maxLines = 2
+                                    size = 12f, weight = 600
                                 )
                                 AksaraText(
                                     selected?.let { it.messages.size.toString() + " mesej" }
@@ -329,7 +329,7 @@ internal fun AksaraSearchHub(
                                     AksaraText(
                                         session.title,
                                         Modifier.fillMaxWidth().padding(10.dp),
-                                        size = 11f, maxLines = 2
+                                        size = 11f
                                     )
                                 }
                             }
