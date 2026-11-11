@@ -42,6 +42,13 @@ test("P1 transient failure circuit opens after repeated failures and resets",()=
  assert.equal(Circuit.canAttempt("groq",t+20000),true);
  assert.equal(Circuit.diagnostics().some(x=>x.provider==="groq"),false);
 });
+test("P1 breaker belongs to router instance, not a global test/session singleton",()=>{
+ const first=Circuit.create(),second=Circuit.create(),t=1000000;
+ first.failure("groq",{status:503,now:t});
+ first.failure("groq",{status:503,now:t+1000});
+ assert.equal(first.canAttempt("groq",t+1500),false);
+ assert.equal(second.canAttempt("groq",t+1500),true);
+});
 test("P1 auth, invalid model and quota errors never turn into extra retries",()=>{
  for(const status of [401,403,404,429]){
   assert.equal(Circuit.failure("openrouter",{status}).retryMs,0);
