@@ -174,7 +174,21 @@ jobs:
       - name: Build Stockfish Android and GPL source companion on cache miss
         if: steps.stockfish-cache.outputs.cache-hit != 'true'
         run: |
-          sdkmanager 'ndk;27.2.12479018'
+          # Android SDK CDN occasionally serves truncated NDK archives. Retry only
+          # the SDK installation; do not suppress a real Stockfish compiler failure.
+          ndk_dir="${ANDROID_SDK_ROOT}/ndk/27.2.12479018"
+          for attempt in 1 2 3; do
+            if sdkmanager --install 'ndk;27.2.12479018' && test -x "$ndk_dir/ndk-build"; then
+              break
+            fi
+            echo "::warning::NDK download/install attempt $attempt failed; clearing partial package"
+            rm -rf "$ndk_dir"
+            if [ "$attempt" -eq 3 ]; then
+              echo "::error::Unable to install Android NDK after three attempts"
+              exit 1
+            fi
+            sleep $((attempt * 10))
+          done
           bash android-native/chess-native/build.sh
       - uses: actions/upload-artifact@v5
         with:
