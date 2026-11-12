@@ -4,7 +4,7 @@ on:
     branches:
       - feature/aksara-linux-v3-absolute-improvement
     # Experimental V3 owner build: Linux install progress only; no other redesign.
-    # Archive entry manifest and 10-step smoke diagnostics are validated in CI.
+    # Archive manifest, Compose progress type and ten-stage smoke diagnostics are validated in CI.
     # Paths intentionally limit automatic CI; later commits need explicit dispatch.
     # Auto-build only when this workflow changes. Subsequent source commits
     # do not consume CI until workflow_dispatch is explicitly requested.
