@@ -15,7 +15,11 @@ class LlamaNativeBridge : NeuralRuntime {
     companion object { private val operation = Mutex() }
     @Volatile private var loaded = false
     override val isLoaded: Boolean get() = loaded
-    val available: Boolean by lazy { runCatching { System.loadLibrary("aksara_neural"); true }.getOrDefault(false) }
+    private val libraryLoadResult: Result<Unit> by lazy { runCatching { System.loadLibrary("aksara_neural") } }
+    val available: Boolean get() = libraryLoadResult.isSuccess
+    val availabilityError: String? get() = libraryLoadResult.exceptionOrNull()?.let { cause ->
+        "JNI_LOAD_FAILED: ${cause.javaClass.simpleName}: ${cause.message ?: "unknown linker error"}"
+    }
     private external fun nativeLoad(path: String, contextSize: Int, ticket: Long): Boolean
     private external fun nativeTicket(): Long
     private external fun nativeGenerate(roles: Array<ByteArray>, contents: Array<ByteArray>, maxTokens: Int, ticket: Long): Int
@@ -27,7 +31,7 @@ class LlamaNativeBridge : NeuralRuntime {
     @Suppress("unused")
     fun onNativeToken(bytes: ByteArray) { output.write(bytes); listener?.invoke(output.toString("UTF-8")) }
     suspend fun loadWithContext(model: File, contextSize: Int): Result<Unit> {
-        if (!available) return Result.failure(IllegalStateException("Native ARM64 runtime unavailable"))
+        if (!available) return Result.failure(IllegalStateException(availabilityError ?: "Native ARM64 runtime unavailable"))
         val ticket = nativeTicket()
         return withContext(Dispatchers.IO) {
             operation.withLock {
