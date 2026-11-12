@@ -180,8 +180,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         if(state.value.busy || !state.value.loaded)return
         viewModelScope.launch {
             val rows = withContext(Dispatchers.IO) { JSONArray(getApplication<Application>().assets.open("journey.json").bufferedReader().use {it.readText()}) }
-            val normal: (String)->String = {it.lowercase().replace(Regex("[^a-z0-9]"),"")}
-            val i=(0 until rows.length()).firstOrNull {normal(rows.getJSONObject(it).getString("question"))==normal(question)}?:return@launch
+            val questions = (0 until rows.length()).map { rows.getJSONObject(it).getString("question") }
+            val i = LocalJourneyMatcher.match(question, questions) ?: return@launch
             val row=rows.getJSONObject(i)
             val prior=state.value.messages
             val user=Message(UUID.randomUUID().toString(),"user",row.getString("question"))
