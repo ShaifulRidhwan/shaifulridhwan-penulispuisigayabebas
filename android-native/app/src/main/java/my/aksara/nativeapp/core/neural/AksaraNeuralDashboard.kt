@@ -80,20 +80,48 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                     }
                     AksaraButton("Bilik", onBack, icon = "chat")
                 }
+                // Compact command deck: content-sized tiles, not six full-height placeholders.
+                // The remaining wallpaper is intentional breathing room, not stretched cards.
                 BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
                     val columns = if (maxWidth > maxHeight) 3 else 2
                     val rows = moduleNames.indices.chunked(columns)
-                    Column(Modifier.fillMaxWidth().heightIn(max = 520.dp).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    val compact = maxHeight < 440.dp
+                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        AksaraGlassSurface(Modifier.fillMaxWidth(), radius = 18.dp, blur = 8.dp) {
+                            Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                AksaraIcon("brain", Modifier.size(23.dp))
+                                Column(Modifier.weight(1f)) {
+                                    AksaraText(state.loadedId ?: "Aksara Local", size = 14f, weight = 650,
+                                        family = AksaraTypography.heading)
+                                    AksaraText(when {
+                                        state.busy != null -> state.busy!!
+                                        state.canInfer -> "Model aktif · inferens offline sedia"
+                                        state.runtimeAvailable -> "Enjin sedia · pilih model untuk mula"
+                                        else -> "Runtime tidak tersedia"
+                                    }, size = 11f, color = AksaraColors.muted)
+                                }
+                                AksaraText(state.device?.let { bytes(it.availableRamBytes) } ?: "RAM …",
+                                    size = 11f, color = AksaraColors.gold)
+                            }
+                        }
                         rows.forEach { row ->
-                            Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 row.forEach { index ->
-                                    AksaraGlassSurface(Modifier.weight(1f).fillMaxHeight().testTag("neural-module-$index")
-                                        .aksaraBouncyClick { vm.refresh(); module = index }, radius = 20.dp, blur = 8.dp) {
-                                        Column(Modifier.fillMaxSize().padding(12.dp), verticalArrangement = Arrangement.Center) {
-                                            AksaraIcon(moduleIcons[index], Modifier.size(22.dp))
+                                    AksaraGlassSurface(Modifier.weight(1f)
+                                        .height(if (compact) 100.dp else 116.dp)
+                                        .testTag("neural-module-$index")
+                                        .aksaraBouncyClick { vm.refresh(); module = index },
+                                        radius = 20.dp, blur = 8.dp) {
+                                        Column(Modifier.fillMaxSize().padding(12.dp),
+                                            verticalArrangement = Arrangement.Center) {
+                                            AksaraIcon(moduleIcons[index], Modifier.size(21.dp))
                                             Spacer(Modifier.height(6.dp))
-                                            AksaraText(moduleNames[index], size = 13f, line = 17f, weight = 600, family = AksaraTypography.heading)
-                                            Spacer(Modifier.height(4.dp))
+                                            AksaraText(moduleNames[index], size = 13f, line = 17f,
+                                                weight = 600, family = AksaraTypography.heading)
+                                            Spacer(Modifier.height(3.dp))
                                             AksaraText(when (index) {
                                                 0 -> state.loadedId?.let { "Model aktif" } ?: if (state.runtimeAvailable) "llama.cpp sedia" else "Runtime tiada"
                                                 1 -> state.device?.let { "${bytes(it.availableRamBytes)} RAM tersedia" } ?: "Mengukur…"
@@ -107,9 +135,10 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                                 }
                             }
                         }
+                        AksaraText("Tiada muat turun automatik · tiada inferens awan",
+                            size = 10f, color = AksaraColors.muted)
                     }
                 }
-                AksaraText(state.busy ?: "Tiada muat turun automatik · tiada inferens awan", size = 10f, color = AksaraColors.muted)
             }
             module?.let { selected ->
                 AksaraGlassModal(onClose = { deleting = null; module = null }, preferredHeight = 740.dp) {
