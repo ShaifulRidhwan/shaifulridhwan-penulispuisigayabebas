@@ -201,7 +201,6 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         if (slots.getOrNull(selected)?.terminal === session) terminalView?.invalidate()
     }
     override fun onTerminalCursorStateChange(state: Boolean) {}
-    override fun setTerminalShellPid(session: TerminalSession, pid: Int) {}
     override fun getTerminalCursorStyle(): Int? = null
 
     // TerminalViewClient: full keyboard, IME, selection and screen handling.
