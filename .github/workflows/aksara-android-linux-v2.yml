@@ -1,4 +1,4 @@
-name: AKSARA Linux V2 polish owner APK
+name: AKSARA Linux V2 essentials owner APK
 on:
   push:
     branches:
@@ -63,6 +63,10 @@ jobs:
         run: |
           python3 android-native/tools/sync_local_knowledge.py --check
           python3 android-native/ci/performance-contracts.py
+      - name: Enable verified ARM64 emulation for Alpine package staging
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
       - name: Stage Alpine ARM64 and build Android 16 seccomp-compatible PRoot
         run: bash android-native/scripts/build-aksara-linux.sh
       - name: Assert official Alpine archive contains guest shell and package manager
@@ -73,13 +77,13 @@ jobs:
           archive = Path("android-native/app/src/main/assets/linux/alpine-minirootfs.bundle")
           with tarfile.open(archive, mode="r:gz") as root:
               members = {member.name.lstrip("./"): member for member in root.getmembers()}
-          for entry in ("bin/sh", "sbin/apk"):
+          for entry in ("bin/sh", "sbin/apk", "usr/bin/vim", "usr/bin/nano", "usr/bin/git", "usr/bin/python3", "usr/bin/htop", "etc/aksara-preinstalled-packages.txt"):
               assert entry in members, f"Alpine archive missing {entry}"
               member = members[entry]
               assert member.isfile() or member.issym() or member.islnk(), f"Invalid Alpine entry: {entry}"
               print(f"Verified guest entry {entry}: type={member.type!r} link={member.linkname!r}")
           PYCODE
-      # Kotlin compile repair: avoid KDoc nested comment patterns in shell profile documentation.
+      # Rootfs contains preinstalled, native ARM64 developer packages and their apk database.
       # Focused Linux tests cover prompt, restart, categories and key mapping.
       - name: Compile rootless Linux preview with focused regression tests
         working-directory: android-native
@@ -145,6 +149,6 @@ jobs:
           set -euo pipefail
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
           gh release create "aksara-linux-v2-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \
-            --title "AKSARA Linux V2 $tag - Control Deck polish" \
-            --notes "Experimental unmerged ARM64 APK: Alpine 3.22.8 + PRoot + PTY, Control Deck prompt, grouped shortcuts and restart guard. No host root. Debug-only targetSdk 28. Physical-phone restart and keyboard QA still required. PRoot GPL source attached. Do not merge before owner approval." \
+            --title "AKSARA Linux V2 $tag - Developer Essentials" \
+            --notes "Experimental unmerged ARM64 APK: Alpine 3.22.8 + PRoot + PTY, Control Deck with built-in Vim, Nano, Git, Python, Bash, jq, htop, curl and SSH client. No host root. Debug-only targetSdk 28. Physical-phone restart and keyboard QA still required. PRoot GPL source attached. Do not merge before owner approval." \
             --prerelease --target "$GITHUB_SHA"
