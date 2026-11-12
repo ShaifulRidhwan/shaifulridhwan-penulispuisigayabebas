@@ -1,7 +1,9 @@
 package my.aksara.nativeapp.core.linux
 
-/** Pure tab-index calculation avoids attaching a different PTY after a close. */
+/** Pure tab rules, so a closing/restarting tab never silently switches PTYs. */
 internal object LinuxSessionSelection {
+    data class RestartPlan(val index: Int, val name: String)
+
     fun afterClose(selected: Int, removed: Int, countBefore: Int): Int {
         require(countBefore > 0 && removed in 0 until countBefore)
         val remaining = countBefore - 1
@@ -9,22 +11,62 @@ internal object LinuxSessionSelection {
         return (if (removed < selected) selected - 1 else selected)
             .coerceIn(0, remaining - 1)
     }
+
+    fun restartPlan(selected: Int, names: List<String>, ended: Boolean): RestartPlan? {
+        if (!ended || selected !in names.indices) return null
+        return RestartPlan(index = selected, name = names[selected])
+    }
 }
 
-/** Only explicit, non-mutating commands. Never interpolate user input into a shell. */
+/** Shortcuts are constant, read-only commands. Nothing is auto-executed. */
 internal object LinuxQuickCommands {
-    data class Action(val id: String, val label: String, val command: String, val linuxOnly: Boolean = false)
-    private val actions = listOf(
-        Action("pwd", "PWD", "pwd"),
-        Action("ls", "FILES", "ls -la"),
-        Action("disk", "DISK", "df -h"),
-        Action("kernel", "KERNEL", "uname -a"),
-        Action("git", "GIT", "git status", linuxOnly = true),
-        Action("python", "PYTHON", "python3 --version", linuxOnly = true),
-        Action("packages", "PACKAGES", "apk info", linuxOnly = true)
+    enum class Category(val label: String, val icon: String) {
+        FILES("FILES", "file-text"),
+        SYSTEM("SYSTEM", "activity"),
+        DEV("DEV", "code")
+    }
+
+    data class Action(
+        val id: String,
+        val label: String,
+        val icon: String,
+        val command: String,
+        val category: Category,
+        val linuxOnly: Boolean = false
     )
+
+    private val actions = listOf(
+        Action("pwd", "PWD", "terminal", "pwd", Category.FILES),
+        Action("ls", "FILES", "file-text", "ls -la", Category.FILES),
+        Action("disk", "DISK", "activity", "df -h", Category.FILES),
+        Action("kernel", "KERNEL", "code", "uname -a", Category.SYSTEM),
+        Action("process", "PROCESSES", "activity", "ps", Category.SYSTEM),
+        Action("git", "GIT", "network", "git status", Category.DEV, linuxOnly = true),
+        Action("python", "PYTHON", "code", "python3 --version", Category.DEV, linuxOnly = true),
+        Action("packages", "PACKAGES", "file-text", "apk info", Category.DEV, linuxOnly = true)
+    )
+
+    fun categories(installed: Boolean): List<Category> =
+        Category.entries.filter { category -> forRuntime(installed, category).isNotEmpty() }
+
     fun forRuntime(installed: Boolean): List<Action> =
         actions.filter { installed || !it.linuxOnly }
+
+    fun forRuntime(installed: Boolean, category: Category): List<Action> =
+        forRuntime(installed).filter { it.category == category }
+
     fun sequence(id: String, installed: Boolean): String? =
         forRuntime(installed).firstOrNull { it.id == id }?.command?.plus("\r")
+}
+
+/** Sourced by Alpine's login shell; users can override PS1 in ~/.profile. */
+internal object LinuxShellIdentity {
+    const val relativePath = "etc/profile.d/99-aksara-prompt.sh"
+    val profile = """
+        # AKSARA Linux: visual identity only, no commands or privileges.
+        case "\${'$'}-" in *i*) ;; *) return 0 ;; esac
+        [ "\${'$'}{AKSARA_PROMPT_OFF:-0}" = "1" ] && return 0
+        PS1='aksara:\w ❯ '
+        export PS1
+    """.trimIndent() + "\n"
 }
