@@ -17,7 +17,7 @@ class LocalJourneyMatcherTest {
         assertNull(LocalJourneyMatcher.match("", questions))
     }
     @Test fun numberedFollowUpOnlyWhenOptionsPresent() {
-        val options = "Pilihan:\\n1. Siapa Aku?\\n2. The Coder Poet\\n3. Apa Itu Aksara Local?"
+        val options = "Pilihan:\n1. Siapa Aku?\n2. The Coder Poet\n3. Apa Itu Aksara Local?"
         assertEquals("The Coder Poet", LocalJourneyMatcher.followUpChoice("pilihan kedua dulu", options))
         assertNull(LocalJourneyMatcher.followUpChoice("pilihan kedua dulu", "Tiada pilihan bernombor"))
         assertNull(LocalJourneyMatcher.followUpChoice("sambung tadi", options))
