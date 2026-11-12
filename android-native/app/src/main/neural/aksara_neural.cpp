@@ -3,6 +3,7 @@
 #include <string>
 #include <mutex>
 #include <atomic>
+#include <algorithm>
 #include "llama.h"
 
 namespace {
@@ -26,6 +27,7 @@ Java_my_aksara_nativeapp_core_neural_LlamaNativeBridge_nativeLoad(JNIEnv* env, j
     auto cp = llama_context_default_params();
     cp.n_ctx = static_cast<uint32_t>(contextSize);
     cp.n_batch = 512;
+    cp.n_ubatch = 512;
     ctx = llama_init_from_model(model, cp);
     if (!ctx) { llama_model_free(model); model = nullptr; return JNI_FALSE; }
     cancelled = false;
@@ -43,6 +45,8 @@ Java_my_aksara_nativeapp_core_neural_LlamaNativeBridge_nativeGenerate(JNIEnv* en
     const llama_vocab* vocab = llama_model_get_vocab(model);
     int count = -llama_tokenize(vocab, input.c_str(), static_cast<int>(input.size()), nullptr, 0, true, true);
     if (count <= 0 || count >= static_cast<int>(llama_n_ctx(ctx))) return env->NewStringUTF("");
+    const int remaining = static_cast<int>(llama_n_ctx(ctx)) - count;
+    const int boundedTokens = std::min(static_cast<int>(maxTokens), remaining);
     std::vector<llama_token> tokens(count);
     if (llama_tokenize(vocab, input.c_str(), static_cast<int>(input.size()), tokens.data(), count, true, true) < 0) return env->NewStringUTF("");
     llama_memory_clear(llama_get_memory(ctx), true);
@@ -53,7 +57,7 @@ Java_my_aksara_nativeapp_core_neural_LlamaNativeBridge_nativeGenerate(JNIEnv* en
     llama_sampler_chain_add(sampler, llama_sampler_init_temp(0.7f));
     llama_sampler_chain_add(sampler, llama_sampler_init_dist(42));
     std::string output;
-    for (int i = 0; i < maxTokens && !cancelled; ++i) {
+    for (int i = 0; i < boundedTokens && !cancelled; ++i) {
         llama_token token = llama_sampler_sample(sampler, ctx, -1);
         if (llama_vocab_is_eog(vocab, token)) break;
         char piece[512];
