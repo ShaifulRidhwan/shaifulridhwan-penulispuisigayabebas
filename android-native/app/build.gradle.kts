@@ -5,6 +5,8 @@ plugins {
 }
 // Keep default Cloud APK build reproducible; enable heavy native runtime with -PenableSdTurboNative=true.
 val enableSdTurboNative = providers.gradleProperty("enableSdTurboNative").orNull == "true"
+val enableNeuralNative = providers.gradleProperty("enableNeuralNative").orNull == "true"
+require(!(enableNeuralNative && enableSdTurboNative)) { "Select one native CMake target at a time" }
 // PR preview APKs use a SHA-scoped package ID to avoid colliding with an installed
 // Android app signed by a different, ephemeral CI debug keystore.
 // The normal merged/development app retains its original applicationId.
@@ -22,10 +24,19 @@ android {
             }
         }
     }
+    if (enableNeuralNative) {
+        ndkVersion = "27.2.12479018"
+        externalNativeBuild {
+            cmake {
+                path = file("src/main/neural/CMakeLists.txt")
+                version = "3.22.1"
+            }
+        }
+    }
     namespace = "my.aksara.nativeapp"
     compileSdk = 35
     defaultConfig {
-        if (enableSdTurboNative) {
+        if (enableSdTurboNative || enableNeuralNative) {
             ndk { abiFilters.add("arm64-v8a") }
         }
         applicationId = "my.aksara.nativeapp"
