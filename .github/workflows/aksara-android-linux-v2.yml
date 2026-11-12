@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - feature/aksara-linux-control-deck-v2
+    # Final owner QA: both header capsules 76dp high, refined icon/text padding,
+    # LIVE PTY capsule 116dp wide. No runtime or footer changes.
     # Owner QA: identity and LIVE PTY independent glass cards, equal-width
     # command categories/actions, footer glass parity. Keyboard remains unchanged.
     # Auto-build only when this workflow changes. Subsequent source commits
