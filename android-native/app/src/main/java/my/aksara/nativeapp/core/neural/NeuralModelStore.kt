@@ -31,7 +31,7 @@ class NeuralModelStore(private val context: Context) {
             source.inputStream().use { input ->
                 staging.outputStream().use { output ->
                     input.copyTo(output, 64 * 1024)
-                    output.fd.sync()
+                    output.flush()
                 }
             }
             if (!NeuralModelIntegrity.verifySha256(staging, descriptor.sha256)) {
