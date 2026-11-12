@@ -1,4 +1,4 @@
-name: AKSARA Linux V2 owner APK
+name: AKSARA Linux V2 polish owner APK
 on:
   push:
     branches:
@@ -79,6 +79,7 @@ jobs:
               assert member.isfile() or member.issym() or member.islnk(), f"Invalid Alpine entry: {entry}"
               print(f"Verified guest entry {entry}: type={member.type!r} link={member.linkname!r}")
           PYCODE
+      # The focused Linux test package covers prompt, restart, categories and key mapping.
       - name: Compile rootless Linux preview with focused regression tests
         working-directory: android-native
         run: |
@@ -143,6 +144,6 @@ jobs:
           set -euo pipefail
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
           gh release create "aksara-linux-v2-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \
-            --title "AKSARA Linux V2 $tag - owner test" \
-            --notes "Experimental unmerged ARM64 APK: Alpine 3.22.8 + PRoot + PTY, no host root. Debug-only targetSdk 28. Physical-phone compatibility is NOT yet verified. PRoot corresponding GPL source attached. Do not merge before owner approval." \
+            --title "AKSARA Linux V2 $tag - Control Deck polish" \
+            --notes "Experimental unmerged ARM64 APK: Alpine 3.22.8 + PRoot + PTY, Control Deck prompt, grouped shortcuts and restart guard. No host root. Debug-only targetSdk 28. Physical-phone restart and keyboard QA still required. PRoot GPL source attached. Do not merge before owner approval." \
             --prerelease --target "$GITHUB_SHA"
