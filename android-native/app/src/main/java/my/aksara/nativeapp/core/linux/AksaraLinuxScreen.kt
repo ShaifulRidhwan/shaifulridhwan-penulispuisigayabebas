@@ -128,7 +128,7 @@ fun AksaraLinuxScreen(
                                     size = 15f, color = AksaraColors.gold)
                             }
                         }
-                        if (vm.slots.size < 6) {
+                        if (vm.slots.size < 6 && !vm.installing) {
                             Box(Modifier.size(33.dp).clip(RoundedCornerShape(10.dp))
                                 .border(1.dp, Color(0x77E6C58B), RoundedCornerShape(10.dp))
                                 .clickable { vm.addSession() }.testTag("linux-add-session"),
