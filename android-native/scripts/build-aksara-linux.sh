@@ -10,16 +10,25 @@ mkdir -p "$ASSETS" "$LIBS"
 git clone --filter=blob:none https://github.com/berilevi/proot-static.git "$PROOT_SRC"
 git -C "$PROOT_SRC" fetch --depth=1 origin "$PROOT_SHA"
 git -C "$PROOT_SRC" checkout --detach "$PROOT_SHA"
-# Android ARM64 Bionic requires the executable's PT_TLS segment to have
-# p_align >= 64. The upstream static PRoot otherwise has p_align=8 and
-# aborts before main() with signal 6 on physical Android phones.
-# Force a 64-byte-aligned TLS section into PRoot's main executable object.
-# This patch is retained in the corresponding GPL source tarball.
+# Android API 21 Clang uses emulated TLS for C __thread and therefore does
+# NOT create a real PT_TLS section. Android ARM64 Bionic requires real
+# executable PT_TLS p_align >= 64, otherwise it aborts before main().
+# Embed a tiny initialized ELF TLS section with an explicit 64-byte
+# alignment. This is build-time assembly, not a runtime root workaround.
+# The modified GPL source is shipped with the APK prerelease.
 cat >> "$PROOT_SRC/src/cli/proot.c" <<'AKSARA_TLS_EOF'
 
-/* AKSARA Android ARM64: Bionic static executable TLS alignment anchor. */
-__thread unsigned char aksara_bionic_tls_anchor[64]
-    __attribute__((aligned(64), used));
+/* AKSARA: real ELF TLS for ARM64 Bionic, including API 21 NDK builds. */
+__asm__(
+    ".section .tdata.aksara,\"awT\",@progbits\n"
+    ".balign 64\n"
+    ".globl aksara_bionic_tls_anchor\n"
+    ".type aksara_bionic_tls_anchor, %object\n"
+    "aksara_bionic_tls_anchor:\n"
+    ".quad 1\n"
+    ".size aksara_bionic_tls_anchor, 8\n"
+    ".previous\n"
+);
 AKSARA_TLS_EOF
 NDK="$ANDROID_HOME/ndk/27.2.12479018" \
   OUT="$RUNNER_TEMP/aksara-proot-build" \
