@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import android.system.Os
+import android.system.ErrnoException
+import android.system.OsConstants
 import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -29,6 +31,9 @@ internal object AksaraLinuxRuntime {
     private const val archive = "linux/alpine-minirootfs.bundle"
     private const val checksum = "linux/alpine-minirootfs.sha256"
     private const val marker = ".aksara-alpine-installed"
+    private const val imageRevision = "3.22.8-v3-full-devkit"
+    private const val maxEntries = 250_000
+    private const val maxUncompressedBytes = 4L * 1024 * 1024 * 1024
 
     fun rootfs(context: Context): File = File(context.filesDir, "alpine-arm64")
     fun workspace(context: Context): File =
@@ -48,8 +53,16 @@ internal object AksaraLinuxRuntime {
 
     fun installed(context: Context): Boolean {
         val root = rootfs(context)
-        return bundled(context) && File(root, marker).isFile &&
-            LinuxRootfsVerifier.hasRequiredCommands(root)
+        return bundled(context) &&
+            runCatching { File(root, marker).readText().trim() == imageRevision }.getOrDefault(false) &&
+            LinuxRootfsVerifier.hasRequiredCommands(root) &&
+            listOf("usr/bin/git", "usr/bin/python3", "usr/bin/gcc", "usr/bin/g++",
+                "usr/bin/clang", "usr/bin/node", "usr/bin/rustc", "usr/bin/go")
+                .all { relative ->
+                    val path = File(root, relative).toPath()
+                    Files.isRegularFile(path, java.nio.file.LinkOption.NOFOLLOW_LINKS) ||
+                        Files.isSymbolicLink(path)
+                }
     }
 
     /**
@@ -86,7 +99,7 @@ internal object AksaraLinuxRuntime {
                             while (true) {
                                 val entry = tar.nextTarEntry ?: break
                                 count++
-                                require(count <= 30000) { "Terlalu banyak fail dalam arkib Linux." }
+                                require(count <= maxEntries) { "Terlalu banyak fail dalam arkib Linux." }
                                 val path = entry.name.removePrefix("./").trimStart('/')
                                 if (path.isBlank() || path == ".") continue
                                 val file = File(staging, path)
@@ -108,7 +121,7 @@ internal object AksaraLinuxRuntime {
                                                 if (read < 0) break
                                                 output.write(buffer, 0, read)
                                                 uncompressed += read
-                                                require(uncompressed <= 250L * 1024 * 1024) {
+                                                require(uncompressed <= maxUncompressedBytes) {
                                                     "Saiz pemasangan melebihi had."
                                                 }
                                             }
@@ -130,7 +143,19 @@ internal object AksaraLinuxRuntime {
                 val source = File(staging, link.removePrefix("./").trimStart('/'))
                 require(source.canonicalPath.startsWith(stagingCanonical) && source.isFile)
                 file.parentFile?.mkdirs()
-                Os.link(source.absolutePath, file.absolutePath)
+                // SELinux may reject hardlinks in app-private storage even under fake-root.
+                // For initial rootfs extraction, fall back to a copy with execute bits.
+                try {
+                    Os.link(source.absolutePath, file.absolutePath)
+                } catch (failure: ErrnoException) {
+                    if (failure.errno !in listOf(
+                            OsConstants.EPERM, OsConstants.EACCES,
+                            OsConstants.ENOSYS, OsConstants.EOPNOTSUPP
+                        )
+                    ) throw failure
+                    Files.copy(source.toPath(), file.toPath())
+                    if (source.canExecute()) file.setExecutable(true, false)
+                }
             }
             for ((file, link) in pendingSymlinks) {
                 file.parentFile?.mkdirs()
@@ -150,7 +175,10 @@ internal object AksaraLinuxRuntime {
             if (Files.isSymbolicLink(resolv.toPath())) Files.delete(resolv.toPath())
             require(resolv.parentFile.isDirectory || resolv.parentFile.mkdirs())
             resolv.writeText("nameserver 1.1.1.1\nnameserver 8.8.8.8\n")
-            File(staging, marker).writeText(alpineVersion + "\n")
+            val guestTmp = File(staging, "tmp")
+            require(guestTmp.isDirectory || guestTmp.mkdirs()) { "Cannot create guest /tmp" }
+            Os.chmod(guestTmp.absolutePath, 0x3ff) // 01777 sticky directory
+            File(staging, marker).writeText(imageRevision + "\n")
             if (target.exists()) require(target.deleteRecursively())
             require(staging.renameTo(target)) { "Tidak dapat mengaktifkan rootfs Linux." }
         } catch (failure: Exception) {
@@ -191,6 +219,11 @@ internal object AksaraLinuxRuntime {
         val workspace = workspace(context)
         val root = rootfs(context)
         val binary = proot(context)
+        // Keep link2symlink backing files in a private, non-symlink directory.
+        val l2s = File(root, ".l2s")
+        require(!Files.isSymbolicLink(l2s.toPath())) { "Unsafe PRoot hardlink store" }
+        require(l2s.isDirectory || l2s.mkdirs()) { "Cannot prepare PRoot hardlink store" }
+        Os.chmod(l2s.absolutePath, 0x1c0) // 0700
         val env = arrayOf(
             "HOME=/root",
             "TERM=xterm-256color",
@@ -199,12 +232,14 @@ internal object AksaraLinuxRuntime {
             "PROOT_LOADER=" + loader(context).absolutePath,
             "PROOT_NO_SECCOMP=1",
             "PROOT_TMP_DIR=" + context.cacheDir.absolutePath,
-            "TMPDIR=" + context.cacheDir.absolutePath
+            "PROOT_L2S_DIR=" + l2s.absolutePath,
+            "TMPDIR=/tmp"
         )
         val args = arrayOf(
             binary.absolutePath,
             "-0",
             "--kill-on-exit",
+            "--link2symlink",
             "-r", root.absolutePath,
             "-b", "/dev",
             "-b", "/proc",
