@@ -12,6 +12,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,6 +34,7 @@ fun AksaraNeuralDashboard(
     modelLoaded: Boolean,
     onOpenDetails: (String) -> Unit = {}
 ) {
+    var selectedTier by remember { mutableStateOf<NeuralTier?>(null) }
     val panels = listOf(
         "Neural Core" to (if (modelLoaded) "Model loaded" else "Runtime not connected"),
         "Device Intelligence" to (snapshot?.let { "RAM: ${it.totalRamBytes / 1_073_741_824L} GB • Available: ${it.availableRamBytes / 1_048_576L} MB" } ?: "Not measured"),
@@ -57,6 +63,28 @@ fun AksaraNeuralDashboard(
                     }
                 }
             }
+        }
+        TextButton(onClick = { selectedTier = NeuralTier.LIGHT }) {
+            Text("Model Library • Pilih model", color = Color(0xFFE9C67A))
+        }
+        selectedTier?.let { tier ->
+            androidx.compose.material3.AlertDialog(
+                onDismissRequest = { selectedTier = null },
+                title = { Text("Model Library") },
+                text = {
+                    Column {
+                        NeuralModelCatalog.entries.forEach { entry ->
+                            TextButton(onClick = { selectedTier = entry.tier }) {
+                                Text(entry.tier.label + if (entry.tier == tier) " ✓" else "")
+                            }
+                        }
+                        Text(tier.description)
+                        Text("Panduan RAM: " + tier.ramGuidanceGb + "GB atau lebih")
+                        Text("Muat turun belum tersedia: sumber model dan runtime perlu disahkan.")
+                    }
+                },
+                confirmButton = { TextButton(onClick = { selectedTier = null }) { Text("Tutup") } }
+            )
         }
     }
 }
