@@ -64,12 +64,12 @@ fun AksaraLinuxScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AksaraGlassSurface(Modifier.weight(1f).heightIn(min = 68.dp),
+                    AksaraGlassSurface(Modifier.weight(1f).height(76.dp),
                         radius = 19.dp, blur = 9.dp) {
                         Row(
-                            Modifier.fillMaxWidth().padding(horizontal = 11.dp, vertical = 11.dp),
+                            Modifier.fillMaxSize().padding(horizontal = 13.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(9.dp)
+                            horizontalArrangement = Arrangement.spacedBy(11.dp)
                         ) {
                             Box(
                                 Modifier.size(40.dp).clip(RoundedCornerShape(13.dp))
@@ -82,7 +82,7 @@ fun AksaraLinuxScreen(
                                 AksaraIcon("terminal", Modifier.size(24.dp))
                             }
                             Column(Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                verticalArrangement = Arrangement.spacedBy(3.dp)) {
                                 AksaraText("AKSARA / LINUX", size = 14.5f, weight = 700,
                                     family = AksaraTypography.heading, tracking = .35f)
                                 AksaraText(
@@ -94,13 +94,13 @@ fun AksaraLinuxScreen(
                             }
                         }
                     }
-                    AksaraGlassSurface(Modifier.width(108.dp).heightIn(min = 68.dp),
+                    AksaraGlassSurface(Modifier.width(116.dp).height(76.dp),
                         radius = 19.dp, blur = 9.dp) {
                         Column(
-                            Modifier.fillMaxWidth()
-                                .padding(horizontal = 7.dp, vertical = 11.dp),
+                            Modifier.fillMaxSize()
+                                .padding(horizontal = 9.dp, vertical = 12.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                            verticalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterVertically)
                         ) {
                             Row(verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(7.dp)) {
