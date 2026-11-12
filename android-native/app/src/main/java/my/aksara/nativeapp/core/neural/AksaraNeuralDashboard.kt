@@ -84,7 +84,7 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                 // The remaining wallpaper is intentional breathing room, not stretched cards.
                 BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
                     val columns = if (maxWidth > maxHeight) 3 else 2
-                    val rows = moduleNames.indices.chunked(columns)
+                    val rows = listOf(2, 3, 4, 5, 0, 1).chunked(columns)
                     val compact = maxHeight < 440.dp
                     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -93,14 +93,15 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                                 // Prominent brain emblem, using the existing gold icon and shared glass tokens.
-                                AksaraIcon("brain", Modifier.size(56.dp))
+                                AksaraIcon("brain", Modifier.size(92.dp))
                                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    AksaraText("Model Aktif", size = 11f, color = AksaraColors.gold)
-                                    AksaraText(state.loadedId ?: "Aksara Local", size = 17f, weight = 650,
+                                    AksaraText(if (state.canInfer) "MODEL AKTIF" else "AKSARA LOCAL · ON DEVICE", size = 11f, color = AksaraColors.gold)
+                                    AksaraText(if (state.canInfer) "Aksara Local · Aktif" else "Aksara Local", size = 17f, weight = 650,
                                         family = AksaraTypography.heading)
                                     AksaraText(when {
                                         state.busy != null -> state.busy!!
                                         state.canInfer -> "Sedia · inferens offline"
+                                        state.installed.isNotEmpty() -> "Model dipasang · Belum dimuatkan" 
                                         state.runtimeAvailable -> "Enjin sedia · pilih model"
                                         else -> "Runtime tidak tersedia"
                                     }, size = 11f, color = AksaraColors.muted)
@@ -139,7 +140,7 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                                 }
                             }
                         }
-                        AksaraText("Tiada muat turun automatik · tiada inferens awan",
+                        AksaraText("Privasi tempatan · tiada muat turun automatik · tiada inferens awan",
                             size = 10f, color = AksaraColors.muted)
                     }
                 }
@@ -236,7 +237,13 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
             "KV ${bytes(it.kvCacheBytes)} · scratch ${bytes(it.scratchBytes)} · overhead ${bytes(it.overheadBytes)}\n" +
             "Rizab Android ${bytes(it.reserveBytes)} · cadangan tersedia ${bytes(it.recommendedAvailableBytes)}\nKonteks ${it.contextSize} token"
     } ?: "Tekan Semak RAM untuk bacaan baharu"
-    Note("${entry.tier.label} · ${model.name}", "${model.parameters} parameter · GGUF ${model.quantization}\nFail: ${model.sizeBytes} bait (${bytes(model.sizeBytes)})\nStoran diperlukan: ${bytes(model.sizeBytes + 134217728)}\n${memoryDescription}\nQwen / Alibaba · ${model.license}\nRevisi: ${model.sourceRevision}\nSHA-256: ${model.sha256}\nPemasangan: ${if (installed) "fail tersedia" else "belum dipasang"}\nPengesahan: ${if (model.id in state.verified) "SHA-256 sah sesi ini" else "diperiksa semasa import/aktivasi"}\nKeserasian: ${eligibility}\n${model.downloadUrl}")
+    var showDetails by remember(model.id) { mutableStateOf(false) }
+    Note("${entry.tier.label} · ${model.name}",
+        "${model.parameters} parameter · GGUF ${model.quantization} · ${bytes(model.sizeBytes)}\n" +
+        "Status: ${if (state.loadedId == model.id) "Aktif" else if (installed) "Dipasang" else "Belum dipasang"}\n" +
+        "RAM tersedia: ${state.device?.let { bytes(it.availableRamBytes) } ?: "Belum diukur"}")
+    AksaraButton(if (showDetails) "Tutup Model Details" else "Model Details", { showDetails = !showDetails })
+    if (showDetails) Note("${entry.tier.label} · ${model.name}", "${model.parameters} parameter · GGUF ${model.quantization}\nFail: ${model.sizeBytes} bait (${bytes(model.sizeBytes)})\nStoran diperlukan: ${bytes(model.sizeBytes + 134217728)}\n${memoryDescription}\nQwen / Alibaba · ${model.license}\nRevisi: ${model.sourceRevision}\nSHA-256: ${model.sha256}\nPemasangan: ${if (installed) "fail tersedia" else "belum dipasang"}\nPengesahan: ${if (model.id in state.verified) "SHA-256 sah sesi ini" else "diperiksa semasa import/aktivasi"}\nKeserasian: ${eligibility}\n${model.downloadUrl}")
     AksaraButton("Sumber & atribusi", {
         runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(model.downloadUrl.substringBefore("/resolve/") + "/tree/" + model.sourceRevision))) }
     })
