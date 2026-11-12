@@ -83,7 +83,9 @@ jobs:
               assert member.isfile() or member.issym() or member.islnk(), f"Invalid Alpine entry: {entry}"
               print(f"Verified guest entry {entry}: type={member.type!r} link={member.linkname!r}")
           PYCODE
-      # Rootfs contains preinstalled, native ARM64 developer packages and their apk database.
+      # ChatApiTest is covered by the regular Android Native CI. Its network-cancellation
+      # MockWebServer test is intermittently flaky; don't rebuild PRoot for that unrelated test.
+      # Rootfs contains preinstalled ARM64 packages and their apk database.
       # Focused Linux tests cover prompt, restart, categories and key mapping.
       - name: Compile rootless Linux preview with focused regression tests
         working-directory: android-native
@@ -95,7 +97,6 @@ jobs:
             assembleDebug :app:testDebugUnitTest \
             --tests 'my.aksara.nativeapp.core.linux.*' \
             --tests 'my.aksara.nativeapp.NativeIntegrationContractTest' \
-            --tests 'my.aksara.nativeapp.ChatApiTest' \
             --tests 'my.aksara.nativeapp.SessionAndProviderStatusTest' \
             --tests 'my.aksara.nativeapp.TodayAdvancedNavigationTest' \
             --tests 'my.aksara.nativeapp.SettingsV2TechnicalRegistryTest' \
