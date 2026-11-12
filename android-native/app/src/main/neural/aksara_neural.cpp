@@ -5,6 +5,7 @@
 #include <atomic>
 #include <algorithm>
 #include <thread>
+#include <cstdlib>
 #include <memory>
 #include <stdexcept>
 #include "llama.h"
@@ -50,10 +51,14 @@ Java_my_aksara_nativeapp_core_neural_LlamaNativeBridge_nativeLoad(JNIEnv* env, j
         if (!model) throw std::runtime_error("GGUF loading failed: unsupported, corrupt, or insufficient memory");
         auto cp = llama_context_default_params();
         cp.n_ctx = static_cast<uint32_t>(std::min(static_cast<int32_t>(contextSize), llama_model_n_ctx_train(model)));
-        cp.n_batch = 256;
-        cp.n_ubatch = 128;
-        cp.n_threads = std::max(1u, std::min(4u, std::thread::hardware_concurrency()));
-        cp.n_threads_batch = cp.n_threads;
+        // Keep prompt prefill large enough to avoid many JNI-independent decode passes.
+        // Decode is memory-bandwidth-bound on mobile: oversubscribing little cores can regress speed.
+        cp.n_batch = 512;
+        cp.n_ubatch = 256;
+        const unsigned cores = std::max(1u, std::thread::hardware_concurrency());
+        const unsigned automaticThreads = cores >= 8 ? 4u : (cores >= 4 ? 3u : cores);
+        cp.n_threads = static_cast<int32_t>(automaticThreads);
+        cp.n_threads_batch = static_cast<int32_t>(std::min(cores, 4u));
         cp.abort_callback = abortDecode;
         ctx = llama_init_from_model(model, cp);
         if (!ctx) throw std::runtime_error("Context allocation failed; try Light or a smaller context");
@@ -100,9 +105,9 @@ Java_my_aksara_nativeapp_core_neural_LlamaNativeBridge_nativeGenerate(
         if (llama_tokenize(vocab,prompt.data(),prompt.size(),tokens.data(),count,true,true) != count)
             throw std::runtime_error("Tokenization failed");
         llama_memory_clear(llama_get_memory(ctx),true);
-        for (int offset=0; offset<count; offset+=256) {
+        for (int offset=0; offset<count; offset+=512) {
             if (abortDecode(nullptr)) return 0;
-            int result = llama_decode(ctx,llama_batch_get_one(tokens.data()+offset,std::min(256,count-offset)));
+            int result = llama_decode(ctx,llama_batch_get_one(tokens.data()+offset,std::min(512,count-offset)));
             if (abortDecode(nullptr)) return 0;
             if (result != 0) throw std::runtime_error("Prompt decode failed; unload model to recover memory");
         }
