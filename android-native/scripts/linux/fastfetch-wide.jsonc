@@ -1,0 +1,53 @@
+{
+  "logo": {
+    "type": "file",
+    "source": "/usr/share/aksara/aksara-logo.txt",
+    "padding": {
+      "right": 3
+    },
+    "color": {
+      "1": "#E6C58B",
+      "2": "#76C2F8"
+    }
+  },
+  "display": {
+    "separator": "  ›  ",
+    "color": {
+      "keys": "#E6C58B",
+      "title": "#76C2F8"
+    },
+    "key": {
+      "width": 12
+    }
+  },
+  "modules": [
+    {
+      "type": "os",
+      "key": "USERLAND"
+    },
+    {
+      "type": "kernel",
+      "key": "HOST KERNEL"
+    },
+    {
+      "type": "cpu",
+      "key": "HOST CPU"
+    },
+    {
+      "type": "memory",
+      "key": "HOST RAM"
+    },
+    {
+      "type": "packages",
+      "key": "PACKAGES"
+    },
+    {
+      "type": "shell",
+      "key": "SHELL"
+    },
+    {
+      "type": "uptime",
+      "key": "HOST UPTIME"
+    }
+  ]
+}

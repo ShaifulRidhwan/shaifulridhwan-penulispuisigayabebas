@@ -52,8 +52,11 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         private set
     var installStatus by mutableStateOf<String?>(null)
         private set
+    var restarting by mutableStateOf(false)
+        private set
 
     private var terminalView: TerminalView? = null
+    private var nextSlotNumber = 1
 
     init { addSession() }
 
@@ -71,6 +74,7 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
                 slots.forEach { it.terminal.finishIfRunning() }
                 slots.clear()
                 selected = 0
+                clearModifiers()
                 addSession()
                 installStatus = "Alpine dipasang. Sesi Linux dimulakan."
             } catch (failure: Exception) {
@@ -82,52 +86,93 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         }
     }
 
-    fun addSession() {
-        if (slots.size >= 6) return
+    /** A PTY belongs to a slot rather than to a recomposed terminal view. */
+    private fun newSlot(name: String): Slot {
         val app = getApplication<Application>()
         val workspace = File(app.filesDir, "linux-workspace").apply { mkdirs() }
-        val env = arrayOf(
-            "HOME=" + workspace.absolutePath,
-            "PWD=" + workspace.absolutePath,
-            "TMPDIR=" + app.cacheDir.absolutePath,
-            "PATH=/system/bin:/system/xbin:/vendor/bin",
-            "TERM=xterm-256color",
-            "LANG=en_US.UTF-8"
-        )
-        val session = if (installed)
+        val session = if (installed) {
             AksaraLinuxRuntime.createSession(app, this)
-        else TerminalSession(
-            "/system/bin/sh",
-            workspace.absolutePath,
-            arrayOf("/system/bin/sh"),
-            env,
-            2000,
-            this
-        )
-        val slot = Slot((if (installed) "Linux " else "Shell ") + (slots.size + 1), session)
-        slots.add(slot)
-        selected = slots.lastIndex
-        terminalView?.attachSession(session)
-        problem = null
+        } else {
+            TerminalSession(
+                "/system/bin/sh", workspace.absolutePath,
+                arrayOf("/system/bin/sh"),
+                arrayOf(
+                    "HOME=" + workspace.absolutePath,
+                    "PWD=" + workspace.absolutePath,
+                    "TMPDIR=" + app.cacheDir.absolutePath,
+                    "PATH=/system/bin:/system/xbin:/vendor/bin",
+                    "TERM=xterm-256color",
+                    "LANG=en_US.UTF-8"
+                ),
+                2000, this
+            )
+        }
+        return Slot(name, session)
+    }
+
+    fun addSession() {
+        if (slots.size >= 6) return
+        try {
+            val slot = newSlot((if (installed) "Linux " else "Shell ") + nextSlotNumber++)
+            slots.add(slot)
+            selected = slots.lastIndex
+            clearModifiers()
+            terminalView?.attachSession(slot.terminal)
+            problem = null
+        } catch (failure: Exception) {
+            problem = failure.message ?: "Sesi PTY tidak dapat dimulakan."
+        }
     }
 
     fun selectSession(index: Int) {
-        if (index !in slots.indices) return
+        if (index !in slots.indices || selected == index) return
         selected = index
+        clearModifiers()
         terminalView?.attachSession(slots[index].terminal)
     }
 
     fun closeSession(index: Int) {
         if (index !in slots.indices) return
-        slots[index].terminal.finishIfRunning()
-        slots.removeAt(index)
+        val next = LinuxSessionSelection.afterClose(selected, index, slots.size)
+        val old = slots.removeAt(index)
+        old.terminal.finishIfRunning()
+        clearModifiers()
         if (slots.isEmpty()) {
             selected = 0
             addSession()
         } else {
-            selected = selected.coerceAtMost(slots.lastIndex)
+            selected = next
             terminalView?.attachSession(slots[selected].terminal)
         }
+    }
+
+    /** Restart a finished PTY in place. Reject duplicate taps and stale requests. */
+    fun restartSession() {
+        if (restarting || installing) return
+        val plan = LinuxSessionSelection.restartPlan(
+            selected, slots.map { it.name }, slots.getOrNull(selected)?.ended == true
+        ) ?: return
+        val old = slots[plan.index]
+        restarting = true
+        try {
+            val replacement = newSlot(plan.name)
+            // Replace the exact old slot; a process-finished callback for old
+            // cannot mark the replacement as terminated.
+            slots[plan.index] = replacement
+            old.terminal.finishIfRunning()
+            clearModifiers()
+            terminalView?.attachSession(replacement.terminal)
+            problem = null
+        } catch (failure: Exception) {
+            problem = failure.message ?: "Gagal memulakan semula sesi Linux."
+        } finally {
+            restarting = false
+        }
+    }
+
+    private fun clearModifiers() {
+        ctrlDown = false
+        altDown = false
     }
 
     fun attach(view: TerminalView) {
@@ -148,24 +193,23 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         slots.getOrNull(selected)?.takeUnless { it.ended }?.terminal?.write(sequence)
     }
 
-    fun restartSession() {
-        val index = selected
-        val current = slots.getOrNull(index) ?: return
-        if (!current.ended) return
-        slots.removeAt(index)
-        selected = if (slots.isEmpty()) 0 else index.coerceAtMost(slots.lastIndex)
-        // A new PTY and a new process are required after SIGABRT/SIGKILL.
-        // Pressing Enter cannot revive an already-exited Linux process.
-        addSession()
-    }
-
     fun extraKey(label: String) {
         when (label) {
             "CTRL" -> ctrlDown = !ctrlDown
             "ALT" -> altDown = !altDown
             "ENTER" -> if (slots.getOrNull(selected)?.ended == true) restartSession() else send("\r")
-            else -> send(LinuxTerminalKeyMap.sequence(label))
+            else -> LinuxTerminalKeyMap.sequence(label).takeIf { it.isNotEmpty() }?.let(::send)
         }
+    }
+
+    /** Explicit tap only; all commands are literal compile-time read-only strings. */
+    fun runQuickCommand(id: String) {
+        val sequence = LinuxQuickCommands.sequence(id, installed) ?: return
+        if (slots.getOrNull(selected)?.ended == true) {
+            problem = "Sesi telah tamat. Mulakan semula untuk menghantar arahan."
+            return
+        }
+        send(sequence)
     }
 
     fun resizeFont(delta: Int) {

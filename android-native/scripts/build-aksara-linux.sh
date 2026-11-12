@@ -87,6 +87,8 @@ alignment = int(segments[0][-1], 0)
 assert alignment >= 64, f"PRoot ARM64 PT_TLS alignment {alignment}, Bionic requires >=64"
 print(f"Verified ARM64 executable PT_TLS p_align: {alignment} bytes")
 AKSARA_TLS_CHECK
+# Verified official Alpine ARM64 base + installed developer essentials.
+# Docker runs only on GitHub runner (ARM64 QEMU/binfmt), never on Android.
 base="https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64"
 file="alpine-minirootfs-$VERSION-aarch64.tar.gz"
 curl --fail --location --retry 3 --connect-timeout 20 --max-time 240 "$base/$file" -o "$ASSETS/$file"
@@ -95,8 +97,72 @@ curl --fail --location --retry 3 --connect-timeout 20 --max-time 60 "$base/$file
 tar -tzf "$ASSETS/$file" > "$RUNNER_TEMP/aksara-alpine-contents.txt"
 grep -Eq 'bin/(sh|busybox)' "$RUNNER_TEMP/aksara-alpine-contents.txt"
 grep -Fq 'sbin/apk' "$RUNNER_TEMP/aksara-alpine-contents.txt"
-# Android aapt has special handling for *.gz assets: it strips or
-# transforms the .gz suffix. Preserve the literal gzip bytes under .bundle.
-mv "$ASSETS/$file" "$ASSETS/alpine-minirootfs.bundle"
-mv "$ASSETS/$file.sha256" "$ASSETS/alpine-minirootfs.sha256"
-echo "Pinned GPL PRoot and Alpine rootfs staged for ARM64 APK."
+# No compilers, daemons, root privileges or extra Android permissions.
+BRAND="$ROOT/android-native/scripts/linux"
+sh -n "$BRAND/aksara-fetch.sh" "$BRAND/90-aksara-intro.sh"
+python3 -m json.tool "$BRAND/fastfetch-wide.jsonc" >/dev/null
+python3 -m json.tool "$BRAND/fastfetch-compact.jsonc" >/dev/null
+image="$(docker import --platform linux/arm64 "$ASSETS/$file")"
+test -n "$image"
+container=""
+cleanup_linux_bundle() {
+  if [ -n "$container" ]; then docker rm -f "$container" >/dev/null 2>&1 || true; fi
+  if [ -n "$image" ]; then docker image rm -f "$image" >/dev/null 2>&1 || true; fi
+}
+trap cleanup_linux_bundle EXIT
+container="$(docker create --platform linux/arm64 "$image" /bin/sh -ec '
+  printf "%s\n" \
+    "https://dl-cdn.alpinelinux.org/alpine/v3.22/main" \
+    "https://dl-cdn.alpinelinux.org/alpine/v3.22/community" > /etc/apk/repositories
+  apk add --no-cache bash ca-certificates curl fastfetch file git htop jq less nano openssh-client-default python3 ripgrep vim wget
+  for cmd in sh apk bash curl fastfetch git htop jq less nano ssh python3 rg vi wget; do
+    command -v "$cmd" >/dev/null || { echo "Missing bundled command: $cmd" >&2; exit 1; }
+  done
+  mkdir -p /usr/local/bin /usr/share/aksara /etc/profile.d
+  mv /tmp/aksara-fetch.sh /usr/local/bin/aksara-fetch
+  chmod 755 /usr/local/bin/aksara-fetch
+  mv /tmp/90-aksara-intro.sh /etc/profile.d/90-aksara-intro.sh
+  chmod 644 /etc/profile.d/90-aksara-intro.sh
+  mv /tmp/aksara-logo.txt /usr/share/aksara/aksara-logo.txt
+  mv /tmp/fastfetch-wide.jsonc /usr/share/aksara/fastfetch-wide.jsonc
+  mv /tmp/fastfetch-compact.jsonc /usr/share/aksara/fastfetch-compact.jsonc
+  # Parse both real v3.22 ARM64 fastfetch configs, including logo mode.
+  timeout 8 fastfetch --config /usr/share/aksara/fastfetch-wide.jsonc --pipe >/dev/null
+  timeout 8 fastfetch --config /usr/share/aksara/fastfetch-compact.jsonc --pipe >/dev/null
+  apk info -vv | sort > /etc/aksara-preinstalled-packages.txt
+  printf "%s\n" "AKSARA Linux Developer Essentials / Alpine v3.22 / ARM64" > /etc/aksara-package-profile
+')"
+test -n "$container"
+# Copy assets into the stopped ARM64 container before it runs package hooks;
+# this ensures executable bits/config paths are in the exported rootfs.
+for item in aksara-fetch.sh 90-aksara-intro.sh aksara-logo.txt fastfetch-wide.jsonc fastfetch-compact.jsonc; do
+  docker cp "$BRAND/$item" "$container:/tmp/$item"
+done
+docker start -a "$container"
+# Flatten actual installed files, apk database, hooks and all dependencies.
+docker export "$container" | gzip -9 > "$ASSETS/alpine-minirootfs.bundle"
+test -s "$ASSETS/alpine-minirootfs.bundle"
+rm -f "$ASSETS/$file" "$ASSETS/$file.sha256"
+(cd "$ASSETS" && sha256sum alpine-minirootfs.bundle > alpine-minirootfs.sha256)
+python3 - "$ASSETS/alpine-minirootfs.bundle" <<'AKSARA_ROOTFS_BOUNDS'
+import sys, tarfile
+files, size, members = 0, 0, set()
+with tarfile.open(sys.argv[1], "r:gz") as tar:
+    for member in tar:
+        files += 1
+        size += member.size if member.isfile() else 0
+        if files > 30000 or size > 250 * 1024 * 1024:
+            raise SystemExit(f"Android extraction bounds exceeded: {files=} {size=}")
+        members.add(member.name.lstrip("./"))
+required = {"bin/sh", "sbin/apk", "usr/bin/vim", "usr/bin/nano",
+            "usr/bin/git", "usr/bin/python3", "usr/bin/htop", "usr/bin/fastfetch",
+            "usr/local/bin/aksara-fetch", "etc/profile.d/90-aksara-intro.sh",
+            "usr/share/aksara/fastfetch-wide.jsonc",
+            "usr/share/aksara/fastfetch-compact.jsonc",
+            "usr/share/aksara/aksara-logo.txt",
+            "etc/aksara-preinstalled-packages.txt"}
+missing = sorted(required.difference(members))
+if missing: raise SystemExit(f"Bundled Linux files missing: {missing}")
+print(f"Alpine essentials verified: {files} entries, {size / 2**20:.1f} MiB")
+AKSARA_ROOTFS_BOUNDS
+echo "Pinned PRoot + Alpine ARM64 Developer Essentials + AKSARA System Identity staged."
