@@ -162,7 +162,7 @@ internal object AksaraLinuxRuntime {
 
     /**
      * Idempotent shell-only cosmetic hook. Alpine login /etc/profile sources
-     * /etc/profile.d/*.sh. Never overwrite a user's existing file or create
+     * shell scripts under /etc/profile.d. Never overwrite a user's existing file or create
      * profiles outside the guest rootfs.
      */
     private fun installShellIdentity(root: File) {
