@@ -47,8 +47,8 @@ class NeuralMemoryPolicyTest {
         assertFalse(NeuralMemoryPolicy.assess(device().copy(thermalStatus = 3), light, 1024).canAttempt)
     }
     @Test fun largerModelsRequireTheirEstimatedWorkingSet() {
-        val balanced = NeuralModelCatalog.entries[1].model!!
-        val advanced = NeuralModelCatalog.entries[2].model!!
+        val balanced = NeuralModelCatalog.entries.single { it.tier == NeuralTier.BALANCED }.model!!
+        val advanced = NeuralModelCatalog.entries.single { it.tier == NeuralTier.ADVANCED_8B }.model!!
         assertFalse(NeuralMemoryPolicy.assess(device(), balanced, 2048).canAttempt)
         assertFalse(NeuralMemoryPolicy.assess(device(6L shl 30).copy(totalRamBytes = 8L shl 30), advanced, 2048).canAttempt)
         assertTrue(NeuralMemoryPolicy.assess(device(10L shl 30).copy(totalRamBytes = 16L shl 30), advanced, 2048).canAttempt)
@@ -62,14 +62,14 @@ class NeuralMemoryPolicyTest {
         val limited = device(small.minimumAvailableBytes)
         assertTrue(NeuralMemoryPolicy.assess(limited, light, 1024).canAttempt)
         assertFalse(NeuralMemoryPolicy.assess(limited, light, 2048).canAttempt)
-        val advanced = NeuralModelCatalog.entries[2].model!!
+        val advanced = NeuralModelCatalog.entries.single { it.tier == NeuralTier.ADVANCED_8B }.model!!
         // No fixed 10 GiB total-RAM lock when the actual available working set fits.
         val roomy = device(7L shl 30).copy(totalRamBytes = 8L shl 30)
         assertTrue(NeuralMemoryPolicy.assess(roomy, advanced, 1024).canAttempt)
     }
     @Test fun smallerQuantizationHasSameKvButSmallerWeightEstimate() {
         val q8 = NeuralMemoryPolicy.assess(device(), light, 1024)
-        val q4 = NeuralMemoryPolicy.assess(device(), NeuralModelCatalog.entries.last().model!!, 1024)
+        val q4 = NeuralMemoryPolicy.assess(device(), NeuralModelCatalog.entries.single { it.model?.id == "qwen3-0-6b-q4-k-m" }.model!!, 1024)
         assertEquals(q8.kvCacheBytes, q4.kvCacheBytes)
         assertEquals(q8.modelBytes - q4.modelBytes, q8.minimumAvailableBytes - q4.minimumAvailableBytes)
     }

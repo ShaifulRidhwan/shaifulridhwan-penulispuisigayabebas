@@ -86,7 +86,8 @@ class NeuralManagementTest {
     }
     @Test fun memoryEligibilityRejectsEightGbDeviceAndThermalPressure() {
         val snapshot = NeuralDeviceSnapshot(8L shl 30, 6L shl 30, false, listOf("arm64-v8a"), 20L shl 30, 35)
-        assertNotNull(snapshot.loadingIssue(NeuralModelCatalog.entries.last().model!!))
+        val advanced = NeuralModelCatalog.entries.single { it.tier == NeuralTier.ADVANCED_8B }.model!!
+        assertNotNull(snapshot.loadingIssue(advanced))
         assertNull(snapshot.loadingIssue(NeuralModelCatalog.entries.first().model!!))
         assertNotNull(snapshot.copy(thermalStatus = 3).loadingIssue(NeuralModelCatalog.entries.first().model!!))
         assertNotNull(snapshot.copy(supportedAbis = listOf("x86_64")).loadingIssue(NeuralModelCatalog.entries.first().model!!))
