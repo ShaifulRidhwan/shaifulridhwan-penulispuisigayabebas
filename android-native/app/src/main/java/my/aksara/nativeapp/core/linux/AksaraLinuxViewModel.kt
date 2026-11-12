@@ -109,7 +109,7 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
     }
 
     fun addSession() {
-        if (slots.size >= 6 || installing) return
+        if (slots.size >= 6) return
         try {
             val slot = newSlot((if (installed) "Linux " else "Shell ") + nextSlotNumber++)
             slots.add(slot)
