@@ -3,10 +3,9 @@ on:
   push:
     branches:
       - feature/aksara-neural-local-v1
+    # Auto-build only when this workflow changes. Subsequent source commits
+    # do not consume CI until workflow_dispatch is explicitly requested.
     paths:
-      - 'android-native/app/**'
-      - 'android-native/settings.gradle.kts'
-      - 'android-native/scripts/build-aksara-linux.sh'
       - '.github/workflows/aksara-android-linux-native.yml'
   workflow_dispatch:
 permissions:
@@ -92,7 +91,11 @@ jobs:
           unzip -l "delivery/$apk" | grep -F 'lib/arm64-v8a/libaksara_proot.so'
           unzip -l "delivery/$apk" | grep -F 'lib/arm64-v8a/libaksara_proot_loader.so'
           unzip -l "delivery/$apk" | grep -F 'lib/arm64-v8a/libtermux.so'
-          unzip -l "delivery/$apk" | grep -F 'assets/linux/alpine-minirootfs.tar.gz'
+          unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/alpine-minirootfs.bundle'
+          unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/alpine-minirootfs.sha256'
+          expected="$(awk '{print $1; exit}' android-native/app/src/main/assets/linux/alpine-minirootfs.sha256)"
+          actual="$(unzip -p "delivery/$apk" assets/linux/alpine-minirootfs.bundle | sha256sum | awk '{print $1}')"
+          test "$expected" = "$actual" || { echo 'ERROR: Alpine archive changed during APK packaging' >&2; exit 1; }
           unzip -l "delivery/$apk" | grep -F 'lib/arm64-v8a/libstockfish.so'
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "delivery/$apk"
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 4 "delivery/$apk"

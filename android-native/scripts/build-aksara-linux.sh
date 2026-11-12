@@ -26,6 +26,8 @@ curl --fail --location --retry 3 --connect-timeout 20 --max-time 60 "$base/$file
 tar -tzf "$ASSETS/$file" > "$RUNNER_TEMP/aksara-alpine-contents.txt"
 grep -Eq 'bin/(sh|busybox)' "$RUNNER_TEMP/aksara-alpine-contents.txt"
 grep -Fq 'sbin/apk' "$RUNNER_TEMP/aksara-alpine-contents.txt"
-mv "$ASSETS/$file" "$ASSETS/alpine-minirootfs.tar.gz"
+# Android aapt has special handling for *.gz assets: it strips or
+# transforms the .gz suffix. Preserve the literal gzip bytes under .bundle.
+mv "$ASSETS/$file" "$ASSETS/alpine-minirootfs.bundle"
 mv "$ASSETS/$file.sha256" "$ASSETS/alpine-minirootfs.sha256"
 echo "Pinned GPL PRoot and Alpine rootfs staged for ARM64 APK."

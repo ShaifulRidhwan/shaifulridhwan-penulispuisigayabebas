@@ -23,7 +23,8 @@ import java.util.zip.GZIPInputStream
  */
 internal object AksaraLinuxRuntime {
     const val alpineVersion = "3.22.8"
-    private const val archive = "linux/alpine-minirootfs.tar.gz"
+    // .bundle avoids aapt's special .gz asset transformation.
+    private const val archive = "linux/alpine-minirootfs.bundle"
     private const val checksum = "linux/alpine-minirootfs.sha256"
     private const val marker = ".aksara-alpine-installed"
 
@@ -39,7 +40,7 @@ internal object AksaraLinuxRuntime {
         val names = runCatching { context.assets.list("linux")?.toList().orEmpty() }.getOrDefault(emptyList())
         return Build.SUPPORTED_ABIS.contains("arm64-v8a") &&
             proot(context).isFile && loader(context).isFile &&
-            "alpine-minirootfs.tar.gz" in names &&
+            "alpine-minirootfs.bundle" in names &&
             "alpine-minirootfs.sha256" in names
     }
 
