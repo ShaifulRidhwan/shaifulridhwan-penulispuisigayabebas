@@ -3,7 +3,8 @@ on:
   push:
     branches:
       - feature/aksara-linux-v3-absolute-improvement
-    # Experimental V3 owner build: no UI redesign, no automatic merge.
+    # Experimental V3 owner build: Linux install progress only; no other redesign.
+    # Archive entry manifest and 10-step smoke diagnostics are validated in CI.
     # Paths intentionally limit automatic CI; later commits need explicit dispatch.
     # Auto-build only when this workflow changes. Subsequent source commits
     # do not consume CI until workflow_dispatch is explicitly requested.
@@ -82,7 +83,10 @@ jobs:
           from pathlib import Path
           archive = Path("android-native/app/src/main/assets/linux/alpine-minirootfs.bundle")
           with tarfile.open(archive, mode="r:gz") as root:
-              members = {member.name.lstrip("./"): member for member in root.getmembers()}
+              all_members = root.getmembers()
+              members = {member.name.lstrip("./"): member for member in all_members}
+          entries = int(archive.with_name("alpine-minirootfs.entries").read_text().strip())
+          assert entries == len(all_members), f"Progress manifest mismatch: {entries} != {len(all_members)}"
           for entry in ("bin/sh", "sbin/apk", "usr/bin/vim", "usr/bin/nano", "usr/bin/git", "usr/bin/python3", "usr/bin/htop", "usr/bin/fastfetch", "usr/local/bin/aksara-fetch", "etc/profile.d/90-aksara-intro.sh", "usr/share/aksara/fastfetch-wide.jsonc", "usr/share/aksara/fastfetch-compact.jsonc", "usr/share/aksara/aksara-logo.txt", "etc/aksara-preinstalled-packages.txt", "usr/bin/gcc", "usr/bin/g++", "usr/bin/clang", "usr/bin/node", "usr/bin/rustc", "usr/bin/cargo", "usr/bin/go", "usr/bin/java", "usr/bin/javac", "usr/bin/sqlite3", "usr/local/bin/aksara-linux-smoke", "usr/local/bin/aksara-linux-benchmark"):
               assert entry in members, f"Alpine archive missing {entry}"
               member = members[entry]
@@ -132,6 +136,8 @@ jobs:
           unzip -l "delivery/$apk" | grep -F 'lib/arm64-v8a/libtermux.so'
           unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/alpine-minirootfs.bundle'
           unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/alpine-minirootfs.sha256'
+          unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/alpine-minirootfs.entries'
+          echo "Embedded verified Alpine extraction progress manifest"
           expected="$(awk '{print $1; exit}' android-native/app/src/main/assets/linux/alpine-minirootfs.sha256)"
           actual="$(unzip -p "delivery/$apk" assets/linux/alpine-minirootfs.bundle | sha256sum | awk '{print $1}')"
           test "$expected" = "$actual" || { echo 'ERROR: Alpine archive changed during APK packaging' >&2; exit 1; }
