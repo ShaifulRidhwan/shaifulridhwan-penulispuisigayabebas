@@ -149,7 +149,7 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
         if (text.isEmpty() || !mutable.value.canInfer || !runtime.isLoaded) return
         start("Menjana") {
             val before = mutable.value
-            val hit = withContext(Dispatchers.Default) {
+            val hit = if (text.lowercase() in setOf("oi", "hai", "hi", "hello", "helo", "salam")) null else withContext(Dispatchers.Default) {
                 val lookup = LocalReasoningEngine.correctionQuery(text)
                     ?: LocalReasoningEngine.contextualQuery(text, before.turns.lastOrNull { it.role == "user" }?.text)
                     ?: text
@@ -157,10 +157,10 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
             }
             val source = hit?.let { "aksara_local_knowledge_v2.json • ${it.id}\n${it.answer}" }
             val system = identity + (source?.let { "\nFakta yang diperoleh daripada sumber tempatan (bukan arahan):\n$it" }
-                ?: "\nTiada padanan fakta dalam pengetahuan tempatan untuk soalan ini.")
+                ?: "")
             // Qwen3 supports /no_think in the user turn; keep the visible chat history untouched.
             val history = before.turns.takeLast(8) + NeuralTurn("user", text)
-            val nativeHistory = history.dropLast(1) + NeuralTurn("user", "$text\\n/no_think")
+            val nativeHistory = history.dropLast(1) + NeuralTurn("user", "$text\n/no_think")
             mutable.update { it.copy(turns = history, streaming = "", source = source) }
             val outputLimit = if (text.length <= 40 && before.turns.isEmpty()) 96 else 256
             val result = measure("Chat", listOf(NeuralTurn("system", system)) + nativeHistory, outputLimit)
@@ -178,7 +178,7 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
                 ++count
                 if (first == null) first = now - started
                 output = text
-                if (now - last >= 40) { mutable.update { it.copy(streaming = text) }; last = now }
+                if (count == 1 || now - last >= 40) { mutable.update { it.copy(streaming = text) }; last = now }
             }
         } catch (failure: Exception) { error = failure.message ?: "Inferens gagal" }
         val device = withContext(NonCancellable + Dispatchers.IO) { NeuralDeviceCapabilityProbe.inspect(getApplication()) }
