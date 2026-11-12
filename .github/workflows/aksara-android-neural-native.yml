@@ -1,6 +1,12 @@
 name: AKSARA Neural PR321 owner APK
 on:
   workflow_dispatch:
+    inputs:
+      publish_manifest:
+        description: 'Optional Git blob manifest for an already validated APK; skips all builds'
+        type: string
+        required: false
+        default: ''
 permissions:
   contents: write
 concurrency:
@@ -8,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build-native:
-    if: github.ref == 'refs/heads/feature/aksara-neural-local-v1'
+    if: github.ref == 'refs/heads/feature/aksara-neural-local-v1' && inputs.publish_manifest == ''
     runs-on: ubuntu-latest
     timeout-minutes: 55
     env:
@@ -109,3 +115,77 @@ jobs:
             android-native/app/build/outputs/apk/debug/
             android-native/app/build/outputs/logs/
             android-native/app/build/reports/
+
+  publish-verified:
+    if: github.ref == 'refs/heads/feature/aksara-neural-local-v1' && inputs.publish_manifest != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Recover verified APK using GitHub-only transport (no build)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PUBLICATION_COMMIT: ${{ github.sha }}
+          MANIFEST_BLOB: ${{ inputs.publish_manifest }}
+        run: |
+          python3 - <<'PYCODE'
+          import base64, hashlib, json, os, re, urllib.request, zipfile
+          from pathlib import Path
+          def get(path):
+              request = urllib.request.Request('https://api.github.com/repos/' + os.environ['REPO'] + '/' + path,
+                  headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+              with urllib.request.urlopen(request, timeout=120) as response:
+                  return json.load(response)
+          def blob(sha):
+              assert re.fullmatch('[0-9a-f]{40}', sha)
+              response = get('git/blobs/' + sha)
+              assert response['encoding'] == 'base64'
+              return base64.b64decode(response['content'])
+          manifest = json.loads(blob(os.environ['MANIFEST_BLOB']))
+          validated = '0fbf8f779c814a3db1f72dd0ecc55408a037bd75'
+          assert manifest['validated_commit'] == validated
+          def android_tree(commit):
+              tree = get('git/commits/' + commit)['tree']['sha']
+              return next(row['sha'] for row in get('git/trees/' + tree)['tree'] if row['path'] == 'android-native')
+          assert android_tree(validated) == android_tree(os.environ['PUBLICATION_COMMIT']), 'Android source changed since validation'
+          delivery = Path('delivery'); delivery.mkdir()
+          for file in manifest['files']:
+              assert file['name'] in ['AKSARA-Neural-PR321-REPAIR-0fbf8f77.apk', 'evidence.zip']
+              target = delivery / file['name']
+              with target.open('wb') as output:
+                  for sha in file['chunks']:
+                      output.write(blob(sha))
+              with target.open('rb') as source:
+                  assert hashlib.file_digest(source, 'sha256').hexdigest() == file['sha256']
+              assert target.stat().st_size == file['bytes']
+          apk = delivery / 'AKSARA-Neural-PR321-REPAIR-0fbf8f77.apk'
+          with apk.open('rb') as source:
+              assert hashlib.file_digest(source, 'sha256').hexdigest() == '60625e4455819887c5d0edf482c8a441e5bab316b6f81fa6423f7358fbe8ae43'
+          with zipfile.ZipFile(apk) as archive:
+              assert archive.testzip() is None
+              assert 'lib/arm64-v8a/libaksara_neural.so' in archive.namelist()
+              assert 'lib/arm64-v8a/libstockfish.so' in archive.namelist()
+          evidence = delivery / 'evidence.zip'
+          with zipfile.ZipFile(evidence) as archive:
+              for name in archive.namelist():
+                  assert re.fullmatch('[A-Za-z0-9._-]+', name) and name != '..'
+              archive.extractall(delivery)
+          evidence.unlink()
+          with (delivery / 'BUILD.txt').open('a') as receipt:
+              receipt.write('publication_commit=' + os.environ['PUBLICATION_COMMIT'] + '\nandroid_tree=' + android_tree(validated) + '\n')
+          PYCODE
+      - name: Publish already validated APK and evidence (no Gradle)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh release download aksara-neural-pr321-fdf8bcad --repo "$REPO" \
+            --pattern stockfish-19-corresponding-source.tar.gz --dir delivery
+          echo 'ff5431773e59f3b963eca8dee9c55fa4eb226182808b75a379daceb1e0f58a4e  delivery/stockfish-19-corresponding-source.tar.gz' | sha256sum -c -
+          (cd delivery && sha256sum *.apk *.tar.gz *.json *.txt *.md *.log llama.cpp-LICENSE > SHA256SUMS)
+          gh release upload aksara-neural-pr321-repair-0fbf8f77 delivery/* --repo "$REPO" --clobber
+          gh release edit aksara-neural-pr321-repair-0fbf8f77 --repo "$REPO" --draft=false --prerelease \
+            --target "$GITHUB_SHA" --notes-file delivery/VALIDATION.md
+          cat delivery/SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
+          echo "Publication only. The verified local APK was transferred byte-for-byte; no build/test rerun." >> "$GITHUB_STEP_SUMMARY"
