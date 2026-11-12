@@ -36,7 +36,7 @@ fun AksaraLinuxScreen(
 ) {
     val backdrop = remember { HazeState() }
     val margins = aksaraDeviceMargins()
-    val keys = listOf("ESC", "CTRL", "ALT", "TAB", "←", "↓", "↑", "→", "HOME", "END")
+    val keys = listOf("ESC", "CTRL", "ALT", "TAB", "ENTER", "←", "↓", "↑", "→", "HOME", "END")
     BackHandler { onBack() }
     DisposableEffect(Unit) {
         onDialogVisibilityChange(false)
@@ -61,7 +61,8 @@ fun AksaraLinuxScreen(
                             AksaraText("Aksara Linux", size = 16f, weight = 650,
                                 family = AksaraTypography.heading)
                             AksaraText(
-                                if (vm.installed) "ALPINE " + AksaraLinuxRuntime.alpineVersion + " · PROOT · PTY"
+                                if (vm.slots.getOrNull(vm.selected)?.ended == true) "PTY · SESSION STOPPED · RESTART"
+                                else if (vm.installed) "ALPINE " + AksaraLinuxRuntime.alpineVersion + " · PROOT · PTY"
                                 else if (vm.bundled) "PTY · ALPINE BOOTSTRAP AVAILABLE"
                                 else "PTY · ANDROID SHELL",
                                 size = 10f, color = AksaraColors.muted
@@ -106,6 +107,13 @@ fun AksaraLinuxScreen(
                                 color = AksaraColors.gold)
                         }
                     }
+                }
+                if (vm.slots.getOrNull(vm.selected)?.ended == true) {
+                    AksaraButton(
+                        "Sesi terhenti · Mulakan semula",
+                        { vm.restartSession() },
+                        Modifier.fillMaxWidth().testTag("linux-restart-session")
+                    )
                 }
                 if (!vm.installed && vm.bundled) {
                     AksaraButton(

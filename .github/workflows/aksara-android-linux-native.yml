@@ -103,6 +103,16 @@ jobs:
           cp android-native/app/build/outputs/apk/debug/app-debug.apk "delivery/$apk"
           unzip -tq "delivery/$apk"
           unzip -l "delivery/$apk" | grep -F 'lib/arm64-v8a/libaksara_proot.so'
+          unzip -p "delivery/$apk" lib/arm64-v8a/libaksara_proot.so > "$RUNNER_TEMP/aksara-packaged-proot"
+          python3 - "$RUNNER_TEMP/aksara-packaged-proot" <<'AKSARA_PACKAGED_TLS'
+          import subprocess
+          import sys
+          rows = subprocess.check_output(["readelf", "-lW", sys.argv[1]], text=True).splitlines()
+          tls = [r.split() for r in rows if r.strip().startswith("TLS ")]
+          assert tls, "APK PRoot executable has no PT_TLS segment"
+          assert int(tls[0][-1], 0) >= 64, "APK PRoot has underaligned ARM64 PT_TLS"
+          print("APK native PRoot ARM64 TLS alignment verified")
+          AKSARA_PACKAGED_TLS
           unzip -l "delivery/$apk" | grep -F 'lib/arm64-v8a/libaksara_proot_loader.so'
           unzip -l "delivery/$apk" | grep -F 'lib/arm64-v8a/libtermux.so'
           unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/alpine-minirootfs.bundle'

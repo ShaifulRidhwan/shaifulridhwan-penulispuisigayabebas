@@ -148,10 +148,22 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         slots.getOrNull(selected)?.takeUnless { it.ended }?.terminal?.write(sequence)
     }
 
+    fun restartSession() {
+        val index = selected
+        val current = slots.getOrNull(index) ?: return
+        if (!current.ended) return
+        slots.removeAt(index)
+        selected = if (slots.isEmpty()) 0 else index.coerceAtMost(slots.lastIndex)
+        // A new PTY and a new process are required after SIGABRT/SIGKILL.
+        // Pressing Enter cannot revive an already-exited Linux process.
+        addSession()
+    }
+
     fun extraKey(label: String) {
         when (label) {
             "CTRL" -> ctrlDown = !ctrlDown
             "ALT" -> altDown = !altDown
+            "ENTER" -> if (slots.getOrNull(selected)?.ended == true) restartSession() else send("\r")
             else -> send(LinuxTerminalKeyMap.sequence(label))
         }
     }
