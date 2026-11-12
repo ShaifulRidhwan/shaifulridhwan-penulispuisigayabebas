@@ -60,3 +60,35 @@ close a preceding tab, and confirm the active PTY remains selected.
 
 No kernel/root elevation, file deletion, background package installs, privileged
 commands or extra app permissions were added.
+
+
+## AKSARA System Identity · Fastfetch V2
+
+- Maintained Alpine v3.22 ARM64 **Fastfetch** binary is actually installed during
+  rootfs assembly, including its apk dependencies. Manual use: "fastfetch".
+- Original dual-gold/cobalt AKSARA ASCII emblem plus an **adaptive compact/wide**
+  startup dashboard: Alpine userland, Android host kernel/CPU/RAM, packages,
+  shell, and host uptime are queried live. Host kernel is not called Alpine.
+- Startup is **once per interactive PTY session**, never noninteractive jobs or
+  nested login shells. No animation loops, background polling or network calls.
+  If Fastfetch fails or times out (4 seconds), the terminal still opens.
+- Controls: "aksara-fetch", "aksara-fetch --compact", "aksara-fetch --wide",
+  "aksara-fetch --off" (persists), "aksara-fetch --on". Shell profile
+  overrides remain the user's choice.
+- CI tests the real **Fastfetch 2.44 config parser** inside Alpine ARM64,
+  validates shell syntax, checks archive contents and enforces extractor bounds.
+
+### Owner acceptance (before merge)
+
+1. Install Alpine in a new preview APK; first PTY shows the AKSARA emblem and
+   the ordinary "aksara:/workspace ❯" prompt after the dashboard.
+2. Open another tab, then exit and restart a tab: intro appears exactly once
+   for each new PTY, not on tab selection or every command.
+3. Run "aksara-fetch --wide" and "aksara-fetch --compact" in landscape and
+   portrait; info stays readable and live input is never blocked.
+4. Run "aksara-fetch --off", then exit and restart; intro stays hidden but the
+   normal prompt remains. Run "aksara-fetch --on" to restore.
+5. Verify Fastfetch, Vim and Python versions; reopen the existing /workspace
+   test file and test interactive Vim.
+
+PR #322 remains Draft and unmerged until owner phone testing.
