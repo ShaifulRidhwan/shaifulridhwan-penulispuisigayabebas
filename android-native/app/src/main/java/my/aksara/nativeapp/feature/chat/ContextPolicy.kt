@@ -81,7 +81,9 @@ object ContextPolicy {
             if(rows[i].role=="user" && i+1<recentStart && rows[i+1].role=="assistant")
                 include(i+1)
         }
-        // Backend boundedHistory allows 24 messages at most.
+        // Keep retrieved older assistant option lists even when the initiating user
+        // turn falls outside the bounded history. Dropping everything before the
+        // first selected user silently loses the numbered choice being referenced.
         return rows.filterIndexed { i,_ -> i in chosen }
     }
     fun summaryWindow(size:Int,summarizedThrough:Int):IntRange? {

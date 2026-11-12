@@ -42,6 +42,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     private val mutable = MutableStateFlow(ChatState())
     val state = mutable.asStateFlow()
     private var requestJob: Job? = null
+    private var activeRequestId: String? = null
     private val providerRefreshGate = LatestRefreshGate()
     private var providerRefreshJob: Job? = null
     private var storageReadable = true
@@ -222,6 +223,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         val note = if(newAttachment) "\n\n[Lampiran: "+AttachmentContinuity.manifest(attachmentNames)+"]" else ""
         val user = Message(UUID.randomUUID().toString(), "user", question+note)
         val assistant = Message(UUID.randomUUID().toString(), "assistant", "", incomplete = true)
+        val requestId = UUID.randomUUID().toString()
+        activeRequestId = requestId
         if (newAttachment) activeAttachment=effective
         mutable.update { clearAnswerDiagnostics(it.copy(messages = previous + user + assistant,
             sessionStarts = if (previous.isEmpty() || it.resumedFromHistory) (it.sessionStarts + user.id).distinct() else it.sessionStarts,
@@ -291,6 +294,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     }
                 }
                 api.chat(payload).collect { event ->
+                    if (activeRequestId != requestId) return@collect
                     if (event is ChatEvent.Delta) {
                         pending.append(event.text)
                         return@collect
@@ -327,7 +331,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             } finally {
                 renderer?.cancel()
                 pending.flush() // Stop/error must never discard the last streamed token.
-                mutable.update { it.copy(busy = false) }
+                if (activeRequestId == requestId) {
+                    activeRequestId = null
+                    mutable.update { it.copy(busy = false) }
+                }
                 withContext(NonCancellable) {
                     try {
                         check(storageReadable) { "Fail sesi asal belum dapat dibaca." }
