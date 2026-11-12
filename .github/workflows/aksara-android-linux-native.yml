@@ -63,7 +63,7 @@ jobs:
         run: |
           python3 android-native/tools/sync_local_knowledge.py --check
           python3 android-native/ci/performance-contracts.py
-      - name: Stage Alpine ARM64 and build Bionic-aligned static PRoot
+      - name: Stage Alpine ARM64 and build Android 16 seccomp-compatible PRoot
         run: bash android-native/scripts/build-aksara-linux.sh
       - name: Assert official Alpine archive contains guest shell and package manager
         run: |
