@@ -31,3 +31,12 @@ A native build intentionally fails when the source is absent, rather than silent
 6. Confirm local-only mode never silently invokes a cloud provider.
 
 **Known limitations:** current JNI generation returns its full result at completion, not streaming; prompt chat templates and runtime-level progress are not integrated; source commit has not been pinned and CI has not been run. Do not claim production readiness.
+
+## Locked upstream source (2026-11-12)
+- Upstream: https://github.com/ggml-org/llama.cpp
+- Release tag: `b12248`
+- Verified Git commit: `3837bf0bc02ea5d08f8ee3585fc8c7784a81bce8`
+- Repository script: `bash android-native/scripts/prepare-neural-native.sh`
+- Native build: `cd android-native && ./gradlew :app:assembleDebug -PenableNeuralNative=true`
+- Upstream source is intentionally excluded from the Aksara Git tree; prepare it in CI before Gradle.
+- This is a source pin, **not** a successful native compilation. The JNI API must still be validated against the pinned revision.
