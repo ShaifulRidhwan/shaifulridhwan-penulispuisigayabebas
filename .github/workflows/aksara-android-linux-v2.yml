@@ -1,4 +1,4 @@
-name: AKSARA Linux V2 essentials owner APK
+name: AKSARA Linux V2 System Identity owner APK
 on:
   push:
     branches:
@@ -77,7 +77,7 @@ jobs:
           archive = Path("android-native/app/src/main/assets/linux/alpine-minirootfs.bundle")
           with tarfile.open(archive, mode="r:gz") as root:
               members = {member.name.lstrip("./"): member for member in root.getmembers()}
-          for entry in ("bin/sh", "sbin/apk", "usr/bin/vim", "usr/bin/nano", "usr/bin/git", "usr/bin/python3", "usr/bin/htop", "etc/aksara-preinstalled-packages.txt"):
+          for entry in ("bin/sh", "sbin/apk", "usr/bin/vim", "usr/bin/nano", "usr/bin/git", "usr/bin/python3", "usr/bin/htop", "usr/bin/fastfetch", "usr/local/bin/aksara-fetch", "etc/profile.d/90-aksara-intro.sh", "usr/share/aksara/fastfetch-wide.jsonc", "usr/share/aksara/fastfetch-compact.jsonc", "usr/share/aksara/aksara-logo.txt", "etc/aksara-preinstalled-packages.txt"):
               assert entry in members, f"Alpine archive missing {entry}"
               member = members[entry]
               assert member.isfile() or member.issym() or member.islnk(), f"Invalid Alpine entry: {entry}"
@@ -85,7 +85,9 @@ jobs:
           PYCODE
       # ChatApiTest is covered by the regular Android Native CI. Its network-cancellation
       # MockWebServer test is intermittently flaky; don't rebuild PRoot for that unrelated test.
-      # Rootfs contains preinstalled ARM64 packages and their apk database.
+      # CI executes Fastfetch 2.44 under ARM64 QEMU with BOTH original AKSARA
+      # configs before this step, and validates shell syntax for startup hooks.
+      # Rootfs contains preinstalled ARM64 packages and its apk database.
       # Focused Linux tests cover prompt, restart, categories and key mapping.
       - name: Compile rootless Linux preview with focused regression tests
         working-directory: android-native
@@ -150,6 +152,6 @@ jobs:
           set -euo pipefail
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
           gh release create "aksara-linux-v2-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \
-            --title "AKSARA Linux V2 $tag - Developer Essentials" \
-            --notes "Experimental unmerged ARM64 APK: Alpine 3.22.8 + PRoot + PTY, Control Deck with built-in Vim, Nano, Git, Python, Bash, jq, htop, curl and SSH client. No host root. Debug-only targetSdk 28. Physical-phone restart and keyboard QA still required. PRoot GPL source attached. Do not merge before owner approval." \
+            --title "AKSARA Linux V2 $tag - System Identity" \
+            --notes "Experimental owner ARM64 APK: Alpine 3.22.8 + PRoot + PTY, preinstalled Fastfetch and developer tools. AKSARA dual-tone original ASCII logo, adaptive compact/wide system identity from real host/userland facts, one-time startup, persistent on/off and 4s timeout. No Android root. Isolated targetSdk 28 preview only. Physical phone UI/IME QA required before merge. GPL PRoot source attached." \
             --prerelease --target "$GITHUB_SHA"
