@@ -2,8 +2,20 @@
 # AKSARA Linux System Identity. Real fastfetch metrics, no remote calls or daemon.
 # A new real PTY shows this once; manual "aksara-fetch" always works.
 case "$1" in
-  ""|--startup|--show) ;;
-  --help) printf '%s\n' 'Usage: aksara-fetch [--show|--startup|--help]' 'Disable automatic splash: export AKSARA_INTRO_OFF=1'; exit 0 ;;
+  ""|--startup|--show|--compact|--wide) ;;
+  --off|--disable)
+    mkdir -p /root/.config/aksara
+    : > /root/.config/aksara/intro-off
+    printf '%s\n' 'AKSARA startup banner disabled; run aksara-fetch --on to enable.'
+    exit 0 ;;
+  --on|--enable)
+    rm -f /root/.config/aksara/intro-off
+    printf '%s\n' 'AKSARA startup banner enabled for new sessions.'
+    exit 0 ;;
+  --help)
+    printf '%s\n' 'Usage: aksara-fetch [--show|--compact|--wide|--off|--on]' \
+      'Shows real Linux/Android system information. No network queries.'
+    exit 0 ;;
   *) printf '%s\n' 'Unknown aksara-fetch option' >&2; exit 2 ;;
 esac
 [ -t 1 ] || exit 0
@@ -16,11 +28,12 @@ if [ -r /dev/tty ]; then
   set -- $(stty size < /dev/tty 2>/dev/null)
   case "$2" in ""|*[!0-9]*) ;; *) [ "$2" -gt 0 ] && cols="$2" ;; esac
 fi
-if [ "$AKSARA_INTRO_COMPACT" = "1" ] || [ "$cols" -lt 76 ]; then
+if [ "$1" = "--compact" ] || { [ "$1" != "--wide" ] && { [ "$AKSARA_INTRO_COMPACT" = "1" ] || [ "$cols" -lt 76 ]; }; }; then
   config=/usr/share/aksara/fastfetch-compact.jsonc
-  printf '\n%b╭━━━ ◆ A K S A R A ◆ ━━━╮%b\n' "$gold" "$reset"
-  printf '%b┃  L I N U X   I D     ┃%b\n' "$blue" "$reset"
-  printf '%b╰━━━━━━━━━━━━━━━━━━━━━━━╯%b\n' "$gold" "$reset"
+  printf '\n%b       /\\    %b╭━━━◆━━━━━━━━━━╮%b\n' "$gold" "$blue" "$reset"
+  printf '%b      /  \\   %b┃ A K S A R A  ┃%b\n' "$gold" "$blue" "$reset"
+  printf '%b     / ◇  \\  %b┃  LINUX · V2   ┃%b\n' "$gold" "$blue" "$reset"
+  printf '%b    /_ __ _\\ %b╰━━━━━━━━━━━━━━╯%b\n' "$gold" "$blue" "$reset"
 else
   config=/usr/share/aksara/fastfetch-wide.jsonc
   printf '\n%b╭━━━━━━━━━━━━━━━━━━━%b◆%b━━━━━━━━━━━━━━━━━━━━╮%b\n' "$gold" "$blue" "$gold" "$reset"
