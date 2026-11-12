@@ -5,8 +5,9 @@ plugins {
 }
 // Keep default Cloud APK build reproducible; enable heavy native runtime with -PenableSdTurboNative=true.
 val enableSdTurboNative = providers.gradleProperty("enableSdTurboNative").orNull == "true"
-val enableNeuralNative = providers.gradleProperty("enableNeuralNative").orNull == "true"
-require(!(enableNeuralNative && enableSdTurboNative)) { "Select one native CMake target at a time" }
+// Linux preview is an isolated debug APK. Production remains targetSdk 35.
+val enableLinuxPreview = providers.gradleProperty("enableLinuxPreview").orNull == "true"
+require(!(enableLinuxPreview && enableSdTurboNative)) { "Linux preview and SD-Turbo builds must remain separate" }
 // PR preview APKs use a SHA-scoped package ID to avoid colliding with an installed
 // Android app signed by a different, ephemeral CI debug keystore.
 // The normal merged/development app retains its original applicationId.
@@ -24,24 +25,18 @@ android {
             }
         }
     }
-    if (enableNeuralNative) {
-        ndkVersion = "27.2.12479018"
-        externalNativeBuild {
-            cmake {
-                path = file("src/main/neural/CMakeLists.txt")
-                version = "3.22.1"
-            }
-        }
-    }
     namespace = "my.aksara.nativeapp"
     compileSdk = 35
     defaultConfig {
-        if (enableSdTurboNative || enableNeuralNative) {
+        if (enableSdTurboNative || enableLinuxPreview) {
             ndk { abiFilters.add("arm64-v8a") }
         }
         applicationId = "my.aksara.nativeapp"
         minSdk = 31
-        targetSdk = 35
+        // SDK 28 is required by the *unmerged, sideload-only* rootless
+        // Linux preview to exec package binaries from app-private storage.
+        // Do not use this configuration for production/Play Store releases.
+        targetSdk = if (enableLinuxPreview) 28 else 35
         versionCode = 4
         versionName = "0.2.0-chess-darkness"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -70,7 +65,11 @@ android {
     compileOptions { isCoreLibraryDesugaringEnabled = true; sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
     testOptions { animationsDisabled = true }
-    packaging { jniLibs.useLegacyPackaging = true; jniLibs.keepDebugSymbols += "**/libstockfish.so"; resources.excludes += setOf("META-INF/LICENSE*", "META-INF/NOTICE*") }
+    packaging {
+        jniLibs.useLegacyPackaging = true
+        jniLibs.keepDebugSymbols += setOf("**/libstockfish.so", "**/libaksara_proot*.so")
+        resources.excludes += setOf("META-INF/LICENSE*", "META-INF/NOTICE*")
+    }
 }
 dependencies {
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
@@ -94,6 +93,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("dev.chrisbanes.haze:haze:1.5.4")
+    // Official Termux PTY/native terminal renderer; no external Termux app needed.
+    implementation("com.termux.termux-app:terminal-view:0.118.0")
+    implementation("org.apache.commons:commons-compress:1.27.1")
     // Native OpenGL MapLibre for broad Android GPU compatibility; OpenFreeMap needs no paid key.
     implementation("org.maplibre.gl:android-sdk-opengl:13.7.1")
     implementation("io.noties.markwon:core:4.6.2")
