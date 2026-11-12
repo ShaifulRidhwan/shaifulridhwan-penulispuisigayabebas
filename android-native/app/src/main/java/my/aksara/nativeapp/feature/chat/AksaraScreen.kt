@@ -43,7 +43,6 @@ import io.noties.markwon.ext.tables.TablePlugin
 import my.aksara.nativeapp.R
 import my.aksara.nativeapp.feature.today.TodayScreen
 import my.aksara.nativeapp.core.neural.AksaraNeuralDashboard
-import my.aksara.nativeapp.core.neural.NeuralDeviceCapabilityProbe
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.platform.Attachment
@@ -186,6 +185,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val pagerState = rememberPagerState(initialPage=1,pageCount={3})
     var overlayVisible by remember { mutableStateOf(false) }
     var todayDialogVisible by remember { mutableStateOf(false) }
+    var neuralDialogVisible by remember { mutableStateOf(false) }
     // Do not recompose the whole pager for each IME animation pixel.
     val imeDensity=LocalDensity.current
     // WindowInsets.ime is composable: resolve it before entering derivedStateOf.
@@ -197,10 +197,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         state=pagerState,
         modifier=Modifier.fillMaxSize(),
         beyondViewportPageCount=1,
-        userScrollEnabled=!overlayVisible && !todayDialogVisible && !keyboardOpen
+        userScrollEnabled=!overlayVisible && !todayDialogVisible && !neuralDialogVisible && !keyboardOpen
     ) { page ->
-      if(page==2) {
-        TodayScreen(active=pagerState.currentPage==2,onBack={
+      if(page==0) {
+        TodayScreen(active=pagerState.currentPage==0,onBack={
             scope.launch {
                 pagerState.animateScrollToPage(
                     1,animationSpec=androidx.compose.animation.core.spring(
@@ -210,9 +210,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                 )
             }
         },onDialogVisibilityChange={todayDialogVisible=it})
-      } else if (page == 0) {
-        val device = remember(context) { runCatching { NeuralDeviceCapabilityProbe.inspect(context) }.getOrNull() }
-        AksaraNeuralDashboard(snapshot = device, modelLoaded = false)
+      } else if (page == 2) {
+        AksaraNeuralDashboard(onBack={ scope.launch { pagerState.animateScrollToPage(1) } },
+            onDialogVisibilityChange={ neuralDialogVisible=it })
       } else {
         AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
         val textDocs = attachments.filter { it.text.isNotBlank() }

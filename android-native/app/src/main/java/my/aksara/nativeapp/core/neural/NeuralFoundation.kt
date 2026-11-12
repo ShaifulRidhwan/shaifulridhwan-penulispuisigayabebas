@@ -17,7 +17,8 @@ data class NeuralDeviceSnapshot(
     val lowMemory: Boolean,
     val supportedAbis: List<String>,
     val availableStorageBytes: Long,
-    val sdkInt: Int
+    val sdkInt: Int,
+    val thermalStatus: Int = 0
 )
 
 object NeuralDeviceCapabilityProbe {
@@ -32,7 +33,8 @@ object NeuralDeviceCapabilityProbe {
             lowMemory = info.lowMemory,
             supportedAbis = Build.SUPPORTED_ABIS.toList(),
             availableStorageBytes = storage.availableBytes,
-            sdkInt = Build.VERSION.SDK_INT
+            sdkInt = Build.VERSION.SDK_INT,
+            thermalStatus = (context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).currentThermalStatus
         )
     }
 }
@@ -43,7 +45,12 @@ data class NeuralModelDescriptor(
     val sha256: String,
     val minAvailableRamBytes: Long,
     val license: String,
-    val downloadUrl: String
+    val downloadUrl: String,
+    val sizeBytes: Long = 0L,
+    val name: String = id,
+    val parameters: String = "",
+    val quantization: String = "",
+    val sourceRevision: String = ""
 ) {
     fun validate(): Boolean =
         id.matches(Regex("[a-zA-Z0-9._-]{1,100}")) &&
@@ -80,12 +87,13 @@ class UnavailableNeuralRuntime : NeuralRuntime {
 }
 
 object NeuralModelIntegrity {
-    fun verifySha256(file: File, expectedHex: String): Boolean {
+    fun verifySha256(file: File, expectedHex: String, checkpoint: () -> Unit = {}): Boolean {
         if (!expectedHex.matches(Regex("[0-9a-fA-F]{64}")) || !file.isFile) return false
         val digest = MessageDigest.getInstance("SHA-256")
         file.inputStream().buffered().use { stream ->
             val buffer = ByteArray(64 * 1024)
             while (true) {
+                checkpoint()
                 val n = stream.read(buffer)
                 if (n < 0) break
                 digest.update(buffer, 0, n)
@@ -97,4 +105,13 @@ object NeuralModelIntegrity {
             expectedHex.lowercase().toByteArray(Charsets.US_ASCII)
         )
     }
+}
+
+/** Conservative eligibility at 2048 tokens, leaving at least 1 GiB for Android. */
+fun NeuralDeviceSnapshot.loadingIssue(model: NeuralModelDescriptor): String? = when {
+    "arm64-v8a" !in supportedAbis -> "ARM64 runtime required"
+    lowMemory -> "Android reports low memory; close other apps or use Light"
+    thermalStatus >= 3 -> "Device is too hot; allow it to cool"
+    availableRamBytes < model.minAvailableRamBytes + 1_073_741_824L -> "Insufficient available RAM; try Light or Balanced"
+    else -> null
 }
