@@ -76,9 +76,9 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                     AksaraIcon("brain", Modifier.size(26.dp))
                     Column(Modifier.weight(1f)) {
                         AksaraText("AKSARA NEURAL", size = 20f, weight = 650, family = AksaraTypography.heading)
-                        AksaraText("Aksara Local · pada peranti", size = 11f, color = AksaraColors.gold)
+                        AksaraText("llama.cpp · ARM64 · JNI", size = 11f, color = AksaraColors.gold)
                     }
-                    AksaraButton("Bilik", onBack, icon = "chat")
+                    AksaraButton("Menu Utama", onBack, icon = "chat")
                 }
                 // Compact command deck: content-sized tiles, not six full-height placeholders.
                 // The remaining wallpaper is intentional breathing room, not stretched cards.
