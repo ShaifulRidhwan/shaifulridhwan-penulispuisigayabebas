@@ -1,0 +1,35 @@
+{
+  "logo": null,
+  "display": {
+    "separator": "  ›  ",
+    "color": {
+      "keys": "#E6C58B",
+      "title": "#76C2F8"
+    },
+    "key": {
+      "width": 8
+    }
+  },
+  "modules": [
+    {
+      "type": "os",
+      "key": "ALPINE"
+    },
+    {
+      "type": "kernel",
+      "key": "KERNEL"
+    },
+    {
+      "type": "cpu",
+      "key": "CPU"
+    },
+    {
+      "type": "memory",
+      "key": "RAM"
+    },
+    {
+      "type": "packages",
+      "key": "PKGS"
+    }
+  ]
+}
