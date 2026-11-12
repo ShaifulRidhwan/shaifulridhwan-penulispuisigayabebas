@@ -52,6 +52,8 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         private set
     var installStatus by mutableStateOf<String?>(null)
         private set
+    var restarting by mutableStateOf(false)
+        private set
 
     private var terminalView: TerminalView? = null
     private var nextSlotNumber = 1
@@ -144,20 +146,27 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         }
     }
 
-    /** Keep a restarted PTY in its original tab instead of appending a new tab. */
+    /** Restart a finished PTY in place. Reject duplicate taps and stale requests. */
     fun restartSession() {
-        val index = selected
-        val old = slots.getOrNull(index) ?: return
-        if (!old.ended) return
+        if (restarting || installing) return
+        val plan = LinuxSessionSelection.restartPlan(
+            selected, slots.map { it.name }, slots.getOrNull(selected)?.ended == true
+        ) ?: return
+        val old = slots[plan.index]
+        restarting = true
         try {
-            val replacement = newSlot(old.name)
-            slots[index] = replacement
+            val replacement = newSlot(plan.name)
+            // Replace the exact old slot; a process-finished callback for old
+            // cannot mark the replacement as terminated.
+            slots[plan.index] = replacement
             old.terminal.finishIfRunning()
             clearModifiers()
             terminalView?.attachSession(replacement.terminal)
             problem = null
         } catch (failure: Exception) {
             problem = failure.message ?: "Gagal memulakan semula sesi Linux."
+        } finally {
+            restarting = false
         }
     }
 
