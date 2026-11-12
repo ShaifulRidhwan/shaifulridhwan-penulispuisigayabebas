@@ -179,6 +179,7 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
     }
     private suspend fun measure(label: String, turns: List<NeuralTurn>, maxTokens: Int = 256): NeuralMeasurement {
         val started = SystemClock.elapsedRealtime(); var first: Long? = null; var last = 0L; val output = StringBuilder(); var error: String? = null
+        val priorMetrics = runtime.lastMetrics
         mutable.update { it.copy(renderDelayMs = null) }
         try {
             runtime.chat(turns, maxTokens, mutable.value.threads) { delta ->
@@ -189,14 +190,17 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
             }
         } catch (_: CancellationException) { stopRequested = true }
         catch (failure: Exception) { error = failure.message ?: "Inferens gagal" }
-        val count = runtime.lastTokenCount
+        // Stop may cancel before the dispatcher acquires the native operation lock.
+        // In that case the bridge still holds the preceding request's diagnostics.
+        val nativeMetrics = runtime.lastMetrics?.takeUnless { it === priorMetrics }
+        val count = if (output.isNotEmpty() || nativeMetrics != null) runtime.lastTokenCount else 0
         val inferenceMs = SystemClock.elapsedRealtime() - started
         // Flush the final partial UI frame even when the last token arrived inside the throttle window.
         if (output.isNotEmpty()) publishStreaming(output.toString())
         return withContext(NonCancellable) {
             val device = withContext(Dispatchers.IO) { NeuralDeviceCapabilityProbe.inspect(getApplication()) }
             NeuralMeasurement(label, count, first, inferenceMs, device.processPssBytes / 1024, device.thermalStatus,
-                stopRequested, error, output.toString(), runtime.lastMetrics, mutable.value.renderDelayMs, device)
+                stopRequested, error, output.toString(), nativeMetrics, mutable.value.renderDelayMs, device)
         }
     }
     fun benchmark() {
