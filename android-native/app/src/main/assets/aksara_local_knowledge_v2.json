@@ -1,0 +1,171 @@
+{
+  "schema_version": 1,
+  "updated": "2026-11-12",
+  "policy": {
+    "scope": "bundled-offline-curated",
+    "memory_default": false,
+    "live_status": "never-claim",
+    "generated_model": false
+  },
+  "entries": [
+    {
+      "id": "identity",
+      "title": "Identiti Aksara",
+      "aliases": [
+        "siapa aksara",
+        "siapa buat aksara",
+        "aksara ai"
+      ],
+      "facts": [
+        "Aksara A.I. ialah pengalaman AI yang dibina Shaiful Ridhwan untuk web dan Android Native.",
+        "Penyedia awan termasuk Gemini, Groq, OpenRouter dan Cloudflare Workers AI; sambungan berubah mengikut runtime.",
+        "Aksara Local ialah pengetahuan offline terpilih, bukan model generatif yang dilatih sendiri."
+      ]
+    },
+    {
+      "id": "author",
+      "title": "Shaiful Ridhwan",
+      "aliases": [
+        "shaiful ridhwan",
+        "the coder poet",
+        "penulis aksara"
+      ],
+      "facts": [
+        "Shaiful Ridhwan ialah penulis puisi gaya bebas dan pembangun Aksara A.I.",
+        "Identiti kreatifnya The Coder Poet dan Aksara Moden.",
+        "Beliau pernah membangunkan Twister Kernel untuk Redmi 4X.",
+        "Dulu aku debug code. Sekarang aku debug diri sendiri."
+      ]
+    },
+    {
+      "id": "chat",
+      "title": "Chat Engine dan Context Manager",
+      "aliases": [
+        "context manager",
+        "pilihan kedua",
+        "chat engine",
+        "ingat konteks"
+      ],
+      "facts": [
+        "Chat Engine Android Native mengurus sejarah sesi dan konteks untuk soalan susulan.",
+        "Pertukaran penyedia tidak bermakna model berkongsi memori secara langsung; konteks relevan perlu dihantar semula.",
+        "Memori jangka panjang tidak sama dengan sejarah sesi dan default memori kekal OFF."
+      ]
+    },
+    {
+      "id": "providers",
+      "title": "Multi A.I. dan Routing",
+      "aliases": [
+        "gemini groq",
+        "fallback provider",
+        "multi ai",
+        "openrouter"
+      ],
+      "facts": [
+        "Gemini, Groq, OpenRouter dan Cloudflare Workers AI ialah integrasi penyedia Aksara.",
+        "Status online, kuota dan model semasa hanya boleh disahkan daripada runtime.",
+        "Routing dan fallback tidak menjamin semua penyedia mempunyai kebolehan sama."
+      ]
+    },
+    {
+      "id": "voice",
+      "title": "Gemini Live Voice",
+      "aliases": [
+        "voice live",
+        "voice chat",
+        "bahasa santai",
+        "aoede"
+      ],
+      "facts": [
+        "Voice Live menggunakan integrasi Gemini.",
+        "Bahasa Santai ialah label pengalaman suara Aksara.",
+        "Sambungan, volum dan reconnect mesti diuji pada peranti; data offline tidak membuktikan keadaan runtime."
+      ]
+    },
+    {
+      "id": "studio",
+      "title": "Studio Antara",
+      "aliases": [
+        "flux studio",
+        "jana gambar",
+        "studio antara",
+        "image generator"
+      ],
+      "facts": [
+        "Studio Antara menggunakan Cloudflare Workers AI untuk penjanaan imej awan.",
+        "FLUX ialah antara keluarga model imej yang digunakan.",
+        "Eksperimen SD-Turbo on-device tidak boleh dianggap tersedia sehingga runtime mengesahkannya."
+      ]
+    },
+    {
+      "id": "today",
+      "title": "Aksara Today",
+      "aliases": [
+        "dashboard hari ini",
+        "aksara today",
+        "cuaca waktu solat",
+        "status commit"
+      ],
+      "facts": [
+        "Aksara Today ialah dashboard Android yang menghimpunkan maklumat harian, kalendar, cuaca, waktu solat, pasaran dan aktiviti pembangunan.",
+        "Bacaan langsung dan status commit memerlukan sumber data semasa; corpus offline bukan sumber masa nyata."
+      ]
+    },
+    {
+      "id": "chess",
+      "title": "Ratu Gelap Chess",
+      "aliases": [
+        "catur",
+        "chess",
+        "ratu gelap"
+      ],
+      "facts": [
+        "Ratu Gelap ialah pengalaman catur dalam aplikasi Aksara Android.",
+        "Kewujudan modul tidak bermakna semua peranti lulus ujian; status build dan runtime perlu diperiksa."
+      ]
+    },
+    {
+      "id": "design",
+      "title": "Liquid Glass",
+      "aliases": [
+        "ui glass",
+        "liquid glass",
+        "background aksara"
+      ],
+      "facts": [
+        "Reka bentuk Android menggunakan tema gelap dan komponen Liquid Glass yang separa telus dan blur.",
+        "Reka bentuk tidak boleh mengorbankan keterbacaan atau kestabilan aplikasi."
+      ]
+    },
+    {
+      "id": "privacy",
+      "title": "Sesi Memori dan Privasi",
+      "aliases": [
+        "memory off",
+        "data control",
+        "sejarah sesi",
+        "padam data"
+      ],
+      "facts": [
+        "Sejarah sesi, konteks sementara dan memori kekal ialah konsep berbeza.",
+        "Memori default OFF mesti dihormati; jangan simpan maklumat sensitif tanpa kebenaran.",
+        "Kawalan pemadaman dan eksport data mesti berfungsi mengikut UI sebenar."
+      ]
+    },
+    {
+      "id": "offline",
+      "title": "Had Aksara Local",
+      "aliases": [
+        "offline",
+        "tanpa internet",
+        "local intelligence",
+        "local ai"
+      ],
+      "facts": [
+        "Aksara Local boleh menjawab topik dalam pengetahuan yang dibekalkan tanpa API awan.",
+        "Ia tidak mempunyai akses automatik kepada web, status provider, harga atau cuaca semasa.",
+        "Untuk soalan di luar corpus, sistem perlu menolak padanan yang tidak yakin daripada mereka jawapan."
+      ]
+    }
+  ]
+}
