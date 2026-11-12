@@ -96,6 +96,13 @@ jobs:
           (cd delivery && sha256sum "$file" stockfish-19-corresponding-source.tar.gz > SHA256SUMS)
           printf 'source_commit=%s\nabi=arm64-v8a\nllama_cpp=3837bf0bc02ea5d08f8ee3585fc8c7784a81bce8\nsigning=CI-debug\n' "$GITHUB_SHA" > delivery/BUILD.txt
           cat delivery/SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload verified ARM64 APK and checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: aksara-neural-pr321-arm64-${{ github.sha }}
+          path: delivery/
+          if-no-files-found: error
+          compression-level: 0
       - name: Publish owner test APK from this unmerged revision
         env:
           GH_TOKEN: ${{ github.token }}
