@@ -64,8 +64,8 @@ internal object LinuxShellIdentity {
     const val relativePath = "etc/profile.d/99-aksara-prompt.sh"
     val profile = """
         # AKSARA Linux: visual identity only, no commands or privileges.
-        case "\${'$'}-" in *i*) ;; *) return 0 ;; esac
-        [ "\${'$'}{AKSARA_PROMPT_OFF:-0}" = "1" ] && return 0
+        case "${'$'}-" in *i*) ;; *) return 0 ;; esac
+        [ "${'$'}{AKSARA_PROMPT_OFF:-0}" = "1" ] && return 0
         PS1='aksara:\w ❯ '
         export PS1
     """.trimIndent() + "\n"
