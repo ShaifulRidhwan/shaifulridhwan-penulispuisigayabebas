@@ -1,5 +1,12 @@
 name: AKSARA Neural PR321 owner APK
 on:
+  push:
+    branches:
+      - feature/aksara-neural-local-v1
+    paths:
+      - 'android-native/app/src/main/neural/aksara_neural.cpp'
+      - 'android-native/app/src/main/java/my/aksara/nativeapp/core/neural/**'
+      - '.github/workflows/aksara-android-neural-native.yml'
   workflow_dispatch:
     inputs:
       publish_manifest:
@@ -14,7 +21,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build-native:
-    if: github.ref == 'refs/heads/feature/aksara-neural-local-v1' && inputs.publish_manifest == ''
+    if: github.ref == 'refs/heads/feature/aksara-neural-local-v1' && (github.event_name == 'push' || inputs.publish_manifest == '')
     runs-on: ubuntu-latest
     timeout-minutes: 55
     env:
@@ -124,7 +131,7 @@ jobs:
             android-native/app/build/reports/
 
   publish-verified:
-    if: github.ref == 'refs/heads/feature/aksara-neural-local-v1' && inputs.publish_manifest != ''
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feature/aksara-neural-local-v1' && inputs.publish_manifest != ''
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
