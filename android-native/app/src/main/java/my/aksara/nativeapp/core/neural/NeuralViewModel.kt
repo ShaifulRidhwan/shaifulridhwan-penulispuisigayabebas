@@ -162,7 +162,7 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
             val history = before.turns.takeLast(8) + NeuralTurn("user", text)
             val nativeHistory = history.dropLast(1) + NeuralTurn("user", "$text\n/no_think")
             mutable.update { it.copy(turns = history, streaming = "", source = source) }
-            val outputLimit = if (text.length <= 40 && before.turns.isEmpty()) 96 else 256
+            val outputLimit = if (text.lowercase() in setOf("oi", "hai", "hi", "hello", "helo", "salam")) 48 else if (text.length <= 40 && before.turns.isEmpty()) 96 else 256
             val result = measure("Chat", listOf(NeuralTurn("system", system)) + nativeHistory, outputLimit)
             mutable.update { it.copy(turns = if (result.error == null && !result.cancelled && result.output.isNotBlank()) history + NeuralTurn("assistant", result.output) else history.dropLast(1),
                 streaming = if (result.error == null && !result.cancelled) "" else result.output,
@@ -181,6 +181,8 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
                 if (count == 1 || now - last >= 40) { mutable.update { it.copy(streaming = text) }; last = now }
             }
         } catch (failure: Exception) { error = failure.message ?: "Inferens gagal" }
+        // Flush the final partial UI frame even when the last token arrived inside the throttle window.
+        if (output.isNotEmpty()) mutable.update { it.copy(streaming = output) }
         val device = withContext(NonCancellable + Dispatchers.IO) { NeuralDeviceCapabilityProbe.inspect(getApplication()) }
         return NeuralMeasurement(label, count, first, SystemClock.elapsedRealtime() - started, Debug.getPss(), device.thermalStatus, stopRequested, error, output)
     }
@@ -195,7 +197,8 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
                 val conversation = listOf(NeuralTurn("system", identity)) + if (label == "Multi-turn") listOf(
                     NeuralTurn("user", "Nama watak saya Melur."), NeuralTurn("assistant", "Baik, watak itu bernama Melur."), NeuralTurn("user", prompt)
                 ) else listOf(NeuralTurn("user", prompt))
-                val result = measure(label, conversation)
+                val fastConversation = conversation.dropLast(1) + conversation.last().copy(text = conversation.last().text + "\n/no_think")
+                val result = measure(label, fastConversation)
                 mutable.update { it.copy(measurements = it.measurements + result, streaming = result.output) }
                 if (result.error != null) break
             }
