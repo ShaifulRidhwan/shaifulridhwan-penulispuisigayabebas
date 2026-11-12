@@ -186,7 +186,7 @@ missing = sorted(required.difference(members))
 if missing: raise SystemExit(f"Bundled Linux files missing: {missing}")
 # Installation progress reads the actual verified archive entry count.
 manifest = Path(sys.argv[1]).with_name("alpine-minirootfs.entries")
-manifest.write_text(f"{files}\\n".replace("\\n", "\n"), encoding="ascii")
+manifest.write_text(str(files) + chr(10), encoding="ascii")
 print(f"Alpine essentials verified: {files} entries, {size / 2**20:.1f} MiB")
 AKSARA_ROOTFS_BOUNDS
 echo "Pinned PRoot + Alpine ARM64 V3 FULL PREBUILT developer toolchain staged."
