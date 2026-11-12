@@ -1,0 +1,121 @@
+name: AKSARA Neural PR321 Build Latest
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: aksara-neural-cpu
+  cancel-in-progress: true
+jobs:
+  build-native:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      AKSARA_CI_COMPILER_REPOSITORY: /tmp/aksara-compiler-repository
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/aksara-neural-local-v1
+      - name: Record Neural source revision
+        run: echo "NEURAL_SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0 ndk;27.2.12479018 cmake;3.22.1"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Prepare pinned llama.cpp source
+        run: bash android-native/scripts/prepare-neural-native.sh
+      - name: Bootstrap checksum-pinned Gradle
+        run: |
+          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/gradle/gradle-distributions/releases/assets/232373824' -o "$RUNNER_TEMP/aksara-gradle.zip"
+          printf '%s  %s\n' '20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78' "$RUNNER_TEMP/aksara-gradle.zip" | sha256sum --check
+          unzip -q "$RUNNER_TEMP/aksara-gradle.zip" -d "$RUNNER_TEMP/aksara-gradle"
+          echo "$RUNNER_TEMP/aksara-gradle/gradle-8.13/bin" >> "$GITHUB_PATH"
+      - name: Prepare verified compiler repository
+        run: |
+          compiler_dir="$AKSARA_CI_COMPILER_REPOSITORY/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21"
+          mkdir -p "$compiler_dir"
+          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/JetBrains/kotlin/releases/assets/598630357' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar"
+          curl --fail --location --retry 3 'https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21/kotlin-compiler-embeddable-2.1.21.pom' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom"
+          printf '%s  %s\n' '67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar" 'dbbf8ac2550d5b1ae2a627f204f28b16f9271e36c44d8994aa3b139cbf70e45a' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom" | sha256sum --check
+      - name: Verify shared Web/Android Brain contracts
+        run: node scripts/sync-android-voice-brain.cjs --check
+      - name: Restore existing Stockfish build
+        id: stockfish-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            android-native/app/src/main/jniLibs/arm64-v8a/libstockfish.so
+            android-native/chess-native/build/stockfish-19-corresponding-source.tar.gz
+          key: neural-stockfish19-arm64-${{ hashFiles('android-native/chess-native/build.sh', 'android-native/chess-native/stockfish/**') }}
+      - name: Preserve Stockfish and corresponding source
+        if: steps.stockfish-cache.outputs.cache-hit != 'true'
+        env:
+          AKSARA_CHESS_ABIS: arm64-v8a
+        run: bash android-native/chess-native/build.sh
+      - name: Check offline knowledge and preservation contracts
+        run: |
+          python3 android-native/tools/sync_local_knowledge.py --check
+          python3 android-native/ci/performance-contracts.py
+      - name: Compile JNI-enabled arm64 APK
+        working-directory: android-native
+        run: gradle --no-daemon --init-script ci/compiler-repository.init.gradle -PenableNeuralNative=true -PaksaraPreviewSuffix=.preview.p321.c${NEURAL_SOURCE_SHA:0:8} assembleDebug
+      - name: Check optimized native configuration
+        run: |
+          python3 - <<'PYCODE'
+          import json
+          from pathlib import Path
+          paths = list(Path('android-native/app/.cxx/Debug').glob('*/arm64-v8a/compile_commands.json'))
+          assert paths, 'Missing native compile database'
+          rows = json.loads(paths[0].read_text())
+          for suffix in ['/aksara_neural.cpp', '/ggml-cpu.c', '/llama.cpp']:
+              command = next(row['command'] for row in rows if row['file'].endswith(suffix))
+              assert '-O3' in command, suffix + ' must be optimized'
+          PYCODE
+      - name: Prove arm64 neural JNI is inside APK
+        run: |
+          set -euo pipefail
+          unzip -l android-native/app/build/outputs/apk/debug/app-debug.apk | grep 'lib/arm64-v8a/libaksara_neural.so'
+      - name: Verify signature, native engines and checksum
+        run: |
+          set -euo pipefail
+          mkdir -p delivery
+          file="AKSARA-Neural-PR321-${NEURAL_SOURCE_SHA:0:8}.apk"
+          cp android-native/app/build/outputs/apk/debug/app-debug.apk "delivery/$file"
+          unzip -tq "delivery/$file"
+          unzip -l "delivery/$file" | grep 'lib/arm64-v8a/libstockfish.so'
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "delivery/$file"
+          cp android-native/chess-native/build/stockfish-19-corresponding-source.tar.gz delivery/
+          cp android-native/app/src/main/neural/third_party/llama.cpp/LICENSE delivery/llama.cpp-LICENSE
+          (cd delivery && sha256sum "$file" stockfish-19-corresponding-source.tar.gz > SHA256SUMS)
+          printf 'source_commit=%s\nabi=arm64-v8a\nllama_cpp=3837bf0bc02ea5d08f8ee3585fc8c7784a81bce8\nsigning=CI-debug\n' "$NEURAL_SOURCE_SHA" > delivery/BUILD.txt
+          cat delivery/SHA256SUMS >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload verified ARM64 APK and checksums
+        uses: actions/upload-artifact@v4
+        with:
+          name: aksara-neural-pr321-arm64-${{ env.NEURAL_SOURCE_SHA }}
+          path: delivery/
+          if-no-files-found: error
+          compression-level: 0
+      - name: Publish owner test APK from this unmerged revision
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="aksara-neural-pr321-${NEURAL_SOURCE_SHA:0:8}"
+          gh release create "$tag" delivery/* --target "$NEURAL_SOURCE_SHA" --prerelease \
+            --title "Aksara Neural PR #321 owner test ${NEURAL_SOURCE_SHA:0:8}" \
+            --notes "Unmerged ARM64 debug APK from $GITHUB_SHA. Host JNI inference evidence is recorded in the PR; Android physical-device testing remains pending. Tests are run locally within the single-suite budget; this dispatch builds and verifies packaging only. Install on Android 12 or newer. Keep the Stockfish corresponding source companion with redistribution."
+          echo "https://github.com/$GITHUB_REPOSITORY/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: aksara-neural-build-failure
+          path: |
+            delivery/
+            android-native/app/build/outputs/apk/debug/
+            android-native/app/build/outputs/logs/
+            android-native/app/build/reports/
