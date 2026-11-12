@@ -52,5 +52,14 @@ public final class LlamaNativeBridge {
         catch (IllegalStateException expected) { unloaded = true; }
         if (!unloaded) throw new AssertionError("Generation after unload must fail");
         System.out.println("UNLOAD_PASS");
+        bridge.cancelOnToken = false;
+        for (int cycle = 1; cycle <= 2; cycle++) {
+            bridge.output.reset(); bridge.streamed.set(0);
+            if (!bridge.nativeLoad(args[0], 1024, bridge.nativeTicket())) throw new AssertionError("Reload failed");
+            int fresh = bridge.nativeGenerate(bridge.utf8("user"), bridge.utf8("Balas ringkas: selamat pagi. /no_think"), 8, bridge.nativeTicket());
+            if (fresh <= 0 || fresh != bridge.streamed.get()) throw new AssertionError("No streaming after reload");
+            bridge.nativeUnload();
+            System.out.println("REACTIVATION_PASS cycle=" + cycle + " tokens=" + fresh);
+        }
     }
 }

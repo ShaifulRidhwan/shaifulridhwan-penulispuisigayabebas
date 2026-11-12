@@ -8,8 +8,8 @@ import java.io.File
 import java.security.MessageDigest
 
 /**
- * PR #321: real capability and model-install contracts.
- * No generated output is represented as real inference until a native backend is wired.
+ * PR #321 capability and model-install contracts.
+ * Memory snapshots and engineering estimates never imply a successful native load.
  */
 data class NeuralDeviceSnapshot(
     val totalRamBytes: Long,
@@ -18,7 +18,12 @@ data class NeuralDeviceSnapshot(
     val supportedAbis: List<String>,
     val availableStorageBytes: Long,
     val sdkInt: Int,
-    val thermalStatus: Int = 0
+    val thermalStatus: Int = 0,
+    val lowMemoryThresholdBytes: Long = 0,
+    val javaHeapUsedBytes: Long = 0,
+    val javaHeapMaxBytes: Long = 0,
+    val nativeHeapAllocatedBytes: Long = 0,
+    val processPssBytes: Long = 0
 )
 
 object NeuralDeviceCapabilityProbe {
@@ -34,7 +39,13 @@ object NeuralDeviceCapabilityProbe {
             supportedAbis = Build.SUPPORTED_ABIS.toList(),
             availableStorageBytes = storage.availableBytes,
             sdkInt = Build.VERSION.SDK_INT,
-            thermalStatus = (context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).currentThermalStatus
+            thermalStatus = (context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager).currentThermalStatus,
+            lowMemoryThresholdBytes = info.threshold,
+            javaHeapUsedBytes = Runtime.getRuntime().let { it.totalMemory() - it.freeMemory() },
+            javaHeapMaxBytes = Runtime.getRuntime().maxMemory(),
+            nativeHeapAllocatedBytes = android.os.Debug.getNativeHeapAllocatedSize(),
+            processPssBytes = android.os.Debug.getPss() * 1024
+
         )
     }
 }
@@ -107,11 +118,6 @@ object NeuralModelIntegrity {
     }
 }
 
-/** Conservative eligibility at 2048 tokens, leaving at least 1 GiB for Android. */
-fun NeuralDeviceSnapshot.loadingIssue(model: NeuralModelDescriptor): String? = when {
-    "arm64-v8a" !in supportedAbis -> "ARM64 runtime required"
-    lowMemory -> "Android reports low memory; close other apps or use Light"
-    thermalStatus >= 3 -> "Device is too hot; allow it to cool"
-    availableRamBytes < model.minAvailableRamBytes + 1_073_741_824L -> "Insufficient available RAM; try Light or Balanced"
-    else -> null
-}
+/** Compatibility callers receive only safety failures; warnings permit an explicit attempt. */
+fun NeuralDeviceSnapshot.loadingIssue(model: NeuralModelDescriptor): String? =
+    NeuralMemoryPolicy.assess(this, model, 2048).hardFailure

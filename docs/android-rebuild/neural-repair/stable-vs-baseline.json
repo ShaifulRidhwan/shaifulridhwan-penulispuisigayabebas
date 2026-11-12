@@ -1,0 +1,4456 @@
+{
+  "reference": {
+    "name": "AKSARA-Android-PR308-309-310-MERGED-f05ec540b647.apk",
+    "apk_bytes": 244454434,
+    "sha256": "0b65b0ab9763c2c0bcc68ec541425a6c1ecccde50a54026d6a8755a47cccccc6",
+    "categories": {
+      "DEX": {
+        "entries": 22,
+        "bytes": 31051036,
+        "compressed": 31051036
+      },
+      "assets": {
+        "entries": 41,
+        "bytes": 14108649,
+        "compressed": 10778339
+      },
+      "lib/arm64-v8a": {
+        "entries": 7,
+        "bytes": 120256472,
+        "compressed": 90781608
+      },
+      "lib/armeabi-v7a": {
+        "entries": 6,
+        "bytes": 15815336,
+        "compressed": 8677637
+      },
+      "lib/x86": {
+        "entries": 6,
+        "bytes": 21139612,
+        "compressed": 10169606
+      },
+      "lib/x86_64": {
+        "entries": 7,
+        "bytes": 121098584,
+        "compressed": 91142603
+      },
+      "metadata/other": {
+        "entries": 84,
+        "bytes": 432036,
+        "compressed": 292639
+      },
+      "resources": {
+        "entries": 166,
+        "bytes": 1744133,
+        "compressed": 1502818
+      }
+    },
+    "archive_overhead_bytes": 58148
+  },
+  "candidate": {
+    "name": "AKSARA-Neural-PR321-fdf8bcad.apk",
+    "apk_bytes": 142036849,
+    "sha256": "d4fbb35ad7a3a01a1399611c92d0bdd121f6e97fa9895d2c3d5ae4c6c04348ad",
+    "categories": {
+      "DEX": {
+        "entries": 23,
+        "bytes": 35627380,
+        "compressed": 35627380
+      },
+      "assets": {
+        "entries": 42,
+        "bytes": 14109702,
+        "compressed": 10778973
+      },
+      "lib/arm64-v8a": {
+        "entries": 8,
+        "bytes": 127011344,
+        "compressed": 93495932
+      },
+      "metadata/other": {
+        "entries": 87,
+        "bytes": 721423,
+        "compressed": 575248
+      },
+      "resources": {
+        "entries": 166,
+        "bytes": 1744133,
+        "compressed": 1502816
+      }
+    },
+    "archive_overhead_bytes": 56500
+  },
+  "removed": [
+    {
+      "name": "lib/armeabi-v7a/libandroidx.graphics.path.so",
+      "bytes": 7252,
+      "compressed": 4208,
+      "compression": 8,
+      "sha256": "41399eba6fc2a60f6f14642375c1824f3cf25eb8fec7397d753730a3ceda3e2b"
+    },
+    {
+      "name": "lib/armeabi-v7a/libfilament-jni.so",
+      "bytes": 1808980,
+      "compressed": 884705,
+      "compression": 8,
+      "sha256": "2fdd5949c0fff4c9e3ba311327845abb2d6b04b2c98dc41a9d1cfca2da6ae856"
+    },
+    {
+      "name": "lib/armeabi-v7a/libfilament-utils-jni.so",
+      "bytes": 331576,
+      "compressed": 178792,
+      "compression": 8,
+      "sha256": "a1e28c6d7fc96320da237e9d025a727067759e1b51cba9705fbba67e921c8853"
+    },
+    {
+      "name": "lib/armeabi-v7a/libgltfio-jni.so",
+      "bytes": 4096596,
+      "compressed": 3337077,
+      "compression": 8,
+      "sha256": "7df7e6f5400795cf349a92c7c236ebc22cb0f635e358358abd2a6b9b45bd4861"
+    },
+    {
+      "name": "lib/armeabi-v7a/libmaplibre.so",
+      "bytes": 8054608,
+      "compressed": 3497494,
+      "compression": 8,
+      "sha256": "ffd99d47de7a14d0b0f83eca77097b3a84bf1eff515d9095ee567eb4ecb8f17c"
+    },
+    {
+      "name": "lib/armeabi-v7a/libsqliteJni.so",
+      "bytes": 1516324,
+      "compressed": 775361,
+      "compression": 8,
+      "sha256": "33b416cda2fc0c853cb4ca347446bed1358f40f965ce8ad4710b6940869344f3"
+    },
+    {
+      "name": "lib/x86/libandroidx.graphics.path.so",
+      "bytes": 9284,
+      "compressed": 4999,
+      "compression": 8,
+      "sha256": "eb0570b41fd3bff25d8204a967c03bd7550719e768b791f680cc40cbe35f29af"
+    },
+    {
+      "name": "lib/x86/libfilament-jni.so",
+      "bytes": 2490912,
+      "compressed": 1071413,
+      "compression": 8,
+      "sha256": "a03fb8b99e7179bef67ed42ace3dd79bf0d94154addbc41b3e69dc6b9f743c1a"
+    },
+    {
+      "name": "lib/x86/libfilament-utils-jni.so",
+      "bytes": 455940,
+      "compressed": 213166,
+      "compression": 8,
+      "sha256": "3ab80a00cc8556dab46b14382cd08499ab45748567e4bd46744b4f149966327a"
+    },
+    {
+      "name": "lib/x86/libgltfio-jni.so",
+      "bytes": 4952552,
+      "compressed": 3564752,
+      "compression": 8,
+      "sha256": "c595994a86545bf755b2d744f8af6313dc5f87605f29f84f498d4d69382a1a6a"
+    },
+    {
+      "name": "lib/x86/libmaplibre.so",
+      "bytes": 11190308,
+      "compressed": 4332947,
+      "compression": 8,
+      "sha256": "a50a3e06e6773b61594b8b6164e0b027b272f7e014f9e33dbf8307e7fe9e9d05"
+    },
+    {
+      "name": "lib/x86/libsqliteJni.so",
+      "bytes": 2040616,
+      "compressed": 982329,
+      "compression": 8,
+      "sha256": "842b4107b57678fb7853b23f21ce7052d899ddf2382253b4a5fb2e831552fca1"
+    },
+    {
+      "name": "lib/x86_64/libandroidx.graphics.path.so",
+      "bytes": 10760,
+      "compressed": 4877,
+      "compression": 8,
+      "sha256": "4e56c996f13670e70082658de7880c4020eabf4f25e43387f88ed78a713fc9f0"
+    },
+    {
+      "name": "lib/x86_64/libfilament-jni.so",
+      "bytes": 2394920,
+      "compressed": 1013017,
+      "compression": 8,
+      "sha256": "793bdf047f514d6d942840e08ba3e02e8dcb197f31fe9e0760c7cef1ff46dfa3"
+    },
+    {
+      "name": "lib/x86_64/libfilament-utils-jni.so",
+      "bytes": 460440,
+      "compressed": 210335,
+      "compression": 8,
+      "sha256": "7c2eceeaf7658d82c580f818c7a97d9466864c121a7f6af5cf8ea60a9fd4f395"
+    },
+    {
+      "name": "lib/x86_64/libgltfio-jni.so",
+      "bytes": 4856696,
+      "compressed": 3494468,
+      "compression": 8,
+      "sha256": "0d1241dd5b3ecaad9eefd5b2c4bd6bb750b2713a9e970355490ede504af77961"
+    },
+    {
+      "name": "lib/x86_64/libmaplibre.so",
+      "bytes": 11423144,
+      "compressed": 4265087,
+      "compression": 8,
+      "sha256": "b80b8f5243b701ddec465689c5d827b4b0f491609c694f97a4e9bd99690e453a"
+    },
+    {
+      "name": "lib/x86_64/libsqliteJni.so",
+      "bytes": 2030848,
+      "compressed": 943678,
+      "compression": 8,
+      "sha256": "fbda1a1c8668e2a5b28fa2363ef23a3605e5a392d8cc03b3bd599be2e217810b"
+    },
+    {
+      "name": "lib/x86_64/libstockfish.so",
+      "bytes": 99921776,
+      "compressed": 81211141,
+      "compression": 8,
+      "sha256": "46382d7dc5497d3d22c930c7577ffed65517bf729a8b95bd71a0f86632352f11"
+    }
+  ],
+  "added": [
+    {
+      "name": "META-INF/androidx.compose.material3_material3.version",
+      "bytes": 6,
+      "compressed": 6,
+      "compression": 0,
+      "sha256": "33158972a53877b421cfe2598b8d93cab169963a4964b45ee889e85349979018"
+    },
+    {
+      "name": "META-INF/androidx.compose.material_material-icons-core.version",
+      "bytes": 6,
+      "compressed": 6,
+      "compression": 0,
+      "sha256": "068eaa526351c4d1f6a42f79ae5fa0a7d2b74501a0824727fb6baa2db3c61cce"
+    },
+    {
+      "name": "META-INF/androidx/lifecycle/lifecycle-common-java8/LICENSE.txt",
+      "bytes": 10175,
+      "compressed": 3563,
+      "compression": 8,
+      "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+    },
+    {
+      "name": "assets/neural/README.md",
+      "bytes": 1053,
+      "compressed": 634,
+      "compression": 8,
+      "sha256": "5914b2a42a20a1b36138f475371fa12d2a0a33992bad498092a8aa20ca6e4cfe"
+    },
+    {
+      "name": "classes23.dex",
+      "bytes": 1633716,
+      "compressed": 1633716,
+      "compression": 0,
+      "sha256": "e3c8a8ff21bcfe50a1fa079cb17da037da0f677edbd4a760a2243982287b164c"
+    },
+    {
+      "name": "lib/arm64-v8a/libaksara_neural.so",
+      "bytes": 6754872,
+      "compressed": 2714324,
+      "compression": 8,
+      "sha256": "54408ba8bb497df18e52b4f956b534a79e6a787a1b2b7d5a6466f69274c76471"
+    }
+  ],
+  "changed": [
+    {
+      "name": "AndroidManifest.xml",
+      "reference": {
+        "bytes": 10032,
+        "compressed": 2634,
+        "compression": 8,
+        "sha256": "ab23514fdc5cb16b1e2bcdae6e4df966ee5d0023bca06462ca0972664a244bbf"
+      },
+      "candidate": {
+        "bytes": 10232,
+        "compressed": 2668,
+        "compression": 8,
+        "sha256": "99687a651b57747e40cc4cb22510ab2fb75b2c00a0d1eaff36f7711f2fa5965a"
+      }
+    },
+    {
+      "name": "classes.dex",
+      "reference": {
+        "bytes": 16363364,
+        "compressed": 16363364,
+        "compression": 0,
+        "sha256": "5bf5f9d36ee45982ec185e684bea6dccf06b33c48300fe2097cb63e45434ad9c"
+      },
+      "candidate": {
+        "bytes": 18195400,
+        "compressed": 18195400,
+        "compression": 0,
+        "sha256": "d92b8ffb64f47f2aadd707f1a087eb6d457ec574b78478bd15febe047b460b8b"
+      }
+    },
+    {
+      "name": "classes12.dex",
+      "reference": {
+        "bytes": 1175096,
+        "compressed": 1175096,
+        "compression": 0,
+        "sha256": "7ed79e04224c6db360f272dcb34c9115f0c82b6ddfa5fd76c648238acca85a80"
+      },
+      "candidate": {
+        "bytes": 1178996,
+        "compressed": 1178996,
+        "compression": 0,
+        "sha256": "3c058913daf09c2a54e65bc382e5a4d337d447789676d95ffb13d8e83d08fb47"
+      }
+    },
+    {
+      "name": "classes13.dex",
+      "reference": {
+        "bytes": 532424,
+        "compressed": 532424,
+        "compression": 0,
+        "sha256": "ff038288e9b05f83e169064d40419bfa6697379941e56c7bc8129279fe6cdaaa"
+      },
+      "candidate": {
+        "bytes": 532476,
+        "compressed": 532476,
+        "compression": 0,
+        "sha256": "61925019a881b9b66a89f12909c601cea4535d2073d49799c0e40a082704e158"
+      }
+    },
+    {
+      "name": "classes17.dex",
+      "reference": {
+        "bytes": 410212,
+        "compressed": 410212,
+        "compression": 0,
+        "sha256": "6ebdd801c65b74675b63b357309760c658a483b324db12deb972fb4929626e6e"
+      },
+      "candidate": {
+        "bytes": 674548,
+        "compressed": 674548,
+        "compression": 0,
+        "sha256": "c0cb79e3d6da7e7f9e95b747fe60477b3fe508173716ae20a1747e6be65a3780"
+      }
+    },
+    {
+      "name": "classes22.dex",
+      "reference": {
+        "bytes": 11072928,
+        "compressed": 11072928,
+        "compression": 0,
+        "sha256": "eac1b505c4afff4b5f01c7f48501d07248846a1f2134166c90cd435d25aeae15"
+      },
+      "candidate": {
+        "bytes": 11911224,
+        "compressed": 11911224,
+        "compression": 0,
+        "sha256": "209aeb277e84743362c95cb31b0304d4ad7ebf3215385c25e062dbed52a51ce1"
+      }
+    },
+    {
+      "name": "classes9.dex",
+      "reference": {
+        "bytes": 75628,
+        "compressed": 75628,
+        "compression": 0,
+        "sha256": "230577686a349927972fd0b1aceda5c3f2e754d61e49ab00065f36d03693b968"
+      },
+      "candidate": {
+        "bytes": 79636,
+        "compressed": 79636,
+        "compression": 0,
+        "sha256": "157c8922d586ec8a6d9f50cbedb9dc42a6ff075033fb4f99aee1c1d554689e32"
+      }
+    },
+    {
+      "name": "res/layout-v21/notification_action.xml",
+      "reference": {
+        "bytes": 1052,
+        "compressed": 485,
+        "compression": 8,
+        "sha256": "15017f7f66732d44c127d4b2731d1990069918dc599566b59849a50933ff7de1"
+      },
+      "candidate": {
+        "bytes": 1052,
+        "compressed": 485,
+        "compression": 8,
+        "sha256": "dfaedc274d1e6c78d68ad227cd0f1794f7c7ed65c69980dbfea606cef1dd4ffc"
+      }
+    },
+    {
+      "name": "res/layout-v21/notification_action_tombstone.xml",
+      "reference": {
+        "bytes": 1228,
+        "compressed": 537,
+        "compression": 8,
+        "sha256": "57c5f20e636419e61d310fbc5635ee2a924432503b717e5a3e601bd0f3998e6f"
+      },
+      "candidate": {
+        "bytes": 1228,
+        "compressed": 536,
+        "compression": 8,
+        "sha256": "cc2c9f070b49b5ffdd1d8a550d6b585193209ec9a2fd13329274d5620557265b"
+      }
+    },
+    {
+      "name": "res/layout-v21/notification_template_custom_big.xml",
+      "reference": {
+        "bytes": 2456,
+        "compressed": 787,
+        "compression": 8,
+        "sha256": "ab2092e82384309aff9c62f7ddb55cd3268625449d4316a624525f03d4e6c87e"
+      },
+      "candidate": {
+        "bytes": 2456,
+        "compressed": 787,
+        "compression": 8,
+        "sha256": "52fec6ec06c0105effd96a2329dfe0a03f7dd4d913f1a3fa42dec90a6b856a48"
+      }
+    },
+    {
+      "name": "res/layout/notification_template_part_chronometer.xml",
+      "reference": {
+        "bytes": 440,
+        "compressed": 260,
+        "compression": 8,
+        "sha256": "d19ea17948a9e5ecf1edf633df728074a5f901dacd41ceac13acf25fd1fea29f"
+      },
+      "candidate": {
+        "bytes": 440,
+        "compressed": 259,
+        "compression": 8,
+        "sha256": "5b133ff24bc64d8d0ec4f1732e7f0f0ebce2aa29d6d17255f8ef83b78f9e2d7b"
+      }
+    },
+    {
+      "name": "res/layout/notification_template_part_time.xml",
+      "reference": {
+        "bytes": 440,
+        "compressed": 260,
+        "compression": 8,
+        "sha256": "f1990df61f27c1a6f64c381d3b4fcedef5bdf438540bd31e848ee9e3fafd6979"
+      },
+      "candidate": {
+        "bytes": 440,
+        "compressed": 260,
+        "compression": 8,
+        "sha256": "4bd9473c36b136500f65bd0eca525756a6f0ff107037abf589f1880f5227b791"
+      }
+    },
+    {
+      "name": "resources.arsc",
+      "reference": {
+        "bytes": 187248,
+        "compressed": 187248,
+        "compression": 0,
+        "sha256": "c263c9cfdf60d4dc8f824213711c1d8a5ce094a4f89c0c051cb4437683ae07dd"
+      },
+      "candidate": {
+        "bytes": 466248,
+        "compressed": 466248,
+        "compression": 0,
+        "sha256": "08876bc9b97030fb9c7671a9b1d754e1a9dc711df56cee0922c24197b492976c"
+      }
+    }
+  ],
+  "unchanged_entries": 307,
+  "inventories": {
+    "reference": {
+      "META-INF/com/android/build/gradle/app-metadata.properties": {
+        "bytes": 56,
+        "compressed": 52,
+        "compression": 8,
+        "sha256": "8202f7c2e4c63802e60a377cafd767bca48370716b97cda90a91c8ab96cef941"
+      },
+      "classes.dex": {
+        "bytes": 16363364,
+        "compressed": 16363364,
+        "compression": 0,
+        "sha256": "5bf5f9d36ee45982ec185e684bea6dccf06b33c48300fe2097cb63e45434ad9c"
+      },
+      "classes10.dex": {
+        "bytes": 57600,
+        "compressed": 57600,
+        "compression": 0,
+        "sha256": "db3933ee6f35ce18e7f5d198609157f0246bd0e0f895b1d6682474287709f873"
+      },
+      "classes11.dex": {
+        "bytes": 29132,
+        "compressed": 29132,
+        "compression": 0,
+        "sha256": "b133b04932ebcf82519ce661d861d3134bb649576c44b4cf1017d02c5c51f821"
+      },
+      "classes12.dex": {
+        "bytes": 1175096,
+        "compressed": 1175096,
+        "compression": 0,
+        "sha256": "7ed79e04224c6db360f272dcb34c9115f0c82b6ddfa5fd76c648238acca85a80"
+      },
+      "classes13.dex": {
+        "bytes": 532424,
+        "compressed": 532424,
+        "compression": 0,
+        "sha256": "ff038288e9b05f83e169064d40419bfa6697379941e56c7bc8129279fe6cdaaa"
+      },
+      "classes14.dex": {
+        "bytes": 4988,
+        "compressed": 4988,
+        "compression": 0,
+        "sha256": "289929dc8b5c3b2709a022459c64b9afbd44a12056afc8e193e7cc53f1a1d220"
+      },
+      "classes15.dex": {
+        "bytes": 89444,
+        "compressed": 89444,
+        "compression": 0,
+        "sha256": "4e690deff1ef3b855643552a5274c0723f4ae897a9b6bfe38cc8283a0fce4079"
+      },
+      "classes16.dex": {
+        "bytes": 66380,
+        "compressed": 66380,
+        "compression": 0,
+        "sha256": "7cc4e880e961a850262c15150c2e560048729f8315b8c622710d1cfb4e394650"
+      },
+      "classes17.dex": {
+        "bytes": 410212,
+        "compressed": 410212,
+        "compression": 0,
+        "sha256": "6ebdd801c65b74675b63b357309760c658a483b324db12deb972fb4929626e6e"
+      },
+      "classes18.dex": {
+        "bytes": 158300,
+        "compressed": 158300,
+        "compression": 0,
+        "sha256": "304b291dee9a57f2d07eebd56c6659b7229d9e48e0ce177db1b8a2aab7131066"
+      },
+      "classes19.dex": {
+        "bytes": 632632,
+        "compressed": 632632,
+        "compression": 0,
+        "sha256": "ccd2d966455383a76b74f2d27d8e09f77522cd8cb5735a43ba5834299124bb29"
+      },
+      "classes2.dex": {
+        "bytes": 1564,
+        "compressed": 1564,
+        "compression": 0,
+        "sha256": "8ece1a305e5adaa4683ed1c343f29bebe2d8bf484ba442b36d81aa31eee90b5a"
+      },
+      "classes20.dex": {
+        "bytes": 704,
+        "compressed": 704,
+        "compression": 0,
+        "sha256": "f9ee98633ed1482d019836f983171eea185a76fe480a183018a78d44a22f96b4"
+      },
+      "classes21.dex": {
+        "bytes": 39192,
+        "compressed": 39192,
+        "compression": 0,
+        "sha256": "ed992ee48e631bfc72c436477017ae03febff334a9a58afb00d20de8950cb648"
+      },
+      "classes22.dex": {
+        "bytes": 11072928,
+        "compressed": 11072928,
+        "compression": 0,
+        "sha256": "eac1b505c4afff4b5f01c7f48501d07248846a1f2134166c90cd435d25aeae15"
+      },
+      "classes3.dex": {
+        "bytes": 9888,
+        "compressed": 9888,
+        "compression": 0,
+        "sha256": "1789b4aaf802fe694d39037206f844cc9d978797ee0d437f62a141911f3d0f4b"
+      },
+      "classes4.dex": {
+        "bytes": 83680,
+        "compressed": 83680,
+        "compression": 0,
+        "sha256": "6438b315ce41ef5515e263cb881c901dee593dc4c2dce94d9924284204a35500"
+      },
+      "classes5.dex": {
+        "bytes": 158104,
+        "compressed": 158104,
+        "compression": 0,
+        "sha256": "293bfd43e514d3388ef521964f477eadad399d5432083a45589f6d42f7494f4c"
+      },
+      "classes6.dex": {
+        "bytes": 6268,
+        "compressed": 6268,
+        "compression": 0,
+        "sha256": "095d711956162d74fbd6805b7d39f1a43d8bde1fb0267b80b8d9b6bccf0f60a9"
+      },
+      "classes7.dex": {
+        "bytes": 56860,
+        "compressed": 56860,
+        "compression": 0,
+        "sha256": "8f3fadf082e881a8d9b27722bf7d56eeaa02d0f23fcdc54a5ae5ec60703de438"
+      },
+      "classes8.dex": {
+        "bytes": 26648,
+        "compressed": 26648,
+        "compression": 0,
+        "sha256": "d1cfe7f2f4ebef8ba5615ba3e32eb9ae847448692b98e4693ae62f8b30905936"
+      },
+      "classes9.dex": {
+        "bytes": 75628,
+        "compressed": 75628,
+        "compression": 0,
+        "sha256": "230577686a349927972fd0b1aceda5c3f2e754d61e49ab00065f36d03693b968"
+      },
+      "lib/arm64-v8a/libandroidx.graphics.path.so": {
+        "bytes": 10096,
+        "compressed": 4584,
+        "compression": 8,
+        "sha256": "41e9a793c43a0f4fddb19e33f346bace464f30f888ba7b9eaf96294ea115bfb6"
+      },
+      "lib/arm64-v8a/libfilament-jni.so": {
+        "bytes": 2266408,
+        "compressed": 955485,
+        "compression": 8,
+        "sha256": "d75914906f58575b70012edc4848fad5981d57de4a776d6486cdfabbf1c90da4"
+      },
+      "lib/arm64-v8a/libfilament-utils-jni.so": {
+        "bytes": 432176,
+        "compressed": 200190,
+        "compression": 8,
+        "sha256": "5c88c7abab185ffdd29bce7876f3d30f0f6231015ccc1fa2b716cb276d56cd1d"
+      },
+      "lib/arm64-v8a/libgltfio-jni.so": {
+        "bytes": 4679472,
+        "compressed": 3411721,
+        "compression": 8,
+        "sha256": "d0646ee3858dc865bc861529ce817fe4a667806c36a5c1fab67d7e2f1fcd9a2b"
+      },
+      "lib/arm64-v8a/libmaplibre.so": {
+        "bytes": 11042072,
+        "compressed": 4149133,
+        "compression": 8,
+        "sha256": "ec63a12face954ce34ef1692292de8e41e562accc86c9fd33506666b0a55c6b5"
+      },
+      "lib/arm64-v8a/libsqliteJni.so": {
+        "bytes": 1932216,
+        "compressed": 877182,
+        "compression": 8,
+        "sha256": "65f87fcc609bf2af4bcf13035ad0b4a4a095d96c4bd96735f80f699f7474772c"
+      },
+      "lib/arm64-v8a/libstockfish.so": {
+        "bytes": 99894032,
+        "compressed": 81183313,
+        "compression": 8,
+        "sha256": "2a4287a1b84172237c8760c4e9121c777b20e371735ac1e2c29ed847ad9ad9d6"
+      },
+      "lib/armeabi-v7a/libandroidx.graphics.path.so": {
+        "bytes": 7252,
+        "compressed": 4208,
+        "compression": 8,
+        "sha256": "41399eba6fc2a60f6f14642375c1824f3cf25eb8fec7397d753730a3ceda3e2b"
+      },
+      "lib/armeabi-v7a/libfilament-jni.so": {
+        "bytes": 1808980,
+        "compressed": 884705,
+        "compression": 8,
+        "sha256": "2fdd5949c0fff4c9e3ba311327845abb2d6b04b2c98dc41a9d1cfca2da6ae856"
+      },
+      "lib/armeabi-v7a/libfilament-utils-jni.so": {
+        "bytes": 331576,
+        "compressed": 178792,
+        "compression": 8,
+        "sha256": "a1e28c6d7fc96320da237e9d025a727067759e1b51cba9705fbba67e921c8853"
+      },
+      "lib/armeabi-v7a/libgltfio-jni.so": {
+        "bytes": 4096596,
+        "compressed": 3337077,
+        "compression": 8,
+        "sha256": "7df7e6f5400795cf349a92c7c236ebc22cb0f635e358358abd2a6b9b45bd4861"
+      },
+      "lib/armeabi-v7a/libmaplibre.so": {
+        "bytes": 8054608,
+        "compressed": 3497494,
+        "compression": 8,
+        "sha256": "ffd99d47de7a14d0b0f83eca77097b3a84bf1eff515d9095ee567eb4ecb8f17c"
+      },
+      "lib/armeabi-v7a/libsqliteJni.so": {
+        "bytes": 1516324,
+        "compressed": 775361,
+        "compression": 8,
+        "sha256": "33b416cda2fc0c853cb4ca347446bed1358f40f965ce8ad4710b6940869344f3"
+      },
+      "lib/x86/libandroidx.graphics.path.so": {
+        "bytes": 9284,
+        "compressed": 4999,
+        "compression": 8,
+        "sha256": "eb0570b41fd3bff25d8204a967c03bd7550719e768b791f680cc40cbe35f29af"
+      },
+      "lib/x86/libfilament-jni.so": {
+        "bytes": 2490912,
+        "compressed": 1071413,
+        "compression": 8,
+        "sha256": "a03fb8b99e7179bef67ed42ace3dd79bf0d94154addbc41b3e69dc6b9f743c1a"
+      },
+      "lib/x86/libfilament-utils-jni.so": {
+        "bytes": 455940,
+        "compressed": 213166,
+        "compression": 8,
+        "sha256": "3ab80a00cc8556dab46b14382cd08499ab45748567e4bd46744b4f149966327a"
+      },
+      "lib/x86/libgltfio-jni.so": {
+        "bytes": 4952552,
+        "compressed": 3564752,
+        "compression": 8,
+        "sha256": "c595994a86545bf755b2d744f8af6313dc5f87605f29f84f498d4d69382a1a6a"
+      },
+      "lib/x86/libmaplibre.so": {
+        "bytes": 11190308,
+        "compressed": 4332947,
+        "compression": 8,
+        "sha256": "a50a3e06e6773b61594b8b6164e0b027b272f7e014f9e33dbf8307e7fe9e9d05"
+      },
+      "lib/x86/libsqliteJni.so": {
+        "bytes": 2040616,
+        "compressed": 982329,
+        "compression": 8,
+        "sha256": "842b4107b57678fb7853b23f21ce7052d899ddf2382253b4a5fb2e831552fca1"
+      },
+      "lib/x86_64/libandroidx.graphics.path.so": {
+        "bytes": 10760,
+        "compressed": 4877,
+        "compression": 8,
+        "sha256": "4e56c996f13670e70082658de7880c4020eabf4f25e43387f88ed78a713fc9f0"
+      },
+      "lib/x86_64/libfilament-jni.so": {
+        "bytes": 2394920,
+        "compressed": 1013017,
+        "compression": 8,
+        "sha256": "793bdf047f514d6d942840e08ba3e02e8dcb197f31fe9e0760c7cef1ff46dfa3"
+      },
+      "lib/x86_64/libfilament-utils-jni.so": {
+        "bytes": 460440,
+        "compressed": 210335,
+        "compression": 8,
+        "sha256": "7c2eceeaf7658d82c580f818c7a97d9466864c121a7f6af5cf8ea60a9fd4f395"
+      },
+      "lib/x86_64/libgltfio-jni.so": {
+        "bytes": 4856696,
+        "compressed": 3494468,
+        "compression": 8,
+        "sha256": "0d1241dd5b3ecaad9eefd5b2c4bd6bb750b2713a9e970355490ede504af77961"
+      },
+      "lib/x86_64/libmaplibre.so": {
+        "bytes": 11423144,
+        "compressed": 4265087,
+        "compression": 8,
+        "sha256": "b80b8f5243b701ddec465689c5d827b4b0f491609c694f97a4e9bd99690e453a"
+      },
+      "lib/x86_64/libsqliteJni.so": {
+        "bytes": 2030848,
+        "compressed": 943678,
+        "compression": 8,
+        "sha256": "fbda1a1c8668e2a5b28fa2363ef23a3605e5a392d8cc03b3bd599be2e217810b"
+      },
+      "lib/x86_64/libstockfish.so": {
+        "bytes": 99921776,
+        "compressed": 81211141,
+        "compression": 8,
+        "sha256": "46382d7dc5497d3d22c930c7577ffed65517bf729a8b95bd71a0f86632352f11"
+      },
+      "assets/AVATAR_NOTICE.txt": {
+        "bytes": 589,
+        "compressed": 374,
+        "compression": 8,
+        "sha256": "0a9879cb0b4128dff0a43170d879446dbf755deea4204d4192080c828ea2fd83"
+      },
+      "assets/aksara-code-engine.html": {
+        "bytes": 6724,
+        "compressed": 3321,
+        "compression": 8,
+        "sha256": "81aa176de8faad63903053786e04fffaff6400fc0ac596bbb81c3d6df217a956"
+      },
+      "assets/aksara-code-runtime.js": {
+        "bytes": 22554,
+        "compressed": 8851,
+        "compression": 8,
+        "sha256": "dd4d80a5ea6f2e1d07eaea96f655016487dac88c02b3c68145a10b920b4d018c"
+      },
+      "assets/aksara_local_knowledge_v2.json": {
+        "bytes": 5417,
+        "compressed": 2021,
+        "compression": 8,
+        "sha256": "48de9a7d297c7aa78c2a2ee43856f43fcea1f44f7325bb6342ade7bd0d931011"
+      },
+      "assets/aksara_local_module_index.json": {
+        "bytes": 1861,
+        "compressed": 380,
+        "compression": 8,
+        "sha256": "338f9a4d7406a4b05a8af8a07312fb80e51230fcefc9fc1c46284be4bb432db3"
+      },
+      "assets/chess/Chesslib-Apache-2.0.txt": {
+        "bytes": 11358,
+        "compressed": 4430,
+        "compression": 8,
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      },
+      "assets/chess/Commons-Lang-NOTICE.txt": {
+        "bytes": 174,
+        "compressed": 127,
+        "compression": 8,
+        "sha256": "64bc8696af3f6c770521412b85d3a733fa44b2ef5b0f4bd739e0c4d02eca492a"
+      },
+      "assets/chess/LLVM-libcxx-LICENSE.txt": {
+        "bytes": 16703,
+        "compressed": 6128,
+        "compression": 8,
+        "sha256": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b"
+      },
+      "assets/chess/NOTICE.txt": {
+        "bytes": 1085,
+        "compressed": 629,
+        "compression": 8,
+        "sha256": "7a7b939db98e9d297a82389bc77693d5b419e0914b2dd44994ad72502a5f5db9"
+      },
+      "assets/chess/Stockfish-GPL-3.0.txt": {
+        "bytes": 35149,
+        "compressed": 14203,
+        "compression": 8,
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "assets/chess/capture.wav": {
+        "bytes": 16364,
+        "compressed": 16364,
+        "compression": 0,
+        "sha256": "45d90e369371e95a7de82ba3ad961adec0c014c9eea9a82688dfc747e8f3b80a"
+      },
+      "assets/chess/light_step.wav": {
+        "bytes": 9644,
+        "compressed": 9644,
+        "compression": 0,
+        "sha256": "039c6b0635a7f6d50e4942e4a8ca0771be6b75df6381464491d7c72928c971c8"
+      },
+      "assets/chess/shadow_step.wav": {
+        "bytes": 12044,
+        "compressed": 12044,
+        "compression": 0,
+        "sha256": "5eb8f3b81e6187964a47ba59d8e3cb8ed5b14c3a5854addf927eea508d7d5aec"
+      },
+      "assets/game/PHASER-LICENSE.md": {
+        "bytes": 1120,
+        "compressed": 670,
+        "compression": 8,
+        "sha256": "080f3d5539e766bb556df5b8e86c4f5d581ece35c692b80956ca352b84d29134"
+      },
+      "assets/game/boot.js": {
+        "bytes": 899,
+        "compressed": 476,
+        "compression": 8,
+        "sha256": "ed69dbe216037fac5a7928952b011c3c78b2beb94552097905d9fdbe65073b75"
+      },
+      "assets/game/campaign.js": {
+        "bytes": 2419,
+        "compressed": 1340,
+        "compression": 8,
+        "sha256": "6d5038d31951946bfa7f89d565ff4b45acd4a49a84f1cf93429a20682895d116"
+      },
+      "assets/game/combat.js": {
+        "bytes": 9754,
+        "compressed": 4176,
+        "compression": 8,
+        "sha256": "7d7e75f445d43822ad77a4faa94dd406e995ccdf29fef1ddbeacc19bb2e63c57"
+      },
+      "assets/game/controls.js": {
+        "bytes": 4901,
+        "compressed": 1650,
+        "compression": 8,
+        "sha256": "f1006f9e45a9216d5ce3f64f97505f2ec7090b7fae850a5c84cf4e484b510f61"
+      },
+      "assets/game/dm_sans.ttf": {
+        "bytes": 240164,
+        "compressed": 116394,
+        "compression": 8,
+        "sha256": "8cd08d97e89c24d0aa92edd2f0f4c8ee6195eee9b7c9f154865a58b02f0c1c0d"
+      },
+      "assets/game/eclipse-arena.png": {
+        "bytes": 2421425,
+        "compressed": 2421425,
+        "compression": 0,
+        "sha256": "6d5ce6334743921e5c1afb2bc32e7f4962cb962d7c8f94a12c97ddd660a34a9a"
+      },
+      "assets/game/eclipse-walk.json": {
+        "bytes": 6856,
+        "compressed": 512,
+        "compression": 8,
+        "sha256": "b277557a1b6e330a1dbae8d7768fa1a76f3e067f306ff7447863f581cd229253"
+      },
+      "assets/game/eclipse-walk.png": {
+        "bytes": 2136754,
+        "compressed": 2136754,
+        "compression": 0,
+        "sha256": "77e1fdd0a16e1f2b018e71cd28771b90c853c2f5e981f4db6ea1efa69d38b438"
+      },
+      "assets/game/eclipse-warriors.json": {
+        "bytes": 13573,
+        "compressed": 1098,
+        "compression": 8,
+        "sha256": "037978b7f95582b6773f1c4eefbfbd7d425b94a1b72fdbcda63110d9bbcb879d"
+      },
+      "assets/game/eclipse-warriors.png": {
+        "bytes": 2624155,
+        "compressed": 2624155,
+        "compression": 0,
+        "sha256": "b4a2e4f797d331e587b86c4e7ecd95d8be4991e16dd896d27a020d5eff4de92c"
+      },
+      "assets/game/eclipse.css": {
+        "bytes": 10581,
+        "compressed": 3665,
+        "compression": 8,
+        "sha256": "1d1cd27115ddcc9eb70fb1df7f6938279cf28d0231e14e088c8b5dfb55e970c3"
+      },
+      "assets/game/game.js": {
+        "bytes": 9457,
+        "compressed": 4060,
+        "compression": 8,
+        "sha256": "44a746431bb7f3361cd0f2a96ba7b1c4a5f8641900a51aa9bc669636f59d9075"
+      },
+      "assets/game/index.html": {
+        "bytes": 5010,
+        "compressed": 2038,
+        "compression": 8,
+        "sha256": "6c83a8455c9e3db059d453a75f0892ee38b25dc9a840710072c4c0a87bdbe5d3"
+      },
+      "assets/game/input.js": {
+        "bytes": 3360,
+        "compressed": 1458,
+        "compression": 8,
+        "sha256": "13c3be69fd2c5817a9b4840d7e076950aa3fc7226d9fa2575f12f2a58984ec0f"
+      },
+      "assets/game/phaser.min.js": {
+        "bytes": 1196122,
+        "compressed": 383384,
+        "compression": 8,
+        "sha256": "e92ddef111ba42e92d316979c732311757093688ea1810591cb7aa2858eba7a7"
+      },
+      "assets/game/space_grotesk.ttf": {
+        "bytes": 136676,
+        "compressed": 68383,
+        "compression": 8,
+        "sha256": "acad6de1fc93436f5c0f1f4137751ef04f1aea3063e7036535970ffcfbd79f72"
+      },
+      "assets/game/visual.js": {
+        "bytes": 9532,
+        "compressed": 3917,
+        "compression": 8,
+        "sha256": "443b1fc0f591de3ec6f1d4bb3547c25ade4aca994c872bb46b2671dbdeb3b12f"
+      },
+      "assets/journey.json": {
+        "bytes": 26060,
+        "compressed": 10923,
+        "compression": 8,
+        "sha256": "8db353712e7ec67ab6eb61e63e0bf7b078b8e3b29b562fe9d2d1f3d0317826d3"
+      },
+      "assets/karya-index.json": {
+        "bytes": 16680,
+        "compressed": 7356,
+        "compression": 8,
+        "sha256": "0fdd5b02160931c1d7ab416614b9266902dd2b030c054017483bc56ec9572aa3"
+      },
+      "assets/licenses/dm_sans_license.txt": {
+        "bytes": 4389,
+        "compressed": 2051,
+        "compression": 8,
+        "sha256": "2af94f4fb533be8fa23282eb33e08ca311ddf47c2f32777e2040b282deeec65c"
+      },
+      "assets/licenses/space_grotesk_license.txt": {
+        "bytes": 4402,
+        "compressed": 2059,
+        "compression": 8,
+        "sha256": "c6dec685825f73b18c20926fddc65e8315642e12986f15db0699170940a09efc"
+      },
+      "assets/licenses/stable_diffusion_cpp_license.txt": {
+        "bytes": 1063,
+        "compressed": 633,
+        "compression": 8,
+        "sha256": "8c7410e741dfd54668e7c9d098d03b26ff56496dc3e44709cae0540942e0438d"
+      },
+      "assets/models/brunette.glb": {
+        "bytes": 4721528,
+        "compressed": 2777618,
+        "compression": 8,
+        "sha256": "8864c504b5c11daa2f0037afffdc0815bb0fa2e6062e37a584746116a3c2f538"
+      },
+      "assets/novel-kb.json": {
+        "bytes": 281755,
+        "compressed": 90333,
+        "compression": 8,
+        "sha256": "b48626e7a5b30b3d6d7f807ada3d9b3cd0aefeb58086981febc5f2f60c443bfd"
+      },
+      "assets/voice-identity.txt": {
+        "bytes": 15299,
+        "compressed": 5398,
+        "compression": 8,
+        "sha256": "05e2a89b643e1ea0bea53e5f970a5fd9f4695c160e4ddbb28e71a10e88e219c4"
+      },
+      "assets/voice-web-brain-cahaya.txt": {
+        "bytes": 32507,
+        "compressed": 13939,
+        "compression": 8,
+        "sha256": "8ab2d3be7f398a7ce565b1dba5c3e20023d8ab73ce9904fb06343803b5d733d4"
+      },
+      "assets/voice-web-brain-gelap.txt": {
+        "bytes": 32542,
+        "compressed": 13958,
+        "compression": 8,
+        "sha256": "6082512d4555b3b85f0d13c713285dd61615ae276465d40869f3da1adcd7d57f"
+      },
+      "AndroidManifest.xml": {
+        "bytes": 10032,
+        "compressed": 2634,
+        "compression": 8,
+        "sha256": "ab23514fdc5cb16b1e2bcdae6e4df966ee5d0023bca06462ca0972664a244bbf"
+      },
+      "res/anim-v21/fragment_fast_out_extra_slow_in.xml": {
+        "bytes": 364,
+        "compressed": 218,
+        "compression": 8,
+        "sha256": "650c54c5eff734092ee09354ffa1d833931b7706f2797e801f825604c47c2dd3"
+      },
+      "res/animator/fragment_close_enter.xml": {
+        "bytes": 1128,
+        "compressed": 395,
+        "compression": 8,
+        "sha256": "69e40dba6a95b3a53721b0f6b44df60478cd5a6fc6136c8eb62c0f24a9afcfbe"
+      },
+      "res/animator/fragment_close_exit.xml": {
+        "bytes": 1128,
+        "compressed": 395,
+        "compression": 8,
+        "sha256": "64fb930830d5e318935eeb6412bdaea39b0adc6e5a74f0bcc72fe35bc6629e51"
+      },
+      "res/animator/fragment_fade_enter.xml": {
+        "bytes": 452,
+        "compressed": 265,
+        "compression": 8,
+        "sha256": "0b51013fc0f5e916a727b75512c1ee9206178bd134509b7b4be6a397fa4d9a6b"
+      },
+      "res/animator/fragment_fade_exit.xml": {
+        "bytes": 452,
+        "compressed": 265,
+        "compression": 8,
+        "sha256": "440c234ca8a09188ec558b13771cb29c2da228956bfb58bdade5c1770384acbe"
+      },
+      "res/animator/fragment_open_enter.xml": {
+        "bytes": 1128,
+        "compressed": 388,
+        "compression": 8,
+        "sha256": "26aadd07b2900770e39a732b38f778a445cf6ae7127934ade550ed36612345b6"
+      },
+      "res/animator/fragment_open_exit.xml": {
+        "bytes": 1128,
+        "compressed": 392,
+        "compression": 8,
+        "sha256": "9a0bb56e3f3365aeeb29817fd0a6d1b6360b32751ddf52573364c54eef6187b9"
+      },
+      "res/color/vector_tint_color.xml": {
+        "bytes": 340,
+        "compressed": 180,
+        "compression": 8,
+        "sha256": "4bbb4ef3e0e3db260a05d794047a1765e420d699ee5673e90b57ff682a2fe34e"
+      },
+      "res/color/vector_tint_theme_color.xml": {
+        "bytes": 340,
+        "compressed": 182,
+        "compression": 8,
+        "sha256": "cf34dc5bdb4a6d1568143e115ac4e34448383ac772862ef0fdbb7fe8936c6dd3"
+      },
+      "res/drawable-anydpi-v21/ic_call_answer.xml": {
+        "bytes": 1356,
+        "compressed": 663,
+        "compression": 8,
+        "sha256": "5f6376dfe199d8a6e40033d3e623989d052c9b2f974d00c824fbb8b76fc6fde8"
+      },
+      "res/drawable-anydpi-v21/ic_call_answer_low.xml": {
+        "bytes": 1320,
+        "compressed": 644,
+        "compression": 8,
+        "sha256": "8f9acacabaf2dfb4bb53dab7ce7bec9c1451ce0a0219ffaa41760ea82da3d2d6"
+      },
+      "res/drawable-anydpi-v21/ic_call_answer_video.xml": {
+        "bytes": 772,
+        "compressed": 421,
+        "compression": 8,
+        "sha256": "5d4cdaae5838ad9442c085f951b766b2808bff13b8c85a14e0bcf8571514492c"
+      },
+      "res/drawable-anydpi-v21/ic_call_answer_video_low.xml": {
+        "bytes": 736,
+        "compressed": 401,
+        "compression": 8,
+        "sha256": "4a959580080ebb1d822a2459a4234d2abf0dd0b65d9c28bda8c258dafc888c51"
+      },
+      "res/drawable-anydpi-v21/ic_call_decline.xml": {
+        "bytes": 1528,
+        "compressed": 734,
+        "compression": 8,
+        "sha256": "2d825b79cce60203492ff09a04826db0ac8d9eb9bc0fb9fb139ae1aa5cde0f67"
+      },
+      "res/drawable-anydpi-v21/ic_call_decline_low.xml": {
+        "bytes": 1492,
+        "compressed": 712,
+        "compression": 8,
+        "sha256": "c8321364802409baf4d76e2a84e303871585bdc95b0395040c5ecea0e2051105"
+      },
+      "res/drawable-anydpi-v24/maplibre_logo_icon.xml": {
+        "bytes": 14652,
+        "compressed": 5655,
+        "compression": 8,
+        "sha256": "eab8e1202a57ef7ee26f30bb84020d3af1448aead8ee513e549942a47344b98e"
+      },
+      "res/drawable-hdpi-v4/ic_call_answer.png": {
+        "bytes": 472,
+        "compressed": 472,
+        "compression": 0,
+        "sha256": "5c80d88a7b82ef5833255bf70ff1c26c3efb2a92ae90cac222f3200f59e0b1ea"
+      },
+      "res/drawable-hdpi-v4/ic_call_answer_low.png": {
+        "bytes": 472,
+        "compressed": 472,
+        "compression": 0,
+        "sha256": "5c80d88a7b82ef5833255bf70ff1c26c3efb2a92ae90cac222f3200f59e0b1ea"
+      },
+      "res/drawable-hdpi-v4/ic_call_answer_video.png": {
+        "bytes": 254,
+        "compressed": 254,
+        "compression": 0,
+        "sha256": "6adcfc9dd1e1b82b985d223fc8a01c8e8f0dd3b9051d38062674b2380af79a50"
+      },
+      "res/drawable-hdpi-v4/ic_call_answer_video_low.png": {
+        "bytes": 254,
+        "compressed": 254,
+        "compression": 0,
+        "sha256": "6adcfc9dd1e1b82b985d223fc8a01c8e8f0dd3b9051d38062674b2380af79a50"
+      },
+      "res/drawable-hdpi-v4/ic_call_decline.png": {
+        "bytes": 375,
+        "compressed": 375,
+        "compression": 0,
+        "sha256": "12ec9f9ad5fa3d7d897114af6c2297b66f31cb056e43daffbe80d23f6f66396d"
+      },
+      "res/drawable-hdpi-v4/ic_call_decline_low.png": {
+        "bytes": 375,
+        "compressed": 375,
+        "compression": 0,
+        "sha256": "12ec9f9ad5fa3d7d897114af6c2297b66f31cb056e43daffbe80d23f6f66396d"
+      },
+      "res/drawable-hdpi-v4/maplibre_compass_icon.png": {
+        "bytes": 1929,
+        "compressed": 1929,
+        "compression": 0,
+        "sha256": "4ce32188a64f9e8a96733854e970602e08391f448b19a50561b12bc9df8a5c26"
+      },
+      "res/drawable-hdpi-v4/maplibre_logo_helmet.png": {
+        "bytes": 1044,
+        "compressed": 1044,
+        "compression": 0,
+        "sha256": "1aacb0054470e22f3ee9e8608681a5f218bfdf96c21facfc52a9fe6efaa0a7e5"
+      },
+      "res/drawable-hdpi-v4/maplibre_logo_icon.png": {
+        "bytes": 4001,
+        "compressed": 4001,
+        "compression": 0,
+        "sha256": "0cc87251603e3456973f3c247275c962de340152f6dc28d124721c5cb8ca2a56"
+      },
+      "res/drawable-hdpi-v4/maplibre_marker_icon_default.png": {
+        "bytes": 1483,
+        "compressed": 1483,
+        "compression": 0,
+        "sha256": "b731e4bcb740259c25e34315bcd328d78777a1143dd58f79674173b71226b3f2"
+      },
+      "res/drawable-hdpi-v4/maplibre_markerview_icon_default.png": {
+        "bytes": 1611,
+        "compressed": 1611,
+        "compression": 0,
+        "sha256": "85559f0da8f35ebe9eb1bac620eb993d4c40ba6b28d576c64b98857cdae27592"
+      },
+      "res/drawable-hdpi-v4/maplibre_mylocation_icon_bearing.png": {
+        "bytes": 786,
+        "compressed": 786,
+        "compression": 0,
+        "sha256": "00fdacd746eca4eadc8398dc4ab6569b1107660c7ca7b818812594fab5e44473"
+      },
+      "res/drawable-hdpi-v4/maplibre_mylocation_icon_default.png": {
+        "bytes": 651,
+        "compressed": 651,
+        "compression": 0,
+        "sha256": "edd8cd33b0f25c90a9bcd6f7f5495fa74ac328f7a9750dcccbec3afd33375de4"
+      },
+      "res/drawable-hdpi-v4/notification_bg_low_normal.9.png": {
+        "bytes": 212,
+        "compressed": 212,
+        "compression": 0,
+        "sha256": "21f0b55280be10b187ceff8edef4a5a7047683e6e9fcf47de410aa3839f41094"
+      },
+      "res/drawable-hdpi-v4/notification_bg_low_pressed.9.png": {
+        "bytes": 225,
+        "compressed": 225,
+        "compression": 0,
+        "sha256": "42aee0b03883e94df5e543348a397d1302c1b8221895871a83b81899f5a9647b"
+      },
+      "res/drawable-hdpi-v4/notification_bg_normal.9.png": {
+        "bytes": 212,
+        "compressed": 212,
+        "compression": 0,
+        "sha256": "0c6328c7b2420570a7ec38b3beb3bac9a29d895ac1ab7239315aba7266418593"
+      },
+      "res/drawable-hdpi-v4/notification_bg_normal_pressed.9.png": {
+        "bytes": 225,
+        "compressed": 225,
+        "compression": 0,
+        "sha256": "18b328d8017e677d5aad3dbd66bae356b5cac978c6f0670938ea648e51d0eb66"
+      },
+      "res/drawable-hdpi-v4/notification_oversize_large_icon_bg.png": {
+        "bytes": 909,
+        "compressed": 909,
+        "compression": 0,
+        "sha256": "aa00088d0d9fd97bd92ed9ffd29b54bb69a48a984aa73448ce553fb9d812be41"
+      },
+      "res/drawable-hdpi-v4/notify_panel_notification_icon_bg.png": {
+        "bytes": 107,
+        "compressed": 107,
+        "compression": 0,
+        "sha256": "8430ec003e003f3f2ba2f78d48fd150e25407667e530e82e87a7d4841c0fd676"
+      },
+      "res/drawable-ldpi-v4/ic_call_answer.png": {
+        "bytes": 270,
+        "compressed": 270,
+        "compression": 0,
+        "sha256": "6d34a8bb29be26e343781603588506f33bd1b93732a1c1bc9fd84678aa36b178"
+      },
+      "res/drawable-ldpi-v4/ic_call_answer_low.png": {
+        "bytes": 270,
+        "compressed": 270,
+        "compression": 0,
+        "sha256": "6d34a8bb29be26e343781603588506f33bd1b93732a1c1bc9fd84678aa36b178"
+      },
+      "res/drawable-ldpi-v4/ic_call_answer_video.png": {
+        "bytes": 199,
+        "compressed": 199,
+        "compression": 0,
+        "sha256": "66356f564f051a568e25071f60da312c418309f9129773aceb2246773458681c"
+      },
+      "res/drawable-ldpi-v4/ic_call_answer_video_low.png": {
+        "bytes": 199,
+        "compressed": 199,
+        "compression": 0,
+        "sha256": "66356f564f051a568e25071f60da312c418309f9129773aceb2246773458681c"
+      },
+      "res/drawable-ldpi-v4/ic_call_decline.png": {
+        "bytes": 201,
+        "compressed": 201,
+        "compression": 0,
+        "sha256": "a18cdaaf3742b1a3d4f484fa15d00fa34afb21495884301aafa3213338661ed6"
+      },
+      "res/drawable-ldpi-v4/ic_call_decline_low.png": {
+        "bytes": 201,
+        "compressed": 201,
+        "compression": 0,
+        "sha256": "a18cdaaf3742b1a3d4f484fa15d00fa34afb21495884301aafa3213338661ed6"
+      },
+      "res/drawable-ldpi-v4/maplibre_logo_icon.png": {
+        "bytes": 1812,
+        "compressed": 1812,
+        "compression": 0,
+        "sha256": "aaec3a68a08dadb0d013eb7fe1461d3567797b73e3acf8465768a7234fa7494d"
+      },
+      "res/drawable-mdpi-v4/ic_call_answer.png": {
+        "bytes": 317,
+        "compressed": 317,
+        "compression": 0,
+        "sha256": "f2ff62f473d8a5e00a8b6c81c15be9a0536471c3d5a81e37d04bc3356ea81ca0"
+      },
+      "res/drawable-mdpi-v4/ic_call_answer_low.png": {
+        "bytes": 317,
+        "compressed": 317,
+        "compression": 0,
+        "sha256": "f2ff62f473d8a5e00a8b6c81c15be9a0536471c3d5a81e37d04bc3356ea81ca0"
+      },
+      "res/drawable-mdpi-v4/ic_call_answer_video.png": {
+        "bytes": 206,
+        "compressed": 206,
+        "compression": 0,
+        "sha256": "6306048ba5f7eca43e7bdadeefa9412180508486fd543e02de93d2a013e223f0"
+      },
+      "res/drawable-mdpi-v4/ic_call_answer_video_low.png": {
+        "bytes": 206,
+        "compressed": 206,
+        "compression": 0,
+        "sha256": "6306048ba5f7eca43e7bdadeefa9412180508486fd543e02de93d2a013e223f0"
+      },
+      "res/drawable-mdpi-v4/ic_call_decline.png": {
+        "bytes": 264,
+        "compressed": 264,
+        "compression": 0,
+        "sha256": "7e87b3e0229126dc3c2bdaddcd8f330f3bb5f7613a05024c3cd6445dd161f788"
+      },
+      "res/drawable-mdpi-v4/ic_call_decline_low.png": {
+        "bytes": 264,
+        "compressed": 264,
+        "compression": 0,
+        "sha256": "7e87b3e0229126dc3c2bdaddcd8f330f3bb5f7613a05024c3cd6445dd161f788"
+      },
+      "res/drawable-mdpi-v4/maplibre_compass_icon.png": {
+        "bytes": 1711,
+        "compressed": 1711,
+        "compression": 0,
+        "sha256": "dbc5d7d0cff0696ffc2979f110ab2138f33481075d493cf0d93a4918fe2dcd49"
+      },
+      "res/drawable-mdpi-v4/maplibre_logo_helmet.png": {
+        "bytes": 665,
+        "compressed": 665,
+        "compression": 0,
+        "sha256": "ad1b578d84eb565ecef2f534aa08b18d439f37f3dc528b22d498d9cf72c267ed"
+      },
+      "res/drawable-mdpi-v4/maplibre_logo_icon.png": {
+        "bytes": 2419,
+        "compressed": 2419,
+        "compression": 0,
+        "sha256": "67b6d8b27d4f2ecf7007ca94b698b426d2ecf4caf7cf9e9611986ccf1ca5f275"
+      },
+      "res/drawable-mdpi-v4/maplibre_marker_icon_default.png": {
+        "bytes": 973,
+        "compressed": 973,
+        "compression": 0,
+        "sha256": "7d782e286cd3906851db7f627a085edbc93ec07382afccf4ba6d280a647d0ad9"
+      },
+      "res/drawable-mdpi-v4/maplibre_markerview_icon_default.png": {
+        "bytes": 1057,
+        "compressed": 1057,
+        "compression": 0,
+        "sha256": "994f95b79e509c69e0bc5740c3d273007cce7afcf771c816dcb98c508619c5d4"
+      },
+      "res/drawable-mdpi-v4/maplibre_mylocation_icon_bearing.png": {
+        "bytes": 519,
+        "compressed": 519,
+        "compression": 0,
+        "sha256": "a455bcfbe45c960649f3eb4a2aa022b1474a1e8d9bd1a905109c94cbbf9f36eb"
+      },
+      "res/drawable-mdpi-v4/maplibre_mylocation_icon_default.png": {
+        "bytes": 426,
+        "compressed": 426,
+        "compression": 0,
+        "sha256": "2cbdd35c2381d84b5f78a8a88bfb4f2388cfbb3a8ad8ea45198d67b97afeb7ad"
+      },
+      "res/drawable-mdpi-v4/notification_bg_low_normal.9.png": {
+        "bytes": 215,
+        "compressed": 215,
+        "compression": 0,
+        "sha256": "2f7fbda0ba6e53e9a47e2fc0e24e32c447c613a5808c2d6285dc651e83a07ad7"
+      },
+      "res/drawable-mdpi-v4/notification_bg_low_pressed.9.png": {
+        "bytes": 223,
+        "compressed": 223,
+        "compression": 0,
+        "sha256": "e17761ed280edd93d7141bd504b70f9e9e15a8652288d9e6333bf4ce964ef844"
+      },
+      "res/drawable-mdpi-v4/notification_bg_normal.9.png": {
+        "bytes": 215,
+        "compressed": 215,
+        "compression": 0,
+        "sha256": "a8676a1793ac8310ffb12986232df66df092d29c242aeedc2b73556c010d38dc"
+      },
+      "res/drawable-mdpi-v4/notification_bg_normal_pressed.9.png": {
+        "bytes": 223,
+        "compressed": 223,
+        "compression": 0,
+        "sha256": "99c14d6855b8be296d58017d3751b8dc849c47b6d1d80ab614ff9075080e461b"
+      },
+      "res/drawable-mdpi-v4/notify_panel_notification_icon_bg.png": {
+        "bytes": 98,
+        "compressed": 98,
+        "compression": 0,
+        "sha256": "0d773e62c756422313262846c787e58f67e0ee87e45e1ae9942002e816c4cb9e"
+      },
+      "res/drawable-nodpi-v4/aksara_chat_wallpaper.webp": {
+        "bytes": 114514,
+        "compressed": 114514,
+        "compression": 0,
+        "sha256": "537cbeb2958640870c6c0b2966eaf46ebcccf68fcef5faf9e16da501f6fb62db"
+      },
+      "res/drawable-nodpi-v4/aksara_duality_v2.webp": {
+        "bytes": 82436,
+        "compressed": 82436,
+        "compression": 0,
+        "sha256": "25226ce76b3ac94178055360aecc1439b4c1e9a25c70c0cb16182ebaf48590b5"
+      },
+      "res/drawable-nodpi-v4/aksara_glass_sigil.webp": {
+        "bytes": 59862,
+        "compressed": 59862,
+        "compression": 0,
+        "sha256": "21c62538fc80a85c074d85d5e6bd14c8f6563c8394b8d94ff13b39847a1496df"
+      },
+      "res/drawable-nodpi-v4/aksara_icon_transparent.png": {
+        "bytes": 722751,
+        "compressed": 722751,
+        "compression": 0,
+        "sha256": "83e1317c0846c33720d91f000fa4136b380f3d403f2083bde8392234b0b06f00"
+      },
+      "res/drawable-nodpi-v4/haze_noise.webp": {
+        "bytes": 6386,
+        "compressed": 6386,
+        "compression": 0,
+        "sha256": "ee6cac627606ba6c039fa26faa97f9503afec17b65706b1f5c37f02123231f90"
+      },
+      "res/drawable-v21/notification_action_background.xml": {
+        "bytes": 1180,
+        "compressed": 462,
+        "compression": 8,
+        "sha256": "1c45af11269fe4402ac051453e3efa997cfea51d1411feb49d2c3d4a78fa8c64"
+      },
+      "res/drawable-xhdpi-v4/ic_call_answer.png": {
+        "bytes": 623,
+        "compressed": 623,
+        "compression": 0,
+        "sha256": "e64c2e57627e24ec1ed37e67344c2bf31d1d6bdd2d8d715840c1edf0bd1425b6"
+      },
+      "res/drawable-xhdpi-v4/ic_call_answer_low.png": {
+        "bytes": 623,
+        "compressed": 623,
+        "compression": 0,
+        "sha256": "e64c2e57627e24ec1ed37e67344c2bf31d1d6bdd2d8d715840c1edf0bd1425b6"
+      },
+      "res/drawable-xhdpi-v4/ic_call_answer_video.png": {
+        "bytes": 290,
+        "compressed": 290,
+        "compression": 0,
+        "sha256": "5d02a81102644428ca639aec3df626eeb4a839a9ddc76fc2b158b04461d7f00f"
+      },
+      "res/drawable-xhdpi-v4/ic_call_answer_video_low.png": {
+        "bytes": 290,
+        "compressed": 290,
+        "compression": 0,
+        "sha256": "5d02a81102644428ca639aec3df626eeb4a839a9ddc76fc2b158b04461d7f00f"
+      },
+      "res/drawable-xhdpi-v4/ic_call_decline.png": {
+        "bytes": 452,
+        "compressed": 452,
+        "compression": 0,
+        "sha256": "9a9a30c305022a2f8e075d2ed7d33f5c7711bba8d0d0385511fdb62f89f208e3"
+      },
+      "res/drawable-xhdpi-v4/ic_call_decline_low.png": {
+        "bytes": 452,
+        "compressed": 452,
+        "compression": 0,
+        "sha256": "9a9a30c305022a2f8e075d2ed7d33f5c7711bba8d0d0385511fdb62f89f208e3"
+      },
+      "res/drawable-xhdpi-v4/maplibre_compass_icon.png": {
+        "bytes": 4005,
+        "compressed": 4005,
+        "compression": 0,
+        "sha256": "cf5f72d4d833fbca4a24715c5792775bcf0aaea56b9dfc2969309853bd43a17f"
+      },
+      "res/drawable-xhdpi-v4/maplibre_logo_helmet.png": {
+        "bytes": 1369,
+        "compressed": 1369,
+        "compression": 0,
+        "sha256": "331fd18c3373ef8b753bcaf62df0790f6967a085cc0f855668e414078d6d3456"
+      },
+      "res/drawable-xhdpi-v4/maplibre_logo_icon.png": {
+        "bytes": 5389,
+        "compressed": 5389,
+        "compression": 0,
+        "sha256": "eb4e79a51f417fef026931d4d8d019fc2feb275612b9026b3817e5fa14eb475e"
+      },
+      "res/drawable-xhdpi-v4/maplibre_marker_icon_default.png": {
+        "bytes": 1015,
+        "compressed": 1015,
+        "compression": 0,
+        "sha256": "646cbc0c543bd51137f5407ab01a78a004a3a50df3e6c3726f3c37fa7dddd1b9"
+      },
+      "res/drawable-xhdpi-v4/maplibre_markerview_icon_default.png": {
+        "bytes": 2105,
+        "compressed": 2105,
+        "compression": 0,
+        "sha256": "abe8249770657d4bb1ca0f6a62d30b8a0e0780101ba46feee8fc14aa31f9e0b7"
+      },
+      "res/drawable-xhdpi-v4/maplibre_mylocation_icon_bearing.png": {
+        "bytes": 832,
+        "compressed": 832,
+        "compression": 0,
+        "sha256": "206a65acee7acf2a3257ca70c59fef615aca84dd155a37499b2cea492f52a1aa"
+      },
+      "res/drawable-xhdpi-v4/maplibre_mylocation_icon_default.png": {
+        "bytes": 611,
+        "compressed": 611,
+        "compression": 0,
+        "sha256": "626873329ed980ceef23bc91ce7cb0ecb2bb7f0b642e7127d1825d601302c8b6"
+      },
+      "res/drawable-xhdpi-v4/notification_bg_low_normal.9.png": {
+        "bytes": 221,
+        "compressed": 221,
+        "compression": 0,
+        "sha256": "3e09afa21c45372c035598c017c8fb405a6d678e6cb84dc857581cb3b40e482d"
+      },
+      "res/drawable-xhdpi-v4/notification_bg_low_pressed.9.png": {
+        "bytes": 252,
+        "compressed": 252,
+        "compression": 0,
+        "sha256": "20343222f9f79dd565c3a2248494d452e70820ac1c437173c38badd45f962afd"
+      },
+      "res/drawable-xhdpi-v4/notification_bg_normal.9.png": {
+        "bytes": 221,
+        "compressed": 221,
+        "compression": 0,
+        "sha256": "559bf783d765c02338e97952bdc9c6689c7ff99090b8c9813369118da8b080f0"
+      },
+      "res/drawable-xhdpi-v4/notification_bg_normal_pressed.9.png": {
+        "bytes": 247,
+        "compressed": 247,
+        "compression": 0,
+        "sha256": "d27af435101ca4cbec0c840bd30687918cd39eb83aab1487420855623a45998b"
+      },
+      "res/drawable-xhdpi-v4/notify_panel_notification_icon_bg.png": {
+        "bytes": 138,
+        "compressed": 138,
+        "compression": 0,
+        "sha256": "b44eeda34d7a529c2fe55719eb098fa29707caa91d18de06a7a775d6e6bcf973"
+      },
+      "res/drawable-xxhdpi-v4/ic_call_answer.png": {
+        "bytes": 884,
+        "compressed": 884,
+        "compression": 0,
+        "sha256": "86763a30af2a934c7c13b123b36443d1d17918b71c6149bc6ee80115b872593d"
+      },
+      "res/drawable-xxhdpi-v4/ic_call_answer_low.png": {
+        "bytes": 884,
+        "compressed": 884,
+        "compression": 0,
+        "sha256": "86763a30af2a934c7c13b123b36443d1d17918b71c6149bc6ee80115b872593d"
+      },
+      "res/drawable-xxhdpi-v4/ic_call_answer_video.png": {
+        "bytes": 384,
+        "compressed": 384,
+        "compression": 0,
+        "sha256": "ca48f604262f2b4ef8b100c73130efe2ad33ef8c2a2c1b3516f24f51b7b04665"
+      },
+      "res/drawable-xxhdpi-v4/ic_call_answer_video_low.png": {
+        "bytes": 384,
+        "compressed": 384,
+        "compression": 0,
+        "sha256": "ca48f604262f2b4ef8b100c73130efe2ad33ef8c2a2c1b3516f24f51b7b04665"
+      },
+      "res/drawable-xxhdpi-v4/ic_call_decline.png": {
+        "bytes": 628,
+        "compressed": 628,
+        "compression": 0,
+        "sha256": "87adad32e0ec19c4e920420bf3a06c9f94f6128ed0d866a1891628aeab2cef06"
+      },
+      "res/drawable-xxhdpi-v4/ic_call_decline_low.png": {
+        "bytes": 628,
+        "compressed": 628,
+        "compression": 0,
+        "sha256": "87adad32e0ec19c4e920420bf3a06c9f94f6128ed0d866a1891628aeab2cef06"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_compass_icon.png": {
+        "bytes": 6856,
+        "compressed": 6856,
+        "compression": 0,
+        "sha256": "dfec2761f9349354e9863f0f6e538cbf7d079c67013f1e88960c4c86a38a3b20"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_logo_helmet.png": {
+        "bytes": 2160,
+        "compressed": 2160,
+        "compression": 0,
+        "sha256": "a1c33959ab7a2dae9b5c6ba1b95145b90127c45b72fe046fab60be51c1d2f40b"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_logo_icon.png": {
+        "bytes": 8315,
+        "compressed": 8315,
+        "compression": 0,
+        "sha256": "0157323a7022524df9c8a123b30d3aad4cfe216d427f888e0c16317af92fe758"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_marker_icon_default.png": {
+        "bytes": 1448,
+        "compressed": 1448,
+        "compression": 0,
+        "sha256": "aaf454480d9aee183a091c120de897038ee3ec1488a052fbb1e819f761c4f551"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_markerview_icon_default.png": {
+        "bytes": 1411,
+        "compressed": 1411,
+        "compression": 0,
+        "sha256": "382e5446236cd9b32251afeae186402222897e4afda1bbb2fe7d5cf5b4c71e60"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_mylocation_icon_bearing.png": {
+        "bytes": 1167,
+        "compressed": 1167,
+        "compression": 0,
+        "sha256": "71256caeb2ff22d1e48b151671040499be1dfe0b4029fa3c7b351770d0c71340"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_mylocation_icon_default.png": {
+        "bytes": 982,
+        "compressed": 982,
+        "compression": 0,
+        "sha256": "a03291c9e912f4a0c0046d26a726598489a2d23d2481fd1c983dc893df3ee441"
+      },
+      "res/drawable-xxxhdpi-v4/ic_call_answer.png": {
+        "bytes": 1171,
+        "compressed": 1171,
+        "compression": 0,
+        "sha256": "ec698a3217bce74d8bc4a44bb008f2dbd3d1aebff1af1e9641805143dbf9fa87"
+      },
+      "res/drawable-xxxhdpi-v4/ic_call_answer_low.png": {
+        "bytes": 1171,
+        "compressed": 1171,
+        "compression": 0,
+        "sha256": "ec698a3217bce74d8bc4a44bb008f2dbd3d1aebff1af1e9641805143dbf9fa87"
+      },
+      "res/drawable-xxxhdpi-v4/ic_call_answer_video.png": {
+        "bytes": 465,
+        "compressed": 465,
+        "compression": 0,
+        "sha256": "4c717ce1ffb551c765981add65d1956132d8f522337de2866b045f0a60485426"
+      },
+      "res/drawable-xxxhdpi-v4/ic_call_answer_video_low.png": {
+        "bytes": 465,
+        "compressed": 465,
+        "compression": 0,
+        "sha256": "4c717ce1ffb551c765981add65d1956132d8f522337de2866b045f0a60485426"
+      },
+      "res/drawable-xxxhdpi-v4/ic_call_decline.png": {
+        "bytes": 823,
+        "compressed": 823,
+        "compression": 0,
+        "sha256": "ab73b729bb95878120a3bdc8dc915f3aaa1d7070fc644a0de64d40941ad507ed"
+      },
+      "res/drawable-xxxhdpi-v4/ic_call_decline_low.png": {
+        "bytes": 823,
+        "compressed": 823,
+        "compression": 0,
+        "sha256": "ab73b729bb95878120a3bdc8dc915f3aaa1d7070fc644a0de64d40941ad507ed"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_compass_icon.png": {
+        "bytes": 18478,
+        "compressed": 18478,
+        "compression": 0,
+        "sha256": "b27621dac7c51ab91b4337e5e8fe9f3f232796484ca9e88461b25da130a00e05"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_logo_helmet.png": {
+        "bytes": 2880,
+        "compressed": 2880,
+        "compression": 0,
+        "sha256": "f492c4ea2e6ef317c3595b59ae47c8a3572ffed2e370ff6aca04017da7463e39"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_logo_icon.png": {
+        "bytes": 11380,
+        "compressed": 11380,
+        "compression": 0,
+        "sha256": "62285dd7f726eb53a6757f4bd183d13af87043083f140ae4c29a4a308d2e61cd"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_marker_icon_default.png": {
+        "bytes": 1870,
+        "compressed": 1870,
+        "compression": 0,
+        "sha256": "1255bdaa01cf57aacb3f2b6d78c5dc636836ad02e4301ee85c4dcea6f970646e"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_markerview_icon_default.png": {
+        "bytes": 1814,
+        "compressed": 1814,
+        "compression": 0,
+        "sha256": "7fe31c9d1ac5d44f34f00b50bd510f65d5fce175cee8afa096d3c2cbb85d0496"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_mylocation_icon_bearing.png": {
+        "bytes": 1628,
+        "compressed": 1628,
+        "compression": 0,
+        "sha256": "22ca0089f298e9b1806beac9f6bc9d875f27b71f0724c774a566573b8f2e34f0"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_mylocation_icon_default.png": {
+        "bytes": 1251,
+        "compressed": 1251,
+        "compression": 0,
+        "sha256": "882de0a9b7047fee9e58e3d790e12812d2b8551dcf3357a41bed426a687328c3"
+      },
+      "res/drawable/$aksara_launcher_a_foreground__0.xml": {
+        "bytes": 852,
+        "compressed": 353,
+        "compression": 8,
+        "sha256": "422b59fbd2703d3864439b124fdaa5437da4c86e27abedcdc05e1554b1e47c96"
+      },
+      "res/drawable/$aksara_launcher_dual_background__0.xml": {
+        "bytes": 952,
+        "compressed": 361,
+        "compression": 8,
+        "sha256": "264f2de9c796fea19beb210323c956e8452629907ae10cc11a315039f210a6aa"
+      },
+      "res/drawable/$aksara_launcher_dual_foreground__0.xml": {
+        "bytes": 952,
+        "compressed": 374,
+        "compression": 8,
+        "sha256": "3466e6e0bc7e9f2ccdbdddd830fe9f940cd142e8ff19e4b5c99f0cd6be44c618"
+      },
+      "res/drawable/$aksara_launcher_dual_foreground__1.xml": {
+        "bytes": 952,
+        "compressed": 371,
+        "compression": 8,
+        "sha256": "c28a85d154190591c174aefe7423c0806e60542ab4f7b36a07918253994991b6"
+      },
+      "res/drawable/$aksara_launcher_midnight_background__0.xml": {
+        "bytes": 852,
+        "compressed": 336,
+        "compression": 8,
+        "sha256": "4e46726b8486d29765fa23236c16c733ee46842028b91532ce366d17901de720"
+      },
+      "res/drawable/aksara_cinematic_desktop.webp": {
+        "bytes": 57830,
+        "compressed": 57830,
+        "compression": 0,
+        "sha256": "83060de2e2155d7f14cd1ba7f713d04f65f529440dd877238e4e4c8561d80048"
+      },
+      "res/drawable/aksara_cinematic_mobile.webp": {
+        "bytes": 47874,
+        "compressed": 47874,
+        "compression": 0,
+        "sha256": "aab5ebc2e56d4c4e265ed2c65cac3d26b08b8eea5949afcdaceaa92a90b1229f"
+      },
+      "res/drawable/aksara_launch_empty.xml": {
+        "bytes": 372,
+        "compressed": 182,
+        "compression": 8,
+        "sha256": "2663b257c5801a7ae7e43834b187ccba0179438f5aa8514d86cbcdcf9d517e9e"
+      },
+      "res/drawable/aksara_launcher_a_foreground.xml": {
+        "bytes": 1508,
+        "compressed": 564,
+        "compression": 8,
+        "sha256": "98081f594bf984af5816bc2907c1bbf6495a9846e1cc9961bbaf9829f5d5421d"
+      },
+      "res/drawable/aksara_launcher_a_monochrome.xml": {
+        "bytes": 932,
+        "compressed": 445,
+        "compression": 8,
+        "sha256": "af97037477854657bc8bc583f4330effd72e022a108671b511f322ca509a683a"
+      },
+      "res/drawable/aksara_launcher_dual_background.xml": {
+        "bytes": 1912,
+        "compressed": 749,
+        "compression": 8,
+        "sha256": "cf49a2bfa9aa9709e26d9ba66534f490ad91561120ce2583623b3ad5afb5f8e1"
+      },
+      "res/drawable/aksara_launcher_dual_foreground.xml": {
+        "bytes": 2452,
+        "compressed": 953,
+        "compression": 8,
+        "sha256": "bc397dde22c4fc5e68c5a2a0fe7922b862e74cc7aac6e25a221aff61d5256741"
+      },
+      "res/drawable/aksara_launcher_dual_monochrome.xml": {
+        "bytes": 1072,
+        "compressed": 521,
+        "compression": 8,
+        "sha256": "b17da7860fefa4bc94f42ffbbdb372942596a60ba22df4b7014cc53e6d31b9cf"
+      },
+      "res/drawable/aksara_launcher_midnight_background.xml": {
+        "bytes": 948,
+        "compressed": 431,
+        "compression": 8,
+        "sha256": "50331d8cf4bd3742125e96eef0dc0d9452467d7ccb9435098caf7f10a7f4cd99"
+      },
+      "res/drawable/aksara_portrait.webp": {
+        "bytes": 2390,
+        "compressed": 2390,
+        "compression": 0,
+        "sha256": "412170771033464701abe72a7bb4c83d94c636638a114591121b179629a56274"
+      },
+      "res/drawable/maplibre_info_bg_selector.xml": {
+        "bytes": 464,
+        "compressed": 230,
+        "compression": 8,
+        "sha256": "f472cf61e248f887855765306a1768a979457a94c048807d5404401ab84fe633"
+      },
+      "res/drawable/maplibre_info_icon_default.xml": {
+        "bytes": 716,
+        "compressed": 399,
+        "compression": 8,
+        "sha256": "5e71e66b9146ebbb34eecca7c8a91e8ce7ab50413efc70709c34b9a9b736feeb"
+      },
+      "res/drawable/maplibre_info_icon_selected.xml": {
+        "bytes": 716,
+        "compressed": 405,
+        "compression": 8,
+        "sha256": "ab0a7f02137dd44e27a2f4b086c0f9fadb2a7cf2c6fdaabb11e93b28a7c4c649"
+      },
+      "res/drawable/maplibre_mylocation_bg_shape.xml": {
+        "bytes": 516,
+        "compressed": 245,
+        "compression": 8,
+        "sha256": "ef85281b6f95f578dd228753e1edf0b9e5d142e908bc5b1841162fa3810bc459"
+      },
+      "res/drawable/maplibre_popup_window_transparent.xml": {
+        "bytes": 680,
+        "compressed": 296,
+        "compression": 8,
+        "sha256": "69cde0377af44f4bc282469e66eee9aae243a9c307851216a2fcbf3b3d9369ec"
+      },
+      "res/drawable/maplibre_rounded_corner.xml": {
+        "bytes": 664,
+        "compressed": 301,
+        "compression": 8,
+        "sha256": "4c6856a4bb705a6b008b8a8b8bb1f9ab0dc471cffb95110646d5dd0e1576b2fb"
+      },
+      "res/drawable/maplibre_user_bearing_icon.xml": {
+        "bytes": 636,
+        "compressed": 351,
+        "compression": 8,
+        "sha256": "1faaa3e717e11d214217954c81c8918ed9f5f253761c615a4928aab212bc34d1"
+      },
+      "res/drawable/maplibre_user_icon.xml": {
+        "bytes": 588,
+        "compressed": 313,
+        "compression": 8,
+        "sha256": "3b57aaef74d70c1997918d68fce5687fe40f1dab08c0c6ee959022bca86c921a"
+      },
+      "res/drawable/maplibre_user_icon_shadow.xml": {
+        "bytes": 908,
+        "compressed": 404,
+        "compression": 8,
+        "sha256": "93fbc7e80ff4c1d2e117a34f2d5f8da2824496857dadfa2dcdbab3eddc9158ca"
+      },
+      "res/drawable/maplibre_user_icon_stale.xml": {
+        "bytes": 588,
+        "compressed": 313,
+        "compression": 8,
+        "sha256": "f9e0fd5a8835e9cb272a90d4bb1cff7e24905723918c6cbbeb062fc5475d72b6"
+      },
+      "res/drawable/maplibre_user_puck_icon.xml": {
+        "bytes": 1232,
+        "compressed": 579,
+        "compression": 8,
+        "sha256": "9945d82ba9197edde85b71b6dba277cfa49f9de2bef9dc599bf004ad541fbaf0"
+      },
+      "res/drawable/maplibre_user_stroke_icon.xml": {
+        "bytes": 588,
+        "compressed": 306,
+        "compression": 8,
+        "sha256": "4613d4f0154bbb0800c8293230edfe77771ba85fa23d6bd4870198c57c0ded88"
+      },
+      "res/drawable/notification_bg.xml": {
+        "bytes": 532,
+        "compressed": 253,
+        "compression": 8,
+        "sha256": "9c27ffb47bc22c33313e31c4849a24efb888ca4e010b7a0f969445a19898ed44"
+      },
+      "res/drawable/notification_bg_low.xml": {
+        "bytes": 532,
+        "compressed": 253,
+        "compression": 8,
+        "sha256": "a0e53f13179b4ac4b440db6e0d24416447868d2036023069e4e66c3d3c725204"
+      },
+      "res/drawable/notification_icon_background.xml": {
+        "bytes": 372,
+        "compressed": 185,
+        "compression": 8,
+        "sha256": "797a8792749e4d3aa20c58b17834516036aa690cdd3fcacea4ab453d6fc756a1"
+      },
+      "res/drawable/notification_tile_bg.xml": {
+        "bytes": 304,
+        "compressed": 173,
+        "compression": 8,
+        "sha256": "518bddea77fc582a14e18218f1eab29f0b663b1e4d591f13587062eb108e0af5"
+      },
+      "res/font/dm_sans.ttf": {
+        "bytes": 240164,
+        "compressed": 108937,
+        "compression": 8,
+        "sha256": "8cd08d97e89c24d0aa92edd2f0f4c8ee6195eee9b7c9f154865a58b02f0c1c0d"
+      },
+      "res/font/space_grotesk.ttf": {
+        "bytes": 136676,
+        "compressed": 63665,
+        "compression": 8,
+        "sha256": "acad6de1fc93436f5c0f1f4137751ef04f1aea3063e7036535970ffcfbd79f72"
+      },
+      "res/layout-v21/notification_action.xml": {
+        "bytes": 1052,
+        "compressed": 485,
+        "compression": 8,
+        "sha256": "15017f7f66732d44c127d4b2731d1990069918dc599566b59849a50933ff7de1"
+      },
+      "res/layout-v21/notification_action_tombstone.xml": {
+        "bytes": 1228,
+        "compressed": 537,
+        "compression": 8,
+        "sha256": "57c5f20e636419e61d310fbc5635ee2a924432503b717e5a3e601bd0f3998e6f"
+      },
+      "res/layout-v21/notification_template_custom_big.xml": {
+        "bytes": 2456,
+        "compressed": 787,
+        "compression": 8,
+        "sha256": "ab2092e82384309aff9c62f7ddb55cd3268625449d4316a624525f03d4e6c87e"
+      },
+      "res/layout-v21/notification_template_icon_group.xml": {
+        "bytes": 988,
+        "compressed": 420,
+        "compression": 8,
+        "sha256": "b64922422c6e30f52c4239dd63d959fe8402b80853da4f8472e8f20ef27830c8"
+      },
+      "res/layout/custom_dialog.xml": {
+        "bytes": 612,
+        "compressed": 310,
+        "compression": 8,
+        "sha256": "38a8daad6e30e065828a8f853e91bfe166d937b475dc3e137240a92cdc3351c6"
+      },
+      "res/layout/ime_base_split_test_activity.xml": {
+        "bytes": 364,
+        "compressed": 201,
+        "compression": 8,
+        "sha256": "37ff040591f96786bfaf9d3d937fedf2f2f97e218c06beb3e7fe8a2442a181a8"
+      },
+      "res/layout/ime_secondary_split_test_activity.xml": {
+        "bytes": 876,
+        "compressed": 417,
+        "compression": 8,
+        "sha256": "5564d7e92b53a0a1707544f928fd77f88d149d0cd4474702f86b00f5feeedcf6"
+      },
+      "res/layout/maplibre_attribution_list_item.xml": {
+        "bytes": 688,
+        "compressed": 372,
+        "compression": 8,
+        "sha256": "fcbd77b21e656e2eb3fb2ed60308e9220a36bb458f34a71a7b7aa768c7eebcb6"
+      },
+      "res/layout/maplibre_infowindow_content.xml": {
+        "bytes": 2024,
+        "compressed": 784,
+        "compression": 8,
+        "sha256": "d3e8a6a7a96c511c290d8ea90af6fd979008e696e3d38b6a2ed4fa7f93af10e9"
+      },
+      "res/layout/maplibre_view_image_marker.xml": {
+        "bytes": 400,
+        "compressed": 234,
+        "compression": 8,
+        "sha256": "237d7384be0adbc8c43808e829cc65efacbe2c0fc406ed731358fe6e7c94fca1"
+      },
+      "res/layout/notification_template_part_chronometer.xml": {
+        "bytes": 440,
+        "compressed": 260,
+        "compression": 8,
+        "sha256": "d19ea17948a9e5ecf1edf633df728074a5f901dacd41ceac13acf25fd1fea29f"
+      },
+      "res/layout/notification_template_part_time.xml": {
+        "bytes": 440,
+        "compressed": 260,
+        "compression": 8,
+        "sha256": "f1990df61f27c1a6f64c381d3b4fcedef5bdf438540bd31e848ee9e3fafd6979"
+      },
+      "res/mipmap-anydpi-v26/ic_launcher.xml": {
+        "bytes": 548,
+        "compressed": 242,
+        "compression": 8,
+        "sha256": "340aeb32b8f013270e31a9aa666dcde28083b35a892fc31c5823bf3e7393d830"
+      },
+      "res/mipmap-hdpi-v4/ic_launcher.webp": {
+        "bytes": 3500,
+        "compressed": 3500,
+        "compression": 0,
+        "sha256": "bab864756c3ec018035214d12569dc4dea105bf1d6b6449f69290e0b162b17bc"
+      },
+      "res/mipmap-hdpi-v4/ic_launcher_foreground.webp": {
+        "bytes": 5454,
+        "compressed": 5454,
+        "compression": 0,
+        "sha256": "f62e629bb19066e6e78d57b11bd73a4670a8845f82172c43bb5dc620c86337d5"
+      },
+      "res/mipmap-mdpi-v4/ic_launcher.webp": {
+        "bytes": 1980,
+        "compressed": 1980,
+        "compression": 0,
+        "sha256": "faf2a3e4a745faa3e5860e03f291549c0a58323b0d61057dbb713f09f92988a1"
+      },
+      "res/mipmap-mdpi-v4/ic_launcher_foreground.webp": {
+        "bytes": 3040,
+        "compressed": 3040,
+        "compression": 0,
+        "sha256": "c9362e37a183ffb1a0b910348d7fe5f9c6c07367fdd40497ba7e5578756bbf2c"
+      },
+      "res/mipmap-xhdpi-v4/ic_launcher.webp": {
+        "bytes": 5216,
+        "compressed": 5216,
+        "compression": 0,
+        "sha256": "d8d78e6c98316575142f6ba52d777633bae43cc6a9c8df60a062b244b7210143"
+      },
+      "res/mipmap-xhdpi-v4/ic_launcher_foreground.webp": {
+        "bytes": 8164,
+        "compressed": 8164,
+        "compression": 0,
+        "sha256": "8e835474b2c8e30d00923072c63515ce01cda581125aa230c7ad2d3da60e3acc"
+      },
+      "res/mipmap-xxhdpi-v4/ic_launcher.webp": {
+        "bytes": 9456,
+        "compressed": 9456,
+        "compression": 0,
+        "sha256": "ab34fa0a6530ca5b4ba538aaa22edc184d248e94b2b29b3914cbc63d8730048a"
+      },
+      "res/mipmap-xxhdpi-v4/ic_launcher_foreground.webp": {
+        "bytes": 14888,
+        "compressed": 14888,
+        "compression": 0,
+        "sha256": "07352df5268230a1c2f7825f1c351900ac4847fe3c25330a2b95b1ca8e77e952"
+      },
+      "res/mipmap-xxxhdpi-v4/ic_launcher.webp": {
+        "bytes": 14222,
+        "compressed": 14222,
+        "compression": 0,
+        "sha256": "7d24ef100b8cdd7bc3be9216733bd2e868dde9ac821f957c2b7a764564dfce6b"
+      },
+      "res/mipmap-xxxhdpi-v4/ic_launcher_foreground.webp": {
+        "bytes": 23374,
+        "compressed": 23374,
+        "compression": 0,
+        "sha256": "df9c5548700db263da8b7371eb7f10dce718c8e4c373c662f9847955ff0381be"
+      },
+      "resources.arsc": {
+        "bytes": 187248,
+        "compressed": 187248,
+        "compression": 0,
+        "sha256": "c263c9cfdf60d4dc8f824213711c1d8a5ce094a4f89c0c051cb4437683ae07dd"
+      },
+      "DebugProbesKt.bin": {
+        "bytes": 1733,
+        "compressed": 780,
+        "compression": 8,
+        "sha256": "cd3da36122413f84be484c77cde4a77729f9e8f81a285408d073300c8385ca3a"
+      },
+      "META-INF/androidx.activity_activity-compose.version": {
+        "bytes": 7,
+        "compressed": 7,
+        "compression": 0,
+        "sha256": "118705d21506adb8d7c06a51156bb59497679f644fb4ae3d14bbbfc366643124"
+      },
+      "META-INF/androidx.activity_activity-ktx.version": {
+        "bytes": 7,
+        "compressed": 7,
+        "compression": 0,
+        "sha256": "118705d21506adb8d7c06a51156bb59497679f644fb4ae3d14bbbfc366643124"
+      },
+      "META-INF/androidx.activity_activity.version": {
+        "bytes": 7,
+        "compressed": 7,
+        "compression": 0,
+        "sha256": "118705d21506adb8d7c06a51156bb59497679f644fb4ae3d14bbbfc366643124"
+      },
+      "META-INF/androidx.annotation_annotation-experimental.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "7d072b48526b023950e4c48db01e8c273554a6401119f5691e7589ba9bc65d9d"
+      },
+      "META-INF/androidx.arch.core_core-runtime.version": {
+        "bytes": 67,
+        "compressed": 61,
+        "compression": 8,
+        "sha256": "1b7c606370188534dac5561fba2b2988093829697fce9e6e8832e9291d24ed00"
+      },
+      "META-INF/androidx.autofill_autofill.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.compose.animation_animation-core.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.animation_animation.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.foundation_foundation-layout.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.foundation_foundation.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.material_material-ripple.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.material_material.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.runtime_runtime-saveable.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.runtime_runtime.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-geometry.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-graphics.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-test-manifest.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-text.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-tooling-data.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-tooling-preview.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-tooling.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-unit.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-util.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.core_core-ktx.version": {
+        "bytes": 7,
+        "compressed": 7,
+        "compression": 0,
+        "sha256": "ca0bc79c4cde0ad64e1ec9df2882425197b5ba85704a4ac6bd67f8f99936eb25"
+      },
+      "META-INF/androidx.core_core-viewtree.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.core_core.version": {
+        "bytes": 7,
+        "compressed": 7,
+        "compression": 0,
+        "sha256": "ca0bc79c4cde0ad64e1ec9df2882425197b5ba85704a4ac6bd67f8f99936eb25"
+      },
+      "META-INF/androidx.customview_customview-poolingcontainer.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.customview_customview.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.emoji2_emoji2.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "78b591400c56b7b67b8cb3b2b8a8e65e9093897f02ce0878e6b5405c68620fa7"
+      },
+      "META-INF/androidx.fragment_fragment.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "f26c3d2f53617cde2e8471318e0a060d125c9f1edbf3a47e1a5271c1538a7ca4"
+      },
+      "META-INF/androidx.graphics_graphics-path.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "44e161e4495cac2cf7858043e9e6418e9579f0ddcfae826f9a372622968ce066"
+      },
+      "META-INF/androidx.interpolator_interpolator.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-livedata-core-ktx.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-livedata-core.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-livedata.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-process.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-runtime-compose.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-runtime-ktx.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-runtime.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-viewmodel-compose.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-viewmodel-ktx.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-viewmodel-savedstate.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-viewmodel.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.loader_loader.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.metrics_metrics-performance.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.profileinstaller_profileinstaller.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "7d072b48526b023950e4c48db01e8c273554a6401119f5691e7589ba9bc65d9d"
+      },
+      "META-INF/androidx.savedstate_savedstate-ktx.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "64d23f858ef51b0f996e4966d4e27c0371b437e2d2787890b1f7ad22d4ec5663"
+      },
+      "META-INF/androidx.savedstate_savedstate.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "64d23f858ef51b0f996e4966d4e27c0371b437e2d2787890b1f7ad22d4ec5663"
+      },
+      "META-INF/androidx.sqlite_sqlite-bundled.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "99600f6a7bfe6c33ebd1a2518f44a861a67afc40c25da42bc622595716529584"
+      },
+      "META-INF/androidx.sqlite_sqlite.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "99600f6a7bfe6c33ebd1a2518f44a861a67afc40c25da42bc622595716529584"
+      },
+      "META-INF/androidx.startup_startup-runtime.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "cc52f678848b814373757b460383bf61960e4943c203735adde0a350b3e50989"
+      },
+      "META-INF/androidx.tracing_tracing.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.versionedparcelable_versionedparcelable.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "cc52f678848b814373757b460383bf61960e4943c203735adde0a350b3e50989"
+      },
+      "META-INF/androidx.viewpager_viewpager.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.webkit_webkit.version": {
+        "bytes": 7,
+        "compressed": 7,
+        "compression": 0,
+        "sha256": "d723798f2436b46872ee9a012632d6f5602ab9297be05780a79ba29733f8a532"
+      },
+      "META-INF/androidx/annotation/annotation/LICENSE.txt": {
+        "bytes": 10175,
+        "compressed": 3563,
+        "compression": 8,
+        "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+      },
+      "META-INF/androidx/collection/collection-ktx/LICENSE.txt": {
+        "bytes": 10175,
+        "compressed": 3563,
+        "compression": 8,
+        "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+      },
+      "META-INF/androidx/collection/collection/LICENSE.txt": {
+        "bytes": 10175,
+        "compressed": 3563,
+        "compression": 8,
+        "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+      },
+      "META-INF/androidx/lifecycle/lifecycle-common/LICENSE.txt": {
+        "bytes": 10175,
+        "compressed": 3563,
+        "compression": 8,
+        "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+      },
+      "META-INF/kotlinx_coroutines_android.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "34d597db43ca53b2fd72ccbdd1af7a0fe238c2c0b8321dad8f43a1613143fc62"
+      },
+      "META-INF/kotlinx_coroutines_core.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "34d597db43ca53b2fd72ccbdd1af7a0fe238c2c0b8321dad8f43a1613143fc62"
+      },
+      "META-INF/services/kotlinx.coroutines.CoroutineExceptionHandler": {
+        "bytes": 54,
+        "compressed": 50,
+        "compression": 8,
+        "sha256": "3129b8edf6db07de6f8ff47695e2177c8bba4eed2962d3085c719e5acbb58a33"
+      },
+      "META-INF/services/kotlinx.coroutines.internal.MainDispatcherFactory": {
+        "bytes": 52,
+        "compressed": 49,
+        "compression": 8,
+        "sha256": "a1ea77ea8f93f419256b6e66f29713f950d8d6e90442b608d880a48003b5eb72"
+      },
+      "META-INF/versions/9/OSGI-INF/MANIFEST.MF": {
+        "bytes": 145,
+        "compressed": 129,
+        "compression": 8,
+        "sha256": "a844d62b02a9eefd9d112e74fd660843d91cd8b81dce6ce60a9eaba605fa939c"
+      },
+      "kotlin/annotation/annotation.kotlin_builtins": {
+        "bytes": 1006,
+        "compressed": 533,
+        "compression": 8,
+        "sha256": "5f75d4352e432664b2a235c472b991cf88365c73f5fcb5e1f9cc2cbe4b410abe"
+      },
+      "kotlin/collections/collections.kotlin_builtins": {
+        "bytes": 8308,
+        "compressed": 1834,
+        "compression": 8,
+        "sha256": "0e654e03a38e119de0f4d11633711bd57e1e8b1a876eda74a90100a2a6e7daa4"
+      },
+      "kotlin/concurrent/atomics/atomics.kotlin_builtins": {
+        "bytes": 2674,
+        "compressed": 1082,
+        "compression": 8,
+        "sha256": "955035527393d165a22da4cb9d992f42b4a30b6f070918f3e2b1f2678f83cc9d"
+      },
+      "kotlin/coroutines/coroutines.kotlin_builtins": {
+        "bytes": 137,
+        "compressed": 116,
+        "compression": 8,
+        "sha256": "98ab3a3c18fcb237528dd63fa489815c583e1d6c13debd2a27ac6d74ccf8717b"
+      },
+      "kotlin/internal/internal.kotlin_builtins": {
+        "bytes": 590,
+        "compressed": 357,
+        "compression": 8,
+        "sha256": "64712f94840e6b3f8123f522f32d08c46f083d87c312a74901f7c00224de775e"
+      },
+      "kotlin/kotlin.kotlin_builtins": {
+        "bytes": 29399,
+        "compressed": 5342,
+        "compression": 8,
+        "sha256": "c4240215bc20e71b01cc62b43edebd02749b3249d7daa8e7f1dc1514f064c274"
+      },
+      "kotlin/ranges/ranges.kotlin_builtins": {
+        "bytes": 4184,
+        "compressed": 1354,
+        "compression": 8,
+        "sha256": "f9d35b836ccb5380803aab5e6c76d708b1536fc6c82f27185e8cff5913824e1c"
+      },
+      "kotlin/reflect/reflect.kotlin_builtins": {
+        "bytes": 4827,
+        "compressed": 1435,
+        "compression": 8,
+        "sha256": "23ecbc7cbb354f31ba37a1be1793d3bb53c00c92cdcf3867759d09d938a1d7c3"
+      },
+      "okhttp3/internal/publicsuffix/NOTICE": {
+        "bytes": 218,
+        "compressed": 149,
+        "compression": 8,
+        "sha256": "8a9c58fbded5ea3474315e4a9824ca8b1486098a1a03e897e0b19419d5e1876a"
+      },
+      "okhttp3/internal/publicsuffix/publicsuffixes.gz": {
+        "bytes": 41394,
+        "compressed": 41394,
+        "compression": 0,
+        "sha256": "9af43e9995ec749e7a30eec4e5a87770d7e2027847084a07cca82060eff0c791"
+      },
+      "org/commonmark/internal/util/entities.properties": {
+        "bytes": 24470,
+        "compressed": 10865,
+        "compression": 8,
+        "sha256": "fea6cf4d3bd2aa7ffd421116551654e2a22e40a17e4cd087c8725138113bad69"
+      },
+      "org/mozilla/javascript/resources/Messages.properties": {
+        "bytes": 25659,
+        "compressed": 7660,
+        "compression": 8,
+        "sha256": "99c073ec6896c64817fdf0fe22f3f72f0d826df04012d6f33f397413b5889038"
+      },
+      "org/mozilla/javascript/resources/Messages_en.properties": {
+        "bytes": 410,
+        "compressed": 261,
+        "compression": 8,
+        "sha256": "b76440d8c6f928ff7a853ad2e07d3b0bc2cf27e68402eab77977af0e8fe6a19d"
+      },
+      "org/mozilla/javascript/resources/Messages_fr.properties": {
+        "bytes": 26038,
+        "compressed": 7114,
+        "compression": 8,
+        "sha256": "440b2a355453be77fa39e205dbc094d845fc366617f7e2f5e98e2f753a52ae7e"
+      },
+      "org/mozilla/javascript/resources/Messages_zh_CN.properties": {
+        "bytes": 22287,
+        "compressed": 7540,
+        "compression": 8,
+        "sha256": "52edaae5c5aa25165edf76de3dc97c22e4c77d7fb8f541a4aa540e04314e121d"
+      }
+    },
+    "candidate": {
+      "META-INF/com/android/build/gradle/app-metadata.properties": {
+        "bytes": 56,
+        "compressed": 52,
+        "compression": 8,
+        "sha256": "8202f7c2e4c63802e60a377cafd767bca48370716b97cda90a91c8ab96cef941"
+      },
+      "classes.dex": {
+        "bytes": 18195400,
+        "compressed": 18195400,
+        "compression": 0,
+        "sha256": "d92b8ffb64f47f2aadd707f1a087eb6d457ec574b78478bd15febe047b460b8b"
+      },
+      "classes10.dex": {
+        "bytes": 57600,
+        "compressed": 57600,
+        "compression": 0,
+        "sha256": "db3933ee6f35ce18e7f5d198609157f0246bd0e0f895b1d6682474287709f873"
+      },
+      "classes11.dex": {
+        "bytes": 29132,
+        "compressed": 29132,
+        "compression": 0,
+        "sha256": "b133b04932ebcf82519ce661d861d3134bb649576c44b4cf1017d02c5c51f821"
+      },
+      "classes12.dex": {
+        "bytes": 1178996,
+        "compressed": 1178996,
+        "compression": 0,
+        "sha256": "3c058913daf09c2a54e65bc382e5a4d337d447789676d95ffb13d8e83d08fb47"
+      },
+      "classes13.dex": {
+        "bytes": 532476,
+        "compressed": 532476,
+        "compression": 0,
+        "sha256": "61925019a881b9b66a89f12909c601cea4535d2073d49799c0e40a082704e158"
+      },
+      "classes14.dex": {
+        "bytes": 4988,
+        "compressed": 4988,
+        "compression": 0,
+        "sha256": "289929dc8b5c3b2709a022459c64b9afbd44a12056afc8e193e7cc53f1a1d220"
+      },
+      "classes15.dex": {
+        "bytes": 89444,
+        "compressed": 89444,
+        "compression": 0,
+        "sha256": "4e690deff1ef3b855643552a5274c0723f4ae897a9b6bfe38cc8283a0fce4079"
+      },
+      "classes16.dex": {
+        "bytes": 66380,
+        "compressed": 66380,
+        "compression": 0,
+        "sha256": "7cc4e880e961a850262c15150c2e560048729f8315b8c622710d1cfb4e394650"
+      },
+      "classes17.dex": {
+        "bytes": 674548,
+        "compressed": 674548,
+        "compression": 0,
+        "sha256": "c0cb79e3d6da7e7f9e95b747fe60477b3fe508173716ae20a1747e6be65a3780"
+      },
+      "classes18.dex": {
+        "bytes": 158300,
+        "compressed": 158300,
+        "compression": 0,
+        "sha256": "304b291dee9a57f2d07eebd56c6659b7229d9e48e0ce177db1b8a2aab7131066"
+      },
+      "classes19.dex": {
+        "bytes": 632632,
+        "compressed": 632632,
+        "compression": 0,
+        "sha256": "ccd2d966455383a76b74f2d27d8e09f77522cd8cb5735a43ba5834299124bb29"
+      },
+      "classes2.dex": {
+        "bytes": 1564,
+        "compressed": 1564,
+        "compression": 0,
+        "sha256": "8ece1a305e5adaa4683ed1c343f29bebe2d8bf484ba442b36d81aa31eee90b5a"
+      },
+      "classes20.dex": {
+        "bytes": 704,
+        "compressed": 704,
+        "compression": 0,
+        "sha256": "f9ee98633ed1482d019836f983171eea185a76fe480a183018a78d44a22f96b4"
+      },
+      "classes21.dex": {
+        "bytes": 39192,
+        "compressed": 39192,
+        "compression": 0,
+        "sha256": "ed992ee48e631bfc72c436477017ae03febff334a9a58afb00d20de8950cb648"
+      },
+      "classes22.dex": {
+        "bytes": 11911224,
+        "compressed": 11911224,
+        "compression": 0,
+        "sha256": "209aeb277e84743362c95cb31b0304d4ad7ebf3215385c25e062dbed52a51ce1"
+      },
+      "classes23.dex": {
+        "bytes": 1633716,
+        "compressed": 1633716,
+        "compression": 0,
+        "sha256": "e3c8a8ff21bcfe50a1fa079cb17da037da0f677edbd4a760a2243982287b164c"
+      },
+      "classes3.dex": {
+        "bytes": 9888,
+        "compressed": 9888,
+        "compression": 0,
+        "sha256": "1789b4aaf802fe694d39037206f844cc9d978797ee0d437f62a141911f3d0f4b"
+      },
+      "classes4.dex": {
+        "bytes": 83680,
+        "compressed": 83680,
+        "compression": 0,
+        "sha256": "6438b315ce41ef5515e263cb881c901dee593dc4c2dce94d9924284204a35500"
+      },
+      "classes5.dex": {
+        "bytes": 158104,
+        "compressed": 158104,
+        "compression": 0,
+        "sha256": "293bfd43e514d3388ef521964f477eadad399d5432083a45589f6d42f7494f4c"
+      },
+      "classes6.dex": {
+        "bytes": 6268,
+        "compressed": 6268,
+        "compression": 0,
+        "sha256": "095d711956162d74fbd6805b7d39f1a43d8bde1fb0267b80b8d9b6bccf0f60a9"
+      },
+      "classes7.dex": {
+        "bytes": 56860,
+        "compressed": 56860,
+        "compression": 0,
+        "sha256": "8f3fadf082e881a8d9b27722bf7d56eeaa02d0f23fcdc54a5ae5ec60703de438"
+      },
+      "classes8.dex": {
+        "bytes": 26648,
+        "compressed": 26648,
+        "compression": 0,
+        "sha256": "d1cfe7f2f4ebef8ba5615ba3e32eb9ae847448692b98e4693ae62f8b30905936"
+      },
+      "classes9.dex": {
+        "bytes": 79636,
+        "compressed": 79636,
+        "compression": 0,
+        "sha256": "157c8922d586ec8a6d9f50cbedb9dc42a6ff075033fb4f99aee1c1d554689e32"
+      },
+      "lib/arm64-v8a/libaksara_neural.so": {
+        "bytes": 6754872,
+        "compressed": 2714324,
+        "compression": 8,
+        "sha256": "54408ba8bb497df18e52b4f956b534a79e6a787a1b2b7d5a6466f69274c76471"
+      },
+      "lib/arm64-v8a/libandroidx.graphics.path.so": {
+        "bytes": 10096,
+        "compressed": 4584,
+        "compression": 8,
+        "sha256": "41e9a793c43a0f4fddb19e33f346bace464f30f888ba7b9eaf96294ea115bfb6"
+      },
+      "lib/arm64-v8a/libfilament-jni.so": {
+        "bytes": 2266408,
+        "compressed": 955485,
+        "compression": 8,
+        "sha256": "d75914906f58575b70012edc4848fad5981d57de4a776d6486cdfabbf1c90da4"
+      },
+      "lib/arm64-v8a/libfilament-utils-jni.so": {
+        "bytes": 432176,
+        "compressed": 200190,
+        "compression": 8,
+        "sha256": "5c88c7abab185ffdd29bce7876f3d30f0f6231015ccc1fa2b716cb276d56cd1d"
+      },
+      "lib/arm64-v8a/libgltfio-jni.so": {
+        "bytes": 4679472,
+        "compressed": 3411721,
+        "compression": 8,
+        "sha256": "d0646ee3858dc865bc861529ce817fe4a667806c36a5c1fab67d7e2f1fcd9a2b"
+      },
+      "lib/arm64-v8a/libmaplibre.so": {
+        "bytes": 11042072,
+        "compressed": 4149133,
+        "compression": 8,
+        "sha256": "ec63a12face954ce34ef1692292de8e41e562accc86c9fd33506666b0a55c6b5"
+      },
+      "lib/arm64-v8a/libsqliteJni.so": {
+        "bytes": 1932216,
+        "compressed": 877182,
+        "compression": 8,
+        "sha256": "65f87fcc609bf2af4bcf13035ad0b4a4a095d96c4bd96735f80f699f7474772c"
+      },
+      "lib/arm64-v8a/libstockfish.so": {
+        "bytes": 99894032,
+        "compressed": 81183313,
+        "compression": 8,
+        "sha256": "2a4287a1b84172237c8760c4e9121c777b20e371735ac1e2c29ed847ad9ad9d6"
+      },
+      "assets/AVATAR_NOTICE.txt": {
+        "bytes": 589,
+        "compressed": 374,
+        "compression": 8,
+        "sha256": "0a9879cb0b4128dff0a43170d879446dbf755deea4204d4192080c828ea2fd83"
+      },
+      "assets/aksara-code-engine.html": {
+        "bytes": 6724,
+        "compressed": 3321,
+        "compression": 8,
+        "sha256": "81aa176de8faad63903053786e04fffaff6400fc0ac596bbb81c3d6df217a956"
+      },
+      "assets/aksara-code-runtime.js": {
+        "bytes": 22554,
+        "compressed": 8851,
+        "compression": 8,
+        "sha256": "dd4d80a5ea6f2e1d07eaea96f655016487dac88c02b3c68145a10b920b4d018c"
+      },
+      "assets/aksara_local_knowledge_v2.json": {
+        "bytes": 5417,
+        "compressed": 2021,
+        "compression": 8,
+        "sha256": "48de9a7d297c7aa78c2a2ee43856f43fcea1f44f7325bb6342ade7bd0d931011"
+      },
+      "assets/aksara_local_module_index.json": {
+        "bytes": 1861,
+        "compressed": 380,
+        "compression": 8,
+        "sha256": "338f9a4d7406a4b05a8af8a07312fb80e51230fcefc9fc1c46284be4bb432db3"
+      },
+      "assets/chess/Chesslib-Apache-2.0.txt": {
+        "bytes": 11358,
+        "compressed": 4430,
+        "compression": 8,
+        "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      },
+      "assets/chess/Commons-Lang-NOTICE.txt": {
+        "bytes": 174,
+        "compressed": 127,
+        "compression": 8,
+        "sha256": "64bc8696af3f6c770521412b85d3a733fa44b2ef5b0f4bd739e0c4d02eca492a"
+      },
+      "assets/chess/LLVM-libcxx-LICENSE.txt": {
+        "bytes": 16703,
+        "compressed": 6128,
+        "compression": 8,
+        "sha256": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b"
+      },
+      "assets/chess/NOTICE.txt": {
+        "bytes": 1085,
+        "compressed": 629,
+        "compression": 8,
+        "sha256": "7a7b939db98e9d297a82389bc77693d5b419e0914b2dd44994ad72502a5f5db9"
+      },
+      "assets/chess/Stockfish-GPL-3.0.txt": {
+        "bytes": 35149,
+        "compressed": 14203,
+        "compression": 8,
+        "sha256": "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"
+      },
+      "assets/chess/capture.wav": {
+        "bytes": 16364,
+        "compressed": 16364,
+        "compression": 0,
+        "sha256": "45d90e369371e95a7de82ba3ad961adec0c014c9eea9a82688dfc747e8f3b80a"
+      },
+      "assets/chess/light_step.wav": {
+        "bytes": 9644,
+        "compressed": 9644,
+        "compression": 0,
+        "sha256": "039c6b0635a7f6d50e4942e4a8ca0771be6b75df6381464491d7c72928c971c8"
+      },
+      "assets/chess/shadow_step.wav": {
+        "bytes": 12044,
+        "compressed": 12044,
+        "compression": 0,
+        "sha256": "5eb8f3b81e6187964a47ba59d8e3cb8ed5b14c3a5854addf927eea508d7d5aec"
+      },
+      "assets/game/PHASER-LICENSE.md": {
+        "bytes": 1120,
+        "compressed": 670,
+        "compression": 8,
+        "sha256": "080f3d5539e766bb556df5b8e86c4f5d581ece35c692b80956ca352b84d29134"
+      },
+      "assets/game/boot.js": {
+        "bytes": 899,
+        "compressed": 476,
+        "compression": 8,
+        "sha256": "ed69dbe216037fac5a7928952b011c3c78b2beb94552097905d9fdbe65073b75"
+      },
+      "assets/game/campaign.js": {
+        "bytes": 2419,
+        "compressed": 1340,
+        "compression": 8,
+        "sha256": "6d5038d31951946bfa7f89d565ff4b45acd4a49a84f1cf93429a20682895d116"
+      },
+      "assets/game/combat.js": {
+        "bytes": 9754,
+        "compressed": 4176,
+        "compression": 8,
+        "sha256": "7d7e75f445d43822ad77a4faa94dd406e995ccdf29fef1ddbeacc19bb2e63c57"
+      },
+      "assets/game/controls.js": {
+        "bytes": 4901,
+        "compressed": 1650,
+        "compression": 8,
+        "sha256": "f1006f9e45a9216d5ce3f64f97505f2ec7090b7fae850a5c84cf4e484b510f61"
+      },
+      "assets/game/dm_sans.ttf": {
+        "bytes": 240164,
+        "compressed": 116394,
+        "compression": 8,
+        "sha256": "8cd08d97e89c24d0aa92edd2f0f4c8ee6195eee9b7c9f154865a58b02f0c1c0d"
+      },
+      "assets/game/eclipse-arena.png": {
+        "bytes": 2421425,
+        "compressed": 2421425,
+        "compression": 0,
+        "sha256": "6d5ce6334743921e5c1afb2bc32e7f4962cb962d7c8f94a12c97ddd660a34a9a"
+      },
+      "assets/game/eclipse-walk.json": {
+        "bytes": 6856,
+        "compressed": 512,
+        "compression": 8,
+        "sha256": "b277557a1b6e330a1dbae8d7768fa1a76f3e067f306ff7447863f581cd229253"
+      },
+      "assets/game/eclipse-walk.png": {
+        "bytes": 2136754,
+        "compressed": 2136754,
+        "compression": 0,
+        "sha256": "77e1fdd0a16e1f2b018e71cd28771b90c853c2f5e981f4db6ea1efa69d38b438"
+      },
+      "assets/game/eclipse-warriors.json": {
+        "bytes": 13573,
+        "compressed": 1098,
+        "compression": 8,
+        "sha256": "037978b7f95582b6773f1c4eefbfbd7d425b94a1b72fdbcda63110d9bbcb879d"
+      },
+      "assets/game/eclipse-warriors.png": {
+        "bytes": 2624155,
+        "compressed": 2624155,
+        "compression": 0,
+        "sha256": "b4a2e4f797d331e587b86c4e7ecd95d8be4991e16dd896d27a020d5eff4de92c"
+      },
+      "assets/game/eclipse.css": {
+        "bytes": 10581,
+        "compressed": 3665,
+        "compression": 8,
+        "sha256": "1d1cd27115ddcc9eb70fb1df7f6938279cf28d0231e14e088c8b5dfb55e970c3"
+      },
+      "assets/game/game.js": {
+        "bytes": 9457,
+        "compressed": 4060,
+        "compression": 8,
+        "sha256": "44a746431bb7f3361cd0f2a96ba7b1c4a5f8641900a51aa9bc669636f59d9075"
+      },
+      "assets/game/index.html": {
+        "bytes": 5010,
+        "compressed": 2038,
+        "compression": 8,
+        "sha256": "6c83a8455c9e3db059d453a75f0892ee38b25dc9a840710072c4c0a87bdbe5d3"
+      },
+      "assets/game/input.js": {
+        "bytes": 3360,
+        "compressed": 1458,
+        "compression": 8,
+        "sha256": "13c3be69fd2c5817a9b4840d7e076950aa3fc7226d9fa2575f12f2a58984ec0f"
+      },
+      "assets/game/phaser.min.js": {
+        "bytes": 1196122,
+        "compressed": 383384,
+        "compression": 8,
+        "sha256": "e92ddef111ba42e92d316979c732311757093688ea1810591cb7aa2858eba7a7"
+      },
+      "assets/game/space_grotesk.ttf": {
+        "bytes": 136676,
+        "compressed": 68383,
+        "compression": 8,
+        "sha256": "acad6de1fc93436f5c0f1f4137751ef04f1aea3063e7036535970ffcfbd79f72"
+      },
+      "assets/game/visual.js": {
+        "bytes": 9532,
+        "compressed": 3917,
+        "compression": 8,
+        "sha256": "443b1fc0f591de3ec6f1d4bb3547c25ade4aca994c872bb46b2671dbdeb3b12f"
+      },
+      "assets/journey.json": {
+        "bytes": 26060,
+        "compressed": 10923,
+        "compression": 8,
+        "sha256": "8db353712e7ec67ab6eb61e63e0bf7b078b8e3b29b562fe9d2d1f3d0317826d3"
+      },
+      "assets/karya-index.json": {
+        "bytes": 16680,
+        "compressed": 7356,
+        "compression": 8,
+        "sha256": "0fdd5b02160931c1d7ab416614b9266902dd2b030c054017483bc56ec9572aa3"
+      },
+      "assets/licenses/dm_sans_license.txt": {
+        "bytes": 4389,
+        "compressed": 2051,
+        "compression": 8,
+        "sha256": "2af94f4fb533be8fa23282eb33e08ca311ddf47c2f32777e2040b282deeec65c"
+      },
+      "assets/licenses/space_grotesk_license.txt": {
+        "bytes": 4402,
+        "compressed": 2059,
+        "compression": 8,
+        "sha256": "c6dec685825f73b18c20926fddc65e8315642e12986f15db0699170940a09efc"
+      },
+      "assets/licenses/stable_diffusion_cpp_license.txt": {
+        "bytes": 1063,
+        "compressed": 633,
+        "compression": 8,
+        "sha256": "8c7410e741dfd54668e7c9d098d03b26ff56496dc3e44709cae0540942e0438d"
+      },
+      "assets/models/brunette.glb": {
+        "bytes": 4721528,
+        "compressed": 2777618,
+        "compression": 8,
+        "sha256": "8864c504b5c11daa2f0037afffdc0815bb0fa2e6062e37a584746116a3c2f538"
+      },
+      "assets/neural/README.md": {
+        "bytes": 1053,
+        "compressed": 634,
+        "compression": 8,
+        "sha256": "5914b2a42a20a1b36138f475371fa12d2a0a33992bad498092a8aa20ca6e4cfe"
+      },
+      "assets/novel-kb.json": {
+        "bytes": 281755,
+        "compressed": 90333,
+        "compression": 8,
+        "sha256": "b48626e7a5b30b3d6d7f807ada3d9b3cd0aefeb58086981febc5f2f60c443bfd"
+      },
+      "assets/voice-identity.txt": {
+        "bytes": 15299,
+        "compressed": 5398,
+        "compression": 8,
+        "sha256": "05e2a89b643e1ea0bea53e5f970a5fd9f4695c160e4ddbb28e71a10e88e219c4"
+      },
+      "assets/voice-web-brain-cahaya.txt": {
+        "bytes": 32507,
+        "compressed": 13939,
+        "compression": 8,
+        "sha256": "8ab2d3be7f398a7ce565b1dba5c3e20023d8ab73ce9904fb06343803b5d733d4"
+      },
+      "assets/voice-web-brain-gelap.txt": {
+        "bytes": 32542,
+        "compressed": 13958,
+        "compression": 8,
+        "sha256": "6082512d4555b3b85f0d13c713285dd61615ae276465d40869f3da1adcd7d57f"
+      },
+      "AndroidManifest.xml": {
+        "bytes": 10232,
+        "compressed": 2668,
+        "compression": 8,
+        "sha256": "99687a651b57747e40cc4cb22510ab2fb75b2c00a0d1eaff36f7711f2fa5965a"
+      },
+      "res/anim-v21/fragment_fast_out_extra_slow_in.xml": {
+        "bytes": 364,
+        "compressed": 218,
+        "compression": 8,
+        "sha256": "650c54c5eff734092ee09354ffa1d833931b7706f2797e801f825604c47c2dd3"
+      },
+      "res/animator/fragment_close_enter.xml": {
+        "bytes": 1128,
+        "compressed": 395,
+        "compression": 8,
+        "sha256": "69e40dba6a95b3a53721b0f6b44df60478cd5a6fc6136c8eb62c0f24a9afcfbe"
+      },
+      "res/animator/fragment_close_exit.xml": {
+        "bytes": 1128,
+        "compressed": 395,
+        "compression": 8,
+        "sha256": "64fb930830d5e318935eeb6412bdaea39b0adc6e5a74f0bcc72fe35bc6629e51"
+      },
+      "res/animator/fragment_fade_enter.xml": {
+        "bytes": 452,
+        "compressed": 265,
+        "compression": 8,
+        "sha256": "0b51013fc0f5e916a727b75512c1ee9206178bd134509b7b4be6a397fa4d9a6b"
+      },
+      "res/animator/fragment_fade_exit.xml": {
+        "bytes": 452,
+        "compressed": 265,
+        "compression": 8,
+        "sha256": "440c234ca8a09188ec558b13771cb29c2da228956bfb58bdade5c1770384acbe"
+      },
+      "res/animator/fragment_open_enter.xml": {
+        "bytes": 1128,
+        "compressed": 388,
+        "compression": 8,
+        "sha256": "26aadd07b2900770e39a732b38f778a445cf6ae7127934ade550ed36612345b6"
+      },
+      "res/animator/fragment_open_exit.xml": {
+        "bytes": 1128,
+        "compressed": 392,
+        "compression": 8,
+        "sha256": "9a0bb56e3f3365aeeb29817fd0a6d1b6360b32751ddf52573364c54eef6187b9"
+      },
+      "res/color/vector_tint_color.xml": {
+        "bytes": 340,
+        "compressed": 180,
+        "compression": 8,
+        "sha256": "4bbb4ef3e0e3db260a05d794047a1765e420d699ee5673e90b57ff682a2fe34e"
+      },
+      "res/color/vector_tint_theme_color.xml": {
+        "bytes": 340,
+        "compressed": 182,
+        "compression": 8,
+        "sha256": "cf34dc5bdb4a6d1568143e115ac4e34448383ac772862ef0fdbb7fe8936c6dd3"
+      },
+      "res/drawable-anydpi-v21/ic_call_answer.xml": {
+        "bytes": 1356,
+        "compressed": 663,
+        "compression": 8,
+        "sha256": "5f6376dfe199d8a6e40033d3e623989d052c9b2f974d00c824fbb8b76fc6fde8"
+      },
+      "res/drawable-anydpi-v21/ic_call_answer_low.xml": {
+        "bytes": 1320,
+        "compressed": 644,
+        "compression": 8,
+        "sha256": "8f9acacabaf2dfb4bb53dab7ce7bec9c1451ce0a0219ffaa41760ea82da3d2d6"
+      },
+      "res/drawable-anydpi-v21/ic_call_answer_video.xml": {
+        "bytes": 772,
+        "compressed": 421,
+        "compression": 8,
+        "sha256": "5d4cdaae5838ad9442c085f951b766b2808bff13b8c85a14e0bcf8571514492c"
+      },
+      "res/drawable-anydpi-v21/ic_call_answer_video_low.xml": {
+        "bytes": 736,
+        "compressed": 401,
+        "compression": 8,
+        "sha256": "4a959580080ebb1d822a2459a4234d2abf0dd0b65d9c28bda8c258dafc888c51"
+      },
+      "res/drawable-anydpi-v21/ic_call_decline.xml": {
+        "bytes": 1528,
+        "compressed": 734,
+        "compression": 8,
+        "sha256": "2d825b79cce60203492ff09a04826db0ac8d9eb9bc0fb9fb139ae1aa5cde0f67"
+      },
+      "res/drawable-anydpi-v21/ic_call_decline_low.xml": {
+        "bytes": 1492,
+        "compressed": 712,
+        "compression": 8,
+        "sha256": "c8321364802409baf4d76e2a84e303871585bdc95b0395040c5ecea0e2051105"
+      },
+      "res/drawable-anydpi-v24/maplibre_logo_icon.xml": {
+        "bytes": 14652,
+        "compressed": 5655,
+        "compression": 8,
+        "sha256": "eab8e1202a57ef7ee26f30bb84020d3af1448aead8ee513e549942a47344b98e"
+      },
+      "res/drawable-hdpi-v4/ic_call_answer.png": {
+        "bytes": 472,
+        "compressed": 472,
+        "compression": 0,
+        "sha256": "5c80d88a7b82ef5833255bf70ff1c26c3efb2a92ae90cac222f3200f59e0b1ea"
+      },
+      "res/drawable-hdpi-v4/ic_call_answer_low.png": {
+        "bytes": 472,
+        "compressed": 472,
+        "compression": 0,
+        "sha256": "5c80d88a7b82ef5833255bf70ff1c26c3efb2a92ae90cac222f3200f59e0b1ea"
+      },
+      "res/drawable-hdpi-v4/ic_call_answer_video.png": {
+        "bytes": 254,
+        "compressed": 254,
+        "compression": 0,
+        "sha256": "6adcfc9dd1e1b82b985d223fc8a01c8e8f0dd3b9051d38062674b2380af79a50"
+      },
+      "res/drawable-hdpi-v4/ic_call_answer_video_low.png": {
+        "bytes": 254,
+        "compressed": 254,
+        "compression": 0,
+        "sha256": "6adcfc9dd1e1b82b985d223fc8a01c8e8f0dd3b9051d38062674b2380af79a50"
+      },
+      "res/drawable-hdpi-v4/ic_call_decline.png": {
+        "bytes": 375,
+        "compressed": 375,
+        "compression": 0,
+        "sha256": "12ec9f9ad5fa3d7d897114af6c2297b66f31cb056e43daffbe80d23f6f66396d"
+      },
+      "res/drawable-hdpi-v4/ic_call_decline_low.png": {
+        "bytes": 375,
+        "compressed": 375,
+        "compression": 0,
+        "sha256": "12ec9f9ad5fa3d7d897114af6c2297b66f31cb056e43daffbe80d23f6f66396d"
+      },
+      "res/drawable-hdpi-v4/maplibre_compass_icon.png": {
+        "bytes": 1929,
+        "compressed": 1929,
+        "compression": 0,
+        "sha256": "4ce32188a64f9e8a96733854e970602e08391f448b19a50561b12bc9df8a5c26"
+      },
+      "res/drawable-hdpi-v4/maplibre_logo_helmet.png": {
+        "bytes": 1044,
+        "compressed": 1044,
+        "compression": 0,
+        "sha256": "1aacb0054470e22f3ee9e8608681a5f218bfdf96c21facfc52a9fe6efaa0a7e5"
+      },
+      "res/drawable-hdpi-v4/maplibre_logo_icon.png": {
+        "bytes": 4001,
+        "compressed": 4001,
+        "compression": 0,
+        "sha256": "0cc87251603e3456973f3c247275c962de340152f6dc28d124721c5cb8ca2a56"
+      },
+      "res/drawable-hdpi-v4/maplibre_marker_icon_default.png": {
+        "bytes": 1483,
+        "compressed": 1483,
+        "compression": 0,
+        "sha256": "b731e4bcb740259c25e34315bcd328d78777a1143dd58f79674173b71226b3f2"
+      },
+      "res/drawable-hdpi-v4/maplibre_markerview_icon_default.png": {
+        "bytes": 1611,
+        "compressed": 1611,
+        "compression": 0,
+        "sha256": "85559f0da8f35ebe9eb1bac620eb993d4c40ba6b28d576c64b98857cdae27592"
+      },
+      "res/drawable-hdpi-v4/maplibre_mylocation_icon_bearing.png": {
+        "bytes": 786,
+        "compressed": 786,
+        "compression": 0,
+        "sha256": "00fdacd746eca4eadc8398dc4ab6569b1107660c7ca7b818812594fab5e44473"
+      },
+      "res/drawable-hdpi-v4/maplibre_mylocation_icon_default.png": {
+        "bytes": 651,
+        "compressed": 651,
+        "compression": 0,
+        "sha256": "edd8cd33b0f25c90a9bcd6f7f5495fa74ac328f7a9750dcccbec3afd33375de4"
+      },
+      "res/drawable-hdpi-v4/notification_bg_low_normal.9.png": {
+        "bytes": 212,
+        "compressed": 212,
+        "compression": 0,
+        "sha256": "21f0b55280be10b187ceff8edef4a5a7047683e6e9fcf47de410aa3839f41094"
+      },
+      "res/drawable-hdpi-v4/notification_bg_low_pressed.9.png": {
+        "bytes": 225,
+        "compressed": 225,
+        "compression": 0,
+        "sha256": "42aee0b03883e94df5e543348a397d1302c1b8221895871a83b81899f5a9647b"
+      },
+      "res/drawable-hdpi-v4/notification_bg_normal.9.png": {
+        "bytes": 212,
+        "compressed": 212,
+        "compression": 0,
+        "sha256": "0c6328c7b2420570a7ec38b3beb3bac9a29d895ac1ab7239315aba7266418593"
+      },
+      "res/drawable-hdpi-v4/notification_bg_normal_pressed.9.png": {
+        "bytes": 225,
+        "compressed": 225,
+        "compression": 0,
+        "sha256": "18b328d8017e677d5aad3dbd66bae356b5cac978c6f0670938ea648e51d0eb66"
+      },
+      "res/drawable-hdpi-v4/notification_oversize_large_icon_bg.png": {
+        "bytes": 909,
+        "compressed": 909,
+        "compression": 0,
+        "sha256": "aa00088d0d9fd97bd92ed9ffd29b54bb69a48a984aa73448ce553fb9d812be41"
+      },
+      "res/drawable-hdpi-v4/notify_panel_notification_icon_bg.png": {
+        "bytes": 107,
+        "compressed": 107,
+        "compression": 0,
+        "sha256": "8430ec003e003f3f2ba2f78d48fd150e25407667e530e82e87a7d4841c0fd676"
+      },
+      "res/drawable-ldpi-v4/ic_call_answer.png": {
+        "bytes": 270,
+        "compressed": 270,
+        "compression": 0,
+        "sha256": "6d34a8bb29be26e343781603588506f33bd1b93732a1c1bc9fd84678aa36b178"
+      },
+      "res/drawable-ldpi-v4/ic_call_answer_low.png": {
+        "bytes": 270,
+        "compressed": 270,
+        "compression": 0,
+        "sha256": "6d34a8bb29be26e343781603588506f33bd1b93732a1c1bc9fd84678aa36b178"
+      },
+      "res/drawable-ldpi-v4/ic_call_answer_video.png": {
+        "bytes": 199,
+        "compressed": 199,
+        "compression": 0,
+        "sha256": "66356f564f051a568e25071f60da312c418309f9129773aceb2246773458681c"
+      },
+      "res/drawable-ldpi-v4/ic_call_answer_video_low.png": {
+        "bytes": 199,
+        "compressed": 199,
+        "compression": 0,
+        "sha256": "66356f564f051a568e25071f60da312c418309f9129773aceb2246773458681c"
+      },
+      "res/drawable-ldpi-v4/ic_call_decline.png": {
+        "bytes": 201,
+        "compressed": 201,
+        "compression": 0,
+        "sha256": "a18cdaaf3742b1a3d4f484fa15d00fa34afb21495884301aafa3213338661ed6"
+      },
+      "res/drawable-ldpi-v4/ic_call_decline_low.png": {
+        "bytes": 201,
+        "compressed": 201,
+        "compression": 0,
+        "sha256": "a18cdaaf3742b1a3d4f484fa15d00fa34afb21495884301aafa3213338661ed6"
+      },
+      "res/drawable-ldpi-v4/maplibre_logo_icon.png": {
+        "bytes": 1812,
+        "compressed": 1812,
+        "compression": 0,
+        "sha256": "aaec3a68a08dadb0d013eb7fe1461d3567797b73e3acf8465768a7234fa7494d"
+      },
+      "res/drawable-mdpi-v4/ic_call_answer.png": {
+        "bytes": 317,
+        "compressed": 317,
+        "compression": 0,
+        "sha256": "f2ff62f473d8a5e00a8b6c81c15be9a0536471c3d5a81e37d04bc3356ea81ca0"
+      },
+      "res/drawable-mdpi-v4/ic_call_answer_low.png": {
+        "bytes": 317,
+        "compressed": 317,
+        "compression": 0,
+        "sha256": "f2ff62f473d8a5e00a8b6c81c15be9a0536471c3d5a81e37d04bc3356ea81ca0"
+      },
+      "res/drawable-mdpi-v4/ic_call_answer_video.png": {
+        "bytes": 206,
+        "compressed": 206,
+        "compression": 0,
+        "sha256": "6306048ba5f7eca43e7bdadeefa9412180508486fd543e02de93d2a013e223f0"
+      },
+      "res/drawable-mdpi-v4/ic_call_answer_video_low.png": {
+        "bytes": 206,
+        "compressed": 206,
+        "compression": 0,
+        "sha256": "6306048ba5f7eca43e7bdadeefa9412180508486fd543e02de93d2a013e223f0"
+      },
+      "res/drawable-mdpi-v4/ic_call_decline.png": {
+        "bytes": 264,
+        "compressed": 264,
+        "compression": 0,
+        "sha256": "7e87b3e0229126dc3c2bdaddcd8f330f3bb5f7613a05024c3cd6445dd161f788"
+      },
+      "res/drawable-mdpi-v4/ic_call_decline_low.png": {
+        "bytes": 264,
+        "compressed": 264,
+        "compression": 0,
+        "sha256": "7e87b3e0229126dc3c2bdaddcd8f330f3bb5f7613a05024c3cd6445dd161f788"
+      },
+      "res/drawable-mdpi-v4/maplibre_compass_icon.png": {
+        "bytes": 1711,
+        "compressed": 1711,
+        "compression": 0,
+        "sha256": "dbc5d7d0cff0696ffc2979f110ab2138f33481075d493cf0d93a4918fe2dcd49"
+      },
+      "res/drawable-mdpi-v4/maplibre_logo_helmet.png": {
+        "bytes": 665,
+        "compressed": 665,
+        "compression": 0,
+        "sha256": "ad1b578d84eb565ecef2f534aa08b18d439f37f3dc528b22d498d9cf72c267ed"
+      },
+      "res/drawable-mdpi-v4/maplibre_logo_icon.png": {
+        "bytes": 2419,
+        "compressed": 2419,
+        "compression": 0,
+        "sha256": "67b6d8b27d4f2ecf7007ca94b698b426d2ecf4caf7cf9e9611986ccf1ca5f275"
+      },
+      "res/drawable-mdpi-v4/maplibre_marker_icon_default.png": {
+        "bytes": 973,
+        "compressed": 973,
+        "compression": 0,
+        "sha256": "7d782e286cd3906851db7f627a085edbc93ec07382afccf4ba6d280a647d0ad9"
+      },
+      "res/drawable-mdpi-v4/maplibre_markerview_icon_default.png": {
+        "bytes": 1057,
+        "compressed": 1057,
+        "compression": 0,
+        "sha256": "994f95b79e509c69e0bc5740c3d273007cce7afcf771c816dcb98c508619c5d4"
+      },
+      "res/drawable-mdpi-v4/maplibre_mylocation_icon_bearing.png": {
+        "bytes": 519,
+        "compressed": 519,
+        "compression": 0,
+        "sha256": "a455bcfbe45c960649f3eb4a2aa022b1474a1e8d9bd1a905109c94cbbf9f36eb"
+      },
+      "res/drawable-mdpi-v4/maplibre_mylocation_icon_default.png": {
+        "bytes": 426,
+        "compressed": 426,
+        "compression": 0,
+        "sha256": "2cbdd35c2381d84b5f78a8a88bfb4f2388cfbb3a8ad8ea45198d67b97afeb7ad"
+      },
+      "res/drawable-mdpi-v4/notification_bg_low_normal.9.png": {
+        "bytes": 215,
+        "compressed": 215,
+        "compression": 0,
+        "sha256": "2f7fbda0ba6e53e9a47e2fc0e24e32c447c613a5808c2d6285dc651e83a07ad7"
+      },
+      "res/drawable-mdpi-v4/notification_bg_low_pressed.9.png": {
+        "bytes": 223,
+        "compressed": 223,
+        "compression": 0,
+        "sha256": "e17761ed280edd93d7141bd504b70f9e9e15a8652288d9e6333bf4ce964ef844"
+      },
+      "res/drawable-mdpi-v4/notification_bg_normal.9.png": {
+        "bytes": 215,
+        "compressed": 215,
+        "compression": 0,
+        "sha256": "a8676a1793ac8310ffb12986232df66df092d29c242aeedc2b73556c010d38dc"
+      },
+      "res/drawable-mdpi-v4/notification_bg_normal_pressed.9.png": {
+        "bytes": 223,
+        "compressed": 223,
+        "compression": 0,
+        "sha256": "99c14d6855b8be296d58017d3751b8dc849c47b6d1d80ab614ff9075080e461b"
+      },
+      "res/drawable-mdpi-v4/notify_panel_notification_icon_bg.png": {
+        "bytes": 98,
+        "compressed": 98,
+        "compression": 0,
+        "sha256": "0d773e62c756422313262846c787e58f67e0ee87e45e1ae9942002e816c4cb9e"
+      },
+      "res/drawable-nodpi-v4/aksara_chat_wallpaper.webp": {
+        "bytes": 114514,
+        "compressed": 114514,
+        "compression": 0,
+        "sha256": "537cbeb2958640870c6c0b2966eaf46ebcccf68fcef5faf9e16da501f6fb62db"
+      },
+      "res/drawable-nodpi-v4/aksara_duality_v2.webp": {
+        "bytes": 82436,
+        "compressed": 82436,
+        "compression": 0,
+        "sha256": "25226ce76b3ac94178055360aecc1439b4c1e9a25c70c0cb16182ebaf48590b5"
+      },
+      "res/drawable-nodpi-v4/aksara_glass_sigil.webp": {
+        "bytes": 59862,
+        "compressed": 59862,
+        "compression": 0,
+        "sha256": "21c62538fc80a85c074d85d5e6bd14c8f6563c8394b8d94ff13b39847a1496df"
+      },
+      "res/drawable-nodpi-v4/aksara_icon_transparent.png": {
+        "bytes": 722751,
+        "compressed": 722751,
+        "compression": 0,
+        "sha256": "83e1317c0846c33720d91f000fa4136b380f3d403f2083bde8392234b0b06f00"
+      },
+      "res/drawable-nodpi-v4/haze_noise.webp": {
+        "bytes": 6386,
+        "compressed": 6386,
+        "compression": 0,
+        "sha256": "ee6cac627606ba6c039fa26faa97f9503afec17b65706b1f5c37f02123231f90"
+      },
+      "res/drawable-v21/notification_action_background.xml": {
+        "bytes": 1180,
+        "compressed": 462,
+        "compression": 8,
+        "sha256": "1c45af11269fe4402ac051453e3efa997cfea51d1411feb49d2c3d4a78fa8c64"
+      },
+      "res/drawable-xhdpi-v4/ic_call_answer.png": {
+        "bytes": 623,
+        "compressed": 623,
+        "compression": 0,
+        "sha256": "e64c2e57627e24ec1ed37e67344c2bf31d1d6bdd2d8d715840c1edf0bd1425b6"
+      },
+      "res/drawable-xhdpi-v4/ic_call_answer_low.png": {
+        "bytes": 623,
+        "compressed": 623,
+        "compression": 0,
+        "sha256": "e64c2e57627e24ec1ed37e67344c2bf31d1d6bdd2d8d715840c1edf0bd1425b6"
+      },
+      "res/drawable-xhdpi-v4/ic_call_answer_video.png": {
+        "bytes": 290,
+        "compressed": 290,
+        "compression": 0,
+        "sha256": "5d02a81102644428ca639aec3df626eeb4a839a9ddc76fc2b158b04461d7f00f"
+      },
+      "res/drawable-xhdpi-v4/ic_call_answer_video_low.png": {
+        "bytes": 290,
+        "compressed": 290,
+        "compression": 0,
+        "sha256": "5d02a81102644428ca639aec3df626eeb4a839a9ddc76fc2b158b04461d7f00f"
+      },
+      "res/drawable-xhdpi-v4/ic_call_decline.png": {
+        "bytes": 452,
+        "compressed": 452,
+        "compression": 0,
+        "sha256": "9a9a30c305022a2f8e075d2ed7d33f5c7711bba8d0d0385511fdb62f89f208e3"
+      },
+      "res/drawable-xhdpi-v4/ic_call_decline_low.png": {
+        "bytes": 452,
+        "compressed": 452,
+        "compression": 0,
+        "sha256": "9a9a30c305022a2f8e075d2ed7d33f5c7711bba8d0d0385511fdb62f89f208e3"
+      },
+      "res/drawable-xhdpi-v4/maplibre_compass_icon.png": {
+        "bytes": 4005,
+        "compressed": 4005,
+        "compression": 0,
+        "sha256": "cf5f72d4d833fbca4a24715c5792775bcf0aaea56b9dfc2969309853bd43a17f"
+      },
+      "res/drawable-xhdpi-v4/maplibre_logo_helmet.png": {
+        "bytes": 1369,
+        "compressed": 1369,
+        "compression": 0,
+        "sha256": "331fd18c3373ef8b753bcaf62df0790f6967a085cc0f855668e414078d6d3456"
+      },
+      "res/drawable-xhdpi-v4/maplibre_logo_icon.png": {
+        "bytes": 5389,
+        "compressed": 5389,
+        "compression": 0,
+        "sha256": "eb4e79a51f417fef026931d4d8d019fc2feb275612b9026b3817e5fa14eb475e"
+      },
+      "res/drawable-xhdpi-v4/maplibre_marker_icon_default.png": {
+        "bytes": 1015,
+        "compressed": 1015,
+        "compression": 0,
+        "sha256": "646cbc0c543bd51137f5407ab01a78a004a3a50df3e6c3726f3c37fa7dddd1b9"
+      },
+      "res/drawable-xhdpi-v4/maplibre_markerview_icon_default.png": {
+        "bytes": 2105,
+        "compressed": 2105,
+        "compression": 0,
+        "sha256": "abe8249770657d4bb1ca0f6a62d30b8a0e0780101ba46feee8fc14aa31f9e0b7"
+      },
+      "res/drawable-xhdpi-v4/maplibre_mylocation_icon_bearing.png": {
+        "bytes": 832,
+        "compressed": 832,
+        "compression": 0,
+        "sha256": "206a65acee7acf2a3257ca70c59fef615aca84dd155a37499b2cea492f52a1aa"
+      },
+      "res/drawable-xhdpi-v4/maplibre_mylocation_icon_default.png": {
+        "bytes": 611,
+        "compressed": 611,
+        "compression": 0,
+        "sha256": "626873329ed980ceef23bc91ce7cb0ecb2bb7f0b642e7127d1825d601302c8b6"
+      },
+      "res/drawable-xhdpi-v4/notification_bg_low_normal.9.png": {
+        "bytes": 221,
+        "compressed": 221,
+        "compression": 0,
+        "sha256": "3e09afa21c45372c035598c017c8fb405a6d678e6cb84dc857581cb3b40e482d"
+      },
+      "res/drawable-xhdpi-v4/notification_bg_low_pressed.9.png": {
+        "bytes": 252,
+        "compressed": 252,
+        "compression": 0,
+        "sha256": "20343222f9f79dd565c3a2248494d452e70820ac1c437173c38badd45f962afd"
+      },
+      "res/drawable-xhdpi-v4/notification_bg_normal.9.png": {
+        "bytes": 221,
+        "compressed": 221,
+        "compression": 0,
+        "sha256": "559bf783d765c02338e97952bdc9c6689c7ff99090b8c9813369118da8b080f0"
+      },
+      "res/drawable-xhdpi-v4/notification_bg_normal_pressed.9.png": {
+        "bytes": 247,
+        "compressed": 247,
+        "compression": 0,
+        "sha256": "d27af435101ca4cbec0c840bd30687918cd39eb83aab1487420855623a45998b"
+      },
+      "res/drawable-xhdpi-v4/notify_panel_notification_icon_bg.png": {
+        "bytes": 138,
+        "compressed": 138,
+        "compression": 0,
+        "sha256": "b44eeda34d7a529c2fe55719eb098fa29707caa91d18de06a7a775d6e6bcf973"
+      },
+      "res/drawable-xxhdpi-v4/ic_call_answer.png": {
+        "bytes": 884,
+        "compressed": 884,
+        "compression": 0,
+        "sha256": "86763a30af2a934c7c13b123b36443d1d17918b71c6149bc6ee80115b872593d"
+      },
+      "res/drawable-xxhdpi-v4/ic_call_answer_low.png": {
+        "bytes": 884,
+        "compressed": 884,
+        "compression": 0,
+        "sha256": "86763a30af2a934c7c13b123b36443d1d17918b71c6149bc6ee80115b872593d"
+      },
+      "res/drawable-xxhdpi-v4/ic_call_answer_video.png": {
+        "bytes": 384,
+        "compressed": 384,
+        "compression": 0,
+        "sha256": "ca48f604262f2b4ef8b100c73130efe2ad33ef8c2a2c1b3516f24f51b7b04665"
+      },
+      "res/drawable-xxhdpi-v4/ic_call_answer_video_low.png": {
+        "bytes": 384,
+        "compressed": 384,
+        "compression": 0,
+        "sha256": "ca48f604262f2b4ef8b100c73130efe2ad33ef8c2a2c1b3516f24f51b7b04665"
+      },
+      "res/drawable-xxhdpi-v4/ic_call_decline.png": {
+        "bytes": 628,
+        "compressed": 628,
+        "compression": 0,
+        "sha256": "87adad32e0ec19c4e920420bf3a06c9f94f6128ed0d866a1891628aeab2cef06"
+      },
+      "res/drawable-xxhdpi-v4/ic_call_decline_low.png": {
+        "bytes": 628,
+        "compressed": 628,
+        "compression": 0,
+        "sha256": "87adad32e0ec19c4e920420bf3a06c9f94f6128ed0d866a1891628aeab2cef06"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_compass_icon.png": {
+        "bytes": 6856,
+        "compressed": 6856,
+        "compression": 0,
+        "sha256": "dfec2761f9349354e9863f0f6e538cbf7d079c67013f1e88960c4c86a38a3b20"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_logo_helmet.png": {
+        "bytes": 2160,
+        "compressed": 2160,
+        "compression": 0,
+        "sha256": "a1c33959ab7a2dae9b5c6ba1b95145b90127c45b72fe046fab60be51c1d2f40b"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_logo_icon.png": {
+        "bytes": 8315,
+        "compressed": 8315,
+        "compression": 0,
+        "sha256": "0157323a7022524df9c8a123b30d3aad4cfe216d427f888e0c16317af92fe758"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_marker_icon_default.png": {
+        "bytes": 1448,
+        "compressed": 1448,
+        "compression": 0,
+        "sha256": "aaf454480d9aee183a091c120de897038ee3ec1488a052fbb1e819f761c4f551"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_markerview_icon_default.png": {
+        "bytes": 1411,
+        "compressed": 1411,
+        "compression": 0,
+        "sha256": "382e5446236cd9b32251afeae186402222897e4afda1bbb2fe7d5cf5b4c71e60"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_mylocation_icon_bearing.png": {
+        "bytes": 1167,
+        "compressed": 1167,
+        "compression": 0,
+        "sha256": "71256caeb2ff22d1e48b151671040499be1dfe0b4029fa3c7b351770d0c71340"
+      },
+      "res/drawable-xxhdpi-v4/maplibre_mylocation_icon_default.png": {
+        "bytes": 982,
+        "compressed": 982,
+        "compression": 0,
+        "sha256": "a03291c9e912f4a0c0046d26a726598489a2d23d2481fd1c983dc893df3ee441"
+      },
+      "res/drawable-xxxhdpi-v4/ic_call_answer.png": {
+        "bytes": 1171,
+        "compressed": 1171,
+        "compression": 0,
+        "sha256": "ec698a3217bce74d8bc4a44bb008f2dbd3d1aebff1af1e9641805143dbf9fa87"
+      },
+      "res/drawable-xxxhdpi-v4/ic_call_answer_low.png": {
+        "bytes": 1171,
+        "compressed": 1171,
+        "compression": 0,
+        "sha256": "ec698a3217bce74d8bc4a44bb008f2dbd3d1aebff1af1e9641805143dbf9fa87"
+      },
+      "res/drawable-xxxhdpi-v4/ic_call_answer_video.png": {
+        "bytes": 465,
+        "compressed": 465,
+        "compression": 0,
+        "sha256": "4c717ce1ffb551c765981add65d1956132d8f522337de2866b045f0a60485426"
+      },
+      "res/drawable-xxxhdpi-v4/ic_call_answer_video_low.png": {
+        "bytes": 465,
+        "compressed": 465,
+        "compression": 0,
+        "sha256": "4c717ce1ffb551c765981add65d1956132d8f522337de2866b045f0a60485426"
+      },
+      "res/drawable-xxxhdpi-v4/ic_call_decline.png": {
+        "bytes": 823,
+        "compressed": 823,
+        "compression": 0,
+        "sha256": "ab73b729bb95878120a3bdc8dc915f3aaa1d7070fc644a0de64d40941ad507ed"
+      },
+      "res/drawable-xxxhdpi-v4/ic_call_decline_low.png": {
+        "bytes": 823,
+        "compressed": 823,
+        "compression": 0,
+        "sha256": "ab73b729bb95878120a3bdc8dc915f3aaa1d7070fc644a0de64d40941ad507ed"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_compass_icon.png": {
+        "bytes": 18478,
+        "compressed": 18478,
+        "compression": 0,
+        "sha256": "b27621dac7c51ab91b4337e5e8fe9f3f232796484ca9e88461b25da130a00e05"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_logo_helmet.png": {
+        "bytes": 2880,
+        "compressed": 2880,
+        "compression": 0,
+        "sha256": "f492c4ea2e6ef317c3595b59ae47c8a3572ffed2e370ff6aca04017da7463e39"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_logo_icon.png": {
+        "bytes": 11380,
+        "compressed": 11380,
+        "compression": 0,
+        "sha256": "62285dd7f726eb53a6757f4bd183d13af87043083f140ae4c29a4a308d2e61cd"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_marker_icon_default.png": {
+        "bytes": 1870,
+        "compressed": 1870,
+        "compression": 0,
+        "sha256": "1255bdaa01cf57aacb3f2b6d78c5dc636836ad02e4301ee85c4dcea6f970646e"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_markerview_icon_default.png": {
+        "bytes": 1814,
+        "compressed": 1814,
+        "compression": 0,
+        "sha256": "7fe31c9d1ac5d44f34f00b50bd510f65d5fce175cee8afa096d3c2cbb85d0496"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_mylocation_icon_bearing.png": {
+        "bytes": 1628,
+        "compressed": 1628,
+        "compression": 0,
+        "sha256": "22ca0089f298e9b1806beac9f6bc9d875f27b71f0724c774a566573b8f2e34f0"
+      },
+      "res/drawable-xxxhdpi-v4/maplibre_mylocation_icon_default.png": {
+        "bytes": 1251,
+        "compressed": 1251,
+        "compression": 0,
+        "sha256": "882de0a9b7047fee9e58e3d790e12812d2b8551dcf3357a41bed426a687328c3"
+      },
+      "res/drawable/$aksara_launcher_a_foreground__0.xml": {
+        "bytes": 852,
+        "compressed": 353,
+        "compression": 8,
+        "sha256": "422b59fbd2703d3864439b124fdaa5437da4c86e27abedcdc05e1554b1e47c96"
+      },
+      "res/drawable/$aksara_launcher_dual_background__0.xml": {
+        "bytes": 952,
+        "compressed": 361,
+        "compression": 8,
+        "sha256": "264f2de9c796fea19beb210323c956e8452629907ae10cc11a315039f210a6aa"
+      },
+      "res/drawable/$aksara_launcher_dual_foreground__0.xml": {
+        "bytes": 952,
+        "compressed": 374,
+        "compression": 8,
+        "sha256": "3466e6e0bc7e9f2ccdbdddd830fe9f940cd142e8ff19e4b5c99f0cd6be44c618"
+      },
+      "res/drawable/$aksara_launcher_dual_foreground__1.xml": {
+        "bytes": 952,
+        "compressed": 371,
+        "compression": 8,
+        "sha256": "c28a85d154190591c174aefe7423c0806e60542ab4f7b36a07918253994991b6"
+      },
+      "res/drawable/$aksara_launcher_midnight_background__0.xml": {
+        "bytes": 852,
+        "compressed": 336,
+        "compression": 8,
+        "sha256": "4e46726b8486d29765fa23236c16c733ee46842028b91532ce366d17901de720"
+      },
+      "res/drawable/aksara_cinematic_desktop.webp": {
+        "bytes": 57830,
+        "compressed": 57830,
+        "compression": 0,
+        "sha256": "83060de2e2155d7f14cd1ba7f713d04f65f529440dd877238e4e4c8561d80048"
+      },
+      "res/drawable/aksara_cinematic_mobile.webp": {
+        "bytes": 47874,
+        "compressed": 47874,
+        "compression": 0,
+        "sha256": "aab5ebc2e56d4c4e265ed2c65cac3d26b08b8eea5949afcdaceaa92a90b1229f"
+      },
+      "res/drawable/aksara_launch_empty.xml": {
+        "bytes": 372,
+        "compressed": 182,
+        "compression": 8,
+        "sha256": "2663b257c5801a7ae7e43834b187ccba0179438f5aa8514d86cbcdcf9d517e9e"
+      },
+      "res/drawable/aksara_launcher_a_foreground.xml": {
+        "bytes": 1508,
+        "compressed": 564,
+        "compression": 8,
+        "sha256": "98081f594bf984af5816bc2907c1bbf6495a9846e1cc9961bbaf9829f5d5421d"
+      },
+      "res/drawable/aksara_launcher_a_monochrome.xml": {
+        "bytes": 932,
+        "compressed": 445,
+        "compression": 8,
+        "sha256": "af97037477854657bc8bc583f4330effd72e022a108671b511f322ca509a683a"
+      },
+      "res/drawable/aksara_launcher_dual_background.xml": {
+        "bytes": 1912,
+        "compressed": 749,
+        "compression": 8,
+        "sha256": "cf49a2bfa9aa9709e26d9ba66534f490ad91561120ce2583623b3ad5afb5f8e1"
+      },
+      "res/drawable/aksara_launcher_dual_foreground.xml": {
+        "bytes": 2452,
+        "compressed": 953,
+        "compression": 8,
+        "sha256": "bc397dde22c4fc5e68c5a2a0fe7922b862e74cc7aac6e25a221aff61d5256741"
+      },
+      "res/drawable/aksara_launcher_dual_monochrome.xml": {
+        "bytes": 1072,
+        "compressed": 521,
+        "compression": 8,
+        "sha256": "b17da7860fefa4bc94f42ffbbdb372942596a60ba22df4b7014cc53e6d31b9cf"
+      },
+      "res/drawable/aksara_launcher_midnight_background.xml": {
+        "bytes": 948,
+        "compressed": 431,
+        "compression": 8,
+        "sha256": "50331d8cf4bd3742125e96eef0dc0d9452467d7ccb9435098caf7f10a7f4cd99"
+      },
+      "res/drawable/aksara_portrait.webp": {
+        "bytes": 2390,
+        "compressed": 2390,
+        "compression": 0,
+        "sha256": "412170771033464701abe72a7bb4c83d94c636638a114591121b179629a56274"
+      },
+      "res/drawable/maplibre_info_bg_selector.xml": {
+        "bytes": 464,
+        "compressed": 230,
+        "compression": 8,
+        "sha256": "f472cf61e248f887855765306a1768a979457a94c048807d5404401ab84fe633"
+      },
+      "res/drawable/maplibre_info_icon_default.xml": {
+        "bytes": 716,
+        "compressed": 399,
+        "compression": 8,
+        "sha256": "5e71e66b9146ebbb34eecca7c8a91e8ce7ab50413efc70709c34b9a9b736feeb"
+      },
+      "res/drawable/maplibre_info_icon_selected.xml": {
+        "bytes": 716,
+        "compressed": 405,
+        "compression": 8,
+        "sha256": "ab0a7f02137dd44e27a2f4b086c0f9fadb2a7cf2c6fdaabb11e93b28a7c4c649"
+      },
+      "res/drawable/maplibre_mylocation_bg_shape.xml": {
+        "bytes": 516,
+        "compressed": 245,
+        "compression": 8,
+        "sha256": "ef85281b6f95f578dd228753e1edf0b9e5d142e908bc5b1841162fa3810bc459"
+      },
+      "res/drawable/maplibre_popup_window_transparent.xml": {
+        "bytes": 680,
+        "compressed": 296,
+        "compression": 8,
+        "sha256": "69cde0377af44f4bc282469e66eee9aae243a9c307851216a2fcbf3b3d9369ec"
+      },
+      "res/drawable/maplibre_rounded_corner.xml": {
+        "bytes": 664,
+        "compressed": 301,
+        "compression": 8,
+        "sha256": "4c6856a4bb705a6b008b8a8b8bb1f9ab0dc471cffb95110646d5dd0e1576b2fb"
+      },
+      "res/drawable/maplibre_user_bearing_icon.xml": {
+        "bytes": 636,
+        "compressed": 351,
+        "compression": 8,
+        "sha256": "1faaa3e717e11d214217954c81c8918ed9f5f253761c615a4928aab212bc34d1"
+      },
+      "res/drawable/maplibre_user_icon.xml": {
+        "bytes": 588,
+        "compressed": 313,
+        "compression": 8,
+        "sha256": "3b57aaef74d70c1997918d68fce5687fe40f1dab08c0c6ee959022bca86c921a"
+      },
+      "res/drawable/maplibre_user_icon_shadow.xml": {
+        "bytes": 908,
+        "compressed": 404,
+        "compression": 8,
+        "sha256": "93fbc7e80ff4c1d2e117a34f2d5f8da2824496857dadfa2dcdbab3eddc9158ca"
+      },
+      "res/drawable/maplibre_user_icon_stale.xml": {
+        "bytes": 588,
+        "compressed": 313,
+        "compression": 8,
+        "sha256": "f9e0fd5a8835e9cb272a90d4bb1cff7e24905723918c6cbbeb062fc5475d72b6"
+      },
+      "res/drawable/maplibre_user_puck_icon.xml": {
+        "bytes": 1232,
+        "compressed": 579,
+        "compression": 8,
+        "sha256": "9945d82ba9197edde85b71b6dba277cfa49f9de2bef9dc599bf004ad541fbaf0"
+      },
+      "res/drawable/maplibre_user_stroke_icon.xml": {
+        "bytes": 588,
+        "compressed": 306,
+        "compression": 8,
+        "sha256": "4613d4f0154bbb0800c8293230edfe77771ba85fa23d6bd4870198c57c0ded88"
+      },
+      "res/drawable/notification_bg.xml": {
+        "bytes": 532,
+        "compressed": 253,
+        "compression": 8,
+        "sha256": "9c27ffb47bc22c33313e31c4849a24efb888ca4e010b7a0f969445a19898ed44"
+      },
+      "res/drawable/notification_bg_low.xml": {
+        "bytes": 532,
+        "compressed": 253,
+        "compression": 8,
+        "sha256": "a0e53f13179b4ac4b440db6e0d24416447868d2036023069e4e66c3d3c725204"
+      },
+      "res/drawable/notification_icon_background.xml": {
+        "bytes": 372,
+        "compressed": 185,
+        "compression": 8,
+        "sha256": "797a8792749e4d3aa20c58b17834516036aa690cdd3fcacea4ab453d6fc756a1"
+      },
+      "res/drawable/notification_tile_bg.xml": {
+        "bytes": 304,
+        "compressed": 173,
+        "compression": 8,
+        "sha256": "518bddea77fc582a14e18218f1eab29f0b663b1e4d591f13587062eb108e0af5"
+      },
+      "res/font/dm_sans.ttf": {
+        "bytes": 240164,
+        "compressed": 108937,
+        "compression": 8,
+        "sha256": "8cd08d97e89c24d0aa92edd2f0f4c8ee6195eee9b7c9f154865a58b02f0c1c0d"
+      },
+      "res/font/space_grotesk.ttf": {
+        "bytes": 136676,
+        "compressed": 63665,
+        "compression": 8,
+        "sha256": "acad6de1fc93436f5c0f1f4137751ef04f1aea3063e7036535970ffcfbd79f72"
+      },
+      "res/layout-v21/notification_action.xml": {
+        "bytes": 1052,
+        "compressed": 485,
+        "compression": 8,
+        "sha256": "dfaedc274d1e6c78d68ad227cd0f1794f7c7ed65c69980dbfea606cef1dd4ffc"
+      },
+      "res/layout-v21/notification_action_tombstone.xml": {
+        "bytes": 1228,
+        "compressed": 536,
+        "compression": 8,
+        "sha256": "cc2c9f070b49b5ffdd1d8a550d6b585193209ec9a2fd13329274d5620557265b"
+      },
+      "res/layout-v21/notification_template_custom_big.xml": {
+        "bytes": 2456,
+        "compressed": 787,
+        "compression": 8,
+        "sha256": "52fec6ec06c0105effd96a2329dfe0a03f7dd4d913f1a3fa42dec90a6b856a48"
+      },
+      "res/layout-v21/notification_template_icon_group.xml": {
+        "bytes": 988,
+        "compressed": 420,
+        "compression": 8,
+        "sha256": "b64922422c6e30f52c4239dd63d959fe8402b80853da4f8472e8f20ef27830c8"
+      },
+      "res/layout/custom_dialog.xml": {
+        "bytes": 612,
+        "compressed": 310,
+        "compression": 8,
+        "sha256": "38a8daad6e30e065828a8f853e91bfe166d937b475dc3e137240a92cdc3351c6"
+      },
+      "res/layout/ime_base_split_test_activity.xml": {
+        "bytes": 364,
+        "compressed": 201,
+        "compression": 8,
+        "sha256": "37ff040591f96786bfaf9d3d937fedf2f2f97e218c06beb3e7fe8a2442a181a8"
+      },
+      "res/layout/ime_secondary_split_test_activity.xml": {
+        "bytes": 876,
+        "compressed": 417,
+        "compression": 8,
+        "sha256": "5564d7e92b53a0a1707544f928fd77f88d149d0cd4474702f86b00f5feeedcf6"
+      },
+      "res/layout/maplibre_attribution_list_item.xml": {
+        "bytes": 688,
+        "compressed": 372,
+        "compression": 8,
+        "sha256": "fcbd77b21e656e2eb3fb2ed60308e9220a36bb458f34a71a7b7aa768c7eebcb6"
+      },
+      "res/layout/maplibre_infowindow_content.xml": {
+        "bytes": 2024,
+        "compressed": 784,
+        "compression": 8,
+        "sha256": "d3e8a6a7a96c511c290d8ea90af6fd979008e696e3d38b6a2ed4fa7f93af10e9"
+      },
+      "res/layout/maplibre_view_image_marker.xml": {
+        "bytes": 400,
+        "compressed": 234,
+        "compression": 8,
+        "sha256": "237d7384be0adbc8c43808e829cc65efacbe2c0fc406ed731358fe6e7c94fca1"
+      },
+      "res/layout/notification_template_part_chronometer.xml": {
+        "bytes": 440,
+        "compressed": 259,
+        "compression": 8,
+        "sha256": "5b133ff24bc64d8d0ec4f1732e7f0f0ebce2aa29d6d17255f8ef83b78f9e2d7b"
+      },
+      "res/layout/notification_template_part_time.xml": {
+        "bytes": 440,
+        "compressed": 260,
+        "compression": 8,
+        "sha256": "4bd9473c36b136500f65bd0eca525756a6f0ff107037abf589f1880f5227b791"
+      },
+      "res/mipmap-anydpi-v26/ic_launcher.xml": {
+        "bytes": 548,
+        "compressed": 242,
+        "compression": 8,
+        "sha256": "340aeb32b8f013270e31a9aa666dcde28083b35a892fc31c5823bf3e7393d830"
+      },
+      "res/mipmap-hdpi-v4/ic_launcher.webp": {
+        "bytes": 3500,
+        "compressed": 3500,
+        "compression": 0,
+        "sha256": "bab864756c3ec018035214d12569dc4dea105bf1d6b6449f69290e0b162b17bc"
+      },
+      "res/mipmap-hdpi-v4/ic_launcher_foreground.webp": {
+        "bytes": 5454,
+        "compressed": 5454,
+        "compression": 0,
+        "sha256": "f62e629bb19066e6e78d57b11bd73a4670a8845f82172c43bb5dc620c86337d5"
+      },
+      "res/mipmap-mdpi-v4/ic_launcher.webp": {
+        "bytes": 1980,
+        "compressed": 1980,
+        "compression": 0,
+        "sha256": "faf2a3e4a745faa3e5860e03f291549c0a58323b0d61057dbb713f09f92988a1"
+      },
+      "res/mipmap-mdpi-v4/ic_launcher_foreground.webp": {
+        "bytes": 3040,
+        "compressed": 3040,
+        "compression": 0,
+        "sha256": "c9362e37a183ffb1a0b910348d7fe5f9c6c07367fdd40497ba7e5578756bbf2c"
+      },
+      "res/mipmap-xhdpi-v4/ic_launcher.webp": {
+        "bytes": 5216,
+        "compressed": 5216,
+        "compression": 0,
+        "sha256": "d8d78e6c98316575142f6ba52d777633bae43cc6a9c8df60a062b244b7210143"
+      },
+      "res/mipmap-xhdpi-v4/ic_launcher_foreground.webp": {
+        "bytes": 8164,
+        "compressed": 8164,
+        "compression": 0,
+        "sha256": "8e835474b2c8e30d00923072c63515ce01cda581125aa230c7ad2d3da60e3acc"
+      },
+      "res/mipmap-xxhdpi-v4/ic_launcher.webp": {
+        "bytes": 9456,
+        "compressed": 9456,
+        "compression": 0,
+        "sha256": "ab34fa0a6530ca5b4ba538aaa22edc184d248e94b2b29b3914cbc63d8730048a"
+      },
+      "res/mipmap-xxhdpi-v4/ic_launcher_foreground.webp": {
+        "bytes": 14888,
+        "compressed": 14888,
+        "compression": 0,
+        "sha256": "07352df5268230a1c2f7825f1c351900ac4847fe3c25330a2b95b1ca8e77e952"
+      },
+      "res/mipmap-xxxhdpi-v4/ic_launcher.webp": {
+        "bytes": 14222,
+        "compressed": 14222,
+        "compression": 0,
+        "sha256": "7d24ef100b8cdd7bc3be9216733bd2e868dde9ac821f957c2b7a764564dfce6b"
+      },
+      "res/mipmap-xxxhdpi-v4/ic_launcher_foreground.webp": {
+        "bytes": 23374,
+        "compressed": 23374,
+        "compression": 0,
+        "sha256": "df9c5548700db263da8b7371eb7f10dce718c8e4c373c662f9847955ff0381be"
+      },
+      "resources.arsc": {
+        "bytes": 466248,
+        "compressed": 466248,
+        "compression": 0,
+        "sha256": "08876bc9b97030fb9c7671a9b1d754e1a9dc711df56cee0922c24197b492976c"
+      },
+      "DebugProbesKt.bin": {
+        "bytes": 1733,
+        "compressed": 780,
+        "compression": 8,
+        "sha256": "cd3da36122413f84be484c77cde4a77729f9e8f81a285408d073300c8385ca3a"
+      },
+      "META-INF/androidx.activity_activity-compose.version": {
+        "bytes": 7,
+        "compressed": 7,
+        "compression": 0,
+        "sha256": "118705d21506adb8d7c06a51156bb59497679f644fb4ae3d14bbbfc366643124"
+      },
+      "META-INF/androidx.activity_activity-ktx.version": {
+        "bytes": 7,
+        "compressed": 7,
+        "compression": 0,
+        "sha256": "118705d21506adb8d7c06a51156bb59497679f644fb4ae3d14bbbfc366643124"
+      },
+      "META-INF/androidx.activity_activity.version": {
+        "bytes": 7,
+        "compressed": 7,
+        "compression": 0,
+        "sha256": "118705d21506adb8d7c06a51156bb59497679f644fb4ae3d14bbbfc366643124"
+      },
+      "META-INF/androidx.annotation_annotation-experimental.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "7d072b48526b023950e4c48db01e8c273554a6401119f5691e7589ba9bc65d9d"
+      },
+      "META-INF/androidx.arch.core_core-runtime.version": {
+        "bytes": 67,
+        "compressed": 61,
+        "compression": 8,
+        "sha256": "1b7c606370188534dac5561fba2b2988093829697fce9e6e8832e9291d24ed00"
+      },
+      "META-INF/androidx.autofill_autofill.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.compose.animation_animation-core.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.animation_animation.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.foundation_foundation-layout.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.foundation_foundation.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.material3_material3.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "33158972a53877b421cfe2598b8d93cab169963a4964b45ee889e85349979018"
+      },
+      "META-INF/androidx.compose.material_material-icons-core.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "068eaa526351c4d1f6a42f79ae5fa0a7d2b74501a0824727fb6baa2db3c61cce"
+      },
+      "META-INF/androidx.compose.material_material-ripple.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.material_material.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.runtime_runtime-saveable.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.runtime_runtime.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-geometry.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-graphics.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-test-manifest.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-text.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-tooling-data.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-tooling-preview.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-tooling.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-unit.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui-util.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.compose.ui_ui.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "aa20308e2605d94642206c3c7fddc34f87b0c62ac67184fe341dfd489ae08d41"
+      },
+      "META-INF/androidx.core_core-ktx.version": {
+        "bytes": 7,
+        "compressed": 7,
+        "compression": 0,
+        "sha256": "ca0bc79c4cde0ad64e1ec9df2882425197b5ba85704a4ac6bd67f8f99936eb25"
+      },
+      "META-INF/androidx.core_core-viewtree.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.core_core.version": {
+        "bytes": 7,
+        "compressed": 7,
+        "compression": 0,
+        "sha256": "ca0bc79c4cde0ad64e1ec9df2882425197b5ba85704a4ac6bd67f8f99936eb25"
+      },
+      "META-INF/androidx.customview_customview-poolingcontainer.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.customview_customview.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.emoji2_emoji2.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "78b591400c56b7b67b8cb3b2b8a8e65e9093897f02ce0878e6b5405c68620fa7"
+      },
+      "META-INF/androidx.fragment_fragment.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "f26c3d2f53617cde2e8471318e0a060d125c9f1edbf3a47e1a5271c1538a7ca4"
+      },
+      "META-INF/androidx.graphics_graphics-path.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "44e161e4495cac2cf7858043e9e6418e9579f0ddcfae826f9a372622968ce066"
+      },
+      "META-INF/androidx.interpolator_interpolator.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-livedata-core-ktx.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-livedata-core.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-livedata.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-process.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-runtime-compose.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-runtime-ktx.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-runtime.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-viewmodel-compose.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-viewmodel-ktx.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-viewmodel-savedstate.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.lifecycle_lifecycle-viewmodel.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "5ba2db80e8ed2521570b58d5f1acba3a6b83978e500931fc9768dd85355489a8"
+      },
+      "META-INF/androidx.loader_loader.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.metrics_metrics-performance.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.profileinstaller_profileinstaller.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "7d072b48526b023950e4c48db01e8c273554a6401119f5691e7589ba9bc65d9d"
+      },
+      "META-INF/androidx.savedstate_savedstate-ktx.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "64d23f858ef51b0f996e4966d4e27c0371b437e2d2787890b1f7ad22d4ec5663"
+      },
+      "META-INF/androidx.savedstate_savedstate.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "64d23f858ef51b0f996e4966d4e27c0371b437e2d2787890b1f7ad22d4ec5663"
+      },
+      "META-INF/androidx.sqlite_sqlite-bundled.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "99600f6a7bfe6c33ebd1a2518f44a861a67afc40c25da42bc622595716529584"
+      },
+      "META-INF/androidx.sqlite_sqlite.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "99600f6a7bfe6c33ebd1a2518f44a861a67afc40c25da42bc622595716529584"
+      },
+      "META-INF/androidx.startup_startup-runtime.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "cc52f678848b814373757b460383bf61960e4943c203735adde0a350b3e50989"
+      },
+      "META-INF/androidx.tracing_tracing.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.versionedparcelable_versionedparcelable.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "cc52f678848b814373757b460383bf61960e4943c203735adde0a350b3e50989"
+      },
+      "META-INF/androidx.viewpager_viewpager.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "59854984853104df5c353e2f681a15fc7924742f9a2e468c29af248dce45ce03"
+      },
+      "META-INF/androidx.webkit_webkit.version": {
+        "bytes": 7,
+        "compressed": 7,
+        "compression": 0,
+        "sha256": "d723798f2436b46872ee9a012632d6f5602ab9297be05780a79ba29733f8a532"
+      },
+      "META-INF/androidx/annotation/annotation/LICENSE.txt": {
+        "bytes": 10175,
+        "compressed": 3563,
+        "compression": 8,
+        "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+      },
+      "META-INF/androidx/collection/collection-ktx/LICENSE.txt": {
+        "bytes": 10175,
+        "compressed": 3563,
+        "compression": 8,
+        "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+      },
+      "META-INF/androidx/collection/collection/LICENSE.txt": {
+        "bytes": 10175,
+        "compressed": 3563,
+        "compression": 8,
+        "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+      },
+      "META-INF/androidx/lifecycle/lifecycle-common-java8/LICENSE.txt": {
+        "bytes": 10175,
+        "compressed": 3563,
+        "compression": 8,
+        "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+      },
+      "META-INF/androidx/lifecycle/lifecycle-common/LICENSE.txt": {
+        "bytes": 10175,
+        "compressed": 3563,
+        "compression": 8,
+        "sha256": "809fa1ed21450f59827d1e9aec720bbc4b687434fa22283c6cb5dd82a47ab9c0"
+      },
+      "META-INF/kotlinx_coroutines_android.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "34d597db43ca53b2fd72ccbdd1af7a0fe238c2c0b8321dad8f43a1613143fc62"
+      },
+      "META-INF/kotlinx_coroutines_core.version": {
+        "bytes": 6,
+        "compressed": 6,
+        "compression": 0,
+        "sha256": "34d597db43ca53b2fd72ccbdd1af7a0fe238c2c0b8321dad8f43a1613143fc62"
+      },
+      "META-INF/services/kotlinx.coroutines.CoroutineExceptionHandler": {
+        "bytes": 54,
+        "compressed": 50,
+        "compression": 8,
+        "sha256": "3129b8edf6db07de6f8ff47695e2177c8bba4eed2962d3085c719e5acbb58a33"
+      },
+      "META-INF/services/kotlinx.coroutines.internal.MainDispatcherFactory": {
+        "bytes": 52,
+        "compressed": 49,
+        "compression": 8,
+        "sha256": "a1ea77ea8f93f419256b6e66f29713f950d8d6e90442b608d880a48003b5eb72"
+      },
+      "META-INF/versions/9/OSGI-INF/MANIFEST.MF": {
+        "bytes": 145,
+        "compressed": 129,
+        "compression": 8,
+        "sha256": "a844d62b02a9eefd9d112e74fd660843d91cd8b81dce6ce60a9eaba605fa939c"
+      },
+      "kotlin/annotation/annotation.kotlin_builtins": {
+        "bytes": 1006,
+        "compressed": 533,
+        "compression": 8,
+        "sha256": "5f75d4352e432664b2a235c472b991cf88365c73f5fcb5e1f9cc2cbe4b410abe"
+      },
+      "kotlin/collections/collections.kotlin_builtins": {
+        "bytes": 8308,
+        "compressed": 1834,
+        "compression": 8,
+        "sha256": "0e654e03a38e119de0f4d11633711bd57e1e8b1a876eda74a90100a2a6e7daa4"
+      },
+      "kotlin/concurrent/atomics/atomics.kotlin_builtins": {
+        "bytes": 2674,
+        "compressed": 1082,
+        "compression": 8,
+        "sha256": "955035527393d165a22da4cb9d992f42b4a30b6f070918f3e2b1f2678f83cc9d"
+      },
+      "kotlin/coroutines/coroutines.kotlin_builtins": {
+        "bytes": 137,
+        "compressed": 116,
+        "compression": 8,
+        "sha256": "98ab3a3c18fcb237528dd63fa489815c583e1d6c13debd2a27ac6d74ccf8717b"
+      },
+      "kotlin/internal/internal.kotlin_builtins": {
+        "bytes": 590,
+        "compressed": 357,
+        "compression": 8,
+        "sha256": "64712f94840e6b3f8123f522f32d08c46f083d87c312a74901f7c00224de775e"
+      },
+      "kotlin/kotlin.kotlin_builtins": {
+        "bytes": 29399,
+        "compressed": 5342,
+        "compression": 8,
+        "sha256": "c4240215bc20e71b01cc62b43edebd02749b3249d7daa8e7f1dc1514f064c274"
+      },
+      "kotlin/ranges/ranges.kotlin_builtins": {
+        "bytes": 4184,
+        "compressed": 1354,
+        "compression": 8,
+        "sha256": "f9d35b836ccb5380803aab5e6c76d708b1536fc6c82f27185e8cff5913824e1c"
+      },
+      "kotlin/reflect/reflect.kotlin_builtins": {
+        "bytes": 4827,
+        "compressed": 1435,
+        "compression": 8,
+        "sha256": "23ecbc7cbb354f31ba37a1be1793d3bb53c00c92cdcf3867759d09d938a1d7c3"
+      },
+      "okhttp3/internal/publicsuffix/NOTICE": {
+        "bytes": 218,
+        "compressed": 149,
+        "compression": 8,
+        "sha256": "8a9c58fbded5ea3474315e4a9824ca8b1486098a1a03e897e0b19419d5e1876a"
+      },
+      "okhttp3/internal/publicsuffix/publicsuffixes.gz": {
+        "bytes": 41394,
+        "compressed": 41394,
+        "compression": 0,
+        "sha256": "9af43e9995ec749e7a30eec4e5a87770d7e2027847084a07cca82060eff0c791"
+      },
+      "org/commonmark/internal/util/entities.properties": {
+        "bytes": 24470,
+        "compressed": 10865,
+        "compression": 8,
+        "sha256": "fea6cf4d3bd2aa7ffd421116551654e2a22e40a17e4cd087c8725138113bad69"
+      },
+      "org/mozilla/javascript/resources/Messages.properties": {
+        "bytes": 25659,
+        "compressed": 7660,
+        "compression": 8,
+        "sha256": "99c073ec6896c64817fdf0fe22f3f72f0d826df04012d6f33f397413b5889038"
+      },
+      "org/mozilla/javascript/resources/Messages_en.properties": {
+        "bytes": 410,
+        "compressed": 261,
+        "compression": 8,
+        "sha256": "b76440d8c6f928ff7a853ad2e07d3b0bc2cf27e68402eab77977af0e8fe6a19d"
+      },
+      "org/mozilla/javascript/resources/Messages_fr.properties": {
+        "bytes": 26038,
+        "compressed": 7114,
+        "compression": 8,
+        "sha256": "440b2a355453be77fa39e205dbc094d845fc366617f7e2f5e98e2f753a52ae7e"
+      },
+      "org/mozilla/javascript/resources/Messages_zh_CN.properties": {
+        "bytes": 22287,
+        "compressed": 7540,
+        "compression": 8,
+        "sha256": "52edaae5c5aa25165edf76de3dc97c22e4c77d7fb8f541a4aa540e04314e121d"
+      }
+    }
+  }
+}

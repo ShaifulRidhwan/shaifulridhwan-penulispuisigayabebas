@@ -31,5 +31,5 @@
       "license": "apache-2.0"
     }
   ],
-  "memory_policy": "RAM estimates are conservative engineering estimates for 1024-2048 token contexts, not measured device benchmarks. Require 2/4/8 GiB available for Light/Balanced/Advanced plus 1 GiB Android reserve; reject low-memory, non-ARM64 and serious thermal states. An 8 GB total RAM device cannot satisfy Advanced eligibility."
+  "memory_policy": "Superseded by neural-repair/audit.md and NeuralMemoryPolicy.kt: Light uses 1024-token native working-set estimates and Android threshold-based reserve, with an explicit warning attempt below recommended RAM. Balanced/Advanced retain conservative gates. Physical totalMem, available availMem and virtual RAM are distinct; virtual RAM is never added."
 }

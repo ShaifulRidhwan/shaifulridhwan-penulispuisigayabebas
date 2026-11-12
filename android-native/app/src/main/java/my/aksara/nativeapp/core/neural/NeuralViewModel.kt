@@ -23,13 +23,16 @@ data class NeuralMeasurement(val label: String, val tokens: Int, val firstTokenM
 }
 data class NeuralUiState(
     val device: NeuralDeviceSnapshot? = null, val runtimeAvailable: Boolean = false,
-    val loadedId: String? = null, val contextSize: Int = 2048, val loadMs: Long? = null,
+    val activation: NeuralActivationState = NeuralActivationState(), val contextSize: Int = 2048, val loadMs: Long? = null,
     val installed: Set<String> = emptySet(), val verified: Set<String> = emptySet(),
     val busy: String? = null, val transferId: String? = null, val progress: Long = 0,
     val progressTotal: Long? = null, val message: String? = null,
     val turns: List<NeuralTurn> = emptyList(), val streaming: String = "", val source: String? = null,
     val measurements: List<NeuralMeasurement> = emptyList(), val knowledge: String = ""
-)
+) {
+    val loadedId get() = activation.loadedId
+    val canInfer get() = activation.canUse(runtimeAvailable, busy != null)
+}
 
 /** Owned by the chat Activity; all native and disk work stays off the main thread. */
 class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallbacks2 {
@@ -68,18 +71,18 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
         work = viewModelScope.launch {
             try { action() }
             catch (cancelled: CancellationException) {
-                if (mutable.value.busy == "Sahkan & muat model") {
+                if (label in setOf("Sahkan & muat model", "Nyahmuat", "Padam model")) {
                     withContext(NonCancellable) { runtime.unload() }
-                    mutable.update { it.copy(loadedId = null) }
+                    mutable.update { it.copy(activation = NeuralActivationState()) }
                 }
                 mutable.update { it.copy(message = if (it.transferId != null) "Dibatalkan; Retry bermula dari awal" else "Operasi dihentikan") }
             }
             catch (error: OutOfMemoryError) {
                 runtime.unload()
-                mutable.update { it.copy(loadedId = null, message = "Memori tidak mencukupi. Cuba Light.") }
+                mutable.update { it.copy(activation = NeuralActivationState(), message = "Pemuatan kehabisan memori. Tutup aplikasi lain dan cuba Light 1024 token selepas Semak RAM.") }
             }
             catch (error: Exception) { mutable.update { it.copy(message = error.message ?: "Operasi gagal") } }
-            finally { mutable.update { it.copy(busy = null, transferId = null) }; refresh() }
+            finally { mutable.update { it.copy(activation = it.activation.reconcile(runtime.isLoaded), busy = null, transferId = null) }; refresh() }
         }
     }
     fun transfer(model: NeuralModelDescriptor, uri: Uri? = null) = start(if (uri == null) "Muat turun" else "Import & SHA-256") {
@@ -101,24 +104,31 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
         mutable.update { it.copy(verified = it.verified + model.id, message = "SHA-256 sah; model dipasang") }
     }
     fun activate(model: NeuralModelDescriptor) = start("Sahkan & muat model") {
-        val snapshot = withContext(Dispatchers.IO) { NeuralDeviceCapabilityProbe.inspect(getApplication()) }
-        snapshot.loadingIssue(model)?.let { error(it) }
         check(runtime.available) { "Runtime ARM64 tidak tersedia" }
-        mutable.update { it.copy(verified = it.verified - model.id) }
-        val file = withContext(Dispatchers.IO) { store.installedModel(model) { ensureActive() } } ?: error("Model tiada atau rosak. Padam dan cuba semula.")
-        mutable.update { it.copy(loadedId = null, verified = it.verified + model.id, turns = emptyList(), streaming = "") }
+        mutable.update { it.copy(activation = it.activation.begin(model.id), verified = it.verified - model.id) }
+        val file = withContext(Dispatchers.IO) { store.installedModel(model) { ensureActive() } }
+            ?: error("Model tiada atau rosak. Import fail katalog yang betul atau muat turun semula.")
+        // A loaded model consumes available RAM. Release it before assessing the incoming model.
+        mutable.update { it.copy(activation = it.activation.unloaded(), verified = it.verified + model.id, turns = emptyList(), streaming = "") }
         runtime.unload()
+        val snapshot = withContext(Dispatchers.IO) { NeuralDeviceCapabilityProbe.inspect(getApplication()) }
+        val assessment = NeuralMemoryPolicy.assess(snapshot, model, mutable.value.contextSize)
+        mutable.update { it.copy(device = snapshot, message = assessment.hardFailure ?: assessment.warning) }
+        assessment.hardFailure?.let { error(it) }
+        coroutineContext.ensureActive()
         val started = SystemClock.elapsedRealtime()
-        runtime.loadWithContext(file, mutable.value.contextSize).getOrThrow()
+        runtime.loadWithContext(file, assessment.contextSize).getOrThrow()
+        coroutineContext.ensureActive()
         preferences.edit().putString("selected_model", model.id).apply()
-        mutable.update { it.copy(loadedId = model.id, loadMs = SystemClock.elapsedRealtime() - started, message = "Model aktif • inferens pada peranti") }
+        mutable.update { it.copy(activation = it.activation.confirmed(runtime.isLoaded), contextSize = assessment.contextSize,
+            loadMs = SystemClock.elapsedRealtime() - started, message = "Model aktif • ${assessment.contextSize} token • inferens pada peranti") }
     }
     fun delete(model: NeuralModelDescriptor) = start("Padam model") {
-        if (mutable.value.loadedId == model.id) { runtime.unload(); mutable.update { it.copy(loadedId = null, turns = emptyList()) } }
+        if (mutable.value.loadedId == model.id) { runtime.unload(); mutable.update { it.copy(activation = NeuralActivationState(), turns = emptyList()) } }
         withContext(Dispatchers.IO) { check(store.uninstall(model)) { "Model tidak dapat dipadam" } }
         mutable.update { it.copy(verified = it.verified - model.id) }
     }
-    fun unload() = start("Nyahmuat") { runtime.unload(); mutable.update { it.copy(loadedId = null) } }
+    fun unload() = start("Nyahmuat") { mutable.update { it.copy(activation = NeuralActivationState()) }; runtime.unload() }
     fun contextSize(value: Int) { if (mutable.value.busy == null && mutable.value.loadedId == null) mutable.update { it.copy(contextSize = value) } }
     fun clear() { if (mutable.value.busy == null) mutable.update { it.copy(turns = emptyList(), streaming = "", source = null) } }
     fun stop() {
@@ -128,7 +138,7 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
     private val identity = "Anda Aksara, pembantu tempatan. Jawab dalam Bahasa Melayu Malaysia apabila sesuai. Bezakan fakta sumber daripada penaakulan. Jika tidak pasti, nyatakan ketidakpastian. Jangan mendakwa mempunyai akses Internet. /no_think"
     fun send(prompt: String) {
         val text = prompt.trim().take(8000)
-        if (text.isEmpty() || mutable.value.loadedId == null) return
+        if (text.isEmpty() || !mutable.value.canInfer || !runtime.isLoaded) return
         start("Menjana") {
             val before = mutable.value
             val hit = withContext(Dispatchers.Default) {
@@ -164,7 +174,7 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
         return NeuralMeasurement(label, count, first, SystemClock.elapsedRealtime() - started, Debug.getPss(), device.thermalStatus, stopRequested, error, output)
     }
     fun benchmark() {
-        if (mutable.value.loadedId == null) return
+        if (!mutable.value.canInfer || !runtime.isLoaded) return
         start("Benchmark") {
             mutable.update { it.copy(measurements = emptyList(), streaming = "") }
             for ((label, prompt) in suite) {
@@ -191,7 +201,7 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
             work?.join()
             mutable.update { it.copy(busy = "Nyahmuat") }
             try { runtime.unload() }
-            finally { mutable.update { it.copy(loadedId = null, busy = null) } }
+            finally { mutable.update { it.copy(activation = NeuralActivationState(), busy = null) } }
         }
     }
     override fun onTrimMemory(level: Int) { if (level >= ComponentCallbacks2.TRIM_MEMORY_RUNNING_LOW) background() }
