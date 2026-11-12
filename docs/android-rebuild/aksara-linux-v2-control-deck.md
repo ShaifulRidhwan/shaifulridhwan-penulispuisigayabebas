@@ -37,3 +37,26 @@ Feature branch: `feature/aksara-linux-control-deck-v2`.
 - A single workflow-path push produces a new V2 APK; source commits do not burn CI quota.
 - Workflow is also manually dispatchable after modifying the workflow itself.
 - Physical testing and owner approval are required before merge.
+
+## Follow-up polish · Four-point owner feedback
+1. **Alpine PS1 identity:** a tiny interactive-only `/etc/profile.d/99-aksara-prompt.sh`
+   shows `aksara:<cwd> ❯`. Installed idempotently for existing V1 rootfs on the next
+   new Linux session; never overwrites an existing profile. Opt out with
+   `AKSARA_PROMPT_OFF=1` before starting a new login shell, or override
+   `PS1` in `~/.profile`. Nothing is printed by non-interactive shells.
+2. **Status readability:** one lightweight glass strip containing three equal-width,
+   two-line Runtime / Sessions / Storage facts, with larger values.
+3. **Commands UX:** explicitly selected Files / System / Dev groups, known Aksara icons,
+   and one-tap read-only allowlisted commands. Developer group is Alpine-only.
+4. **Restart regression:** a finished process gets a new real PTY in the *same* tab
+   with the *same* label; live sessions are not restartable. Repeated taps are guarded.
+   Kotlin pure-unit tests cover restart planning, group selection and shell profile.
+   A real process-restart/IME/interactive-TUI acceptance test still needs the owner's phone.
+
+**Release QA:** On a device with Alpine already installed, close Linux and reopen, then
+create a fresh Linux session. Verify prompt, move with `cd` and check PS1 path updates.
+Type `exit`, tap Restart, type `pwd` and `echo AKSARA-RESTART-OK`. Open multiple tabs,
+close a preceding tab, and confirm the active PTY remains selected.
+
+No kernel/root elevation, file deletion, background package installs, privileged
+commands or extra app permissions were added.
