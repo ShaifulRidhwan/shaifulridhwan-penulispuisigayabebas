@@ -6,6 +6,8 @@ on:
     paths:
       - 'android-native/app/src/main/neural/aksara_neural.cpp'
       - 'android-native/app/src/main/java/my/aksara/nativeapp/core/neural/**'
+      - 'android-native/app/src/main/java/my/aksara/nativeapp/core/linux/**'
+      - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/AksaraScreen.kt'
       - 'android-native/app/src/test/java/my/aksara/nativeapp/core/neural/**'
       - 'android-native/app/src/main/neural/CMakeLists.txt'
       - '.github/workflows/aksara-android-neural-native.yml'
