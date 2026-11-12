@@ -41,6 +41,20 @@ internal object LocalJourneyMatcher {
         }
         return previous[b.length]
     }
+    /** Only resolve elliptical choices when the visible prior assistant message provides options. */
+    fun followUpChoice(input: String, previousAssistant: String): String? {
+        val query = normalize(input)
+        val selection = when {
+            Regex("\\b(kedua|ke 2|nombor 2|pilihan 2|number 2)\\b").containsMatchIn(query) -> 2
+            Regex("\\b(pertama|ke 1|nombor 1|pilihan 1|number 1)\\b").containsMatchIn(query) -> 1
+            Regex("\\b(ketiga|ke 3|nombor 3|pilihan 3|number 3)\\b").containsMatchIn(query) -> 3
+            else -> return null
+        }
+        val option = Regex("(?m)^\\s*\\*{0,2}([1-9])[.)]\\s+(.+?)\\s*$")
+            .findAll(previousAssistant)
+            .firstOrNull { it.groupValues[1].toInt() == selection }
+        return option?.groupValues?.get(2)?.trim()?.takeIf { it.length in 2..120 }
+    }
     fun match(input: String, questions: List<String>): Int? {
         val query = normalize(input)
         if (query.isBlank()) return null
