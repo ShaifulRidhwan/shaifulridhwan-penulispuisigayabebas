@@ -25,7 +25,7 @@ import java.util.zip.GZIPInputStream
  * executing freshly installed userland binaries; the isolated debug
  * preview has its own documented compatibility gate.
  */
-internal data class LinuxInstallProgress(
+data class LinuxInstallProgress(
     val percent: Int,
     val stage: String,
     val filesDone: Int = 0,
