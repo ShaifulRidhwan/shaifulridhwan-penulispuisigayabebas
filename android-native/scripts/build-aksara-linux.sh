@@ -97,9 +97,10 @@ curl --fail --location --retry 3 --connect-timeout 20 --max-time 60 "$base/$file
 tar -tzf "$ASSETS/$file" > "$RUNNER_TEMP/aksara-alpine-contents.txt"
 grep -Eq 'bin/(sh|busybox)' "$RUNNER_TEMP/aksara-alpine-contents.txt"
 grep -Fq 'sbin/apk' "$RUNNER_TEMP/aksara-alpine-contents.txt"
-# No compilers, daemons, root privileges or extra Android permissions.
+# Full ARM64 developer toolchain is staged in CI, never downloaded at phone startup.
+# Android PRoot remains rootless; all package/runtime features require device QA.
 BRAND="$ROOT/android-native/scripts/linux"
-sh -n "$BRAND/aksara-fetch.sh" "$BRAND/90-aksara-intro.sh"
+sh -n "$BRAND/aksara-fetch.sh" "$BRAND/90-aksara-intro.sh" "$BRAND/aksara-linux-smoke.sh"
 python3 -m json.tool "$BRAND/fastfetch-wide.jsonc" >/dev/null
 python3 -m json.tool "$BRAND/fastfetch-compact.jsonc" >/dev/null
 image="$(docker import --platform linux/arm64 "$ASSETS/$file")"
@@ -114,11 +115,23 @@ container="$(docker create --platform linux/arm64 "$image" /bin/sh -ec '
   printf "%s\n" \
     "https://dl-cdn.alpinelinux.org/alpine/v3.22/main" \
     "https://dl-cdn.alpinelinux.org/alpine/v3.22/community" > /etc/apk/repositories
-  apk add --no-cache bash ca-certificates curl fastfetch file git htop jq less nano openssh-client-default python3 ripgrep vim wget
-  for cmd in sh apk bash curl fastfetch git htop jq less nano ssh python3 rg vi wget; do
+  apk add --no-cache \
+    bash zsh busybox coreutils findutils grep sed gawk tar gzip zip unzip less nano vim man-db \
+    ca-certificates curl wget openssl bind-tools iproute2 netcat-openbsd \
+    git openssh-client-default openssh-server \
+    build-base binutils make cmake ninja pkgconf autoconf automake libtool \
+    clang20 llvm20 lld20 \
+    python3 py3-pip py3-virtualenv nodejs npm rust cargo go openjdk17-jdk \
+    sqlite sqlite-dev jq cloc ripgrep file htop procps fastfetch gdb strace
+  for cmd in sh apk bash zsh curl fastfetch git htop jq less nano ssh python3 rg vi wget \
+    gcc g++ clang cmake make ninja node npm rustc cargo go java javac sqlite3 cloc; do
     command -v "$cmd" >/dev/null || { echo "Missing bundled command: $cmd" >&2; exit 1; }
   done
-  mkdir -p /usr/local/bin /usr/share/aksara /etc/profile.d
+  mkdir -p /usr/local/bin /usr/share/aksara /etc/profile.d /tmp /workspace
+  chmod 1777 /tmp
+  mv /tmp/aksara-linux-smoke.sh /usr/local/bin/aksara-linux-smoke
+  chmod 755 /usr/local/bin/aksara-linux-smoke
+  /usr/local/bin/aksara-linux-smoke --ci
   mv /tmp/aksara-fetch.sh /usr/local/bin/aksara-fetch
   chmod 755 /usr/local/bin/aksara-fetch
   mv /tmp/90-aksara-intro.sh /etc/profile.d/90-aksara-intro.sh
@@ -130,12 +143,12 @@ container="$(docker create --platform linux/arm64 "$image" /bin/sh -ec '
   timeout 8 fastfetch --config /usr/share/aksara/fastfetch-wide.jsonc --pipe >/dev/null
   timeout 8 fastfetch --config /usr/share/aksara/fastfetch-compact.jsonc --pipe >/dev/null
   apk info -vv | sort > /etc/aksara-preinstalled-packages.txt
-  printf "%s\n" "AKSARA Linux Developer Essentials / Alpine v3.22 / ARM64" > /etc/aksara-package-profile
+  printf "%s\n" "AKSARA Linux V3 Full Prebuilt Devkit / Alpine v3.22 / ARM64" > /etc/aksara-package-profile
 ')"
 test -n "$container"
 # Copy assets into the stopped ARM64 container before it runs package hooks;
 # this ensures executable bits/config paths are in the exported rootfs.
-for item in aksara-fetch.sh 90-aksara-intro.sh aksara-logo.txt fastfetch-wide.jsonc fastfetch-compact.jsonc; do
+for item in aksara-fetch.sh 90-aksara-intro.sh aksara-logo.txt fastfetch-wide.jsonc fastfetch-compact.jsonc aksara-linux-smoke.sh; do
   docker cp "$BRAND/$item" "$container:/tmp/$item"
 done
 docker start -a "$container"
@@ -151,7 +164,7 @@ with tarfile.open(sys.argv[1], "r:gz") as tar:
     for member in tar:
         files += 1
         size += member.size if member.isfile() else 0
-        if files > 30000 or size > 250 * 1024 * 1024:
+        if files > 250000 or size > 4 * 1024 * 1024 * 1024:
             raise SystemExit(f"Android extraction bounds exceeded: {files=} {size=}")
         members.add(member.name.lstrip("./"))
 required = {"bin/sh", "sbin/apk", "usr/bin/vim", "usr/bin/nano",
@@ -160,9 +173,13 @@ required = {"bin/sh", "sbin/apk", "usr/bin/vim", "usr/bin/nano",
             "usr/share/aksara/fastfetch-wide.jsonc",
             "usr/share/aksara/fastfetch-compact.jsonc",
             "usr/share/aksara/aksara-logo.txt",
-            "etc/aksara-preinstalled-packages.txt"}
+            "etc/aksara-preinstalled-packages.txt",
+            "usr/bin/gcc", "usr/bin/g++", "usr/bin/clang",
+            "usr/bin/node", "usr/bin/rustc", "usr/bin/cargo",
+            "usr/bin/go", "usr/bin/java", "usr/bin/javac",
+            "usr/bin/sqlite3", "usr/local/bin/aksara-linux-smoke"}
 missing = sorted(required.difference(members))
 if missing: raise SystemExit(f"Bundled Linux files missing: {missing}")
 print(f"Alpine essentials verified: {files} entries, {size / 2**20:.1f} MiB")
 AKSARA_ROOTFS_BOUNDS
-echo "Pinned PRoot + Alpine ARM64 Developer Essentials + AKSARA System Identity staged."
+echo "Pinned PRoot + Alpine ARM64 V3 FULL PREBUILT developer toolchain staged."
