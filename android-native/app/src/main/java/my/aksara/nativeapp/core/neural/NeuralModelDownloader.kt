@@ -32,6 +32,7 @@ class NeuralModelDownloader(
             val request = Request.Builder().url(descriptor.downloadUrl).get().build()
             val response = client.newCall(request).execute()
             response.use { res ->
+                if (res.request.url.scheme != "https") throw SecurityException("Non-HTTPS redirect rejected")
                 if (!res.isSuccessful) throw IOException("HTTP ${res.code}")
                 val body = res.body ?: throw IOException("Empty model response")
                 val expected = body.contentLength().takeIf { it >= 0L }
@@ -48,7 +49,7 @@ class NeuralModelDownloader(
                             val n = input.read(buffer)
                             if (n == -1) break
                             count += n
-                            if (count > stagingDir.usableSpace + staging!!.length()) {
+                            if (n.toLong() > stagingDir.usableSpace) {
                                 throw IOException("Storage exhausted")
                             }
                             output.write(buffer, 0, n)
