@@ -89,47 +89,51 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         AksaraGlassSurface(Modifier.fillMaxWidth(), radius = 18.dp, blur = 8.dp) {
-                            Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+                            Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 14.dp),
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                AksaraIcon("brain", Modifier.size(23.dp))
-                                Column(Modifier.weight(1f)) {
-                                    AksaraText(state.loadedId ?: "Aksara Local", size = 14f, weight = 650,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                                // Prominent brain emblem, using the existing gold icon and shared glass tokens.
+                                AksaraIcon("brain", Modifier.size(56.dp))
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    AksaraText("Model Aktif", size = 11f, color = AksaraColors.gold)
+                                    AksaraText(state.loadedId ?: "Aksara Local", size = 17f, weight = 650,
                                         family = AksaraTypography.heading)
                                     AksaraText(when {
                                         state.busy != null -> state.busy!!
-                                        state.canInfer -> "Model aktif · inferens offline sedia"
-                                        state.runtimeAvailable -> "Enjin sedia · pilih model untuk mula"
+                                        state.canInfer -> "Sedia · inferens offline"
+                                        state.runtimeAvailable -> "Enjin sedia · pilih model"
                                         else -> "Runtime tidak tersedia"
                                     }, size = 11f, color = AksaraColors.muted)
+                                    AksaraText("RAM ${state.device?.let { bytes(it.availableRamBytes) } ?: "…"} · ${state.contextSize} token",
+                                        size = 10f, color = AksaraColors.muted)
                                 }
-                                AksaraText(state.device?.let { bytes(it.availableRamBytes) } ?: "RAM …",
-                                    size = 11f, color = AksaraColors.gold)
                             }
                         }
                         rows.forEach { row ->
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 row.forEach { index ->
                                     AksaraGlassSurface(Modifier.weight(1f)
-                                        .height(if (compact) 100.dp else 116.dp)
+                                        .height(if (compact) 84.dp else 94.dp)
                                         .testTag("neural-module-$index")
                                         .aksaraBouncyClick { vm.refresh(); module = index },
                                         radius = 20.dp, blur = 8.dp) {
-                                        Column(Modifier.fillMaxSize().padding(12.dp),
-                                            verticalArrangement = Arrangement.Center) {
-                                            AksaraIcon(moduleIcons[index], Modifier.size(21.dp))
-                                            Spacer(Modifier.height(6.dp))
-                                            AksaraText(moduleNames[index], size = 13f, line = 17f,
-                                                weight = 600, family = AksaraTypography.heading)
-                                            Spacer(Modifier.height(3.dp))
-                                            AksaraText(when (index) {
-                                                0 -> state.loadedId?.let { "Model aktif" } ?: if (state.runtimeAvailable) "llama.cpp sedia" else "Runtime tiada"
-                                                1 -> state.device?.let { "${bytes(it.availableRamBytes)} RAM tersedia" } ?: "Mengukur…"
-                                                2 -> state.busy?.takeIf { it == "Menjana" } ?: "${state.turns.count { it.role == "assistant" }} jawapan tempatan"
-                                                3 -> "${state.installed.size}/3 dipasang"
-                                                4 -> "${state.measurements.size} ukuran sebenar"
-                                                else -> "Pengetahuan V2 · memori OFF"
-                                            }, size = 10f, line = 14f, color = AksaraColors.muted)
+                                        Row(Modifier.fillMaxSize().padding(horizontal = 11.dp, vertical = 10.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(9.dp)) {
+                                            AksaraIcon(moduleIcons[index], Modifier.size(24.dp))
+                                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                                                AksaraText(moduleNames[index], size = 12f, line = 16f,
+                                                    weight = 600, family = AksaraTypography.heading)
+                                                AksaraText(when (index) {
+                                                    0 -> if (state.loadedId != null) "Model aktif" else "llama.cpp sedia"
+                                                    1 -> state.device?.let { "${bytes(it.availableRamBytes)} tersedia" } ?: "Mengukur…"
+                                                    2 -> "${state.turns.count { it.role == "assistant" }} jawapan"
+                                                    3 -> "${state.installed.size}/3 dipasang"
+                                                    4 -> "${state.measurements.size} ukuran"
+                                                    else -> "Memori OFF"
+                                                }, size = 10f, line = 14f, color = AksaraColors.muted)
+                                            }
+                                            AksaraIcon("chevron-right", Modifier.size(15.dp))
                                         }
                                     }
                                 }
