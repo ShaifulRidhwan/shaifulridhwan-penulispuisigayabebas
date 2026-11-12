@@ -250,11 +250,10 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
             val label = when {
                 state.activation.pendingId == model.id -> "Mengesahkan / memuat…"
                 state.loadedId == model.id -> "Aktif"
-                assessment?.warning != null -> "Cuba Light · 1024"
+                NeuralMemoryPolicy.isLight(model) -> "Cuba Light · 1024"
                 else -> "Sahkan & aktif"
             }
-            AksaraButton(label, onActivate, enabled = state.busy == null && state.runtimeAvailable && state.loadedId != model.id &&
-                (assessment?.canAttempt == true || state.loadedId != null))
+            AksaraButton(label, onActivate, enabled = state.busy == null && state.loadedId != model.id)
             AksaraButton("Padam", onDelete, enabled = state.busy == null)
         }
     }
