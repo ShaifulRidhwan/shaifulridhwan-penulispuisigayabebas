@@ -96,6 +96,9 @@ internal object AksaraLinuxRuntime {
                 DigestInputStream(source, sha).use { digestStream ->
                     GZIPInputStream(digestStream).use { gzip ->
                         TarArchiveInputStream(gzip).use { tar ->
+                            // Reuse one buffer across every entry. A full developer image can
+                            // contain hundreds of thousands of files; do not allocate per-file.
+                            val buffer = ByteArray(64 * 1024)
                             while (true) {
                                 val entry = tar.nextTarEntry ?: break
                                 count++
@@ -115,7 +118,6 @@ internal object AksaraLinuxRuntime {
                                     entry.isFile -> {
                                         require(file.parentFile?.mkdirs() == true || file.parentFile?.isDirectory == true)
                                         FileOutputStream(file).use { output ->
-                                            val buffer = ByteArray(8192)
                                             while (true) {
                                                 val read = tar.read(buffer)
                                                 if (read < 0) break
