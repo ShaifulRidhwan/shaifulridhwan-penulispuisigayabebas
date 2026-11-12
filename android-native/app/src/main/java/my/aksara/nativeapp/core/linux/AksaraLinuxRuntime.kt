@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import android.system.Os
+import android.system.ErrnoException
+import android.system.OsConstants
 import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
@@ -23,12 +25,23 @@ import java.util.zip.GZIPInputStream
  * executing freshly installed userland binaries; the isolated debug
  * preview has its own documented compatibility gate.
  */
+data class LinuxInstallProgress(
+    val percent: Int,
+    val stage: String,
+    val filesDone: Int = 0,
+    val filesTotal: Int = 0
+)
+
 internal object AksaraLinuxRuntime {
     const val alpineVersion = "3.22.8"
     // .bundle avoids aapt's special .gz asset transformation.
     private const val archive = "linux/alpine-minirootfs.bundle"
     private const val checksum = "linux/alpine-minirootfs.sha256"
+    private const val entriesManifest = "linux/alpine-minirootfs.entries"
     private const val marker = ".aksara-alpine-installed"
+    private const val imageRevision = "3.22.8-v3-full-devkit"
+    private const val maxEntries = 250_000
+    private const val maxUncompressedBytes = 4L * 1024 * 1024 * 1024
 
     fun rootfs(context: Context): File = File(context.filesDir, "alpine-arm64")
     fun workspace(context: Context): File =
@@ -43,25 +56,38 @@ internal object AksaraLinuxRuntime {
         return Build.SUPPORTED_ABIS.contains("arm64-v8a") &&
             proot(context).isFile && loader(context).isFile &&
             "alpine-minirootfs.bundle" in names &&
-            "alpine-minirootfs.sha256" in names
+            "alpine-minirootfs.sha256" in names &&
+            "alpine-minirootfs.entries" in names
     }
 
     fun installed(context: Context): Boolean {
         val root = rootfs(context)
-        return bundled(context) && File(root, marker).isFile &&
-            LinuxRootfsVerifier.hasRequiredCommands(root)
+        return bundled(context) &&
+            runCatching { File(root, marker).readText().trim() == imageRevision }.getOrDefault(false) &&
+            LinuxRootfsVerifier.hasRequiredCommands(root) &&
+            listOf("usr/bin/git", "usr/bin/python3", "usr/bin/gcc", "usr/bin/g++",
+                "usr/bin/clang", "usr/bin/node", "usr/bin/rustc", "usr/bin/go")
+                .all { relative ->
+                    val path = File(root, relative).toPath()
+                    Files.isRegularFile(path, java.nio.file.LinkOption.NOFOLLOW_LINKS) ||
+                        Files.isSymbolicLink(path)
+                }
     }
 
     /**
      * Called by an explicit install button, never automatically during app
      * startup. All work MUST run on Dispatchers.IO.
      */
-    fun install(context: Context) {
+    fun install(
+        context: Context,
+        onProgress: (LinuxInstallProgress) -> Unit = {}
+    ) {
         require(bundled(context)) {
             "Bundle Alpine ARM64 atau PRoot belum disertakan dalam APK ini."
         }
         if (installed(context)) return
 
+        onProgress(LinuxInstallProgress(0, "Menyediakan ruang Linux"))
         val target = rootfs(context)
         val staging = File(context.filesDir, "alpine-arm64.installing")
         if (staging.exists()) require(staging.deleteRecursively()) { "Tidak dapat membersihkan pemasangan lama." }
@@ -72,6 +98,12 @@ internal object AksaraLinuxRuntime {
                 it.readLine().trim().split(Regex("\\s+")).first().lowercase()
             }
             require(expected.matches(Regex("[0-9a-f]{64}"))) { "Checksum Alpine tidak sah." }
+            val totalEntries = context.assets.open(entriesManifest).bufferedReader().use {
+                it.readLine().trim().toInt()
+            }
+            require(totalEntries in 1..maxEntries) { "Manifest kemajuan Alpine tidak sah." }
+            onProgress(LinuxInstallProgress(4, "Mengekstrak Alpine ARM64", 0, totalEntries))
+            var lastReportedPercent = 4
             val sha = MessageDigest.getInstance("SHA-256")
             val pendingSymlinks = mutableListOf<Pair<File, String>>()
             val pendingHardlinks = mutableListOf<Pair<File, String>>()
@@ -83,10 +115,13 @@ internal object AksaraLinuxRuntime {
                 DigestInputStream(source, sha).use { digestStream ->
                     GZIPInputStream(digestStream).use { gzip ->
                         TarArchiveInputStream(gzip).use { tar ->
+                            // Reuse one buffer across every entry. A full developer image can
+                            // contain hundreds of thousands of files; do not allocate per-file.
+                            val buffer = ByteArray(64 * 1024)
                             while (true) {
                                 val entry = tar.nextTarEntry ?: break
                                 count++
-                                require(count <= 30000) { "Terlalu banyak fail dalam arkib Linux." }
+                                require(count <= maxEntries) { "Terlalu banyak fail dalam arkib Linux." }
                                 val path = entry.name.removePrefix("./").trimStart('/')
                                 if (path.isBlank() || path == ".") continue
                                 val file = File(staging, path)
@@ -102,13 +137,12 @@ internal object AksaraLinuxRuntime {
                                     entry.isFile -> {
                                         require(file.parentFile?.mkdirs() == true || file.parentFile?.isDirectory == true)
                                         FileOutputStream(file).use { output ->
-                                            val buffer = ByteArray(8192)
                                             while (true) {
                                                 val read = tar.read(buffer)
                                                 if (read < 0) break
                                                 output.write(buffer, 0, read)
                                                 uncompressed += read
-                                                require(uncompressed <= 250L * 1024 * 1024) {
+                                                require(uncompressed <= maxUncompressedBytes) {
                                                     "Saiz pemasangan melebihi had."
                                                 }
                                             }
@@ -116,27 +150,53 @@ internal object AksaraLinuxRuntime {
                                         if ((entry.mode and 73) != 0) file.setExecutable(true, false)
                                     }
                                 }
+                                // Count entries as the extractor completes them, not when it opens them.
+                                // Emit at most one UI update per percentage point.
+                                val percent = (4L + count * 81L / totalEntries)
+                                    .coerceIn(4L, 85L).toInt()
+                                if (percent > lastReportedPercent) {
+                                    lastReportedPercent = percent
+                                    onProgress(LinuxInstallProgress(
+                                        percent, "Mengekstrak Alpine ARM64", count, totalEntries
+                                    ))
+                                }
                             }
                         }
                     }
                 }
             }
+            require(count == totalEntries) { "Manifest Alpine tidak sepadan dengan arkib." }
+            onProgress(LinuxInstallProgress(87, "Mengesahkan SHA-256", count, totalEntries))
             val actual = sha.digest().joinToString("") { "%02x".format(it) }
             require(actual == expected) { "SHA-256 Alpine tidak sepadan." }
 
             // Apply links only after regular files to avoid traversing links
             // while processing archive paths.
+            onProgress(LinuxInstallProgress(90, "Memulihkan pautan fail", count, totalEntries))
             for ((file, link) in pendingHardlinks) {
                 val source = File(staging, link.removePrefix("./").trimStart('/'))
                 require(source.canonicalPath.startsWith(stagingCanonical) && source.isFile)
                 file.parentFile?.mkdirs()
-                Os.link(source.absolutePath, file.absolutePath)
+                // SELinux may reject hardlinks in app-private storage even under fake-root.
+                // For initial rootfs extraction, fall back to a copy with execute bits.
+                try {
+                    Os.link(source.absolutePath, file.absolutePath)
+                } catch (failure: ErrnoException) {
+                    if (failure.errno !in listOf(
+                            OsConstants.EPERM, OsConstants.EACCES,
+                            OsConstants.ENOSYS, OsConstants.EOPNOTSUPP
+                        )
+                    ) throw failure
+                    Files.copy(source.toPath(), file.toPath())
+                    if (source.canExecute()) file.setExecutable(true, false)
+                }
             }
             for ((file, link) in pendingSymlinks) {
                 file.parentFile?.mkdirs()
                 require(!file.exists()) { "Arkib mempunyai laluan pautan berganda." }
                 Os.symlink(link, file.absolutePath)
             }
+            onProgress(LinuxInstallProgress(96, "Menyediakan konfigurasi Linux", count, totalEntries))
             val missing = LinuxRootfsVerifier.missingRequiredCommands(staging)
             require(missing.isEmpty()) {
                 "Pemasangan Alpine tidak lengkap: " + missing.joinToString(", ") +
@@ -150,9 +210,14 @@ internal object AksaraLinuxRuntime {
             if (Files.isSymbolicLink(resolv.toPath())) Files.delete(resolv.toPath())
             require(resolv.parentFile.isDirectory || resolv.parentFile.mkdirs())
             resolv.writeText("nameserver 1.1.1.1\nnameserver 8.8.8.8\n")
-            File(staging, marker).writeText(alpineVersion + "\n")
+            val guestTmp = File(staging, "tmp")
+            require(guestTmp.isDirectory || guestTmp.mkdirs()) { "Cannot create guest /tmp" }
+            Os.chmod(guestTmp.absolutePath, 0x3ff) // 01777 sticky directory
+            File(staging, marker).writeText(imageRevision + "\n")
+            onProgress(LinuxInstallProgress(99, "Mengaktifkan Linux", count, totalEntries))
             if (target.exists()) require(target.deleteRecursively())
             require(staging.renameTo(target)) { "Tidak dapat mengaktifkan rootfs Linux." }
+            onProgress(LinuxInstallProgress(100, "Alpine sedia digunakan", count, totalEntries))
         } catch (failure: Exception) {
             staging.deleteRecursively()
             throw failure
@@ -191,6 +256,11 @@ internal object AksaraLinuxRuntime {
         val workspace = workspace(context)
         val root = rootfs(context)
         val binary = proot(context)
+        // Keep link2symlink backing files in a private, non-symlink directory.
+        val l2s = File(root, ".l2s")
+        require(!Files.isSymbolicLink(l2s.toPath())) { "Unsafe PRoot hardlink store" }
+        require(l2s.isDirectory || l2s.mkdirs()) { "Cannot prepare PRoot hardlink store" }
+        Os.chmod(l2s.absolutePath, 0x1c0) // 0700
         val env = arrayOf(
             "HOME=/root",
             "TERM=xterm-256color",
@@ -199,12 +269,14 @@ internal object AksaraLinuxRuntime {
             "PROOT_LOADER=" + loader(context).absolutePath,
             "PROOT_NO_SECCOMP=1",
             "PROOT_TMP_DIR=" + context.cacheDir.absolutePath,
-            "TMPDIR=" + context.cacheDir.absolutePath
+            "PROOT_L2S_DIR=" + l2s.absolutePath,
+            "TMPDIR=/tmp"
         )
         val args = arrayOf(
             binary.absolutePath,
             "-0",
             "--kill-on-exit",
+            "--link2symlink",
             "-r", root.absolutePath,
             "-b", "/dev",
             "-b", "/proc",

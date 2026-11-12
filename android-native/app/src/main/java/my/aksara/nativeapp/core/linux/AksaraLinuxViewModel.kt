@@ -52,6 +52,8 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         private set
     var installStatus by mutableStateOf<String?>(null)
         private set
+    var installProgress by mutableStateOf(LinuxInstallProgress(0, "Bersedia"))
+        private set
     var restarting by mutableStateOf(false)
         private set
 
@@ -63,11 +65,19 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
     fun installAlpine() {
         if (installed || installing || !bundled) return
         installing = true
-        installStatus = "Memasang rootfs Alpine..."
+        installProgress = LinuxInstallProgress(0, "Menyediakan ruang Linux")
+        installStatus = installProgress.stage
+        problem = null
         viewModelScope.launch {
             try {
                 withContext(Dispatchers.IO) {
-                    AksaraLinuxRuntime.install(getApplication())
+                    AksaraLinuxRuntime.install(getApplication()) { progress ->
+                        // Install runs on Dispatchers.IO; Compose snapshot state is
+                        // safe to update from the worker. Runtime throttles callbacks
+                        // to actual stage/percentage transitions.
+                        installProgress = progress
+                        installStatus = progress.stage
+                    }
                 }
                 installed = AksaraLinuxRuntime.installed(getApplication())
                 require(installed) { "Pemasangan Alpine tidak lengkap." }

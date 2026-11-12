@@ -183,6 +183,53 @@ fun AksaraLinuxScreen(
                     AksaraButton(if (vm.installing) "Memasang Alpine..." else "Pasang Alpine Linux",
                         { vm.installAlpine() }, Modifier.fillMaxWidth(),
                         enabled = !vm.installing, icon = "terminal")
+                    if (vm.installing) {
+                        // True extraction progress from the CI-generated archive entry
+                        // manifest, not a decorative infinite-progress animation.
+                        val install = vm.installProgress
+                        AksaraGlassSurface(
+                            Modifier.fillMaxWidth().testTag("linux-install-progress"),
+                            radius = 14.dp, blur = 7.dp
+                        ) {
+                            Column(
+                                Modifier.fillMaxWidth()
+                                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                                verticalArrangement = Arrangement.spacedBy(7.dp)
+                            ) {
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    AksaraText(install.stage, size = 10f,
+                                        weight = 650, color = AksaraColors.text)
+                                    AksaraText("${install.percent}%", size = 10f,
+                                        weight = 750, color = LinuxDeckMint)
+                                }
+                                Box(
+                                    Modifier.fillMaxWidth().height(5.dp)
+                                        .clip(RoundedCornerShape(6.dp))
+                                        .background(Color(0x46394B61))
+                                ) {
+                                    Box(
+                                        Modifier.fillMaxWidth(
+                                            (install.percent / 100f).coerceIn(0f, 1f)
+                                        ).fillMaxHeight()
+                                            .clip(RoundedCornerShape(6.dp))
+                                            .background(Brush.horizontalGradient(
+                                                listOf(LinuxDeckBlue, LinuxDeckMint)
+                                            ))
+                                    )
+                                }
+                                if (install.filesTotal > 0) {
+                                    AksaraText(
+                                        "${install.filesDone} / ${install.filesTotal} entri arkib",
+                                        size = 9f, color = AksaraColors.muted
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // The PTY receives the remaining viewport height after IME reflow.
