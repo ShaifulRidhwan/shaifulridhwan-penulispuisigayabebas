@@ -2,6 +2,7 @@ package my.aksara.nativeapp.core.linux
 
 import android.content.Context
 import android.os.Build
+import android.util.Log
 import android.system.Os
 import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
@@ -141,6 +142,8 @@ internal object AksaraLinuxRuntime {
                 "Pemasangan Alpine tidak lengkap: " + missing.joinToString(", ") +
                     " tiada sebagai fail atau symbolic link."
             }
+            // Install once, without modifying any user-created shell profiles.
+            installShellIdentity(staging)
             // An absolute guest symlink must not be followed in Android's
             // host namespace when writing a resolver configuration.
             val resolv = File(staging, "etc/resolv.conf")
@@ -156,8 +159,35 @@ internal object AksaraLinuxRuntime {
         }
     }
 
+
+    /**
+     * Idempotent shell-only cosmetic hook. Alpine login /etc/profile sources
+     * /etc/profile.d/*.sh. Never overwrite a user's existing file or create
+     * profiles outside the guest rootfs.
+     */
+    private fun installShellIdentity(root: File) {
+        val file = File(root, LinuxShellIdentity.relativePath)
+        val dir = file.parentFile ?: return
+        val rootPath = root.canonicalPath + File.separator
+        require(dir.canonicalPath.startsWith(rootPath)) { "Linux profile directory escaped rootfs" }
+        if (!dir.isDirectory) require(dir.mkdirs()) { "Cannot create Alpine profile directory" }
+        if (file.exists() || Files.isSymbolicLink(file.toPath())) return
+        val staging = File.createTempFile(".aksara-prompt-", ".tmp", dir)
+        try {
+            staging.writeText(LinuxShellIdentity.profile, Charsets.UTF_8)
+            if (!file.exists() && !staging.renameTo(file)) {
+                error("Cannot install Alpine profile")
+            }
+        } finally {
+            if (staging.exists()) staging.delete()
+        }
+    }
+
     fun createSession(context: Context, client: TerminalSessionClient): TerminalSession {
         require(installed(context)) { "Alpine belum dipasang atau belum disahkan." }
+        // The old V1 rootfs was installed before this non-destructive identity hook.
+        runCatching { installShellIdentity(rootfs(context)) }
+            .onFailure { Log.w("AksaraLinuxRuntime", "Optional Linux prompt was not installed", it) }
         val workspace = workspace(context)
         val root = rootfs(context)
         val binary = proot(context)
