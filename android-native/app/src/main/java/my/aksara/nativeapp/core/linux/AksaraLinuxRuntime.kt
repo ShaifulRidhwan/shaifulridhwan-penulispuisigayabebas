@@ -8,6 +8,7 @@ import com.termux.terminal.TerminalSessionClient
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.file.Files
 import java.security.DigestInputStream
 import java.security.MessageDigest
 import java.util.zip.GZIPInputStream
@@ -47,8 +48,7 @@ internal object AksaraLinuxRuntime {
     fun installed(context: Context): Boolean {
         val root = rootfs(context)
         return bundled(context) && File(root, marker).isFile &&
-            File(root, "bin/sh").exists() &&
-            File(root, "sbin/apk").exists()
+            LinuxRootfsVerifier.hasRequiredCommands(root)
     }
 
     /**
@@ -136,10 +136,17 @@ internal object AksaraLinuxRuntime {
                 require(!file.exists()) { "Arkib mempunyai laluan pautan berganda." }
                 Os.symlink(link, file.absolutePath)
             }
-            require(File(staging, "bin/sh").exists() && File(staging, "sbin/apk").exists()) {
-                "Pemasangan Alpine tidak lengkap."
+            val missing = LinuxRootfsVerifier.missingRequiredCommands(staging)
+            require(missing.isEmpty()) {
+                "Pemasangan Alpine tidak lengkap: " + missing.joinToString(", ") +
+                    " tiada sebagai fail atau symbolic link."
             }
-            File(staging, "etc/resolv.conf").writeText("nameserver 1.1.1.1\nnameserver 8.8.8.8\n")
+            // An absolute guest symlink must not be followed in Android's
+            // host namespace when writing a resolver configuration.
+            val resolv = File(staging, "etc/resolv.conf")
+            if (Files.isSymbolicLink(resolv.toPath())) Files.delete(resolv.toPath())
+            require(resolv.parentFile.isDirectory || resolv.parentFile.mkdirs())
+            resolv.writeText("nameserver 1.1.1.1\nnameserver 8.8.8.8\n")
             File(staging, marker).writeText(alpineVersion + "\n")
             if (target.exists()) require(target.deleteRecursively())
             require(staging.renameTo(target)) { "Tidak dapat mengaktifkan rootfs Linux." }

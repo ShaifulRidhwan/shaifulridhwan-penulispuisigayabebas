@@ -65,6 +65,20 @@ jobs:
           python3 android-native/ci/performance-contracts.py
       - name: Stage Alpine ARM64 and build static PRoot
         run: bash android-native/scripts/build-aksara-linux.sh
+      - name: Assert official Alpine archive contains guest shell and package manager
+        run: |
+          python3 - <<'PYCODE'
+          import tarfile
+          from pathlib import Path
+          archive = Path("android-native/app/src/main/assets/linux/alpine-minirootfs.bundle")
+          with tarfile.open(archive, mode="r:gz") as root:
+              members = {member.name.lstrip("./"): member for member in root.getmembers()}
+          for entry in ("bin/sh", "sbin/apk"):
+              assert entry in members, f"Alpine archive missing {entry}"
+              member = members[entry]
+              assert member.isfile() or member.issym() or member.islnk(), f"Invalid Alpine entry: {entry}"
+              print(f"Verified guest entry {entry}: type={member.type!r} link={member.linkname!r}")
+          PYCODE
       - name: Compile rootless Linux preview with focused regression tests
         working-directory: android-native
         run: |
