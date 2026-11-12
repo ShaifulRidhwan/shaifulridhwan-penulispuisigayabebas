@@ -3,7 +3,8 @@ on:
   push:
     branches:
       - feature/aksara-linux-control-deck-v2
-    # Owner QA: fixed-width keyboard row, ENTER last, PASTE in top toolbar.
+    # Owner QA: identity and LIVE PTY independent glass cards, equal-width
+    # command categories/actions, footer glass parity. Keyboard remains unchanged.
     # Auto-build only when this workflow changes. Subsequent source commits
     # do not consume CI until workflow_dispatch is explicitly requested.
     paths:
@@ -153,6 +154,6 @@ jobs:
           set -euo pipefail
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
           gh release create "aksara-linux-v2-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \
-            --title "AKSARA Linux V2 $tag - System Identity" \
-            --notes "Experimental owner ARM64 APK: Alpine 3.22.8 + PRoot + PTY, preinstalled Fastfetch and developer tools. AKSARA dual-tone original ASCII logo, adaptive compact/wide system identity from real host/userland facts, one-time startup, persistent on/off and 4s timeout. No Android root. Isolated targetSdk 28 preview only. Physical phone UI/IME QA required before merge. GPL PRoot source attached." \
+            --title "AKSARA Linux V2 $tag - Liquid Glass polish" \
+            --notes "Experimental owner ARM64 APK: Alpine 3.22.8 + PRoot + PTY, preinstalled Fastfetch and developer tools. AKSARA dual-tone original ASCII logo, adaptive compact/wide system identity from real host/userland facts, one-time startup, persistent on/off and 4s timeout. No Android root. Isolated targetSdk 28 preview only. Liquid Glass header/footer and one-row commands UI require owner phone QA before merge. GPL PRoot source attached." \
             --prerelease --target "$GITHUB_SHA"
