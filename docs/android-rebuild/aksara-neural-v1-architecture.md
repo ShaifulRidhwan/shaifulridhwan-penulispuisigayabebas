@@ -47,3 +47,13 @@ G. Reliability: CI, device tests, battery/thermal/memory/latency and staged beta
 - No 'AI ready' status until real model loads and generates on-device with network disabled.
 - No PR merge solely on mock/demo UI.
 - Preserve existing app, its provider fallback, privacy defaults, and current branch.
+
+
+## Updated experimental target (2026-11-12): 8B first
+- Primary evaluation candidate: Qwen3-8B GGUF Q4_K_M, subject to exact license, source revision, digest, Android llama.cpp compatibility and measured Malay benchmark results.
+- Initial context window: 4096 tokens. Do not assume this fits every 8GB RAM device.
+- Target arm64-v8a CPU backend first; acceleration only after verified device-specific testing.
+- Model file is not committed or embedded yet. Do not advertise a working offline 8B until a physical Android device successfully generates in airplane mode.
+- Bundle in test APK only through reproducible pinned artifact injection, not Git LFS pointers or fabricated placeholders.
+- Gate installation on available RAM/storage; offer explicit unsupported-device explanation rather than crash.
+- Never silently fall back to cloud when local-only mode is selected.
