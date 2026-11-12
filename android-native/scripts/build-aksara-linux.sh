@@ -16,24 +16,16 @@ NDK="$ANDROID_HOME/ndk/27.2.12479018" \
   bash "$PROOT_SRC/tools/build-static-aarch64.sh"
 cp "$RUNNER_TEMP/aksara-proot-dist/proot" "$LIBS/libaksara_proot.so"
 cp "$RUNNER_TEMP/aksara-proot-dist/loader" "$LIBS/libaksara_proot_loader.so"
-readelf -h "$LIBS/libaksara_proot.so" | grep -F 'AArch64'
-readelf -h "$LIBS/libaksara_proot_loader.so" | grep -F 'AArch64'
+readelf -h "$LIBS/libaksara_proot.so" | grep -F AArch64
+readelf -h "$LIBS/libaksara_proot_loader.so" | grep -F AArch64
 base="https://dl-cdn.alpinelinux.org/alpine/v3.22/releases/aarch64"
 file="alpine-minirootfs-$VERSION-aarch64.tar.gz"
 curl --fail --location --retry 3 --connect-timeout 20 --max-time 240 "$base/$file" -o "$ASSETS/$file"
 curl --fail --location --retry 3 --connect-timeout 20 --max-time 60 "$base/$file.sha256" -o "$ASSETS/$file.sha256"
 (cd "$ASSETS" && sha256sum --check "$file.sha256")
 tar -tzf "$ASSETS/$file" > "$RUNNER_TEMP/aksara-alpine-contents.txt"
-grep -Eq '(^|/)bin/sh$|(^|/)bin/busybox
-mv "$ASSETS/$file" "$ASSETS/alpine-minirootfs.tar.gz"
-mv "$ASSETS/$file.sha256" "$ASSETS/alpine-minirootfs.sha256"
-echo "Pinned GPL PRoot and Alpine rootfs staged for ARM64 APK."
- "$RUNNER_TEMP/aksara-alpine-contents.txt"
-grep -Eq '(^|/)sbin/apk
-mv "$ASSETS/$file" "$ASSETS/alpine-minirootfs.tar.gz"
-mv "$ASSETS/$file.sha256" "$ASSETS/alpine-minirootfs.sha256"
-echo "Pinned GPL PRoot and Alpine rootfs staged for ARM64 APK."
- "$RUNNER_TEMP/aksara-alpine-contents.txt"
+grep -Eq 'bin/(sh|busybox)' "$RUNNER_TEMP/aksara-alpine-contents.txt"
+grep -Fq 'sbin/apk' "$RUNNER_TEMP/aksara-alpine-contents.txt"
 mv "$ASSETS/$file" "$ASSETS/alpine-minirootfs.tar.gz"
 mv "$ASSETS/$file.sha256" "$ASSETS/alpine-minirootfs.sha256"
 echo "Pinned GPL PRoot and Alpine rootfs staged for ARM64 APK."
