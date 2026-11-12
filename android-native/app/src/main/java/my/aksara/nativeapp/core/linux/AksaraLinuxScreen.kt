@@ -212,13 +212,19 @@ fun AksaraLinuxScreen(
                                 size = 10f, weight = 650, color = AksaraColors.gold)
                         }
                         when (deck) {
-                            "keys" -> Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                                horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                                listOf("ESC", "CTRL", "ALT", "TAB", "ENTER", "←", "↓", "↑", "→",
-                                    "HOME", "END", "PGUP", "PGDN", "DEL").forEach { key ->
-                                    LinuxDeckKey(key, (key == "CTRL" && vm.ctrlDown) ||
-                                        (key == "ALT" && vm.altDown)) { vm.extraKey(key) }
-                                }
+                            // No horizontal slide: nine essential PTY keys fit one row.
+                            // Paste stays in the deck header; ENTER ends this key strip.
+                            "keys" -> Row(Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                                listOf("ESC", "CTRL", "ALT", "TAB", "←", "↓", "↑", "→", "ENTER")
+                                    .forEach { key ->
+                                        LinuxDeckKey(
+                                            key,
+                                            (key == "CTRL" && vm.ctrlDown) ||
+                                                (key == "ALT" && vm.altDown),
+                                            Modifier.weight(if (key == "ENTER") 1.4f else 1f)
+                                        ) { vm.extraKey(key) }
+                                    }
                             }
                             "commands" -> {
                                 // Category picker and actions are only recomposed when this
@@ -338,15 +344,18 @@ private val LinuxDeckRose = Color(0xFFFFA9A9)
     }
 }
 
-@Composable private fun LinuxDeckKey(label: String, active: Boolean, onClick: () -> Unit) {
-    Box(Modifier.clip(RoundedCornerShape(10.dp))
+@Composable private fun LinuxDeckKey(
+    label: String, active: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit
+) {
+    Box(modifier.heightIn(min = 39.dp)
+        .clip(RoundedCornerShape(9.dp))
         .background(if (active) Color(0x775A482B) else Color(0x33354C60))
         .border(1.dp, if (active) Color(0x93E6C58B) else Color(0x315C7794),
-            RoundedCornerShape(10.dp))
+            RoundedCornerShape(9.dp))
         .clickable(onClick = onClick)
-        .padding(horizontal = 12.dp, vertical = 10.dp),
+        .padding(horizontal = 1.dp, vertical = 9.dp),
         contentAlignment = Alignment.Center) {
-        AksaraText(label, size = 10f, weight = 600,
+        AksaraText(label, size = if (label == "ENTER") 9f else 9.4f, weight = 600,
             color = if (active) AksaraColors.gold else AksaraColors.text)
     }
 }
