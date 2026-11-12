@@ -23,7 +23,8 @@ data class NeuralDeviceSnapshot(
     val javaHeapUsedBytes: Long = 0,
     val javaHeapMaxBytes: Long = 0,
     val nativeHeapAllocatedBytes: Long = 0,
-    val processPssBytes: Long = 0
+    val processPssBytes: Long = 0,
+    val processRssBytes: Long? = null
 )
 
 object NeuralDeviceCapabilityProbe {
@@ -44,8 +45,13 @@ object NeuralDeviceCapabilityProbe {
             javaHeapUsedBytes = Runtime.getRuntime().let { it.totalMemory() - it.freeMemory() },
             javaHeapMaxBytes = Runtime.getRuntime().maxMemory(),
             nativeHeapAllocatedBytes = android.os.Debug.getNativeHeapAllocatedSize(),
-            processPssBytes = android.os.Debug.getPss() * 1024
-
+            processPssBytes = android.os.Debug.getPss() * 1024,
+            processRssBytes = runCatching {
+                File("/proc/self/status").useLines { lines ->
+                    lines.firstOrNull { it.startsWith("VmRSS:") }?.substringAfter(":")?.trim()
+                        ?.substringBefore(" ")?.toLongOrNull()?.times(1024)
+                }
+            }.getOrNull()
         )
     }
 }
@@ -61,7 +67,8 @@ data class NeuralModelDescriptor(
     val name: String = id,
     val parameters: String = "",
     val quantization: String = "",
-    val sourceRevision: String = ""
+    val sourceRevision: String = "",
+    val publisher: String = "Qwen / Alibaba"
 ) {
     fun validate(): Boolean =
         id.matches(Regex("[a-zA-Z0-9._-]{1,100}")) &&

@@ -15,6 +15,20 @@ class NeuralModelStore(private val directory: File) {
     fun installedModel(descriptor: NeuralModelDescriptor, checkpoint: () -> Unit = {}): File? = target(descriptor).takeIf {
         it.isFile && NeuralModelIntegrity.verifySha256(it, descriptor.sha256, checkpoint)
     }
+    fun requireInstalledModel(descriptor: NeuralModelDescriptor, checkpoint: () -> Unit = {}): File {
+        val file = target(descriptor)
+        check(file.isFile) { "MODEL_MISSING: ${descriptor.id}. Import GGUF katalog atau pilih muat turun." }
+        check(file.length() == descriptor.sizeBytes) {
+            "GGUF_SIZE_MISMATCH: ${file.length()} bait; dijangka ${descriptor.sizeBytes}. Import semula fail lengkap."
+        }
+        check(file.inputStream().use { input ->
+            ByteArray(4).also { check(input.read(it) == 4) { "GGUF_HEADER_TRUNCATED" } }.contentEquals("GGUF".toByteArray())
+        }) { "GGUF_MAGIC_INVALID: fail bukan GGUF." }
+        check(NeuralModelIntegrity.verifySha256(file, descriptor.sha256, checkpoint)) {
+            "SHA256_MISMATCH: ${descriptor.id}; fail rosak atau kuantisasi/revisi tidak sepadan. Import fail katalog yang betul."
+        }
+        return file
+    }
     fun recover() {
         directory.listFiles()?.filter { it.name.endsWith(".part") || it.name.endsWith(".partial") }?.forEach { it.delete() }
         // Preserve pre-V2 imports; activation still rechecks their pinned hash.
@@ -34,11 +48,11 @@ class NeuralModelStore(private val directory: File) {
         return destination
     }
     fun stage() = File.createTempFile("neural-", ".part", directory)
-    suspend fun importStream(input: InputStream, descriptor: NeuralModelDescriptor, coroutine: CoroutineContext, progress: (Long, Long?) -> Unit): File {
+    suspend fun importStream(input: InputStream, descriptor: NeuralModelDescriptor, coroutine: CoroutineContext, progress: (Long, Long?) -> Unit): File = input.use { source ->
         val staging = stage()
         try {
             require(directory.usableSpace > descriptor.sizeBytes + 128L * 1024 * 1024) { "Insufficient storage" }
-            input.use { source -> FileOutputStream(staging).use { output ->
+            FileOutputStream(staging).use { output ->
                 val buffer = ByteArray(64 * 1024); var count = 0L
                 while (true) {
                     coroutine.ensureActive()
@@ -49,9 +63,9 @@ class NeuralModelStore(private val directory: File) {
                     output.write(buffer, 0, n); progress(count, descriptor.sizeBytes)
                 }
                 output.fd.sync()
-            } }
+            }
             coroutine.ensureActive()
-            return install(staging, descriptor) { coroutine.ensureActive() }
+            install(staging, descriptor) { coroutine.ensureActive() }
         } finally { staging.delete() }
     }
     fun importVerified(source: File, descriptor: NeuralModelDescriptor): Result<File> = runCatching {

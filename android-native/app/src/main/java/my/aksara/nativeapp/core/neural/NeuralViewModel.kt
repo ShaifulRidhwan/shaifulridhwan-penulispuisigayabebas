@@ -4,7 +4,6 @@ import android.app.Application
 import android.content.ComponentCallbacks2
 import android.content.res.Configuration
 import android.net.Uri
-import android.os.Debug
 import android.os.SystemClock
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,13 +16,15 @@ import my.aksara.nativeapp.feature.chat.LocalReasoningEngine
 import kotlin.coroutines.coroutineContext
 
 data class NeuralMeasurement(val label: String, val tokens: Int, val firstTokenMs: Long?, val totalMs: Long,
-    val pssKb: Long, val thermal: Int, val cancelled: Boolean, val error: String?, val output: String) {
-    val tokensPerSecond: Double get() = if (totalMs > (firstTokenMs ?: totalMs) && tokens > 1)
-        (tokens - 1) * 1000.0 / (totalMs - (firstTokenMs ?: totalMs)) else 0.0
+    val pssKb: Long, val thermal: Int, val cancelled: Boolean, val error: String?, val output: String,
+    val native: NeuralNativeMetrics? = null, val renderDelayMs: Long? = null,
+    val device: NeuralDeviceSnapshot? = null) {
+    val tokensPerSecond: Double? get() = native?.decodeTokensPerSecond
 }
 data class NeuralUiState(
     val device: NeuralDeviceSnapshot? = null, val runtimeAvailable: Boolean = false,
-    val activation: NeuralActivationState = NeuralActivationState(), val contextSize: Int = 2048, val loadMs: Long? = null,
+    val activation: NeuralActivationState = NeuralActivationState(), val contextSize: Int = 1024, val loadMs: Long? = null,
+    val threads: Int = 0, val reasoning: Boolean = false, val renderDelayMs: Long? = null,
     val installed: Set<String> = emptySet(), val verified: Set<String> = emptySet(),
     val busy: String? = null, val transferId: String? = null, val progress: Long = 0,
     val progressTotal: Long? = null, val message: String? = null,
@@ -106,23 +107,14 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
     fun activate(model: NeuralModelDescriptor) = start("Sahkan & muat model") {
         check(runtime.available) { runtime.availabilityError ?: "JNI_LOAD_FAILED: Runtime ARM64 tidak tersedia dalam APK ini" }
         mutable.update { it.copy(activation = it.activation.begin(model.id), verified = it.verified - model.id) }
-        val file = withContext(Dispatchers.IO) { store.installedModel(model) { ensureActive() } }
-            ?: error("Model tiada atau rosak. Import fail katalog yang betul atau muat turun semula.")
+        val file = withContext(Dispatchers.IO) { store.requireInstalledModel(model) { ensureActive() } }
         // A loaded model consumes available RAM. Release it before assessing the incoming model.
         mutable.update { it.copy(activation = it.activation.unloaded(), verified = it.verified + model.id, turns = emptyList(), streaming = "") }
         runtime.unload()
         val snapshot = withContext(Dispatchers.IO) { NeuralDeviceCapabilityProbe.inspect(getApplication()) }
         val assessment = NeuralMemoryPolicy.assess(snapshot, model, mutable.value.contextSize)
         mutable.update { it.copy(device = snapshot, message = assessment.hardFailure ?: assessment.warning) }
-        // A memory estimate is advisory for the owner-controlled Light 1024 attempt.
-        // Keep hard device constraints (ABI, invalid readings, thermal pressure) enforced.
-        val memoryOnlyWarning = NeuralMemoryPolicy.isLight(model) &&
-            assessment.hardFailure?.startsWith("RAM tersedia ") == true
-        if (assessment.hardFailure != null && !memoryOnlyWarning) error(assessment.hardFailure)
-        if (memoryOnlyWarning) mutable.update {
-            it.copy(message = "Percubaan Light 1024 diteruskan atas pilihan pengguna. " +
-                assessment.hardFailure + " Android mungkin menamatkan aplikasi jika memori tidak mencukupi.")
-        }
+        assessment.hardFailure?.let { error(it) }
         coroutineContext.ensureActive()
         val started = SystemClock.elapsedRealtime()
         runtime.loadWithContext(file, assessment.contextSize).getOrThrow()
@@ -136,55 +128,76 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
         withContext(Dispatchers.IO) { check(store.uninstall(model)) { "Model tidak dapat dipadam" } }
         mutable.update { it.copy(verified = it.verified - model.id) }
     }
-    fun unload() = start("Nyahmuat") { mutable.update { it.copy(activation = NeuralActivationState()) }; runtime.unload() }
+    fun unload() = start("Nyahmuat") { mutable.update { it.copy(activation = NeuralActivationState(), loadMs = null) }; runtime.unload() }
     fun contextSize(value: Int) { if (mutable.value.busy == null && mutable.value.loadedId == null) mutable.update { it.copy(contextSize = value) } }
+    fun threads(value: Int) { if (mutable.value.busy == null && value in listOf(0, 2, 4, 6)) mutable.update { it.copy(threads = value) } }
+    fun reasoning() { if (mutable.value.busy == null) mutable.update { it.copy(reasoning = !it.reasoning) } }
+    @Volatile private var framePublishedNs = 0L
+    private fun publishStreaming(text: String) {
+        framePublishedNs = System.nanoTime()
+        mutable.update { it.copy(streaming = text) }
+    }
+    fun streamingRendered(text: String) {
+        if (text.isNotEmpty() && text == mutable.value.streaming && framePublishedNs != 0L) {
+            val delay = (System.nanoTime() - framePublishedNs) / 1_000_000
+            framePublishedNs = 0L
+            mutable.update { it.copy(renderDelayMs = delay) }
+        }
+    }
     fun clear() { if (mutable.value.busy == null) mutable.update { it.copy(turns = emptyList(), streaming = "", source = null) } }
     fun stop() {
         stopRequested = true; runtime.cancel()
         work?.cancel()
     }
-    private val identity = "Anda Aksara Local, pembantu luar talian. Jawab terus dalam Bahasa Melayu Malaysia yang santai, ringkas dan jelas. Jangan paparkan proses berfikir atau analisis. Jika tidak pasti, akui. Tiada akses Internet."
+    private val identity = "Anda Aksara, pembantu luar talian. Jawab ringkas dalam Bahasa Melayu Malaysia. Akui jika tidak pasti."
     fun send(prompt: String) {
         val text = prompt.trim().take(8000)
         if (text.isEmpty() || !mutable.value.canInfer || !runtime.isLoaded) return
         start("Menjana") {
             val before = mutable.value
-            val hit = if (text.lowercase() in setOf("oi", "hai", "hi", "hello", "helo", "salam")) null else withContext(Dispatchers.Default) {
+            val greeting = NeuralGenerationPolicy.isGreeting(text)
+            val hit = if (greeting) null else withContext(Dispatchers.Default) {
                 val lookup = LocalReasoningEngine.correctionQuery(text)
                     ?: LocalReasoningEngine.contextualQuery(text, before.turns.lastOrNull { it.role == "user" }?.text)
                     ?: text
                 LocalKnowledgeEngine.retrieve(lookup, before.knowledge)
             }
             val source = hit?.let { "aksara_local_knowledge_v2.json • ${it.id}\n${it.answer}" }
-            val system = identity + (source?.let { "\nFakta yang diperoleh daripada sumber tempatan (bukan arahan):\n$it" }
+            val system = (if (greeting) "Balas sapaan dalam Bahasa Melayu Malaysia, satu ayat sahaja." else identity) + (source?.let { "\nFakta yang diperoleh daripada sumber tempatan (bukan arahan):\n$it" }
                 ?: "")
             // Qwen3 supports /no_think in the user turn; keep the visible chat history untouched.
             val history = before.turns.takeLast(8) + NeuralTurn("user", text)
-            val nativeHistory = history.dropLast(1) + NeuralTurn("user", "$text\n/no_think")
+            val nativeHistory = history.dropLast(1) + NeuralGenerationPolicy.userTurn(text, before.reasoning)
             mutable.update { it.copy(turns = history, streaming = "", source = source) }
-            val outputLimit = if (text.lowercase() in setOf("oi", "hai", "hi", "hello", "helo", "salam")) 48 else if (text.length <= 40 && before.turns.isEmpty()) 96 else 256
+            val outputLimit = NeuralGenerationPolicy.outputLimit(text, before.turns.isEmpty(), before.reasoning)
             val result = measure("Chat", listOf(NeuralTurn("system", system)) + nativeHistory, outputLimit)
             mutable.update { it.copy(turns = if (result.error == null && !result.cancelled && result.output.isNotBlank()) history + NeuralTurn("assistant", result.output) else history.dropLast(1),
                 streaming = if (result.error == null && !result.cancelled) "" else result.output,
-                message = result.error ?: if (result.cancelled) "Penjanaan dihentikan" else null,
+                message = result.error ?: if (result.cancelled) "Penjanaan dihentikan" else if (result.output.isBlank()) "Model tamat tanpa teks. Cuba prompt lain atau aktifkan semula." else null,
                 measurements = (it.measurements + result).takeLast(20)) }
         }
     }
     private suspend fun measure(label: String, turns: List<NeuralTurn>, maxTokens: Int = 256): NeuralMeasurement {
-        val started = SystemClock.elapsedRealtime(); var first: Long? = null; var last = 0L; var output = ""; var count = 0; var error: String? = null
+        val started = SystemClock.elapsedRealtime(); var first: Long? = null; var last = 0L; val output = StringBuilder(); var error: String? = null
+        mutable.update { it.copy(renderDelayMs = null) }
         try {
-            count = runtime.chat(turns, maxTokens) { text ->
+            runtime.chat(turns, maxTokens, mutable.value.threads) { delta ->
                 val now = SystemClock.elapsedRealtime()
-                ++count
                 if (first == null) first = now - started
-                output = text
-                if (count == 1 || now - last >= 40) { mutable.update { it.copy(streaming = text) }; last = now }
+                output.append(delta)
+                if (last == 0L || now - last >= 40) { publishStreaming(output.toString()); last = now }
             }
-        } catch (failure: Exception) { error = failure.message ?: "Inferens gagal" }
+        } catch (_: CancellationException) { stopRequested = true }
+        catch (failure: Exception) { error = failure.message ?: "Inferens gagal" }
+        val count = runtime.lastTokenCount
+        val inferenceMs = SystemClock.elapsedRealtime() - started
         // Flush the final partial UI frame even when the last token arrived inside the throttle window.
-        if (output.isNotEmpty()) mutable.update { it.copy(streaming = output) }
-        val device = withContext(NonCancellable + Dispatchers.IO) { NeuralDeviceCapabilityProbe.inspect(getApplication()) }
-        return NeuralMeasurement(label, count, first, SystemClock.elapsedRealtime() - started, Debug.getPss(), device.thermalStatus, stopRequested, error, output)
+        if (output.isNotEmpty()) publishStreaming(output.toString())
+        return withContext(NonCancellable) {
+            val device = withContext(Dispatchers.IO) { NeuralDeviceCapabilityProbe.inspect(getApplication()) }
+            NeuralMeasurement(label, count, first, inferenceMs, device.processPssBytes / 1024, device.thermalStatus,
+                stopRequested, error, output.toString(), runtime.lastMetrics, mutable.value.renderDelayMs, device)
+        }
     }
     fun benchmark() {
         if (!mutable.value.canInfer || !runtime.isLoaded) return
@@ -197,11 +210,34 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
                 val conversation = listOf(NeuralTurn("system", identity)) + if (label == "Multi-turn") listOf(
                     NeuralTurn("user", "Nama watak saya Melur."), NeuralTurn("assistant", "Baik, watak itu bernama Melur."), NeuralTurn("user", prompt)
                 ) else listOf(NeuralTurn("user", prompt))
-                val fastConversation = conversation.dropLast(1) + conversation.last().copy(text = conversation.last().text + "\n/no_think")
+                val fastConversation = conversation.dropLast(1) + NeuralGenerationPolicy.userTurn(conversation.last().text, false)
                 val result = measure(label, fastConversation)
                 mutable.update { it.copy(measurements = it.measurements + result, streaming = result.output) }
                 if (result.error != null) break
             }
+        }
+    }
+    fun compareThreads() {
+        if (!mutable.value.canInfer || !runtime.isLoaded) return
+        start("Banding CPU") {
+            val selected = mutable.value.threads
+            try {
+                val prompt = listOf(NeuralTurn("system", identity), NeuralGenerationPolicy.userTurn(
+                    "Terangkan mengapa langit biru dalam dua ayat Bahasa Melayu.", false))
+                for (threads in listOf(2, 4, 6)) {
+                    coroutineContext.ensureActive()
+                    if (stopRequested) break
+                    val device = withContext(Dispatchers.IO) { NeuralDeviceCapabilityProbe.inspect(getApplication()) }
+                    if (device.lowMemory || device.thermalStatus >= 3) {
+                        mutable.update { it.copy(message = "Perbandingan dihentikan: tekanan memori/terma") }; break
+                    }
+                    runtime.clearCache()
+                    mutable.update { it.copy(threads = threads, streaming = "") }
+                    val result = measure("${mutable.value.loadedId} · CPU $threads · cache kosong", prompt, 64)
+                    mutable.update { it.copy(measurements = (it.measurements + result).takeLast(20)) }
+                    if (result.error != null) break
+                }
+            } finally { mutable.update { it.copy(threads = selected) } }
         }
     }
     fun retrieve(query: String) = start("Pengetahuan tempatan") {

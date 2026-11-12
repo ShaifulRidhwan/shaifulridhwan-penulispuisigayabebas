@@ -68,6 +68,22 @@ class NeuralManagementTest {
             assertTrue(store.uninstall(descriptor())); assertNull(store.installedModel(descriptor()))
         } finally { dir.deleteRecursively() }
     }
+    @Test fun activationDiagnosesMissingTruncatedAndWrongDigestWithoutDeletingUserFile() {
+        val dir = directory()
+        try {
+            val store = NeuralModelStore(dir)
+            fun failure() = runCatching { store.requireInstalledModel(descriptor()) }.exceptionOrNull()!!.message.orEmpty()
+            assertTrue(failure().startsWith("MODEL_MISSING:"))
+            val file = store.target(descriptor())
+            file.writeBytes(payload.copyOf(8))
+            assertTrue(failure().startsWith("GGUF_SIZE_MISMATCH:"))
+            file.writeBytes(payload.clone().also { it[it.lastIndex] = 0 })
+            assertTrue(failure().startsWith("SHA256_MISMATCH:"))
+            assertTrue(file.exists())
+            file.writeBytes(payload)
+            assertEquals(file, store.requireInstalledModel(descriptor()))
+        } finally { dir.deleteRecursively() }
+    }
     @Test fun memoryEligibilityRejectsEightGbDeviceAndThermalPressure() {
         val snapshot = NeuralDeviceSnapshot(8L shl 30, 6L shl 30, false, listOf("arm64-v8a"), 20L shl 30, 35)
         assertNotNull(snapshot.loadingIssue(NeuralModelCatalog.entries.last().model!!))
@@ -75,8 +91,8 @@ class NeuralManagementTest {
         assertNotNull(snapshot.copy(thermalStatus = 3).loadingIssue(NeuralModelCatalog.entries.first().model!!))
         assertNotNull(snapshot.copy(supportedAbis = listOf("x86_64")).loadingIssue(NeuralModelCatalog.entries.first().model!!))
     }
-    @Test fun catalogIsPinnedToAuditedOfficialRevisions() {
-        assertEquals(3, NeuralModelCatalog.entries.size)
+    @Test fun catalogIsPinnedToAuditedPublisherRevisions() {
+        assertEquals(4, NeuralModelCatalog.entries.size)
         NeuralModelCatalog.entries.forEach { entry ->
             val model = entry.model!!
             assertTrue(entry.canDownload)

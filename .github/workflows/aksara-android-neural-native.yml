@@ -6,6 +6,8 @@ on:
     paths:
       - 'android-native/app/src/main/neural/aksara_neural.cpp'
       - 'android-native/app/src/main/java/my/aksara/nativeapp/core/neural/**'
+      - 'android-native/app/src/test/java/my/aksara/nativeapp/core/neural/**'
+      - 'android-native/app/src/main/neural/CMakeLists.txt'
       - '.github/workflows/aksara-android-neural-native.yml'
   workflow_dispatch:
     inputs:
@@ -16,6 +18,7 @@ on:
         default: ''
 permissions:
   contents: write
+  actions: read
 concurrency:
   group: aksara-neural-cpu
   cancel-in-progress: true
@@ -36,6 +39,25 @@ jobs:
         with:
           packages: "platform-tools platforms;android-35 build-tools;35.0.0 ndk;27.2.12479018 cmake;3.22.1"
       - uses: gradle/actions/setup-gradle@v4
+      - name: Retain original red-build compiler diagnosis (read-only, no rerun)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh run view 43156590584 --repo "$GITHUB_REPOSITORY" --job 130977945220 --log > "$RUNNER_TEMP/historical-android.log"
+          gh run view 43156590593 --repo "$GITHUB_REPOSITORY" --job 130978005436 --log > "$RUNNER_TEMP/historical-studio.log"
+          python3 - <<'PYCODE'
+          import os, re
+          from pathlib import Path
+          directory = Path(os.environ['RUNNER_TEMP'])
+          lines = []
+          for name in ['historical-android.log', 'historical-studio.log']:
+              lines.append(name + '\n')
+              errors = [line for line in (directory / name).read_text().splitlines()
+                        if re.search(r'e: file|error:|What went wrong|Compilation error|Unresolved reference', line)]
+              lines.extend(line + '\n' for line in errors[:80])
+          (directory / 'historical-compiler-errors.txt').write_text(''.join(lines))
+          PYCODE
       - name: Prepare pinned llama.cpp source
         run: bash android-native/scripts/prepare-neural-native.sh
       - name: Bootstrap checksum-pinned Gradle
@@ -70,9 +92,21 @@ jobs:
         run: |
           python3 android-native/tools/sync_local_knowledge.py --check
           python3 android-native/ci/performance-contracts.py
-      - name: Compile JNI-enabled arm64 APK
+      - name: Compile JNI-enabled arm64 APK and run focused regression tests once
         working-directory: android-native
-        run: gradle --no-daemon --init-script ci/compiler-repository.init.gradle -PenableNeuralNative=true -PaksaraPreviewSuffix=.preview.p321.c${GITHUB_SHA:0:8} assembleDebug
+        run: |
+          set -euo pipefail
+          gradle --no-daemon --init-script ci/compiler-repository.init.gradle \
+            -PenableNeuralNative=true -PaksaraPreviewSuffix=.preview.p321.c${GITHUB_SHA:0:8} \
+            assembleDebug :app:testDebugUnitTest \
+            --tests 'my.aksara.nativeapp.core.neural.*' \
+            --tests 'my.aksara.nativeapp.NativeIntegrationContractTest' \
+            --tests 'my.aksara.nativeapp.ChatApiTest' \
+            --tests 'my.aksara.nativeapp.SessionAndProviderStatusTest' \
+            --tests 'my.aksara.nativeapp.StudioContractsTest' \
+            --tests 'my.aksara.nativeapp.TodayAdvancedNavigationTest' \
+            --tests 'my.aksara.nativeapp.SettingsV2TechnicalRegistryTest' \
+            --tests 'my.aksara.nativeapp.WebBrainBridgeTest' | tee "$RUNNER_TEMP/neural-build.log"
       - name: Check optimized native configuration
         run: |
           python3 - <<'PYCODE'
@@ -98,6 +132,12 @@ jobs:
           unzip -tq "delivery/$file"
           unzip -l "delivery/$file" | grep 'lib/arm64-v8a/libstockfish.so'
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "delivery/$file"
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 4 "delivery/$file"
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "delivery/$file" > delivery/BADGING.txt
+          grep -F "package: name='my.aksara.nativeapp.preview.p321.c${GITHUB_SHA:0:8}'" delivery/BADGING.txt
+          cp "$RUNNER_TEMP/neural-build.log" delivery/
+          if [ -f "$RUNNER_TEMP/historical-compiler-errors.txt" ]; then cp "$RUNNER_TEMP/historical-compiler-errors.txt" delivery/; fi
+          tar -czf delivery/test-results.tar.gz -C android-native/app/build/test-results/testDebugUnitTest .
           cp android-native/chess-native/build/stockfish-19-corresponding-source.tar.gz delivery/
           cp android-native/app/src/main/neural/third_party/llama.cpp/LICENSE delivery/llama.cpp-LICENSE
           (cd delivery && sha256sum "$file" stockfish-19-corresponding-source.tar.gz > SHA256SUMS)
@@ -118,7 +158,7 @@ jobs:
           tag="aksara-neural-pr321-${GITHUB_SHA:0:8}"
           gh release create "$tag" delivery/* --target "$GITHUB_SHA" --prerelease \
             --title "Aksara Neural PR #321 owner test ${GITHUB_SHA:0:8}" \
-            --notes "Unmerged ARM64 debug APK from $GITHUB_SHA. Host JNI inference evidence is recorded in the PR; Android physical-device testing remains pending. Tests are run locally within the single-suite budget; this dispatch builds and verifies packaging only. Install on Android 12 or newer. Keep the Stockfish corresponding source companion with redistribution."
+            --notes "Unmerged ARM64 debug APK from $GITHUB_SHA. This run compiles JNI, runs focused Neural and existing-function regression tests once, and verifies APK integrity, signature and alignment. Native host evidence is separate from Android physical-device testing, which remains pending. Optional models require explicit user download/import; no weights are bundled. Install on Android 12 or newer. Keep the Stockfish corresponding source companion with redistribution."
           echo "https://github.com/$GITHUB_REPOSITORY/releases/tag/$tag" >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: failure()
@@ -129,6 +169,8 @@ jobs:
             android-native/app/build/outputs/apk/debug/
             android-native/app/build/outputs/logs/
             android-native/app/build/reports/
+            android-native/app/build/test-results/
+            ${{ runner.temp }}/neural-build.log
 
   publish-verified:
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feature/aksara-neural-local-v1' && inputs.publish_manifest != ''

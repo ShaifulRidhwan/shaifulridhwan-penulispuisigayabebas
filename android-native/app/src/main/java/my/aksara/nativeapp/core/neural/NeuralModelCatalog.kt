@@ -49,6 +49,16 @@ object NeuralModelCatalog {
             downloadUrl = "https://huggingface.co/Qwen/Qwen3-4B-GGUF/resolve/bc640142c66e1fdd12af0bd68f40445458f3869b/Qwen3-4B-Q4_K_M.gguf",
             sizeBytes = 2497280256L, name = "Qwen3-4B", parameters = "4B", quantization = "Q4_K_M", sourceRevision = "bc640142c66e1fdd12af0bd68f40445458f3869b"
         ), true),
-        NeuralCatalogEntry(NeuralTier.ADVANCED_8B, advanced, true)
+        NeuralCatalogEntry(NeuralTier.ADVANCED_8B, advanced, true),
+        // Third-party quantization: publisher API LFS digest/size and Apache-2.0
+        // verified at this immutable revision. Smaller weights do not guarantee speed/quality.
+        NeuralCatalogEntry(NeuralTier.LIGHT, NeuralModelDescriptor(
+            id = "qwen3-0-6b-q4-k-m", runtime = "llama.cpp",
+            sha256 = "ac2d97712095a558e31573f62f466a3f9d93990898b0ec79d7c974c1780d524a",
+            minAvailableRamBytes = 1536L * 1024 * 1024, license = "Apache-2.0",
+            downloadUrl = "https://huggingface.co/unsloth/Qwen3-0.6B-GGUF/resolve/50968a4468ef4233ed78cd7c3de230dd1d61a56b/Qwen3-0.6B-Q4_K_M.gguf",
+            sizeBytes = 396705472L, name = "Qwen3-0.6B", parameters = "0.6B", quantization = "Q4_K_M",
+            sourceRevision = "50968a4468ef4233ed78cd7c3de230dd1d61a56b", publisher = "Unsloth · base Qwen / Alibaba"
+        ), true)
     )
 }

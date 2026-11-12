@@ -19,21 +19,19 @@ data class NeuralMemoryAssessment(
 
 object NeuralMemoryPolicy {
     private const val MIB = 1024L * 1024
-    private const val GIB = 1024L * MIB
-    fun isLight(model: NeuralModelDescriptor) = model.id == "qwen3-0-6b-q8-0"
+    fun isLight(model: NeuralModelDescriptor) = model.id in setOf("qwen3-0-6b-q8-0", "qwen3-0-6b-q4-k-m")
     private fun mib(bytes: Long) = "${(bytes + MIB - 1) / MIB} MiB"
 
     fun assess(device: NeuralDeviceSnapshot, model: NeuralModelDescriptor, requestedContext: Int): NeuralMemoryAssessment {
         val light = isLight(model)
-        // Controlled Light attempts use 1024 tokens; this bounds KV and prefill memory.
-        val context = if (light) 1024 else requestedContext.coerceIn(1024, 2048)
+        val context = requestedContext.coerceIn(1024, 2048)
         val kvPerToken = when (model.id) {
-            "qwen3-0-6b-q8-0" -> 112L * 1024 // 28 layers * 8 KV heads * 128 dims * K/V * fp16
+            "qwen3-0-6b-q8-0", "qwen3-0-6b-q4-k-m" -> 112L * 1024 // 28 layers * 8 KV heads * 128 dims * K/V * fp16
             "qwen3-4b-q4-k-m" -> 144L * 1024 // 36 layers, same KV dimensions
             "qwen3-8b-q4-k-m" -> 128L * 1024 // 32 layers, same KV dimensions
             else -> 256L * 1024
         }
-        val scratch = when { light -> 128 * MIB; model.parameters == "4B" -> 256 * MIB; else -> 384 * MIB }
+        val scratch = when { light -> 192 * MIB; model.parameters == "4B" -> 256 * MIB; else -> 384 * MIB }
         val overhead = if (light) 192 * MIB else 384 * MIB
         // threshold is Android's pressure watermark, not extra model memory or swap.
         val reserve = maxOf(device.lowMemoryThresholdBytes, 256 * MIB) + 128 * MIB
@@ -47,15 +45,13 @@ object NeuralMemoryPolicy {
             device.lowMemory || device.availableRamBytes <= device.lowMemoryThresholdBytes ->
                 "Android melaporkan tekanan memori (tersedia ${mib(device.availableRamBytes)}, ambang ${mib(device.lowMemoryThresholdBytes)}). Tutup aplikasi lain dan semak semula."
             device.thermalStatus >= 3 -> "Peranti terlalu panas. Biarkan sejuk sebelum memuat model."
-            model.parameters == "8B" && device.totalRamBytes < 10 * GIB ->
-                "Advanced 8B tidak layak pada RAM fizikal ini. Pilih Light; Balanced hanya jika semakan RAMnya lulus. RAM maya tidak dikira."
-            device.availableRamBytes < (if (light) minimum else recommended) ->
-                "RAM tersedia ${mib(device.availableRamBytes)}; perlu sekurang-kurangnya ${mib(if (light) minimum else recommended)} termasuk rizab Android ${mib(reserve)}. " +
+            device.availableRamBytes < minimum ->
+                "RAM tersedia ${mib(device.availableRamBytes)}; anggaran perlu sekurang-kurangnya ${mib(minimum)} termasuk rizab Android ${mib(reserve)}. " +
                     if (light) "Tutup aplikasi lain dan cuba semula Light 1024 token." else "Nyahmuat model aktif atau cuba Light."
             else -> null
         }
-        val warning = if (reason == null && light && device.availableRamBytes < recommended)
-            "Di bawah cadangan ${mib(recommended)}. Percubaan Light dibenarkan pada 1024 token; tutup aplikasi lain. Pemuatan masih boleh gagal jika RAM berubah." else null
+        val warning = if (reason == null && device.availableRamBytes < recommended)
+            "Di bawah cadangan ${mib(recommended)}. Anggaran muat pada $context token; tutup aplikasi lain. Pemuatan native masih boleh gagal jika RAM berubah." else null
         return NeuralMemoryAssessment(context, model.sizeBytes, kvPerToken * context, scratch, overhead, reserve, recommended, reason, warning)
     }
 }

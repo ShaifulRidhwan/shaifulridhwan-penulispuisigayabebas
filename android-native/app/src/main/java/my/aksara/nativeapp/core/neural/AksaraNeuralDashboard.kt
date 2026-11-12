@@ -35,6 +35,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
 private fun bytes(value: Long) = String.format(Locale.ROOT, "%.2f GiB", value / 1073741824.0)
+private fun speed(value: Double?) = value?.let { String.format(Locale.ROOT, "%.2f", it) } ?: "—"
 private val moduleNames = listOf("Neural Core", "Device Intelligence", "Live Inference", "Model Library", "Neural Laboratory", "Knowledge & Reasoning")
 private val moduleIcons = listOf("brain", "activity", "chat", "book", "research", "network")
 
@@ -52,7 +53,7 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
     LaunchedEffect(module) {
         onDialogVisibilityChange(module != null)
         // Refresh transient memory eligibility while the relevant details are visible.
-        while (isActive && (module == 1 || module == 3)) { vm.refresh(); delay(5000) }
+        while (isActive && (module == null || module == 1 || module == 3)) { vm.refresh(); delay(5000) }
     }
     DisposableEffect(Unit) { onDispose { onDialogVisibilityChange(false) } }
     val owner = LocalLifecycleOwner.current
@@ -64,7 +65,9 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
         owner.lifecycle.addObserver(observer)
         onDispose { owner.lifecycle.removeObserver(observer) }
     }
-    BackHandler(module != null) { if (deleting != null) deleting = null else module = null }
+    BackHandler {
+        when { deleting != null -> deleting = null; module != null -> module = null; else -> onBack() }
+    }
     val backdrop = remember { HazeState() }
     val margins = aksaraDeviceMargins()
     CompositionLocalProvider(LocalBackdrop provides backdrop) {
@@ -73,7 +76,6 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
             Column(Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = margins.horizontal)
                 .padding(top = margins.top, bottom = margins.bottom), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 // Compact command deck: content-sized tiles, not six full-height placeholders.
-                // The remaining wallpaper is intentional breathing room, not stretched cards.
                 BoxWithConstraints(Modifier.weight(1f).fillMaxWidth()) {
                     val columns = if (maxWidth > maxHeight) 3 else 2
                     val rows = listOf(2, 3, 4, 5, 0, 1).chunked(columns)
@@ -87,7 +89,7 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                                 // Prominent brain emblem, using the existing gold icon and shared glass tokens.
                                 AksaraIcon("brain", Modifier.size(if (compact) 84.dp else 104.dp))
                                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                    AksaraText(if (state.canInfer) "MODEL AKTIF" else "AKSARA LOCAL · ON DEVICE", size = 11f, color = AksaraColors.gold)
+                                    AksaraText(if (state.loadedId != null) "MODEL AKTIF" else "AKSARA LOCAL · ON DEVICE", size = 11f, color = AksaraColors.gold)
                                     AksaraText(if (state.canInfer) "Aksara Local · Aktif" else "Aksara Local", size = 17f, weight = 650,
                                         family = AksaraTypography.heading)
                                     AksaraText(when {
@@ -99,6 +101,10 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                                     }, size = 11f, color = AksaraColors.muted)
                                     AksaraText("RAM ${state.device?.let { bytes(it.availableRamBytes) } ?: "…"} · ${state.contextSize} token",
                                         size = 10f, color = AksaraColors.muted)
+                                    state.loadedId?.let { id ->
+                                        AksaraText(NeuralModelCatalog.entries.firstOrNull { it.model?.id == id }?.model?.let { "${it.name} · ${it.quantization}" } ?: id,
+                                            size = 10f, color = AksaraColors.gold)
+                                    }
                                     AksaraText(when {
                                         state.busy == "Menjana" -> "INFERENCE · MENJANA TOKEN"
                                         state.busy == "Sahkan & muat model" -> "RUNTIME · MEMUAT GGUF"
@@ -113,11 +119,11 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                 row.forEach { index ->
                                     AksaraGlassSurface(Modifier.weight(1f)
-                                        .height(if (compact) 84.dp else 94.dp)
+                                        .heightIn(min = if (compact) 84.dp else 94.dp)
                                         .testTag("neural-module-$index")
                                         .aksaraBouncyClick { vm.refresh(); module = index },
                                         radius = 20.dp, blur = 8.dp) {
-                                        Row(Modifier.fillMaxSize().padding(horizontal = 11.dp, vertical = 10.dp),
+                                        Row(Modifier.fillMaxWidth().padding(horizontal = 11.dp, vertical = 10.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(9.dp)) {
                                             AksaraIcon(moduleIcons[index], Modifier.size(24.dp))
@@ -125,10 +131,10 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                                                 AksaraText(moduleNames[index], size = 12f, line = 16f,
                                                     weight = 600, family = AksaraTypography.heading)
                                                 AksaraText(when (index) {
-                                                    0 -> if (state.loadedId != null) "Model aktif" else "llama.cpp sedia"
+                                                    0 -> if (state.loadedId != null) "Model aktif" else if (state.runtimeAvailable) "Enjin sedia" else "JNI tidak tersedia"
                                                     1 -> state.device?.let { "${bytes(it.availableRamBytes)} tersedia" } ?: "Mengukur…"
-                                                    2 -> "${state.turns.count { it.role == "assistant" }} jawapan"
-                                                    3 -> "${state.installed.size}/3 dipasang"
+                                                    2 -> if (state.busy == "Menjana") "Menjana token…" else "${state.turns.count { it.role == "assistant" }} jawapan"
+                                                    3 -> "${state.installed.size}/${NeuralModelCatalog.entries.size} dipasang"
                                                     4 -> "${state.measurements.size} ukuran"
                                                     else -> "Memori OFF"
                                                 }, size = 10f, line = 14f, color = AksaraColors.muted)
@@ -168,13 +174,14 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                         listOf(1024, 2048).forEach { size -> AksaraButton("$size", { vm.contextSize(size) }, enabled = state.loadedId == null && state.busy == null) }
                                     }
+                                    ThreadControls(state, vm)
                                     AksaraButton("Nyahmuat model", vm::unload, enabled = state.canInfer)
                                     AksaraButton("Model Library", { module = 3 })
                                     Note("Privasi", "Inferens Aksara Local hanya melalui JNI pada peranti. Tiada fallback awan. Memori jangka panjang OFF; chat tempatan disimpan dalam RAM sesi sahaja.")
                                 }
                                 1 -> {
                                     state.device?.let { d ->
-                                        Note("Peranti", "RAM fizikal (Android) ${bytes(d.totalRamBytes)}\nRAM tersedia ${bytes(d.availableRamBytes)}\nAmbang tekanan Android ${bytes(d.lowMemoryThresholdBytes)}\nHeap Java ${bytes(d.javaHeapUsedBytes)} / ${bytes(d.javaHeapMaxBytes)}\nHeap native ${bytes(d.nativeHeapAllocatedBytes)}\nPSS proses ${bytes(d.processPssBytes)}\nRAM maya/extended tidak dikira\nStoran tersedia ${bytes(d.availableStorageBytes)}\nABI ${d.supportedAbis.joinToString()}\nAndroid API ${d.sdkInt}\nTerma ${d.thermalStatus} (0 biasa, 3 serius)\nMemori rendah: ${d.lowMemory}\nRuntime: ${state.runtimeAvailable}")
+                                        Note("Peranti", "RAM fizikal (Android) ${bytes(d.totalRamBytes)}\nRAM tersedia ${bytes(d.availableRamBytes)}\nAmbang tekanan Android ${bytes(d.lowMemoryThresholdBytes)}\nHeap Java ${bytes(d.javaHeapUsedBytes)} / ${bytes(d.javaHeapMaxBytes)}\nHeap native ${bytes(d.nativeHeapAllocatedBytes)}\nPSS proses ${bytes(d.processPssBytes)}\nRSS proses ${d.processRssBytes?.let { bytes(it) } ?: "tidak tersedia"}\nRAM maya/extended tidak dikira\nStoran tersedia ${bytes(d.availableStorageBytes)}\nABI ${d.supportedAbis.joinToString()}\nAndroid API ${d.sdkInt}\nTerma ${d.thermalStatus} (0 biasa, 3 serius)\nMemori rendah: ${d.lowMemory}\nRuntime: ${state.runtimeAvailable}")
                                         NeuralModelCatalog.entries.forEach { entry -> entry.model?.let { model ->
                                             val assessment = NeuralMemoryPolicy.assess(d, model, state.contextSize)
                                             Note(entry.tier.label, "Anggaran native ${bytes(assessment.estimatedNativeBytes)} + rizab Android ${bytes(assessment.reserveBytes)}\n" +
@@ -184,7 +191,7 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                                     AksaraButton("Ukur semula", vm::refresh)
                                 }
                                 3 -> {
-                                    AksaraText("Import hanya fail GGUF yang sepadan dengan model katalog. Retry bermula dari awal; fail separa dibuang selepas gangguan.", size = 12f)
+                                    AksaraText("Q8_0 mengekalkan lebih ketepatan berat; Q4_K_M menggunakan storan/RAM berat lebih kecil dan boleh mengubah kualiti. Kelajuan perlu diukur dengan prompt sama. Import hanya fail GGUF yang sepadan dengan model katalog. Retry bermula dari awal; fail separa dibuang selepas gangguan.", size = 12f)
                                     NeuralModelCatalog.entries.forEach { entry -> entry.model?.let { model ->
                                         ModelEntry(entry, model, state, onDownload = { vm.transfer(model) }, onImport = {
                                             importModel = model; picker.launch(arrayOf("*/*"))
@@ -192,11 +199,17 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                                     } }
                                 }
                                 4 -> {
-                                    Note("Diagnostik", "Model load: ${state.loadMs?.let { "$it ms" } ?: "belum diukur"}\nKonteks: ${state.contextSize}\nPSS merangkumi proses aplikasi, bukan model sahaja. Kelajuan diukur daripada token native; tiada skor kualiti automatik.")
+                                    Note("Diagnostik", "Model load: ${state.loadMs?.let { "$it ms" } ?: "belum diukur"}\nKonteks: ${state.contextSize}\nBatch 512 · microbatch 256 · mmap ON · mlock OFF\nPSS merangkumi proses aplikasi. Decode token/s mengukur masa llama_decode sahaja. TTFT UI termasuk penjadualan; TTFT native bermula dalam JNI. Ukuran di telefon ini sahaja; tiada skor kualiti automatik.")
+                                    ThreadControls(state, vm)
                                     AksaraButton("Jalankan 9 benchmark", vm::benchmark, enabled = state.canInfer)
+                                    AksaraButton("Banding CPU 2 / 4 / 6", vm::compareThreads, enabled = state.canInfer)
+                                    AksaraText("Perbandingan menggunakan prompt sama dan cache dibersihkan bagi setiap konfigurasi. Pilihan CPU tidak ditukar secara automatik berdasarkan satu sampel.", size = 11f)
                                     AksaraText("Suite: " + NeuralViewModel.suite.joinToString { it.first }, size = 11f)
                                     state.measurements.forEach { result ->
-                                        Note(result.label, "${result.tokens} token · TTFT ${result.firstTokenMs?.let { "$it ms" } ?: "—"}\n${String.format(Locale.ROOT, "%.2f", result.tokensPerSecond)} token/s · ${result.totalMs} ms jumlah\nPSS ${result.pssKb / 1024} MiB · terma ${result.thermal}\nDibatalkan: ${result.cancelled}\nRalat: ${result.error ?: "tiada"}\n\n${result.output}")
+                                        Note(result.label, "${result.tokens} token · TTFT UI ${result.firstTokenMs?.let { "$it ms" } ?: "—"}\n${speed(result.tokensPerSecond)} decode token/s · ${result.totalMs} ms inferens\n" +
+                                            (result.native?.let { "Prefill ${it.prefillUs / 1000.0} ms · ${it.promptTokens} prompt / ${it.reusedTokens} cache\nTTFT native ${it.firstTokenUs?.let { us -> "${us / 1000.0} ms" } ?: "—"} · queue ${it.queueMs} ms\nCPU ${it.threads} / prefill ${it.batchThreads} threads · konteks ${it.context}\nHenti → JNI selesai ${it.cancelUs?.let { us -> "${us / 1000.0} ms" } ?: "—"}\n" } ?: "Metrik native tidak tersedia\n") +
+                                            (result.device?.let { "RAM tersedia ${bytes(it.availableRamBytes)} · ambang ${bytes(it.lowMemoryThresholdBytes)} · tekanan ${it.lowMemory}\nRSS ${it.processRssBytes?.let { rss -> bytes(rss) } ?: "—"}\n" } ?: "") +
+                                            "PSS ${result.pssKb / 1024} MiB · terma ${result.thermal}\nDibatalkan: ${result.cancelled}\nRalat: ${result.error ?: "tiada"}\n\n${result.output}")
                                     }
                                     if (state.measurements.isEmpty()) AksaraText("Belum ada keputusan. Aktifkan model dan mulakan ujian secara manual.", size = 12f)
                                 }
@@ -242,13 +255,13 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
         "Status: ${if (state.loadedId == model.id) "Aktif" else if (installed) "Dipasang" else "Belum dipasang"}\n" +
         "RAM tersedia: ${state.device?.let { bytes(it.availableRamBytes) } ?: "Belum diukur"}")
     AksaraButton(if (showDetails) "Tutup Model Details" else "Model Details", { showDetails = !showDetails })
-    if (showDetails) Note("${entry.tier.label} · ${model.name}", "${model.parameters} parameter · GGUF ${model.quantization}\nFail: ${model.sizeBytes} bait (${bytes(model.sizeBytes)})\nStoran diperlukan: ${bytes(model.sizeBytes + 134217728)}\n${memoryDescription}\nQwen / Alibaba · ${model.license}\nRevisi: ${model.sourceRevision}\nSHA-256: ${model.sha256}\nPemasangan: ${if (installed) "fail tersedia" else "belum dipasang"}\nPengesahan: ${if (model.id in state.verified) "SHA-256 sah sesi ini" else "diperiksa semasa import/aktivasi"}\nKeserasian: ${eligibility}\n${model.downloadUrl}")
+    if (showDetails) Note("${entry.tier.label} · ${model.name}", "${model.parameters} parameter · GGUF ${model.quantization}\nFail: ${model.sizeBytes} bait (${bytes(model.sizeBytes)})\nStoran diperlukan: ${bytes(model.sizeBytes + 134217728)}\n${memoryDescription}\n${model.publisher} · ${model.license}\nRevisi: ${model.sourceRevision}\nSHA-256: ${model.sha256}\nPemasangan: ${if (installed) "fail tersedia" else "belum dipasang"}\nPengesahan: ${if (model.id in state.verified) "SHA-256 sah sesi ini" else "diperiksa semasa import/aktivasi"}\nKeserasian: ${eligibility}\n${model.downloadUrl}")
     AksaraButton("Sumber & atribusi", {
         runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(model.downloadUrl.substringBefore("/resolve/") + "/tree/" + model.sourceRevision))) }
     })
     if (installed) AksaraButton("Semak RAM", onRefresh, enabled = state.busy == null)
     if (state.transferId == model.id) AksaraText("${state.progress} / ${state.progressTotal ?: "?"} bait · ${if ((state.progressTotal ?: 0) > 0) state.progress * 100 / state.progressTotal!! else 0}% · SHA-256 sebelum pemasangan", size = 11f)
-    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
         if (!installed) {
             AksaraButton("Muat turun / Retry", onDownload, enabled = entry.canDownload && state.busy == null && (state.device?.availableStorageBytes ?: 0) > model.sizeBytes + 134217728)
             AksaraButton("Import", onImport, enabled = state.busy == null)
@@ -256,10 +269,11 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
             val label = when {
                 state.activation.pendingId == model.id -> "Mengesahkan / memuat…"
                 state.loadedId == model.id -> "Aktif"
-                NeuralMemoryPolicy.isLight(model) -> "Cuba Light · 1024"
+                NeuralMemoryPolicy.isLight(model) -> "Cuba Light · ${state.contextSize}"
                 else -> "Sahkan & aktif"
             }
-            AksaraButton(label, onActivate, enabled = state.busy == null && state.loadedId != model.id)
+            // Keep activation reachable: fresh RAM is measured after unloading the old model.
+            AksaraButton(label, onActivate, enabled = state.busy == null && state.loadedId != model.id && state.runtimeAvailable)
             AksaraButton("Padam", onDelete, enabled = state.busy == null)
         }
     }
@@ -278,6 +292,10 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
     val list = rememberLazyListState()
     val dragging by list.interactionSource.collectIsDraggedAsState()
     var follow by remember { mutableStateOf(true) }
+    LaunchedEffect(state.streaming) {
+        withFrameNanos { }
+        vm.streamingRendered(state.streaming)
+    }
     LaunchedEffect(dragging) { if (!dragging) follow = !list.canScrollForward }
     LaunchedEffect(state.streaming, state.turns.size) {
         if (follow && !dragging && (state.turns.isNotEmpty() || state.streaming.isNotEmpty())) {
@@ -289,16 +307,26 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
             AksaraText(state.loadedId ?: "Aktifkan model di Model Library", Modifier.weight(1f), size = 11f, color = AksaraColors.gold)
             AksaraButton("Kosongkan", vm::clear, enabled = state.busy == null)
         }
+        AksaraButton(if (state.reasoning) "Penaakulan: ON" else "Respons pantas: /no_think", vm::reasoning, enabled = state.busy == null)
         LazyColumn(Modifier.weight(1f).fillMaxWidth(), state = list, verticalArrangement = Arrangement.spacedBy(9.dp)) {
             if (state.turns.isEmpty() && state.streaming.isEmpty()) item { Note("Aksara Local", "Mesej dijana pada peranti. Aktifkan model untuk bermula. Tiada memori kekal.") }
-            items(state.turns) { turn -> Note(if (turn.role == "user") "Anda" else "Aksara Local", turn.text) }
+            items(state.turns, contentType = { it.role }) { turn -> Note(if (turn.role == "user") "Anda" else "Aksara Local", turn.text) }
             if (state.streaming.isNotEmpty()) item { Note("Aksara Local · aliran", state.streaming) }
             state.source?.let { source -> item { Note("Fakta diperoleh • berasingan daripada jawapan model", source) } }
         }
-        state.measurements.lastOrNull()?.let { AksaraText("${it.tokens} token · ${it.totalMs} ms · ${String.format(Locale.ROOT, "%.2f", it.tokensPerSecond)} token/s", size = 10f) }
+        state.measurements.lastOrNull()?.let { AksaraText("${it.tokens} token · TTFT ${it.firstTokenMs?.let { ms -> "$ms ms" } ?: "—"} · ${speed(it.tokensPerSecond)} decode token/s", size = 10f) }
+        state.renderDelayMs?.let { AksaraText("Publish → bingkai Compose: $it ms", size = 10f, color = AksaraColors.muted) }
         Input(prompt, { prompt = it })
         AksaraButton("Hantar pada peranti", { vm.send(prompt); prompt = "" }, Modifier.fillMaxWidth(), icon = "send",
             enabled = state.canInfer && prompt.isNotBlank())
+    }
+}
+@Composable private fun ThreadControls(state: NeuralUiState, vm: NeuralViewModel) {
+    AksaraText("CPU: ${if (state.threads == 0) "Auto (sehingga 4)" else "${state.threads} threads"}", size = 12f)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(7.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        listOf(0, 2, 4, 6).forEach { value ->
+            AksaraButton(if (value == 0) "Auto" else "$value", { vm.threads(value) }, enabled = state.busy == null)
+        }
     }
 }
 @Composable private fun KnowledgePanel(state: NeuralUiState, vm: NeuralViewModel) {
