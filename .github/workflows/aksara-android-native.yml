@@ -19,6 +19,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: '22'
+      - name: Verify Aksara Local knowledge and source inventory
+        run: python3 android-native/tools/sync_local_knowledge.py --check
       - run: node --test android-native/game-tests/*.test.cjs
   web-audit:
     runs-on: ubuntu-latest
