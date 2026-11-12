@@ -85,7 +85,7 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                                 // Prominent brain emblem, using the existing gold icon and shared glass tokens.
-                                AksaraIcon("brain", Modifier.size(92.dp))
+                                AksaraIcon("brain", Modifier.size(if (compact) 84.dp else 104.dp))
                                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     AksaraText(if (state.canInfer) "MODEL AKTIF" else "AKSARA LOCAL · ON DEVICE", size = 11f, color = AksaraColors.gold)
                                     AksaraText(if (state.canInfer) "Aksara Local · Aktif" else "Aksara Local", size = 17f, weight = 650,
@@ -99,6 +99,13 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                                     }, size = 11f, color = AksaraColors.muted)
                                     AksaraText("RAM ${state.device?.let { bytes(it.availableRamBytes) } ?: "…"} · ${state.contextSize} token",
                                         size = 10f, color = AksaraColors.muted)
+                                    AksaraText(when {
+                                        state.busy == "Menjana" -> "INFERENCE · MENJANA TOKEN"
+                                        state.busy == "Sahkan & muat model" -> "RUNTIME · MEMUAT GGUF"
+                                        state.loadedId != null -> "LLAMA.CPP · CPU ARM64 · OFFLINE"
+                                        state.installed.isNotEmpty() -> "GGUF DIKESAN · BELUM AKTIF"
+                                        else -> "RUNTIME TEMPATAN · MENUNGGU MODEL"
+                                    }, size = 10f, color = AksaraColors.gold)
                                 }
                             }
                         }
@@ -132,7 +139,7 @@ fun AksaraNeuralDashboard(onBack: () -> Unit, onDialogVisibilityChange: (Boolean
                                 }
                             }
                         }
-                        AksaraText("Privasi tempatan · tiada muat turun automatik · tiada inferens awan",
+                        AksaraText("Pemprosesan pada peranti · model GGUF · tanpa inferens awan",
                             size = 10f, color = AksaraColors.muted)
                     }
                 }
