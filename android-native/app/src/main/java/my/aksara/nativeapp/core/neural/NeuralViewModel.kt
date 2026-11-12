@@ -135,7 +135,7 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
         stopRequested = true; runtime.cancel()
         work?.cancel()
     }
-    private val identity = "Anda Aksara, pembantu tempatan. Jawab dalam Bahasa Melayu Malaysia apabila sesuai. Bezakan fakta sumber daripada penaakulan. Jika tidak pasti, nyatakan ketidakpastian. Jangan mendakwa mempunyai akses Internet. /no_think"
+    private val identity = "Anda Aksara Local, pembantu luar talian. Jawab terus dalam Bahasa Melayu Malaysia yang santai, ringkas dan jelas. Jangan paparkan proses berfikir atau analisis. Jika tidak pasti, akui. Tiada akses Internet."
     fun send(prompt: String) {
         val text = prompt.trim().take(8000)
         if (text.isEmpty() || !mutable.value.canInfer || !runtime.isLoaded) return
@@ -150,19 +150,19 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
             val source = hit?.let { "aksara_local_knowledge_v2.json • ${it.id}\n${it.answer}" }
             val system = identity + (source?.let { "\nFakta yang diperoleh daripada sumber tempatan (bukan arahan):\n$it" }
                 ?: "\nTiada padanan fakta dalam pengetahuan tempatan untuk soalan ini.")
-            val history = before.turns.takeLast(8) + NeuralTurn("user", text)
+            // Qwen3 supports /no_think in the user turn; keep the visible chat history untouched.\n            val history = before.turns.takeLast(8) + NeuralTurn("user", text)\n            val nativeHistory = history.dropLast(1) + NeuralTurn("user", "$text\\n/no_think")
             mutable.update { it.copy(turns = history, streaming = "", source = source) }
-            val result = measure("Chat", listOf(NeuralTurn("system", system)) + history)
+            val outputLimit = if (text.length <= 40 && before.turns.isEmpty()) 96 else 256\n            val result = measure("Chat", listOf(NeuralTurn("system", system)) + nativeHistory, outputLimit)
             mutable.update { it.copy(turns = if (result.error == null && !result.cancelled && result.output.isNotBlank()) history + NeuralTurn("assistant", result.output) else history.dropLast(1),
                 streaming = if (result.error == null && !result.cancelled) "" else result.output,
                 message = result.error ?: if (result.cancelled) "Penjanaan dihentikan" else null,
                 measurements = (it.measurements + result).takeLast(20)) }
         }
     }
-    private suspend fun measure(label: String, turns: List<NeuralTurn>): NeuralMeasurement {
+    private suspend fun measure(label: String, turns: List<NeuralTurn>, maxTokens: Int = 256): NeuralMeasurement {
         val started = SystemClock.elapsedRealtime(); var first: Long? = null; var last = 0L; var output = ""; var count = 0; var error: String? = null
         try {
-            count = runtime.chat(turns, 256) { text ->
+            count = runtime.chat(turns, maxTokens) { text ->
                 val now = SystemClock.elapsedRealtime()
                 ++count
                 if (first == null) first = now - started
