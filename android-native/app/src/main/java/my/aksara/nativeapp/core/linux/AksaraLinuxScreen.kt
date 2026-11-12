@@ -57,36 +57,65 @@ fun AksaraLinuxScreen(
                     .padding(top = margins.top, bottom = margins.bottom),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                AksaraGlassSurface(Modifier.fillMaxWidth(), radius = 20.dp, blur = 9.dp) {
-                    Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 13.dp, vertical = 11.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Box(
-                            Modifier.size(43.dp).clip(RoundedCornerShape(14.dp))
-                                .background(Brush.linearGradient(listOf(Color(0x664D7091), Color(0x345C4329))))
-                                .border(1.dp, Color(0x66E6C58B), RoundedCornerShape(14.dp)),
-                            contentAlignment = Alignment.Center
+                // Independent, matching Liquid Glass capsules: identity on the left,
+                // and a truly live PTY status on the right. No extra parent card.
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    AksaraGlassSurface(Modifier.weight(1f).heightIn(min = 68.dp),
+                        radius = 19.dp, blur = 9.dp) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 11.dp, vertical = 11.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(9.dp)
                         ) {
-                            AksaraIcon("terminal", Modifier.size(26.dp))
+                            Box(
+                                Modifier.size(40.dp).clip(RoundedCornerShape(13.dp))
+                                    .background(Brush.linearGradient(
+                                        listOf(Color(0x664D7091), Color(0x345C4329))
+                                    ))
+                                    .border(1.dp, Color(0x66E6C58B), RoundedCornerShape(13.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                AksaraIcon("terminal", Modifier.size(24.dp))
+                            }
+                            Column(Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                AksaraText("AKSARA / LINUX", size = 14.5f, weight = 700,
+                                    family = AksaraTypography.heading, tracking = .35f)
+                                AksaraText(
+                                    if (vm.installed) "ALPINE ${AksaraLinuxRuntime.alpineVersion} · ARM64"
+                                    else if (vm.bundled) "ARM64 · ALPINE READY"
+                                    else "ANDROID · NATIVE PTY",
+                                    size = 8.8f, color = AksaraColors.muted
+                                )
+                            }
                         }
-                        Column(Modifier.weight(1f)) {
-                            AksaraText("AKSARA / LINUX", size = 15.5f, weight = 700,
-                                family = AksaraTypography.heading, tracking = .6f)
+                    }
+                    AksaraGlassSurface(Modifier.width(108.dp).heightIn(min = 68.dp),
+                        radius = 19.dp, blur = 9.dp) {
+                        Column(
+                            Modifier.fillMaxWidth()
+                                .padding(horizontal = 7.dp, vertical = 11.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                                LinuxRuntimePulse(current != null && !current.ended)
+                                AksaraText(
+                                    if (current?.ended == true) "STOPPED" else "LIVE PTY",
+                                    size = 10f, weight = 700,
+                                    color = if (current?.ended == true)
+                                        LinuxDeckRose else LinuxDeckMint
+                                )
+                            }
                             AksaraText(
-                                if (vm.installed) "ALPINE ${AksaraLinuxRuntime.alpineVersion} · ARM64 · PROOT"
-                                else if (vm.bundled) "ARM64 · ALPINE READY TO INSTALL"
-                                else "ANDROID SHELL · NATIVE PTY",
-                                size = 9.3f, color = AksaraColors.muted
+                                if (vm.installed) "PROOT · ROOTLESS" else "APP SANDBOX",
+                                size = 8f, color = AksaraColors.muted
                             )
-                        }
-                        LinuxRuntimePulse(current != null && !current.ended)
-                        Column(horizontalAlignment = Alignment.End) {
-                            AksaraText(if (current?.ended == true) "STOPPED" else "LIVE PTY",
-                                size = 9.5f, weight = 650,
-                                color = if (current?.ended == true) LinuxDeckRose else LinuxDeckMint)
-                            AksaraText("ROOTLESS", size = 8.7f, color = AksaraColors.muted)
                         }
                     }
                 }
@@ -198,8 +227,9 @@ fun AksaraLinuxScreen(
                     )
                 }
 
-                AksaraGlassSurface(Modifier.fillMaxWidth(), radius = 16.dp, blur = 8.dp) {
-                    Column(Modifier.fillMaxWidth().padding(8.dp),
+                // Same glass radius and blur as both header capsules.
+                AksaraGlassSurface(Modifier.fillMaxWidth(), radius = 19.dp, blur = 9.dp) {
+                    Column(Modifier.fillMaxWidth().padding(9.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Row(Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -233,23 +263,26 @@ fun AksaraLinuxScreen(
                                 val selectedCategory = categories.firstOrNull {
                                     it.name == commandCategory
                                 } ?: categories.first()
-                                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                // Categories and actions fill balanced, non-scrolling rows.
+                                Row(Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                     categories.forEach { category ->
                                         LinuxDeckCommandCategory(
                                             category.label, category.icon,
-                                            category == selectedCategory
+                                            category == selectedCategory, Modifier.weight(1f)
                                         ) { commandCategory = category.name }
                                     }
                                 }
-                                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                                val actions = LinuxQuickCommands.forRuntime(
+                                    vm.installed, selectedCategory
+                                )
+                                Row(Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    LinuxQuickCommands.forRuntime(vm.installed, selectedCategory)
-                                        .forEach { action ->
-                                            LinuxDeckCommandAction(action) {
-                                                vm.runQuickCommand(action.id)
-                                            }
-                                        }
+                                    actions.forEach { action ->
+                                        LinuxDeckCommandAction(
+                                            action, Modifier.weight(1f)
+                                        ) { vm.runQuickCommand(action.id) }
+                                    }
                                 }
                             }
                             else -> {
@@ -301,15 +334,15 @@ private val LinuxDeckRose = Color(0xFFFFA9A9)
 }
 
 @Composable private fun LinuxDeckCommandCategory(
-    label: String, icon: String, active: Boolean, onClick: () -> Unit
+    label: String, icon: String, active: Boolean, modifier: Modifier, onClick: () -> Unit
 ) {
-    Row(Modifier.clip(RoundedCornerShape(10.dp))
+    Row(modifier.heightIn(min = 38.dp).clip(RoundedCornerShape(10.dp))
         .background(if (active) Color(0x63597893) else Color(0x25304053))
         .border(1.dp, if (active) Color(0x82E6C58B) else Color(0x385E7388),
             RoundedCornerShape(10.dp))
         .clickable(onClick = onClick)
-        .padding(horizontal = 10.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        .padding(horizontal = 5.dp, vertical = 7.dp),
+        horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically) {
         AksaraIcon(icon, Modifier.size(14.dp),
             if (active) AksaraColors.gold else AksaraColors.muted)
@@ -319,16 +352,16 @@ private val LinuxDeckRose = Color(0xFFFFA9A9)
 }
 
 @Composable private fun LinuxDeckCommandAction(
-    action: LinuxQuickCommands.Action, onClick: () -> Unit
+    action: LinuxQuickCommands.Action, modifier: Modifier, onClick: () -> Unit
 ) {
-    Row(Modifier.clip(RoundedCornerShape(10.dp))
+    Row(modifier.heightIn(min = 40.dp).clip(RoundedCornerShape(10.dp))
         .background(Color(0x3830455C))
         .border(1.dp, Color(0x466C88A2), RoundedCornerShape(10.dp))
         .clickable(onClick = onClick)
-        .padding(horizontal = 11.dp, vertical = 9.dp),
-        horizontalArrangement = Arrangement.spacedBy(7.dp),
+        .padding(horizontal = 6.dp, vertical = 9.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically) {
-        AksaraIcon(action.icon, Modifier.size(16.dp), AksaraColors.gold)
+        AksaraIcon(action.icon, Modifier.size(15.dp), AksaraColors.gold)
         AksaraText(action.label, size = 10f, weight = 600)
     }
 }
