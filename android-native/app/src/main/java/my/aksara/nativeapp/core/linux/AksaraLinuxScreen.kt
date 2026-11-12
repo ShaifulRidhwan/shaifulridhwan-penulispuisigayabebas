@@ -88,8 +88,6 @@ fun AksaraLinuxScreen(
                                 color = if (current?.ended == true) LinuxDeckRose else LinuxDeckMint)
                             AksaraText("ROOTLESS", size = 8.7f, color = AksaraColors.muted)
                         }
-                        AksaraText("‹", Modifier.clickable { onBack() }.padding(start = 4.dp),
-                            size = 25f, color = AksaraColors.gold)
                     }
                 }
 
@@ -261,7 +259,6 @@ fun AksaraLinuxScreen(
                         }
                     }
                 }
-                vm.installStatus?.let { AksaraText(it, size = 10f, color = AksaraColors.muted) }
                 vm.problem?.let { AksaraText(it, size = 11f, color = LinuxDeckRose) }
             }
         }
