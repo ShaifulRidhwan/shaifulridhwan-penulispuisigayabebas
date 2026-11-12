@@ -50,7 +50,7 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
             runCatching {
                 store.recover()
                 val knowledge = app.assets.open("aksara_local_knowledge_v2.json").bufferedReader().use { it.readText() }
-                mutable.update { it.copy(runtimeAvailable = runtime.available, knowledge = knowledge) }
+                mutable.update { it.copy(runtimeAvailable = runtime.available, knowledge = knowledge, message = runtime.availabilityError) }
                 refresh()
             }.onFailure { error -> mutable.update { it.copy(message = error.message ?: "Persediaan Neural gagal") } }
         }
@@ -104,7 +104,7 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
         mutable.update { it.copy(verified = it.verified + model.id, message = "SHA-256 sah; model dipasang") }
     }
     fun activate(model: NeuralModelDescriptor) = start("Sahkan & muat model") {
-        check(runtime.available) { "Runtime ARM64 tidak tersedia" }
+        check(runtime.available) { runtime.availabilityError ?: "Runtime ARM64 tidak tersedia" }
         mutable.update { it.copy(activation = it.activation.begin(model.id), verified = it.verified - model.id) }
         val file = withContext(Dispatchers.IO) { store.installedModel(model) { ensureActive() } }
             ?: error("Model tiada atau rosak. Import fail katalog yang betul atau muat turun semula.")
