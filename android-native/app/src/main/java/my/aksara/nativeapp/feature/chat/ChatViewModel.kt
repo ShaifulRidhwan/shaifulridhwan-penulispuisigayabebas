@@ -181,14 +181,18 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val rows = withContext(Dispatchers.IO) { JSONArray(getApplication<Application>().assets.open("journey.json").bufferedReader().use {it.readText()}) }
             val questions = (0 until rows.length()).map { rows.getJSONObject(it).getString("question") }
-            val direct = LocalJourneyMatcher.match(question, questions)
+            val corrected = LocalReasoningEngine.correctionQuery(question)
+            val previousUser = state.value.messages.lastOrNull { it.role == "user" }?.text
+            val contextual = LocalReasoningEngine.contextualQuery(question, previousUser)
+            val lookupQuestion = corrected ?: contextual ?: question
+            val direct = LocalJourneyMatcher.match(lookupQuestion, questions)
             val priorAssistant = state.value.messages.lastOrNull { it.role == "assistant" }?.text.orEmpty()
             val selectedOption = if (direct == null) LocalJourneyMatcher.followUpChoice(question, priorAssistant) else null
             val i = direct ?: selectedOption?.let { LocalJourneyMatcher.match(it, questions) }
             val knowledge = if (i == null) runCatching {
                 val json = getApplication<Application>().assets.open("aksara_local_knowledge_v2.json")
                     .bufferedReader().use { it.readText() }
-                LocalKnowledgeEngine.retrieve(question, json)
+                LocalKnowledgeEngine.retrieve(lookupQuestion, json)
             }.getOrNull() else null
             if (i == null && knowledge == null) return@launch
             val row = i?.let { rows.getJSONObject(it) }
