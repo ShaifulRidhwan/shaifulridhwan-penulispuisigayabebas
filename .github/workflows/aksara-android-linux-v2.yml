@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/aksara-linux-control-deck-v2
+    # Owner QA: fixed-width keyboard row, ENTER last, PASTE in top toolbar.
     # Auto-build only when this workflow changes. Subsequent source commits
     # do not consume CI until workflow_dispatch is explicitly requested.
     paths:
