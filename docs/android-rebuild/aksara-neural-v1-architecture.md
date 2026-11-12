@@ -57,3 +57,12 @@ G. Reliability: CI, device tests, battery/thermal/memory/latency and staged beta
 - Bundle in test APK only through reproducible pinned artifact injection, not Git LFS pointers or fabricated placeholders.
 - Gate installation on available RAM/storage; offer explicit unsupported-device explanation rather than crash.
 - Never silently fall back to cloud when local-only mode is selected.
+
+## Decision superseding embedded-8B proposal (2026-11-12)
+- **No bundled model weights in the APK**. Remove the previous embedded-model delivery proposal from the release plan. Keep native runtime code small and model-agnostic.
+- User explicitly opts into each model download from Model Library, after seeing size, license, hardware compatibility and available storage.
+- Provide multiple independently selectable tiers (lightweight, balanced, advanced 8B). Qwen3-8B Q4_K_M remains an advanced evaluation candidate, not the mandatory default.
+- Model files live in private app storage and support checksum verification, cancellation, deletion and clear download failure recovery. Resume is a separate implementation gate; do not label as supported before implemented.
+- No model download on startup, no automatic model selection that triggers network access, no silent cloud fallback for local-only mode.
+- The optional asset installer is experimental scaffolding only and must not be invoked by normal application startup or release packaging.
+- A working model library requires authenticated manifest provenance, pinned artifact hashes and a real inference runtime; those remain release blockers.
