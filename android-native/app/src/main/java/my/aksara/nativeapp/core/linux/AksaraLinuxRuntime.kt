@@ -25,11 +25,19 @@ import java.util.zip.GZIPInputStream
  * executing freshly installed userland binaries; the isolated debug
  * preview has its own documented compatibility gate.
  */
+internal data class LinuxInstallProgress(
+    val percent: Int,
+    val stage: String,
+    val filesDone: Int = 0,
+    val filesTotal: Int = 0
+)
+
 internal object AksaraLinuxRuntime {
     const val alpineVersion = "3.22.8"
     // .bundle avoids aapt's special .gz asset transformation.
     private const val archive = "linux/alpine-minirootfs.bundle"
     private const val checksum = "linux/alpine-minirootfs.sha256"
+    private const val entriesManifest = "linux/alpine-minirootfs.entries"
     private const val marker = ".aksara-alpine-installed"
     private const val imageRevision = "3.22.8-v3-full-devkit"
     private const val maxEntries = 250_000
@@ -48,7 +56,8 @@ internal object AksaraLinuxRuntime {
         return Build.SUPPORTED_ABIS.contains("arm64-v8a") &&
             proot(context).isFile && loader(context).isFile &&
             "alpine-minirootfs.bundle" in names &&
-            "alpine-minirootfs.sha256" in names
+            "alpine-minirootfs.sha256" in names &&
+            "alpine-minirootfs.entries" in names
     }
 
     fun installed(context: Context): Boolean {
@@ -69,12 +78,16 @@ internal object AksaraLinuxRuntime {
      * Called by an explicit install button, never automatically during app
      * startup. All work MUST run on Dispatchers.IO.
      */
-    fun install(context: Context) {
+    fun install(
+        context: Context,
+        onProgress: (LinuxInstallProgress) -> Unit = {}
+    ) {
         require(bundled(context)) {
             "Bundle Alpine ARM64 atau PRoot belum disertakan dalam APK ini."
         }
         if (installed(context)) return
 
+        onProgress(LinuxInstallProgress(0, "Menyediakan ruang Linux"))
         val target = rootfs(context)
         val staging = File(context.filesDir, "alpine-arm64.installing")
         if (staging.exists()) require(staging.deleteRecursively()) { "Tidak dapat membersihkan pemasangan lama." }
@@ -85,6 +98,12 @@ internal object AksaraLinuxRuntime {
                 it.readLine().trim().split(Regex("\\s+")).first().lowercase()
             }
             require(expected.matches(Regex("[0-9a-f]{64}"))) { "Checksum Alpine tidak sah." }
+            val totalEntries = context.assets.open(entriesManifest).bufferedReader().use {
+                it.readLine().trim().toInt()
+            }
+            require(totalEntries in 1..maxEntries) { "Manifest kemajuan Alpine tidak sah." }
+            onProgress(LinuxInstallProgress(4, "Mengekstrak Alpine ARM64", 0, totalEntries))
+            var lastReportedPercent = 4
             val sha = MessageDigest.getInstance("SHA-256")
             val pendingSymlinks = mutableListOf<Pair<File, String>>()
             val pendingHardlinks = mutableListOf<Pair<File, String>>()
@@ -131,16 +150,29 @@ internal object AksaraLinuxRuntime {
                                         if ((entry.mode and 73) != 0) file.setExecutable(true, false)
                                     }
                                 }
+                                // Count entries as the extractor completes them, not when it opens them.
+                                // Emit at most one UI update per percentage point.
+                                val percent = (4L + count * 81L / totalEntries)
+                                    .coerceIn(4L, 85L).toInt()
+                                if (percent > lastReportedPercent) {
+                                    lastReportedPercent = percent
+                                    onProgress(LinuxInstallProgress(
+                                        percent, "Mengekstrak Alpine ARM64", count, totalEntries
+                                    ))
+                                }
                             }
                         }
                     }
                 }
             }
+            require(count == totalEntries) { "Manifest Alpine tidak sepadan dengan arkib." }
+            onProgress(LinuxInstallProgress(87, "Mengesahkan SHA-256", count, totalEntries))
             val actual = sha.digest().joinToString("") { "%02x".format(it) }
             require(actual == expected) { "SHA-256 Alpine tidak sepadan." }
 
             // Apply links only after regular files to avoid traversing links
             // while processing archive paths.
+            onProgress(LinuxInstallProgress(90, "Memulihkan pautan fail", count, totalEntries))
             for ((file, link) in pendingHardlinks) {
                 val source = File(staging, link.removePrefix("./").trimStart('/'))
                 require(source.canonicalPath.startsWith(stagingCanonical) && source.isFile)
@@ -164,6 +196,7 @@ internal object AksaraLinuxRuntime {
                 require(!file.exists()) { "Arkib mempunyai laluan pautan berganda." }
                 Os.symlink(link, file.absolutePath)
             }
+            onProgress(LinuxInstallProgress(96, "Menyediakan konfigurasi Linux", count, totalEntries))
             val missing = LinuxRootfsVerifier.missingRequiredCommands(staging)
             require(missing.isEmpty()) {
                 "Pemasangan Alpine tidak lengkap: " + missing.joinToString(", ") +
@@ -181,8 +214,10 @@ internal object AksaraLinuxRuntime {
             require(guestTmp.isDirectory || guestTmp.mkdirs()) { "Cannot create guest /tmp" }
             Os.chmod(guestTmp.absolutePath, 0x3ff) // 01777 sticky directory
             File(staging, marker).writeText(imageRevision + "\n")
+            onProgress(LinuxInstallProgress(99, "Mengaktifkan Linux", count, totalEntries))
             if (target.exists()) require(target.deleteRecursively())
             require(staging.renameTo(target)) { "Tidak dapat mengaktifkan rootfs Linux." }
+            onProgress(LinuxInstallProgress(100, "Alpine sedia digunakan", count, totalEntries))
         } catch (failure: Exception) {
             staging.deleteRecursively()
             throw failure
