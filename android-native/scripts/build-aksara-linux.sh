@@ -100,7 +100,7 @@ grep -Fq 'sbin/apk' "$RUNNER_TEMP/aksara-alpine-contents.txt"
 # Full ARM64 developer toolchain is staged in CI, never downloaded at phone startup.
 # Android PRoot remains rootless; all package/runtime features require device QA.
 BRAND="$ROOT/android-native/scripts/linux"
-sh -n "$BRAND/aksara-fetch.sh" "$BRAND/90-aksara-intro.sh" "$BRAND/aksara-linux-smoke.sh"
+sh -n "$BRAND/aksara-fetch.sh" "$BRAND/90-aksara-intro.sh" "$BRAND/aksara-linux-smoke.sh" "$BRAND/aksara-linux-benchmark.sh"
 python3 -m json.tool "$BRAND/fastfetch-wide.jsonc" >/dev/null
 python3 -m json.tool "$BRAND/fastfetch-compact.jsonc" >/dev/null
 image="$(docker import --platform linux/arm64 "$ASSETS/$file")"
@@ -129,6 +129,8 @@ container="$(docker create --platform linux/arm64 "$image" /bin/sh -ec '
   done
   mkdir -p /usr/local/bin /usr/share/aksara /etc/profile.d /tmp /workspace
   chmod 1777 /tmp
+  mv /tmp/aksara-linux-benchmark.sh /usr/local/bin/aksara-linux-benchmark
+  chmod 755 /usr/local/bin/aksara-linux-benchmark
   mv /tmp/aksara-linux-smoke.sh /usr/local/bin/aksara-linux-smoke
   chmod 755 /usr/local/bin/aksara-linux-smoke
   /usr/local/bin/aksara-linux-smoke --ci
@@ -148,7 +150,7 @@ container="$(docker create --platform linux/arm64 "$image" /bin/sh -ec '
 test -n "$container"
 # Copy assets into the stopped ARM64 container before it runs package hooks;
 # this ensures executable bits/config paths are in the exported rootfs.
-for item in aksara-fetch.sh 90-aksara-intro.sh aksara-logo.txt fastfetch-wide.jsonc fastfetch-compact.jsonc aksara-linux-smoke.sh; do
+for item in aksara-fetch.sh 90-aksara-intro.sh aksara-logo.txt fastfetch-wide.jsonc fastfetch-compact.jsonc aksara-linux-smoke.sh aksara-linux-benchmark.sh; do
   docker cp "$BRAND/$item" "$container:/tmp/$item"
 done
 docker start -a "$container"
@@ -177,7 +179,8 @@ required = {"bin/sh", "sbin/apk", "usr/bin/vim", "usr/bin/nano",
             "usr/bin/gcc", "usr/bin/g++", "usr/bin/clang",
             "usr/bin/node", "usr/bin/rustc", "usr/bin/cargo",
             "usr/bin/go", "usr/bin/java", "usr/bin/javac",
-            "usr/bin/sqlite3", "usr/local/bin/aksara-linux-smoke"}
+            "usr/bin/sqlite3", "usr/local/bin/aksara-linux-smoke",
+            "usr/local/bin/aksara-linux-benchmark"}
 missing = sorted(required.difference(members))
 if missing: raise SystemExit(f"Bundled Linux files missing: {missing}")
 print(f"Alpine essentials verified: {files} entries, {size / 2**20:.1f} MiB")
