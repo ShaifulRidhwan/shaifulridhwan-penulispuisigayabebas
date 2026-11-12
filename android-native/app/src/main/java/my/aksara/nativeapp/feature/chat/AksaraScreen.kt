@@ -42,6 +42,7 @@ import io.noties.markwon.Markwon
 import io.noties.markwon.ext.tables.TablePlugin
 import my.aksara.nativeapp.R
 import my.aksara.nativeapp.feature.today.TodayScreen
+import my.aksara.nativeapp.core.linux.AksaraLinuxScreen
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.platform.Attachment
@@ -181,9 +182,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             else beginAttachmentRead(uris)
         }
     }
-    val pagerState = rememberPagerState(initialPage=0,pageCount={2})
+    val pagerState = rememberPagerState(initialPage=1,pageCount={3})
     var overlayVisible by remember { mutableStateOf(false) }
     var todayDialogVisible by remember { mutableStateOf(false) }
+    var linuxDialogVisible by remember { mutableStateOf(false) }
     // Do not recompose the whole pager for each IME animation pixel.
     val imeDensity=LocalDensity.current
     // WindowInsets.ime is composable: resolve it before entering derivedStateOf.
@@ -195,19 +197,22 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         state=pagerState,
         modifier=Modifier.fillMaxSize(),
         beyondViewportPageCount=1,
-        userScrollEnabled=!overlayVisible && !todayDialogVisible && !keyboardOpen
+        userScrollEnabled=!overlayVisible && !todayDialogVisible && !linuxDialogVisible && !keyboardOpen
     ) { page ->
-      if(page==1) {
-        TodayScreen(active=pagerState.currentPage==1,onBack={
+      if(page==0) {
+        TodayScreen(active=pagerState.currentPage==0,onBack={
             scope.launch {
                 pagerState.animateScrollToPage(
-                    0,animationSpec=androidx.compose.animation.core.spring(
+                    1,animationSpec=androidx.compose.animation.core.spring(
                         dampingRatio=.85f,
                         stiffness=androidx.compose.animation.core.Spring.StiffnessMedium
                     )
                 )
             }
         },onDialogVisibilityChange={todayDialogVisible=it})
+      } else if (page == 2) {
+        AksaraLinuxScreen(onBack={ scope.launch { pagerState.animateScrollToPage(1) } },
+            onDialogVisibilityChange={ linuxDialogVisible=it })
       } else {
         AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
         val textDocs = attachments.filter { it.text.isNotBlank() }

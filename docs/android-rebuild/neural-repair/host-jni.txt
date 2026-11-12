@@ -1,0 +1,25 @@
+Genuine offline Linux x86_64 JNI test, 2026-11-12; not Android/physical-device evidence.
+Model: Qwen3-0.6B-Q8_0.gguf, 639446688 bytes.
+SHA-256: 9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031
+Pinned llama.cpp: 3837bf0bc02ea5d08f8ee3585fc8c7784a81bce8.
+The native bridge source is unchanged from fdf8bcad and the existing host library
+executes that exact JNI implementation. The Java harness now additionally reloads
+and streams twice at 1024 tokens after unloading. One verified model download in
+this repair cycle; no 4B/8B downloads. Process ran in the network-isolated sandbox.
+No fake inference; the unit activation-state fixtures are tested separately.
+
+HOST_REAL_GGUF tokens=10 callbacks=10 elapsed_ms=929
+OUTPUT=<think>
+
+</think>
+
+"Kemudian..."
+graph_compute: ggml_backend_sched_graph_compute_async failed with error 1
+process_ubatch: failed to compute graph, compute status: 1
+decode: removing memory module entries for seq_id = 0, pos = [13, +inf)
+llama_decode: failed to decode, ret = 2
+CANCEL_PASS tokens=1
+CONTEXT_LIMIT_PASS
+UNLOAD_PASS
+REACTIVATION_PASS cycle=1 tokens=8
+REACTIVATION_PASS cycle=2 tokens=8

@@ -1,0 +1,19 @@
+HOST_SAMPLE label=fast-greeting tokens=15 prompt=47 reused=0 prefill_ms=285.284 ttft_ms=294.969 decode_tps=44.323 threads=3 batch_threads=3 context=1024
+OUTPUT="Oi, ဗာာာာ!"
+HOST_SAMPLE label=same-prompt-cache tokens=1 prompt=47 reused=46 prefill_ms=37.127 ttft_ms=38.077 decode_tps=70.323 threads=3 batch_threads=3 context=1024
+OUTPUT=oi
+PREFIX_CACHE_PASS
+CANCEL_PASS tokens=1 cancel_us=4494
+HOST_SAMPLE label=after-cancel tokens=8 prompt=47 reused=0 prefill_ms=259.676 ttft_ms=264.657 decode_tps=54.627 threads=3 batch_threads=3 context=1024
+OUTPUT="Oi, ဗု
+QUEUED_CANCEL_PASS
+CONTEXT_LIMIT_PASS
+HOST_SAMPLE label=compare-2 tokens=35 prompt=58 reused=0 prefill_ms=302.550 ttft_ms=307.257 decode_tps=65.239 threads=2 batch_threads=2 context=1024
+OUTPUT=1. Langit biru kumpan ina 2 ayat.  
+HOST_SAMPLE label=compare-4 tokens=64 prompt=58 reused=0 prefill_ms=286.200 ttft_ms=291.724 decode_tps=46.150 threads=3 batch_threads=3 context=1024
+OUTPUT=1. Langit biru dianggap sebagai suatu aliran yang paling jelas dan indah karena kekonsistenan antara kekuatan dan keindahan.  
+HOST_SAMPLE label=compare-6 tokens=18 prompt=58 reused=0 prefill_ms=297.283 ttft_ms=302.164 decode_tps=52.428 threads=3 batch_threads=3 context=1024
+OUTPUT=Langit biru dinyatakan oleh kemungkinan itu yang terbaik.
+UNLOAD_PASS
+REACTIVATION_PASS cycle=1 tokens=5
+REACTIVATION_PASS cycle=2 tokens=5

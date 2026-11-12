@@ -1,0 +1,35 @@
+{
+  "verified_at": "2026-11-12",
+  "method": "Official Hugging Face model API with blobs=true; cardData.license and LFS SHA-256/size inspected. URLs use immutable repository revisions.",
+  "publisher": "Qwen / Alibaba",
+  "models": [
+    {
+      "repository": "Qwen/Qwen3-0.6B-GGUF",
+      "api": "https://huggingface.co/api/models/Qwen/Qwen3-0.6B-GGUF?blobs=true",
+      "revision": "23749fefcc72300e3a2ad315e1317431b06b590a",
+      "file": "Qwen3-0.6B-Q8_0.gguf",
+      "size": 639446688,
+      "sha256": "9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031",
+      "license": "apache-2.0"
+    },
+    {
+      "repository": "Qwen/Qwen3-4B-GGUF",
+      "api": "https://huggingface.co/api/models/Qwen/Qwen3-4B-GGUF?blobs=true",
+      "revision": "bc640142c66e1fdd12af0bd68f40445458f3869b",
+      "file": "Qwen3-4B-Q4_K_M.gguf",
+      "size": 2497280256,
+      "sha256": "7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5",
+      "license": "apache-2.0"
+    },
+    {
+      "repository": "Qwen/Qwen3-8B-GGUF",
+      "api": "https://huggingface.co/api/models/Qwen/Qwen3-8B-GGUF?blobs=true",
+      "revision": "7c41481f57cb95916b40956ab2f0b139b296d974",
+      "file": "Qwen3-8B-Q4_K_M.gguf",
+      "size": 5027783488,
+      "sha256": "d98cdcbd03e17ce47681435b5150e34c1417f50b5c0019dd560e4882c5745785",
+      "license": "apache-2.0"
+    }
+  ],
+  "memory_policy": "Superseded by neural-repair/audit.md and NeuralMemoryPolicy.kt: Light uses 1024-token native working-set estimates and Android threshold-based reserve, with an explicit warning attempt below recommended RAM. Balanced/Advanced retain conservative gates. Physical totalMem, available availMem and virtual RAM are distinct; virtual RAM is never added."
+}

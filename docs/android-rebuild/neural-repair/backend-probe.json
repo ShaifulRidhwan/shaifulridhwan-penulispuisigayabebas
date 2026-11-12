@@ -1,0 +1,37 @@
+{
+  "origin": "https://shaifulridhwan-penulispuisigayabebas.netlify.app",
+  "timestamp_utc": "2026-11-12T03:41:16Z",
+  "checks": [
+    {
+      "name": "web",
+      "status": 200,
+      "content_type": "text/html; charset=UTF-8",
+      "elapsed_ms": 896
+    },
+    {
+      "name": "provider_health",
+      "status": 200,
+      "content_type": "application/json; charset=utf-8",
+      "elapsed_ms": 2285,
+      "ok": true,
+      "providers": [
+        {
+          "id": "gemini",
+          "status": "online"
+        },
+        {
+          "id": "groq",
+          "status": "online"
+        },
+        {
+          "id": "workers_ai",
+          "status": "ready"
+        },
+        {
+          "id": "openrouter",
+          "status": "ready"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+Genuine GGUF JNI smoke evidence — Linux x86_64 host, not Android
+Date: 2026-11-12
+llama.cpp: 3837bf0bc02ea5d08f8ee3585fc8c7784a81bce8 (b12248)
+Model: official Qwen3-0.6B-Q8_0.gguf
+Bytes: 639446688
+SHA-256: 9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031
+One model download, no Balanced/8B weights downloaded.
+
+Built the same app/src/main/neural CMake target for the host with JDK 17.
+Compiled tools/neural-smoke/.../LlamaNativeBridge.java with javac.
+Ran the Java process in the default network-isolated command sandbox, with the
+already downloaded and checksum-verified model. No remote inference or mocks.
+
+Actual harness output (native metadata/debug log omitted):
+HOST_REAL_GGUF tokens=13 callbacks=13 elapsed_ms=19021
+OUTPUT=<think>
+
+</think>
+
+"Sebutkan satu perkataan."
+CANCEL_PASS tokens=1
+CONTEXT_LIMIT_PASS
+UNLOAD_PASS
+
+The native abort callback reports decode status 2 when Stop is requested;
+the bridge treats that as cancellation and the harness exits successfully.
+This verifies loading, model-provided chat templating, tokenization, real
+sample/decode streaming, cancellation, context rejection, cleanup and errors.
+The output is recorded verbatim, without a correctness/quality score.
+This host timing must NOT be presented as an Android performance benchmark.
+Physical-device inference and visual/regression review remain owner tests.

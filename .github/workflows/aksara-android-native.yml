@@ -125,6 +125,8 @@ jobs:
           name: production-backend-contract-evidence
           path: docs/android-rebuild/backend-contract/live-check.json
   build:
+    # PR321 is compiled/tested/published once by the JNI-enabled owner APK workflow.
+    if: github.event_name != 'pull_request' || github.head_ref != 'feature/aksara-neural-local-v1'
     runs-on: ubuntu-latest
     outputs:
       apk_ready: ${{ steps.compile.outputs.apk_ready }}

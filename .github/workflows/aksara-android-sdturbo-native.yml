@@ -20,6 +20,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build-native:
+    # Neural-only owner repairs use their dedicated JNI APK; Studio source is unchanged.
+    if: github.event_name != 'pull_request' || github.head_ref != 'feature/aksara-neural-local-v1'
     runs-on: ubuntu-latest
     timeout-minutes: 55
     env:

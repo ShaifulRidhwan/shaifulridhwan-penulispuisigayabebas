@@ -1,0 +1,19 @@
+HOST_SAMPLE label=fast-greeting tokens=4 prompt=47 reused=0 prefill_ms=432.103 ttft_ms=442.375 decode_tps=34.425 threads=3 batch_threads=3 context=1024
+OUTPUT=- Oi!
+HOST_SAMPLE label=same-prompt-cache tokens=4 prompt=47 reused=46 prefill_ms=19.778 ttft_ms=43.936 decode_tps=34.668 threads=3 batch_threads=3 context=1024
+OUTPUT=- "oi"
+PREFIX_CACHE_PASS
+CANCEL_PASS tokens=1 cancel_us=4807
+HOST_SAMPLE label=after-cancel tokens=5 prompt=47 reused=0 prefill_ms=542.842 ttft_ms=548.605 decode_tps=38.257 threads=3 batch_threads=3 context=1024
+OUTPUT=- *Oii*
+QUEUED_CANCEL_PASS
+CONTEXT_LIMIT_PASS
+HOST_SAMPLE label=compare-2 tokens=27 prompt=58 reused=0 prefill_ms=534.648 ttft_ms=540.405 decode_tps=41.617 threads=2 batch_threads=2 context=1024
+OUTPUT=Langit biru mungkin menerangkan keindahan dan ketidaktergantungannya dalam perjalanan alam.
+HOST_SAMPLE label=compare-4 tokens=38 prompt=58 reused=0 prefill_ms=535.188 ttft_ms=541.091 decode_tps=30.841 threads=3 batch_threads=3 context=1024
+OUTPUT=Langit biru adalah suatu tajuk yang terbentuk oleh zat alami seperti udara dan partikel matahari yang melalui permukaan atmosfer.
+HOST_SAMPLE label=compare-6 tokens=20 prompt=58 reused=0 prefill_ms=561.486 ttft_ms=567.184 decode_tps=33.245 threads=3 batch_threads=3 context=1024
+OUTPUT=Langit biru mungkin diterangkan karena keindahan dan keindahan alam.
+UNLOAD_PASS
+REACTIVATION_PASS cycle=1 tokens=5
+REACTIVATION_PASS cycle=2 tokens=5
