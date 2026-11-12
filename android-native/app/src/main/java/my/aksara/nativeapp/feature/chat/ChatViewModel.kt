@@ -180,16 +180,30 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         if(state.value.busy || !state.value.loaded)return
         viewModelScope.launch {
             val rows = withContext(Dispatchers.IO) { JSONArray(getApplication<Application>().assets.open("journey.json").bufferedReader().use {it.readText()}) }
-            val normal: (String)->String = {it.lowercase().replace(Regex("[^a-z0-9]"),"")}
-            val i=(0 until rows.length()).firstOrNull {normal(rows.getJSONObject(it).getString("question"))==normal(question)}?:return@launch
-            val row=rows.getJSONObject(i)
+            val questions = (0 until rows.length()).map { rows.getJSONObject(it).getString("question") }
+            val corrected = LocalReasoningEngine.correctionQuery(question)
+            val previousUser = state.value.messages.lastOrNull { it.role == "user" }?.text
+            val contextual = LocalReasoningEngine.contextualQuery(question, previousUser)
+            val lookupQuestion = corrected ?: contextual ?: question
+            val direct = LocalJourneyMatcher.match(lookupQuestion, questions)
+            val priorAssistant = state.value.messages.lastOrNull { it.role == "assistant" }?.text.orEmpty()
+            val selectedOption = if (direct == null) LocalJourneyMatcher.followUpChoice(question, priorAssistant) else null
+            val i = direct ?: selectedOption?.let { LocalJourneyMatcher.match(it, questions) }
+            val knowledge = if (i == null) runCatching {
+                val json = getApplication<Application>().assets.open("aksara_local_knowledge_v2.json")
+                    .bufferedReader().use { it.readText() }
+                LocalKnowledgeEngine.retrieve(lookupQuestion, json)
+            }.getOrNull() else null
+            if (i == null && knowledge == null) return@launch
+            val row = i?.let { rows.getJSONObject(it) }
+            val answer = row?.getString("answer") ?: knowledge!!.answer
             val prior=state.value.messages
-            val user=Message(UUID.randomUUID().toString(),"user",row.getString("question"))
-            val messages=prior+user+Message(UUID.randomUUID().toString(),"assistant",row.getString("answer"),provider="aksara_local")
+            val user=Message(UUID.randomUUID().toString(),"user",row?.getString("question") ?: question)
+            val messages=prior+user+Message(UUID.randomUUID().toString(),"assistant",answer,provider="aksara_local")
             mutable.update {it.copy(messages=messages,
                 sessionStarts=if(prior.isEmpty() || it.resumedFromHistory) (it.sessionStarts+user.id).distinct() else it.sessionStarts,
                 resumedFromHistory=false,
-                nextJourney=rows.optJSONObject(i+1)?.optString("question"))}
+                nextJourney=i?.let { rows.optJSONObject(it+1)?.optString("question") })}
             if(storageReadable)try{persistArchive()}catch(_:Exception){mutable.update{it.copy(error="Sesi belum berjaya disimpan.")}}
         }
     }

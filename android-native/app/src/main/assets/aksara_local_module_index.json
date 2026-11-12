@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "scope": "source_inventory_only",
+  "runtime_status": "not_verified",
+  "knowledge_schema": 1,
+  "curated_questions": 40,
+  "modules": [
+    {
+      "id": "chat_engine",
+      "source_path": "android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/ChatViewModel.kt",
+      "source_present": true
+    },
+    {
+      "id": "chess",
+      "source_path": "android-native/app/src/main/java/my/aksara/nativeapp/feature/chess",
+      "source_present": true
+    },
+    {
+      "id": "context_manager",
+      "source_path": "android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/ContextPolicy.kt",
+      "source_present": true
+    },
+    {
+      "id": "history",
+      "source_path": "android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/UnifiedHistory.kt",
+      "source_present": true
+    },
+    {
+      "id": "liquid_glass",
+      "source_path": "android-native/app/src/main/java/my/aksara/nativeapp/core/design/AksaraDesign.kt",
+      "source_present": true
+    },
+    {
+      "id": "local_knowledge",
+      "source_path": "android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/LocalKnowledgeEngine.kt",
+      "source_present": true
+    },
+    {
+      "id": "privacy",
+      "source_path": "android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/AksaraPrivacyDataControl.kt",
+      "source_present": true
+    },
+    {
+      "id": "studio",
+      "source_path": "android-native/app/src/main/java/my/aksara/nativeapp/feature/studio",
+      "source_present": true
+    },
+    {
+      "id": "today",
+      "source_path": "android-native/app/src/main/java/my/aksara/nativeapp/feature/today",
+      "source_present": true
+    },
+    {
+      "id": "voice",
+      "source_path": "android-native/app/src/main/java/my/aksara/nativeapp/feature/voice",
+      "source_present": true
+    }
+  ]
+}
