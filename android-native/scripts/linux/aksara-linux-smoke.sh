@@ -49,6 +49,6 @@ GOCACHE="$tmp/go-cache" go build -o "$tmp/hello-go" "$tmp/hello.go"
 [ "$("$tmp/hello-go")" = AKSARA_GO_OK ]
 [ "$(sqlite3 :memory: 'select 42;')" = 42 ]
 echo "AKSARA LINUX V3: TOOLCHAIN + FILESYSTEM PASS"
-if [ "\${1:-}" = "--ci" ]; then
+if [ "${1:-}" = "--ci" ]; then
   echo "ARM64 Alpine CI passed; phone PRoot compatibility still requires device QA."
 fi
