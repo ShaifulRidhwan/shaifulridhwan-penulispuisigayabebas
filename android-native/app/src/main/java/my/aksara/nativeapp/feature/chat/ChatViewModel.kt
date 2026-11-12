@@ -181,7 +181,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val rows = withContext(Dispatchers.IO) { JSONArray(getApplication<Application>().assets.open("journey.json").bufferedReader().use {it.readText()}) }
             val questions = (0 until rows.length()).map { rows.getJSONObject(it).getString("question") }
-            val i = LocalJourneyMatcher.match(question, questions) ?: return@launch
+            val direct = LocalJourneyMatcher.match(question, questions)
+            val priorAssistant = state.value.messages.lastOrNull { it.role == "assistant" }?.text.orEmpty()
+            val selectedOption = if (direct == null) LocalJourneyMatcher.followUpChoice(question, priorAssistant) else null
+            val i = direct ?: selectedOption?.let { LocalJourneyMatcher.match(it, questions) } ?: return@launch
             val row=rows.getJSONObject(i)
             val prior=state.value.messages
             val user=Message(UUID.randomUUID().toString(),"user",row.getString("question"))
