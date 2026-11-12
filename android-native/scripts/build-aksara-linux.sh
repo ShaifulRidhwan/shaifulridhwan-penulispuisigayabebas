@@ -161,6 +161,7 @@ rm -f "$ASSETS/$file" "$ASSETS/$file.sha256"
 (cd "$ASSETS" && sha256sum alpine-minirootfs.bundle > alpine-minirootfs.sha256)
 python3 - "$ASSETS/alpine-minirootfs.bundle" <<'AKSARA_ROOTFS_BOUNDS'
 import sys, tarfile
+from pathlib import Path
 files, size, members = 0, 0, set()
 with tarfile.open(sys.argv[1], "r:gz") as tar:
     for member in tar:
@@ -183,6 +184,9 @@ required = {"bin/sh", "sbin/apk", "usr/bin/vim", "usr/bin/nano",
             "usr/local/bin/aksara-linux-benchmark"}
 missing = sorted(required.difference(members))
 if missing: raise SystemExit(f"Bundled Linux files missing: {missing}")
+# Installation progress reads the actual verified archive entry count.
+manifest = Path(sys.argv[1]).with_name("alpine-minirootfs.entries")
+manifest.write_text(f"{files}\\n".replace("\\n", "\n"), encoding="ascii")
 print(f"Alpine essentials verified: {files} entries, {size / 2**20:.1f} MiB")
 AKSARA_ROOTFS_BOUNDS
 echo "Pinned PRoot + Alpine ARM64 V3 FULL PREBUILT developer toolchain staged."
