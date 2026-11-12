@@ -104,7 +104,7 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
         mutable.update { it.copy(verified = it.verified + model.id, message = "SHA-256 sah; model dipasang") }
     }
     fun activate(model: NeuralModelDescriptor) = start("Sahkan & muat model") {
-        check(runtime.available) { runtime.availabilityError ?: "Runtime ARM64 tidak tersedia" }
+        check(runtime.available) { runtime.availabilityError ?: "JNI_LOAD_FAILED: Runtime ARM64 tidak tersedia dalam APK ini" }
         mutable.update { it.copy(activation = it.activation.begin(model.id), verified = it.verified - model.id) }
         val file = withContext(Dispatchers.IO) { store.installedModel(model) { ensureActive() } }
             ?: error("Model tiada atau rosak. Import fail katalog yang betul atau muat turun semula.")
@@ -114,7 +114,15 @@ class NeuralViewModel(app: Application) : AndroidViewModel(app), ComponentCallba
         val snapshot = withContext(Dispatchers.IO) { NeuralDeviceCapabilityProbe.inspect(getApplication()) }
         val assessment = NeuralMemoryPolicy.assess(snapshot, model, mutable.value.contextSize)
         mutable.update { it.copy(device = snapshot, message = assessment.hardFailure ?: assessment.warning) }
-        assessment.hardFailure?.let { error(it) }
+        // A memory estimate is advisory for the owner-controlled Light 1024 attempt.
+        // Keep hard device constraints (ABI, invalid readings, thermal pressure) enforced.
+        val memoryOnlyWarning = NeuralMemoryPolicy.isLight(model) &&
+            assessment.hardFailure?.startsWith("RAM tersedia ") == true
+        if (assessment.hardFailure != null && !memoryOnlyWarning) error(assessment.hardFailure)
+        if (memoryOnlyWarning) mutable.update {
+            it.copy(message = "Percubaan Light 1024 diteruskan atas pilihan pengguna. " +
+                assessment.hardFailure + " Android mungkin menamatkan aplikasi jika memori tidak mencukupi.")
+        }
         coroutineContext.ensureActive()
         val started = SystemClock.elapsedRealtime()
         runtime.loadWithContext(file, assessment.contextSize).getOrThrow()
