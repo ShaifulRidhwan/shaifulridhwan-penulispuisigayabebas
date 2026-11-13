@@ -1,0 +1,87 @@
+name: AKSARA Agentic Netlify Backend Preview
+on:
+  push:
+    branches: [feature/aksara-agentic-absolute-core-v1]
+    paths:
+      - 'netlify/functions/agentic/**'
+      - 'netlify/functions/aksara-agentic.js'
+      - 'netlify.toml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tests/aksara-agentic-*'
+      - '.github/workflows/aksara-agentic-netlify-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: aksara-agentic-netlify-preview
+  cancel-in-progress: true
+jobs:
+  owner-backend-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check preview deployment credentials
+        id: gate
+        shell: bash
+        run: |
+          if [[ -n "${NETLIFY_AUTH_TOKEN:-}" && -n "${NETLIFY_SITE_ID:-}" ]]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "### Netlify preview belum boleh dideploy" >> "$GITHUB_STEP_SUMMARY"
+            echo "Sediakan secrets NETLIFY_AUTH_TOKEN dan NETLIFY_SITE_ID di GitHub Actions. Tiada deploy produksi dibuat." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Install verified server dependencies
+        if: steps.gate.outputs.ready == 'true'
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Run both real Agent SDKs against local mock provider
+        if: steps.gate.outputs.ready == 'true'
+        run: npm run test:aksara-agentic
+      - name: Publish isolated functions-only draft (NEVER production)
+        if: steps.gate.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/aksara-agentic-preview"
+          printf '%s\n' '<!doctype html><title>AKSARA Agentic Backend Preview</title><meta name="robots" content="noindex">' > "$RUNNER_TEMP/aksara-agentic-preview/index.html"
+          npx --yes netlify-cli@27.17.0 deploy \
+            --no-build \
+            --context=deploy-preview \
+            --site="$NETLIFY_SITE_ID" \
+            --alias=aksara-agentic-pr328 \
+            --dir="$RUNNER_TEMP/aksara-agentic-preview" \
+            --functions=netlify/functions \
+            --message="Android PR328 Agentic Owner-only backend preview" \
+            --json > "$RUNNER_TEMP/aksara-agentic-deploy.json"
+          node -e '
+            const data=require(process.env.RUNNER_TEMP+"/aksara-agentic-deploy.json");
+            const url=data.deploy_url||data.url;
+            if(!url||!/^https:\/\//.test(url))process.exit(1);
+            require("fs").appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+              "### Netlify Agentic Preview diterbitkan\n\n"+url+"\n\nIni BUKAN production deploy.\n");
+          '
+      - name: Verify anonymous status exposes no secrets
+        if: steps.gate.outputs.ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node - <<'NODE'
+          const d=require(process.env.RUNNER_TEMP+"/aksara-agentic-deploy.json");
+          const url=new URL("/.netlify/functions/aksara-agentic",d.deploy_url||d.url);
+          (async()=>{
+            const res=await fetch(url,{signal:AbortSignal.timeout(20000)});
+            const json=await res.json();
+            if(!res.ok || json.platform!=="android-native" || json.ownerAuthRequired!==true)
+              throw Error("Preview backend status failed: HTTP "+res.status);
+            if(typeof json.enabled!=="boolean")throw Error("Missing truthful enabled flag.");
+            console.log("Netlify Agentic preview health: HTTP "+res.status+", owner auth required: "+json.ownerAuthRequired);
+          })().catch(e=>{console.error(e.message);process.exitCode=1});
+          NODE
