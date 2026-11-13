@@ -36,6 +36,12 @@ internal class NexusChatCoordinator(private val scope: CoroutineScope) {
     }
 
     fun submit(raw: String, request: NexusChatRequest): Boolean {
+        if (request == NexusChatRequest.Stop) {
+            note("user", raw)
+            NexusEngine.cancel()
+            note("assistant", "Nexus: pembatalan diminta.")
+            return true
+        }
         if (review != null || progress != null ||
             trackingTaskId != null || NexusEngine.state.value.activeId != null) return false
         note("user", raw)
@@ -45,10 +51,11 @@ internal class NexusChatCoordinator(private val scope: CoroutineScope) {
                 val snap = NexusEngine.state.value
                 val status = if (snap.activeId != null) "RUNNING"
                     else snap.lastStatus?.name ?: "IDLE"
+                val today = if (snap.dashboard.isBlank()) "No snapshot" else "Connected"
+                val linux = if (snap.linuxReady) "Ready" else "Not installed"
                 note("assistant", "NEXUS KERNEL · " + status +
-                    "\nToday: " + if (snap.dashboard.isBlank()) "No snapshot"
-                        else "Connected" + "\nAI: " + snap.aiStatus +
-                        "\nLinux: " + if (snap.linuxReady) "Ready" else "Not installed")
+                    "\nToday: " + today + "\nA.I.: " + snap.aiStatus +
+                    "\nLinux: " + linux)
             }
             NexusChatRequest.Stop -> {
                 NexusEngine.cancel()

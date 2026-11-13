@@ -15,6 +15,7 @@ internal sealed interface NexusChatRequest {
     data class Delete(val path: String) : NexusChatRequest
     data class EditWithAi(val path: String, val goal: String) : NexusChatRequest
     data object Undo : NexusChatRequest
+    data object Recovery : NexusChatRequest
     data object Stop : NexusChatRequest
     data object Status : NexusChatRequest
     data object Help : NexusChatRequest
@@ -51,6 +52,7 @@ internal object NexusChatRouter {
                 else NexusChatRequest.EditWithAi(parts[0].trim(), parts[1].trim())
             }
             "undo" -> NexusChatRequest.Undo
+            "recovery" -> NexusChatRequest.Recovery
             "stop", "cancel" -> NexusChatRequest.Stop
             "status" -> NexusChatRequest.Status
             else -> NexusChatRequest.Help
@@ -64,7 +66,7 @@ internal object NexusChatRouter {
         "• /nexus write notes.txt [baris baharu] teks\n" +
         "• /nexus delete notes.txt\n" +
         "• /nexus edit notes.txt | ringkaskan isi\n" +
-        "• /nexus undo · /nexus stop · /nexus status\n" +
+        "• /nexus undo · /nexus recovery · /nexus stop · /nexus status\n" +
         "Semua tindakan mengubah sistem memerlukan kelulusan dalam Chat."
 }
 internal data class NexusChatNote(
