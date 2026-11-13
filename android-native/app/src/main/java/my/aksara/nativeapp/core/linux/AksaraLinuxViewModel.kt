@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.net.Uri
 import android.util.Log
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -49,6 +50,10 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
             .getInt("terminal_font_size", 15).coerceIn(11, 26))
         private set
     var problem by mutableStateOf<String?>(null)
+        private set
+    var vaultStatus by mutableStateOf<String?>(null)
+        private set
+    var vaultBusy by mutableStateOf(false)
         private set
     var installed by mutableStateOf(AksaraLinuxRuntime.installed(app))
         private set
@@ -251,6 +256,35 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         getApplication<Application>().getSharedPreferences("aksara_linux", Context.MODE_PRIVATE)
             .edit().putInt("terminal_font_size", fontSize).apply()
         terminalView?.setTextSize(fontSize)
+    }
+
+    /** Explicit SAF actions from SYSTEM deck; no broad storage permissions. */
+    fun exportVault(uri: Uri) {
+        if (vaultBusy) return
+        vaultBusy = true
+        vaultStatus = "Mengeksport projek..."
+        viewModelScope.launch {
+            try {
+                val result = LinuxProjectVault.export(getApplication(), uri)
+                vaultStatus = "Backup berjaya: " + result.files + " fail. SSH keys dikecualikan."
+            } catch (error: Exception) {
+                vaultStatus = "Backup gagal: " + (error.message ?: "I/O tidak diketahui").take(140)
+            } finally { vaultBusy = false }
+        }
+    }
+
+    fun importVault(uri: Uri) {
+        if (vaultBusy) return
+        vaultBusy = true
+        vaultStatus = "Menyemak arkib Linux..."
+        viewModelScope.launch {
+            try {
+                val result = LinuxProjectVault.restore(getApplication(), uri)
+                vaultStatus = "Import berjaya: " + result.files + " fail → " + result.location
+            } catch (error: Exception) {
+                vaultStatus = "Import gagal: " + (error.message ?: "I/O tidak diketahui").take(140)
+            } finally { vaultBusy = false }
+        }
     }
 
     fun paste() {
