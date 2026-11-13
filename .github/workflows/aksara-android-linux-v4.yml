@@ -100,6 +100,8 @@ jobs:
           from pathlib import Path
           source = Path("android-native/app/src/main/java/my/aksara/nativeapp/core/linux/AksaraLinuxScreen.kt").read_text()
           factory = source.split("TerminalView(context, null).apply {", 1)[1].split("vm.attach(this)", 1)[0]
+          # Only inspect real Kotlin statements, not comments mentioning setTypeface().
+          factory = "\n".join(line.split("//", 1)[0] for line in factory.splitlines())
           assert "setTextSize(vm.fontSize)" in factory, "Terminal renderer needs a text size"
           assert "setTypeface(" in factory, "JetBrains Mono terminal font missing"
           assert factory.index("setTextSize(vm.fontSize)") < factory.index("setTypeface("), (
