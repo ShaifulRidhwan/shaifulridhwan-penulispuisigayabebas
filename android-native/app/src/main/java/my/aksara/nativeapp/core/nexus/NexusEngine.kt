@@ -5,6 +5,7 @@ import android.system.Os
 import my.aksara.nativeapp.core.linux.AksaraLinuxRuntime
 import my.aksara.nativeapp.core.nexus.kernel.KernelApproval
 import my.aksara.nativeapp.core.nexus.kernel.KernelContextGraph
+import my.aksara.nativeapp.core.nexus.kernel.KernelCheckpointStore
 import my.aksara.nativeapp.core.nexus.kernel.KernelDefaults
 import my.aksara.nativeapp.core.nexus.kernel.KernelEvidence
 import my.aksara.nativeapp.core.nexus.kernel.KernelEvidenceParser
@@ -105,6 +106,9 @@ internal object NexusEngine {
     private val journalMutex = Mutex()
     private val kernelRegistry: KernelRegistry = KernelDefaults.registry()
     private val kernelContext = KernelContextGraph()
+    private var kernelCheckpoint: KernelCheckpointStore? = null
+    fun kernelCheckpoints(): List<KernelCheckpointStore.Checkpoint> =
+        kernelCheckpoint?.recover().orEmpty()
 
     /** Planning is pure: no shell process or remote request runs here. */
     fun planKernel(goal: String): KernelPlan? = KernelPlanner.propose(goal, kernelRegistry)
@@ -130,12 +134,15 @@ internal object NexusEngine {
                 lastOutput = "", events = (listOf(event) + it.events).take(24))
         }
         persistMetadata()
+        runCatching { kernelCheckpoint?.record(plan.id, "workflow", KernelStatus.RUNNING.name) }
         running = scope.launch {
             try {
                 val outcome = KernelScheduler(kernelRegistry, maxParallel = 2).run(
                     plan, approval,
                     execute = { node, previous -> executeKernelNode(context, node, previous, plan.id) },
                     onTransition = { transition ->
+                        runCatching { kernelCheckpoint?.record(
+                            transition.planId, transition.nodeId, transition.status.name) }
                         mutable.update { it.copy(progress =
                             transition.nodeId + " · " + transition.status.name) }
                     }
@@ -153,12 +160,16 @@ internal object NexusEngine {
                         if (!step.error.isNullOrBlank()) append("Reason: ").append(step.error).append('\n')
                     }
                 }
+                runCatching { kernelCheckpoint?.record(plan.id, "workflow",
+                    if (outcome.passed) KernelStatus.COMPLETED.name else KernelStatus.FAILED.name) }
                 finish(id, if (outcome.passed) NexusTaskStatus.COMPLETED else NexusTaskStatus.FAILED,
                     report, if (outcome.passed) "All DAG steps completed" else "Workflow incomplete")
             } catch (c: CancellationException) {
+                runCatching { kernelCheckpoint?.record(plan.id, "workflow", "CANCELLED") }
                 finish(id, NexusTaskStatus.CANCELLED, "", "Kernel workflow cancelled")
                 throw c
             } catch (e: Exception) {
+                runCatching { kernelCheckpoint?.record(plan.id, "workflow", KernelStatus.FAILED.name) }
                 finish(id, NexusTaskStatus.FAILED, "Kernel error: " +
                     (e.message ?: "unknown").take(200), "Kernel workflow failed")
             }
@@ -250,6 +261,7 @@ internal object NexusEngine {
         if (app != null) return
         val safe = context.applicationContext
         journal = NexusJournal(safe)
+        kernelCheckpoint = KernelCheckpointStore(safe)
         app = safe
         val history = journal?.read().orEmpty()
         mutable.update {
