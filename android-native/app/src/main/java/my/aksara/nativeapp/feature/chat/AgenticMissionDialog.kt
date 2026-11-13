@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.CancellationException
@@ -34,7 +35,7 @@ private data class AgentMissionReport(
 private class AgentMissionClient {
     @Volatile private var active:HttpURLConnection?=null
     fun stop(){ active?.disconnect() }
-    suspend fun execute(mission:String,mode:String):AgentMissionReport=withContext(Dispatchers.IO) {
+    suspend fun execute(mission:String,mode:String,ownerKey:String):AgentMissionReport=withContext(Dispatchers.IO) {
         val endpoint=BuildConfig.API_ORIGIN.trimEnd('/')+"/.netlify/functions/aksara-agentic"
         val connection=(URL(endpoint).openConnection() as HttpURLConnection)
         active=connection
@@ -46,6 +47,8 @@ private class AgentMissionClient {
             connection.setRequestProperty("Content-Type","application/json; charset=utf-8")
             connection.setRequestProperty("Accept","application/json")
             connection.setRequestProperty("X-Aksara-Client","android-native")
+            // Owner token is entered at runtime, NEVER bundled or persisted.
+            connection.setRequestProperty("Authorization","Bearer "+ownerKey)
             val payload=JSONObject().put("mission",mission).put("mode",mode).put("consent",true)
                 .toString().toByteArray(Charsets.UTF_8)
             connection.outputStream.use { it.write(payload) }
@@ -92,6 +95,8 @@ internal fun AgenticMissionDialog(onClose:()->Unit){
     var mission by rememberSaveable { mutableStateOf("") }
     var mode by rememberSaveable { mutableStateOf("balanced") }
     var consent by rememberSaveable { mutableStateOf(false) }
+    // Deliberately NOT rememberSaveable: never place credentials in Android saved state.
+    var ownerKey by remember { mutableStateOf("") }
     var pending by remember { mutableStateOf(false) }
     var notice by remember { mutableStateOf("Tiada misi berjalan.") }
     var outcome by remember { mutableStateOf<AgentMissionReport?>(null) }
@@ -100,7 +105,7 @@ internal fun AgenticMissionDialog(onClose:()->Unit){
         client.stop()
         job?.cancel()
         pending=false
-        notice="Misi dihentikan. Tiada tindakan tulis dilaksanakan."
+        notice="Sambungan telefon dihentikan. Backend boleh terus berjalan sehingga had masa; tiada akses tulis."
     }
     DisposableEffect(Unit) { onDispose { client.stop();job?.cancel() } }
     Dialog(onDismissRequest={halt();onClose()}) {
@@ -143,6 +148,19 @@ internal fun AgenticMissionDialog(onClose:()->Unit){
                     else if(mode=="light")"Light: carian ringkas dan jawapan pantas."
                     else "Balanced: agent loop untuk misi berbilang langkah.",
                     size=10f,line=15f,color=AksaraColors.muted)
+                AksaraText("Kunci pemilik Agentic (tidak disimpan)",size=11f,weight=650)
+                AksaraGlassSurface(Modifier.fillMaxWidth().height(48.dp),radius=13.dp) {
+                    BasicTextField(
+                        value=ownerKey,onValueChange={if(it.length<=256)ownerKey=it},
+                        modifier=Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=13.dp),
+                        textStyle=AksaraTypography.style(13f,20f),
+                        cursorBrush=SolidColor(AksaraColors.gold),
+                        visualTransformation=PasswordVisualTransformation(),
+                        singleLine=true,enabled=!pending
+                    )
+                }
+                AksaraText("Kunci hanya digunakan untuk misi ini. Tiada kunci dalam APK.",
+                    size=9.5f,line=15f,color=AksaraColors.muted)
                 AksaraText(
                     (if(consent)"☑ " else "☐ ")+
                       "Aku benarkan misi ini dihantar ke provider AI percuma yang tersedia.",
@@ -157,14 +175,14 @@ internal fun AgenticMissionDialog(onClose:()->Unit){
                         {if(pending)halt() else onClose()},
                         Modifier.weight(1f),height=38.dp,size=11f)
                     AksaraButton("Laksana",{
-                        if(!pending && consent && mission.trim().length>=10){
+                        if(!pending && consent && mission.trim().length>=10 && ownerKey.length>=40){
                             focus.clearFocus()
                             outcome=null
                             pending=true
                             notice="Agent menjalankan misi. Tunggu keputusan sebenar..."
                             job=scope.launch {
                                 try {
-                                    outcome=client.execute(mission.trim(),mode)
+                                    outcome=client.execute(mission.trim(),mode,ownerKey)
                                     notice="Misi tamat: "+(outcome?.status?:"unknown")
                                 }catch(_:CancellationException){
                                     notice="Misi dibatalkan."
