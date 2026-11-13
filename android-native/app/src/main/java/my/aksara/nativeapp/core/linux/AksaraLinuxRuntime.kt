@@ -86,6 +86,11 @@ internal object AksaraLinuxRuntime {
             "Bundle Alpine ARM64 atau PRoot belum disertakan dalam APK ini."
         }
         if (installed(context)) return
+        // A revision mismatch is NOT permission to erase the owner's Linux files.
+        require(!rootfs(context).exists()) {
+            "Rootfs Alpine lama dikesan. Backup dan migrasi manual diperlukan; " +
+                "fail/pakej lama tidak akan dipadam."
+        }
 
         onProgress(LinuxInstallProgress(0, "Menyediakan ruang Linux"))
         val target = rootfs(context)
@@ -204,6 +209,7 @@ internal object AksaraLinuxRuntime {
             }
             // Install once, without modifying any user-created shell profiles.
             installShellIdentity(staging)
+            installLinuxExtras(context, staging)
             // An absolute guest symlink must not be followed in Android's
             // host namespace when writing a resolver configuration.
             val resolv = File(staging, "etc/resolv.conf")
@@ -215,7 +221,9 @@ internal object AksaraLinuxRuntime {
             Os.chmod(guestTmp.absolutePath, 0x3ff) // 01777 sticky directory
             File(staging, marker).writeText(imageRevision + "\n")
             onProgress(LinuxInstallProgress(99, "Mengaktifkan Linux", count, totalEntries))
-            if (target.exists()) require(target.deleteRecursively())
+            require(!target.exists()) {
+            "Rootfs wujud semasa install; aktivasi dibatalkan tanpa overwrite."
+        }
             require(staging.renameTo(target)) { "Tidak dapat mengaktifkan rootfs Linux." }
             onProgress(LinuxInstallProgress(100, "Alpine sedia digunakan", count, totalEntries))
         } catch (failure: Exception) {
@@ -248,11 +256,38 @@ internal object AksaraLinuxRuntime {
         }
     }
 
+    /** Optional in-guest utilities; user modifications are never overwritten. */
+    private fun installLinuxExtras(context: Context, root: File) {
+        val scripts = listOf(
+            "linux/terminal-theme.sh" to "etc/profile.d/zz-aksara-theme.sh",
+            "linux/aksara-doctor.sh" to "usr/local/bin/aksara-doctor"
+        )
+        for ((asset, relative) in scripts) {
+            val file = File(root, relative)
+            val parent = file.parentFile ?: error("Linux directory missing")
+            require(parent.canonicalPath.startsWith(root.canonicalPath + File.separator)) {
+                "Unsafe Linux script destination"
+            }
+            require(parent.isDirectory || parent.mkdirs()) { "Cannot create Linux script directory" }
+            if (file.exists() || Files.isSymbolicLink(file.toPath())) continue
+            val temp = File.createTempFile(".aksara-v4-", ".tmp", parent)
+            try {
+                context.assets.open(asset).use { input ->
+                    temp.outputStream().use { output -> input.copyTo(output) }
+                }
+                temp.setExecutable(true, false)
+                if (!file.exists()) require(temp.renameTo(file)) { "Failed to activate Linux script" }
+            } finally { if (temp.exists()) temp.delete() }
+        }
+    }
+
     fun createSession(context: Context, client: TerminalSessionClient): TerminalSession {
         require(installed(context)) { "Alpine belum dipasang atau belum disahkan." }
         // The old V1 rootfs was installed before this non-destructive identity hook.
-        runCatching { installShellIdentity(rootfs(context)) }
-            .onFailure { Log.w("AksaraLinuxRuntime", "Optional Linux prompt was not installed", it) }
+        runCatching {
+            installShellIdentity(rootfs(context))
+            installLinuxExtras(context, rootfs(context))
+        }.onFailure { Log.w("AksaraLinuxRuntime", "Optional Linux setup scripts failed", it) }
         val workspace = workspace(context)
         val root = rootfs(context)
         val binary = proot(context)
