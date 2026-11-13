@@ -436,10 +436,20 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             .clickable { open("context-status") }
                             .semantics { contentDescription="Lihat konteks sesi Aksara" },
                             radius=13.dp) {
-                            Row(Modifier.align(Alignment.Center).padding(horizontal=7.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(3.dp)) {
-                                AksaraText("AKSARA A.", size=10f,line=12f,weight=650)
-                                AksaraText("ⓘ",size=9f,color=AksaraColors.gold)
-                                AksaraText("oleh Shaiful Ridhwan",size=8f,line=8.4f,weight=450,color=Color(233,198,141,212))
+                            Row(
+                                Modifier.align(Alignment.Center).padding(horizontal=7.dp),
+                                verticalAlignment=Alignment.CenterVertically,
+                                horizontalArrangement=Arrangement.spacedBy(5.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment=Alignment.CenterVertically,
+                                    horizontalArrangement=Arrangement.spacedBy(1.dp)
+                                ) {
+                                    AksaraText("AKSARA A.",size=10f,line=12f,weight=650)
+                                    AksaraIcon("info",Modifier.size(11.dp).offset(y=.5.dp),AksaraColors.gold)
+                                }
+                                AksaraText("oleh Shaiful Ridhwan",size=8.5f,line=12f,
+                                    weight=450,color=Color(233,198,141,212))
                             }
                         }
                         Spacer(Modifier.weight(1f))
@@ -485,7 +495,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                         Row(Modifier.align(Alignment.Center),
                                             horizontalArrangement=Arrangement.spacedBy(5.dp),
                                             verticalAlignment=Alignment.CenterVertically) {
-                                            AksaraIcon("agent-flow",Modifier.size(16.dp),AksaraColors.gold)
+                                            AksaraIcon("compass-core",Modifier.size(17.dp),AksaraColors.gold)
                                             AksaraText("Agent",size=if(compact)9.5f else 10f,
                                                 line=13f,weight=600)
                                         }
