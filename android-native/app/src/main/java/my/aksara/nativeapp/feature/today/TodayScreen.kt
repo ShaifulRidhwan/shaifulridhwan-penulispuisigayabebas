@@ -8,6 +8,8 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.ui.input.pointer.pointerInput
@@ -18,6 +20,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -30,6 +33,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import my.aksara.nativeapp.core.design.*
+import my.aksara.nativeapp.BuildConfig
 import my.aksara.nativeapp.feature.chat.ChatWallpaper
 import my.aksara.nativeapp.feature.chat.AksaraGlassModal
 import java.text.NumberFormat
@@ -83,6 +87,18 @@ internal fun nextPrayer(prayer:TodayPrayer?,now:LocalTime):Pair<String,String>? 
         else -> "$mins minit"
     }
     return next.first to duration
+}
+
+/** Progress between the previous and next prayer, including the midnight Isyak/Subuh gap. */
+internal fun prayerTimelineProgress(prayer:TodayPrayer?, now:LocalTime):Float? {
+    val minutes=prayer?.times?.mapNotNull { (_,raw) ->
+        runCatching { LocalTime.parse(raw).toSecondOfDay()/60 }.getOrNull()
+    }?.sorted() ?: return null
+    if(minutes.size<2 || minutes.distinct().size!=minutes.size)return null
+    val current=now.toSecondOfDay()/60
+    val previous=minutes.lastOrNull { it<=current } ?: minutes.last()-1440
+    val next=minutes.firstOrNull { it>current } ?: minutes.first()+1440
+    return if(next>previous) ((current-previous).toFloat()/(next-previous)).coerceIn(0f,1f) else null
 }
 
 @Suppress("DEPRECATION")
@@ -169,6 +185,9 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
         }
     }
     var epoch by remember { mutableIntStateOf(0) }
+    // Navigation should re-use each feed's TTL, not turn one manual refresh into
+    // a permanent forced-refresh flag on every return to Dashboard.
+    var consumedRefreshEpoch by remember { mutableIntStateOf(0) }
     var locating by remember { mutableStateOf(false) }
     var locationReady by remember { mutableStateOf(false) }
     var city by remember { mutableStateOf<String?>(null) }
@@ -200,8 +219,10 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
     }
     LaunchedEffect(active,epoch,permissionLocation) {
         if(!active)return@LaunchedEffect
-        launch { crypto=repo.crypto(force=epoch>0) }
-        launch { github=repo.github(force=epoch>0) }
+        val forceReload=epoch>consumedRefreshEpoch
+        consumedRefreshEpoch=epoch
+        launch { crypto=repo.crypto(force=forceReload) }
+        launch { github=repo.github(force=forceReload) }
         if(permissionLocation) {
             locating=true
             val found=withTimeoutOrNull(12_000L) { todayLocation(context) }
@@ -213,8 +234,8 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                 launch { city=withContext(Dispatchers.IO) { resolveCity(context,found) } }
                 weather=null
                 prayer=null
-                launch { weather=repo.weather(found,force=epoch>0) }
-                launch { prayer=repo.prayer(found,force=epoch>0) }
+                launch { weather=repo.weather(found,force=forceReload) }
+                launch { prayer=repo.prayer(found,force=forceReload) }
             } else { city=null; weather=null; prayer=null }
         } else {
             latestLocation=null
@@ -294,9 +315,14 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                                     " · Angin "+String.format(Locale.US,"%.0f km/j",value.windKmh),
                                     size=10.3f,line=14f,color=todayMuted)
                             }
-                            AksaraText("Potensi hujan hari ini: "+
-                                (value.rainChance?.let { "$it%" } ?: "tidak tersedia"),
-                                size=10f,line=13f,color=todayMuted)
+                            val rainSoon=value.rainNext3Hours
+                            val weatherTrend=value.temperatureTrend3Hours?.let {
+                                " · Suhu "+String.format(Locale.US,"%+.1f°C",it)
+                            }.orEmpty()
+                            AksaraText(if(rainSoon!=null)
+                                "3 jam · Potensi hujan $rainSoon%"+weatherTrend
+                                else "Hujan harian: "+(value.rainChance?.let { "$it%" } ?: "tiada data"),
+                                size=9.5f,line=13f,color=todayMuted)
                             AksaraText("Ramalan cuaca, bukan amaran rasmi METMalaysia.",
                                 size=8.7f,line=11f,color=todayMuted)
                         } else {
@@ -341,6 +367,14 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                                 } ?: "Waktu seterusnya tidak tersedia",
                                     size=10.2f,line=14f,weight=600,color=todayGold)
                             }
+                            prayerTimelineProgress(value,prayerNow)?.let { fraction ->
+                                Box(Modifier.fillMaxWidth().height(3.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(Color(0x443D5470))) {
+                                    Box(Modifier.fillMaxWidth(fraction).fillMaxHeight()
+                                        .background(todayGold))
+                                }
+                            }
                         } else TodayPending(if(!permissionLocation)"Aktifkan lokasi untuk jadual solat."
                             else "Waktu solat tidak tersedia.")
                     }
@@ -371,8 +405,9 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                                     weight=600)
                             }
                         }
-                        AksaraText("Perubahan harga 24 jam · CoinPaprika",
-                            size=8.8f,line=11f,color=todayMuted)
+                        AksaraText("CoinPaprika · "+updatedLabel(crypto?.updatedAt,
+                            crypto?.fromCache==true),
+                            size=8.6f,line=11f,color=todayMuted)
                     }
                 }
                 AksaraGlassSurface(Modifier.fillMaxWidth().weight(.19f)
@@ -403,7 +438,11 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                                 "Sedang berjalan" -> todayGold
                                 else -> todayMuted
                             }
-                            AksaraText("CI: "+commit.ci,size=9.8f,line=13f,color=ciColor)
+                            val buildId=BuildConfig.SOURCE_COMMIT_SHA
+                            val apkIdentity=if(buildId.isNotBlank()) "APK "+buildId.take(7)
+                                else "APK "+BuildConfig.VERSION_NAME.take(17)
+                            AksaraText(apkIdentity+" · CI: "+commit.ci,
+                                size=9.5f,line=13f,color=ciColor)
                         } else TodayPending("Aktiviti GitHub belum tersedia.")
                     }
                 }
