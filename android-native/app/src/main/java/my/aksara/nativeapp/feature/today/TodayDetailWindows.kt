@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.BuildConfig
@@ -114,6 +115,7 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
     val marketContext=LocalContext.current
     val marketRepo=remember(marketContext) { TodayMarketQuotes(marketContext) }
     var market by remember(kind) { mutableStateOf<TodayMarketResult?>(null) }
+    var btcTrend by remember(kind) { mutableStateOf<TodayFeed<List<Double>>?>(null) }
     LaunchedEffect(kind,location?.latitude,location?.longitude) {
         if(kind=="weather" && location!=null)
             forecast=detailRepo.forecast(location.latitude,location.longitude)
@@ -124,7 +126,10 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
     }
     LaunchedEffect(kind) {
         if(kind=="development")dev=detailRepo.development()
-        if(kind=="crypto")market=marketRepo.quotes()
+        if(kind=="crypto") {
+            launch { market=marketRepo.quotes() }
+            launch { btcTrend=detailRepo.btcHistory() }
+        }
     }
     val title=when(kind) {
         "clock"->"Masa & Kalendar"
@@ -155,7 +160,7 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
                         "weather" -> WeatherDetail(weather,forecast,city,location!=null,
                             onOpenMap={ onNavigate("map") })
                         "prayer" -> PrayerDetail(prayer,monthly)
-                        "crypto" -> CryptoDetail(coins,market)
+                        "crypto" -> CryptoDetail(coins,market,btcTrend)
                         "development" -> DevelopmentDetail(github,dev)
                     }
                 }
@@ -427,7 +432,32 @@ private val reminders=listOf(
     }
 }
 
-@Composable private fun CryptoDetail(coins:TodayFeed<List<TodayCoin>>?,market:TodayMarketResult?) {
+/** Only genuine BTC/USD historical samples may be plotted. */
+@Composable private fun MarketPriceChart(prices:List<Double>) {
+    if(prices.size<2)return
+    val low=prices.minOrNull() ?: return
+    val high=prices.maxOrNull() ?: return
+    val span=(high-low).coerceAtLeast(0.000001)
+    Canvas(Modifier.fillMaxWidth().height(58.dp)) {
+        val chart=Path()
+        prices.forEachIndexed { index,price ->
+            val x=size.width*index/(prices.size-1)
+            val y=(size.height-8.dp.toPx())*(1f-((price-low)/span).toFloat())+4.dp.toPx()
+            if(index==0)chart.moveTo(x,y) else chart.lineTo(x,y)
+        }
+        drawPath(chart,color=gold,style=Stroke(width=2.dp.toPx(),cap=StrokeCap.Round))
+    }
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+        AksaraText(String.format(Locale.US,"USD %.0f",low),size=9f,color=muted)
+        AksaraText("BTC/USD · 24 jam",size=9f,color=gold)
+        AksaraText(String.format(Locale.US,"USD %.0f",high),size=9f,color=muted)
+    }
+}
+
+@Composable private fun CryptoDetail(
+    coins:TodayFeed<List<TodayCoin>>?,market:TodayMarketResult?,
+    trend:TodayFeed<List<Double>>?
+) {
     var search by remember { mutableStateOf("") }
     var onlySc by remember { mutableStateOf(true) }
     GlassSection("Pasaran & semakan Syariah") {
@@ -445,6 +475,16 @@ private val reminders=listOf(
         }
         AksaraButton(if(onlySc)"✓ Hanya disahkan SC" else "Semua aset dalam senarai",
             {onlySc=!onlySc},Modifier.fillMaxWidth(),height=36.dp,size=10.5f)
+    }
+    GlassSection("Graf BTC 24 jam") {
+        val prices=trend?.value
+        if(prices==null)DetailNote(if(trend==null)"Memuatkan sejarah harga CoinGecko…"
+            else "Sejarah harga tidak tersedia. Graf tidak direka secara sintetik.")
+        else {
+            MarketPriceChart(prices)
+            DetailNote((if(trend.fromCache)"Data cache • " else "Data CoinGecko • ")+
+                "Pergerakan BTC, bukan gambaran keseluruhan pasaran.")
+        }
     }
     val known=TodayShariahReference.listed+TodayShariahReference.unverified
     // SC status and public market prices are separate independently sourced records.
