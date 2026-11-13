@@ -24,7 +24,7 @@ function schemas(z,registry){
   return out;
 }
 export async function runSdk({mission,limits,provider,signal}){
-  const [{ToolLoopAgent,isStepCount,tool},{createOpenAICompatible},{z}]=await Promise.all([
+  const [{ToolLoopAgent,stepCountIs,tool},{createOpenAICompatible},{z}]=await Promise.all([
     import("ai"),import("@ai-sdk/openai-compatible"),import("zod")
   ]);
   const state=createRegistry(limits,{signal});
@@ -35,7 +35,7 @@ export async function runSdk({mission,limits,provider,signal}){
   const api=createOpenAICompatible({baseURL:provider.baseURL,name:"aksara-"+provider.id,apiKey:provider.apiKey});
   const agent=new ToolLoopAgent({
     model:api.chatModel(provider.model),instructions:INSTRUCTIONS,tools,
-    stopWhen:isStepCount(limits.steps)
+    stopWhen:stepCountIs(limits.steps),maxRetries:0
   });
   const result=await agent.generate({prompt:mission,abortSignal:signal});
   return {text:partsToText(result.text),state,engine:"vercel-ai-sdk",provider:provider.id,model:provider.model};
@@ -51,7 +51,7 @@ export async function runDeep({mission,limits,provider,signal}){
     {name,description:item.description,schema:defs[name]}
   ));
   const model=new ChatOpenAI({
-    model:provider.model,apiKey:provider.apiKey,temperature:0,
+    model:provider.model,apiKey:provider.apiKey,temperature:0,maxRetries:0,
     configuration:{baseURL:provider.baseURL}
   });
   // Default StateBackend is a virtual workspace, not a host filesystem/shell.
