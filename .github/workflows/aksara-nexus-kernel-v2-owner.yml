@@ -58,6 +58,14 @@ jobs:
           grep -Fq 'NexusEngine.publishAiStatus(state.providers)' android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/AksaraScreen.kt
           grep -Fq 'AKSARA NEXUS KERNEL' android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/NexusPanel.kt
           test -s android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/NexusChatBridge.kt
+          test -s android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/NexusChatCoordinator.kt
+          test -s android-native/app/src/test/java/my/aksara/nativeapp/feature/chat/NexusChatRouterTest.kt
+          grep -Fq 'NexusChatRouter.parse(q)' android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/AksaraScreen.kt
+          grep -Fq 'NexusChatConversation' android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/AksaraScreen.kt
+          if grep -Eq 'BasicTextField|NexusActions.all|startKernelPlan|previewWorkspaceUpsert|runApprovedLinuxCommand' android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/NexusPanel.kt; then
+            echo 'Nexus status panel must never contain operational controls' >&2
+            exit 1
+          fi
           grep -Fq 'NexusLinuxRunner.execute' android-native/app/src/main/java/my/aksara/nativeapp/core/nexus/NexusEngine.kt
           echo 'Nexus has one connected panel, a guarded Linux runner and reviewable AI handoff.'
       - name: Verify shared Web/Android Brain contracts
@@ -137,6 +145,7 @@ jobs:
             --tests 'my.aksara.nativeapp.core.linux.*' \
             --tests 'my.aksara.nativeapp.core.nexus.*' \
             --tests 'my.aksara.nativeapp.core.nexus.kernel.*' \
+            --tests 'my.aksara.nativeapp.feature.chat.NexusChatRouterTest' \
             --tests 'my.aksara.nativeapp.NativeIntegrationContractTest' \
             --tests 'my.aksara.nativeapp.SessionAndProviderStatusTest' \
             --tests 'my.aksara.nativeapp.TodayAdvancedNavigationTest' \
@@ -209,5 +218,5 @@ jobs:
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
           gh release create "aksara-nexus-pr325-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \
             --title "AKSARA Nexus PR325 $tag - Integrated Android Preview" \
-            --notes "PR325 AKSARA Nexus Kernel V2 integrated owner APK. Includes AI-planned DAGs; real Linux/Today/GitHub adapters; trusted evidence; adaptive scheduling; checkpoint recovery; user-approved workspace file create/update/delete/rollback; opt-in AI file-edit suggestions; explicitly approved custom Linux PRoot commands; original PTY and source-preserving UI. One Alpine ARM64 runtime, no embedded extra LLM. CI and unit tests required; sideload-only preview; owner-device QA required before merge. GPL PRoot source attached." \
+            --notes "PR325 ANK V2 status-only kernel overlay. All planning, manual shell, reviewed file edits and approvals now originate from main Chat composer, with results in Chat. Existing Today and interactive Linux screens remain untouched. Typed DAG planner, evidence, recovery, telemetry and rootless ARM64 PRoot preserved. No duplicate model/rootfs. CI and owner QA required before merge. GPL PRoot source attached." \
             --prerelease --target "$GITHUB_SHA"
