@@ -44,6 +44,8 @@ import my.aksara.nativeapp.R
 import my.aksara.nativeapp.feature.today.TodayScreen
 import my.aksara.nativeapp.core.linux.AksaraLinuxScreen
 import my.aksara.nativeapp.core.nexus.NexusEngine
+import my.aksara.nativeapp.core.nexus.NexusPanel
+import my.aksara.nativeapp.core.nexus.NexusLauncher
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.platform.Attachment
@@ -190,6 +192,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var todayDialogVisible by remember { mutableStateOf(false) }
     var linuxDialogVisible by remember { mutableStateOf(false) }
     var nexusOpen by rememberSaveable { mutableStateOf(false) }
+    var nexusDraft by remember { mutableStateOf<String?>(null) }
     // Do not recompose the whole pager for each IME animation pixel.
     val imeDensity=LocalDensity.current
     // WindowInsets.ime is composable: resolve it before entering derivedStateOf.
@@ -263,6 +266,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         onCancelUpload = { uploadJob?.cancel() },
         onPickAttachment = { category -> picker.launch(AttachmentSendPolicy.mimeTypes(category)) },
         onDismissError = { attachmentError = null; vm.dismissError() },
+        nexusDraft = nexusDraft, onNexusDraftConsumed = { nexusDraft = null },
         onOverlayVisibilityChange = { overlayVisible=it })
       }
     }
@@ -276,10 +280,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             nexusOpen=false
             scope.launch { pagerState.animateScrollToPage(target) }
         },
-        onAskAi={ prompt ->
-            val accepted=vm.send(prompt)
-            if(accepted) scope.launch { pagerState.animateScrollToPage(1) }
-            accepted
+        onDraftForChat={ prompt ->
+            nexusDraft = prompt
+            nexusOpen = false
+            scope.launch { pagerState.animateScrollToPage(1) }
         }
     )
 
@@ -325,12 +329,19 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     onRemoveDraft: suspend(String)->Boolean = { false },
     onEraseLocal: suspend()->Boolean = { false },
     fixedTimestamp: Long? = null, onVoiceTurns:(List<my.aksara.engine.voice.VoiceContextTurn>)->Unit = {},
-    onOverlayVisibilityChange:(Boolean)->Unit = {}) {
+    onOverlayVisibilityChange:(Boolean)->Unit = {},
+    nexusDraft:String? = null, onNexusDraftConsumed:()->Unit = {}) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
     LaunchedEffect(overlay) { onOverlayVisibilityChange(overlay!=null) }
     var voiceIndicator by remember { mutableStateOf(VoiceLinkState.IDLE) }
     var draft by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(nexusDraft) {
+        if (!nexusDraft.isNullOrBlank()) {
+            draft = nexusDraft
+            onNexusDraftConsumed()
+        }
+    }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingJumpId by remember { mutableStateOf<String?>(null) }
     var highlightedMessageId by remember { mutableStateOf<String?>(null) }
