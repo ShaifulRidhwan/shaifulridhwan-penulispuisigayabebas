@@ -58,3 +58,76 @@ Base: `rebuild/aksara-android-native-v1`. Target: existing ARM64 Alpine 3.22.8 /
 - Build with project's **existing** owner Full Linux workflow. Green CI is not device acceptance, and **no merge** until owner approves.
 
 Android documentation: https://developer.android.com/guide/topics/providers/document-provider and https://developer.android.com/training/data-storage/shared/documents-files
+
+
+---
+
+## AKSARA LINUX · ADVANCED MODE (implemented on PR329, not yet owner-tested)
+
+The existing `SYSTEM` bottom tab is renamed **ADVANCED**. This is a
+developer/workstation feature set, *not* a privileged "Owner Mode", no second
+kernel/runtime, and not an Android root switch. Existing terminal styling and
+the full Alpine bundle are preserved.
+
+### Android file movement: explicit two-way folder bridge
+
+- **FILES:** choose one or multiple documents via system picker, stored under
+  `/workspace/imports/batch-*` using existing atomic batch import.
+- **FOLDER:** Android `OpenDocumentTree` asks you to choose an accessible
+  directory; persist read/write URI grant in private app preferences.
+- **PULL:** copy *top-level regular files* from selected Android folder into
+  a new `/workspace/android-in/batch-*`; source Android files untouched.
+  Subdirectories are currently skipped, not recursively imported.
+- **PUSH:** copy *top-level regular files* from `/workspace/android-out` to
+  *newly created* documents in the selected Android folder; never overwrite
+  existing documents. Already-exported outbox files are retained. If batch
+  fails, earlier successful exports remain and the failing partial item is
+  deleted when supported by provider.
+- **UNLINK:** revoke previously persisted Android directory permission and
+  clear stored URI without deleting any files.
+
+Direct cross-filesystem bind mounts, Android shell escalation, automatic
+background synchronization, or unrestricted `/sdcard` access are intentionally
+**not** included. The Android system picker may refuse storage roots, the
+`Download` directory as a folder, and `Android/data` or `Android/obb` on
+Android 11 and later; use **FILES** for individual downloads or create/select a
+normal writable subdirectory when allowed.
+
+### CLI workflow
+
+```sh
+aksara-capabilities
+aksara-share help
+aksara-share status
+aksara-share inbox
+ls -lah /workspace/android-in
+aksara-share stage /workspace/poem.py
+aksara-share outbox
+# Then tap ADVANCED > PUSH in the Android UI
+```
+
+`aksara-share stage` accepts ordinary files from `/workspace`, rejects
+symlinks, non-workspace paths, common secret filenames and oversized files.
+Staging is **not** automatic export. User chooses destination and taps PUSH.
+
+Transfer limits: up to 50 *regular files*, 256 MiB per file and 512 MiB
+per transaction. No recursive copy and no overwrite. File Bridge already
+imports 20 selected files per batch. Workspace is persisted inside app
+sandbox, so separate signed preview package IDs do not automatically share it.
+
+### Reliability / test gate
+
+- Run Kotlin unit tests for filename collision avoidance, path traversal,
+  secret and symlink exclusion.
+- Android actual device: test folder grant/regrant/revoke, canceled picker,
+  PULL from writable subdirectory, PILOT full MP3 + LRC + PY import, PUSH
+  a text file, name conflict and read-only provider failures.
+- Verify that changing tabs, process lifecycle, Enter, shell history, UI
+  transparency, Chat and Today remain unchanged.
+- Ensure Android package identity, signature, full rootfs archive (roughly
+  740 MB class), native ARM64 PRoot and bundled source archive are verified.
+- Do **not** merge based on green CI alone. Device validation required.
+
+**Android sources:**
+https://developer.android.com/training/data-storage/shared/documents-files
+https://developer.android.com/reference/android/provider/DocumentsContract
