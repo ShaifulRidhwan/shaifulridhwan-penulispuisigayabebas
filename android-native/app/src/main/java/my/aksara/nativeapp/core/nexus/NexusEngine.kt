@@ -310,9 +310,14 @@ internal object NexusEngine {
                     output.append('[').append(label).append("]\n")
                         .append(response.output).append("\nExit: ").append(response.exitCode)
                         .append("\n\n")
-                    resultFacts["check." + label.lowercase(java.util.Locale.ROOT)
-                        .replace(Regex("[^a-z0-9]+"), "-") + ".exit"] = response.exitCode.toString()
-                    lastExit = response.exitCode
+                    val checkKey = "check." + label.lowercase(java.util.Locale.ROOT)
+                        .replace(Regex("[^a-z0-9]+"), "-")
+                    resultFacts[checkKey + ".exit"] = response.exitCode.toString()
+                    if (response.truncated) {
+                        resultFacts[checkKey + ".truncated"] = "true"
+                        output.append("WARNING: Command output truncated at 16384 bytes.\n")
+                    }
+                    lastExit = if (response.truncated && response.exitCode == 0) 5 else response.exitCode
                     if (lastExit != 0) {
                         // No Git repository is an observed state, not a shell success.
                         val missingRepo = cap == "linux.git" &&
@@ -438,7 +443,7 @@ internal object NexusEngine {
     }
 }
 
-private data class NexusProcessResult(val output: String, val exitCode: Int)
+private data class NexusProcessResult(val output: String, val exitCode: Int, val truncated: Boolean)
 
 private object NexusLinuxRunner {
     /** Separate headless PRoot process. Never writes into an interactive PTY. */
@@ -470,6 +475,7 @@ private object NexusLinuxRunner {
             put("TMPDIR", "/tmp")
         }
         val process = builder.start()
+        val overflow = java.util.concurrent.atomic.AtomicBoolean(false)
         val reader = async(Dispatchers.IO) {
             val buffer = ByteArray(4096)
             val bytes = ByteArrayOutputStream()
@@ -479,6 +485,7 @@ private object NexusLinuxRunner {
                     if (n < 0) break
                     val remaining = 16_384 - bytes.size()
                     if (remaining > 0) bytes.write(buffer, 0, minOf(n, remaining))
+                    if (n > remaining) overflow.set(true)
                 }
             }
             bytes.toString(Charsets.UTF_8.name())
@@ -492,7 +499,7 @@ private object NexusLinuxRunner {
                 elapsed += 100L
             }
             if (!complete) throw IllegalStateException("Linux task timeout (" + timeoutMs + "ms)")
-            NexusProcessResult(reader.await(), process.exitValue())
+            NexusProcessResult(reader.await(), process.exitValue(), overflow.get())
         } finally {
             if (process.isAlive) process.destroyForcibly()
             reader.cancel()
