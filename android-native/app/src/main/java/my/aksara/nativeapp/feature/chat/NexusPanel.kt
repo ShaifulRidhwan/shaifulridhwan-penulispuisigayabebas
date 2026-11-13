@@ -28,6 +28,7 @@ import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.core.nexus.NexusAction
 import my.aksara.nativeapp.core.nexus.NexusActions
 import my.aksara.nativeapp.core.nexus.NexusEngine
+import my.aksara.nativeapp.core.nexus.NexusCommandPreview
 import my.aksara.nativeapp.core.nexus.NexusTaskStatus
 import my.aksara.nativeapp.core.nexus.kernel.KernelPlan
 import my.aksara.nativeapp.core.nexus.kernel.KernelChangePreview
@@ -65,6 +66,8 @@ internal fun NexusPanel(
     var workspaceText by remember { mutableStateOf("") }
     var workspaceApproval by remember { mutableStateOf<KernelChangePreview?>(null) }
     var txBusy by remember { mutableStateOf(false) }
+    var manualCommand by remember { mutableStateOf("pwd") }
+    var manualCommandPreview by remember { mutableStateOf<NexusCommandPreview?>(null) }
     val coroutineScope = rememberCoroutineScope()
     var message by remember { mutableStateOf<String?>(null) }
 
@@ -339,6 +342,67 @@ internal fun NexusPanel(
                                             }
                                         }, Modifier.weight(1f), height = 36.dp, size = 10f,
                                             enabled = !txBusy && current.activeId == null)
+                                    }
+                                }
+                            }
+                        }
+
+                        AksaraText("MANUAL LINUX EXECUTION", size = 11.5f,
+                            weight = 700, color = AksaraColors.gold)
+                        AksaraText(
+                            "Arahan shell Linux pilihan kau sendiri. Ia berjalan dalam Alpine " +
+                            "PRoot (bukan root Android), berasingan daripada terminal interaktif. " +
+                            "Tindakan boleh mengubah fail atau memasang pakej. Semak arahan " +
+                            "sepenuhnya sebelum meluluskan.",
+                            size = 9.5f, line = 14f, color = AksaraColors.muted)
+                        BasicTextField(
+                            value = manualCommand,
+                            onValueChange = {
+                                manualCommand = it.take(8000)
+                                manualCommandPreview = null
+                                NexusEngine.clearManualCommandPreview()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0x7B142334))
+                                .border(1.dp, Color(0x77EACB94), RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            textStyle = TextStyle(color = AksaraColors.text, fontSize = 12.sp),
+                            minLines = 2, maxLines = 5,
+                            enabled = current.activeId == null)
+                        AksaraButton("Preview Shell Command", {
+                            try {
+                                manualCommandPreview = NexusEngine.previewManualLinuxCommand(manualCommand)
+                                message = null
+                            } catch (error: Exception) {
+                                message = "Arahan tidak sah: " +
+                                    (error.message ?: "Unknown").take(140)
+                            }
+                        }, Modifier.fillMaxWidth(), height = 36.dp, size = 10f,
+                            enabled = current.linuxReady && current.activeId == null &&
+                                manualCommand.isNotBlank())
+                        if (manualCommandPreview != null) {
+                            val pendingCommand = manualCommandPreview!!
+                            AksaraGlassSurface(Modifier.fillMaxWidth(), radius = 14.dp, blur = 5.dp) {
+                                Column(Modifier.fillMaxWidth().padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    AksaraText("PENGESAHAN ARAHAN SHELL",
+                                        size = 11f, weight = 700, color = AksaraColors.gold)
+                                    AksaraText("Arahan tepat yang akan dijalankan:",
+                                        size = 9.5f, color = AksaraColors.muted)
+                                    AksaraText(pendingCommand.command.take(8000), size = 10f,
+                                        line = 15f)
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        AksaraButton("Tolak", {
+                                            manualCommandPreview = null
+                                            NexusEngine.clearManualCommandPreview()
+                                        }, Modifier.weight(1f), height = 35.dp, size = 10f)
+                                        AksaraButton("Lulus & Jalankan", {
+                                            if (!NexusEngine.runApprovedLinuxCommand(pendingCommand))
+                                                message = "Arahan tidak dapat dijalankan."
+                                            manualCommandPreview = null
+                                        }, Modifier.weight(1f), height = 35.dp, size = 10f,
+                                            enabled = current.linuxReady && current.activeId == null)
                                     }
                                 }
                             }
