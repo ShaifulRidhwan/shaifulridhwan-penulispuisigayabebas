@@ -267,6 +267,7 @@ internal object KernelDefaults {
         KernelCapability("linux.devkit", "alpine-proot"),
         KernelCapability("linux.git", "alpine-proot"),
         KernelCapability("linux.workspace", "alpine-proot"),
+        KernelCapability("linux.workspace.write", "alpine-workspace", KernelRisk.WRITE_LOCAL),
         KernelCapability("today.github", "today-github-repository"),
         KernelCapability("today.snapshot", "today-repository"),
         KernelCapability("ai.health", "chat-provider-state"),
