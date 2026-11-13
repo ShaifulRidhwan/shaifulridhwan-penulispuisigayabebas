@@ -89,6 +89,12 @@ jobs:
             if(!res.ok || json.platform!=="android-native" || json.ownerAuthRequired!==true)
               throw Error("Preview backend status failed: HTTP "+res.status);
             if(typeof json.enabled!=="boolean")throw Error("Missing truthful enabled flag.");
+            console.log("Agentic preview status (non-secret): "+
+              JSON.stringify({enabled:json.enabled,ownerAuthConfigured:json.ownerAuthConfigured,
+                configuredProviders:json.configuredProviders,readyForOwnerMission:json.readyForOwnerMission}));
+            console.log("Agentic preview endpoint URL: "+url.origin+"/.netlify/functions/aksara-agentic");
+            if(!json.enabled||!json.ownerAuthConfigured||!json.readyForOwnerMission)
+              throw Error("Netlify preview environment incomplete. Verify Functions scope/context for AKSARA_AGENT_ENABLED, AKSARA_AGENT_OWNER_KEY and a free provider key.");
             const denied=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},
               body:JSON.stringify({mission:"Semak seni bina backend dengan teliti",mode:"light",consent:true}),
               signal:AbortSignal.timeout(20000)});
