@@ -18,6 +18,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.*
 import my.aksara.nativeapp.core.design.*
+import my.aksara.nativeapp.core.storage.Message
 import dev.chrisbanes.haze.*
 import kotlinx.coroutines.launch
 import my.aksara.engine.runtime.RuntimeClient
@@ -41,7 +42,8 @@ import my.aksara.nativeapp.feature.tools.*
     onUseDraft:(String)->Unit={},
     onEraseLocal:suspend()->Boolean={false},
     onJumpToMessage:(String)->Unit={},
-    onVoiceState:(String,Boolean)->Unit={_,_->}) {
+    onVoiceState:(String,Boolean)->Unit={_,_->},
+    selectedAnswer:Message?=null, selectedAttachmentNames:String?=null) {
     // Android Lite: preserve the engines on disk, but expose no inactive entry points.
     if(kind=="code" || kind=="terminal" || kind=="engines") return
     if(kind=="chess"){
@@ -83,7 +85,7 @@ import my.aksara.nativeapp.feature.tools.*
         }
         Box(Modifier.fillMaxSize().hazeSource(modalBackdrop).hazeEffect(haze,HazeStyle(tints=emptyList(), backgroundColor=Color(0xff070911),blurRadius=14.dp,noiseFactor=0f)).background(AksaraModalStyle.scrim).clickable(onClick=onClose))
         var expandedProviderId by remember(kind) { mutableStateOf("") }
-        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"connection"->minOf(when(expandedProviderId) {
+        val height=when(kind){"external-home"->245.dp;"response-details"->375.dp;"context-status"->345.dp;"connection"->minOf(when(expandedProviderId) {
             "" -> 490.dp
             "gemini", "openrouter" -> 650.dp
             else -> 565.dp
@@ -110,7 +112,7 @@ import my.aksara.nativeapp.feature.tools.*
                         AksaraButton("Aktifkan Mikrofon",{onNavigate("voice")},Modifier.weight(.63f))
                     }
                 } else {
-                    val title=when(kind){"external-home"->"Buka Laman Utama?";"response-details"->"Butiran Jawapan";"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Explore";"literary-notice"->"AMARAN: KAWASAN SASTERA DILINDUNGI";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";"studio"->"Studio Antara";"library"->"Perpustakaan AKSARA";"novel"->"Baca Novel";"security"->"Security Lab";"metrics"->"Prestasi A.I."; "engines"->"Native Engines";else->kind}
+                    val title=when(kind){"external-home"->"Buka Laman Utama?";"response-details"->"Butiran Jawapan";"context-status"->"Konteks Sesi";"connection"->"Connection · Provider Health";"code"->"Code Engine · Runtime Health";"terminal"->"AKSARA Terminal";"portal"->"Explore";"literary-notice"->"AMARAN: KAWASAN SASTERA DILINDUNGI";"thinking"->"Thinking Mode";"attachments"->"Tambah lampiran";"sessions"->"Sesi & Sejarah";"knowledge"->"Pusat Pengetahuan & Rujukan";"studio"->"Studio Antara";"library"->"Perpustakaan AKSARA";"novel"->"Baca Novel";"security"->"Security Lab";"metrics"->"Prestasi A.I."; "engines"->"Native Engines";else->kind}
                     Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.Top,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
                         Column(Modifier.weight(1f)) {
                             AksaraText(title,size=16f,line=20.8f,weight=700,tracking=.4f)
@@ -140,13 +142,14 @@ import my.aksara.nativeapp.feature.tools.*
                         }
                         "response-details" -> {
                             Spacer(Modifier.height(14.dp))
-                            AksaraText("Metadata yang dilaporkan backend untuk jawapan terakhir dalam sesi aktif. Ini bukan bukti ketepatan setiap dakwaan.",size=11.5f,line=18f,color=AksaraColors.muted)
+                            AksaraText("Metadata milik jawapan yang dipilih, disimpan bersama sesi. Data lama mungkin tiada butiran penuh; ini bukan jaminan ketepatan.",size=11.5f,line=18f,color=AksaraColors.muted)
                             Spacer(Modifier.height(13.dp))
+                            val answer=selectedAnswer
                             val entries=listOf(
-                                "Penyedia" to state.lastProvider.ifBlank { "Tidak diketahui" },
-                                "Model" to state.lastModel.ifBlank { "Tidak dilaporkan" },
-                                "Status kajian" to state.lastResearchStatus.ifBlank { "Tidak dilaporkan" },
-                                "Tahap sumber" to when(state.lastEvidenceLevel) {
+                                "Penyedia" to (answer?.provider?.takeIf { it.isNotBlank() } ?: "Tidak dilaporkan"),
+                                "Model" to (answer?.model?.takeIf { it.isNotBlank() } ?: "Tidak dilaporkan"),
+                                "Status kajian" to (answer?.researchStatus?.takeIf { it.isNotBlank() } ?: "Tidak dilaporkan"),
+                                "Tahap sumber" to when(answer?.evidenceLevel) {
                                     "page_text" -> "Teks halaman dirujuk"
                                     "search_excerpt" -> "Petikan carian sahaja"
                                     "grounded_search" -> "Carian berasaskan sumber"
@@ -154,12 +157,34 @@ import my.aksara.nativeapp.feature.tools.*
                                     "no_external_evidence" -> "Tiada bukti luaran"
                                     else -> "Belum disahkan"
                                 },
-                                "Alat digunakan" to state.lastToolsUsed.take(8).joinToString(", ").ifBlank { "Tiada dilaporkan" }
+                                "Alat digunakan" to answer?.toolsUsed.orEmpty().take(8).joinToString(", ").ifBlank { "Tiada dilaporkan" }
                             )
                             entries.forEach { (label,value) ->
                                 AksaraText(label,size=10f,color=AksaraColors.muted)
                                 AksaraText(value.take(180),size=12f,weight=600)
                                 Spacer(Modifier.height(9.dp))
+                            }
+                        }
+                        "context-status" -> {
+                            Spacer(Modifier.height(14.dp))
+                            AksaraText("Ketelusan konteks perbualan semasa. Tidak memberi kebenaran baharu untuk memori, lokasi atau data Dashboard.",size=11.5f,line=18f,color=AksaraColors.muted)
+                            Spacer(Modifier.height(14.dp))
+                            val summaryText=when(state.summaryStatus) {
+                                "saved" -> "Ringkasan konteks tersimpan"
+                                "unavailable" -> "Ringkasan belum tersedia"
+                                else -> "Tiada ringkasan disahkan"
+                            }
+                            val facts=listOf(
+                                "Mesej sesi semasa" to state.messages.size.toString(),
+                                "Memori peribadi" to if(state.memoryEnabled) "AKTIF (izin pengguna)" else "OFF",
+                                "Ringkasan perbualan" to summaryText,
+                                "Lampiran mesej baharu" to (selectedAttachmentNames?.take(100) ?: "Tiada dipilih"),
+                                "Data AKSARA TODAY" to "Tidak dikongsi secara automatik"
+                            )
+                            facts.forEach { (label,value) ->
+                                AksaraText(label,size=10f,color=AksaraColors.muted)
+                                AksaraText(value,size=12f,weight=600)
+                                Spacer(Modifier.height(10.dp))
                             }
                         }
                         "connection" -> ProviderHealthContent(state,onRefresh,Modifier.weight(1f),
