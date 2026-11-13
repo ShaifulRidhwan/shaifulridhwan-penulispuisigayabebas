@@ -47,7 +47,7 @@ jobs:
           npm ci --ignore-scripts --no-audit --no-fund
           node --check netlify/functions/agentic/engines.mjs
           node --check netlify/functions/aksara-agentic.js
-          node --test tests/aksara-agentic-absolute-core.test.cjs
+          npm run test:aksara-agentic
           if ! git diff --quiet -- package-lock.json; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
