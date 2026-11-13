@@ -92,6 +92,14 @@ internal class KernelWorkspaceTransactions(workspace: File, private val privateD
         return preview
     }
 
+    /** Explicit user opt-in is required by UI before this data is shared with A.I. */
+    @Synchronized fun textForAi(path: String): String {
+        val bytes = read(target(path)) ?: return ""
+        require(bytes.size <= 14_000) { "Fail terlalu besar untuk cadangan A.I." }
+        require(!bytes.contains(0.toByte())) { "Fail binari tidak boleh dihantar untuk suntingan teks A.I." }
+        return bytes.toString(Charsets.UTF_8)
+    }
+
     @Synchronized fun previewUpsert(path: String, text: String): KernelChangePreview =
         buildPreview(path, KernelWriteOperation.UPSERT, text.toByteArray(Charsets.UTF_8))
 
