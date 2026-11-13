@@ -316,6 +316,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     onOverlayVisibilityChange:(Boolean)->Unit = {}) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
+    var agenticMissionVisible by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(overlay) { onOverlayVisibilityChange(overlay!=null) }
     var voiceIndicator by remember { mutableStateOf(VoiceLinkState.IDLE) }
     var draft by rememberSaveable { mutableStateOf("") }
@@ -466,6 +467,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 CompositionLocalProvider(LocalBackdropPaints provides listOf(headerPaint)) {
                                 Row(Modifier.fillMaxSize().padding(horizontal=if(compact)5.dp else 8.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(if(compact)3.dp else 4.dp)) {
                                     ReactiveVoiceChip(voiceIndicator,compact) {open("voice-permission")}
+                                    AksaraButton("Agent",{agenticMissionVisible=true},
+                                        Modifier.width(53.dp).semantics { contentDescription="Buka Agentic Core" },
+                                        size=10f,height=32.dp,radius=999.dp)
                                     Spacer(Modifier.weight(1f))
                                     AksaraGlassSurface(Modifier.width(if(compact)151.dp else 167.dp).height(AksaraGlassTokens.capsuleHeight).clickable {open("connection")}.semantics {contentDescription="Connection"},radius=999.dp,blur=9.dp) {
                                         val connectionStatus = ProviderConnectionStatus.label(state.providers)
@@ -648,6 +652,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
         }
     }
+    if(agenticMissionVisible) AgenticMissionDialog(onClose={agenticMissionVisible=false})
 }
 private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
 private val ChatTimestampFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm",java.util.Locale.ENGLISH)
