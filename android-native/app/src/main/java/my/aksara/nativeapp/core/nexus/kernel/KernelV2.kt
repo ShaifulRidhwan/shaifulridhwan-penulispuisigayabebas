@@ -36,7 +36,8 @@ internal class KernelRegistry(initial: List<KernelCapability> = emptyList()) {
 internal data class KernelNode(val id: String, val capability: String, val dependsOn: Set<String> = emptySet())
 internal data class KernelPlan(val id: String, val goal: String, val nodes: List<KernelNode>, val createdAt: Long)
 internal data class KernelApproval(
-    val planId: String, val allowedCapabilities: Set<String>, val grantedAt: Long, val expiresAt: Long
+    val planId: String, val allowedCapabilities: Set<String>, val grantedAt: Long, val expiresAt: Long,
+    val fingerprint: String
 )
 internal data class KernelEvidence(
     val capability: String, val source: String, val output: String, val exitCode: Int,
@@ -69,8 +70,13 @@ internal object KernelPlanner {
         val ai = listOf("gemini", "groq", "provider", "multi a.i.", "multi ai").any(text::contains)
         if (all || linux) selected.add("linux.health")
         if (all || tools) selected.add("linux.devkit")
-        if (git) selected.add("linux.git")
-        if (all || today || git) selected.add("today.snapshot")
+        if (all || git) {
+            selected.add("linux.git")
+            selected.add("today.github")
+        }
+        if (listOf("workspace", "folder", "direktori", "files", "fail").any(text::contains))
+            selected.add("linux.workspace")
+        if (all || today) selected.add("today.snapshot")
         if (all || ai) selected.add("ai.health")
         if (selected.isEmpty()) return null
         if (!selected.all { registry.get(it)?.risk == KernelRisk.READ }) return null
@@ -104,14 +110,23 @@ internal object KernelPlanner {
 
 /** A model cannot silently expand authority granted to a different plan. */
 internal object KernelPolicy {
+    private fun fingerprint(plan: KernelPlan): String {
+        val canonical = plan.id + "\n" + plan.nodes.joinToString("\n") { node ->
+            node.id + ":" + node.capability + ":" + node.dependsOn.sorted().joinToString(",")
+        }
+        return java.security.MessageDigest.getInstance("SHA-256")
+            .digest(canonical.toByteArray(Charsets.UTF_8))
+            .joinToString("") { byte -> "%02x".format(byte) }
+    }
     fun approveReadOnly(plan: KernelPlan, registry: KernelRegistry, now: Long): KernelApproval {
         KernelPlanner.validate(plan, registry)
         require(plan.nodes.all { registry.get(it.capability)?.risk == KernelRisk.READ })
         return KernelApproval(plan.id, plan.nodes.map { it.capability }.toSet(),
-            now, now + 120_000L)
+            now, now + 120_000L, fingerprint(plan))
     }
     fun permits(plan: KernelPlan, approval: KernelApproval, registry: KernelRegistry, now: Long): Boolean {
-        return plan.id == approval.planId && now >= approval.grantedAt && now < approval.expiresAt &&
+        return plan.id == approval.planId && fingerprint(plan) == approval.fingerprint &&
+            now >= approval.grantedAt && now < approval.expiresAt &&
             plan.nodes.all {
                 it.capability in approval.allowedCapabilities &&
                     registry.get(it.capability)?.risk == KernelRisk.READ
@@ -248,6 +263,8 @@ internal object KernelDefaults {
         KernelCapability("linux.health", "alpine-proot"),
         KernelCapability("linux.devkit", "alpine-proot"),
         KernelCapability("linux.git", "alpine-proot"),
+        KernelCapability("linux.workspace", "alpine-proot"),
+        KernelCapability("today.github", "today-github-repository"),
         KernelCapability("today.snapshot", "today-repository"),
         KernelCapability("ai.health", "chat-provider-state"),
         KernelCapability("kernel.evidence", "nexus-local"),

@@ -25,6 +25,7 @@ import my.aksara.nativeapp.core.nexus.kernel.KernelTelemetry
 import my.aksara.nativeapp.core.nexus.kernel.KernelProviderPolicy
 import my.aksara.nativeapp.core.nexus.kernel.KernelPlanStore
 import android.os.SystemClock
+import my.aksara.nativeapp.feature.today.TodayRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -248,6 +249,25 @@ internal object NexusEngine {
                         "today.snapshot.age_ms" to if (snapshot.isBlank()) "unknown"
                             else (now - state.value.dashboardUpdated).coerceAtLeast(0).toString()))
             }
+            "today.github" -> {
+                val feed = TodayRepository(context).github(force = false)
+                val commit = feed.value
+                val updated = feed.updatedAt ?: now
+                if (commit == null) {
+                    KernelEvidence(cap, "today-github-repository",
+                        "GitHub commit tidak tersedia", 3, now,
+                        facts = mapOf("github.available" to "false"))
+                } else {
+                    val summary = "Commit " + commit.sha.take(12) +
+                        "\nCI: " + commit.ci + "\n" + commit.message.take(160)
+                    KernelEvidence(cap, "today-github-repository", summary, 0, updated,
+                        facts = mapOf(
+                            "github.commit.sha" to commit.sha.take(40),
+                            "github.ci.status" to commit.ci.take(60),
+                            "github.data.cached" to feed.fromCache.toString(),
+                            "github.snapshot.age_ms" to (now - updated).coerceAtLeast(0L).toString()))
+                }
+            }
             "ai.health" -> {
                 val status = kernelProviderHealth()
                 KernelEvidence(cap, "chat-provider-state",
@@ -261,7 +281,7 @@ internal object NexusEngine {
                 KernelEvidence(cap, "nexus-local", report, 0, now,
                     facts = mapOf("kernel.evidence.sources" to previous.size.toString()))
             }
-            "linux.health", "linux.devkit", "linux.git", "linux.probe" -> {
+            "linux.health", "linux.devkit", "linux.git", "linux.workspace", "linux.probe" -> {
                 // V2 never concatenates unrelated checks with ';'. Each has its
                 // own truthful exit code, unlike the backwards-compatible V1 actions.
                 val checks = when (cap) {
@@ -276,6 +296,9 @@ internal object NexusEngine {
                         "GCC" to "gcc --version",
                         "Clang" to "clang --version")
                     "linux.git" -> listOf("Git workspace" to "git -C /workspace status --short --branch")
+                    "linux.workspace" -> listOf(
+                        "Directory" to "pwd",
+                        "Files" to "ls -lah /workspace")
                     else -> requireNotNull(NexusActions.find("linux.probe")).steps
                 }
                 val output = StringBuilder()

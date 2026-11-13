@@ -45,7 +45,7 @@ internal class KernelPlanStore(context: Context) {
         val root = runCatching {
             file.openRead().use { JSONObject(it.readBytes().toString(Charsets.UTF_8)) }
         }.getOrNull() ?: return@synchronized null
-        if (root.optInt("schema") != 1 || now - root.optLong("at") !in 0..86_400_000L)
+        if (root.optInt("schema") != 1 || now - root.optLong("at") !in 0L..86_400_000L)
             return@synchronized null
         val id = root.optString("id").takeIf { it.isNotBlank() } ?: return@synchronized null
         val workflow = checkpoints.lastOrNull { it.planId == id && it.nodeId == "workflow" }
