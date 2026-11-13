@@ -260,7 +260,8 @@ internal object AksaraLinuxRuntime {
     private fun installLinuxExtras(context: Context, root: File) {
         val scripts = listOf(
             "linux/terminal-theme.sh" to "etc/profile.d/zz-aksara-theme.sh",
-            "linux/aksara-doctor.sh" to "usr/local/bin/aksara-doctor"
+            "linux/aksara-doctor.sh" to "usr/local/bin/aksara-doctor",
+            "linux/aksara-capabilities.sh" to "usr/local/bin/aksara-capabilities"
         )
         for ((asset, relative) in scripts) {
             val file = File(root, relative)
