@@ -230,11 +230,13 @@ fun AksaraLinuxScreen(
                                 isFocusable = true
                                 isFocusableInTouchMode = true
                                 setBackgroundColor(android.graphics.Color.rgb(8, 11, 18))
+                                // Termux TerminalView.setTypeface() dereferences mRenderer.
+                                // setTextSize() MUST initialize the renderer first.
+                                setTextSize(vm.fontSize)
                                 setTypeface(runCatching {
                                     Typeface.createFromAsset(context.assets,
                                         "fonts/jetbrains_mono_nl_regular.ttf")
                                 }.getOrDefault(Typeface.MONOSPACE))
-                                setTextSize(vm.fontSize)
                                 vm.attach(this)
                             }
                         },
