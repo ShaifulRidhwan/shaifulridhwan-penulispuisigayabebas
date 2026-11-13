@@ -10,7 +10,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   delete-old-android-releases:
-    if: github.repository == 'ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas' && github.event.head_commit.message == 'chore(releases): one-time cleanup of old Android APK releases'
+    if: >-
+      github.repository == 'ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas' &&
+      github.event.head_commit.message == 'chore(releases): fix one-time cleanup workflow validation'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
