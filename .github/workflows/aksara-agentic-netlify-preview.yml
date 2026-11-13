@@ -37,7 +37,9 @@ jobs:
           else
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "### Netlify preview belum boleh dideploy" >> "$GITHUB_STEP_SUMMARY"
-            echo "Sediakan secrets NETLIFY_AUTH_TOKEN dan NETLIFY_SITE_ID di GitHub Actions. Tiada deploy produksi dibuat." >> "$GITHUB_STEP_SUMMARY"
+            echo "GitHub Actions mesti mempunyai NETLIFY_AUTH_TOKEN dan NETLIFY_SITE_ID. Tiada deploy produksi dibuat." >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::Netlify deployment credentials missing. Check repository Actions secrets scope/names."
+            exit 1
           fi
       - name: Install verified server dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
@@ -87,6 +89,14 @@ jobs:
             if(!res.ok || json.platform!=="android-native" || json.ownerAuthRequired!==true)
               throw Error("Preview backend status failed: HTTP "+res.status);
             if(typeof json.enabled!=="boolean")throw Error("Missing truthful enabled flag.");
-            console.log("Netlify Agentic preview health: HTTP "+res.status+", owner auth required: "+json.ownerAuthRequired);
+            const denied=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},
+              body:JSON.stringify({mission:"Semak seni bina backend dengan teliti",mode:"light",consent:true}),
+              signal:AbortSignal.timeout(20000)});
+            // Unauthorized calls must never be successful, even when the agent is enabled.
+            if(denied.ok || ![401,403,503].includes(denied.status))
+              throw Error("Unauthenticated agent request was not blocked: HTTP "+denied.status);
+            console.log("Netlify Agentic preview health: HTTP "+res.status+
+              ", owner auth required: "+json.ownerAuthRequired+
+              ", anonymous mission blocked: HTTP "+denied.status);
           })().catch(e=>{console.error(e.message);process.exitCode=1});
           NODE
