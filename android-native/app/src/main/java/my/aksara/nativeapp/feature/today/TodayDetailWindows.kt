@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.provider.CalendarContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -17,6 +18,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -24,6 +28,7 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import my.aksara.nativeapp.core.design.*
+import my.aksara.nativeapp.BuildConfig
 import my.aksara.nativeapp.feature.chat.AksaraGlassModal
 import my.aksara.nativeapp.feature.chat.AksaraModalStyle
 import java.time.Instant
@@ -304,6 +309,30 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
     }
 }
 
+/** Actual Open-Meteo temperature samples, never a synthetic activity sparkline. */
+@Composable private fun HourlyTemperatureChart(hours:List<TodayForecastHour>) {
+    val values=hours.take(12)
+    if(values.size<2)return
+    val low=values.minOf { it.celsius }
+    val high=values.maxOf { it.celsius }
+    val span=(high-low).coerceAtLeast(1.0)
+    AksaraText("Graf suhu "+values.size+" jam terdekat",size=10.5f,color=muted)
+    Canvas(Modifier.fillMaxWidth().height(58.dp)) {
+        val chart=Path()
+        values.forEachIndexed { index,hour ->
+            val x=size.width*index/(values.size-1)
+            val y=(size.height-8.dp.toPx())*(1f-((hour.celsius-low)/span).toFloat())+4.dp.toPx()
+            if(index==0) chart.moveTo(x,y) else chart.lineTo(x,y)
+        }
+        drawPath(chart,color=gold,style=Stroke(width=2.dp.toPx(),cap=StrokeCap.Round))
+    }
+    Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+        AksaraText(values.first().time.takeLast(5),size=9f,color=muted)
+        AksaraText(String.format(Locale.US,"%.1f–%.1f°C",low,high),size=9f,color=gold)
+        AksaraText(values.last().time.takeLast(5),size=9f,color=muted)
+    }
+}
+
 @Composable private fun WeatherDetail(
     current:TodayFeed<TodayWeather>?,forecast:TodayFeed<TodayForecast>?,
     city:String?,hasLocation:Boolean,onOpenMap:()->Unit
@@ -313,7 +342,11 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
         if(current?.value!=null) {
             AksaraText(formatNumber(current.value.celsius)+"°C",size=29f,weight=650,color=gold)
             WindowLine("Angin",formatNumber(current.value.windKmh)+" km/j")
-            current.value.rainChance?.let { WindowLine("Potensi hujan",it.toString()+"%") }
+            current.value.rainChance?.let { WindowLine("Potensi hujan harian",it.toString()+"%") }
+            current.value.rainNext3Hours?.let { WindowLine("Potensi hujan 3 jam",it.toString()+"%") }
+            current.value.temperatureTrend3Hours?.let {
+                WindowLine("Perubahan suhu 3 jam",String.format(Locale.US,"%+.1f°C",it))
+            }
         } else DetailNote(if(!hasLocation)"Lokasi belum dibenarkan." else "Bacaan semasa belum tersedia.")
         DetailNote("Sumber: Open-Meteo. Ramalan, bukan amaran rasmi METMalaysia.")
         if(hasLocation) {
@@ -333,6 +366,7 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
         val now=LocalDateTime.now(kl).toString().take(16)
         val hours=data.hours.filter { it.time.take(16)>=now }.take(18)
             .ifEmpty { data.hours.take(12) }
+        HourlyTemperatureChart(hours)
         hours.forEach { hour ->
             WindowLine(hour.time.replace("T"," • "),
                 formatNumber(hour.celsius)+"°C • "+hour.rain+"% hujan")
@@ -443,6 +477,11 @@ private val reminders=listOf(
             Spacer(Modifier.height(6.dp))
         }
     }
+    coins?.updatedAt?.let { timestamp ->
+        DetailNote("BTC/ETH/SOL · "+(if(coins.fromCache)"data cache • " else "data diterima • ")+
+            runCatching { Instant.ofEpochMilli(timestamp).atZone(kl)
+                .format(DateTimeFormatter.ofPattern("dd MMM HH:mm",ms)) }.getOrDefault("masa tidak diketahui"))
+    }
     DetailNote("Harga: CoinGecko (berkumpulan), fallback BTC/ETH/SOL: CoinPaprika. "+
         (if(market?.cached==true)"Paparan data cache; " else "")+
         "Harga/24j mungkin lewat atau tiada. Bukan nasihat pelaburan atau fatwa. Status aset tidak bermakna semua platform atau produk leverage patuh Syariah.")
@@ -451,6 +490,16 @@ private val reminders=listOf(
 @Composable private fun DevelopmentDetail(
     current:TodayFeed<TodayCommit>?,development:TodayDevelopment?
 ) {
+    GlassSection("APK dipasang pada peranti") {
+        WindowLine("Versi",BuildConfig.VERSION_NAME.take(50))
+        val knownSha=BuildConfig.SOURCE_COMMIT_SHA
+        WindowLine("SHA sumber",if(knownSha.isBlank())"Tidak dilaporkan" else knownSha.take(10))
+        if(knownSha.isNotBlank() && current?.value!=null) {
+            DetailNote(if(knownSha.equals(current.value.sha,ignoreCase=true))
+                "SHA APK sama dengan commit branch pembangunan terkini."
+                else "SHA APK berbeza daripada commit terkini; build pratonton dan branch mungkin berlainan.")
+        } else DetailNote("Tiada inferens versi terkini dibuat tanpa SHA sumber APK.")
+    }
     GlassSection("Commit Android terbaru") {
         if(current?.value==null)DetailNote("Belum dapat mengesahkan commit terkini.")
         else {
