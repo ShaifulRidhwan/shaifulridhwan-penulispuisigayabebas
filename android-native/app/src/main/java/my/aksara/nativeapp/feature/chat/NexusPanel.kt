@@ -312,6 +312,31 @@ internal fun NexusPanel(
                             }, Modifier.weight(1f), height = 35.dp, size = 9f,
                                 enabled = !txBusy && current.activeId == null)
                         }
+                        AksaraText(
+                            "Kongsi & Cadang Edit menghantar matlamat dan kandungan fail teks " +
+                            "(maksimum 14 KB) ke backend Aksara. Ia tidak menulis fail sebelum " +
+                            "kau semak dan luluskan.",
+                            size = 9f, line = 14f, color = AksaraColors.muted)
+                        AksaraButton("Kongsi Fail & Cadang Edit dengan A.I.", {
+                            txBusy = true
+                            message = null
+                            coroutineScope.launch {
+                                try {
+                                    val result = NexusEngine.suggestWorkspaceEditWithAi(
+                                        workspacePath, kernelGoal)
+                                    workspaceText = result.first
+                                    workspaceApproval = result.second
+                                    message = "Cadangan A.I. tersedia. Semak kandungan teks " +
+                                        "dan preview sebelum Lulus & Ubah Fail."
+                                } catch (error: Exception) {
+                                    message = "Cadangan edit A.I. gagal: " +
+                                        (error.message ?: "Unknown").take(160)
+                                } finally { txBusy = false }
+                            }
+                        }, Modifier.fillMaxWidth(), height = 36.dp, size = 10f,
+                            enabled = !txBusy && current.activeId == null &&
+                                workspacePath.isNotBlank() && kernelGoal.isNotBlank())
+
                         if (workspaceApproval != null) {
                             val preview = workspaceApproval!!
                             AksaraGlassSurface(Modifier.fillMaxWidth(), radius = 14.dp, blur = 5.dp) {
