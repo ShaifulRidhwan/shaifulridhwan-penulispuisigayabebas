@@ -437,7 +437,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             .semantics { contentDescription="Lihat konteks sesi Aksara" },
                             radius=13.dp) {
                             Row(Modifier.align(Alignment.Center).padding(horizontal=7.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(3.dp)) {
-                                AksaraText("AKSARA A.I", size=10f,line=12f,weight=650)
+                                AksaraText("AKSARA A.", size=10f,line=12f,weight=650)
                                 AksaraText("ⓘ",size=9f,color=AksaraColors.gold)
                                 AksaraText("oleh Shaiful Ridhwan",size=8f,line=8.4f,weight=450,color=Color(233,198,141,212))
                             }
@@ -467,11 +467,36 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 CompositionLocalProvider(LocalBackdropPaints provides listOf(headerPaint)) {
                                 Row(Modifier.fillMaxSize().padding(horizontal=if(compact)5.dp else 8.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(if(compact)3.dp else 4.dp)) {
                                     ReactiveVoiceChip(voiceIndicator,compact) {open("voice-permission")}
-                                    AksaraButton("Agent",{agenticMissionVisible=true},
-                                        Modifier.width(53.dp).semantics { contentDescription="Buka Agentic Core" },
-                                        size=10f,height=32.dp,radius=999.dp)
                                     Spacer(Modifier.weight(1f))
-                                    AksaraGlassSurface(Modifier.width(if(compact)151.dp else 167.dp).height(AksaraGlassTokens.capsuleHeight).clickable {open("connection")}.semantics {contentDescription="Connection"},radius=999.dp,blur=9.dp) {
+                                    // Dedicated delegated-flow icon and shared capsule glass tokens.
+                                    // Keep Agent immediately adjacent to Multi A.I; Voice remains on the left.
+                                    AksaraGlassSurface(
+                                        Modifier.width(if(maxWidth<350.dp)75.dp else if(compact)85.dp else 100.dp)
+                                            .height(AksaraGlassTokens.capsuleHeight)
+                                            .aksaraBouncyClick(onClick={agenticMissionVisible=true})
+                                            .semantics {
+                                                contentDescription="Buka Agentic Runtime"
+                                                testTag="agent-status-chip"
+                                            },
+                                        radius=AksaraGlassTokens.capsuleRadius,
+                                        blur=AksaraGlassTokens.capsuleBlur
+                                    ) {
+                                        Row(Modifier.align(Alignment.Center),
+                                            horizontalArrangement=Arrangement.spacedBy(5.dp),
+                                            verticalAlignment=Alignment.CenterVertically) {
+                                            AksaraIcon("agent-flow",Modifier.size(16.dp),AksaraColors.gold)
+                                            AksaraText("Agent",size=if(compact)9.5f else 10f,
+                                                line=13f,weight=600)
+                                        }
+                                    }
+                                    AksaraGlassSurface(
+                                        Modifier.width(if(maxWidth<350.dp)137.dp else if(compact)151.dp else 167.dp)
+                                            .height(AksaraGlassTokens.capsuleHeight)
+                                            .clickable {open("connection")}
+                                            .semantics {contentDescription="Connection"},
+                                        radius=AksaraGlassTokens.capsuleRadius,
+                                        blur=AksaraGlassTokens.capsuleBlur
+                                    ) {
                                         val connectionStatus = ProviderConnectionStatus.label(state.providers)
                                         val compactStatus = when(connectionStatus) {
                                             "Backend unreachable" -> "Unreachable"
