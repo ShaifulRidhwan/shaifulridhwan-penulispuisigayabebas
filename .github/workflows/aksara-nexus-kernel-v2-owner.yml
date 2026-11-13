@@ -118,6 +118,12 @@ jobs:
           test -s android-native/app/src/main/java/my/aksara/nativeapp/core/nexus/kernel/KernelAiPlanner.kt
           test -s android-native/app/src/main/java/my/aksara/nativeapp/core/nexus/kernel/KernelPlanStore.kt
           test -s android-native/app/src/test/java/my/aksara/nativeapp/core/nexus/kernel/KernelPlannerIntegrationTest.kt
+          test -s android-native/app/src/main/java/my/aksara/nativeapp/core/nexus/kernel/KernelWorkspaceTransactions.kt
+          test -s android-native/app/src/main/java/my/aksara/nativeapp/core/nexus/kernel/KernelAiEditPlanner.kt
+          test -s android-native/app/src/test/java/my/aksara/nativeapp/core/nexus/kernel/KernelWorkspaceTransactionsTest.kt
+          test -s android-native/app/src/test/java/my/aksara/nativeapp/core/nexus/kernel/KernelAiEditPlannerTest.kt
+          grep -Fq 'previewManualLinuxCommand' android-native/app/src/main/java/my/aksara/nativeapp/core/nexus/NexusEngine.kt
+          grep -Fq 'runApprovedLinuxCommand' android-native/app/src/main/java/my/aksara/nativeapp/core/nexus/NexusEngine.kt
           python3 android-native/tools/verify_ank_apk.py --self-test
       - name: Compile rootless Linux preview with focused regression tests
         working-directory: android-native
@@ -202,5 +208,5 @@ jobs:
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
           gh release create "aksara-nexus-pr325-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \
             --title "AKSARA Nexus PR325 $tag - Integrated Android Preview" \
-            --notes "PR325 AKSARA Nexus Kernel V2 owner APK. Includes AI-planned capability DAGs with explicit user approval, Linux/Today/GitHub adapters, provenance, resource-aware scheduler, checkpoint recovery, event journal, telemetry, isolated Alpine ARM64 PRoot and original PTY. A single rootfs and no embedded additional LLM. Sideload-only targetSdk28 preview; owner-device QA required before merge. GPL PRoot source attached." \
+            --notes "PR325 AKSARA Nexus Kernel V2 integrated owner APK. Includes AI-planned DAGs; real Linux/Today/GitHub adapters; trusted evidence; adaptive scheduling; checkpoint recovery; user-approved workspace file create/update/delete/rollback; opt-in AI file-edit suggestions; explicitly approved custom Linux PRoot commands; original PTY and source-preserving UI. One Alpine ARM64 runtime, no embedded extra LLM. CI and unit tests required; sideload-only preview; owner-device QA required before merge. GPL PRoot source attached." \
             --prerelease --target "$GITHUB_SHA"
