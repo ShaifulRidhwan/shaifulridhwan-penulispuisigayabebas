@@ -261,7 +261,8 @@ internal object AksaraLinuxRuntime {
         val scripts = listOf(
             "linux/terminal-theme.sh" to "etc/profile.d/zz-aksara-theme.sh",
             "linux/aksara-doctor.sh" to "usr/local/bin/aksara-doctor",
-            "linux/aksara-capabilities.sh" to "usr/local/bin/aksara-capabilities"
+            "linux/aksara-capabilities.sh" to "usr/local/bin/aksara-capabilities",
+            "linux/aksara-share.sh" to "usr/local/bin/aksara-share"
         )
         for ((asset, relative) in scripts) {
             val file = File(root, relative)
