@@ -211,8 +211,17 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
         },onDialogVisibilityChange={todayDialogVisible=it})
       } else if (page == 2) {
-        AksaraLinuxScreen(onBack={ scope.launch { pagerState.animateScrollToPage(1) } },
-            onDialogVisibilityChange={ linuxDialogVisible=it })
+        // HorizontalPager precomposes adjacent pages. Never start a native Linux
+        // PTY (or run Linux first-setup checks) during the initial Chat launch.
+        // Mount Linux as soon as a swipe towards it begins, or it is targeted.
+        // The activity-scoped ViewModel retains live PTYs when this page unmounts.
+        val linuxEntering = pagerState.currentPage == 2 ||
+            pagerState.targetPage == 2 ||
+            (pagerState.currentPage == 1 && pagerState.currentPageOffsetFraction > 0f)
+        if (linuxEntering) {
+            AksaraLinuxScreen(onBack={ scope.launch { pagerState.animateScrollToPage(1) } },
+                onDialogVisibilityChange={ linuxDialogVisible=it })
+        }
       } else {
         AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
         val textDocs = attachments.filter { it.text.isNotBlank() }
