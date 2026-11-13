@@ -30,11 +30,16 @@ internal class KernelCheckpointStore(context: Context) {
         writeUnsafe(existing.takeLast(maxEvents))
     }
 
-    @Synchronized fun recover(): List<Checkpoint> =
-        readUnsafe().map { mark ->
+    @Synchronized fun recover(): List<Checkpoint> {
+        // Collapse history to the final state for each step. A RUNNING record
+        // followed by COMPLETED must never be reported as interrupted.
+        val latest = linkedMapOf<Pair<String, String>, Checkpoint>()
+        readUnsafe().forEach { mark -> latest[mark.planId to mark.nodeId] = mark }
+        return latest.values.map { mark ->
             if (mark.status == KernelStatus.RUNNING.name)
                 mark.copy(status = "INTERRUPTED") else mark
         }
+    }
 
     private fun readUnsafe(): List<Checkpoint> = runCatching {
         val json = JSONObject(file.openRead().use { stream ->
