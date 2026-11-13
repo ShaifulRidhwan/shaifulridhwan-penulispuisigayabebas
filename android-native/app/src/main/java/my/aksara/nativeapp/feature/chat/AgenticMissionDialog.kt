@@ -55,7 +55,7 @@ private class AgentMissionClient {
             val status=connection.responseCode
             val stream=if(status in 200..299)connection.inputStream else connection.errorStream
             val raw=stream?.bufferedReader(Charsets.UTF_8)?.use { it.readText().take(38000) }
-                ?: error("Tiada respons daripada backend.")
+                ?: error("Backend Response: payload kosong.")
             val json=JSONObject(raw)
             if(status !in 200..299)error(json.optString("error","Backend HTTP $status"))
             fun values(key:String,formatter:(JSONObject)->String):List<String> {
@@ -69,10 +69,10 @@ private class AgentMissionClient {
                 json.optString("engine","unknown"),
                 json.optString("provider","unknown"),
                 json.optString("model","unknown"),
-                json.optString("response","Tiada jawapan."),
+                json.optString("response","Execution Result tidak tersedia."),
                 values("steps"){ row ->
                     (if(row.optBoolean("ok",false))"✓ " else "× ")+
-                        row.optString("tool","tool")+" · "+row.optString("reason","selesai")
+                        row.optString("tool","tool")+" · "+row.optString("reason","completed")
                 },
                 values("sources"){ row ->
                     row.optString("title","Sumber")+" · "+row.optString("url","")
@@ -98,14 +98,14 @@ internal fun AgenticMissionDialog(onClose:()->Unit){
     // Deliberately NOT rememberSaveable: never place credentials in Android saved state.
     var ownerKey by remember { mutableStateOf("") }
     var pending by remember { mutableStateOf(false) }
-    var notice by remember { mutableStateOf("Tiada misi berjalan.") }
+    var notice by remember { mutableStateOf("Runtime IDLE · Tiada request aktif.") }
     var outcome by remember { mutableStateOf<AgentMissionReport?>(null) }
     var job by remember { mutableStateOf<Job?>(null) }
     fun halt(){
         client.stop()
         job?.cancel()
         pending=false
-        notice="Sambungan telefon dihentikan. Backend boleh terus berjalan sehingga had masa; tiada akses tulis."
+        notice="Client Abort dihantar. Server task mungkin aktif sehingga timeout; write access kekal disekat."
     }
     DisposableEffect(Unit) { onDispose { client.stop();job?.cancel() } }
     Dialog(onDismissRequest={halt();onClose()}) {
@@ -117,13 +117,13 @@ internal fun AgenticMissionDialog(onClose:()->Unit){
                 verticalArrangement=Arrangement.spacedBy(11.dp)
             ) {
                 AksaraText("AKSARA AGENTIC CORE",size=16f,weight=700,color=AksaraColors.gold)
-                AksaraText("Misi Android · Vercel AI SDK + DeepAgents.js",
+                AksaraText("Runtime Gateway · Vercel AI SDK / DeepAgents.js",
                     size=10.5f,line=16f,color=AksaraColors.muted)
-                AksaraText("Arahan misi",size=11f,weight=650)
+                AksaraText("Mission Specification",size=11f,weight=650)
                 AksaraGlassSurface(Modifier.fillMaxWidth().heightIn(min=95.dp),radius=15.dp) {
                     Box(Modifier.fillMaxWidth().padding(12.dp)) {
                         if(mission.isBlank())AksaraText(
-                            "Contoh: Semak framework AI percuma dan jelaskan pilihan terbaik beserta sumber.",
+                            "Contoh: Invoke calculate untuk 7*6. Sertakan execution trace dan verified result.",
                             size=12f,line=18f,color=AksaraColors.muted)
                         BasicTextField(
                             value=mission,onValueChange={if(it.length<=3000)mission=it},
@@ -134,7 +134,7 @@ internal fun AgenticMissionDialog(onClose:()->Unit){
                         )
                     }
                 }
-                AksaraText("Tahap pelaksanaan",size=11f,weight=650)
+                AksaraText("Execution Profile",size=11f,weight=650)
                 Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){
                     AksaraButton(if(mode=="light")"✓ Light" else "Light",
                         {mode="light"},Modifier.weight(1f),size=10f,height=34.dp,radius=12.dp)
@@ -144,11 +144,11 @@ internal fun AgenticMissionDialog(onClose:()->Unit){
                         {mode="deep"},Modifier.weight(1f),size=10f,height=34.dp,radius=12.dp)
                 }
                 AksaraText(
-                    if(mode=="deep")"Deep: perancangan dan sub-agent dengan had ketat."
-                    else if(mode=="light")"Light: carian ringkas dan jawapan pantas."
-                    else "Balanced: agent loop untuk misi berbilang langkah.",
+                    if(mode=="deep")"DeepAgents.js · max 9 model steps / 14 tool calls."
+                    else if(mode=="light")"ToolLoopAgent · max 3 model steps / 4 tool calls."
+                    else "ToolLoopAgent · max 6 model steps / 8 tool calls.",
                     size=10f,line=15f,color=AksaraColors.muted)
-                AksaraText("Kunci pemilik Agentic (tidak disimpan)",size=11f,weight=650)
+                AksaraText("Owner Authorization · Bearer Token",size=11f,weight=650)
                 AksaraGlassSurface(Modifier.fillMaxWidth().height(48.dp),radius=13.dp) {
                     BasicTextField(
                         value=ownerKey,onValueChange={if(it.length<=256)ownerKey=it},
@@ -159,55 +159,56 @@ internal fun AgenticMissionDialog(onClose:()->Unit){
                         singleLine=true,enabled=!pending
                     )
                 }
-                AksaraText("Kunci hanya digunakan untuk misi ini. Tiada kunci dalam APK.",
+                AksaraText("Ephemeral credential · tidak dibundel dalam APK atau disimpan pada peranti.",
                     size=9.5f,line=15f,color=AksaraColors.muted)
                 AksaraText(
                     (if(consent)"☑ " else "☐ ")+
-                      "Aku benarkan misi ini dihantar ke provider AI percuma yang tersedia.",
+                      "Benarkan model invocation ke free-tier provider yang dikonfigurasi.",
                     Modifier.fillMaxWidth().clickable(enabled=!pending){consent=!consent},
                     size=10.5f,line=17f,color=AksaraColors.gold)
                 AksaraText(
-                    "Read-only: tiada akses shell, root, fail peribadi, Novel/Perpustakaan atau GitHub write. " +
-                    "Tiada memori pengguna disimpan oleh endpoint.",
+                    "Execution Policy: read-only tools · shell/root blocked · private data isolated. " +
+                    "Memory disabled · GitHub write prohibited.",
                     size=9.5f,line=16f,color=AksaraColors.muted)
                 Row(horizontalArrangement=Arrangement.spacedBy(7.dp)){
-                    AksaraButton(if(pending)"Henti" else "Tutup",
+                    AksaraButton(if(pending)"Abort" else "Close",
                         {if(pending)halt() else onClose()},
                         Modifier.weight(1f),height=38.dp,size=11f)
-                    AksaraButton("Laksana",{
+                    AksaraButton("Execute",{
                         if(!pending && consent && mission.trim().length>=10 && ownerKey.length>=40){
                             focus.clearFocus()
                             outcome=null
                             pending=true
-                            notice="Agent menjalankan misi. Tunggu keputusan sebenar..."
+                            notice="Runtime EXECUTING · Request dihantar ke Netlify Gateway..."
                             job=scope.launch {
                                 try {
                                     outcome=client.execute(mission.trim(),mode,ownerKey)
-                                    notice="Misi tamat: "+(outcome?.status?:"unknown")
+                                    notice="Runtime Status: "+(outcome?.status?:"unknown")
                                 }catch(_:CancellationException){
-                                    notice="Misi dibatalkan."
+                                    notice="Client request cancelled."
                                 }catch(error:Exception){
-                                    notice="Gagal: "+(error.message?:"Backend unreachable")
+                                    notice="Runtime Error: "+(error.message?:"Backend unreachable")
                                 }finally { pending=false;job=null }
                             }
                         }
                     },Modifier.weight(1f),height=38.dp,size=11f)
                 }
                 AksaraText(notice,size=11f,line=17f,
-                    color=if(notice.startsWith("Gagal"))Color(0xffe7a08e) else AksaraColors.gold)
+                    color=if(notice.startsWith("Runtime Error"))Color(0xffe7a08e) else AksaraColors.gold)
                 outcome?.let { report ->
-                    AksaraText(report.engine+" · "+report.provider+" / "+report.model,
+                    AksaraText("Engine: "+report.engine+" · Provider: "+report.provider+" / "+report.model,
                         size=10f,line=16f,color=AksaraColors.muted)
+                    AksaraText("Execution Result",size=11f,weight=650)
                     AksaraText(report.answer,size=12f,line=19f)
                     if(report.steps.isNotEmpty()){
-                        AksaraText("Jejak tindakan yang benar-benar dilaksanakan",size=11f,weight=650)
+                        AksaraText("Verified Tool Invocation Trace",size=11f,weight=650)
                         report.steps.forEach { AksaraText(it,size=10f,line=16f) }
                     }
                     if(report.sources.isNotEmpty()){
-                        AksaraText("Sumber",size=11f,weight=650)
+                        AksaraText("Source References",size=11f,weight=650)
                         report.sources.forEach { AksaraText(it,size=10f,line=16f,color=AksaraColors.muted) }
                     }
-                    AksaraText("Masa: "+report.elapsedMs+" ms. Status: "+report.status,
+                    AksaraText("Latency: "+report.elapsedMs+" ms · Final Status: "+report.status,
                         size=9.5f,line=15f,color=AksaraColors.muted)
                 }
             }
