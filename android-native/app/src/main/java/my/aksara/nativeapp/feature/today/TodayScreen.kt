@@ -30,6 +30,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import my.aksara.nativeapp.core.design.*
+import my.aksara.nativeapp.core.nexus.NexusEngine
 import my.aksara.nativeapp.feature.chat.ChatWallpaper
 import my.aksara.nativeapp.feature.chat.AksaraGlassModal
 import java.text.NumberFormat
@@ -222,6 +223,19 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
             city=null
             weather=null
             prayer=null
+        }
+    }
+    // Publish only a coarse, bounded snapshot. No precise location, tokens, or personal notes.
+    // The snapshot stays inside the app until the user explicitly sends it to A.I.
+    LaunchedEffect(active, weather, prayer, crypto, github) {
+        if (active) {
+            val snapshot = listOfNotNull(
+                weather?.value?.let { "Cuaca " + String.format(Locale.US, "%.1f", it.celsius) + "°C (" + todayCondition(it.code) + ")" },
+                prayer?.value?.let { "Zon solat " + it.zone },
+                crypto?.value?.take(3)?.joinToString(", ") { it.symbol + " USD " + String.format(Locale.US, "%.2f", it.usd) },
+                github?.value?.let { "GitHub " + it.sha.take(8) + " · CI " + it.ci }
+            ).joinToString(" | ")
+            NexusEngine.publishDashboard(snapshot)
         }
     }
     // Clock ticks should not recreate expensive date/time format patterns.
