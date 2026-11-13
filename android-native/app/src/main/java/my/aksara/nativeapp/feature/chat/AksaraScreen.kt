@@ -43,7 +43,6 @@ import io.noties.markwon.ext.tables.TablePlugin
 import my.aksara.nativeapp.R
 import my.aksara.nativeapp.feature.today.TodayScreen
 import my.aksara.nativeapp.core.linux.AksaraLinuxScreen
-import my.aksara.nativeapp.core.nexus.NexusEngine
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.platform.Attachment
@@ -82,8 +81,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
 @Composable fun AksaraApp(vm: ChatViewModel = viewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    remember(context) { NexusEngine.initialize(context); Unit }
-    LaunchedEffect(state.providers) { NexusEngine.publishAiStatus(state.providers) }
     var attachments by remember { mutableStateOf<List<Attachment>>(emptyList()) }
     var attachmentError by remember { mutableStateOf<String?>(null) }
     var attachmentLoading by remember { mutableStateOf(false) }
@@ -189,8 +186,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var overlayVisible by remember { mutableStateOf(false) }
     var todayDialogVisible by remember { mutableStateOf(false) }
     var linuxDialogVisible by remember { mutableStateOf(false) }
-    var nexusOpen by rememberSaveable { mutableStateOf(false) }
-    var nexusDraft by remember { mutableStateOf<String?>(null) }
     // Do not recompose the whole pager for each IME animation pixel.
     val imeDensity=LocalDensity.current
     // WindowInsets.ime is composable: resolve it before entering derivedStateOf.
@@ -198,12 +193,11 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val keyboardOpen by remember(imeDensity,pagerImeInsets) {
         derivedStateOf { pagerImeInsets.getBottom(imeDensity)>0 }
     }
-    Box(Modifier.fillMaxSize()) {
     HorizontalPager(
         state=pagerState,
         modifier=Modifier.fillMaxSize(),
         beyondViewportPageCount=1,
-        userScrollEnabled=!overlayVisible && !todayDialogVisible && !linuxDialogVisible && !nexusOpen && !keyboardOpen
+        userScrollEnabled=!overlayVisible && !todayDialogVisible && !linuxDialogVisible && !keyboardOpen
     ) { page ->
       if(page==0) {
         TodayScreen(active=pagerState.currentPage==0,onBack={
@@ -264,26 +258,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         onCancelUpload = { uploadJob?.cancel() },
         onPickAttachment = { category -> picker.launch(AttachmentSendPolicy.mimeTypes(category)) },
         onDismissError = { attachmentError = null; vm.dismissError() },
-        nexusDraft = nexusDraft, onNexusDraftConsumed = { nexusDraft = null },
         onOverlayVisibilityChange = { overlayVisible=it })
       }
     }
-    if(!keyboardOpen && !overlayVisible && !todayDialogVisible && !linuxDialogVisible && !nexusOpen) {
-        Box(Modifier.align(Alignment.CenterEnd)) { NexusLauncher { nexusOpen = true } }
-    }
-    }
-    if(nexusOpen) NexusPanel(
-        onClose={ nexusOpen=false },
-        onNavigate={ target ->
-            nexusOpen=false
-            scope.launch { pagerState.animateScrollToPage(target) }
-        },
-        onDraftForChat={ prompt ->
-            nexusDraft = prompt
-            nexusOpen = false
-            scope.launch { pagerState.animateScrollToPage(1) }
-        }
-    )
 
     // A document-picker selection is not consent for uploading multi-megabyte
     // files to a remote provider. Obtain a second explicit approval first.
@@ -327,19 +304,12 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     onRemoveDraft: suspend(String)->Boolean = { false },
     onEraseLocal: suspend()->Boolean = { false },
     fixedTimestamp: Long? = null, onVoiceTurns:(List<my.aksara.engine.voice.VoiceContextTurn>)->Unit = {},
-    onOverlayVisibilityChange:(Boolean)->Unit = {},
-    nexusDraft:String? = null, onNexusDraftConsumed:()->Unit = {}) {
+    onOverlayVisibilityChange:(Boolean)->Unit = {}) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
     LaunchedEffect(overlay) { onOverlayVisibilityChange(overlay!=null) }
     var voiceIndicator by remember { mutableStateOf(VoiceLinkState.IDLE) }
     var draft by rememberSaveable { mutableStateOf("") }
-    LaunchedEffect(nexusDraft) {
-        if (!nexusDraft.isNullOrBlank()) {
-            draft = nexusDraft
-            onNexusDraftConsumed()
-        }
-    }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingJumpId by remember { mutableStateOf<String?>(null) }
     var highlightedMessageId by remember { mutableStateOf<String?>(null) }
