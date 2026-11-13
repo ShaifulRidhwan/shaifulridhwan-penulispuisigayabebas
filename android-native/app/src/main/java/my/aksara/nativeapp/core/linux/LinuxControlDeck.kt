@@ -18,12 +18,13 @@ internal object LinuxSessionSelection {
     }
 }
 
-/** Shortcuts are constant, read-only commands. Nothing is auto-executed. */
+/** Explicit user-triggered terminal shortcuts. No command runs automatically. */
 internal object LinuxQuickCommands {
     enum class Category(val label: String, val icon: String) {
         FILES("FILES", "file-text"),
         SYSTEM("SYSTEM", "activity"),
-        DEV("DEV", "code")
+        DEV("DEV", "code"),
+        GIT("GIT", "network")
     }
 
     data class Action(
@@ -41,9 +42,23 @@ internal object LinuxQuickCommands {
         Action("disk", "DISK", "activity", "df -h", Category.FILES),
         Action("kernel", "KERNEL", "code", "uname -a", Category.SYSTEM),
         Action("process", "PROCESSES", "activity", "ps", Category.SYSTEM),
+        Action("doctor", "DOCTOR", "activity", "aksara-doctor", Category.SYSTEM,
+            linuxOnly = true),
+        Action("server", "SERVER", "network",
+            "python3 -m http.server 8000 --bind 127.0.0.1",
+            Category.SYSTEM, linuxOnly = true),
         Action("git", "GIT", "network", "git status", Category.DEV, linuxOnly = true),
         Action("python", "PYTHON", "code", "python3 --version", Category.DEV, linuxOnly = true),
-        Action("packages", "PACKAGES", "file-text", "apk info", Category.DEV, linuxOnly = true)
+        Action("packages", "PACKAGES", "file-text", "apk info", Category.DEV, linuxOnly = true),
+        Action("branch", "BRANCH", "network",
+            "git branch --show-current", Category.GIT, linuxOnly = true),
+        Action("git-log", "LOG", "file-text",
+            "git log -3 --oneline", Category.GIT, linuxOnly = true),
+        Action("remote", "REMOTE", "network",
+            "git remote -v", Category.GIT, linuxOnly = true),
+        Action("ssh-test", "SSH TEST", "network",
+            "ssh -o BatchMode=yes -o ConnectTimeout=5 -T git@github.com",
+            Category.GIT, linuxOnly = true)
     )
 
     fun categories(installed: Boolean): List<Category> =
