@@ -94,6 +94,19 @@ jobs:
           assert pager.index("if (linuxEntering) {") < pager.index("AksaraLinuxScreen(onBack=")
           print("Linux PTY deferred until Linux page is entered")
           AKSARA_LINUX_COLD_START
+          # Termux TerminalView.setTypeface reads mRenderer.mTextSize.
+          # Protect against the Android 16 crash from applying a font before setTextSize.
+          python3 - <<'AKSARA_TERMINAL_FONT_INIT'
+          from pathlib import Path
+          source = Path("android-native/app/src/main/java/my/aksara/nativeapp/core/linux/AksaraLinuxScreen.kt").read_text()
+          factory = source.split("TerminalView(context, null).apply {", 1)[1].split("vm.attach(this)", 1)[0]
+          assert "setTextSize(vm.fontSize)" in factory, "Terminal renderer needs a text size"
+          assert "setTypeface(" in factory, "JetBrains Mono terminal font missing"
+          assert factory.index("setTextSize(vm.fontSize)") < factory.index("setTypeface("), (
+              "CRASH: setTypeface dereferences a null Termux renderer; initialize via setTextSize first"
+          )
+          print("Termux renderer initialized before bundled JetBrains Mono font")
+          AKSARA_TERMINAL_FONT_INIT
           bash android-native/scripts/build-aksara-linux.sh
       - name: Assert official Alpine archive contains guest shell and package manager
         run: |
