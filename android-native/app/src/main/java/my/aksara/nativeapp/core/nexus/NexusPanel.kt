@@ -155,3 +155,19 @@ internal fun NexusPanel(
         }
     }
 }
+
+
+/**
+ * Slim edge handle shared by all three pager pages. Does not change their
+ * layout, tab count, gesture logic, or existing headers.
+ */
+@Composable
+internal fun NexusLauncher(onClick: () -> Unit) {
+    val backdrop = remember { HazeState() }
+    CompositionLocalProvider(LocalBackdrop provides backdrop) {
+        AksaraButton("", onClick,
+            Modifier.width(30.dp).height(54.dp),
+            icon = "network", height = 54.dp, radius = 13.dp,
+            size = 10f, iconSize = 18.dp, contentColor = AksaraColors.gold)
+    }
+}
