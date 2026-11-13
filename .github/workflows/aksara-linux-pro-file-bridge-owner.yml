@@ -1,4 +1,4 @@
-name: AKSARA Linux Pro File Bridge (PR329 Owner APK)
+name: AKSARA Linux Advanced Mode (PR329 Full Alpine APK)
 on:
   push:
     branches:
@@ -150,8 +150,14 @@ jobs:
       # configs before this step, and validates shell syntax for startup hooks.
       # Rootfs contains preinstalled ARM64 packages and its apk database.
       # Focused Linux tests cover prompt, restart, categories and key mapping.
-      - name: Shell syntax check for Linux capability inspector
-        run: sh -n android-native/app/src/main/assets/linux/aksara-capabilities.sh
+      - name: Validate Advanced Mode shell scripts and security contracts
+        run: |
+          set -euo pipefail
+          sh -n android-native/app/src/main/assets/linux/aksara-capabilities.sh
+          sh -n android-native/app/src/main/assets/linux/aksara-share.sh
+          grep -q 'linux/aksara-share.sh' android-native/app/src/main/java/my/aksara/nativeapp/core/linux/AksaraLinuxRuntime.kt
+          grep -q 'OpenDocumentTree' android-native/app/src/main/java/my/aksara/nativeapp/core/linux/AksaraLinuxScreen.kt
+          grep -q 'LinuxAdvancedStorageTest' android-native/app/src/test/java/my/aksara/nativeapp/core/linux/LinuxAdvancedStorageTest.kt
       - name: Compile rootless Linux preview with focused regression tests
         working-directory: android-native
         run: |
@@ -231,5 +237,5 @@ jobs:
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
           gh release create "aksara-pr329-full-linux-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \
             --title "AKSARA PR329 Full Linux + Linux Pro File Bridge $tag" \
-            --notes "PR329 owner-only Alpine Full Linux sideload QA APK with Android SAF File Bridge and capability inspector. Rootless PRoot and all existing pages preserved. Isolated preview app ID, targetSdk 28, NOT Play-Store-ready. Requires on-device QA; do NOT merge before owner approval. GPL PRoot corresponding source attached." \
+            --notes "PR329 AKSARA LINUX ADVANCED MODE: rootless Full Alpine APK with SAF single/multiple-file import, selected folder PULL/PUSH/UNLINK, aksara-share CLI, capabilities inspector. No root or unrestricted shared storage. New isolated preview app, targetSdk28 sideload-only. Device QA mandatory before merge; PRoot GPL source attached." \
             --prerelease --target "$GITHUB_SHA"
