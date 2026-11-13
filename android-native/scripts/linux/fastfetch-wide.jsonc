@@ -1,15 +1,5 @@
 {
-  "logo": {
-    "type": "file",
-    "source": "/usr/share/aksara/aksara-logo.txt",
-    "padding": {
-      "right": 3
-    },
-    "color": {
-      "1": "#E6C58B",
-      "2": "#76C2F8"
-    }
-  },
+  "logo": null,
   "display": {
     "separator": "  ›  ",
     "color": {
