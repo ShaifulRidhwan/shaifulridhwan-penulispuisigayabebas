@@ -1,6 +1,11 @@
 package my.aksara.nativeapp.core.linux
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -19,6 +24,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import android.graphics.Typeface
@@ -41,6 +47,15 @@ fun AksaraLinuxScreen(
 ) {
     val backdrop = remember { HazeState() }
     val margins = aksaraDeviceMargins()
+    val context = LocalContext.current
+    val backupPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        if (uri != null) vm.exportVault(uri)
+    }
+    val restorePicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) vm.importVault(uri)
+    }
     val current = vm.slots.getOrNull(vm.selected)
     var deck by rememberSaveable { mutableStateOf("keys") }
     var commandCategory by rememberSaveable { mutableStateOf("FILES") }
@@ -287,8 +302,34 @@ fun AksaraLinuxScreen(
                                     LinuxDeckStat("ISOLATION", "PROOT · NO ROOT", AksaraColors.gold)
                                     LinuxDeckStat("STORAGE", "APP PRIVATE", LinuxDeckMint)
                                 }
-                                AksaraText("Fail /workspace disimpan dalam storan aplikasi. Proses PTY tidak dijamin selepas app dimatikan.",
+                                AksaraText("Workspace kekal dalam storan aplikasi. Sesi PTY tidak dapat dijamin selepas Android menamatkan proses.",
                                     size = 9.2f, color = AksaraColors.muted)
+                                Row(Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    AksaraButton("BACKUP", {
+                                        backupPicker.launch("aksara-linux-workspace.zip")
+                                    }, Modifier.weight(1f), height = 31.dp, size = 10f,
+                                        enabled = !vm.vaultBusy)
+                                    AksaraButton("IMPORT", {
+                                        restorePicker.launch(arrayOf("application/zip",
+                                            "application/octet-stream"))
+                                    }, Modifier.weight(1f), height = 31.dp, size = 10f,
+                                        enabled = !vm.vaultBusy)
+                                    AksaraButton("LOCALHOST", {
+                                        runCatching {
+                                            context.startActivity(Intent(
+                                                Intent.ACTION_VIEW,
+                                                Uri.parse("http://127.0.0.1:8000/")))
+                                        }.onFailure {
+                                            Toast.makeText(context,
+                                                "Browser tidak dapat dibuka.",
+                                                Toast.LENGTH_SHORT).show()
+                                        }
+                                    }, Modifier.weight(1f), height = 31.dp, size = 10f)
+                                }
+                                vm.vaultStatus?.let { status ->
+                                    AksaraText(status, size = 9f, color = AksaraColors.gold)
+                                }
                             }
                         }
                     }
