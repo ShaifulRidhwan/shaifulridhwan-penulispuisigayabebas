@@ -7,6 +7,12 @@ plugins {
 val enableSdTurboNative = providers.gradleProperty("enableSdTurboNative").orNull == "true"
 // Linux preview is an isolated debug APK. Production remains targetSdk 35.
 val enableLinuxPreview = providers.gradleProperty("enableLinuxPreview").orNull == "true"
+// Compatibility research only; Android target 36 enforces W^X app-data execution.
+// This probe is NOT a supported Linux delivery until on-device PRoot exec is solved.
+val enableLinuxModernProbe = providers.gradleProperty("enableLinuxModernProbe").orNull == "true"
+require(!enableLinuxModernProbe || enableLinuxPreview) {
+    "Modern Linux compatibility probe must be isolated from production build"
+}
 require(!(enableLinuxPreview && enableSdTurboNative)) { "Linux preview and SD-Turbo builds must remain separate" }
 // PR preview APKs use a SHA-scoped package ID to avoid colliding with an installed
 // Android app signed by a different, ephemeral CI debug keystore.
@@ -26,7 +32,7 @@ android {
         }
     }
     namespace = "my.aksara.nativeapp"
-    compileSdk = 35
+    compileSdk = if (enableLinuxModernProbe) 36 else 35
     defaultConfig {
         if (enableSdTurboNative || enableLinuxPreview) {
             ndk { abiFilters.add("arm64-v8a") }
@@ -36,7 +42,11 @@ android {
         // SDK 28 is required by the *unmerged, sideload-only* rootless
         // Linux preview to exec package binaries from app-private storage.
         // Do not use this configuration for production/Play Store releases.
-        targetSdk = if (enableLinuxPreview) 28 else 35
+        targetSdk = when {
+            enableLinuxModernProbe -> 36
+            enableLinuxPreview -> 28
+            else -> 35
+        }
         versionCode = 4
         versionName = "0.2.0-chess-darkness"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
