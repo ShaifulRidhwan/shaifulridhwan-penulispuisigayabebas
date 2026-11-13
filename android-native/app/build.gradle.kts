@@ -51,6 +51,15 @@ android {
         versionName = "0.2.0-chess-darkness"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "API_ORIGIN", "\"https://shaifulridhwan-penulispuisigayabebas.netlify.app\"")
+        // PR328 owner APK uses isolated Netlify draft backend; regular Chat stays
+        // on the authoritative production Netlify endpoint. Non-preview APKs
+        // return to the normal production agent origin after the owner merges.
+        val agentPreview = aksaraPreviewSuffix?.startsWith(".preview.p328.") == true
+        val agentOrigin = if (agentPreview)
+            "https://aksara-agentic-pr328--shaifulridhwan-penulispuisigayabebas.netlify.app"
+        else
+            "https://shaifulridhwan-penulispuisigayabebas.netlify.app"
+        buildConfigField("String", "AGENT_API_ORIGIN", "\"$agentOrigin\"")
         buildConfigField("String", "WEB_REFERENCE_COMMIT", "\"f482b8ed393fe0eb4277ae3eaf3938f1593489c4\"")
         // Only display a source commit when CI supplies a verified 40-hex PR head.
         // An ordinary local build leaves this unknown; never imply APK matches GitHub.
