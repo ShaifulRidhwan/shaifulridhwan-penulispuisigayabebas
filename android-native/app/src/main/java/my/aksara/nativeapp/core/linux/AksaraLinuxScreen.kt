@@ -122,7 +122,14 @@ fun AksaraLinuxScreen(
                                 horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                                 LinuxRuntimePulse(current != null && !current.ended)
                                 AksaraText(
-                                    if (current?.ended == true) "STOPPED" else "LIVE PTY",
+                                    if (current?.ended == true) {
+                                         val code = current.exitCode
+                                         if (code == null) "STOPPED" else when {
+                                             code == 0 -> "EXIT 0"
+                                             code < 0 -> "SIGNAL " + (-code)
+                                             else -> "ERROR " + code
+                                         }
+                                     } else "LIVE PTY",
                                     size = 10f, weight = 700,
                                     color = if (current?.ended == true)
                                         LinuxDeckRose else LinuxDeckMint
