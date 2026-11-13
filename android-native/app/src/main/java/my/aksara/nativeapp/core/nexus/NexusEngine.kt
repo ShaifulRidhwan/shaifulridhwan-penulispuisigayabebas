@@ -90,6 +90,12 @@ internal object NexusActions {
 
 internal enum class NexusTaskStatus { RUNNING, COMPLETED, FAILED, CANCELLED, INTERRUPTED }
 
+internal data class NexusCommandPreview(
+    val token: String,
+    val command: String,
+    val createdAt: Long
+)
+
 internal data class NexusEvent(
     val id: String,
     val title: String,
@@ -123,6 +129,7 @@ internal object NexusEngine {
     private var kernelCheckpoint: KernelCheckpointStore? = null
     private var kernelPlanStore: KernelPlanStore? = null
     private var workspaceTransactions: KernelWorkspaceTransactions? = null
+    private var pendingManualCommand: NexusCommandPreview? = null
     private val kernelBus = KernelEventBus()
     val kernelEvents = kernelBus.events
     private val metrics = KernelTelemetry()
@@ -192,6 +199,65 @@ internal object NexusEngine {
         }
 
     fun clearWorkspacePreview() { workspaceTransactions?.clearPreview() }
+
+    /**
+     * Explicit user-authored command runner. No command text from A.I. planning
+     * is executed automatically. This operates inside the existing rootless
+     * Alpine PRoot sandbox, not Android OS root.
+     */
+    @Synchronized fun previewManualLinuxCommand(command: String): NexusCommandPreview {
+        require(command.isNotBlank() && command.length <= 8000 && !command.contains('\u0000')) {
+            "Arahan Linux tidak sah atau terlalu panjang"
+        }
+        return NexusCommandPreview(
+            UUID.randomUUID().toString(), command, System.currentTimeMillis()
+        ).also { pendingManualCommand = it }
+    }
+
+    @Synchronized fun clearManualCommandPreview() { pendingManualCommand = null }
+
+    @Synchronized fun runApprovedLinuxCommand(approved: NexusCommandPreview): Boolean {
+        val context = app ?: return false
+        if (running?.isActive == true) return false
+        val pending = pendingManualCommand ?: return false
+        if (pending !== approved || pending.token != approved.token ||
+            System.currentTimeMillis() - pending.createdAt !in 0L..120_000L) return false
+        if (!AksaraLinuxRuntime.installed(context)) return false
+        pendingManualCommand = null
+        val event = NexusEvent(
+            UUID.randomUUID().toString(), "Manual Linux Command",
+            NexusTaskStatus.RUNNING, System.currentTimeMillis())
+        mutable.update {
+            it.copy(activeId = event.id, activeTitle = event.title,
+                progress = "Menjalankan arahan pengguna dalam PRoot",
+                lastOutput = "", lastStatus = NexusTaskStatus.RUNNING,
+                events = (listOf(event) + it.events).take(24))
+        }
+        persistMetadata()
+        running = scope.launch {
+            kernelBus.publish(KernelEventType.TASK_STARTED, detail = "Manual shell")
+            try {
+                val result = NexusLinuxRunner.execute(context, approved.command, 600_000L)
+                val text = result.output + "\nExit: " + result.exitCode +
+                    if (result.truncated) "\nNota: output dipendekkan pada 16KiB." else ""
+                val ok = result.exitCode == 0
+                finish(event.id, if (ok) NexusTaskStatus.COMPLETED else NexusTaskStatus.FAILED,
+                    text, if (ok) "Arahan selesai" else "Arahan gagal")
+                kernelBus.publish(if (ok) KernelEventType.TASK_FINISHED
+                    else KernelEventType.TASK_FAILED, detail = "Manual shell")
+            } catch (cancel: CancellationException) {
+                finish(event.id, NexusTaskStatus.CANCELLED, "", "Arahan dibatalkan")
+                kernelBus.publish(KernelEventType.TASK_CANCELLED, detail = "Manual shell")
+                throw cancel
+            } catch (error: Exception) {
+                finish(event.id, NexusTaskStatus.FAILED,
+                    "Command error: " + (error.message ?: "Unknown").take(180),
+                    "Arahan gagal")
+                kernelBus.publish(KernelEventType.TASK_FAILED, detail = "Manual shell")
+            }
+        }
+        return true
+    }
 
     /**
      * This method MUST only be called after explicit plan preview + user approval.
