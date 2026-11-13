@@ -83,6 +83,17 @@ jobs:
           ! grep -Fq 'Pasang Alpine Linux' android-native/app/src/main/java/my/aksara/nativeapp/core/linux/AksaraLinuxScreen.kt
           ! grep -Fq '"A−"' android-native/app/src/main/java/my/aksara/nativeapp/core/linux/AksaraLinuxScreen.kt
           grep -Fq 'SettingsGroup("Advanced Settings",' android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/AksaraSettings.kt
+          # Cold-start regression: adjacent pager precomposition must NOT boot Linux PTY.
+          python3 - <<'AKSARA_LINUX_COLD_START'
+          from pathlib import Path
+          pager = Path("android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/AksaraScreen.kt").read_text()
+          assert "beyondViewportPageCount=1" in pager, "Keep swipe/pager parity"
+          assert "val linuxEntering = pagerState.currentPage == 2 ||" in pager
+          assert "pagerState.targetPage == 2 ||" in pager
+          assert "if (linuxEntering) {" in pager
+          assert pager.index("if (linuxEntering) {") < pager.index("AksaraLinuxScreen(onBack=")
+          print("Linux PTY deferred until Linux page is entered")
+          AKSARA_LINUX_COLD_START
           bash android-native/scripts/build-aksara-linux.sh
       - name: Assert official Alpine archive contains guest shell and package manager
         run: |
