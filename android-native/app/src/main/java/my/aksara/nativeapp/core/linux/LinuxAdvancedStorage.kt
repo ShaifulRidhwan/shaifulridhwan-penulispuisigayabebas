@@ -36,6 +36,7 @@ internal object LinuxAdvancedStorage {
     internal object Policy {
         fun allowedGuestFile(root: File, candidate: File): Boolean =
             candidate.isFile && !Files.isSymbolicLink(candidate.toPath()) &&
+                LinuxVaultPaths.includeInBackup(candidate.name) &&
                 candidate.canonicalPath.startsWith(root.canonicalPath + File.separator)
 
         fun nextAvailable(rawName: String?, taken: Set<String>): String {
