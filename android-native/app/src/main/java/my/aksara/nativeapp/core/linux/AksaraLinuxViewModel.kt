@@ -36,6 +36,7 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         val startedAt: Long = System.currentTimeMillis()
         var ended by mutableStateOf(false)
         var endedAt by mutableStateOf<Long?>(null)
+        var exitCode by mutableStateOf<Int?>(null)
     }
 
     val slots = mutableStateListOf<Slot>()
@@ -315,6 +316,7 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         slots.firstOrNull { it.terminal === finishedSession }?.let {
             it.ended = true
             it.endedAt = System.currentTimeMillis()
+            it.exitCode = runCatching { finishedSession.exitStatus }.getOrNull()
         }
         if (slots.getOrNull(selected)?.terminal === finishedSession)
             terminalView?.onScreenUpdated()
