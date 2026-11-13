@@ -90,6 +90,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var uploadStatus by remember { mutableStateOf<String?>(null) }
     var uploadJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
+    val nexusChat = remember(scope) { NexusChatCoordinator(scope) }
+    val nexusRuntime by NexusEngine.state.collectAsStateWithLifecycle()
+    LaunchedEffect(nexusRuntime) { nexusChat.observe(nexusRuntime) }
     val uploader = remember(context) { LargeUploadClient() }
     var exportSelectedSessionId by rememberSaveable { mutableStateOf<String?>(null) }
     val exportPicker = rememberLauncherForActivityResult(
@@ -190,7 +193,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var todayDialogVisible by remember { mutableStateOf(false) }
     var linuxDialogVisible by remember { mutableStateOf(false) }
     var nexusOpen by rememberSaveable { mutableStateOf(false) }
-    var nexusDraft by remember { mutableStateOf<String?>(null) }
     // Do not recompose the whole pager for each IME animation pixel.
     val imeDensity=LocalDensity.current
     // WindowInsets.ime is composable: resolve it before entering derivedStateOf.
@@ -221,6 +223,13 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             onDialogVisibilityChange={ linuxDialogVisible=it })
       } else {
         AksaraScreen(state.copy(error = attachmentError ?: state.error), onSend = { q ->
+        val nexusCommand = NexusChatRouter.parse(q)
+        if (nexusCommand != null) {
+            if (attachments.isNotEmpty()) {
+                attachmentError = "Arahan Nexus tidak menggunakan lampiran. Selesaikan lampiran dahulu."
+                false
+            } else nexusChat.submit(q, nexusCommand)
+        } else {
         val textDocs = attachments.filter { it.text.isNotBlank() }
         val text = textDocs.joinToString("\n\n") { "[DOKUMEN: " + it.name + "]\n" + it.text + "\n[TAMAT DOKUMEN]" }
         val name = textDocs.joinToString(", ") { it.name }.take(100)
@@ -236,6 +245,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             attachmentError = vm.state.value.error ?: "Mesej belum dihantar. Cuba lagi selepas sambungan sedia."
         }
         accepted
+        }
     }, onJourney=vm::journey, onStop = vm::stop, onRefresh = { vm.refreshProviders() }, onMode = vm::setMode,
         onExportSessions = {
             exportSelectedSessionId = null
@@ -264,7 +274,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         onCancelUpload = { uploadJob?.cancel() },
         onPickAttachment = { category -> picker.launch(AttachmentSendPolicy.mimeTypes(category)) },
         onDismissError = { attachmentError = null; vm.dismissError() },
-        nexusDraft = nexusDraft, onNexusDraftConsumed = { nexusDraft = null },
+        nexusChat = nexusChat,
         onOverlayVisibilityChange = { overlayVisible=it })
       }
     }
@@ -272,18 +282,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         Box(Modifier.align(Alignment.CenterEnd)) { NexusLauncher { nexusOpen = true } }
     }
     }
-    if(nexusOpen) NexusPanel(
-        onClose={ nexusOpen=false },
-        onNavigate={ target ->
-            nexusOpen=false
-            scope.launch { pagerState.animateScrollToPage(target) }
-        },
-        onDraftForChat={ prompt ->
-            nexusDraft = prompt
-            nexusOpen = false
-            scope.launch { pagerState.animateScrollToPage(1) }
-        }
-    )
+    if(nexusOpen) NexusPanel(onClose={ nexusOpen=false })
 
     // A document-picker selection is not consent for uploading multi-megabyte
     // files to a remote provider. Obtain a second explicit approval first.
@@ -328,18 +327,12 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     onEraseLocal: suspend()->Boolean = { false },
     fixedTimestamp: Long? = null, onVoiceTurns:(List<my.aksara.engine.voice.VoiceContextTurn>)->Unit = {},
     onOverlayVisibilityChange:(Boolean)->Unit = {},
-    nexusDraft:String? = null, onNexusDraftConsumed:()->Unit = {}) {
+    nexusChat:NexusChatCoordinator? = null) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
     LaunchedEffect(overlay) { onOverlayVisibilityChange(overlay!=null) }
     var voiceIndicator by remember { mutableStateOf(VoiceLinkState.IDLE) }
     var draft by rememberSaveable { mutableStateOf("") }
-    LaunchedEffect(nexusDraft) {
-        if (!nexusDraft.isNullOrBlank()) {
-            draft = nexusDraft
-            onNexusDraftConsumed()
-        }
-    }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingJumpId by remember { mutableStateOf<String?>(null) }
     var highlightedMessageId by remember { mutableStateOf<String?>(null) }
@@ -388,8 +381,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
     }
     LaunchedEffect(state.messages.size, state.messages.lastOrNull()?.text?.length,
-        state.busy, autoFollow) {
-        if (autoFollow && state.messages.isNotEmpty()) {
+        nexusChat?.notes?.size, nexusChat?.review, nexusChat?.progress, state.busy, autoFollow) {
+        if (autoFollow && (state.messages.isNotEmpty() ||
+                (nexusChat?.notes?.isNotEmpty() == true))) {
             withFrameNanos { }
             val last = list.layoutInfo.totalItemsCount - 1
             if (last >= 0) {
@@ -528,6 +522,13 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                         }) else null,
                                         onRetry=if(message.role=="assistant" && message.id==state.messages.lastOrNull()?.id && !state.busy)
                                             ({if(onRegenerate(message.id)){editingId=null;draft="";autoFollow=true};Unit}) else null)
+                                }
+                                if (nexusChat != null) item("nexus-main-chat") {
+                                    NexusChatConversation(nexusChat, onAnalyze = { response ->
+                                        draft = response
+                                        editingId = null
+                                        autoFollow = true
+                                    })
                                 }
                             }
                             if(state.messages.isEmpty()) Row(
