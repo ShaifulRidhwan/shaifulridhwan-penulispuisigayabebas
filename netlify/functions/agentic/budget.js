@@ -2,7 +2,7 @@
 // Shared best-effort daily reservations using Netlify Blobs strongly-consistent
 // reads. Netlify Blobs has last-writer-wins semantics (not atomic CAS), so
 // concurrent cold instances may race; upstream free-tier limits remain essential.
-const {getStore}=require("@netlify/blobs");
+// Lazy load: disabled-agent unit tests run without npm dependencies.
 const inFlight=new Set();
 const ERR=(status,message,category="budget")=>Object.assign(new Error(message),{status,category});
 function cap(env=process.env){
@@ -19,7 +19,7 @@ async function reserve(ownerId,{env=process.env,store=null,now=Date.now()}={}){
   if(inFlight.has(lock))throw ERR(429,"Satu misi sedang berjalan. Cuba selepas ia selesai.");
   inFlight.add(lock);
   try {
-    const blob=store||getStore({name:"aksara-agentic-budget",consistency:"strong"});
+    const blob=store||require("@netlify/blobs").getStore({name:"aksara-agentic-budget",consistency:"strong"});
     const record=await blob.get(key,{type:"json",consistency:"strong"});
     if(record!==null && (!record||typeof record!=="object"||
       !Number.isSafeInteger(record.count)||record.count<0))
