@@ -5,6 +5,7 @@ import my.aksara.nativeapp.feature.today.TodayDetailParsers
 import my.aksara.nativeapp.feature.today.TodayPrayer
 import my.aksara.nativeapp.feature.today.prayerTimelineProgress
 import my.aksara.nativeapp.feature.chat.ChatResponseLifecycle
+import my.aksara.nativeapp.feature.chat.SessionTransferCodec
 import my.aksara.nativeapp.core.storage.Message
 import org.junit.Assert.*
 import org.junit.Test
@@ -62,6 +63,19 @@ class TodayChatV2RegressionTest {
         assertEquals(listOf("web_search"),modern.toolsUsed)
         assertEquals("search_excerpt",modern.evidenceLevel)
         assertEquals(true,modern.reviewApplied)
+    }
+
+    @Test fun sessionTransferKeepsPerAnswerProvenanceForNewArchives() {
+        val original=Message("original","assistant","Jawapan",provider="gemini",
+            model="gemini-test",researchStatus="complete",
+            toolsUsed=listOf("web_search"),evidenceLevel="page_text",reviewApplied=true)
+        val exported=SessionTransferCodec.encode(listOf(original),listOf(original.id))
+        val restored=SessionTransferCodec.decode(exported).messages.single()
+        assertEquals("gemini",restored.provider)
+        assertEquals("gemini-test",restored.model)
+        assertEquals(listOf("web_search"),restored.toolsUsed)
+        assertEquals("page_text",restored.evidenceLevel)
+        assertEquals(true,restored.reviewApplied)
     }
 
     @Test fun marketChartRequiresRealValidSamples() {
