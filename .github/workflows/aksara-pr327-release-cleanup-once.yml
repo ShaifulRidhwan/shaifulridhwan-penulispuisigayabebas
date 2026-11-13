@@ -1,0 +1,120 @@
+name: One-time Android release cleanup (keep PR327 full Linux)
+on:
+  push:
+    branches: ['maintenance/pr327-android-release-purge-once']
+    paths: ['.github/workflows/aksara-pr327-release-cleanup-once.yml']
+permissions:
+  contents: write
+concurrency:
+  group: one-time-android-release-purge-pr327
+  cancel-in-progress: false
+jobs:
+  delete-old-android-releases:
+    if: github.repository == 'ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas' && github.event.head_commit.message == 'chore(releases): one-time cleanup of old Android APK releases'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Verify explicit inventory and preserve PR327 Full Linux
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "$RUNNER_TEMP/old-android-releases.tsv" <<'EXPECTED_RELEASES'
+          444187838|aksara-today-preview-pr327-003f4f5c
+          443932425|aksara-nexus-pr325-fb811f9d
+          443806075|aksara-nexus-pr325-d12abfa5
+          443832860|aksara-nexus-pr325-5eb7feda
+          443702185|aksara-nexus-pr324-c83dbafc
+          443714547|aksara-nexus-pr324-5be4f8ce
+          444041819|aksara-linux-v4-f6ba7b76
+          444159174|aksara-linux-v4-e179356b
+          444003305|aksara-linux-v4-de7d6ccc
+          444079265|aksara-linux-v4-3a26e176
+          444158748|aksara-android-308-309-310-merged-dece6ec7b8eb
+          443774111|aksara-android-308-309-310-merged-4a69d234c364
+          442481835|aksara-neural-pr321-repair-0fbf8f77
+          442452285|aksara-neural-pr321-fdf8bcad
+          442544509|aksara-neural-pr321-b391e965
+          442657457|aksara-neural-pr321-aae33010
+          442532517|aksara-neural-pr321-a91f40d4
+          442575025|aksara-neural-pr321-a5b6ad32
+          443175708|aksara-linux-v3-9f61e934
+          443271179|aksara-linux-v3-33de8f49
+          442923986|aksara-linux-v2-f863923e
+          442990896|aksara-linux-v2-d105dae3
+          442851809|aksara-linux-v2-b0e3ad28
+          442943341|aksara-linux-v2-a7e7e6f2
+          442810598|aksara-linux-v2-64609d1f
+          442897280|aksara-linux-v2-239d2101
+          442968556|aksara-linux-v2-12a5a3a5
+          442712621|aksara-linux-pr321-fc0ddb31
+          442752287|aksara-linux-pr321-d461c8a7
+          442733035|aksara-linux-pr321-779898ed
+          442700487|aksara-linux-pr321-1a9d205d
+          442373494|aksara-android-308-309-310-merged-f05ec540b647
+          443015934|aksara-android-308-309-310-merged-d966e07da7d4
+          443615647|aksara-android-308-309-310-merged-b5f8271a6445
+          442332822|aksara-android-308-309-310-merged-97ea934edac0
+          442796646|aksara-android-308-309-310-merged-400cea748a3f
+          441194526|aksara-today-v2-pr308-b90d0474
+          441160506|aksara-today-v2-pr308-99a28fe9
+          441164654|aksara-today-v2-pr308-635f14d1
+          441199829|aksara-today-v2-pr308-56057dce
+          441249928|aksara-today-preview-pr311-dfbd9c42
+          441299575|aksara-today-preview-pr311-b452a315
+          441315299|aksara-today-preview-pr311-af3c348b
+          441333693|aksara-today-preview-pr311-a37efe9e
+          441260727|aksara-today-preview-pr311-66f2c2df
+          441362271|aksara-today-preview-pr311-38f6495d
+          441268041|aksara-today-preview-pr311-0a3f2450
+          441226612|aksara-android-308-309-310-merged-ad00de86f72d
+          441665033|aksara-android-308-309-310-merged-abf200f2e223
+          442119785|aksara-android-308-309-310-merged-8edf931196ac
+          442010011|aksara-android-308-309-310-merged-5d9be1a8c539
+          441716048|aksara-android-308-309-310-merged-4b11877f6e0f
+          441531676|aksara-android-308-309-310-merged-4493a70ccd3f
+          440678580|aksara-android-pr305-merged-20261111
+          440704779|aksara-today-v1-pr306
+          440620334|aksara-android-pr304-p0p1p3-preview-20261110
+          440641138|aksara-android-pr304-merged-20261110
+          440480304|aksara-android-pr300-20261110
+          EXPECTED_RELEASES
+          test "$(wc -l < "$RUNNER_TEMP/old-android-releases.tsv")" -eq 58
+          while IFS='|' read -r id tag; do
+            case "$tag" in aksara-pr327-full-linux-*) echo "Cannot delete PR327 full Linux" >&2; exit 1;; esac
+            [[ "$id" =~ ^[0-9]+$ && "$tag" =~ ^aksara-[a-z0-9-]+$ ]] || exit 1
+            release="$(gh api "repos/$GH_REPO/releases/$id")"
+            actual="$(jq -r '.tag_name' <<< "$release")"
+            count="$(jq '[.assets[].name | ascii_downcase | select(endswith(".apk"))] | length' <<< "$release")"
+            [ "$actual" = "$tag" ] && [ "$count" -gt 0 ] || {
+              echo "Release $id no longer matches '$tag' or has no APK; abort before deletion" >&2
+              exit 1
+            }
+          done < "$RUNNER_TEMP/old-android-releases.tsv"
+          echo "Verified 58 old APK releases; PR327 full Linux and non-Android releases excluded"
+      - name: Delete 58 verified old Android releases (preserve commits and tags)
+        shell: bash
+        run: |
+          set -euo pipefail
+          count=0
+          while IFS='|' read -r id tag; do
+            echo "Deleting old Android release: $tag ($id)"
+            gh api -X DELETE "repos/$GH_REPO/releases/$id" >/dev/null
+            count=$((count+1))
+          done < "$RUNNER_TEMP/old-android-releases.tsv"
+          echo "Removed $count old GitHub Releases. Git tags, branches and commits retained."
+          [ "$count" -eq 58 ]
+      - name: Verify only PR327 Full Linux or non-Android releases remain
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api --paginate "repos/$GH_REPO/releases?per_page=100" --jq '.[] | [.tag_name, ([.assets[].name | ascii_downcase | select(endswith(".apk"))] | length)] | @tsv' > "$RUNNER_TEMP/releases-after.tsv"
+          while IFS=$'\t' read -r tag apk_count; do
+            if [ "$apk_count" -gt 0 ] && [[ "$tag" == aksara-* ]] && [[ "$tag" != aksara-pr327-full-linux-* ]]; then
+              echo "Legacy APK still published: $tag" >&2
+              exit 1
+            fi
+          done < "$RUNNER_TEMP/releases-after.tsv"
+          echo "All old Android APK releases removed. PR327 full Linux and non-Android releases preserved."
