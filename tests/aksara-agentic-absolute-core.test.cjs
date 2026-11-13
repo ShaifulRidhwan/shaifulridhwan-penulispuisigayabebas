@@ -42,3 +42,44 @@ test("GET health and malformed request work without npm ESM packages",async()=>{
   const invalid=await endpoint.handler({httpMethod:"POST",body:"{broken"});
   assert.equal(invalid.statusCode,400);
 });
+
+const Owner=require("../netlify/functions/agentic/owner-auth");
+const Budget=require("../netlify/functions/agentic/budget");
+const OWNER_KEY="AksaraOwnerQA_0123456789abcdefghijklmnopqrstuvwxyz_2026";
+test("owner key never ships in client and fails closed if not configured",()=>{
+  assert.equal(Owner.configured({}),false);
+  assert.equal(Owner.configured({AKSARA_AGENT_OWNER_KEY:"short"}),false);
+  const env={AKSARA_AGENT_OWNER_KEY:OWNER_KEY};
+  assert.equal(Owner.configured(env),true);
+  assert.throws(()=>Owner.authenticate({},env),x=>x.status===401);
+  assert.throws(()=>Owner.authenticate({authorization:"Bearer "+OWNER_KEY+"wrong"},env),x=>x.status===401);
+  assert.equal(Owner.authenticate({authorization:"Bearer "+OWNER_KEY},env).length,24);
+});
+test("unauthorized request is rejected before budget or model invocation",async()=>{
+  const env={AKSARA_AGENT_ENABLED:"true",AKSARA_AGENT_OWNER_KEY:OWNER_KEY,OPENROUTER_API_KEY:"mock"};
+  await assert.rejects(
+    ()=>Controller.execute({mission:"Audit keselamatan Android",mode:"light",consent:true},{env,headers:{}}),
+    x=>x.status===401 && x.category==="authorization"
+  );
+});
+test("quota persistence is fail-closed, reserves until cap and rejects overspending",async()=>{
+  const db=new Map();
+  const store={
+    async get(key){return db.get(key)||null;},
+    async setJSON(key,value){db.set(key,value);}
+  };
+  const id="a".repeat(24),env={AKSARA_AGENT_DAILY_CAP:"2"};
+  assert.equal((await Budget.reserve(id,{env,store,now:Date.UTC(2026,10,13)})).spent,1);
+  assert.equal((await Budget.reserve(id,{env,store,now:Date.UTC(2026,10,13)})).spent,2);
+  await assert.rejects(()=>Budget.reserve(id,{env,store,now:Date.UTC(2026,10,13)}),x=>x.status===429);
+  await assert.rejects(()=>Budget.reserve(id,{env,store:{get:()=>{throw Error("offline")}}}),x=>x.status===503);
+});
+test("status reveals no credentials",()=>{
+  const status=Controller.status({AKSARA_AGENT_ENABLED:"true",AKSARA_AGENT_OWNER_KEY:OWNER_KEY,OPENROUTER_API_KEY:"secret-provider-key"});
+  const json=JSON.stringify(status);
+  assert.equal(status.ownerAuthRequired,true);
+  assert.equal(status.ownerAuthConfigured,true);
+  assert.equal(status.readyForOwnerMission,true);
+  assert.ok(!json.includes(OWNER_KEY));
+  assert.ok(!json.includes("secret-provider-key"));
+});
