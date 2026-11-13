@@ -289,7 +289,7 @@ jobs:
           set -e
           if [[ "$result" -eq 0 ]]; then
             echo "### Release diterbitkan: aksara-pr328-agentic-full-linux-$tag" >> "$GITHUB_STEP_SUMMARY"
-          elif [[ "$output" == *"HTTP 403: Resource not accessible by integration"* ]]; then
+          elif grep -Fq 'HTTP 403: Resource not accessible by integration' <<<"$output"; then
             echo "::warning::GitHub release write denied by installation token. APK artifact uploaded successfully; use Actions artifacts to download owner QA APK."
             echo "### APK Full Linux siap, Release tidak tersedia (GitHub token HTTP 403)" >> "$GITHUB_STEP_SUMMARY"
             echo "Muat turun Actions artifact: aksara-pr328-agentic-full-linux-owner. Ini bukan kegagalan build." >> "$GITHUB_STEP_SUMMARY"
