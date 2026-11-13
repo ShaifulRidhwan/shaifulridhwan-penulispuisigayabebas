@@ -276,7 +276,24 @@ jobs:
         run: |
           set -euo pipefail
           tag="$(printf '%s' "$AKSARA_PREVIEW_HEAD_SHA" | cut -c1-8)"
-          gh release create "aksara-pr328-agentic-full-linux-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \
-            --title "AKSARA PR328 Full Linux + Today Chat V2 $tag" \
-            --notes "PR328 owner-only full Linux + TODAY/Chat V2 QA APK: reuses tested Alpine rootfs, PRoot and PTY from PR326 with no Linux code changes. All new UI and Chat features are on the same preview APK. SHA-scoped debug package with targetSdk 28 for Linux sideload; NOT Play-Store-ready. Verify Dashboard, Chat and Linux on-device. PR328 MUST remain unmerged until owner approves. GPL PRoot source attached." \
-            --prerelease --target "$AKSARA_PREVIEW_HEAD_SHA"
+          # The full signed Alpine APK and GPL source have already been uploaded as
+          # Actions artifacts above. Some GitHub App tokens have no Releases write.
+          # Treat ONLY that explicit permission denial as a publishing limitation,
+          # never hide a genuine build / signature / upload failure.
+          set +e
+          output=$(gh release create "aksara-pr328-agentic-full-linux-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \\
+            --title "AKSARA PR328 Full Linux Agentic Owner QA $tag" \\
+            --notes "Owner-only signed Full Linux QA APK. Keep PR328 unmerged until device and protected backend tests pass." \\
+            --prerelease --target "$AKSARA_PREVIEW_HEAD_SHA" 2>&1)
+          result=$?
+          set -e
+          if [[ "$result" -eq 0 ]]; then
+            echo "### Release diterbitkan: aksara-pr328-agentic-full-linux-$tag" >> "$GITHUB_STEP_SUMMARY"
+          elif [[ "$output" == *"HTTP 403: Resource not accessible by integration"* ]]; then
+            echo "::warning::GitHub release write denied by installation token. APK artifact uploaded successfully; use Actions artifacts to download owner QA APK."
+            echo "### APK Full Linux siap, Release tidak tersedia (GitHub token HTTP 403)" >> "$GITHUB_STEP_SUMMARY"
+            echo "Muat turun Actions artifact: aksara-pr328-agentic-full-linux-owner. Ini bukan kegagalan build." >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '%s\\n' "$output" >&2
+            exit "$result"
+          fi
