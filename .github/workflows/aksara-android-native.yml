@@ -241,6 +241,11 @@ jobs:
           sha256sum "$apk" | tee app/build/outputs/apk/debug/SHA256SUMS
           echo "apk_sha256=$(sha256sum "$apk" | awk '{print $1}')" >> "$GITHUB_OUTPUT"
           printf 'source_commit=%s\nbuild_run=%s\n' '${{ github.event.pull_request.head.sha || github.sha }}' '${{ github.run_id }}' | tee app/build/outputs/apk/debug/BUILD.txt
+      - name: Verify ANK runtime package without duplicate Linux or model
+        working-directory: android-native
+        run: |
+          python3 tools/verify_ank_apk.py --self-test
+          python3 tools/verify_ank_apk.py app/build/outputs/apk/debug/app-debug.apk
       - uses: actions/upload-artifact@v5
         with:
           name: aksara-native-installable-apk
