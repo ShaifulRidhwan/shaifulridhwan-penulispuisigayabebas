@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
@@ -84,6 +86,7 @@ internal object NexusEngine {
     @Volatile private var app: Context? = null
     private var journal: NexusJournal? = null
     private var running: Job? = null
+    private val journalMutex = Mutex()
 
     @Synchronized fun initialize(context: Context) {
         if (app != null) return
@@ -169,9 +172,9 @@ internal object NexusEngine {
     }
 
     private fun persistMetadata() {
-        // Output, prompts, weather and location are never written to this journal.
-        val events = mutable.value.events
-        scope.launch { journal?.write(events) }
+        // Serialize writes and take the latest snapshot only after acquiring the lock.
+        // Output, prompts, weather and location never reach this journal.
+        scope.launch { journalMutex.withLock { journal?.write(mutable.value.events) } }
     }
 }
 
