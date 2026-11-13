@@ -27,7 +27,20 @@ data class ChatState(val messages: List<Message> = emptyList(), val archive: Lis
     val capabilities: List<P3Intelligence.Capability> = emptyList(),
     val modelRegistry: List<P3Intelligence.ModelInfo> = emptyList(),
     val pendingDrafts: List<PendingDraft> = emptyList(),
-    val completedRequests: Int = 0, val failedRequests: Int = 0)
+    val completedRequests: Int = 0, val failedRequests: Int = 0,
+    val responsePhase: String = "idle")
+
+/** Real request stages only; no simulated provider connection or fake progress %. */
+internal object ChatResponseLifecycle {
+    fun label(phase:String):String = when(phase) {
+        "saving" -> "Menyimpan mesej"
+        "context" -> "Menyediakan konteks"
+        "connecting" -> "Menghubungi backend"
+        "streaming" -> "Menjana respons"
+        "finalizing" -> "Menyimpan jawapan"
+        else -> ""
+    }
+}
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
     private val api = ChatApi(BuildConfig.API_ORIGIN)
     private val store = SessionStore(app)
@@ -242,7 +255,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         if (newAttachment) activeAttachment=effective
         mutable.update { clearAnswerDiagnostics(it.copy(messages = previous + user + assistant,
             sessionStarts = if (previous.isEmpty() || it.resumedFromHistory) (it.sessionStarts + user.id).distinct() else it.sessionStarts,
-            resumedFromHistory = false, busy = true, error = null, nextJourney = null)) }
+            resumedFromHistory = false, busy = true, responsePhase = "saving",
+            error = null, nextJourney = null)) }
         requestJob = viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
             // Every delta remains recoverable; only UI publishes are batched to frames.
             val pending = StreamDeltaBuffer { slice ->
@@ -268,6 +282,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 catch (e: Exception) {
                     throw java.io.IOException("Simpanan awal gagal. Mesej kekal di skrin; permintaan belum dihantar.", e)
                 }
+                if (activeRequestId == requestId)
+                    mutable.update { it.copy(responsePhase = "context") }
                 val firstId = previous.firstOrNull()?.id ?: user.id
                 if (savedContext.sessionFirstId != firstId) {
                     savedContext = savedContext.copy(sessionFirstId = firstId, summary = "", summarizedThrough = 0, thoughtLedger = emptyList())
@@ -307,9 +323,16 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         pending.flush()
                     }
                 }
+                if (activeRequestId == requestId)
+                    mutable.update { it.copy(responsePhase = "connecting") }
+                var sawFirstDelta = false
                 api.chat(payload).collect { event ->
                     if (activeRequestId != requestId) return@collect
                     if (event is ChatEvent.Delta) {
+                        if (!sawFirstDelta) {
+                            sawFirstDelta = true
+                            mutable.update { it.copy(responsePhase = "streaming") }
+                        }
                         pending.append(event.text)
                         return@collect
                     }
@@ -324,7 +347,12 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                             is ChatEvent.Done -> m.copy(text = event.reply +
                                 my.aksara.nativeapp.core.network.EvidenceIntegrity.formatSources(
                                     event.sources,event.evidenceLevel),
-                                incomplete = false, provider = ProviderIdentity.normalize(event.provider))
+                                incomplete = false, provider = ProviderIdentity.normalize(event.provider),
+                                model = event.model.takeIf { it.isNotBlank() },
+                                researchStatus = event.researchStatus.takeIf { it.isNotBlank() },
+                                toolsUsed = event.toolsUsed.take(12),
+                                evidenceLevel = event.evidenceLevel,
+                                reviewApplied = event.reviewApplied)
                         }
                     }, lastProvider = if(event is ChatEvent.Done) event.provider else value.lastProvider,
                         lastModel = if(event is ChatEvent.Done) event.model else value.lastModel,
@@ -332,7 +360,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         lastToolsUsed = if(event is ChatEvent.Done) event.toolsUsed else value.lastToolsUsed,
                         lastEvidenceLevel = if(event is ChatEvent.Done) event.evidenceLevel else value.lastEvidenceLevel,
                         lastReviewApplied = if(event is ChatEvent.Done) event.reviewApplied else value.lastReviewApplied,
-                        completedRequests = if(event is ChatEvent.Done) value.completedRequests+1 else value.completedRequests) }
+                        completedRequests = if(event is ChatEvent.Done) value.completedRequests+1 else value.completedRequests,
+                        responsePhase = if(event is ChatEvent.Done) "finalizing" else value.responsePhase) }
                 }
             } catch (e: CancellationException) {
                 mutable.update { it.copy(error = "Penjanaan dihentikan. Teks separa dikekalkan.") }
@@ -347,7 +376,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 pending.flush() // Stop/error must never discard the last streamed token.
                 if (activeRequestId == requestId) {
                     activeRequestId = null
-                    mutable.update { it.copy(busy = false) }
+                    mutable.update { it.copy(busy = false, responsePhase = "idle") }
                 }
                 withContext(NonCancellable) {
                     try {
