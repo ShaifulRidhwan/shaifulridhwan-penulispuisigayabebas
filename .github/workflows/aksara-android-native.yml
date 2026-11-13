@@ -349,9 +349,11 @@ jobs:
             android-native/app/build/reports/
 
   today-preview-apk:
-    # A direct, SHA-locked .apk preview for TODAY UI PRs, without artifact ZIPs.
+    # PR327 must use the full Linux owner APK, not the stripped 240MB TODAY preview.
+    # Other TODAY UI PRs keep their original lightweight preview delivery.
     if: >-
       github.event_name == 'pull_request' &&
+      github.event.pull_request.number != 327 &&
       startsWith(github.head_ref, 'feature/aksara-today-') &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       needs.build.result == 'success' &&
