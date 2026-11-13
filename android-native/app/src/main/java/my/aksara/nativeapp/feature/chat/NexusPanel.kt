@@ -30,6 +30,7 @@ import my.aksara.nativeapp.core.nexus.NexusActions
 import my.aksara.nativeapp.core.nexus.NexusEngine
 import my.aksara.nativeapp.core.nexus.NexusTaskStatus
 import my.aksara.nativeapp.core.nexus.kernel.KernelPlan
+import my.aksara.nativeapp.core.nexus.kernel.KernelChangePreview
 
 /** Shared entry point. A single, tiny overlay works on all three pager pages. */
 @Composable
@@ -60,6 +61,10 @@ internal fun NexusPanel(
     var kernelGoal by remember { mutableStateOf("audit penuh") }
     var aiPlanning by remember { mutableStateOf(false) }
     var planSource by remember { mutableStateOf("offline") }
+    var workspacePath by remember { mutableStateOf("nexus-notes.txt") }
+    var workspaceText by remember { mutableStateOf("") }
+    var workspaceApproval by remember { mutableStateOf<KernelChangePreview?>(null) }
+    var txBusy by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
     var message by remember { mutableStateOf<String?>(null) }
 
@@ -222,6 +227,123 @@ internal fun NexusPanel(
                             telemetry.cancellations + " cancelled · parallel " +
                             telemetry.lastParallelism,
                             size = 9.5f, line = 15f, color = AksaraColors.muted)
+                        AksaraText("WORKSPACE TRANSACTIONS", size = 11.5f,
+                            color = AksaraColors.gold, weight = 700)
+                        AksaraText(
+                            "Bina, kemas kini, padam atau rollback fail /workspace. " +
+                            "Setiap perubahan perlu preview dan kelulusan. Linux PTY kekal berasingan.",
+                            size = 10f, line = 15f, color = AksaraColors.muted)
+                        AksaraText("Fail relatif dalam /workspace", size = 10f,
+                            color = AksaraColors.muted)
+                        BasicTextField(
+                            value = workspacePath,
+                            onValueChange = {
+                                workspacePath = it.take(220)
+                                workspaceApproval = null
+                                NexusEngine.clearWorkspacePreview()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0x7B142334))
+                                .border(1.dp, Color(0x77EACB94), RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            textStyle = TextStyle(color = AksaraColors.text, fontSize = 12.sp),
+                            singleLine = true, enabled = !txBusy && current.activeId == null)
+                        AksaraText("Kandungan teks baharu", size = 10f,
+                            color = AksaraColors.muted)
+                        BasicTextField(
+                            value = workspaceText,
+                            onValueChange = {
+                                workspaceText = it
+                                workspaceApproval = null
+                                NexusEngine.clearWorkspacePreview()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0x7B142334))
+                                .border(1.dp, Color(0x77EACB94), RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            textStyle = TextStyle(color = AksaraColors.text, fontSize = 12.sp),
+                            minLines = 2, maxLines = 5,
+                            enabled = !txBusy && current.activeId == null)
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            AksaraButton("Preview Tulis", {
+                                txBusy = true
+                                coroutineScope.launch {
+                                    try {
+                                        workspaceApproval = NexusEngine.previewWorkspaceUpsert(
+                                            workspacePath, workspaceText)
+                                        message = null
+                                    } catch (error: Exception) {
+                                        message = "Preview gagal: " +
+                                            (error.message ?: "Unknown").take(160)
+                                    } finally { txBusy = false }
+                                }
+                            }, Modifier.weight(1f), height = 35.dp, size = 9f,
+                                enabled = !txBusy && current.activeId == null && workspacePath.isNotBlank())
+                            AksaraButton("Preview Padam", {
+                                txBusy = true
+                                coroutineScope.launch {
+                                    try {
+                                        workspaceApproval = NexusEngine.previewWorkspaceDelete(workspacePath)
+                                        message = null
+                                    } catch (error: Exception) {
+                                        message = "Preview gagal: " +
+                                            (error.message ?: "Unknown").take(160)
+                                    } finally { txBusy = false }
+                                }
+                            }, Modifier.weight(1f), height = 35.dp, size = 9f,
+                                enabled = !txBusy && current.activeId == null && workspacePath.isNotBlank())
+                            AksaraButton("Undo Terakhir", {
+                                txBusy = true
+                                coroutineScope.launch {
+                                    try {
+                                        workspaceApproval = NexusEngine.previewWorkspaceRollback()
+                                        if (workspaceApproval == null)
+                                            message = "Tiada transaksi yang selamat untuk di-rollback."
+                                    } catch (error: Exception) {
+                                        message = "Rollback gagal: " +
+                                            (error.message ?: "Unknown").take(160)
+                                    } finally { txBusy = false }
+                                }
+                            }, Modifier.weight(1f), height = 35.dp, size = 9f,
+                                enabled = !txBusy && current.activeId == null)
+                        }
+                        if (workspaceApproval != null) {
+                            val preview = workspaceApproval!!
+                            AksaraGlassSurface(Modifier.fillMaxWidth(), radius = 14.dp, blur = 5.dp) {
+                                Column(Modifier.fillMaxWidth().padding(11.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    AksaraText("SEMAK PERUBAHAN SEBELUM LULUS",
+                                        size = 10.5f, weight = 700, color = AksaraColors.gold)
+                                    AksaraText(preview.details,
+                                        size = 9.5f, line = 14f, color = AksaraColors.muted)
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        AksaraButton("Tolak", {
+                                            workspaceApproval = null
+                                            NexusEngine.clearWorkspacePreview()
+                                        }, Modifier.weight(1f), height = 36.dp, size = 10f)
+                                        AksaraButton("Lulus & Ubah Fail", {
+                                            txBusy = true
+                                            coroutineScope.launch {
+                                                try {
+                                                    val receipt = NexusEngine.commitWorkspaceChange(preview)
+                                                    message = "Berjaya: " + receipt.action +
+                                                        " /workspace/" + receipt.path
+                                                    workspaceApproval = null
+                                                } catch (error: Exception) {
+                                                    message = "Transaksi gagal: " +
+                                                        (error.message ?: "Unknown").take(160)
+                                                    workspaceApproval = null
+                                                } finally { txBusy = false }
+                                            }
+                                        }, Modifier.weight(1f), height = 36.dp, size = 10f,
+                                            enabled = !txBusy && current.activeId == null)
+                                    }
+                                }
+                            }
+                        }
+
                         AksaraText("LINUX CAPABILITY REGISTRY", size = 11.5f,
                             weight = 700, color = AksaraColors.gold)
                         AksaraText("Arahan tetap dan baca sahaja. Tidak mengusik tab terminal sedia ada.",
