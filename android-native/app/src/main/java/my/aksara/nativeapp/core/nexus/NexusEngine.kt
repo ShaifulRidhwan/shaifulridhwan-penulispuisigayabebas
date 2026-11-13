@@ -18,6 +18,7 @@ import my.aksara.nativeapp.core.nexus.kernel.KernelTransition
 import my.aksara.nativeapp.core.nexus.kernel.KernelStatus
 import my.aksara.nativeapp.core.nexus.kernel.KernelPolicy
 import my.aksara.nativeapp.core.nexus.kernel.KernelWorkspaceTransactions
+import my.aksara.nativeapp.core.nexus.kernel.KernelAiEditPlanner
 import my.aksara.nativeapp.core.nexus.kernel.KernelChangePreview
 import my.aksara.nativeapp.core.nexus.kernel.KernelTransactionReceipt
 import my.aksara.nativeapp.core.nexus.kernel.KernelWriteOperation
@@ -165,6 +166,16 @@ internal object NexusEngine {
             check(running?.isActive != true) { "Nexus sedang menjalankan tugas" }
             requireNotNull(workspaceTransactions).previewUpsert(path, content)
         }
+
+    /** Sends file text to backend only after the user explicitly requests AI edit. */
+    suspend fun suggestWorkspaceEditWithAi(path: String, goal: String): KernelChangePreview {
+        check(running?.isActive != true) { "Nexus sedang menjalankan tugas" }
+        val current = withContext(Dispatchers.IO) {
+            requireNotNull(workspaceTransactions).textForAi(path)
+        }
+        val proposal = KernelAiEditPlanner().suggest(path, goal, current)
+        return previewWorkspaceUpsert(path, proposal)
+    }
 
     suspend fun previewWorkspaceDelete(path: String): KernelChangePreview =
         withContext(Dispatchers.IO) {
