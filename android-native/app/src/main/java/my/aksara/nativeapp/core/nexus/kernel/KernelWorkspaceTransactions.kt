@@ -14,7 +14,6 @@ import org.json.JSONObject
 internal class KernelWorkspaceTransactions(workspace: File, private val privateDir: File) {
     private val root = workspace.absoluteFile.normalize()
     private val receiptFile = File(privateDir, "ank-workspace-receipt.json")
-    private val backupFile = File(privateDir, "ank-workspace-previous.bin")
     private val previewLimit = 2 * 1024 * 1024
     private data class Pending(
         val preview: KernelChangePreview, val oldHash: String,
@@ -132,13 +131,15 @@ internal class KernelWorkspaceTransactions(workspace: File, private val privateD
         val obj = JSONObject(receiptFile.readText(Charsets.UTF_8))
         KernelTransactionReceipt(
             obj.getString("path"), obj.getBoolean("existed"), obj.getString("before"),
-            obj.getString("after"), obj.getLong("at"), obj.getString("action"))
+            obj.getString("after"), obj.getLong("at"), obj.getString("action"),
+            obj.optString("backup", "ank-workspace-previous.bin"))
     }.getOrNull()
 
     private fun saveReceipt(row: KernelTransactionReceipt) {
         val json = JSONObject().put("path", row.path).put("existed", row.wasPresent)
             .put("before", row.beforeSha256).put("after", row.afterSha256)
-            .put("at", row.completedAt).put("action", row.action).toString()
+            .put("at", row.completedAt).put("action", row.action)
+            .put("backup", row.backupName).toString()
         val staged = File.createTempFile(".ank-receipt-", ".tmp", privateDir)
         try {
             staged.writeText(json, Charsets.UTF_8)
@@ -161,29 +162,44 @@ internal class KernelWorkspaceTransactions(workspace: File, private val privateD
         require(sha(read(destination)) == selected.oldHash) {
             "Fail sudah berubah sejak preview. Bina preview baharu."
         }
+        val oldReceipt = receipt()
+        val nextBackupName = "ank-workspace-" + UUID.randomUUID().toString() + ".bin"
+        val nextBackup = File(privateDir, nextBackupName)
         val row = KernelTransactionReceipt(
             approval.target, selected.existed, selected.oldHash, approval.afterSha256,
-            System.currentTimeMillis(), approval.operation.name)
+            System.currentTimeMillis(), approval.operation.name, nextBackupName)
         val stagedBackup = File.createTempFile(".ank-backup-", ".tmp", privateDir)
         try {
             stagedBackup.writeBytes(selected.oldBytes ?: byteArrayOf())
-            move(stagedBackup, backupFile)
+            move(stagedBackup, nextBackup)
             // A newly-created parent must not be a symlink.
             val parent = destination.parentFile ?: error("Folder tiada")
             require(parent.isDirectory || parent.mkdirs())
             target(approval.target)
             apply(destination, selected.newBytes)
             saveReceipt(row)
+            // Delete the old snapshot only AFTER the new receipt is durable.
+            oldReceipt?.backupName?.let { previous ->
+                if (previous != nextBackupName && previous.matches(
+                        Regex("ank-workspace-[0-9a-f-]{36}\\.bin"))) {
+                    runCatching { File(privateDir, previous).delete() }
+                }
+            }
             return row
         } catch (failure: Exception) {
             runCatching { apply(destination, if (selected.existed) selected.oldBytes else null) }
+            runCatching { nextBackup.delete() }
             throw failure
         } finally { stagedBackup.delete() }
     }
 
     @Synchronized fun previewRollback(): KernelChangePreview? {
         val row = receipt() ?: return null
-        if (!backupFile.isFile || backupFile.length() > previewLimit) return null
+        if (!row.backupName.matches(Regex("ank-workspace-[0-9a-f-]{36}\\.bin")) &&
+            row.backupName != "ank-workspace-previous.bin") return null
+        val backupFile = File(privateDir, row.backupName)
+        if (!backupFile.isFile || Files.isSymbolicLink(backupFile.toPath()) ||
+            backupFile.length() > previewLimit) return null
         val destination = target(row.path)
         if (sha(read(destination)) != row.afterSha256) return null
         val original = if (row.wasPresent) backupFile.readBytes() else null
@@ -196,5 +212,6 @@ internal class KernelWorkspaceTransactions(workspace: File, private val privateD
 
 internal data class KernelTransactionReceipt(
     val path: String, val wasPresent: Boolean, val beforeSha256: String,
-    val afterSha256: String, val completedAt: Long, val action: String
+    val afterSha256: String, val completedAt: Long, val action: String,
+    val backupName: String = ""
 )
