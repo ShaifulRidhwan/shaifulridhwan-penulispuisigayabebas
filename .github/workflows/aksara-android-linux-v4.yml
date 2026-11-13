@@ -75,6 +75,24 @@ jobs:
           bash -n android-native/scripts/build-aksara-linux.sh
           sh -n android-native/scripts/linux/aksara-linux-smoke.sh
           sh -n android-native/scripts/linux/aksara-linux-benchmark.sh
+          sh -n android-native/scripts/linux/aksara-fetch.sh
+          # Final owner UI request: only the in-terminal wordmark may change.
+          # The framed banner has fixed matching corners and no A graphic or V2.
+          python3 - <<'AKSARA_TERMINAL_BANNER'
+          import json
+          from pathlib import Path
+          root = Path("android-native/scripts/linux")
+          fetch = (root / "aksara-fetch.sh").read_text()
+          assert '╭────────────────────╮' in fetch
+          assert '│%b    AKSARA LINUX    %b│' in fetch
+          assert '╰────────────────────╯' in fetch
+          assert 'LINUX · V2' not in fetch and 'A K S A R A' not in fetch
+          assert ' /\\ ' not in fetch and ' / ◇ ' not in fetch
+          assert json.loads((root / "fastfetch-wide.jsonc").read_text())["logo"] is None
+          assert json.loads((root / "fastfetch-compact.jsonc").read_text())["logo"] is None
+          assert (root / "aksara-logo.txt").read_text().strip() == "$[1]AKSARA LINUX"
+          print("In-terminal wordmark only: uniform box, no gold A icon or V2")
+          AKSARA_TERMINAL_BANNER
           sh -n android-native/app/src/main/assets/linux/first-setup.sh
           sh -n android-native/app/src/main/assets/linux/terminal-theme.sh
           sh -n android-native/app/src/main/assets/linux/aksara-doctor.sh
