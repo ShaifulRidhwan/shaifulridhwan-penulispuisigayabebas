@@ -3,6 +3,19 @@ package my.aksara.nativeapp.core.nexus
 import android.content.Context
 import android.system.Os
 import my.aksara.nativeapp.core.linux.AksaraLinuxRuntime
+import my.aksara.nativeapp.core.nexus.kernel.KernelApproval
+import my.aksara.nativeapp.core.nexus.kernel.KernelContextGraph
+import my.aksara.nativeapp.core.nexus.kernel.KernelDefaults
+import my.aksara.nativeapp.core.nexus.kernel.KernelEvidence
+import my.aksara.nativeapp.core.nexus.kernel.KernelEvidenceParser
+import my.aksara.nativeapp.core.nexus.kernel.KernelPlan
+import my.aksara.nativeapp.core.nexus.kernel.KernelPlanner
+import my.aksara.nativeapp.core.nexus.kernel.KernelRegistry
+import my.aksara.nativeapp.core.nexus.kernel.KernelScheduler
+import my.aksara.nativeapp.core.nexus.kernel.KernelNode
+import my.aksara.nativeapp.core.nexus.kernel.KernelTransition
+import my.aksara.nativeapp.core.nexus.kernel.KernelStatus
+import my.aksara.nativeapp.core.nexus.kernel.KernelPolicy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,7 +65,10 @@ internal object NexusActions {
         NexusAction("workflow.audit", "Nexus System Audit", "Workflow berbilang langkah: sistem, devkit dan Git",
             listOf("Sistem" to "uname -a; df -h /workspace",
                 "Tools" to "python3 --version; git --version; node --version",
-                "Git" to "git -C /workspace status --short --branch 2>&1 || echo 'Tiada repositori Git di /workspace'"))
+                "Git" to "git -C /workspace status --short --branch 2>&1 || echo 'Tiada repositori Git di /workspace'")),
+        NexusAction("linux.probe", "Scheduler Probe (8s)",
+            "Ujian P10/P11: proses terkawal untuk concurrency dan cancellation",
+            listOf("Probe" to "sleep 8 && printf 'NEXUS_PROBE_COMPLETED\n'"))
     )
     fun find(id: String): NexusAction? = all.firstOrNull { it.id == id }
 }
@@ -87,6 +103,120 @@ internal object NexusEngine {
     private var journal: NexusJournal? = null
     private var running: Job? = null
     private val journalMutex = Mutex()
+    private val kernelRegistry: KernelRegistry = KernelDefaults.registry()
+    private val kernelContext = KernelContextGraph()
+
+    /** Planning is pure: no shell process or remote request runs here. */
+    fun planKernel(goal: String): KernelPlan? = KernelPlanner.propose(goal, kernelRegistry)
+    fun kernelFacts() = kernelContext.facts()
+
+    /**
+     * This method MUST only be called after explicit plan preview + user approval.
+     * The approved plan is immutable and checked against the registry again.
+     */
+    @Synchronized fun startKernelPlan(plan: KernelPlan): Boolean {
+        val context = app ?: return false
+        if (running?.isActive == true) return false
+        val approval = runCatching {
+            KernelPolicy.approveReadOnly(plan, kernelRegistry, System.currentTimeMillis())
+        }.getOrNull() ?: return false
+        if (!AksaraLinuxRuntime.installed(context)) return false
+        val id = UUID.randomUUID().toString()
+        val event = NexusEvent(id, "ANK V2 · " + plan.goal.take(45),
+            NexusTaskStatus.RUNNING, System.currentTimeMillis())
+        mutable.update {
+            it.copy(activeId = id, activeTitle = event.title,
+                progress = "Kernel scheduler initializing", lastStatus = NexusTaskStatus.RUNNING,
+                lastOutput = "", events = (listOf(event) + it.events).take(24))
+        }
+        persistMetadata()
+        running = scope.launch {
+            try {
+                val outcome = KernelScheduler(kernelRegistry, maxParallel = 2).run(
+                    plan, approval,
+                    execute = { node, previous -> executeKernelNode(context, node, previous, plan.id) },
+                    onTransition = { transition ->
+                        mutable.update { it.copy(progress =
+                            transition.nodeId + " · " + transition.status.name) }
+                    }
+                )
+                val report = buildString {
+                    append("ANK V2 WORKFLOW ").append(plan.id).append('\n')
+                    outcome.steps.forEach { step ->
+                        append("\n[").append(step.nodeId).append("] ")
+                            .append(step.status.name).append('\n')
+                        step.evidence?.let { evidence ->
+                            append("Source: ").append(evidence.source).append('\n')
+                            append("Exit: ").append(evidence.exitCode).append('\n')
+                            append(evidence.output.take(5000)).append('\n')
+                        }
+                        if (!step.error.isNullOrBlank()) append("Reason: ").append(step.error).append('\n')
+                    }
+                }
+                finish(id, if (outcome.passed) NexusTaskStatus.COMPLETED else NexusTaskStatus.FAILED,
+                    report, if (outcome.passed) "All DAG steps completed" else "Workflow incomplete")
+            } catch (c: CancellationException) {
+                finish(id, NexusTaskStatus.CANCELLED, "", "Kernel workflow cancelled")
+                throw c
+            } catch (e: Exception) {
+                finish(id, NexusTaskStatus.FAILED, "Kernel error: " +
+                    (e.message ?: "unknown").take(200), "Kernel workflow failed")
+            }
+        }
+        return true
+    }
+
+    private suspend fun executeKernelNode(
+        context: Context,
+        node: KernelNode,
+        previous: Map<String, KernelEvidence>,
+        planId: String
+    ): KernelEvidence {
+        val now = System.currentTimeMillis()
+        val cap = node.capability
+        val evidence = when (cap) {
+            "today.snapshot" -> {
+                val snapshot = state.value.dashboard
+                KernelEvidence(cap, "today-repository",
+                    snapshot.ifBlank { "Dashboard snapshot unavailable; open Today first." },
+                    0, now, facts = mapOf(
+                        "today.availability" to if (snapshot.isBlank()) "missing" else "cached",
+                        "today.snapshot.age_ms" to if (snapshot.isBlank()) "unknown"
+                            else (now - state.value.dashboardUpdated).coerceAtLeast(0).toString()))
+            }
+            "ai.health" -> {
+                val status = state.value.aiStatus
+                KernelEvidence(cap, "chat-provider-state", status, 0, now,
+                    facts = mapOf("ai.health.snapshot" to status.take(200)))
+            }
+            "kernel.evidence" -> {
+                val report = KernelEvidenceParser.summarize(previous.values)
+                KernelEvidence(cap, "nexus-local", report, 0, now,
+                    facts = mapOf("kernel.evidence.sources" to previous.size.toString()))
+            }
+            "linux.health", "linux.devkit", "linux.git", "linux.probe" -> {
+                val action = requireNotNull(NexusActions.find(cap)) { "Unregistered Linux adapter" }
+                val output = StringBuilder()
+                var lastExit = 0
+                for ((label, command) in action.steps) {
+                    val response = NexusLinuxRunner.execute(context, command,
+                        if (cap == "linux.probe") 15_000L else 12_000L)
+                    output.append('[').append(label).append("]\n")
+                        .append(response.output).append("\nExit: ").append(response.exitCode)
+                        .append("\n\n")
+                    lastExit = response.exitCode
+                    if (lastExit != 0) break
+                }
+                val text = output.toString()
+                KernelEvidence(cap, "alpine-proot", text, lastExit, now,
+                    facts = KernelEvidenceParser.parse(cap, text))
+            }
+            else -> error("Kernel policy denied unknown adapter")
+        }
+        kernelContext.ingest(planId, evidence)
+        return evidence
+    }
+
 
     @Synchronized fun initialize(context: Context) {
         if (app != null) return

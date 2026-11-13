@@ -25,6 +25,7 @@ import my.aksara.nativeapp.core.nexus.NexusAction
 import my.aksara.nativeapp.core.nexus.NexusActions
 import my.aksara.nativeapp.core.nexus.NexusEngine
 import my.aksara.nativeapp.core.nexus.NexusTaskStatus
+import my.aksara.nativeapp.core.nexus.kernel.KernelPlan
 
 /** Shared entry point. A single, tiny overlay works on all three pager pages. */
 @Composable
@@ -51,6 +52,7 @@ internal fun NexusPanel(
     val current by NexusEngine.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { NexusEngine.refreshLinux() }
     var approval by remember { mutableStateOf<NexusAction?>(null) }
+    var kernelPlan by remember { mutableStateOf<KernelPlan?>(null) }
     var message by remember { mutableStateOf<String?>(null) }
 
     Dialog(
@@ -112,6 +114,46 @@ internal fun NexusPanel(
                                     onClose()
                                 }, Modifier.fillMaxWidth(), height = 35.dp, size = 10f,
                                     enabled = current.dashboard.isNotBlank())
+                            }
+                        }
+
+                        AksaraText("ANK V2 · ORCHESTRATION KERNEL", size = 11.5f,
+                            weight = 700, color = AksaraColors.gold)
+                        AksaraText(
+                            "Kernel mengurus capability, dependency, evidence dan proses PRoot. " +
+                            "Semua workflow perlu kelulusan sebelum berjalan.",
+                            size = 10f, line = 15f, color = AksaraColors.muted
+                        )
+                        AksaraButton("Rancang Unified System Audit", {
+                            kernelPlan = NexusEngine.planKernel("audit penuh")
+                            if (kernelPlan == null) message = "Kernel Planner tidak dapat membina workflow."
+                        }, Modifier.fillMaxWidth(), height = 38.dp, size = 10f,
+                            enabled = current.linuxReady && current.activeId == null)
+                        if (kernelPlan != null) {
+                            val pending = kernelPlan!!
+                            AksaraGlassSurface(Modifier.fillMaxWidth(), radius = 14.dp, blur = 5.dp) {
+                                Column(Modifier.fillMaxWidth().padding(12.dp),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    AksaraText("SAHKAN KERNEL WORKFLOW",
+                                        size = 11f, weight = 700, color = AksaraColors.gold)
+                                    AksaraText(
+                                        pending.nodes.joinToString(" → ") { it.capability },
+                                        size = 9.5f, line = 15f, color = AksaraColors.muted)
+                                    AksaraText(
+                                        "Arahan read-only sahaja. Snapshot Today dan status A.I. " +
+                                        "digunakan di dalam aplikasi. Tiada prompt dihantar automatik.",
+                                        size = 9.5f, line = 15f, color = AksaraColors.muted)
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        AksaraButton("Batal", { kernelPlan = null },
+                                            Modifier.weight(1f), height = 36.dp, size = 10f)
+                                        AksaraButton("Lulus & Jalankan", {
+                                            if (!NexusEngine.startKernelPlan(pending))
+                                                message = "Kernel masih sibuk atau tidak tersedia."
+                                            kernelPlan = null
+                                        }, Modifier.weight(1f), height = 36.dp, size = 10f,
+                                            enabled = current.activeId == null && current.linuxReady)
+                                    }
+                                }
                             }
                         }
 
