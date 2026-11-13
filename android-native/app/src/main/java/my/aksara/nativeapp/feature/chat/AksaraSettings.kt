@@ -91,7 +91,7 @@ internal fun AksaraSettings(
                     } else {
                         SettingsGroup("Advanced Settings",
                             "Di Sebalik Aksara · System Architecture, Capabilities & Runtime",
-                            "brain",false,{expanded="";advancedPage=true}) {}
+                            "settings",false,{expanded="";advancedPage=true}) {}
                         tabs.forEach { (name,description,icon) ->
                         SettingsGroup(name,description,icon,expanded==name,{expanded=if(expanded==name)"" else name}) {
                             when(name) {

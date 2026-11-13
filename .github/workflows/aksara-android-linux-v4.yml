@@ -1,25 +1,25 @@
-name: AKSARA Nexus PR324 Linux Owner APK
+name: AKSARA Linux V4 Absolute Improvement owner APK
 on:
   push:
     branches:
-      - feature/aksara-nexus-engine-v1
-    # Experimental V3 owner build: Linux install progress only; no other redesign.
+      - feature/aksara-linux-v4-from-pr323
+    # Experimental V4 owner build: Linux install progress only; no other redesign.
     # Archive manifest, Compose progress type and ten-stage smoke diagnostics are validated in CI.
     # Paths intentionally limit automatic CI; later commits need explicit dispatch.
     # Auto-build only when this workflow changes. Subsequent source commits
     # do not consume CI until workflow_dispatch is explicitly requested.
     paths:
-      - '.github/workflows/aksara-nexus-pr324-linux.yml'
+      - '.github/workflows/aksara-android-linux-v4.yml'
   workflow_dispatch:
 permissions:
   contents: write
   actions: read
 concurrency:
-  group: aksara-nexus-pr324-arm64
+  group: aksara-linux-v4-arm64
   cancel-in-progress: true
 jobs:
   build-linux:
-    if: github.ref == 'refs/heads/feature/aksara-nexus-engine-v1'
+    if: github.ref == 'refs/heads/feature/aksara-linux-v4-from-pr323'
     runs-on: ubuntu-latest
     timeout-minutes: 100
     env:
@@ -47,18 +47,6 @@ jobs:
           curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/JetBrains/kotlin/releases/assets/598630357' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar"
           curl --fail --location --retry 3 'https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21/kotlin-compiler-embeddable-2.1.21.pom' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom"
           printf '%s  %s\n' '67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar" 'dbbf8ac2550d5b1ae2a627f204f28b16f9271e36c44d8994aa3b139cbf70e45a' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom" | sha256sum --check
-      - name: Verify Nexus V1 integration boundaries
-        run: |
-          set -euo pipefail
-          test -f android-native/app/src/main/java/my/aksara/nativeapp/core/nexus/NexusEngine.kt
-          test -f android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/NexusPanel.kt
-          test ! -e android-native/app/src/main/java/my/aksara/nativeapp/core/nexus/NexusPanel.kt
-          test -f android-native/app/src/test/java/my/aksara/nativeapp/core/nexus/NexusActionsTest.kt
-          grep -Fq 'NexusEngine.publishDashboard(snapshot)' android-native/app/src/main/java/my/aksara/nativeapp/feature/today/TodayScreen.kt
-          grep -Fq 'NexusEngine.publishAiStatus(state.providers)' android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/AksaraScreen.kt
-          grep -Fq 'onDraftForChat' android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/NexusPanel.kt
-          grep -Fq 'NexusLinuxRunner.execute' android-native/app/src/main/java/my/aksara/nativeapp/core/nexus/NexusEngine.kt
-          echo 'Nexus has one connected panel, a guarded Linux runner and reviewable AI handoff.'
       - name: Verify shared Web/Android Brain contracts
         run: node scripts/sync-android-voice-brain.cjs --check
       - name: Restore existing Stockfish build
@@ -87,6 +75,58 @@ jobs:
           bash -n android-native/scripts/build-aksara-linux.sh
           sh -n android-native/scripts/linux/aksara-linux-smoke.sh
           sh -n android-native/scripts/linux/aksara-linux-benchmark.sh
+          sh -n android-native/scripts/linux/aksara-fetch.sh
+          # Final owner UI request: only the in-terminal wordmark may change.
+          # The framed banner has fixed matching corners and no A graphic or V2.
+          python3 - <<'AKSARA_TERMINAL_BANNER'
+          import json
+          from pathlib import Path
+          root = Path("android-native/scripts/linux")
+          fetch = (root / "aksara-fetch.sh").read_text()
+          assert '╭────────────────────╮' in fetch
+          assert '│%b    AKSARA LINUX    %b│' in fetch
+          assert '╰────────────────────╯' in fetch
+          assert 'LINUX · V2' not in fetch and 'A K S A R A' not in fetch
+          assert ' /\\ ' not in fetch and ' / ◇ ' not in fetch
+          assert json.loads((root / "fastfetch-wide.jsonc").read_text())["logo"] is None
+          assert json.loads((root / "fastfetch-compact.jsonc").read_text())["logo"] is None
+          assert (root / "aksara-logo.txt").read_text().strip() == "$[1]AKSARA LINUX"
+          print("In-terminal wordmark only: uniform box, no gold A icon or V2")
+          AKSARA_TERMINAL_BANNER
+          sh -n android-native/app/src/main/assets/linux/first-setup.sh
+          sh -n android-native/app/src/main/assets/linux/terminal-theme.sh
+          sh -n android-native/app/src/main/assets/linux/aksara-doctor.sh
+          test -s android-native/app/src/main/assets/fonts/jetbrains_mono_nl_regular.ttf
+          test -s android-native/app/src/main/assets/licenses/jetbrainsmono/OFL.txt
+          ! grep -Fq 'Pasang Alpine Linux' android-native/app/src/main/java/my/aksara/nativeapp/core/linux/AksaraLinuxScreen.kt
+          ! grep -Fq '"A−"' android-native/app/src/main/java/my/aksara/nativeapp/core/linux/AksaraLinuxScreen.kt
+          grep -Fq 'SettingsGroup("Advanced Settings",' android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/AksaraSettings.kt
+          # Cold-start regression: adjacent pager precomposition must NOT boot Linux PTY.
+          python3 - <<'AKSARA_LINUX_COLD_START'
+          from pathlib import Path
+          pager = Path("android-native/app/src/main/java/my/aksara/nativeapp/feature/chat/AksaraScreen.kt").read_text()
+          assert "beyondViewportPageCount=1" in pager, "Keep swipe/pager parity"
+          assert "val linuxEntering = pagerState.currentPage == 2 ||" in pager
+          assert "pagerState.targetPage == 2 ||" in pager
+          assert "if (linuxEntering) {" in pager
+          assert pager.index("if (linuxEntering) {") < pager.index("AksaraLinuxScreen(onBack=")
+          print("Linux PTY deferred until Linux page is entered")
+          AKSARA_LINUX_COLD_START
+          # Termux TerminalView.setTypeface reads mRenderer.mTextSize.
+          # Protect against the Android 16 crash from applying a font before setTextSize.
+          python3 - <<'AKSARA_TERMINAL_FONT_INIT'
+          from pathlib import Path
+          source = Path("android-native/app/src/main/java/my/aksara/nativeapp/core/linux/AksaraLinuxScreen.kt").read_text()
+          factory = source.split("TerminalView(context, null).apply {", 1)[1].split("vm.attach(this)", 1)[0]
+          # Only inspect real Kotlin statements, not comments mentioning setTypeface().
+          factory = "\n".join(line.split("//", 1)[0] for line in factory.splitlines())
+          assert "setTextSize(vm.fontSize)" in factory, "Terminal renderer needs a text size"
+          assert "setTypeface(" in factory, "JetBrains Mono terminal font missing"
+          assert factory.index("setTextSize(vm.fontSize)") < factory.index("setTypeface("), (
+              "CRASH: setTypeface dereferences a null Termux renderer; initialize via setTextSize first"
+          )
+          print("Termux renderer initialized before bundled JetBrains Mono font")
+          AKSARA_TERMINAL_FONT_INIT
           bash android-native/scripts/build-aksara-linux.sh
       - name: Assert official Alpine archive contains guest shell and package manager
         run: |
@@ -117,10 +157,9 @@ jobs:
           set -euo pipefail
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
           gradle --no-daemon --init-script ci/compiler-repository.init.gradle \
-            -PenableLinuxPreview=true -PaksaraPreviewSuffix=.preview.p324.c"$tag" \
+            -PenableLinuxPreview=true -PaksaraPreviewSuffix=.preview.p326.c"$tag" \
             assembleDebug :app:testDebugUnitTest \
             --tests 'my.aksara.nativeapp.core.linux.*' \
-            --tests 'my.aksara.nativeapp.core.nexus.*' \
             --tests 'my.aksara.nativeapp.NativeIntegrationContractTest' \
             --tests 'my.aksara.nativeapp.SessionAndProviderStatusTest' \
             --tests 'my.aksara.nativeapp.TodayAdvancedNavigationTest' \
@@ -131,7 +170,7 @@ jobs:
           set -euo pipefail
           mkdir -p delivery
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
-          apk="AKSARA-Nexus-PR324-$tag.apk"
+          apk="AKSARA-Linux-V4-$tag.apk"
           cp android-native/app/build/outputs/apk/debug/app-debug.apk "delivery/$apk"
           unzip -tq "delivery/$apk"
           unzip -l "delivery/$apk" | grep -F 'lib/arm64-v8a/libaksara_proot.so'
@@ -150,6 +189,10 @@ jobs:
           unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/alpine-minirootfs.bundle'
           unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/alpine-minirootfs.sha256'
           unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/alpine-minirootfs.entries'
+          unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/first-setup.sh'
+          unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/terminal-theme.sh'
+          unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/aksara-doctor.sh'
+          unzip -Z1 "delivery/$apk" | grep -Fx 'assets/fonts/jetbrains_mono_nl_regular.ttf'
           echo "Embedded verified Alpine extraction progress manifest"
           expected="$(awk '{print $1; exit}' android-native/app/src/main/assets/linux/alpine-minirootfs.sha256)"
           actual="$(unzip -p "delivery/$apk" assets/linux/alpine-minirootfs.bundle | sha256sum | awk '{print $1}')"
@@ -158,29 +201,15 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "delivery/$apk"
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 4 "delivery/$apk"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "delivery/$apk" > delivery/BADGING.txt
-          grep -F "package: name='my.aksara.nativeapp.preview.p324.c$tag'" delivery/BADGING.txt
+          grep -F "package: name='my.aksara.nativeapp.preview.p326.c$tag'" delivery/BADGING.txt
           grep -F "targetSdkVersion:'28'" delivery/BADGING.txt
-          python3 - "delivery/$apk" <<'NEXUS_APK_SIZE'
-          import sys
-          import zipfile
-          from pathlib import Path
-          path = Path(sys.argv[1])
-          with zipfile.ZipFile(path) as z:
-              files = z.infolist()
-              bundles = [i for i in files if i.filename == 'assets/linux/alpine-minirootfs.bundle']
-              assert len(bundles) == 1, 'Exactly one Alpine rootfs bundle required'
-              print(f'APK size: {path.stat().st_size / 1048576:.1f} MiB')
-              print(f'Alpine compressed share: {bundles[0].compress_size / 1048576:.1f} MiB')
-              for entry in sorted(files, key=lambda i: i.compress_size, reverse=True)[:8]:
-                  print(f'{entry.compress_size / 1048576:7.1f} MiB  {entry.filename}')
-          NEXUS_APK_SIZE
           sha256sum "delivery/$apk" > delivery/SHA256SUMS.txt
-          tar -czf "delivery/AKSARA-Nexus-PR324-$tag-proot-source.tar.gz" \
+          tar -czf "delivery/AKSARA-Linux-V4-$tag-proot-source.tar.gz" \
             -C "$RUNNER_TEMP/aksara-proot-static" --exclude=.git .
       - name: Upload Linux preview APK and corresponding GPL source
         uses: actions/upload-artifact@v4
         with:
-          name: aksara-nexus-pr324-arm64
+          name: aksara-linux-v4-arm64
           path: delivery/
           retention-days: 60
           if-no-files-found: error
@@ -190,7 +219,7 @@ jobs:
         run: |
           set -euo pipefail
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
-          gh release create "aksara-nexus-pr324-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \
-            --title "AKSARA Nexus PR324 $tag - Integrated Android Preview" \
-            --notes "PR324 experimental owner APK. AKSARA Nexus adds shared Today/AI/Linux orchestration and an isolated headless PRoot diagnostics runner, no duplicate rootfs or model. Existing Alpine ARM64 full devkit, PTY and Liquid Glass are preserved. This is a sideload-only targetSdk 28 preview, not a Play Store build. Owner-device QA required before merge. GPL PRoot source attached." \
+          gh release create "aksara-linux-v4-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \
+            --title "AKSARA Linux V4 $tag - SETUJU, Vault, Gold Crimson" \
+            --notes "AKSARA Linux V4 owner-only ARM64 candidate: first-run SETUJU in PTY with real Alpine extraction, JetBrains Mono NL Gold/Crimson, resilient multi-PTY with exit codes, SAF Project Vault, localhost Python server, Git/SSH tools and environment doctor. Existing rootfs is never auto-replaced. Isolated targetSdk 28 sideload, NOT Play-Store-ready; modern API36 probe requires separate device work. User QA is required before merge. GPL PRoot source attached." \
             --prerelease --target "$GITHUB_SHA"

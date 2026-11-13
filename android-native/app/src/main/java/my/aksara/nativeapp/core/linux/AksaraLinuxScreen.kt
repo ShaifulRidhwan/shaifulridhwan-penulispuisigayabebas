@@ -1,6 +1,11 @@
 package my.aksara.nativeapp.core.linux
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -19,8 +24,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import android.graphics.Typeface
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.termux.view.TerminalView
 import dev.chrisbanes.haze.HazeState
@@ -40,6 +47,15 @@ fun AksaraLinuxScreen(
 ) {
     val backdrop = remember { HazeState() }
     val margins = aksaraDeviceMargins()
+    val context = LocalContext.current
+    val backupPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")) { uri ->
+        if (uri != null) vm.exportVault(uri)
+    }
+    val restorePicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) vm.importVault(uri)
+    }
     val current = vm.slots.getOrNull(vm.selected)
     var deck by rememberSaveable { mutableStateOf("keys") }
     var commandCategory by rememberSaveable { mutableStateOf("FILES") }
@@ -87,7 +103,7 @@ fun AksaraLinuxScreen(
                                     family = AksaraTypography.heading, tracking = .35f)
                                 AksaraText(
                                     if (vm.installed) "ALPINE ${AksaraLinuxRuntime.alpineVersion} · ARM64"
-                                    else if (vm.bundled) "ARM64 · ALPINE READY"
+                                    else if (vm.bundled) "ARM64 · INITIAL SETUP"
                                     else "ANDROID · NATIVE PTY",
                                     size = 8.8f, color = AksaraColors.muted
                                 )
@@ -106,7 +122,14 @@ fun AksaraLinuxScreen(
                                 horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                                 LinuxRuntimePulse(current != null && !current.ended)
                                 AksaraText(
-                                    if (current?.ended == true) "STOPPED" else "LIVE PTY",
+                                    if (current?.ended == true) {
+                                         val code = current.exitCode
+                                         if (code == null) "STOPPED" else when {
+                                             code == 0 -> "EXIT 0"
+                                             code < 0 -> "SIGNAL " + (-code)
+                                             else -> "ERROR " + code
+                                         }
+                                     } else "LIVE PTY",
                                     size = 10f, weight = 700,
                                     color = if (current?.ended == true)
                                         LinuxDeckRose else LinuxDeckMint
@@ -163,7 +186,7 @@ fun AksaraLinuxScreen(
                                     size = 15f, color = AksaraColors.gold)
                             }
                         }
-                        if (vm.slots.size < 6 && !vm.installing) {
+                        if (vm.installed && vm.slots.size < 6 && !vm.installing) {
                             Box(Modifier.size(33.dp).clip(RoundedCornerShape(10.dp))
                                 .border(1.dp, Color(0x77E6C58B), RoundedCornerShape(10.dp))
                                 .clickable { vm.addSession() }.testTag("linux-add-session"),
@@ -179,66 +202,13 @@ fun AksaraLinuxScreen(
                         { vm.restartSession() }, Modifier.fillMaxWidth().testTag("linux-restart-session"),
                         icon = "terminal", enabled = !vm.restarting)
                 }
-                if (!vm.installed && vm.bundled) {
-                    AksaraButton(if (vm.installing) "Memasang Alpine..." else "Pasang Alpine Linux",
-                        { vm.installAlpine() }, Modifier.fillMaxWidth(),
-                        enabled = !vm.installing, icon = "terminal")
-                    if (vm.installing) {
-                        // True extraction progress from the CI-generated archive entry
-                        // manifest, not a decorative infinite-progress animation.
-                        val install = vm.installProgress
-                        AksaraGlassSurface(
-                            Modifier.fillMaxWidth().testTag("linux-install-progress"),
-                            radius = 14.dp, blur = 7.dp
-                        ) {
-                            Column(
-                                Modifier.fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                                verticalArrangement = Arrangement.spacedBy(7.dp)
-                            ) {
-                                Row(
-                                    Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    AksaraText(install.stage, size = 10f,
-                                        weight = 650, color = AksaraColors.text)
-                                    AksaraText("${install.percent}%", size = 10f,
-                                        weight = 750, color = LinuxDeckMint)
-                                }
-                                Box(
-                                    Modifier.fillMaxWidth().height(5.dp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(Color(0x46394B61))
-                                ) {
-                                    Box(
-                                        Modifier.fillMaxWidth(
-                                            (install.percent / 100f).coerceIn(0f, 1f)
-                                        ).fillMaxHeight()
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(Brush.horizontalGradient(
-                                                listOf(LinuxDeckBlue, LinuxDeckMint)
-                                            ))
-                                    )
-                                }
-                                if (install.filesTotal > 0) {
-                                    AksaraText(
-                                        "${install.filesDone} / ${install.filesTotal} entri arkib",
-                                        size = 9f, color = AksaraColors.muted
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
                 // The PTY receives the remaining viewport height after IME reflow.
                 // No expensive backdrop blur is applied to live terminal glyphs.
                 Column(
                     Modifier.fillMaxWidth().weight(1f)
                         .clip(RoundedCornerShape(19.dp))
                         .border(1.dp, Color(0x695C83A5), RoundedCornerShape(19.dp))
-                        .background(Color(0xFC080C14))
+                        .background(Color(0xFF080B12))
                         .testTag("linux-terminal-pty")
                 ) {
                     Row(
@@ -250,21 +220,23 @@ fun AksaraLinuxScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         AksaraText("●", size = 7f, color = LinuxDeckMint)
-                        AksaraText(if (vm.installed) "aksara · alpine · /workspace" else "aksara · android shell",
+                        AksaraText(if (vm.installed) "aksara · alpine · /workspace" else "aksara · first-time setup",
                             Modifier.weight(1f), size = 10f, color = AksaraColors.muted)
-                        AksaraText("A−", Modifier.clickable { vm.resizeFont(-1) }.padding(horizontal = 5.dp),
-                            size = 11f, color = AksaraColors.gold)
-                        AksaraText("A+", Modifier.clickable { vm.resizeFont(1) }.padding(horizontal = 5.dp),
-                            size = 11f, color = AksaraColors.gold)
-                        AksaraText("${vm.fontSize}sp", size = 9f, color = AksaraColors.muted)
+
                     }
                     AndroidView(
                         factory = { context ->
                             TerminalView(context, null).apply {
                                 isFocusable = true
                                 isFocusableInTouchMode = true
-                                setBackgroundColor(android.graphics.Color.rgb(8, 12, 20))
+                                setBackgroundColor(android.graphics.Color.rgb(8, 11, 18))
+                                // Termux TerminalView.setTypeface() dereferences mRenderer.
+                                // setTextSize() MUST initialize the renderer first.
                                 setTextSize(vm.fontSize)
+                                setTypeface(runCatching {
+                                    Typeface.createFromAsset(context.assets,
+                                        "fonts/jetbrains_mono_nl_regular.ttf")
+                                }.getOrDefault(Typeface.MONOSPACE))
                                 vm.attach(this)
                             }
                         },
@@ -339,8 +311,34 @@ fun AksaraLinuxScreen(
                                     LinuxDeckStat("ISOLATION", "PROOT · NO ROOT", AksaraColors.gold)
                                     LinuxDeckStat("STORAGE", "APP PRIVATE", LinuxDeckMint)
                                 }
-                                AksaraText("Fail /workspace disimpan dalam storan aplikasi. Proses PTY tidak dijamin selepas app dimatikan.",
+                                AksaraText("Workspace kekal dalam storan aplikasi. Sesi PTY tidak dapat dijamin selepas Android menamatkan proses.",
                                     size = 9.2f, color = AksaraColors.muted)
+                                Row(Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    AksaraButton("BACKUP", {
+                                        backupPicker.launch("aksara-linux-workspace.zip")
+                                    }, Modifier.weight(1f), height = 31.dp, size = 10f,
+                                        enabled = !vm.vaultBusy)
+                                    AksaraButton("IMPORT", {
+                                        restorePicker.launch(arrayOf("application/zip",
+                                            "application/octet-stream"))
+                                    }, Modifier.weight(1f), height = 31.dp, size = 10f,
+                                        enabled = !vm.vaultBusy)
+                                    AksaraButton("LOCALHOST", {
+                                        runCatching {
+                                            context.startActivity(Intent(
+                                                Intent.ACTION_VIEW,
+                                                Uri.parse("http://127.0.0.1:8000/")))
+                                        }.onFailure {
+                                            Toast.makeText(context,
+                                                "Browser tidak dapat dibuka.",
+                                                Toast.LENGTH_SHORT).show()
+                                        }
+                                    }, Modifier.weight(1f), height = 31.dp, size = 10f)
+                                }
+                                vm.vaultStatus?.let { status ->
+                                    AksaraText(status, size = 9f, color = AksaraColors.gold)
+                                }
                             }
                         }
                     }
