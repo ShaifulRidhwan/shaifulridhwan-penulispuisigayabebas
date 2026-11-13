@@ -180,6 +180,8 @@ private val iconPaths = mapOf(
     "brain" to listOf("M12 20V5a3 3 0 0 0-5.8-.9A3.7 3.7 0 0 0 3.5 9a3.4 3.4 0 0 0 .1 5.4A3.6 3.6 0 0 0 6.8 19 3 3 0 0 0 12 20Zm0 0V5a3 3 0 0 1 5.8-.9A3.7 3.7 0 0 1 20.5 9a3.4 3.4 0 0 1-.1 5.4A3.6 3.6 0 0 1 17.2 19 3 3 0 0 1 12 20Z", "M5.5 9h3l2 2.1v3.2M18.5 9h-3l-2 2.1v3.2M6.2 15.5h2.6m6.4 0h2.6"),
     "terminal" to listOf("M5.3 4.2h13.4a2.8 2.8 0 0 1 2.8 2.8v10a2.8 2.8 0 0 1-2.8 2.8H5.3a2.8 2.8 0 0 1-2.8-2.8V7a2.8 2.8 0 0 1 2.8-2.8Z", "m7 9 3.7 3-3.7 3m6.2.4h4.2"),
     "code" to listOf("M8 6h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z", "M10 9h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1Z", "M9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4"),
+    // Exclusive Agentic icon: three delegated nodes converging on one execution core.
+    "agent-flow" to listOf("M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6Z", "M4.5 2.5a2 2 0 1 0 0 4a2 2 0 1 0 0-4Z", "M19.5 2.5a2 2 0 1 0 0 4a2 2 0 1 0 0-4Z", "M12 18a2 2 0 1 0 0 4a2 2 0 1 0 0-4Z", "M5.8 6 9.6 9.4M18.2 6 14.4 9.4M12 15v3"),
     "network" to listOf("M5 5.5 12 12l7-7M12 12l7.3 7M12 12 4.8 18.5", "m12 7.2 1.25 3.55L16.8 12l-3.55 1.25L12 16.8l-1.25-3.55L7.2 12l3.55-1.25Z"),
     "grid" to listOf("M4 4h6v6H4ZM14 4h6v6h-6ZM4 14h6v6H4ZM14 14h6v6h-6Z"),
     "voice" to listOf("M3 10v4m4-7v10m5-13v16m5-13v10m4-7v4"),
