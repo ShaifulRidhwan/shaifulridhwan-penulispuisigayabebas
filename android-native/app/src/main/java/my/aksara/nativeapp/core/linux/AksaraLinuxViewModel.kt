@@ -288,6 +288,25 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         }
     }
 
+    /** Android SAF -> /workspace/imports; never auto-executes imported scripts. */
+    fun importFiles(uris: List<Uri>) {
+        if (vaultBusy || uris.isEmpty()) return
+        vaultBusy = true
+        vaultStatus = "Menyalin fail ke workspace Linux..."
+        viewModelScope.launch {
+            try {
+                val result = LinuxFileBridge.importDocuments(getApplication(), uris)
+                vaultStatus = "FILES " + result.count + " fail (" +
+                    (result.bytes / 1024) + " KiB) → " + result.guestDirectory
+            } catch (error: Exception) {
+                vaultStatus = "Import fail gagal: " +
+                    (error.message ?: "Tidak dapat membaca fail.").take(140)
+            } finally {
+                vaultBusy = false
+            }
+        }
+    }
+
     fun paste() {
         val clipboard = getApplication<Application>()
             .getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
