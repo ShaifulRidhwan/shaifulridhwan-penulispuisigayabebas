@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import android.graphics.Typeface
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.termux.view.TerminalView
 import dev.chrisbanes.haze.HazeState
@@ -87,7 +88,7 @@ fun AksaraLinuxScreen(
                                     family = AksaraTypography.heading, tracking = .35f)
                                 AksaraText(
                                     if (vm.installed) "ALPINE ${AksaraLinuxRuntime.alpineVersion} · ARM64"
-                                    else if (vm.bundled) "ARM64 · ALPINE READY"
+                                    else if (vm.bundled) "ARM64 · INITIAL SETUP"
                                     else "ANDROID · NATIVE PTY",
                                     size = 8.8f, color = AksaraColors.muted
                                 )
@@ -163,7 +164,7 @@ fun AksaraLinuxScreen(
                                     size = 15f, color = AksaraColors.gold)
                             }
                         }
-                        if (vm.slots.size < 6 && !vm.installing) {
+                        if (vm.installed && vm.slots.size < 6 && !vm.installing) {
                             Box(Modifier.size(33.dp).clip(RoundedCornerShape(10.dp))
                                 .border(1.dp, Color(0x77E6C58B), RoundedCornerShape(10.dp))
                                 .clickable { vm.addSession() }.testTag("linux-add-session"),
@@ -179,66 +180,13 @@ fun AksaraLinuxScreen(
                         { vm.restartSession() }, Modifier.fillMaxWidth().testTag("linux-restart-session"),
                         icon = "terminal", enabled = !vm.restarting)
                 }
-                if (!vm.installed && vm.bundled) {
-                    AksaraButton(if (vm.installing) "Memasang Alpine..." else "Pasang Alpine Linux",
-                        { vm.installAlpine() }, Modifier.fillMaxWidth(),
-                        enabled = !vm.installing, icon = "terminal")
-                    if (vm.installing) {
-                        // True extraction progress from the CI-generated archive entry
-                        // manifest, not a decorative infinite-progress animation.
-                        val install = vm.installProgress
-                        AksaraGlassSurface(
-                            Modifier.fillMaxWidth().testTag("linux-install-progress"),
-                            radius = 14.dp, blur = 7.dp
-                        ) {
-                            Column(
-                                Modifier.fillMaxWidth()
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                                verticalArrangement = Arrangement.spacedBy(7.dp)
-                            ) {
-                                Row(
-                                    Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    AksaraText(install.stage, size = 10f,
-                                        weight = 650, color = AksaraColors.text)
-                                    AksaraText("${install.percent}%", size = 10f,
-                                        weight = 750, color = LinuxDeckMint)
-                                }
-                                Box(
-                                    Modifier.fillMaxWidth().height(5.dp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(Color(0x46394B61))
-                                ) {
-                                    Box(
-                                        Modifier.fillMaxWidth(
-                                            (install.percent / 100f).coerceIn(0f, 1f)
-                                        ).fillMaxHeight()
-                                            .clip(RoundedCornerShape(6.dp))
-                                            .background(Brush.horizontalGradient(
-                                                listOf(LinuxDeckBlue, LinuxDeckMint)
-                                            ))
-                                    )
-                                }
-                                if (install.filesTotal > 0) {
-                                    AksaraText(
-                                        "${install.filesDone} / ${install.filesTotal} entri arkib",
-                                        size = 9f, color = AksaraColors.muted
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
                 // The PTY receives the remaining viewport height after IME reflow.
                 // No expensive backdrop blur is applied to live terminal glyphs.
                 Column(
                     Modifier.fillMaxWidth().weight(1f)
                         .clip(RoundedCornerShape(19.dp))
                         .border(1.dp, Color(0x695C83A5), RoundedCornerShape(19.dp))
-                        .background(Color(0xFC080C14))
+                        .background(Color(0xFF080B12))
                         .testTag("linux-terminal-pty")
                 ) {
                     Row(
@@ -250,20 +198,20 @@ fun AksaraLinuxScreen(
                         horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         AksaraText("●", size = 7f, color = LinuxDeckMint)
-                        AksaraText(if (vm.installed) "aksara · alpine · /workspace" else "aksara · android shell",
+                        AksaraText(if (vm.installed) "aksara · alpine · /workspace" else "aksara · first-time setup",
                             Modifier.weight(1f), size = 10f, color = AksaraColors.muted)
-                        AksaraText("A−", Modifier.clickable { vm.resizeFont(-1) }.padding(horizontal = 5.dp),
-                            size = 11f, color = AksaraColors.gold)
-                        AksaraText("A+", Modifier.clickable { vm.resizeFont(1) }.padding(horizontal = 5.dp),
-                            size = 11f, color = AksaraColors.gold)
-                        AksaraText("${vm.fontSize}sp", size = 9f, color = AksaraColors.muted)
+
                     }
                     AndroidView(
                         factory = { context ->
                             TerminalView(context, null).apply {
                                 isFocusable = true
                                 isFocusableInTouchMode = true
-                                setBackgroundColor(android.graphics.Color.rgb(8, 12, 20))
+                                setBackgroundColor(android.graphics.Color.rgb(8, 11, 18))
+                                setTypeface(runCatching {
+                                    Typeface.createFromAsset(context.assets,
+                                        "fonts/jetbrains_mono_nl_regular.ttf")
+                                }.getOrDefault(Typeface.MONOSPACE))
                                 setTextSize(vm.fontSize)
                                 vm.attach(this)
                             }
