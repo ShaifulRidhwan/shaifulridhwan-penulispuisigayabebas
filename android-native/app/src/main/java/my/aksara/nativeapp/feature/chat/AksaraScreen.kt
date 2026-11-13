@@ -44,8 +44,6 @@ import my.aksara.nativeapp.R
 import my.aksara.nativeapp.feature.today.TodayScreen
 import my.aksara.nativeapp.core.linux.AksaraLinuxScreen
 import my.aksara.nativeapp.core.nexus.NexusEngine
-import my.aksara.nativeapp.core.nexus.NexusPanel
-import my.aksara.nativeapp.core.nexus.NexusLauncher
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.platform.Attachment
