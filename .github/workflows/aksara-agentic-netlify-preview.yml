@@ -60,7 +60,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/aksara-agentic-preview"
           printf '%s\n' '<!doctype html><title>AKSARA Agentic Backend Preview</title><meta name="robots" content="noindex">' > "$RUNNER_TEMP/aksara-agentic-preview/index.html"
           npx --yes netlify-cli@27.17.0 deploy \
-            --no-build \
+            --build \
             --context=deploy-preview \
             --site="$NETLIFY_SITE_ID" \
             --alias=aksara-agentic-pr328 \
