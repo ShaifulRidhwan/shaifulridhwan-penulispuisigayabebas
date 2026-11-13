@@ -1,15 +1,18 @@
-name: AKSARA PR327 Full Linux + Today Chat V2 Owner APK
+name: AKSARA Android Full Linux (PR327 Owner APK)
 on:
   push:
     branches:
       - feature/aksara-today-chat-v2
     # Isolated PR327 owner QA build: full Alpine Linux + new TODAY/Chat UI.
     # Reuse the already owner-tested Linux packaging; never patch PTY code from this workflow.
-    # Paths intentionally limit automatic CI; later commits need explicit dispatch.
-    # Auto-build only when this workflow changes. Subsequent source commits
-    # do not consume CI until workflow_dispatch is explicitly requested.
+    # This is the ONLY installable APK build for PR327.
+    # Rebuild on actual Android source changes, not only workflow edits.
     paths:
+      - 'android-native/**'
       - '.github/workflows/aksara-today-chat-v2-linux-owner.yml'
+      - '.github/workflows/aksara-android-native.yml'
+      - '.github/workflows/aksara-android-sdturbo-native.yml'
+      - '.github/workflows/aksara-sdturbo-native.yml'
   workflow_dispatch:
 permissions:
   contents: write
@@ -176,8 +179,14 @@ jobs:
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
           apk="AKSARA-TODAY-CHAT-V2-FULL-LINUX-PR327-$tag.apk"
           cp android-native/app/build/outputs/apk/debug/app-debug.apk "delivery/$apk"
-          test "$(stat -c %s "delivery/$apk")" -gt 400000000 || { echo "FATAL: Full Alpine missing from owner APK (unexpected small APK)"; exit 1; }
-          stat -c "Full Linux owner APK: %s bytes" "delivery/$apk"
+          # Owner-tested PR326 full Alpine APK measured 766233021 bytes (~731 MiB).
+          # Size is a sanity check only; archive + checksum checks below are authoritative.
+          apk_bytes="$(stat -c %s "delivery/$apk")"
+          if [ "$apk_bytes" -lt 700000000 ] || [ "$apk_bytes" -gt 900000000 ]; then
+            echo "FATAL: expected full Alpine APK (~740 MB class), got $apk_bytes bytes" >&2
+            exit 1
+          fi
+          echo "Canonical PR327 Full Linux APK bytes: $apk_bytes"
           unzip -tq "delivery/$apk"
           unzip -l "delivery/$apk" | grep -F 'lib/arm64-v8a/libaksara_proot.so'
           unzip -p "delivery/$apk" lib/arm64-v8a/libaksara_proot.so > "$RUNNER_TEMP/aksara-packaged-proot"
