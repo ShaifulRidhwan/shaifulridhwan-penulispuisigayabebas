@@ -17,6 +17,11 @@ import my.aksara.nativeapp.core.nexus.kernel.KernelNode
 import my.aksara.nativeapp.core.nexus.kernel.KernelTransition
 import my.aksara.nativeapp.core.nexus.kernel.KernelStatus
 import my.aksara.nativeapp.core.nexus.kernel.KernelPolicy
+import my.aksara.nativeapp.core.nexus.kernel.KernelWorkspaceTransactions
+import my.aksara.nativeapp.core.nexus.kernel.KernelChangePreview
+import my.aksara.nativeapp.core.nexus.kernel.KernelTransactionReceipt
+import my.aksara.nativeapp.core.nexus.kernel.KernelWriteOperation
+import kotlinx.coroutines.withContext
 import my.aksara.nativeapp.core.nexus.kernel.KernelAiPlanner
 import my.aksara.nativeapp.core.nexus.kernel.KernelEventBus
 import my.aksara.nativeapp.core.nexus.kernel.KernelEventType
@@ -117,6 +122,7 @@ internal object NexusEngine {
     private val kernelContext = KernelContextGraph()
     private var kernelCheckpoint: KernelCheckpointStore? = null
     private var kernelPlanStore: KernelPlanStore? = null
+    private var workspaceTransactions: KernelWorkspaceTransactions? = null
     private val kernelBus = KernelEventBus()
     val kernelEvents = kernelBus.events
     private val metrics = KernelTelemetry()
@@ -141,6 +147,51 @@ internal object NexusEngine {
         return plan
     }
     fun kernelFacts() = kernelContext.facts()
+
+    /**
+     * Nexus can modify local workspace files through user-approved transactions.
+     * These cannot edit outside /workspace or execute shell text. Existing Linux
+     * PTY remains independent and retains its own capabilities.
+     */
+    suspend fun previewWorkspaceUpsert(path: String, content: String): KernelChangePreview =
+        withContext(Dispatchers.IO) {
+            check(running?.isActive != true) { "Nexus sedang menjalankan tugas" }
+            requireNotNull(workspaceTransactions).previewUpsert(path, content)
+        }
+
+    suspend fun previewWorkspaceDelete(path: String): KernelChangePreview =
+        withContext(Dispatchers.IO) {
+            check(running?.isActive != true) { "Nexus sedang menjalankan tugas" }
+            requireNotNull(workspaceTransactions).previewDelete(path)
+        }
+
+    suspend fun previewWorkspaceRollback(): KernelChangePreview? =
+        withContext(Dispatchers.IO) {
+            check(running?.isActive != true) { "Nexus sedang menjalankan tugas" }
+            requireNotNull(workspaceTransactions).previewRollback()
+        }
+
+    suspend fun commitWorkspaceChange(preview: KernelChangePreview): KernelTransactionReceipt =
+        withContext(Dispatchers.IO) {
+            check(running?.isActive != true) { "Nexus sedang menjalankan tugas" }
+            val receipt = requireNotNull(workspaceTransactions).commit(preview)
+            val id = UUID.randomUUID().toString()
+            mutable.update {
+                it.copy(
+                    activeTitle = "Workspace " + receipt.action,
+                    progress = "Perubahan disahkan",
+                    lastStatus = NexusTaskStatus.COMPLETED,
+                    lastOutput = "Selesai " + receipt.action + " /workspace/" + receipt.path,
+                    events = (listOf(NexusEvent(id, "Workspace " + receipt.action,
+                        NexusTaskStatus.COMPLETED, receipt.completedAt)) + it.events).take(24)
+                )
+            }
+            kernelBus.publish(KernelEventType.TASK_FINISHED, detail = "Workspace " + receipt.action)
+            persistMetadata()
+            receipt
+        }
+
+    fun clearWorkspacePreview() { workspaceTransactions?.clearPreview() }
 
     /**
      * This method MUST only be called after explicit plan preview + user approval.
@@ -357,6 +408,8 @@ internal object NexusEngine {
         journal = NexusJournal(safe)
         kernelCheckpoint = KernelCheckpointStore(safe)
         kernelPlanStore = KernelPlanStore(safe)
+        workspaceTransactions = KernelWorkspaceTransactions(
+            AksaraLinuxRuntime.workspace(safe), safe.noBackupFilesDir)
         app = safe
         kernelBus.publish(KernelEventType.BOOTSTRAPPED)
         if (recoverablePlan() != null)
