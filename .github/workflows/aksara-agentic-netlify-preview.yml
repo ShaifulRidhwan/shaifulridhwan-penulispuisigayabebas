@@ -40,11 +40,16 @@ jobs:
             echo "Sediakan secrets NETLIFY_AUTH_TOKEN dan NETLIFY_SITE_ID di GitHub Actions. Tiada deploy produksi dibuat." >> "$GITHUB_STEP_SUMMARY"
           fi
       - name: Install verified server dependencies
-        if: steps.gate.outputs.ready == 'true'
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Run both real Agent SDKs against local mock provider
-        if: steps.gate.outputs.ready == 'true'
         run: npm run test:aksara-agentic
+      - name: Validate Netlify Functions bundle without owner credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes netlify-cli@27.17.0 functions:build --src netlify/functions --functions "$RUNNER_TEMP/aksara-agentic-functions"
+          find "$RUNNER_TEMP/aksara-agentic-functions" -maxdepth 2 -type f | grep -q .
+
       - name: Publish isolated functions-only draft (NEVER production)
         if: steps.gate.outputs.ready == 'true'
         shell: bash
