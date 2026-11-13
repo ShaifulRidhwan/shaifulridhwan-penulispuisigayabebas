@@ -13,6 +13,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import com.termux.terminal.TerminalSession
 import com.termux.terminal.TerminalSessionClient
@@ -31,7 +32,9 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
     TerminalSessionClient, TerminalViewClient {
 
     class Slot(val name: String, val terminal: TerminalSession) {
+        val startedAt: Long = System.currentTimeMillis()
         var ended by mutableStateOf(false)
+        var endedAt by mutableStateOf<Long?>(null)
     }
 
     val slots = mutableStateListOf<Slot>()
@@ -41,7 +44,9 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         private set
     var altDown by mutableStateOf(false)
         private set
-    var fontSize by mutableIntStateOf(15)
+    var fontSize by mutableIntStateOf(
+        app.getSharedPreferences("aksara_linux", Context.MODE_PRIVATE)
+            .getInt("terminal_font_size", 15).coerceIn(11, 26))
         private set
     var problem by mutableStateOf<String?>(null)
         private set
@@ -60,7 +65,25 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
     private var terminalView: TerminalView? = null
     private var nextSlotNumber = 1
 
-    init { addSession() }
+    init {
+        addSession()
+        if (!installed && bundled) watchSetupConsent()
+    }
+
+    private fun watchSetupConsent() {
+        viewModelScope.launch {
+            val app = getApplication<Application>()
+            while (!installed) {
+                val token = AksaraLinuxBootstrap.consent(app)
+                if (!installing && token.isFile &&
+                    token.readText().trim() == "SETUJU") {
+                    token.delete()
+                    installAlpine()
+                }
+                delay(250)
+            }
+        }
+    }
 
     fun installAlpine() {
         if (installed || installing || !bundled) return
@@ -72,6 +95,7 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
             try {
                 withContext(Dispatchers.IO) {
                     AksaraLinuxRuntime.install(getApplication()) { progress ->
+                        AksaraLinuxBootstrap.progress(getApplication(), progress)
                         // Install runs on Dispatchers.IO; Compose snapshot state is
                         // safe to update from the worker. Runtime throttles callbacks
                         // to actual stage/percentage transitions.
@@ -87,9 +111,15 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
                 clearModifiers()
                 addSession()
                 installStatus = "Alpine dipasang. Sesi Linux dimulakan."
+                AksaraLinuxBootstrap.done(getApplication()).writeText(
+                    "[OK] Alpine Linux sedia digunakan.\n")
             } catch (failure: Exception) {
                 problem = failure.message ?: "Pemasangan Alpine gagal."
                 installStatus = "Pemasangan gagal."
+                AksaraLinuxBootstrap.output(getApplication()).appendText(
+                    "[ERROR] " + problem + "\n")
+                AksaraLinuxBootstrap.done(getApplication()).writeText(
+                    "[FAILED] Mulakan semula sesi setup untuk cuba lagi.\n")
             } finally {
                 installing = false
             }
@@ -100,28 +130,22 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
     private fun newSlot(name: String): Slot {
         val app = getApplication<Application>()
         val workspace = File(app.filesDir, "linux-workspace").apply { mkdirs() }
-        val session = if (installed) {
-            AksaraLinuxRuntime.createSession(app, this)
-        } else {
-            TerminalSession(
+        val session = when {
+            installed -> AksaraLinuxRuntime.createSession(app, this)
+            bundled -> AksaraLinuxBootstrap.createSession(app, this)
+            else -> TerminalSession(
                 "/system/bin/sh", workspace.absolutePath,
                 arrayOf("/system/bin/sh"),
-                arrayOf(
-                    "HOME=" + workspace.absolutePath,
-                    "PWD=" + workspace.absolutePath,
-                    "TMPDIR=" + app.cacheDir.absolutePath,
-                    "PATH=/system/bin:/system/xbin:/vendor/bin",
-                    "TERM=xterm-256color",
-                    "LANG=en_US.UTF-8"
-                ),
-                2000, this
+                arrayOf("HOME=" + workspace.absolutePath,
+                    "PATH=/system/bin:/system/xbin", "TERM=xterm-256color",
+                    "LANG=en_US.UTF-8"), 2000, this
             )
         }
         return Slot(name, session)
     }
 
     fun addSession() {
-        if (slots.size >= 6) return
+        if (slots.size >= 6 || (!installed && slots.isNotEmpty())) return
         try {
             val slot = newSlot((if (installed) "Linux " else "Shell ") + nextSlotNumber++)
             slots.add(slot)
@@ -224,6 +248,8 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
 
     fun resizeFont(delta: Int) {
         fontSize = (fontSize + delta).coerceIn(11, 26)
+        getApplication<Application>().getSharedPreferences("aksara_linux", Context.MODE_PRIVATE)
+            .edit().putInt("terminal_font_size", fontSize).apply()
         terminalView?.setTextSize(fontSize)
     }
 
@@ -252,7 +278,10 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
             terminalView?.invalidate()
     }
     override fun onSessionFinished(finishedSession: TerminalSession) {
-        slots.firstOrNull { it.terminal === finishedSession }?.ended = true
+        slots.firstOrNull { it.terminal === finishedSession }?.let {
+            it.ended = true
+            it.endedAt = System.currentTimeMillis()
+        }
         if (slots.getOrNull(selected)?.terminal === finishedSession)
             terminalView?.onScreenUpdated()
     }
