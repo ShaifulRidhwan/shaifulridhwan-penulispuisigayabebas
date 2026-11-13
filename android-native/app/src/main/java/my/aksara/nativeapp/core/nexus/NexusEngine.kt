@@ -99,6 +99,11 @@ internal object NexusEngine {
         }
     }
 
+    fun refreshLinux() {
+        val context = app ?: return
+        mutable.update { it.copy(linuxReady = AksaraLinuxRuntime.installed(context)) }
+    }
+
     fun publishDashboard(summary: String) {
         val clipped = summary.take(900)
         mutable.update {
