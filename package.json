@@ -9,7 +9,9 @@
     "@langchain/openai": "1.8.3",
     "deepagents": "1.16.3",
     "zod": "4.6.7",
-    "@opentelemetry/exporter-trace-otlp-proto": "0.223.0"
+    "@opentelemetry/exporter-trace-otlp-proto": "0.223.0",
+    "langchain": "1.6.5",
+    "@langchain/core": "1.4.0"
   },
   "devDependencies": {
     "fake-indexeddb": "6.2.4"
@@ -35,6 +37,6 @@
     "benchmark:aksara:v6:literary": "node scripts/aksara-literary-benchmark-v6.cjs",
     "report:aksara:v6": "node scripts/aksara-ops-report-v6.cjs",
     "test:aksara-skills": "node --test tests/aksara-skills-v1.test.cjs",
-    "test:aksara-agentic": "node --test tests/aksara-agentic-absolute-core.test.cjs"
+    "test:aksara-agentic": "node --test tests/aksara-agentic-absolute-core.test.cjs tests/aksara-agentic-runtime-smoke.test.mjs"
   }
 }
