@@ -28,18 +28,16 @@ if [ -r /dev/tty ]; then
   set -- $(stty size < /dev/tty 2>/dev/null)
   case "$2" in ""|*[!0-9]*) ;; *) [ "$2" -gt 0 ] && cols="$2" ;; esac
 fi
+# Single, aligned terminal-only identity. No gold A icon or V2 mark.
+# Both narrow and wide layouts use the same 22-column capsule.
 if [ "$1" = "--compact" ] || { [ "$1" != "--wide" ] && { [ "$AKSARA_INTRO_COMPACT" = "1" ] || [ "$cols" -lt 76 ]; }; }; then
   config=/usr/share/aksara/fastfetch-compact.jsonc
-  printf '\n%b       /\\    %b╭━━━◆━━━━━━━━━━╮%b\n' "$gold" "$blue" "$reset"
-  printf '%b      /  \\   %b┃ A K S A R A  ┃%b\n' "$gold" "$blue" "$reset"
-  printf '%b     / ◇  \\  %b┃  LINUX · V2   ┃%b\n' "$gold" "$blue" "$reset"
-  printf '%b    /_ __ _\\ %b╰━━━━━━━━━━━━━━╯%b\n' "$gold" "$blue" "$reset"
 else
   config=/usr/share/aksara/fastfetch-wide.jsonc
-  printf '\n%b╭━━━━━━━━━━━━━━━━━━━%b◆%b━━━━━━━━━━━━━━━━━━━━╮%b\n' "$gold" "$blue" "$gold" "$reset"
-  printf '%b│%b  A K S A R A  /  S Y S T E M  I D E N T I T Y  %b│%b\n' "$gold" "$blue" "$gold" "$reset"
-  printf '%b╰━━━━━━━━━━━━━━━━━━━%b◆%b━━━━━━━━━━━━━━━━━━━━╯%b\n' "$gold" "$blue" "$gold" "$reset"
 fi
+printf '\n%b╭────────────────────╮%b\n' "$gold" "$reset"
+printf '%b│%b    AKSARA LINUX    %b│%b\n' "$gold" "$blue" "$gold" "$reset"
+printf '%b╰────────────────────╯%b\n' "$gold" "$reset"
 if command -v fastfetch >/dev/null 2>&1; then
   if ! timeout 4 fastfetch --config "$config" 2>/dev/null; then
     printf '%bAlpine userland · Android host · ARM64 / PRoot%b\n' "$blue" "$reset"
