@@ -195,21 +195,49 @@ internal object NexusEngine {
                     facts = mapOf("kernel.evidence.sources" to previous.size.toString()))
             }
             "linux.health", "linux.devkit", "linux.git", "linux.probe" -> {
-                val action = requireNotNull(NexusActions.find(cap)) { "Unregistered Linux adapter" }
+                // V2 never concatenates unrelated checks with ';'. Each has its
+                // own truthful exit code, unlike the backwards-compatible V1 actions.
+                val checks = when (cap) {
+                    "linux.health" -> listOf(
+                        "Kernel" to "uname -a",
+                        "Alpine" to "cat /etc/os-release",
+                        "Storage" to "df -h /workspace")
+                    "linux.devkit" -> listOf(
+                        "Python" to "python3 --version",
+                        "Git" to "git --version",
+                        "Node.js" to "node --version",
+                        "GCC" to "gcc --version",
+                        "Clang" to "clang --version")
+                    "linux.git" -> listOf("Git workspace" to "git -C /workspace status --short --branch")
+                    else -> requireNotNull(NexusActions.find("linux.probe")).steps
+                }
                 val output = StringBuilder()
+                val resultFacts = linkedMapOf<String, String>()
                 var lastExit = 0
-                for ((label, command) in action.steps) {
+                for ((label, command) in checks) {
                     val response = NexusLinuxRunner.execute(context, command,
                         if (cap == "linux.probe") 15_000L else 12_000L)
                     output.append('[').append(label).append("]\n")
                         .append(response.output).append("\nExit: ").append(response.exitCode)
                         .append("\n\n")
+                    resultFacts["check." + label.lowercase(java.util.Locale.ROOT)
+                        .replace(Regex("[^a-z0-9]+"), "-") + ".exit"] = response.exitCode.toString()
                     lastExit = response.exitCode
-                    if (lastExit != 0) break
+                    if (lastExit != 0) {
+                        // No Git repository is an observed state, not a shell success.
+                        val missingRepo = cap == "linux.git" &&
+                            response.output.contains("not a git repository", ignoreCase = true)
+                        if (missingRepo) {
+                            resultFacts["git.workspace.repository"] = "absent"
+                            output.append("NOTE: Git status failed because /workspace has no repository.\n")
+                            lastExit = 0
+                        }
+                        break
+                    }
                 }
                 val text = output.toString()
-                KernelEvidence(cap, "alpine-proot", text, lastExit, now,
-                    facts = KernelEvidenceParser.parse(cap, text))
+                resultFacts.putAll(KernelEvidenceParser.parse(cap, text))
+                KernelEvidence(cap, "alpine-proot", text, lastExit, now, facts = resultFacts)
             }
             else -> error("Kernel policy denied unknown adapter")
         }
