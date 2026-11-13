@@ -19,12 +19,20 @@ REQUIRED = (
     "lib/arm64-v8a/libaksara_proot_loader.so",
 )
 
-def verify(path: str) -> dict:
+def verify(path: str, require_runtime: bool = False) -> dict:
     with zipfile.ZipFile(path) as apk:
         entries = [record.filename for record in apk.infolist() if not record.is_dir()]
         count = Counter(entries)
-        errors = [f"{name} expected once, found {count[name]}" for name in REQUIRED
-                  if count[name] != 1]
+        staged = [count[name] for name in REQUIRED]
+        # Ordinary Android PR builds are compile-only; the owner workflow
+        # stages Alpine/PRoot separately. A partial or duplicate staged
+        # runtime is ALWAYS a failure, not a valid APK for device QA.
+        complete = all(value == 1 for value in staged)
+        unstaged = all(value == 0 for value in staged)
+        errors = []
+        if not complete and (require_runtime or not unstaged):
+            errors += [f"{name} expected once, found {count[name]}" for name in REQUIRED
+                       if count[name] != 1]
         extra_roots = [name for name in entries if
                        ("rootfs" in name.lower() or "minirootfs" in name.lower()) and
                        name not in REQUIRED]
@@ -43,12 +51,13 @@ def verify(path: str) -> dict:
             errors.append("New embedded LLM model(s): " + repr(embedded_models[:8]))
         if errors:
             raise ValueError("ANK APK integrity check failed:\n" + "\n".join(errors))
-        root = apk.getinfo(REQUIRED[0])
+        root = apk.getinfo(REQUIRED[0]) if complete else None
         return {
             "apk_bytes": os.path.getsize(path),
-            "linux_bundle_zip_bytes": root.compress_size,
-            "linux_bundle_uncompressed_bytes": root.file_size,
-            "proot_pairs": 1,
+            "runtime_staged": complete,
+            "linux_bundle_zip_bytes": root.compress_size if root else 0,
+            "linux_bundle_uncompressed_bytes": root.file_size if root else 0,
+            "proot_pairs": 1 if complete else 0,
         }
 
 def selftest() -> None:
@@ -72,12 +81,19 @@ def selftest() -> None:
     print("ANK APK guard self-test PASS")
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        raise SystemExit("Usage: verify_ank_apk.py --self-test | app-debug.apk")
-    if sys.argv[1] == "--self-test":
+    if len(sys.argv) == 2 and sys.argv[1] == "--self-test":
         selftest()
-    else:
+    elif len(sys.argv) == 2:
         summary = verify(sys.argv[1])
         for label, value in summary.items():
             print(f"{label}={value}")
-        print("ANK APK guard PASS: single existing Linux runtime")
+        print("ANK APK guard PASS: " +
+              ("full Linux owner build" if summary["runtime_staged"]
+               else "compile-only CI; NOT a Linux-capable owner APK"))
+    elif len(sys.argv) == 3 and sys.argv[1] == "--require-runtime":
+        summary = verify(sys.argv[2], require_runtime=True)
+        for label, value in summary.items():
+            print(f"{label}={value}")
+        print("ANK owner APK guard PASS: Alpine and PRoot verified")
+    else:
+        raise SystemExit("Usage: verify_ank_apk.py [--require-runtime] app-debug.apk | --self-test")
