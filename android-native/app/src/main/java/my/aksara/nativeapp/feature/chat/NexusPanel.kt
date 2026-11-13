@@ -4,6 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -53,6 +57,10 @@ internal fun NexusPanel(
     LaunchedEffect(Unit) { NexusEngine.refreshLinux() }
     var approval by remember { mutableStateOf<NexusAction?>(null) }
     var kernelPlan by remember { mutableStateOf<KernelPlan?>(null) }
+    var kernelGoal by remember { mutableStateOf("audit penuh") }
+    var aiPlanning by remember { mutableStateOf(false) }
+    var planSource by remember { mutableStateOf("offline") }
+    val coroutineScope = rememberCoroutineScope()
     var message by remember { mutableStateOf<String?>(null) }
 
     Dialog(
@@ -124,17 +132,66 @@ internal fun NexusPanel(
                             "Semua workflow perlu kelulusan sebelum berjalan.",
                             size = 10f, line = 15f, color = AksaraColors.muted
                         )
-                        AksaraButton("Rancang Unified System Audit", {
-                            kernelPlan = NexusEngine.planKernel("audit penuh")
-                            if (kernelPlan == null) message = "Kernel Planner tidak dapat membina workflow."
-                        }, Modifier.fillMaxWidth(), height = 38.dp, size = 10f,
-                            enabled = current.linuxReady && current.activeId == null)
+                        AksaraText("MATLAMAT WORKFLOW", size = 10.5f,
+                            color = AksaraColors.gold, weight = 650)
+                        BasicTextField(
+                            value = kernelGoal,
+                            onValueChange = { kernelGoal = it.take(500) },
+                            modifier = Modifier.fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0x7B142334))
+                                .border(1.dp, Color(0x77EACB94), RoundedCornerShape(12.dp))
+                                .padding(12.dp),
+                            textStyle = TextStyle(color = AksaraColors.text, fontSize = 13.sp),
+                            minLines = 2, maxLines = 4,
+                            enabled = !aiPlanning && current.activeId == null
+                        )
+                        AksaraText(
+                            "Rancang dengan A.I. menghantar matlamat sahaja ke backend Aksara. " +
+                            "Tiada arahan Linux dilaksana sebelum kau luluskan pelan.",
+                            size = 9f, line = 14f, color = AksaraColors.muted)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            AksaraButton("Rancang Offline", {
+                                kernelPlan = NexusEngine.planKernel(kernelGoal)
+                                planSource = "local-planner"
+                                if (kernelPlan == null)
+                                    message = "Matlamat tidak sepadan dengan capability yang ada."
+                            }, Modifier.weight(1f), height = 38.dp, size = 10f,
+                                enabled = !aiPlanning && current.activeId == null && kernelGoal.isNotBlank())
+                            AksaraButton(if (aiPlanning) "Merancang..." else "Rancang dengan A.I.", {
+                                aiPlanning = true
+                                message = null
+                                coroutineScope.launch {
+                                    try {
+                                        kernelPlan = NexusEngine.planWithAi(kernelGoal)
+                                        planSource = "Aksara Multi-A.I. · plan disahkan"
+                                    } catch (error: Exception) {
+                                        message = "Perancang A.I. gagal: " +
+                                            (error.message ?: "Output tidak sah").take(160) +
+                                            ". Gunakan Rancang Offline jika perlu."
+                                    } finally {
+                                        aiPlanning = false
+                                    }
+                                }
+                            }, Modifier.weight(1f), height = 38.dp, size = 10f,
+                                enabled = !aiPlanning && current.activeId == null && kernelGoal.isNotBlank())
+                        }
+                        val interrupted = NexusEngine.recoverablePlan()
+                        if (interrupted != null) {
+                            AksaraText("Workflow terdahulu terputus. Tiada auto-resume.",
+                                size = 9.5f, color = AksaraColors.muted)
+                            AksaraButton("Tinjau dan ulang audit terganggu", {
+                                kernelPlan = interrupted
+                                planSource = "manual read-only recovery"
+                            }, Modifier.fillMaxWidth(), height = 36.dp, size = 10f,
+                                enabled = current.activeId == null)
+                        }
                         if (kernelPlan != null) {
                             val pending = kernelPlan!!
                             AksaraGlassSurface(Modifier.fillMaxWidth(), radius = 14.dp, blur = 5.dp) {
                                 Column(Modifier.fillMaxWidth().padding(12.dp),
                                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    AksaraText("SAHKAN KERNEL WORKFLOW",
+                                    AksaraText("SAHKAN KERNEL WORKFLOW · " + planSource,
                                         size = 11f, weight = 700, color = AksaraColors.gold)
                                     AksaraText(
                                         pending.nodes.joinToString(" → ") { it.capability },
@@ -151,12 +208,20 @@ internal fun NexusPanel(
                                                 message = "Kernel masih sibuk atau tidak tersedia."
                                             kernelPlan = null
                                         }, Modifier.weight(1f), height = 36.dp, size = 10f,
-                                            enabled = current.activeId == null && current.linuxReady)
+                                            enabled = current.activeId == null &&
+                                                (current.linuxReady || pending.nodes.none { it.capability.startsWith("linux.") }))
                                     }
                                 }
                             }
                         }
 
+                        val telemetry = NexusEngine.kernelTelemetry()
+                        AksaraText(
+                            "ANK KERNEL: " + telemetry.executions + " runs · " +
+                            telemetry.success + " ok · " + telemetry.failures + " failed · " +
+                            telemetry.cancellations + " cancelled · parallel " +
+                            telemetry.lastParallelism,
+                            size = 9.5f, line = 15f, color = AksaraColors.muted)
                         AksaraText("LINUX CAPABILITY REGISTRY", size = 11.5f,
                             weight = 700, color = AksaraColors.gold)
                         AksaraText("Arahan tetap dan baca sahaja. Tidak mengusik tab terminal sedia ada.",
