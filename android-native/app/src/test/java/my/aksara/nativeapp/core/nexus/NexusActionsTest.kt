@@ -22,7 +22,10 @@ class NexusActionsTest {
 
     @Test fun commandsAreFixedReadonlyDiagnostics() {
         val allowed = listOf("uname ", "cat /etc/os-release", "df ", "python3 --version",
-            "git ", "node --version", "gcc --version", "clang --version", "pwd", "ls ")
+            "git ", "node --version", "gcc --version", "clang --version", "pwd", "ls ", "sleep 8 && printf ")
+        val probe = requireNotNull(NexusActions.find("linux.probe"))
+        assertEquals(1, probe.steps.size)
+        assertEquals("sleep 8 && printf 'NEXUS_PROBE_COMPLETED\\n'", probe.steps.single().second)
         NexusActions.all.flatMap { it.steps }.forEach { (_, cmd) ->
             val pieces = cmd.split(";", "||").map { it.trim() }
             assertTrue(pieces.all { piece ->
