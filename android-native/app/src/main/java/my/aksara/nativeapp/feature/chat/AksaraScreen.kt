@@ -461,7 +461,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         brush=Brush.linearGradient(listOf(Color(15,17,25,51),Color(10,14,25,33),Color(7,10,18,56))),border=Color.Transparent) {
                         Column(Modifier.fillMaxSize().padding(1.dp)) {
                             BoxWithConstraints(Modifier.fillMaxWidth().height(58.dp).testTagCompat("conversation-head")) {
-                                val compact=maxWidth<390.dp
+                                val headerWidth=maxWidth
+                                val compact=headerWidth<390.dp
                                 val headerPaint=remember{HazeState()}
                                 Box(Modifier.matchParentSize().hazeSource(headerPaint).background(Brush.horizontalGradient(listOf(Color(20,18,21,64),Color(5,8,17,56)))))
                                 CompositionLocalProvider(LocalBackdropPaints provides listOf(headerPaint)) {
@@ -471,7 +472,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                     // Dedicated delegated-flow icon and shared capsule glass tokens.
                                     // Keep Agent immediately adjacent to Multi A.I; Voice remains on the left.
                                     AksaraGlassSurface(
-                                        Modifier.width(if(maxWidth<350.dp)75.dp else if(compact)85.dp else 100.dp)
+                                        Modifier.width(if(headerWidth<350.dp)75.dp else if(compact)85.dp else 100.dp)
                                             .height(AksaraGlassTokens.capsuleHeight)
                                             .aksaraBouncyClick(onClick={agenticMissionVisible=true})
                                             .semantics {
@@ -490,7 +491,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                         }
                                     }
                                     AksaraGlassSurface(
-                                        Modifier.width(if(maxWidth<350.dp)137.dp else if(compact)151.dp else 167.dp)
+                                        Modifier.width(if(headerWidth<350.dp)137.dp else if(compact)151.dp else 167.dp)
                                             .height(AksaraGlassTokens.capsuleHeight)
                                             .clickable {open("connection")}
                                             .semantics {contentDescription="Connection"},
