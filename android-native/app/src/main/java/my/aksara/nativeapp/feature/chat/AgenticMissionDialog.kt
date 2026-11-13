@@ -23,6 +23,7 @@ import my.aksara.nativeapp.core.design.*
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
+import dev.chrisbanes.haze.HazeState
 
 private data class AgentMissionReport(
     val status:String, val engine:String, val provider:String, val model:String,
@@ -86,6 +87,7 @@ private class AgentMissionClient {
 internal fun AgenticMissionDialog(onClose:()->Unit){
     val scope=rememberCoroutineScope()
     val focus=LocalFocusManager.current
+    val localBackdrop=remember { HazeState() }
     val client=remember { AgentMissionClient() }
     var mission by rememberSaveable { mutableStateOf("") }
     var mode by rememberSaveable { mutableStateOf("balanced") }
@@ -102,6 +104,7 @@ internal fun AgenticMissionDialog(onClose:()->Unit){
     }
     DisposableEffect(Unit) { onDispose { client.stop();job?.cancel() } }
     Dialog(onDismissRequest={halt();onClose()}) {
+      CompositionLocalProvider(LocalBackdrop provides localBackdrop) {
         AksaraGlassSurface(Modifier.fillMaxWidth(),radius=22.dp,blur=18.dp) {
             Column(
                 Modifier.fillMaxWidth().heightIn(max=610.dp).verticalScroll(rememberScrollState())
@@ -191,5 +194,6 @@ internal fun AgenticMissionDialog(onClose:()->Unit){
                 }
             }
         }
+      }
     }
 }
