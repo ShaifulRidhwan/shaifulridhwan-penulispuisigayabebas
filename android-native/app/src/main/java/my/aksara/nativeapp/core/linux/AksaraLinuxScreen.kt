@@ -56,6 +56,10 @@ fun AksaraLinuxScreen(
         ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) vm.importVault(uri)
     }
+    val filesPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isNotEmpty()) vm.importFiles(uris)
+    }
     val current = vm.slots.getOrNull(vm.selected)
     var deck by rememberSaveable { mutableStateOf("keys") }
     var commandCategory by rememberSaveable { mutableStateOf("FILES") }
@@ -311,18 +315,22 @@ fun AksaraLinuxScreen(
                                     LinuxDeckStat("ISOLATION", "PROOT · NO ROOT", AksaraColors.gold)
                                     LinuxDeckStat("STORAGE", "APP PRIVATE", LinuxDeckMint)
                                 }
-                                AksaraText("Workspace kekal dalam storan aplikasi. Sesi PTY tidak dapat dijamin selepas Android menamatkan proses.",
+                                AksaraText("SAF File Bridge → /workspace/imports · Storan Linux kekal dalam sandbox aplikasi.",
                                     size = 9.2f, color = AksaraColors.muted)
                                 Row(Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    AksaraButton("FILES", {
+                                        filesPicker.launch(arrayOf("*/*"))
+                                    }, Modifier.weight(1f), height = 31.dp, size = 9f,
+                                        enabled = !vm.vaultBusy)
                                     AksaraButton("BACKUP", {
                                         backupPicker.launch("aksara-linux-workspace.zip")
-                                    }, Modifier.weight(1f), height = 31.dp, size = 10f,
+                                    }, Modifier.weight(1f), height = 31.dp, size = 9f,
                                         enabled = !vm.vaultBusy)
-                                    AksaraButton("IMPORT", {
+                                    AksaraButton("ZIP", {
                                         restorePicker.launch(arrayOf("application/zip",
                                             "application/octet-stream"))
-                                    }, Modifier.weight(1f), height = 31.dp, size = 10f,
+                                    }, Modifier.weight(1f), height = 31.dp, size = 9f,
                                         enabled = !vm.vaultBusy)
                                     AksaraButton("LOCALHOST", {
                                         runCatching {
@@ -334,7 +342,7 @@ fun AksaraLinuxScreen(
                                                 "Browser tidak dapat dibuka.",
                                                 Toast.LENGTH_SHORT).show()
                                         }
-                                    }, Modifier.weight(1f), height = 31.dp, size = 10f)
+                                    }, Modifier.weight(1f), height = 31.dp, size = 9f)
                                 }
                                 vm.vaultStatus?.let { status ->
                                     AksaraText(status, size = 9f, color = AksaraColors.gold)
