@@ -74,6 +74,8 @@ jobs:
       - name: Stage V3 full-prebuilt Alpine and verify ARM64 compilers
         run: |
           bash -n android-native/scripts/build-aksara-linux.sh
+          # Guard against accidentally delivering the standard 240MB preview.
+          grep -Fq 'github.event.pull_request.number != 327' .github/workflows/aksara-android-native.yml
           sh -n android-native/scripts/linux/aksara-linux-smoke.sh
           sh -n android-native/scripts/linux/aksara-linux-benchmark.sh
           sh -n android-native/scripts/linux/aksara-fetch.sh
