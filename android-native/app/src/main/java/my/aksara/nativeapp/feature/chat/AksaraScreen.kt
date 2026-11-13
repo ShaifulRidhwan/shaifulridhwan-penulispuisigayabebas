@@ -43,6 +43,7 @@ import io.noties.markwon.ext.tables.TablePlugin
 import my.aksara.nativeapp.R
 import my.aksara.nativeapp.feature.today.TodayScreen
 import my.aksara.nativeapp.core.linux.AksaraLinuxScreen
+import my.aksara.nativeapp.core.nexus.NexusEngine
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.core.storage.Message
 import my.aksara.nativeapp.core.platform.Attachment
@@ -81,6 +82,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
 @Composable fun AksaraApp(vm: ChatViewModel = viewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    remember(context) { NexusEngine.initialize(context); Unit }
+    LaunchedEffect(state.providers) { NexusEngine.publishAiStatus(state.providers) }
     var attachments by remember { mutableStateOf<List<Attachment>>(emptyList()) }
     var attachmentError by remember { mutableStateOf<String?>(null) }
     var attachmentLoading by remember { mutableStateOf(false) }
@@ -186,6 +189,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var overlayVisible by remember { mutableStateOf(false) }
     var todayDialogVisible by remember { mutableStateOf(false) }
     var linuxDialogVisible by remember { mutableStateOf(false) }
+    var nexusOpen by rememberSaveable { mutableStateOf(false) }
     // Do not recompose the whole pager for each IME animation pixel.
     val imeDensity=LocalDensity.current
     // WindowInsets.ime is composable: resolve it before entering derivedStateOf.
@@ -193,11 +197,12 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val keyboardOpen by remember(imeDensity,pagerImeInsets) {
         derivedStateOf { pagerImeInsets.getBottom(imeDensity)>0 }
     }
+    Box(Modifier.fillMaxSize()) {
     HorizontalPager(
         state=pagerState,
         modifier=Modifier.fillMaxSize(),
         beyondViewportPageCount=1,
-        userScrollEnabled=!overlayVisible && !todayDialogVisible && !linuxDialogVisible && !keyboardOpen
+        userScrollEnabled=!overlayVisible && !todayDialogVisible && !linuxDialogVisible && !nexusOpen && !keyboardOpen
     ) { page ->
       if(page==0) {
         TodayScreen(active=pagerState.currentPage==0,onBack={
@@ -261,6 +266,22 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         onOverlayVisibilityChange = { overlayVisible=it })
       }
     }
+    if(!keyboardOpen && !overlayVisible && !todayDialogVisible && !linuxDialogVisible && !nexusOpen) {
+        Box(Modifier.align(Alignment.CenterEnd)) { NexusLauncher { nexusOpen = true } }
+    }
+    }
+    if(nexusOpen) NexusPanel(
+        onClose={ nexusOpen=false },
+        onNavigate={ target ->
+            nexusOpen=false
+            scope.launch { pagerState.animateScrollToPage(target) }
+        },
+        onAskAi={ prompt ->
+            val accepted=vm.send(prompt)
+            if(accepted) scope.launch { pagerState.animateScrollToPage(1) }
+            accepted
+        }
+    )
 
     // A document-picker selection is not consent for uploading multi-megabyte
     // files to a remote provider. Obtain a second explicit approval first.
