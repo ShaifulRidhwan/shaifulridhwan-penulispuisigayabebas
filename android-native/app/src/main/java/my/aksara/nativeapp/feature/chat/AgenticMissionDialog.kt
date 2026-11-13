@@ -36,7 +36,7 @@ private class AgentMissionClient {
     @Volatile private var active:HttpURLConnection?=null
     fun stop(){ active?.disconnect() }
     suspend fun execute(mission:String,mode:String,ownerKey:String):AgentMissionReport=withContext(Dispatchers.IO) {
-        val endpoint=BuildConfig.API_ORIGIN.trimEnd('/')+"/.netlify/functions/aksara-agentic"
+        val endpoint=BuildConfig.AGENT_API_ORIGIN.trimEnd('/')+"/.netlify/functions/aksara-agentic"
         val connection=(URL(endpoint).openConnection() as HttpURLConnection)
         active=connection
         try {
