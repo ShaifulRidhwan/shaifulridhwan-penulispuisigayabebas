@@ -58,6 +58,9 @@ class KernelSystemTest {
         assertEquals(197L, snap.totalDurationMs)
         assertEquals(100L, snap.maxDurationMs)
         assertEquals(1, snap.lastParallelism)
+        assertEquals(80L, snap.lastHeapMb)
+        assertEquals(80L, snap.peakHeapMb)
+        assertEquals(0L, snap.processCpuMs)
     }
 
     @Test fun schedulerRespectsDependencyAndFailureBoundaries() = runBlocking {

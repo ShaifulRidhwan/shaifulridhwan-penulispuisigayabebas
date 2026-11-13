@@ -137,7 +137,8 @@ internal object KernelPolicy {
 /** DAG scheduler: two independent steps at a time; failed prerequisites skip their children. */
 internal class KernelScheduler(
     private val registry: KernelRegistry, private val maxParallel: Int = 2,
-    private val now: () -> Long = System::currentTimeMillis
+    private val now: () -> Long = System::currentTimeMillis,
+    private val parallelismProvider: (() -> Int)? = null
 ) {
     init { require(maxParallel in 1..4) }
 
@@ -163,7 +164,9 @@ internal class KernelScheduler(
                 remaining.remove(node.id)
                 onTransition(KernelTransition(plan.id, node.id, KernelStatus.SKIPPED))
             }
-            ready.filter { it.id in remaining }.chunked(maxParallel).forEach { batch ->
+            ready.filter { it.id in remaining }
+                .chunked((parallelismProvider?.invoke() ?: maxParallel).coerceIn(1, maxParallel))
+                .forEach { batch ->
                 val prior = finished.mapNotNull { (key, value) ->
                     value.evidence?.let { key to it }
                 }.toMap()

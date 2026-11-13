@@ -35,7 +35,8 @@ internal data class KernelTelemetrySnapshot(
     val executions: Long, val success: Long, val failures: Long,
     val cancellations: Long, val totalDurationMs: Long,
     val maxDurationMs: Long, val lastParallelism: Int,
-    val lastAvailableRamMb: Long
+    val lastAvailableRamMb: Long, val lastHeapMb: Long,
+    val peakHeapMb: Long, val processCpuMs: Long
 )
 internal class KernelTelemetry {
     private val executions = AtomicLong()
@@ -44,14 +45,19 @@ internal class KernelTelemetry {
     private val cancellations = AtomicLong()
     private val totalMs = AtomicLong()
     private val maxMs = AtomicLong()
+    private val cpuMs = AtomicLong()
+    private val heapPeakMb = AtomicLong()
     @Volatile private var parallel = 1
     @Volatile private var ramMb = 0L
+    @Volatile private var heapMb = 0L
 
     fun configure(resources: KernelResources) {
         parallel = resources.parallelism
         ramMb = resources.availableRamMb
+        heapMb = resources.processHeapMb
+        heapPeakMb.accumulateAndGet(heapMb, java.lang.Long::max)
     }
-    fun record(durationMs: Long, outcome: KernelStatus?) {
+    fun record(durationMs: Long, outcome: KernelStatus?, cpuDurationMs: Long = 0L) {
         executions.incrementAndGet()
         when (outcome) {
             KernelStatus.COMPLETED -> success.incrementAndGet()
@@ -59,11 +65,13 @@ internal class KernelTelemetry {
             else -> cancellations.incrementAndGet()
         }
         totalMs.addAndGet(durationMs.coerceAtLeast(0L))
+        cpuMs.addAndGet(cpuDurationMs.coerceAtLeast(0L))
         maxMs.accumulateAndGet(durationMs.coerceAtLeast(0L), java.lang.Long::max)
     }
     fun snapshot(): KernelTelemetrySnapshot = KernelTelemetrySnapshot(
         executions.get(), success.get(), failures.get(), cancellations.get(),
-        totalMs.get(), maxMs.get(), parallel, ramMb)
+        totalMs.get(), maxMs.get(), parallel, ramMb, heapMb,
+        heapPeakMb.get(), cpuMs.get())
 }
 
 /** Backend owns multi-model routing; Nexus never fabricates a provider fallback. */

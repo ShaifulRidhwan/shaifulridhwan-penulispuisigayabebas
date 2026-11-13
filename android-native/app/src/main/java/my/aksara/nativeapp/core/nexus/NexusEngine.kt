@@ -173,10 +173,18 @@ internal object NexusEngine {
         runCatching { kernelCheckpoint?.record(plan.id, "workflow", KernelStatus.RUNNING.name) }
         running = scope.launch {
             val wallStart = SystemClock.elapsedRealtime()
+            val cpuStart = android.os.Process.getElapsedCpuTime()
             var recordedStatus: KernelStatus? = null
             kernelBus.publish(KernelEventType.TASK_STARTED, plan.id)
             try {
-                val outcome = KernelScheduler(kernelRegistry, maxParallel = resource.parallelism).run(
+                val outcome = KernelScheduler(
+                    kernelRegistry, maxParallel = 2,
+                    parallelismProvider = {
+                        val updated = KernelResourceGovernor.snapshot(context)
+                        metrics.configure(updated)
+                        updated.parallelism
+                    }
+                ).run(
                     plan, approval,
                     execute = { node, previous -> executeKernelNode(context, node, previous, plan.id) },
                     onTransition = { transition ->
@@ -225,7 +233,9 @@ internal object NexusEngine {
                 finish(id, NexusTaskStatus.FAILED, "Kernel error: " +
                     (e.message ?: "unknown").take(200), "Kernel workflow failed")
             } finally {
-                metrics.record(SystemClock.elapsedRealtime() - wallStart, recordedStatus)
+                metrics.configure(KernelResourceGovernor.snapshot(context))
+                metrics.record(SystemClock.elapsedRealtime() - wallStart, recordedStatus,
+                    android.os.Process.getElapsedCpuTime() - cpuStart)
             }
         }
         return true
