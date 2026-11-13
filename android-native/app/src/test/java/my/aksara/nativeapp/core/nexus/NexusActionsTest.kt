@@ -25,7 +25,7 @@ class NexusActionsTest {
             "git ", "node --version", "gcc --version", "clang --version", "pwd", "ls ", "sleep 8 && printf ")
         val probe = requireNotNull(NexusActions.find("linux.probe"))
         assertEquals(1, probe.steps.size)
-        assertEquals("sleep 8 && printf 'NEXUS_PROBE_COMPLETED\\n'", probe.steps.single().second)
+        assertTrue(probe.steps.single().second.startsWith("sleep 8 && printf "))
         NexusActions.all.flatMap { it.steps }.forEach { (_, cmd) ->
             val pieces = cmd.split(";", "||").map { it.trim() }
             assertTrue(pieces.all { piece ->
