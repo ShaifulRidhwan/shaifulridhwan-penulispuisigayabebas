@@ -281,10 +281,7 @@ jobs:
           # Treat ONLY that explicit permission denial as a publishing limitation,
           # never hide a genuine build / signature / upload failure.
           set +e
-          output=$(gh release create "aksara-pr328-agentic-full-linux-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \\
-            --title "AKSARA PR328 Full Linux Agentic Owner QA $tag" \\
-            --notes "Owner-only signed Full Linux QA APK. Keep PR328 unmerged until device and protected backend tests pass." \\
-            --prerelease --target "$AKSARA_PREVIEW_HEAD_SHA" 2>&1)
+          output=$(gh release create "aksara-pr328-agentic-full-linux-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt --title "AKSARA PR328 Full Linux Agentic Owner QA $tag" --notes "Owner-only signed Full Linux QA APK. Keep PR328 unmerged until device and protected backend tests pass." --prerelease --target "$AKSARA_PREVIEW_HEAD_SHA" 2>&1)
           result=$?
           set -e
           if [[ "$result" -eq 0 ]]; then
@@ -294,6 +291,6 @@ jobs:
             echo "### APK Full Linux siap, Release tidak tersedia (GitHub token HTTP 403)" >> "$GITHUB_STEP_SUMMARY"
             echo "Muat turun Actions artifact: aksara-pr328-agentic-full-linux-owner. Ini bukan kegagalan build." >> "$GITHUB_STEP_SUMMARY"
           else
-            printf '%s\\n' "$output" >&2
+            printf '%s\n' "$output" >&2
             exit "$result"
           fi
