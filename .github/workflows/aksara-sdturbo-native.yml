@@ -6,7 +6,6 @@ on:
     paths:
       - '.github/workflows/aksara-sdturbo-native.yml'
       - 'android-native/app/src/main/cpp/**'
-      - 'android-native/app/build.gradle.kts'
       - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/studio/**'
 permissions:
   contents: read

@@ -320,6 +320,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var voiceIndicator by remember { mutableStateOf(VoiceLinkState.IDLE) }
     var draft by rememberSaveable { mutableStateOf("") }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    var selectedResponseId by remember { mutableStateOf<String?>(null) }
+    val jumpScope = rememberCoroutineScope()
     var pendingJumpId by remember { mutableStateOf<String?>(null) }
     var highlightedMessageId by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
@@ -429,9 +431,13 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                 AksaraGlassSurface(Modifier.fillMaxWidth().height(58.dp).testTagCompat("topbar"), radius=20.dp, blur=12.dp,
                     brush=cssGradient(115f,listOf(Color(8,14,24,102),Color(17,26,40,51))),saturation=1.15f, border=Color.Transparent) {
                     Row(Modifier.fillMaxSize().padding(horizontal=10.dp), verticalAlignment=Alignment.CenterVertically) {
-                        AksaraGlassSurface(Modifier.height(31.dp), radius=13.dp) {
+                        AksaraGlassSurface(Modifier.height(31.dp)
+                            .clickable { open("context-status") }
+                            .semantics { contentDescription="Lihat konteks sesi Aksara" },
+                            radius=13.dp) {
                             Row(Modifier.align(Alignment.Center).padding(horizontal=7.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(3.dp)) {
                                 AksaraText("AKSARA A.I", size=10f,line=12f,weight=650)
+                                AksaraText("ⓘ",size=9f,color=AksaraColors.gold)
                                 AksaraText("oleh Shaiful Ridhwan",size=8f,line=8.4f,weight=450,color=Color(233,198,141,212))
                             }
                         }
@@ -481,8 +487,19 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 }
                                 Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(1.dp).background(Color(235,215,185,35)))
                             }
-                            if(state.busy) Box(Modifier.fillMaxWidth().height(42.1875.dp).background(Color(15,18,26,40)).padding(horizontal=21.dp,vertical=11.dp)){AksaraText("Generating Response",size=12f,line=19.2f,color=Color(0xffd9c8b0))}
-                            LazyColumn(Modifier.weight(1f).fillMaxWidth().testTagCompat("messages"),state=list,contentPadding=PaddingValues(start=if(state.messages.isEmpty())17.dp else 12.dp,end=if(state.messages.isEmpty())17.dp else 12.dp,top=if(state.messages.isEmpty())14.dp else 13.dp,bottom=13.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
+                            if(state.busy) Row(Modifier.fillMaxWidth().height(42.dp)
+                                .background(Color(15,18,26,40))
+                                .padding(horizontal=15.dp,vertical=10.dp),
+                                verticalAlignment=Alignment.CenterVertically,
+                                horizontalArrangement=Arrangement.spacedBy(7.dp)) {
+                                AksaraIcon("activity",Modifier.size(15.dp),AksaraColors.gold)
+                                AksaraText(ChatResponseLifecycle.label(state.responsePhase)
+                                    .ifBlank { "Memproses permintaan" },
+                                    Modifier.weight(1f),size=11f,line=16f,color=Color(0xffd9c8b0))
+                                AksaraText("Status sebenar",size=9f,line=13f,color=AksaraColors.muted)
+                            }
+                            Box(Modifier.weight(1f).fillMaxWidth()) {
+                            LazyColumn(Modifier.fillMaxSize().testTagCompat("messages"),state=list,contentPadding=PaddingValues(start=if(state.messages.isEmpty())17.dp else 12.dp,end=if(state.messages.isEmpty())17.dp else 12.dp,top=if(state.messages.isEmpty())14.dp else 13.dp,bottom=13.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
                                 if(state.messages.isEmpty()) item { AksaraChatBubble(Message("welcome","assistant",WelcomeText,fixedTimestamp?:System.currentTimeMillis()),fixedTimestamp=fixedTimestamp,initial=true) }
                                 if(state.messages.isNotEmpty()) item { AksaraChatBubble(Message("welcome-expanded","assistant","Antara aksara dan code,\nGAYA yang bebas,\nBEBAS dalam bentuk,\nLUAS dalam pemikiran.",fixedTimestamp?:state.messages.first().at),fixedTimestamp=fixedTimestamp) }
                                 items(state.messages,key={it.id},contentType={it.role}) { message ->
@@ -497,9 +514,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                             !message.text.contains("[Lampiran: ") && !state.busy) ({
                                             editingId=message.id;draft=message.text;autoFollow=true
                                         }) else null,
-                                        onDetails=if(message.role=="assistant" && !state.busy &&
-                                            message.id==state.messages.lastOrNull()?.id &&
-                                            state.lastProvider.isNotBlank()) ({
+                                        onDetails=if(message.role=="assistant" && !message.incomplete &&
+                                            !state.busy && message.provider != null) ({
+                                            selectedResponseId=message.id
                                             open("response-details")
                                         }) else null,
                                         onBranch=if(!state.busy && !message.incomplete) ({
@@ -508,6 +525,19 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                         onRetry=if(message.role=="assistant" && message.id==state.messages.lastOrNull()?.id && !state.busy)
                                             ({if(onRegenerate(message.id)){editingId=null;draft="";autoFollow=true};Unit}) else null)
                                 }
+                            }
+                            if(!autoFollow && list.canScrollForward && state.messages.isNotEmpty()) {
+                                AksaraButton("Ke mesej terkini",{
+                                    autoFollow=true
+                                    jumpScope.launch {
+                                        val last=(list.layoutInfo.totalItemsCount-1).coerceAtLeast(0)
+                                        list.scrollToItem(last)
+                                    }
+                                },Modifier.align(Alignment.BottomEnd)
+                                    .padding(end=12.dp,bottom=8.dp)
+                                    .testTagCompat("chat-jump-latest"),
+                                    size=10f,height=35.dp,radius=999.dp)
+                            }
                             }
                             if(state.messages.isEmpty()) Row(
                                 Modifier.fillMaxWidth().height(60.dp).padding(horizontal=12.dp,vertical=4.dp),
@@ -527,7 +557,21 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 }
                             }
                             if(state.nextJourney!=null) AksaraButton(state.nextJourney,{onJourney(state.nextJourney)},Modifier.padding(horizontal=12.dp,vertical=4.dp),size=11.5f,height=37.dp,radius=999.dp,leadingText="↗")
-                            if(state.error!=null) Row(Modifier.fillMaxWidth().clickable(onClick=onDismissError).padding(8.dp)) { AksaraText(state.error,size=11f,color=Color(0xffe7a08e)) }
+                            if(state.error!=null) Row(Modifier.fillMaxWidth().padding(8.dp),
+                                verticalAlignment=Alignment.CenterVertically,
+                                horizontalArrangement=Arrangement.spacedBy(7.dp)) {
+                                AksaraText(state.error,Modifier.weight(1f),size=10.5f,color=Color(0xffe7a08e))
+                                val incomplete=state.messages.lastOrNull()
+                                if(!state.busy && incomplete?.role=="assistant" && incomplete.incomplete) {
+                                    AksaraButton("Cuba semula",{
+                                        if(onRegenerate(incomplete.id)) {
+                                            editingId=null; draft=""; autoFollow=true
+                                        }
+                                    },height=31.dp,size=10f,radius=12.dp)
+                                }
+                                AksaraText("×",Modifier.clickable(onClick=onDismissError)
+                                    .padding(3.dp),size=17f,color=AksaraColors.gold)
+                            }
                         }
                     }
                 }
@@ -597,7 +641,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                     onUseDraft={pending->draft=pending;editingId=null;overlay=null;autoFollow=true},
                     onEraseLocal=onEraseLocal,
                     onJumpToMessage={id->pendingJumpId=id},
-                    onVoiceState={phase,ready->voiceIndicator=VoiceLinkState.from(phase,ready)})
+                    onVoiceState={phase,ready->voiceIndicator=VoiceLinkState.from(phase,ready)},
+                    selectedAnswer=state.messages.firstOrNull { it.id==selectedResponseId },
+                    selectedAttachmentNames=attachmentName)
                 }
             }
         }

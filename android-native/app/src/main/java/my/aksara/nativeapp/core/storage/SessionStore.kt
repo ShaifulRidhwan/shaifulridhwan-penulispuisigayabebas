@@ -15,7 +15,15 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-data class Message(val id: String, val role: String, val text: String, val at: Long = System.currentTimeMillis(), val incomplete: Boolean = false, val provider: String? = null)
+data class Message(
+    val id: String, val role: String, val text: String,
+    val at: Long = System.currentTimeMillis(), val incomplete: Boolean = false,
+    val provider: String? = null,
+    // Optional per-answer backend facts. Defaults preserve older encrypted archives.
+    val model: String? = null, val researchStatus: String? = null,
+    val toolsUsed: List<String> = emptyList(), val evidenceLevel: String? = null,
+    val reviewApplied: Boolean? = null
+)
 data class SessionSnapshot(val messages: List<Message>, val sessionStarts: List<String> = emptyList())
 
 /** Conversation v1 stays an encrypted JSON array for downgrade compatibility.
@@ -59,7 +67,16 @@ class SessionStore(context: Context) {
             Message(it.getString("id"), it.getString("role"), it.getString("text"), it.getLong("at"),
                 it.optBoolean("incomplete"), it.optString("provider").takeIf { id ->
                     !it.isNull("provider") && id.isNotBlank() && id != "null"
-                })
+                },
+                it.optString("model").takeIf { v -> v.isNotBlank() && v != "null" },
+                it.optString("researchStatus").takeIf { v -> v.isNotBlank() && v != "null" },
+                it.optJSONArray("toolsUsed")?.let { tools ->
+                    (0 until minOf(tools.length(),12)).mapNotNull { index ->
+                        tools.optString(index).takeIf { entry -> entry.isNotBlank() }
+                    }
+                } ?: emptyList(),
+                it.optString("evidenceLevel").takeIf { v -> v.isNotBlank() && v != "null" },
+                it.opt("reviewApplied") as? Boolean)
         }
         val fromIndex = runCatching {
             if (!index.baseFile.exists()) emptyList()
@@ -74,7 +91,12 @@ class SessionStore(context: Context) {
         val data = JSONArray().apply {
             messages.forEach { put(JSONObject().put("id", it.id).put("role", it.role)
                 .put("text", it.text).put("at", it.at).put("incomplete", it.incomplete)
-                .put("provider", it.provider ?: JSONObject.NULL)) }
+                .put("provider", it.provider ?: JSONObject.NULL)
+                .put("model", it.model ?: JSONObject.NULL)
+                .put("researchStatus", it.researchStatus ?: JSONObject.NULL)
+                .put("toolsUsed", JSONArray(it.toolsUsed.take(12)))
+                .put("evidenceLevel", it.evidenceLevel ?: JSONObject.NULL)
+                .put("reviewApplied", it.reviewApplied ?: JSONObject.NULL)) }
         }
         // Write the original v1 shape so an older APK can still open this archive.
         writeEncrypted(file, data.toString())

@@ -52,6 +52,11 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "API_ORIGIN", "\"https://shaifulridhwan-penulispuisigayabebas.netlify.app\"")
         buildConfigField("String", "WEB_REFERENCE_COMMIT", "\"f482b8ed393fe0eb4277ae3eaf3938f1593489c4\"")
+        // Only display a source commit when CI supplies a verified 40-hex PR head.
+        // An ordinary local build leaves this unknown; never imply APK matches GitHub.
+        val sourceSha = providers.environmentVariable("AKSARA_PREVIEW_HEAD_SHA").orNull
+            ?.takeIf { it.matches(Regex("[a-fA-F0-9]{40}")) } ?: ""
+        buildConfigField("String", "SOURCE_COMMIT_SHA", "\"$sourceSha\"")
     }
     buildTypes {
         create("benchmark") {

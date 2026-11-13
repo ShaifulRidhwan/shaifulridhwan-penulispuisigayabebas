@@ -28,7 +28,8 @@ import kotlin.coroutines.resume
 internal data class TodayFeed<T>(val value:T?,val fromCache:Boolean,val updatedAt:Long?)
 internal data class TodayWeather(
     val celsius:Double,val code:Int,val windKmh:Double,val rainChance:Int?,
-    val feelsLike:Double?=null,val humidity:Int?=null
+    val feelsLike:Double?=null,val humidity:Int?=null,
+    val rainNext3Hours:Int?=null, val temperatureTrend3Hours:Double?=null
 )
 internal data class TodayPrayer(val zone:String,val hijri:String,val times:List<Pair<String,String>>)
 internal data class TodayCoin(val symbol:String,val usd:Double,val change24h:Double,val updatedAt:String)
@@ -44,11 +45,26 @@ internal object TodayParsers {
         require(now.has("temperature_2m")) { "Suhu tiada dalam respons cuaca" }
         val rain=root.optJSONObject("daily")?.optJSONArray("precipitation_probability_max")
             ?.takeIf { it.length()>0 && !it.isNull(0) }?.optInt(0)
+        val hourly=root.optJSONObject("hourly")
+        val rainHours=hourly?.optJSONArray("precipitation_probability")
+        val tempHours=hourly?.optJSONArray("temperature_2m")
+        val shortRain=rainHours?.let { array ->
+            (0 until minOf(3,array.length())).mapNotNull { i ->
+                if(array.isNull(i)) null else array.optInt(i,-1).takeIf { it in 0..100 }
+            }.maxOrNull()
+        }
+        val trend=if(tempHours!=null && tempHours.length()>=4 &&
+            !tempHours.isNull(0) && !tempHours.isNull(3)) {
+            val first=tempHours.optDouble(0,Double.NaN)
+            val last=tempHours.optDouble(3,Double.NaN)
+            (last-first).takeIf { it.isFinite() }
+        } else null
         return TodayWeather(
             now.getDouble("temperature_2m"),now.optInt("weather_code",-1),
             now.optDouble("wind_speed_10m",0.0),rain,
             now.optDouble("apparent_temperature",Double.NaN).takeIf { it.isFinite() },
-            now.optInt("relative_humidity_2m",-1).takeIf { it in 0..100 }
+            now.optInt("relative_humidity_2m",-1).takeIf { it in 0..100 },
+            shortRain,trend
         )
     }
 
@@ -187,7 +203,7 @@ internal class TodayRepository(context:Context) {
         val previous=raw?.let { runCatching { parser(it) }.getOrNull() }
         val now=System.currentTimeMillis()
         if(!force && previous!=null && now-updated<ttlMs)
-            return@withContext TodayFeed(previous,false,updated)
+            return@withContext TodayFeed(previous,true,updated)
         try {
             val response=loader()
             val value=parser(response)
@@ -204,7 +220,8 @@ internal class TodayRepository(context:Context) {
         val lon=String.format(Locale.US,"%.3f",location.longitude)
         val url="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+
             "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m"+
-            "&daily=precipitation_probability_max&timezone=auto&forecast_days=1"
+            "&daily=precipitation_probability_max&hourly=precipitation_probability,temperature_2m"+
+            "&forecast_hours=6&timezone=auto&forecast_days=1"
         return cached("weather:"+lat+":"+lon,30L*60_000L,force,TodayParsers::weather) { request(url) }
     }
 

@@ -57,6 +57,19 @@ internal object TodayDetailParsers {
         }
         return TodayForecast(hours,days)
     }
+    /** Historical BTC/USD prices from CoinGecko; no synthetic chart when unavailable. */
+    fun btcHistory(raw:String):List<Double> {
+        val rows=JSONObject(raw).getJSONArray("prices")
+        val values=(0 until rows.length().coerceAtMost(1000)).mapNotNull { i ->
+            rows.optJSONArray(i)?.optDouble(1,Double.NaN)?.takeIf { it.isFinite() && it>0.0 }
+        }
+        require(values.size>=2) { "Sejarah harga BTC tidak mencukupi" }
+        val limited=values.takeLast(300)
+        val step=((limited.size+47)/48).coerceAtLeast(1)
+        return limited.filterIndexed { index,_ -> index%step==0 }.let { sampled ->
+            if(sampled.last()!=limited.last()) sampled+limited.last() else sampled
+        }
+    }
     fun prayerMonth(raw:String):List<TodayPrayerDate> {
         val root=JSONObject(raw)
         val entries=root.optJSONArray("prayerTime") ?: root.optJSONArray("data")
@@ -125,7 +138,7 @@ internal class TodayDetailRepository(context:Context) {
         val at=prefs.getLong("$key:at",0L)
         val old=raw?.let { runCatching { parser(it) }.getOrNull() }
         val now=System.currentTimeMillis()
-        if(old!=null && now-at<ttl)return@withContext TodayFeed(old,false,at)
+        if(old!=null && now-at<ttl)return@withContext TodayFeed(old,true,at)
         try {
             val text=request()
             val result=parser(text)
@@ -146,6 +159,11 @@ internal class TodayDetailRepository(context:Context) {
                 "&timezone=auto&forecast_days=7")
         }
     }
+    suspend fun btcHistory():TodayFeed<List<Double>> =
+        cached("btc-history-24h",15L*60_000L,TodayDetailParsers::btcHistory) {
+            get("https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1")
+        }
+
     suspend fun prayerMonth(zone:String):TodayFeed<List<TodayPrayerDate>> {
         require(zone.matches(Regex("[A-Z]{3}0[1-9]")))
         val month=YearMonth.now(ZoneId.of("Asia/Kuala_Lumpur"))

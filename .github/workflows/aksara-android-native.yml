@@ -125,8 +125,9 @@ jobs:
           name: production-backend-contract-evidence
           path: docs/android-rebuild/backend-contract/live-check.json
   build:
-    # PR321 is compiled/tested/published once by the JNI-enabled owner APK workflow.
-    if: github.event_name != 'pull_request' || github.head_ref != 'feature/aksara-neural-local-v1'
+    # Build one APK per PR: PR327 uses the canonical full-Alpine owner workflow.
+    # Keep Android Native QA jobs (backend/web/game) but NEVER publish its 240MB APK for PR327.
+    if: github.event_name != 'pull_request' || (github.head_ref != 'feature/aksara-neural-local-v1' && github.head_ref != 'feature/aksara-today-chat-v2')
     runs-on: ubuntu-latest
     outputs:
       apk_ready: ${{ steps.compile.outputs.apk_ready }}
@@ -349,9 +350,11 @@ jobs:
             android-native/app/build/reports/
 
   today-preview-apk:
-    # A direct, SHA-locked .apk preview for TODAY UI PRs, without artifact ZIPs.
+    # PR327 must use the full Linux owner APK, not the stripped 240MB TODAY preview.
+    # Other TODAY UI PRs keep their original lightweight preview delivery.
     if: >-
       github.event_name == 'pull_request' &&
+      github.event.pull_request.number != 327 &&
       startsWith(github.head_ref, 'feature/aksara-today-') &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       needs.build.result == 'success' &&

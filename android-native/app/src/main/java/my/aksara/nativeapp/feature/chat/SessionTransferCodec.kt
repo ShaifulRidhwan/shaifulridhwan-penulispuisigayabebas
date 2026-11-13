@@ -24,7 +24,12 @@ internal object SessionTransferCodec {
                     put(JSONArray().apply { session.messages.forEach { m ->
                         put(JSONObject().put("role",m.role).put("text",m.text)
                             .put("at",m.at).put("incomplete",m.incomplete)
-                            .put("provider",m.provider ?: JSONObject.NULL))
+                            .put("provider",m.provider ?: JSONObject.NULL)
+                            .put("model",m.model ?: JSONObject.NULL)
+                            .put("researchStatus",m.researchStatus ?: JSONObject.NULL)
+                            .put("toolsUsed",JSONArray(m.toolsUsed.take(12)))
+                            .put("evidenceLevel",m.evidenceLevel ?: JSONObject.NULL)
+                            .put("reviewApplied",m.reviewApplied ?: JSONObject.NULL))
                     } })
                 }
             }).toString()
@@ -60,7 +65,17 @@ internal object SessionTransferCodec {
                 val provider=row.optString("provider").takeIf {
                     it.matches(Regex("[A-Za-z0-9_.-]{1,64}"))
                 }
-                messages.add(Message(id,role,content,time,row.optBoolean("incomplete",false),provider))
+                val model=row.optString("model").takeIf { it.isNotBlank() && it!="null" }?.take(100)
+                val research=row.optString("researchStatus").takeIf { it.isNotBlank() && it!="null" }?.take(65)
+                val tools=row.optJSONArray("toolsUsed")?.let { arr ->
+                    (0 until minOf(12,arr.length())).mapNotNull { index ->
+                        arr.optString(index).take(70).takeIf { it.isNotBlank() }
+                    }
+                } ?: emptyList()
+                val evidence=row.optString("evidenceLevel").takeIf { it.isNotBlank() && it!="null" }?.take(50)
+                val reviewed=row.opt("reviewApplied") as? Boolean
+                messages.add(Message(id,role,content,time,row.optBoolean("incomplete",false),
+                    provider,model,research,tools,evidence,reviewed))
             }
             starts.add(firstId)
         }
