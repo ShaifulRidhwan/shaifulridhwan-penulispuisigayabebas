@@ -17,6 +17,14 @@ import my.aksara.nativeapp.core.nexus.kernel.KernelNode
 import my.aksara.nativeapp.core.nexus.kernel.KernelTransition
 import my.aksara.nativeapp.core.nexus.kernel.KernelStatus
 import my.aksara.nativeapp.core.nexus.kernel.KernelPolicy
+import my.aksara.nativeapp.core.nexus.kernel.KernelAiPlanner
+import my.aksara.nativeapp.core.nexus.kernel.KernelEventBus
+import my.aksara.nativeapp.core.nexus.kernel.KernelEventType
+import my.aksara.nativeapp.core.nexus.kernel.KernelResourceGovernor
+import my.aksara.nativeapp.core.nexus.kernel.KernelTelemetry
+import my.aksara.nativeapp.core.nexus.kernel.KernelProviderPolicy
+import my.aksara.nativeapp.core.nexus.kernel.KernelPlanStore
+import android.os.SystemClock
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -107,11 +115,30 @@ internal object NexusEngine {
     private val kernelRegistry: KernelRegistry = KernelDefaults.registry()
     private val kernelContext = KernelContextGraph()
     private var kernelCheckpoint: KernelCheckpointStore? = null
+    private var kernelPlanStore: KernelPlanStore? = null
+    private val kernelBus = KernelEventBus()
+    val kernelEvents = kernelBus.events
+    private val metrics = KernelTelemetry()
+    @Volatile private var providerList: List<Pair<String, String>> = emptyList()
     fun kernelCheckpoints(): List<KernelCheckpointStore.Checkpoint> =
         kernelCheckpoint?.recover().orEmpty()
+    fun kernelEventsRecent() = kernelBus.recent()
+    fun kernelTelemetry() = metrics.snapshot()
+    fun kernelProviderHealth() = KernelProviderPolicy.assess(providerList)
+    fun recoverablePlan(): KernelPlan? =
+        kernelPlanStore?.recoveryCandidate(kernelRegistry, kernelCheckpoints())
 
-    /** Planning is pure: no shell process or remote request runs here. */
-    fun planKernel(goal: String): KernelPlan? = KernelPlanner.propose(goal, kernelRegistry)
+    /** Deterministic offline planner; never runs a shell command. */
+    fun planKernel(goal: String): KernelPlan? =
+        KernelPlanner.propose(goal, kernelRegistry)?.also {
+            kernelBus.publish(KernelEventType.PLAN_PROPOSED, it.id)
+        }
+    /** User-triggered remote planning; no memory, history or command execution. */
+    suspend fun planWithAi(goal: String): KernelPlan {
+        val plan = KernelAiPlanner().propose(goal, kernelRegistry)
+        kernelBus.publish(KernelEventType.PLAN_PROPOSED, plan.id, detail = "remote-model")
+        return plan
+    }
     fun kernelFacts() = kernelContext.facts()
 
     /**
@@ -124,8 +151,16 @@ internal object NexusEngine {
         val approval = runCatching {
             KernelPolicy.approveReadOnly(plan, kernelRegistry, System.currentTimeMillis())
         }.getOrNull() ?: return false
-        if (!AksaraLinuxRuntime.installed(context)) return false
+        val needsLinux = plan.nodes.any { it.capability.startsWith("linux.") }
+        if (needsLinux && !AksaraLinuxRuntime.installed(context)) return false
+        val resource = KernelResourceGovernor.snapshot(context)
+        metrics.configure(resource)
+        if (resource.lowMemory || resource.powerSave)
+            kernelBus.publish(KernelEventType.RESOURCE_PRESSURE,
+                detail = "Parallelism limited to one")
+        if (runCatching { kernelPlanStore?.save(plan) }.isFailure) return false
         val id = UUID.randomUUID().toString()
+        kernelBus.publish(KernelEventType.PLAN_APPROVED, plan.id)
         val event = NexusEvent(id, "ANK V2 · " + plan.goal.take(45),
             NexusTaskStatus.RUNNING, System.currentTimeMillis())
         mutable.update {
@@ -136,13 +171,21 @@ internal object NexusEngine {
         persistMetadata()
         runCatching { kernelCheckpoint?.record(plan.id, "workflow", KernelStatus.RUNNING.name) }
         running = scope.launch {
+            val wallStart = SystemClock.elapsedRealtime()
+            var recordedStatus: KernelStatus? = null
+            kernelBus.publish(KernelEventType.TASK_STARTED, plan.id)
             try {
-                val outcome = KernelScheduler(kernelRegistry, maxParallel = 2).run(
+                val outcome = KernelScheduler(kernelRegistry, maxParallel = resource.parallelism).run(
                     plan, approval,
                     execute = { node, previous -> executeKernelNode(context, node, previous, plan.id) },
                     onTransition = { transition ->
                         runCatching { kernelCheckpoint?.record(
                             transition.planId, transition.nodeId, transition.status.name) }
+                        kernelBus.publish(
+                            if (transition.status == KernelStatus.FAILED)
+                                KernelEventType.TASK_FAILED else KernelEventType.TASK_STARTED,
+                            transition.planId, transition.nodeId,
+                            transition.status.name)
                         mutable.update { it.copy(progress =
                             transition.nodeId + " · " + transition.status.name) }
                     }
@@ -162,16 +205,26 @@ internal object NexusEngine {
                 }
                 runCatching { kernelCheckpoint?.record(plan.id, "workflow",
                     if (outcome.passed) KernelStatus.COMPLETED.name else KernelStatus.FAILED.name) }
+                recordedStatus = if (outcome.passed) KernelStatus.COMPLETED else KernelStatus.FAILED
+                kernelBus.publish(
+                    if (outcome.passed) KernelEventType.TASK_FINISHED else KernelEventType.TASK_FAILED,
+                    plan.id, detail = "Workflow " + recordedStatus.name)
                 finish(id, if (outcome.passed) NexusTaskStatus.COMPLETED else NexusTaskStatus.FAILED,
                     report, if (outcome.passed) "All DAG steps completed" else "Workflow incomplete")
             } catch (c: CancellationException) {
                 runCatching { kernelCheckpoint?.record(plan.id, "workflow", "CANCELLED") }
+                kernelBus.publish(KernelEventType.TASK_CANCELLED, plan.id)
                 finish(id, NexusTaskStatus.CANCELLED, "", "Kernel workflow cancelled")
                 throw c
             } catch (e: Exception) {
                 runCatching { kernelCheckpoint?.record(plan.id, "workflow", KernelStatus.FAILED.name) }
+                recordedStatus = KernelStatus.FAILED
+                kernelBus.publish(KernelEventType.TASK_FAILED, plan.id,
+                    detail = "Workflow failed")
                 finish(id, NexusTaskStatus.FAILED, "Kernel error: " +
                     (e.message ?: "unknown").take(200), "Kernel workflow failed")
+            } finally {
+                metrics.record(SystemClock.elapsedRealtime() - wallStart, recordedStatus)
             }
         }
         return true
@@ -190,15 +243,18 @@ internal object NexusEngine {
                 val snapshot = state.value.dashboard
                 KernelEvidence(cap, "today-repository",
                     snapshot.ifBlank { "Dashboard snapshot unavailable; open Today first." },
-                    0, now, facts = mapOf(
+                    if (snapshot.isBlank()) 3 else 0, now, facts = mapOf(
                         "today.availability" to if (snapshot.isBlank()) "missing" else "cached",
                         "today.snapshot.age_ms" to if (snapshot.isBlank()) "unknown"
                             else (now - state.value.dashboardUpdated).coerceAtLeast(0).toString()))
             }
             "ai.health" -> {
-                val status = state.value.aiStatus
-                KernelEvidence(cap, "chat-provider-state", status, 0, now,
-                    facts = mapOf("ai.health.snapshot" to status.take(200)))
+                val status = kernelProviderHealth()
+                KernelEvidence(cap, "chat-provider-state",
+                    status.status + "\n" + state.value.aiStatus,
+                    if (status.available) 0 else 3, now,
+                    facts = mapOf("ai.providers.available" to status.available.toString(),
+                        "ai.providers.observed" to status.sources.joinToString(",")))
             }
             "kernel.evidence" -> {
                 val report = KernelEvidenceParser.summarize(previous.values)
@@ -262,7 +318,11 @@ internal object NexusEngine {
         val safe = context.applicationContext
         journal = NexusJournal(safe)
         kernelCheckpoint = KernelCheckpointStore(safe)
+        kernelPlanStore = KernelPlanStore(safe)
         app = safe
+        kernelBus.publish(KernelEventType.BOOTSTRAPPED)
+        if (recoverablePlan() != null)
+            kernelBus.publish(KernelEventType.RECOVERY_AVAILABLE)
         val history = journal?.read().orEmpty()
         mutable.update {
             it.copy(events = history, linuxReady = AksaraLinuxRuntime.installed(safe))
@@ -283,6 +343,8 @@ internal object NexusEngine {
     }
 
     fun publishAiStatus(providers: List<Pair<String, String>>) {
+        providerList = providers.take(8).map { (id, status) -> id.take(40) to status.take(60) }
+        kernelBus.publish(KernelEventType.PROVIDER_UPDATED)
         val summary = if (providers.isEmpty()) "Belum diperiksa"
             else providers.take(5).joinToString(" · ") { it.first + ": " + it.second.take(35) }
         mutable.update { it.copy(aiStatus = summary) }
