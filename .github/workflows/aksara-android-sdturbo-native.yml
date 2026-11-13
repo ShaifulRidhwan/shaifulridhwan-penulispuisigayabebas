@@ -6,13 +6,11 @@ on:
     paths:
       - 'android-native/app/src/main/cpp/**'
       - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/studio/**'
-      - 'android-native/app/build.gradle.kts'
   push:
     branches: ['rebuild/aksara-android-native-v1']
     paths:
       - 'android-native/app/src/main/cpp/**'
       - 'android-native/app/src/main/java/my/aksara/nativeapp/feature/studio/**'
-      - 'android-native/app/build.gradle.kts'
 permissions:
   contents: read
 concurrency:
@@ -20,8 +18,9 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build-native:
-    # Neural-only owner repairs use their dedicated JNI APK; Studio source is unchanged.
-    if: github.event_name != 'pull_request' || github.head_ref != 'feature/aksara-neural-local-v1'
+    # Studio-only JNI experiment. Gradle metadata changes must not launch SD-Turbo.
+    # PR327 Full Linux uses a single Alpine owner APK; do not run this job there.
+    if: github.event_name != 'pull_request' || (github.head_ref != 'feature/aksara-neural-local-v1' && github.head_ref != 'feature/aksara-today-chat-v2')
     runs-on: ubuntu-latest
     timeout-minutes: 55
     env:
