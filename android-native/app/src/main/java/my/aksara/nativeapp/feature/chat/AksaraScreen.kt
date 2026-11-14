@@ -316,6 +316,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     onOverlayVisibilityChange:(Boolean)->Unit = {}) {
     val backdrop = remember { HazeState() }; val scene = remember { HazeState() }
     var overlay by rememberSaveable { mutableStateOf(initialOverlay) }
+    var agenticMissionVisible by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(overlay) { onOverlayVisibilityChange(overlay!=null) }
     var voiceIndicator by remember { mutableStateOf(VoiceLinkState.IDLE) }
     var draft by rememberSaveable { mutableStateOf("") }
@@ -435,10 +436,20 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             .clickable { open("context-status") }
                             .semantics { contentDescription="Lihat konteks sesi Aksara" },
                             radius=13.dp) {
-                            Row(Modifier.align(Alignment.Center).padding(horizontal=7.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(3.dp)) {
-                                AksaraText("AKSARA A.I", size=10f,line=12f,weight=650)
-                                AksaraText("ⓘ",size=9f,color=AksaraColors.gold)
-                                AksaraText("oleh Shaiful Ridhwan",size=8f,line=8.4f,weight=450,color=Color(233,198,141,212))
+                            Row(
+                                Modifier.align(Alignment.Center).padding(horizontal=7.dp),
+                                verticalAlignment=Alignment.CenterVertically,
+                                horizontalArrangement=Arrangement.spacedBy(5.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment=Alignment.CenterVertically,
+                                    horizontalArrangement=Arrangement.spacedBy(1.dp)
+                                ) {
+                                    AksaraText("AKSARA A.",size=10f,line=12f,weight=650)
+                                    AksaraIcon("info",Modifier.size(11.dp).offset(y=.5.dp),AksaraColors.gold)
+                                }
+                                AksaraText("oleh Shaiful Ridhwan",size=8.5f,line=12f,
+                                    weight=450,color=Color(233,198,141,212))
                             }
                         }
                         Spacer(Modifier.weight(1f))
@@ -460,14 +471,43 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         brush=Brush.linearGradient(listOf(Color(15,17,25,51),Color(10,14,25,33),Color(7,10,18,56))),border=Color.Transparent) {
                         Column(Modifier.fillMaxSize().padding(1.dp)) {
                             BoxWithConstraints(Modifier.fillMaxWidth().height(58.dp).testTagCompat("conversation-head")) {
-                                val compact=maxWidth<390.dp
+                                val headerWidth=maxWidth
+                                val compact=headerWidth<390.dp
                                 val headerPaint=remember{HazeState()}
                                 Box(Modifier.matchParentSize().hazeSource(headerPaint).background(Brush.horizontalGradient(listOf(Color(20,18,21,64),Color(5,8,17,56)))))
                                 CompositionLocalProvider(LocalBackdropPaints provides listOf(headerPaint)) {
                                 Row(Modifier.fillMaxSize().padding(horizontal=if(compact)5.dp else 8.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(if(compact)3.dp else 4.dp)) {
                                     ReactiveVoiceChip(voiceIndicator,compact) {open("voice-permission")}
                                     Spacer(Modifier.weight(1f))
-                                    AksaraGlassSurface(Modifier.width(if(compact)151.dp else 167.dp).height(AksaraGlassTokens.capsuleHeight).clickable {open("connection")}.semantics {contentDescription="Connection"},radius=999.dp,blur=9.dp) {
+                                    // Dedicated delegated-flow icon and shared capsule glass tokens.
+                                    // Keep Agent immediately adjacent to Multi A.I; Voice remains on the left.
+                                    AksaraGlassSurface(
+                                        Modifier.width(if(headerWidth<350.dp)75.dp else if(compact)85.dp else 100.dp)
+                                            .height(AksaraGlassTokens.capsuleHeight)
+                                            .aksaraBouncyClick(onClick={agenticMissionVisible=true})
+                                            .semantics {
+                                                contentDescription="Buka Agentic Runtime"
+                                                testTag="agent-status-chip"
+                                            },
+                                        radius=AksaraGlassTokens.capsuleRadius,
+                                        blur=AksaraGlassTokens.capsuleBlur
+                                    ) {
+                                        Row(Modifier.align(Alignment.Center),
+                                            horizontalArrangement=Arrangement.spacedBy(5.dp),
+                                            verticalAlignment=Alignment.CenterVertically) {
+                                            AksaraIcon("compass-core",Modifier.size(17.dp),AksaraColors.gold)
+                                            AksaraText("Agent",size=if(compact)9.5f else 10f,
+                                                line=13f,weight=600)
+                                        }
+                                    }
+                                    AksaraGlassSurface(
+                                        Modifier.width(if(headerWidth<350.dp)137.dp else if(compact)151.dp else 167.dp)
+                                            .height(AksaraGlassTokens.capsuleHeight)
+                                            .clickable {open("connection")}
+                                            .semantics {contentDescription="Connection"},
+                                        radius=AksaraGlassTokens.capsuleRadius,
+                                        blur=AksaraGlassTokens.capsuleBlur
+                                    ) {
                                         val connectionStatus = ProviderConnectionStatus.label(state.providers)
                                         val compactStatus = when(connectionStatus) {
                                             "Backend unreachable" -> "Unreachable"
@@ -648,6 +688,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             }
         }
     }
+    if(agenticMissionVisible) AgenticMissionDialog(onClose={agenticMissionVisible=false})
 }
 private fun Modifier.testTagCompat(tag:String) = semantics { testTag=tag }
 private val ChatTimestampFormatter = DateTimeFormatter.ofPattern("d MMM HH:mm",java.util.Locale.ENGLISH)

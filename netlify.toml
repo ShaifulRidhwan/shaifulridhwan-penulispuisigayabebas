@@ -73,6 +73,10 @@
 [functions."bilik-antara"]
   external_node_modules = ["@netlify/blobs"]
 
+# Android-only Agentic Core. Server-side SDKs are NEVER shipped in the APK.
+[functions."aksara-agentic"]
+  external_node_modules = ["ai", "@ai-sdk/openai-compatible", "deepagents", "langchain", "@langchain/openai", "zod"]
+
 [functions."studio-image"]
   external_node_modules = ["@netlify/blobs"]
 [functions."studio-enhance"]
