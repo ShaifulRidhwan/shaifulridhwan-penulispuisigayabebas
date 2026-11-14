@@ -56,6 +56,14 @@ fun AksaraLinuxScreen(
         ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) vm.importVault(uri)
     }
+    val filesPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isNotEmpty()) vm.importFiles(uris)
+    }
+    val advancedTreePicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) vm.connectAdvancedFolder(uri)
+    }
     val current = vm.slots.getOrNull(vm.selected)
     var deck by rememberSaveable { mutableStateOf("keys") }
     var commandCategory by rememberSaveable { mutableStateOf("FILES") }
@@ -255,7 +263,7 @@ fun AksaraLinuxScreen(
                             verticalAlignment = Alignment.CenterVertically) {
                             LinuxDeckSwitch("KEYBOARD", deck == "keys", Modifier.weight(1f)) { deck = "keys" }
                             LinuxDeckSwitch("COMMANDS", deck == "commands", Modifier.weight(1f)) { deck = "commands" }
-                            LinuxDeckSwitch("SYSTEM", deck == "system", Modifier.weight(1f)) { deck = "system" }
+                            LinuxDeckSwitch("ADVANCED", deck == "system", Modifier.weight(1f)) { deck = "system" }
                             AksaraText("PASTE", Modifier.clickable { vm.paste() }
                                 .padding(horizontal = 6.dp, vertical = 8.dp),
                                 size = 10f, weight = 650, color = AksaraColors.gold)
@@ -311,18 +319,22 @@ fun AksaraLinuxScreen(
                                     LinuxDeckStat("ISOLATION", "PROOT · NO ROOT", AksaraColors.gold)
                                     LinuxDeckStat("STORAGE", "APP PRIVATE", LinuxDeckMint)
                                 }
-                                AksaraText("Workspace kekal dalam storan aplikasi. Sesi PTY tidak dapat dijamin selepas Android menamatkan proses.",
+                                AksaraText("SAF File Bridge → /workspace/imports · Storan Linux kekal dalam sandbox aplikasi.",
                                     size = 9.2f, color = AksaraColors.muted)
                                 Row(Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    AksaraButton("FILES", {
+                                        filesPicker.launch(arrayOf("*/*"))
+                                    }, Modifier.weight(1f), height = 31.dp, size = 9f,
+                                        enabled = !vm.vaultBusy)
                                     AksaraButton("BACKUP", {
                                         backupPicker.launch("aksara-linux-workspace.zip")
-                                    }, Modifier.weight(1f), height = 31.dp, size = 10f,
+                                    }, Modifier.weight(1f), height = 31.dp, size = 9f,
                                         enabled = !vm.vaultBusy)
-                                    AksaraButton("IMPORT", {
+                                    AksaraButton("ZIP", {
                                         restorePicker.launch(arrayOf("application/zip",
                                             "application/octet-stream"))
-                                    }, Modifier.weight(1f), height = 31.dp, size = 10f,
+                                    }, Modifier.weight(1f), height = 31.dp, size = 9f,
                                         enabled = !vm.vaultBusy)
                                     AksaraButton("LOCALHOST", {
                                         runCatching {
@@ -334,7 +346,31 @@ fun AksaraLinuxScreen(
                                                 "Browser tidak dapat dibuka.",
                                                 Toast.LENGTH_SHORT).show()
                                         }
-                                    }, Modifier.weight(1f), height = 31.dp, size = 10f)
+                                    }, Modifier.weight(1f), height = 31.dp, size = 9f)
+                                }
+                                AksaraText(
+                                    "ADVANCED FOLDER: " + (vm.advancedFolder ?: "Belum dipilih") +
+                                        " · PULL → /workspace/android-in · PUSH ← /workspace/android-out",
+                                    size = 9f, color = AksaraColors.muted
+                                )
+                                Row(Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    AksaraButton("FOLDER", {
+                                        advancedTreePicker.launch(null)
+                                    }, Modifier.weight(1f), height = 31.dp, size = 9f,
+                                        enabled = !vm.vaultBusy)
+                                    AksaraButton("PULL", {
+                                        vm.advancedPull()
+                                    }, Modifier.weight(1f), height = 31.dp, size = 9f,
+                                        enabled = !vm.vaultBusy && vm.advancedFolder != null)
+                                    AksaraButton("PUSH", {
+                                        vm.advancedPush()
+                                    }, Modifier.weight(1f), height = 31.dp, size = 9f,
+                                        enabled = !vm.vaultBusy && vm.advancedFolder != null)
+                                    AksaraButton("UNLINK", {
+                                        vm.disconnectAdvancedFolder()
+                                    }, Modifier.weight(1f), height = 31.dp, size = 9f,
+                                        enabled = !vm.vaultBusy && vm.advancedFolder != null)
                                 }
                                 vm.vaultStatus?.let { status ->
                                     AksaraText(status, size = 9f, color = AksaraColors.gold)

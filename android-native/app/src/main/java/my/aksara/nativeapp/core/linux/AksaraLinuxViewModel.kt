@@ -56,6 +56,8 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
         private set
     var vaultBusy by mutableStateOf(false)
         private set
+    var advancedFolder by mutableStateOf<String?>(null)
+        private set
     var installed by mutableStateOf(AksaraLinuxRuntime.installed(app))
         private set
     val bundled: Boolean = AksaraLinuxRuntime.bundled(app)
@@ -74,6 +76,11 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
     init {
         addSession()
         if (!installed && bundled) watchSetupConsent()
+        viewModelScope.launch {
+            advancedFolder = withContext(Dispatchers.IO) {
+                LinuxAdvancedStorage.connectedName(getApplication())
+            }
+        }
     }
 
     private fun watchSetupConsent() {
@@ -284,6 +291,93 @@ class AksaraLinuxViewModel(app: Application) : AndroidViewModel(app),
                 vaultStatus = "Import berjaya: " + result.files + " fail → " + result.location
             } catch (error: Exception) {
                 vaultStatus = "Import gagal: " + (error.message ?: "I/O tidak diketahui").take(140)
+            } finally { vaultBusy = false }
+        }
+    }
+
+    /** Android SAF -> /workspace/imports; never auto-executes imported scripts. */
+    fun importFiles(uris: List<Uri>) {
+        if (vaultBusy || uris.isEmpty()) return
+        vaultBusy = true
+        vaultStatus = "Menyalin fail ke workspace Linux..."
+        viewModelScope.launch {
+            try {
+                val result = LinuxFileBridge.importDocuments(getApplication(), uris)
+                vaultStatus = "FILES " + result.count + " fail (" +
+                    (result.bytes / 1024) + " KiB) → " + result.guestDirectory
+            } catch (error: Exception) {
+                vaultStatus = "Import fail gagal: " +
+                    (error.message ?: "Tidak dapat membaca fail.").take(140)
+            } finally {
+                vaultBusy = false
+            }
+        }
+    }
+
+    /** ADVANCED: link a user-selected Android SAF folder; no guest host path. */
+    fun connectAdvancedFolder(uri: Uri) {
+        if (vaultBusy) return
+        vaultBusy = true
+        vaultStatus = "Menyambungkan folder Android..."
+        viewModelScope.launch {
+            try {
+                val selected = withContext(Dispatchers.IO) {
+                    LinuxAdvancedStorage.connect(getApplication(), uri)
+                }
+                advancedFolder = selected
+                vaultStatus = "ADVANCED: Folder \"" + selected + "\" bersambung."
+            } catch (error: Exception) {
+                vaultStatus = "Folder gagal: " +
+                    (error.message ?: "Akses Android tidak diberikan.").take(140)
+            } finally { vaultBusy = false }
+        }
+    }
+
+    fun disconnectAdvancedFolder() {
+        if (vaultBusy) return
+        vaultBusy = true
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    LinuxAdvancedStorage.disconnect(getApplication())
+                }
+                advancedFolder = null
+                vaultStatus = "ADVANCED: Akses folder telah dibatalkan."
+            } catch (error: Exception) {
+                vaultStatus = "Tidak dapat membatalkan akses: " +
+                    (error.message ?: "Tidak diketahui.").take(140)
+            } finally { vaultBusy = false }
+        }
+    }
+
+    fun advancedPull() {
+        if (vaultBusy) return
+        vaultBusy = true
+        vaultStatus = "ADVANCED: Membaca folder Android..."
+        viewModelScope.launch {
+            try {
+                val result = LinuxAdvancedStorage.pull(getApplication())
+                vaultStatus = "PULL " + result.count + " fail → " + result.location +
+                    if (result.skipped > 0) " (" + result.skipped + " folder dilangkau)" else ""
+            } catch (error: Exception) {
+                vaultStatus = "PULL gagal: " +
+                    (error.message ?: "Ralat Android Folder Provider.").take(140)
+            } finally { vaultBusy = false }
+        }
+    }
+
+    fun advancedPush() {
+        if (vaultBusy) return
+        vaultBusy = true
+        vaultStatus = "ADVANCED: Mengeksport /workspace/android-out..."
+        viewModelScope.launch {
+            try {
+                val result = LinuxAdvancedStorage.push(getApplication())
+                vaultStatus = "PUSH " + result.count + " fail → " + result.location +
+                    if (result.skipped > 0) " (" + result.skipped + " entri dilangkau)" else ""
+            } catch (error: Exception) {
+                vaultStatus = "PUSH gagal: " +
+                    (error.message ?: "Ralat Android Folder Provider.").take(140)
             } finally { vaultBusy = false }
         }
     }
