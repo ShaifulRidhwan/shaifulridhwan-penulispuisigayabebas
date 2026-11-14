@@ -164,7 +164,7 @@ jobs:
           set -euo pipefail
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
           gradle --no-daemon --init-script ci/compiler-repository.init.gradle \
-            -PenableLinuxPreview=true -PaksaraPreviewSuffix=.preview.full.c"$tag" \
+            -PenableLinuxPreview=true -PaksaraPreviewSuffix=.preview.p330.c"$tag" \
             assembleDebug :app:testDebugUnitTest \
             --tests 'my.aksara.nativeapp.core.linux.*' \
             --tests 'my.aksara.nativeapp.NativeIntegrationContractTest' \
@@ -217,7 +217,7 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "delivery/$apk"
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 4 "delivery/$apk"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "delivery/$apk" > delivery/BADGING.txt
-          grep -F "package: name='my.aksara.nativeapp.preview.full.c$tag'" delivery/BADGING.txt
+          grep -F "package: name='my.aksara.nativeapp.preview.p330.c$tag'" delivery/BADGING.txt
           grep -F "targetSdkVersion:'28'" delivery/BADGING.txt
           sha256sum "delivery/$apk" > delivery/SHA256SUMS.txt
           tar -czf "delivery/AKSARA-AGENTIC-ADVANCED-$tag-proot-source.tar.gz" \
