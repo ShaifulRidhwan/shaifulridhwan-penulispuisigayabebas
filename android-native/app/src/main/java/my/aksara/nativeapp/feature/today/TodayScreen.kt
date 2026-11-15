@@ -270,6 +270,8 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
         } else {
             context.getSharedPreferences("aksara_today_location",Context.MODE_PRIVATE)
                 .edit().clear().apply()
+            repo.clearLocationData()
+            detailRepo.clearLocationData()
             latestLocation=null
             locationReady=false
             city=null
@@ -381,7 +383,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                             if(!compact)AksaraText("Zon "+value.zone+
                                 (if(value.hijri.isNotBlank())" · Hijrah "+value.hijri else ""),
                                 size=9.4f,line=12f,color=todayMuted)
-                            (if(compact)value.times.filter { it.first==countdown?.first } else value.times).forEach { (name,time) ->
+                            (if(compact)emptyList() else value.times).forEach { (name,time) ->
                                 val upcoming=name==countdown?.first
                                 Row(Modifier.fillMaxWidth(),
                                     verticalAlignment=Alignment.CenterVertically,
@@ -510,7 +512,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                             }
                             Column(Modifier.weight(1f)) {
                                 AksaraText("Kebenaran AKSARA TODAY",size=17f,weight=700)
-                                AksaraText("AKSARA TODAY • SEMUA AKSES BERKAITAN",
+                                AksaraText("AKSARA TODAY • KEBENARAN LOKASI",
                                     size=9.5f,color=todayGold)
                             }
                         }
