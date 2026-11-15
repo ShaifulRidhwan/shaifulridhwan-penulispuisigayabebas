@@ -118,7 +118,7 @@ internal object TodayParsers {
             val quote=item.getJSONObject("quotes").getJSONObject("USD")
             TodayCoin(item.getString("symbol"),quote.getDouble("price"),
                 quote.getDouble("percent_change_24h"),item.optString("last_updated"))
-        }.also { require(it.size==3) { "Harga aset tidak lengkap" } }
+        }.also { require(it.isNotEmpty()) { "Harga aset tidak tersedia" } }
     }
 
     fun commit(text:String):TodayCommit {
@@ -194,8 +194,18 @@ internal suspend fun todayLocation(context:Context):Location? {
     }
     val locationPrefs=context.getSharedPreferences("aksara_today_location",Context.MODE_PRIVATE)
     val now=System.currentTimeMillis()
+    fun rememberCoarse(found:Location) {
+        locationPrefs.edit()
+            .putString("latitude",String.format(Locale.US,"%.3f",found.latitude))
+            .putString("longitude",String.format(Locale.US,"%.3f",found.longitude))
+            .putLong("at",now).apply()
+    }
     val last=runCatching { manager.getLastKnownLocation(provider) }.getOrNull()
-    if(last!=null && last.time in (now-60L*60_000L)..now)return last
+    if(last!=null && last.time in (now-60L*60_000L)..now &&
+        last.latitude in -90.0..90.0 && last.longitude in -180.0..180.0) {
+        rememberCoarse(last)
+        return last
+    }
     val current=suspendCancellableCoroutine<Location?> { continuation ->
         val cancellation=CancellationSignal()
         continuation.invokeOnCancellation { cancellation.cancel() }
@@ -209,9 +219,7 @@ internal suspend fun todayLocation(context:Context):Location? {
     }
     if(current!=null && current.latitude in -90.0..90.0 && current.longitude in -180.0..180.0) {
         // Store only coarse coordinates for recovery, not full GPS precision.
-        locationPrefs.edit().putString("latitude",String.format(Locale.US,"%.3f",current.latitude))
-            .putString("longitude",String.format(Locale.US,"%.3f",current.longitude))
-            .putLong("at",now).apply()
+        rememberCoarse(current)
         return current
     }
     val savedAt=locationPrefs.getLong("at",0L)
@@ -252,7 +260,7 @@ internal class TodayRepository(context:Context) {
             val value=parser(response)
             val received=System.currentTimeMillis()
             prefs.edit().putString(key,response).putLong(key+":at",received).apply()
-            if(key.startsWith("prayer:") || key.startsWith("weather:")) {
+            if(key.startsWith("prayer-v3:") || key.startsWith("weather:")) {
                 // Bound coordinate/date-based entries; no indefinite location history.
                 val prefix=key.substringBefore(':')+":"
                 val keys=prefs.all.keys.filter { it.startsWith(prefix) && !it.endsWith(":at") }
@@ -269,6 +277,14 @@ internal class TodayRepository(context:Context) {
         }
     }
 
+    fun clearLocationData() {
+        val keys=prefs.all.keys.filter {
+            it.startsWith("weather:") || it.startsWith("prayer:")
+                || it.startsWith("prayer-v3:")
+        }
+        prefs.edit().also { editor -> keys.forEach(editor::remove) }.apply()
+    }
+
     suspend fun weather(location:Location,force:Boolean=false):TodayFeed<TodayWeather> {
         val lat=String.format(Locale.US,"%.3f",location.latitude)
         val lon=String.format(Locale.US,"%.3f",location.longitude)
@@ -283,7 +299,7 @@ internal class TodayRepository(context:Context) {
         val lat=String.format(Locale.US,"%.4f",location.latitude)
         val lon=String.format(Locale.US,"%.4f",location.longitude)
         val today=LocalDate.now(ZoneId.of("Asia/Kuala_Lumpur")).toString()
-        return cached("prayer:"+lat+":"+lon+":"+today,6L*60L*60_000L,force,
+        return cached("prayer-v3:"+lat+":"+lon+":"+today,6L*60L*60_000L,force,
             { text ->
                 val root=JSONObject(text)
                 TodayParsers.prayer(root.getJSONObject("timetable").toString(),root.getString("zone"),LocalDate.parse(today))
@@ -302,8 +318,10 @@ internal class TodayRepository(context:Context) {
             // Independent quotes run in parallel; awaitAll preserves BTC/ETH/SOL order.
             coroutineScope {
                 listOf("btc-bitcoin","eth-ethereum","sol-solana").map { id ->
-                    async { JSONObject(request("https://api.coinpaprika.com/v1/tickers/"+id)) }
-                }.awaitAll().forEach { quote -> result.put(quote) }
+                    async { runCatching {
+                        JSONObject(request("https://api.coinpaprika.com/v1/tickers/"+id))
+                    }.getOrNull() }
+                }.awaitAll().filterNotNull().forEach { quote -> result.put(quote) }
             }
             result.toString()
         }
