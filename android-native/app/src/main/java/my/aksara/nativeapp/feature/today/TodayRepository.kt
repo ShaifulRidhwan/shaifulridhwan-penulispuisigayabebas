@@ -19,19 +19,26 @@ import okhttp3.Request
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.time.ZoneId
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 
 // No API credentials, no inference calls, and no app-specific backend changes.
-internal data class TodayFeed<T>(val value:T?,val fromCache:Boolean,val updatedAt:Long?)
+internal enum class TodayFreshness { LIVE, CACHED, STALE, UNAVAILABLE }
+internal data class TodayFeed<T>(
+    val value:T?, val fromCache:Boolean, val updatedAt:Long?,
+    val freshness:TodayFreshness=if(value==null) TodayFreshness.UNAVAILABLE
+        else if(fromCache) TodayFreshness.CACHED else TodayFreshness.LIVE,
+    val error:String?=null
+)
 internal data class TodayWeather(
     val celsius:Double,val code:Int,val windKmh:Double,val rainChance:Int?,
     val feelsLike:Double?=null,val humidity:Int?=null,
     val rainNext3Hours:Int?=null, val temperatureTrend3Hours:Double?=null
 )
-internal data class TodayPrayer(val zone:String,val hijri:String,val times:List<Pair<String,String>>)
+internal data class TodayPrayer(val zone:String,val hijri:String,val times:List<Pair<String,String>>,val nextDaySubuh:String?=null)
 internal data class TodayCoin(val symbol:String,val usd:Double,val change24h:Double,val updatedAt:String)
 internal data class TodayCommit(
     val sha:String,val message:String,val date:String,val url:String,val ci:String,val ciUrl:String?,
@@ -68,18 +75,30 @@ internal object TodayParsers {
         )
     }
 
-    fun prayer(text:String,zone:String):TodayPrayer {
-        val root=JSONObject(text)
-        val times=root.getJSONArray("prayerTime")
-        require(times.length()>0) { "Waktu solat tidak tersedia" }
-        val item=times.getJSONObject(0)
+    private val jakimDateFormat=DateTimeFormatter.ofPattern("dd-MMM-yyyy",Locale.ENGLISH)
+    private fun jakimDate(text:String):LocalDate?=runCatching {
+        LocalDate.parse(text.trim(),jakimDateFormat)
+    }.getOrNull()
+
+    fun prayer(text:String,zone:String,today:LocalDate=LocalDate.now(ZoneId.of("Asia/Kuala_Lumpur"))):TodayPrayer {
+        val rows=JSONObject(text).getJSONArray("prayerTime")
+        require(rows.length()>0) { "Waktu solat tidak tersedia" }
+        val indexed=(0 until rows.length()).map { rows.getJSONObject(it) }
+        // For week responses, never silently use yesterday's or tomorrow's timetable.
+        val item=indexed.firstOrNull { jakimDate(it.optString("date"))==today }
+            ?: indexed.singleOrNull { jakimDate(it.optString("date"))==null }
+            ?: throw IllegalArgumentException("Jadual JAKIM tidak sepadan dengan tarikh hari ini")
         val fields=listOf("Subuh" to "fajr","Zohor" to "dhuhr","Asar" to "asr",
             "Maghrib" to "maghrib","Isyak" to "isha")
         val values=fields.map { (name,key) -> name to item.optString(key).take(5) }
-        require(values.all { it.second.matches(Regex("[0-2][0-9]:[0-5][0-9]")) }) {
+        require(values.all { it.second.matches(Regex("(?:[01][0-9]|2[0-3]):[0-5][0-9]")) }) {
             "Format waktu solat tidak sah"
         }
-        return TodayPrayer(zone,item.optString("hijri"),values)
+        val tomorrow=indexed.firstOrNull { jakimDate(it.optString("date"))==today.plusDays(1) }
+            ?.optString("fajr")?.take(5)?.takeIf {
+                it.matches(Regex("(?:[01][0-9]|2[0-3]):[0-5][0-9]"))
+            }
+        return TodayPrayer(zone,item.optString("hijri"),values,tomorrow)
     }
 
     fun zone(text:String):String {
@@ -116,6 +135,14 @@ internal object TodayParsers {
         if (runs!=null) for(index in 0 until runs.length()) {
             val run=runs.optJSONObject(index) ?: continue
             if(run.optString("head_sha")!=sha)continue
+            // Other checks (web audits, previews, game tests) must not masquerade as the Android build.
+            val workflowName=run.optString("name")
+            val workflowPath=run.optString("path")
+            val androidBuild=workflowName.contains("Android Full Linux",ignoreCase=true) ||
+                workflowName.contains("Android Native",ignoreCase=true) ||
+                workflowPath.contains("aksara-android-native.yml") ||
+                workflowPath.contains("aksara-today-chat-v2-linux-owner.yml")
+            if(!androidBuild)continue
             ci=when {
                 run.optString("status")!="completed" -> "Sedang berjalan"
                 run.optString("conclusion")=="success" -> "Lulus"
@@ -165,9 +192,11 @@ internal suspend fun todayLocation(context:Context):Location? {
         manager.isProviderEnabled(LocationManager.GPS_PROVIDER) -> LocationManager.GPS_PROVIDER
         else -> return null
     }
+    val locationPrefs=context.getSharedPreferences("aksara_today_location",Context.MODE_PRIVATE)
+    val now=System.currentTimeMillis()
     val last=runCatching { manager.getLastKnownLocation(provider) }.getOrNull()
-    if(last!=null && System.currentTimeMillis()-last.time<60L*60L*1000L)return last
-    return suspendCancellableCoroutine { continuation ->
+    if(last!=null && last.time in (now-60L*60_000L)..now)return last
+    val current=suspendCancellableCoroutine<Location?> { continuation ->
         val cancellation=CancellationSignal()
         continuation.invokeOnCancellation { cancellation.cancel() }
         try {
@@ -178,6 +207,20 @@ internal suspend fun todayLocation(context:Context):Location? {
             if(continuation.isActive) continuation.resume(null)
         }
     }
+    if(current!=null && current.latitude in -90.0..90.0 && current.longitude in -180.0..180.0) {
+        // Store only coarse coordinates for recovery, not full GPS precision.
+        locationPrefs.edit().putString("latitude",String.format(Locale.US,"%.3f",current.latitude))
+            .putString("longitude",String.format(Locale.US,"%.3f",current.longitude))
+            .putLong("at",now).apply()
+        return current
+    }
+    val savedAt=locationPrefs.getLong("at",0L)
+    if(savedAt<=0L || now-savedAt !in 0L..(6L*60L*60_000L))return null
+    val lat=locationPrefs.getString("latitude",null)?.toDoubleOrNull()
+    val lon=locationPrefs.getString("longitude",null)?.toDoubleOrNull()
+    return if(lat!=null && lon!=null && lat in -90.0..90.0 && lon in -180.0..180.0)
+        Location("aksara-coarse-cache").apply { latitude=lat;longitude=lon;time=savedAt;accuracy=150f }
+    else null
 }
 
 internal class TodayRepository(context:Context) {
@@ -202,16 +245,27 @@ internal class TodayRepository(context:Context) {
         val updated=prefs.getLong(key+":at",0L)
         val previous=raw?.let { runCatching { parser(it) }.getOrNull() }
         val now=System.currentTimeMillis()
-        if(!force && previous!=null && now-updated<ttlMs)
-            return@withContext TodayFeed(previous,true,updated)
+        if(!force && previous!=null && updated>0L && now>=updated && now-updated<ttlMs)
+            return@withContext TodayFeed(previous,true,updated,TodayFreshness.CACHED)
         try {
             val response=loader()
             val value=parser(response)
-            prefs.edit().putString(key,response).putLong(key+":at",System.currentTimeMillis()).apply()
-            TodayFeed(value,false,System.currentTimeMillis())
+            val received=System.currentTimeMillis()
+            prefs.edit().putString(key,response).putLong(key+":at",received).apply()
+            if(key.startsWith("prayer:") || key.startsWith("weather:")) {
+                // Bound coordinate/date-based entries; no indefinite location history.
+                val prefix=key.substringBefore(':')+":"
+                val keys=prefs.all.keys.filter { it.startsWith(prefix) && !it.endsWith(":at") }
+                keys.sortedByDescending { prefs.getLong(it+":at",0L) }.drop(8).forEach {
+                    prefs.edit().remove(it).remove(it+":at").apply()
+                }
+            }
+            TodayFeed(value,false,received,TodayFreshness.LIVE)
         } catch (e:Exception) {
             if(e is CancellationException) throw e
-            TodayFeed(previous,true,updated.takeIf { it>0L })
+            TodayFeed(previous,previous!=null,updated.takeIf { it>0L },
+                if(previous==null)TodayFreshness.UNAVAILABLE else TodayFreshness.STALE,
+                e.message?.take(100) ?: "Sumber tidak tersedia")
         }
     }
 
@@ -232,11 +286,12 @@ internal class TodayRepository(context:Context) {
         return cached("prayer:"+lat+":"+lon+":"+today,6L*60L*60_000L,force,
             { text ->
                 val root=JSONObject(text)
-                TodayParsers.prayer(root.getJSONObject("timetable").toString(),root.getString("zone"))
+                TodayParsers.prayer(root.getJSONObject("timetable").toString(),root.getString("zone"),LocalDate.parse(today))
             }) {
             val detected=TodayParsers.zone(request(
                 "https://solat.my/api/detect?latitude="+lat+"&longitude="+lon))
-            val response=request("https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=today&zone="+detected)
+            // Week includes tomorrow's real Subuh; today-only data is not used for tomorrow.
+            val response=request("https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=week&zone="+detected)
             JSONObject().put("zone",detected).put("timetable",JSONObject(response)).toString()
         }
     }
