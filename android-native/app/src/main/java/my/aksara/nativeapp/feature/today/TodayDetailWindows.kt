@@ -71,7 +71,8 @@ private fun shortWeatherTime(s:String)=s.takeLast(5)
     weather:TodayFeed<TodayWeather>?,prayer:TodayFeed<TodayPrayer>?,
     coins:TodayFeed<List<TodayCoin>>?,github:TodayFeed<TodayCommit>?,
     location:Location?,city:String?,detailRepo:TodayDetailRepository,
-    onNavigate:(String)->Unit={}
+    onNavigate:(String)->Unit={},
+    onPrayerZoneSelected:(String)->Unit={}
 ) {
     var forecast by remember(kind,location?.latitude,location?.longitude) {
         mutableStateOf<TodayFeed<TodayForecast>?>(null)
@@ -157,7 +158,7 @@ private fun shortWeatherTime(s:String)=s.takeLast(5)
                         "clock" -> ClockCalendarDetail(clock,prayer?.value?.hijri,location)
                         "weather" -> WeatherDetail(weather,forecast,city,location!=null,
                             onOpenMap={ onNavigate("map") })
-                        "prayer" -> PrayerDetail(prayer,monthly)
+                        "prayer" -> PrayerDetail(prayer,monthly,onPrayerZoneSelected)
                         "crypto" -> CryptoDetail(coins,market,btcTrend)
                         "development" -> DevelopmentDetail(github,dev)
                     }
@@ -352,7 +353,8 @@ private val reminders=listOf(
     "Teguran yang lembut lebih mudah menjadi ruang untuk seseorang belajar dan berubah."
 )
 @Composable private fun PrayerDetail(
-    prayer:TodayFeed<TodayPrayer>?,month:TodayFeed<List<TodayPrayerDate>>?
+    prayer:TodayFeed<TodayPrayer>?,month:TodayFeed<List<TodayPrayerDate>>?,
+    onManualZone:(String)->Unit
 ) {
     val data=prayer?.value
     GlassSection("Jadual waktu solat hari ini") {
@@ -361,6 +363,33 @@ private val reminders=listOf(
             DetailNote("Zon "+data.zone+" • Hijrah "+data.hijri)
             data.times.forEach { (name,time)->WindowLine(name,time) }
             DetailNote("Sumber: jadual JAKIM melalui e-Solat.")
+        }
+    }
+    var zoneInput by remember { mutableStateOf(prayer?.value?.zone.orEmpty()) }
+    var manualError by remember { mutableStateOf(false) }
+    GlassSection("Zon solat manual") {
+        DetailNote("Gunakan kod zon JAKIM jika GPS atau pengesanan automatik gagal. Contoh: SGR01.")
+        AksaraGlassSurface(Modifier.fillMaxWidth().height(42.dp),radius=12.dp) {
+            BasicTextField(zoneInput,{zoneInput=it.uppercase(Locale.US).take(5)},
+                Modifier.fillMaxSize().padding(12.dp),singleLine=true,
+                textStyle=AksaraTypography.style(12f,17f),
+                cursorBrush=SolidColor(gold),
+                decorationBox={inner->Box {
+                    if(zoneInput.isBlank())AksaraText("Kod zon JAKIM",size=11f,color=muted)
+                    inner()
+                }})
+        }
+        if(manualError)DetailNote("Kod zon perlu berbentuk SGR01, WLY01 dan sebagainya.")
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+            AksaraButton("Guna zon",{
+                val code=zoneInput.trim()
+                manualError=!code.matches(Regex("[A-Z]{3}0[1-9]"))
+                if(!manualError)onManualZone(code)
+            },Modifier.weight(1f),height=36.dp,size=10f)
+            AksaraButton("Zon automatik",{
+                manualError=false
+                onManualZone("")
+            },Modifier.weight(1f),height=36.dp,size=10f)
         }
     }
     var verseIndex by remember { mutableIntStateOf(LocalDate.now(kl).dayOfYear%reminders.size) }
