@@ -292,14 +292,14 @@ internal class TodayRepository(context:Context) {
             "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m"+
             "&daily=precipitation_probability_max&hourly=precipitation_probability,temperature_2m"+
             "&forecast_hours=6&timezone=auto&forecast_days=1"
-        return cached("weather:"+lat+":"+lon,30L*60_000L,force,TodayParsers::weather) { request(url) }
+        return cached("weather:"+lat+":"+lon,TodayRefreshCoordinator.WEATHER_TTL_MS,force,TodayParsers::weather) { request(url) }
     }
 
     suspend fun prayer(location:Location,force:Boolean=false):TodayFeed<TodayPrayer> {
         val lat=String.format(Locale.US,"%.4f",location.latitude)
         val lon=String.format(Locale.US,"%.4f",location.longitude)
         val today=LocalDate.now(ZoneId.of("Asia/Kuala_Lumpur")).toString()
-        return cached("prayer-v3:"+lat+":"+lon+":"+today,6L*60L*60_000L,force,
+        return cached("prayer-v3:"+lat+":"+lon+":"+today,TodayRefreshCoordinator.PRAYER_TTL_MS,force,
             { text ->
                 val root=JSONObject(text)
                 TodayParsers.prayer(root.getJSONObject("timetable").toString(),root.getString("zone"),LocalDate.parse(today))
@@ -316,14 +316,14 @@ internal class TodayRepository(context:Context) {
         val zone=input.uppercase(Locale.US).trim()
         require(zone.matches(Regex("[A-Z]{3}0[1-9]"))) { "Kod zon solat tidak sah" }
         val today=LocalDate.now(ZoneId.of("Asia/Kuala_Lumpur"))
-        return cached("prayer-v3:manual:$zone:$today",6L*60L*60_000L,force,
+        return cached("prayer-v3:manual:$zone:$today",TodayRefreshCoordinator.PRAYER_TTL_MS,force,
             { TodayParsers.prayer(it,zone,today) }) {
             request("https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=week&zone="+zone)
         }
     }
 
     suspend fun crypto(force:Boolean=false):TodayFeed<List<TodayCoin>> =
-        cached("crypto",15L*60_000L,force,TodayParsers::coins) {
+        cached("crypto",TodayRefreshCoordinator.CRYPTO_TTL_MS,force,TodayParsers::coins) {
             val result=JSONArray()
             // Independent quotes run in parallel; awaitAll preserves BTC/ETH/SOL order.
             coroutineScope {
@@ -337,7 +337,7 @@ internal class TodayRepository(context:Context) {
         }
 
     suspend fun github(force:Boolean=false):TodayFeed<TodayCommit> =
-        cached("github",10L*60_000L,force,TodayParsers::commit) {
+        cached("github",TodayRefreshCoordinator.GITHUB_TTL_MS,force,TodayParsers::commit) {
             val base="https://api.github.com/repos/ShaifulRidhwan/shaifulridhwan-penulispuisigayabebas"
             val commits=JSONArray(request(base+"/commits?sha=rebuild%2Faksara-android-native-v1&per_page=1"))
             require(commits.length()>0) { "Tiada commit" }
