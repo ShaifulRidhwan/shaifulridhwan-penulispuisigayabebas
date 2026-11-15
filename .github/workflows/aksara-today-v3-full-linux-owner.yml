@@ -56,13 +56,33 @@ jobs:
           fi
           unzip -q "$archive" -d "$RUNNER_TEMP/aksara-gradle"
           echo "$RUNNER_TEMP/aksara-gradle/gradle-8.13/bin" >> "$GITHUB_PATH"
-      - name: Prepare verified compiler repository
+      - name: Prepare verified compiler repository with checksum-pinned mirrors
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           compiler_dir="$AKSARA_CI_COMPILER_REPOSITORY/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21"
           mkdir -p "$compiler_dir"
-          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/JetBrains/kotlin/releases/assets/598630357' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar"
-          curl --fail --location --retry 3 'https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21/kotlin-compiler-embeddable-2.1.21.pom' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom"
-          printf '%s  %s\n' '67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar" 'dbbf8ac2550d5b1ae2a627f204f28b16f9271e36c44d8994aa3b139cbf70e45a' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom" | sha256sum --check
+          jar="$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar"
+          expected="67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49"
+          found=false
+          for url in "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21/kotlin-compiler-embeddable-2.1.21.jar" "https://repo1.maven.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21/kotlin-compiler-embeddable-2.1.21.jar"; do
+            rm -f "$jar"
+            if curl --fail --location --retry 2 --retry-all-errors --connect-timeout 20 --max-time 180 "$url" -o "$jar" \
+              && printf '%s  %s\n' "$expected" "$jar" | sha256sum --check; then
+              found=true
+              break
+            fi
+          done
+          if [ "$found" != true ]; then
+            rm -f "$jar"
+            curl --fail --location --retry 2 --retry-all-errors --connect-timeout 20 --max-time 180 \
+              -H "Authorization: Bearer $GH_TOKEN" -H 'Accept: application/octet-stream' \
+              'https://api.github.com/repos/JetBrains/kotlin/releases/assets/598630357' -o "$jar"
+            printf '%s  %s\n' "$expected" "$jar" | sha256sum --check
+          fi
+          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 'https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21/kotlin-compiler-embeddable-2.1.21.pom' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom"
+          printf '%s  %s\n' "$expected" "$jar" 'dbbf8ac2550d5b1ae2a627f204f28b16f9271e36c44d8994aa3b139cbf70e45a' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom" | sha256sum --check
       - name: Verify shared Web/Android Brain contracts
         run: node scripts/sync-android-voice-brain.cjs --check
       - name: Restore existing Stockfish build
@@ -91,6 +111,10 @@ jobs:
           bash -n android-native/scripts/build-aksara-linux.sh
           # Guard against accidentally delivering the standard 240MB preview.
           grep -Fq 'github.event.pull_request.number != 327' .github/workflows/aksara-android-native.yml
+          # Lock owner choice: no new signals or calendar-agenda permission.
+          ! grep -Fq 'READ_CALENDAR' android-native/app/src/main/AndroidManifest.xml
+          grep -Fq 'TodayMiniMap(dashboard.latestLocation' android-native/app/src/main/java/my/aksara/nativeapp/feature/today/TodayScreen.kt
+          ! grep -Eq 'TodaySignals|TodaySignal' android-native/app/src/main/java/my/aksara/nativeapp/feature/today/TodayScreen.kt
           sh -n android-native/scripts/linux/aksara-linux-smoke.sh
           sh -n android-native/scripts/linux/aksara-linux-benchmark.sh
           sh -n android-native/scripts/linux/aksara-fetch.sh
