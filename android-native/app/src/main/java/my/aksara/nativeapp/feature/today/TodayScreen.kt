@@ -162,6 +162,12 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
     val permissionPrefs=remember(context) {
         context.getSharedPreferences("aksara_today_v1_permissions",Context.MODE_PRIVATE)
     }
+    val zonePrefs=remember(context) {
+        context.getSharedPreferences("aksara_today_prayer_zone",Context.MODE_PRIVATE)
+    }
+    var manualPrayerZone by rememberSaveable {
+        mutableStateOf(zonePrefs.getString("manual_zone",null))
+    }
     var permissionLocation by remember { mutableStateOf(hasTodayLocationPermission(context)) }
     var introShown by remember { mutableStateOf(permissionPrefs.getBoolean("today_all_permissions_intro_shown",false)) }
     var showLocationDialog by rememberSaveable { mutableStateOf(false) }
@@ -236,7 +242,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
             delay(if(detailWindow=="clock")1_000L else 30_000L)
         }
     }
-    LaunchedEffect(active,epoch,refreshTick,permissionLocation) {
+    LaunchedEffect(active,epoch,refreshTick,permissionLocation,manualPrayerZone) {
         if(!active)return@LaunchedEffect
         val forceReload=epoch>consumedRefreshEpoch
         consumedRefreshEpoch=epoch
@@ -259,13 +265,15 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                 if(moved) {
                     city=null
                     weather=null
-                    prayer=null
+                    if(manualPrayerZone==null)prayer=null
                     launch { city=withContext(Dispatchers.IO) { resolveCity(context,found) } }
                 }
                 launch { weather=repo.weather(found,force=forceReload) }
-                launch { prayer=repo.prayer(found,force=forceReload) }
+                if(manualPrayerZone==null)
+                    launch { prayer=repo.prayer(found,force=forceReload) }
             } else if(previous==null) {
-                city=null;weather=null;prayer=null
+                city=null;weather=null
+                if(manualPrayerZone==null)prayer=null
             }
         } else {
             context.getSharedPreferences("aksara_today_location",Context.MODE_PRIVATE)
@@ -276,7 +284,10 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
             locationReady=false
             city=null
             weather=null
-            prayer=null
+            if(manualPrayerZone==null)prayer=null
+        }
+        manualPrayerZone?.let { zone ->
+            launch { prayer=repo.prayerByZone(zone,force=forceReload) }
         }
     }
     // Clock ticks should not recreate expensive date/time format patterns.
@@ -411,7 +422,8 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                                         .background(todayGold))
                                 }
                             }
-                        } else TodayPending(if(!permissionLocation)"Aktifkan lokasi untuk jadual solat."
+                        } else TodayPending(if(!permissionLocation && manualPrayerZone==null)
+                            "Aktifkan lokasi atau pilih zon dalam butiran."
                             else "Waktu solat tidak tersedia.")
                     }
                 }
@@ -498,7 +510,15 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                     kind=detailWindow!!,onClose={detailWindow=null},clock=clock,
                     weather=weather,prayer=prayer,coins=crypto,github=github,
                     location=latestLocation,city=city,detailRepo=detailRepo,
-                    onNavigate={ detailWindow=it }
+                    onNavigate={ detailWindow=it },
+                    onPrayerZoneSelected={ zone ->
+                        val selected=zone.takeIf { it.isNotBlank() }
+                        manualPrayerZone=selected
+                        zonePrefs.edit().apply {
+                            if(selected==null)remove("manual_zone")
+                            else putString("manual_zone",selected)
+                        }.apply()
+                    }
                 )
             }
             if(showLocationDialog && active) {
