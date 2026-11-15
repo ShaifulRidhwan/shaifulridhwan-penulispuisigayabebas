@@ -31,17 +31,49 @@ jobs:
         with:
           packages: "platform-tools platforms;android-35 build-tools;35.0.0 ndk;27.2.12479018 cmake;3.22.1"
       - uses: gradle/actions/setup-gradle@v4
-      - name: Bootstrap checksum-pinned Gradle
+      - name: Bootstrap checksum-pinned Gradle with official mirror fallback
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/gradle/gradle-distributions/releases/assets/232373824' -o "$RUNNER_TEMP/aksara-gradle.zip"
-          printf '%s  %s\n' '20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78' "$RUNNER_TEMP/aksara-gradle.zip" | sha256sum --check
-          unzip -q "$RUNNER_TEMP/aksara-gradle.zip" -d "$RUNNER_TEMP/aksara-gradle"
+          set -euo pipefail
+          archive="$RUNNER_TEMP/aksara-gradle.zip"
+          expected="20f1b1176237254a6fc204d8434196fa11a4cfb387567519c61556e8710aed78"
+          # Use Gradle's official distribution CDN first; GitHub release assets
+          # may fail with HTTP 403 even when the APK source is correct.
+          downloaded=false
+          for url in \
+            "https://downloads.gradle.org/distributions/gradle-8.13-bin.zip" \
+            "https://services.gradle.org/distributions/gradle-8.13-bin.zip"; do
+            rm -f "$archive"
+            if curl --fail --location --retry 2 --retry-all-errors --connect-timeout 20 --max-time 300 "$url" -o "$archive" \
+              && printf '%s  %s\n' "$expected" "$archive" | sha256sum --check; then
+              downloaded=true
+              break
+            fi
+            echo "::warning::Gradle mirror unavailable or checksum mismatch: $url"
+          done
+          if [ "$downloaded" != true ]; then
+            rm -f "$archive"
+            curl --fail --location --retry 2 --retry-all-errors --connect-timeout 20 --max-time 300 \
+              -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/octet-stream" \
+              "https://api.github.com/repos/gradle/gradle-distributions/releases/assets/232373824" -o "$archive"
+            printf '%s  %s\n' "$expected" "$archive" | sha256sum --check
+          fi
+          unzip -tq "$archive"
+          unzip -q "$archive" -d "$RUNNER_TEMP/aksara-gradle"
           echo "$RUNNER_TEMP/aksara-gradle/gradle-8.13/bin" >> "$GITHUB_PATH"
       - name: Prepare verified compiler repository
         run: |
           compiler_dir="$AKSARA_CI_COMPILER_REPOSITORY/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21"
           mkdir -p "$compiler_dir"
-          curl --fail --location --retry 3 --retry-all-errors --connect-timeout 20 --max-time 180 -H 'Accept: application/octet-stream' 'https://api.github.com/repos/JetBrains/kotlin/releases/assets/598630357' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar"
+          # Prefer Maven Central to avoid the same unauthenticated GitHub asset 403.
+          jar="$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar"
+          if ! curl --fail --location --retry 2 --retry-all-errors --connect-timeout 20 --max-time 240 \
+            'https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21/kotlin-compiler-embeddable-2.1.21.jar' -o "$jar"; then
+            curl --fail --location --retry 2 --retry-all-errors --connect-timeout 20 --max-time 240 \
+              -H "Authorization: Bearer ${{ github.token }}" -H 'Accept: application/octet-stream' \
+              'https://api.github.com/repos/JetBrains/kotlin/releases/assets/598630357' -o "$jar"
+          fi
           curl --fail --location --retry 3 'https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-compiler-embeddable/2.1.21/kotlin-compiler-embeddable-2.1.21.pom' -o "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom"
           printf '%s  %s\n' '67a2e3673765f097725608cc7c843b0d8fdd94bd9af41327211361614aa57d49' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.jar" 'dbbf8ac2550d5b1ae2a627f204f28b16f9271e36c44d8994aa3b139cbf70e45a' "$compiler_dir/kotlin-compiler-embeddable-2.1.21.pom" | sha256sum --check
       - name: Verify shared Web/Android Brain contracts
