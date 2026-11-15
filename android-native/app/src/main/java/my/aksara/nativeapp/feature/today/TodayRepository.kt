@@ -282,7 +282,7 @@ internal class TodayRepository(context:Context) {
             it.startsWith("weather:") || it.startsWith("prayer:")
                 || it.startsWith("prayer-v3:")
         }
-        prefs.edit().also { editor -> keys.forEach(editor::remove) }.apply()
+        prefs.edit().apply { keys.forEach { remove(it) } }.apply()
     }
 
     suspend fun weather(location:Location,force:Boolean=false):TodayFeed<TodayWeather> {
