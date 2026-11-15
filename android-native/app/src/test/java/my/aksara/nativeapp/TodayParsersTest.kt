@@ -80,7 +80,7 @@ class TodayParsersTest {
              "commit":{"message":"Fix Android\nextra details","committer":{"date":"2026-11-10T17:00:00Z"}}}],
             "workflow_runs":[
                 {"head_sha":"oldsha","status":"completed","conclusion":"failure"},
-                {"head_sha":"abcdef123456789","status":"completed","conclusion":"success","html_url":"https://github.com/example/actions/runs/123"}
+                {"head_sha":"abcdef123456789","name":"AKSARA Android Full Linux (Owner APK)","status":"completed","conclusion":"success","html_url":"https://github.com/example/actions/runs/123"}
             ]
         }""")
         assertEquals("abcdef1",result.sha.take(7))
@@ -137,7 +137,7 @@ class TodayParsersTest {
     @Test fun prayerCountdownWrapsToTomorrowAfterIsyak() {
         val prayer=TodayPrayer("SGR01","1448-05-01",listOf(
             "Subuh" to "05:48","Zohor" to "13:00","Asar" to "16:21",
-            "Maghrib" to "18:58","Isyak" to "20:10"))
+            "Maghrib" to "18:58","Isyak" to "20:10"),nextDaySubuh="05:48")
         assertEquals("Subuh" to "7 jam 48 minit",nextPrayer(prayer,LocalTime.of(22,0)))
         assertEquals("Zohor" to "1 jam",nextPrayer(prayer,LocalTime.of(12,0)))
         assertEquals("Zohor" to "15 minit",nextPrayer(prayer,LocalTime.of(12,45)))
