@@ -64,6 +64,16 @@ class TodayV3ReliabilityTest {
         assertThrows(IllegalArgumentException::class.java) { TodayParsers.coins("[]") }
     }
 
+    @Test fun coordinatorUsesRealFeedTtlAndNeverInventsLocation() {
+        assertEquals(60_000L,TodayRefreshCoordinator.ACTIVE_TICK_MS)
+        assertEquals(30L*60_000L,TodayRefreshCoordinator.WEATHER_TTL_MS)
+        assertEquals(6L*60L*60_000L,TodayRefreshCoordinator.PRAYER_TTL_MS)
+        assertEquals(15L*60_000L,TodayRefreshCoordinator.CRYPTO_TTL_MS)
+        assertEquals(10L*60_000L,TodayRefreshCoordinator.GITHUB_TTL_MS)
+        assertTrue(TodayRefreshCoordinator.needsLocation(null,0L,10L,false))
+        assertTrue(TodayRefreshCoordinator.needsLocation(null,10L,11L,true))
+    }
+
     @Test fun locationPermissionRationaleNeverAppearsWhenAlreadyGranted() {
         assertFalse(shouldShowTodayLocationIntro(true,true,false))
         assertTrue(shouldShowTodayLocationIntro(true,false,false))
