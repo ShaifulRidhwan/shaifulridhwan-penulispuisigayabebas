@@ -141,7 +141,9 @@ internal object TodayParsers {
             val androidBuild=workflowName.contains("Android Full Linux",ignoreCase=true) ||
                 workflowName.contains("Android Native",ignoreCase=true) ||
                 workflowPath.contains("aksara-android-native.yml") ||
-                workflowPath.contains("aksara-today-chat-v2-linux-owner.yml")
+                workflowPath.contains("aksara-today-chat-v2-linux-owner.yml") ||
+                workflowName.contains("AKSARA TODAY V3",ignoreCase=true) ||
+                workflowPath.contains("aksara-today-v3-full-linux-owner.yml")
             if(!androidBuild)continue
             ci=when {
                 run.optString("status")!="completed" -> "Sedang berjalan"
