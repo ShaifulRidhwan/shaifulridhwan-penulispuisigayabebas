@@ -199,24 +199,16 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
     }
     var epoch by remember { mutableIntStateOf(0) }
     var refreshTick by remember { mutableIntStateOf(0) }
-    var lastLocationCheck by remember { mutableLongStateOf(0L) }
     LaunchedEffect(active) {
         while(active) {
-            delay(60_000L)
+            delay(TodayRefreshCoordinator.ACTIVE_TICK_MS)
             refreshTick++
         }
     }
     // Navigation should re-use each feed's TTL, not turn one manual refresh into
     // a permanent forced-refresh flag on every return to Dashboard.
     var consumedRefreshEpoch by remember { mutableIntStateOf(0) }
-    var locating by remember { mutableStateOf(false) }
-    var locationReady by remember { mutableStateOf(false) }
-    var city by remember { mutableStateOf<String?>(null) }
-    var latestLocation by remember { mutableStateOf<Location?>(null) }
-    var weather by remember { mutableStateOf<TodayFeed<TodayWeather>?>(null) }
-    var prayer by remember { mutableStateOf<TodayFeed<TodayPrayer>?>(null) }
-    var crypto by remember { mutableStateOf<TodayFeed<List<TodayCoin>>?>(null) }
-    var github by remember { mutableStateOf<TodayFeed<TodayCommit>?>(null) }
+    val dashboard=androidx.lifecycle.viewmodel.compose.viewModel<TodayDashboardViewModel>()
     var clock by remember { mutableStateOf(ZonedDateTime.now(malaysiaZone)) }
     val todayPermissionPrompt=rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()) { grants ->
@@ -246,48 +238,53 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
         if(!active)return@LaunchedEffect
         val forceReload=epoch>consumedRefreshEpoch
         consumedRefreshEpoch=epoch
-        launch { crypto=repo.crypto(force=forceReload) }
-        launch { github=repo.github(force=forceReload) }
+        launch { dashboard.crypto=repo.crypto(force=forceReload) }
+        launch { dashboard.github=repo.github(force=forceReload) }
         if(permissionLocation) {
             val now=System.currentTimeMillis()
-            val shouldLocate=forceReload || latestLocation==null ||
-                now-lastLocationCheck !in 0L..(30L*60_000L)
-            if(shouldLocate)locating=true
-            val previous=latestLocation
+            val shouldLocate=TodayRefreshCoordinator.needsLocation(
+                dashboard.latestLocation,dashboard.lastLocationCheck,now,forceReload)
+            if(shouldLocate)dashboard.locating=true
+            val previous=dashboard.latestLocation
             val found=if(shouldLocate)withTimeoutOrNull(12_000L) { todayLocation(context) }
-                else latestLocation
-            if(shouldLocate)lastLocationCheck=now
-            locating=false
-            locationReady=found!=null
+                else dashboard.latestLocation
+            if(shouldLocate)dashboard.lastLocationCheck=now
+            dashboard.locating=false
+            dashboard.locationReady=found!=null
             if(found!=null) {
                 val moved=previous==null || previous.distanceTo(found)>1500f
-                latestLocation=found
+                dashboard.latestLocation=found
                 if(moved) {
-                    city=null
-                    weather=null
-                    if(manualPrayerZone==null)prayer=null
-                    launch { city=withContext(Dispatchers.IO) { resolveCity(context,found) } }
+                    dashboard.city=null
+                    dashboard.weather=null
+                    if(manualPrayerZone==null)dashboard.prayer=null
+                    launch { dashboard.city=withContext(Dispatchers.IO) { resolveCity(context,found) } }
                 }
-                launch { weather=repo.weather(found,force=forceReload) }
+                launch { dashboard.weather=repo.weather(found,force=forceReload) }
                 if(manualPrayerZone==null)
-                    launch { prayer=repo.prayer(found,force=forceReload) }
+                    launch { dashboard.prayer=repo.prayer(found,force=forceReload) }
             } else if(previous==null) {
-                city=null;weather=null
-                if(manualPrayerZone==null)prayer=null
+                dashboard.city=null;dashboard.weather=null
+                if(manualPrayerZone==null)dashboard.prayer=null
             }
         } else {
+            dashboard.latestLocation=null
+            dashboard.locationReady=false
+            dashboard.city=null
+            dashboard.weather=null
+            if(manualPrayerZone==null)dashboard.prayer=null
+        }
+        manualPrayerZone?.let { zone ->
+            launch { dashboard.prayer=repo.prayerByZone(zone,force=forceReload) }
+        }
+    }
+    // Revoke old coordinate-derived cache once, not on every 60-second poll.
+    LaunchedEffect(permissionLocation) {
+        if(!permissionLocation) {
             context.getSharedPreferences("aksara_today_location",Context.MODE_PRIVATE)
                 .edit().clear().apply()
             repo.clearLocationData()
             detailRepo.clearLocationData()
-            latestLocation=null
-            locationReady=false
-            city=null
-            weather=null
-            if(manualPrayerZone==null)prayer=null
-        }
-        manualPrayerZone?.let { zone ->
-            launch { prayer=repo.prayerByZone(zone,force=forceReload) }
         }
     }
     // Clock ticks should not recreate expensive date/time format patterns.
@@ -295,7 +292,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
     val timeFormatter=remember { DateTimeFormatter.ofPattern("HH:mm") }
     val dateLabel=remember(clock.toLocalDate()) { clock.format(dateFormatter) }
     val prayerNow=LocalTime.now(malaysiaZone)
-    val countdown=nextPrayer(prayer?.value,prayerNow)
+    val countdown=nextPrayer(dashboard.prayer?.value,prayerNow)
     val wallpaperBackdrop=remember { HazeState() }
 
     CompositionLocalProvider(LocalBackdrop provides wallpaperBackdrop) {
@@ -343,7 +340,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                 }
                 AksaraGlassSurface(Modifier.fillMaxWidth().weight(.21f)
                     .aksaraBouncyClick { detailWindow="weather" },radius=19.dp,blur=12.dp) {
-                    val value=weather?.value
+                    val value=dashboard.weather?.value
                     Row(Modifier.fillMaxSize(),verticalAlignment=Alignment.CenterVertically) {
                         Column(Modifier.weight(.60f).fillMaxHeight()
                             .padding(start=if(compact)8.dp else 12.dp,top=4.dp,bottom=4.dp),
@@ -356,7 +353,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                                     size=if(compact)17f else 20f,
                                     line=if(compact)20f else 25f,weight=650)
                                 if(!compact) {
-                                    AksaraText((city ?: "Lokasi semasa")+
+                                    AksaraText((dashboard.city ?: "Lokasi semasa")+
                                         " · Angin "+String.format(Locale.US,"%.0f km/j",value.windKmh),
                                         size=9.8f,line=13f,color=todayMuted)
                                     val trend=value.temperatureTrend3Hours?.let {
@@ -370,9 +367,9 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                                         size=8.3f,line=10f,color=todayMuted)
                                 }
                             } else TodayPending(if(!permissionLocation)"Benarkan lokasi."
-                                else if(locating)"Mendapatkan lokasi…" else "Cuaca tidak tersedia.")
+                                else if(dashboard.locating)"Mendapatkan lokasi…" else "Cuaca tidak tersedia.")
                         }
-                        TodayMiniMap(latestLocation,city,active,epoch,
+                        TodayMiniMap(dashboard.latestLocation,dashboard.city,active,epoch,
                             Modifier.weight(.40f).fillMaxHeight()
                                 .padding(horizontal=4.dp,vertical=4.dp)) {
                             detailWindow="map"
@@ -381,7 +378,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                 }
                 AksaraGlassSurface(Modifier.fillMaxWidth().weight(if(compact).25f else .29f)
                     .aksaraBouncyClick { detailWindow="prayer" },radius=19.dp,blur=12.dp) {
-                    val value=prayer?.value
+                    val value=dashboard.prayer?.value
                     Column(Modifier.fillMaxSize().padding(horizontal=14.dp,vertical=9.dp),
                         verticalArrangement=Arrangement.SpaceEvenly) {
                         Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,
@@ -434,7 +431,7 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                         verticalArrangement=Arrangement.SpaceEvenly) {
                         AksaraText("Pasaran Kripto · USD",size=12.5f,line=16f,
                             weight=700,color=todayGold)
-                        val coins=crypto?.value.orEmpty()
+                        val coins=dashboard.crypto?.value.orEmpty()
                         if(coins.isEmpty())TodayPending("Harga belum tersedia.")
                         else coins.take(if(compact)1 else 3).forEach { coin ->
                             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
@@ -454,8 +451,8 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                                     weight=600)
                             }
                         }
-                        if(!compact)AksaraText("CoinPaprika · "+updatedLabel(crypto?.updatedAt,
-                            crypto?.fromCache==true,crypto?.freshness ?: TodayFreshness.UNAVAILABLE),
+                        if(!compact)AksaraText("CoinPaprika · "+updatedLabel(dashboard.crypto?.updatedAt,
+                            dashboard.crypto?.fromCache==true,dashboard.crypto?.freshness ?: TodayFreshness.UNAVAILABLE),
                             size=8.6f,line=11f,color=todayMuted)
                     }
                 }
@@ -471,8 +468,8 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                             AksaraText("Aktiviti Pembangunan · GitHub",
                                 size=12.5f,line=16f,weight=700,color=todayGold)
                         }
-                        if(github?.value!=null) {
-                            val commit=github!!.value!!
+                        if(dashboard.github?.value!=null) {
+                            val commit=dashboard.github!!.value!!
                             if(!compact)AksaraText("Android · "+commit.sha.take(7)+" · "+
                                 (localIsoTime(commit.date) ?: "masa tiada"),
                                 size=9.7f,line=13f,color=todayMuted)
@@ -508,8 +505,9 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
             if(detailWindow!=null && active) {
                 TodayDetailWindow(
                     kind=detailWindow!!,onClose={detailWindow=null},clock=clock,
-                    weather=weather,prayer=prayer,coins=crypto,github=github,
-                    location=latestLocation,city=city,detailRepo=detailRepo,
+                    weather=dashboard.weather,prayer=dashboard.prayer,
+                    coins=dashboard.crypto,github=dashboard.github,
+                    location=dashboard.latestLocation,city=dashboard.city,detailRepo=detailRepo,
                     onNavigate={ detailWindow=it },
                     onPrayerZoneSelected={ zone ->
                         val selected=zone.takeIf { it.isNotBlank() }
