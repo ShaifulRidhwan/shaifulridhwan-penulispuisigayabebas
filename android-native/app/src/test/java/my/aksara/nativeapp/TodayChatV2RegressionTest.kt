@@ -37,9 +37,13 @@ class TodayChatV2RegressionTest {
         val prayer=TodayPrayer("SGR01","",listOf(
             "Subuh" to "05:45","Zohor" to "13:15","Asar" to "16:35",
             "Maghrib" to "19:10","Isyak" to "20:25"))
-        val midnight=prayerTimelineProgress(prayer,LocalTime.of(0,15))!!
+        // Midnight cannot assume yesterday's Isyak was identical to today's.
+        assertNull(prayerTimelineProgress(prayer,LocalTime.of(0,15)))
+        assertNull(prayerTimelineProgress(prayer,LocalTime.of(21,0)))
+        val withTomorrow=prayer.copy(nextDaySubuh="05:46")
+        val afterIsyak=prayerTimelineProgress(withTomorrow,LocalTime.of(21,0))!!
         val afterAsar=prayerTimelineProgress(prayer,LocalTime.of(17,0))!!
-        assertTrue(midnight in 0f..1f)
+        assertTrue(afterIsyak in 0f..1f)
         assertTrue(afterAsar in 0f..1f)
         assertEquals(0f,prayerTimelineProgress(prayer,LocalTime.of(16,35))!!,0.0001f)
     }
