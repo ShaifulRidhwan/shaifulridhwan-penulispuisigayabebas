@@ -3,9 +3,17 @@ on:
   push:
     branches:
       - feature/aksara-today-v3-reliability
-    # One owner APK on workflow addition; later changes require explicit dispatch.
     paths:
+      - 'android-native/**'
       - '.github/workflows/aksara-today-v3-full-linux-owner.yml'
+      - '.github/workflows/aksara-android-native.yml'
+  pull_request:
+    branches:
+      - rebuild/aksara-android-native-v1
+    paths:
+      - 'android-native/**'
+      - '.github/workflows/aksara-today-v3-full-linux-owner.yml'
+      - '.github/workflows/aksara-android-native.yml'
   workflow_dispatch:
 permissions:
   contents: write
@@ -15,14 +23,21 @@ concurrency:
   cancel-in-progress: true
 jobs:
   build-linux:
-    if: github.ref == 'refs/heads/feature/aksara-today-v3-reliability'
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/feature/aksara-today-v3-reliability') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.number == 330 &&
+       github.event.pull_request.head.ref == 'feature/aksara-today-v3-reliability') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/feature/aksara-today-v3-reliability')
     runs-on: ubuntu-latest
     timeout-minutes: 100
     env:
       AKSARA_CI_COMPILER_REPOSITORY: /tmp/aksara-compiler-repository
-      AKSARA_PREVIEW_HEAD_SHA: ${{ github.sha }}
+      AKSARA_PREVIEW_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -110,7 +125,8 @@ jobs:
         run: |
           bash -n android-native/scripts/build-aksara-linux.sh
           # Guard against accidentally delivering the standard 240MB preview.
-          grep -Fq 'github.event.pull_request.number != 327' .github/workflows/aksara-android-native.yml
+          grep -Fq "github.head_ref != 'feature/aksara-today-v3-reliability'" .github/workflows/aksara-android-native.yml
+          grep -Fq 'github.event.pull_request.number != 330' .github/workflows/aksara-android-native.yml
           # Lock owner choice: no new signals or calendar-agenda permission.
           ! grep -Fq 'READ_CALENDAR' android-native/app/src/main/AndroidManifest.xml
           grep -Fq 'TodayMiniMap(dashboard.latestLocation' android-native/app/src/main/java/my/aksara/nativeapp/feature/today/TodayScreen.kt
@@ -205,23 +221,15 @@ jobs:
         working-directory: android-native
         run: |
           set -euo pipefail
-          tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
+          tag="$(printf '%s' "$AKSARA_PREVIEW_HEAD_SHA" | cut -c1-8)"
           gradle --no-daemon --init-script ci/compiler-repository.init.gradle \
             -PenableLinuxPreview=true -PaksaraPreviewSuffix=.preview.tv3.c"$tag" \
-            assembleDebug :app:testDebugUnitTest \
-            --tests 'my.aksara.nativeapp.core.linux.*' \
-            --tests 'my.aksara.nativeapp.NativeIntegrationContractTest' \
-            --tests 'my.aksara.nativeapp.SessionAndProviderStatusTest' \
-            --tests 'my.aksara.nativeapp.TodayAdvancedNavigationTest' \
-            --tests 'my.aksara.nativeapp.SettingsV2TechnicalRegistryTest' \
-            --tests 'my.aksara.nativeapp.StudioContractsTest' \
-            --tests 'my.aksara.nativeapp.TodayChatV2RegressionTest' \
-            --tests 'my.aksara.nativeapp.TodayV3ReliabilityTest'
+            assembleDebug :app:testDebugUnitTest
       - name: Verify native PTY, Alpine, signature and checksum
         run: |
           set -euo pipefail
           mkdir -p delivery
-          tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
+          tag="$(printf '%s' "$AKSARA_PREVIEW_HEAD_SHA" | cut -c1-8)"
           apk="AKSARA-TODAY-V3-FULL-LINUX-$tag.apk"
           cp android-native/app/build/outputs/apk/debug/app-debug.apk "delivery/$apk"
           # Owner-tested PR326 full Alpine APK measured 766233021 bytes (~731 MiB).
@@ -264,7 +272,7 @@ jobs:
           grep -F "package: name='my.aksara.nativeapp.preview.tv3.c$tag'" delivery/BADGING.txt
           grep -F "targetSdkVersion:'28'" delivery/BADGING.txt
           sha256sum "delivery/$apk" > delivery/SHA256SUMS.txt
-          tar -czf "delivery/AKSARA-TODAY-CHAT-V2-$tag-proot-source.tar.gz" \
+          tar -czf "delivery/AKSARA-TODAY-V3-$tag-proot-source.tar.gz" \
             -C "$RUNNER_TEMP/aksara-proot-static" --exclude=.git .
       - name: Upload TODAY V3 full Linux owner APK and corresponding GPL source
         uses: actions/upload-artifact@v4
@@ -273,13 +281,29 @@ jobs:
           path: delivery/
           retention-days: 60
           if-no-files-found: error
-      - name: Publish TODAY V3 full Linux owner QA prerelease
+      - name: Publish verified Full Linux owner QA prerelease (non-blocking if release permission denied)
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
-          gh release create "aksara-today-v3-full-linux-$tag" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \
-            --title "AKSARA TODAY V3 Full Linux + Today V3 $tag" \
-            --notes "AKSARA TODAY V3 owner QA: five-card dashboard reliability, source freshness, manual JAKIM zone, lightweight 60/40 map, no Today Signals. Preserves full Alpine Linux/PTY. SHA-scoped targetSdk28 sideload preview only; owner physical-device testing and explicit merge approval required. Bundled PRoot GPL source attached." \
-            --prerelease --target "$GITHUB_SHA"
+          tag="$(printf '%s' "$AKSARA_PREVIEW_HEAD_SHA" | cut -c1-8)"
+          release="aksara-today-v3-full-linux-$tag"
+          echo "### Full Alpine Linux owner QA artifact verified" >> "$GITHUB_STEP_SUMMARY"
+          echo "APK: AKSARA-TODAY-V3-FULL-LINUX-$tag.apk" >> "$GITHUB_STEP_SUMMARY"
+          echo "Head SHA: $AKSARA_PREVIEW_HEAD_SHA" >> "$GITHUB_STEP_SUMMARY"
+          echo "Downloadable Actions artifact: aksara-today-v3-full-linux-owner" >> "$GITHUB_STEP_SUMMARY"
+          if gh release view "$release" >/dev/null 2>&1; then
+            output=$(gh release upload "$release" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt --clobber 2>&1) || {
+              echo "::warning::Verified APK artifact uploaded; GitHub Release upload unavailable: $output"
+              exit 0
+            }
+          else
+            output=$(gh release create "$release" delivery/*.apk delivery/*-proot-source.tar.gz delivery/SHA256SUMS.txt \
+              --title "AKSARA TODAY V3 Full Alpine Linux owner QA $tag" \
+              --notes "Verified Full Alpine/PRoot APK for PR330. Not the 240MB native preview. No Today Signals. Owner on-device QA and explicit merge approval still required. This is a targetSdk28 preview sideload APK." \
+              --prerelease --target "$AKSARA_PREVIEW_HEAD_SHA" 2>&1) || {
+              echo "::warning::Verified APK artifact uploaded; GitHub Release creation unavailable: $output"
+              exit 0
+            }
+          fi
+          echo "GitHub Release: $release" >> "$GITHUB_STEP_SUMMARY"
