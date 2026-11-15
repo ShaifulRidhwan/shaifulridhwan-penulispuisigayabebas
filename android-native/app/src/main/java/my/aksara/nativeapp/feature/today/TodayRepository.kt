@@ -312,6 +312,16 @@ internal class TodayRepository(context:Context) {
         }
     }
 
+    suspend fun prayerByZone(input:String,force:Boolean=false):TodayFeed<TodayPrayer> {
+        val zone=input.uppercase(Locale.US).trim()
+        require(zone.matches(Regex("[A-Z]{3}0[1-9]"))) { "Kod zon solat tidak sah" }
+        val today=LocalDate.now(ZoneId.of("Asia/Kuala_Lumpur"))
+        return cached("prayer-v3:manual:$zone:$today",6L*60L*60_000L,force,
+            { TodayParsers.prayer(it,zone,today) }) {
+            request("https://www.e-solat.gov.my/index.php?r=esolatApi/takwimsolat&period=week&zone="+zone)
+        }
+    }
+
     suspend fun crypto(force:Boolean=false):TodayFeed<List<TodayCoin>> =
         cached("crypto",15L*60_000L,force,TodayParsers::coins) {
             val result=JSONArray()
