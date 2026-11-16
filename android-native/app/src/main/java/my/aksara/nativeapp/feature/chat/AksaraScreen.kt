@@ -62,6 +62,8 @@ import org.json.JSONArray
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import java.time.*
@@ -362,11 +364,18 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     }
     var speechAlternative by remember { mutableStateOf<AksaraSpeechAlternative?>(null) }
     var speechError by remember { mutableStateOf<String?>(null) }
+    var micHandoffPending by remember { mutableStateOf(false) }
+    var voiceHandoffPending by remember { mutableStateOf<String?>(null) }
+    var wakeStartPending by remember { mutableStateOf(false) }
     val margins = aksaraDeviceMargins()
     val focus = LocalFocusManager.current
     val list = rememberLazyListState()
     var autoFollow by remember { mutableStateOf(true) }
     fun startDictation(mode:AksaraSpeechMode) {
+        if(!AksaraWakeWordStatus.canStartOtherAudio) {
+            speechError="Wake word belum melepaskan mikrofon. Dikte tidak akan bermula serentak."
+            return
+        }
         speechError=null
         speechAlternative=null
         speechInput.start(
@@ -380,12 +389,41 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         )
     }
     fun beginDictation() {
-        if(speechInput.listening) speechInput.stop()
-        else startDictation(
-            if(!systemRecognizerAllowed) AksaraSpeechMode.LOCAL
+        if(speechInput.listening) {
+            speechInput.stop()
+            return
+        }
+        if(micHandoffPending) return
+        val mode=if(!systemRecognizerAllowed) AksaraSpeechMode.LOCAL
             else if(systemAutoLanguage) AksaraSpeechMode.SYSTEM_AUTO
             else AksaraSpeechMode.SYSTEM_MALAY
-        )
+        if(!AksaraWakeWordStatus.canStartOtherAudio) {
+            micHandoffPending=true
+            speechError="Mematikan wake word dan menunggu mikrofon dilepaskan..."
+            try { AksaraWakeWordService.stop(context) }
+            catch(error:Exception) {
+                micHandoffPending=false
+                speechError="Android gagal menghentikan wake word: ${error.javaClass.simpleName}"
+                return
+            }
+            jumpScope.launch {
+                val released=withTimeoutOrNull(5_500L) {
+                    snapshotFlow { AksaraWakeWordStatus.canStartOtherAudio }.first { it }
+                } == true
+                if(!micHandoffPending) return@launch
+                if(released) {
+                    kotlinx.coroutines.delay(400L) // OEM audio / recognizer cleanup
+                    micHandoffPending=false
+                    if(AksaraWakeWordStatus.canStartOtherAudio) startDictation(mode)
+                    else speechError="Mikrofon masih digunakan. Dikte tidak dimulakan."
+                } else {
+                    micHandoffPending=false
+                    speechError="Wake word tidak mengesahkan pelepasan mikrofon. Cuba semula atau buka Voice Chat."
+                }
+            }
+            return
+        }
+        startDictation(mode)
     }
     val micPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -410,11 +448,22 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             speechError = "Pengecaman suara lokal tidak tersedia. Gunakan Voice Chat atau gestur pembantu Android."
             return
         }
+        if(wakeStartPending || micHandoffPending || voiceHandoffPending!=null) {
+            speechError="Sesi suara lain sedang bertukar. Tamatkan dahulu sebelum aktifkan wake word."
+            return
+        }
+        val recognizerWasActive=speechInput.listening
         speechInput.dispose()
-        try {
-            AksaraWakeWordService.start(context)
-        } catch (error: Exception) {
-            speechError = "Android menyekat pengaktifan wake word: ${error.message ?: "sekatan sistem"}"
+        wakeStartPending=true
+        jumpScope.launch {
+            try {
+                if(recognizerWasActive) kotlinx.coroutines.delay(450L)
+                AksaraWakeWordService.start(context)
+            } catch(error:Exception) {
+                speechError="Android menyekat wake word: ${error.message ?: "sekatan sistem"}"
+            } finally {
+                wakeStartPending=false
+            }
         }
     }
     // Microphone is the only *required* runtime permission for a microphone FGS.
@@ -445,7 +494,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         }
     }
     fun toggleWakeWord() {
-        if (AksaraWakeWordStatus.active) {
+        if(wakeStartPending) return
+        if (AksaraWakeWordStatus.active || AksaraWakeWordStatus.stopPending) {
             AksaraWakeWordService.stop(context)
             return
         }
@@ -534,13 +584,44 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     }
     val keyboard = LocalSoftwareKeyboardController.current
     fun open(value: String) {
-        if (value.startsWith("voice")) {
-            speechInput.dispose()
-            if (AksaraWakeWordStatus.active) AksaraWakeWordService.stop(context)
+        if(value.startsWith("voice") && voiceHandoffPending==null) {
+            val speechWasActive=speechInput.listening
+            if(speechWasActive || !AksaraWakeWordStatus.canStartOtherAudio) {
+                voiceHandoffPending=value
+                speechInput.dispose()
+                if(!AksaraWakeWordStatus.canStartOtherAudio) {
+                    try { AksaraWakeWordService.stop(context) }
+                    catch(error:Exception) {
+                        voiceHandoffPending=null
+                        speechError="Voice tidak dapat mengambil mikrofon: ${error.javaClass.simpleName}"
+                        return
+                    }
+                }
+                jumpScope.launch {
+                    val released=withTimeoutOrNull(5_500L) {
+                        snapshotFlow { AksaraWakeWordStatus.canStartOtherAudio }.first { it }
+                    }==true
+                    if(voiceHandoffPending!=value) return@launch
+                    if(released) {
+                        kotlinx.coroutines.delay(400L)
+                        if(voiceHandoffPending==value && AksaraWakeWordStatus.canStartOtherAudio) {
+                            voiceHandoffPending=null
+                            focus.clearFocus(); keyboard?.hide()
+                            if(value=="voice") voiceIndicator=VoiceLinkState.CONNECTING
+                            overlay=value
+                        }
+                    } else {
+                        voiceHandoffPending=null
+                        speechError="Wake word belum melepaskan mikrofon. Voice tidak dimulakan."
+                    }
+                }
+                return
+            }
         }
+        if(value.startsWith("voice")) speechInput.dispose()
         focus.clearFocus(); keyboard?.hide()
         if(value=="voice") voiceIndicator=VoiceLinkState.CONNECTING
-        overlay = value
+        overlay=value
     }
     // Offline Android speech may not contain the Malay model. Offer a visible,
     // revocable choice before system ASR is allowed to process microphone audio.
@@ -913,7 +994,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             cursorBrush=SolidColor(AksaraColors.gold))
                         Box(Modifier.size(38.dp).clip(RoundedCornerShape(13.dp))
                             .clickable {
-                                if (AksaraWakeWordStatus.active) AksaraWakeWordService.stop(context)
                                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
                                     == PackageManager.PERMISSION_GRANTED) beginDictation()
                                 else micPermission.launch(Manifest.permission.RECORD_AUDIO)
