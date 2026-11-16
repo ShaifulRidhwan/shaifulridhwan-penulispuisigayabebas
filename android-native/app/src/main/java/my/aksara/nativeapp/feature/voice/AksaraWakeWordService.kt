@@ -62,29 +62,72 @@ internal object AksaraWakeLivenessPolicy {
         active && lastSignalMs>0L && nowMs-lastSignalMs>maxAgeMs
 }
 
-/** Visible opt-in state only; this is not a boot-started or hidden microphone. */
+/**
+ * Cross-process microphone ownership.
+ * stopService() is ASYNCHRONOUS: only the worker's onDestroy(false) relay
+ * confirms its SpeechRecognizer has released the mic. A timeout must NEVER
+ * grant microphone ownership to a new recognizer.
+ */
+internal object AksaraWakeAudioHandoff {
+    fun canStartOtherRecognizer(active:Boolean,stopping:Boolean,released:Boolean):Boolean =
+        !active && !stopping && released
+}
+
 internal object AksaraWakeWordStatus {
     var active by mutableStateOf(false)
         internal set
+    var stopPending by mutableStateOf(false)
+        private set
+    var released by mutableStateOf(true)
+        private set
     var lastFailure by mutableStateOf<String?>(null)
         internal set
     private var lastSignalMs = 0L
+    val canStartOtherAudio: Boolean
+        get() = AksaraWakeAudioHandoff.canStartOtherRecognizer(active,stopPending,released)
+
     internal fun requestStart() {
         active=true
+        stopPending=false
+        released=false
         lastFailure=null
         lastSignalMs=SystemClock.elapsedRealtime()
     }
-    internal fun requestStop() { active=false;lastSignalMs=0L }
+    internal fun startFailed() {
+        active=false
+        stopPending=false
+        released=true
+        lastSignalMs=0L
+    }
+    internal fun requestStop() {
+        if(!released) {
+            stopPending=true
+            // A wake worker may still own the microphone after stopService().
+            active=true
+        }
+    }
     internal fun receiveStatus(isActive:Boolean,diagnostic:String?) {
-        active=isActive
-        lastSignalMs=if(isActive) SystemClock.elapsedRealtime() else 0L
+        // A delayed 'active' heartbeat must not cancel an in-progress stop.
+        if(!isActive) {
+            active=false
+            stopPending=false
+            released=true
+            lastSignalMs=0L
+        } else if(!stopPending) {
+            active=true
+            released=false
+            lastSignalMs=SystemClock.elapsedRealtime()
+        }
         if(!diagnostic.isNullOrBlank()) lastFailure=diagnostic
     }
     internal fun checkHeartbeat(maxAgeMs:Long=15_000L) {
         if(AksaraWakeLivenessPolicy.expired(active,lastSignalMs,
             SystemClock.elapsedRealtime(),maxAgeMs)) {
             active=false
-            lastFailure="Enjin wake word terhenti. Chatbox masih boleh digunakan. Cuba Voice Chat atau gestur pembantu."
+            stopPending=false
+            released=false // Worker death is NOT a verified microphone release.
+            lastSignalMs=0L
+            lastFailure="Enjin wake word tidak memberi respons. Dikte disekat sehingga servis dihentikan dan mikrofon dilepaskan."
         }
     }
     fun dismissFailure() { lastFailure=null }
@@ -114,7 +157,7 @@ class AksaraWakeWordService : Service() {
                     context, Intent(context, AksaraWakeWordService::class.java)
                         .setAction(ACTION_START))
             } catch(error:Exception) {
-                AksaraWakeWordStatus.requestStop()
+                AksaraWakeWordStatus.startFailed()
                 throw error
             }
         }
@@ -123,7 +166,14 @@ class AksaraWakeWordService : Service() {
             // Never start a stopped foreground microphone service from background.
             // stopService is valid even when the app is not visible.
             AksaraWakeWordStatus.requestStop()
-            context.stopService(Intent(context, AksaraWakeWordService::class.java))
+            try {
+                val wasRunning=context.stopService(Intent(context, AksaraWakeWordService::class.java))
+                if(!wasRunning) AksaraWakeWordStatus.receiveStatus(false,null)
+            } catch(error:Exception) {
+                AksaraWakeWordStatus.lastFailure=
+                    "Android menolak penghentian wake word: ${error.javaClass.simpleName}."
+                throw error
+            }
         }
     }
 
