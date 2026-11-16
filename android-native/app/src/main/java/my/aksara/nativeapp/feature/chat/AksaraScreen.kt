@@ -195,6 +195,51 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val pagerState = rememberPagerState(initialPage=1,pageCount={3})
     var inAppWakeToken by remember { mutableIntStateOf(0) }
     val appLifecycleOwner = LocalLifecycleOwner.current
+    // Offline Android speech may not contain the Malay model. Offer a visible,
+    // revocable choice before system ASR is allowed to process microphone audio.
+    if(speechAlternative!=null) {
+        Dialog(onDismissRequest={speechAlternative=null}) {
+            val requested=speechAlternative!!
+            AksaraGlassSurface(Modifier.fillMaxWidth(),radius=22.dp,blur=18.dp) {
+                Column(Modifier.fillMaxWidth().padding(17.dp),
+                    verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                    AksaraText("Pilihan pengecaman suara",size=16f,weight=650)
+                    AksaraText(
+                        when(requested) {
+                            AksaraSpeechAlternative.SYSTEM_CONSENT ->
+                                "Model suara lokal Android tidak menyokong Bahasa Melayu pada peranti ini. Dikte sistem mungkin menghantar audio kepada penyedia pengecaman Android, bergantung pada tetapan peranti. Benarkan penggunaan dikte sistem?"
+                            AksaraSpeechAlternative.AUTO_LANGUAGE ->
+                                "Pengecaman sistem juga tidak menyokong tetapan ms-MY. Cuba pengesanan bahasa automatik? Hasil boleh tersalah bahasa dan boleh dibetulkan sebelum hantar."
+                            AksaraSpeechAlternative.MODEL_DOWNLOAD ->
+                                "Model lokal Bahasa Melayu belum tersedia. Android mungkin menyediakan muat turun model, atau kau boleh pilih dikte sistem dengan izin.",
+                        },
+                        size=12f,line=18f,color=AksaraColors.muted)
+                    if(requested==AksaraSpeechAlternative.MODEL_DOWNLOAD) {
+                        AksaraButton("Cuba pasang model lokal",{
+                            speechAlternative=null
+                            speechInput.requestOfflineMalayDownload { speechError=it }
+                        },Modifier.fillMaxWidth(),height=40.dp,size=11f)
+                    }
+                    if(requested==AksaraSpeechAlternative.SYSTEM_CONSENT ||
+                        requested==AksaraSpeechAlternative.MODEL_DOWNLOAD) {
+                        AksaraButton("Benarkan dikte sistem",{
+                            speechPreferences.edit().putBoolean("system_recognizer_consent",true).apply()
+                            systemRecognizerAllowed=true
+                            startDictation(AksaraSpeechMode.SYSTEM_MALAY)
+                        },Modifier.fillMaxWidth(),height=40.dp,size=11f)
+                    } else {
+                        AksaraButton("Cuba pengesanan automatik",{
+                            startDictation(AksaraSpeechMode.SYSTEM_AUTO)
+                        },Modifier.fillMaxWidth(),height=40.dp,size=11f)
+                    }
+                    AksaraButton("Batal · guna Voice Chat",{
+                        speechAlternative=null
+                        open("voice")
+                    },Modifier.fillMaxWidth(),height=37.dp,size=10.5f)
+                }
+            }
+        }
+    }
     LaunchedEffect(assistantStartToken) {
         if (assistantStartToken > 0) pagerState.scrollToPage(1)
     }
@@ -351,21 +396,35 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var highlightedMessageId by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val speechInput = remember(context) { AksaraSpeechInput(context) }
+    val speechPreferences = remember(context) {
+        context.getSharedPreferences("aksara_speech_privacy",Context.MODE_PRIVATE)
+    }
+    var systemRecognizerAllowed by remember {
+        mutableStateOf(speechPreferences.getBoolean("system_recognizer_consent",false))
+    }
+    var speechAlternative by remember { mutableStateOf<AksaraSpeechAlternative?>(null) }
     var speechError by remember { mutableStateOf<String?>(null) }
     val margins = aksaraDeviceMargins()
     val focus = LocalFocusManager.current
     val list = rememberLazyListState()
     var autoFollow by remember { mutableStateOf(true) }
+    fun startDictation(mode:AksaraSpeechMode) {
+        speechError=null
+        speechAlternative=null
+        speechInput.start(
+            mode=mode,
+            onFinal={ words ->
+                draft=listOf(draft.trim(),words).filter { it.isNotBlank() }.joinToString(" ")
+                autoFollow=true
+            },
+            onError={ speechError=it },
+            onAlternative={ alternative -> speechAlternative=alternative }
+        )
+    }
     fun beginDictation() {
-        speechError = null
-        if (speechInput.listening) {
-            speechInput.stop()
-        } else {
-            speechInput.start(onFinal = { words ->
-                draft = listOf(draft.trim(), words).filter { it.isNotBlank() }.joinToString(" ")
-                autoFollow = true
-            }, onError = { speechError = it })
-        }
+        if(speechInput.listening) speechInput.stop()
+        else startDictation(if(systemRecognizerAllowed) AksaraSpeechMode.SYSTEM_MALAY
+            else AksaraSpeechMode.LOCAL)
     }
     val micPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -738,16 +797,23 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         Modifier.weight(1f),size=10.5f,color=AksaraColors.gold)
                     AksaraButton("Batal",{editingId=null;draft=""},height=29.dp,size=10f)
                 }
-                if (speechInput.listening || speechError != null) {
+                if (speechInput.listening || speechError != null ||
+                    AksaraWakeWordStatus.lastFailure!=null) {
                     Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=3.dp),
                         verticalAlignment=Alignment.CenterVertically) {
                         AksaraText(
-                            if (speechInput.listening) "Dikte lokal · " +
-                                (speechInput.partial.ifBlank { "Mendengar Bahasa Melayu..." }).take(90)
-                            else speechError.orEmpty(),
+                            if (speechInput.listening) (
+                                if(speechInput.currentMode==AksaraSpeechMode.LOCAL) "Dikte lokal · "
+                                else "Dikte sistem · "
+                            ) + (speechInput.partial.ifBlank { "Mendengar..." }).take(90)
+                            else (speechError ?: AksaraWakeWordStatus.lastFailure).orEmpty(),
                             Modifier.weight(1f), size=10.5f,
-                            color=if(speechError!=null) Color(0xffffaa97) else AksaraColors.gold)
-                        if (speechError != null) AksaraButton("Tutup",{speechError=null},
+                            color=if(speechError!=null || AksaraWakeWordStatus.lastFailure!=null)
+                                Color(0xffffaa97) else AksaraColors.gold)
+                        if (speechError != null || AksaraWakeWordStatus.lastFailure!=null)
+                            AksaraButton("Tutup",{
+                                speechError=null; AksaraWakeWordStatus.dismissFailure()
+                            },
                             size=9f,height=29.dp,radius=12.dp)
                     }
                 }
