@@ -1,6 +1,11 @@
 package my.aksara.nativeapp
 
 import android.os.Bundle
+import android.content.Intent
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
+import my.aksara.nativeapp.feature.voice.AksaraAssistantSignals
 import android.os.Build
 import android.view.animation.DecelerateInterpolator
 import android.animation.AnimatorSet
@@ -17,11 +22,13 @@ import androidx.core.view.WindowInsetsControllerCompat
 import my.aksara.nativeapp.feature.chat.AksaraApp
 
 class MainActivity : ComponentActivity() {
+    private var assistantOpenCount by mutableIntStateOf(0)
     private var perfStats: JankStats? = null
     // One-shot platform splash pulse; never hold the first application frame.
     private var startupPulse: AnimatorSet? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (intent?.action == AksaraAssistantSignals.ACTION_OPEN_VOICE) assistantOpenCount++
         // The platform splash remains visible until the first app frame is ready.
         // Animate its exit, not a second artificial loading screen.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -54,13 +61,19 @@ class MainActivity : ComponentActivity() {
             hide(WindowInsetsCompat.Type.systemBars())
             systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         }
-        setContent { AksaraApp() }
+        setContent { AksaraApp(assistantStartToken = assistantOpenCount) }
         // Debug-only, explicit opt-in. Never record personal content or location.
         if (BuildConfig.DEBUG && intent?.getBooleanExtra("aksara_perf_trace", false) == true) {
             perfStats = JankStats.createAndTrack(window) { frame ->
                 AksaraPerfFrames.accept(frame.isJank, frame.frameDurationUiNanos)
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.action == AksaraAssistantSignals.ACTION_OPEN_VOICE) assistantOpenCount++
     }
 
     override fun onStop() {
