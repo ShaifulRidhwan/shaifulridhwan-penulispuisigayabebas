@@ -21,9 +21,9 @@ class AksaraAssistantSessionService : VoiceInteractionSessionService() {
         AksaraAssistantSession(this)
 }
 
-private class AksaraAssistantSession(context: Context) : VoiceInteractionSession(context) {
+private class AksaraAssistantSession(private val sessionContext: Context) : VoiceInteractionSession(sessionContext) {
     override fun onCreateContentView(): View =
-        TextView(context).apply {
+        TextView(sessionContext).apply {
             text = "Aksara A.I. · Membuka pembantu suara"
             textSize = 18f
             setPadding(30, 36, 30, 36)
@@ -31,7 +31,7 @@ private class AksaraAssistantSession(context: Context) : VoiceInteractionSession
 
     override fun onShow(args: Bundle?, showFlags: Int) {
         super.onShow(args, showFlags)
-        val intent = Intent(context, MainActivity::class.java).apply {
+        val intent = Intent(sessionContext, MainActivity::class.java).apply {
             action = AksaraAssistantSignals.ACTION_OPEN_VOICE
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP)
         }
