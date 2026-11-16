@@ -7,6 +7,13 @@ import android.content.Context
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
+import android.os.Build
+import android.speech.SpeechRecognizer
+import my.aksara.nativeapp.feature.voice.AksaraWakeWordService
+import my.aksara.nativeapp.feature.voice.AksaraWakeWordStatus
+import my.aksara.nativeapp.feature.voice.AksaraAssistantSignals
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -81,7 +88,7 @@ internal fun overlayNeedsImeSpace(kind:String):Boolean = kind in setOf(
 )
 
 const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam bentuk, LUAS dalam pemikiran."
-@Composable fun AksaraApp(vm: ChatViewModel = viewModel()) {
+@Composable fun AksaraApp(vm: ChatViewModel = viewModel(), assistantStartToken: Int = 0) {
     val state by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var attachments by remember { mutableStateOf<List<Attachment>>(emptyList()) }
@@ -270,7 +277,8 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         onCancelUpload = { uploadJob?.cancel() },
         onPickAttachment = { category -> picker.launch(AttachmentSendPolicy.mimeTypes(category)) },
         onDismissError = { attachmentError = null; vm.dismissError() },
-        onOverlayVisibilityChange = { overlayVisible=it })
+        onOverlayVisibilityChange = { overlayVisible=it },
+        assistantStartToken = assistantStartToken)
       }
     }
 
@@ -305,7 +313,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
 
 @Composable fun AksaraScreen(state: ChatState, onSend: (String)->Boolean = {true}, onStop: ()->Unit = {}, onRefresh: ()->Unit = {},
     onJourney: (String)->Unit = { onSend(it); Unit }, onMode: (String)->Unit = {}, onRestore: ()->Unit = {}, onRestoreSession: (String)->Unit = {}, onClear: ()->Unit = {}, attachmentName: String? = null,
-    onPickAttachment: (String)->Unit = {}, onDismissError: ()->Unit = {}, onMemory: (Boolean,String)->Unit = {_,_->}, onClearAttachment: ()->Unit = {}, initialOverlay: String? = null,
+    onPickAttachment: (String)->Unit = {}, onDismissError: ()->Unit = {}, onMemory: (Boolean,String)->Unit = {_,_->}, onClearAttachment: ()->Unit = {}, initialOverlay: String? = null, assistantStartToken: Int = 0,
     attachmentLoading: Boolean = false,
     uploadStatus: String? = null, onCancelUpload: ()->Unit = {},
     onEditAndSend: (String,String)->Boolean = {_,_->false},
@@ -330,6 +338,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var highlightedMessageId by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val speechInput = remember(context) { AksaraSpeechInput(context) }
+    val lifecycleOwner = LocalLifecycleOwner.current
     var speechError by remember { mutableStateOf<String?>(null) }
     val margins = aksaraDeviceMargins()
     val focus = LocalFocusManager.current
@@ -351,6 +360,44 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     ) { granted ->
         if (granted) beginDictation()
         else speechError = "Izin mikrofon ditolak. Dikte tidak diaktifkan."
+    }
+    fun enableWakeWord() {
+        speechError = null
+        if (!SpeechRecognizer.isOnDeviceRecognitionAvailable(context)) {
+            speechError = "Pengesan suara lokal tiada pada peranti ini. Voice Live masih tersedia."
+            return
+        }
+        try {
+            speechInput.dispose()
+            AksaraWakeWordService.start(context)
+        } catch (error: Exception) {
+            speechError = "Wake word tidak dapat dimulakan: ${error.message ?: "sistem menolak"}"
+        }
+    }
+    val wakePermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { grants ->
+        val micOk = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED
+        val notifOk = Build.VERSION.SDK_INT < 33 ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+        if (micOk && notifOk) enableWakeWord()
+        else speechError = "Wake word memerlukan izin mikrofon dan notifikasi."
+    }
+    fun toggleWakeWord() {
+        if (AksaraWakeWordStatus.active) {
+            AksaraWakeWordService.stop(context)
+            return
+        }
+        val required = buildList {
+            if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) !=
+                PackageManager.PERMISSION_GRANTED) add(Manifest.permission.RECORD_AUDIO)
+            if (Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED) add(Manifest.permission.POST_NOTIFICATIONS)
+        }
+        if (required.isEmpty()) enableWakeWord() else wakePermission.launch(required.toTypedArray())
     }
     DisposableEffect(speechInput) { onDispose { speechInput.dispose() } }
     // Track only visibility transitions; the keyboard animates its insets every frame.
@@ -433,10 +480,22 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     }
     val keyboard = LocalSoftwareKeyboardController.current
     fun open(value: String) {
-        if (value.startsWith("voice")) speechInput.dispose()
+        if (value.startsWith("voice")) {
+            speechInput.dispose()
+            if (AksaraWakeWordStatus.active) AksaraWakeWordService.stop(context)
+        }
         focus.clearFocus(); keyboard?.hide()
         if(value=="voice") voiceIndicator=VoiceLinkState.CONNECTING
         overlay = value
+    }
+    LaunchedEffect(assistantStartToken) {
+        if (assistantStartToken > 0) open("voice")
+    }
+    LaunchedEffect(lifecycleOwner) {
+        AksaraAssistantSignals.requests.collect {
+            if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
+                open("voice")
+        }
     }
     BackHandler(overlay != null) {
         if(overlay=="voice") voiceIndicator=VoiceLinkState.IDLE
@@ -502,6 +561,22 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                 CompositionLocalProvider(LocalBackdropPaints provides listOf(headerPaint)) {
                                 Row(Modifier.fillMaxSize().padding(horizontal=if(compact)5.dp else 8.dp,vertical=8.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(if(compact)3.dp else 4.dp)) {
                                     ReactiveVoiceChip(voiceIndicator,compact) {open("voice-permission")}
+                                    AksaraGlassSurface(
+                                        Modifier.width(if(compact)33.dp else 39.dp)
+                                            .height(AksaraGlassTokens.capsuleHeight)
+                                            .clickable { toggleWakeWord() }
+                                            .semantics {
+                                                testTag = "wakeword-toggle"
+                                                contentDescription =
+                                                    if(AksaraWakeWordStatus.active) "Hentikan wake word Aksara"
+                                                    else "Aktifkan wake word Aksara secara lokal"
+                                            },
+                                        radius=AksaraGlassTokens.capsuleRadius,
+                                        blur=AksaraGlassTokens.capsuleBlur) {
+                                        AksaraIcon("mic",Modifier.align(Alignment.Center).size(16.dp),
+                                            if(AksaraWakeWordStatus.active) AksaraColors.gold
+                                            else AksaraColors.muted)
+                                    }
                                     Spacer(Modifier.weight(1f))
                                     // Dedicated delegated-flow icon and shared capsule glass tokens.
                                     // Keep Agent immediately adjacent to Multi A.I; Voice remains on the left.
@@ -692,6 +767,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             cursorBrush=SolidColor(AksaraColors.gold))
                         Box(Modifier.size(38.dp).clip(RoundedCornerShape(13.dp))
                             .clickable {
+                                if (AksaraWakeWordStatus.active) AksaraWakeWordService.stop(context)
                                 if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
                                     == PackageManager.PERMISSION_GRANTED) beginDictation()
                                 else micPermission.launch(Manifest.permission.RECORD_AUDIO)
