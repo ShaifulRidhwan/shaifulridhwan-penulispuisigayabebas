@@ -68,8 +68,9 @@ class AksaraWakeWordService : Service() {
         }
 
         fun stop(context: Context) {
-            context.startService(Intent(context, AksaraWakeWordService::class.java)
-                .setAction(ACTION_STOP))
+            // Never start a stopped foreground microphone service from background.
+            // stopService is valid even when the app is not visible.
+            context.stopService(Intent(context, AksaraWakeWordService::class.java))
         }
     }
 
@@ -82,38 +83,42 @@ class AksaraWakeWordService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == ACTION_STOP) {
+        if(intent?.action == ACTION_STOP) {
             stopSelf()
             return START_NOT_STICKY
         }
-        if (AksaraWakeWordStatus.active) return START_NOT_STICKY
-        if (intent?.action != ACTION_START ||
-            ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) !=
-                PackageManager.PERMISSION_GRANTED) {
-            AksaraWakeWordStatus.lastFailure="Wake word memerlukan izin mikrofon."
-            stopSelf()
-            return START_NOT_STICKY
-        }
-        if(!SpeechRecognizer.isOnDeviceRecognitionAvailable(this)) {
-            AksaraWakeWordStatus.lastFailure=
-                "Tiada enjin suara lokal. Gunakan Voice Chat atau gestur pembantu Android."
-            stopSelf()
-            return START_NOT_STICKY
-        }
-        createChannels()
+        if(AksaraWakeWordStatus.active) return START_NOT_STICKY
+        // All operations here may be rejected by an OEM. Do not crash the entire
+        // app or allow startForegroundService() to exceed its startup deadline.
         try {
-            startForeground(NOTIFICATION_ID, listeningNotification(),
+            if(intent?.action != ACTION_START) {
+                failWakeWord("Arahan mengaktifkan wake word tidak sah.")
+                return START_NOT_STICKY
+            }
+            if(ContextCompat.checkSelfPermission(this,Manifest.permission.RECORD_AUDIO) !=
+                PackageManager.PERMISSION_GRANTED) {
+                failWakeWord("Izin mikrofon belum diberikan. Tekan mic untuk meminta izin dalam aplikasi.")
+                return START_NOT_STICKY
+            }
+            if(!SpeechRecognizer.isOnDeviceRecognitionAvailable(this)) {
+                failWakeWord("Enjin suara lokal tidak tersedia pada Android ini. Gunakan Voice Chat.")
+                return START_NOT_STICKY
+            }
+            createChannels()
+            startForeground(NOTIFICATION_ID,listeningNotification(),
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
-        } catch (_: Exception) {
-            stopSelf()
-            return START_NOT_STICKY
+            stopped=false
+            consecutiveErrors=0
+            defaultLocaleTried=false
+            AksaraWakeWordStatus.lastFailure=null
+            AksaraWakeWordStatus.active=true
+            scheduleListening(0L)
+        } catch(error: Exception) {
+            failWakeWord(when(error) {
+                is SecurityException -> "Android menolak akses mikrofon ketika servis bermula. Aktifkan daripada Chatbox yang terbuka."
+                else -> "Servis wake word tidak dapat bermula: ${error.javaClass.simpleName}."
+            })
         }
-        stopped = false
-        consecutiveErrors = 0
-        defaultLocaleTried = false
-        AksaraWakeWordStatus.lastFailure = null
-        AksaraWakeWordStatus.active = true
-        scheduleListening(0L)
         return START_NOT_STICKY
     }
 
@@ -157,7 +162,7 @@ class AksaraWakeWordService : Service() {
 
     private fun listenOnce() {
         if (stopped) return
-        engine?.destroy()
+        try { engine?.destroy() } catch (_: Exception) { }
         engine = null
         try {
             val recognizer = SpeechRecognizer.createOnDeviceSpeechRecognizer(this)
@@ -171,10 +176,11 @@ class AksaraWakeWordService : Service() {
                 override fun onEvent(eventType: Int, params: Bundle?) = Unit
 
                 override fun onPartialResults(partialResults: Bundle?) {
-                    inspect(partialResults)
+                    if(engine === recognizer && !stopped) inspect(partialResults)
                 }
 
                 override fun onResults(results: Bundle?) {
+                    if(engine !== recognizer || stopped) return
                     if (!inspect(results)) {
                         consecutiveErrors = 0
                         scheduleListening(700L)
@@ -182,7 +188,7 @@ class AksaraWakeWordService : Service() {
                 }
 
                 override fun onError(error: Int) {
-                    if (stopped) return
+                    if (stopped || engine !== recognizer) return
                     if (error == SpeechRecognizer.ERROR_NO_MATCH ||
                         error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
                         consecutiveErrors = 0
@@ -231,8 +237,10 @@ class AksaraWakeWordService : Service() {
     }
 
     private fun failWakeWord(reason:String) {
+        stopped=true
+        AksaraWakeWordStatus.active=false
         AksaraWakeWordStatus.lastFailure=reason
-        stopSelf()
+        try { stopSelf() } catch (_: Exception) { }
     }
 
     /** Returns true only if this recognition cycle has activated the assistant. */
@@ -242,21 +250,32 @@ class AksaraWakeWordService : Service() {
         if (candidates.none { AksaraHotwordMatcher.matches(it) }) return false
         stopped = true
         main.removeCallbacksAndMessages(null)
-        engine?.cancel()
-        engine?.destroy()
+        try { engine?.cancel(); engine?.destroy() } catch (_: Exception) { }
         engine = null
         AksaraWakeWordStatus.active = false
         // Active chat handles this directly. Background Android restricts arbitrary
         // Activity launches; use an explicit user-tappable notification instead.
         AksaraAssistantSignals.requests.tryEmit(Unit)
-        val manager = getSystemService(NotificationManager::class.java)
-        manager.notify(ACTIVATION_ID, Notification.Builder(this, ACTIVATION_CHANNEL)
-            .setSmallIcon(android.R.drawable.ic_btn_speak_now)
-            .setContentTitle("Aksara dengar panggilan kau")
-            .setContentText("Buka pembantu suara")
-            .setContentIntent(openVoiceIntent())
-            .setAutoCancel(true)
-            .build())
+        try {
+            val manager=getSystemService(NotificationManager::class.java)
+            // POST_NOTIFICATIONS is optional for the foreground service, but
+            // a heads-up activation notification is only possible if allowed.
+            if(manager.areNotificationsEnabled()) {
+                manager.notify(ACTIVATION_ID, Notification.Builder(this, ACTIVATION_CHANNEL)
+                    .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+                    .setContentTitle("Aksara dengar panggilan kau")
+                    .setContentText("Buka pembantu suara")
+                    .setContentIntent(openVoiceIntent())
+                    .setAutoCancel(true)
+                    .build())
+            } else {
+                AksaraWakeWordStatus.lastFailure=
+                    "Panggilan dikesan, tetapi notifikasi disekat. Hidupkan notifikasi Aksara untuk pengaktifan ketika di background."
+            }
+        } catch (_: Exception) {
+            AksaraWakeWordStatus.lastFailure=
+                "Panggilan dikesan, tetapi Android tidak membenarkan notifikasi pengaktifan."
+        }
         stopSelf()
         return true
     }
@@ -264,8 +283,7 @@ class AksaraWakeWordService : Service() {
     override fun onDestroy() {
         stopped = true
         main.removeCallbacksAndMessages(null)
-        engine?.cancel()
-        engine?.destroy()
+        try { engine?.cancel(); engine?.destroy() } catch (_: Exception) { }
         engine = null
         AksaraWakeWordStatus.active = false
         super.onDestroy()
