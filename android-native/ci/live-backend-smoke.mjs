@@ -39,18 +39,31 @@ try{
  add("provider_health",r.status===200&&j.ok===true&&rows.length>0,
  {http:r.status,mime:r.type,rows:rows.map(x=>({id:String(x.id).slice(0,35),status:String(x.status).slice(0,30)}))});
 }catch(e){add("provider_health",false,info(e));}
-try{
- const r=await send("/.netlify/functions/bilik-antara-stream",{
- question:"Ujian sambungan ringkas. Balas satu ayat tentang Aksara A.I.",
- history:[],thoughtMode:"cahaya",contextFallback:true,mediaFallback:false},48000);
- const frames=r.data.split(/\r?\n/).filter(Boolean).map(line=>JSON.parse(line));
- const done=frames.find(x=>x.type==="done"&&typeof x.reply==="string"&&x.reply.trim().length>0);
- const error=frames.find(x=>x.type==="error");
- add("live_chat_stream",r.status===200&&r.type.includes("ndjson")&&!!done&&!error,
- {http:r.status,mime:r.type,frames:frames.slice(0,30).map(x=>x.type),
-  provider:done?String(done.provider||"").slice(0,50):null,
-  errorCode:error?String(error.code||error.status||"UPSTREAM").slice(0,55):null});
-}catch(e){add("live_chat_stream",false,info(e));}
+// Re-check bounded, transient external provider interruptions. Every attempt must
+// complete the same real NDJSON contract, and persistent failure remains a CI failure.
+let streamPassed=false;
+let lastStream={kind:"NOT_RUN"};
+for(let attempt=1;attempt<=3&&!streamPassed;attempt++){
+ try{
+  const r=await send("/.netlify/functions/bilik-antara-stream",{
+   question:"Ujian sambungan ringkas. Balas satu ayat tentang Aksara A.I.",
+   history:[],thoughtMode:"cahaya",contextFallback:true,mediaFallback:false},48000);
+  const frames=r.data.split(/\\r?\\n/).filter(Boolean).map(line=>JSON.parse(line));
+  const done=frames.find(x=>x.type==="done"&&typeof x.reply==="string"&&x.reply.trim().length>0);
+  const error=frames.find(x=>x.type==="error");
+  const code=error?String(error.code||error.status||"UPSTREAM").slice(0,55):null;
+  streamPassed=r.status===200&&r.type.includes("ndjson")&&!!done&&!error;
+  lastStream={attempt,http:r.status,mime:r.type,frames:frames.slice(0,30).map(x=>x.type),
+   provider:done?String(done.provider||"").slice(0,50):null,errorCode:code};
+  const transient=code==="STREAM_INTERRUPTED"||code==="UPSTREAM_TIMEOUT"||
+   code==="RATE_LIMITED"||[429,502,503,504].includes(r.status);
+  if(!streamPassed&&!transient)break;
+ }catch(e){
+  lastStream={attempt,...info(e)};
+ }
+ if(!streamPassed&&attempt<3)await new Promise(resolve=>setTimeout(resolve,attempt*2200));
+}
+add("live_chat_stream",streamPassed,lastStream);
 try{
  const r=await send("/.netlify/functions/bilik-antara-live-token",{},38000);
  const j=JSON.parse(r.data);
