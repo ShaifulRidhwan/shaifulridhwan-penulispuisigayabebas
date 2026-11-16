@@ -193,6 +193,19 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         }
     }
     val pagerState = rememberPagerState(initialPage=1,pageCount={3})
+    var inAppWakeToken by remember { mutableIntStateOf(0) }
+    val appLifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(assistantStartToken) {
+        if (assistantStartToken > 0) pagerState.scrollToPage(1)
+    }
+    LaunchedEffect(appLifecycleOwner) {
+        AksaraAssistantSignals.requests.collect {
+            if (appLifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
+                pagerState.scrollToPage(1)
+                inAppWakeToken++
+            }
+        }
+    }
     var overlayVisible by remember { mutableStateOf(false) }
     var todayDialogVisible by remember { mutableStateOf(false) }
     var linuxDialogVisible by remember { mutableStateOf(false) }
@@ -278,7 +291,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         onPickAttachment = { category -> picker.launch(AttachmentSendPolicy.mimeTypes(category)) },
         onDismissError = { attachmentError = null; vm.dismissError() },
         onOverlayVisibilityChange = { overlayVisible=it },
-        assistantStartToken = assistantStartToken)
+        assistantStartToken = assistantStartToken + inAppWakeToken)
       }
     }
 
@@ -338,7 +351,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var highlightedMessageId by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
     val speechInput = remember(context) { AksaraSpeechInput(context) }
-    val lifecycleOwner = LocalLifecycleOwner.current
     var speechError by remember { mutableStateOf<String?>(null) }
     val margins = aksaraDeviceMargins()
     val focus = LocalFocusManager.current
@@ -490,12 +502,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     }
     LaunchedEffect(assistantStartToken) {
         if (assistantStartToken > 0) open("voice")
-    }
-    LaunchedEffect(lifecycleOwner) {
-        AksaraAssistantSignals.requests.collect {
-            if (lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
-                open("voice")
-        }
     }
     BackHandler(overlay != null) {
         if(overlay=="voice") voiceIndicator=VoiceLinkState.IDLE
