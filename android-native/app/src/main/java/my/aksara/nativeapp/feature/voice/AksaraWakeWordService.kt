@@ -41,6 +41,8 @@ internal object AksaraWakePermissionPolicy {
             !notificationsAllowed -> AksaraWakeReadiness.READY_WITHOUT_NOTIFICATIONS
             else -> AksaraWakeReadiness.READY
         }
+
+    fun mayContinueInBackground(notificationsAllowed: Boolean): Boolean = notificationsAllowed
 }
 
 /** In-process rendezvous for an already-visible chat UI. No recording is persisted. */
