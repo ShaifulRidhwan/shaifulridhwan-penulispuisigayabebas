@@ -25,7 +25,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import my.aksara.nativeapp.MainActivity
 
 internal object AksaraHotwordMatcher {
-    private val pattern = Regex("(^|[^\\p{L}])aksara([^\\p{L}]|$)", RegexOption.IGNORE_CASE)
+    // A minimal common romanized variant when the device's offline model is English.
+    private val pattern = Regex("(^|[^\\p{L}])(?:aksara|akshara|ak sara)([^\\p{L}]|$)",RegexOption.IGNORE_CASE)
     fun matches(transcript: String): Boolean = pattern.containsMatchIn(transcript)
 }
 
@@ -39,6 +40,9 @@ internal object AksaraAssistantSignals {
 internal object AksaraWakeWordStatus {
     var active by mutableStateOf(false)
         internal set
+    var lastFailure by mutableStateOf<String?>(null)
+        internal set
+    fun dismissFailure() { lastFailure=null }
 }
 
 /**
@@ -73,6 +77,7 @@ class AksaraWakeWordService : Service() {
     private var engine: SpeechRecognizer? = null
     private var stopped = false
     private var consecutiveErrors = 0
+    private var defaultLocaleTried = false
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -84,8 +89,14 @@ class AksaraWakeWordService : Service() {
         if (AksaraWakeWordStatus.active) return START_NOT_STICKY
         if (intent?.action != ACTION_START ||
             ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) !=
-                PackageManager.PERMISSION_GRANTED ||
-            !SpeechRecognizer.isOnDeviceRecognitionAvailable(this)) {
+                PackageManager.PERMISSION_GRANTED) {
+            AksaraWakeWordStatus.lastFailure="Wake word memerlukan izin mikrofon."
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        if(!SpeechRecognizer.isOnDeviceRecognitionAvailable(this)) {
+            AksaraWakeWordStatus.lastFailure=
+                "Tiada enjin suara lokal. Gunakan Voice Chat atau gestur pembantu Android."
             stopSelf()
             return START_NOT_STICKY
         }
@@ -99,6 +110,8 @@ class AksaraWakeWordService : Service() {
         }
         stopped = false
         consecutiveErrors = 0
+        defaultLocaleTried = false
+        AksaraWakeWordStatus.lastFailure = null
         AksaraWakeWordStatus.active = true
         scheduleListening(0L)
         return START_NOT_STICKY
@@ -175,26 +188,51 @@ class AksaraWakeWordService : Service() {
                         consecutiveErrors = 0
                         scheduleListening(950L)
                     } else {
-                        consecutiveErrors++
-                        // No runaway retry loops if Android or another mic session refuses us.
-                        if (consecutiveErrors >= 6) stopSelf()
-                        else scheduleListening((1500L * consecutiveErrors).coerceAtMost(7500L))
+                        when(error) {
+                            SpeechRecognizer.ERROR_LANGUAGE_NOT_SUPPORTED -> {
+                                if(!defaultLocaleTried) {
+                                    defaultLocaleTried=true
+                                    consecutiveErrors=0
+                                    // The device has no offline ms-MY model. Try its default
+                                    // local language ONCE, never switch to cloud recognition.
+                                    scheduleListening(600L)
+                                } else failWakeWord("Wake word lokal tidak serasi dengan model bahasa pada peranti. Gunakan gestur pembantu Android atau Voice Chat.")
+                            }
+                            SpeechRecognizer.ERROR_LANGUAGE_UNAVAILABLE ->
+                                failWakeWord("Model suara lokal belum dipasang. Cuba pasang model luar talian melalui tetapan Android.")
+                            SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ->
+                                failWakeWord("Izin mikrofon wake word ditolak oleh Android.")
+                            SpeechRecognizer.ERROR_TOO_MANY_REQUESTS ->
+                                failWakeWord("Android mengehadkan cubaan suara berulang. Wake word dihentikan untuk jimat bateri.")
+                            else -> {
+                                consecutiveErrors++
+                                if(consecutiveErrors>=4) failWakeWord(
+                                    "Enjin wake word tidak stabil (Android $error). Gunakan gestur pembantu.")
+                                else scheduleListening((1600L*consecutiveErrors).coerceAtMost(7000L))
+                            }
+                        }
                     }
                 }
             })
             recognizer.startListening(Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
                     RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "ms-MY")
-                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
-                putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true)
-                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+                if(!defaultLocaleTried) putExtra(RecognizerIntent.EXTRA_LANGUAGE,"ms-MY")
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS,true)
+                putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE,true)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS,1)
             })
         } catch (_: Exception) {
             consecutiveErrors++
-            if (consecutiveErrors >= 6) stopSelf()
-            else scheduleListening(2000L * consecutiveErrors)
+            if(consecutiveErrors>=4) failWakeWord(
+                "Android tidak dapat memulakan enjin wake word lokal.")
+            else scheduleListening(2000L*consecutiveErrors)
         }
+    }
+
+    private fun failWakeWord(reason:String) {
+        AksaraWakeWordStatus.lastFailure=reason
+        stopSelf()
     }
 
     /** Returns true only if this recognition cycle has activated the assistant. */
