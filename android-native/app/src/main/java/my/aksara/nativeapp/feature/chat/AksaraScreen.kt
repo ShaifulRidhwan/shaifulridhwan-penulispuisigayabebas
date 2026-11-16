@@ -797,6 +797,20 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         Modifier.weight(1f),size=10.5f,color=AksaraColors.gold)
                     AksaraButton("Batal",{editingId=null;draft=""},height=29.dp,size=10f)
                 }
+                if(systemRecognizerAllowed && !speechInput.listening) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=2.dp),
+                        verticalAlignment=Alignment.CenterVertically) {
+                        AksaraText("Dikte sistem dibenarkan · audio ikut tetapan Android",
+                            Modifier.weight(1f),size=9.5f,color=AksaraColors.muted)
+                        AksaraButton("Lokal sahaja",{
+                            speechPreferences.edit()
+                                .putBoolean("system_recognizer_consent",false).apply()
+                            systemRecognizerAllowed=false
+                            speechError=null
+                            speechAlternative=null
+                        },size=9f,height=28.dp,radius=12.dp)
+                    }
+                }
                 if (speechInput.listening || speechError != null ||
                     AksaraWakeWordStatus.lastFailure!=null) {
                     Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=3.dp),
