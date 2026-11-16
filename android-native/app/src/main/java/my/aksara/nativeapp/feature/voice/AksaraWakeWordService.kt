@@ -14,6 +14,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.os.SystemClock
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
@@ -48,6 +49,10 @@ internal object AksaraWakePermissionPolicy {
 /** In-process rendezvous for an already-visible chat UI. No recording is persisted. */
 internal object AksaraAssistantSignals {
     const val ACTION_OPEN_VOICE = "my.aksara.nativeapp.action.OPEN_ASSISTANT_VOICE"
+    const val ACTION_WAKE_STATUS = "my.aksara.nativeapp.action.WAKE_STATUS"
+    const val EXTRA_ACTIVE = "active"
+    const val EXTRA_DIAGNOSTIC = "diagnostic"
+    const val EXTRA_ACTIVATED = "activated"
     val requests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 }
 
@@ -57,6 +62,25 @@ internal object AksaraWakeWordStatus {
         internal set
     var lastFailure by mutableStateOf<String?>(null)
         internal set
+    private var lastSignalMs = 0L
+    internal fun requestStart() {
+        active=true
+        lastFailure=null
+        lastSignalMs=SystemClock.elapsedRealtime()
+    }
+    internal fun requestStop() { active=false;lastSignalMs=0L }
+    internal fun receiveStatus(isActive:Boolean,diagnostic:String?) {
+        active=isActive
+        lastSignalMs=if(isActive) SystemClock.elapsedRealtime() else 0L
+        if(!diagnostic.isNullOrBlank()) lastFailure=diagnostic
+    }
+    internal fun checkHeartbeat(maxAgeMs:Long=15_000L) {
+        if(active && lastSignalMs>0L &&
+            SystemClock.elapsedRealtime()-lastSignalMs>maxAgeMs) {
+            active=false
+            lastFailure="Enjin wake word terhenti. Chatbox masih boleh digunakan. Cuba Voice Chat atau gestur pembantu."
+        }
+    }
     fun dismissFailure() { lastFailure=null }
 }
 
@@ -78,13 +102,21 @@ class AksaraWakeWordService : Service() {
         private const val ACTIVATION_ID = 7242
 
         fun start(context: Context) {
-            ContextCompat.startForegroundService(
-                context, Intent(context, AksaraWakeWordService::class.java).setAction(ACTION_START))
+            AksaraWakeWordStatus.requestStart()
+            try {
+                ContextCompat.startForegroundService(
+                    context, Intent(context, AksaraWakeWordService::class.java)
+                        .setAction(ACTION_START))
+            } catch(error:Exception) {
+                AksaraWakeWordStatus.requestStop()
+                throw error
+            }
         }
 
         fun stop(context: Context) {
             // Never start a stopped foreground microphone service from background.
             // stopService is valid even when the app is not visible.
+            AksaraWakeWordStatus.requestStop()
             context.stopService(Intent(context, AksaraWakeWordService::class.java))
         }
     }
@@ -94,6 +126,23 @@ class AksaraWakeWordService : Service() {
     private var stopped = false
     private var consecutiveErrors = 0
     private var defaultLocaleTried = false
+    private val heartbeat = object:Runnable {
+        override fun run() {
+            if(!stopped) {
+                broadcastStatus(true)
+                main.postDelayed(this,5_000L)
+            }
+        }
+    }
+    private fun broadcastStatus(active:Boolean,reason:String?=null,activated:Boolean=false) {
+        try {
+            sendBroadcast(Intent(AksaraAssistantSignals.ACTION_WAKE_STATUS)
+                .setPackage(packageName)
+                .putExtra(AksaraAssistantSignals.EXTRA_ACTIVE,active)
+                .putExtra(AksaraAssistantSignals.EXTRA_DIAGNOSTIC,reason)
+                .putExtra(AksaraAssistantSignals.EXTRA_ACTIVATED,activated))
+        } catch (_:Exception) { /* The owner Activity may no longer be visible. */ }
+    }
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -132,6 +181,9 @@ class AksaraWakeWordService : Service() {
             defaultLocaleTried=false
             AksaraWakeWordStatus.lastFailure=null
             AksaraWakeWordStatus.active=true
+            broadcastStatus(true)
+            main.removeCallbacks(heartbeat)
+            main.postDelayed(heartbeat,5_000L)
             scheduleListening(0L)
         } catch(error: Exception) {
             failWakeWord(when(error) {
@@ -260,6 +312,7 @@ class AksaraWakeWordService : Service() {
         stopped=true
         AksaraWakeWordStatus.active=false
         AksaraWakeWordStatus.lastFailure=reason
+        broadcastStatus(false,reason)
         try { stopSelf() } catch (_: Exception) { }
     }
 
@@ -273,9 +326,9 @@ class AksaraWakeWordService : Service() {
         try { engine?.cancel(); engine?.destroy() } catch (_: Exception) { }
         engine = null
         AksaraWakeWordStatus.active = false
-        // Active chat handles this directly. Background Android restricts arbitrary
-        // Activity launches; use an explicit user-tappable notification instead.
-        AksaraAssistantSignals.requests.tryEmit(Unit)
+        // This service runs in :wakeword. In-process SharedFlow does not cross
+        // process boundaries; deliver activation via same-package broadcast.
+        broadcastStatus(false,activated=true)
         try {
             val manager=getSystemService(NotificationManager::class.java)
             // POST_NOTIFICATIONS is optional for the foreground service, but
@@ -306,6 +359,7 @@ class AksaraWakeWordService : Service() {
         try { engine?.cancel(); engine?.destroy() } catch (_: Exception) { }
         engine = null
         AksaraWakeWordStatus.active = false
+        broadcastStatus(false)
         super.onDestroy()
     }
 }
