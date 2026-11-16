@@ -2,6 +2,9 @@ package my.aksara.nativeapp
 
 import android.os.Bundle
 import android.content.Intent
+import android.app.NotificationManager
+import my.aksara.nativeapp.feature.voice.AksaraWakeWordStatus
+import my.aksara.nativeapp.feature.voice.AksaraWakeWordService
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
@@ -78,6 +81,19 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         perfStats?.isTrackingEnabled = false
+        // Without notifications, background wake-up has no reliable user-visible
+        // handoff. Stop audio before Home/lock-screen on restrictive OEM builds;
+        // the system default-assistant gesture remains available.
+        if(AksaraWakeWordStatus.active) {
+            val canNotify=runCatching {
+                getSystemService(NotificationManager::class.java).areNotificationsEnabled()
+            }.getOrDefault(false)
+            if(!canNotify) {
+                AksaraWakeWordStatus.lastFailure=
+                    "Wake word dihentikan apabila app ke background kerana notifikasi dimatikan. Benarkan notifikasi untuk penggunaan background."
+                runCatching { AksaraWakeWordService.stop(this) }
+            }
+        }
         super.onStop()
     }
 
