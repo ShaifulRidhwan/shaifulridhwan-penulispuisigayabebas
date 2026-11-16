@@ -36,6 +36,17 @@ class AksaraWakeCrashIsolationTest {
             ?: error("Expected Android main source not found: $path")
     }
 
+    @Test fun abnormalExitDiagnosticsDistinguishCrashFromNormalExit() {
+        assertTrue(AksaraExitDiagnostics.interestingReason(
+            android.app.ApplicationExitInfo.REASON_CRASH))
+        assertTrue(AksaraExitDiagnostics.interestingReason(
+            android.app.ApplicationExitInfo.REASON_CRASH_NATIVE))
+        assertTrue(AksaraExitDiagnostics.interestingReason(
+            android.app.ApplicationExitInfo.REASON_LOW_MEMORY))
+        assertFalse(AksaraExitDiagnostics.interestingReason(
+            android.app.ApplicationExitInfo.REASON_EXIT_SELF))
+    }
+
     @Test fun staleIsolatedWorkerIsDetected() {
         assertTrue(AksaraWakeLivenessPolicy.expired(true,1_000L,16_001L))
         assertFalse(AksaraWakeLivenessPolicy.expired(true,1_000L,15_999L))
