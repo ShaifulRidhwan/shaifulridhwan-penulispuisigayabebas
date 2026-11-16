@@ -56,6 +56,12 @@ internal object AksaraAssistantSignals {
     val requests = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 }
 
+/** Guard against isolated-process death without asking Android for hidden process state. */
+internal object AksaraWakeLivenessPolicy {
+    fun expired(active:Boolean,lastSignalMs:Long,nowMs:Long,maxAgeMs:Long=15_000L):Boolean =
+        active && lastSignalMs>0L && nowMs-lastSignalMs>maxAgeMs
+}
+
 /** Visible opt-in state only; this is not a boot-started or hidden microphone. */
 internal object AksaraWakeWordStatus {
     var active by mutableStateOf(false)
@@ -75,8 +81,8 @@ internal object AksaraWakeWordStatus {
         if(!diagnostic.isNullOrBlank()) lastFailure=diagnostic
     }
     internal fun checkHeartbeat(maxAgeMs:Long=15_000L) {
-        if(active && lastSignalMs>0L &&
-            SystemClock.elapsedRealtime()-lastSignalMs>maxAgeMs) {
+        if(AksaraWakeLivenessPolicy.expired(active,lastSignalMs,
+            SystemClock.elapsedRealtime(),maxAgeMs)) {
             active=false
             lastFailure="Enjin wake word terhenti. Chatbox masih boleh digunakan. Cuba Voice Chat atau gestur pembantu."
         }
