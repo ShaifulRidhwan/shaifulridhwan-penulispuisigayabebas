@@ -357,6 +357,9 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var systemRecognizerAllowed by remember {
         mutableStateOf(speechPreferences.getBoolean("system_recognizer_consent",false))
     }
+    var systemAutoLanguage by remember {
+        mutableStateOf(speechPreferences.getBoolean("system_auto_language",false))
+    }
     var speechAlternative by remember { mutableStateOf<AksaraSpeechAlternative?>(null) }
     var speechError by remember { mutableStateOf<String?>(null) }
     val margins = aksaraDeviceMargins()
@@ -378,8 +381,11 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     }
     fun beginDictation() {
         if(speechInput.listening) speechInput.stop()
-        else startDictation(if(systemRecognizerAllowed) AksaraSpeechMode.SYSTEM_MALAY
-            else AksaraSpeechMode.LOCAL)
+        else startDictation(
+            if(!systemRecognizerAllowed) AksaraSpeechMode.LOCAL
+            else if(systemAutoLanguage) AksaraSpeechMode.SYSTEM_AUTO
+            else AksaraSpeechMode.SYSTEM_MALAY
+        )
     }
     val micPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -544,10 +550,14 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         AksaraButton("Benarkan dikte sistem",{
                             speechPreferences.edit().putBoolean("system_recognizer_consent",true).apply()
                             systemRecognizerAllowed=true
+                            systemAutoLanguage=false
+                            speechPreferences.edit().putBoolean("system_auto_language",false).apply()
                             startDictation(AksaraSpeechMode.SYSTEM_MALAY)
                         },Modifier.fillMaxWidth(),height=40.dp,size=11f)
                     } else {
                         AksaraButton("Cuba pengesanan automatik",{
+                            systemAutoLanguage=true
+                            speechPreferences.edit().putBoolean("system_auto_language",true).apply()
                             startDictation(AksaraSpeechMode.SYSTEM_AUTO)
                         },Modifier.fillMaxWidth(),height=40.dp,size=11f)
                     }
@@ -800,12 +810,16 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                 if(systemRecognizerAllowed && !speechInput.listening) {
                     Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=2.dp),
                         verticalAlignment=Alignment.CenterVertically) {
-                        AksaraText("Dikte sistem dibenarkan · audio ikut tetapan Android",
+                        AksaraText(
+                            if(systemAutoLanguage) "Dikte sistem · bahasa automatik"
+                            else "Dikte sistem dibenarkan · audio ikut tetapan Android",
                             Modifier.weight(1f),size=9.5f,color=AksaraColors.muted)
                         AksaraButton("Lokal sahaja",{
                             speechPreferences.edit()
                                 .putBoolean("system_recognizer_consent",false).apply()
                             systemRecognizerAllowed=false
+                            systemAutoLanguage=false
+                            speechPreferences.edit().putBoolean("system_auto_language",false).apply()
                             speechError=null
                             speechAlternative=null
                         },size=9f,height=28.dp,radius=12.dp)
