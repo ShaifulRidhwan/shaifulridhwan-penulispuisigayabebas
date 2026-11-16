@@ -9,6 +9,8 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <!-- Microphone FGS is only started after an explicit UI action. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Agenda is optional: read-only and requested from the Clock window with explanation. -->
@@ -18,6 +20,19 @@
         <intent><action android:name="android.speech.RecognitionService" /></intent>
     </queries>
     <application android:extractNativeLibs="true" android:label="Aksara A.I." android:theme="@style/Theme.Aksara" android:allowBackup="false" android:usesCleartextTraffic="false" android:icon="@drawable/aksara_icon_transparent" android:roundIcon="@drawable/aksara_icon_transparent" android:supportsRtl="true">
+        <service android:name=".feature.voice.AksaraWakeWordService"
+            android:exported="false" android:foregroundServiceType="microphone"
+            android:stopWithTask="false" />
+        <service android:name=".feature.voice.AksaraSystemAssistantService"
+            android:exported="true" android:permission="android.permission.BIND_VOICE_INTERACTION">
+            <intent-filter>
+                <action android:name="android.service.voice.VoiceInteractionService" />
+            </intent-filter>
+            <meta-data android:name="android.voice_interaction"
+                android:resource="@xml/aksara_voice_interaction" />
+        </service>
+        <service android:name=".feature.voice.AksaraAssistantSessionService"
+            android:exported="true" android:permission="android.permission.BIND_VOICE_INTERACTION" />
         <service android:name=".feature.today.TodayNavigationService" android:exported="false" android:foregroundServiceType="location" android:stopWithTask="false" />
         <activity android:name=".ChessActivity" android:launchMode="singleTop" android:exported="false" android:hardwareAccelerated="true" />
         <activity android:name=".GameActivity" android:exported="false" android:screenOrientation="sensorLandscape" android:configChanges="orientation|screenSize|keyboardHidden" android:hardwareAccelerated="true" />
