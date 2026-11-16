@@ -23,9 +23,9 @@ class AksaraWakeCrashIsolationTest {
         val service=Regex("""<service\s+android:name="\.feature\.voice\.AksaraWakeWordService"([\s\S]*?)/>""")
             .find(manifest)?.value.orEmpty()
         assertTrue("experimental recognizer must be isolated from Chatbox process",
-            service.contains("""android:process=":wakeword""""))
-        assertTrue(service.contains("""android:exported="false""""))
-        assertTrue(service.contains("""android:foregroundServiceType="microphone""""))
+            service.contains("android:process=\":wakeword\""))
+        assertTrue(service.contains("android:exported=\"false\""))
+        assertTrue(service.contains("android:foregroundServiceType=\"microphone\""))
     }
 
     @Test fun statusBridgeUsesBroadcastAndNotCrossProcessSharedFlow() {
