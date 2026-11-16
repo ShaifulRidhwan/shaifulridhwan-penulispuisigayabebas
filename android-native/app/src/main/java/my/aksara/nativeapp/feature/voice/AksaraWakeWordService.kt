@@ -24,6 +24,11 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableSharedFlow
 import my.aksara.nativeapp.MainActivity
 
+internal object AksaraHotwordMatcher {
+    private val pattern = Regex("(^|[^\\p{L}])aksara([^\\p{L}]|$)", RegexOption.IGNORE_CASE)
+    fun matches(transcript: String): Boolean = pattern.containsMatchIn(transcript)
+}
+
 /** In-process rendezvous for an already-visible chat UI. No recording is persisted. */
 internal object AksaraAssistantSignals {
     const val ACTION_OPEN_VOICE = "my.aksara.nativeapp.action.OPEN_ASSISTANT_VOICE"
@@ -68,7 +73,6 @@ class AksaraWakeWordService : Service() {
     private var engine: SpeechRecognizer? = null
     private var stopped = false
     private var consecutiveErrors = 0
-    private val wakeWord = Regex("(^|[^\\p{L}])aksara([^\\p{L}]|$)", RegexOption.IGNORE_CASE)
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -197,7 +201,7 @@ class AksaraWakeWordService : Service() {
     private fun inspect(bundle: Bundle?): Boolean {
         if (stopped) return false
         val candidates = bundle?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION).orEmpty()
-        if (candidates.none { wakeWord.containsMatchIn(it) }) return false
+        if (candidates.none { AksaraHotwordMatcher.matches(it) }) return false
         stopped = true
         main.removeCallbacksAndMessages(null)
         engine?.cancel()
