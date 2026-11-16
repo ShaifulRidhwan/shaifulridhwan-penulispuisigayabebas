@@ -5,6 +5,7 @@ import android.content.Intent
 import android.app.NotificationManager
 import my.aksara.nativeapp.feature.voice.AksaraWakeWordStatus
 import my.aksara.nativeapp.feature.voice.AksaraWakeWordService
+import my.aksara.nativeapp.feature.voice.AksaraWakePermissionPolicy
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
@@ -88,7 +89,7 @@ class MainActivity : ComponentActivity() {
             val canNotify=runCatching {
                 getSystemService(NotificationManager::class.java).areNotificationsEnabled()
             }.getOrDefault(false)
-            if(!canNotify) {
+            if(!AksaraWakePermissionPolicy.mayContinueInBackground(canNotify)) {
                 AksaraWakeWordStatus.lastFailure=
                     "Wake word dihentikan apabila app ke background kerana notifikasi dimatikan. Benarkan notifikasi untuk penggunaan background."
                 runCatching { AksaraWakeWordService.stop(this) }
