@@ -204,7 +204,8 @@ jobs:
             --tests 'my.aksara.nativeapp.TodayAdvancedNavigationTest' \
             --tests 'my.aksara.nativeapp.SettingsV2TechnicalRegistryTest' \
             --tests 'my.aksara.nativeapp.StudioContractsTest' \
-            --tests 'my.aksara.nativeapp.TodayChatV2RegressionTest'
+            --tests 'my.aksara.nativeapp.TodayChatV2RegressionTest' \
+            --tests 'my.aksara.nativeapp.feature.voice.AksaraHotwordMatcherTest'
       - name: Verify native PTY, Alpine, signature and checksum
         run: |
           set -euo pipefail
