@@ -48,7 +48,7 @@ for(let attempt=1;attempt<=3&&!streamPassed;attempt++){
   const r=await send("/.netlify/functions/bilik-antara-stream",{
    question:"Ujian sambungan ringkas. Balas satu ayat tentang Aksara A.I.",
    history:[],thoughtMode:"cahaya",contextFallback:true,mediaFallback:false},48000);
-  const frames=r.data.split(/\\r?\\n/).filter(Boolean).map(line=>JSON.parse(line));
+  const frames=r.data.split(/\r?\n/).filter(Boolean).map(line=>JSON.parse(line));
   const done=frames.find(x=>x.type==="done"&&typeof x.reply==="string"&&x.reply.trim().length>0);
   const error=frames.find(x=>x.type==="error");
   const code=error?String(error.code||error.status||"UPSTREAM").slice(0,55):null;
