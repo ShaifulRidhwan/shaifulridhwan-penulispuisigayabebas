@@ -11,6 +11,7 @@ import android.os.Build
 import android.speech.SpeechRecognizer
 import my.aksara.nativeapp.feature.voice.AksaraWakeWordService
 import my.aksara.nativeapp.feature.voice.AksaraWakeWordStatus
+import my.aksara.nativeapp.feature.voice.AksaraExitDiagnostics
 import my.aksara.nativeapp.feature.voice.AksaraAssistantSignals
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -367,6 +368,14 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var micHandoffPending by remember { mutableStateOf(false) }
     var voiceHandoffPending by remember { mutableStateOf<String?>(null) }
     var wakeStartPending by remember { mutableStateOf(false) }
+    val crashPrefs=remember(context) {
+        context.getSharedPreferences("aksara_local_exit_report",Context.MODE_PRIVATE)
+    }
+    var lastExitEvent by remember(context) {
+        mutableStateOf(AksaraExitDiagnostics.latest(context)?.takeIf {
+            it.timestamp!=crashPrefs.getLong("acknowledged_timestamp",0L)
+        })
+    }
     val margins = aksaraDeviceMargins()
     val focus = LocalFocusManager.current
     val list = rememberLazyListState()
@@ -926,6 +935,25 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             speechError=null
                             speechAlternative=null
                         },size=9f,height=28.dp,radius=12.dp)
+                    }
+                }
+                if(lastExitEvent!=null) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=3.dp),
+                        verticalAlignment=Alignment.CenterVertically) {
+                        AksaraText("Diagnostik: ${lastExitEvent!!.summary}",
+                            Modifier.weight(1f),size=9.5f,color=Color(0xffffaa97))
+                        AksaraButton("Salin",{
+                            try {
+                                val clipboard=context.getSystemService(Context.CLIPBOARD_SERVICE)
+                                    as ClipboardManager
+                                clipboard.setPrimaryClip(ClipData.newPlainText(
+                                    "Aksara Android process-exit diagnostic",
+                                    lastExitEvent!!.summary))
+                            } catch (_:Exception) { }
+                            crashPrefs.edit()
+                                .putLong("acknowledged_timestamp",lastExitEvent!!.timestamp).apply()
+                            lastExitEvent=null
+                        },size=9f,height=29.dp,radius=12.dp)
                     }
                 }
                 if(AksaraWakeWordStatus.active && Build.VERSION.SDK_INT>=33 &&
