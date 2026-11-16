@@ -30,6 +30,19 @@ internal object AksaraHotwordMatcher {
     fun matches(transcript: String): Boolean = pattern.containsMatchIn(transcript)
 }
 
+internal enum class AksaraWakeReadiness {
+    MIC_REQUIRED, READY_WITHOUT_NOTIFICATIONS, READY
+}
+
+internal object AksaraWakePermissionPolicy {
+    fun evaluate(microphoneGranted: Boolean, notificationsAllowed: Boolean): AksaraWakeReadiness =
+        when {
+            !microphoneGranted -> AksaraWakeReadiness.MIC_REQUIRED
+            !notificationsAllowed -> AksaraWakeReadiness.READY_WITHOUT_NOTIFICATIONS
+            else -> AksaraWakeReadiness.READY
+        }
+}
+
 /** In-process rendezvous for an already-visible chat UI. No recording is persisted. */
 internal object AksaraAssistantSignals {
     const val ACTION_OPEN_VOICE = "my.aksara.nativeapp.action.OPEN_ASSISTANT_VOICE"
@@ -95,8 +108,13 @@ class AksaraWakeWordService : Service() {
                 failWakeWord("Arahan mengaktifkan wake word tidak sah.")
                 return START_NOT_STICKY
             }
-            if(ContextCompat.checkSelfPermission(this,Manifest.permission.RECORD_AUDIO) !=
-                PackageManager.PERMISSION_GRANTED) {
+            val micGranted=ContextCompat.checkSelfPermission(
+                this,Manifest.permission.RECORD_AUDIO)==PackageManager.PERMISSION_GRANTED
+            val notificationsAllowed=runCatching {
+                getSystemService(NotificationManager::class.java).areNotificationsEnabled()
+            }.getOrDefault(false)
+            if(AksaraWakePermissionPolicy.evaluate(micGranted,notificationsAllowed) ==
+                AksaraWakeReadiness.MIC_REQUIRED) {
                 failWakeWord("Izin mikrofon belum diberikan. Tekan mic untuk meminta izin dalam aplikasi.")
                 return START_NOT_STICKY
             }
