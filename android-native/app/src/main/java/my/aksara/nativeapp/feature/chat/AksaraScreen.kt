@@ -393,43 +393,47 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         if (granted) beginDictation()
         else speechError = "Izin mikrofon ditolak. Dikte tidak diaktifkan."
     }
+    var wakePermissionBlocked by remember { mutableStateOf(false) }
     fun enableWakeWord() {
         speechError = null
-        if (!SpeechRecognizer.isOnDeviceRecognitionAvailable(context)) {
-            speechError = "Pengesan suara lokal tiada pada peranti ini. Voice Live masih tersedia."
+        AksaraWakeWordStatus.dismissFailure()
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) !=
+            PackageManager.PERMISSION_GRANTED) {
+            wakePermissionBlocked = true
+            speechError = "Izin mikrofon diperlukan untuk mendengar nama Aksara."
             return
         }
+        val localAvailable = runCatching {
+            SpeechRecognizer.isOnDeviceRecognitionAvailable(context)
+        }.getOrDefault(false)
+        if (!localAvailable) {
+            speechError = "Pengecaman suara lokal tidak tersedia. Gunakan Voice Chat atau gestur pembantu Android."
+            return
+        }
+        speechInput.dispose()
         try {
-            speechInput.dispose()
             AksaraWakeWordService.start(context)
         } catch (error: Exception) {
-            speechError = "Wake word tidak dapat dimulakan: ${error.message ?: "sistem menolak"}"
+            speechError = "Android menyekat pengaktifan wake word: ${error.message ?: "sekatan sistem"}"
         }
     }
+    // Microphone is the only *required* runtime permission for a microphone FGS.
+    // POST_NOTIFICATIONS is optional on Android 13+. Never block voice on its denial.
     val wakePermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { grants ->
-        val micOk = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
-            PackageManager.PERMISSION_GRANTED
-        val notifOk = Build.VERSION.SDK_INT < 33 ||
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) ==
-                PackageManager.PERMISSION_GRANTED
-        if (micOk && notifOk) enableWakeWord()
-        else speechError = "Wake word memerlukan izin mikrofon dan notifikasi."
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        wakePermissionBlocked = !granted
+        if (granted) enableWakeWord()
+        else speechError = "Izin mikrofon ditolak. Benarkan daripada dialog Android atau tetapan aplikasi."
     }
     fun toggleWakeWord() {
         if (AksaraWakeWordStatus.active) {
             AksaraWakeWordService.stop(context)
             return
         }
-        val required = buildList {
-            if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) !=
-                PackageManager.PERMISSION_GRANTED) add(Manifest.permission.RECORD_AUDIO)
-            if (Build.VERSION.SDK_INT >= 33 &&
-                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
-                PackageManager.PERMISSION_GRANTED) add(Manifest.permission.POST_NOTIFICATIONS)
-        }
-        if (required.isEmpty()) enableWakeWord() else wakePermission.launch(required.toTypedArray())
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED) enableWakeWord()
+        else wakePermission.launch(Manifest.permission.RECORD_AUDIO)
     }
     DisposableEffect(speechInput) { onDispose { speechInput.dispose() } }
     // Track only visibility transitions; the keyboard animates its insets every frame.
@@ -838,6 +842,18 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             Modifier.weight(1f), size=10.5f,
                             color=if(speechError!=null || AksaraWakeWordStatus.lastFailure!=null)
                                 Color(0xffffaa97) else AksaraColors.gold)
+                        if (wakePermissionBlocked &&
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) !=
+                                PackageManager.PERMISSION_GRANTED) {
+                            AksaraButton("Izin",{
+                                try {
+                                    context.startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                                        .setData(Uri.parse("package:${context.packageName}")))
+                                } catch (_: Exception) {
+                                    speechError="Buka Settings Android → Apps → Aksara A.I. → Microphone."
+                                }
+                            },size=9f,height=29.dp,radius=12.dp)
+                        }
                         if (speechError != null || AksaraWakeWordStatus.lastFailure!=null)
                             AksaraButton("Tutup",{
                                 speechError=null; AksaraWakeWordStatus.dismissFailure()
