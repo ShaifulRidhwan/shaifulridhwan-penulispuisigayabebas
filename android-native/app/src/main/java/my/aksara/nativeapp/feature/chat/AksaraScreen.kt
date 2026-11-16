@@ -4,6 +4,9 @@ import android.content.Intent
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -326,10 +329,30 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     var pendingJumpId by remember { mutableStateOf<String?>(null) }
     var highlightedMessageId by remember { mutableStateOf<String?>(null) }
     val context = LocalContext.current
+    val speechInput = remember(context) { AksaraSpeechInput(context) }
+    var speechError by remember { mutableStateOf<String?>(null) }
     val margins = aksaraDeviceMargins()
     val focus = LocalFocusManager.current
     val list = rememberLazyListState()
     var autoFollow by remember { mutableStateOf(true) }
+    fun beginDictation() {
+        speechError = null
+        if (speechInput.listening) {
+            speechInput.stop()
+        } else {
+            speechInput.start(onFinal = { words ->
+                draft = listOf(draft.trim(), words).filter { it.isNotBlank() }.joinToString(" ")
+                autoFollow = true
+            }, onError = { speechError = it })
+        }
+    }
+    val micPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) beginDictation()
+        else speechError = "Izin mikrofon ditolak. Dikte tidak diaktifkan."
+    }
+    DisposableEffect(speechInput) { onDispose { speechInput.dispose() } }
     // Track only visibility transitions; the keyboard animates its insets every frame.
     // Pixel-by-pixel effect restarts caused expensive repeated LazyColumn scrolling.
     val imeDensity=LocalDensity.current
@@ -410,6 +433,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     }
     val keyboard = LocalSoftwareKeyboardController.current
     fun open(value: String) {
+        if (value.startsWith("voice")) speechInput.dispose()
         focus.clearFocus(); keyboard?.hide()
         if(value=="voice") voiceIndicator=VoiceLinkState.CONNECTING
         overlay = value
@@ -633,6 +657,19 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                         Modifier.weight(1f),size=10.5f,color=AksaraColors.gold)
                     AksaraButton("Batal",{editingId=null;draft=""},height=29.dp,size=10f)
                 }
+                if (speechInput.listening || speechError != null) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=3.dp),
+                        verticalAlignment=Alignment.CenterVertically) {
+                        AksaraText(
+                            if (speechInput.listening) "Dikte lokal · " +
+                                (speechInput.partial.ifBlank { "Mendengar Bahasa Melayu..." }).take(90)
+                            else speechError.orEmpty(),
+                            Modifier.weight(1f), size=10.5f,
+                            color=if(speechError!=null) Color(0xffffaa97) else AksaraColors.gold)
+                        if (speechError != null) AksaraButton("Tutup",{speechError=null},
+                            size=9f,height=29.dp,radius=12.dp)
+                    }
+                }
                 val canSubmit = state.loaded && !state.busy && !attachmentLoading &&
                     (draft.isNotBlank() || hasAttachments) && (editingId==null || !hasAttachments)
                 AksaraGlassSurface(
@@ -653,6 +690,20 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             .testTagCompat("input"),
                             textStyle=AksaraTypography.style(16f,24f),
                             cursorBrush=SolidColor(AksaraColors.gold))
+                        Box(Modifier.size(38.dp).clip(RoundedCornerShape(13.dp))
+                            .clickable {
+                                if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO)
+                                    == PackageManager.PERMISSION_GRANTED) beginDictation()
+                                else micPermission.launch(Manifest.permission.RECORD_AUDIO)
+                            }
+                            .semantics {
+                                contentDescription = if(speechInput.listening) "Hentikan dikte suara"
+                                    else "Dikte suara lokal Bahasa Melayu"
+                                testTag = "composer-mic"
+                            }, contentAlignment=Alignment.Center) {
+                            AksaraIcon("mic",Modifier.size(20.dp),
+                                if(speechInput.listening) AksaraColors.gold else AksaraColors.text)
+                        }
                         if(state.busy) AksaraButton("Henti",onStop,Modifier.width(56.dp)
                             .semantics {contentDescription="Hentikan respons"},size=12f,height=40.dp,radius=12.dp)
                         ReactiveThinkingButton(
