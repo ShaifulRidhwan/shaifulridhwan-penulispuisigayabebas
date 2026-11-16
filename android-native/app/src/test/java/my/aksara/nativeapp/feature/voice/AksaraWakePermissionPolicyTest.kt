@@ -17,4 +17,9 @@ class AksaraWakePermissionPolicyTest {
         assertEquals(AksaraWakeReadiness.READY,
             AksaraWakePermissionPolicy.evaluate(true,true))
     }
+
+    @Test fun hiddenBackgroundMicrophoneIsStoppedWhenNotificationsAreDenied() {
+        org.junit.Assert.assertFalse(AksaraWakePermissionPolicy.mayContinueInBackground(false))
+        org.junit.Assert.assertTrue(AksaraWakePermissionPolicy.mayContinueInBackground(true))
+    }
 }
