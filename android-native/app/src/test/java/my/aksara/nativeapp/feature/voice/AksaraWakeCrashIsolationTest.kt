@@ -11,6 +11,13 @@ import org.junit.Test
  * "listening" indicator indefinitely.
  */
 class AksaraWakeCrashIsolationTest {
+    private fun readMainSource(path:String):String {
+        // Gradle Test.workDir can be the module root or the Android project root.
+        return listOf(File("src/main/$path"),File("app/src/main/$path"))
+            .firstOrNull { it.isFile }?.readText()
+            ?: error("Expected Android main source not found: $path")
+    }
+
     @Test fun staleIsolatedWorkerIsDetected() {
         assertTrue(AksaraWakeLivenessPolicy.expired(true,1_000L,16_001L))
         assertFalse(AksaraWakeLivenessPolicy.expired(true,1_000L,15_999L))
@@ -19,7 +26,7 @@ class AksaraWakeCrashIsolationTest {
     }
 
     @Test fun microphoneWorkerIsInSeparateAndroidProcess() {
-        val manifest=File("app/src/main/AndroidManifest.xml").readText()
+        val manifest=readMainSource("AndroidManifest.xml")
         val service=Regex("""<service\s+android:name="\.feature\.voice\.AksaraWakeWordService"([\s\S]*?)/>""")
             .find(manifest)?.value.orEmpty()
         assertTrue("experimental recognizer must be isolated from Chatbox process",
@@ -29,8 +36,8 @@ class AksaraWakeCrashIsolationTest {
     }
 
     @Test fun statusBridgeUsesBroadcastAndNotCrossProcessSharedFlow() {
-        val code=File("app/src/main/java/my/aksara/nativeapp/feature/voice/AksaraWakeWordService.kt").readText()
-        val activity=File("app/src/main/java/my/aksara/nativeapp/MainActivity.kt").readText()
+        val code=readMainSource("java/my/aksara/nativeapp/feature/voice/AksaraWakeWordService.kt")
+        val activity=readMainSource("java/my/aksara/nativeapp/MainActivity.kt")
         assertTrue(code.contains("broadcastStatus(false,activated=true)"))
         assertTrue(code.contains("sendBroadcast(Intent(AksaraAssistantSignals.ACTION_WAKE_STATUS)"))
         assertTrue(activity.contains("ContextCompat.registerReceiver(this,wakeReceiver"))
