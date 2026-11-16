@@ -3,13 +3,19 @@ package my.aksara.nativeapp
 import android.os.Bundle
 import android.content.Intent
 import android.app.NotificationManager
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.IntentFilter
+import android.os.Handler
+import android.os.Looper
+import androidx.core.content.ContextCompat
 import my.aksara.nativeapp.feature.voice.AksaraWakeWordStatus
 import my.aksara.nativeapp.feature.voice.AksaraWakeWordService
 import my.aksara.nativeapp.feature.voice.AksaraWakePermissionPolicy
+import my.aksara.nativeapp.feature.voice.AksaraAssistantSignals
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
-import my.aksara.nativeapp.feature.voice.AksaraAssistantSignals
 import android.os.Build
 import android.view.animation.DecelerateInterpolator
 import android.animation.AnimatorSet
@@ -27,11 +33,33 @@ import my.aksara.nativeapp.feature.chat.AksaraApp
 
 class MainActivity : ComponentActivity() {
     private var assistantOpenCount by mutableIntStateOf(0)
+    // The experimental listener lives in :wakeword. Never trust in-process
+    // state from another Android process without the explicit relay.
+    private val wakeReceiver=object:BroadcastReceiver() {
+        override fun onReceive(context:Context?,intent:Intent?) {
+            if(intent?.action!=AksaraAssistantSignals.ACTION_WAKE_STATUS) return
+            AksaraWakeWordStatus.receiveStatus(
+                intent.getBooleanExtra(AksaraAssistantSignals.EXTRA_ACTIVE,false),
+                intent.getStringExtra(AksaraAssistantSignals.EXTRA_DIAGNOSTIC))
+            if(intent.getBooleanExtra(AksaraAssistantSignals.EXTRA_ACTIVATED,false))
+                assistantOpenCount++
+        }
+    }
+    private val wakeMonitor=Handler(Looper.getMainLooper())
+    private val verifyWakeProcess=object:Runnable {
+        override fun run() {
+            AksaraWakeWordStatus.checkHeartbeat()
+            wakeMonitor.postDelayed(this,5_000L)
+        }
+    }
     private var perfStats: JankStats? = null
     // One-shot platform splash pulse; never hold the first application frame.
     private var startupPulse: AnimatorSet? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ContextCompat.registerReceiver(this,wakeReceiver,
+            IntentFilter(AksaraAssistantSignals.ACTION_WAKE_STATUS),
+            ContextCompat.RECEIVER_NOT_EXPORTED)
         if (intent?.action == AksaraAssistantSignals.ACTION_OPEN_VOICE) assistantOpenCount++
         // The platform splash remains visible until the first app frame is ready.
         // Animate its exit, not a second artificial loading screen.
@@ -81,6 +109,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        wakeMonitor.removeCallbacks(verifyWakeProcess)
         perfStats?.isTrackingEnabled = false
         // Without notifications, background wake-up has no reliable user-visible
         // handoff. Stop audio before Home/lock-screen on restrictive OEM builds;
@@ -100,6 +129,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        wakeMonitor.removeCallbacks(verifyWakeProcess)
+        wakeMonitor.post(verifyWakeProcess)
         perfStats?.isTrackingEnabled = true
+    }
+
+    override fun onDestroy() {
+        wakeMonitor.removeCallbacksAndMessages(null)
+        try { unregisterReceiver(wakeReceiver) } catch (_:Exception) { }
+        super.onDestroy()
     }
 }
