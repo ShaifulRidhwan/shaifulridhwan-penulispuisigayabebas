@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android controls assistant selection; no automatic role takeover. -->
+<voice-interaction-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:sessionService="my.aksara.nativeapp.feature.voice.AksaraAssistantSessionService"
+    android:recognitionService=""
+    android:supportsAssist="true"
+    android:supportsLocalInteraction="true"
+    android:supportsLaunchVoiceAssistFromKeyguard="false" />
