@@ -426,6 +426,24 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         if (granted) enableWakeWord()
         else speechError = "Izin mikrofon ditolak. Benarkan daripada dialog Android atau tetapan aplikasi."
     }
+    val optionalNotificationPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        speechError = if(granted) null else
+            "Notifikasi tidak diberi. Wake word boleh berfungsi ketika aplikasi aktif, tetapi panggilan di background mungkin tidak boleh membuka Voice."
+    }
+    fun requestWakeNotifications() {
+        if(Build.VERSION.SDK_INT>=33 &&
+            ContextCompat.checkSelfPermission(context,Manifest.permission.POST_NOTIFICATIONS)!=
+                PackageManager.PERMISSION_GRANTED)
+            optionalNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        else try {
+            context.startActivity(Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE,context.packageName))
+        } catch (_: Exception) {
+            speechError="Buka Settings Android → Apps → Aksara A.I. → Notifications."
+        }
+    }
     fun toggleWakeWord() {
         if (AksaraWakeWordStatus.active) {
             AksaraWakeWordService.stop(context)
@@ -827,6 +845,18 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             speechError=null
                             speechAlternative=null
                         },size=9f,height=28.dp,radius=12.dp)
+                    }
+                }
+                if(AksaraWakeWordStatus.active && Build.VERSION.SDK_INT>=33 &&
+                    !context.getSystemService(android.app.NotificationManager::class.java)
+                        .areNotificationsEnabled()) {
+                    Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=2.dp),
+                        verticalAlignment=Alignment.CenterVertically) {
+                        AksaraText("Wake word aktif · notifikasi background dimatikan",
+                            Modifier.weight(1f),size=10f,color=AksaraColors.muted)
+                        AksaraButton("Izin notifikasi",{
+                            requestWakeNotifications()
+                        },size=9f,height=29.dp,radius=12.dp)
                     }
                 }
                 if (speechInput.listening || speechError != null ||
