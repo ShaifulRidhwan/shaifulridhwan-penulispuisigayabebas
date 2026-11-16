@@ -11,6 +11,24 @@ import org.junit.Test
  * "listening" indicator indefinitely.
  */
 class AksaraWakeCrashIsolationTest {
+    @Test fun neverShareMicrophoneUntilWorkerReleaseIsAcknowledged() {
+        assertFalse(AksaraWakeAudioHandoff.canStartOtherRecognizer(true,false,false))
+        assertFalse(AksaraWakeAudioHandoff.canStartOtherRecognizer(true,true,false))
+        assertFalse(AksaraWakeAudioHandoff.canStartOtherRecognizer(false,true,false))
+        assertFalse(AksaraWakeAudioHandoff.canStartOtherRecognizer(false,false,false))
+        assertTrue(AksaraWakeAudioHandoff.canStartOtherRecognizer(false,false,true))
+    }
+
+    @Test fun chatAndVoiceBothWaitForCrossProcessRelease() {
+        val chat=readMainSource("java/my/aksara/nativeapp/feature/chat/AksaraScreen.kt")
+        val releaseWait="snapshotFlow { AksaraWakeWordStatus.canStartOtherAudio }.first { it }"
+        assertTrue("chat mic and Voice should await the isolated worker release",
+            chat.split(releaseWait).size>=3)
+        assertTrue(chat.contains("micHandoffPending=true"))
+        assertTrue(chat.contains("voiceHandoffPending=value"))
+        assertTrue(chat.contains("Wake word tidak mengesahkan pelepasan mikrofon"))
+    }
+
     private fun readMainSource(path:String):String {
         // Gradle Test.workDir can be the module root or the Android project root.
         return listOf(File("src/main/$path"),File("app/src/main/$path"))
