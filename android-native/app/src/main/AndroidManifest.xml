@@ -20,7 +20,10 @@
         <intent><action android:name="android.speech.RecognitionService" /></intent>
     </queries>
     <application android:extractNativeLibs="true" android:label="Aksara A.I." android:theme="@style/Theme.Aksara" android:allowBackup="false" android:usesCleartextTraffic="false" android:icon="@drawable/aksara_icon_transparent" android:roundIcon="@drawable/aksara_icon_transparent" android:supportsRtl="true">
+        <!-- Isolate experimental OEM SpeechRecognizer callbacks from Chat/Voice process.
+             If local hotword recognition crashes, Android can terminate :wakeword only. -->
         <service android:name=".feature.voice.AksaraWakeWordService"
+            android:process=":wakeword"
             android:exported="false" android:foregroundServiceType="microphone"
             android:stopWithTask="false" />
         <service android:name=".feature.voice.AksaraSystemAssistantService"
