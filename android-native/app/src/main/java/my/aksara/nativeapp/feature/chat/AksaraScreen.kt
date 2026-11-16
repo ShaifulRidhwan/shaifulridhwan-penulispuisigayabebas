@@ -398,6 +398,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         )
     }
     fun beginDictation() {
+        if(voiceHandoffPending!=null) {
+            speechError="Voice Chat sedang mengambil mikrofon. Tunggu sesi suara bersambung."
+            return
+        }
         if(speechInput.listening) {
             speechInput.stop()
             return
@@ -593,6 +597,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     }
     val keyboard = LocalSoftwareKeyboardController.current
     fun open(value: String) {
+        if(value.startsWith("voice")) micHandoffPending=false
         if(value.startsWith("voice") && voiceHandoffPending==null) {
             val speechWasActive=speechInput.listening
             if(speechWasActive || !AksaraWakeWordStatus.canStartOtherAudio) {
