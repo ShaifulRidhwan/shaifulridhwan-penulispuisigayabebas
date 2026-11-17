@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import android.content.Context
 import android.os.Build
+import my.aksara.nativeapp.AksaraCrashJournal
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -53,10 +54,20 @@ internal object AksaraExitDiagnostics {
                 "Enjin wake word" else "Aplikasi utama"
             val time=SimpleDateFormat("dd MMM HH:mm:ss",Locale.ROOT)
                 .format(Date(exit.timestamp))
+            val processId=if(exit.processName.endsWith(":wakeword"))
+                "wakeword" else "main"
+            val saved=AksaraCrashJournal.mostRecent(context,processId)
+            // Only correlate a synchronous fatal-handler record from the SAME
+            // process and close to this specific Android exit event.
+            val matching=saved?.takeIf {
+                kotlin.math.abs(it.timestamp-exit.timestamp)<=90_000L
+            }
+            val base="Android lapor ${reasonLabel(exit.reason)} pada $process ($time). "+
+                "Reason ${exit.reason}; status ${exit.status}."
             AksaraExitEvent(
                 exit.timestamp,
-                "Android lapor ${reasonLabel(exit.reason)} pada $process ($time). "+
-                "Reason ${exit.reason}; status ${exit.status}.")
+                if(matching!=null) base+"\\n"+matching.text
+                else base+"\\nException stack belum tersedia. Crash Journal hanya boleh merakam crash selepas versi ini dipasang.")
         } catch (_:Exception) {
             null // OEMs may restrict historical process-exit access.
         }
