@@ -47,6 +47,18 @@ class AksaraWakeCrashIsolationTest {
             android.app.ApplicationExitInfo.REASON_EXIT_SELF))
     }
 
+    @Test fun listeningRescheduleMustNotCancelHeartbeat() {
+        val code=readMainSource("java/my/aksara/nativeapp/feature/voice/AksaraWakeWordService.kt")
+        val schedule=code.substringAfter("private fun scheduleListening(waitMs: Long)")
+            .substringBefore("private fun listenOnce()")
+        assertTrue("must cancel only the pending recognition task",
+            schedule.contains("main.removeCallbacks(it)"))
+        assertFalse("removing all callbacks would silently cancel the heartbeat",
+            schedule.contains("removeCallbacksAndMessages(null)"))
+        assertTrue("heartbeat must still be registered",
+            code.contains("main.postDelayed(heartbeat,5_000L)"))
+    }
+
     @Test fun staleIsolatedWorkerIsDetected() {
         assertTrue(AksaraWakeLivenessPolicy.expired(true,1_000L,16_001L))
         assertFalse(AksaraWakeLivenessPolicy.expired(true,1_000L,15_999L))
