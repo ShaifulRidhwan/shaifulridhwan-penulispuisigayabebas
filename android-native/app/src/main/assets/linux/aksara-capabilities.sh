@@ -52,6 +52,7 @@ check_group 'FILES AND DEBUG' git sqlite3 jq rg file find tar unzip zip less nan
 check_group 'NETWORK AND SERVICES' curl wget ssh scp sftp openssl nc
 check_group 'OPTIONAL MEDIA' ffmpeg ffprobe sox
 check_group 'OPTIONAL MULTIPLEXER' tmux screen
+check_group 'SECURITY TESTING (BUNDLED)' nmap ncat ffuf nikto.pl sqlmap openssl john hydra tshark tcpdump
 
 printf '\n[SECURITY]\n'
 echo '  Android root: NOT PROVIDED'
@@ -59,4 +60,4 @@ echo '  Android shared storage: NOT MOUNTED'
 echo '  SAF files: explicit Android picker or selected folder, never a raw host mount'
 echo '  No commands, packages, downloads, or privileges were changed.'
 echo ''
-echo 'Next: aksara-share status | aksara-doctor | apk info'
+echo 'Next: aksara-security --check | aksara-share status | aksara-doctor | apk info'

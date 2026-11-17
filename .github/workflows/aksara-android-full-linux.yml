@@ -1,4 +1,4 @@
-name: AKSARA Android Full Linux (Agentic + Advanced)
+name: AKSARA Android Full Linux (Stable + Security)
 on:
   push:
     branches:
@@ -11,7 +11,7 @@ permissions:
   contents: read
   actions: read
 concurrency:
-  group: aksara-android-full-linux-merged
+  group: aksara-android-full-linux-stable
   cancel-in-progress: true
 jobs:
   build-linux:
@@ -190,13 +190,15 @@ jobs:
           grep -q 'linux/aksara-share.sh' android-native/app/src/main/java/my/aksara/nativeapp/core/linux/AksaraLinuxRuntime.kt
           grep -q 'OpenDocumentTree' android-native/app/src/main/java/my/aksara/nativeapp/core/linux/AksaraLinuxScreen.kt
           grep -q 'LinuxAdvancedStorageTest' android-native/app/src/test/java/my/aksara/nativeapp/core/linux/LinuxAdvancedStorageTest.kt
-      - name: Compile integrated Agentic and Advanced Full Linux preview with focused regression tests
+          sh -n android-native/scripts/linux/aksara-security.sh
+          sh -n android-native/scripts/linux/sqlmap-wrapper.sh
+      - name: Compile stable Alpine Advanced + Security Suite with focused regression tests
         working-directory: android-native
         run: |
           set -euo pipefail
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
           gradle --no-daemon --init-script ci/compiler-repository.init.gradle \
-            -PenableLinuxPreview=true -PaksaraPreviewSuffix=.preview.p330.c"$tag" \
+            -PenableLinuxPreview=true -PaksaraPreviewSuffix=.preview.p332.c"$tag" \
             assembleDebug :app:testDebugUnitTest \
             --tests 'my.aksara.nativeapp.core.linux.*' \
             --tests 'my.aksara.nativeapp.NativeIntegrationContractTest' \
@@ -210,7 +212,7 @@ jobs:
           set -euo pipefail
           mkdir -p delivery
           tag="$(printf '%s' "$GITHUB_SHA" | cut -c1-8)"
-          apk="AKSARA-AGENTIC-ADVANCED-FULL-LINUX-$tag.apk"
+          apk="AKSARA-STABLE-SECURITY-FULL-LINUX-$tag.apk"
           cp android-native/app/build/outputs/apk/debug/app-debug.apk "delivery/$apk"
           # Owner-tested PR326 full Alpine APK measured 766233021 bytes (~731 MiB).
           # Size is a sanity check only; archive + checksum checks below are authoritative.
@@ -219,7 +221,7 @@ jobs:
             echo "FATAL: expected full Alpine APK (~740 MB class), got $apk_bytes bytes" >&2
             exit 1
           fi
-          echo "Merged Agentic + Advanced Full Linux APK bytes: $apk_bytes"
+          echo "Stable Advanced + Security Full Linux APK bytes: $apk_bytes"
           unzip -tq "delivery/$apk"
           unzip -l "delivery/$apk" | grep -F 'lib/arm64-v8a/libaksara_proot.so'
           unzip -p "delivery/$apk" lib/arm64-v8a/libaksara_proot.so > "$RUNNER_TEMP/aksara-packaged-proot"
@@ -240,6 +242,28 @@ jobs:
           unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/first-setup.sh'
           unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/terminal-theme.sh'
           unzip -Z1 "delivery/$apk" | grep -Fx 'assets/linux/aksara-doctor.sh'
+          # Verify the installed toolchain inside the APK, not on the CI host.
+          python3 - "delivery/$apk" <<'AKSARA_SECURITY_APK_CHECK'
+          import sys, tarfile, zipfile
+          required = {
+              'usr/bin/nmap', 'usr/bin/ncat', 'usr/bin/ffuf',
+              'usr/bin/nikto.pl', 'usr/bin/john', 'usr/bin/hydra',
+              'usr/bin/tshark', 'usr/bin/tcpdump', 'usr/bin/openssl',
+              'opt/sqlmap/sqlmap.py', 'usr/local/bin/sqlmap',
+              'usr/local/bin/aksara-security'
+          }
+          found = set()
+          with zipfile.ZipFile(sys.argv[1]) as apk:
+              with apk.open('assets/linux/alpine-minirootfs.bundle') as data:
+                  with tarfile.open(fileobj=data, mode='r|gz') as root:
+                      for member in root:
+                          name = member.name.lstrip('./')
+                          if name in required:
+                              found.add(name)
+          missing = required - found
+          assert not missing, f'Missing embedded security commands: {sorted(missing)}'
+          print(f'APK rootfs verified: {len(required)} security entries')
+          AKSARA_SECURITY_APK_CHECK
           unzip -Z1 "delivery/$apk" | grep -Fx 'assets/fonts/jetbrains_mono_nl_regular.ttf'
           echo "Embedded verified Alpine extraction progress manifest"
           expected="$(awk '{print $1; exit}' android-native/app/src/main/assets/linux/alpine-minirootfs.sha256)"
@@ -249,15 +273,15 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "delivery/$apk"
           "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -P 16 4 "delivery/$apk"
           "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "delivery/$apk" > delivery/BADGING.txt
-          grep -F "package: name='my.aksara.nativeapp.preview.p330.c$tag'" delivery/BADGING.txt
+          grep -F "package: name='my.aksara.nativeapp.preview.p332.c$tag'" delivery/BADGING.txt
           grep -F "targetSdkVersion:'28'" delivery/BADGING.txt
           sha256sum "delivery/$apk" > delivery/SHA256SUMS.txt
-          tar -czf "delivery/AKSARA-AGENTIC-ADVANCED-$tag-proot-source.tar.gz" \
+          tar -czf "delivery/AKSARA-STABLE-SECURITY-$tag-proot-source.tar.gz" \
             -C "$RUNNER_TEMP/aksara-proot-static" --exclude=.git .
-      - name: Upload merged Agentic and Advanced Full Linux APK with GPL source
+      - name: Upload stable Full Linux Security APK and GPL source
         uses: actions/upload-artifact@v4
         with:
-          name: aksara-android-full-linux-merged
+          name: aksara-android-full-linux-stable
           path: delivery/
           retention-days: 60
           if-no-files-found: error
