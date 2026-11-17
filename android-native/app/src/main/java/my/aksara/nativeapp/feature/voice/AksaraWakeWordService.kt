@@ -284,10 +284,23 @@ class AksaraWakeWordService : Service() {
             .build()
     }
 
+    private var pendingListen:Runnable?=null
+
     private fun scheduleListening(waitMs: Long) {
-        main.removeCallbacksAndMessages(null)
-        if (stopped) return
-        main.postDelayed({ if (!stopped) listenOnce() }, waitMs)
+        // Never clear the entire Handler queue here. That used to cancel the
+        // five-second liveness heartbeat every time recognition was scheduled,
+        // making the main process report a false worker death at ~15-20 s.
+        pendingListen?.let { main.removeCallbacks(it) }
+        pendingListen=null
+        if(stopped) return
+        val task=object:Runnable {
+            override fun run() {
+                pendingListen=null
+                if(!stopped) listenOnce()
+            }
+        }
+        pendingListen=task
+        main.postDelayed(task,waitMs)
     }
 
     private fun listenOnce() {
