@@ -41,8 +41,10 @@ class MainActivity : ComponentActivity() {
             AksaraWakeWordStatus.receiveStatus(
                 intent.getBooleanExtra(AksaraAssistantSignals.EXTRA_ACTIVE,false),
                 intent.getStringExtra(AksaraAssistantSignals.EXTRA_DIAGNOSTIC))
-            if(intent.getBooleanExtra(AksaraAssistantSignals.EXTRA_ACTIVATED,false))
+            if(intent.getBooleanExtra(AksaraAssistantSignals.EXTRA_ACTIVATED,false)) {
+                AksaraCrashJournal.mark("wake-activation-broadcast")
                 assistantOpenCount++
+            }
         }
     }
     private val wakeMonitor=Handler(Looper.getMainLooper())
@@ -56,6 +58,7 @@ class MainActivity : ComponentActivity() {
     // One-shot platform splash pulse; never hold the first application frame.
     private var startupPulse: AnimatorSet? = null
     override fun onCreate(savedInstanceState: Bundle?) {
+        AksaraCrashJournal.mark("main-activity-onCreate")
         super.onCreate(savedInstanceState)
         ContextCompat.registerReceiver(this,wakeReceiver,
             IntentFilter(AksaraAssistantSignals.ACTION_WAKE_STATUS),
@@ -103,6 +106,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onNewIntent(intent: Intent) {
+        AksaraCrashJournal.mark("main-activity-assistant-intent")
         super.onNewIntent(intent)
         setIntent(intent)
         if (intent.action == AksaraAssistantSignals.ACTION_OPEN_VOICE) assistantOpenCount++
