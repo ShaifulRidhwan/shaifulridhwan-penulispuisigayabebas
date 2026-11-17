@@ -3,6 +3,7 @@ package my.aksara.nativeapp
 import android.app.Application
 import android.content.Context
 import android.os.Process
+import android.os.Build
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -23,7 +24,7 @@ internal object AksaraCrashJournal {
     }
 
     private fun processTag():String =
-        if(Application.getProcessName().endsWith(":wakeword")) "wakeword" else "main"
+        if(Build.VERSION.SDK_INT>=28 && Application.getProcessName().endsWith(":wakeword")) "wakeword" else "main"
 
     internal fun filename(process:String):String = when(process) {
         "wakeword" -> "aksara-crash-wakeword.txt"
@@ -39,15 +40,16 @@ internal object AksaraCrashJournal {
         var cause:Throwable?=failure
         var depth=0
         while(cause!=null && depth<MAX_CAUSES) {
+            val current=cause
             out.append("exception[").append(depth).append("]=")
-                .append(cause.javaClass.name).append('\n')
-            cause.stackTrace.take(MAX_FRAMES).forEachIndexed {index,frame ->
+                .append(current.javaClass.name).append('\n')
+            current.stackTrace.take(MAX_FRAMES).forEachIndexed {index,frame ->
                 out.append("  ").append(index).append(": ")
                     .append(frame.className).append(".").append(frame.methodName)
                     .append("(").append(frame.fileName ?: "?")
                     .append(":").append(frame.lineNumber).append(")").append('\n')
             }
-            cause=cause.cause
+            cause=current.cause
             depth++
         }
         return out.toString().take(6000)
