@@ -24,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.flow.MutableSharedFlow
 import my.aksara.nativeapp.MainActivity
+import my.aksara.nativeapp.AksaraCrashJournal
 
 internal object AksaraHotwordMatcher {
     // A minimal common romanized variant when the device's offline model is English.
@@ -170,9 +171,9 @@ class AksaraWakeWordService : Service() {
                 val wasRunning=context.stopService(Intent(context, AksaraWakeWordService::class.java))
                 if(!wasRunning) AksaraWakeWordStatus.receiveStatus(false,null)
             } catch(error:Exception) {
+                // A stopped/denied service is a Voice error, not a fatal Chat crash.
                 AksaraWakeWordStatus.lastFailure=
                     "Android menolak penghentian wake word: ${error.javaClass.simpleName}."
-                throw error
             }
         }
     }
@@ -203,6 +204,7 @@ class AksaraWakeWordService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        AksaraCrashJournal.mark("wake-worker-onStartCommand")
         if(intent?.action == ACTION_STOP) {
             stopSelf()
             return START_NOT_STICKY
@@ -290,6 +292,7 @@ class AksaraWakeWordService : Service() {
 
     private fun listenOnce() {
         if (stopped) return
+        AksaraCrashJournal.mark("wake-worker-listenOnce")
         try { engine?.destroy() } catch (_: Exception) { }
         engine = null
         try {
@@ -410,6 +413,7 @@ class AksaraWakeWordService : Service() {
     }
 
     override fun onDestroy() {
+        AksaraCrashJournal.mark("wake-worker-onDestroy")
         stopped = true
         main.removeCallbacksAndMessages(null)
         try { engine?.cancel(); engine?.destroy() } catch (_: Exception) { }
