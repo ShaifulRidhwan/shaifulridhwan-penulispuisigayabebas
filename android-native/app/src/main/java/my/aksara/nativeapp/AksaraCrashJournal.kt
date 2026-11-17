@@ -74,15 +74,17 @@ internal object AksaraCrashJournal {
 
     data class SavedReport(val timestamp:Long,val process:String,val text:String)
 
-    fun mostRecent(context:Context,process:String):SavedReport? = try {
-        val file=File(context.filesDir,filename(process))
-        if(!file.isFile) return null
-        val value=file.readText(Charsets.UTF_8).take(6000)
-        val timestamp=value.lineSequence().firstOrNull()
-            ?.removePrefix("timestamp=")?.toLongOrNull() ?: return null
-        SavedReport(timestamp,process,value)
-    } catch (_:Exception) {
-        null
+    fun mostRecent(context:Context,process:String):SavedReport? {
+        return try {
+            val file=File(context.filesDir,filename(process))
+            if(!file.isFile) return null
+            val value=file.readText(Charsets.UTF_8).take(6000)
+            val timestamp=value.lineSequence().firstOrNull()
+                ?.removePrefix("timestamp=")?.toLongOrNull() ?: return null
+            SavedReport(timestamp,process,value)
+        } catch (_:Exception) {
+            null
+        }
     }
 }
 
