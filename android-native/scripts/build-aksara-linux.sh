@@ -103,6 +103,17 @@ BRAND="$ROOT/android-native/scripts/linux"
 sh -n "$BRAND/aksara-fetch.sh" "$BRAND/90-aksara-intro.sh" "$BRAND/aksara-linux-smoke.sh" "$BRAND/aksara-linux-benchmark.sh"
 python3 -m json.tool "$BRAND/fastfetch-wide.jsonc" >/dev/null
 python3 -m json.tool "$BRAND/fastfetch-compact.jsonc" >/dev/null
+# Stage the official pinned sqlmap release into the CI-built Alpine archive,
+# not as an Android first-run download.
+sh -n "$BRAND/aksara-security.sh" "$BRAND/sqlmap-wrapper.sh"
+SQLMAP_SHA=6faa9bb929347189a62c046d7d02349140e9933d
+SQLMAP_SRC="$RUNNER_TEMP/aksara-sqlmap"
+git clone --filter=blob:none --no-checkout https://github.com/sqlmapproject/sqlmap.git "$SQLMAP_SRC"
+git -C "$SQLMAP_SRC" fetch --depth=1 origin "$SQLMAP_SHA"
+git -C "$SQLMAP_SRC" checkout --detach "$SQLMAP_SHA"
+test "$(git -C "$SQLMAP_SRC" rev-parse HEAD)" = "$SQLMAP_SHA"
+test -f "$SQLMAP_SRC/sqlmap.py"
+rm -rf "$SQLMAP_SRC/.git"
 image="$(docker import --platform linux/arm64 "$ASSETS/$file")"
 test -n "$image"
 container=""
@@ -123,11 +134,36 @@ container="$(docker create --platform linux/arm64 "$image" /bin/sh -ec '
     clang20 llvm20 lld20 \
     python3 py3-pip py3-virtualenv nodejs npm rust cargo go openjdk17-jdk \
     sqlite sqlite-dev jq cloc ripgrep file htop procps fastfetch gdb strace
+  # A package failure never skips attempts for the remaining tools.
+  # Release QA still rejects an incomplete security rootfs.
+  security_failures=""
+  for security_package in nmap nmap-ncat ffuf nikto john hydra tshark tcpdump; do
+    if ! apk add --no-cache "$security_package"; then
+      echo "SECURITY_PACKAGE_FAILED: $security_package" >&2
+      security_failures="$security_failures $security_package"
+    fi
+  done
+  if [ -n "$security_failures" ]; then
+    echo "Cannot publish incomplete security rootfs:$security_failures" >&2
+    exit 1
+  fi
   for cmd in sh apk bash zsh curl fastfetch git htop jq less nano ssh python3 rg vi wget \
     gcc g++ clang cmake make ninja node npm rustc cargo go java javac sqlite3 cloc; do
     command -v "$cmd" >/dev/null || { echo "Missing bundled command: $cmd" >&2; exit 1; }
   done
-  mkdir -p /usr/local/bin /usr/share/aksara /etc/profile.d /tmp /workspace
+  mkdir -p /usr/local/bin /usr/share/aksara /etc/profile.d /tmp /workspace /opt
+  mv /tmp/sqlmap /opt/sqlmap
+  mv /tmp/sqlmap-wrapper.sh /usr/local/bin/sqlmap
+  mv /tmp/aksara-security.sh /usr/local/bin/aksara-security
+  chmod 755 /usr/local/bin/sqlmap /usr/local/bin/aksara-security
+  for security_command in nmap ncat ffuf nikto.pl sqlmap openssl john hydra tshark tcpdump; do
+    command -v "$security_command" >/dev/null || {
+      echo "Missing bundled pentest tool: $security_command" >&2
+      exit 1
+    }
+  done
+  python3 /opt/sqlmap/sqlmap.py --version >/dev/null
+  /usr/local/bin/aksara-security --check
   chmod 1777 /tmp
   mv /tmp/aksara-linux-benchmark.sh /usr/local/bin/aksara-linux-benchmark
   chmod 755 /usr/local/bin/aksara-linux-benchmark
@@ -145,14 +181,15 @@ container="$(docker create --platform linux/arm64 "$image" /bin/sh -ec '
   timeout 8 fastfetch --config /usr/share/aksara/fastfetch-wide.jsonc --pipe >/dev/null
   timeout 8 fastfetch --config /usr/share/aksara/fastfetch-compact.jsonc --pipe >/dev/null
   apk info -vv | sort > /etc/aksara-preinstalled-packages.txt
-  printf "%s\n" "AKSARA Linux V3 Full Prebuilt Devkit / Alpine v3.22 / ARM64" > /etc/aksara-package-profile
+  printf "%s\n" "AKSARA Linux V3 Full Prebuilt Devkit + Security Suite / Alpine v3.22 / ARM64" > /etc/aksara-package-profile
 ')"
 test -n "$container"
 # Copy assets into the stopped ARM64 container before it runs package hooks;
 # this ensures executable bits/config paths are in the exported rootfs.
-for item in aksara-fetch.sh 90-aksara-intro.sh aksara-logo.txt fastfetch-wide.jsonc fastfetch-compact.jsonc aksara-linux-smoke.sh aksara-linux-benchmark.sh; do
+for item in aksara-fetch.sh 90-aksara-intro.sh aksara-logo.txt fastfetch-wide.jsonc fastfetch-compact.jsonc aksara-linux-smoke.sh aksara-linux-benchmark.sh aksara-security.sh sqlmap-wrapper.sh; do
   docker cp "$BRAND/$item" "$container:/tmp/$item"
 done
+docker cp "$SQLMAP_SRC" "$container:/tmp/sqlmap"
 docker start -a "$container"
 # Flatten actual installed files, apk database, hooks and all dependencies.
 docker export "$container" | gzip -9 > "$ASSETS/alpine-minirootfs.bundle"
@@ -180,7 +217,13 @@ required = {"bin/sh", "sbin/apk", "usr/bin/vim", "usr/bin/nano",
             "usr/bin/gcc", "usr/bin/g++", "usr/bin/clang",
             "usr/bin/node", "usr/bin/rustc", "usr/bin/cargo",
             "usr/bin/go", "usr/bin/java", "usr/bin/javac",
-            "usr/bin/sqlite3", "usr/local/bin/aksara-linux-smoke",
+            "usr/bin/sqlite3",
+            "usr/bin/nmap", "usr/bin/ncat", "usr/bin/ffuf",
+            "usr/bin/nikto.pl", "usr/bin/john", "usr/bin/hydra",
+            "usr/bin/tshark", "usr/bin/tcpdump", "usr/bin/openssl",
+            "opt/sqlmap/sqlmap.py", "usr/local/bin/sqlmap",
+            "usr/local/bin/aksara-security",
+            "usr/local/bin/aksara-linux-smoke",
             "usr/local/bin/aksara-linux-benchmark"}
 missing = sorted(required.difference(members))
 if missing: raise SystemExit(f"Bundled Linux files missing: {missing}")
