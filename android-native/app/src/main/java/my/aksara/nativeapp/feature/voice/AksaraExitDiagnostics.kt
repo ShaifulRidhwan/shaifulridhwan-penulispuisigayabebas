@@ -66,8 +66,8 @@ internal object AksaraExitDiagnostics {
                 "Reason ${exit.reason}; status ${exit.status}."
             AksaraExitEvent(
                 exit.timestamp,
-                if(matching!=null) base+"\\n"+matching.text
-                else base+"\\nException stack belum tersedia. Crash Journal hanya boleh merakam crash selepas versi ini dipasang.")
+                if(matching!=null) base+"\n"+matching.text
+                else base+"\nException stack belum tersedia. Crash Journal hanya boleh merakam crash selepas versi ini dipasang.")
         } catch (_:Exception) {
             null // OEMs may restrict historical process-exit access.
         }
