@@ -12,6 +12,7 @@ import android.speech.SpeechRecognizer
 import my.aksara.nativeapp.feature.voice.AksaraWakeWordService
 import my.aksara.nativeapp.feature.voice.AksaraWakeWordStatus
 import my.aksara.nativeapp.feature.voice.AksaraExitDiagnostics
+import my.aksara.nativeapp.AksaraCrashJournal
 import my.aksara.nativeapp.feature.voice.AksaraAssistantSignals
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -381,6 +382,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     val list = rememberLazyListState()
     var autoFollow by remember { mutableStateOf(true) }
     fun startDictation(mode:AksaraSpeechMode) {
+        AksaraCrashJournal.mark("dictation-${mode.name.toLowerCase()}-requested")
         if(!AksaraWakeWordStatus.canStartOtherAudio) {
             speechError="Wake word belum melepaskan mikrofon. Dikte tidak akan bermula serentak."
             return
@@ -398,6 +400,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
         )
     }
     fun beginDictation() {
+        AksaraCrashJournal.mark("composer-mic-pressed")
         if(voiceHandoffPending!=null) {
             speechError="Voice Chat sedang mengambil mikrofon. Tunggu sesi suara bersambung."
             return
@@ -412,6 +415,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
             else AksaraSpeechMode.SYSTEM_MALAY
         if(!AksaraWakeWordStatus.canStartOtherAudio) {
             micHandoffPending=true
+            AksaraCrashJournal.mark("waiting-wake-release-for-dictation")
             speechError="Mematikan wake word dan menunggu mikrofon dilepaskan..."
             try { AksaraWakeWordService.stop(context) }
             catch(error:Exception) {
@@ -446,6 +450,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     }
     var wakePermissionBlocked by remember { mutableStateOf(false) }
     fun enableWakeWord() {
+        AksaraCrashJournal.mark("wake-start-requested")
         speechError = null
         AksaraWakeWordStatus.dismissFailure()
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) !=
@@ -597,7 +602,10 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
     }
     val keyboard = LocalSoftwareKeyboardController.current
     fun open(value: String) {
-        if(value.startsWith("voice")) micHandoffPending=false
+        if(value.startsWith("voice")) {
+            AksaraCrashJournal.mark("voice-opening-requested")
+            micHandoffPending=false
+        }
         if(value.startsWith("voice") && voiceHandoffPending==null) {
             val speechWasActive=speechInput.listening
             if(speechWasActive || !AksaraWakeWordStatus.canStartOtherAudio) {
@@ -945,7 +953,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                 if(lastExitEvent!=null) {
                     Row(Modifier.fillMaxWidth().padding(horizontal=12.dp,vertical=3.dp),
                         verticalAlignment=Alignment.CenterVertically) {
-                        AksaraText("Diagnostik: ${lastExitEvent!!.summary}",
+                        AksaraText("Diagnostik: ${lastExitEvent!!.summary.lineSequence().firstOrNull().orEmpty()} · Tekan Salin untuk butiran",
                             Modifier.weight(1f),size=9.5f,color=Color(0xffffaa97))
                         AksaraButton("Salin",{
                             try {
