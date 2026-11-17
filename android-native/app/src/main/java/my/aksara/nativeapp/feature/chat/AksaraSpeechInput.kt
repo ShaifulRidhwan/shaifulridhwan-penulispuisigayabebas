@@ -16,6 +16,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.ContextCompat
 import java.util.Locale
+import my.aksara.nativeapp.AksaraCrashJournal
 
 /** No silent network fallback: the user explicitly consents before SYSTEM is used. */
 internal enum class AksaraSpeechMode { LOCAL, SYSTEM_MALAY, SYSTEM_AUTO }
@@ -99,6 +100,7 @@ internal class AksaraSpeechInput(private val context: Context) {
         onError: (String) -> Unit,
         onAlternative: (AksaraSpeechAlternative) -> Unit
     ) {
+        AksaraCrashJournal.mark("speech-${mode.name.lowercase()}-requested")
         if(listening) return
         if(ContextCompat.checkSelfPermission(context,Manifest.permission.RECORD_AUDIO) !=
             PackageManager.PERMISSION_GRANTED) {
@@ -128,6 +130,7 @@ internal class AksaraSpeechInput(private val context: Context) {
         }
         recognizer=engine
         val intent=request(mode)
+        AksaraCrashJournal.mark("speech-engine-created")
         engine.setRecognitionListener(object: RecognitionListener {
             override fun onReadyForSpeech(params: Bundle?) { if(recognizer===engine) listening=true }
             override fun onBeginningOfSpeech()=Unit
@@ -142,6 +145,7 @@ internal class AksaraSpeechInput(private val context: Context) {
             }
             override fun onResults(results: Bundle?) {
                 if(recognizer!==engine) return
+                AksaraCrashJournal.mark("speech-results-received")
                 val spoken=results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                     ?.firstOrNull()?.trim().orEmpty()
                 dispose()
@@ -150,6 +154,7 @@ internal class AksaraSpeechInput(private val context: Context) {
             }
             override fun onError(error: Int) {
                 if(recognizer!==engine) return
+                AksaraCrashJournal.mark("speech-error-$error")
                 dispose()
                 val alternative=AksaraSpeechPolicy.alternative(mode,error)
                 if(alternative!=null) onAlternative(alternative)
@@ -159,6 +164,7 @@ internal class AksaraSpeechInput(private val context: Context) {
         listening=true
         fun listen() {
             if(recognizer!==engine) return
+            AksaraCrashJournal.mark("speech-engine-start-listening")
             try { engine.startListening(intent) }
             catch(error:Exception) {
                 dispose()
@@ -214,16 +220,19 @@ internal class AksaraSpeechInput(private val context: Context) {
     }
 
     fun stop() {
-        recognizer?.stopListening()
+        try { recognizer?.stopListening() }
+        catch(_:Exception) { dispose() }
         // Results may arrive asynchronously after stopListening.
     }
 
     fun dispose() {
         val old=recognizer
         recognizer=null
-        old?.cancel()
-        old?.destroy()
         listening=false
         partial=""
+        // OEM RecognitionService implementations may throw on teardown. Never
+        // allow a failed cancel/destroy to terminate the entire Chatbox.
+        try { old?.cancel() } catch(_:Exception) { }
+        try { old?.destroy() } catch(_:Exception) { }
     }
 }
