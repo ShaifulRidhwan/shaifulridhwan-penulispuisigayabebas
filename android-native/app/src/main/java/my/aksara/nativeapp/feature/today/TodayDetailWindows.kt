@@ -1,11 +1,6 @@
 package my.aksara.nativeapp.feature.today
 
-import android.Manifest
 import android.content.Context
-import android.content.pm.PackageManager
-import android.provider.CalendarContract
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -24,10 +19,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.core.content.ContextCompat
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import my.aksara.nativeapp.core.design.*
 import my.aksara.nativeapp.BuildConfig
 import my.aksara.nativeapp.feature.chat.AksaraGlassModal
@@ -73,37 +65,14 @@ private fun readableDate(iso:String):String=runCatching {
 }.getOrElse { iso.take(19) }
 private fun formatNumber(num:Double):String=String.format(Locale.US,"%.1f",num)
 private fun shortWeatherTime(s:String)=s.takeLast(5)
-private data class AgendaEntry(val name:String,val begin:Long)
-
-private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaEntry> =
-    withContext(Dispatchers.IO) {
-        if(ContextCompat.checkSelfPermission(context,Manifest.permission.READ_CALENDAR)!=
-            PackageManager.PERMISSION_GRANTED)return@withContext emptyList()
-        val from=month.atDay(1).atStartOfDay(kl).toInstant().toEpochMilli()
-        val until=month.plusMonths(1).atDay(1).atStartOfDay(kl).toInstant().toEpochMilli()
-        runCatching {
-            val list=mutableListOf<AgendaEntry>()
-            CalendarContract.Instances.query(context.contentResolver,
-                arrayOf(CalendarContract.Instances.TITLE,CalendarContract.Instances.BEGIN),
-                from,until)?.use { cursor ->
-                val title=cursor.getColumnIndexOrThrow(CalendarContract.Instances.TITLE)
-                val begin=cursor.getColumnIndexOrThrow(CalendarContract.Instances.BEGIN)
-                while(cursor.moveToNext() && list.size<100) {
-                    val name=cursor.getString(title).orEmpty().trim()
-                    if(name.isNotBlank())list+=AgendaEntry(name.take(90),cursor.getLong(begin))
-                }
-            }
-            list
-        }.getOrDefault(emptyList())
-    }
-
 /** Show only one detail at a time; network requests are launched in the selected window. */
 @Composable internal fun TodayDetailWindow(
     kind:String,onClose:()->Unit,clock:java.time.ZonedDateTime,
     weather:TodayFeed<TodayWeather>?,prayer:TodayFeed<TodayPrayer>?,
     coins:TodayFeed<List<TodayCoin>>?,github:TodayFeed<TodayCommit>?,
     location:Location?,city:String?,detailRepo:TodayDetailRepository,
-    onNavigate:(String)->Unit={}
+    onNavigate:(String)->Unit={},
+    onPrayerZoneSelected:(String)->Unit={}
 ) {
     var forecast by remember(kind,location?.latitude,location?.longitude) {
         mutableStateOf<TodayFeed<TodayForecast>?>(null)
@@ -155,11 +124,41 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
             } else {
                 Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
                     verticalArrangement=Arrangement.spacedBy(10.dp)) {
+                    val activeFeed:TodayFeed<*>?=when(kind) {
+                        "weather" -> weather
+                        "prayer" -> prayer
+                        "crypto" -> coins
+                        "development" -> github
+                        else -> null
+                    }
+                    if(kind in setOf("weather","prayer","crypto","development")) {
+                        GlassSection("Diagnostik sumber data") {
+                            WindowLine("Sumber",when(kind) {
+                                "weather" -> "Open-Meteo"
+                                "prayer" -> "JAKIM e-Solat"
+                                "crypto" -> "CoinPaprika"
+                                else -> "GitHub API"
+                            })
+                            WindowLine("Keadaan",when(activeFeed?.freshness) {
+                                TodayFreshness.LIVE -> "Diterima daripada sumber"
+                                TodayFreshness.CACHED -> "Cache masih segar"
+                                TodayFreshness.STALE -> "Data lama, refresh gagal"
+                                else -> "Tidak tersedia"
+                            })
+                            WindowLine("Kemas kini terakhir",activeFeed?.updatedAt?.let {
+                                Instant.ofEpochMilli(it).atZone(kl).format(
+                                    DateTimeFormatter.ofPattern("dd MMM yyyy HH:mm",ms))
+                            } ?: "Tidak diketahui")
+                            activeFeed?.error?.takeIf { it.isNotBlank() }?.let {
+                                DetailNote("Ralat sumber: "+it)
+                            }
+                        }
+                    }
                     when(kind) {
                         "clock" -> ClockCalendarDetail(clock,prayer?.value?.hijri,location)
                         "weather" -> WeatherDetail(weather,forecast,city,location!=null,
                             onOpenMap={ onNavigate("map") })
-                        "prayer" -> PrayerDetail(prayer,monthly)
+                        "prayer" -> PrayerDetail(prayer,monthly,onPrayerZoneSelected)
                         "crypto" -> CryptoDetail(coins,market,btcTrend)
                         "development" -> DevelopmentDetail(github,dev)
                     }
@@ -173,11 +172,6 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
     val context=LocalContext.current
     var month by remember { mutableStateOf(YearMonth.from(clock)) }
     var selected by remember { mutableStateOf(clock.toLocalDate()) }
-    var hasCalendar by remember { mutableStateOf(
-        ContextCompat.checkSelfPermission(context,Manifest.permission.READ_CALENDAR)==
-            PackageManager.PERMISSION_GRANTED
-    ) }
-    var showRationale by remember { mutableStateOf(false) }
     val holidaysRepo=remember(context) { TodayHolidayRepository(context) }
     var stateCode by remember { mutableStateOf<String?>(null) }
     var holidays by remember(month.year,stateCode) {
@@ -189,13 +183,6 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
     LaunchedEffect(month.year,stateCode) {
         val state=stateCode
         if(state!=null)holidays=holidaysRepo.fetch(month.year,state)
-    }
-    var agenda by remember(month,hasCalendar) { mutableStateOf<List<AgendaEntry>>(emptyList()) }
-    val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-        hasCalendar=it
-    }
-    LaunchedEffect(month,hasCalendar) {
-        if(hasCalendar)agenda=agendaForMonth(context,month)
     }
     GlassSection("Masa semasa") {
         AksaraText(clock.format(DateTimeFormatter.ofPattern("HH:mm:ss")),
@@ -228,15 +215,12 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
                     val day=week.getOrNull(i) ?: 0
                     val date=if(day>0)month.atDay(day) else null
                     val holiday=date?.let { d -> holidays?.entries?.any {it.date==d} }==true
-                    val deviceEvent=date?.let { d -> agenda.any {
-                        Instant.ofEpochMilli(it.begin).atZone(kl).toLocalDate()==d
-                    } }==true
                     AksaraGlassSurface(Modifier.weight(1f).height(37.dp)
                         .clickable(enabled=date!=null) { if(date!=null)selected=date },
                         radius=10.dp,border=if(date==selected)gold else AksaraColors.border) {
                         if(day>0)AksaraText(day.toString(),Modifier.align(Alignment.Center),
                             size=11f,color=if(date==selected || holiday)gold
-                                else if(deviceEvent)Color(0xFF91D8C2) else AksaraColors.text)
+                                else AksaraColors.text)
                     }
                 }
             }
@@ -244,7 +228,7 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
         DetailNote("Dipilih: "+selected.format(DateTimeFormatter.ofPattern("d MMMM yyyy",ms)))
     }
     GlassSection("Cuti umum Malaysia • negeri") {
-        DetailNote("Emas = cuti umum, hijau = agenda peranti. Tarikh cuti boleh berubah mengikut pengumuman kerajaan.")
+        DetailNote("Emas = cuti umum. Tarikh cuti boleh berubah mengikut pengumuman kerajaan.")
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
             horizontalArrangement=Arrangement.spacedBy(6.dp)) {
             MalaysiaHolidayStates.all.forEach { (code,name) ->
@@ -275,43 +259,16 @@ private suspend fun agendaForMonth(context:Context,month:YearMonth):List<AgendaE
                 }
             }
         }
+        holidays?.entries?.filter { it.date>=LocalDate.now(kl) }
+            ?.minByOrNull { it.date }?.let { upcoming ->
+                DetailNote("Cuti seterusnya: "+upcoming.name+" · "+
+                    upcoming.date.format(DateTimeFormatter.ofPattern("d MMM yyyy",ms)))
+            }
         DetailNote("Sumber: Malaysia Holiday API, rekod disemak daripada dokumen JPM. "+
             (if(holidays?.cached==true)"Data cache/luar talian. " else "")+
             "Sahkan pengumuman rasmi sebelum membuat urusan penting.")
     }
-    GlassSection("Agenda peranti") {
-        if(!hasCalendar) {
-            DetailNote("Aksara hanya membaca agenda jika kau benarkan. Ia tidak mengubah acara atau menyegerak ke pelayan.")
-            AksaraButton("Benarkan akses kalendar",{showRationale=true},
-                Modifier.fillMaxWidth(),height=36.dp,size=10.5f)
-        } else {
-            val items=agenda.filter { Instant.ofEpochMilli(it.begin).atZone(kl).toLocalDate()==selected }
-            if(items.isEmpty())DetailNote("Tiada acara untuk tarikh ini.")
-            items.forEach { item ->
-                WindowLine(Instant.ofEpochMilli(item.begin).atZone(kl)
-                    .format(DateTimeFormatter.ofPattern("HH:mm")),item.name)
-            }
-        }
-    }
-    if(showRationale) {
-        Dialog(onDismissRequest={showRationale=false}) {
-            AksaraGlassSurface(Modifier.fillMaxWidth(),radius=22.dp,
-                border=AksaraModalStyle.border) {
-                Column(Modifier.fillMaxWidth().padding(18.dp),
-                    verticalArrangement=Arrangement.spacedBy(12.dp)) {
-                    AksaraText("Kebenaran Kalendar",size=16f,weight=700,color=gold)
-                    DetailNote("Aksara ingin membaca acara kalendar peranti untuk dipaparkan pada tarikh yang kau pilih. Tiada acara akan dimuat naik atau diubah.")
-                    Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                        AksaraButton("Batal",{showRationale=false},Modifier.weight(1f))
-                        AksaraButton("Benarkan",{
-                            showRationale=false
-                            permission.launch(Manifest.permission.READ_CALENDAR)
-                        },Modifier.weight(1f))
-                    }
-                }
-            }
-        }
-    }
+
 }
 
 /** Actual Open-Meteo temperature samples, never a synthetic activity sparkline. */
@@ -396,7 +353,8 @@ private val reminders=listOf(
     "Teguran yang lembut lebih mudah menjadi ruang untuk seseorang belajar dan berubah."
 )
 @Composable private fun PrayerDetail(
-    prayer:TodayFeed<TodayPrayer>?,month:TodayFeed<List<TodayPrayerDate>>?
+    prayer:TodayFeed<TodayPrayer>?,month:TodayFeed<List<TodayPrayerDate>>?,
+    onManualZone:(String)->Unit
 ) {
     val data=prayer?.value
     GlassSection("Jadual waktu solat hari ini") {
@@ -405,6 +363,33 @@ private val reminders=listOf(
             DetailNote("Zon "+data.zone+" • Hijrah "+data.hijri)
             data.times.forEach { (name,time)->WindowLine(name,time) }
             DetailNote("Sumber: jadual JAKIM melalui e-Solat.")
+        }
+    }
+    var zoneInput by remember { mutableStateOf(prayer?.value?.zone.orEmpty()) }
+    var manualError by remember { mutableStateOf(false) }
+    GlassSection("Zon solat manual") {
+        DetailNote("Gunakan kod zon JAKIM jika GPS atau pengesanan automatik gagal. Contoh: SGR01.")
+        AksaraGlassSurface(Modifier.fillMaxWidth().height(42.dp),radius=12.dp) {
+            BasicTextField(zoneInput,{zoneInput=it.uppercase(Locale.US).take(5)},
+                Modifier.fillMaxSize().padding(12.dp),singleLine=true,
+                textStyle=AksaraTypography.style(12f,17f),
+                cursorBrush=SolidColor(gold),
+                decorationBox={inner->Box {
+                    if(zoneInput.isBlank())AksaraText("Kod zon JAKIM",size=11f,color=muted)
+                    inner()
+                }})
+        }
+        if(manualError)DetailNote("Kod zon perlu berbentuk SGR01, WLY01 dan sebagainya.")
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+            AksaraButton("Guna zon",{
+                val code=zoneInput.trim()
+                manualError=!code.matches(Regex("[A-Z]{3}0[1-9]"))
+                if(!manualError)onManualZone(code)
+            },Modifier.weight(1f),height=36.dp,size=10f)
+            AksaraButton("Zon automatik",{
+                manualError=false
+                onManualZone("")
+            },Modifier.weight(1f),height=36.dp,size=10f)
         }
     }
     var verseIndex by remember { mutableIntStateOf(LocalDate.now(kl).dayOfYear%reminders.size) }

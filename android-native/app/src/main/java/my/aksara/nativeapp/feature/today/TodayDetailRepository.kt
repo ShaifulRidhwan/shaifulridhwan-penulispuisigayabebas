@@ -138,17 +138,25 @@ internal class TodayDetailRepository(context:Context) {
         val at=prefs.getLong("$key:at",0L)
         val old=raw?.let { runCatching { parser(it) }.getOrNull() }
         val now=System.currentTimeMillis()
-        if(old!=null && now-at<ttl)return@withContext TodayFeed(old,true,at)
+        if(old!=null && at>0L && now>=at && now-at<ttl)
+            return@withContext TodayFeed(old,true,at,TodayFreshness.CACHED)
         try {
             val text=request()
             val result=parser(text)
             prefs.edit().putString(key,text).putLong("$key:at",now).apply()
-            TodayFeed(result,false,now)
+            TodayFeed(result,false,now,TodayFreshness.LIVE)
         } catch (e:Exception) {
             if (e is CancellationException) throw e
-            TodayFeed(old,true,at.takeIf { it>0L })
+            TodayFeed(old,old!=null,at.takeIf { it>0L },
+                if(old==null)TodayFreshness.UNAVAILABLE else TodayFreshness.STALE,
+                e.message?.take(100) ?: "Sumber tidak tersedia")
         }
     }
+    fun clearLocationData() {
+        val keys=prefs.all.keys.filter { it.startsWith("forecast:") }
+        prefs.edit().apply { keys.forEach { remove(it) } }.apply()
+    }
+
     suspend fun forecast(lat:Double,lon:Double):TodayFeed<TodayForecast> {
         val a=String.format(Locale.US,"%.3f",lat)
         val b=String.format(Locale.US,"%.3f",lon)
