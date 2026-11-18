@@ -3,8 +3,10 @@ on:
   push:
     branches:
       - rebuild/aksara-android-native-v1
-    # Push to this workflow file starts a full integrated Alpine build; manual dispatch also supported.
+    # Build the canonical Full Linux APK whenever merged Android source changes.
+    # Keep workflow-file pushes as a manual fallback without distributing native-only APKs.
     paths:
+      - 'android-native/**'
       - '.github/workflows/aksara-android-full-linux.yml'
   workflow_dispatch:
 permissions:
