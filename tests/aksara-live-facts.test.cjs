@@ -41,6 +41,16 @@ test("No location means clarification, never fabricated facts",async()=>{
  assert.equal(r.sources.length,0);
  assert.match(r.reply,/bandar/i);
 });
+test("A one-city reply continues the previous location-required question",async()=>{
+ const initial=await facts.answer("ramalan cuaca esok",{now,fetchImpl:mockedFetch});
+ const history=[{role:"user",content:"ramalan cuaca esok"},{role:"assistant",content:initial.reply}];
+ const resumed=facts.resumeLocation("Subang Jaya",history);
+ assert.match(resumed,/cuaca esok di Subang Jaya/);
+ const result=await facts.answer(resumed,{now,fetchImpl:mockedFetch});
+ assert.equal(result.status,"verified");
+ assert.match(result.reply,/Subang Jaya/);
+ assert.equal(facts.resumeLocation("Bandar",[]),"Bandar");
+});
 test("Weather tomorrow is answered from a dated public forecast",async()=>{
  const r=await facts.answer("ramalan cuaca esok",{now,coarseLocation:loc,fetchImpl:mockedFetch});
  assert.equal(r.status,"verified");
