@@ -121,15 +121,24 @@ async function answer(question,{coarseLocation,signal,fetchImpl=fetch,now=new Da
      if(!detected)throw new Error("invalid_zone");
      return detected;
    });
-   const period=intent.when==="tomorrow"?"tomorrow":"today";
+   const period=intent.when==="tomorrow"?"week":"today";
    const url=JAKIM_URL+"?r=esolatApi/takwimsolat&period="+period+"&zone="+zone;
    const data=await memo("prayer:"+zone+":"+day,60*60*1000,()=>getJson(url,options));
    const list=Array.isArray(data?.prayerTime)?data.prayerTime:[];
-   const entry=list[0];
-   if(!entry)throw new Error("missing_timetable");
+   const matches=(value)=>{
+     const raw=String(value||"").trim();
+     if(raw===day)return true;
+     const m=raw.match(/^(\\d{1,2})[-/ ]([A-Za-z]{3}|\\d{1,2})[-/ ](\\d{4})$/);
+     if(!m)return false;
+     const month=Number(m[2])||(["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].indexOf(m[2].toLowerCase())+1);
+     return m[3]+"-"+String(month).padStart(2,"0")+"-"+m[1].padStart(2,"0")===day;
+   };
+   const entry=list.find(x=>matches(x?.date))||(intent.when==="today"&&list.length===1?list[0]:null);
+   if(!entry)throw new Error("missing_or_mismatched_timetable_date");
    const names={subuh:"Subuh",zohor:"Zohor",asar:"Asar",maghrib:"Maghrib",isyak:"Isyak"};
+   const fields={subuh:"fajr",zohor:"dhuhr",asar:"asr",maghrib:"maghrib",isyak:"isha"};
    const keys=intent.prayer?[intent.prayer]:Object.keys(names);
-   const times=keys.map(k=>({name:names[k],time:formatTime(entry[k])}));
+   const times=keys.map(k=>({name:names[k],time:formatTime(entry[fields[k]])}));
    if(times.some(x=>!x.time))throw new Error("invalid_prayer_time");
    return {status:"verified",reply:"Waktu solat "+(intent.prayer?names[intent.prayer]:"")+" untuk "+place.name+
      " (zon "+zone+") pada "+day+": "+times.map(x=>x.name+" "+x.time).join(", ")+
