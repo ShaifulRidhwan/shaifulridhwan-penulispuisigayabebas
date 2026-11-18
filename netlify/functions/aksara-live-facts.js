@@ -35,6 +35,15 @@ function cityFromText(question){
  if(!found)return "";
  return found[1].replace(/\b(?:esok|besok|tomorrow|hari ini|hari ni|today|malam ini|malam ni|jam berapa|pukul berapa)\b.*$/i,"").replace(/[?.!,]+$/,"").trim().slice(0,55);
 }
+function resumeLocation(question,history){
+ const city=String(question||"").trim();
+ if(classify(city)||!/^[a-zA-ZÀ-ÿ\s.'-]{3,60}$/.test(city)||!Array.isArray(history))return city;
+ const priorAssistant=[...history].reverse().find(x=>x?.role==="assistant"&&typeof x.content==="string");
+ if(!priorAssistant||!/perlukan kawasan|nyatakan bandar/i.test(priorAssistant.content))return city;
+ const priorUser=[...history].reverse().find(x=>x?.role==="user"&&typeof x.content==="string");
+ if(!priorUser||!classify(priorUser.content))return city;
+ return priorUser.content+" di "+city;
+}
 function safeCoords(coarse){
  const a=Number(coarse?.latitude),b=Number(coarse?.longitude);
  if(!Number.isFinite(a)||!Number.isFinite(b)||a<0.5||a>7.8||b<99||b>120)return null;
@@ -152,4 +161,4 @@ async function answer(question,{coarseLocation,signal,fetchImpl=fetch,now=new Da
      sources:[],toolsUsed:[]};
  }
 }
-module.exports={classify,malaysiaDate,cityFromText,safeCoords,decodeZone,formatTime,answer};
+module.exports={classify,resumeLocation,malaysiaDate,cityFromText,safeCoords,decodeZone,formatTime,answer};
