@@ -70,7 +70,7 @@ function analyzeIntent(question,attachment){
   // Soalan yang panjang, "mengapa" dan "analisis" tidak semestinya permintaan berdebat.
   const debate=/(?:\b(?:kritik|kritikkan|kritikan|debat|debatkan|bahaskan|sanggah|patahkan|refute|debate)\b|bedah (?:hujah|logik)|uji (?:logik|hujah)|cari (?:kelemahan|percanggahan) (?:hujah|idea|alasan)|semak (?:logik|hujah)|bantah (?:pendapat|hujah)|counterargument|logical fallacy|apa (?:silap|lemah) (?:pada|dalam) hujah)/i.test(q);
   const explicitNews=/\b(?:terkini|terbaru|baru-baru|berita|harga|pasaran|kajian terkini|statistik terkini|sumber terbaru|siapa (?:presiden|perdana menteri|menteri|ceo)|is it true|latest|current|today(?:'s)? news|news|recent studies|verify|semak fakta|sahkan dakwaan)\b/i.test(q);
-  const temporal=/(?:sekarang|hari ini|semalam|minggu ini|bulan ini|tahun ini|202[5-9])/i.test(q);
+  const temporal=/(?:sekarang|hari\\s+(?:ini|ni)|malam\\s+(?:ini|ni)|esok|besok|tomorrow|tonight|semalam|minggu ini|bulan ini|tahun ini|202[5-9])/i.test(q);
   const asksCurrentFact=/\b(?:apa|siapa|berapa|bila|di mana|cuaca|suhu|status|jadual|cari|semak|laporan|statistik|keputusan|saham|nilai|terkini|current|how much|who is|when is|update)\b/i.test(q);
   const explicitWeb=/(?:\b(?:cari|search|semak|research)\b.{0,40}\b(?:internet|web|online|sumber terkini)|\b(?:web search|search web|browse|melayari internet)\b)/i.test(q);
   const latest=explicitNews||explicitWeb||(temporal&&asksCurrentFact);
