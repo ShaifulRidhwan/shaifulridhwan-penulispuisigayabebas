@@ -73,6 +73,8 @@ jobs:
           node --check bilik-antara-video.js
           node --check bilik-antara-avatar.js
           node --check bilik-antara-pcm-worklet.js
+          node --check netlify/functions/aksara-live-facts.js
+          node --test tests/aksara-live-facts.test.cjs
           node --check netlify/functions/antara-intelligence.js
           node --check netlify/functions/aksara-web-search.js
           node --check netlify/functions/aksara-tavily.js

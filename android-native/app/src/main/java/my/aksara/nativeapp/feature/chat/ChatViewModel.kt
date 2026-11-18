@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.update
 import my.aksara.nativeapp.BuildConfig
 import my.aksara.nativeapp.core.network.*
 import my.aksara.nativeapp.core.storage.*
+import my.aksara.nativeapp.feature.today.hasTodayLocationPermission
+import my.aksara.nativeapp.feature.today.todayLocation
+import kotlin.math.round
 import my.aksara.engine.voice.VoiceContextTurn
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -317,6 +320,22 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                     media = effective?.let { JSONArray(it.mediaJson) },
                     fileUploads = effective?.let { JSONArray(it.receiptsJson) }
                 )
+                // Share only ~1 km rounded coordinates when Android location
+                // permission is already granted. Never request permission from chat,
+                // and never attach location to unrelated model prompts or summaries.
+                val liveDataTopic = Regex("""\b(cuaca|ramalan|weather|forecast|waktu solat|solat|isyak|isya|maghrib|subuh|zohor|asar)\b""", RegexOption.IGNORE_CASE).containsMatchIn(question)
+                val liveDataTime = Regex("""\b(esok|besok|hari ini|hari ni|malam ini|malam ni|today|tomorrow|sekarang|jam|pukul|berapa|waktu|ramalan)\b""", RegexOption.IGNORE_CASE).containsMatchIn(question)
+                val locationDenied = Regex("jangan (guna|akses) lokasi|tanpa lokasi", RegexOption.IGNORE_CASE).containsMatchIn(question)
+                if (liveDataTopic && liveDataTime && !locationDenied &&
+                    effective == null && documentText.isNullOrBlank() &&
+                    hasTodayLocationPermission(getApplication<Application>())) {
+                    val loc = withTimeoutOrNull(1700L) { todayLocation(getApplication<Application>()) }
+                    if (loc != null && loc.latitude in 0.5..7.8 && loc.longitude in 99.0..120.0) {
+                        payload.put("coarseLocation", JSONObject()
+                            .put("latitude", round(loc.latitude * 100.0) / 100.0)
+                            .put("longitude", round(loc.longitude * 100.0) / 100.0))
+                    }
+                }
                 renderer = launch {
                     while (isActive) {
                         delay(32L)

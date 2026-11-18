@@ -64,6 +64,7 @@ const GeminiDiagnosis={
  }
 };
 const Research=require("./aksara-research-workflow");
+const LiveFacts=require("./aksara-live-facts");
 const AgentToolsV7=require("./aksara-agent-tools-v7");
 const OwnedPage=require("./aksara-owned-page");
 const Data=require("./aksara-data-analysis");
@@ -484,6 +485,21 @@ exports.handler=async event=>{
    if(calculated.ok)return result(200,{mode:"live",aiMode:"automatic",model:"local-calculator",
     thoughtMode,reply:calculatorCall.arguments.expression+" = "+calculated.result,
     sources:[],toolsUsed:["calculate"],reviewApplied:false,disclaimer:"Pengiraan setempat."},H);
+  }
+
+  // Primary-source live facts take precedence over memorized model guesses.
+  // Only ordinary text, not uploads, private documents or voice recordings.
+  // GPS is never inferred by the server; a coarse coordinate requires client permission.
+  if(flags.researchEnabled&&!hasMedia&&!documentText&&payload.voiceFallback!==true){
+    const liveQuestion=LiveFacts.resumeLocation(question,history);
+    const liveFact=await LiveFacts.answer(liveQuestion,{coarseLocation:payload.coarseLocation,signal:event.signal});
+    if(liveFact){
+      return result(200,{mode:"grounded-live-facts",aiMode:"automatic",thoughtMode,
+        provider:"local",model:"aksara-live-facts-v1",reply:liveFact.reply,
+        researchStatus:liveFact.status,sources:liveFact.sources||[],
+        toolsUsed:liveFact.toolsUsed||[],reviewApplied:false,
+        disclaimer:liveFact.status==="verified"?"Maklumat sumber langsung; tiada inferens model digunakan.":"Tiada data langsung disahkan."},H);
+    }
   }
 
   // Opt-in short audio recordings: avoid search, historical context, tools and
