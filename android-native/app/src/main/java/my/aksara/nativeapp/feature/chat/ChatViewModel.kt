@@ -323,7 +323,11 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 // Share only ~1 km rounded coordinates when Android location
                 // permission is already granted. Never request permission from chat,
                 // and never attach location to unrelated model prompts or summaries.
-                if (Regex("(cuaca|ramalan|weather|forecast|waktu solat|solat|isyak|maghrib|subuh|zohor|asar)", RegexOption.IGNORE_CASE).containsMatchIn(question) &&
+                val liveDataTopic = Regex("""\\b(cuaca|ramalan|weather|forecast|waktu solat|solat|isyak|isya|maghrib|subuh|zohor|asar)\\b""", RegexOption.IGNORE_CASE).containsMatchIn(question)
+                val liveDataTime = Regex("""\\b(esok|besok|hari ini|hari ni|malam ini|malam ni|today|tomorrow|sekarang|jam|pukul|berapa|waktu|ramalan)\\b""", RegexOption.IGNORE_CASE).containsMatchIn(question)
+                val locationDenied = Regex("jangan (guna|akses) lokasi|tanpa lokasi", RegexOption.IGNORE_CASE).containsMatchIn(question)
+                if (liveDataTopic && liveDataTime && !locationDenied &&
+                    effective == null && documentText.isNullOrBlank() &&
                     hasTodayLocationPermission(getApplication<Application>())) {
                     val loc = withTimeoutOrNull(1700L) { todayLocation(getApplication<Application>()) }
                     if (loc != null && loc.latitude in 0.5..7.8 && loc.longitude in 99.0..120.0) {
