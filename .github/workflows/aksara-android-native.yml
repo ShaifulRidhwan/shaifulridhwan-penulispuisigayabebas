@@ -22,7 +22,6 @@ jobs:
       - name: Verify Aksara Local knowledge and source inventory
         run: python3 android-native/tools/sync_local_knowledge.py --check
       - run: node --test android-native/game-tests/*.test.cjs
-      - run: node --test tests/aksara-agentic-absolute-core.test.cjs
   web-audit:
     runs-on: ubuntu-latest
     # Chromium, fonts, and native libraries are preinstalled in the version-pinned
@@ -128,7 +127,7 @@ jobs:
   build:
     # Full Alpine PRs #327 and #330 use isolated owner workflows as their ONLY testable APK.
     # Keep independent backend/web/game checks but do not build or publish any ~240MB APK for PR #330.
-    if: github.event_name != 'pull_request' || (github.head_ref != 'feature/aksara-neural-local-v1' && github.head_ref != 'feature/aksara-today-chat-v2' && github.head_ref != 'feature/aksara-agentic-absolute-core-v1' && github.head_ref != 'feature/aksara-today-v3-reliability')
+    if: github.event_name != 'pull_request' || (github.head_ref != 'feature/aksara-neural-local-v1' && github.head_ref != 'feature/aksara-today-chat-v2' && github.head_ref != 'feature/aksara-today-v3-reliability')
     runs-on: ubuntu-latest
     outputs:
       apk_ready: ${{ steps.compile.outputs.apk_ready }}
