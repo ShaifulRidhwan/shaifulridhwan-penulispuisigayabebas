@@ -128,7 +128,7 @@ async function answer(question,{coarseLocation,signal,fetchImpl=fetch,now=new Da
    const matches=(value)=>{
      const raw=String(value||"").trim();
      if(raw===day)return true;
-     const m=raw.match(/^(\\d{1,2})[-/ ]([A-Za-z]{3}|\\d{1,2})[-/ ](\\d{4})$/);
+     const m=raw.match(/^(\d{1,2})[-/ ]([A-Za-z]{3}|\d{1,2})[-/ ](\d{4})$/);
      if(!m)return false;
      const month=Number(m[2])||(["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"].indexOf(m[2].toLowerCase())+1);
      return m[3]+"-"+String(month).padStart(2,"0")+"-"+m[1].padStart(2,"0")===day;
