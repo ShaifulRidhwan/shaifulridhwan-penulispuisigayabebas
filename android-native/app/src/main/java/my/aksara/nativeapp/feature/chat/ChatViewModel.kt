@@ -324,8 +324,8 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 // permission is already granted. Never request permission from chat,
                 // and never attach location to unrelated model prompts or summaries.
                 if (Regex("(cuaca|ramalan|weather|forecast|waktu solat|solat|isyak|maghrib|subuh|zohor|asar)", RegexOption.IGNORE_CASE).containsMatchIn(question) &&
-                    hasTodayLocationPermission(getApplication())) {
-                    val loc = withTimeoutOrNull(1700L) { todayLocation(getApplication()) }
+                    hasTodayLocationPermission(getApplication<Application>())) {
+                    val loc = withTimeoutOrNull(1700L) { todayLocation(getApplication<Application>()) }
                     if (loc != null && loc.latitude in 0.5..7.8 && loc.longitude in 99.0..120.0) {
                         payload.put("coarseLocation", JSONObject()
                             .put("latitude", round(loc.latitude * 100.0) / 100.0)
