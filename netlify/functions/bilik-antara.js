@@ -491,7 +491,8 @@ exports.handler=async event=>{
   // Only ordinary text, not uploads, private documents or voice recordings.
   // GPS is never inferred by the server; a coarse coordinate requires client permission.
   if(flags.researchEnabled&&!hasMedia&&!documentText&&payload.voiceFallback!==true){
-    const liveFact=await LiveFacts.answer(question,{coarseLocation:payload.coarseLocation,signal:event.signal});
+    const liveQuestion=LiveFacts.resumeLocation(question,history);
+    const liveFact=await LiveFacts.answer(liveQuestion,{coarseLocation:payload.coarseLocation,signal:event.signal});
     if(liveFact){
       return result(200,{mode:"grounded-live-facts",aiMode:"automatic",thoughtMode,
         provider:"local",model:"aksara-live-facts-v1",reply:liveFact.reply,
