@@ -1,6 +1,8 @@
 package my.aksara.nativeapp.core.network
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -138,8 +140,20 @@ class ChatApi(val origin: String, private val client: OkHttpClient = OkHttpClien
                 }
             }
         )
-        awaitClose { call.cancel(); work.cancel() }
+        // First cancel the Flow worker, then close the socket to avoid reporting
+        // expected teardown as a backend SocketException.
+        awaitClose { work.cancel(); call.cancel() }
     }.flowOn(Dispatchers.IO)
 }
 private fun kotlinx.coroutines.CoroutineScope.launchSafely(onError: (Throwable) -> Unit, block: suspend () -> Unit) =
-    launch(context = coroutineContext) { try { block() } catch (e: Throwable) { onError(e) } }
+    launch(context = coroutineContext) {
+        try {
+            block()
+        } catch (cancelled: CancellationException) {
+            throw cancelled // Stop/close is intentional, not a server error.
+        } catch (error: Throwable) {
+            // OkHttp can throw SocketException after a cancelled request.
+            // Still report genuine IO failures while the collector is active.
+            if (isActive) onError(error)
+        }
+    }

@@ -341,10 +341,9 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                 AksaraGlassSurface(Modifier.fillMaxWidth().weight(.21f)
                     .aksaraBouncyClick { detailWindow="weather" },radius=19.dp,blur=12.dp) {
                     val value=dashboard.weather?.value
-                    Row(Modifier.fillMaxSize(),verticalAlignment=Alignment.CenterVertically) {
-                        Column(Modifier.weight(.60f).fillMaxHeight()
-                            .padding(start=if(compact)8.dp else 12.dp,top=4.dp,bottom=4.dp),
-                            verticalArrangement=Arrangement.SpaceEvenly) {
+                    Column(Modifier.fillMaxSize()
+                        .padding(horizontal=if(compact)10.dp else 14.dp,vertical=6.dp),
+                        verticalArrangement=Arrangement.SpaceEvenly) {
                             AksaraText("Cuaca & Lokasi",size=if(compact)10f else 12.5f,
                                 line=if(compact)12f else 16f,weight=700,color=todayGold)
                             if(value!=null) {
@@ -369,12 +368,6 @@ internal fun shouldShowTodayLocationIntro(active:Boolean,permissionGranted:Boole
                             } else TodayPending(if(!permissionLocation)"Benarkan lokasi."
                                 else if(dashboard.locating)"Mendapatkan lokasi…" else "Cuaca tidak tersedia.")
                         }
-                        TodayMiniMap(dashboard.latestLocation,dashboard.city,active,epoch,
-                            Modifier.weight(.40f).fillMaxHeight()
-                                .padding(horizontal=4.dp,vertical=4.dp)) {
-                            detailWindow="map"
-                        }
-                    }
                 }
                 AksaraGlassSurface(Modifier.fillMaxWidth().weight(if(compact).25f else .29f)
                     .aksaraBouncyClick { detailWindow="prayer" },radius=19.dp,blur=12.dp) {

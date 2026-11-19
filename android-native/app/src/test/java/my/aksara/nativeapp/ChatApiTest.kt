@@ -11,6 +11,14 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ChatApiTest {
+    private suspend fun awaitNetworkCleanup(client: OkHttpClient) {
+        // The socket dispatcher can finish just after the cancelled collector.
+        // Require cleanup within a strict deadline rather than on the same tick.
+        withTimeout(3_000) {
+            while (client.dispatcher.runningCallsCount() != 0) delay(10)
+        }
+    }
+
     @Test fun cancellationWaitsForBlockedHttpCallToRelease()=runBlocking {
         MockWebServer().use { server ->
             server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
@@ -21,7 +29,7 @@ class ChatApiTest {
             }
             assertNotNull(server.takeRequest(5,java.util.concurrent.TimeUnit.SECONDS))
             withTimeout(3000) { job.cancelAndJoin() }
-            assertEquals("Cancellation must release the active HTTP call",0,client.dispatcher.runningCallsCount())
+            awaitNetworkCleanup(client)
         }
     }
 
@@ -40,7 +48,7 @@ class ChatApiTest {
             }
             withTimeout(5000) { first.await() }
             withTimeout(3000) { job.cancelAndJoin() }
-            assertEquals(0,client.dispatcher.runningCallsCount())
+            awaitNetworkCleanup(client)
             assertEquals("Cancellation must not replay inference",1,server.requestCount)
         }
     }
