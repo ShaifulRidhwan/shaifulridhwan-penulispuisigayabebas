@@ -125,9 +125,9 @@ jobs:
           name: production-backend-contract-evidence
           path: docs/android-rebuild/backend-contract/live-check.json
   build:
-    # Full Alpine PRs #327 and #330 use isolated owner workflows as their ONLY testable APK.
-    # Keep independent backend/web/game checks but do not build or publish any ~240MB APK for PR #330.
-    if: github.event_name != 'pull_request' || (github.head_ref != 'feature/aksara-neural-local-v1' && github.head_ref != 'feature/aksara-today-chat-v2' && github.head_ref != 'feature/aksara-today-v3-reliability')
+    # Full Alpine PRs #327/#330/#334 use isolated owner workflows as their ONLY testable APK.
+    # Never build or publish misleading native-only (~240MB) APKs for PR #334.
+    if: github.event_name != 'pull_request' || (github.head_ref != 'feature/aksara-neural-local-v1' && github.head_ref != 'feature/aksara-today-chat-v2' && github.head_ref != 'feature/aksara-today-v3-reliability' && github.head_ref != 'ui/aksara-whoami-no-minimap-20261119')
     runs-on: ubuntu-latest
     outputs:
       apk_ready: ${{ steps.compile.outputs.apk_ready }}
@@ -350,12 +350,13 @@ jobs:
             android-native/app/build/reports/
 
   today-preview-apk:
-    # PR327/PR330 have their own full Alpine owner APK; never publish a native-only preview.
+    # PR327/PR330/PR334 have their own full Alpine owner APK; never publish a native-only preview.
     # Other TODAY UI PRs keep their original lightweight preview delivery.
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.number != 327 &&
       github.event.pull_request.number != 330 &&
+      github.event.pull_request.number != 334 &&
       startsWith(github.head_ref, 'feature/aksara-today-') &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       needs.build.result == 'success' &&
