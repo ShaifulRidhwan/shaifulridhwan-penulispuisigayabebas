@@ -437,7 +437,6 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                             radius=13.dp) {
                             Row(Modifier.align(Alignment.Center).padding(horizontal=7.dp), verticalAlignment=Alignment.CenterVertically, horizontalArrangement=Arrangement.spacedBy(3.dp)) {
                                 AksaraText("AKSARA A.I", size=10f,line=12f,weight=650)
-                                AksaraText("ⓘ",size=9f,color=AksaraColors.gold)
                                 AksaraText("oleh Shaiful Ridhwan",size=8f,line=8.4f,weight=450,color=Color(233,198,141,212))
                             }
                         }
@@ -552,7 +551,7 @@ const val WelcomeText = "Antara aksara dan code, GAYA yang bebas, BEBAS dalam be
                                     Row(Modifier.align(Alignment.Center),verticalAlignment=Alignment.CenterVertically,
                                         horizontalArrangement=Arrangement.spacedBy(6.dp)) {
                                         AksaraText("↗",size=12f,color=AksaraColors.gold)
-                                        AksaraText("Siapa Aku",size=11.5f)
+                                        AksaraText("whoami",size=11.5f)
                                     }
                                 }
                             }
