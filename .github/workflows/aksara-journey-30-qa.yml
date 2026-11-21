@@ -1,0 +1,25 @@
+name: Aksara Journey 30 QA
+on:
+  pull_request:
+    paths:
+      - "bilik-antara-journey.js"
+      - "tests/aksara-journey-30-v2.test.cjs"
+      - "tests/aksara-journey-local-flow.test.cjs"
+      - "tests/aksara-journey-20.test.cjs"
+      - "bilik-antara-identity.js"
+      - ".github/workflows/aksara-journey-30-qa.yml"
+jobs:
+  journey:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check journey syntax
+        run: node --check bilik-antara-journey.js
+      - name: Run 30-chapter local regression suite
+        run: |
+          node --test tests/aksara-journey-30-v2.test.cjs
+          node --test tests/aksara-journey-local-flow.test.cjs
+          node --test tests/aksara-journey-20.test.cjs
