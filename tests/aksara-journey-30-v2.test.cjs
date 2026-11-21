@@ -49,7 +49,7 @@ test("the refreshed chapters distinguish actual runtime from claims or roadmap",
  const combined=Journey.steps.slice(2).map(x=>x.answer).join("\n");
  for(const [q,pattern]of [
   ["Empat Otak Aku Buat Apa?",/Configured|Connected/i],
-  ["Hybrid Router Tu Jalan Macam Mana?",/fallback.*context|context.*fallback/is],
+  ["Hybrid Router Tu Jalan Macam Mana?",/fallback[\\s\\S]*konteks|konteks[\\s\\S]*fallback/i],
   ["Code Engine Aku Boleh Buat Apa?",/web.*Android/is],
   ["Kenapa Shaiful Tambah Terminal?",/Alpine Linux rootless/],
   ["Apa Beza Terminal Dengan Code Engine?",/Code Engine.*web.*Aksara Linux.*Android/is],
