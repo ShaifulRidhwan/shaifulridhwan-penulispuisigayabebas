@@ -55,9 +55,10 @@ test("the refreshed chapters distinguish actual runtime from claims or roadmap",
   ["Apa Beza Terminal Dengan Code Engine?",/Code Engine.*web.*Aksara Linux.*Android/is],
   ["Apa Lagi Yang Perlu Dibaiki Pada Connection?",/Netlify/],
   ["Kenapa Sesi Dan Memori Tak Boleh Main-main?",/OFF secara default/],
-  ["Apa Pesanan Terakhir Aksara Untuk Shaiful?",/Tamat · Kenali Shaiful \\(30\\/30\\)/]
+  ["Apa Pesanan Terakhir Aksara Untuk Shaiful?",/Tamat · Kenali Shaiful/],
  ]){
   assert.match(Journey.answer(q),pattern,q);
+  if(q==="Apa Pesanan Terakhir Aksara Untuk Shaiful?")assert.ok(Journey.answer(q).includes("(30/30)"));
  }
  assert.match(combined,/regression test/i);
  assert.doesNotMatch(combined,/semua provider.*online|akses root automatik/i);
