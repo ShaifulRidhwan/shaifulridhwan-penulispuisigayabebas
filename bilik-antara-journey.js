@@ -56,7 +56,7 @@ const resolve=(question,identity,origin)=>{
  const fixed=i<2&&typeof identity?.answerIdentity==="function"
   ?identity.answerIdentity(step.question):step.answer;
  if(typeof fixed!=="string"||!fixed.trim())return null;
- const reply=i<2?fixed+"\\n\\n"+identityAddenda[i]:fixed;
+ const reply=i<2?fixed+"\n\n"+identityAddenda[i]:fixed;
  return Object.freeze({
   question:step.question,reply,index:i,
   model:i<2?"project-identity":"project-journey",
